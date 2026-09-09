@@ -67,14 +67,92 @@ class DatabaseHelper {
       } catch (_) {}
     }
 
-    return await databaseFactory.openDatabase(
-      targetPath,
-      options: OpenDatabaseOptions(
-        version: 5,
-        onCreate: _createDB,
-        onUpgrade: _upgradeDB,
-      ),
-    );
+    final mirrorPath = join(dbDir, 'dont_forget_v3.mirror.db');
+    final snapshotPath = join(dbDir, 'ha_snapshot.json');
+
+    try {
+      final db = await databaseFactory.openDatabase(
+        targetPath,
+        options: OpenDatabaseOptions(
+          version: 6,
+          onCreate: _createDB,
+          onUpgrade: _upgradeDB,
+        ),
+      );
+      return db;
+    } catch (e) {
+      debugPrint('Warning: Initial open database failed ($e). Invoking HA self-healing...');
+      await _attemptSelfHealing(targetPath, mirrorPath, snapshotPath);
+      return await databaseFactory.openDatabase(
+        targetPath,
+        options: OpenDatabaseOptions(
+          version: 6,
+          onCreate: _createDB,
+          onUpgrade: _upgradeDB,
+        ),
+      );
+    }
+  }
+
+  Future<void> createMirrorBackup() async {
+    try {
+      final dbDir = await _getDatabaseDirectory();
+      final targetPath = join(dbDir, 'dont_forget_v3.db');
+      final mirrorPath = join(dbDir, 'dont_forget_v3.mirror.db');
+      final snapshotPath = join(dbDir, 'ha_snapshot.json');
+
+      final targetFile = File(targetPath);
+      if (targetFile.existsSync()) {
+        targetFile.copySync(mirrorPath);
+      }
+
+      final db = await database;
+      final reminders = await db.query('Reminders');
+      final settings = await db.query('Settings');
+      final snapshotData = {
+        'timestamp': DateTime.now().toIso8601String(),
+        'settings': settings,
+        'reminders': reminders,
+      };
+      File(snapshotPath).writeAsStringSync(jsonEncode(snapshotData));
+    } catch (e) {
+      debugPrint('HA Mirror backup warning: $e');
+    }
+  }
+
+  Future<void> _attemptSelfHealing(String targetPath, String mirrorPath, String snapshotPath) async {
+    debugPrint('🚨 [HA Disaster Recovery] Database corruption detected! Triggering self-healing...');
+    try {
+      final mirrorFile = File(mirrorPath);
+      if (mirrorFile.existsSync() && mirrorFile.lengthSync() > 0) {
+        mirrorFile.copySync(targetPath);
+        debugPrint('✅ [HA Disaster Recovery] Successfully recovered from double-active mirror database!');
+        return;
+      }
+
+      final snapshotFile = File(snapshotPath);
+      if (snapshotFile.existsSync()) {
+        final content = snapshotFile.readAsStringSync();
+        final data = jsonDecode(content);
+        final targetFile = File(targetPath);
+        if (targetFile.existsSync()) {
+          targetFile.deleteSync();
+        }
+        final recoveredDb = await databaseFactory.openDatabase(
+          targetPath,
+          options: OpenDatabaseOptions(version: 6, onCreate: _createDB),
+        );
+        if (data['reminders'] is List) {
+          for (final rem in (data['reminders'] as List)) {
+            await recoveredDb.insert('Reminders', rem);
+          }
+        }
+        await recoveredDb.close();
+        debugPrint('✅ [HA Disaster Recovery] Successfully recovered from JSON state machine snapshot!');
+      }
+    } catch (e) {
+      debugPrint('❌ [HA Disaster Recovery] Self-healing failed: $e');
+    }
   }
 
   Future _createDB(Database db, int version) async {
@@ -129,6 +207,8 @@ CREATE TABLE Reminders (
   is_emotion_filtered INTEGER DEFAULT 0,
   sub_tasks TEXT,
   created_at TEXT,
+  review_level INTEGER DEFAULT 0,
+  next_review_at TEXT,
   FOREIGN KEY (record_id) REFERENCES MediaRecords (id) ON DELETE CASCADE
 )
 ''');
@@ -157,9 +237,18 @@ CREATE TABLE Reminders (
         await db.execute('ALTER TABLE Reminders ADD COLUMN created_at TEXT');
       } catch (_) {}
     }
+    if (oldVersion < 6) {
+      try {
+        await db.execute('ALTER TABLE Reminders ADD COLUMN review_level INTEGER DEFAULT 0');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE Reminders ADD COLUMN next_review_at TEXT');
+      } catch (_) {}
+    }
   }
 
   Future<void> close() async {
+    await createMirrorBackup();
     final db = await instance.database;
     db.close();
   }

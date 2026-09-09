@@ -2,7 +2,7 @@
 ; Defines packaging, installation, shortcuts, and full uninstallation
 
 #define MyAppName "DontForget"
-#define MyAppVersion "1.3.0"
+#define MyAppVersion "1.4.0"
 #define MyAppPublisher "DontForget Team"
 #define MyAppExeName "dont_forget.exe"
 #define SourceDir "..\build\windows\x64\runner\Release"

@@ -177,6 +177,45 @@ class AppLocalizations {
       'searchResults': 'Search Results',
       'allTasks': 'All Tasks',
       'noSearchResult': 'No matching tasks found',
+      // Multi-Agent Architecture
+      'multiAgentTitle': 'Multi-Agent Collective Pipeline',
+      'multiAgentDesc': '1 Manager Agent + 2 Execution Agents (Decomposer & Scheduler)',
+      'managerRole': 'Manager Agent (Global Priority)',
+      'decomposerRole': 'Decomposer Agent (Goal Breakdown)',
+      'schedulerRole': 'Scheduler Agent (DP Timeline Fitting)',
+      'agentProcessing': 'Multi-Agent is collaborating on goal...',
+      'agentComplete': 'Multi-Agent successfully scheduled milestone pipeline',
+      // Immersive Preparation Mode
+      'immersiveMode': 'Immersive Preparation Mode',
+      'immersiveModeDesc': 'Silent suppression of non-critical Q3/Q4 notifications during deep focus',
+      'immersiveActive': 'Immersive Mode Active (Q3/Q4 Silenced)',
+      'immersiveDisabled': 'Immersive Mode Deactivated',
+      'filterQ3Q4Notice': 'Notification suppressed by Immersive Preparation Mode',
+      // Spaced Repetition Flashcards
+      'spacedRepetitionTitle': 'Spaced Repetition Review Deck',
+      'spacedRepetitionSubtitle': 'Ebbinghaus memory curve for critical technology mastery',
+      'reviewToday': 'Reviews Due Today',
+      'noReviewsToday': 'All knowledge cards reviewed for today! Keep up the great work.',
+      'flipCard': 'Tap card to flip answer',
+      'markRemembered': 'Mastered (Next Stage)',
+      'markDifficult': 'Hard (Reset to Stage 1)',
+      'stageLevel': 'Stage ',
+      'convertCard': 'Turn into Review Card',
+      // Dynamic Programming Scheduling
+      'dpScheduleTitle': 'DP Free Slot Scheduling',
+      'dpScheduleDesc': 'Finds optimal contiguous calendar slots for Q2 tasks with minimal fragmentation',
+      'dpScheduled': 'Scheduled into optimal slot',
+      'fragmentationSaved': 'Calendar fragmentation minimized',
+      // Command Palette & Geek Control
+      'commandPalette': 'Command Palette',
+      'cmdHint': 'Type a command (/search, /add, /focus, /export, /sync, /cards)...',
+      'keyboardShortcuts': 'Keyboard Shortcuts',
+      // Data Export
+      'exportExcel': 'Export Excel Pivot Compatible CSV',
+      'exportExcelDesc': 'RFC 4180 CSV with UTF-8 BOM ready for Excel 2019+ Pivot Tables',
+      'exportSuccess': 'Exported successfully to: ',
+      'exportFailed': 'Export failed',
+      'openExportFolder': 'Open Directory',
     },
     'zh': {
       'appTitle': '别忘了',
@@ -346,6 +385,45 @@ class AppLocalizations {
       'searchResults': '搜索结果',
       'allTasks': '全部事项',
       'noSearchResult': '未找到匹配的事项',
+      // 多智能体微调度架构
+      'multiAgentTitle': '多智能体微型协作流水线',
+      'multiAgentDesc': '1 个管理总控智能体 + 2 个业务执行智能体 (拆解 & 排程)',
+      'managerRole': '👔 管理总控智能体 (全局优先级)',
+      'decomposerRole': '🔨 目标拆解智能体 (里程碑分解)',
+      'schedulerRole': '⏱️ 动态排程智能体 (DP时间槽填缝)',
+      'agentProcessing': '多智能体团队正在协同拆解与排程...',
+      'agentComplete': '多智能体团队已完成阶段性拆解与时间槽排程！',
+      // 高压场景专注模式
+      'immersiveMode': '沉浸备战模式',
+      'immersiveModeDesc': '高压专注时底层静音拦截所有 Q3/Q4 非核心干扰通知',
+      'immersiveActive': '已开启沉浸备战模式 (静音拦截Q3/Q4)',
+      'immersiveDisabled': '已退出沉浸备战模式',
+      'filterQ3Q4Notice': '已被沉浸备战模式拦截静音',
+      // 艾宾浩斯间隔重复复习
+      'spacedRepetitionTitle': '间隔重复复习卡片 (艾宾浩斯记忆流)',
+      'spacedRepetitionSubtitle': '针对技术难点与核心考点，按遗忘曲线安排每日深度复盘',
+      'reviewToday': '今日待复习卡片',
+      'noReviewsToday': '今日复习计划已全部完成！保持专注状态。',
+      'flipCard': '点击卡片翻转查看详情',
+      'markRemembered': '已牢固掌握 (进入下一复习阶梯)',
+      'markDifficult': '仍需强化 (重置为第1阶梯)',
+      'stageLevel': '第 ',
+      'convertCard': '转为备战复习卡片',
+      // 动态规划时间分配
+      'dpScheduleTitle': '动态规划时间槽填缝 (DP Scheduling)',
+      'dpScheduleDesc': '智能分析空闲区间，将重要不紧急任务填入最优连续专注块，最小化碎片',
+      'dpScheduled': '已由动态规划算法安排至最优时间槽',
+      'fragmentationSaved': '已消除日程碎裂时间',
+      // 极客全键盘与指令盘
+      'commandPalette': '极客全局命令行指令盘',
+      'cmdHint': '输入指令 (/search, /add, /focus, /export, /sync, /cards)...',
+      'keyboardShortcuts': '全键盘快捷键指南',
+      // 大数据导出
+      'exportExcel': '导出 Excel 数据透视表兼容 CSV',
+      'exportExcelDesc': '严格遵循 RFC 4180 与 UTF-8 BOM 规范，双击零乱码，可直接生成数据透视表',
+      'exportSuccess': '已成功导出数据文件至: ',
+      'exportFailed': '导出数据失败',
+      'openExportFolder': '打开文件所在目录',
     },
     'ja': {
       'appTitle': '忘れないで',
@@ -515,6 +593,45 @@ class AppLocalizations {
       'searchResults': '検索結果',
       'allTasks': 'すべてのタスク',
       'noSearchResult': '一致するタスクが見つかりませんでした',
+      // マルチエージェント協調
+      'multiAgentTitle': 'マルチエージェント協調パイプライン',
+      'multiAgentDesc': '管理エージェント1基 + 実行エージェント2基（分解・日程）',
+      'managerRole': '👔 管理統括エージェント（全体優先度）',
+      'decomposerRole': '🔨 目標分解エージェント（マイルストーン分解）',
+      'schedulerRole': '⏱️ 動的日程エージェント（DPスロット割当）',
+      'agentProcessing': 'エージェントチームが協調処理中...',
+      'agentComplete': 'マイルストーン分解と日程割当が完了しました！',
+      // 没入集中モード
+      'immersiveMode': '没入集中モード',
+      'immersiveModeDesc': '集中時に重要度の低いQ3/Q4通知を自動ミュート',
+      'immersiveActive': '没入集中モード稼働中（Q3/Q4消音）',
+      'immersiveDisabled': '没入集中モードを解除しました',
+      'filterQ3Q4Notice': '没入集中モードにより通知が消音されました',
+      // 間隔反復復習（エビングハウス）
+      'spacedRepetitionTitle': '間隔反復復習デッキ（忘却曲線対応）',
+      'spacedRepetitionSubtitle': '重要知識や技術課題を忘却曲線に沿って定期復習',
+      'reviewToday': '本日の復習カード',
+      'noReviewsToday': '本日の復習タスクはすべて完了しました！',
+      'flipCard': 'タップしてカードを裏返す',
+      'markRemembered': '習得済み（次段階へ進む）',
+      'markDifficult': '要復習（第1段階へリセット）',
+      'stageLevel': 'ステージ ',
+      'convertCard': '復習カードに変換',
+      // 動的計画法日程最適化
+      'dpScheduleTitle': '動的計画法による空き時間割当 (DP Scheduling)',
+      'dpScheduleDesc': '空きスロットを分析し、重要タスクを最適な連続時間に配置して細分化を防止',
+      'dpScheduled': '動的計画法により最適時間に配置されました',
+      'fragmentationSaved': 'スケジュールの細分化を抑制しました',
+      // ターミナルコマンドパレット
+      'commandPalette': 'コマンドパレット',
+      'cmdHint': 'コマンドを入力 (/search, /add, /focus, /export, /sync, /cards)...',
+      'keyboardShortcuts': 'キーボードショートカット一覧',
+      // データエクスポート
+      'exportExcel': 'Excelピボットテーブル対応CSV出力',
+      'exportExcelDesc': 'RFC 4180準拠 & UTF-8 BOM対応、文字化けなしでピボットテーブルに直結',
+      'exportSuccess': 'データを出力しました: ',
+      'exportFailed': 'エクスポートに失敗しました',
+      'openExportFolder': '保存先フォルダを開く',
     },
   };
 
@@ -523,6 +640,8 @@ class AppLocalizations {
         _localizedValues['en']?[key] ??
         key;
   }
+
+  String translate(String key) => get(key);
 }
 
 class AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

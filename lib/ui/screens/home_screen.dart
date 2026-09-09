@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:audioplayers/audioplayers.dart';
 import '../../models/reminder.dart';
@@ -13,6 +14,8 @@ import '../widgets/quadrant_view.dart';
 import '../widgets/task_card.dart';
 import '../widgets/input_bottom_bar.dart';
 import '../widgets/ai_background_effect.dart';
+import '../widgets/command_palette_dialog.dart';
+import '../widgets/spaced_repetition_sheet.dart';
 import '../../l10n/app_localizations.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -453,11 +456,262 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
     }
   }
 
+  void _toggleImmersiveMode() {
+    final notifier = ref.read(immersiveModeProvider.notifier);
+    notifier.toggle();
+    final isActive = ref.read(immersiveModeProvider);
+    final l10n = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        content: Row(
+          children: [
+            Icon(
+              isActive ? Icons.shield : Icons.shield_outlined,
+              color: isActive ? Colors.amberAccent : Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                isActive
+                    ? l10n.get('immersiveActive')
+                    : l10n.get('immersiveDisabled'),
+                style: const TextStyle(fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openSpacedRepetitionSheet() {
+    SpacedRepetitionSheet.show(context);
+  }
+
+  Future<void> _exportCsvData() async {
+    final l10n = AppLocalizations.of(context);
+    final reminders = ref.read(remindersProvider);
+    final exportService = ref.read(dataExportServiceProvider);
+    try {
+      final file = await exportService.exportToFile(reminders);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 5),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          content: Text('${l10n.get('exportSuccess')}${file.path}'),
+          action: SnackBarAction(
+            label: l10n.get('openExportFolder'),
+            onPressed: () {
+              if (Platform.isWindows) {
+                Process.run('explorer.exe', ['/select,', file.path]);
+              }
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${l10n.get('exportFailed')}: $e'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
+  }
+
+  void _showMultiAgentGoalDialog() {
+    final l10n = AppLocalizations.of(context);
+    final textController = TextEditingController();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E2028) : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Row(
+          children: [
+            const Icon(Icons.hub_outlined, color: Colors.indigoAccent),
+            const SizedBox(width: 8),
+            Text(l10n.get('multiAgentTitle'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.get('multiAgentDesc'),
+              style: TextStyle(fontSize: 12, color: isDark ? Colors.white60 : Colors.black54),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: textController,
+              autofocus: true,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: '输入您的复杂目标（例如：两周后备战高级技术面试，精通分布式与并发原理）...',
+                hintStyle: TextStyle(fontSize: 13, color: isDark ? Colors.white38 : Colors.black38),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(l10n.get('cancel')),
+          ),
+          FilledButton.icon(
+            icon: const Icon(Icons.rocket_launch, size: 16),
+            label: const Text('启动三智能体协同'),
+            onPressed: () {
+              final goal = textController.text.trim();
+              if (goal.isNotEmpty) {
+                Navigator.pop(ctx);
+                ref.read(homeControllerProvider.notifier).processWithMultiAgent(goal);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(l10n.get('agentProcessing')),
+                    duration: const Duration(seconds: 3),
+                  ),
+                );
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openCommandPalette() {
+    final l10n = AppLocalizations.of(context);
+    final isImmersive = ref.read(immersiveModeProvider);
+
+    CommandPaletteDialog.show(context, [
+      CommandPaletteAction(
+        id: 'agent',
+        title: l10n.get('multiAgentTitle'),
+        subtitle: l10n.get('multiAgentDesc'),
+        icon: Icons.hub_outlined,
+        shortcut: '/agent',
+        onExecute: _showMultiAgentGoalDialog,
+      ),
+      CommandPaletteAction(
+        id: 'focus',
+        title: isImmersive ? l10n.get('immersiveDisabled') : l10n.get('immersiveActive'),
+        subtitle: l10n.get('immersiveModeDesc'),
+        icon: isImmersive ? Icons.shield : Icons.shield_outlined,
+        shortcut: 'F',
+        onExecute: _toggleImmersiveMode,
+      ),
+      CommandPaletteAction(
+        id: 'cards',
+        title: l10n.get('spacedRepetitionTitle'),
+        subtitle: l10n.get('spacedRepetitionSubtitle'),
+        icon: Icons.school_outlined,
+        shortcut: 'R',
+        onExecute: _openSpacedRepetitionSheet,
+      ),
+      CommandPaletteAction(
+        id: 'export',
+        title: l10n.get('exportExcel'),
+        subtitle: l10n.get('exportExcelDesc'),
+        icon: Icons.table_chart_outlined,
+        shortcut: 'E',
+        onExecute: _exportCsvData,
+      ),
+      CommandPaletteAction(
+        id: 'search',
+        title: l10n.get('searchResults'),
+        subtitle: l10n.get('searchHint'),
+        icon: Icons.search_rounded,
+        shortcut: '/',
+        onExecute: () => setState(() => _isSearchOpen = true),
+      ),
+      CommandPaletteAction(
+        id: 'dashboard',
+        title: l10n.get('dashboardTitle'),
+        subtitle: l10n.get('taskCompletion'),
+        icon: Icons.bar_chart_rounded,
+        shortcut: 'B',
+        onExecute: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        ),
+      ),
+      CommandPaletteAction(
+        id: 'clear_notices',
+        title: l10n.get('clearAllNotices'),
+        subtitle: l10n.get('noticesCleared'),
+        icon: Icons.notifications_off_outlined,
+        onExecute: _clearAllNotices,
+      ),
+      CommandPaletteAction(
+        id: 'clear_completed',
+        title: l10n.get('clearCompletedTitle'),
+        subtitle: l10n.get('clearCompleted'),
+        icon: Icons.cleaning_services_outlined,
+        onExecute: _confirmClearCompleted,
+      ),
+      CommandPaletteAction(
+        id: 'settings',
+        title: l10n.get('settings'),
+        subtitle: l10n.get('lanSyncTitle'),
+        icon: Icons.settings_outlined,
+        shortcut: ',',
+        onExecute: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SettingsScreen()),
+        ),
+      ),
+    ]);
+  }
+
+  void _handleGlobalKeyEvent(KeyEvent event) {
+    if (event is! KeyDownEvent) return;
+
+    final primaryFocus = FocusManager.instance.primaryFocus;
+    final isTyping = primaryFocus != null && primaryFocus.context?.widget is EditableText;
+
+    final isCtrl = HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed;
+
+    // Ctrl+K -> Command Palette
+    if (isCtrl && event.logicalKey == LogicalKeyboardKey.keyK) {
+      _openCommandPalette();
+      return;
+    }
+
+    if (isTyping) return;
+
+    if (event.logicalKey == LogicalKeyboardKey.slash) {
+      setState(() => _isSearchOpen = true);
+    } else if (event.logicalKey == LogicalKeyboardKey.keyF) {
+      _toggleImmersiveMode();
+    } else if (event.logicalKey == LogicalKeyboardKey.keyR) {
+      _openSpacedRepetitionSheet();
+    } else if (event.logicalKey == LogicalKeyboardKey.keyE) {
+      _exportCsvData();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final reminders = ref.watch(remindersProvider);
     final l10n = AppLocalizations.of(context);
     final homeState = ref.watch(homeControllerProvider);
+    final isImmersiveActive = ref.watch(immersiveModeProvider);
+    final spacedService = ref.watch(spacedRepetitionServiceProvider);
+    final dueCardsCount = spacedService.getDueCards(reminders).length;
 
     ref.listen<HomeState>(homeControllerProvider, (previous, next) {
       if (next.error != null) {
@@ -483,8 +737,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
     final isProcessing = homeState.isProcessingInBackground;
     final statusColor = isProcessing ? const Color(0xFF00E5FF) : const Color(0xFF00E676);
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
+    return KeyboardListener(
+      focusNode: FocusNode(),
+      onKeyEvent: _handleGlobalKeyEvent,
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
       appBar: AppBar(
         leading: _isSearchOpen
             ? IconButton(
@@ -558,6 +815,46 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                 const SizedBox(width: 6),
               ]
             : [
+                IconButton(
+                  icon: const Icon(Icons.terminal, size: 20),
+                  tooltip: '${l10n.get('commandPalette')} (Ctrl+K)',
+                  splashRadius: 18,
+                  onPressed: _openCommandPalette,
+                ),
+                IconButton(
+                  icon: Icon(
+                    isImmersiveActive ? Icons.shield : Icons.shield_outlined,
+                    size: 20,
+                    color: isImmersiveActive ? Colors.amberAccent : null,
+                  ),
+                  tooltip: isImmersiveActive
+                      ? l10n.get('immersiveActive')
+                      : l10n.get('immersiveMode'),
+                  splashRadius: 18,
+                  onPressed: _toggleImmersiveMode,
+                ),
+                Badge(
+                  isLabelVisible: dueCardsCount > 0,
+                  label: Text(
+                    dueCardsCount.toString(),
+                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
+                  backgroundColor: Colors.amber,
+                  textColor: Colors.black87,
+                  offset: const Offset(-4, 4),
+                  child: IconButton(
+                    icon: const Icon(Icons.school_outlined, size: 20),
+                    tooltip: '${l10n.get('spacedRepetitionTitle')} ($dueCardsCount)',
+                    splashRadius: 18,
+                    onPressed: _openSpacedRepetitionSheet,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.table_chart_outlined, size: 20),
+                  tooltip: l10n.get('exportExcel'),
+                  splashRadius: 18,
+                  onPressed: _exportCsvData,
+                ),
                 IconButton(
                   icon: const Icon(Icons.search_rounded, size: 20),
                   tooltip: l10n.get('searchHint'),
@@ -727,6 +1024,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
           ),
         ),
       ),
-    );
+    ));
   }
 }

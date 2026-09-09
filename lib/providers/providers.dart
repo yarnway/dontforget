@@ -8,6 +8,10 @@ import '../models/media_record.dart';
 import '../services/llm_service.dart';
 import '../services/notification_service.dart';
 import '../services/lan_sync_service.dart';
+import '../services/dp_scheduler_service.dart';
+import '../services/multi_agent_service.dart';
+import '../services/spaced_repetition_service.dart';
+import '../services/data_export_service.dart';
 
 final databaseHelperProvider = Provider<DatabaseHelper>((ref) {
   return DatabaseHelper.instance;
@@ -171,5 +175,43 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
 
 final lanSyncServiceProvider = Provider<LanSyncService>((ref) {
   return LanSyncService.instance;
+});
+
+final dpSchedulerServiceProvider = Provider<DPSchedulerService>((ref) {
+  return const DPSchedulerService();
+});
+
+final multiAgentServiceProvider = Provider<MultiAgentService>((ref) {
+  return MultiAgentService(
+    llmService: ref.read(llmServiceProvider),
+    dpScheduler: ref.read(dpSchedulerServiceProvider),
+  );
+});
+
+final spacedRepetitionServiceProvider = Provider<SpacedRepetitionService>((ref) {
+  return const SpacedRepetitionService();
+});
+
+final dataExportServiceProvider = Provider<DataExportService>((ref) {
+  return const DataExportService();
+});
+
+class ImmersiveModeNotifier extends StateNotifier<bool> {
+  final NotificationService _notificationService;
+  ImmersiveModeNotifier(this._notificationService) : super(false);
+
+  void toggle() {
+    state = !state;
+    _notificationService.isImmersiveModeActive = state;
+  }
+
+  void setMode(bool enabled) {
+    state = enabled;
+    _notificationService.isImmersiveModeActive = enabled;
+  }
+}
+
+final immersiveModeProvider = StateNotifierProvider<ImmersiveModeNotifier, bool>((ref) {
+  return ImmersiveModeNotifier(ref.read(notificationServiceProvider));
 });
 

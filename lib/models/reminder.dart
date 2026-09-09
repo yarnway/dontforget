@@ -1,5 +1,27 @@
 import 'dart:convert';
 
+class TaskBitmask {
+  static const int quadrant1 = 1 << 0;
+  static const int quadrant2 = 1 << 1;
+  static const int quadrant3 = 1 << 2;
+  static const int quadrant4 = 1 << 3;
+  static const int completed = 1 << 4;
+  static const int overdue = 1 << 5;
+  static const int recurring = 1 << 6;
+  static const int emotionFiltered = 1 << 7;
+  static const int hasAttachment = 1 << 8;
+  static const int hasSubtasks = 1 << 9;
+  static const int stagnant = 1 << 10;
+  static const int spacedReview = 1 << 11;
+
+  // Convenient aliases
+  static const int q1 = quadrant1;
+  static const int q2 = quadrant2;
+  static const int q3 = quadrant3;
+  static const int q4 = quadrant4;
+  static const int reviewCard = spacedReview;
+}
+
 class Reminder {
   final String id;
   final String? recordId;
@@ -16,6 +38,8 @@ class Reminder {
   final bool isEmotionFiltered; // '空船效应' 情绪去噪重构标识
   final String? subTasks; // JSON 格式微习惯原子项列表
   final DateTime? createdAt; // 创建时间戳，用于滞留感知
+  final int spacedRepetitionLevel; // 0: 普通任务, 1..5: 艾宾浩斯复习阶梯
+  final DateTime? nextReviewAt; // 下一次间隔复习时间
 
   Reminder({
     required this.id,
@@ -33,7 +57,32 @@ class Reminder {
     this.isEmotionFiltered = false,
     this.subTasks,
     DateTime? createdAt,
+    this.spacedRepetitionLevel = 0,
+    this.nextReviewAt,
   }) : createdAt = createdAt ?? DateTime.now();
+
+  int get bitmask {
+    int mask = 0;
+    if (quadrantLevel == 1) mask |= TaskBitmask.quadrant1;
+    if (quadrantLevel == 2) mask |= TaskBitmask.quadrant2;
+    if (quadrantLevel == 3) mask |= TaskBitmask.quadrant3;
+    if (quadrantLevel == 4) mask |= TaskBitmask.quadrant4;
+    if (isCompleted) mask |= TaskBitmask.completed;
+    if (triggerTime != null && triggerTime!.isBefore(DateTime.now()) && !isCompleted) {
+      mask |= TaskBitmask.overdue;
+    }
+    if (isRecurring) mask |= TaskBitmask.recurring;
+    if (isEmotionFiltered) mask |= TaskBitmask.emotionFiltered;
+    if (recordId != null && recordId!.isNotEmpty) mask |= TaskBitmask.hasAttachment;
+    if (subTasks != null && subTasks!.trim().isNotEmpty && subTasks != '[]') {
+      mask |= TaskBitmask.hasSubtasks;
+    }
+    if (isStagnant()) mask |= TaskBitmask.stagnant;
+    if (spacedRepetitionLevel > 0) mask |= TaskBitmask.spacedReview;
+    return mask;
+  }
+
+  bool get isOverdue => triggerTime != null && triggerTime!.isBefore(DateTime.now()) && !isCompleted;
 
   factory Reminder.fromJson(Map<String, dynamic> json) => Reminder(
         id: json['id'] as String,
@@ -58,6 +107,10 @@ class Reminder {
         createdAt: json['created_at'] != null
             ? DateTime.tryParse(json['created_at'] as String)
             : null,
+        spacedRepetitionLevel: (json['review_level'] as int?) ?? 0,
+        nextReviewAt: json['next_review_at'] != null
+            ? DateTime.tryParse(json['next_review_at'] as String)
+            : null,
       );
 
   Map<String, dynamic> toJson() => {
@@ -76,6 +129,8 @@ class Reminder {
         'is_emotion_filtered': isEmotionFiltered ? 1 : 0,
         'sub_tasks': subTasks,
         'created_at': createdAt?.toIso8601String(),
+        'review_level': spacedRepetitionLevel,
+        'next_review_at': nextReviewAt?.toIso8601String(),
       };
 
   DateTime? getNextOccurrence() {
@@ -118,6 +173,8 @@ class Reminder {
     bool? isEmotionFiltered,
     String? subTasks,
     DateTime? createdAt,
+    int? spacedRepetitionLevel,
+    DateTime? nextReviewAt,
   }) {
     return Reminder(
       id: id,
@@ -135,6 +192,8 @@ class Reminder {
       isEmotionFiltered: isEmotionFiltered ?? this.isEmotionFiltered,
       subTasks: subTasks ?? this.subTasks,
       createdAt: createdAt ?? this.createdAt,
+      spacedRepetitionLevel: spacedRepetitionLevel ?? this.spacedRepetitionLevel,
+      nextReviewAt: nextReviewAt ?? this.nextReviewAt,
     );
   }
 

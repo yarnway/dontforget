@@ -20,6 +20,9 @@ class NotificationService {
   final StreamController<Reminder> _reminderDueController =
       StreamController<Reminder>.broadcast();
 
+  /// 沉浸备战专注模式开关（开启后底层静音拦截 Q3 和 Q4 通知）
+  bool isImmersiveModeActive = false;
+
   Stream<Reminder> get onReminderDue => _reminderDueController.stream;
 
   Future<void> init() async {
@@ -168,6 +171,13 @@ class NotificationService {
 
   Future<void> fireReminderNow(Reminder reminder) async {
     _activeTimers.remove(reminder.id);
+
+    // 高压场景专注模式：拦截并静音所有“紧急不重要 (Q3)”和“不重要不紧急 (Q4)”的通知
+    if (isImmersiveModeActive && (reminder.quadrantLevel == 3 || reminder.quadrantLevel == 4)) {
+      debugPrint('[沉浸模式拦截] 已静音跳过低优先级提醒: [Q${reminder.quadrantLevel}] ${reminder.taskTitle}');
+      _reminderDueController.add(reminder);
+      return;
+    }
 
     // Notify UI / Stream listeners
     _reminderDueController.add(reminder);

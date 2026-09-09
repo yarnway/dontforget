@@ -143,6 +143,24 @@ class _TaskCardState extends ConsumerState<TaskCard> {
             ],
           ),
         ),
+        PopupMenuItem(
+          value: 'toggle_review',
+          child: Row(
+            children: [
+              Icon(
+                widget.task.spacedRepetitionLevel > 0 ? Icons.school : Icons.school_outlined,
+                size: 16,
+                color: Colors.amber,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                widget.task.spacedRepetitionLevel > 0
+                    ? '移出复习卡片'
+                    : l10n.get('convertCard'),
+              ),
+            ],
+          ),
+        ),
         const PopupMenuDivider(),
         PopupMenuItem(
           value: 'delete',
@@ -177,6 +195,20 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       }
     } else if (value == 'decompose') {
       _decomposeToMicroHabits();
+    } else if (value == 'toggle_review') {
+      final spacedService = ref.read(spacedRepetitionServiceProvider);
+      final updated = widget.task.spacedRepetitionLevel > 0
+          ? spacedService.disableCard(widget.task)
+          : spacedService.enableCard(widget.task);
+      ref.read(remindersProvider.notifier).updateReminder(updated);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(updated.spacedRepetitionLevel > 0
+              ? '已转为艾宾浩斯复习卡片！将按记忆遗忘曲线安排深度复盘。'
+              : '已从复习卡片移出。'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
     } else if (value == 'delete') {
       _deleteTask(context);
     }
@@ -378,7 +410,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                          if (task.triggerTime != null || task.isRecurring || (isStagnant && subTasksList.isEmpty))
+                          if (task.triggerTime != null || task.isRecurring || task.spacedRepetitionLevel > 0 || (isStagnant && subTasksList.isEmpty))
                             Padding(
                               padding: const EdgeInsets.only(top: 4),
                               child: Wrap(
@@ -386,6 +418,33 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                                 runSpacing: 2,
                                 crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
+                                  if (task.spacedRepetitionLevel > 0)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                      decoration: BoxDecoration(
+                                        color: Colors.amber.withValues(alpha: 0.15),
+                                        border: Border.all(
+                                          color: Colors.amber.withValues(alpha: 0.5),
+                                          width: 0.8,
+                                        ),
+                                        borderRadius: BorderRadius.circular(3),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.school, size: 10, color: Colors.amber),
+                                          const SizedBox(width: 2),
+                                          Text(
+                                            'Lv.${task.spacedRepetitionLevel}',
+                                            style: const TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.amber,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   if (task.isRecurring)
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),

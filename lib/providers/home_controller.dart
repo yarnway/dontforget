@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import '../models/media_record.dart';
 import '../models/reminder.dart';
+import '../models/agent_models.dart';
 import '../services/llm_service.dart';
 import 'providers.dart';
 
@@ -65,9 +66,61 @@ class HomeController extends StateNotifier<HomeState> {
     return savedPath;
   }
 
+  Future<MultiAgentExecutionResult> processWithMultiAgent(String complexGoal) async {
+    final trimmed = complexGoal.trim();
+    if (trimmed.isEmpty) {
+      throw Exception('目标内容不能为空');
+    }
+
+    state = state.copyWith(
+      pendingTasksCount: state.pendingTasksCount + 1,
+      error: null,
+    );
+
+    try {
+      final multiAgentService = _ref.read(multiAgentServiceProvider);
+      final settings = _ref.read(settingsProvider);
+      final existingTasks = _ref.read(remindersProvider);
+      final notificationService = _ref.read(notificationServiceProvider);
+
+      final result = await multiAgentService.executePipeline(
+        trimmed,
+        settings: settings,
+        existingTasks: existingTasks,
+      );
+
+      for (final task in result.scheduledTasks) {
+        await _ref.read(remindersProvider.notifier).addReminder(task);
+        await notificationService.scheduleReminder(task);
+      }
+
+      return result;
+    } catch (e) {
+      state = state.copyWith(error: '多智能体协同处理异常: $e');
+      rethrow;
+    } finally {
+      final remaining = (state.pendingTasksCount - 1).clamp(0, 999);
+      state = state.copyWith(pendingTasksCount: remaining);
+    }
+  }
+
   Future<void> processText(String text) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty) return;
+
+    // 支持通过 /agent 或 /goal 指令触发三智能体微型协作流水线
+    if (trimmed.startsWith('/agent ') || trimmed.startsWith('/goal ')) {
+      final goalContent = trimmed.replaceFirst(RegExp(r'^/(agent|goal)\s+'), '');
+      if (goalContent.isNotEmpty) {
+        try {
+          await processWithMultiAgent(goalContent);
+          return;
+        } catch (_) {
+          // Error already set in state
+          return;
+        }
+      }
+    }
 
     // Immediately update background count so UI stays completely non-blocking
     state = state.copyWith(
