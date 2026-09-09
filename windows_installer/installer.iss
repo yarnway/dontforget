@@ -2,7 +2,7 @@
 ; Defines packaging, installation, shortcuts, and full uninstallation
 
 #define MyAppName "DontForget"
-#define MyAppVersion "1.2.2"
+#define MyAppVersion "1.2.3"
 #define MyAppPublisher "DontForget Team"
 #define MyAppExeName "dont_forget.exe"
 #define SourceDir "..\build\windows\x64\runner\Release"
@@ -18,7 +18,7 @@ DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 ; Output setup file
 OutputDir=..\dist
-OutputBaseFilename=DontForget_Setup_v1.2.2
+OutputBaseFilename=DontForget_Setup_v{#MyAppVersion}
 SetupIconFile=..\windows\runner\resources\app_icon.ico
 Compression=lzma2/max
 SolidCompression=yes

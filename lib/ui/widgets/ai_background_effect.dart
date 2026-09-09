@@ -1,6 +1,15 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 
+/// Next-Generation 3D Holographic AI Background
+/// Features:
+/// - 3x particle density (~555 logo particles + 70 deep-space stars)
+/// - Astra & DeepSeek inspired multi-chromatic AI aesthetics
+/// - Twinkling cosmic starlight with 4-point optical diffraction cross-flares
+/// - Synaptic wire bundles with traveling photon energy pulses (线束脉冲)
+/// - Viscous damped mouse tracking & fluid wake physics (阻尼交互)
+/// - Organic multi-axis spatial floating & Lissajous orbital precession (自然缓慢空间摆动)
+/// - 3D shockwave dispersal & Hooke's law elastic recovery
 class AiBackgroundEffect extends StatefulWidget {
   final Widget child;
   const AiBackgroundEffect({super.key, required this.child});
@@ -12,32 +21,48 @@ class AiBackgroundEffect extends StatefulWidget {
 class _AiBackgroundEffectState extends State<AiBackgroundEffect>
     with SingleTickerProviderStateMixin {
   late AnimationController _animController;
+
+  // Particle sets
   final List<_Particle3D> _particles = [];
+  final List<_Star3D> _stars = [];
   final List<_RippleWave> _waves = [];
-  Offset? _mousePos;
-  Offset? _lastMousePos;
+
+  // Damped mouse tracking with viscous inertia
+  Offset? _rawMousePos;
+  Offset _dampedMousePos = const Offset(-1000, -1000);
+  Offset _prevDampedMousePos = const Offset(-1000, -1000);
+  Offset _mouseVelocity = Offset.zero;
   DateTime _lastMoveTime = DateTime.now();
 
   @override
   void initState() {
     super.initState();
+    // 24-second ultra-smooth loop for majestic celestial rotation
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 16),
+      duration: const Duration(seconds: 24),
     )..repeat();
 
     _initLogoParticles();
+    _initCosmicStars();
   }
 
   void _initLogoParticles() {
-    final rand = Random(42);
+    final rand = Random(2026);
 
-    // 1. Upper Diagonal Ribbon of Logo (Chevron Stroke 1)
-    // From (0.42, -0.65) to (-0.38, 0.05)
-    for (int i = 0; i < 65; i++) {
+    // Color palette inspired by Astra (celestial violet-cyan) & DeepSeek (oceanic bioluminescence)
+    const colorCyan = Color(0xFF00F0FF);
+    const colorElectricBlue = Color(0xFF2979FF);
+    const colorDeepSeekAqua = Color(0xFF00B0FF);
+    const colorAstraViolet = Color(0xFF7C4DFF);
+    const colorNeonMagenta = Color(0xFFE040FB);
+    const colorEmeraldCyan = Color(0xFF00E676);
+
+    // 1. Upper Diagonal Ribbon of Logo (Chevron Stroke 1) - 195 particles (3x of 65)
+    for (int i = 0; i < 195; i++) {
       final t = rand.nextDouble();
-      final w = (rand.nextDouble() - 0.5) * 0.18;
-      final z = (rand.nextDouble() - 0.5) * 0.28;
+      final w = (rand.nextDouble() - 0.5) * 0.22;
+      final z = (rand.nextDouble() - 0.5) * 0.32;
 
       final startX = 0.42 + w;
       const startY = -0.65;
@@ -47,45 +72,90 @@ class _AiBackgroundEffectState extends State<AiBackgroundEffect>
       final bx = startX + (endX - startX) * t;
       final by = startY + (endY - startY) * t;
 
-      _particles.add(_createParticle(bx, by, z, rand, const Color(0xFF00E5FF)));
+      // Astra violet-to-cyan gradient
+      final color = t < 0.5
+          ? Color.lerp(colorAstraViolet, colorCyan, t * 2.0)!
+          : Color.lerp(colorCyan, colorElectricBlue, (t - 0.5) * 2.0)!;
+
+      _particles.add(_createParticle(bx, by, z, rand, color));
     }
 
-    // 2. Lower Chevron of Logo (Chevron Stroke 2)
-    // Wing part A: from (-0.15, 0.15) to (0.35, -0.05)
-    for (int i = 0; i < 35; i++) {
+    // 2. Lower Chevron - Wing A - 105 particles (3x of 35)
+    for (int i = 0; i < 105; i++) {
       final t = rand.nextDouble();
-      final w = (rand.nextDouble() - 0.5) * 0.15;
-      final z = (rand.nextDouble() - 0.5) * 0.26;
+      final w = (rand.nextDouble() - 0.5) * 0.18;
+      final z = (rand.nextDouble() - 0.5) * 0.30;
 
       final bx = -0.15 + (0.35 - (-0.15)) * t + w * 0.5;
       final by = 0.15 + (-0.05 - 0.15) * t + w;
 
-      _particles.add(_createParticle(bx, by, z, rand, const Color(0xFF2979FF)));
+      final color = Color.lerp(colorDeepSeekAqua, colorElectricBlue, t)!;
+      _particles.add(_createParticle(bx, by, z, rand, color));
     }
 
-    // Wing part B: from (0.05, 0.28) down to (0.42, 0.65)
-    for (int i = 0; i < 45; i++) {
+    // 3. Lower Chevron - Wing B - 135 particles (3x of 45)
+    for (int i = 0; i < 135; i++) {
       final t = rand.nextDouble();
-      final w = (rand.nextDouble() - 0.5) * 0.16;
-      final z = (rand.nextDouble() - 0.5) * 0.26;
+      final w = (rand.nextDouble() - 0.5) * 0.19;
+      final z = (rand.nextDouble() - 0.5) * 0.30;
 
       final bx = 0.05 + (0.42 - 0.05) * t + w * 0.5;
       final by = 0.28 + (0.65 - 0.28) * t + w;
 
-      _particles.add(_createParticle(bx, by, z, rand, const Color(0xFF00B0FF)));
+      final color = Color.lerp(colorCyan, colorEmeraldCyan, t * 0.6)!;
+      _particles.add(_createParticle(bx, by, z, rand, color));
     }
 
-    // 3. 3D Orbital Rings around the Logo
-    for (int i = 0; i < 40; i++) {
-      final angle = (i / 40.0) * 2 * pi;
-      final radius = 0.82 + (rand.nextDouble() - 0.5) * 0.14;
+    // 4. Dual 3D Orbital Rings (Astra celestial orbits) - 120 particles (3x of 40)
+    // Ring 1 (tilted forward)
+    for (int i = 0; i < 60; i++) {
+      final angle = (i / 60.0) * 2 * pi;
+      final radius = 0.86 + (rand.nextDouble() - 0.5) * 0.12;
       const tilt = 0.45;
 
       final bx = cos(angle) * radius;
       final by = sin(angle) * radius * cos(tilt);
-      final bz = sin(angle) * radius * sin(tilt) + (rand.nextDouble() - 0.5) * 0.12;
+      final bz = sin(angle) * radius * sin(tilt) + (rand.nextDouble() - 0.5) * 0.10;
 
-      _particles.add(_createParticle(bx, by, bz, rand, const Color(0xFF7C4DFF)));
+      _particles.add(_createParticle(bx, by, bz, rand, colorAstraViolet));
+    }
+
+    // Ring 2 (counter-tilted)
+    for (int i = 0; i < 60; i++) {
+      final angle = (i / 60.0) * 2 * pi;
+      final radius = 0.80 + (rand.nextDouble() - 0.5) * 0.12;
+      const tilt = -0.42;
+
+      final bx = cos(angle) * radius;
+      final by = sin(angle) * radius * cos(tilt);
+      final bz = sin(angle) * radius * sin(tilt) + (rand.nextDouble() - 0.5) * 0.10;
+
+      _particles.add(_createParticle(bx, by, bz, rand, colorNeonMagenta));
+    }
+  }
+
+  void _initCosmicStars() {
+    final rand = Random(777);
+    // 70 ambient 3D deep-space background stars
+    for (int i = 0; i < 70; i++) {
+      final x = (rand.nextDouble() - 0.5) * 3.2;
+      final y = (rand.nextDouble() - 0.5) * 2.4;
+      final z = (rand.nextDouble() - 0.5) * 2.6;
+      final baseSize = rand.nextDouble() * 1.6 + 0.8;
+      final twinkleSpeed = rand.nextDouble() * 2.5 + 1.2;
+      final phase = rand.nextDouble() * 2 * pi;
+      // Top 16 stars will have 4-point diffraction cross flares
+      final hasFlare = i < 16;
+
+      _stars.add(_Star3D(
+        x: x,
+        y: y,
+        z: z,
+        baseSize: baseSize,
+        twinkleSpeed: twinkleSpeed,
+        phase: phase,
+        hasFlare: hasFlare,
+      ));
     }
   }
 
@@ -98,8 +168,9 @@ class _AiBackgroundEffectState extends State<AiBackgroundEffect>
       curX: bx,
       curY: by,
       curZ: bz,
-      baseRadius: rand.nextDouble() * 1.8 + 1.2,
+      baseRadius: rand.nextDouble() * 1.6 + 1.1,
       phase: rand.nextDouble() * 2 * pi,
+      pulseSpeed: rand.nextDouble() * 1.5 + 1.0,
       color: baseColor,
     );
   }
@@ -111,38 +182,37 @@ class _AiBackgroundEffectState extends State<AiBackgroundEffect>
   }
 
   void _onPointerHover(Offset pos) {
+    _rawMousePos = pos;
     final now = DateTime.now();
-    _mousePos = pos;
 
-    // If mouse moved significantly, emit a continuous repulsion wave
-    if (_lastMousePos != null) {
-      final dist = (pos - _lastMousePos!).distance;
-      if (dist > 12 && now.difference(_lastMoveTime).inMilliseconds > 60) {
+    // If mouse moved actively, emit soft fluid ripples
+    if (now.difference(_lastMoveTime).inMilliseconds > 70) {
+      if ((pos - _dampedMousePos).distance > 18) {
         _waves.add(_RippleWave(
           center: pos,
           createdAt: now,
-          maxRadius: 220,
-          strength: 0.12,
+          maxRadius: 240,
+          strength: 0.14,
         ));
         _lastMoveTime = now;
       }
     }
-    _lastMousePos = pos;
   }
 
   void _onPointerDown(Offset pos) {
+    _rawMousePos = pos;
     final now = DateTime.now();
-    _mousePos = pos;
-    // Click triggers a powerful 3D push dispersal shockwave
+
+    // Powerful 3D push shockwave on click
     _waves.add(_RippleWave(
       center: pos,
       createdAt: now,
-      maxRadius: 360,
-      strength: 0.32,
+      maxRadius: 380,
+      strength: 0.36,
     ));
 
-    // Clean up old waves
-    _waves.removeWhere((w) => now.difference(w.createdAt).inMilliseconds > 1000);
+    // Cleanup expired waves
+    _waves.removeWhere((w) => now.difference(w.createdAt).inMilliseconds > 900);
   }
 
   @override
@@ -164,18 +234,33 @@ class _AiBackgroundEffectState extends State<AiBackgroundEffect>
             ),
           ),
 
-          // 3D Optical Logo Hologram & Wave Dispersal Painter
+          // 3D Optical Logo Hologram, Starlight, Wire Pulses & Viscous Damped Physics
           Positioned.fill(
             child: RepaintBoundary(
               child: AnimatedBuilder(
                 animation: _animController,
                 builder: (context, _) {
+                  // Update smooth damped mouse coordinates with viscous spring inertia
+                  if (_rawMousePos != null) {
+                    if (_dampedMousePos.dx < -500) {
+                      _dampedMousePos = _rawMousePos!;
+                      _prevDampedMousePos = _rawMousePos!;
+                    } else {
+                      _prevDampedMousePos = _dampedMousePos;
+                      // Smooth exponential damping (fluid tracking)
+                      _dampedMousePos += (_rawMousePos! - _dampedMousePos) * 0.085;
+                      _mouseVelocity = _dampedMousePos - _prevDampedMousePos;
+                    }
+                  }
+
                   return CustomPaint(
                     painter: _Logo3dParticlePainter(
                       particles: _particles,
+                      stars: _stars,
                       waves: _waves,
                       progress: _animController.value,
-                      mousePos: _mousePos,
+                      mousePos: _rawMousePos != null ? _dampedMousePos : null,
+                      mouseVelocity: _mouseVelocity,
                       isDark: isDark,
                       primaryColor: primaryColor,
                     ),
@@ -193,6 +278,31 @@ class _AiBackgroundEffectState extends State<AiBackgroundEffect>
   }
 }
 
+class _Star3D {
+  final double x;
+  final double y;
+  final double z;
+  final double baseSize;
+  final double twinkleSpeed;
+  final double phase;
+  final bool hasFlare;
+
+  double screenX = 0;
+  double screenY = 0;
+  double scale = 1;
+  double depthZ = 0;
+
+  _Star3D({
+    required this.x,
+    required this.y,
+    required this.z,
+    required this.baseSize,
+    required this.twinkleSpeed,
+    required this.phase,
+    required this.hasFlare,
+  });
+}
+
 class _Particle3D {
   final double baseX;
   final double baseY;
@@ -208,6 +318,7 @@ class _Particle3D {
 
   final double baseRadius;
   final double phase;
+  final double pulseSpeed;
   final Color color;
 
   // Screen projected coordinates
@@ -225,6 +336,7 @@ class _Particle3D {
     required this.curZ,
     required this.baseRadius,
     required this.phase,
+    required this.pulseSpeed,
     required this.color,
   });
 }
@@ -245,17 +357,21 @@ class _RippleWave {
 
 class _Logo3dParticlePainter extends CustomPainter {
   final List<_Particle3D> particles;
+  final List<_Star3D> stars;
   final List<_RippleWave> waves;
   final double progress;
   final Offset? mousePos;
+  final Offset mouseVelocity;
   final bool isDark;
   final Color primaryColor;
 
   _Logo3dParticlePainter({
     required this.particles,
+    required this.stars,
     required this.waves,
     required this.progress,
     required this.mousePos,
+    required this.mouseVelocity,
     required this.isDark,
     required this.primaryColor,
   });
@@ -268,67 +384,143 @@ class _Logo3dParticlePainter extends CustomPainter {
     final centerY = size.height / 2;
     final baseRadius = min(size.width, size.height) * 0.38;
 
-    // 1. Interactive 3D Parallax & Continuous Gentle Gyroscope
+    // 1. Organic Gentle 3D Spatial Precession (Lissajous Space Levitation)
+    // Multi-frequency harmonic oscillation mimicking Astra celestial float & DeepSeek oceanic swell
     double parallaxX = 0;
     double parallaxY = 0;
     if (mousePos != null) {
-      parallaxX = (mousePos!.dx / size.width - 0.5) * 0.35;
-      parallaxY = (mousePos!.dy / size.height - 0.5) * 0.30;
+      parallaxX = (mousePos!.dx / size.width - 0.5) * 0.28;
+      parallaxY = (mousePos!.dy / size.height - 0.5) * 0.24;
     }
 
-    final double rotY = sin(progress * 2 * pi) * 0.18 + parallaxX;
-    final double rotX = cos(progress * 2 * pi * 0.5) * 0.10 - parallaxY;
+    // Multi-axis rotation (Yaw, Pitch, Roll)
+    final double rotY = sin(progress * 2 * pi) * 0.20 +
+        sin(progress * 2 * pi * 0.35) * 0.08 +
+        parallaxX;
+    final double rotX = cos(progress * 2 * pi * 0.65) * 0.12 +
+        sin(progress * 2 * pi * 0.20) * 0.05 -
+        parallaxY;
+    final double rotZ = sin(progress * 2 * pi * 0.40) * 0.06; // Majestic slow roll
 
-    final double cosY = cos(rotY);
-    final double sinY = sin(rotY);
-    final double cosX = cos(rotX);
-    final double sinX = sin(rotX);
+    // Floating oceanic levitation & breathing scale
+    final double floatingY = sin(progress * 2 * pi * 0.75) * 7.0;
+    final double breatheScale = 1.0 + sin(progress * 2 * pi * 0.40) * 0.025;
 
-    const double cameraZ = 2.5;
-    const double fov = 1.9;
+    // Precalculate trigonometric functions
+    final double cy = cos(rotY);
+    final double sy = sin(rotY);
+    final double cx = cos(rotX);
+    final double sx = sin(rotX);
+    final double cz = cos(rotZ);
+    final double sz = sin(rotZ);
 
-    // 2. Physics Update: Wave Dispersal (波纹推散) & Hooke's Elastic Return
+    const double cameraZ = 2.6;
+    const double fov = 1.95;
+
+    // 2. Project Deep Space Stars & Render Optical Flares
+    final starPaint = Paint()..style = PaintingStyle.fill;
+    final flarePaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.9;
+
+    for (final s in stars) {
+      // Rotation
+      final x1 = s.x * cy + s.z * sy;
+      final y1 = s.y;
+      final z1 = -s.x * sy + s.z * cy;
+
+      final x2 = x1;
+      final y2 = y1 * cx - z1 * sx;
+      final z2 = y1 * sx + z1 * cx;
+
+      final scale = fov / (cameraZ + z2);
+      s.screenX = centerX + x2 * scale * baseRadius * 1.35;
+      s.screenY = centerY + (y2 * scale * baseRadius * 1.35) + floatingY * 0.4;
+      s.scale = scale;
+      s.depthZ = z2;
+
+      // Star twinkle
+      final twinkle = (sin(progress * s.twinkleSpeed * 2 * pi + s.phase) + 1.0) / 2.0;
+      final starAlpha = (isDark ? 0.45 : 0.25) * twinkle * (scale.clamp(0.4, 1.2));
+
+      starPaint.color = isDark
+          ? Colors.white.withValues(alpha: starAlpha)
+          : const Color(0xFF00B0FF).withValues(alpha: starAlpha);
+      canvas.drawCircle(Offset(s.screenX, s.screenY), s.baseSize * scale * (0.8 + 0.4 * twinkle), starPaint);
+
+      // 4-Point Optical Diffraction Cross Flare for bright stars
+      if (s.hasFlare && twinkle > 0.6) {
+        final flareProg = (twinkle - 0.6) / 0.4;
+        final flareLen = 9.0 * flareProg * scale;
+        final flareAlpha = (isDark ? 0.35 : 0.20) * flareProg;
+        flarePaint.color = const Color(0xFF00F0FF).withValues(alpha: flareAlpha);
+
+        // Horizontal ray
+        canvas.drawLine(
+          Offset(s.screenX - flareLen, s.screenY),
+          Offset(s.screenX + flareLen, s.screenY),
+          flarePaint,
+        );
+        // Vertical ray
+        canvas.drawLine(
+          Offset(s.screenX, s.screenY - flareLen),
+          Offset(s.screenX, s.screenY + flareLen),
+          flarePaint,
+        );
+      }
+    }
+
+    // 3. Physics Update: Damped Wave Dispersal & Viscous Vortex Drag
     final now = DateTime.now();
 
     for (final p in particles) {
-      // 2.1 Ripple Wave Dispersal Force (冲击推散)
+      // 3.1 Shockwave dispersal (波纹推散)
       for (final wave in waves) {
         final elapsed = now.difference(wave.createdAt).inMilliseconds;
-        if (elapsed < 850) {
-          final waveProg = elapsed / 850.0;
+        if (elapsed < 880) {
+          final waveProg = elapsed / 880.0;
           final currentRadius = waveProg * wave.maxRadius;
           final distToCenter = Offset(p.screenX - wave.center.dx, p.screenY - wave.center.dy).distance;
           final waveDelta = (distToCenter - currentRadius).abs();
 
-          // If within the shockwave band (width 40px)
-          if (waveDelta < 40.0 && distToCenter > 1.0) {
-            final waveFactor = (1.0 - waveDelta / 40.0) * (1.0 - waveProg) * wave.strength;
-            final norm = Offset((p.screenX - wave.center.dx) / distToCenter, (p.screenY - wave.center.dy) / distToCenter);
+          if (waveDelta < 45.0 && distToCenter > 1.0) {
+            final waveFactor = (1.0 - waveDelta / 45.0) * (1.0 - waveProg) * wave.strength;
+            final norm = Offset(
+              (p.screenX - wave.center.dx) / distToCenter,
+              (p.screenY - wave.center.dy) / distToCenter,
+            );
 
-            // Push outward in 3D
-            p.vx += norm.dx * waveFactor * 0.09;
-            p.vy += norm.dy * waveFactor * 0.09;
-            p.vz += (waveFactor * 0.06);
+            // Push outward in 3D with viscous momentum
+            p.vx += norm.dx * waveFactor * 0.10;
+            p.vy += norm.dy * waveFactor * 0.10;
+            p.vz += (waveFactor * 0.08);
           }
         }
       }
 
-      // 2.2 Direct Mouse Repulsion (鼠标滑动推散)
+      // 3.2 Damped Mouse Proximity & Viscous Vortex Drag (鼠标阻尼与拖曳旋涡)
       if (mousePos != null) {
         final dist = Offset(p.screenX - mousePos!.dx, p.screenY - mousePos!.dy).distance;
-        const double mouseRepelDist = 120.0;
+        const double mouseRepelDist = 140.0;
         if (dist < mouseRepelDist && dist > 1.0) {
-          final repel = (1.0 - dist / mouseRepelDist) * 0.025;
+          final repel = (1.0 - dist / mouseRepelDist) * 0.030;
           final norm = Offset((p.screenX - mousePos!.dx) / dist, (p.screenY - mousePos!.dy) / dist);
+
+          // Repulsion
           p.vx += norm.dx * repel;
           p.vy += norm.dy * repel;
-          p.vz -= repel * 0.5;
+          p.vz -= repel * 0.6;
+
+          // Fluid wake drag: particles catch a fraction of the mouse's momentum
+          p.vx += mouseVelocity.dx * 0.0015 * (1.0 - dist / mouseRepelDist);
+          p.vy += mouseVelocity.dy * 0.0015 * (1.0 - dist / mouseRepelDist);
         }
       }
 
-      // 2.3 Spring Restitution back to Logo Base coordinates (弹性复位)
-      const double springK = 0.055;
-      const double damping = 0.88;
+      // 3.3 High-Damping Elastic Spring Recovery (胡克定律阻尼回弹)
+      // Damping = 0.91 gives a distinct viscous fluid resistance feeling
+      const double springK = 0.048;
+      const double damping = 0.91;
 
       final diffX = p.baseX - p.curX;
       final diffY = p.baseY - p.curY;
@@ -342,105 +534,126 @@ class _Logo3dParticlePainter extends CustomPainter {
       p.curY += p.vy;
       p.curZ += p.vz;
 
-      // 2.4 3D Rotation & Projection
-      // Y-axis rotation
-      final x1 = p.curX * cosY + p.curZ * sinY;
+      // 3.4 3D Full Matrix Rotation (Yaw -> Pitch -> Roll)
+      // Y-rotation
+      final x1 = p.curX * cy + p.curZ * sy;
       final y1 = p.curY;
-      final z1 = -p.curX * sinY + p.curZ * cosY;
+      final z1 = -p.curX * sy + p.curZ * cy;
 
-      // X-axis rotation
+      // X-rotation
       final x2 = x1;
-      final y2 = y1 * cosX - z1 * sinX;
-      final z2 = y1 * sinX + z1 * cosX;
+      final y2 = y1 * cx - z1 * sx;
+      final z2 = y1 * sx + z1 * cx;
 
-      final scale = fov / (cameraZ + z2);
+      // Z-rotation (Roll)
+      final x3 = x2 * cz - y2 * sz;
+      final y3 = x2 * sz + y2 * cz;
+      final z3 = z2;
 
-      p.screenX = centerX + x2 * scale * baseRadius;
-      p.screenY = centerY + y2 * scale * baseRadius;
+      final scale = (fov / (cameraZ + z3)) * breatheScale;
+
+      p.screenX = centerX + x3 * scale * baseRadius;
+      p.screenY = centerY + y3 * scale * baseRadius + floatingY;
       p.scale = scale;
-      p.depthZ = z2;
+      p.depthZ = z3;
     }
 
-    // 3. Render Expanding Shockwaves (波纹视觉效果)
+    // 4. Render Dispersal Shockwaves
     for (final wave in waves) {
       final elapsed = now.difference(wave.createdAt).inMilliseconds;
-      if (elapsed < 850) {
-        final prog = elapsed / 850.0;
+      if (elapsed < 880) {
+        final prog = elapsed / 880.0;
         final r = prog * wave.maxRadius;
-        final alpha = (1.0 - prog) * (isDark ? 0.28 : 0.18);
+        final alpha = (1.0 - prog) * (isDark ? 0.32 : 0.20);
 
         final wavePaint = Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = (1.0 - prog) * 2.2 + 0.5
+          ..strokeWidth = (1.0 - prog) * 2.4 + 0.6
           ..shader = RadialGradient(
             colors: [
-              const Color(0xFF00E5FF).withValues(alpha: alpha * 0.1),
-              const Color(0xFF00E5FF).withValues(alpha: alpha),
+              const Color(0xFF00F0FF).withValues(alpha: alpha * 0.1),
+              const Color(0xFF7C4DFF).withValues(alpha: alpha),
             ],
-            stops: const [0.8, 1.0],
+            stops: const [0.82, 1.0],
           ).createShader(Rect.fromCircle(center: wave.center, radius: r + 1));
 
         canvas.drawCircle(wave.center, r, wavePaint);
       }
     }
 
-    // 4. Sort particles by depth for true 3D volumetric rendering
+    // 5. Depth Sort for True Volumetric Rendering
     final sortedParticles = List<_Particle3D>.from(particles)
       ..sort((a, b) => b.depthZ.compareTo(a.depthZ));
 
-    // 5. Draw Holographic Laser Threads between adjacent particles in the logo
-    final threadPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.8;
+    // 6. Synaptic Wire Bundles & Traveling Photon Pulses (线束脉冲)
+    final threadPaint = Paint()..style = PaintingStyle.stroke;
+    final pulsePaint = Paint()..style = PaintingStyle.fill;
 
-    const double threadMaxDist = 48.0;
+    const double threadMaxDist = 42.0;
+
+    // Connect along adjacent indices (high performance O(N))
     for (int i = 0; i < sortedParticles.length; i++) {
-      for (int j = i + 1; j < min(i + 8, sortedParticles.length); j++) {
-        final p1 = sortedParticles[i];
+      final p1 = sortedParticles[i];
+      for (int j = i + 1; j < min(i + 5, sortedParticles.length); j++) {
         final p2 = sortedParticles[j];
         final dist = Offset(p1.screenX - p2.screenX, p1.screenY - p2.screenY).distance;
+
         if (dist < threadMaxDist) {
           final factor = 1.0 - (dist / threadMaxDist);
-          final alpha = factor * (isDark ? 0.18 : 0.10) * p1.scale;
+          final alpha = factor * (isDark ? 0.20 : 0.12) * p1.scale;
+
           threadPaint.color = p1.color.withValues(alpha: alpha);
+          threadPaint.strokeWidth = 0.7 * factor + 0.3;
           canvas.drawLine(Offset(p1.screenX, p1.screenY), Offset(p2.screenX, p2.screenY), threadPaint);
+
+          // Traveling Synaptic Energy Pulse (沿着光纤线束穿梭的能量光子)
+          final pulseProg = ((progress * 6.0 * p1.pulseSpeed) + (p1.phase * 0.3)) % 1.0;
+          final pulseX = p1.screenX + (p2.screenX - p1.screenX) * pulseProg;
+          final pulseY = p1.screenY + (p2.screenY - p1.screenY) * pulseProg;
+
+          final pulseAlpha = factor * (isDark ? 0.75 : 0.50) * p1.scale;
+          pulsePaint.color = isDark
+              ? Colors.white.withValues(alpha: pulseAlpha)
+              : p1.color.withValues(alpha: pulseAlpha);
+
+          canvas.drawCircle(Offset(pulseX, pulseY), 1.3 * p1.scale, pulsePaint);
         }
       }
     }
 
-    // 6. Draw 3D Optical Glowing Particles (Core + Halo + Flare)
+    // 7. Volumetric Glowing Particle Nodes (Core + Halo + Flare)
     final haloPaint = Paint()..style = PaintingStyle.fill;
     final corePaint = Paint()..style = PaintingStyle.fill;
 
     for (final p in sortedParticles) {
-      final breathe = 0.8 + 0.3 * sin((progress * 2 * pi) + p.phase);
-      final depthBrightness = ((p.depthZ + 1.0) / 2.0).clamp(0.2, 1.0);
+      final breathe = 0.85 + 0.25 * sin((progress * 2 * pi * 1.5) + p.phase);
+      final depthBrightness = ((p.depthZ + 1.2) / 2.4).clamp(0.25, 1.0);
       final radius = p.baseRadius * p.scale * breathe;
 
       // Outer optical glow halo
-      final haloAlpha = (isDark ? 0.22 : 0.12) * depthBrightness;
+      final haloAlpha = (isDark ? 0.24 : 0.14) * depthBrightness;
       haloPaint.color = p.color.withValues(alpha: haloAlpha);
-      canvas.drawCircle(Offset(p.screenX, p.screenY), radius * 3.2, haloPaint);
+      canvas.drawCircle(Offset(p.screenX, p.screenY), radius * 3.0, haloPaint);
 
-      // Core luminous point
-      final coreAlpha = (isDark ? 0.85 : 0.65) * depthBrightness;
+      // Core luminous crystal point
+      final coreAlpha = (isDark ? 0.90 : 0.70) * depthBrightness;
       corePaint.color = isDark
           ? Colors.white.withValues(alpha: coreAlpha)
           : p.color.withValues(alpha: coreAlpha);
       canvas.drawCircle(Offset(p.screenX, p.screenY), radius, corePaint);
     }
 
-    // 7. Mouse Pointer Subtle Halo
+    // 8. Damped Mouse Viscous Aura
     if (mousePos != null) {
-      final pointerGlow = Paint()
+      final mouseAura = Paint()
         ..shader = RadialGradient(
           colors: [
-            const Color(0xFF00E5FF).withValues(alpha: isDark ? 0.08 : 0.04),
+            const Color(0xFF00F0FF).withValues(alpha: isDark ? 0.09 : 0.05),
             Colors.transparent,
           ],
           stops: const [0.0, 1.0],
-        ).createShader(Rect.fromCircle(center: mousePos!, radius: 100));
-      canvas.drawCircle(mousePos!, 100, pointerGlow);
+        ).createShader(Rect.fromCircle(center: mousePos!, radius: 120));
+      canvas.drawCircle(mousePos!, 120, mouseAura);
     }
   }
 
