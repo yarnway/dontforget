@@ -1,0 +1,243 @@
+name: Multi-Platform Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # =======================================================
+  # 1. WINDOWS BUILD (Setup Installer & Portable Zip)
+  # =======================================================
+  build-windows:
+    name: Build Windows Release
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+
+      - name: Get Dependencies
+        run: flutter pub get
+
+      - name: Build Windows Executable
+        run: flutter build windows --release
+
+      - name: Bundle VC++ CRT & DirectX Redistributables
+        run: |
+          $releaseDir = "build\windows\x64\runner\Release"
+          $redistDir = "windows_redist\x64"
+          if (Test-Path $redistDir) {
+            Copy-Item "$redistDir\*.dll" -Destination $releaseDir -Force
+          }
+          Get-ChildItem -Path $releaseDir -Include "*.db","*.log","error_log.txt" -Recurse -Force | Remove-Item -Force -ErrorAction SilentlyContinue
+
+      - name: Compile Inno Setup (Setup.exe)
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" windows_installer\installer.iss
+
+      - name: Create Portable Zip
+        run: |
+          $releaseDir = "build\windows\x64\runner\Release"
+          $distDir = "dist"
+          if (-not (Test-Path $distDir)) { New-Item -ItemType Directory -Path $distDir -Force }
+          Compress-Archive -Path "$releaseDir\*" -DestinationPath "$distDir\DontForget_Portable_v1.0.0.zip" -Force
+
+      - name: Upload Windows Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-deliverables
+          path: dist/*
+
+  # =======================================================
+  # 2. ANDROID BUILD (Universal APK & App Bundle)
+  # =======================================================
+  build-android:
+    name: Build Android Release (APK & AAB)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get Dependencies
+        run: flutter pub get
+
+      - name: Build Android Release APK
+        run: flutter build apk --release
+
+      - name: Build Android App Bundle (AAB)
+        run: flutter build appbundle --release
+
+      - name: Prepare Android Dist
+        run: |
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-release.apk dist/DontForget_Android_v1.0.0.apk
+          cp build/app/outputs/bundle/release/app-release.aab dist/DontForget_Android_v1.0.0.aab
+
+      - name: Upload Android Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-deliverables
+          path: dist/*
+
+  # =======================================================
+  # 3. LINUX BUILD (Standalone Tarball)
+  # =======================================================
+  build-linux:
+    name: Build Linux Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Linux Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get Dependencies
+        run: flutter pub get
+
+      - name: Build Flutter Linux Release
+        run: flutter build linux --release
+
+      - name: Package Linux Archive
+        run: |
+          mkdir -p dist
+          tar -czf dist/DontForget_Linux_x64_v1.0.0.tar.gz -C build/linux/x64/release/bundle .
+
+      - name: Upload Linux Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-deliverables
+          path: dist/*
+
+  # =======================================================
+  # 4. MACOS BUILD (App Bundle & DMG/Zip)
+  # =======================================================
+  build-macos:
+    name: Build macOS Release
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get Dependencies
+        run: flutter pub get
+
+      - name: Build Flutter macOS Release
+        run: flutter build macos --release
+
+      - name: Package macOS Archive
+        run: |
+          mkdir -p dist
+          cd build/macos/Build/Products/Release
+          zip -r -y ../../../../../dist/DontForget_macOS_v1.0.0.zip dont_forget.app
+
+      - name: Upload macOS Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-deliverables
+          path: dist/*
+
+  # =======================================================
+  # 5. IOS BUILD (IPA Package)
+  # =======================================================
+  build-ios:
+    name: Build iOS Release
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Get Dependencies
+        run: flutter pub get
+
+      - name: Build Flutter iOS Release (unsigned IPA)
+        run: flutter build ipa --release --no-codesign
+
+      - name: Package iOS IPA
+        run: |
+          mkdir -p dist/Payload
+          cp -R build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app dist/Payload/
+          cd dist
+          zip -r -y DontForget_iOS_v1.0.0.ipa Payload
+          rm -rf Payload
+
+      - name: Upload iOS Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-deliverables
+          path: dist/DontForget_iOS_v1.0.0.ipa
+
+  # =======================================================
+  # 6. GITHUB RELEASE (Unified Release Publishing)
+  # =======================================================
+  release:
+    name: Publish Multi-Platform Release
+    needs: [build-windows, build-android, build-linux, build-macos, build-ios]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: Consolidate Deliverables
+        run: |
+          mkdir -p release-files
+          find release-artifacts -type f -exec cp {} release-files/ \;
+          ls -lh release-files/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-files/*
+          tag_name: ${{ github.ref_name || 'v1.0.0' }}
+          name: Release ${{ github.ref_name || 'v1.0.0' }} (Mac, Windows, Linux, Android, iOS)
+          draft: false
+          prerelease: false
+          generate_release_notes: true
