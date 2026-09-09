@@ -161,10 +161,10 @@ class DashboardScreen extends ConsumerWidget {
                               spacing: 12,
                               runSpacing: 8,
                               children: [
-                                _buildLegendItem(l10n.get('q1Short'), q1, Colors.red.shade400),
-                                _buildLegendItem(l10n.get('q2Short'), q2, Colors.orange.shade400),
-                                _buildLegendItem(l10n.get('q3Short'), q3, Colors.blue.shade400),
-                                _buildLegendItem(l10n.get('q4Short'), q4, Colors.green.shade400),
+                                _buildLegendItem(Icons.local_fire_department_rounded, q1, Colors.red.shade400),
+                                _buildLegendItem(Icons.star_rounded, q2, Colors.orange.shade400),
+                                _buildLegendItem(Icons.bolt_rounded, q3, Colors.blue.shade400),
+                                _buildLegendItem(Icons.coffee_rounded, q4, Colors.green.shade400),
                               ],
                             ),
                           ],
@@ -237,25 +237,22 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildLegendItem(String label, int count, Color color) {
+  Widget _buildLegendItem(IconData icon, int count, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
-        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withValues(alpha: 0.35), width: 1),
+        borderRadius: BorderRadius.circular(6),
+        color: color.withValues(alpha: 0.08),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
+          Icon(icon, size: 15, color: color),
           const SizedBox(width: 6),
           Text(
-            '$label ($count)',
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+            '$count',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color),
           ),
         ],
       ),

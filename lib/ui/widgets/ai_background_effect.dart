@@ -11,56 +11,138 @@ class AiBackgroundEffect extends StatefulWidget {
 
 class _AiBackgroundEffectState extends State<AiBackgroundEffect>
     with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  final List<_AiNode> _nodes = [];
-  final List<_ClickRipple> _ripples = [];
-  final Random _random = Random(77);
+  late AnimationController _animController;
+  final List<_Particle3D> _particles = [];
+  final List<_RippleWave> _waves = [];
   Offset? _mousePos;
+  Offset? _lastMousePos;
+  DateTime _lastMoveTime = DateTime.now();
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
+    _animController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 14),
+      duration: const Duration(seconds: 16),
     )..repeat();
 
-    // Generate 36 dynamic constellation nodes
-    for (int i = 0; i < 36; i++) {
-      _nodes.add(_AiNode(
-        x: _random.nextDouble(),
-        y: _random.nextDouble(),
-        speedX: (_random.nextDouble() - 0.5) * 0.07,
-        speedY: (_random.nextDouble() - 0.5) * 0.07,
-        radius: _random.nextDouble() * 2.0 + 1.2,
-        phase: _random.nextDouble() * 2 * pi,
-      ));
+    _initLogoParticles();
+  }
+
+  void _initLogoParticles() {
+    final rand = Random(42);
+
+    // 1. Upper Diagonal Ribbon of Logo (Chevron Stroke 1)
+    // From (0.42, -0.65) to (-0.38, 0.05)
+    for (int i = 0; i < 65; i++) {
+      final t = rand.nextDouble();
+      final w = (rand.nextDouble() - 0.5) * 0.18;
+      final z = (rand.nextDouble() - 0.5) * 0.28;
+
+      final startX = 0.42 + w;
+      const startY = -0.65;
+      final endX = -0.38 + w;
+      const endY = 0.05;
+
+      final bx = startX + (endX - startX) * t;
+      final by = startY + (endY - startY) * t;
+
+      _particles.add(_createParticle(bx, by, z, rand, const Color(0xFF00E5FF)));
     }
+
+    // 2. Lower Chevron of Logo (Chevron Stroke 2)
+    // Wing part A: from (-0.15, 0.15) to (0.35, -0.05)
+    for (int i = 0; i < 35; i++) {
+      final t = rand.nextDouble();
+      final w = (rand.nextDouble() - 0.5) * 0.15;
+      final z = (rand.nextDouble() - 0.5) * 0.26;
+
+      final bx = -0.15 + (0.35 - (-0.15)) * t + w * 0.5;
+      final by = 0.15 + (-0.05 - 0.15) * t + w;
+
+      _particles.add(_createParticle(bx, by, z, rand, const Color(0xFF2979FF)));
+    }
+
+    // Wing part B: from (0.05, 0.28) down to (0.42, 0.65)
+    for (int i = 0; i < 45; i++) {
+      final t = rand.nextDouble();
+      final w = (rand.nextDouble() - 0.5) * 0.16;
+      final z = (rand.nextDouble() - 0.5) * 0.26;
+
+      final bx = 0.05 + (0.42 - 0.05) * t + w * 0.5;
+      final by = 0.28 + (0.65 - 0.28) * t + w;
+
+      _particles.add(_createParticle(bx, by, z, rand, const Color(0xFF00B0FF)));
+    }
+
+    // 3. 3D Orbital Rings around the Logo
+    for (int i = 0; i < 40; i++) {
+      final angle = (i / 40.0) * 2 * pi;
+      final radius = 0.82 + (rand.nextDouble() - 0.5) * 0.14;
+      const tilt = 0.45;
+
+      final bx = cos(angle) * radius;
+      final by = sin(angle) * radius * cos(tilt);
+      final bz = sin(angle) * radius * sin(tilt) + (rand.nextDouble() - 0.5) * 0.12;
+
+      _particles.add(_createParticle(bx, by, bz, rand, const Color(0xFF7C4DFF)));
+    }
+  }
+
+  _Particle3D _createParticle(
+      double bx, double by, double bz, Random rand, Color baseColor) {
+    return _Particle3D(
+      baseX: bx,
+      baseY: by,
+      baseZ: bz,
+      curX: bx,
+      curY: by,
+      curZ: bz,
+      baseRadius: rand.nextDouble() * 1.8 + 1.2,
+      phase: rand.nextDouble() * 2 * pi,
+      color: baseColor,
+    );
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _animController.dispose();
     super.dispose();
   }
 
-  void _onPointerMove(Offset pos) {
-    setState(() {
-      _mousePos = pos;
-    });
+  void _onPointerHover(Offset pos) {
+    final now = DateTime.now();
+    _mousePos = pos;
+
+    // If mouse moved significantly, emit a continuous repulsion wave
+    if (_lastMousePos != null) {
+      final dist = (pos - _lastMousePos!).distance;
+      if (dist > 12 && now.difference(_lastMoveTime).inMilliseconds > 60) {
+        _waves.add(_RippleWave(
+          center: pos,
+          createdAt: now,
+          maxRadius: 220,
+          strength: 0.12,
+        ));
+        _lastMoveTime = now;
+      }
+    }
+    _lastMousePos = pos;
   }
 
-  void _onPointerDown(Offset pos, Color primaryColor) {
-    setState(() {
-      _mousePos = pos;
-      _ripples.add(_ClickRipple(
-        position: pos,
-        createdAt: DateTime.now(),
-      ));
-      // Prune old ripples (older than 1 sec)
-      final now = DateTime.now();
-      _ripples.removeWhere((r) => now.difference(r.createdAt).inMilliseconds > 900);
-    });
+  void _onPointerDown(Offset pos) {
+    final now = DateTime.now();
+    _mousePos = pos;
+    // Click triggers a powerful 3D push dispersal shockwave
+    _waves.add(_RippleWave(
+      center: pos,
+      createdAt: now,
+      maxRadius: 360,
+      strength: 0.32,
+    ));
+
+    // Clean up old waves
+    _waves.removeWhere((w) => now.difference(w.createdAt).inMilliseconds > 1000);
   }
 
   @override
@@ -70,9 +152,9 @@ class _AiBackgroundEffectState extends State<AiBackgroundEffect>
 
     return Listener(
       behavior: HitTestBehavior.translucent,
-      onPointerHover: (e) => _onPointerMove(e.localPosition),
-      onPointerMove: (e) => _onPointerMove(e.localPosition),
-      onPointerDown: (e) => _onPointerDown(e.localPosition, primaryColor),
+      onPointerHover: (e) => _onPointerHover(e.localPosition),
+      onPointerMove: (e) => _onPointerHover(e.localPosition),
+      onPointerDown: (e) => _onPointerDown(e.localPosition),
       child: Stack(
         children: [
           // Base Background
@@ -82,17 +164,17 @@ class _AiBackgroundEffectState extends State<AiBackgroundEffect>
             ),
           ),
 
-          // Interactive AI Canvas (Constellation, Laser connections, Pointer Spotlight & Waves)
+          // 3D Optical Logo Hologram & Wave Dispersal Painter
           Positioned.fill(
             child: RepaintBoundary(
               child: AnimatedBuilder(
-                animation: _controller,
+                animation: _animController,
                 builder: (context, _) {
                   return CustomPaint(
-                    painter: _AiMeshPainter(
-                      nodes: _nodes,
-                      ripples: _ripples,
-                      progress: _controller.value,
+                    painter: _Logo3dParticlePainter(
+                      particles: _particles,
+                      waves: _waves,
+                      progress: _animController.value,
                       mousePos: _mousePos,
                       isDark: isDark,
                       primaryColor: primaryColor,
@@ -103,7 +185,7 @@ class _AiBackgroundEffectState extends State<AiBackgroundEffect>
             ),
           ),
 
-          // Content UI on top
+          // Content Layer (suspended on top of 3D hologram)
           Positioned.fill(child: widget.child),
         ],
       ),
@@ -111,42 +193,67 @@ class _AiBackgroundEffectState extends State<AiBackgroundEffect>
   }
 }
 
-class _AiNode {
-  final double x;
-  final double y;
-  final double speedX;
-  final double speedY;
-  final double radius;
-  final double phase;
+class _Particle3D {
+  final double baseX;
+  final double baseY;
+  final double baseZ;
 
-  _AiNode({
-    required this.x,
-    required this.y,
-    required this.speedX,
-    required this.speedY,
-    required this.radius,
+  double curX;
+  double curY;
+  double curZ;
+
+  double vx = 0;
+  double vy = 0;
+  double vz = 0;
+
+  final double baseRadius;
+  final double phase;
+  final Color color;
+
+  // Screen projected coordinates
+  double screenX = 0;
+  double screenY = 0;
+  double scale = 1;
+  double depthZ = 0;
+
+  _Particle3D({
+    required this.baseX,
+    required this.baseY,
+    required this.baseZ,
+    required this.curX,
+    required this.curY,
+    required this.curZ,
+    required this.baseRadius,
     required this.phase,
+    required this.color,
   });
 }
 
-class _ClickRipple {
-  final Offset position;
+class _RippleWave {
+  final Offset center;
   final DateTime createdAt;
+  final double maxRadius;
+  final double strength;
 
-  _ClickRipple({required this.position, required this.createdAt});
+  _RippleWave({
+    required this.center,
+    required this.createdAt,
+    required this.maxRadius,
+    required this.strength,
+  });
 }
 
-class _AiMeshPainter extends CustomPainter {
-  final List<_AiNode> nodes;
-  final List<_ClickRipple> ripples;
+class _Logo3dParticlePainter extends CustomPainter {
+  final List<_Particle3D> particles;
+  final List<_RippleWave> waves;
   final double progress;
   final Offset? mousePos;
   final bool isDark;
   final Color primaryColor;
 
-  _AiMeshPainter({
-    required this.nodes,
-    required this.ripples,
+  _Logo3dParticlePainter({
+    required this.particles,
+    required this.waves,
     required this.progress,
     required this.mousePos,
     required this.isDark,
@@ -157,147 +264,186 @@ class _AiMeshPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (size.width <= 0 || size.height <= 0) return;
 
-    // 1. Ambient radial pulse in background
-    final pulseOffset = Offset(
-      size.width * (0.5 + 0.25 * sin(progress * 2 * pi)),
-      size.height * (0.35 + 0.18 * cos(progress * 2 * pi)),
-    );
-    final glowPaint = Paint()
-      ..shader = RadialGradient(
-        colors: [
-          primaryColor.withValues(alpha: isDark ? 0.07 : 0.035),
-          const Color(0xFF00E5FF).withValues(alpha: isDark ? 0.04 : 0.018),
-          Colors.transparent,
-        ],
-        stops: const [0.0, 0.45, 1.0],
-      ).createShader(Rect.fromCircle(center: pulseOffset, radius: size.width * 0.75));
+    final centerX = size.width / 2;
+    final centerY = size.height / 2;
+    final baseRadius = min(size.width, size.height) * 0.38;
 
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), glowPaint);
-
-    // 2. Mouse Pointer Spotlight & Aura
+    // 1. Interactive 3D Parallax & Continuous Gentle Gyroscope
+    double parallaxX = 0;
+    double parallaxY = 0;
     if (mousePos != null) {
-      final mouseGlowPaint = Paint()
+      parallaxX = (mousePos!.dx / size.width - 0.5) * 0.35;
+      parallaxY = (mousePos!.dy / size.height - 0.5) * 0.30;
+    }
+
+    final double rotY = sin(progress * 2 * pi) * 0.18 + parallaxX;
+    final double rotX = cos(progress * 2 * pi * 0.5) * 0.10 - parallaxY;
+
+    final double cosY = cos(rotY);
+    final double sinY = sin(rotY);
+    final double cosX = cos(rotX);
+    final double sinX = sin(rotX);
+
+    const double cameraZ = 2.5;
+    const double fov = 1.9;
+
+    // 2. Physics Update: Wave Dispersal (波纹推散) & Hooke's Elastic Return
+    final now = DateTime.now();
+
+    for (final p in particles) {
+      // 2.1 Ripple Wave Dispersal Force (冲击推散)
+      for (final wave in waves) {
+        final elapsed = now.difference(wave.createdAt).inMilliseconds;
+        if (elapsed < 850) {
+          final waveProg = elapsed / 850.0;
+          final currentRadius = waveProg * wave.maxRadius;
+          final distToCenter = Offset(p.screenX - wave.center.dx, p.screenY - wave.center.dy).distance;
+          final waveDelta = (distToCenter - currentRadius).abs();
+
+          // If within the shockwave band (width 40px)
+          if (waveDelta < 40.0 && distToCenter > 1.0) {
+            final waveFactor = (1.0 - waveDelta / 40.0) * (1.0 - waveProg) * wave.strength;
+            final norm = Offset((p.screenX - wave.center.dx) / distToCenter, (p.screenY - wave.center.dy) / distToCenter);
+
+            // Push outward in 3D
+            p.vx += norm.dx * waveFactor * 0.09;
+            p.vy += norm.dy * waveFactor * 0.09;
+            p.vz += (waveFactor * 0.06);
+          }
+        }
+      }
+
+      // 2.2 Direct Mouse Repulsion (鼠标滑动推散)
+      if (mousePos != null) {
+        final dist = Offset(p.screenX - mousePos!.dx, p.screenY - mousePos!.dy).distance;
+        const double mouseRepelDist = 120.0;
+        if (dist < mouseRepelDist && dist > 1.0) {
+          final repel = (1.0 - dist / mouseRepelDist) * 0.025;
+          final norm = Offset((p.screenX - mousePos!.dx) / dist, (p.screenY - mousePos!.dy) / dist);
+          p.vx += norm.dx * repel;
+          p.vy += norm.dy * repel;
+          p.vz -= repel * 0.5;
+        }
+      }
+
+      // 2.3 Spring Restitution back to Logo Base coordinates (弹性复位)
+      const double springK = 0.055;
+      const double damping = 0.88;
+
+      final diffX = p.baseX - p.curX;
+      final diffY = p.baseY - p.curY;
+      final diffZ = p.baseZ - p.curZ;
+
+      p.vx = (p.vx + diffX * springK) * damping;
+      p.vy = (p.vy + diffY * springK) * damping;
+      p.vz = (p.vz + diffZ * springK) * damping;
+
+      p.curX += p.vx;
+      p.curY += p.vy;
+      p.curZ += p.vz;
+
+      // 2.4 3D Rotation & Projection
+      // Y-axis rotation
+      final x1 = p.curX * cosY + p.curZ * sinY;
+      final y1 = p.curY;
+      final z1 = -p.curX * sinY + p.curZ * cosY;
+
+      // X-axis rotation
+      final x2 = x1;
+      final y2 = y1 * cosX - z1 * sinX;
+      final z2 = y1 * sinX + z1 * cosX;
+
+      final scale = fov / (cameraZ + z2);
+
+      p.screenX = centerX + x2 * scale * baseRadius;
+      p.screenY = centerY + y2 * scale * baseRadius;
+      p.scale = scale;
+      p.depthZ = z2;
+    }
+
+    // 3. Render Expanding Shockwaves (波纹视觉效果)
+    for (final wave in waves) {
+      final elapsed = now.difference(wave.createdAt).inMilliseconds;
+      if (elapsed < 850) {
+        final prog = elapsed / 850.0;
+        final r = prog * wave.maxRadius;
+        final alpha = (1.0 - prog) * (isDark ? 0.28 : 0.18);
+
+        final wavePaint = Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = (1.0 - prog) * 2.2 + 0.5
+          ..shader = RadialGradient(
+            colors: [
+              const Color(0xFF00E5FF).withValues(alpha: alpha * 0.1),
+              const Color(0xFF00E5FF).withValues(alpha: alpha),
+            ],
+            stops: const [0.8, 1.0],
+          ).createShader(Rect.fromCircle(center: wave.center, radius: r + 1));
+
+        canvas.drawCircle(wave.center, r, wavePaint);
+      }
+    }
+
+    // 4. Sort particles by depth for true 3D volumetric rendering
+    final sortedParticles = List<_Particle3D>.from(particles)
+      ..sort((a, b) => b.depthZ.compareTo(a.depthZ));
+
+    // 5. Draw Holographic Laser Threads between adjacent particles in the logo
+    final threadPaint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8;
+
+    const double threadMaxDist = 48.0;
+    for (int i = 0; i < sortedParticles.length; i++) {
+      for (int j = i + 1; j < min(i + 8, sortedParticles.length); j++) {
+        final p1 = sortedParticles[i];
+        final p2 = sortedParticles[j];
+        final dist = Offset(p1.screenX - p2.screenX, p1.screenY - p2.screenY).distance;
+        if (dist < threadMaxDist) {
+          final factor = 1.0 - (dist / threadMaxDist);
+          final alpha = factor * (isDark ? 0.18 : 0.10) * p1.scale;
+          threadPaint.color = p1.color.withValues(alpha: alpha);
+          canvas.drawLine(Offset(p1.screenX, p1.screenY), Offset(p2.screenX, p2.screenY), threadPaint);
+        }
+      }
+    }
+
+    // 6. Draw 3D Optical Glowing Particles (Core + Halo + Flare)
+    final haloPaint = Paint()..style = PaintingStyle.fill;
+    final corePaint = Paint()..style = PaintingStyle.fill;
+
+    for (final p in sortedParticles) {
+      final breathe = 0.8 + 0.3 * sin((progress * 2 * pi) + p.phase);
+      final depthBrightness = ((p.depthZ + 1.0) / 2.0).clamp(0.2, 1.0);
+      final radius = p.baseRadius * p.scale * breathe;
+
+      // Outer optical glow halo
+      final haloAlpha = (isDark ? 0.22 : 0.12) * depthBrightness;
+      haloPaint.color = p.color.withValues(alpha: haloAlpha);
+      canvas.drawCircle(Offset(p.screenX, p.screenY), radius * 3.2, haloPaint);
+
+      // Core luminous point
+      final coreAlpha = (isDark ? 0.85 : 0.65) * depthBrightness;
+      corePaint.color = isDark
+          ? Colors.white.withValues(alpha: coreAlpha)
+          : p.color.withValues(alpha: coreAlpha);
+      canvas.drawCircle(Offset(p.screenX, p.screenY), radius, corePaint);
+    }
+
+    // 7. Mouse Pointer Subtle Halo
+    if (mousePos != null) {
+      final pointerGlow = Paint()
         ..shader = RadialGradient(
           colors: [
-            const Color(0xFF00E5FF).withValues(alpha: isDark ? 0.12 : 0.07),
-            primaryColor.withValues(alpha: isDark ? 0.06 : 0.03),
+            const Color(0xFF00E5FF).withValues(alpha: isDark ? 0.08 : 0.04),
             Colors.transparent,
           ],
-          stops: const [0.0, 0.5, 1.0],
-        ).createShader(Rect.fromCircle(center: mousePos!, radius: 150));
-
-      canvas.drawCircle(mousePos!, 150, mouseGlowPaint);
-    }
-
-    // 3. Render Click Ripples
-    final now = DateTime.now();
-    for (final ripple in ripples) {
-      final elapsedMs = now.difference(ripple.createdAt).inMilliseconds;
-      if (elapsedMs < 800) {
-        final rippleProgress = elapsedMs / 800.0;
-        final radius = rippleProgress * 160.0;
-        final alpha = (1.0 - rippleProgress) * (isDark ? 0.35 : 0.22);
-
-        final ripplePaint = Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = (1.0 - rippleProgress) * 2.0 + 0.5
-          ..color = const Color(0xFF00E5FF).withValues(alpha: alpha);
-
-        canvas.drawCircle(ripple.position, radius, ripplePaint);
-      }
-    }
-
-    // 4. Calculate actual positions of nodes with magnetic pull
-    final List<Offset> positions = [];
-    for (final node in nodes) {
-      double nx = (node.x + node.speedX * progress) % 1.0;
-      double ny = (node.y + node.speedY * progress) % 1.0;
-      if (nx < 0) nx += 1.0;
-      if (ny < 0) ny += 1.0;
-
-      Offset pos = Offset(nx * size.width, ny * size.height);
-
-      // Mouse magnetic interaction: gently attract nearby nodes towards pointer
-      if (mousePos != null) {
-        final distToMouse = (pos - mousePos!).distance;
-        const maxMagnetDist = 160.0;
-        if (distToMouse < maxMagnetDist && distToMouse > 0.1) {
-          final pullFactor = (1.0 - (distToMouse / maxMagnetDist)) * 20.0;
-          final dir = (mousePos! - pos) / distToMouse;
-          pos = pos + dir * pullFactor;
-        }
-      }
-
-      positions.add(pos);
-    }
-
-    final linePaint = Paint()
-      ..strokeWidth = 0.8
-      ..style = PaintingStyle.stroke;
-
-    final dotPaint = Paint()..style = PaintingStyle.fill;
-
-    const double maxDist = 135.0;
-
-    // 5. Draw Neural Constellation connection lines between nearby nodes
-    for (int i = 0; i < positions.length; i++) {
-      for (int j = i + 1; j < positions.length; j++) {
-        final d = (positions[i] - positions[j]).distance;
-        if (d < maxDist) {
-          final alphaFactor = (1.0 - (d / maxDist));
-          final opacity = (isDark ? 0.16 : 0.08) * alphaFactor;
-          linePaint.color = primaryColor.withValues(alpha: opacity);
-          linePaint.strokeWidth = 0.8;
-          canvas.drawLine(positions[i], positions[j], linePaint);
-        }
-      }
-    }
-
-    // 6. Draw Laser Beams to Mouse Pointer!
-    if (mousePos != null) {
-      const double mouseBeamRadius = 180.0;
-      for (final pos in positions) {
-        final d = (pos - mousePos!).distance;
-        if (d < mouseBeamRadius) {
-          final factor = (1.0 - (d / mouseBeamRadius));
-          final beamOpacity = factor * (isDark ? 0.38 : 0.22);
-
-          linePaint.color = const Color(0xFF00E5FF).withValues(alpha: beamOpacity);
-          linePaint.strokeWidth = 1.2 * factor + 0.4;
-          canvas.drawLine(pos, mousePos!, linePaint);
-        }
-      }
-
-      // Micro cursor node dot
-      final cursorDotPaint = Paint()
-        ..color = const Color(0xFF00E5FF).withValues(alpha: isDark ? 0.6 : 0.4)
-        ..style = PaintingStyle.fill;
-      canvas.drawCircle(mousePos!, 2.5, cursorDotPaint);
-    }
-
-    // 7. Draw Constellation Node Points
-    for (int i = 0; i < positions.length; i++) {
-      final node = nodes[i];
-      final pos = positions[i];
-      final breathe = 0.8 + 0.3 * sin((progress * 2 * pi) + node.phase);
-
-      // Outer Halo
-      dotPaint.color = primaryColor.withValues(alpha: isDark ? 0.12 : 0.06);
-      canvas.drawCircle(pos, node.radius * breathe * 2.6, dotPaint);
-
-      // Core Particle
-      dotPaint.color = isDark
-          ? Colors.white.withValues(alpha: 0.65)
-          : primaryColor.withValues(alpha: 0.50);
-      canvas.drawCircle(pos, node.radius * breathe, dotPaint);
+          stops: const [0.0, 1.0],
+        ).createShader(Rect.fromCircle(center: mousePos!, radius: 100));
+      canvas.drawCircle(mousePos!, 100, pointerGlow);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _AiMeshPainter oldDelegate) {
-    return oldDelegate.progress != progress ||
-        oldDelegate.mousePos != mousePos ||
-        oldDelegate.ripples.length != ripples.length ||
-        oldDelegate.isDark != isDark;
-  }
+  bool shouldRepaint(covariant _Logo3dParticlePainter oldDelegate) => true;
 }

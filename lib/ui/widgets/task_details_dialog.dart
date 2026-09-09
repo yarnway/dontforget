@@ -190,7 +190,7 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
                       children: [
                         Icon(Icons.local_fire_department_rounded, color: Colors.red.shade400, size: 18),
                         const SizedBox(width: 8),
-                        Text(l10n.get('q1Short'), style: const TextStyle(fontSize: 13)),
+                        Text(l10n.get('cat1'), style: const TextStyle(fontSize: 13)),
                       ],
                     ),
                   ),
@@ -200,7 +200,7 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
                       children: [
                         Icon(Icons.star_rounded, color: Colors.orange.shade400, size: 18),
                         const SizedBox(width: 8),
-                        Text(l10n.get('q2Short'), style: const TextStyle(fontSize: 13)),
+                        Text(l10n.get('cat2'), style: const TextStyle(fontSize: 13)),
                       ],
                     ),
                   ),
@@ -210,7 +210,7 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
                       children: [
                         Icon(Icons.bolt_rounded, color: Colors.blue.shade400, size: 18),
                         const SizedBox(width: 8),
-                        Text(l10n.get('q3Short'), style: const TextStyle(fontSize: 13)),
+                        Text(l10n.get('cat3'), style: const TextStyle(fontSize: 13)),
                       ],
                     ),
                   ),
@@ -220,7 +220,7 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
                       children: [
                         Icon(Icons.coffee_rounded, color: Colors.green.shade400, size: 18),
                         const SizedBox(width: 8),
-                        Text(l10n.get('q4Short'), style: const TextStyle(fontSize: 13)),
+                        Text(l10n.get('cat4'), style: const TextStyle(fontSize: 13)),
                       ],
                     ),
                   ),

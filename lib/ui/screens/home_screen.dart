@@ -572,21 +572,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                             Expanded(
                               child: QuadrantView(
                                 level: 1,
-                                titleIcon: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.local_fire_department_rounded, color: Colors.red.shade400, size: 18),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      l10n.get('q1'),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.red.shade400,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                titleIcon: Icon(Icons.local_fire_department_rounded, color: Colors.red.shade400, size: 20),
                                 allReminders: reminders,
                                 bgColor: Colors.red.shade400,
                                 onPlayMedia: _playMedia,
@@ -596,21 +582,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                             Expanded(
                               child: QuadrantView(
                                 level: 2,
-                                titleIcon: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.star_rounded, color: Colors.orange.shade400, size: 18),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      l10n.get('q2'),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.orange.shade400,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                titleIcon: Icon(Icons.star_rounded, color: Colors.orange.shade400, size: 20),
                                 allReminders: reminders,
                                 bgColor: Colors.orange.shade400,
                                 onPlayMedia: _playMedia,
@@ -626,21 +598,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                             Expanded(
                               child: QuadrantView(
                                 level: 3,
-                                titleIcon: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.bolt_rounded, color: Colors.blue.shade400, size: 18),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      l10n.get('q3'),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.blue.shade400,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                titleIcon: Icon(Icons.bolt_rounded, color: Colors.blue.shade400, size: 20),
                                 allReminders: reminders,
                                 bgColor: Colors.blue.shade400,
                                 onPlayMedia: _playMedia,
@@ -650,21 +608,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                             Expanded(
                               child: QuadrantView(
                                 level: 4,
-                                titleIcon: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.coffee_rounded, color: Colors.green.shade400, size: 18),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      l10n.get('q4'),
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.green.shade400,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                titleIcon: Icon(Icons.coffee_rounded, color: Colors.green.shade400, size: 20),
                                 allReminders: reminders,
                                 bgColor: Colors.green.shade400,
                                 onPlayMedia: _playMedia,
