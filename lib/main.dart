@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:path/path.dart' as p;
+import 'package:uuid/uuid.dart';
+import 'data/database_helper.dart';
+import 'models/reminder.dart';
 import 'app.dart';
 
 void _writeCrashLog(dynamic error, StackTrace? stack) {
@@ -35,7 +38,73 @@ void _writeCrashLog(dynamic error, StackTrace? stack) {
   } catch (_) {}
 }
 
-void main() async {
+Future<void> _handleCli(List<String> args) async {
+  if (args.contains('--help') || args.contains('-h')) {
+    stdout.writeln('''
+======================================================
+ DontForget Geek CLI v1.3.0
+======================================================
+Usage:
+  dont_forget --add <content>   (-a) Quickly record a reminder
+  dont_forget --list            (-l) List all active reminders
+  dont_forget --help            (-h) Show this help message
+======================================================''');
+    return;
+  }
+
+  if (args.contains('--list') || args.contains('-l')) {
+    final dbHelper = DatabaseHelper.instance;
+    final db = await dbHelper.database;
+    final res = await db.query('Reminders', where: 'is_completed = 0');
+    stdout.writeln('📋 Active Reminders (${res.length}):');
+    for (final item in res) {
+      final quad = item['quadrant_level'];
+      final title = item['task_title'];
+      final time = item['trigger_time'] ?? 'Not set';
+      stdout.writeln('  • [Q$quad] $title (Reminder: $time)');
+    }
+    return;
+  }
+
+  int addIdx = args.indexOf('--add');
+  if (addIdx == -1) addIdx = args.indexOf('-a');
+  if (addIdx != -1) {
+    final content = args.sublist(addIdx + 1).join(' ').trim();
+    if (content.isEmpty) {
+      stderr.writeln('❌ Error: Please provide content for --add');
+      return;
+    }
+
+    final dbHelper = DatabaseHelper.instance;
+    final db = await dbHelper.database;
+    final title = content.length > 30 ? '${content.substring(0, 30)}...' : content;
+    final reminder = Reminder(
+      id: const Uuid().v4(),
+      taskTitle: title,
+      taskSummary: content,
+      quadrantLevel: 2,
+      urgencyLevel: 'General',
+      importanceLevel: 'Important',
+      triggerTime: DateTime.now().add(const Duration(hours: 2)),
+    );
+    await db.insert('Reminders', reminder.toJson());
+    stdout.writeln('✅ [DontForget CLI] Reminder created: "$title"');
+    return;
+  }
+}
+
+void main(List<String> args) async {
+  if (args.isNotEmpty &&
+      (args.contains('--add') ||
+       args.contains('-a') ||
+       args.contains('--list') ||
+       args.contains('-l') ||
+       args.contains('--help') ||
+       args.contains('-h'))) {
+    await _handleCli(args);
+    exit(0);
+  }
+
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
 

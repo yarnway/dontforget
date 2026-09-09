@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +8,7 @@ import '../../services/notification_service.dart';
 import '../../l10n/app_localizations.dart';
 import '../screens/task_detail_screen.dart';
 
-class TaskCard extends ConsumerWidget {
+class TaskCard extends ConsumerStatefulWidget {
   final Reminder task;
   final VoidCallback onPlayMedia;
 
@@ -17,11 +18,65 @@ class TaskCard extends ConsumerWidget {
     required this.onPlayMedia,
   });
 
-  void _deleteTask(BuildContext context, WidgetRef ref) {
+  @override
+  ConsumerState<TaskCard> createState() => _TaskCardState();
+}
+
+class _TaskCardState extends ConsumerState<TaskCard> {
+  bool _isDecomposing = false;
+  bool _showSubtasks = true;
+
+  Future<void> _decomposeToMicroHabits() async {
+    if (_isDecomposing) return;
+    setState(() => _isDecomposing = true);
+
+    try {
+      final settings = ref.read(settingsProvider);
+      final llmService = ref.read(llmServiceProvider);
+      final habits = await llmService.decomposeTaskToMicroHabits(
+        widget.task,
+        settings,
+        language: settings.language,
+      );
+
+      final updated = widget.task.copyWith(
+        subTasks: jsonEncode(habits),
+      );
+      await ref.read(remindersProvider.notifier).updateReminder(updated);
+
+      if (mounted) {
+        final l10n = AppLocalizations.of(context);
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            content: Text(l10n.get('addMicroHabitsAsSubtasks')),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('拆解失败: $e'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isDecomposing = false);
+      }
+    }
+  }
+
+  void _deleteTask(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final notifier = ref.read(remindersProvider.notifier);
-    notifier.deleteReminder(task.id);
-    NotificationService().cancelReminder(task.id);
+    notifier.deleteReminder(widget.task.id);
+    NotificationService().cancelReminder(widget.task.id);
 
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -29,14 +84,14 @@ class TaskCard extends ConsumerWidget {
         duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        content: Text('${l10n.get('deletedTask')}: ${task.taskTitle}'),
+        content: Text('${l10n.get('deletedTask')}: ${widget.task.taskTitle}'),
         action: SnackBarAction(
           label: l10n.get('undo'),
           textColor: Colors.amberAccent,
           onPressed: () {
-            notifier.addReminder(task);
-            if (task.triggerTime != null && task.triggerTime!.isAfter(DateTime.now())) {
-              NotificationService().scheduleReminder(task);
+            notifier.addReminder(widget.task);
+            if (widget.task.triggerTime != null && widget.task.triggerTime!.isAfter(DateTime.now())) {
+              NotificationService().scheduleReminder(widget.task);
             }
           },
         ),
@@ -44,7 +99,7 @@ class TaskCard extends ConsumerWidget {
     );
   }
 
-  void _showContextMenu(BuildContext context, WidgetRef ref, Offset globalPosition) async {
+  void _showContextMenu(BuildContext context, Offset globalPosition) async {
     final l10n = AppLocalizations.of(context);
     final value = await showMenu<String>(
       context: context,
@@ -70,11 +125,21 @@ class TaskCard extends ConsumerWidget {
           child: Row(
             children: [
               Icon(
-                task.isCompleted ? Icons.radio_button_unchecked : Icons.check_circle_outline,
+                widget.task.isCompleted ? Icons.radio_button_unchecked : Icons.check_circle_outline,
                 size: 16,
               ),
               const SizedBox(width: 8),
-              Text(task.isCompleted ? l10n.get('markUndone') : l10n.get('markDone')),
+              Text(widget.task.isCompleted ? l10n.get('markUndone') : l10n.get('markDone')),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'decompose',
+          child: Row(
+            children: [
+              const Icon(Icons.psychology_outlined, size: 16, color: Colors.indigoAccent),
+              const SizedBox(width: 8),
+              Text(l10n.get('breakdownHabits')),
             ],
           ),
         ),
@@ -98,27 +163,30 @@ class TaskCard extends ConsumerWidget {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => TaskDetailScreen(task: task, onPlayMedia: onPlayMedia),
+          builder: (_) => TaskDetailScreen(task: widget.task, onPlayMedia: widget.onPlayMedia),
         ),
       );
     } else if (value == 'toggle') {
       HapticFeedback.selectionClick();
-      final updated = task.copyWith(isCompleted: !task.isCompleted);
+      final updated = widget.task.copyWith(isCompleted: !widget.task.isCompleted);
       ref.read(remindersProvider.notifier).updateReminder(updated);
       if (updated.isCompleted) {
-        NotificationService().cancelReminder(task.id);
+        NotificationService().cancelReminder(widget.task.id);
       } else if (updated.triggerTime != null && updated.triggerTime!.isAfter(DateTime.now())) {
         NotificationService().scheduleReminder(updated);
       }
+    } else if (value == 'decompose') {
+      _decomposeToMicroHabits();
     } else if (value == 'delete') {
-      _deleteTask(context, ref);
+      _deleteTask(context);
     }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final task = widget.task;
 
     IconData? mediaIcon;
     if (task.recordId != null) {
@@ -152,6 +220,9 @@ class TaskCard extends ConsumerWidget {
         break;
     }
 
+    final subTasksList = task.getSubTasksList();
+    final isStagnant = task.isStagnant(hours: 24);
+
     return Dismissible(
       key: Key(task.id),
       direction: DismissDirection.endToStart,
@@ -165,7 +236,7 @@ class TaskCard extends ConsumerWidget {
         padding: const EdgeInsets.only(right: 16),
         child: const Icon(Icons.delete_outline, color: Colors.white, size: 20),
       ),
-      onDismissed: (_) => _deleteTask(context, ref),
+      onDismissed: (_) => _deleteTask(context),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeInOut,
@@ -188,198 +259,383 @@ class TaskCard extends ConsumerWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => TaskDetailScreen(task: task, onPlayMedia: onPlayMedia),
+                builder: (_) => TaskDetailScreen(task: task, onPlayMedia: widget.onPlayMedia),
               ),
             );
           },
           onSecondaryTapUp: (details) {
-            _showContextMenu(context, ref, details.globalPosition);
+            _showContextMenu(context, details.globalPosition);
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: Row(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Micro Status Indicator Light on the edge
-                Padding(
-                  padding: const EdgeInsets.only(top: 5, right: 6),
-                  child: Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: task.isCompleted ? Colors.grey.shade400 : priorityColor,
-                      boxShadow: task.isCompleted
-                          ? []
-                          : [
-                              BoxShadow(
-                                color: priorityColor.withValues(alpha: 0.6),
-                                blurRadius: 4,
-                                spreadRadius: 0.5,
-                              ),
-                            ],
-                    ),
-                  ),
-                ),
-
-                // Media attachment icon if any
-                if (mediaIcon != null) ...[
-                  InkWell(
-                    onTap: onPlayMedia,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 1, right: 6),
-                      child: Icon(mediaIcon, size: 16, color: Theme.of(context).colorScheme.primary),
-                    ),
-                  ),
-                ],
-
-                // Main Info Stream (Title, Summary, Recurrence/Time wireframe tags)
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        task.taskTitle,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.color
-                              ?.withValues(alpha: task.isCompleted ? 0.38 : 1.0),
-                          decoration: task.isCompleted ? TextDecoration.lineThrough : null,
-                          height: 1.25,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (task.taskSummary != null && task.taskSummary!.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Text(
-                            task.taskSummary!,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.color
-                                  ?.withValues(alpha: task.isCompleted ? 0.35 : 0.65),
-                              height: 1.2,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      if (task.triggerTime != null || task.isRecurring)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Wrap(
-                            spacing: 4,
-                            runSpacing: 2,
-                            children: [
-                              if (task.isRecurring)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                                      width: 0.8,
-                                    ),
-                                    borderRadius: BorderRadius.circular(3),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Micro Status Indicator Light on the edge
+                    Padding(
+                      padding: const EdgeInsets.only(top: 5, right: 6),
+                      child: Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: task.isCompleted ? Colors.grey.shade400 : priorityColor,
+                          boxShadow: task.isCompleted
+                              ? []
+                              : [
+                                  BoxShadow(
+                                    color: priorityColor.withValues(alpha: 0.6),
+                                    blurRadius: 4,
+                                    spreadRadius: 0.5,
                                   ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.autorenew_rounded, size: 10, color: Theme.of(context).colorScheme.primary),
-                                      const SizedBox(width: 2),
-                                      Text(
-                                        task.recurrenceDescription ?? l10n.get('recurrencePeriodic'),
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w600,
-                                          color: Theme.of(context).colorScheme.primary,
+                                ],
+                        ),
+                      ),
+                    ),
+
+                    // Media attachment icon if any
+                    if (mediaIcon != null) ...[
+                      InkWell(
+                        onTap: widget.onPlayMedia,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 1, right: 6),
+                          child: Icon(mediaIcon, size: 16, color: Theme.of(context).colorScheme.primary),
+                        ),
+                      ),
+                    ],
+
+                    // Main Info Stream (Title, Summary, Recurrence/Time wireframe tags)
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  task.taskTitle,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color
+                                        ?.withValues(alpha: task.isCompleted ? 0.38 : 1.0),
+                                    decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                                    height: 1.25,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              // Empty Boat Purified Badge
+                              if (task.isEmotionFiltered)
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 4),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                    decoration: BoxDecoration(
+                                      color: Colors.teal.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(3),
+                                      border: Border.all(
+                                        color: Colors.teal.withValues(alpha: 0.35),
+                                        width: 0.7,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      l10n.get('emotionFilteredBadge'),
+                                      style: TextStyle(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: isDark ? Colors.tealAccent : Colors.teal.shade700,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          if (task.taskSummary != null && task.taskSummary!.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Text(
+                                task.taskSummary!,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.color
+                                      ?.withValues(alpha: task.isCompleted ? 0.35 : 0.65),
+                                  height: 1.2,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          if (task.triggerTime != null || task.isRecurring || (isStagnant && subTasksList.isEmpty))
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Wrap(
+                                spacing: 4,
+                                runSpacing: 2,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  if (task.isRecurring)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                                          width: 0.8,
+                                        ),
+                                        borderRadius: BorderRadius.circular(3),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.autorenew_rounded, size: 10, color: Theme.of(context).colorScheme.primary),
+                                          const SizedBox(width: 2),
+                                          Text(
+                                            task.recurrenceDescription ?? l10n.get('recurrencePeriodic'),
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w600,
+                                              color: Theme.of(context).colorScheme.primary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  if (task.triggerTime != null)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: Colors.grey.withValues(alpha: 0.3),
+                                          width: 0.8,
+                                        ),
+                                        borderRadius: BorderRadius.circular(3),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.access_time, size: 10, color: Colors.grey.shade600),
+                                          const SizedBox(width: 2),
+                                          Text(
+                                            task.triggerTime.toString().substring(0, 16),
+                                            style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  // Stagnant Task Warning Hint
+                                  if (isStagnant && subTasksList.isEmpty)
+                                    InkWell(
+                                      onTap: _decomposeToMicroHabits,
+                                      borderRadius: BorderRadius.circular(3),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                        decoration: BoxDecoration(
+                                          color: Colors.amber.withValues(alpha: 0.15),
+                                          border: Border.all(
+                                            color: Colors.amber.shade700.withValues(alpha: 0.4),
+                                            width: 0.8,
+                                          ),
+                                          borderRadius: BorderRadius.circular(3),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(Icons.bolt, size: 10, color: Colors.amber),
+                                            const SizedBox(width: 2),
+                                            Text(
+                                              l10n.get('stagnantHint'),
+                                              style: TextStyle(
+                                                fontSize: 9.5,
+                                                fontWeight: FontWeight.w600,
+                                                color: isDark ? Colors.amberAccent : Colors.amber.shade900,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                    ],
-                                  ),
-                                ),
-                              if (task.triggerTime != null)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: Colors.grey.withValues(alpha: 0.3),
-                                      width: 0.8,
                                     ),
-                                    borderRadius: BorderRadius.circular(3),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+
+                    // Trailing: Compact Checkbox
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: Checkbox(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
+                          activeColor: Theme.of(context).colorScheme.primary,
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          value: task.isCompleted,
+                          onChanged: (val) {
+                            HapticFeedback.selectionClick();
+                            if (val == true && task.isRecurring) {
+                              final nextTime = task.getNextOccurrence();
+                              if (nextTime != null) {
+                                final nextTask = task.copyWith(triggerTime: nextTime, isCompleted: false);
+                                ref.read(remindersProvider.notifier).updateReminder(nextTask);
+                                NotificationService().scheduleReminder(nextTask);
+
+                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    duration: const Duration(seconds: 3),
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    content: Text('${l10n.get('periodicNext')}${nextTime.toString().substring(0, 16)}'),
                                   ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(Icons.access_time, size: 10, color: Colors.grey.shade600),
-                                      const SizedBox(width: 2),
-                                      Text(
-                                        task.triggerTime.toString().substring(0, 16),
-                                        style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                            ],
-                          ),
+                                );
+                                return;
+                              }
+                            }
+
+                            final updatedTask = task.copyWith(isCompleted: val);
+                            ref.read(remindersProvider.notifier).updateReminder(updatedTask);
+                            if (val == true) {
+                              NotificationService().cancelReminder(task.id);
+                            } else if (updatedTask.triggerTime != null &&
+                                updatedTask.triggerTime!.isAfter(DateTime.now())) {
+                              NotificationService().scheduleReminder(updatedTask);
+                            }
+                          },
                         ),
-                    ],
-                  ),
+                      ),
+                    ),
+                  ],
                 ),
 
-                // Trailing: Compact Checkbox
-                Padding(
-                  padding: const EdgeInsets.only(left: 4),
-                  child: SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: Checkbox(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
-                      activeColor: Theme.of(context).colorScheme.primary,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      value: task.isCompleted,
-                      onChanged: (val) {
-                        HapticFeedback.selectionClick();
-                        if (val == true && task.isRecurring) {
-                          final nextTime = task.getNextOccurrence();
-                          if (nextTime != null) {
-                            final nextTask = task.copyWith(triggerTime: nextTime, isCompleted: false);
-                            ref.read(remindersProvider.notifier).updateReminder(nextTask);
-                            NotificationService().scheduleReminder(nextTask);
-
-                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                duration: const Duration(seconds: 3),
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                content: Text('${l10n.get('periodicNext')}${nextTime.toString().substring(0, 16)}'),
+                // Micro-Habits Subtasks Section
+                if (subTasksList.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.indigo.withValues(alpha: 0.04),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: Colors.indigoAccent.withValues(alpha: 0.2),
+                        width: 0.6,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.psychology, size: 12, color: Colors.indigoAccent),
+                            const SizedBox(width: 4),
+                            Text(
+                              l10n.get('subTasksTitle'),
+                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.indigoAccent),
+                            ),
+                            const Spacer(),
+                            InkWell(
+                              onTap: () => setState(() => _showSubtasks = !_showSubtasks),
+                              child: Icon(
+                                _showSubtasks ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                                size: 14,
+                                color: Colors.grey,
                               ),
-                            );
-                            return;
-                          }
-                        }
-
-                        final updatedTask = task.copyWith(isCompleted: val);
-                        ref.read(remindersProvider.notifier).updateReminder(updatedTask);
-                        if (val == true) {
-                          NotificationService().cancelReminder(task.id);
-                        } else if (updatedTask.triggerTime != null &&
-                            updatedTask.triggerTime!.isAfter(DateTime.now())) {
-                          NotificationService().scheduleReminder(updatedTask);
-                        }
-                      },
+                            ),
+                          ],
+                        ),
+                        if (_showSubtasks) ...[
+                          const SizedBox(height: 2),
+                          for (final habit in subTasksList)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2, left: 2),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4, right: 4),
+                                    child: Container(
+                                      width: 4,
+                                      height: 4,
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: Colors.indigoAccent,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      habit,
+                                      style: TextStyle(
+                                        fontSize: 10.5,
+                                        color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.85),
+                                        height: 1.25,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ],
                     ),
                   ),
-                ),
+                ] else if (task.quadrantLevel == 2 && !task.isCompleted) ...[
+                  // Decompose button for Q2 tasks without micro habits
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, left: 12),
+                    child: _isDecomposing
+                        ? Row(
+                            children: [
+                              const SizedBox(
+                                width: 10,
+                                height: 10,
+                                child: CircularProgressIndicator(strokeWidth: 1.5),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                l10n.get('breakdownLoading'),
+                                style: const TextStyle(fontSize: 10, color: Colors.indigoAccent),
+                              ),
+                            ],
+                          )
+                        : InkWell(
+                            onTap: _decomposeToMicroHabits,
+                            borderRadius: BorderRadius.circular(4),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 2),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.auto_awesome, size: 11, color: Colors.indigoAccent),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    l10n.get('breakdownHabits'),
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.indigoAccent,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                  ),
+                ],
               ],
             ),
           ),

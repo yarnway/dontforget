@@ -7,6 +7,7 @@ import '../models/reminder.dart';
 import '../models/media_record.dart';
 import '../services/llm_service.dart';
 import '../services/notification_service.dart';
+import '../services/lan_sync_service.dart';
 
 final databaseHelperProvider = Provider<DatabaseHelper>((ref) {
   return DatabaseHelper.instance;
@@ -138,6 +139,10 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     state = state.where((r) => !r.isCompleted).toList();
     return count;
   }
+
+  Future<void> refreshReminders() async {
+    await _loadReminders();
+  }
 }
 
 final mediaRecordsProvider = StateNotifierProvider<MediaRecordsNotifier, List<MediaRecord>>((ref) {
@@ -163,3 +168,8 @@ final llmServiceProvider = Provider<LLMService>((ref) {
 final notificationServiceProvider = Provider<NotificationService>((ref) {
   return NotificationService();
 });
+
+final lanSyncServiceProvider = Provider<LanSyncService>((ref) {
+  return LanSyncService.instance;
+});
+

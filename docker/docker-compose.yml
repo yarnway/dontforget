@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # 1. Ollama 端侧离线大模型推理后端 (支持 GPU 加速)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: dontforget-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+    # 如需启用 NVIDIA GPU 加速，可取消下方注释:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  # 2. vLLM 高并发高性能推理后端 (可选)
+  # vllm:
+  #   image: vllm/vllm-openai:latest
+  #   container_name: dontforget-vllm
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8000:8000"
+  #   volumes:
+  #     - ~/.cache/huggingface:/root/.cache/huggingface
+  #   ipc: host
+  #   command: --model Qwen/Qwen2.5-7B-Instruct --port 8000 --max-model-len 4096
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: all
+  #             capabilities: [gpu]
+
+volumes:
+  ollama_data:
+    driver: local

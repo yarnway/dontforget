@@ -7,9 +7,18 @@
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
-  // Attach to console when present (e.g., 'flutter run') or create a
-  // new console when running with a debugger.
-  if (!::AttachConsole(ATTACH_PARENT_PROCESS) && ::IsDebuggerPresent()) {
+  // Attach to console when present (e.g., terminal CLI invocation)
+  if (::AttachConsole(ATTACH_PARENT_PROCESS)) {
+    HANDLE hOut = CreateFile(L"CONOUT$", GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+    if (hOut != INVALID_HANDLE_VALUE) {
+      SetStdHandle(STD_OUTPUT_HANDLE, hOut);
+      SetStdHandle(STD_ERROR_HANDLE, hOut);
+    }
+    FILE* fp;
+    freopen_s(&fp, "CONOUT$", "w", stdout);
+    freopen_s(&fp, "CONOUT$", "w", stderr);
+    freopen_s(&fp, "CONIN$", "r", stdin);
+  } else if (::IsDebuggerPresent()) {
     CreateAndAttachConsole();
   }
 

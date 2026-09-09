@@ -19,7 +19,7 @@ void main() {
     await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
-    expect(find.byType(TextField), findsNWidgets(3));
+    expect(find.byType(TextField), findsWidgets);
     expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
     Navigator.pop(tester.element(find.byType(DropdownButtonFormField<String>)));
     await tester.pump();

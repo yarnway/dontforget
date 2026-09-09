@@ -70,7 +70,7 @@ class DatabaseHelper {
     return await databaseFactory.openDatabase(
       targetPath,
       options: OpenDatabaseOptions(
-        version: 4,
+        version: 5,
         onCreate: _createDB,
         onUpgrade: _upgradeDB,
       ),
@@ -126,6 +126,9 @@ CREATE TABLE Reminders (
   is_recurring INTEGER DEFAULT 0,
   recurrence_rule TEXT DEFAULT 'none',
   recurrence_description TEXT,
+  is_emotion_filtered INTEGER DEFAULT 0,
+  sub_tasks TEXT,
+  created_at TEXT,
   FOREIGN KEY (record_id) REFERENCES MediaRecords (id) ON DELETE CASCADE
 )
 ''');
@@ -141,6 +144,17 @@ CREATE TABLE Reminders (
       } catch (_) {}
       try {
         await db.execute('ALTER TABLE Reminders ADD COLUMN recurrence_description TEXT');
+      } catch (_) {}
+    }
+    if (oldVersion < 5) {
+      try {
+        await db.execute('ALTER TABLE Reminders ADD COLUMN is_emotion_filtered INTEGER DEFAULT 0');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE Reminders ADD COLUMN sub_tasks TEXT');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE Reminders ADD COLUMN created_at TEXT');
       } catch (_) {}
     }
   }

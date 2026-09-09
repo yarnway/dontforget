@@ -38,7 +38,7 @@ if (-not (Test-Path $isccPath)) {
     if ($isccCmd) { $isccPath = $isccCmd.Source }
 }
 
-$version = "1.2.8"
+$version = "1.3.0"
 $pubspecPath = "$PSScriptRoot\..\pubspec.yaml"
 if (Test-Path $pubspecPath) {
     $verLine = Get-Content $pubspecPath | Where-Object { $_ -match "^version:\s*([^\+]+)" }

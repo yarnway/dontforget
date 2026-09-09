@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class Reminder {
   final String id;
   final String? recordId;
@@ -11,6 +13,9 @@ class Reminder {
   final bool isRecurring;
   final String? recurrenceRule; // 'none', 'daily', 'workday', 'weekly', 'monthly', 'yearly'
   final String? recurrenceDescription;
+  final bool isEmotionFiltered; // '空船效应' 情绪去噪重构标识
+  final String? subTasks; // JSON 格式微习惯原子项列表
+  final DateTime? createdAt; // 创建时间戳，用于滞留感知
 
   Reminder({
     required this.id,
@@ -25,7 +30,10 @@ class Reminder {
     this.isRecurring = false,
     this.recurrenceRule = 'none',
     this.recurrenceDescription,
-  });
+    this.isEmotionFiltered = false,
+    this.subTasks,
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
 
   factory Reminder.fromJson(Map<String, dynamic> json) => Reminder(
         id: json['id'] as String,
@@ -44,6 +52,12 @@ class Reminder {
             : (json['is_recurring'] is bool ? (json['is_recurring'] as bool) : false),
         recurrenceRule: json['recurrence_rule'] as String? ?? 'none',
         recurrenceDescription: json['recurrence_description'] as String?,
+        isEmotionFiltered: (json['is_emotion_filtered'] as int?) == 1 ||
+            json['is_emotion_filtered'] == true,
+        subTasks: json['sub_tasks'] as String?,
+        createdAt: json['created_at'] != null
+            ? DateTime.tryParse(json['created_at'] as String)
+            : null,
       );
 
   Map<String, dynamic> toJson() => {
@@ -59,6 +73,9 @@ class Reminder {
         'is_recurring': isRecurring ? 1 : 0,
         'recurrence_rule': recurrenceRule ?? 'none',
         'recurrence_description': recurrenceDescription,
+        'is_emotion_filtered': isEmotionFiltered ? 1 : 0,
+        'sub_tasks': subTasks,
+        'created_at': createdAt?.toIso8601String(),
       };
 
   DateTime? getNextOccurrence() {
@@ -98,6 +115,9 @@ class Reminder {
     bool? isRecurring,
     String? recurrenceRule,
     String? recurrenceDescription,
+    bool? isEmotionFiltered,
+    String? subTasks,
+    DateTime? createdAt,
   }) {
     return Reminder(
       id: id,
@@ -112,6 +132,29 @@ class Reminder {
       isRecurring: isRecurring ?? this.isRecurring,
       recurrenceRule: recurrenceRule ?? this.recurrenceRule,
       recurrenceDescription: recurrenceDescription ?? this.recurrenceDescription,
+      isEmotionFiltered: isEmotionFiltered ?? this.isEmotionFiltered,
+      subTasks: subTasks ?? this.subTasks,
+      createdAt: createdAt ?? this.createdAt,
     );
+  }
+
+  List<String> getSubTasksList() {
+    if (subTasks == null || subTasks!.trim().isEmpty) return [];
+    try {
+      final decoded = jsonDecode(subTasks!);
+      if (decoded is List) {
+        return decoded.map((e) => e.toString()).toList();
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  bool isStagnant({int hours = 24}) {
+    if (isCompleted || quadrantLevel != 2) return false;
+    final now = DateTime.now();
+    if (createdAt != null) {
+      return now.difference(createdAt!).inHours >= hours;
+    }
+    return false;
   }
 }

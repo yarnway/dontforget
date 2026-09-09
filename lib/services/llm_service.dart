@@ -174,6 +174,7 @@ Guidelines:
 10. "quadrant": Categorize into Eisenhower Matrix (1 = 紧急且重要, 2 = 重要不紧急, 3 = 紧急不重要, 4 = 不重要不紧急).
 11. "urgency": "Urgent" | "General" | "Not Urgent"
 12. "importance": "Important" | "General" | "Not Important"
+13. "is_emotion_filtered": boolean. "Empty Boat Effect" (空船效应): If user input contains emotional venting, complaints, frustration, anger, or aggressive tone (e.g. "烦死了那个煞笔客户又改需求明天要交", "气死我了必须把烂代码重构"), AI MUST strip away all emotional insults/venting/frustration, reconstruct a calm, objective, constructive task title and summary (e.g. "按客户最新修改意见更新需求并交付"), and set "is_emotion_filtered" to true. If input is neutral/normal, set to false.
 
 Output strictly in valid JSON object matching this structure:
 {
@@ -188,6 +189,7 @@ Output strictly in valid JSON object matching this structure:
       "is_recurring": false,
       "recurrence_rule": "none",
       "recurrence_desc": null,
+      "is_emotion_filtered": false,
       "quadrant": 1,
       "urgency": "...",
       "importance": "..."
@@ -322,6 +324,13 @@ Output strictly in valid JSON object matching this structure:
           }
         }
 
+        bool isEmotionFiltered = false;
+        if (json['is_emotion_filtered'] is bool) {
+          isEmotionFiltered = json['is_emotion_filtered'];
+        } else if (json['is_emotion_filtered'] != null) {
+          isEmotionFiltered = json['is_emotion_filtered'].toString().toLowerCase() == 'true' || json['is_emotion_filtered'] == 1;
+        }
+
         return Reminder(
           id: const Uuid().v4(),
           taskTitle: json['title'] ?? json['task'] ?? json['event'] ?? '新事项',
@@ -333,6 +342,7 @@ Output strictly in valid JSON object matching this structure:
           isRecurring: isRecur,
           recurrenceRule: rule,
           recurrenceDescription: desc,
+          isEmotionFiltered: isEmotionFiltered,
         );
       }).toList();
     } catch (e) {
@@ -632,4 +642,218 @@ Include:
 3. **每日下班前 3 分钟复盘**: 快速审视清单，拖拽调整优先级，带着清晰掌控感开启新的一天。''';
     }
   }
+
+  // ==========================================
+  // 端侧本地模型探测器 (Edge AI Probe)
+  // ==========================================
+
+  Future<List<LocalInferenceEndpoint>> probeLocalInferenceEndpoints() async {
+    final List<LocalInferenceEndpoint> results = [];
+    final testDio = Dio(BaseOptions(
+      connectTimeout: const Duration(milliseconds: 1500),
+      receiveTimeout: const Duration(milliseconds: 1500),
+    ));
+
+    // 1. Ollama (default 11434)
+    try {
+      final sw = Stopwatch()..start();
+      final res = await testDio.get('http://127.0.0.1:11434/api/tags');
+      sw.stop();
+      String? modelName;
+      if (res.data != null && res.data['models'] is List && (res.data['models'] as List).isNotEmpty) {
+        modelName = res.data['models'][0]['name'];
+      }
+      modelName ??= 'qwen2.5:latest';
+      results.add(LocalInferenceEndpoint(
+        name: 'Ollama',
+        url: 'http://127.0.0.1:11434/v1',
+        port: 11434,
+        isAvailable: true,
+        recommendedModel: modelName,
+        latencyMs: sw.elapsedMilliseconds,
+      ));
+    } catch (_) {
+      results.add(LocalInferenceEndpoint(
+        name: 'Ollama',
+        url: 'http://127.0.0.1:11434/v1',
+        port: 11434,
+        isAvailable: false,
+      ));
+    }
+
+    // 2. vLLM / sglang (default 8000)
+    try {
+      final sw = Stopwatch()..start();
+      final res = await testDio.get('http://127.0.0.1:8000/v1/models');
+      sw.stop();
+      String? modelName;
+      if (res.data != null && res.data['data'] is List && (res.data['data'] as List).isNotEmpty) {
+        modelName = res.data['data'][0]['id'];
+      }
+      modelName ??= 'default-model';
+      results.add(LocalInferenceEndpoint(
+        name: 'vLLM / sglang',
+        url: 'http://127.0.0.1:8000/v1',
+        port: 8000,
+        isAvailable: true,
+        recommendedModel: modelName,
+        latencyMs: sw.elapsedMilliseconds,
+      ));
+    } catch (_) {
+      results.add(LocalInferenceEndpoint(
+        name: 'vLLM / sglang',
+        url: 'http://127.0.0.1:8000/v1',
+        port: 8000,
+        isAvailable: false,
+      ));
+    }
+
+    // 3. llama.cpp (default 8080)
+    try {
+      final sw = Stopwatch()..start();
+      final res = await testDio.get('http://127.0.0.1:8080/v1/models');
+      sw.stop();
+      String? modelName;
+      if (res.data != null && res.data['data'] is List && (res.data['data'] as List).isNotEmpty) {
+        modelName = res.data['data'][0]['id'];
+      }
+      modelName ??= 'llama-3.2-1b';
+      results.add(LocalInferenceEndpoint(
+        name: 'llama.cpp',
+        url: 'http://127.0.0.1:8080/v1',
+        port: 8080,
+        isAvailable: true,
+        recommendedModel: modelName,
+        latencyMs: sw.elapsedMilliseconds,
+      ));
+    } catch (_) {
+      results.add(LocalInferenceEndpoint(
+        name: 'llama.cpp',
+        url: 'http://127.0.0.1:8080/v1',
+        port: 8080,
+        isAvailable: false,
+      ));
+    }
+
+    return results;
+  }
+
+  // ==========================================
+  // 反社会懈怠：5 分钟微习惯拆解
+  // ==========================================
+
+  Future<List<String>> decomposeTaskToMicroHabits(
+    Reminder task,
+    AppSettings settings, {
+    String language = 'zh',
+  }) async {
+    final langInstruction = language == 'en'
+        ? 'Output 3 micro habits in English'
+        : (language == 'ja'
+            ? 'Output 3 micro habits in Japanese'
+            : '输出 3 个极微行动项，简体中文');
+
+    final prompt = '''
+Task Title: "${task.taskTitle}"
+Task Summary: "${task.taskSummary ?? ''}"
+
+Based on cognitive psychology (anti-social loafing & micro habits theory), break down this stalled task into 2 to 3 frictionless, actionable 5-minute starter steps that eliminate procrastination resistance. Each step must start with a concrete action verb.
+$langInstruction.
+
+Strictly return a JSON object with a "habits" array of strings:
+{"habits": ["1. ...", "2. ...", "3. ..."]}
+''';
+
+    if (settings.apiKey.isNotEmpty) {
+      try {
+        final response = await _dio.post(
+          '${settings.baseUrl}/chat/completions',
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer ${settings.apiKey}',
+              'Content-Type': 'application/json',
+            },
+          ),
+          data: {
+            'model': settings.modelName,
+            'messages': [
+              {
+                'role': 'system',
+                'content':
+                    'You are an expert cognitive behavioral coach specializing in anti-social loafing and atomic micro-habits.',
+              },
+              {'role': 'user', 'content': prompt},
+            ],
+            'temperature': 0.3,
+            'max_tokens': 512,
+            'response_format': {'type': 'json_object'},
+          },
+        );
+
+        final message = response.data['choices'][0]['message'];
+        String content = (message['content'] as String? ?? '').trim();
+        if (content.isEmpty && message['reasoning_content'] != null) {
+          content = (message['reasoning_content'] as String? ?? '').trim();
+        }
+
+        final jsonBlockRegex = RegExp(r'```(?:json)?\s*([\s\S]*?)\s*```', caseSensitive: false);
+        final match = jsonBlockRegex.firstMatch(content);
+        final jsonStr = match != null ? match.group(1)!.trim() : content;
+
+        final decoded = jsonDecode(jsonStr);
+        if (decoded is Map && decoded['habits'] is List) {
+          final list = (decoded['habits'] as List)
+              .map((e) => e.toString().trim())
+              .where((e) => e.isNotEmpty)
+              .toList();
+          if (list.isNotEmpty) return list;
+        }
+      } catch (_) {
+        // Fall back to heuristic rule generator
+      }
+    }
+
+    return _generateFallbackMicroHabits(task.taskTitle, language);
+  }
+
+  List<String> _generateFallbackMicroHabits(String title, String language) {
+    if (language == 'en') {
+      return [
+        '1. Quick Setup: Open work files / reference tabs for "$title" (2 mins)',
+        '2. Low-Friction Start: Draft the initial outline or first 3 key bullets (3 mins)',
+        '3. Unblock: Note the single blocker question and decide the next immediate milestone',
+      ];
+    } else if (language == 'ja') {
+      return [
+        '1. 準備ステップ: 「$title」の関連ファイルや参考タブを開く（2分）',
+        '2. 最小開始: 最初の骨子や主要な3つの箇条書きを書き出す（3分）',
+        '3. 推進確認: 疑問点や次のアクションを1行メモして進行を確定',
+      ];
+    } else {
+      return [
+        '1. 零阻力准备：打开「$title」关联文档或工作台，扫清桌面干扰 (2分钟)',
+        '2. 最小化启动：写下初版骨架或最核心的 3 个关键要点 (3分钟)',
+        '3. 锁定推进：记录下一步关键动作与阻碍点，确立正向启动势能',
+      ];
+    }
+  }
 }
+
+class LocalInferenceEndpoint {
+  final String name; // 'Ollama' | 'vLLM / sglang' | 'llama.cpp'
+  final String url;
+  final int port;
+  final bool isAvailable;
+  final String? recommendedModel;
+  final int? latencyMs;
+
+  LocalInferenceEndpoint({
+    required this.name,
+    required this.url,
+    required this.port,
+    required this.isAvailable,
+    this.recommendedModel,
+    this.latencyMs,
+  });
+}
+

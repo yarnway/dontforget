@@ -10,6 +10,7 @@ import '../../services/notification_service.dart';
 import 'settings_screen.dart';
 import 'dashboard_screen.dart';
 import '../widgets/quadrant_view.dart';
+import '../widgets/task_card.dart';
 import '../widgets/input_bottom_bar.dart';
 import '../widgets/ai_background_effect.dart';
 import '../../l10n/app_localizations.dart';
@@ -27,6 +28,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
   StreamSubscription<Reminder>? _dueSubscription;
   final Set<String> _promptedReminderIds = {};
   late AnimationController _indicatorAnimController;
+  bool _isSearchOpen = false;
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -50,6 +54,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
 
   @override
   void dispose() {
+    _searchController.dispose();
     _indicatorAnimController.dispose();
     _heartbeatTimer?.cancel();
     _dueSubscription?.cancel();
@@ -481,80 +486,120 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              l10n.get('appTitle'),
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17, letterSpacing: 0.5),
-            ),
-            const SizedBox(width: 8),
-            // Micro Status Indicator Light with Breathing Animation
-            AnimatedBuilder(
-              animation: _indicatorAnimController,
-              builder: (context, child) {
-                final glow = _indicatorAnimController.value;
-                return Tooltip(
-                  message: isProcessing ? l10n.get('statusBusy') : l10n.get('statusReady'),
-                  child: Container(
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: statusColor,
-                      boxShadow: [
-                        BoxShadow(
-                          color: statusColor.withValues(alpha: 0.5 + 0.4 * glow),
-                          blurRadius: 4 + 4 * glow,
-                          spreadRadius: 1 + 1 * glow,
-                        ),
-                      ],
-                    ),
+        leading: _isSearchOpen
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back, size: 20),
+                onPressed: () => setState(() {
+                  _isSearchOpen = false;
+                  _searchController.clear();
+                  _searchQuery = '';
+                }),
+              )
+            : null,
+        title: _isSearchOpen
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                style: const TextStyle(fontSize: 14),
+                decoration: InputDecoration(
+                  hintText: l10n.get('searchHint'),
+                  hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                  border: InputBorder.none,
+                ),
+                onChanged: (val) => setState(() => _searchQuery = val),
+              )
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    l10n.get('appTitle'),
+                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17, letterSpacing: 0.5),
                   ),
-                );
-              },
-            ),
-          ],
-        ),
+                  const SizedBox(width: 8),
+                  // Micro Status Indicator Light with Breathing Animation
+                  AnimatedBuilder(
+                    animation: _indicatorAnimController,
+                    builder: (context, child) {
+                      final glow = _indicatorAnimController.value;
+                      return Tooltip(
+                        message: isProcessing ? l10n.get('statusBusy') : l10n.get('statusReady'),
+                        child: Container(
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: statusColor,
+                            boxShadow: [
+                              BoxShadow(
+                                color: statusColor.withValues(alpha: 0.5 + 0.4 * glow),
+                                blurRadius: 4 + 4 * glow,
+                                spreadRadius: 1 + 1 * glow,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
         elevation: 0,
         backgroundColor: Colors.transparent,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_off_outlined, size: 20),
-            tooltip: l10n.get('clearAllNotices'),
-            splashRadius: 18,
-            onPressed: _clearAllNotices,
-          ),
-          IconButton(
-            icon: const Icon(Icons.cleaning_services_outlined, size: 20),
-            tooltip: l10n.get('clearCompleted'),
-            splashRadius: 18,
-            onPressed: _confirmClearCompleted,
-          ),
-          IconButton(
-            icon: const Icon(Icons.bar_chart_rounded, size: 20),
-            tooltip: l10n.get('dashboardTitle'),
-            splashRadius: 18,
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const DashboardScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined, size: 20),
-            tooltip: l10n.get('settings'),
-            splashRadius: 18,
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
-              );
-            },
-          ),
-          const SizedBox(width: 6),
-        ],
+        actions: _isSearchOpen
+            ? [
+                if (_searchQuery.isNotEmpty)
+                  IconButton(
+                    icon: const Icon(Icons.clear, size: 18),
+                    onPressed: () => setState(() {
+                      _searchController.clear();
+                      _searchQuery = '';
+                    }),
+                  ),
+                const SizedBox(width: 6),
+              ]
+            : [
+                IconButton(
+                  icon: const Icon(Icons.search_rounded, size: 20),
+                  tooltip: l10n.get('searchHint'),
+                  splashRadius: 18,
+                  onPressed: () => setState(() => _isSearchOpen = true),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.notifications_off_outlined, size: 20),
+                  tooltip: l10n.get('clearAllNotices'),
+                  splashRadius: 18,
+                  onPressed: _clearAllNotices,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.cleaning_services_outlined, size: 20),
+                  tooltip: l10n.get('clearCompleted'),
+                  splashRadius: 18,
+                  onPressed: _confirmClearCompleted,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.bar_chart_rounded, size: 20),
+                  tooltip: l10n.get('dashboardTitle'),
+                  splashRadius: 18,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const DashboardScreen()),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.settings_outlined, size: 20),
+                  tooltip: l10n.get('settings'),
+                  splashRadius: 18,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                    );
+                  },
+                ),
+                const SizedBox(width: 6),
+              ],
       ),
       body: AiBackgroundEffect(
         child: SafeArea(
@@ -562,64 +607,120 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
           child: Column(
             children: [
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: Row(
+                child: _isSearchOpen && _searchQuery.trim().isNotEmpty
+                    ? Builder(
+                        builder: (context) {
+                          final q = _searchQuery.trim().toLowerCase();
+                          final searchResults = reminders.where((r) {
+                            if (r.taskTitle.toLowerCase().contains(q)) return true;
+                            if ((r.taskSummary ?? '').toLowerCase().contains(q)) return true;
+                            if (r.getSubTasksList().any((sub) => sub.toLowerCase().contains(q))) return true;
+                            return false;
+                          }).toList();
+
+                          if (searchResults.isEmpty) {
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.search_off_rounded, size: 48, color: Colors.grey.shade400),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    l10n.get('noSearchResult'),
+                                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                child: Text(
+                                  '${l10n.get('searchResults')} (${searchResults.length})',
+                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.indigoAccent),
+                                ),
+                              ),
+                              Expanded(
+                                child: ListView.builder(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                  itemCount: searchResults.length,
+                                  itemBuilder: (context, index) {
+                                    final task = searchResults[index];
+                                    return TaskCard(
+                                      task: task,
+                                      onPlayMedia: () {
+                                        if (task.recordId != null) _playMedia(task.recordId!);
+                                      },
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      )
+                    : Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+                        child: Column(
                           children: [
                             Expanded(
-                              child: QuadrantView(
-                                level: 1,
-                                titleIcon: Icon(Icons.local_fire_department_rounded, color: Colors.red.shade400, size: 20),
-                                allReminders: reminders,
-                                bgColor: Colors.red.shade400,
-                                onPlayMedia: _playMedia,
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: QuadrantView(
+                                      level: 1,
+                                      titleIcon: Icon(Icons.local_fire_department_rounded, color: Colors.red.shade400, size: 20),
+                                      allReminders: reminders,
+                                      bgColor: Colors.red.shade400,
+                                      onPlayMedia: _playMedia,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: QuadrantView(
+                                      level: 2,
+                                      titleIcon: Icon(Icons.star_rounded, color: Colors.orange.shade400, size: 20),
+                                      allReminders: reminders,
+                                      bgColor: Colors.orange.shade400,
+                                      onPlayMedia: _playMedia,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(height: 8),
                             Expanded(
-                              child: QuadrantView(
-                                level: 2,
-                                titleIcon: Icon(Icons.star_rounded, color: Colors.orange.shade400, size: 20),
-                                allReminders: reminders,
-                                bgColor: Colors.orange.shade400,
-                                onPlayMedia: _playMedia,
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: QuadrantView(
+                                      level: 3,
+                                      titleIcon: Icon(Icons.bolt_rounded, color: Colors.blue.shade400, size: 20),
+                                      allReminders: reminders,
+                                      bgColor: Colors.blue.shade400,
+                                      onPlayMedia: _playMedia,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: QuadrantView(
+                                      level: 4,
+                                      titleIcon: Icon(Icons.coffee_rounded, color: Colors.green.shade400, size: 20),
+                                      allReminders: reminders,
+                                      bgColor: Colors.green.shade400,
+                                      onPlayMedia: _playMedia,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: QuadrantView(
-                                level: 3,
-                                titleIcon: Icon(Icons.bolt_rounded, color: Colors.blue.shade400, size: 20),
-                                allReminders: reminders,
-                                bgColor: Colors.blue.shade400,
-                                onPlayMedia: _playMedia,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: QuadrantView(
-                                level: 4,
-                                titleIcon: Icon(Icons.coffee_rounded, color: Colors.green.shade400, size: 20),
-                                allReminders: reminders,
-                                bgColor: Colors.green.shade400,
-                                onPlayMedia: _playMedia,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ),
               const InputBottomBar(),
             ],
