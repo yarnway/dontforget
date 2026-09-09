@@ -475,4 +475,161 @@ Output strictly in valid JSON object matching this structure:
       throw AudioTranscriptionUnsupportedException('语音转文字失败，已自动保存原声备忘录');
     }
   }
+
+  Future<String> generateReviewReport(
+    List<Reminder> reminders,
+    AppSettings settings, {
+    String language = 'zh',
+  }) async {
+    if (reminders.isEmpty) {
+      if (language == 'en') {
+        return 'No tasks recorded yet. Add some tasks and your AI Productivity Coach will give you a comprehensive analysis!';
+      } else if (language == 'ja') {
+        return 'タスクがまだありません。タスクを追加するとAIコーチが生産性を分析します！';
+      } else {
+        return '当前暂无事项数据。快去记录几条任务，AI 效能教练将为您深度复盘精力投入！';
+      }
+    }
+
+    final total = reminders.length;
+    final completed = reminders.where((r) => r.isCompleted).length;
+    final pending = total - completed;
+    final completionRate = (completed / total * 100).round();
+
+    final q1Count = reminders.where((r) => r.quadrantLevel == 1).length;
+    final q2Count = reminders.where((r) => r.quadrantLevel == 2).length;
+    final q3Count = reminders.where((r) => r.quadrantLevel == 3).length;
+    final q4Count = reminders.where((r) => r.quadrantLevel == 4).length;
+
+    final completedTitles = reminders.where((r) => r.isCompleted).take(6).map((r) => r.taskTitle).join(', ');
+    final pendingTitles = reminders.where((r) => !r.isCompleted).take(6).map((r) => r.taskTitle).join(', ');
+
+    if (settings.apiKey.isNotEmpty) {
+      final prompt = '''
+User asks for a personal productivity review & coaching report.
+Target Language: $language.
+Data statistics:
+- Total tasks: $total, Completed: $completed ($completionRate%), Pending: $pending
+- Quadrant 1 (Urgent Alert / 紧急提醒): $q1Count
+- Quadrant 2 (Key Focus / 重点跟进): $q2Count
+- Quadrant 3 (Routine Task / 常规待办): $q3Count
+- Quadrant 4 (Memo & Notes / 备忘便签): $q4Count
+- Recent Completed: ${completedTitles.isEmpty ? "None" : completedTitles}
+- Key Pending Tasks: ${pendingTitles.isEmpty ? "None" : pendingTitles}
+
+Role: Friendly, empowering, elite Personal Productivity Coach.
+Please provide a structured, encouraging, concise productivity coaching report in clean Markdown.
+Include:
+1. 🎯 精力分布与投入诊断 (Energy & Priority Diagnosis)
+2. 🌟 阶段成就与肯定 (Accomplishments & Affirmation)
+3. 💡 极简破局与行动建议 (Actionable Advice - 2 to 3 practical tips)
+''';
+
+      try {
+        final response = await _dio.post(
+          '${settings.baseUrl}/chat/completions',
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer ${settings.apiKey}',
+              'Content-Type': 'application/json',
+            },
+          ),
+          data: {
+            'model': settings.modelName,
+            'messages': [
+              {
+                'role': 'system',
+                'content': 'You are an elite Personal Productivity Coach and Time Management Expert. Output clean, beautifully formatted Markdown in the specified language.',
+              },
+              {
+                'role': 'user',
+                'content': prompt,
+              },
+            ],
+            'temperature': 0.6,
+            'max_tokens': 1200,
+          },
+        );
+
+        final message = response.data['choices'][0]['message'];
+        String content = (message['content'] as String? ?? '').trim();
+        if (content.isEmpty && message['reasoning_content'] != null) {
+          content = (message['reasoning_content'] as String? ?? '').trim();
+        }
+        if (content.isNotEmpty) {
+          return content;
+        }
+      } catch (_) {
+        // Fallback to local intelligent analysis if LLM fails
+      }
+    }
+
+    return _generateFallbackReviewReport(
+      total: total,
+      completed: completed,
+      pending: pending,
+      completionRate: completionRate,
+      q1: q1Count,
+      q2: q2Count,
+      q3: q3Count,
+      q4: q4Count,
+      language: language,
+    );
+  }
+
+  String _generateFallbackReviewReport({
+    required int total,
+    required int completed,
+    required int pending,
+    required int completionRate,
+    required int q1,
+    required int q2,
+    required int q3,
+    required int q4,
+    required String language,
+  }) {
+    if (language == 'en') {
+      return '''### 🎯 Energy & Priority Diagnosis
+- **Total Workload**: $total items ($completed completed, $pending in progress).
+- **Execution Rate**: **$completionRate%** overall completion.
+- **Focus Balance**: ${q2 >= q1 ? 'Great job prioritizing high-leverage key focus tasks (Q2: $q2) over emergencies.' : 'Noticeable urgent firefighting items (Q1: $q1). Recommended to delegate or schedule preventive tasks.'}
+
+### 🌟 Accomplishments & Affirmation
+- You have already pushed through $completed tasks with tangible momentum.
+- Maintaining consistent task closure keeps cognitive load low and focus sharp.
+
+### 💡 Pragmatic Action Tips
+1. **Focus on High-Impact Q2**: Protect an uninterrupted 45-minute block tomorrow morning for your most critical follow-up task.
+2. **Clear Routine Batches**: Batch process quick routine tasks (Q3: $q3) in one single 20-minute afternoon sprint.
+3. **Daily Evening Check**: Review pending items at the end of each workday to keep your Eisenhower matrix well-balanced.''';
+    } else if (language == 'ja') {
+      return '''### 🎯 精力配分と優先度の診断
+- **全体タスク数**: $total 件（完了: $completed 件, 進行中: $pending 件）
+- **完了達成率**: **$completionRate%**
+- **バランス分析**: ${q2 >= q1 ? '重要タスク（第2領域: $q2件）に集中できており、非常に質の高い時間配分です。' : '緊急タスク（第1領域: $q1件）への対応が多めです。計画的な事前対応で負荷を軽減しましょう。'}
+
+### 🌟 成果の振り返りと肯定
+- 既に $completed 件のタスクを確実に達成し、着実な前進を遂げています。
+- タスクを着実に完了させるリズムが定着してきています。
+
+### 💡 生産性向上のアクション提案
+1. **最優先事項のブロック**: 明日午前中の45分間を重要タスクの推進に専念する時間として確保しましょう。
+2. **ルーチンの一括処理**: 日常タスク（第3領域: $q3件）は午後の決まった時間にまとめて片付けましょう。
+3. **1日の終わりに棚卸し**: 夕方に未完了タスクを整理し、翌日のスタートをスムーズにしましょう。''';
+    } else {
+      return '''### 🎯 精力分布与投入诊断
+- **当前任务总量**: 共 $total 项（已完成 $completed 项，进行中 $pending 项）。
+- **任务推进效率**: 综合完成率达到 **$completionRate%**。
+- **四象限平衡度**: ${q2 >= q1 ? '非常棒！重点跟进（第二象限: $q2 项）投入充沛，表明您能主动规划高杠杆目标，而非单纯被动救火。' : '当前紧急提醒（第一象限: $q1 项）占比较高，说明近期面临较多临时突发事务。建议提前拆解风险，减少救火压力。'}
+
+### 🌟 阶段成就与肯定
+- 您已经扎实推进行动并完成了 $completed 项待办，保持着良好的执行动能。
+- 及时将事项移入完成或归档，能够有效释放大脑工作记忆，保持专注度。
+
+### 💡 极简破局与行动建议
+1. **守护核心深度时间**: 建议在明日上午安排 45 分钟无打扰专注块，优先推进 1 项最核心的重点跟进事项。
+2. **批量处理常规待办**: 将零散的常规事务（第三象限: $q3 项）集中在下午统一的 20 分钟内批处理完毕。
+3. **每日下班前 3 分钟复盘**: 快速审视清单，拖拽调整优先级，带着清晰掌控感开启新的一天。''';
+    }
+  }
 }

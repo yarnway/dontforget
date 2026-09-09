@@ -38,18 +38,27 @@ if (-not (Test-Path $isccPath)) {
     if ($isccCmd) { $isccPath = $isccCmd.Source }
 }
 
+$version = "1.2.8"
+$pubspecPath = "$PSScriptRoot\..\pubspec.yaml"
+if (Test-Path $pubspecPath) {
+    $verLine = Get-Content $pubspecPath | Where-Object { $_ -match "^version:\s*([^\+]+)" }
+    if ($verLine -match "^version:\s*([^\+]+)") {
+        $version = $matches[1].Trim()
+    }
+}
+
 if (Test-Path $isccPath) {
     & $isccPath "$PSScriptRoot\..\windows_installer\installer.iss"
-    Write-Host "[OK] Setup installer created: dist\DontForget_Setup_v1.2.7.exe" -ForegroundColor Green
+    Write-Host "[OK] Setup installer created: dist\DontForget_Setup_v$version.exe" -ForegroundColor Green
 } else {
     Write-Warning "ISCC.exe not found, skipping Inno Setup."
 }
 
 Write-Host "[3/3] Creating portable zip archive (Portable.zip)..." -ForegroundColor Cyan
-$zipOutput = "$PSScriptRoot\..\dist\DontForget_Portable_v1.2.7.zip"
+$zipOutput = "$PSScriptRoot\..\dist\DontForget_Portable_v$version.zip"
 if (Test-Path $zipOutput) { Remove-Item $zipOutput -Force }
 Compress-Archive -Path "$releaseDir\*" -DestinationPath $zipOutput -Force
-Write-Host "[OK] Portable zip created: dist\DontForget_Portable_v1.2.7.zip" -ForegroundColor Green
+Write-Host "[OK] Portable zip created: dist\DontForget_Portable_v$version.zip" -ForegroundColor Green
 
 Write-Host "==================================================" -ForegroundColor Green
 Write-Host "Build complete! Production deliverables in dist:" -ForegroundColor Green

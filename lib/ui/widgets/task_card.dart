@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
 import '../../providers/providers.dart';
@@ -101,6 +102,7 @@ class TaskCard extends ConsumerWidget {
         ),
       );
     } else if (value == 'toggle') {
+      HapticFeedback.selectionClick();
       final updated = task.copyWith(isCompleted: !task.isCompleted);
       ref.read(remindersProvider.notifier).updateReminder(updated);
       if (updated.isCompleted) {
@@ -164,16 +166,18 @@ class TaskCard extends ConsumerWidget {
         child: const Icon(Icons.delete_outline, color: Colors.white, size: 20),
       ),
       onDismissed: (_) => _deleteTask(context, ref),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
         margin: const EdgeInsets.only(bottom: 6),
         decoration: BoxDecoration(
-          color: isDark
-              ? Colors.black.withValues(alpha: 0.3)
-              : Colors.white.withValues(alpha: 0.75),
+          color: task.isCompleted
+              ? (isDark ? Colors.black26 : Colors.grey.shade100.withValues(alpha: 0.6))
+              : (isDark ? Colors.black.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.75)),
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color: task.isCompleted
-                ? Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5)
+                ? Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.35)
                 : priorityColor.withValues(alpha: 0.35),
             width: 1.0,
           ),
@@ -343,6 +347,7 @@ class TaskCard extends ConsumerWidget {
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       value: task.isCompleted,
                       onChanged: (val) {
+                        HapticFeedback.selectionClick();
                         if (val == true && task.isRecurring) {
                           final nextTime = task.getNextOccurrence();
                           if (nextTime != null) {

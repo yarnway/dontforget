@@ -1,15 +1,65 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/providers.dart';
 import '../../l10n/app_localizations.dart';
+import '../../services/llm_service.dart';
 import '../widgets/ai_background_effect.dart';
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  bool _isLoadingReport = false;
+  String? _reviewReport;
+
+  Future<void> _generateReport() async {
+    final reminders = ref.read(remindersProvider);
+    final settings = ref.read(settingsProvider);
+    if (reminders.isEmpty) return;
+
+    setState(() => _isLoadingReport = true);
+    try {
+      final report = await LLMService().generateReviewReport(
+        reminders,
+        settings,
+        language: settings.language,
+      );
+      if (mounted) {
+        setState(() {
+          _reviewReport = report;
+          _isLoadingReport = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingReport = false);
+      }
+    }
+  }
+
+  void _copyReport(BuildContext context, AppLocalizations l10n) {
+    if (_reviewReport == null || _reviewReport!.isEmpty) return;
+    Clipboard.setData(ClipboardData(text: _reviewReport!));
+    HapticFeedback.lightImpact();
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        content: Text(l10n.get('reportCopied')),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final reminders = ref.watch(remindersProvider);
 
@@ -170,10 +220,150 @@ class DashboardScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
+
+                      const SizedBox(height: 24),
+
+                      // Section 3: AI Productivity Coach & Review
+                      Row(
+                        children: [
+                          Icon(Icons.psychology_alt_rounded, size: 20, color: Theme.of(context).colorScheme.primary),
+                          const SizedBox(width: 8),
+                          Text(
+                            l10n.get('aiReviewTitle'),
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        l10n.get('aiReviewSubtitle'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.65),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      _buildAiReviewCard(context, l10n, isDark),
+                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildAiReviewCard(BuildContext context, AppLocalizations l10n, bool isDark) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.black26 : Colors.white.withValues(alpha: 0.65),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: primaryColor.withValues(alpha: 0.35),
+          width: 1.0,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (_isLoadingReport) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Column(
+                children: [
+                  SizedBox(
+                    width: 28,
+                    height: 28,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: primaryColor),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    l10n.get('generatingAiReview'),
+                    style: TextStyle(fontSize: 13, color: primaryColor, fontWeight: FontWeight.w500),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ] else if (_reviewReport == null) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Column(
+                children: [
+                  Icon(Icons.auto_awesome, size: 36, color: primaryColor.withValues(alpha: 0.7)),
+                  const SizedBox(height: 10),
+                  Text(
+                    l10n.get('aiReviewSubtitle'),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    ),
+                    icon: const Icon(Icons.bolt_rounded, size: 18),
+                    label: Text(
+                      l10n.get('generateAiReview'),
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                    ),
+                    onPressed: _generateReport,
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            SelectableText(
+              _reviewReport!,
+              style: TextStyle(
+                fontSize: 13,
+                height: 1.6,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.9),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.5)),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                  icon: const Icon(Icons.refresh_rounded, size: 16),
+                  label: Text(l10n.get('regenerateAiReview'), style: const TextStyle(fontSize: 12)),
+                  onPressed: _generateReport,
+                ),
+                const SizedBox(width: 8),
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  ),
+                  icon: const Icon(Icons.copy_rounded, size: 16),
+                  label: Text(l10n.get('copyReport'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                  onPressed: () => _copyReport(context, l10n),
+                ),
+              ],
+            ),
+          ],
+        ],
       ),
     );
   }

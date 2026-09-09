@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/providers.dart';
@@ -39,6 +40,12 @@ final List<ModelProvider> _providers = [
     'https://generativelanguage.googleapis.com/v1beta/openai',
     'gemini-3.6-flash',
     _decodeSecret('QVEuQWI4Uk42SUVydFNsUVZ6TzlGRmRFdXpjcnBraUppdjZMUF80VTFrTnFXekswWkl4ckE='),
+  ),
+  const ModelProvider(
+    'Ollama (本地离线大模型)',
+    'http://localhost:11434/v1',
+    'llama3',
+    'ollama',
   ),
   const ModelProvider('OpenAI (ChatGPT)', 'https://api.openai.com/v1', 'gpt-4o-mini'),
   const ModelProvider('Kimi (Moonshot)', 'https://api.moonshot.cn/v1', 'moonshot-v1-8k'),
@@ -110,6 +117,43 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     Navigator.pop(context);
   }
 
+  void _openConsoleUrl(String url) {
+    if (Platform.isWindows) {
+      Process.run('cmd', ['/c', 'start', '', url]);
+    }
+  }
+
+  Widget _buildConsoleLinkChip(String label, String url) {
+    return InkWell(
+      onTap: () => _openConsoleUrl(url),
+      borderRadius: BorderRadius.circular(4),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.7),
+            width: 0.8,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.85),
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(Icons.launch_rounded, size: 11, color: Theme.of(context).colorScheme.primary),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -132,6 +176,62 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Top: Privacy Shield Card (Wireframe Security)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF0D251A) : const Color(0xFFEAF8F0),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: const Color(0xFF10B981).withValues(alpha: isDark ? 0.45 : 0.6),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.security_rounded,
+                          color: Color(0xFF10B981),
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.get('privacyShieldTitle'),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                color: Color(0xFF10B981),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              l10n.get('privacyShieldDesc'),
+                              style: TextStyle(
+                                fontSize: 11,
+                                height: 1.4,
+                                color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
                 // Language selection card (Wireframe)
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -226,6 +326,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             ),
                             onPressed: () => _onProviderChanged(_providers[1]),
                           ),
+                          ActionChip(
+                            avatar: const Icon(Icons.download_for_offline_rounded, size: 15, color: Colors.teal),
+                            label: Text(l10n.get('ollamaLocal'), style: const TextStyle(fontSize: 12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              side: BorderSide(color: Colors.teal.withValues(alpha: 0.4), width: 1),
+                            ),
+                            onPressed: () => _onProviderChanged(_providers[2]),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -255,7 +364,43 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                         obscureText: true,
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 8),
+                      // Platform Official Console Direct Links
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2, bottom: 6),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.open_in_new_rounded, size: 13, color: Theme.of(context).colorScheme.primary),
+                                const SizedBox(width: 4),
+                                Text(
+                                  l10n.get('openOfficialSite'),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: [
+                                _buildConsoleLinkChip('DeepSeek', 'https://platform.deepseek.com/api_keys'),
+                                _buildConsoleLinkChip('Google AI Studio', 'https://aistudio.google.com/app/apikey'),
+                                _buildConsoleLinkChip('OpenAI', 'https://platform.openai.com/api-keys'),
+                                _buildConsoleLinkChip('Moonshot (Kimi)', 'https://platform.moonshot.cn/console/api-keys'),
+                                _buildConsoleLinkChip('阿里百炼 (Qwen)', 'https://bailian.console.aliyun.com/'),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
                       TextField(
                         controller: _baseUrlController,
                         decoration: InputDecoration(

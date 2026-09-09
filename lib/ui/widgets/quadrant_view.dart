@@ -80,18 +80,39 @@ class QuadrantView extends ConsumerWidget {
         final task = details.data;
         if (task.quadrantLevel != level) {
           ref.read(remindersProvider.notifier).updateReminder(task.copyWith(quadrantLevel: level));
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              duration: const Duration(seconds: 2),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              content: Text('${l10n.get('movedToQuadrant')}${_getLevelTitle(l10n)}: ${task.taskTitle}'),
+            ),
+          );
         }
       },
       builder: (context, candidateData, rejectedData) {
+        final isHovered = candidateData.isNotEmpty;
         return AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
-            color: candidateData.isNotEmpty ? surfaceColor.withValues(alpha: 0.8) : surfaceColor,
+            color: isHovered
+                ? bgColor.withValues(alpha: isDark ? 0.22 : 0.12)
+                : surfaceColor,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: candidateData.isNotEmpty ? bgColor : outlineColor,
-              width: candidateData.isNotEmpty ? 1.5 : 1.0,
+              color: isHovered ? bgColor : outlineColor,
+              width: isHovered ? 2.0 : 1.0,
             ),
+            boxShadow: isHovered
+                ? [
+                    BoxShadow(
+                      color: bgColor.withValues(alpha: 0.3),
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                    )
+                  ]
+                : [],
           ),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           child: Column(
@@ -146,19 +167,23 @@ class QuadrantView extends ConsumerWidget {
                           itemCount: tasks.length,
                           itemBuilder: (context, index) {
                             final task = tasks[index];
-                            return Draggable<Reminder>(
+                            return LongPressDraggable<Reminder>(
                               data: task,
+                              delay: const Duration(milliseconds: 160),
                               feedback: Material(
-                                elevation: 8,
-                                borderRadius: BorderRadius.circular(6),
+                                elevation: 12,
+                                borderRadius: BorderRadius.circular(8),
                                 color: Colors.transparent,
                                 child: SizedBox(
-                                  width: 250,
-                                  child: TaskCard(task: task, onPlayMedia: () {}),
+                                  width: 260,
+                                  child: Opacity(
+                                    opacity: 0.95,
+                                    child: TaskCard(task: task, onPlayMedia: () {}),
+                                  ),
                                 ),
                               ),
                               childWhenDragging: Opacity(
-                                opacity: 0.25,
+                                opacity: 0.2,
                                 child: TaskCard(
                                   task: task,
                                   onPlayMedia: () => onPlayMedia(task.recordId ?? ''),

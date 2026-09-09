@@ -87,7 +87,7 @@ if (-not (Test-Path $regPath)) {
     New-Item -Path $regPath -Force | Out-Null
 }
 Set-ItemProperty -Path $regPath -Name "DisplayName" -Value "DontForget"
-Set-ItemProperty -Path $regPath -Name "DisplayVersion" -Value "1.2.7"
+Set-ItemProperty -Path $regPath -Name "DisplayVersion" -Value "1.2.8"
 Set-ItemProperty -Path $regPath -Name "Publisher" -Value "DontForget Team"
 Set-ItemProperty -Path $regPath -Name "DisplayIcon" -Value "$TargetDir\dont_forget.exe,0"
 Set-ItemProperty -Path $regPath -Name "InstallLocation" -Value $TargetDir

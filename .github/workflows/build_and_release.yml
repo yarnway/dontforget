@@ -2,8 +2,13 @@ name: Multi-Platform Build & Release
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -46,14 +51,17 @@ jobs:
 
       - name: Compile Inno Setup (Setup.exe)
         run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" windows_installer\installer.iss
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { $iscc = "C:\Program Files\Inno Setup 6\ISCC.exe" }
+          & $iscc windows_installer\installer.iss
 
       - name: Create Portable Zip
         run: |
+          $ver = (Get-Content pubspec.yaml | Select-String "^version:\s*([^\+]+)").Matches.Groups[1].Value.Trim()
           $releaseDir = "build\windows\x64\runner\Release"
           $distDir = "dist"
           if (-not (Test-Path $distDir)) { New-Item -ItemType Directory -Path $distDir -Force }
-          Compress-Archive -Path "$releaseDir\*" -DestinationPath "$distDir\DontForget_Portable_v1.0.0.zip" -Force
+          Compress-Archive -Path "$releaseDir\*" -DestinationPath "$distDir\DontForget_Windows_Portable_v$ver.zip" -Force
 
       - name: Upload Windows Artifacts
         uses: actions/upload-artifact@v4
@@ -94,9 +102,10 @@ jobs:
 
       - name: Prepare Android Dist
         run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' | tr -d ' \r\n')
           mkdir -p dist
-          cp build/app/outputs/flutter-apk/app-release.apk dist/DontForget_Android_v1.0.0.apk
-          cp build/app/outputs/bundle/release/app-release.aab dist/DontForget_Android_v1.0.0.aab
+          cp build/app/outputs/flutter-apk/app-release.apk dist/DontForget_Android_v${VERSION}.apk
+          cp build/app/outputs/bundle/release/app-release.aab dist/DontForget_Android_v${VERSION}.aab
 
       - name: Upload Android Artifacts
         uses: actions/upload-artifact@v4
@@ -117,7 +126,7 @@ jobs:
       - name: Install Linux Build Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libasound2-dev
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -133,13 +142,14 @@ jobs:
 
       - name: Package Linux Archive
         run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' | tr -d ' \r\n')
           mkdir -p dist
-          tar -czf dist/DontForget_Linux_x64_v1.0.0.tar.gz -C build/linux/x64/release/bundle .
+          tar -czf dist/DontForget_Ubuntu_Linux_x64_v${VERSION}.tar.gz -C build/linux/x64/release/bundle .
 
       - name: Upload Linux Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: linux-deliverables
+          name: ubuntu-deliverables
           path: dist/*
 
   # =======================================================
@@ -166,9 +176,10 @@ jobs:
 
       - name: Package macOS Archive
         run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' | tr -d ' \r\n')
           mkdir -p dist
           cd build/macos/Build/Products/Release
-          zip -r -y ../../../../../dist/DontForget_macOS_v1.0.0.zip dont_forget.app
+          zip -r -y ../../../../../dist/DontForget_macOS_v${VERSION}.zip dont_forget.app
 
       - name: Upload macOS Artifacts
         uses: actions/upload-artifact@v4
@@ -180,7 +191,7 @@ jobs:
   # 5. IOS BUILD (IPA Package)
   # =======================================================
   build-ios:
-    name: Build iOS Release
+    name: Build iOS Release (Unsigned IPA)
     runs-on: macos-latest
     steps:
       - name: Checkout Code
@@ -200,17 +211,18 @@ jobs:
 
       - name: Package iOS IPA
         run: |
+          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' | tr -d ' \r\n')
           mkdir -p dist/Payload
           cp -R build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app dist/Payload/
           cd dist
-          zip -r -y DontForget_iOS_v1.0.0.ipa Payload
+          zip -r -y DontForget_iOS_v${VERSION}.ipa Payload
           rm -rf Payload
 
       - name: Upload iOS Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ios-deliverables
-          path: dist/DontForget_iOS_v1.0.0.ipa
+          path: dist/DontForget_iOS_*.ipa
 
   # =======================================================
   # 6. GITHUB RELEASE (Unified Release Publishing)
@@ -236,8 +248,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: release-files/*
-          tag_name: ${{ github.ref_name || 'v1.0.0' }}
-          name: Release ${{ github.ref_name || 'v1.0.0' }} (Mac, Windows, Linux, Android, iOS)
+          tag_name: ${{ github.ref_name || 'v1.2.8' }}
+          name: Release ${{ github.ref_name || 'v1.2.8' }} (Windows, macOS, Ubuntu, Android, iOS)
           draft: false
           prerelease: false
           generate_release_notes: true
