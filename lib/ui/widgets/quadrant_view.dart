@@ -83,30 +83,10 @@ class QuadrantView extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header bar with title icon & micro indicator
+              // Header bar with minimal title icon (no counter badge)
               Padding(
-                padding: const EdgeInsets.only(left: 2, bottom: 6),
-                child: Row(
-                  children: [
-                    titleIcon,
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: outlineColor.withValues(alpha: 0.4), width: 0.8),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        '${tasks.length}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                padding: const EdgeInsets.only(left: 4, top: 2, bottom: 6),
+                child: titleIcon,
               ),
 
               // Tasks information feed

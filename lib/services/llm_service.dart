@@ -147,29 +147,33 @@ $truncatedContent
 You are a highly efficient, accurate, and intelligent task management AI assistant.
 Current local time is: $nowStr.
 User will provide a text (may be speech-to-text transcription) or an image.
-Your task is to accurately extract actionable task(s), automatically generate appropriate reminder times, and detect recurrence patterns.
+Your task is to accurately extract actionable task(s), intelligently evaluate how long in advance to remind the user, generate appropriate reminder times, and detect recurrence patterns.
 
 Guidelines:
 1. "title": Crisp, actionable task title (under 15 Chinese characters or 10 words).
 2. "summary": Refined, concise summary of the context. Eliminate conversational fillers, specify key details.
-3. "time": MUST ALWAYS BE AUTOMATICALLY GENERATED in "YYYY-MM-DD HH:MM" format based on "Current local time ($nowStr)".
-   - Do NOT ask user to choose or input time. Auto-infer a smart reminder timestamp:
-     * If user explicitly mentions a time ("下午3点开会", "明天交周报", "10分钟后吃药"): calculate exact future timestamp.
-     * If no explicit time is mentioned ("买牛奶", "复习英语", "发邮件给客户"): NEVER return null! Automatically assign a sensible future time:
-       - Urgent/Important (Q1): within 1-2 hours or today's working hours.
-       - Important/Not Urgent (Q2): tonight 20:00 or tomorrow morning 09:30.
-       - Routine/General (Q3/Q4): today 18:30 or 20:00. If already late night (>21:00), schedule tomorrow 09:00.
-     * Special case only: If input is completely unintelligible gibberish, return null and flag needs_clarification.
-4. "is_recurring": boolean. true if user mentions or implies periodic/recurring behavior (e.g. "每天", "每周五", "工作日", "每个月", "按时吃药", "每日复盘"), otherwise false.
-5. "recurrence_rule": "none" | "daily" | "workday" | "weekly" | "monthly" | "yearly".
-6. "recurrence_desc": Short Chinese description if recurring (e.g. "每天", "每个工作日", "每周五", "每月1号"), or null if none.
-7. "quadrant": Categorize into Eisenhower Matrix:
-   1 = 紧急且重要 (Urgent & Important)
-   2 = 重要不紧急 (Important & Not Urgent)
-   3 = 紧急不重要 (Urgent & Not Important)
-   4 = 不重要不紧急 (Not Important & Not Urgent)
-8. "urgency": "Urgent" | "General" | "Not Urgent"
-9. "importance": "Important" | "General" | "Not Important"
+3. "event_time": If user mentions a specific event time, appointment, departure, or deadline (e.g. "下午3点开会", "明天早上9点的高铁", "周五下午5点前交总结", "今晚8点聚餐"), calculate the exact future event timestamp in "YYYY-MM-DD HH:MM". If no fixed event/deadline is mentioned (e.g. "买牛奶", "发邮件给客户"), output null.
+4. "lead_time_minutes": AI MUST INTELLIGENTLY JUDGE how many minutes in advance to remind the user, so they can adequately prepare:
+   - Conference call, meeting, interview, class: 15 to 30 minutes in advance (e.g. 15).
+   - Flight, train, doctor appointment, outdoor trip: 60 to 120 minutes in advance (e.g. 60 or 90).
+   - Deadline, report submission, project deliverable: 60 to 180 minutes in advance (e.g. 120) so user can finalize work before cutoff.
+   - Point-in-time immediate actions (e.g. "10分钟后吃药", "下午2点抢票", "晚上8点做瑜伽"): 0 minutes.
+   - General tasks without a fixed event time: 0 minutes.
+5. "lead_time_desc": Brief human-readable explanation of the reminder timing (e.g. "会议时间 15:00，提前 15 分钟提醒准备入会", or "高铁发车 09:00，提前 90 分钟提醒出发安检", or "工作日建议 10:00 前完成").
+6. "time": The actual REMINDER TRIGGER TIMESTAMP in "YYYY-MM-DD HH:MM":
+   - If "event_time" is present: "time" MUST BE (event_time minus lead_time_minutes).
+     * Example: Event is 15:00 meeting, lead_time_minutes is 15 -> reminder "time" is 14:45.
+     * Example: Train is 09:00, lead_time_minutes is 90 -> reminder "time" is 07:30.
+   - If no explicit event time is mentioned: NEVER return null! Automatically assign a sensible future time:
+     * Urgent/Important (Q1): within 1-2 hours or today's working hours.
+     * Important/Not Urgent (Q2): tonight 20:00 or tomorrow morning 09:30.
+     * Routine/General (Q3/Q4): today 18:30 or 20:00. If already late night (>21:00), schedule tomorrow 09:00.
+7. "is_recurring": boolean. true if user mentions or implies periodic/recurring behavior (e.g. "每天", "每周五", "工作日", "每个月", "按时吃药", "每日复盘"), otherwise false.
+8. "recurrence_rule": "none" | "daily" | "workday" | "weekly" | "monthly" | "yearly".
+9. "recurrence_desc": Short Chinese description if recurring (e.g. "每天", "每个工作日", "每周五", "每月1号"), or null if none.
+10. "quadrant": Categorize into Eisenhower Matrix (1 = 紧急且重要, 2 = 重要不紧急, 3 = 紧急不重要, 4 = 不重要不紧急).
+11. "urgency": "Urgent" | "General" | "Not Urgent"
+12. "importance": "Important" | "General" | "Not Important"
 
 Output strictly in valid JSON object matching this structure:
 {
@@ -177,6 +181,9 @@ Output strictly in valid JSON object matching this structure:
     {
       "title": "...",
       "summary": "...",
+      "event_time": "YYYY-MM-DD HH:MM" or null,
+      "lead_time_minutes": 15,
+      "lead_time_desc": "提前15分钟提醒准备入会",
       "time": "YYYY-MM-DD HH:MM",
       "is_recurring": false,
       "recurrence_rule": "none",
@@ -257,18 +264,43 @@ Output strictly in valid JSON object matching this structure:
       }
 
       return tasksList.map((json) {
-        DateTime? parsedTime;
-        final rawTime = json['time'] ?? json['date'];
+        DateTime? parsedTriggerTime;
+        DateTime? parsedEventTime;
+
+        final rawTime = json['time'] ?? json['date'] ?? json['trigger_time'];
         if (rawTime != null && rawTime.toString().toLowerCase() != 'null') {
           try {
-            parsedTime = DateTime.parse(rawTime.toString());
+            parsedTriggerTime = DateTime.parse(rawTime.toString());
           } catch (_) {}
+        }
+
+        final rawEventTime = json['event_time'];
+        if (rawEventTime != null && rawEventTime.toString().toLowerCase() != 'null') {
+          try {
+            parsedEventTime = DateTime.parse(rawEventTime.toString());
+          } catch (_) {}
+        }
+
+        int leadMinutes = 0;
+        if (json['lead_time_minutes'] is int) {
+          leadMinutes = json['lead_time_minutes'];
+        } else if (json['lead_time_minutes'] != null) {
+          leadMinutes = int.tryParse(json['lead_time_minutes'].toString()) ?? 0;
+        }
+
+        // If event_time was provided and leadMinutes > 0, verify/ensure lead time is applied
+        if (parsedEventTime != null && leadMinutes > 0) {
+          final expectedTrigger = parsedEventTime.subtract(Duration(minutes: leadMinutes));
+          // If model returned triggerTime matching eventTime exactly without subtracting lead time
+          if (parsedTriggerTime == null || parsedTriggerTime.isAtSameMomentAs(parsedEventTime)) {
+            parsedTriggerTime = expectedTrigger;
+          }
         }
         
         int quad = json['quadrant'] is int ? json['quadrant'] : 4;
 
         // If the model didn't return a time, automatically assign a smart default reminder time
-        parsedTime ??= _deduceDefaultTriggerTime(DateTime.now(), quad);
+        parsedTriggerTime ??= _deduceDefaultTriggerTime(DateTime.now(), quad);
 
         bool isRecur = false;
         if (json['is_recurring'] is bool) {
@@ -280,14 +312,24 @@ Output strictly in valid JSON object matching this structure:
         String rule = json['recurrence_rule'] as String? ?? 'none';
         String? desc = json['recurrence_desc'] as String? ?? json['recurrence_description'] as String?;
 
+        String? leadDesc = json['lead_time_desc'] as String?;
+        String? summary = json['summary'] ?? json['description'];
+        if (leadDesc != null && leadDesc.isNotEmpty) {
+          if (summary == null || summary.isEmpty) {
+            summary = leadDesc;
+          } else if (!summary.contains('提前') && !summary.contains(leadDesc)) {
+            summary = '$summary ($leadDesc)';
+          }
+        }
+
         return Reminder(
           id: const Uuid().v4(),
           taskTitle: json['title'] ?? json['task'] ?? json['event'] ?? '新事项',
-          taskSummary: json['summary'] ?? json['description'],
+          taskSummary: summary,
           quadrantLevel: quad,
           urgencyLevel: json['urgency'] ?? 'General',
           importanceLevel: json['importance'] ?? 'General',
-          triggerTime: parsedTime,
+          triggerTime: parsedTriggerTime,
           isRecurring: isRecur,
           recurrenceRule: rule,
           recurrenceDescription: desc,
@@ -324,6 +366,9 @@ Output strictly in valid JSON object matching this structure:
     final titleMatch = RegExp(r'"(?:title|task|event)"\s*:\s*"([^"]+)"').firstMatch(raw);
     final summaryMatch = RegExp(r'"(?:summary|description)"\s*:\s*"([^"]+)"').firstMatch(raw);
     final timeMatch = RegExp(r'"(?:time|date)"\s*:\s*"([^"]+)"').firstMatch(raw);
+    final eventTimeMatch = RegExp(r'"event_time"\s*:\s*"([^"]+)"').firstMatch(raw);
+    final leadMinutesMatch = RegExp(r'"lead_time_minutes"\s*:\s*(\d+)').firstMatch(raw);
+    final leadDescMatch = RegExp(r'"lead_time_desc"\s*:\s*"([^"]+)"').firstMatch(raw);
     final quadMatch = RegExp(r'"quadrant"\s*:\s*(\d+)').firstMatch(raw);
     final urgencyMatch = RegExp(r'"urgency"\s*:\s*"([^"]+)"').firstMatch(raw);
     final importanceMatch = RegExp(r'"importance"\s*:\s*"([^"]+)"').firstMatch(raw);
@@ -338,6 +383,9 @@ Output strictly in valid JSON object matching this structure:
             'title': titleMatch.group(1),
             'summary': summaryMatch?.group(1),
             'time': timeMatch?.group(1),
+            'event_time': eventTimeMatch?.group(1),
+            'lead_time_minutes': int.tryParse(leadMinutesMatch?.group(1) ?? '0') ?? 0,
+            'lead_time_desc': leadDescMatch?.group(1),
             'quadrant': int.tryParse(quadMatch?.group(1) ?? '4') ?? 4,
             'urgency': urgencyMatch?.group(1) ?? 'General',
             'importance': importanceMatch?.group(1) ?? 'General',

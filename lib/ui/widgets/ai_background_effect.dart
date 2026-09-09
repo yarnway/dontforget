@@ -136,16 +136,16 @@ class _AiBackgroundEffectState extends State<AiBackgroundEffect>
 
   void _initCosmicStars() {
     final rand = Random(777);
-    // 70 ambient 3D deep-space background stars
-    for (int i = 0; i < 70; i++) {
-      final x = (rand.nextDouble() - 0.5) * 3.2;
-      final y = (rand.nextDouble() - 0.5) * 2.4;
-      final z = (rand.nextDouble() - 0.5) * 2.6;
-      final baseSize = rand.nextDouble() * 1.6 + 0.8;
-      final twinkleSpeed = rand.nextDouble() * 2.5 + 1.2;
+    // 150 ambient 3D deep-space background stars (doubled starlight density)
+    for (int i = 0; i < 150; i++) {
+      final x = (rand.nextDouble() - 0.5) * 3.4;
+      final y = (rand.nextDouble() - 0.5) * 2.6;
+      final z = (rand.nextDouble() - 0.5) * 2.8;
+      final baseSize = rand.nextDouble() * 1.5 + 0.7;
+      final twinkleSpeed = rand.nextDouble() * 2.5 + 1.0;
       final phase = rand.nextDouble() * 2 * pi;
-      // Top 16 stars will have 4-point diffraction cross flares
-      final hasFlare = i < 16;
+      // Top 32 stars will have 4-point diffraction cross flares
+      final hasFlare = i < 32;
 
       _stars.add(_Star3D(
         x: x,
@@ -491,9 +491,9 @@ class _Logo3dParticlePainter extends CustomPainter {
             );
 
             // Push outward in 3D with viscous momentum
-            p.vx += norm.dx * waveFactor * 0.10;
-            p.vy += norm.dy * waveFactor * 0.10;
-            p.vz += (waveFactor * 0.08);
+            p.vx += norm.dx * waveFactor * 0.07;
+            p.vy += norm.dy * waveFactor * 0.07;
+            p.vz += (waveFactor * 0.05);
           }
         }
       }
@@ -503,24 +503,24 @@ class _Logo3dParticlePainter extends CustomPainter {
         final dist = Offset(p.screenX - mousePos!.dx, p.screenY - mousePos!.dy).distance;
         const double mouseRepelDist = 140.0;
         if (dist < mouseRepelDist && dist > 1.0) {
-          final repel = (1.0 - dist / mouseRepelDist) * 0.030;
+          final repel = (1.0 - dist / mouseRepelDist) * 0.022;
           final norm = Offset((p.screenX - mousePos!.dx) / dist, (p.screenY - mousePos!.dy) / dist);
 
-          // Repulsion
+          // Gentle Repulsion
           p.vx += norm.dx * repel;
           p.vy += norm.dy * repel;
-          p.vz -= repel * 0.6;
+          p.vz -= repel * 0.5;
 
           // Fluid wake drag: particles catch a fraction of the mouse's momentum
-          p.vx += mouseVelocity.dx * 0.0015 * (1.0 - dist / mouseRepelDist);
-          p.vy += mouseVelocity.dy * 0.0015 * (1.0 - dist / mouseRepelDist);
+          p.vx += mouseVelocity.dx * 0.0012 * (1.0 - dist / mouseRepelDist);
+          p.vy += mouseVelocity.dy * 0.0012 * (1.0 - dist / mouseRepelDist);
         }
       }
 
-      // 3.3 High-Damping Elastic Spring Recovery (胡克定律阻尼回弹)
-      // Damping = 0.91 gives a distinct viscous fluid resistance feeling
-      const double springK = 0.048;
-      const double damping = 0.91;
+      // 3.3 Slow & Serene High-Damping Elastic Spring Recovery (慢速阻尼平缓回弹)
+      // springK = 0.016 and damping = 0.945 allow particles to drift back gently over several seconds
+      const double springK = 0.016;
+      const double damping = 0.945;
 
       final diffX = p.baseX - p.curX;
       final diffY = p.baseY - p.curY;
