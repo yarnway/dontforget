@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/database_helper.dart';
 import '../models/settings.dart';
@@ -31,43 +32,52 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   }
 
   Future<void> _loadSettings() async {
-    final db = await _dbHelper.database;
-    final res = await db.query('Settings', where: 'id = ?', whereArgs: ['default']);
-    if (res.isNotEmpty) {
-      var loadedSettings = AppSettings.fromJson(res.first);
-      // Migrate old deepseek model name if present
-      if (loadedSettings.baseUrl.contains('deepseek.com') &&
-          (loadedSettings.modelName == 'deepseek-v4-flash' || loadedSettings.modelName.isEmpty)) {
-        loadedSettings = loadedSettings.copyWith(
+    try {
+      final db = await _dbHelper.database;
+      final res = await db.query('Settings', where: 'id = ?', whereArgs: ['default']);
+      if (res.isNotEmpty) {
+        var loadedSettings = AppSettings.fromJson(res.first);
+        // Migrate old deepseek model name if present
+        if (loadedSettings.baseUrl.contains('deepseek.com') &&
+            (loadedSettings.modelName == 'deepseek-v4-flash' || loadedSettings.modelName.isEmpty)) {
+          loadedSettings = loadedSettings.copyWith(
+            apiKey: _kDefaultKey,
+            baseUrl: 'https://api.deepseek.com',
+            modelName: 'deepseek-v4-flash-vision-exp',
+          );
+          await updateSettings(loadedSettings);
+        }
+        state = loadedSettings;
+      } else {
+        // If no settings exist yet, insert the default
+        final defaultSettings = AppSettings(
+          id: 'default',
           apiKey: _kDefaultKey,
           baseUrl: 'https://api.deepseek.com',
           modelName: 'deepseek-v4-flash-vision-exp',
+          language: 'zh',
         );
-        await updateSettings(loadedSettings);
+        await db.insert('Settings', defaultSettings.toJson());
+        state = defaultSettings;
       }
-      state = loadedSettings;
-    } else {
-      // If no settings exist yet, insert the default
-      final defaultSettings = AppSettings(
-        id: 'default',
-        apiKey: _kDefaultKey,
-        baseUrl: 'https://api.deepseek.com',
-        modelName: 'deepseek-v4-flash-vision-exp',
-        language: 'zh',
-      );
-      await db.insert('Settings', defaultSettings.toJson());
-      state = defaultSettings;
+    } catch (e, stack) {
+      // Fallback gracefully to default in-memory state on any storage issue
+      debugPrint('Warning: Settings storage error: $e\n$stack');
     }
   }
 
   Future<void> updateSettings(AppSettings newSettings) async {
-    final db = await _dbHelper.database;
-    await db.update(
-      'Settings',
-      newSettings.toJson(),
-      where: 'id = ?',
-      whereArgs: ['default'],
-    );
+    try {
+      final db = await _dbHelper.database;
+      await db.update(
+        'Settings',
+        newSettings.toJson(),
+        where: 'id = ?',
+        whereArgs: ['default'],
+      );
+    } catch (e) {
+      debugPrint('Warning: updateSettings storage error: $e');
+    }
     state = newSettings;
   }
 }
@@ -84,15 +94,20 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
   }
 
   Future<void> _loadReminders() async {
-    final db = await _dbHelper.database;
-    final res = await db.query('Reminders');
-    final list = res.map((r) => Reminder.fromJson(r)).toList();
-    state = list;
-    final now = DateTime.now();
-    for (final reminder in list) {
-      if (!reminder.isCompleted && reminder.triggerTime != null && reminder.triggerTime!.isAfter(now)) {
-        NotificationService().scheduleReminder(reminder);
+    try {
+      final db = await _dbHelper.database;
+      final res = await db.query('Reminders');
+      final list = res.map((r) => Reminder.fromJson(r)).toList();
+      state = list;
+      final now = DateTime.now();
+      for (final reminder in list) {
+        if (!reminder.isCompleted && reminder.triggerTime != null && reminder.triggerTime!.isAfter(now)) {
+          NotificationService().scheduleReminder(reminder);
+        }
       }
+    } catch (e, stack) {
+      debugPrint('Warning: Reminders load error: $e\n$stack');
+      state = [];
     }
   }
 

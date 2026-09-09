@@ -41,38 +41,37 @@ Copy-Item -Path "$sourceDir\*" -Destination $TargetDir -Recurse -Force
 # Copy uninstaller script
 Copy-Item -Path "$PSScriptRoot\Uninstall.ps1" -Destination "$TargetDir\Uninstall.ps1" -Force
 
-# 3. Create desktop and start menu shortcuts
-Write-Host "[2/4] Creating desktop and start menu shortcuts..." -ForegroundColor Green
+# 3. Create single English desktop and start menu shortcuts
+Write-Host "[2/4] Creating single English desktop and start menu shortcuts..." -ForegroundColor Green
 $wsh = New-Object -ComObject WScript.Shell
 
 $cnName = [System.Text.Encoding]::UTF8.GetString([byte[]](0xE5,0x88,0xAB,0xE5,0xBF,0x98,0xE4,0xBA,0x86))
-$cnDesc = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String('5Yir5b+Y5LqGIC0g5pm66IO95Zub6LGh6ZmQ5pel56iL5o+Q6YaS566h5a62'))
-
 $desktopPath = [System.Environment]::GetFolderPath('Desktop')
-$shortcutCnPath = Join-Path $desktopPath "$cnName.lnk"
-$shortcutDesktopCn = $wsh.CreateShortcut($shortcutCnPath)
-$shortcutDesktopCn.TargetPath = "$TargetDir\dont_forget.exe"
-$shortcutDesktopCn.WorkingDirectory = $TargetDir
-$shortcutDesktopCn.IconLocation = "$TargetDir\dont_forget.exe,0"
-$shortcutDesktopCn.Description = $cnDesc
-$shortcutDesktopCn.Save()
+
+# Clean up legacy Chinese shortcut if present
+Remove-Item "$desktopPath\$cnName.lnk" -ErrorAction SilentlyContinue
 
 $shortcutEnPath = Join-Path $desktopPath "DontForget.lnk"
 $shortcutDesktop = $wsh.CreateShortcut($shortcutEnPath)
 $shortcutDesktop.TargetPath = "$TargetDir\dont_forget.exe"
 $shortcutDesktop.WorkingDirectory = $TargetDir
 $shortcutDesktop.IconLocation = "$TargetDir\dont_forget.exe,0"
-$shortcutDesktop.Description = "DontForget - Intelligent Task Manager"
+$shortcutDesktop.Description = "DontForget - Intelligent Task & Reminder Assistant"
 $shortcutDesktop.Save()
 
 $programsPath = [System.Environment]::GetFolderPath('Programs')
 $menuDir = Join-Path $programsPath "DontForget"
 if (-not (Test-Path $menuDir)) { New-Item -ItemType Directory -Path $menuDir -Force | Out-Null }
-$menuCnPath = Join-Path $menuDir "$cnName.lnk"
-$shortcutMenu = $wsh.CreateShortcut($menuCnPath)
+
+# Clean up legacy Chinese menu shortcut
+Remove-Item "$menuDir\$cnName.lnk" -ErrorAction SilentlyContinue
+
+$menuEnPath = Join-Path $menuDir "DontForget.lnk"
+$shortcutMenu = $wsh.CreateShortcut($menuEnPath)
 $shortcutMenu.TargetPath = "$TargetDir\dont_forget.exe"
 $shortcutMenu.WorkingDirectory = $TargetDir
 $shortcutMenu.IconLocation = "$TargetDir\dont_forget.exe,0"
+$shortcutMenu.Description = "DontForget - Intelligent Task & Reminder Assistant"
 $shortcutMenu.Save()
 
 $shortcutUninst = $wsh.CreateShortcut("$menuDir\Uninstall DontForget.lnk")
@@ -87,8 +86,8 @@ $regPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\DontForget
 if (-not (Test-Path $regPath)) {
     New-Item -Path $regPath -Force | Out-Null
 }
-Set-ItemProperty -Path $regPath -Name "DisplayName" -Value "DontForget ($cnName)"
-Set-ItemProperty -Path $regPath -Name "DisplayVersion" -Value "1.2.6"
+Set-ItemProperty -Path $regPath -Name "DisplayName" -Value "DontForget"
+Set-ItemProperty -Path $regPath -Name "DisplayVersion" -Value "1.2.7"
 Set-ItemProperty -Path $regPath -Name "Publisher" -Value "DontForget Team"
 Set-ItemProperty -Path $regPath -Name "DisplayIcon" -Value "$TargetDir\dont_forget.exe,0"
 Set-ItemProperty -Path $regPath -Name "InstallLocation" -Value $TargetDir

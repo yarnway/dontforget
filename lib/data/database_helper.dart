@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite/sqflite.dart' as sqflite;
 
@@ -16,6 +18,33 @@ class DatabaseHelper {
     return _database!;
   }
 
+  Future<String> _getDatabaseDirectory() async {
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      try {
+        final supportDir = await getApplicationSupportDirectory();
+        final dbDir = Directory(join(supportDir.path, 'databases'));
+        if (!await dbDir.exists()) {
+          await dbDir.create(recursive: true);
+        }
+        return dbDir.path;
+      } catch (e) {
+        debugPrint('Error getting application support directory: $e');
+        if (Platform.isWindows) {
+          final localAppData = Platform.environment['LOCALAPPDATA'] ??
+              Platform.environment['APPDATA'] ??
+              Platform.environment['USERPROFILE'] ??
+              '.';
+          final fallbackDir = Directory(join(localAppData, 'DontForget', 'databases'));
+          if (!fallbackDir.existsSync()) {
+            fallbackDir.createSync(recursive: true);
+          }
+          return fallbackDir.path;
+        }
+      }
+    }
+    return await sqflite.getDatabasesPath();
+  }
+
   Future<Database> _initDB(String filePath) async {
     // Initialize FFI for desktop platforms
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
@@ -23,11 +52,23 @@ class DatabaseHelper {
       databaseFactory = databaseFactoryFfi;
     }
     
-    final dbPath = await sqflite.getDatabasesPath();
-    final path = join(dbPath, filePath);
+    final dbDir = await _getDatabaseDirectory();
+    final targetPath = join(dbDir, filePath);
+
+    // Auto-migrate legacy DB from previous development/relative path if target doesn't exist
+    final targetFile = File(targetPath);
+    if (!targetFile.existsSync()) {
+      try {
+        final legacyDir = join(Directory.current.path, '.dart_tool', 'sqflite_common_ffi', 'databases', filePath);
+        final legacyFile = File(legacyDir);
+        if (legacyFile.existsSync()) {
+          legacyFile.copySync(targetPath);
+        }
+      } catch (_) {}
+    }
 
     return await databaseFactory.openDatabase(
-      path,
+      targetPath,
       options: OpenDatabaseOptions(
         version: 4,
         onCreate: _createDB,

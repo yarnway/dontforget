@@ -1,8 +1,8 @@
-; Inno Setup Script for DontForget (别忘了)
+; Inno Setup Script for DontForget
 ; Defines packaging, installation, shortcuts, and full uninstallation
 
 #define MyAppName "DontForget"
-#define MyAppVersion "1.2.6"
+#define MyAppVersion "1.2.7"
 #define MyAppPublisher "DontForget Team"
 #define MyAppExeName "dont_forget.exe"
 #define SourceDir "..\build\windows\x64\runner\Release"
@@ -29,28 +29,60 @@ DisableProgramGroupPage=auto
 MinVersion=6.1sp1
 
 [Languages]
-; Name: "chinesesimp"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
+[InstallDelete]
+; Actively remove legacy Chinese shortcuts from earlier installations
+Type: files; Name: "{autodesktop}\别忘了.lnk"
+Type: files; Name: "{group}\别忘了.lnk"
+Type: files; Name: "{userdesktop}\别忘了.lnk"
+Type: files; Name: "{commondesktop}\别忘了.lnk"
+Type: files; Name: "{userprograms}\DontForget\别忘了.lnk"
+Type: files; Name: "{commonprograms}\DontForget\别忘了.lnk"
+
 [Files]
-; Main executable and all dependencies in the Release folder (Strict product build: exclude any dev/test databases and logs)
+; Main executable and all dependencies in the Release folder
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.db,*.log,.dart_tool\*,.dart_tool,*.pdb,run.log,error_log.txt"
 
 [Icons]
-; Start Menu shortcuts with explicitly defined WorkingDir
+; Single English Start Menu shortcut
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
-Name: "{group}\别忘了"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
-; Desktop shortcut with explicitly defined WorkingDir
+; Single English Desktop shortcut
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: desktopicon
-Name: "{autodesktop}\别忘了"; Filename: "{app}\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent; WorkingDir: "{app}"
 
 [UninstallDelete]
+Type: files; Name: "{autodesktop}\别忘了.lnk"
+Type: files; Name: "{autodesktop}\DontForget.lnk"
 Type: filesandordirs; Name: "{app}\data"
 Type: filesandordirs; Name: "{app}"
+
+[Code]
+procedure CleanLegacyRegistry();
+begin
+  // Remove conflicting manual registry key registered by legacy Install.ps1 so Windows Settings only displays one clean DontForget entry
+  RegDeleteKeyIncludingSubkeys(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\DontForget');
+  RegDeleteKeyIncludingSubkeys(HKLM, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\DontForget');
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssInstall then
+  begin
+    CleanLegacyRegistry();
+  end;
+end;
+
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if CurUninstallStep = usPostUninstall then
+  begin
+    CleanLegacyRegistry();
+  end;
+end;

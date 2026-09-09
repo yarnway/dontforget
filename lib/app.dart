@@ -37,7 +37,7 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener, TrayListener
           ? 'assets/app_icon.ico' 
           : 'assets/app_icon.png' // Fallback for macOS and Linux
       );
-      await trayManager.setToolTip("别忘了");
+      await trayManager.setToolTip("DontForget");
       Menu menu = Menu(
         items: [
           MenuItem(
@@ -125,7 +125,7 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener, TrayListener
     const primaryColor = Color(0xFF7A8B8B); // A muted, grayish cyan/teal
 
     return MaterialApp(
-      title: "别忘了",
+      title: "DontForget",
       debugShowCheckedModeBanner: false,
       locale: Locale(settings.language),
       localizationsDelegates: const [
