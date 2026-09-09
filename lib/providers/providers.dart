@@ -12,6 +12,9 @@ import '../services/dp_scheduler_service.dart';
 import '../services/multi_agent_service.dart';
 import '../services/spaced_repetition_service.dart';
 import '../services/data_export_service.dart';
+import '../services/dynamic_urgency_service.dart';
+import '../services/bidirectional_link_service.dart';
+import '../services/context_trigger_service.dart';
 
 final databaseHelperProvider = Provider<DatabaseHelper>((ref) {
   return DatabaseHelper.instance;
@@ -110,6 +113,8 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           NotificationService().scheduleReminder(reminder);
         }
       }
+      // 启动时自动执行 Q2 动态跃迁扫描
+      await scanAndApplyDynamicUrgency();
     } catch (e, stack) {
       debugPrint('Warning: Reminders load error: $e\n$stack');
       state = [];
@@ -118,8 +123,35 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
 
   Future<void> addReminder(Reminder reminder) async {
     final db = await _dbHelper.database;
-    await db.insert('Reminders', reminder.toJson());
-    state = [...state, reminder];
+    Reminder toAdd = reminder;
+
+    // 智能双向链接发现：若新任务未指定关联项，自动与语义相关度高的历史任务建立双向互联
+    if (toAdd.linkedTaskIds.isEmpty && state.isNotEmpty) {
+      final suggestedIds = const BiDirectionalLinkService().findSuggestedLinkedIds(toAdd, state);
+      if (suggestedIds.isNotEmpty) {
+        toAdd = toAdd.copyWith(linkedTaskIds: suggestedIds);
+        // 对被推荐的历史任务也反向添加当前任务 ID
+        for (final otherId in suggestedIds) {
+          final idx = state.indexWhere((r) => r.id == otherId);
+          if (idx != -1) {
+            final other = state[idx];
+            if (!other.linkedTaskIds.contains(toAdd.id)) {
+              final updatedOther = other.copyWith(
+                linkedTaskIds: [...other.linkedTaskIds, toAdd.id],
+              );
+              await db.update('Reminders', updatedOther.toJson(), where: 'id = ?', whereArgs: [other.id]);
+              state = [
+                for (final r in state)
+                  if (r.id == other.id) updatedOther else r
+              ];
+            }
+          }
+        }
+      }
+    }
+
+    await db.insert('Reminders', toAdd.toJson());
+    state = [...state, toAdd];
   }
 
   Future<void> updateReminder(Reminder reminder) async {
@@ -129,6 +161,99 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       for (final r in state)
         if (r.id == reminder.id) reminder else r
     ];
+  }
+
+  Future<void> linkTwoTasks(String id1, String id2) async {
+    if (id1 == id2) return;
+    final idx1 = state.indexWhere((r) => r.id == id1);
+    final idx2 = state.indexWhere((r) => r.id == id2);
+    if (idx1 == -1 || idx2 == -1) return;
+
+    final db = await _dbHelper.database;
+    final task1 = state[idx1];
+    final task2 = state[idx2];
+
+    Reminder? new1;
+    Reminder? new2;
+
+    if (!task1.linkedTaskIds.contains(id2)) {
+      new1 = task1.copyWith(linkedTaskIds: [...task1.linkedTaskIds, id2]);
+      await db.update('Reminders', new1.toJson(), where: 'id = ?', whereArgs: [id1]);
+    }
+    if (!task2.linkedTaskIds.contains(id1)) {
+      new2 = task2.copyWith(linkedTaskIds: [...task2.linkedTaskIds, id1]);
+      await db.update('Reminders', new2.toJson(), where: 'id = ?', whereArgs: [id2]);
+    }
+
+    state = [
+      for (final r in state)
+        if (r.id == id1 && new1 != null)
+          new1
+        else if (r.id == id2 && new2 != null)
+          new2
+        else
+          r
+    ];
+  }
+
+  Future<void> unlinkTwoTasks(String id1, String id2) async {
+    final idx1 = state.indexWhere((r) => r.id == id1);
+    final idx2 = state.indexWhere((r) => r.id == id2);
+
+    final db = await _dbHelper.database;
+    Reminder? new1;
+    Reminder? new2;
+
+    if (idx1 != -1) {
+      final task1 = state[idx1];
+      if (task1.linkedTaskIds.contains(id2)) {
+        new1 = task1.copyWith(
+          linkedTaskIds: task1.linkedTaskIds.where((id) => id != id2).toList(),
+        );
+        await db.update('Reminders', new1.toJson(), where: 'id = ?', whereArgs: [id1]);
+      }
+    }
+    if (idx2 != -1) {
+      final task2 = state[idx2];
+      if (task2.linkedTaskIds.contains(id1)) {
+        new2 = task2.copyWith(
+          linkedTaskIds: task2.linkedTaskIds.where((id) => id != id1).toList(),
+        );
+        await db.update('Reminders', new2.toJson(), where: 'id = ?', whereArgs: [id2]);
+      }
+    }
+
+    state = [
+      for (final r in state)
+        if (r.id == id1 && new1 != null)
+          new1
+        else if (r.id == id2 && new2 != null)
+          new2
+        else
+          r
+    ];
+  }
+
+  /// 扫描待办列表，自动执行 Q2 -> Q1 动态跃迁
+  Future<int> scanAndApplyDynamicUrgency() async {
+    const dynamicService = DynamicUrgencyService();
+    final updatedList = dynamicService.evaluatePromotions(state);
+    int promotedCount = 0;
+
+    final db = await _dbHelper.database;
+    for (int i = 0; i < updatedList.length; i++) {
+      final updated = updatedList[i];
+      final original = state[i];
+      if (updated.quadrantLevel != original.quadrantLevel && updated.isDynamicallyPromoted) {
+        promotedCount++;
+        await db.update('Reminders', updated.toJson(), where: 'id = ?', whereArgs: [updated.id]);
+      }
+    }
+
+    if (promotedCount > 0) {
+      state = updatedList;
+    }
+    return promotedCount;
   }
 
   Future<void> deleteReminder(String id) async {
@@ -213,5 +338,31 @@ class ImmersiveModeNotifier extends StateNotifier<bool> {
 
 final immersiveModeProvider = StateNotifierProvider<ImmersiveModeNotifier, bool>((ref) {
   return ImmersiveModeNotifier(ref.read(notificationServiceProvider));
+});
+
+final dynamicUrgencyServiceProvider = Provider<DynamicUrgencyService>((ref) {
+  return const DynamicUrgencyService();
+});
+
+final biDirectionalLinkServiceProvider = Provider<BiDirectionalLinkService>((ref) {
+  return const BiDirectionalLinkService();
+});
+
+final contextTriggerServiceProvider = Provider<ContextTriggerService>((ref) {
+  return ContextTriggerService();
+});
+
+class ContextProfileNotifier extends StateNotifier<ContextProfile> {
+  final ContextTriggerService _service;
+  ContextProfileNotifier(this._service) : super(_service.currentProfile);
+
+  void setProfile(ContextProfile profile) {
+    _service.switchProfile(profile);
+    state = profile;
+  }
+}
+
+final contextProfileProvider = StateNotifierProvider<ContextProfileNotifier, ContextProfile>((ref) {
+  return ContextProfileNotifier(ref.read(contextTriggerServiceProvider));
 });
 

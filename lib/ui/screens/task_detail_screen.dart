@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
 import '../../providers/providers.dart';
 import '../../services/notification_service.dart';
+import '../../services/context_trigger_service.dart';
 import '../../l10n/app_localizations.dart';
+import 'knowledge_graph_screen.dart';
 
 /// Dedicated Full-Page Task Detail & Editing Screen
 class TaskDetailScreen extends ConsumerStatefulWidget {
@@ -24,9 +26,18 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   late TextEditingController _titleController;
   late TextEditingController _summaryController;
   late int _selectedQuadrant;
+  late int _originalQuadrant;
+  late bool _isDynamicallyPromoted;
   late DateTime? _selectedTime;
   late String _selectedRecurrenceRule;
   late bool _isCompleted;
+  late List<String> _linkedTaskIds;
+
+  // Context Trigger state
+  late String _contextTriggerType; // 'none', 'wifi', 'profile'
+  late TextEditingController _wifiSsidController;
+  late TextEditingController _contextPromptController;
+  late String _contextProfileValue;
 
   @override
   void initState() {
@@ -34,17 +45,40 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     _titleController = TextEditingController(text: widget.task.taskTitle);
     _summaryController = TextEditingController(text: widget.task.taskSummary ?? '');
     _selectedQuadrant = widget.task.quadrantLevel;
+    _originalQuadrant = widget.task.originalQuadrantLevel;
+    _isDynamicallyPromoted = widget.task.isDynamicallyPromoted;
     _selectedTime = widget.task.triggerTime;
     _selectedRecurrenceRule = widget.task.isRecurring && widget.task.recurrenceRule != null
         ? widget.task.recurrenceRule!
         : 'none';
     _isCompleted = widget.task.isCompleted;
+    _linkedTaskIds = List<String>.from(widget.task.linkedTaskIds);
+
+    final rule = ContextTriggerRule.tryParse(widget.task.contextTrigger);
+    if (rule != null) {
+      _contextTriggerType = rule.type;
+      if (rule.type == 'wifi') {
+        _wifiSsidController = TextEditingController(text: rule.value);
+        _contextProfileValue = 'office';
+      } else {
+        _wifiSsidController = TextEditingController();
+        _contextProfileValue = rule.value.isNotEmpty ? rule.value : 'office';
+      }
+      _contextPromptController = TextEditingController(text: rule.prompt ?? '');
+    } else {
+      _contextTriggerType = 'none';
+      _wifiSsidController = TextEditingController();
+      _contextProfileValue = 'office';
+      _contextPromptController = TextEditingController();
+    }
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _summaryController.dispose();
+    _wifiSsidController.dispose();
+    _contextPromptController.dispose();
     super.dispose();
   }
 
@@ -81,15 +115,38 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
     final summary = _summaryController.text.trim();
 
+    String? newContextTrigger;
+    if (_contextTriggerType == 'wifi' && _wifiSsidController.text.trim().isNotEmpty) {
+      newContextTrigger = ContextTriggerRule(
+        type: 'wifi',
+        value: _wifiSsidController.text.trim(),
+        prompt: _contextPromptController.text.trim().isNotEmpty
+            ? _contextPromptController.text.trim()
+            : null,
+      ).toJsonString();
+    } else if (_contextTriggerType == 'profile') {
+      newContextTrigger = ContextTriggerRule(
+        type: 'profile',
+        value: _contextProfileValue,
+        prompt: _contextPromptController.text.trim().isNotEmpty
+            ? _contextPromptController.text.trim()
+            : null,
+      ).toJsonString();
+    }
+
     final updatedTask = widget.task.copyWith(
       taskTitle: title,
       taskSummary: summary.isEmpty ? null : summary,
       quadrantLevel: _selectedQuadrant,
+      originalQuadrantLevel: _originalQuadrant,
+      isDynamicallyPromoted: _isDynamicallyPromoted,
       triggerTime: _selectedTime,
       isCompleted: _isCompleted,
       isRecurring: _selectedRecurrenceRule != 'none',
       recurrenceRule: _selectedRecurrenceRule,
       recurrenceDescription: recurrenceDesc,
+      linkedTaskIds: _linkedTaskIds,
+      contextTrigger: newContextTrigger,
     );
 
     ref.read(remindersProvider.notifier).updateReminder(updatedTask);
@@ -251,12 +308,162 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     }
   }
 
+  Widget _buildTriggerTypeRadio(String type, String label) {
+    final isSelected = _contextTriggerType == type;
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () => setState(() => _contextTriggerType = type),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.teal.withValues(alpha: 0.18) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? Colors.teal : Colors.grey.withValues(alpha: 0.3),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+              size: 14,
+              color: isSelected ? Colors.teal : Colors.grey,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                color: isSelected ? Colors.teal : null,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLinkedTaskChip(
+    String linkedId,
+    List<Reminder> allReminders,
+    AppLocalizations l10n,
+    bool isDark,
+  ) {
+    final target = allReminders.where((r) => r.id == linkedId).firstOrNull;
+    final title = target?.taskTitle ?? linkedId;
+    final qLevel = target?.quadrantLevel ?? 4;
+    final qColor = _getCategoryColor(qLevel);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: qColor.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+            decoration: BoxDecoration(
+              color: qColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: Text(
+              'Q$qLevel',
+              style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: qColor),
+            ),
+          ),
+          const SizedBox(width: 6),
+          InkWell(
+            onTap: () {
+              if (target != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => TaskDetailScreen(task: target)),
+                );
+              }
+            },
+            child: Text(
+              title.length > 12 ? '${title.substring(0, 12)}...' : title,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+            ),
+          ),
+          const SizedBox(width: 6),
+          InkWell(
+            onTap: () {
+              setState(() {
+                _linkedTaskIds.remove(linkedId);
+              });
+              ref.read(remindersProvider.notifier).unlinkTwoTasks(widget.task.id, linkedId);
+            },
+            child: const Icon(Icons.close, size: 14, color: Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddLinkDialog(List<Reminder> allReminders, AppLocalizations l10n) {
+    final available = allReminders.where((r) => r.id != widget.task.id && !_linkedTaskIds.contains(r.id)).toList();
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text(l10n.get('addLinkedTask')),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 300,
+            child: available.isEmpty
+                ? Center(child: Text(l10n.get('noAvailableTasksToLink')))
+                : ListView.builder(
+                    itemCount: available.length,
+                    itemBuilder: (_, i) {
+                      final item = available[i];
+                      final qColor = _getCategoryColor(item.quadrantLevel);
+                      return ListTile(
+                        leading: CircleAvatar(
+                          radius: 12,
+                          backgroundColor: qColor.withValues(alpha: 0.2),
+                          child: Text(
+                            'Q${item.quadrantLevel}',
+                            style: TextStyle(fontSize: 10, color: qColor, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        title: Text(item.taskTitle, style: const TextStyle(fontSize: 13)),
+                        onTap: () {
+                          Navigator.pop(ctx);
+                          setState(() {
+                            _linkedTaskIds.add(item.id);
+                          });
+                          ref.read(remindersProvider.notifier).linkTwoTasks(widget.task.id, item.id);
+                        },
+                      );
+                    },
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(l10n.get('cancel')),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).colorScheme.primary;
     final catColor = _getCategoryColor(_selectedQuadrant);
+    final allReminders = ref.watch(remindersProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -367,6 +574,59 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                   ],
                 ),
               ),
+
+              // Dynamic Promotion Alert Banner
+              if (_isDynamicallyPromoted) ...[
+                const SizedBox(height: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.amber.withValues(alpha: 0.5)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.bolt, color: Colors.amber, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.get('dynamicPromotedAlertTitle'),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.amber,
+                              ),
+                            ),
+                            Text(
+                              l10n.get('dynamicPromotedAlertDesc'),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _selectedQuadrant = _originalQuadrant;
+                            _isDynamicallyPromoted = false;
+                          });
+                        },
+                        child: Text(
+                          l10n.get('revertToQ2'),
+                          style: const TextStyle(fontSize: 11, color: Colors.amber),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
 
               const SizedBox(height: 14),
 
@@ -697,7 +957,179 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 ),
               ),
 
-              // 6. Media Attachment if any
+              const SizedBox(height: 14),
+
+              // 6. Bi-directional Links (双向链接 / 关联备忘)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.link, size: 16, color: Colors.indigoAccent),
+                        const SizedBox(width: 6),
+                        Text(
+                          l10n.get('bidirectionalLinks'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        const Spacer(),
+                        TextButton.icon(
+                          icon: const Icon(Icons.hub_outlined, size: 14),
+                          label: Text(l10n.get('viewInGraph'), style: const TextStyle(fontSize: 11)),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            minimumSize: Size.zero,
+                          ),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => KnowledgeGraphScreen(
+                                  initialFocusTaskId: widget.task.id,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    if (_linkedTaskIds.isEmpty)
+                      Text(
+                        l10n.get('noLinksYet'),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? Colors.grey.shade500 : Colors.grey.shade400,
+                        ),
+                      )
+                    else
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: [
+                          for (final linkedId in _linkedTaskIds)
+                            _buildLinkedTaskChip(linkedId, allReminders, l10n, isDark),
+                        ],
+                      ),
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      icon: const Icon(Icons.add_link, size: 16),
+                      label: Text(l10n.get('addLinkedTask'), style: const TextStyle(fontSize: 12)),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        minimumSize: Size.zero,
+                      ),
+                      onPressed: () => _showAddLinkDialog(allReminders, l10n),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 14),
+
+              // 7. Context Trigger Section (情境感知触发器)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.near_me_outlined, size: 16, color: Colors.teal),
+                        const SizedBox(width: 6),
+                        Text(
+                          l10n.get('contextTriggerTitle'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        _buildTriggerTypeRadio('none', l10n.get('triggerNone')),
+                        _buildTriggerTypeRadio('wifi', l10n.get('triggerWifi')),
+                        _buildTriggerTypeRadio('profile', l10n.get('triggerProfile')),
+                      ],
+                    ),
+                    if (_contextTriggerType == 'wifi') ...[
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _wifiSsidController,
+                        style: const TextStyle(fontSize: 13),
+                        decoration: InputDecoration(
+                          labelText: l10n.get('wifiSsidLabel'),
+                          hintText: 'e.g. Office-WiFi, Home-Net',
+                          isDense: true,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        ),
+                      ),
+                    ] else if (_contextTriggerType == 'profile') ...[
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<String>(
+                        initialValue: _contextProfileValue,
+                        decoration: InputDecoration(
+                          labelText: l10n.get('profileSelectLabel'),
+                          isDense: true,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        ),
+                        items: [
+                          DropdownMenuItem(value: 'office', child: Text(l10n.get('profileOffice'), style: const TextStyle(fontSize: 13))),
+                          DropdownMenuItem(value: 'deepWork', child: Text(l10n.get('profileDeepWork'), style: const TextStyle(fontSize: 13))),
+                          DropdownMenuItem(value: 'home', child: Text(l10n.get('profileHome'), style: const TextStyle(fontSize: 13))),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) setState(() => _contextProfileValue = val);
+                        },
+                      ),
+                    ],
+                    if (_contextTriggerType != 'none') ...[
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _contextPromptController,
+                        style: const TextStyle(fontSize: 13),
+                        decoration: InputDecoration(
+                          labelText: l10n.get('contextPromptLabel'),
+                          hintText: 'e.g. 提醒同步团队进度或更新站会看板',
+                          isDense: true,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+
+              // 8. Media Attachment if any
               if (widget.task.recordId != null) ...[
                 const SizedBox(height: 14),
                 Container(

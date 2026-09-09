@@ -74,7 +74,7 @@ class DatabaseHelper {
       final db = await databaseFactory.openDatabase(
         targetPath,
         options: OpenDatabaseOptions(
-          version: 6,
+          version: 7,
           onCreate: _createDB,
           onUpgrade: _upgradeDB,
         ),
@@ -86,7 +86,7 @@ class DatabaseHelper {
       return await databaseFactory.openDatabase(
         targetPath,
         options: OpenDatabaseOptions(
-          version: 6,
+          version: 7,
           onCreate: _createDB,
           onUpgrade: _upgradeDB,
         ),
@@ -140,7 +140,7 @@ class DatabaseHelper {
         }
         final recoveredDb = await databaseFactory.openDatabase(
           targetPath,
-          options: OpenDatabaseOptions(version: 6, onCreate: _createDB),
+          options: OpenDatabaseOptions(version: 7, onCreate: _createDB),
         );
         if (data['reminders'] is List) {
           for (final rem in (data['reminders'] as List)) {
@@ -209,6 +209,10 @@ CREATE TABLE Reminders (
   created_at TEXT,
   review_level INTEGER DEFAULT 0,
   next_review_at TEXT,
+  original_quadrant_level INTEGER,
+  is_dynamically_promoted INTEGER DEFAULT 0,
+  linked_task_ids TEXT,
+  context_trigger TEXT,
   FOREIGN KEY (record_id) REFERENCES MediaRecords (id) ON DELETE CASCADE
 )
 ''');
@@ -243,6 +247,23 @@ CREATE TABLE Reminders (
       } catch (_) {}
       try {
         await db.execute('ALTER TABLE Reminders ADD COLUMN next_review_at TEXT');
+      } catch (_) {}
+    }
+    if (oldVersion < 7) {
+      try {
+        await db.execute('ALTER TABLE Reminders ADD COLUMN original_quadrant_level INTEGER');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE Reminders ADD COLUMN is_dynamically_promoted INTEGER DEFAULT 0');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE Reminders ADD COLUMN linked_task_ids TEXT');
+      } catch (_) {}
+      try {
+        await db.execute('ALTER TABLE Reminders ADD COLUMN context_trigger TEXT');
+      } catch (_) {}
+      try {
+        await db.execute('UPDATE Reminders SET original_quadrant_level = quadrant_level WHERE original_quadrant_level IS NULL');
       } catch (_) {}
     }
   }

@@ -5,7 +5,7 @@ import '../../providers/providers.dart';
 import '../../l10n/app_localizations.dart';
 import 'task_card.dart';
 
-class QuadrantView extends ConsumerWidget {
+class QuadrantView extends ConsumerStatefulWidget {
   final int level;
   final Widget titleIcon;
   final List<Reminder> allReminders;
@@ -21,8 +21,15 @@ class QuadrantView extends ConsumerWidget {
     required this.onPlayMedia,
   });
 
+  @override
+  ConsumerState<QuadrantView> createState() => _QuadrantViewState();
+}
+
+class _QuadrantViewState extends ConsumerState<QuadrantView> {
+  bool _isQ4FoldExpanded = false;
+
   IconData _getEmptyStateIcon() {
-    switch (level) {
+    switch (widget.level) {
       case 1:
         return Icons.local_fire_department_outlined;
       case 2:
@@ -36,7 +43,7 @@ class QuadrantView extends ConsumerWidget {
   }
 
   String _getEmptyStateText(AppLocalizations l10n) {
-    switch (level) {
+    switch (widget.level) {
       case 1:
         return l10n.get('emptyQ1');
       case 2:
@@ -50,7 +57,7 @@ class QuadrantView extends ConsumerWidget {
   }
 
   String _getLevelTitle(AppLocalizations l10n) {
-    switch (level) {
+    switch (widget.level) {
       case 1:
         return l10n.get('cat1');
       case 2:
@@ -63,23 +70,66 @@ class QuadrantView extends ConsumerWidget {
     }
   }
 
+  Widget _buildDraggableCard(Reminder task) {
+    return LongPressDraggable<Reminder>(
+      data: task,
+      delay: const Duration(milliseconds: 160),
+      feedback: Material(
+        elevation: 12,
+        borderRadius: BorderRadius.circular(8),
+        color: Colors.transparent,
+        child: SizedBox(
+          width: 260,
+          child: Opacity(
+            opacity: 0.95,
+            child: TaskCard(task: task, onPlayMedia: () {}),
+          ),
+        ),
+      ),
+      childWhenDragging: Opacity(
+        opacity: 0.2,
+        child: TaskCard(
+          task: task,
+          onPlayMedia: () => widget.onPlayMedia(task.recordId ?? ''),
+        ),
+      ),
+      child: TaskCard(
+        task: task,
+        onPlayMedia: () => widget.onPlayMedia(task.recordId ?? ''),
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final tasks = allReminders.where((r) => r.quadrantLevel == level).toList();
+    final tasks = widget.allReminders.where((r) => r.quadrantLevel == widget.level).toList();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Subtle wireframe container styling
-    final Color outlineColor = bgColor.withValues(alpha: isDark ? 0.45 : 0.7);
+    final Color outlineColor = widget.bgColor.withValues(alpha: isDark ? 0.45 : 0.7);
     final Color surfaceColor = isDark
         ? Colors.black.withValues(alpha: 0.25)
         : Colors.white.withValues(alpha: 0.5);
 
+    // Q4 自动折叠逻辑：将停滞超 48 小时的低优先级任务归入可折叠区
+    final dynamicService = ref.watch(dynamicUrgencyServiceProvider);
+    final List<Reminder> activeTasks;
+    final List<Reminder> foldedTasks;
+
+    if (widget.level == 4) {
+      activeTasks = tasks.where((t) => !dynamicService.isQ4StagnantFolded(t)).toList();
+      foldedTasks = tasks.where((t) => dynamicService.isQ4StagnantFolded(t)).toList();
+    } else {
+      activeTasks = tasks;
+      foldedTasks = const [];
+    }
+
     return DragTarget<Reminder>(
       onAcceptWithDetails: (details) {
         final task = details.data;
-        if (task.quadrantLevel != level) {
-          ref.read(remindersProvider.notifier).updateReminder(task.copyWith(quadrantLevel: level));
+        if (task.quadrantLevel != widget.level) {
+          ref.read(remindersProvider.notifier).updateReminder(task.copyWith(quadrantLevel: widget.level));
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -97,17 +147,17 @@ class QuadrantView extends ConsumerWidget {
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
             color: isHovered
-                ? bgColor.withValues(alpha: isDark ? 0.22 : 0.12)
+                ? widget.bgColor.withValues(alpha: isDark ? 0.22 : 0.12)
                 : surfaceColor,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isHovered ? bgColor : outlineColor,
+              color: isHovered ? widget.bgColor : outlineColor,
               width: isHovered ? 2.0 : 1.0,
             ),
             boxShadow: isHovered
                 ? [
                     BoxShadow(
-                      color: bgColor.withValues(alpha: 0.3),
+                      color: widget.bgColor.withValues(alpha: 0.3),
                       blurRadius: 10,
                       spreadRadius: 1,
                     )
@@ -123,7 +173,7 @@ class QuadrantView extends ConsumerWidget {
                 padding: const EdgeInsets.only(left: 4, top: 2, bottom: 6),
                 child: Row(
                   children: [
-                    titleIcon,
+                    widget.titleIcon,
                     const SizedBox(width: 6),
                     Text(
                       _getLevelTitle(l10n),
@@ -161,40 +211,60 @@ class QuadrantView extends ConsumerWidget {
                             ],
                           ),
                         )
-                      : ListView.builder(
+                      : ListView(
                           key: const ValueKey('list'),
                           physics: const BouncingScrollPhysics(),
-                          itemCount: tasks.length,
-                          itemBuilder: (context, index) {
-                            final task = tasks[index];
-                            return LongPressDraggable<Reminder>(
-                              data: task,
-                              delay: const Duration(milliseconds: 160),
-                              feedback: Material(
-                                elevation: 12,
-                                borderRadius: BorderRadius.circular(8),
-                                color: Colors.transparent,
-                                child: SizedBox(
-                                  width: 260,
-                                  child: Opacity(
-                                    opacity: 0.95,
-                                    child: TaskCard(task: task, onPlayMedia: () {}),
+                          children: [
+                            // 活跃待办列表
+                            for (final task in activeTasks)
+                              _buildDraggableCard(task),
+
+                            // Q4 长期停滞冗余备忘自动折叠面板
+                            if (foldedTasks.isNotEmpty) ...[
+                              InkWell(
+                                onTap: () {
+                                  setState(() => _isQ4FoldExpanded = !_isQ4FoldExpanded);
+                                },
+                                borderRadius: BorderRadius.circular(6),
+                                child: Container(
+                                  margin: const EdgeInsets.symmetric(vertical: 4),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.withValues(alpha: isDark ? 0.14 : 0.08),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: Colors.grey.withValues(alpha: 0.2),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        _isQ4FoldExpanded
+                                            ? Icons.keyboard_arrow_down
+                                            : Icons.keyboard_arrow_right,
+                                        size: 16,
+                                        color: Colors.grey.shade500,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: Text(
+                                          '${l10n.get('autoCollapsedNotice')} (${foldedTasks.length})',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.grey.shade500,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
-                              childWhenDragging: Opacity(
-                                opacity: 0.2,
-                                child: TaskCard(
-                                  task: task,
-                                  onPlayMedia: () => onPlayMedia(task.recordId ?? ''),
-                                ),
-                              ),
-                              child: TaskCard(
-                                task: task,
-                                onPlayMedia: () => onPlayMedia(task.recordId ?? ''),
-                              ),
-                            );
-                          },
+                              if (_isQ4FoldExpanded)
+                                for (final task in foldedTasks)
+                                  _buildDraggableCard(task),
+                            ],
+                          ],
                         ),
                 ),
               ),
@@ -205,3 +275,4 @@ class QuadrantView extends ConsumerWidget {
     );
   }
 }
+

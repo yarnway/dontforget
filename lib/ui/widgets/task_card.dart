@@ -255,7 +255,10 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     final subTasksList = task.getSubTasksList();
     final isStagnant = task.isStagnant(hours: 24);
 
-    return Dismissible(
+      final dynamicService = ref.watch(dynamicUrgencyServiceProvider);
+      final q4Opacity = dynamicService.calculateQ4VisualOpacity(task);
+
+      return Dismissible(
       key: Key(task.id),
       direction: DismissDirection.endToStart,
       background: Container(
@@ -269,7 +272,9 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         child: const Icon(Icons.delete_outline, color: Colors.white, size: 20),
       ),
       onDismissed: (_) => _deleteTask(context),
-      child: AnimatedContainer(
+      child: Opacity(
+        opacity: q4Opacity,
+        child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeInOut,
         margin: const EdgeInsets.only(bottom: 6),
@@ -390,6 +395,37 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                                     ),
                                   ),
                                 ),
+                              // Dynamic Urgency Promotion Golden Lightning Badge
+                              if (task.isDynamicallyPromoted)
+                                Padding(
+                                  padding: const EdgeInsets.only(left: 4),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                    decoration: BoxDecoration(
+                                      color: Colors.amber.withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(3),
+                                      border: Border.all(
+                                        color: Colors.amber.withValues(alpha: 0.6),
+                                        width: 0.8,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(Icons.bolt, size: 10, color: Colors.amber),
+                                        const SizedBox(width: 2),
+                                        Text(
+                                          l10n.get('promotedToQ1Badge'),
+                                          style: TextStyle(
+                                            fontSize: 9.5,
+                                            fontWeight: FontWeight.bold,
+                                            color: isDark ? Colors.amberAccent : Colors.amber.shade800,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                           if (task.taskSummary != null && task.taskSummary!.isNotEmpty)
@@ -410,7 +446,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                          if (task.triggerTime != null || task.isRecurring || task.spacedRepetitionLevel > 0 || (isStagnant && subTasksList.isEmpty))
+                          if (task.triggerTime != null || task.isRecurring || task.spacedRepetitionLevel > 0 || task.linkedTaskIds.isNotEmpty || (task.contextTrigger != null && task.contextTrigger!.isNotEmpty) || (isStagnant && subTasksList.isEmpty))
                             Padding(
                               padding: const EdgeInsets.only(top: 4),
                               child: Wrap(
@@ -418,6 +454,51 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                                 runSpacing: 2,
                                 crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
+                                  if (task.linkedTaskIds.isNotEmpty)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                      decoration: BoxDecoration(
+                                        color: Colors.indigoAccent.withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(3),
+                                        border: Border.all(
+                                          color: Colors.indigoAccent.withValues(alpha: 0.4),
+                                          width: 0.7,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Icons.link, size: 10, color: Colors.indigoAccent),
+                                          const SizedBox(width: 2),
+                                          Text(
+                                            '${task.linkedTaskIds.length}',
+                                            style: const TextStyle(
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.indigoAccent,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  if (task.contextTrigger != null && task.contextTrigger!.isNotEmpty)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                      decoration: BoxDecoration(
+                                        color: Colors.teal.withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(3),
+                                        border: Border.all(
+                                          color: Colors.teal.withValues(alpha: 0.4),
+                                          width: 0.7,
+                                        ),
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(Icons.near_me_outlined, size: 10, color: Colors.teal),
+                                        ],
+                                      ),
+                                    ),
                                   if (task.spacedRepetitionLevel > 0)
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
@@ -699,6 +780,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

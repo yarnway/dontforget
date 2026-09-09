@@ -7,6 +7,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:window_manager/window_manager.dart';
 import '../models/reminder.dart';
+import 'context_trigger_service.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -179,6 +180,13 @@ class NotificationService {
       return;
     }
 
+    // 情境感知模式拦截：办公与深度专注情境下静音拦截次要通知并入队待生成事后摘要
+    if (ContextTriggerService().shouldInterceptNotification(reminder)) {
+      debugPrint('[情境感知拦截] 处于办公/专注情境，拦截并记录次要提醒: [Q${reminder.quadrantLevel}] ${reminder.taskTitle}');
+      _reminderDueController.add(reminder);
+      return;
+    }
+
     // Notify UI / Stream listeners
     _reminderDueController.add(reminder);
 
@@ -193,7 +201,7 @@ class NotificationService {
           ? reminder.taskSummary!
           : '您设置的待办事项时间已到，请及时处理！';
 
-      await _showWindowsToast(reminder.taskTitle, summary);
+      await showWindowsToast(reminder.taskTitle, summary);
 
       try {
         await windowManager.show();
@@ -202,7 +210,7 @@ class NotificationService {
     }
   }
 
-  Future<void> _showWindowsToast(String title, String body) async {
+  Future<void> showWindowsToast(String title, String body) async {
     try {
       final safeTitle = title
           .replaceAll("'", "''")

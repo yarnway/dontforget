@@ -13,6 +13,9 @@ class TaskBitmask {
   static const int hasSubtasks = 1 << 9;
   static const int stagnant = 1 << 10;
   static const int spacedReview = 1 << 11;
+  static const int dynamicallyPromoted = 1 << 12;
+  static const int hasLinks = 1 << 13;
+  static const int hasContextTrigger = 1 << 14;
 
   // Convenient aliases
   static const int q1 = quadrant1;
@@ -28,6 +31,8 @@ class Reminder {
   final String taskTitle;
   final String? taskSummary;
   final int quadrantLevel; // 1, 2, 3, 4
+  final int originalQuadrantLevel; // 记录初始象限，用于动态跃迁溯源
+  final bool isDynamicallyPromoted; // 是否被动态权重跃迁升级至 Q1
   final String? urgencyLevel; // 'urgent', 'general', 'not_urgent'
   final String? importanceLevel; // 'important', 'general', 'not_important'
   final DateTime? triggerTime;
@@ -37,9 +42,11 @@ class Reminder {
   final String? recurrenceDescription;
   final bool isEmotionFiltered; // '空船效应' 情绪去噪重构标识
   final String? subTasks; // JSON 格式微习惯原子项列表
-  final DateTime? createdAt; // 创建时间戳，用于滞留感知
+  final DateTime? createdAt; // 创建时间戳，用于滞留感知与衰减计算
   final int spacedRepetitionLevel; // 0: 普通任务, 1..5: 艾宾浩斯复习阶梯
   final DateTime? nextReviewAt; // 下一次间隔复习时间
+  final List<String> linkedTaskIds; // 双向关联的任务 ID 列表
+  final String? contextTrigger; // 情境感知触发规则 JSON
 
   Reminder({
     required this.id,
@@ -47,6 +54,8 @@ class Reminder {
     required this.taskTitle,
     this.taskSummary,
     required this.quadrantLevel,
+    int? originalQuadrantLevel,
+    this.isDynamicallyPromoted = false,
     this.urgencyLevel,
     this.importanceLevel,
     this.triggerTime,
@@ -59,7 +68,10 @@ class Reminder {
     DateTime? createdAt,
     this.spacedRepetitionLevel = 0,
     this.nextReviewAt,
-  }) : createdAt = createdAt ?? DateTime.now();
+    this.linkedTaskIds = const [],
+    this.contextTrigger,
+  })  : originalQuadrantLevel = originalQuadrantLevel ?? quadrantLevel,
+        createdAt = createdAt ?? DateTime.now();
 
   int get bitmask {
     int mask = 0;
@@ -79,39 +91,67 @@ class Reminder {
     }
     if (isStagnant()) mask |= TaskBitmask.stagnant;
     if (spacedRepetitionLevel > 0) mask |= TaskBitmask.spacedReview;
+    if (isDynamicallyPromoted) mask |= TaskBitmask.dynamicallyPromoted;
+    if (linkedTaskIds.isNotEmpty) mask |= TaskBitmask.hasLinks;
+    if (contextTrigger != null && contextTrigger!.trim().isNotEmpty) {
+      mask |= TaskBitmask.hasContextTrigger;
+    }
     return mask;
   }
 
   bool get isOverdue => triggerTime != null && triggerTime!.isBefore(DateTime.now()) && !isCompleted;
 
-  factory Reminder.fromJson(Map<String, dynamic> json) => Reminder(
-        id: json['id'] as String,
-        recordId: json['record_id'] as String?,
-        taskTitle: json['task_title'] as String,
-        taskSummary: json['task_summary'] as String?,
-        quadrantLevel: json['quadrant_level'] as int,
-        urgencyLevel: json['urgency_level'] as String?,
-        importanceLevel: json['importance_level'] as String?,
-        triggerTime: json['trigger_time'] != null
-            ? DateTime.parse(json['trigger_time'] as String)
-            : null,
-        isCompleted: (json['is_completed'] as int?) == 1,
-        isRecurring: (json['is_recurring'] is int)
-            ? (json['is_recurring'] as int) == 1
-            : (json['is_recurring'] is bool ? (json['is_recurring'] as bool) : false),
-        recurrenceRule: json['recurrence_rule'] as String? ?? 'none',
-        recurrenceDescription: json['recurrence_description'] as String?,
-        isEmotionFiltered: (json['is_emotion_filtered'] as int?) == 1 ||
-            json['is_emotion_filtered'] == true,
-        subTasks: json['sub_tasks'] as String?,
-        createdAt: json['created_at'] != null
-            ? DateTime.tryParse(json['created_at'] as String)
-            : null,
-        spacedRepetitionLevel: (json['review_level'] as int?) ?? 0,
-        nextReviewAt: json['next_review_at'] != null
-            ? DateTime.tryParse(json['next_review_at'] as String)
-            : null,
-      );
+  factory Reminder.fromJson(Map<String, dynamic> json) {
+    final rawLinked = json['linked_task_ids'];
+    List<String> linkedIds = [];
+    if (rawLinked != null && rawLinked is String && rawLinked.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(rawLinked);
+        if (decoded is List) {
+          linkedIds = decoded.map((e) => e.toString()).toList();
+        }
+      } catch (_) {}
+    } else if (rawLinked is List) {
+      linkedIds = rawLinked.map((e) => e.toString()).toList();
+    }
+
+    final qLevel = json['quadrant_level'] as int;
+    final origQLevel = (json['original_quadrant_level'] as int?) ?? qLevel;
+
+    return Reminder(
+      id: json['id'] as String,
+      recordId: json['record_id'] as String?,
+      taskTitle: json['task_title'] as String,
+      taskSummary: json['task_summary'] as String?,
+      quadrantLevel: qLevel,
+      originalQuadrantLevel: origQLevel,
+      isDynamicallyPromoted: (json['is_dynamically_promoted'] as int?) == 1 ||
+          json['is_dynamically_promoted'] == true,
+      urgencyLevel: json['urgency_level'] as String?,
+      importanceLevel: json['importance_level'] as String?,
+      triggerTime: json['trigger_time'] != null
+          ? DateTime.parse(json['trigger_time'] as String)
+          : null,
+      isCompleted: (json['is_completed'] as int?) == 1,
+      isRecurring: (json['is_recurring'] is int)
+          ? (json['is_recurring'] as int) == 1
+          : (json['is_recurring'] is bool ? (json['is_recurring'] as bool) : false),
+      recurrenceRule: json['recurrence_rule'] as String? ?? 'none',
+      recurrenceDescription: json['recurrence_description'] as String?,
+      isEmotionFiltered: (json['is_emotion_filtered'] as int?) == 1 ||
+          json['is_emotion_filtered'] == true,
+      subTasks: json['sub_tasks'] as String?,
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'] as String)
+          : null,
+      spacedRepetitionLevel: (json['review_level'] as int?) ?? 0,
+      nextReviewAt: json['next_review_at'] != null
+          ? DateTime.tryParse(json['next_review_at'] as String)
+          : null,
+      linkedTaskIds: linkedIds,
+      contextTrigger: json['context_trigger'] as String?,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -119,6 +159,8 @@ class Reminder {
         'task_title': taskTitle,
         'task_summary': taskSummary,
         'quadrant_level': quadrantLevel,
+        'original_quadrant_level': originalQuadrantLevel,
+        'is_dynamically_promoted': isDynamicallyPromoted ? 1 : 0,
         'urgency_level': urgencyLevel,
         'importance_level': importanceLevel,
         'trigger_time': triggerTime?.toIso8601String(),
@@ -131,6 +173,8 @@ class Reminder {
         'created_at': createdAt?.toIso8601String(),
         'review_level': spacedRepetitionLevel,
         'next_review_at': nextReviewAt?.toIso8601String(),
+        'linked_task_ids': jsonEncode(linkedTaskIds),
+        'context_trigger': contextTrigger,
       };
 
   DateTime? getNextOccurrence() {
@@ -163,6 +207,8 @@ class Reminder {
     String? taskTitle,
     String? taskSummary,
     int? quadrantLevel,
+    int? originalQuadrantLevel,
+    bool? isDynamicallyPromoted,
     String? urgencyLevel,
     String? importanceLevel,
     DateTime? triggerTime,
@@ -175,6 +221,8 @@ class Reminder {
     DateTime? createdAt,
     int? spacedRepetitionLevel,
     DateTime? nextReviewAt,
+    List<String>? linkedTaskIds,
+    String? contextTrigger,
   }) {
     return Reminder(
       id: id,
@@ -182,6 +230,8 @@ class Reminder {
       taskTitle: taskTitle ?? this.taskTitle,
       taskSummary: taskSummary ?? this.taskSummary,
       quadrantLevel: quadrantLevel ?? this.quadrantLevel,
+      originalQuadrantLevel: originalQuadrantLevel ?? this.originalQuadrantLevel,
+      isDynamicallyPromoted: isDynamicallyPromoted ?? this.isDynamicallyPromoted,
       urgencyLevel: urgencyLevel ?? this.urgencyLevel,
       importanceLevel: importanceLevel ?? this.importanceLevel,
       triggerTime: triggerTime ?? this.triggerTime,
@@ -194,6 +244,8 @@ class Reminder {
       createdAt: createdAt ?? this.createdAt,
       spacedRepetitionLevel: spacedRepetitionLevel ?? this.spacedRepetitionLevel,
       nextReviewAt: nextReviewAt ?? this.nextReviewAt,
+      linkedTaskIds: linkedTaskIds ?? this.linkedTaskIds,
+      contextTrigger: contextTrigger ?? this.contextTrigger,
     );
   }
 

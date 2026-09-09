@@ -16,6 +16,9 @@ import '../widgets/input_bottom_bar.dart';
 import '../widgets/ai_background_effect.dart';
 import '../widgets/command_palette_dialog.dart';
 import '../widgets/spaced_repetition_sheet.dart';
+import '../widgets/context_digest_sheet.dart';
+import '../../services/context_trigger_service.dart';
+import 'knowledge_graph_screen.dart';
 import '../../l10n/app_localizations.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -29,6 +32,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
   final _audioPlayer = AudioPlayer();
   Timer? _heartbeatTimer;
   StreamSubscription<Reminder>? _dueSubscription;
+  StreamSubscription<List<Reminder>>? _catchUpDigestSubscription;
+  StreamSubscription<List<Reminder>>? _suppressedSubscription;
   final Set<String> _promptedReminderIds = {};
   late AnimationController _indicatorAnimController;
   bool _isSearchOpen = false;
@@ -49,6 +54,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
       _showDueReminderDialog(reminder);
     });
 
+    // 监听情境事后摘要通知并弹出聚合抽屉
+    _catchUpDigestSubscription =
+        ContextTriggerService().onCatchUpDigestReady.listen((digestList) {
+      if (!mounted || digestList.isEmpty) return;
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => ContextDigestSheet(digestReminders: digestList),
+      );
+      if (Platform.isWindows) {
+        NotificationService().showWindowsToast(
+          '情境专注时段已结束',
+          '已为您自动聚合 ${digestList.length} 项次要事务待处理',
+        );
+      }
+    });
+
+    // 监听拦截队列更新以便即时刷新情境徽标
+    _suppressedSubscription =
+        ContextTriggerService().onSuppressedUpdated.listen((_) {
+      if (mounted) setState(() {});
+    });
+
+    // 启动时触发 Wi-Fi 嗅探与情境感知
+    ContextTriggerService().detectCurrentWifiSsid();
+
     // Periodic heartbeat check (every 10 seconds) to ensure reminders are never missed
     _heartbeatTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       _checkDueReminders();
@@ -61,6 +93,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
     _indicatorAnimController.dispose();
     _heartbeatTimer?.cancel();
     _dueSubscription?.cancel();
+    _catchUpDigestSubscription?.cancel();
+    _suppressedSubscription?.cancel();
     _audioPlayer.dispose();
     super.dispose();
   }
@@ -80,6 +114,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
         }
       }
     }
+
+    // 情境感知触发器检测 (检测 Wi-Fi SSID 接入)
+    ContextTriggerService().detectCurrentWifiSsid().then((ssid) {
+      if (ssid != null && mounted) {
+        final matched = ContextTriggerService().evaluateContextTriggers(reminders, ssid: ssid);
+        for (final m in matched) {
+          NotificationService().showWindowsToast('📍 情境感知提醒 [已连接 $ssid]', m.taskTitle);
+        }
+      }
+    });
+
+    // 动态跃迁周期扫描
+    ref.read(remindersProvider.notifier).scanAndApplyDynamicUrgency();
   }
 
   void _showDueReminderDialog(Reminder reminder) {
@@ -493,6 +540,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
     SpacedRepetitionSheet.show(context);
   }
 
+  void _openContextDigest() {
+    final suppressed = ContextTriggerService().suppressedReminders;
+    if (suppressed.isEmpty) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).get('noSuppressedTasks')),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => ContextDigestSheet(digestReminders: suppressed),
+    );
+  }
+
+  IconData _getContextProfileIcon(ContextProfile profile) {
+    switch (profile) {
+      case ContextProfile.office:
+        return Icons.apartment_rounded;
+      case ContextProfile.deepWork:
+        return Icons.psychology_rounded;
+      case ContextProfile.home:
+        return Icons.home_rounded;
+      case ContextProfile.commute:
+        return Icons.directions_subway_rounded;
+      case ContextProfile.general:
+        return Icons.tune_rounded;
+    }
+  }
+
   Future<void> _exportCsvData() async {
     final l10n = AppLocalizations.of(context);
     final reminders = ref.read(remindersProvider);
@@ -599,12 +681,49 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
 
     CommandPaletteDialog.show(context, [
       CommandPaletteAction(
+        id: 'graph',
+        title: l10n.get('knowledgeGraphTitle'),
+        subtitle: l10n.get('knowledgeGraphSubtitle'),
+        icon: Icons.hub_outlined,
+        shortcut: 'G',
+        onExecute: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const KnowledgeGraphScreen()),
+        ),
+      ),
+      CommandPaletteAction(
         id: 'agent',
         title: l10n.get('multiAgentTitle'),
         subtitle: l10n.get('multiAgentDesc'),
-        icon: Icons.hub_outlined,
+        icon: Icons.auto_awesome,
         shortcut: '/agent',
         onExecute: _showMultiAgentGoalDialog,
+      ),
+      CommandPaletteAction(
+        id: 'digest',
+        title: l10n.get('contextDigestTitle'),
+        subtitle: l10n.get('contextDigestDesc'),
+        icon: Icons.summarize_outlined,
+        shortcut: 'C',
+        onExecute: _openContextDigest,
+      ),
+      CommandPaletteAction(
+        id: 'scan_urgency',
+        title: l10n.get('scanDynamicUrgency'),
+        subtitle: l10n.get('scanDynamicUrgencyDesc'),
+        icon: Icons.bolt,
+        shortcut: 'U',
+        onExecute: () async {
+          final count = await ref.read(remindersProvider.notifier).scanAndApplyDynamicUrgency();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('${l10n.get('dynamicPromotedCount')}: $count'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        },
       ),
       CommandPaletteAction(
         id: 'focus',
@@ -695,6 +814,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
 
     if (event.logicalKey == LogicalKeyboardKey.slash) {
       setState(() => _isSearchOpen = true);
+    } else if (event.logicalKey == LogicalKeyboardKey.keyG) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const KnowledgeGraphScreen()),
+      );
+    } else if (event.logicalKey == LogicalKeyboardKey.keyC) {
+      _openContextDigest();
     } else if (event.logicalKey == LogicalKeyboardKey.keyF) {
       _toggleImmersiveMode();
     } else if (event.logicalKey == LogicalKeyboardKey.keyR) {
@@ -712,6 +838,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
     final isImmersiveActive = ref.watch(immersiveModeProvider);
     final spacedService = ref.watch(spacedRepetitionServiceProvider);
     final dueCardsCount = spacedService.getDueCards(reminders).length;
+    final currentProfile = ref.watch(contextProfileProvider);
+    final suppressedCount = ContextTriggerService().suppressedReminders.length;
 
     ref.listen<HomeState>(homeControllerProvider, (previous, next) {
       if (next.error != null) {
@@ -832,6 +960,105 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                       : l10n.get('immersiveMode'),
                   splashRadius: 18,
                   onPressed: _toggleImmersiveMode,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.hub_outlined, size: 20),
+                  tooltip: '${l10n.get('knowledgeGraphTitle')} (G)',
+                  splashRadius: 18,
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const KnowledgeGraphScreen()),
+                    );
+                  },
+                ),
+                PopupMenuButton<ContextProfile>(
+                  icon: Icon(
+                    _getContextProfileIcon(currentProfile),
+                    size: 20,
+                    color: (currentProfile == ContextProfile.deepWork || currentProfile == ContextProfile.office)
+                        ? Colors.tealAccent
+                        : null,
+                  ),
+                  tooltip: l10n.get('contextProfileSwitch'),
+                  splashRadius: 18,
+                  onSelected: (profile) {
+                    ref.read(contextProfileProvider.notifier).setProfile(profile);
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem(
+                      value: ContextProfile.general,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.tune_rounded, size: 18),
+                          const SizedBox(width: 8),
+                          Text(l10n.get('profileGeneral')),
+                          if (currentProfile == ContextProfile.general) ...[
+                            const Spacer(),
+                            const Icon(Icons.check, size: 16, color: Colors.teal),
+                          ],
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: ContextProfile.office,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.apartment_rounded, size: 18),
+                          const SizedBox(width: 8),
+                          Text(l10n.get('profileOffice')),
+                          if (currentProfile == ContextProfile.office) ...[
+                            const Spacer(),
+                            const Icon(Icons.check, size: 16, color: Colors.teal),
+                          ],
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: ContextProfile.deepWork,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.psychology_rounded, size: 18),
+                          const SizedBox(width: 8),
+                          Text(l10n.get('profileDeepWork')),
+                          if (currentProfile == ContextProfile.deepWork) ...[
+                            const Spacer(),
+                            const Icon(Icons.check, size: 16, color: Colors.teal),
+                          ],
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: ContextProfile.home,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.home_rounded, size: 18),
+                          const SizedBox(width: 8),
+                          Text(l10n.get('profileHome')),
+                          if (currentProfile == ContextProfile.home) ...[
+                            const Spacer(),
+                            const Icon(Icons.check, size: 16, color: Colors.teal),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                Badge(
+                  isLabelVisible: suppressedCount > 0,
+                  label: Text(
+                    suppressedCount.toString(),
+                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
+                  backgroundColor: Colors.tealAccent.shade700,
+                  textColor: Colors.white,
+                  offset: const Offset(-4, 4),
+                  child: IconButton(
+                    icon: const Icon(Icons.mark_chat_unread_outlined, size: 20),
+                    tooltip: '${l10n.get('contextDigestTitle')} ($suppressedCount) (C)',
+                    splashRadius: 18,
+                    onPressed: _openContextDigest,
+                  ),
                 ),
                 Badge(
                   isLabelVisible: dueCardsCount > 0,
