@@ -106,7 +106,13 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener, TrayListener
         windowManager.show();
         windowManager.focus();
       } else if (menuItem.key == 'exit_app') {
-        windowManager.destroy(); // fully close the app
+        try {
+          trayManager.destroy();
+        } catch (_) {}
+        try {
+          windowManager.destroy();
+        } catch (_) {}
+        exit(0);
       }
     } catch (_) {}
   }
