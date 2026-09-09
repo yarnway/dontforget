@@ -4,7 +4,7 @@ import '../../models/reminder.dart';
 import '../../providers/providers.dart';
 import '../../services/notification_service.dart';
 import '../../l10n/app_localizations.dart';
-import 'task_details_dialog.dart';
+import '../screens/task_detail_screen.dart';
 
 class TaskCard extends ConsumerWidget {
   final Reminder task;
@@ -94,9 +94,11 @@ class TaskCard extends ConsumerWidget {
     if (!context.mounted) return;
 
     if (value == 'edit') {
-      showDialog(
-        context: context,
-        builder: (context) => TaskDetailsDialog(task: task),
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => TaskDetailScreen(task: task, onPlayMedia: onPlayMedia),
+        ),
       );
     } else if (value == 'toggle') {
       final updated = task.copyWith(isCompleted: !task.isCompleted);
@@ -179,9 +181,11 @@ class TaskCard extends ConsumerWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(6),
           onTap: () {
-            showDialog(
-              context: context,
-              builder: (context) => TaskDetailsDialog(task: task),
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => TaskDetailScreen(task: task, onPlayMedia: onPlayMedia),
+              ),
             );
           },
           onSecondaryTapUp: (details) {

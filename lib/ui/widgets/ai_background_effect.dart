@@ -246,13 +246,13 @@ class _AiBackgroundEffectState extends State<AiBackgroundEffect>
     final now = DateTime.now();
 
     // If mouse moved actively, emit soft fluid ripples
-    if (now.difference(_lastMoveTime).inMilliseconds > 70) {
-      if ((pos - _dampedMousePos).distance > 18) {
+    if (now.difference(_lastMoveTime).inMilliseconds > 110) {
+      if ((pos - _dampedMousePos).distance > 22) {
         _waves.add(_RippleWave(
           center: pos,
           createdAt: now,
-          maxRadius: 240,
-          strength: 0.14,
+          maxRadius: 260,
+          strength: 0.09,
         ));
         _lastMoveTime = now;
       }
@@ -263,16 +263,16 @@ class _AiBackgroundEffectState extends State<AiBackgroundEffect>
     _rawMousePos = pos;
     final now = DateTime.now();
 
-    // Powerful 3D push shockwave on click
+    // Slower, majestic 3D push shockwave on click
     _waves.add(_RippleWave(
       center: pos,
       createdAt: now,
-      maxRadius: 380,
-      strength: 0.36,
+      maxRadius: 360,
+      strength: 0.22,
     ));
 
     // Cleanup expired waves
-    _waves.removeWhere((w) => now.difference(w.createdAt).inMilliseconds > 900);
+    _waves.removeWhere((w) => now.difference(w.createdAt).inMilliseconds > 1600);
   }
 
   @override
@@ -308,7 +308,7 @@ class _AiBackgroundEffectState extends State<AiBackgroundEffect>
                     } else {
                       _prevDampedMousePos = _dampedMousePos;
                       // Smooth exponential damping (fluid tracking)
-                      _dampedMousePos += (_rawMousePos! - _dampedMousePos) * 0.085;
+                      _dampedMousePos += (_rawMousePos! - _dampedMousePos) * 0.048;
                       _mouseVelocity = _dampedMousePos - _prevDampedMousePos;
                     }
                   }
@@ -534,71 +534,88 @@ class _Logo3dParticlePainter extends CustomPainter {
     final now = DateTime.now();
 
     for (final p in particles) {
-      // 3.1 Shockwave dispersal (3D 全向波纹推散)
+      // 3.1 Slower, Majestic 3D Shockwave Dispersal (缓释大范围波纹推散)
       for (final wave in waves) {
         final elapsed = now.difference(wave.createdAt).inMilliseconds;
-        if (elapsed < 880) {
-          final waveProg = elapsed / 880.0;
+        const waveDuration = 1500; // Slower wave expansion for natural elegance
+        if (elapsed < waveDuration) {
+          final waveProg = elapsed / waveDuration.toDouble();
           final currentRadius = waveProg * wave.maxRadius;
           final distToCenter = Offset(p.screenX - wave.center.dx, p.screenY - wave.center.dy).distance;
           final waveDelta = (distToCenter - currentRadius).abs();
 
-          if (waveDelta < 50.0 && distToCenter > 1.0) {
-            final waveFactor = (1.0 - waveDelta / 50.0) * (1.0 - waveProg) * wave.strength;
+          if (waveDelta < 55.0 && distToCenter > 1.0) {
+            final waveBand = (1.0 - waveDelta / 55.0);
+            final waveFactor = waveBand * (1.0 - waveProg) * wave.strength;
             final norm = Offset(
               (p.screenX - wave.center.dx) / distToCenter,
               (p.screenY - wave.center.dy) / distToCenter,
             );
-            final zImpulse = (p.curZ >= 0 ? 1.0 : -1.0) * (waveFactor * 0.10);
+            final zImpulse = (p.curZ >= 0 ? 0.7 : -0.7) * (waveFactor * 0.035);
 
-            // Push outward in full 3D sphere with momentum
-            p.vx += norm.dx * waveFactor * 0.08;
-            p.vy += norm.dy * waveFactor * 0.08;
+            // Slower, smooth wave push
+            p.vx += norm.dx * waveFactor * 0.025;
+            p.vy += norm.dy * waveFactor * 0.025;
             p.vz += zImpulse;
           }
         }
       }
 
-      // 3.2 Damped Mouse Proximity & 3D Viscous Vortex Drag (鼠标阻尼与三维拖曳旋涡)
+      // 3.2 Smooth Cosine Falloff & Soft Organic Fluid Mouse Interaction (慢速自然余弦缓动排斥)
       if (mousePos != null) {
         final dist = Offset(p.screenX - mousePos!.dx, p.screenY - mousePos!.dy).distance;
-        const double mouseRepelDist = 145.0;
+        const double mouseRepelDist = 155.0;
         if (dist < mouseRepelDist && dist > 1.0) {
-          final repel = (1.0 - dist / mouseRepelDist) * 0.024;
-          final norm = Offset((p.screenX - mousePos!.dx) / dist, (p.screenY - mousePos!.dy) / dist);
-          final zRepel = (p.curZ >= 0 ? 1.0 : -1.0) * repel * 1.4;
+          // Smooth cosine bell-curve falloff (gentle at edge, cushiony at center)
+          final normDist = dist / mouseRepelDist;
+          final smoothFactor = 0.5 * (1.0 + cos(normDist * pi)); // [0.0, 1.0]
 
-          // 3D Repulsion: pushes outwards and bulges in depth
+          // Soft organic repulsion force (significantly slower, gentle cushion)
+          final repel = smoothFactor * 0.0055;
+          final norm = Offset((p.screenX - mousePos!.dx) / dist, (p.screenY - mousePos!.dy) / dist);
+          final zRepel = (p.curZ >= 0 ? 0.8 : -0.8) * repel;
+
           p.vx += norm.dx * repel;
           p.vy += norm.dy * repel;
           p.vz += zRepel;
 
-          // Fluid wake drag: particles catch a fraction of the mouse's momentum
-          p.vx += mouseVelocity.dx * 0.0014 * (1.0 - dist / mouseRepelDist);
-          p.vy += mouseVelocity.dy * 0.0014 * (1.0 - dist / mouseRepelDist);
+          // Fluid wake drag: gentle viscous draft
+          p.vx += mouseVelocity.dx * 0.00035 * smoothFactor;
+          p.vy += mouseVelocity.dy * 0.00035 * smoothFactor;
         }
       }
 
-      // 3.3 10x Slower Deep-Space Cosmic Re-aggregation (慢10倍失重星云微漂移与极其缓慢优雅归位)
-      // springK = 0.0016 (literally 10x slower than 0.016)
-      // damping = 0.984 allows particles to drift like cosmic dust in zero-g for 12~18 seconds
-      const double springK = 0.0016;
-      const double damping = 0.984;
+      // 3.3 Physical Terminal Velocity Limiter (限制最大粒子速率，杜绝突兀弹射飞出)
+      const double maxSpeed = 0.019;
+      final speedSq = p.vx * p.vx + p.vy * p.vy + p.vz * p.vz;
+      if (speedSq > maxSpeed * maxSpeed) {
+        final speed = sqrt(speedSq);
+        final scale = maxSpeed / speed;
+        p.vx *= scale;
+        p.vy *= scale;
+        p.vz *= scale;
+      }
+
+      // 3.4 Deep-Space Cosmic Re-aggregation (慢速失重星云微漂移与极其缓慢优雅归位)
+      // springK = 0.0012 for ultra-gentle, serene cosmic return
+      // damping = 0.985 allows particles to drift naturally in space for 15~20 seconds
+      const double springK = 0.0012;
+      const double damping = 0.985;
 
       final diffX = p.baseX - p.curX;
       final diffY = p.baseY - p.curY;
       final diffZ = p.baseZ - p.curZ;
 
-      // Subtle celestial micro-turbulence when scattered in space (interstellar plasma effect)
+      // Subtle celestial micro-turbulence when scattered in space
       final dispDist = sqrt(diffX * diffX + diffY * diffY + diffZ * diffZ);
       double microDriftX = 0;
       double microDriftY = 0;
       double microDriftZ = 0;
       if (dispDist > 0.03) {
-        final driftAngle = (progress * 2 * pi * 2.5) + p.phase;
-        microDriftX = sin(driftAngle) * 0.00015;
-        microDriftY = cos(driftAngle * 1.3) * 0.00015;
-        microDriftZ = sin(driftAngle * 0.7) * 0.00020;
+        final driftAngle = (progress * 2 * pi * 2.0) + p.phase;
+        microDriftX = sin(driftAngle) * 0.00012;
+        microDriftY = cos(driftAngle * 1.2) * 0.00012;
+        microDriftZ = sin(driftAngle * 0.6) * 0.00015;
       }
 
       p.vx = (p.vx + diffX * springK + microDriftX) * damping;

@@ -161,10 +161,10 @@ class DashboardScreen extends ConsumerWidget {
                               spacing: 12,
                               runSpacing: 8,
                               children: [
-                                _buildLegendItem(Icons.local_fire_department_rounded, q1, Colors.red.shade400),
-                                _buildLegendItem(Icons.star_rounded, q2, Colors.orange.shade400),
-                                _buildLegendItem(Icons.bolt_rounded, q3, Colors.blue.shade400),
-                                _buildLegendItem(Icons.coffee_rounded, q4, Colors.green.shade400),
+                                _buildLegendItem(Icons.local_fire_department_rounded, l10n.get('cat1'), q1, Colors.red.shade400),
+                                _buildLegendItem(Icons.star_rounded, l10n.get('cat2'), q2, Colors.orange.shade400),
+                                _buildLegendItem(Icons.bolt_rounded, l10n.get('cat3'), q3, Colors.blue.shade400),
+                                _buildLegendItem(Icons.coffee_rounded, l10n.get('cat4'), q4, Colors.green.shade400),
                               ],
                             ),
                           ],
@@ -237,7 +237,7 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildLegendItem(IconData icon, int count, Color color) {
+  Widget _buildLegendItem(IconData icon, String label, int count, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
@@ -249,6 +249,11 @@ class DashboardScreen extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 15, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color),
+          ),
           const SizedBox(width: 6),
           Text(
             '$count',

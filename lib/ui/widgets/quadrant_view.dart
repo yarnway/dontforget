@@ -49,6 +49,20 @@ class QuadrantView extends ConsumerWidget {
     }
   }
 
+  String _getLevelTitle(AppLocalizations l10n) {
+    switch (level) {
+      case 1:
+        return l10n.get('cat1');
+      case 2:
+        return l10n.get('cat2');
+      case 3:
+        return l10n.get('cat3');
+      case 4:
+      default:
+        return l10n.get('cat4');
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
@@ -83,10 +97,24 @@ class QuadrantView extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header bar with minimal title icon (no counter badge)
+              // Header bar with minimal title icon and professional reminder term
               Padding(
                 padding: const EdgeInsets.only(left: 4, top: 2, bottom: 6),
-                child: titleIcon,
+                child: Row(
+                  children: [
+                    titleIcon,
+                    const SizedBox(width: 6),
+                    Text(
+                      _getLevelTitle(l10n),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.2,
+                        color: isDark ? Colors.grey.shade300 : Colors.grey.shade800,
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
               // Tasks information feed
