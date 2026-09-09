@@ -1,99 +1,262 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/providers.dart';
-import 'dart:math';
+import '../../l10n/app_localizations.dart';
+import '../widgets/ai_background_effect.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final reminders = ref.watch(remindersProvider);
-    
-    int completed = reminders.where((r) => r.isCompleted).length;
-    int pending = reminders.length - completed;
-    
-    int q1 = reminders.where((r) => r.quadrantLevel == 1).length;
-    int q2 = reminders.where((r) => r.quadrantLevel == 2).length;
-    int q3 = reminders.where((r) => r.quadrantLevel == 3).length;
-    int q4 = reminders.where((r) => r.quadrantLevel == 4).length;
+
+    final int completed = reminders.where((r) => r.isCompleted).length;
+    final int pending = reminders.length - completed;
+
+    final int q1 = reminders.where((r) => r.quadrantLevel == 1).length;
+    final int q2 = reminders.where((r) => r.quadrantLevel == 2).length;
+    final int q3 = reminders.where((r) => r.quadrantLevel == 3).length;
+    final int q4 = reminders.where((r) => r.quadrantLevel == 4).length;
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Statistics Dashboard'),
+        title: Text(
+          l10n.get('dashboardTitle'),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
+        ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
       ),
-      body: reminders.isEmpty
-          ? const Center(child: Text('No tasks yet. Create some to see statistics!'))
-          : Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text('Task Completion', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildStatCard(context, 'Total', reminders.length.toString(), Colors.blue),
-                      _buildStatCard(context, 'Completed', completed.toString(), Colors.green),
-                      _buildStatCard(context, 'Pending', pending.toString(), Colors.orange),
-                    ],
-                  ),
-                  const SizedBox(height: 48),
-                  const Text('Quadrant Distribution', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 32),
-                  SizedBox(
-                    height: 200,
-                    child: CustomPaint(
-                      painter: _PieChartPainter(
-                        values: [q1.toDouble(), q2.toDouble(), q3.toDouble(), q4.toDouble()],
-                        colors: [Colors.red.shade400, Colors.orange.shade400, Colors.blue.shade400, Colors.green.shade400],
+      extendBodyBehindAppBar: true,
+      body: AiBackgroundEffect(
+        child: SafeArea(
+          child: reminders.isEmpty
+              ? Center(
+                  child: Container(
+                    margin: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                        width: 1,
                       ),
+                      borderRadius: BorderRadius.circular(8),
+                      color: isDark ? Colors.black26 : Colors.white60,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.bar_chart_rounded,
+                          size: 48,
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          l10n.get('noTasksYet'),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                            fontSize: 14,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 32),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                )
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _buildLegendItem('Q1', Colors.red.shade400),
-                      _buildLegendItem('Q2', Colors.orange.shade400),
-                      _buildLegendItem('Q3', Colors.blue.shade400),
-                      _buildLegendItem('Q4', Colors.green.shade400),
+                      // Section 1: Task Completion Wireframe Block
+                      Text(
+                        l10n.get('taskCompletion'),
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildWireframeStatCard(
+                              context,
+                              l10n.get('total'),
+                              reminders.length.toString(),
+                              Colors.blue,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildWireframeStatCard(
+                              context,
+                              l10n.get('completed'),
+                              completed.toString(),
+                              Colors.green,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildWireframeStatCard(
+                              context,
+                              l10n.get('pending'),
+                              pending.toString(),
+                              Colors.orange,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Section 2: Quadrant Distribution
+                      Text(
+                        l10n.get('quadrantDist'),
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                            width: 1,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                          color: isDark ? Colors.black26 : Colors.white.withValues(alpha: 0.6),
+                        ),
+                        child: Column(
+                          children: [
+                            SizedBox(
+                              height: 180,
+                              child: CustomPaint(
+                                painter: _PieChartPainter(
+                                  values: [q1.toDouble(), q2.toDouble(), q3.toDouble(), q4.toDouble()],
+                                  colors: [
+                                    Colors.red.shade400,
+                                    Colors.orange.shade400,
+                                    Colors.blue.shade400,
+                                    Colors.green.shade400,
+                                  ],
+                                  bgColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Wrap(
+                              alignment: WrapAlignment.center,
+                              spacing: 12,
+                              runSpacing: 8,
+                              children: [
+                                _buildLegendItem(l10n.get('q1Short'), q1, Colors.red.shade400),
+                                _buildLegendItem(l10n.get('q2Short'), q2, Colors.orange.shade400),
+                                _buildLegendItem(l10n.get('q3Short'), q3, Colors.blue.shade400),
+                                _buildLegendItem(l10n.get('q4Short'), q4, Colors.green.shade400),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
-                  )
-                ],
-              ),
-            ),
+                  ),
+                ),
+        ),
+      ),
     );
   }
 
-  Widget _buildStatCard(BuildContext context, String title, String value, Color color) {
+  Widget _buildWireframeStatCard(
+    BuildContext context,
+    String title,
+    String value,
+    Color accentColor,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
-      width: 100,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3)),
+        color: isDark ? Colors.black26 : Colors.white.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: accentColor.withValues(alpha: 0.4),
+          width: 1,
+        ),
       ),
       child: Column(
         children: [
-          Text(value, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: color)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                margin: const EdgeInsets.only(right: 6),
+                decoration: BoxDecoration(
+                  color: accentColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: accentColor,
+                  letterSpacing: -0.5,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 4),
-          Text(title, style: TextStyle(fontSize: 12, color: color.withOpacity(0.8))),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildLegendItem(String label, Color color) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+  Widget _buildLegendItem(String label, int count, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
+        borderRadius: BorderRadius.circular(4),
+      ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Container(width: 12, height: 12, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-          const SizedBox(width: 4),
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '$label ($count)',
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500),
+          ),
         ],
       ),
     );
@@ -103,43 +266,59 @@ class DashboardScreen extends ConsumerWidget {
 class _PieChartPainter extends CustomPainter {
   final List<double> values;
   final List<Color> colors;
+  final Color bgColor;
 
-  _PieChartPainter({required this.values, required this.colors});
+  _PieChartPainter({
+    required this.values,
+    required this.colors,
+    required this.bgColor,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final double total = values.fold(0, (a, b) => a + b);
     if (total == 0) return;
 
-    final Rect rect = Rect.fromLTWH(size.width / 2 - 100, 0, 200, 200);
+    final center = Offset(size.width / 2, size.height / 2);
+    final outerRadius = min(size.width, size.height) / 2 - 8;
+    final innerRadius = outerRadius * 0.58;
+
+    final Rect rect = Rect.fromCircle(center: center, radius: outerRadius);
     double startAngle = -pi / 2;
 
     for (int i = 0; i < values.length; i++) {
+      if (values[i] <= 0) continue;
       final sweepAngle = (values[i] / total) * 2 * pi;
       final paint = Paint()
         ..color = colors[i]
         ..style = PaintingStyle.fill;
-      
+
       canvas.drawArc(rect, startAngle, sweepAngle, true, paint);
-      
-      // Add a stroke to separate slices
+
+      // Clean wireframe separator line
       final strokePaint = Paint()
-        ..color = Colors.white
+        ..color = bgColor
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2;
       canvas.drawArc(rect, startAngle, sweepAngle, true, strokePaint);
 
       startAngle += sweepAngle;
     }
-    
-    // Draw an inner circle for donut effect
-    final Paint innerPaint = Paint()..color = Colors.white; // Or use canvas color
-    // We just assume light theme for simplicity here, but usually we pass Theme.of(context).scaffoldBackgroundColor
-    // Actually we can just set blend mode to clear
-    innerPaint.blendMode = BlendMode.clear;
-    canvas.drawCircle(Offset(size.width / 2, 100), 50, innerPaint);
+
+    // Donut hole with background fill
+    final innerPaint = Paint()
+      ..color = bgColor
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, innerRadius, innerPaint);
+
+    // Inner wireframe ring
+    final ringPaint = Paint()
+      ..color = Colors.grey.withValues(alpha: 0.2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    canvas.drawCircle(center, innerRadius, ringPaint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _PieChartPainter oldDelegate) => true;
 }

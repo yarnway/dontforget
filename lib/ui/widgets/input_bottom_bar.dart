@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../providers/home_controller.dart';
+import '../../l10n/app_localizations.dart';
 
 class InputBottomBar extends ConsumerStatefulWidget {
   const InputBottomBar({super.key});
@@ -11,7 +12,8 @@ class InputBottomBar extends ConsumerStatefulWidget {
   ConsumerState<InputBottomBar> createState() => _InputBottomBarState();
 }
 
-class _InputBottomBarState extends ConsumerState<InputBottomBar> with SingleTickerProviderStateMixin {
+class _InputBottomBarState extends ConsumerState<InputBottomBar>
+    with SingleTickerProviderStateMixin {
   final _textController = TextEditingController();
   final _focusNode = FocusNode();
   late AnimationController _animationController;
@@ -42,75 +44,77 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> with SingleTick
   }
 
   void _showMediaOptionsSheet(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),
       builder: (sheetCtx) {
         final controller = ref.read(homeControllerProvider.notifier);
 
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Center(
                   child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
+                    width: 36,
+                    height: 3,
+                    margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
+                      color: Colors.grey.shade400,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
-                const Text(
-                  '上传素材给大模型',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 4),
                 Text(
-                  '大模型将自动解析内容并为您创建智能待办与日程提醒',
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  l10n.get('uploadMaterial'),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 2),
+                Text(
+                  l10n.get('uploadMaterialDesc'),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 16),
                 Row(
                   children: [
                     _buildMediaOption(
-                      icon: Icons.camera_alt_rounded,
+                      icon: Icons.camera_alt_outlined,
                       color: Colors.blue.shade600,
-                      label: '拍摄照片',
+                      label: l10n.get('takePhoto'),
                       onTap: () {
                         Navigator.pop(sheetCtx);
                         controller.processImageWithSource(ImageSource.camera);
                       },
                     ),
                     _buildMediaOption(
-                      icon: Icons.photo_library_rounded,
+                      icon: Icons.photo_library_outlined,
                       color: Colors.purple.shade500,
-                      label: '相册图片',
+                      label: l10n.get('galleryPhoto'),
                       onTap: () {
                         Navigator.pop(sheetCtx);
                         controller.processImageWithSource(ImageSource.gallery);
                       },
                     ),
                     _buildMediaOption(
-                      icon: Icons.snippet_folder_rounded,
+                      icon: Icons.snippet_folder_outlined,
                       color: Colors.amber.shade700,
-                      label: '导入文件',
+                      label: l10n.get('importFile'),
                       onTap: () {
                         Navigator.pop(sheetCtx);
                         controller.processFile();
                       },
                     ),
                     _buildMediaOption(
-                      icon: Icons.video_collection_rounded,
+                      icon: Icons.video_collection_outlined,
                       color: Colors.redAccent,
-                      label: '上传视频',
+                      label: l10n.get('uploadVideo'),
                       onTap: () {
                         Navigator.pop(sheetCtx);
                         controller.processVideo();
@@ -118,7 +122,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> with SingleTick
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
               ],
             ),
           ),
@@ -136,25 +140,22 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> with SingleTick
     return Expanded(
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          margin: const EdgeInsets.symmetric(horizontal: 4),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 28),
-              ),
-              const SizedBox(height: 8),
+              Icon(icon, color: color, size: 26),
+              const SizedBox(height: 6),
               Text(
                 label,
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
               ),
             ],
           ),
@@ -165,32 +166,34 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> with SingleTick
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final homeState = ref.watch(homeControllerProvider);
     final isRecording = homeState.isRecording || _isLongPressRecording;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return SafeArea(
       top: false,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        margin: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 18,
-              offset: const Offset(0, 6),
-            )
-          ],
+          color: isDark ? Colors.black.withValues(alpha: 0.35) : Colors.white.withValues(alpha: 0.85),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isRecording
+                ? Colors.red.withValues(alpha: 0.6)
+                : Theme.of(context).colorScheme.outlineVariant,
+            width: 1.0,
+          ),
         ),
         child: Row(
           children: [
             // Left '+' Add button
             IconButton(
-              icon: const Icon(Icons.add_circle_outline_rounded, size: 26),
+              icon: const Icon(Icons.add_circle_outline_rounded, size: 22),
               color: Theme.of(context).colorScheme.primary,
-              tooltip: '上传图片、文件或视频',
+              tooltip: l10n.get('uploadMaterial'),
+              splashRadius: 18,
               onPressed: () => _showMediaOptionsSheet(context),
             ),
 
@@ -205,19 +208,20 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> with SingleTick
                         ? [
                             BoxShadow(
                               color: Colors.red.withValues(alpha: 0.4 * _animationController.value),
-                              blurRadius: 12 * _animationController.value,
-                              spreadRadius: 3 * _animationController.value,
+                              blurRadius: 8 * _animationController.value,
+                              spreadRadius: 2 * _animationController.value,
                             )
                           ]
                         : [],
                   ),
                   child: IconButton(
                     icon: Icon(
-                      isRecording ? Icons.stop_circle_rounded : Icons.mic_rounded,
+                      isRecording ? Icons.stop_circle_rounded : Icons.mic_none_rounded,
                       color: isRecording ? Colors.red : Colors.grey.shade600,
-                      size: 24,
+                      size: 22,
                     ),
-                    tooltip: isRecording ? '停止录音' : '单击录音 / 长按输入框说话',
+                    splashRadius: 18,
+                    tooltip: isRecording ? l10n.get('recordingClickStop') : l10n.get('inputHint'),
                     onPressed: () => ref.read(homeControllerProvider.notifier).toggleRecording(),
                   ),
                 );
@@ -254,21 +258,21 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> with SingleTick
                     ? Row(
                         children: [
                           Container(
-                            width: 10,
-                            height: 10,
+                            width: 8,
+                            height: 8,
                             decoration: const BoxDecoration(
                               color: Colors.red,
                               shape: BoxShape.circle,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               _isLongPressRecording
-                                  ? '松手立即提交生成待办...'
-                                  : '正在录音中，点击左侧停止...',
+                                  ? l10n.get('releaseToSend')
+                                  : l10n.get('recordingClickStop'),
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.red.shade700,
                               ),
@@ -281,9 +285,10 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> with SingleTick
                     : TextField(
                         controller: _textController,
                         focusNode: _focusNode,
+                        style: const TextStyle(fontSize: 13),
                         decoration: InputDecoration(
-                          hintText: '单击输入文本，长按输入语音...',
-                          hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                          hintText: l10n.get('inputHint'),
+                          hintStyle: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                           border: InputBorder.none,
                           isDense: true,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
@@ -293,35 +298,37 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> with SingleTick
               ),
             ),
 
-            // Background Processing capsule
+            // Background Processing capsule (Wireframe)
             if (homeState.isProcessingInBackground)
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                    width: 1,
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBox(
-                      width: 11,
-                      height: 11,
+                      width: 9,
+                      height: 9,
                       child: CircularProgressIndicator(
-                        strokeWidth: 2,
+                        strokeWidth: 1.5,
                         color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
-                    const SizedBox(width: 5),
+                    const SizedBox(width: 4),
                     Text(
                       homeState.pendingTasksCount > 1
-                          ? 'AI提炼中 (${homeState.pendingTasksCount})'
-                          : 'AI提炼中...',
+                          ? 'AI (${homeState.pendingTasksCount})'
+                          : 'AI...',
                       style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
                         color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
@@ -329,16 +336,20 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> with SingleTick
                 ),
               ),
 
-            // Right Send button
-            IconButton(
-              icon: const Icon(Icons.arrow_upward_rounded, size: 22),
-              style: IconButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.all(6),
+            // Right Send button (Wireframe)
+            Container(
+              margin: const EdgeInsets.only(left: 4),
+              child: IconButton(
+                icon: const Icon(Icons.arrow_upward_rounded, size: 18),
+                style: IconButton.styleFrom(
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.all(5),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                ),
+                tooltip: l10n.get('send'),
+                onPressed: _submitText,
               ),
-              tooltip: '发送',
-              onPressed: _submitText,
             ),
           ],
         ),

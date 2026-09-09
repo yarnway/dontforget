@@ -11,6 +11,7 @@ import 'settings_screen.dart';
 import 'dashboard_screen.dart';
 import '../widgets/quadrant_view.dart';
 import '../widgets/input_bottom_bar.dart';
+import '../widgets/ai_background_effect.dart';
 import '../../l10n/app_localizations.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -20,15 +21,21 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProviderStateMixin {
   final _audioPlayer = AudioPlayer();
   Timer? _heartbeatTimer;
   StreamSubscription<Reminder>? _dueSubscription;
   final Set<String> _promptedReminderIds = {};
+  late AnimationController _indicatorAnimController;
 
   @override
   void initState() {
     super.initState();
+
+    _indicatorAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
 
     // Listen to notification service broadcast stream
     _dueSubscription = NotificationService().onReminderDue.listen((reminder) {
@@ -43,6 +50,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   void dispose() {
+    _indicatorAnimController.dispose();
     _heartbeatTimer?.cancel();
     _dueSubscription?.cancel();
     _audioPlayer.dispose();
@@ -68,17 +76,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   void _showDueReminderDialog(Reminder reminder) {
     if (!mounted) return;
+    final l10n = AppLocalizations.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (dialogCtx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant, width: 1),
+        ),
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         title: Row(
           children: [
-            Icon(Icons.alarm_on_rounded, color: Theme.of(context).colorScheme.primary, size: 28),
+            Icon(Icons.alarm_on_rounded, color: Theme.of(context).colorScheme.primary, size: 24),
             const SizedBox(width: 8),
-            const Text('待办提醒到期', style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(
+              l10n.get('dueReminder'),
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+            ),
           ],
         ),
         content: Column(
@@ -87,13 +104,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             Text(
               reminder.taskTitle,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             if (reminder.taskSummary != null && reminder.taskSummary!.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
                 reminder.taskSummary!,
-                style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
               ),
             ],
             const SizedBox(height: 12),
@@ -104,7 +121,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Text(
                   reminder.triggerTime != null
                       ? reminder.triggerTime.toString().substring(0, 16)
-                      : '现在',
+                      : l10n.get('now'),
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
               ],
@@ -125,20 +142,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
               ScaffoldMessenger.of(context).hideCurrentSnackBar();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  duration: Duration(seconds: 4),
+                SnackBar(
+                  duration: const Duration(seconds: 3),
                   behavior: SnackBarBehavior.floating,
-                  content: Text('已推迟 5 分钟后再次提醒'),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  content: Text(l10n.get('snoozeSuccess')),
                 ),
               );
             },
-            child: const Text('稍后 5 分钟提醒'),
+            child: Text(l10n.get('snooze5Min'), style: const TextStyle(fontSize: 13)),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(),
-            child: const Text('我知道了'),
+            child: Text(l10n.get('iKnow'), style: const TextStyle(fontSize: 13)),
           ),
           FilledButton(
+            style: FilledButton.styleFrom(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            ),
             onPressed: () {
               Navigator.of(dialogCtx).pop();
               if (reminder.isRecurring) {
@@ -152,10 +173,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      duration: const Duration(seconds: 4),
+                      duration: const Duration(seconds: 3),
                       behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      content: Text('已完成本次周期任务，下一次已自动排期至: ${nextTime.toString().substring(0, 16)}'),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      content: Text('${l10n.get('periodicNext')}${nextTime.toString().substring(0, 16)}'),
                     ),
                   );
                   return;
@@ -168,14 +189,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
               ScaffoldMessenger.of(context).hideCurrentSnackBar();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  duration: Duration(seconds: 4),
+                SnackBar(
+                  duration: const Duration(seconds: 3),
                   behavior: SnackBarBehavior.floating,
-                  content: Text('事项已标为完成'),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  content: Text(l10n.get('taskCompleted')),
                 ),
               );
             },
-            child: const Text('标为完成'),
+            child: Text(l10n.get('markDone'), style: const TextStyle(fontSize: 13)),
           ),
         ],
       ),
@@ -183,6 +205,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _confirmClearCompleted() {
+    final l10n = AppLocalizations.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final completedCount = ref.read(remindersProvider).where((r) => r.isCompleted).length;
     if (completedCount == 0) {
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -190,13 +214,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         SnackBar(
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          content: const Text('当前没有已完成的历史事项需要清理'),
-          action: SnackBarAction(
-            label: '✕',
-            textColor: Colors.white,
-            onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          content: Text(l10n.get('noCompletedToClear')),
         ),
       );
       return;
@@ -205,22 +224,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant, width: 1),
+        ),
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         title: Row(
-          children: const [
-            Icon(Icons.cleaning_services_outlined, color: Colors.redAccent, size: 24),
-            SizedBox(width: 8),
-            Text('清理已完成事项'),
+          children: [
+            const Icon(Icons.cleaning_services_outlined, color: Colors.redAccent, size: 22),
+            const SizedBox(width: 8),
+            Text(l10n.get('clearCompletedTitle'), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
           ],
         ),
-        content: Text('确定要清除所有已完成的 $completedCount 条历史待办事项吗？此操作不可撤销。'),
+        content: Text(
+          '${l10n.get('clearCompletedConfirm')} ($completedCount)',
+          style: const TextStyle(fontSize: 14),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('取消'),
+            child: Text(l10n.get('cancel'), style: const TextStyle(fontSize: 13)),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            ),
             onPressed: () async {
               Navigator.of(ctx).pop();
               final count = await ref.read(remindersProvider.notifier).clearCompletedReminders();
@@ -228,31 +257,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ScaffoldMessenger.of(context).hideCurrentSnackBar();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    duration: const Duration(seconds: 4),
+                    duration: const Duration(seconds: 3),
                     behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    content: Text('已成功清除 $count 条已完成历史事项'),
-                    action: SnackBarAction(
-                      label: '✕',
-                      textColor: Colors.white,
-                      onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    content: Text('${l10n.get('clearedCompletedSuccess')} ($count)'),
                   ),
                 );
               }
             },
-            child: const Text('确定清理'),
+            child: Text(l10n.get('confirm'), style: const TextStyle(fontSize: 13)),
           ),
         ],
       ),
     );
   }
 
+  void _clearAllNotices() {
+    final l10n = AppLocalizations.of(context);
+    ref.read(homeControllerProvider.notifier).clearError();
+    _promptedReminderIds.clear();
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        content: Text(l10n.get('noticesCleared')),
+      ),
+    );
+  }
+
   void _showImageDialog(String filePath) {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         clipBehavior: Clip.antiAlias,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -264,9 +304,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: Image.file(
                     File(filePath),
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Padding(
-                      padding: EdgeInsets.all(32),
-                      child: Text('无法载入图片'),
+                    errorBuilder: (_, __, ___) => Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Text(l10n.get('cannotLoadImage')),
                     ),
                   ),
                 ),
@@ -275,8 +315,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   top: 8,
                   child: CircleAvatar(
                     backgroundColor: Colors.black54,
+                    radius: 16,
                     child: IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white),
+                      icon: const Icon(Icons.close, color: Colors.white, size: 16),
                       onPressed: () => Navigator.pop(ctx),
                     ),
                   ),
@@ -290,6 +331,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _showFileDialog(String filePath) {
+    final l10n = AppLocalizations.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final fileName = filePath.split(Platform.pathSeparator).last;
     String preview = '';
     try {
@@ -302,15 +345,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant, width: 1),
+        ),
+        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         title: Row(
           children: [
-            const Icon(Icons.description_outlined, color: Colors.amber, size: 26),
+            const Icon(Icons.description_outlined, color: Colors.amber, size: 22),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 fileName,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -322,31 +369,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('本地路径: $filePath', style: const TextStyle(fontSize: 11, color: Colors.grey)),
-              const Divider(height: 20),
+              Text('${l10n.get('localPath')}: $filePath', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+              const Divider(height: 18),
               if (preview.isNotEmpty) ...[
-                const Text('内容预览:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                const SizedBox(height: 8),
+                Text('${l10n.get('contentPreview')}:', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+                const SizedBox(height: 6),
                 Container(
-                  constraints: const BoxConstraints(maxHeight: 220),
-                  padding: const EdgeInsets.all(10),
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.grey.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
                   ),
                   child: SingleChildScrollView(
-                    child: Text(preview, style: const TextStyle(fontSize: 12, fontFamily: 'monospace')),
+                    child: Text(preview, style: const TextStyle(fontSize: 11, fontFamily: 'monospace')),
                   ),
                 ),
               ] else
-                const Text('该文件为二进制文件，已作为附件关联至本任务。', style: TextStyle(fontSize: 13)),
+                Text(l10n.get('binaryFileNotice'), style: const TextStyle(fontSize: 12)),
             ],
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('关闭'),
+            child: Text(l10n.get('close'), style: const TextStyle(fontSize: 13)),
           ),
         ],
       ),
@@ -354,6 +402,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _openVideo(String filePath) {
+    final l10n = AppLocalizations.of(context);
     final fileName = filePath.split(Platform.pathSeparator).last;
     if (Platform.isWindows) {
       try {
@@ -363,19 +412,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        duration: const Duration(seconds: 4),
+        duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
-        content: Text('已调用系统播放器打开视频: $fileName'),
-        action: SnackBarAction(
-          label: '✕',
-          textColor: Colors.white,
-          onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        content: Text('${l10n.get('openedVideo')}: $fileName'),
       ),
     );
   }
 
   void _playMedia(String recordId) async {
+    final l10n = AppLocalizations.of(context);
     final records = ref.read(mediaRecordsProvider);
     final media = records.where((m) => m.id == recordId).firstOrNull;
     if (media == null) return;
@@ -388,12 +434,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           SnackBar(
             duration: const Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
-            content: const Text('正在播放原声录音...'),
-            action: SnackBarAction(
-              label: '✕',
-              textColor: Colors.white,
-              onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            content: Text(l10n.get('playingAudio')),
           ),
         );
       }
@@ -410,26 +452,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final reminders = ref.watch(remindersProvider);
     final l10n = AppLocalizations.of(context);
+    final homeState = ref.watch(homeControllerProvider);
 
     ref.listen<HomeState>(homeControllerProvider, (previous, next) {
       if (next.error != null) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            duration: const Duration(seconds: 4),
+            duration: const Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             content: Row(
               children: [
-                const Icon(Icons.info_outline, color: Colors.white, size: 20),
+                const Icon(Icons.info_outline, color: Colors.white, size: 18),
                 const SizedBox(width: 8),
-                Expanded(child: Text(next.error!)),
+                Expanded(child: Text(next.error!, style: const TextStyle(fontSize: 13))),
               ],
-            ),
-            action: SnackBarAction(
-              label: '✕',
-              textColor: Colors.white,
-              onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
             ),
           ),
         );
@@ -437,20 +475,66 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       }
     });
 
+    final isProcessing = homeState.isProcessingInBackground;
+    final statusColor = isProcessing ? const Color(0xFF00E5FF) : const Color(0xFF00E676);
+
     return Scaffold(
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(l10n.get('appTitle'), style: const TextStyle(fontWeight: FontWeight.w600)),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              l10n.get('appTitle'),
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17, letterSpacing: 0.5),
+            ),
+            const SizedBox(width: 8),
+            // Micro Status Indicator Light with Breathing Animation
+            AnimatedBuilder(
+              animation: _indicatorAnimController,
+              builder: (context, child) {
+                final glow = _indicatorAnimController.value;
+                return Tooltip(
+                  message: isProcessing ? l10n.get('statusBusy') : l10n.get('statusReady'),
+                  child: Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: statusColor,
+                      boxShadow: [
+                        BoxShadow(
+                          color: statusColor.withValues(alpha: 0.5 + 0.4 * glow),
+                          blurRadius: 4 + 4 * glow,
+                          spreadRadius: 1 + 1 * glow,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
         elevation: 0,
         backgroundColor: Colors.transparent,
         actions: [
           IconButton(
-            icon: const Icon(Icons.cleaning_services_outlined),
-            tooltip: '清理已完成事项',
+            icon: const Icon(Icons.notifications_off_outlined, size: 20),
+            tooltip: l10n.get('clearAllNotices'),
+            splashRadius: 18,
+            onPressed: _clearAllNotices,
+          ),
+          IconButton(
+            icon: const Icon(Icons.cleaning_services_outlined, size: 20),
+            tooltip: l10n.get('clearCompleted'),
+            splashRadius: 18,
             onPressed: _confirmClearCompleted,
           ),
           IconButton(
-            icon: const Icon(Icons.bar_chart_rounded),
-            tooltip: '数据看板',
+            icon: const Icon(Icons.bar_chart_rounded, size: 20),
+            tooltip: l10n.get('dashboardTitle'),
+            splashRadius: 18,
             onPressed: () {
               Navigator.push(
                 context,
@@ -459,8 +543,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: '系统设置',
+            icon: const Icon(Icons.settings_outlined, size: 20),
+            tooltip: l10n.get('settings'),
+            splashRadius: 18,
             onPressed: () {
               Navigator.push(
                 context,
@@ -468,28 +553,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               );
             },
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
         ],
       ),
-      extendBodyBehindAppBar: true,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Theme.of(context).colorScheme.surface,
-              Theme.of(context).colorScheme.surface.withOpacity(0.9),
-            ],
-          ),
-        ),
+      body: AiBackgroundEffect(
         child: SafeArea(
           bottom: false,
           child: Column(
             children: [
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 6.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
                   child: Column(
                     children: [
                       Expanded(
@@ -498,45 +572,101 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             Expanded(
                               child: QuadrantView(
                                 level: 1,
-                                titleIcon: Icon(Icons.local_fire_department_rounded, color: Colors.red.shade400, size: 26),
+                                titleIcon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.local_fire_department_rounded, color: Colors.red.shade400, size: 18),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      l10n.get('q1'),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.red.shade400,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                                 allReminders: reminders,
-                                bgColor: const Color(0xFFFFEBEE),
+                                bgColor: Colors.red.shade400,
                                 onPlayMedia: _playMedia,
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: QuadrantView(
                                 level: 2,
-                                titleIcon: Icon(Icons.star_rounded, color: Colors.orange.shade400, size: 26),
+                                titleIcon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.star_rounded, color: Colors.orange.shade400, size: 18),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      l10n.get('q2'),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.orange.shade400,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                                 allReminders: reminders,
-                                bgColor: const Color(0xFFFFF3E0),
+                                bgColor: Colors.orange.shade400,
                                 onPlayMedia: _playMedia,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       Expanded(
                         child: Row(
                           children: [
                             Expanded(
                               child: QuadrantView(
                                 level: 3,
-                                titleIcon: Icon(Icons.bolt_rounded, color: Colors.blue.shade400, size: 26),
+                                titleIcon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.bolt_rounded, color: Colors.blue.shade400, size: 18),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      l10n.get('q3'),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.blue.shade400,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                                 allReminders: reminders,
-                                bgColor: const Color(0xFFE3F2FD),
+                                bgColor: Colors.blue.shade400,
                                 onPlayMedia: _playMedia,
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: QuadrantView(
                                 level: 4,
-                                titleIcon: Icon(Icons.coffee_rounded, color: Colors.green.shade400, size: 26),
+                                titleIcon: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.coffee_rounded, color: Colors.green.shade400, size: 18),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      l10n.get('q4'),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.green.shade400,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                                 allReminders: reminders,
-                                bgColor: const Color(0xFFE8F5E9),
+                                bgColor: Colors.green.shade400,
                                 onPlayMedia: _playMedia,
                               ),
                             ),

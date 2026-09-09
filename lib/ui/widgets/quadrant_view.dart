@@ -1,8 +1,8 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
 import '../../providers/providers.dart';
+import '../../l10n/app_localizations.dart';
 import 'task_card.dart';
 
 class QuadrantView extends ConsumerWidget {
@@ -35,25 +35,31 @@ class QuadrantView extends ConsumerWidget {
     }
   }
 
-  String _getEmptyStateText() {
+  String _getEmptyStateText(AppLocalizations l10n) {
     switch (level) {
       case 1:
-        return '暂无火急事务';
+        return l10n.get('emptyQ1');
       case 2:
-        return '暂无重点规划';
+        return l10n.get('emptyQ2');
       case 3:
-        return '暂无突发杂事';
+        return l10n.get('emptyQ3');
       case 4:
       default:
-        return '一身轻松，无琐事';
+        return l10n.get('emptyQ4');
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final tasks = allReminders.where((r) => r.quadrantLevel == level).toList();
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final finalBgColor = isDark ? bgColor.withOpacity(0.05) : bgColor.withOpacity(0.4);
+
+    // Subtle wireframe container styling
+    final Color outlineColor = bgColor.withValues(alpha: isDark ? 0.45 : 0.7);
+    final Color surfaceColor = isDark
+        ? Colors.black.withValues(alpha: 0.25)
+        : Colors.white.withValues(alpha: 0.5);
 
     return DragTarget<Reminder>(
       onAcceptWithDetails: (details) {
@@ -63,82 +69,103 @@ class QuadrantView extends ConsumerWidget {
         }
       },
       builder: (context, candidateData, rejectedData) {
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(20),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              decoration: BoxDecoration(
-                color: candidateData.isNotEmpty ? finalBgColor.withOpacity(0.8) : finalBgColor,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withOpacity(0.2)),
-                boxShadow: candidateData.isNotEmpty 
-                    ? [BoxShadow(color: finalBgColor, blurRadius: 10, spreadRadius: 2)] 
-                    : [],
-              ),
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4, bottom: 8),
-                    child: titleIcon,
-                  ),
-                  Expanded(
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      child: tasks.isEmpty
-                          ? Center(
-                              key: const ValueKey('empty'),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(_getEmptyStateIcon(), size: 42, color: Colors.grey.withOpacity(0.4)),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    _getEmptyStateText(),
-                                    style: TextStyle(color: Colors.grey.withOpacity(0.6), fontSize: 12, fontWeight: FontWeight.w500),
-                                  ),
-                                ],
-                              ),
-                            )
-                          : ListView.builder(
-                              key: const ValueKey('list'),
-                              physics: const BouncingScrollPhysics(),
-                              itemCount: tasks.length,
-                              itemBuilder: (context, index) {
-                                final task = tasks[index];
-                                return Draggable<Reminder>(
-                                  data: task,
-                                  feedback: Material(
-                                    elevation: 12,
-                                    borderRadius: BorderRadius.circular(16),
-                                    color: Colors.transparent,
-                                    child: SizedBox(
-                                      width: 260,
-                                      child: TaskCard(task: task, onPlayMedia: () {}),
-                                    ),
-                                  ),
-                                  childWhenDragging: Opacity(
-                                    opacity: 0.3,
-                                    child: TaskCard(
-                                      task: task,
-                                      onPlayMedia: () => onPlayMedia(task.recordId ?? ''),
-                                    ),
-                                  ),
-                                  child: TaskCard(
-                                    task: task,
-                                    onPlayMedia: () => onPlayMedia(task.recordId ?? ''),
-                                  ),
-                                );
-                              },
-                            ),
-                    ),
-                  ),
-                ],
-              ),
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            color: candidateData.isNotEmpty ? surfaceColor.withValues(alpha: 0.8) : surfaceColor,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: candidateData.isNotEmpty ? bgColor : outlineColor,
+              width: candidateData.isNotEmpty ? 1.5 : 1.0,
             ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header bar with title icon & micro indicator
+              Padding(
+                padding: const EdgeInsets.only(left: 2, bottom: 6),
+                child: Row(
+                  children: [
+                    titleIcon,
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: outlineColor.withValues(alpha: 0.4), width: 0.8),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        '${tasks.length}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Tasks information feed
+              Expanded(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  child: tasks.isEmpty
+                      ? Center(
+                          key: const ValueKey('empty'),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(_getEmptyStateIcon(), size: 32, color: Colors.grey.withValues(alpha: 0.35)),
+                              const SizedBox(height: 6),
+                              Text(
+                                _getEmptyStateText(l10n),
+                                style: TextStyle(
+                                  color: Colors.grey.withValues(alpha: 0.6),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          key: const ValueKey('list'),
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: tasks.length,
+                          itemBuilder: (context, index) {
+                            final task = tasks[index];
+                            return Draggable<Reminder>(
+                              data: task,
+                              feedback: Material(
+                                elevation: 8,
+                                borderRadius: BorderRadius.circular(6),
+                                color: Colors.transparent,
+                                child: SizedBox(
+                                  width: 250,
+                                  child: TaskCard(task: task, onPlayMedia: () {}),
+                                ),
+                              ),
+                              childWhenDragging: Opacity(
+                                opacity: 0.25,
+                                child: TaskCard(
+                                  task: task,
+                                  onPlayMedia: () => onPlayMedia(task.recordId ?? ''),
+                                ),
+                              ),
+                              child: TaskCard(
+                                task: task,
+                                onPlayMedia: () => onPlayMedia(task.recordId ?? ''),
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ),
+            ],
           ),
         );
       },

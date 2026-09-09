@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
 import '../../providers/providers.dart';
 import '../../services/notification_service.dart';
+import '../../l10n/app_localizations.dart';
 
 class TaskDetailsDialog extends ConsumerStatefulWidget {
   final Reminder task;
@@ -37,19 +38,20 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
   }
 
   void _save() {
+    final l10n = AppLocalizations.of(context);
     String? recurrenceDesc;
     switch (_selectedRecurrenceRule) {
       case 'daily':
-        recurrenceDesc = '每天';
+        recurrenceDesc = l10n.get('repeatDaily');
         break;
       case 'workday':
-        recurrenceDesc = '工作日';
+        recurrenceDesc = l10n.get('repeatWorkday');
         break;
       case 'weekly':
-        recurrenceDesc = '每周';
+        recurrenceDesc = l10n.get('repeatWeekly');
         break;
       case 'monthly':
-        recurrenceDesc = '每月';
+        recurrenceDesc = l10n.get('repeatMonthly');
         break;
       default:
         recurrenceDesc = null;
@@ -78,6 +80,7 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
   }
 
   void _delete() {
+    final l10n = AppLocalizations.of(context);
     final notifier = ref.read(remindersProvider.notifier);
     notifier.deleteReminder(widget.task.id);
     NotificationService().cancelReminder(widget.task.id);
@@ -87,12 +90,12 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        duration: const Duration(seconds: 4),
+        duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        content: Text('已删除事项: ${widget.task.taskTitle}'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        content: Text('${l10n.get('deletedTask')}: ${widget.task.taskTitle}'),
         action: SnackBarAction(
-          label: '撤销',
+          label: l10n.get('undo'),
           textColor: Colors.amberAccent,
           onPressed: () {
             notifier.addReminder(widget.task);
@@ -137,43 +140,57 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant, width: 1),
+      ),
+      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
+        constraints: const BoxConstraints(maxWidth: 460),
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('编辑事项',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(
+                l10n.get('editTask'),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 16),
               TextField(
                 controller: _titleController,
+                style: const TextStyle(fontSize: 14),
                 decoration: InputDecoration(
-                  labelText: '事项标题',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  labelText: l10n.get('taskTitleLabel'),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
                 maxLines: 3,
                 minLines: 1,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               DropdownButtonFormField<int>(
                 initialValue: _selectedQuadrant,
                 decoration: InputDecoration(
-                  labelText: '象限分类',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  labelText: l10n.get('quadrantLabel'),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
                 items: [
                   DropdownMenuItem(
                     value: 1,
                     child: Row(
                       children: [
-                        Icon(Icons.local_fire_department_rounded, color: Colors.red.shade400, size: 20),
+                        Icon(Icons.local_fire_department_rounded, color: Colors.red.shade400, size: 18),
                         const SizedBox(width: 8),
-                        const Text('象限 1 (火急重要)'),
+                        Text(l10n.get('q1Short'), style: const TextStyle(fontSize: 13)),
                       ],
                     ),
                   ),
@@ -181,9 +198,9 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
                     value: 2,
                     child: Row(
                       children: [
-                        Icon(Icons.star_rounded, color: Colors.orange.shade400, size: 20),
+                        Icon(Icons.star_rounded, color: Colors.orange.shade400, size: 18),
                         const SizedBox(width: 8),
-                        const Text('象限 2 (长期重要)'),
+                        Text(l10n.get('q2Short'), style: const TextStyle(fontSize: 13)),
                       ],
                     ),
                   ),
@@ -191,9 +208,9 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
                     value: 3,
                     child: Row(
                       children: [
-                        Icon(Icons.bolt_rounded, color: Colors.blue.shade400, size: 20),
+                        Icon(Icons.bolt_rounded, color: Colors.blue.shade400, size: 18),
                         const SizedBox(width: 8),
-                        const Text('象限 3 (突发琐事)'),
+                        Text(l10n.get('q3Short'), style: const TextStyle(fontSize: 13)),
                       ],
                     ),
                   ),
@@ -201,9 +218,9 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
                     value: 4,
                     child: Row(
                       children: [
-                        Icon(Icons.coffee_rounded, color: Colors.green.shade400, size: 20),
+                        Icon(Icons.coffee_rounded, color: Colors.green.shade400, size: 18),
                         const SizedBox(width: 8),
-                        const Text('象限 4 (低优闲事)'),
+                        Text(l10n.get('q4Short'), style: const TextStyle(fontSize: 13)),
                       ],
                     ),
                   ),
@@ -212,79 +229,95 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
                   if (val != null) setState(() => _selectedQuadrant = val);
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 14),
               DropdownButtonFormField<String>(
                 initialValue: _selectedRecurrenceRule,
                 decoration: InputDecoration(
-                  labelText: '提醒周期',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  labelText: l10n.get('recurrenceLabel'),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
-                items: const [
-                  DropdownMenuItem(value: 'none', child: Text('单次提醒 (不重复)')),
-                  DropdownMenuItem(value: 'daily', child: Text('每天重复')),
-                  DropdownMenuItem(value: 'workday', child: Text('工作日重复 (周一至周五)')),
-                  DropdownMenuItem(value: 'weekly', child: Text('每周重复')),
-                  DropdownMenuItem(value: 'monthly', child: Text('每月重复')),
+                items: [
+                  DropdownMenuItem(value: 'none', child: Text(l10n.get('repeatNone'), style: const TextStyle(fontSize: 13))),
+                  DropdownMenuItem(value: 'daily', child: Text(l10n.get('repeatDaily'), style: const TextStyle(fontSize: 13))),
+                  DropdownMenuItem(value: 'workday', child: Text(l10n.get('repeatWorkday'), style: const TextStyle(fontSize: 13))),
+                  DropdownMenuItem(value: 'weekly', child: Text(l10n.get('repeatWeekly'), style: const TextStyle(fontSize: 13))),
+                  DropdownMenuItem(value: 'monthly', child: Text(l10n.get('repeatMonthly'), style: const TextStyle(fontSize: 13))),
                 ],
                 onChanged: (val) {
                   if (val != null) setState(() => _selectedRecurrenceRule = val);
                 },
               ),
-              const SizedBox(height: 16),
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('提醒时间'),
-                subtitle: Text(
-                  _selectedTime?.toString().substring(0, 16) ?? '未设置提醒',
-                  style: TextStyle(
-                    color: _selectedTime == null ? Colors.grey : Theme.of(context).colorScheme.primary,
-                    fontWeight: _selectedTime == null ? FontWeight.normal : FontWeight.w600,
-                  ),
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Theme.of(context).colorScheme.outlineVariant, width: 1),
+                  borderRadius: BorderRadius.circular(6),
                 ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
+                child: Row(
                   children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(l10n.get('triggerTimeLabel'), style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                          const SizedBox(height: 2),
+                          Text(
+                            _selectedTime?.toString().substring(0, 16) ?? l10n.get('notSet'),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: _selectedTime == null ? Colors.grey : Theme.of(context).colorScheme.primary,
+                              fontWeight: _selectedTime == null ? FontWeight.normal : FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     if (_selectedTime != null)
                       IconButton(
-                        icon: const Icon(Icons.clear, size: 20),
-                        tooltip: '清除提醒时间',
+                        icon: const Icon(Icons.clear, size: 18),
+                        tooltip: l10n.get('clearTime'),
+                        splashRadius: 16,
                         onPressed: () => setState(() => _selectedTime = null),
                       ),
                     IconButton(
-                      icon: const Icon(Icons.access_time, size: 20),
-                      tooltip: '选择提醒时间',
+                      icon: const Icon(Icons.access_time, size: 18),
+                      tooltip: l10n.get('triggerTimeLabel'),
+                      splashRadius: 16,
                       onPressed: _pickTime,
                     ),
                   ],
                 ),
               ),
               if (widget.task.taskSummary != null && widget.task.taskSummary!.isNotEmpty) ...[
-                const Divider(),
-                const Text('AI提炼摘要',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                const SizedBox(height: 4),
+                const SizedBox(height: 12),
                 Text(
                   widget.task.taskSummary!,
                   style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
               ],
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               Row(
                 children: [
                   TextButton.icon(
-                    icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
-                    label: const Text('删除', style: TextStyle(color: Colors.red)),
+                    icon: const Icon(Icons.delete_outline, color: Colors.red, size: 16),
+                    label: Text(l10n.get('deleteTask'), style: const TextStyle(color: Colors.red, fontSize: 13)),
                     onPressed: _delete,
                   ),
                   const Spacer(),
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('取消'),
+                    child: Text(l10n.get('cancel'), style: const TextStyle(fontSize: 13)),
                   ),
                   const SizedBox(width: 8),
                   FilledButton(
+                    style: FilledButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    ),
                     onPressed: _save,
-                    child: const Text('保存'),
+                    child: Text(l10n.get('save'), style: const TextStyle(fontSize: 13)),
                   ),
                 ],
               ),

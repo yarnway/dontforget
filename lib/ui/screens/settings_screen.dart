@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/providers.dart';
 import '../../l10n/app_localizations.dart';
+import '../widgets/ai_background_effect.dart';
 
 class ModelProvider {
   final String name;
@@ -69,7 +70,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _modelNameController = TextEditingController(text: settings.modelName);
     _selectedLang = settings.language;
     
-    // Try to match current settings to a provider
     for (var p in _providers) {
       if (p.defaultBaseUrl == settings.baseUrl && p.defaultModel == settings.modelName) {
         _selectedProvider = p;
@@ -113,113 +113,187 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.get('settings')),
+        title: Text(
+          l10n.get('settings'),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
+        ),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            DropdownButtonFormField<String>(
-              decoration: InputDecoration(
-                labelText: l10n.get('language'),
-                border: const OutlineInputBorder(),
-              ),
-              initialValue: _selectedLang,
-              items: const [
-                DropdownMenuItem(value: 'en', child: Text('English')),
-                DropdownMenuItem(value: 'zh', child: Text('中文')),
-                DropdownMenuItem(value: 'ja', child: Text('日本語')),
-              ],
-              onChanged: (val) {
-                if (val != null) setState(() => _selectedLang = val);
-              },
-            ),
-            const SizedBox(height: 24),
-            
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('大模型服务接入配置', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+      extendBodyBehindAppBar: true,
+      body: AiBackgroundEffect(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Language selection card (Wireframe)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.black26 : Colors.white.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      ActionChip(
-                        avatar: const Icon(Icons.bolt_rounded, size: 16, color: Colors.blue),
-                        label: const Text('一键选用 DeepSeek'),
-                        onPressed: () => _onProviderChanged(_providers[0]),
+                      Row(
+                        children: [
+                          Icon(Icons.language_rounded, size: 18, color: Theme.of(context).colorScheme.primary),
+                          const SizedBox(width: 8),
+                          Text(
+                            l10n.get('language'),
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                          ),
+                        ],
                       ),
-                      ActionChip(
-                        avatar: const Icon(Icons.auto_awesome, size: 16, color: Colors.deepPurple),
-                        label: const Text('一键选用 Gemini'),
-                        onPressed: () => _onProviderChanged(_providers[1]),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                        initialValue: _selectedLang,
+                        items: const [
+                          DropdownMenuItem(value: 'zh', child: Text('简体中文')),
+                          DropdownMenuItem(value: 'en', child: Text('English')),
+                          DropdownMenuItem(value: 'ja', child: Text('日本語')),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) setState(() => _selectedLang = val);
+                        },
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-                  DropdownButtonFormField<ModelProvider>(
-                    decoration: const InputDecoration(
-                      labelText: '快捷预设服务商',
-                      border: OutlineInputBorder(),
+                ),
+
+                const SizedBox(height: 16),
+                
+                // AI Configuration (Wireframe style)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.black26 : Colors.white.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outlineVariant,
+                      width: 1,
                     ),
-                    initialValue: _selectedProvider,
-                    items: [
-                      const DropdownMenuItem(value: null, child: Text('自定义 (Custom)')),
-                      ..._providers.map((p) => DropdownMenuItem(value: p, child: Text(p.name))),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.memory_rounded, size: 18, color: Theme.of(context).colorScheme.primary),
+                          const SizedBox(width: 8),
+                          Text(
+                            l10n.get('llmConfigTitle'),
+                            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          ActionChip(
+                            avatar: const Icon(Icons.bolt_rounded, size: 15, color: Colors.blue),
+                            label: Text(l10n.get('quickDeepSeek'), style: const TextStyle(fontSize: 12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              side: BorderSide(color: Colors.blue.withValues(alpha: 0.4), width: 1),
+                            ),
+                            onPressed: () => _onProviderChanged(_providers[0]),
+                          ),
+                          ActionChip(
+                            avatar: const Icon(Icons.auto_awesome, size: 15, color: Colors.deepPurple),
+                            label: Text(l10n.get('quickGemini'), style: const TextStyle(fontSize: 12)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                              side: BorderSide(color: Colors.deepPurple.withValues(alpha: 0.4), width: 1),
+                            ),
+                            onPressed: () => _onProviderChanged(_providers[1]),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<ModelProvider>(
+                        decoration: InputDecoration(
+                          labelText: l10n.get('presetProvider'),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                        initialValue: _selectedProvider,
+                        items: [
+                          DropdownMenuItem(value: null, child: Text(l10n.get('customProvider'))),
+                          ..._providers.map((p) => DropdownMenuItem(value: p, child: Text(p.name))),
+                        ],
+                        onChanged: _onProviderChanged,
+                      ),
+                      const SizedBox(height: 14),
+                      TextField(
+                        controller: _apiKeyController,
+                        decoration: InputDecoration(
+                          labelText: l10n.get('apiKey'),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                          helperText: l10n.get('apiKeyHelper'),
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                        obscureText: true,
+                      ),
+                      const SizedBox(height: 14),
+                      TextField(
+                        controller: _baseUrlController,
+                        decoration: InputDecoration(
+                          labelText: l10n.get('baseUrl'),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      TextField(
+                        controller: _modelNameController,
+                        decoration: InputDecoration(
+                          labelText: l10n.get('modelNameLabel'),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        ),
+                      ),
                     ],
-                    onChanged: _onProviderChanged,
                   ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _apiKeyController,
-                    decoration: InputDecoration(
-                      labelText: l10n.get('apiKey'),
-                      border: const OutlineInputBorder(),
-                      helperText: '输入或粘贴模型服务商的 API Key',
-                    ),
-                    obscureText: true,
+                ),
+                
+                const SizedBox(height: 24),
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _baseUrlController,
-                    decoration: InputDecoration(
-                      labelText: l10n.get('baseUrl'),
-                      border: const OutlineInputBorder(),
-                    ),
+                  onPressed: _saveSettings,
+                  child: Text(
+                    l10n.get('save'),
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                   ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: _modelNameController,
-                    decoration: const InputDecoration(
-                      labelText: '模型标识 (Model Name)',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            
-            const SizedBox(height: 32),
-            FilledButton(
-              onPressed: _saveSettings,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12.0),
-                child: Text(l10n.get('save')),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
