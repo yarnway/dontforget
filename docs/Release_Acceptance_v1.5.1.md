@@ -1,12 +1,12 @@
 # v1.5.1 发布前验收记录
 
-日期：2026-10-20。版本：1.5.1+2；数据库：v8；候选源码：`66bf406c15a9723a8fe190a55c7007ad4c52eb3c`。后续验收文档提交不改变此候选包身份。
+日期：2026-10-20。版本：1.5.1+2；数据库：v8；候选源码：`7cdf85b766fbc9be437246803a5443b2ace32937`。后续验收文档提交不改变此候选包身份。
 
 状态：**LOCAL_CHECKS_PASS / FIVE_PLATFORM_PACKAGES_PASS / DEVICE_ACCEPTANCE_PARTIAL / PUBLIC_RELEASE_NOT_PERFORMED**。打包与自动化验收完成；完整设备验收尚未关闭，v1.6 功能开发尚未启动。
 
-**新增阻塞：MAC_RECORDING_FAILED。** 66bf406 在当前 Mac 实际录音失败；原生构建与进程启动成功不足以关闭该问题。发布草稿保留原包供追溯，不可作为正式发布候选放行；修订后需重新打包复测。
+**未关闭阻塞：MAC_RECORDING_RETEST_PENDING。** 66bf406 在当前 Mac 实际录音失败；修订后的 7cdf85b 已重新打包，但真机复测尚未完成。发布草稿仍保留 66bf406 原包供追溯；原生构建与进程启动成功不足以关闭该问题。
 
-当前有效流水线：[run 39402846594](https://github.com/yarnway/dontforget/actions/runs/39402846594)。质量检查、五平台原生构建全部成功；分支推送跳过自动 release job。下载全部五份平台产物后，本地独立执行 `verify_artifacts.py --revision 66bf406c15a9723a8fe190a55c7007ad4c52eb3c --tag v1.5.1`，七个交付包的版本、提交身份及 SHA-256 全部通过。旧失败流水线的包不混入本候选。
+当前有效流水线：[run 39407526781](https://github.com/yarnway/dontforget/actions/runs/39407526781)。质量检查、五平台原生构建全部成功；分支推送跳过自动 release job。下载全部五份平台产物后，本地独立执行 `verify_artifacts.py --revision 7cdf85b766fbc9be437246803a5443b2ace32937 --tag v1.5.1`，七个交付包的版本、提交身份及 SHA-256 全部通过。旧失败流水线的包不混入本候选。
 
 ## 已完成的本地检查
 
@@ -14,7 +14,7 @@
 | --- | --- | --- |
 | 锁定依赖解析 | PASS | Flutter 3.44.9 / Dart 3.12.2；record 6.1.2 / audioplayers 6.5.1 |
 | Flutter 静态分析 | PASS，无问题 | 不含原生编译 |
-| Flutter 测试 | PASS，55 项（录音及通知初始化修订后） | 66bf406 的 CI 为 49 项；修订后云端重建待完成。临时 SQLite / widget 不代替设备测试 |
+| Flutter 测试 | PASS，55 项（录音及通知初始化修订后） | 66bf406 的 CI 为 49 项；7cdf85b 云端质量检查和重建已通过。临时 SQLite / widget 不代替设备测试 |
 | 打包逻辑回归 | PASS，10 项 | 临时假产物；覆盖缺失、篡改、版本/提交错配、路径逃逸、私有数据、归档结构 |
 | 工作流语法 | PASS，actionlint 1.7.12 | 本候选另有云端原生构建成功证据 |
 | Shell / Python 语法 | PASS | PowerShell 和 Inno 已在 Windows CI 执行 |
@@ -27,7 +27,7 @@
 
 | 阶段 | 操作与通过标准 | 当前结果 |
 | --- | --- | --- |
-| GitHub | 推送已验证源码；记录 commit/run URL | PASS，66bf406 / run 39402846594 |
+| GitHub | 推送已验证源码；记录 commit/run URL | PASS，7cdf85b / run 39407526781 |
 | 五平台构建 | 所有 job 通过；下载七个包；版本/build/提交号/哈希匹配 | PASS，五平台七个包；签名限制见下文 |
 | 桌面启动 | 三平台隔离进程存活检查与日志无启动崩溃 | PASS，交付归档解压后进程运行 10 秒；不等于可用性验收 |
 | 安装与卸载 | 新安装、覆盖升级、取消安装；路径含空格；卸载保留历史/用户数据；记录 OS 与包哈希 | PARTIAL，Windows CI 新安装、同候选覆盖安装、卸载、含空格路径及合成历史文件保留通过；取消安装、真实旧版安装及用户主机待验收 |
@@ -90,3 +90,9 @@ Mac 系统通知设置中未列出本应用；源码检索确认 `NotificationSe
 第五次完整构建 run 39402846594，源码 66bf406：全部质量检查和五平台构建通过；Windows 改用当前 Visual Studio 配套 CRT 后，归档启动、安装覆盖及卸载保留检查全部通过。验证的是整个修订后的候选，未单独隔离定位到某一个旧 DLL。Linux 启动日志存在虚拟显示环境的 EGL/辅助功能警告，macOS 存在 sqflite factory 提示；均未导致本次进程启动失败，不代表这些日志已被消除。
 
 用户具备 Mac、iPhone、Windows 主机与 Android 手机；[设备验收步骤](Device_Acceptance_v1.5.1.md) 已准备。当前 Mac 运行前未发现本应用安装或支持数据目录。
+
+## 7cdf85b 新包复测恢复
+
+2026-10-20 用户手动恢复验收。七包身份与哈希再次验证通过；新 Mac ZIP SHA-256 为 `9bf667a1c061165653205f2a6f2ddb965ce7da9bd508bf547cbb182ab511c787`。启动进程路径确认来自 run 39407526781 的解压目录；中文首页及旧测试任务仍可见。开始前 bundle 缓存目录仍不存在，可覆盖首次录音目录创建场景。
+
+桌面工具可读取窗口，但点击录音未改变状态，坐标点击返回 `noWindowsAvailable`；没有证据表明录音已启动。已请求用户手动录制约 5 秒并停止，录音、回放、音频文件和媒体关联验证待完成。此工具阻塞不记为新包录音失败。发布草稿尚未替换旧附件，v1.6 尚未开始。
