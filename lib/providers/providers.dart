@@ -344,6 +344,7 @@ class ContextProfileNotifier extends StateNotifier<ContextProfile> {
 
   void setProfile(ContextProfile profile) {
     _service.switchProfile(profile);
+    NotificationService().reconcileNotificationPolicy();
     state = profile;
   }
 }
