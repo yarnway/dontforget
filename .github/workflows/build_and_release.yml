@@ -2,254 +2,144 @@ name: Multi-Platform Build & Release
 
 on:
   push:
-    branches:
-      - main
-    tags:
-      - 'v*'
+    branches: [main]
+    tags: ['v*']
   pull_request:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: build-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: '3.44.9'
 
 jobs:
-  # =======================================================
-  # 1. WINDOWS BUILD (Setup Installer & Portable Zip)
-  # =======================================================
-  build-windows:
-    name: Build Windows Release
-    runs-on: windows-latest
+  quality:
+    name: Analyze and test
+    runs-on: ubuntu-24.04
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
-          channel: 'stable'
+          python-version: '3.12'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
           cache: true
+      - run: flutter pub get --enforce-lockfile
+      - run: flutter analyze --no-pub
+      - run: flutter test --no-pub --reporter expanded
+      - run: python -m unittest discover -s scripts/tests -v
 
-      - name: Install Inno Setup
-        run: choco install innosetup -y
-
-      - name: Get Dependencies
-        run: flutter pub get
-
-      - name: Build Windows Executable
-        run: flutter build windows --release
-
-      - name: Bundle VC++ CRT & DirectX Redistributables
-        run: |
-          $releaseDir = "build\windows\x64\runner\Release"
-          $redistDir = "windows_redist\x64"
-          if (Test-Path $redistDir) {
-            Copy-Item "$redistDir\*.dll" -Destination $releaseDir -Force
-          }
-          Get-ChildItem -Path $releaseDir -Include "*.db","*.log","error_log.txt" -Recurse -Force | Remove-Item -Force -ErrorAction SilentlyContinue
-
-      - name: Compile Inno Setup (Setup.exe)
-        run: |
-          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
-          if (-not (Test-Path $iscc)) { $iscc = "C:\Program Files\Inno Setup 6\ISCC.exe" }
-          & $iscc windows_installer\installer.iss
-
-      - name: Create Portable Zip
-        run: |
-          $ver = (Get-Content pubspec.yaml | Select-String "^version:\s*([^\+]+)").Matches.Groups[1].Value.Trim()
-          $releaseDir = "build\windows\x64\runner\Release"
-          $distDir = "dist"
-          if (-not (Test-Path $distDir)) { New-Item -ItemType Directory -Path $distDir -Force }
-          Compress-Archive -Path "$releaseDir\*" -DestinationPath "$distDir\DontForget_Windows_Portable_v$ver.zip" -Force
-
-      - name: Upload Windows Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-deliverables
-          path: dist/*
-
-  # =======================================================
-  # 2. ANDROID BUILD (Universal APK & App Bundle)
-  # =======================================================
-  build-android:
-    name: Build Android Release (APK & AAB)
-    runs-on: ubuntu-latest
+  build:
+    name: Build ${{ matrix.platform }} candidate
+    needs: quality
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            runner: windows-2022
+          - platform: android
+            runner: ubuntu-24.04
+          - platform: linux
+            runner: ubuntu-24.04
+          - platform: macos
+            runner: macos-15
+          - platform: ios
+            runner: macos-15
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
-          distribution: 'temurin'
+          python-version: '3.12'
+      - uses: actions/setup-java@v6
+        if: matrix.platform == 'android'
+        with:
+          distribution: temurin
           java-version: '17'
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          cache: true
-
-      - name: Get Dependencies
-        run: flutter pub get
-
-      - name: Build Android Release APK
-        run: flutter build apk --release
-
-      - name: Build Android App Bundle (AAB)
-        run: flutter build appbundle --release
-
-      - name: Prepare Android Dist
-        run: |
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' | tr -d ' \r\n')
-          mkdir -p dist
-          cp build/app/outputs/flutter-apk/app-release.apk dist/DontForget_Android_v${VERSION}.apk
-          cp build/app/outputs/bundle/release/app-release.aab dist/DontForget_Android_v${VERSION}.aab
-
-      - name: Upload Android Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-deliverables
-          path: dist/*
-
-  # =======================================================
-  # 3. LINUX BUILD (Standalone Tarball)
-  # =======================================================
-  build-linux:
-    name: Build Linux Release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Install Linux Build Dependencies
+      - name: Linux native dependencies
+        if: matrix.platform == 'linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libasound2-dev
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libasound2-dev libayatana-appindicator3-dev xvfb
+      - name: Windows installer tooling
+        if: matrix.platform == 'windows'
+        run: choco install innosetup --no-progress -y
+      - uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
           cache: true
-
-      - name: Get Dependencies
-        run: flutter pub get
-
-      - name: Build Flutter Linux Release
-        run: flutter build linux --release
-
-      - name: Package Linux Archive
-        run: |
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' | tr -d ' \r\n')
-          mkdir -p dist
-          tar -czf dist/DontForget_Ubuntu_Linux_x64_v${VERSION}.tar.gz -C build/linux/x64/release/bundle .
-
-      - name: Upload Linux Artifacts
-        uses: actions/upload-artifact@v4
+      - name: Build Windows installer and portable archive
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: ./scripts/package_windows.ps1
+      - name: Build Android test-signed packages
+        if: matrix.platform == 'android'
+        run: bash scripts/build_android.sh
+      - name: Build Linux archive
+        if: matrix.platform == 'linux'
+        run: bash scripts/build_linux.sh
+      - name: Build macOS unnotarized archive
+        if: matrix.platform == 'macos'
+        run: bash scripts/build_macos.sh
+      - name: Build iOS unsigned archive
+        if: matrix.platform == 'ios'
+        run: bash scripts/build_ios.sh
+      - name: Linux native startup smoke check
+        if: matrix.platform == 'linux'
+        run: xvfb-run -a python scripts/smoke_desktop.py --platform linux
+      - name: macOS native startup smoke check
+        if: matrix.platform == 'macos'
+        run: python scripts/smoke_desktop.py --platform macos
+      - name: Windows native startup smoke check
+        if: matrix.platform == 'windows'
+        run: python scripts/smoke_desktop.py --platform windows
+      - name: Verify packaged hashes and source identity
+        shell: bash
+        run: python scripts/verify_artifacts.py dist --platform '${{ matrix.platform }}' --revision "$GITHUB_SHA"
+      - name: Upload candidate packages and manifests
+        uses: actions/upload-artifact@v7
         with:
-          name: ubuntu-deliverables
+          name: ${{ matrix.platform }}-deliverables
           path: dist/*
+          if-no-files-found: error
+          retention-days: 30
 
-  # =======================================================
-  # 4. MACOS BUILD (App Bundle & DMG/Zip)
-  # =======================================================
-  build-macos:
-    name: Build macOS Release
-    runs-on: macos-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          cache: true
-
-      - name: Get Dependencies
-        run: flutter pub get
-
-      - name: Build Flutter macOS Release
-        run: flutter build macos --release
-
-      - name: Package macOS Archive
-        run: |
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' | tr -d ' \r\n')
-          mkdir -p dist
-          cd build/macos/Build/Products/Release
-          zip -r -y ../../../../../dist/DontForget_macOS_v${VERSION}.zip dont_forget.app
-
-      - name: Upload macOS Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-deliverables
-          path: dist/*
-
-  # =======================================================
-  # 5. IOS BUILD (IPA Package)
-  # =======================================================
-  build-ios:
-    name: Build iOS Release (Unsigned IPA)
-    runs-on: macos-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          cache: true
-
-      - name: Get Dependencies
-        run: flutter pub get
-
-      - name: Build Flutter iOS Release (unsigned IPA)
-        run: flutter build ipa --release --no-codesign
-
-      - name: Package iOS IPA
-        run: |
-          VERSION=$(grep '^version:' pubspec.yaml | sed 's/version: //' | sed 's/+.*//' | tr -d ' \r\n')
-          mkdir -p dist/Payload
-          cp -R build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app dist/Payload/
-          cd dist
-          zip -r -y DontForget_iOS_v${VERSION}.ipa Payload
-          rm -rf Payload
-
-      - name: Upload iOS Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-deliverables
-          path: dist/DontForget_iOS_*.ipa
-
-  # =======================================================
-  # 6. GITHUB RELEASE (Unified Release Publishing)
-  # =======================================================
   release:
-    name: Publish Multi-Platform Release
-    needs: [build-windows, build-android, build-linux, build-macos, build-ios]
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
+    name: Prepare draft release after all packages pass
+    needs: [quality, build]
+    runs-on: ubuntu-24.04
+    # Manual/branch runs build acceptance artifacts only. Publication is separate.
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
     steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
-          path: release-artifacts
-
-      - name: Consolidate Deliverables
-        run: |
-          mkdir -p release-files
-          find release-artifacts -type f -exec cp {} release-files/ \;
-          ls -lh release-files/
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+          python-version: '3.12'
+      - uses: actions/download-artifact@v8
+        with:
+          path: release-files
+          merge-multiple: true
+      - name: Verify all platforms belong to this version and commit
+        run: python scripts/verify_artifacts.py release-files --revision "$GITHUB_SHA" --tag "$GITHUB_REF_NAME"
+      - uses: softprops/action-gh-release@v2
         with:
           files: release-files/*
-          tag_name: ${{ github.ref_name || 'v1.2.8' }}
-          name: Release ${{ github.ref_name || 'v1.2.8' }} (Windows, macOS, Ubuntu, Android, iOS)
-          draft: false
-          prerelease: false
+          tag_name: ${{ github.ref_name }}
+          name: DontForget ${{ github.ref_name }} candidate
+          draft: true
+          prerelease: true
           generate_release_notes: true
+          fail_on_unmatched_files: true

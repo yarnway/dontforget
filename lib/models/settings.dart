@@ -13,21 +13,29 @@ class AppSettings {
     required this.language,
   });
 
+  factory AppSettings.defaults() => AppSettings(
+    id: 'default',
+    apiKey: '',
+    baseUrl: 'https://api.deepseek.com',
+    modelName: 'deepseek-v4-flash-vision-exp',
+    language: 'zh',
+  );
+
   factory AppSettings.fromJson(Map<String, dynamic> json) => AppSettings(
-        id: json['id'] as String,
-        apiKey: json['api_key'] as String? ?? '',
-        baseUrl: json['base_url'] as String? ?? '',
-        modelName: json['model_name'] as String? ?? '',
-        language: json['language'] as String? ?? 'zh',
-      );
+    id: json['id'] as String,
+    apiKey: json['api_key'] as String? ?? '',
+    baseUrl: json['base_url'] as String? ?? '',
+    modelName: json['model_name'] as String? ?? '',
+    language: json['language'] as String? ?? 'zh',
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'api_key': apiKey,
-        'base_url': baseUrl,
-        'model_name': modelName,
-        'language': language,
-      };
+    'id': id,
+    'api_key': apiKey,
+    'base_url': baseUrl,
+    'model_name': modelName,
+    'language': language,
+  };
 
   AppSettings copyWith({
     String? apiKey,

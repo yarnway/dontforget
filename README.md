@@ -6,9 +6,9 @@
 
 **端侧隐私第一 · 大模型驱动 · 3D 全息 AI 视觉 · 全平台智能备忘与任务调度系统**
 
-[![Flutter Version](https://img.shields.io/badge/Flutter-3.24%2B-02569B?logo=flutter)](https://flutter.dev)
-[![Dart Version](https://img.shields.io/badge/Dart-3.5%2B-0175C2?logo=dart)](https://dart.dev)
-[![Release Version](https://img.shields.io/badge/Release-v1.2.4-00E5FF)](https://github.com/yarnway/dontforget/releases)
+[![Flutter Version](https://img.shields.io/badge/Flutter-3.44.9-02569B?logo=flutter)](https://flutter.dev)
+[![Dart Version](https://img.shields.io/badge/Dart-3.12%2B-0175C2?logo=dart)](https://dart.dev)
+[![Source Version](https://img.shields.io/badge/Source-v1.5.1-00E5FF)](docs/Iteration_v1.5.1.md)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android%20%7C%20iOS-blue)](#-全平台支持与系统要求)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -21,7 +21,15 @@
 ## 📖 项目简介
 
 在信息碎片化时代，灵感与待办事项往往转瞬即逝。**别忘了 (DontForget)** 致力于打造下一代智能备忘体验：
-您只需用最自然的日常习惯随手记下一句话、录一段语音或丢一张截图，**内置的大模型引擎便会自动为您提炼任务、评估应该提前多久提醒、安排合理的时间并智能分类**。同时，所有数据全部通过 SQLite 物理存储在您的本地设备中，绝不上传私有云，保障绝对的数据主权与隐私安全。
+您可以输入文字、录音或图片，由配置的大模型提取任务、评估提醒时间并分类。任务和配置使用本地 SQLite 保存。调用远程 AI 时，相关内容会发送至您配置的服务商；数据库、API Key 与备份目前未实现应用层加密。需要本机推理时请选择本地模型。
+
+## v1.5.1 稳定性迭代（源码候选）
+
+- 清除内置凭据，保留用户配置，设置保存失败时明确提示。
+- 设置页支持手动备份已保存的数据，覆盖设置、任务与附件索引。
+- 修复重复提醒的月末、闰年与错过周期处理，以及取消复习后的日期残留。
+- 增加回归测试与构建前质量检查。
+- [项目梳理、验证记录与后续版本计划](docs/Iteration_v1.5.1.md)。
 
 ---
 
@@ -46,9 +54,9 @@
 - **纯粹矢量微标**：以 🔥（核心）、⭐（重要）、⚡（协同）、☕（休闲）纯图标呈现，视线焦点回归待办卡片本身；
 - **状态感知**：微型呼吸 LED 状态灯常驻标题栏旁（绿色待机/青蓝推理中），通知提示 3 秒自动平滑退场。
 
-### 🔒 4. 端侧绝对隐私 (Zero Cloud, Local-First)
+### 🔒 4. 本地优先与自主配置 (Local-First, BYOK)
 - 遵循 **BYOK (Bring Your Own Key)** 模式，用户直接对接大模型服务商（DeepSeek、Gemini 或自定义 API）；
-- 备忘记录、语音附件、图片素材、数据库配置**百分之百存储在用户本地**，无中继服务器，安全无忧。
+- 备忘记录、附件与配置保存在本机；AI 请求直连所配置的模型服务商。应用不再提供内置 API Key。
 
 ### 🎙️ 5. 全能多模态随手记
 - **文字记录**：自然语言直接输入，支持任意模糊时间与重复周期（每天、工作日、每周、每月）；
@@ -62,20 +70,20 @@
 
 | 平台 | 最低系统版本 | 架构 | 特性支持 |
 |---|---|---|---|
-| **Windows** | Windows 7 SP1 / 8 / 10 / 11 | x64 | **已内嵌 VC++ CRT 与 DirectX DLL**，纯净系统免装运行库直启；支持托盘最小化、开机自启 |
-| **macOS** | macOS 11.0 (Big Sur) 及以上 | x64 / ARM64 (Apple Silicon) | 支持深色模式与原生菜单栏 |
+| **Windows** | Windows 10 / 11 | x64 | 包含运行库；支持托盘，安装与运行兼容性待发布前验收 |
+| **macOS** | 工程最低配置 macOS 12.0 | x64 / ARM64 (Apple Silicon) | 候选包未公证；原生运行兼容性待验收 |
 | **Linux** | Ubuntu 20.04 LTS / Debian 11+ | x64 | GTK 3 原生窗口与系统托盘 |
 | **Android** | Android 7.0 (API 24) 及以上 | ARM64 / ARMv7 | 移动端触摸手势优化、通知推播 |
-| **iOS** | iOS 13.0 及以上 | ARM64 | 移动端平滑触控交互 |
+| **iOS** | 工程最低配置 iOS 15.0 | ARM64 | CI 仅生成未签名候选包；安装与真机验收需要有效签名 |
 
 ---
 
 ## 🚀 快速下载与安装
 
-前往 [GitHub Releases](https://github.com/yarnway/dontforget/releases) 下载最新发行版（当前最新：**v1.2.4**）：
+前往 [GitHub Releases](https://github.com/yarnway/dontforget/releases) 查看已发布的安装包。当前源码候选版本为 **v1.5.1**，尚未完成五平台打包与真机验收；下载版本以 Releases 页面为准：
 
-- **Windows 独立安装版**：下载 `DontForget_Setup_v1.2.4.exe`，双击根据向导安装。
-- **Windows 绿色免安装版**：下载 `DontForget_Portable_v1.2.4.zip`，解压后双击 `dont_forget.exe` 即可使用。
+- **Windows 独立安装版**：下载对应版本的 `DontForget_Setup_v*.exe`，双击根据向导安装。
+- **Windows 绿色免安装版**：下载对应版本的 `DontForget_Portable_v*.zip`，解压后双击 `dont_forget.exe` 即可使用。
 
 ---
 

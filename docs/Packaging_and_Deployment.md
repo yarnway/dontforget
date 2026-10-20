@@ -1,94 +1,51 @@
-# DontForget (别忘了) - 打包发布与部署运维指南
+# DontForget 打包与发布验收
 
-本文档详细介绍了 DontForget 的多格式发布打包体系、系统运行库兼容机制以及 GitHub Actions 云端持续集成流水线。
+当前候选版本由 `pubspec.yaml` 决定（1.5.1+2），Flutter 固定为 3.44.9。构建成功、打包成功、安装运行、系统通知和正式发布分别验收。具体执行状态见 [v1.5.1 验收记录](Release_Acceptance_v1.5.1.md)。
 
----
+## 构建与产物
 
-## 1. 软件发布形态
+在项目根目录执行；先安装相应平台 Flutter 原生编译依赖与 Python 3。
 
-DontForget 在 Windows 平台上提供两种开箱即用的交付形态：
+| 平台 | 命令 | dist 产物 | 交付边界 |
+| --- | --- | --- | --- |
+| Windows 10/11 x64 | `pwsh -File scripts/package_windows.ps1` | `DontForget_Setup_v1.5.1.exe`、`DontForget_Windows_Portable_v1.5.1.zip` | 需要 Visual Studio C++ 与 Inno Setup 6；未签名 |
+| Android | `bash scripts/build_android.sh` 或 `pwsh -File scripts/build_android.ps1` | `DontForget_Android_test-signed_v1.5.1.apk` / `.aab` | 测试密钥签名；不是商店交付件 |
+| Linux x64 | `bash scripts/build_linux.sh` | `DontForget_Linux_x64_v1.5.1.tar.gz` | 需要 GTK、GStreamer、ALSA、Ayatana AppIndicator 等原生依赖 |
+| macOS 12+ | `bash scripts/build_macos.sh` | `DontForget_macOS_unnotarized_v1.5.1.zip` | 完整 Xcode、CocoaPods；未公证 |
+| iOS 15+ | `bash scripts/build_ios.sh` | `DontForget_iOS_unsigned_v1.5.1.ipa` | 完整 Xcode、CocoaPods；未签名，不能直接真机安装 |
 
-| 发布包形态 | 文件名示例 | 特性与适用场景 |
-|---|---|---|
-| **独立安装引导程序** | `DontForget_Setup_v1.2.4.exe` | 基于 Inno Setup 6 打造，自动检测权限、解压、创建开始菜单与桌面快捷图标，写入系统控制面板卸载项，适合大部分普通用户。 |
-| **绿色免安装便携包** | `DontForget_Portable_v1.2.4.zip` | 包含完整的二进制、依赖 DLL、音频引擎与数据目录。解压后即可运行，支持在 U 盘、移动硬盘随身携带，数据自包含。 |
+每个平台还生成 `<platform>-manifest.json` 和 `<platform>-SHA256SUMS.txt`，包含版本、构建号、提交号、签名状态、文件大小与 SHA-256。桌面 CI 另有 `<platform>-startup.json`。便携包只表示免安装解压，应用数据仍按平台应用支持目录存放，不能当作包含用户数据的可迁移备份。
 
----
+脚本使用锁定依赖，任一步失败即停止。Windows 在编译安装器前检查目录；归档发现数据库、WAL/SHM、日志、JSON 备份或 `.dart_tool` 会报错，保留原文件供检查。不会为打包删除用户数据。仓库内可选 CRT DLL 不构成在所有 Windows 环境免运行库的证明。
 
-## 2. 本地自动化打包工作流
+## 校验
 
-项目根目录的 `scripts/package_windows.ps1` 实现了全自动一键流水线，执行以下命令即可完成全套发布件制作：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\package_windows.ps1
-```
-
-### 脚本内部执行阶段解析：
-1. **[阶段 1/3] 编译 Flutter 生产环境二进制**：
-   - 执行 `flutter build windows --release` 生成优化后的机器码与资产文件。
-2. **[阶段 1.5/3] 跨版本兼容性 DLL 注入（Windows 7/8/10/11 免运行库支持）**：
-   - 从 `windows_redist/x64/` 自动提取官方签名的 Microsoft Visual C++ 2015-2022 CRT 依赖（`vcruntime140.dll`, `vcruntime140_1.dll`, `msvcp140.dll`, `msvcp140_1.dll`, `msvcp140_2.dll`, `msvcp140_atomic_wait.dll`, `msvcp140_codecvt_ids.dll`）以及 DirectX 渲染核心组件 `d3dcompiler_47.dll`；
-   - 强行内嵌注入到 Release 输出目录，彻底解决在老旧 Windows 7 / 8 或未装开发库的纯净 Windows 10/11 系统中报错 `缺少 MSVCP140.dll` 或 `DirectX 错误` 的问题。
-3. **[阶段 1.8/3] 净化中间文件**：
-   - 自动扫描清理临时数据库文件、开发调试日志与测试缓存，确保发布包为纯净出厂状态。
-4. **[阶段 2/3] 调用 Inno Setup 编译器生成安装包**：
-   - 自动定位系统中的 `ISCC.exe`，根据 `windows_installer/installer.iss` 编译生成高压缩率的 `dist/DontForget_Setup_v1.x.x.exe`。
-5. **[阶段 3/3] 归档生成便携版 Zip**：
-   - 将完整 Release 目录打包为 `dist/DontForget_Portable_v1.x.x.zip`。
-
----
-
-## 3. 本地一键安装与测试验证
-
-研发期间若需在本地快速部署安装验证，无需反复运行安装向导，直接执行：
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\Install.ps1
-```
-
-脚本将自动执行：
-- 结束正在运行的旧版进程；
-- 覆盖更新文件至 `%LOCALAPPDATA%\Programs\DontForget`；
-- 更新桌面与开始菜单快捷方式图标；
-- 自动启动最新的应用程序。
-
----
-
-## 4. GitHub Actions 云端多平台 CI/CD 流水线
-
-工程配置了完整的 GitHub Actions 工作流（位于 `.github/workflows/build_release.yml`），由云端三台原生编译机协同工作：
-
-```
-                             [Git Push Tag: v1.2.4]
-                                       │
-                ┌──────────────────────┼──────────────────────┐
-                │                      │                      │
-        [Windows Runner]        [macOS Runner]        [Ubuntu Runner]
-        (windows-latest)        (macos-latest)        (ubuntu-latest)
-                │                      │                      │
-       • 编译 Windows Release   • 编译 macOS App       • 编译 Linux App
-       • 注入 CRT 兼容 DLLs    • 打包 .dmg / .zip     • 打包 .tar.gz
-       • ISCC 生成 Setup.exe           │                      │
-       • 压缩 Portable.zip             │                      │
-                │                      │                      │
-                └──────────────────────┼──────────────────────┘
-                                       │
-                          [GitHub Release 自动发布]
-                     - DontForget_Setup_v1.2.4.exe
-                     - DontForget_Portable_v1.2.4.zip
-                     - DontForget_macOS_v1.2.4.zip
-                     - DontForget_Linux_v1.2.4.tar.gz
-```
-
-### 触发发布流程：
-只需在本地打上版本 Tag 并推送至 GitHub：
 ```bash
-# 提交本地所有改动
-git commit -am "chore: prepare release v1.2.4"
-git push origin main
-
-# 打 Tag 并推送触发云端打包
-git tag -a v1.2.4 -m "Release v1.2.4"
-git push origin v1.2.4
+flutter pub get --enforce-lockfile
+flutter analyze --no-pub
+flutter test --no-pub --reporter expanded
+python3 -m unittest discover -s scripts/tests -v
+# 单个平台（将 COMMIT 替换为构建时的完整提交号）
+python3 scripts/verify_artifacts.py dist --platform macos --revision COMMIT
+# 五个平台产物汇总后
+python3 scripts/verify_artifacts.py release-files --revision COMMIT --tag v1.5.1
 ```
-GitHub Actions 将自动拉起编译机，完成全平台多格式软件包的构建并自动发布到 GitHub Releases 页面供全球用户下载。
+
+Python 回归测试使用假二进制验证归档、清单与失败保护；它们不是原生编译证据。哈希证明下载件与清单一致，不证明发行方身份或应用行为。
+
+## CI 与发布
+
+工作流：`.github/workflows/build_and_release.yml`。
+
+1. main 推送、PR、手动运行：先分析、Flutter 测试和打包脚本测试，再运行 Windows、Android、Linux、macOS、iOS 构建矩阵。
+2. 桌面产物执行 10 秒进程启动检查。Linux 使用 Xvfb；仅在隔离 GitHub runner 执行。记录进程存活与退出状态，仍需人工窗口、安装、数据库升级及通知验收。
+3. 校验各平台提交号、版本和哈希后上传候选 artifact，保留 30 天。
+4. 只有 `v*` 标签可以进入 release job；校验标签与 pubspec 一致、五平台七个文件齐备后创建 **draft prerelease**。main 和手动运行不会创建正式 Release。签名、商店提交和正式公开发布另行处理。
+
+本地有未提交改动时，清单中的 HEAD 不能表示全部源文件；发布候选应来自干净、已提交的 CI checkout。勿把本地 dirty 构建当作可追溯正式产物。
+
+## Windows 安装与升级
+
+优先运行生成的 Inno 安装器。`scripts/Install.ps1` 会校验清单与当前源码提交后打开该安装器，不再递归删除安装目录内数据库。`scripts/Uninstall.ps1` 仅委托该目录的 `unins000.exe`；没有受管卸载程序的旧安装会停止，需先备份并迁移。Inno 只移除自己安装的文件，保留未知文件与历史数据库；不额外递归删除整个安装目录。
+
+升级前在独立测试账号备份原始数据库与附件。保留旧版安装件和数据副本。候选版 DB v8 不能承诺直接用旧程序降级读取，回退应恢复完整的升级前副本。不要在唯一一份真实用户数据上执行故障注入或卸载演练。

@@ -26,6 +26,7 @@ class TaskBitmask {
 }
 
 class Reminder {
+  static const _unchanged = Object();
   final String id;
   final String? recordId;
   final String taskTitle;
@@ -38,7 +39,8 @@ class Reminder {
   final DateTime? triggerTime;
   final bool isCompleted;
   final bool isRecurring;
-  final String? recurrenceRule; // 'none', 'daily', 'workday', 'weekly', 'monthly', 'yearly'
+  final String?
+      recurrenceRule; // 'none', 'daily', 'workday', 'weekly', 'monthly', 'yearly'
   final String? recurrenceDescription;
   final bool isEmotionFiltered; // '空船效应' 情绪去噪重构标识
   final String? subTasks; // JSON 格式微习惯原子项列表
@@ -80,12 +82,16 @@ class Reminder {
     if (quadrantLevel == 3) mask |= TaskBitmask.quadrant3;
     if (quadrantLevel == 4) mask |= TaskBitmask.quadrant4;
     if (isCompleted) mask |= TaskBitmask.completed;
-    if (triggerTime != null && triggerTime!.isBefore(DateTime.now()) && !isCompleted) {
+    if (triggerTime != null &&
+        triggerTime!.isBefore(DateTime.now()) &&
+        !isCompleted) {
       mask |= TaskBitmask.overdue;
     }
     if (isRecurring) mask |= TaskBitmask.recurring;
     if (isEmotionFiltered) mask |= TaskBitmask.emotionFiltered;
-    if (recordId != null && recordId!.isNotEmpty) mask |= TaskBitmask.hasAttachment;
+    if (recordId != null && recordId!.isNotEmpty) {
+      mask |= TaskBitmask.hasAttachment;
+    }
     if (subTasks != null && subTasks!.trim().isNotEmpty && subTasks != '[]') {
       mask |= TaskBitmask.hasSubtasks;
     }
@@ -99,7 +105,10 @@ class Reminder {
     return mask;
   }
 
-  bool get isOverdue => triggerTime != null && triggerTime!.isBefore(DateTime.now()) && !isCompleted;
+  bool get isOverdue =>
+      triggerTime != null &&
+      triggerTime!.isBefore(DateTime.now()) &&
+      !isCompleted;
 
   factory Reminder.fromJson(Map<String, dynamic> json) {
     final rawLinked = json['linked_task_ids'];
@@ -125,20 +134,22 @@ class Reminder {
       taskSummary: json['task_summary'] as String?,
       quadrantLevel: qLevel,
       originalQuadrantLevel: origQLevel,
-      isDynamicallyPromoted: (json['is_dynamically_promoted'] as int?) == 1 ||
+      isDynamicallyPromoted: json['is_dynamically_promoted'] == 1 ||
           json['is_dynamically_promoted'] == true,
       urgencyLevel: json['urgency_level'] as String?,
       importanceLevel: json['importance_level'] as String?,
       triggerTime: json['trigger_time'] != null
           ? DateTime.parse(json['trigger_time'] as String)
           : null,
-      isCompleted: (json['is_completed'] as int?) == 1,
+      isCompleted: json['is_completed'] == 1 || json['is_completed'] == true,
       isRecurring: (json['is_recurring'] is int)
           ? (json['is_recurring'] as int) == 1
-          : (json['is_recurring'] is bool ? (json['is_recurring'] as bool) : false),
+          : (json['is_recurring'] is bool
+              ? (json['is_recurring'] as bool)
+              : false),
       recurrenceRule: json['recurrence_rule'] as String? ?? 'none',
       recurrenceDescription: json['recurrence_description'] as String?,
-      isEmotionFiltered: (json['is_emotion_filtered'] as int?) == 1 ||
+      isEmotionFiltered: json['is_emotion_filtered'] == 1 ||
           json['is_emotion_filtered'] == true,
       subTasks: json['sub_tasks'] as String?,
       createdAt: json['created_at'] != null
@@ -177,75 +188,151 @@ class Reminder {
         'context_trigger': contextTrigger,
       };
 
-  DateTime? getNextOccurrence() {
-    if (!isRecurring || recurrenceRule == null || recurrenceRule == 'none') {
+  /// Advance at least one occurrence and skip missed occurrences. Calendar
+  /// construction preserves wall-clock time across daylight-saving changes.
+  /// Monthly/yearly dates are clamped to the last valid day of the target month.
+  DateTime? getNextOccurrence({DateTime? after}) {
+    if (!isRecurring ||
+        !const {
+          'daily',
+          'workday',
+          'weekly',
+          'monthly',
+          'yearly',
+        }.contains(recurrenceRule)) {
       return null;
     }
-    final base = triggerTime ?? DateTime.now();
-    switch (recurrenceRule) {
-      case 'daily':
-        return base.add(const Duration(days: 1));
-      case 'workday':
-        DateTime next = base.add(const Duration(days: 1));
-        while (next.weekday == DateTime.saturday || next.weekday == DateTime.sunday) {
-          next = next.add(const Duration(days: 1));
-        }
-        return next;
-      case 'weekly':
-        return base.add(const Duration(days: 7));
-      case 'monthly':
-        return DateTime(base.year, base.month + 1, base.day, base.hour, base.minute);
-      case 'yearly':
-        return DateTime(base.year + 1, base.month, base.day, base.hour, base.minute);
-      default:
-        return base.add(const Duration(days: 1));
+    final cutoff = after ?? DateTime.now();
+    final base = triggerTime ?? cutoff;
+    final localCutoff = base.isUtc ? cutoff.toUtc() : cutoff.toLocal();
+    DateTime calendar(int year, int month, int day) => base.isUtc
+        ? DateTime.utc(
+            year,
+            month,
+            day,
+            base.hour,
+            base.minute,
+            base.second,
+            base.millisecond,
+            base.microsecond,
+          )
+        : DateTime(
+            year,
+            month,
+            day,
+            base.hour,
+            base.minute,
+            base.second,
+            base.millisecond,
+            base.microsecond,
+          );
+    DateTime clamped(int year, int month) {
+      final lastDay = DateTime.utc(year, month + 1, 0).day;
+      return calendar(year, month, base.day > lastDay ? lastDay : base.day);
     }
+
+    if (recurrenceRule == 'monthly' || recurrenceRule == 'yearly') {
+      var step = recurrenceRule == 'monthly'
+          ? (localCutoff.year - base.year) * 12 + localCutoff.month - base.month
+          : localCutoff.year - base.year;
+      if (step < 1) step = 1;
+      DateTime candidate() => recurrenceRule == 'monthly'
+          ? clamped(base.year, base.month + step)
+          : clamped(base.year + step, base.month);
+      var next = candidate();
+      if (!next.isAfter(cutoff)) {
+        step++;
+        next = candidate();
+      }
+      return next;
+    }
+
+    final days = DateTime.utc(
+      localCutoff.year,
+      localCutoff.month,
+      localCutoff.day,
+    ).difference(DateTime.utc(base.year, base.month, base.day)).inDays;
+    final interval = recurrenceRule == 'weekly' ? 7 : 1;
+    var step = days > 0 ? days ~/ interval : 1;
+    if (step < 1) step = 1;
+    var next = calendar(base.year, base.month, base.day + step * interval);
+    if (!next.isAfter(cutoff)) {
+      next = calendar(base.year, base.month, base.day + (++step) * interval);
+    }
+    if (recurrenceRule == 'workday') {
+      while (next.weekday == DateTime.saturday ||
+          next.weekday == DateTime.sunday) {
+        next = calendar(next.year, next.month, next.day + 1);
+      }
+    }
+    return next;
   }
 
   Reminder copyWith({
-    String? recordId,
+    Object? recordId = _unchanged,
     String? taskTitle,
-    String? taskSummary,
+    Object? taskSummary = _unchanged,
     int? quadrantLevel,
     int? originalQuadrantLevel,
     bool? isDynamicallyPromoted,
-    String? urgencyLevel,
-    String? importanceLevel,
-    DateTime? triggerTime,
+    Object? urgencyLevel = _unchanged,
+    Object? importanceLevel = _unchanged,
+    Object? triggerTime = _unchanged,
     bool? isCompleted,
     bool? isRecurring,
-    String? recurrenceRule,
-    String? recurrenceDescription,
+    Object? recurrenceRule = _unchanged,
+    Object? recurrenceDescription = _unchanged,
     bool? isEmotionFiltered,
-    String? subTasks,
+    Object? subTasks = _unchanged,
     DateTime? createdAt,
     int? spacedRepetitionLevel,
-    DateTime? nextReviewAt,
+    Object? nextReviewAt = _unchanged,
     List<String>? linkedTaskIds,
-    String? contextTrigger,
+    Object? contextTrigger = _unchanged,
   }) {
     return Reminder(
       id: id,
-      recordId: recordId ?? this.recordId,
+      recordId:
+          identical(recordId, _unchanged) ? this.recordId : recordId as String?,
       taskTitle: taskTitle ?? this.taskTitle,
-      taskSummary: taskSummary ?? this.taskSummary,
+      taskSummary: identical(taskSummary, _unchanged)
+          ? this.taskSummary
+          : taskSummary as String?,
       quadrantLevel: quadrantLevel ?? this.quadrantLevel,
-      originalQuadrantLevel: originalQuadrantLevel ?? this.originalQuadrantLevel,
-      isDynamicallyPromoted: isDynamicallyPromoted ?? this.isDynamicallyPromoted,
-      urgencyLevel: urgencyLevel ?? this.urgencyLevel,
-      importanceLevel: importanceLevel ?? this.importanceLevel,
-      triggerTime: triggerTime ?? this.triggerTime,
+      originalQuadrantLevel:
+          originalQuadrantLevel ?? this.originalQuadrantLevel,
+      isDynamicallyPromoted:
+          isDynamicallyPromoted ?? this.isDynamicallyPromoted,
+      urgencyLevel: identical(urgencyLevel, _unchanged)
+          ? this.urgencyLevel
+          : urgencyLevel as String?,
+      importanceLevel: identical(importanceLevel, _unchanged)
+          ? this.importanceLevel
+          : importanceLevel as String?,
+      triggerTime: identical(triggerTime, _unchanged)
+          ? this.triggerTime
+          : triggerTime as DateTime?,
       isCompleted: isCompleted ?? this.isCompleted,
       isRecurring: isRecurring ?? this.isRecurring,
-      recurrenceRule: recurrenceRule ?? this.recurrenceRule,
-      recurrenceDescription: recurrenceDescription ?? this.recurrenceDescription,
+      recurrenceRule: identical(recurrenceRule, _unchanged)
+          ? this.recurrenceRule
+          : recurrenceRule as String?,
+      recurrenceDescription: identical(recurrenceDescription, _unchanged)
+          ? this.recurrenceDescription
+          : recurrenceDescription as String?,
       isEmotionFiltered: isEmotionFiltered ?? this.isEmotionFiltered,
-      subTasks: subTasks ?? this.subTasks,
+      subTasks:
+          identical(subTasks, _unchanged) ? this.subTasks : subTasks as String?,
       createdAt: createdAt ?? this.createdAt,
-      spacedRepetitionLevel: spacedRepetitionLevel ?? this.spacedRepetitionLevel,
-      nextReviewAt: nextReviewAt ?? this.nextReviewAt,
+      spacedRepetitionLevel:
+          spacedRepetitionLevel ?? this.spacedRepetitionLevel,
+      nextReviewAt: identical(nextReviewAt, _unchanged)
+          ? this.nextReviewAt
+          : nextReviewAt as DateTime?,
       linkedTaskIds: linkedTaskIds ?? this.linkedTaskIds,
-      contextTrigger: contextTrigger ?? this.contextTrigger,
+      contextTrigger: identical(contextTrigger, _unchanged)
+          ? this.contextTrigger
+          : contextTrigger as String?,
     );
   }
 

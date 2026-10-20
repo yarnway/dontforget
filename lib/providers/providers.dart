@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/database_helper.dart';
@@ -24,69 +23,36 @@ final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>((r
   return SettingsNotifier(ref.read(databaseHelperProvider));
 });
 
-final String _kDefaultKey = utf8.decode(base64.decode('c2stZDdmZmNiNTAzMGMzNDI5OGExZTQ3NDEzN2JmODNmYjk='));
-
 class SettingsNotifier extends StateNotifier<AppSettings> {
   final DatabaseHelper _dbHelper;
+  late final Future<void> ready;
 
-  SettingsNotifier(this._dbHelper) : super(AppSettings(
-    id: 'default',
-    apiKey: _kDefaultKey,
-    baseUrl: 'https://api.deepseek.com',
-    modelName: 'deepseek-v4-flash-vision-exp',
-    language: 'zh',
-  )) {
-    _loadSettings();
+  SettingsNotifier(this._dbHelper) : super(AppSettings.defaults()) {
+    ready = _loadSettings();
   }
 
   Future<void> _loadSettings() async {
     try {
       final db = await _dbHelper.database;
       final res = await db.query('Settings', where: 'id = ?', whereArgs: ['default']);
-      if (res.isNotEmpty) {
-        var loadedSettings = AppSettings.fromJson(res.first);
-        // Migrate old deepseek model name if present
-        if (loadedSettings.baseUrl.contains('deepseek.com') &&
-            (loadedSettings.modelName == 'deepseek-v4-flash' || loadedSettings.modelName.isEmpty)) {
-          loadedSettings = loadedSettings.copyWith(
-            apiKey: _kDefaultKey,
-            baseUrl: 'https://api.deepseek.com',
-            modelName: 'deepseek-v4-flash-vision-exp',
-          );
-          await updateSettings(loadedSettings);
-        }
-        state = loadedSettings;
-      } else {
-        // If no settings exist yet, insert the default
-        final defaultSettings = AppSettings(
-          id: 'default',
-          apiKey: _kDefaultKey,
-          baseUrl: 'https://api.deepseek.com',
-          modelName: 'deepseek-v4-flash-vision-exp',
-          language: 'zh',
-        );
-        await db.insert('Settings', defaultSettings.toJson());
-        state = defaultSettings;
+      if (res.isNotEmpty && mounted) {
+        state = AppSettings.fromJson(res.first);
       }
-    } catch (e, stack) {
-      // Fallback gracefully to default in-memory state on any storage issue
-      debugPrint('Warning: Settings storage error: $e\n$stack');
+    } catch (_) {
+      debugPrint('Settings could not be loaded; using unconfigured defaults.');
     }
   }
 
   Future<void> updateSettings(AppSettings newSettings) async {
-    try {
-      final db = await _dbHelper.database;
-      await db.update(
-        'Settings',
-        newSettings.toJson(),
-        where: 'id = ?',
-        whereArgs: ['default'],
-      );
-    } catch (e) {
-      debugPrint('Warning: updateSettings storage error: $e');
-    }
-    state = newSettings;
+    // Do not allow a delayed startup read to overwrite a user's saved values.
+    await ready;
+    final db = await _dbHelper.database;
+    final saved = newSettings.copyWith();
+    await db.transaction((txn) async {
+      await txn.delete('Settings', where: 'id = ?', whereArgs: ['default']);
+      await txn.insert('Settings', {...saved.toJson(), 'id': 'default'});
+    });
+    if (mounted) state = AppSettings.fromJson({...saved.toJson(), 'id': 'default'});
   }
 }
 
@@ -96,15 +62,17 @@ final remindersProvider = StateNotifierProvider<RemindersNotifier, List<Reminder
 
 class RemindersNotifier extends StateNotifier<List<Reminder>> {
   final DatabaseHelper _dbHelper;
+  late final Future<void> ready;
 
   RemindersNotifier(this._dbHelper) : super([]) {
-    _loadReminders();
+    ready = _loadReminders();
   }
 
   Future<void> _loadReminders() async {
     try {
       final db = await _dbHelper.database;
       final res = await db.query('Reminders');
+      if (!mounted) return;
       final list = res.map((r) => Reminder.fromJson(r)).toList();
       state = list;
       final now = DateTime.now();
@@ -116,6 +84,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       // 启动时自动执行 Q2 动态跃迁扫描
       await scanAndApplyDynamicUrgency();
     } catch (e, stack) {
+      if (!mounted) return;
       debugPrint('Warning: Reminders load error: $e\n$stack');
       state = [];
     }
@@ -236,12 +205,14 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
 
   /// 扫描待办列表，自动执行 Q2 -> Q1 动态跃迁
   Future<int> scanAndApplyDynamicUrgency() async {
+    if (!mounted) return 0;
     const dynamicService = DynamicUrgencyService();
     final updatedList = dynamicService.evaluatePromotions(state);
     int promotedCount = 0;
 
     final db = await _dbHelper.database;
     for (int i = 0; i < updatedList.length; i++) {
+      if (!mounted) return promotedCount;
       final updated = updatedList[i];
       final original = state[i];
       if (updated.quadrantLevel != original.quadrantLevel && updated.isDynamicallyPromoted) {
@@ -250,7 +221,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       }
     }
 
-    if (promotedCount > 0) {
+    if (promotedCount > 0 && mounted) {
       state = updatedList;
     }
     return promotedCount;

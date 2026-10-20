@@ -2,7 +2,9 @@
 ; Defines packaging, installation, shortcuts, and full uninstallation
 
 #define MyAppName "DontForget"
-#define MyAppVersion "1.5.0"
+#ifndef MyAppVersion
+  #error Pass /DMyAppVersion from pubspec.yaml using scripts/package_windows.ps1
+#endif
 #define MyAppPublisher "DontForget Team"
 #define MyAppExeName "dont_forget.exe"
 #define SourceDir "..\build\windows\x64\runner\Release"
@@ -26,7 +28,7 @@ WizardStyle=modern
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog commandline
 DisableProgramGroupPage=auto
-MinVersion=6.1sp1
+MinVersion=10.0
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -60,8 +62,7 @@ Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChang
 [UninstallDelete]
 Type: files; Name: "{autodesktop}\别忘了.lnk"
 Type: files; Name: "{autodesktop}\DontForget.lnk"
-Type: filesandordirs; Name: "{app}\data"
-Type: filesandordirs; Name: "{app}"
+; Inno removes files it installed. Preserve unknown files and legacy user data.
 
 [Code]
 procedure CleanLegacyRegistry();

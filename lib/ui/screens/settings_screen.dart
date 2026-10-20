@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,38 +21,28 @@ class ModelProvider {
   ]);
 }
 
-String _decodeSecret(String b64) {
-  try {
-    return utf8.decode(base64.decode(b64));
-  } catch (_) {
-    return '';
-  }
-}
-
-final List<ModelProvider> _providers = [
+const List<ModelProvider> _providers = [
   ModelProvider(
     'DeepSeek (推荐默认)',
     'https://api.deepseek.com',
     'deepseek-v4-flash-vision-exp',
-    _decodeSecret('c2stZDdmZmNiNTAzMGMzNDI5OGExZTQ3NDEzN2JmODNmYjk='),
   ),
   ModelProvider(
     'Gemini (Google 官方)',
     'https://generativelanguage.googleapis.com/v1beta/openai',
     'gemini-3.6-flash',
-    _decodeSecret('QVEuQWI4Uk42SUVydFNsUVZ6TzlGRmRFdXpjcnBraUppdjZMUF80VTFrTnFXekswWkl4ckE='),
   ),
-  const ModelProvider(
+  ModelProvider(
     'Ollama (本地离线大模型)',
     'http://localhost:11434/v1',
     'llama3',
     'ollama',
   ),
-  const ModelProvider('OpenAI (ChatGPT)', 'https://api.openai.com/v1', 'gpt-4o-mini'),
-  const ModelProvider('Kimi (Moonshot)', 'https://api.moonshot.cn/v1', 'moonshot-v1-8k'),
-  const ModelProvider('Qwen (DashScope)', 'https://dashscope.aliyuncs.com/compatible-mode/v1', 'qwen-plus'),
-  const ModelProvider('Grok (xAI)', 'https://api.x.ai/v1', 'grok-beta'),
-  const ModelProvider('Doubao (Volcengine)', 'https://ark.volces.com/api/v3', 'ep-xxx'),
+  ModelProvider('OpenAI (ChatGPT)', 'https://api.openai.com/v1', 'gpt-4o-mini'),
+  ModelProvider('Kimi (Moonshot)', 'https://api.moonshot.cn/v1', 'moonshot-v1-8k'),
+  ModelProvider('Qwen (DashScope)', 'https://dashscope.aliyuncs.com/compatible-mode/v1', 'qwen-plus'),
+  ModelProvider('Grok (xAI)', 'https://api.x.ai/v1', 'grok-beta'),
+  ModelProvider('Doubao (Volcengine)', 'https://ark.volces.com/api/v3', 'ep-xxx'),
 ];
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -114,9 +103,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     super.dispose();
   }
 
+  String? _originOf(String url) {
+    final uri = Uri.tryParse(url.trim());
+    if (uri == null || !const ['http', 'https'].contains(uri.scheme) || uri.host.isEmpty) return null;
+    return uri.origin;
+  }
+
   void _onProviderChanged(ModelProvider? provider) {
     if (provider == null) return;
     setState(() {
+      final previousOrigin = _originOf(_baseUrlController.text);
+      if (previousOrigin != Uri.parse(provider.defaultBaseUrl).origin) {
+        _apiKeyController.clear();
+      }
       _selectedProvider = provider;
       _baseUrlController.text = provider.defaultBaseUrl;
       _modelNameController.text = provider.defaultModel;
@@ -126,7 +125,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     });
   }
 
-  void _saveSettings() {
+  bool _isSaving = false;
+  bool _isBackingUp = false;
+
+  Future<void> _backupNow() async {
+    if (_isBackingUp) return;
+    setState(() => _isBackingUp = true);
+    var messageKey = 'backupSuccess';
+    try {
+      await ref.read(databaseHelperProvider).createMirrorBackup();
+    } catch (_) {
+      messageKey = 'backupFailed';
+    }
+    if (!mounted) return;
+    setState(() => _isBackingUp = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppLocalizations.of(context).get(messageKey))),
+    );
+  }
+
+
+  Future<void> _saveSettings() async {
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
     final settings = ref.read(settingsProvider);
     final newSettings = settings.copyWith(
       apiKey: _apiKeyController.text.trim(),
@@ -134,8 +155,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       modelName: _modelNameController.text.trim(),
       language: _selectedLang,
     );
-    ref.read(settingsProvider.notifier).updateSettings(newSettings);
-    Navigator.pop(context);
+    try {
+      await ref.read(settingsProvider.notifier).updateSettings(newSettings);
+      if (mounted) Navigator.pop(context);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).get('settingsSaveFailed'))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
   }
 
   void _openConsoleUrl(String url) {
@@ -771,12 +802,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               
               const SizedBox(height: 24),
+              OutlinedButton.icon(
+                onPressed: _isBackingUp ? null : _backupNow,
+                icon: const Icon(Icons.backup_outlined),
+                label: Text(l10n.get('backupNow')),
+              ),
+              const SizedBox(height: 8),
+              Text(l10n.get('backupDescription'),
+                style: Theme.of(context).textTheme.bodySmall),
+              const SizedBox(height: 16),
               FilledButton(
                 style: FilledButton.styleFrom(
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
-                onPressed: _saveSettings,
+                onPressed: _isSaving ? null : _saveSettings,
                 child: Text(
                   l10n.get('save'),
                   style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),

@@ -7,8 +7,9 @@
 ## 1. 开发环境要求
 
 - **操作系统**：Windows 10 / 11 (64-bit) 推荐；macOS / Linux 亦可支持对应平台开发。
-- **Flutter SDK**：`>= 3.2.0 < 4.0.0` (推荐 Flutter 3.24+ / 3.27+)
-- **Dart SDK**：`>= 3.2.0`
+- **Flutter SDK**：本轮本地验证与 CI 固定为 `3.44.9`，项目最低约束为 `3.44.0`。
+- **Dart SDK**：`>= 3.12.0 < 4.0.0`（随上述 Flutter 提供）。
+- **依赖与质量检查**：使用提交的 lockfile，执行 `flutter pub get --enforce-lockfile`、`flutter analyze`、`flutter test`。测试使用临时数据库，不读取用户应用数据。
 - **C++ 编译工具链**（Windows 桌面端构建必备）：
   - Visual Studio 2022 / 2019，且安装了 **“使用 C++ 的桌面开发”** 工作负载（包含 MSVC v142/v143、Windows 10/11 SDK）。
 - **打包安装工具**（生成 Setup 安装包必备）：

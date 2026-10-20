@@ -5,20 +5,41 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite/sqflite.dart' as sqflite;
+import '../models/settings.dart';
+import '../models/legacy_credentials.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
-  static Database? _database;
+  Database? _database;
+  Future<Database>? _opening;
+  Future<void>? _backup;
+  Future<void>? _closing;
+  final String? _directory;
+  final DatabaseFactory? _factory;
 
-  DatabaseHelper._init();
+  DatabaseHelper._init() : _directory = null, _factory = null;
+
+  @visibleForTesting
+  DatabaseHelper.forTesting(String directory, DatabaseFactory factory)
+    : _directory = directory,
+      _factory = factory;
 
   Future<Database> get database async {
+    if (_closing != null) await _closing;
     if (_database != null) return _database!;
-    _database = await _initDB('dont_forget_v3.db');
-    return _database!;
+    final opening = _opening ??= _initDB('dont_forget_v3.db');
+    try {
+      return _database = await opening;
+    } finally {
+      if (identical(_opening, opening)) _opening = null;
+    }
   }
 
   Future<String> _getDatabaseDirectory() async {
+    if (_directory != null) {
+      await Directory(_directory).create(recursive: true);
+      return _directory;
+    }
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       try {
         final supportDir = await getApplicationSupportDirectory();
@@ -30,11 +51,14 @@ class DatabaseHelper {
       } catch (e) {
         debugPrint('Error getting application support directory: $e');
         if (Platform.isWindows) {
-          final localAppData = Platform.environment['LOCALAPPDATA'] ??
+          final localAppData =
+              Platform.environment['LOCALAPPDATA'] ??
               Platform.environment['APPDATA'] ??
               Platform.environment['USERPROFILE'] ??
               '.';
-          final fallbackDir = Directory(join(localAppData, 'DontForget', 'databases'));
+          final fallbackDir = Directory(
+            join(localAppData, 'DontForget', 'databases'),
+          );
           if (!fallbackDir.existsSync()) {
             fallbackDir.createSync(recursive: true);
           }
@@ -47,19 +71,26 @@ class DatabaseHelper {
 
   Future<Database> _initDB(String filePath) async {
     // Initialize FFI for desktop platforms
-    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    if (_factory == null &&
+        (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
     }
-    
+
     final dbDir = await _getDatabaseDirectory();
     final targetPath = join(dbDir, filePath);
 
     // Auto-migrate legacy DB from previous development/relative path if target doesn't exist
     final targetFile = File(targetPath);
-    if (!targetFile.existsSync()) {
+    if (_directory == null && !targetFile.existsSync()) {
       try {
-        final legacyDir = join(Directory.current.path, '.dart_tool', 'sqflite_common_ffi', 'databases', filePath);
+        final legacyDir = join(
+          Directory.current.path,
+          '.dart_tool',
+          'sqflite_common_ffi',
+          'databases',
+          filePath,
+        );
         final legacyFile = File(legacyDir);
         if (legacyFile.existsSync()) {
           legacyFile.copySync(targetPath);
@@ -67,91 +98,77 @@ class DatabaseHelper {
       } catch (_) {}
     }
 
-    final mirrorPath = join(dbDir, 'dont_forget_v3.mirror.db');
-    final snapshotPath = join(dbDir, 'ha_snapshot.json');
-
-    try {
-      final db = await databaseFactory.openDatabase(
-        targetPath,
-        options: OpenDatabaseOptions(
-          version: 7,
-          onCreate: _createDB,
-          onUpgrade: _upgradeDB,
-        ),
-      );
-      return db;
-    } catch (e) {
-      debugPrint('Warning: Initial open database failed ($e). Invoking HA self-healing...');
-      await _attemptSelfHealing(targetPath, mirrorPath, snapshotPath);
-      return await databaseFactory.openDatabase(
-        targetPath,
-        options: OpenDatabaseOptions(
-          version: 7,
-          onCreate: _createDB,
-          onUpgrade: _upgradeDB,
-        ),
-      );
-    }
+    // An open failure may be a permission/lock/migration error. Never replace
+    // the user's database with an older backup merely because opening failed.
+    return (_factory ?? databaseFactory).openDatabase(
+      targetPath,
+      options: OpenDatabaseOptions(
+        version: 8,
+        onCreate: _createDB,
+        onUpgrade: _upgradeDB,
+      ),
+    );
   }
 
   Future<void> createMirrorBackup() async {
-    try {
-      final dbDir = await _getDatabaseDirectory();
-      final targetPath = join(dbDir, 'dont_forget_v3.db');
-      final mirrorPath = join(dbDir, 'dont_forget_v3.mirror.db');
-      final snapshotPath = join(dbDir, 'ha_snapshot.json');
-
-      final targetFile = File(targetPath);
-      if (targetFile.existsSync()) {
-        targetFile.copySync(mirrorPath);
-      }
-
-      final db = await database;
-      final reminders = await db.query('Reminders');
-      final settings = await db.query('Settings');
-      final snapshotData = {
-        'timestamp': DateTime.now().toIso8601String(),
-        'settings': settings,
-        'reminders': reminders,
-      };
-      File(snapshotPath).writeAsStringSync(jsonEncode(snapshotData));
-    } catch (e) {
-      debugPrint('HA Mirror backup warning: $e');
-    }
+    if (_closing != null) return _closing;
+    return _backup ??= _createMirrorBackup().whenComplete(() => _backup = null);
   }
 
-  Future<void> _attemptSelfHealing(String targetPath, String mirrorPath, String snapshotPath) async {
-    debugPrint('🚨 [HA Disaster Recovery] Database corruption detected! Triggering self-healing...');
-    try {
-      final mirrorFile = File(mirrorPath);
-      if (mirrorFile.existsSync() && mirrorFile.lengthSync() > 0) {
-        mirrorFile.copySync(targetPath);
-        debugPrint('✅ [HA Disaster Recovery] Successfully recovered from double-active mirror database!');
-        return;
-      }
+  Future<void> _createMirrorBackup() async {
+    final db = await database;
+    await _backupDatabase(db);
+  }
 
-      final snapshotFile = File(snapshotPath);
-      if (snapshotFile.existsSync()) {
-        final content = snapshotFile.readAsStringSync();
-        final data = jsonDecode(content);
-        final targetFile = File(targetPath);
-        if (targetFile.existsSync()) {
-          targetFile.deleteSync();
-        }
-        final recoveredDb = await databaseFactory.openDatabase(
-          targetPath,
-          options: OpenDatabaseOptions(version: 7, onCreate: _createDB),
-        );
-        if (data['reminders'] is List) {
-          for (final rem in (data['reminders'] as List)) {
-            await recoveredDb.insert('Reminders', rem);
+  Future<void> _backupDatabase(Database db) async {
+    final dbDir = await _getDatabaseDirectory();
+    final mirrorPath = join(dbDir, 'dont_forget_v3.mirror.db');
+    final snapshotPath = join(dbDir, 'ha_snapshot.json');
+    final temporary = await Directory(dbDir).createTemp('backup-');
+    Database? mirror;
+    try {
+      // One read transaction includes committed WAL data and keeps all tables
+      // from the same point in time. Never copy an open SQLite file directly.
+      final data = await db.transaction(
+        (txn) async => <String, Object?>{
+          'version': 8,
+          'timestamp': DateTime.now().toUtc().toIso8601String(),
+          'settings': await txn.query('Settings'),
+          'media_records': await txn.query('MediaRecords'),
+          'reminders': await txn.query('Reminders'),
+        },
+      );
+      final temporaryMirror = join(temporary.path, 'mirror.db');
+      mirror = await (_factory ?? databaseFactory).openDatabase(
+        temporaryMirror,
+        options: OpenDatabaseOptions(version: 8, onCreate: _createDB),
+      );
+      await mirror.transaction((txn) async {
+        for (final entry in const {
+          'Settings': 'settings',
+          'MediaRecords': 'media_records',
+          'Reminders': 'reminders',
+        }.entries) {
+          await txn.delete(entry.key);
+          for (final row in data[entry.value] as List<Map<String, Object?>>) {
+            await txn.insert(entry.key, row);
           }
         }
-        await recoveredDb.close();
-        debugPrint('✅ [HA Disaster Recovery] Successfully recovered from JSON state machine snapshot!');
+      });
+      final check = await mirror.rawQuery('PRAGMA integrity_check');
+      if (check.length != 1 || check.single.values.single != 'ok') {
+        throw StateError('Backup integrity check failed');
       }
-    } catch (e) {
-      debugPrint('❌ [HA Disaster Recovery] Self-healing failed: $e');
+      await mirror.close();
+      mirror = null;
+      final snapshot = File(join(temporary.path, 'snapshot.json'));
+      await snapshot.writeAsString(jsonEncode(data), flush: true);
+      // Each artifact replaces its predecessor only after it is complete.
+      await File(temporaryMirror).rename(mirrorPath);
+      await snapshot.rename(snapshotPath);
+    } finally {
+      await mirror?.close();
+      await temporary.delete(recursive: true);
     }
   }
 
@@ -171,15 +188,7 @@ CREATE TABLE Settings (
 )
 ''');
 
-    // Initialize default settings configured for DeepSeek
-    final defaultKey = utf8.decode(base64.decode('c2stZDdmZmNiNTAzMGMzNDI5OGExZTQ3NDEzN2JmODNmYjk='));
-    await db.insert('Settings', {
-      'id': 'default',
-      'api_key': defaultKey,
-      'base_url': 'https://api.deepseek.com',
-      'model_name': 'deepseek-v4-flash-vision-exp',
-      'language': 'zh',
-    });
+    await db.insert('Settings', AppSettings.defaults().toJson());
 
     await db.execute('''
 CREATE TABLE MediaRecords (
@@ -219,20 +228,42 @@ CREATE TABLE Reminders (
   }
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 8) {
+      final settings = await db.query('Settings');
+      for (final row in settings) {
+        if (isLegacyBundledCredential(row['api_key'] as String? ?? '')) {
+          await db.update(
+            'Settings',
+            {'api_key': ''},
+            where: 'id = ?',
+            whereArgs: [row['id']],
+          );
+        }
+      }
+    }
+
     if (oldVersion < 4) {
       try {
-        await db.execute('ALTER TABLE Reminders ADD COLUMN is_recurring INTEGER DEFAULT 0');
+        await db.execute(
+          'ALTER TABLE Reminders ADD COLUMN is_recurring INTEGER DEFAULT 0',
+        );
       } catch (_) {}
       try {
-        await db.execute('ALTER TABLE Reminders ADD COLUMN recurrence_rule TEXT DEFAULT "none"');
+        await db.execute(
+          'ALTER TABLE Reminders ADD COLUMN recurrence_rule TEXT DEFAULT "none"',
+        );
       } catch (_) {}
       try {
-        await db.execute('ALTER TABLE Reminders ADD COLUMN recurrence_description TEXT');
+        await db.execute(
+          'ALTER TABLE Reminders ADD COLUMN recurrence_description TEXT',
+        );
       } catch (_) {}
     }
     if (oldVersion < 5) {
       try {
-        await db.execute('ALTER TABLE Reminders ADD COLUMN is_emotion_filtered INTEGER DEFAULT 0');
+        await db.execute(
+          'ALTER TABLE Reminders ADD COLUMN is_emotion_filtered INTEGER DEFAULT 0',
+        );
       } catch (_) {}
       try {
         await db.execute('ALTER TABLE Reminders ADD COLUMN sub_tasks TEXT');
@@ -243,34 +274,60 @@ CREATE TABLE Reminders (
     }
     if (oldVersion < 6) {
       try {
-        await db.execute('ALTER TABLE Reminders ADD COLUMN review_level INTEGER DEFAULT 0');
+        await db.execute(
+          'ALTER TABLE Reminders ADD COLUMN review_level INTEGER DEFAULT 0',
+        );
       } catch (_) {}
       try {
-        await db.execute('ALTER TABLE Reminders ADD COLUMN next_review_at TEXT');
+        await db.execute(
+          'ALTER TABLE Reminders ADD COLUMN next_review_at TEXT',
+        );
       } catch (_) {}
     }
     if (oldVersion < 7) {
       try {
-        await db.execute('ALTER TABLE Reminders ADD COLUMN original_quadrant_level INTEGER');
+        await db.execute(
+          'ALTER TABLE Reminders ADD COLUMN original_quadrant_level INTEGER',
+        );
       } catch (_) {}
       try {
-        await db.execute('ALTER TABLE Reminders ADD COLUMN is_dynamically_promoted INTEGER DEFAULT 0');
+        await db.execute(
+          'ALTER TABLE Reminders ADD COLUMN is_dynamically_promoted INTEGER DEFAULT 0',
+        );
       } catch (_) {}
       try {
-        await db.execute('ALTER TABLE Reminders ADD COLUMN linked_task_ids TEXT');
+        await db.execute(
+          'ALTER TABLE Reminders ADD COLUMN linked_task_ids TEXT',
+        );
       } catch (_) {}
       try {
-        await db.execute('ALTER TABLE Reminders ADD COLUMN context_trigger TEXT');
+        await db.execute(
+          'ALTER TABLE Reminders ADD COLUMN context_trigger TEXT',
+        );
       } catch (_) {}
       try {
-        await db.execute('UPDATE Reminders SET original_quadrant_level = quadrant_level WHERE original_quadrant_level IS NULL');
+        await db.execute(
+          'UPDATE Reminders SET original_quadrant_level = quadrant_level WHERE original_quadrant_level IS NULL',
+        );
       } catch (_) {}
     }
   }
 
-  Future<void> close() async {
-    await createMirrorBackup();
-    final db = await instance.database;
-    db.close();
+  Future<void> close() {
+    return _closing ??= _close().whenComplete(() => _closing = null);
+  }
+
+  Future<void> _close() async {
+    // No database is opened just to close an unused helper.
+    try {
+      if (_backup != null) await _backup;
+      if (_opening != null) _database = await _opening;
+      final db = _database;
+      if (db != null) await _backupDatabase(db);
+    } finally {
+      final db = _database;
+      _database = null;
+      await db?.close();
+    }
   }
 }
