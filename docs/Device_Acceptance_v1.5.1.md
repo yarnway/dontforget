@@ -3,7 +3,7 @@
 用户可用设备：当前 Mac、iPhone、另一台 Windows 主机、Android 手机。先记录包清单中的提交号与 SHA-256，再记录设备系统版本和实际结果。自动化结果见 [验收台账](Release_Acceptance_v1.5.1.md)，空项表示未执行。
 
 当前候选：`23c8c0174e9022332e864ce5c6464edb6c4c9ac0`，版本 `1.5.1+2`。
-[run 39429010534](https://github.com/yarnway/dontforget/actions/runs/39429010534) 质量检查及五平台构建成功。Mac 包本地独立核验、首页回放、正常重启回放、备份通过；其他平台本地下载复核进行中。可从该流水线 artifacts 下载（需登录 GitHub，CI 保留期 30 天）。发布草稿仍为旧 7cdf85b 附件，待整批更新，不作为当前候选下载入口。
+[run 39429010534](https://github.com/yarnway/dontforget/actions/runs/39429010534) 质量检查及五平台构建成功。Mac 包本地独立核验、首页回放、正常重启回放、备份通过；七个交付包本地版本/提交身份/哈希核验均通过。可从该流水线 artifacts 下载（需登录 GitHub，CI 保留期 30 天）。发布草稿已统一为当前 23c8c01，21 个附件远端摘要及大小全部核对通过；保持未公开草稿。
 
 ## 安装准备
 
