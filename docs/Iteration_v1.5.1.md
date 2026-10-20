@@ -40,7 +40,7 @@
 | 源码 | v1.5.1+2 / DB v8 修改已提交并推送；候选源码 66bf406 |
 | 依赖 | `flutter pub get --enforce-lockfile` 通过 |
 | 静态分析 | `flutter analyze`：No issues found |
-| 全量测试 | 录音修订后 `flutter test --reporter expanded`：52 项通过；既有 10 项打包回归通过 |
+| 全量测试 | 录音及通知初始化修订后 `flutter test --reporter expanded`：55 项通过；既有 10 项打包回归通过 |
 | 定向迁移 | 额外本地测试读取基线 Git 中的两条旧内置凭据，在临时库执行 v7 → v8；两者均被清除。未发起服务商请求，未在测试源码中保留凭据 |
 | 自查 | 检查配置事务、备份失败路径、关闭/重开、异步销毁、版本号与 CI 依赖；`git diff --check` 通过。未进行独立审查 |
 | 编译 | `flutter build bundle --debug --target-platform darwin --no-pub` 生成 Dart kernel 与资源；不是原生 App 或安装包 |

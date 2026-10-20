@@ -12,10 +12,19 @@ import 'context_trigger_service.dart';
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
-  NotificationService._internal();
+  NotificationService._internal()
+      : flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin(),
+        usesNativeNotifications = !Platform.isWindows && !Platform.isLinux;
 
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-      FlutterLocalNotificationsPlugin();
+  @visibleForTesting
+  NotificationService.forTesting(
+    this.flutterLocalNotificationsPlugin, {
+    required this.usesNativeNotifications,
+  });
+
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+  final bool usesNativeNotifications;
+  Future<void>? _initialization;
 
   final Map<String, Timer> _activeTimers = {};
   final StreamController<Reminder> _reminderDueController =
@@ -26,11 +35,13 @@ class NotificationService {
 
   Stream<Reminder> get onReminderDue => _reminderDueController.stream;
 
-  Future<void> init() async {
+  Future<void> init() => _initialization ??= _initialize();
+
+  Future<void> _initialize() async {
     try {
       tz.initializeTimeZones();
 
-      if (!Platform.isWindows && !Platform.isLinux) {
+      if (usesNativeNotifications) {
         const AndroidInitializationSettings initializationSettingsAndroid =
             AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -61,9 +72,13 @@ class NotificationService {
 
   Future<void> scheduleReminder(Reminder reminder) async {
     // Cancel existing timer for this reminder if any
-    cancelReminder(reminder.id);
+    await cancelReminder(reminder.id);
 
     if (reminder.triggerTime == null || reminder.isCompleted) return;
+
+    // Initialize lazily when a reminder is actually requested. Concurrent
+    // schedules share one permission/initialization request.
+    await init();
 
     final now = DateTime.now();
     final difference = reminder.triggerTime!.difference(now);
@@ -83,7 +98,7 @@ class NotificationService {
     });
 
     // Native mobile/Darwin scheduling if supported
-    if (!Platform.isWindows && !Platform.isLinux) {
+    if (usesNativeNotifications) {
       try {
         String channelId;
         String channelName;
@@ -163,7 +178,7 @@ class NotificationService {
     _activeTimers[id]?.cancel();
     _activeTimers.remove(id);
 
-    if (!Platform.isWindows && !Platform.isLinux) {
+    if (usesNativeNotifications) {
       try {
         await flutterLocalNotificationsPlugin.cancel(id.hashCode);
       } catch (_) {}
