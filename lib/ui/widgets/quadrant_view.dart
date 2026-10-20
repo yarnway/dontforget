@@ -73,7 +73,8 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
   Widget _buildDraggableCard(Reminder task) {
     return LongPressDraggable<Reminder>(
       data: task,
-      delay: const Duration(milliseconds: 160),
+      // Keep ordinary clicks on the card's controls out of the drag gesture.
+      delay: const Duration(milliseconds: 500),
       feedback: Material(
         elevation: 12,
         borderRadius: BorderRadius.circular(8),

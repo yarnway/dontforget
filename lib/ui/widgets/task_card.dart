@@ -336,12 +336,16 @@ class _TaskCardState extends ConsumerState<TaskCard> {
 
                     // Media attachment icon if any
                     if (mediaIcon != null) ...[
-                      InkWell(
-                        onTap: widget.onPlayMedia,
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 1, right: 6),
-                          child: Icon(mediaIcon, size: 16, color: Theme.of(context).colorScheme.primary),
+                      IconButton(
+                        tooltip: l10n.get('playOrPreview'),
+                        onPressed: widget.onPlayMedia,
+                        constraints: const BoxConstraints(
+                          minWidth: 40,
+                          minHeight: 40,
                         ),
+                        padding: const EdgeInsets.all(8),
+                        icon: Icon(mediaIcon, size: 20,
+                            color: Theme.of(context).colorScheme.primary),
                       ),
                     ],
 
