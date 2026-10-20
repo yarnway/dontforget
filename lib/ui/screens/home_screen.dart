@@ -10,10 +10,9 @@ import '../../providers/home_controller.dart';
 import '../../services/notification_service.dart';
 import 'settings_screen.dart';
 import 'dashboard_screen.dart';
-import '../widgets/quadrant_view.dart';
 import '../widgets/task_card.dart';
 import '../widgets/input_bottom_bar.dart';
-import '../widgets/ai_background_effect.dart';
+import '../widgets/task_board.dart';
 import '../widgets/command_palette_dialog.dart';
 import '../widgets/spaced_repetition_sheet.dart';
 import '../widgets/context_digest_sheet.dart';
@@ -28,14 +27,17 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _audioPlayer = AudioPlayer();
   Timer? _heartbeatTimer;
   StreamSubscription<Reminder>? _dueSubscription;
   StreamSubscription<List<Reminder>>? _catchUpDigestSubscription;
   StreamSubscription<List<Reminder>>? _suppressedSubscription;
   final Set<String> _promptedReminderIds = {};
-  late AnimationController _indicatorAnimController;
+  final _shortcutFocus = FocusNode(
+    debugLabel: 'workspace-shortcuts',
+    skipTraversal: true,
+  );
   bool _isSearchOpen = false;
   final _searchController = TextEditingController();
   String _searchQuery = '';
@@ -44,39 +46,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
   void initState() {
     super.initState();
 
-    _indicatorAnimController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-
     // Listen to notification service broadcast stream
     _dueSubscription = NotificationService().onReminderDue.listen((reminder) {
       _showDueReminderDialog(reminder);
     });
 
     // 监听情境事后摘要通知并弹出聚合抽屉
-    _catchUpDigestSubscription =
-        ContextTriggerService().onCatchUpDigestReady.listen((digestList) {
-      if (!mounted || digestList.isEmpty) return;
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (_) => ContextDigestSheet(digestReminders: digestList),
-      );
-      if (Platform.isWindows) {
-        NotificationService().showWindowsToast(
-          '情境专注时段已结束',
-          '已为您自动聚合 ${digestList.length} 项次要事务待处理',
-        );
-      }
-    });
+    _catchUpDigestSubscription = ContextTriggerService().onCatchUpDigestReady
+        .listen((digestList) {
+          if (!mounted || digestList.isEmpty) return;
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (_) => ContextDigestSheet(digestReminders: digestList),
+          );
+          if (Platform.isWindows) {
+            NotificationService().showWindowsToast(
+              '情境专注时段已结束',
+              '已为您自动聚合 ${digestList.length} 项次要事务待处理',
+            );
+          }
+        });
 
     // 监听拦截队列更新以便即时刷新情境徽标
-    _suppressedSubscription =
-        ContextTriggerService().onSuppressedUpdated.listen((_) {
-      if (mounted) setState(() {});
-    });
+    _suppressedSubscription = ContextTriggerService().onSuppressedUpdated
+        .listen((_) {
+          if (mounted) setState(() {});
+        });
 
     // 启动时触发 Wi-Fi 嗅探与情境感知
     ContextTriggerService().detectCurrentWifiSsid();
@@ -90,7 +87,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
   @override
   void dispose() {
     _searchController.dispose();
-    _indicatorAnimController.dispose();
+    _shortcutFocus.dispose();
     _heartbeatTimer?.cancel();
     _dueSubscription?.cancel();
     _catchUpDigestSubscription?.cancel();
@@ -118,9 +115,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
     // 情境感知触发器检测 (检测 Wi-Fi SSID 接入)
     ContextTriggerService().detectCurrentWifiSsid().then((ssid) {
       if (ssid != null && mounted) {
-        final matched = ContextTriggerService().evaluateContextTriggers(reminders, ssid: ssid);
+        final matched = ContextTriggerService().evaluateContextTriggers(
+          reminders,
+          ssid: ssid,
+        );
         for (final m in matched) {
-          NotificationService().showWindowsToast('📍 情境感知提醒 [已连接 $ssid]', m.taskTitle);
+          NotificationService().showWindowsToast(
+            '📍 情境感知提醒 [已连接 $ssid]',
+            m.taskTitle,
+          );
         }
       }
     });
@@ -140,12 +143,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
       builder: (dialogCtx) => AlertDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
-          side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant, width: 1),
+          side: BorderSide(
+            color: Theme.of(context).colorScheme.outlineVariant,
+            width: 1,
+          ),
         ),
         backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         title: Row(
           children: [
-            Icon(Icons.alarm_on_rounded, color: Theme.of(context).colorScheme.primary, size: 24),
+            Icon(
+              Icons.alarm_on_rounded,
+              color: Theme.of(context).colorScheme.primary,
+              size: 24,
+            ),
             const SizedBox(width: 8),
             Text(
               l10n.get('dueReminder'),
@@ -161,7 +171,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
               reminder.taskTitle,
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            if (reminder.taskSummary != null && reminder.taskSummary!.isNotEmpty) ...[
+            if (reminder.taskSummary != null &&
+                reminder.taskSummary!.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(
                 reminder.taskSummary!,
@@ -200,27 +211,40 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                 SnackBar(
                   duration: const Duration(seconds: 3),
                   behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   content: Text(l10n.get('snoozeSuccess')),
                 ),
               );
             },
-            child: Text(l10n.get('snooze5Min'), style: const TextStyle(fontSize: 13)),
+            child: Text(
+              l10n.get('snooze5Min'),
+              style: const TextStyle(fontSize: 13),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogCtx).pop(),
-            child: Text(l10n.get('iKnow'), style: const TextStyle(fontSize: 13)),
+            child: Text(
+              l10n.get('iKnow'),
+              style: const TextStyle(fontSize: 13),
+            ),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
             ),
             onPressed: () {
               Navigator.of(dialogCtx).pop();
               if (reminder.isRecurring) {
                 final nextTime = reminder.getNextOccurrence();
                 if (nextTime != null) {
-                  final nextTask = reminder.copyWith(triggerTime: nextTime, isCompleted: false);
+                  final nextTask = reminder.copyWith(
+                    triggerTime: nextTime,
+                    isCompleted: false,
+                  );
                   ref.read(remindersProvider.notifier).updateReminder(nextTask);
                   NotificationService().scheduleReminder(nextTask);
                   _promptedReminderIds.remove(reminder.id);
@@ -230,8 +254,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                     SnackBar(
                       duration: const Duration(seconds: 3),
                       behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      content: Text('${l10n.get('periodicNext')}${nextTime.toString().substring(0, 16)}'),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      content: Text(
+                        '${l10n.get('periodicNext')}${nextTime.toString().substring(0, 16)}',
+                      ),
                     ),
                   );
                   return;
@@ -247,12 +275,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                 SnackBar(
                   duration: const Duration(seconds: 3),
                   behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   content: Text(l10n.get('taskCompleted')),
                 ),
               );
             },
-            child: Text(l10n.get('markDone'), style: const TextStyle(fontSize: 13)),
+            child: Text(
+              l10n.get('markDone'),
+              style: const TextStyle(fontSize: 13),
+            ),
           ),
         ],
       ),
@@ -262,7 +295,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
   void _confirmClearCompleted() {
     final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final completedCount = ref.read(remindersProvider).where((r) => r.isCompleted).length;
+    final completedCount = ref
+        .read(remindersProvider)
+        .where((r) => r.isCompleted)
+        .length;
     if (completedCount == 0) {
       ScaffoldMessenger.of(context).hideCurrentSnackBar();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -281,14 +317,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
-          side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant, width: 1),
+          side: BorderSide(
+            color: Theme.of(context).colorScheme.outlineVariant,
+            width: 1,
+          ),
         ),
         backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         title: Row(
           children: [
-            const Icon(Icons.cleaning_services_outlined, color: Colors.redAccent, size: 22),
+            const Icon(
+              Icons.cleaning_services_outlined,
+              color: Colors.redAccent,
+              size: 22,
+            ),
             const SizedBox(width: 8),
-            Text(l10n.get('clearCompletedTitle'), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+            Text(
+              l10n.get('clearCompletedTitle'),
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+            ),
           ],
         ),
         content: Text(
@@ -298,29 +344,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(l10n.get('cancel'), style: const TextStyle(fontSize: 13)),
+            child: Text(
+              l10n.get('cancel'),
+              style: const TextStyle(fontSize: 13),
+            ),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
               backgroundColor: Colors.redAccent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
             ),
             onPressed: () async {
               Navigator.of(ctx).pop();
-              final count = await ref.read(remindersProvider.notifier).clearCompletedReminders();
+              final count = await ref
+                  .read(remindersProvider.notifier)
+                  .clearCompletedReminders();
               if (mounted) {
                 ScaffoldMessenger.of(context).hideCurrentSnackBar();
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     duration: const Duration(seconds: 3),
                     behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    content: Text('${l10n.get('clearedCompletedSuccess')} ($count)'),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    content: Text(
+                      '${l10n.get('clearedCompletedSuccess')} ($count)',
+                    ),
                   ),
                 );
               }
             },
-            child: Text(l10n.get('confirm'), style: const TextStyle(fontSize: 13)),
+            child: Text(
+              l10n.get('confirm'),
+              style: const TextStyle(fontSize: 13),
+            ),
           ),
         ],
       ),
@@ -372,7 +432,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                     backgroundColor: Colors.black54,
                     radius: 16,
                     child: IconButton(
-                      icon: const Icon(Icons.close, color: Colors.white, size: 16),
+                      icon: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 16,
+                      ),
                       onPressed: () => Navigator.pop(ctx),
                     ),
                   ),
@@ -402,17 +466,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
-          side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant, width: 1),
+          side: BorderSide(
+            color: Theme.of(context).colorScheme.outlineVariant,
+            width: 1,
+          ),
         ),
         backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         title: Row(
           children: [
-            const Icon(Icons.description_outlined, color: Colors.amber, size: 22),
+            const Icon(
+              Icons.description_outlined,
+              color: Colors.amber,
+              size: 22,
+            ),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 fileName,
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -424,10 +498,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('${l10n.get('localPath')}: $filePath', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+              Text(
+                '${l10n.get('localPath')}: $filePath',
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
+              ),
               const Divider(height: 18),
               if (preview.isNotEmpty) ...[
-                Text('${l10n.get('contentPreview')}:', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12)),
+                Text(
+                  '${l10n.get('contentPreview')}:',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
                 const SizedBox(height: 6),
                 Container(
                   constraints: const BoxConstraints(maxHeight: 200),
@@ -435,21 +518,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                   decoration: BoxDecoration(
                     color: Colors.grey.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
+                    border: Border.all(
+                      color: Colors.grey.withValues(alpha: 0.2),
+                    ),
                   ),
                   child: SingleChildScrollView(
-                    child: Text(preview, style: const TextStyle(fontSize: 11, fontFamily: 'monospace')),
+                    child: Text(
+                      preview,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontFamily: 'monospace',
+                      ),
+                    ),
                   ),
                 ),
               ] else
-                Text(l10n.get('binaryFileNotice'), style: const TextStyle(fontSize: 12)),
+                Text(
+                  l10n.get('binaryFileNotice'),
+                  style: const TextStyle(fontSize: 12),
+                ),
             ],
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.get('close'), style: const TextStyle(fontSize: 13)),
+            child: Text(
+              l10n.get('close'),
+              style: const TextStyle(fontSize: 13),
+            ),
           ),
         ],
       ),
@@ -482,9 +579,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
     final records = ref.read(mediaRecordsProvider);
     final media = records.where((m) => m.id == recordId).firstOrNull;
     if (media == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.get('mediaUnavailable'))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.get('mediaUnavailable'))));
       return;
     }
 
@@ -505,7 +602,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
           SnackBar(
             duration: const Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
             content: Text(l10n.get('playingAudio')),
           ),
         );
@@ -640,7 +739,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
           children: [
             const Icon(Icons.hub_outlined, color: Colors.indigoAccent),
             const SizedBox(width: 8),
-            Text(l10n.get('multiAgentTitle'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(
+              l10n.get('multiAgentTitle'),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         content: Column(
@@ -649,7 +751,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
           children: [
             Text(
               l10n.get('multiAgentDesc'),
-              style: TextStyle(fontSize: 12, color: isDark ? Colors.white60 : Colors.black54),
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? Colors.white60 : Colors.black54,
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -658,8 +763,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
               maxLines: 3,
               decoration: InputDecoration(
                 hintText: '输入您的复杂目标（例如：两周后备战高级技术面试，精通分布式与并发原理）...',
-                hintStyle: TextStyle(fontSize: 13, color: isDark ? Colors.white38 : Colors.black38),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                hintStyle: TextStyle(
+                  fontSize: 13,
+                  color: isDark ? Colors.white38 : Colors.black38,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
             ),
           ],
@@ -676,7 +786,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
               final goal = textController.text.trim();
               if (goal.isNotEmpty) {
                 Navigator.pop(ctx);
-                ref.read(homeControllerProvider.notifier).processWithMultiAgent(goal);
+                ref
+                    .read(homeControllerProvider.notifier)
+                    .processWithMultiAgent(goal);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(l10n.get('agentProcessing')),
@@ -730,7 +842,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
         icon: Icons.bolt,
         shortcut: 'U',
         onExecute: () async {
-          final count = await ref.read(remindersProvider.notifier).scanAndApplyDynamicUrgency();
+          final count = await ref
+              .read(remindersProvider.notifier)
+              .scanAndApplyDynamicUrgency();
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -743,7 +857,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
       ),
       CommandPaletteAction(
         id: 'focus',
-        title: isImmersive ? l10n.get('immersiveDisabled') : l10n.get('immersiveActive'),
+        title: isImmersive
+            ? l10n.get('immersiveDisabled')
+            : l10n.get('immersiveActive'),
         subtitle: l10n.get('immersiveModeDesc'),
         icon: isImmersive ? Icons.shield : Icons.shield_outlined,
         shortcut: 'F',
@@ -816,9 +932,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
     if (event is! KeyDownEvent) return;
 
     final primaryFocus = FocusManager.instance.primaryFocus;
-    final isTyping = primaryFocus != null && primaryFocus.context?.widget is EditableText;
+    final focusContext = primaryFocus?.context;
+    final isTyping =
+        focusContext != null &&
+        (focusContext.widget is EditableText ||
+            focusContext.findAncestorWidgetOfExactType<EditableText>() != null);
 
-    final isCtrl = HardwareKeyboard.instance.isControlPressed || HardwareKeyboard.instance.isMetaPressed;
+    final isCtrl =
+        HardwareKeyboard.instance.isControlPressed ||
+        HardwareKeyboard.instance.isMetaPressed;
 
     // Ctrl+K -> Command Palette
     if (isCtrl && event.logicalKey == LogicalKeyboardKey.keyK) {
@@ -826,7 +948,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
       return;
     }
 
-    if (isTyping) return;
+    if (isTyping || isCtrl || HardwareKeyboard.instance.isAltPressed) return;
 
     if (event.logicalKey == LogicalKeyboardKey.slash) {
       setState(() => _isSearchOpen = true);
@@ -851,7 +973,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
     final reminders = ref.watch(remindersProvider);
     final l10n = AppLocalizations.of(context);
     final homeState = ref.watch(homeControllerProvider);
-    final isImmersiveActive = ref.watch(immersiveModeProvider);
     final spacedService = ref.watch(spacedRepetitionServiceProvider);
     final dueCardsCount = spacedService.getDueCards(reminders).length;
     final currentProfile = ref.watch(contextProfileProvider);
@@ -864,12 +985,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
           SnackBar(
             duration: const Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
             content: Row(
               children: [
                 const Icon(Icons.info_outline, color: Colors.white, size: 18),
                 const SizedBox(width: 8),
-                Expanded(child: Text(next.error!, style: const TextStyle(fontSize: 13))),
+                Expanded(
+                  child: Text(
+                    next.error!,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
               ],
             ),
           ),
@@ -879,394 +1007,297 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
     });
 
     final isProcessing = homeState.isProcessingInBackground;
-    final statusColor = isProcessing ? const Color(0xFF00E5FF) : const Color(0xFF00E676);
+    final statusColor = isProcessing
+        ? const Color(0xFF00E5FF)
+        : const Color(0xFF00E676);
 
     return KeyboardListener(
-      focusNode: FocusNode(),
+      focusNode: _shortcutFocus,
       onKeyEvent: _handleGlobalKeyEvent,
       child: Scaffold(
-        extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        leading: _isSearchOpen
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back, size: 20),
-                onPressed: () => setState(() {
-                  _isSearchOpen = false;
-                  _searchController.clear();
-                  _searchQuery = '';
-                }),
-              )
-            : null,
-        title: _isSearchOpen
-            ? TextField(
-                controller: _searchController,
-                autofocus: true,
-                style: const TextStyle(fontSize: 14),
-                decoration: InputDecoration(
-                  hintText: l10n.get('searchHint'),
-                  hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade500),
-                  border: InputBorder.none,
-                ),
-                onChanged: (val) => setState(() => _searchQuery = val),
-              )
-            : Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    l10n.get('appTitle'),
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17, letterSpacing: 0.5),
+        extendBodyBehindAppBar: false,
+        appBar: AppBar(
+          centerTitle: false,
+          leading: _isSearchOpen
+              ? IconButton(
+                  icon: const Icon(Icons.arrow_back, size: 20),
+                  onPressed: () => setState(() {
+                    _isSearchOpen = false;
+                    _searchController.clear();
+                    _searchQuery = '';
+                  }),
+                )
+              : null,
+          title: _isSearchOpen
+              ? TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  style: const TextStyle(fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: l10n.get('searchHint'),
+                    hintStyle: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey.shade500,
+                    ),
+                    border: InputBorder.none,
                   ),
-                  const SizedBox(width: 8),
-                  // Micro Status Indicator Light with Breathing Animation
-                  AnimatedBuilder(
-                    animation: _indicatorAnimController,
-                    builder: (context, child) {
-                      final glow = _indicatorAnimController.value;
-                      return Tooltip(
-                        message: isProcessing ? l10n.get('statusBusy') : l10n.get('statusReady'),
-                        child: Container(
-                          width: 7,
-                          height: 7,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: statusColor,
-                            boxShadow: [
-                              BoxShadow(
-                                color: statusColor.withValues(alpha: 0.5 + 0.4 * glow),
-                                blurRadius: 4 + 4 * glow,
-                                spreadRadius: 1 + 1 * glow,
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        actions: _isSearchOpen
-            ? [
-                if (_searchQuery.isNotEmpty)
-                  IconButton(
-                    icon: const Icon(Icons.clear, size: 18),
-                    onPressed: () => setState(() {
-                      _searchController.clear();
-                      _searchQuery = '';
-                    }),
-                  ),
-                const SizedBox(width: 6),
-              ]
-            : [
-                IconButton(
-                  icon: const Icon(Icons.terminal, size: 20),
-                  tooltip: '${l10n.get('commandPalette')} (Ctrl+K)',
-                  splashRadius: 18,
-                  onPressed: _openCommandPalette,
-                ),
-                IconButton(
-                  icon: Icon(
-                    isImmersiveActive ? Icons.shield : Icons.shield_outlined,
-                    size: 20,
-                    color: isImmersiveActive ? Colors.amberAccent : null,
-                  ),
-                  tooltip: isImmersiveActive
-                      ? l10n.get('immersiveActive')
-                      : l10n.get('immersiveMode'),
-                  splashRadius: 18,
-                  onPressed: _toggleImmersiveMode,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.hub_outlined, size: 20),
-                  tooltip: '${l10n.get('knowledgeGraphTitle')} (G)',
-                  splashRadius: 18,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const KnowledgeGraphScreen()),
-                    );
-                  },
-                ),
-                PopupMenuButton<ContextProfile>(
-                  icon: Icon(
-                    _getContextProfileIcon(currentProfile),
-                    size: 20,
-                    color: (currentProfile == ContextProfile.deepWork || currentProfile == ContextProfile.office)
-                        ? Colors.tealAccent
-                        : null,
-                  ),
-                  tooltip: l10n.get('contextProfileSwitch'),
-                  splashRadius: 18,
-                  onSelected: (profile) {
-                    ref.read(contextProfileProvider.notifier).setProfile(profile);
-                  },
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      value: ContextProfile.general,
-                      child: Row(
-                        children: [
-                          const Icon(Icons.tune_rounded, size: 18),
-                          const SizedBox(width: 8),
-                          Text(l10n.get('profileGeneral')),
-                          if (currentProfile == ContextProfile.general) ...[
-                            const Spacer(),
-                            const Icon(Icons.check, size: 16, color: Colors.teal),
-                          ],
-                        ],
+                  onChanged: (val) => setState(() => _searchQuery = val),
+                )
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l10n.get('appTitle'),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 17,
+                        letterSpacing: 0.5,
                       ),
                     ),
-                    PopupMenuItem(
-                      value: ContextProfile.office,
-                      child: Row(
-                        children: [
-                          const Icon(Icons.apartment_rounded, size: 18),
-                          const SizedBox(width: 8),
-                          Text(l10n.get('profileOffice')),
-                          if (currentProfile == ContextProfile.office) ...[
-                            const Spacer(),
-                            const Icon(Icons.check, size: 16, color: Colors.teal),
-                          ],
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: ContextProfile.deepWork,
-                      child: Row(
-                        children: [
-                          const Icon(Icons.psychology_rounded, size: 18),
-                          const SizedBox(width: 8),
-                          Text(l10n.get('profileDeepWork')),
-                          if (currentProfile == ContextProfile.deepWork) ...[
-                            const Spacer(),
-                            const Icon(Icons.check, size: 16, color: Colors.teal),
-                          ],
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: ContextProfile.home,
-                      child: Row(
-                        children: [
-                          const Icon(Icons.home_rounded, size: 18),
-                          const SizedBox(width: 8),
-                          Text(l10n.get('profileHome')),
-                          if (currentProfile == ContextProfile.home) ...[
-                            const Spacer(),
-                            const Icon(Icons.check, size: 16, color: Colors.teal),
-                          ],
-                        ],
-                      ),
+                    const SizedBox(width: 8),
+                    Tooltip(
+                      message: isProcessing
+                          ? l10n.get('statusBusy')
+                          : l10n.get('statusReady'),
+                      child: Icon(Icons.circle, size: 7, color: statusColor),
                     ),
                   ],
                 ),
-                Badge(
-                  isLabelVisible: suppressedCount > 0,
-                  label: Text(
-                    suppressedCount.toString(),
-                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          actions: _isSearchOpen
+              ? [
+                  if (_searchQuery.isNotEmpty)
+                    IconButton(
+                      icon: const Icon(Icons.clear, size: 18),
+                      onPressed: () => setState(() {
+                        _searchController.clear();
+                        _searchQuery = '';
+                      }),
+                    ),
+                  const SizedBox(width: 6),
+                ]
+              : [
+                  IconButton(
+                    icon: const Icon(Icons.search_rounded),
+                    tooltip: l10n.get('searchHint'),
+                    onPressed: () => setState(() => _isSearchOpen = true),
                   ),
-                  backgroundColor: Colors.tealAccent.shade700,
-                  textColor: Colors.white,
-                  offset: const Offset(-4, 4),
-                  child: IconButton(
-                    icon: const Icon(Icons.mark_chat_unread_outlined, size: 20),
-                    tooltip: '${l10n.get('contextDigestTitle')} ($suppressedCount) (C)',
+                  PopupMenuButton<ContextProfile>(
+                    icon: Icon(
+                      _getContextProfileIcon(currentProfile),
+                      size: 20,
+                      color:
+                          (currentProfile == ContextProfile.deepWork ||
+                              currentProfile == ContextProfile.office)
+                          ? Colors.tealAccent
+                          : null,
+                    ),
+                    tooltip: l10n.get('contextProfileSwitch'),
                     splashRadius: 18,
-                    onPressed: _openContextDigest,
-                  ),
-                ),
-                Badge(
-                  isLabelVisible: dueCardsCount > 0,
-                  label: Text(
-                    dueCardsCount.toString(),
-                    style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-                  ),
-                  backgroundColor: Colors.amber,
-                  textColor: Colors.black87,
-                  offset: const Offset(-4, 4),
-                  child: IconButton(
-                    icon: const Icon(Icons.school_outlined, size: 20),
-                    tooltip: '${l10n.get('spacedRepetitionTitle')} ($dueCardsCount)',
-                    splashRadius: 18,
-                    onPressed: _openSpacedRepetitionSheet,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.table_chart_outlined, size: 20),
-                  tooltip: l10n.get('exportExcel'),
-                  splashRadius: 18,
-                  onPressed: _exportCsvData,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.search_rounded, size: 20),
-                  tooltip: l10n.get('searchHint'),
-                  splashRadius: 18,
-                  onPressed: () => setState(() => _isSearchOpen = true),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.notifications_off_outlined, size: 20),
-                  tooltip: l10n.get('clearAllNotices'),
-                  splashRadius: 18,
-                  onPressed: _clearAllNotices,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.cleaning_services_outlined, size: 20),
-                  tooltip: l10n.get('clearCompleted'),
-                  splashRadius: 18,
-                  onPressed: _confirmClearCompleted,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.bar_chart_rounded, size: 20),
-                  tooltip: l10n.get('dashboardTitle'),
-                  splashRadius: 18,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const DashboardScreen()),
-                    );
-                  },
-                ),
-                IconButton(
-                  icon: const Icon(Icons.settings_outlined, size: 20),
-                  tooltip: l10n.get('settings'),
-                  splashRadius: 18,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                    );
-                  },
-                ),
-                const SizedBox(width: 6),
-              ],
-      ),
-      body: AiBackgroundEffect(
-        child: SafeArea(
-          bottom: false,
-          child: Column(
-            children: [
-              Expanded(
-                child: _isSearchOpen && _searchQuery.trim().isNotEmpty
-                    ? Builder(
-                        builder: (context) {
-                          final q = _searchQuery.trim().toLowerCase();
-                          final searchResults = reminders.where((r) {
-                            if (r.taskTitle.toLowerCase().contains(q)) return true;
-                            if ((r.taskSummary ?? '').toLowerCase().contains(q)) return true;
-                            if (r.getSubTasksList().any((sub) => sub.toLowerCase().contains(q))) return true;
-                            return false;
-                          }).toList();
-
-                          if (searchResults.isEmpty) {
-                            return Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.search_off_rounded, size: 48, color: Colors.grey.shade400),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    l10n.get('noSearchResult'),
-                                    style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                                child: Text(
-                                  '${l10n.get('searchResults')} (${searchResults.length})',
-                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.indigoAccent),
-                                ),
-                              ),
-                              Expanded(
-                                child: ListView.builder(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                  itemCount: searchResults.length,
-                                  itemBuilder: (context, index) {
-                                    final task = searchResults[index];
-                                    return TaskCard(
-                                      task: task,
-                                      onPlayMedia: () {
-                                        if (task.recordId != null) _playMedia(task.recordId!);
-                                      },
-                                    );
-                                  },
-                                ),
+                    onSelected: (profile) {
+                      ref
+                          .read(contextProfileProvider.notifier)
+                          .setProfile(profile);
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                        value: ContextProfile.general,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.tune_rounded, size: 18),
+                            const SizedBox(width: 8),
+                            Text(l10n.get('profileGeneral')),
+                            if (currentProfile == ContextProfile.general) ...[
+                              const Spacer(),
+                              const Icon(
+                                Icons.check,
+                                size: 16,
+                                color: Colors.teal,
                               ),
                             ],
-                          );
-                        },
-                      )
-                    : Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
-                        child: Column(
-                          children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: QuadrantView(
-                                      level: 1,
-                                      titleIcon: Icon(Icons.local_fire_department_rounded, color: Colors.red.shade400, size: 20),
-                                      allReminders: reminders,
-                                      bgColor: Colors.red.shade400,
-                                      onPlayMedia: _playMedia,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: QuadrantView(
-                                      level: 2,
-                                      titleIcon: Icon(Icons.star_rounded, color: Colors.orange.shade400, size: 20),
-                                      allReminders: reminders,
-                                      bgColor: Colors.orange.shade400,
-                                      onPlayMedia: _playMedia,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: QuadrantView(
-                                      level: 3,
-                                      titleIcon: Icon(Icons.bolt_rounded, color: Colors.blue.shade400, size: 20),
-                                      allReminders: reminders,
-                                      bgColor: Colors.blue.shade400,
-                                      onPlayMedia: _playMedia,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: QuadrantView(
-                                      level: 4,
-                                      titleIcon: Icon(Icons.coffee_rounded, color: Colors.green.shade400, size: 20),
-                                      allReminders: reminders,
-                                      bgColor: Colors.green.shade400,
-                                      onPlayMedia: _playMedia,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
                           ],
                         ),
                       ),
-              ),
-              const InputBottomBar(),
-            ],
+                      PopupMenuItem(
+                        value: ContextProfile.office,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.apartment_rounded, size: 18),
+                            const SizedBox(width: 8),
+                            Text(l10n.get('profileOffice')),
+                            if (currentProfile == ContextProfile.office) ...[
+                              const Spacer(),
+                              const Icon(
+                                Icons.check,
+                                size: 16,
+                                color: Colors.teal,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: ContextProfile.deepWork,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.psychology_rounded, size: 18),
+                            const SizedBox(width: 8),
+                            Text(l10n.get('profileDeepWork')),
+                            if (currentProfile == ContextProfile.deepWork) ...[
+                              const Spacer(),
+                              const Icon(
+                                Icons.check,
+                                size: 16,
+                                color: Colors.teal,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: ContextProfile.home,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.home_rounded, size: 18),
+                            const SizedBox(width: 8),
+                            Text(l10n.get('profileHome')),
+                            if (currentProfile == ContextProfile.home) ...[
+                              const Spacer(),
+                              const Icon(
+                                Icons.check,
+                                size: 16,
+                                color: Colors.teal,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  Badge(
+                    isLabelVisible: dueCardsCount + suppressedCount > 0,
+                    label: Text('${dueCardsCount + suppressedCount}'),
+                    child: IconButton(
+                      icon: const Icon(Icons.more_horiz_rounded),
+                      tooltip: l10n.get('moreTools'),
+                      onPressed: _openCommandPalette,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.settings_outlined),
+                    tooltip: l10n.get('settings'),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+        ),
+        body: ColoredBox(
+          color: Theme.of(context).colorScheme.surface,
+          child: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                Expanded(
+                  child: _isSearchOpen && _searchQuery.trim().isNotEmpty
+                      ? Builder(
+                          builder: (context) {
+                            final q = _searchQuery.trim().toLowerCase();
+                            final searchResults = reminders.where((r) {
+                              if (r.taskTitle.toLowerCase().contains(q)) {
+                                return true;
+                              }
+                              if ((r.taskSummary ?? '').toLowerCase().contains(
+                                q,
+                              )) {
+                                return true;
+                              }
+                              if (r.getSubTasksList().any(
+                                (sub) => sub.toLowerCase().contains(q),
+                              )) {
+                                return true;
+                              }
+                              return false;
+                            }).toList();
+
+                            if (searchResults.isEmpty) {
+                              return Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.search_off_rounded,
+                                      size: 48,
+                                      color: Colors.grey.shade400,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      l10n.get('noSearchResult'),
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 6,
+                                  ),
+                                  child: Text(
+                                    '${l10n.get('searchResults')} (${searchResults.length})',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.indigoAccent,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: ListView.builder(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 4,
+                                    ),
+                                    itemCount: searchResults.length,
+                                    itemBuilder: (context, index) {
+                                      final task = searchResults[index];
+                                      return TaskCard(
+                                        task: task,
+                                        onPlayMedia: () {
+                                          if (task.recordId != null) {
+                                            _playMedia(task.recordId!);
+                                          }
+                                        },
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        )
+                      : TaskBoard(
+                          reminders: reminders,
+                          onPlayMedia: _playMedia,
+                        ),
+                ),
+                const InputBottomBar(),
+              ],
+            ),
           ),
         ),
       ),
-    ));
+    );
   }
 }

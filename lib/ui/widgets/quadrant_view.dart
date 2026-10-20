@@ -27,6 +27,7 @@ class QuadrantView extends ConsumerStatefulWidget {
 
 class _QuadrantViewState extends ConsumerState<QuadrantView> {
   bool _isQ4FoldExpanded = false;
+  bool _completedExpanded = false;
 
   IconData _getEmptyStateIcon() {
     switch (widget.level) {
@@ -104,14 +105,20 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final tasks = widget.allReminders.where((r) => r.quadrantLevel == widget.level).toList();
+    final allTasks = widget.allReminders
+        .where((r) => r.quadrantLevel == widget.level)
+        .toList();
+    final tasks = allTasks.where((r) => !r.isCompleted).toList();
+    final completed = allTasks.where((r) => r.isCompleted).toList();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     // Subtle wireframe container styling
-    final Color outlineColor = widget.bgColor.withValues(alpha: isDark ? 0.45 : 0.7);
-    final Color surfaceColor = isDark
-        ? Colors.black.withValues(alpha: 0.25)
-        : Colors.white.withValues(alpha: 0.5);
+    final Color outlineColor = Theme.of(
+      context,
+    ).colorScheme.outlineVariant.withValues(alpha: 0.65);
+    final Color surfaceColor = Theme.of(
+      context,
+    ).colorScheme.surfaceContainerLow;
 
     // Q4 自动折叠逻辑：将停滞超 48 小时的低优先级任务归入可折叠区
     final dynamicService = ref.watch(dynamicUrgencyServiceProvider);
@@ -119,8 +126,12 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
     final List<Reminder> foldedTasks;
 
     if (widget.level == 4) {
-      activeTasks = tasks.where((t) => !dynamicService.isQ4StagnantFolded(t)).toList();
-      foldedTasks = tasks.where((t) => dynamicService.isQ4StagnantFolded(t)).toList();
+      activeTasks = tasks
+          .where((t) => !dynamicService.isQ4StagnantFolded(t))
+          .toList();
+      foldedTasks = tasks
+          .where((t) => dynamicService.isQ4StagnantFolded(t))
+          .toList();
     } else {
       activeTasks = tasks;
       foldedTasks = const [];
@@ -130,14 +141,20 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
       onAcceptWithDetails: (details) {
         final task = details.data;
         if (task.quadrantLevel != widget.level) {
-          ref.read(remindersProvider.notifier).updateReminder(task.copyWith(quadrantLevel: widget.level));
+          ref
+              .read(remindersProvider.notifier)
+              .updateReminder(task.copyWith(quadrantLevel: widget.level));
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               duration: const Duration(seconds: 2),
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              content: Text('${l10n.get('movedToQuadrant')}${_getLevelTitle(l10n)}: ${task.taskTitle}'),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              content: Text(
+                '${l10n.get('movedToQuadrant')}${_getLevelTitle(l10n)}: ${task.taskTitle}',
+              ),
             ),
           );
         }
@@ -150,7 +167,7 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
             color: isHovered
                 ? widget.bgColor.withValues(alpha: isDark ? 0.22 : 0.12)
                 : surfaceColor,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: isHovered ? widget.bgColor : outlineColor,
               width: isHovered ? 2.0 : 1.0,
@@ -161,11 +178,11 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
                       color: widget.bgColor.withValues(alpha: 0.3),
                       blurRadius: 10,
                       spreadRadius: 1,
-                    )
+                    ),
                   ]
                 : [],
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          padding: const EdgeInsets.all(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -176,14 +193,25 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
                   children: [
                     widget.titleIcon,
                     const SizedBox(width: 6),
-                    Text(
-                      _getLevelTitle(l10n),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.2,
-                        color: isDark ? Colors.grey.shade300 : Colors.grey.shade800,
+                    Expanded(
+                      child: Text(
+                        _getLevelTitle(l10n),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
+                          color: isDark
+                              ? Colors.grey.shade300
+                              : Colors.grey.shade800,
+                        ),
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${tasks.length}',
+                      style: Theme.of(context).textTheme.labelMedium,
                     ),
                   ],
                 ),
@@ -193,18 +221,22 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
               Expanded(
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
-                  child: tasks.isEmpty
+                  child: allTasks.isEmpty
                       ? Center(
                           key: const ValueKey('empty'),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(_getEmptyStateIcon(), size: 32, color: Colors.grey.withValues(alpha: 0.35)),
+                              Icon(
+                                _getEmptyStateIcon(),
+                                size: 32,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                              ),
                               const SizedBox(height: 6),
                               Text(
                                 _getEmptyStateText(l10n),
                                 style: TextStyle(
-                                  color: Colors.grey.withValues(alpha: 0.6),
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   fontSize: 11,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -220,18 +252,50 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
                             for (final task in activeTasks)
                               _buildDraggableCard(task),
 
+                            if (completed.isNotEmpty) ...[
+                              TextButton.icon(
+                                key: ValueKey('completed-${widget.level}'),
+                                onPressed: () => setState(
+                                  () =>
+                                      _completedExpanded = !_completedExpanded,
+                                ),
+                                icon: Icon(
+                                  _completedExpanded
+                                      ? Icons.expand_less
+                                      : Icons.expand_more,
+                                  size: 18,
+                                ),
+                                label: Text(
+                                  '${l10n.get('completed')} (${completed.length})',
+                                ),
+                              ),
+                              if (_completedExpanded)
+                                for (final task in completed)
+                                  _buildDraggableCard(task),
+                            ],
+
                             // Q4 长期停滞冗余备忘自动折叠面板
                             if (foldedTasks.isNotEmpty) ...[
                               InkWell(
                                 onTap: () {
-                                  setState(() => _isQ4FoldExpanded = !_isQ4FoldExpanded);
+                                  setState(
+                                    () =>
+                                        _isQ4FoldExpanded = !_isQ4FoldExpanded,
+                                  );
                                 },
                                 borderRadius: BorderRadius.circular(6),
                                 child: Container(
-                                  margin: const EdgeInsets.symmetric(vertical: 4),
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                                  margin: const EdgeInsets.symmetric(
+                                    vertical: 4,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 5,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: Colors.grey.withValues(alpha: isDark ? 0.14 : 0.08),
+                                    color: Colors.grey.withValues(
+                                      alpha: isDark ? 0.14 : 0.08,
+                                    ),
                                     borderRadius: BorderRadius.circular(6),
                                     border: Border.all(
                                       color: Colors.grey.withValues(alpha: 0.2),
@@ -276,4 +340,3 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
     );
   }
 }
-

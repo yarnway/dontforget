@@ -93,6 +93,9 @@ void main() {
       ),
     ));
     await tester.pump();
+    expect(find.byIcon(Icons.mic_none), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('completed-1')));
+    await tester.pump();
     final gesture = await tester.startGesture(
       tester.getCenter(find.byIcon(Icons.mic_none)),
       kind: PointerDeviceKind.mouse,

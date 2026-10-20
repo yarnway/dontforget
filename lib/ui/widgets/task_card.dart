@@ -304,7 +304,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
             _showContextMenu(context, details.globalPosition);
           },
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -367,7 +367,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                                         .textTheme
                                         .bodyMedium
                                         ?.color
-                                        ?.withValues(alpha: task.isCompleted ? 0.38 : 1.0),
+                                        ?.withValues(alpha: task.isCompleted ? 0.65 : 1.0),
                                     decoration: task.isCompleted ? TextDecoration.lineThrough : null,
                                     height: 1.25,
                                   ),
@@ -400,7 +400,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                                   ),
                                 ),
                               // Dynamic Urgency Promotion Golden Lightning Badge
-                              if (task.isDynamicallyPromoted)
+                              if (task.isDynamicallyPromoted && !task.isCompleted)
                                 Padding(
                                   padding: const EdgeInsets.only(left: 4),
                                   child: Container(

@@ -12,6 +12,7 @@ class AppLocalizations {
     'en': {
       'appTitle': "Don't Forget",
       'settings': 'Settings',
+      'moreTools': 'More tools',
       'q1': 'Urgent Alert',
       'q2': 'Key Focus',
       'q3': 'Routine Task',
@@ -99,7 +100,7 @@ class AppLocalizations {
       'apiKeyHelper': 'Enter or paste your AI API Key',
       'modelNameLabel': 'Model Name',
       // Status Indicator
-      'statusReady': 'AI Engine Ready',
+      'statusReady': 'Ready',
       'statusBusy': 'AI Inferring & Scheduling...',
       'clearAllNotices': 'Clear history notices',
       'noticesCleared': 'All history notices cleared',
@@ -267,6 +268,7 @@ class AppLocalizations {
     'zh': {
       'appTitle': '别忘了',
       'settings': '设置',
+      'moreTools': '更多功能',
       'q1': '紧急提醒',
       'q2': '重点跟进',
       'q3': '常规待办',
@@ -354,7 +356,7 @@ class AppLocalizations {
       'apiKeyHelper': '输入或粘贴模型服务商的 API Key',
       'modelNameLabel': '模型标识 (Model Name)',
       // Status Indicator
-      'statusReady': '大模型引擎就绪',
+      'statusReady': '就绪',
       'statusBusy': 'AI 正在解析排期中...',
       'clearAllNotices': '清除历史提示信息',
       'noticesCleared': '已清理全部历史提示',
@@ -522,6 +524,7 @@ class AppLocalizations {
     'ja': {
       'appTitle': '忘れないで',
       'settings': '設定',
+      'moreTools': 'その他の機能',
       'q1': '緊急リマインド',
       'q2': '重要タスク',
       'q3': '日常タスク',
@@ -609,7 +612,7 @@ class AppLocalizations {
       'apiKeyHelper': 'AIプロバイダーのAPIキーを入力',
       'modelNameLabel': 'モデル名',
       // Status Indicator
-      'statusReady': 'AIエンジン準備完了',
+      'statusReady': '準備完了',
       'statusBusy': 'AIが解析中...',
       'clearAllNotices': '通知履歴を消去',
       'noticesCleared': '履歴通知をすべて消去しました',

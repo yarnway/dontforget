@@ -109,6 +109,23 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets('backup and save remain reachable without scrolling on a phone', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(375, 667);
+    addTearDown(() => tester.view.resetPhysicalSize());
+    addTearDown(() => tester.view.resetDevicePixelRatio());
+    await showSettings(tester);
+    for (final label in ['备份已保存的数据', '保存']) {
+      final button = find.text(label);
+      expect(button.hitTestable(), findsOneWidget);
+      expect(tester.getRect(button).bottom, lessThan(667));
+    }
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets(
     'Save failure keeps the settings screen open and shows an error',
     (tester) async {
