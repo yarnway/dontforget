@@ -8,31 +8,46 @@ import platform as host_platform
 import subprocess
 import tempfile
 import time
+import tarfile
+import zipfile
 from package_artifacts import ROOT
 
 EXECUTABLES = {
-    'windows': 'build/windows/x64/runner/Release/dont_forget.exe',
-    'linux': 'build/linux/x64/release/bundle/dont_forget',
-    'macos': 'build/macos/Build/Products/Release/dont_forget.app/Contents/MacOS/dont_forget',
+    'windows': 'dont_forget.exe',
+    'linux': 'dont_forget',
+    'macos': 'dont_forget.app/Contents/MacOS/dont_forget',
 }
 
 
 def smoke(platform):
     if os.environ.get('GITHUB_ACTIONS') != 'true':
         raise RuntimeError('Run this startup smoke check on an isolated GitHub Actions runner')
-    executable = ROOT / EXECUTABLES[platform]
-    if not executable.is_file():
-        raise FileNotFoundError(executable)
     manifest_path = ROOT / f'dist/{platform}-manifest.json'
     manifest = json.loads(manifest_path.read_text())
+    extension = '.tar.gz' if platform == 'linux' else '.zip'
+    archive = ROOT / 'dist' / next(
+        entry['file'] for entry in manifest['artifacts'] if entry['file'].endswith(extension))
     result = {'platform': platform, 'revision': manifest['revision'],
               'version': manifest['version'], 'host': host_platform.platform(),
-              'scope': 'native-process-startup-only', 'seconds': 10,
+              'scope': 'unpacked-native-process-startup-only', 'seconds': 10,
               'result': 'FAIL', 'ui_acceptance': 'NOT_PERFORMED',
               'notification_acceptance': 'NOT_PERFORMED'}
     try:
         with tempfile.TemporaryDirectory(prefix='dontforget-smoke-') as work:
             data = Path(work)
+            unpacked = data / 'unpacked'
+            unpacked.mkdir()
+            if platform == 'linux':
+                with tarfile.open(archive) as bundle:
+                    bundle.extractall(unpacked, filter='data')
+            elif platform == 'macos':
+                subprocess.run(['ditto', '-x', '-k', str(archive), str(unpacked)], check=True)
+            else:
+                with zipfile.ZipFile(archive) as bundle:
+                    bundle.extractall(unpacked)
+            executable = unpacked / EXECUTABLES[platform]
+            if not executable.is_file():
+                raise FileNotFoundError(executable)
             env = dict(os.environ)
             for variable, relative in {
                 'XDG_CONFIG_HOME': 'config', 'XDG_DATA_HOME': 'data',

@@ -95,6 +95,10 @@ jobs:
       - name: Build iOS unsigned archive
         if: matrix.platform == 'ios'
         run: bash scripts/build_ios.sh
+      - name: Windows install upgrade and uninstall acceptance
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: ./scripts/smoke_windows_installer.ps1
       - name: Linux native startup smoke check
         if: matrix.platform == 'linux'
         run: xvfb-run -a python scripts/smoke_desktop.py --platform linux

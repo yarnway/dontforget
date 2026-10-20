@@ -38,7 +38,7 @@ Python 回归测试使用假二进制验证归档、清单与失败保护；它�
 工作流：`.github/workflows/build_and_release.yml`。
 
 1. main 推送、PR、手动运行：先分析、Flutter 测试和打包脚本测试，再运行 Windows、Android、Linux、macOS、iOS 构建矩阵。
-2. 桌面产物执行 10 秒进程启动检查。Linux 使用 Xvfb；仅在隔离 GitHub runner 执行。记录进程存活与退出状态，仍需人工窗口、安装、数据库升级及通知验收。
+2. 桌面产物解压后执行 10 秒进程启动检查。Windows 另在带空格的临时路径中安装、覆盖安装与卸载，校验历史文件哈希不变；不是实际旧数据库迁移测试。Linux 使用 Xvfb；仅在隔离 GitHub runner 执行。记录进程存活与退出状态，仍需人工窗口、安装、数据库升级及通知验收。
 3. 校验各平台提交号、版本和哈希后上传候选 artifact，保留 30 天。
 4. 只有 `v*` 标签可以进入 release job；校验标签与 pubspec 一致、五平台七个文件齐备后创建 **draft prerelease**。main 和手动运行不会创建正式 Release。签名、商店提交和正式公开发布另行处理。
 

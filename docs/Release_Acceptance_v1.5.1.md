@@ -8,9 +8,9 @@
 
 | 检查 | 结果 | 边界 |
 | --- | --- | --- |
-| 锁定依赖解析 | PASS | Flutter 3.44.9 / Dart 3.12.2 |
+| 锁定依赖解析 | PASS | Flutter 3.44.9 / Dart 3.12.2；record 6.1.2 / audioplayers 6.5.1 |
 | Flutter 静态分析 | PASS，无问题 | 不含原生编译 |
-| Flutter 测试 | PASS，46 项 | 临时 SQLite / widget；通知与录音不是设备测试 |
+| Flutter 测试 | PASS，49 项 | 临时 SQLite / widget；通知与录音不是设备测试 |
 | 打包逻辑回归 | PASS，10 项 | 临时假产物；覆盖缺失、篡改、版本/提交错配、路径逃逸、私有数据、归档结构 |
 | 工作流语法 | PASS，actionlint 1.7.12 | 未执行云端原生构建 |
 | Shell / Python 语法 | PASS | PowerShell 和 Inno 的实际执行留给 Windows CI |
@@ -47,3 +47,5 @@
 读取历史失败日志后确认 Android 缺少 `flutterEmbedding=2` 元数据，Windows 全局 `/await` 触发 MSVC STL1011。已补齐 v2 embedding 并将 Windows 标准设置迁到 C++20、删除旧协程扩展；仍需本轮 CI 验证。
 
 第二次构建 [run 39399461749](https://github.com/yarnway/dontforget/actions/runs/39399461749)，源码 03e5785：质量、Linux、macOS、iOS 通过；Android 的 record 4.4.4 缺少 namespace，Windows 旧窗口插件不兼容全局 C++20。修订采用 record 6.1.2 的 AudioRecorder/RecordConfig API，C++20 限定到 audioplayers；修复 Linux 不支持 tooltip 导致托盘菜单初始化中断。新增 3 项录音协议回归（插件模拟，不是真实录音）。新插件需要全部平台重建，旧产物不作为新版本提交的验收证据。
+
+第三次完整构建 [run 39400690334](https://github.com/yarnway/dontforget/actions/runs/39400690334)，源码 9f7c9f4：Linux、macOS、iOS 通过；Windows 已通过插件编译，失败在当前 Flutter SDK 不存在的 Impeller API；Android 已通过录音模块配置，失败在旧 audioplayers 的 compileSdk 33。移除无效 API 并升级 audioplayers 6.5.1 后，本地分析与 49 项测试通过。追加 Windows 隔离安装/覆盖升级/卸载文件保留检查；桌面启动从交付归档解压运行。这些新增原生验收待后续 CI 执行。
