@@ -48,7 +48,7 @@ final homeControllerProvider = StateNotifierProvider<HomeController, HomeState>(
 
 class HomeController extends StateNotifier<HomeState> {
   final Ref _ref;
-  final _audioRecorder = Record();
+  final _audioRecorder = AudioRecorder();
 
   HomeController(this._ref) : super(HomeState());
 
@@ -186,7 +186,7 @@ class HomeController extends StateNotifier<HomeState> {
       if (await _audioRecorder.hasPermission()) {
         final tempDir = await getTemporaryDirectory();
         final path = '${tempDir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
-        await _audioRecorder.start(path: path);
+        await _audioRecorder.start(const RecordConfig(), path: path);
         state = state.copyWith(isRecording: true, error: null);
         return true;
       }

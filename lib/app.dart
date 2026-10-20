@@ -37,7 +37,8 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener, TrayListener
           ? 'assets/app_icon.ico' 
           : 'assets/app_icon.png' // Fallback for macOS and Linux
       );
-      await trayManager.setToolTip("DontForget");
+      // The Linux tray backend does not implement tooltips.
+      if (!Platform.isLinux) await trayManager.setToolTip("DontForget");
       Menu menu = Menu(
         items: [
           MenuItem(

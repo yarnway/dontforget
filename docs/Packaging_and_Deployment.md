@@ -10,7 +10,7 @@
 | --- | --- | --- | --- |
 | Windows 10/11 x64 | `pwsh -File scripts/package_windows.ps1` | `DontForget_Setup_v1.5.1.exe`、`DontForget_Windows_Portable_v1.5.1.zip` | 需要 Visual Studio C++ 与 Inno Setup 6；未签名 |
 | Android | `bash scripts/build_android.sh` 或 `pwsh -File scripts/build_android.ps1` | `DontForget_Android_test-signed_v1.5.1.apk` / `.aab` | 测试密钥签名；不是商店交付件 |
-| Linux x64 | `bash scripts/build_linux.sh` | `DontForget_Linux_x64_v1.5.1.tar.gz` | 需要 GTK、GStreamer、ALSA、Ayatana AppIndicator 等原生依赖 |
+| Linux x64 | `bash scripts/build_linux.sh` | `DontForget_Linux_x64_v1.5.1.tar.gz` | 需要 GTK、GStreamer、ALSA、Ayatana AppIndicator 等原生依赖；录音运行时另需 pulseaudio-utils 和 ffmpeg |
 | macOS 12+ | `bash scripts/build_macos.sh` | `DontForget_macOS_unnotarized_v1.5.1.zip` | 完整 Xcode、CocoaPods；未公证 |
 | iOS 15+ | `bash scripts/build_ios.sh` | `DontForget_iOS_unsigned_v1.5.1.ipa` | 完整 Xcode、CocoaPods；未签名，不能直接真机安装 |
 

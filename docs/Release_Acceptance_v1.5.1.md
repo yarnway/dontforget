@@ -45,3 +45,5 @@
 ## 原生构建修订
 
 读取历史失败日志后确认 Android 缺少 `flutterEmbedding=2` 元数据，Windows 全局 `/await` 触发 MSVC STL1011。已补齐 v2 embedding 并将 Windows 标准设置迁到 C++20、删除旧协程扩展；仍需本轮 CI 验证。
+
+第二次构建 [run 39399461749](https://github.com/yarnway/dontforget/actions/runs/39399461749)，源码 03e5785：质量、Linux、macOS、iOS 通过；Android 的 record 4.4.4 缺少 namespace，Windows 旧窗口插件不兼容全局 C++20。修订采用 record 6.1.2 的 AudioRecorder/RecordConfig API，C++20 限定到 audioplayers；修复 Linux 不支持 tooltip 导致托盘菜单初始化中断。新增 3 项录音协议回归（插件模拟，不是真实录音）。新插件需要全部平台重建，旧产物不作为新版本提交的验收证据。

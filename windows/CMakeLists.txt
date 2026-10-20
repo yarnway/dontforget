@@ -38,8 +38,7 @@ add_definitions(-DUNICODE -D_UNICODE)
 # default. In most cases, you should add new options to specific targets instead
 # of modifying this function.
 function(APPLY_STANDARD_SETTINGS TARGET)
-  # WinRT plugins use standard coroutines; avoid the removed /await extension.
-  target_compile_features(${TARGET} PUBLIC cxx_std_20)
+  target_compile_features(${TARGET} PUBLIC cxx_std_17)
   target_compile_options(${TARGET} PRIVATE /W4 /WX /wd"4100")
   target_compile_options(${TARGET} PRIVATE /EHsc)
   target_compile_definitions(${TARGET} PRIVATE "_HAS_EXCEPTIONS=0")
@@ -58,6 +57,11 @@ add_subdirectory("runner")
 # them to the application.
 include(flutter/generated_plugins.cmake)
 
+# The audio plugin uses WinRT coroutines. Keep C++20 scoped to this target:
+# older window_manager sources still rely on C++17 permissive declarations.
+if(TARGET audioplayers_windows_plugin)
+  target_compile_features(audioplayers_windows_plugin PRIVATE cxx_std_20)
+endif()
 
 # === Installation ===
 # Support files are copied into place next to the executable, so that it can

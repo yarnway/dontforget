@@ -17,7 +17,7 @@ void main() {
   setUpAll(() async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(recorderChannel, (call) async {
-      if (call.method == 'dispose') return null;
+      if (call.method == 'create' || call.method == 'dispose') return null;
       throw UnsupportedError('Unexpected recorder operation: ${call.method}');
     });
     sqfliteFfiInit();
