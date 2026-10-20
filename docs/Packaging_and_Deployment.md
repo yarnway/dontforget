@@ -16,7 +16,7 @@
 
 每个平台还生成 `<platform>-manifest.json` 和 `<platform>-SHA256SUMS.txt`，包含版本、构建号、提交号、签名状态、文件大小与 SHA-256。桌面 CI 另有 `<platform>-startup.json`。便携包只表示免安装解压，应用数据仍按平台应用支持目录存放，不能当作包含用户数据的可迁移备份。
 
-脚本使用锁定依赖，任一步失败即停止。Windows 在编译安装器前检查目录；归档发现数据库、WAL/SHM、日志、JSON 备份或 `.dart_tool` 会报错，保留原文件供检查。不会为打包删除用户数据。仓库内可选 CRT DLL 不构成在所有 Windows 环境免运行库的证明。
+脚本使用锁定依赖，任一步失败即停止。Windows 在编译安装器前检查目录；归档发现数据库、WAL/SHM、日志、JSON 备份或 `.dart_tool` 会报错，保留原文件供检查。不会为打包删除用户数据。Windows 从已安装 Visual Studio 工具链提取配套 x64 VC CRT，不再打包仓库内的旧 UCRT/API shim；Windows 10/11 使用系统 UCRT。实际运行仍需在目标设备验证。
 
 ## 校验
 

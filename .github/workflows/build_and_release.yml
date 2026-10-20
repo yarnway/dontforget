@@ -118,6 +118,16 @@ jobs:
           path: dist/*
           if-no-files-found: error
           retention-days: 30
+      - name: Preserve failed acceptance diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.platform }}-diagnostics
+          path: |
+            dist/*-startup.json
+            dist/windows-installation.json
+          if-no-files-found: ignore
+          retention-days: 7
 
   release:
     name: Prepare draft release after all packages pass

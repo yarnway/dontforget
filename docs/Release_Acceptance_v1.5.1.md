@@ -49,3 +49,7 @@
 第二次构建 [run 39399461749](https://github.com/yarnway/dontforget/actions/runs/39399461749)，源码 03e5785：质量、Linux、macOS、iOS 通过；Android 的 record 4.4.4 缺少 namespace，Windows 旧窗口插件不兼容全局 C++20。修订采用 record 6.1.2 的 AudioRecorder/RecordConfig API，C++20 限定到 audioplayers；修复 Linux 不支持 tooltip 导致托盘菜单初始化中断。新增 3 项录音协议回归（插件模拟，不是真实录音）。新插件需要全部平台重建，旧产物不作为新版本提交的验收证据。
 
 第三次完整构建 [run 39400690334](https://github.com/yarnway/dontforget/actions/runs/39400690334)，源码 9f7c9f4：Linux、macOS、iOS 通过；Windows 已通过插件编译，失败在当前 Flutter SDK 不存在的 Impeller API；Android 已通过录音模块配置，失败在旧 audioplayers 的 compileSdk 33。移除无效 API 并升级 audioplayers 6.5.1 后，本地分析与 49 项测试通过。追加 Windows 隔离安装/覆盖升级/卸载文件保留检查；桌面启动从交付归档解压运行。这些新增原生验收待后续 CI 执行。
+
+第四次完整构建 [run 39401703837](https://github.com/yarnway/dontforget/actions/runs/39401703837)，源码 a6cff9a：质量、Android、Linux、macOS、iOS 通过；Windows 编译及安装/覆盖安装/卸载/历史文件保留检查通过，归档启动以 0xC0000005 失败。打包中发现旧 UCRT 10.0.10240.16384 与 VC CRT 14.29.30139，下一次改用当前 Visual Studio 配套 CRT，并采集失败的启动日志和 Windows 应用事件。此时尚未确认崩溃根因，不能将更换运行库当作修复已验证。
+
+用户具备 Mac、iPhone、Windows 主机与 Android 手机；[设备验收步骤](Device_Acceptance_v1.5.1.md) 已准备。当前 Mac 运行前未发现本应用安装或支持数据目录。

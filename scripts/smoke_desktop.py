@@ -77,6 +77,19 @@ def smoke(platform):
                             process.wait(timeout=5)
                     log.seek(0)
                     result['startup_log'] = log.read(65536).decode(errors='replace')
+                    if result['result'] != 'PASS':
+                        print(result['startup_log'], flush=True)
+                        if platform == 'windows':
+                            events = subprocess.run(
+                                ['powershell', '-NoProfile', '-Command',
+                                 "Get-WinEvent -FilterHashtable @{LogName='Application';"
+                                 "StartTime=(Get-Date).AddMinutes(-5);Id=1000,1001} "
+                                 "-ErrorAction SilentlyContinue | Where-Object "
+                                 "{$_.Message -match 'dont_forget'} | "
+                                 "Select-Object TimeCreated,Id,Message | ConvertTo-Json"],
+                                capture_output=True, text=True, timeout=30)
+                            result['windows_crash_events'] = events.stdout[-32768:]
+                            print(result['windows_crash_events'], flush=True)
     finally:
         output = ROOT / f'dist/{platform}-startup.json'
         output.write_text(json.dumps(result, indent=2) + '\n')
