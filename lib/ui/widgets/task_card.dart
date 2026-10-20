@@ -222,7 +222,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
 
     IconData? mediaIcon;
     if (task.recordId != null) {
-      final records = ref.read(mediaRecordsProvider);
+      final records = ref.watch(mediaRecordsProvider);
       final media = records.where((m) => m.id == task.recordId).firstOrNull;
       if (media?.type == 'audio') {
         mediaIcon = Icons.mic_none;

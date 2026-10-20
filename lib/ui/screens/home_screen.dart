@@ -477,12 +477,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
 
   void _playMedia(String recordId) async {
     final l10n = AppLocalizations.of(context);
+    await ref.read(mediaRecordsProvider.notifier).ready;
+    if (!mounted) return;
     final records = ref.read(mediaRecordsProvider);
     final media = records.where((m) => m.id == recordId).firstOrNull;
-    if (media == null) return;
+    if (media == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.get('mediaUnavailable'))),
+      );
+      return;
+    }
 
     if (media.type == 'audio') {
-      await _audioPlayer.play(DeviceFileSource(media.contentOrPath));
+      try {
+        await _audioPlayer.play(DeviceFileSource(media.contentOrPath));
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l10n.get('audioPlaybackFailed'))),
+          );
+        }
+        return;
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(

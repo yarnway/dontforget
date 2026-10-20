@@ -251,13 +251,28 @@ final mediaRecordsProvider = StateNotifierProvider<MediaRecordsNotifier, List<Me
 
 class MediaRecordsNotifier extends StateNotifier<List<MediaRecord>> {
   final DatabaseHelper _dbHelper;
+  late final Future<void> ready;
 
-  MediaRecordsNotifier(this._dbHelper) : super([]);
+  MediaRecordsNotifier(this._dbHelper) : super([]) {
+    ready = _loadRecords();
+  }
+
+  Future<void> _loadRecords() async {
+    try {
+      final db = await _dbHelper.database;
+      final rows = await db.query('MediaRecords');
+      if (mounted) state = rows.map(MediaRecord.fromJson).toList();
+    } catch (error) {
+      debugPrint('Media records could not be loaded: $error');
+    }
+  }
 
   Future<void> addRecord(MediaRecord record) async {
+    // A late startup read must not replace a newly captured attachment.
+    await ready;
     final db = await _dbHelper.database;
     await db.insert('MediaRecords', record.toJson());
-    state = [...state, record];
+    if (mounted) state = [...state, record];
   }
 }
 
