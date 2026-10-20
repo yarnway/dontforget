@@ -446,7 +446,11 @@ Output strictly in valid JSON object matching this structure:
 
   Future<String> transcribeAudio(String filePath, AppSettings settings) async {
     if (settings.apiKey.isEmpty) {
-      throw Exception('API Key is not configured.');
+      // The local recording remains useful without an AI account. Route this
+      // through the original-audio memo fallback so it has a playback entry.
+      throw AudioTranscriptionUnsupportedException(
+        '未配置语音转文字服务，已保存原声录音',
+      );
     }
 
     String targetUrl;

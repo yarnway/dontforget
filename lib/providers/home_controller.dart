@@ -13,6 +13,7 @@ import '../services/llm_service.dart';
 import 'providers.dart';
 
 class HomeState {
+  static const _unchanged = Object();
   final bool isLoading;
   final bool isRecording;
   final int pendingTasksCount;
@@ -31,13 +32,13 @@ class HomeState {
     bool? isLoading, 
     bool? isRecording, 
     int? pendingTasksCount,
-    String? error,
+    Object? error = _unchanged,
   }) {
     return HomeState(
       isLoading: isLoading ?? this.isLoading,
       isRecording: isRecording ?? this.isRecording,
       pendingTasksCount: pendingTasksCount ?? this.pendingTasksCount,
-      error: error,
+      error: identical(error, _unchanged) ? this.error : error as String?,
     );
   }
 }
@@ -60,6 +61,7 @@ class HomeController extends StateNotifier<HomeState> {
 
   Future<String> _saveFileToLocal(String tempPath) async {
     final appDir = await getApplicationDocumentsDirectory();
+    await appDir.create(recursive: true);
     final fileName = tempPath.split(Platform.pathSeparator).last;
     final savedPath = '${appDir.path}/$fileName';
     await File(tempPath).copy(savedPath);
@@ -185,6 +187,10 @@ class HomeController extends StateNotifier<HomeState> {
     try {
       if (await _audioRecorder.hasPermission()) {
         final tempDir = await getTemporaryDirectory();
+        // On macOS this may be a bundle-specific cache directory that has not
+        // been created yet. AVFoundation can accept start and then fail to
+        // create the audio file asynchronously, leaving stop without a result.
+        await tempDir.create(recursive: true);
         final path = '${tempDir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
         await _audioRecorder.start(const RecordConfig(), path: path);
         state = state.copyWith(isRecording: true, error: null);
