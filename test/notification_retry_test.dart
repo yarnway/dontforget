@@ -10,6 +10,9 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class _Notifications implements NotificationService {
   @override
+  Future<void> init() async {}
+
+  @override
   bool isPausedForMaintenance = false;
   final List<Reminder> scheduled = [];
   final List<String> cancelled = [];

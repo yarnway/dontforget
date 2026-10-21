@@ -8,6 +8,7 @@ import '../models/reminder.dart';
 import '../models/notification_payload.dart';
 import '../data/database_helper.dart';
 import 'context_trigger_service.dart';
+import 'notification_journal.dart';
 
 class NotificationService {
   static final _instances = Expando<NotificationService>();
@@ -18,6 +19,7 @@ class NotificationService {
   NotificationService._internal(DatabaseHelper database)
     : flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin(),
       usesNativeNotifications = !Platform.isWindows && !Platform.isLinux,
+      _database = database,
       _readDatasetEpoch = database.readNotificationEpoch;
 
   @visibleForTesting
@@ -26,8 +28,84 @@ class NotificationService {
     required this.usesNativeNotifications,
     DateTime Function()? now,
     Future<String> Function()? readDatasetEpoch,
+    DatabaseHelper? database,
   }) : _now = now ?? DateTime.now,
-       _readDatasetEpoch = readDatasetEpoch ?? _testDatasetEpoch;
+       _database = database,
+       _readDatasetEpoch =
+           readDatasetEpoch ??
+           database?.readNotificationEpoch ??
+           _testDatasetEpoch;
+
+  final DatabaseHelper? _database;
+  Future<void>? _journalPreparation;
+  String? _journalEpoch;
+
+  Future<void> _prepareJournal() async {
+    final database = _database;
+    if (database == null || !usesNativeNotifications) return;
+    if (!_initialized) throw StateError('Notification initialization failed.');
+    final epoch = await _readDatasetEpoch();
+    if (_journalEpoch == epoch) return;
+    if (_journalPreparation != null) {
+      await _journalPreparation;
+      return _prepareJournal();
+    }
+    final operation = database.withNotificationJournal((journal) async {
+      final snapshot = await journal.read();
+      if (snapshot == null || snapshot.epoch != epoch) {
+        // One-time migration from VM hashCode IDs, or a restored data set.
+        // Mark completion only after cancellation returns. A crash repeats
+        // cancellation safely before any new IDs can be submitted.
+        await flutterLocalNotificationsPlugin.cancelAll();
+        await journal.reset(epoch);
+      }
+      _journalEpoch = epoch;
+    });
+    _journalPreparation = operation;
+    try {
+      await operation;
+    } finally {
+      _journalPreparation = null;
+    }
+  }
+
+  Future<void> _journalNative(
+    String id,
+    Future<void> Function(int nativeId) action, {
+    Reminder? schedule,
+  }) async {
+    final database = _database;
+    if (database == null) return action(stableNotificationId(id));
+    await init();
+    await _prepareJournal();
+    final epoch = _journalEpoch!;
+    final entry = await database.withNotificationJournal(
+      (j) => j.reserve(epoch, id),
+    );
+    Future<void> record(String status) => database.withNotificationJournal(
+      (j) => j.record(
+        epoch,
+        id,
+        action: schedule == null ? 'cancel' : 'schedule',
+        status: status,
+        triggerUtcMicros: schedule?.triggerTime?.toUtc().microsecondsSinceEpoch,
+        noticeRevision: schedule?.noticeRevision,
+        attemptedAt: _now(),
+      ),
+    );
+    await record('pending');
+    try {
+      await action(entry.nativeId);
+      await record('submitted');
+    } catch (_) {
+      // A failed result write leaves a durable pending intent. Preserve the
+      // original native error if even failure bookkeeping cannot be written.
+      try {
+        await record('failed');
+      } catch (_) {}
+      rethrow;
+    }
+  }
 
   static Future<String> _testDatasetEpoch() async =>
       '00000000-0000-4000-8000-000000000001';
@@ -125,6 +203,7 @@ class NotificationService {
     _strictFailures = true;
     try {
       _datasetEpoch = await _readDatasetEpoch();
+      if (_database != null && usesNativeNotifications) await init();
       final startedAt = _now();
       for (final reminder in reminders) {
         if (!reminder.isCompleted &&
@@ -198,6 +277,31 @@ class NotificationService {
   Stream<Reminder> get onReminderDue => _reminderDueController.stream;
 
   Future<void> init() {
+    // UI route readiness calls init repeatedly. Reuse the completed native
+    // initialization instead of reopening local files on every widget build.
+    // Native mutations still read the durable epoch in _prepareJournal, and
+    // recovery refreshes _datasetEpoch before requesting initialization.
+    if (_initialized &&
+        (_database == null ||
+            !usesNativeNotifications ||
+            (_journalEpoch != null && _journalEpoch == _datasetEpoch))) {
+      return _initialization!;
+    }
+    return _track(() async {
+      await _initializeOnce();
+      if (_database != null && usesNativeNotifications && !_initialized) {
+        throw StateError('Native notification initialization failed.');
+      }
+      // Capture cold-launch payloads before migration removes legacy notices.
+      // Even an empty database needs this migration, otherwise old IDs from a
+      // failed deletion could survive indefinitely with nothing to reschedule.
+      if (_initialized && (!_maintenance || _strictFailures)) {
+        await _prepareJournal();
+      }
+    });
+  }
+
+  Future<void> _initializeOnce() {
     if (_initialization != null) return _initialization!;
     late final Future<void> pending;
     pending = _initialize().whenComplete(() {
@@ -400,19 +504,23 @@ class NotificationService {
           if (_revisions[reminder.id] != revision || isSuppressed(reminder)) {
             return;
           }
-          await flutterLocalNotificationsPlugin.zonedSchedule(
-            reminder.id.hashCode,
-            reminder.taskTitle,
-            reminder.taskSummary ?? 'You have a scheduled task',
-            tz.TZDateTime.from(reminder.triggerTime!, tz.local),
-            platformChannelSpecifics,
-            androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-            uiLocalNotificationDateInterpretation:
-                UILocalNotificationDateInterpretation.absoluteTime,
-            payload: NotificationPayload.forReminder(
-              reminder,
-              datasetEpoch: epoch,
-            ).encode(),
+          await _journalNative(
+            reminder.id,
+            (nativeId) => flutterLocalNotificationsPlugin.zonedSchedule(
+              nativeId,
+              reminder.taskTitle,
+              reminder.taskSummary ?? 'You have a scheduled task',
+              tz.TZDateTime.from(reminder.triggerTime!, tz.local),
+              platformChannelSpecifics,
+              androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+              uiLocalNotificationDateInterpretation:
+                  UILocalNotificationDateInterpretation.absoluteTime,
+              payload: NotificationPayload.forReminder(
+                reminder,
+                datasetEpoch: epoch,
+              ).encode(),
+            ),
+            schedule: reminder,
           );
         });
       } catch (e) {
@@ -484,7 +592,7 @@ class NotificationService {
       try {
         await _enqueueNative(
           id,
-          () => flutterLocalNotificationsPlugin.cancel(id.hashCode),
+          () => _journalNative(id, flutterLocalNotificationsPlugin.cancel),
         );
       } catch (_) {
         if (strict || _strictFailures) rethrow;

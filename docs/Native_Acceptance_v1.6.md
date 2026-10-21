@@ -125,3 +125,21 @@ Mac 原始候选为 `DontForget_macOS_unnotarized_v1.5.2.zip`，23,798,328 字�
 隔离派生身份为 `com.example.dontForget.acceptance.scheduling-r39601538766`，副本位于 `build/native_acceptance/scheduling-r39601538766/dont_forget.app`。准备脚本完成受保护内容比较和 codesign 校验，未启动或注册此副本。其状态为“包来源与隔离副本准备通过，原生业务验收待执行”，不继承旧 `permissions-r39575684866` 的业务通过结论。CI Mac 记录仅为解包后 10 秒原生进程启动检查，UI/通知业务验收均未执行，原包仍未公证。
 
 后续先使用全新合成数据验收新候选的编辑/删除/撤销与动态晋级调度，以及 Mac 热点击、冷启动与旧通知隔离；跨重启取消补偿和持久重试属下一源码阶段。保留前一隔离空基线和回退材料，录音与播放验收继续跳过。
+
+## 2026-10-21：3C-1 原生编辑与送达续验
+
+本轮用户已允许录音和播放验收；此前各阶段的“跳过”是历史范围，不再代表当前要求。
+
+继续使用已核验的源码 `886254f` / CI `39601538766` 隔离身份 `scheduling-r39601538766`。首次启动为空库，设置页手动请求通知权限后，系统授权并回读为 Allowed。通过应用生成空库镜像，保存为 `/private/tmp/dontforget-scheduling-fixtures-r39601538766/empty-before-restore.db`。
+
+原生文件选择器可定位合成文件，但 Open 持续禁用，坐标点击报 `noWindowsAvailable`；本轮没有完成该入口的恢复。正常退出且核实进程不存在、取得独立容器 owner lock 后，保留空库，再离线装入无密钥的四任务合成数据。样本、安装条件与读回记录保存在 `/private/tmp/dontforget-scheduling-session-r39601538766`。这属于隔离数据准备，不计作原生恢复通过。
+
+| 验收项 | 观察结果 |
+| --- | --- |
+| 编辑提醒时间 | 对 `QA 3 DAILY EARLY` 选择 Tomorrow 09:00 并保存。数据库时间变为 2026-10-22 09:00 本地时间，修订从 0 到 1；正常退出重开后看板仍显示该时间。系统日志在 22:39:58 记录取消旧请求、接受同 ID 的新请求。标题/补充文本输入未确认生效，不计通过。 |
+| 删除 | `QA 4 MONTH END` 从看板消失，任务数 4→3；只读数据库核实该行已删除。原四任务样本保留。 |
+| 撤销 | 截图可见 Deleted task 和 Undo，但原生可访问性树缺少整个反馈条。坐标点击仍报 `noWindowsAvailable`，没有执行撤销；该问题已由新增 Flutter 语义回归复现，进入 3C-2 修复。 |
+| 热启动送达 | 22:46:48.136 系统 Delivering，22:46:48.138 NotificationCenter displaying as banner；Q3 `hasSound: false`。应用当时运行。读取通知中心超时，未完成热点击。 |
+| 退出后送达 | 正常退出且确认候选进程不存在后，22:47:48.116 系统 Delivering，22:47:48.117 displaying as banner，仍为静音。未完成冷启动点击，不把送达等同于点击或已读。 |
+
+证据文件：`offline-seed-evidence.json`、`deleted-native-readback.json`、`native-edit.log`、`native-hot-delivery.log`、`native-cold-delivery.log`。旧候选已正常退出；合成任务和回退基线继续保留，后续在新候选完成撤销、清理及稳定 ID 原生验收。录音/播放现已允许，但本节尚未执行，不宣称通过。

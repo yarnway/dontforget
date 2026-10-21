@@ -8,6 +8,7 @@ import '../models/reminder.dart';
 import '../models/media_record.dart';
 import '../services/llm_service.dart';
 import '../services/notification_service.dart';
+import '../services/notification_journal.dart';
 import '../services/lan_sync_service.dart';
 import '../services/dp_scheduler_service.dart';
 import '../services/multi_agent_service.dart';
@@ -198,6 +199,26 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       if (!runEffects) return;
       // Promote before scheduling so startup uses the final saved priority.
       await _applyDynamicUrgency(generation, synchronize: false);
+      final journal = await _notificationEntries(generation);
+      _rememberUnfinished(journal.values);
+      // A process can exit between deleting a row and cancelling its OS
+      // request. Retained ID allocations let startup find those orphaned
+      // requests even when no failed-cancel result was written.
+      final existingIds = state.map((r) => r.id).toSet();
+      for (final entry in journal.values) {
+        if (!existingIds.contains(entry.reminderId) &&
+            entry.needsCancellation) {
+          await _dbHelper.runOperation(
+            generation,
+            () => _synchronizeNotification(
+              entry.reminderId,
+              generation,
+              () => _notifications.cancelReminderStrict(entry.reminderId),
+              cancellation: true,
+            ),
+          );
+        }
+      }
       final now = DateTime.now();
       for (final reminder in state) {
         _dbHelper.checkGeneration(generation);
@@ -206,10 +227,15 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         }
         if (reminder.isCompleted ||
             reminder.noticeAcknowledgedAt != null ||
-            reminder.triggerTime == null) {
+            reminder.triggerTime == null ||
+            _requiresPastCancellation(reminder, journal[reminder.id], now)) {
           await _dbHelper.runOperation(generation, () async {
             _dbHelper.checkGeneration(generation);
-            await _synchronizeReminder(reminder, generation);
+            await _synchronizeReminder(
+              reminder,
+              generation,
+              cancelOverdue: true,
+            );
           });
         } else if (!reminder.isCompleted &&
             reminder.triggerTime != null &&
@@ -232,6 +258,43 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     }
   }
 
+  Future<Map<String, NotificationJournalEntry>> _notificationEntries(
+    DataGeneration generation,
+  ) async {
+    final snapshot = await _dbHelper.withNotificationJournal((j) => j.read());
+    _dbHelper.checkGeneration(generation);
+    if (snapshot == null) return {};
+    final epoch = await _dbHelper.readNotificationEpoch();
+    _dbHelper.checkGeneration(generation);
+    return snapshot.epoch == epoch ? snapshot.entries : {};
+  }
+
+  void _rememberUnfinished(Iterable<NotificationJournalEntry> entries) {
+    for (final entry in entries.where((e) => e.unfinished)) {
+      _pendingNotificationRetries.add(entry.reminderId);
+      if (entry.action == 'cancel') {
+        _pendingNotificationCancellations.add(entry.reminderId);
+      }
+    }
+  }
+
+  bool _requiresPastCancellation(
+    Reminder reminder,
+    NotificationJournalEntry? entry,
+    DateTime now,
+  ) {
+    if (reminder.triggerTime == null || reminder.triggerTime!.isAfter(now)) {
+      return false;
+    }
+    if (_pendingNotificationCancellations.contains(reminder.id)) return true;
+    // Preserve a delivered current occurrence. Cancel a previous occurrence
+    // when a time edit committed but the process exited before native sync.
+    return entry?.action == 'schedule' &&
+        (entry!.triggerUtcMicros !=
+                reminder.triggerTime!.toUtc().microsecondsSinceEpoch ||
+            entry.noticeRevision != reminder.noticeRevision);
+  }
+
   Future<ReminderActionResult> addReminder(Reminder reminder) async {
     final generation = _dbHelper.captureGeneration();
     return addReminderForGeneration(reminder, generation);
@@ -252,6 +315,11 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       }
 
       checkCurrent();
+      await _notifications.init();
+      checkCurrent();
+      final journal = await _notificationEntries(generation);
+      _rememberUnfinished(journal.values);
+      checkCurrent();
       final rows = await _dbHelper.read(
         generation,
         (db) => db.query('Reminders'),
@@ -268,8 +336,11 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
             reminder.isCompleted ||
             reminder.noticeAcknowledgedAt != null ||
             reminder.triggerTime == null ||
-            (!reminder.triggerTime!.isAfter(now ?? DateTime.now()) &&
-                _pendingNotificationCancellations.contains(reminder.id));
+            _requiresPastCancellation(
+              reminder,
+              journal[reminder.id],
+              now ?? DateTime.now(),
+            );
         // Existing overdue notices remain available. Retrying must not replay
         // them, erase their delivered banner, or persist an acknowledgement.
         if (!cancel && !reminder.triggerTime!.isAfter(now ?? DateTime.now())) {
@@ -294,7 +365,14 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       }
       // A failed cancellation can outlive the saved row in this session.
       // Retain that ID until cancellation succeeds; do not recreate the task.
-      for (final id in _pendingNotificationRetries.difference(existingIds)) {
+      final orphaned = <String>{
+        ..._pendingNotificationRetries.difference(existingIds),
+        for (final entry in journal.values)
+          if (!existingIds.contains(entry.reminderId) &&
+              entry.needsCancellation)
+            entry.reminderId,
+      };
+      for (final id in orphaned) {
         checkCurrent();
         attempted++;
         try {

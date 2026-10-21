@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:dont_forget/services/notification_journal.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/services.dart';
@@ -153,11 +154,11 @@ void main() {
         await service.scheduleReminder(task('urgent', 1));
         service.isImmersiveModeActive = true;
         await service.reconcileNotificationPolicy();
-        expect(native.pending.keys, ['urgent'.hashCode]);
+        expect(native.pending.keys, [stableNotificationId('urgent')]);
         await service.cancelReminder('quiet');
         service.isImmersiveModeActive = false;
         await service.reconcileNotificationPolicy();
-        expect(native.pending.keys, ['urgent'.hashCode]);
+        expect(native.pending.keys, [stableNotificationId('urgent')]);
         expect(native.schedules.last.macOS!.presentSound, isTrue);
       } finally {
         await service.cancelReminder('quiet');
@@ -184,7 +185,7 @@ void main() {
         expect(native.pending, isEmpty);
         context.switchProfile(ContextProfile.general);
         await service.reconcileNotificationPolicy();
-        expect(native.pending.keys, ['context'.hashCode]);
+        expect(native.pending.keys, [stableNotificationId('context')]);
         context.switchProfile(ContextProfile.office);
         await service.reconcileNotificationPolicy();
         await service.fireReminderNow(task('context', 4));
@@ -203,31 +204,34 @@ void main() {
     },
   );
 
-  test('due reminders never add an in-app sound on top of native delivery', () async {
-    final sounds = <MethodCall>[];
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
-          sounds.add(call);
-          return null;
-        });
-    final service = NotificationService.forTesting(
-      NativeProbe(),
-      usesNativeNotifications: false,
-    );
-    try {
-      await service.fireReminderNow(task('silent', 3));
-      expect(
-        sounds.where((call) => call.method == 'SystemSound.play'),
-        isEmpty,
-      );
-      await service.fireReminderNow(task('audible', 1));
-      expect(
-        sounds.where((call) => call.method == 'SystemSound.play'),
-        isEmpty,
-      );
-    } finally {
+  test(
+    'due reminders never add an in-app sound on top of native delivery',
+    () async {
+      final sounds = <MethodCall>[];
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-          .setMockMethodCallHandler(SystemChannels.platform, null);
-    }
-  });
+          .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+            sounds.add(call);
+            return null;
+          });
+      final service = NotificationService.forTesting(
+        NativeProbe(),
+        usesNativeNotifications: false,
+      );
+      try {
+        await service.fireReminderNow(task('silent', 3));
+        expect(
+          sounds.where((call) => call.method == 'SystemSound.play'),
+          isEmpty,
+        );
+        await service.fireReminderNow(task('audible', 1));
+        expect(
+          sounds.where((call) => call.method == 'SystemSound.play'),
+          isEmpty,
+        );
+      } finally {
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(SystemChannels.platform, null);
+      }
+    },
+  );
 }

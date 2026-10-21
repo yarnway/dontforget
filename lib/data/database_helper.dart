@@ -9,6 +9,7 @@ import 'package:sqflite/sqflite.dart' as sqflite;
 import '../models/settings.dart';
 import '../models/legacy_credentials.dart';
 import '../services/notification_epoch_store.dart';
+import '../services/notification_journal.dart';
 
 part 'database_access.dart';
 
@@ -28,6 +29,7 @@ class DatabaseHelper {
   String? _ownedDirectory;
   RandomAccessFile? _ownershipLock;
   NotificationEpochStore? _notificationEpochStore;
+  NotificationJournal? _notificationJournal;
   static final Map<String, DatabaseHelper> _directoryOwners = {};
   static final Object _operationZoneKey = Object();
   final String? _directory;
@@ -173,6 +175,43 @@ class DatabaseHelper {
   /// needs this sidecar while its SQL gate is closed, including on cold startup.
   /// A live maintenance lease retains exclusive ownership during the file I/O.
   Future<String> readNotificationEpoch() {
+    return _notificationOperation(
+      _readAdmittedNotificationEpoch,
+      _readOwnedNotificationEpoch,
+    );
+  }
+
+  /// Keeps local platform bookkeeping inside the same process ownership and
+  /// maintenance admission as notification epoch reads, including recovery.
+  Future<T> withNotificationJournal<T>(
+    Future<T> Function(NotificationJournal) action,
+  ) {
+    Future<T> owned() {
+      final directory = _ownedDirectory;
+      if (directory == null ||
+          _ownershipLock == null ||
+          !identical(_directoryOwners[directory], this)) {
+        throw const DatabaseAccessException(
+          DatabaseAccessError.ownedByAnotherProcess,
+        );
+      }
+      return action(
+        _notificationJournal ??= NotificationJournal(Directory(directory)),
+      );
+    }
+
+    Future<T> admitted() async {
+      await _acquireOwnership();
+      return owned();
+    }
+
+    return _notificationOperation(admitted, owned);
+  }
+
+  Future<T> _notificationOperation<T>(
+    Future<T> Function() admitted,
+    Future<T> Function() owned,
+  ) {
     if (_accessState == _AccessState.faulted) {
       throw const DatabaseAccessException(DatabaseAccessError.faulted);
     }
@@ -185,14 +224,14 @@ class DatabaseHelper {
         identical(inherited.helper, this)) {
       // Already admitted side effects must be able to finish while maintenance
       // waits for them. The nested operation remains part of that same drain.
-      return runOperation(inherited.generation, _readAdmittedNotificationEpoch);
+      return runOperation(inherited.generation, admitted);
     }
     if (_accessState == _AccessState.ready) {
-      return runOperation(captureGeneration(), _readAdmittedNotificationEpoch);
+      return runOperation(captureGeneration(), admitted);
     }
     final lease = _maintenance;
     if (_accessState == _AccessState.maintenance && lease != null) {
-      return lease._perform(_readOwnedNotificationEpoch);
+      return lease._perform(owned);
     }
     // A new caller cannot join the gap while earlier operations are draining
     // and no exclusive maintenance lease has been issued yet.
@@ -273,6 +312,7 @@ class DatabaseHelper {
     await handle.close();
     _ownershipLock = null;
     _notificationEpochStore = null;
+    _notificationJournal = null;
     _ownedDirectory = null;
     if (identical(_directoryOwners[directory], this)) {
       _directoryOwners.remove(directory);

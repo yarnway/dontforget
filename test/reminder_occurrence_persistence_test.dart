@@ -5,6 +5,7 @@ import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/providers/providers.dart';
 import 'package:dont_forget/services/notification_service.dart';
+import 'package:dont_forget/services/notification_journal.dart';
 import 'package:dont_forget/services/lan_sync_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -158,7 +159,7 @@ void main() {
       expect(native.cancellations, 0);
       final reopened = await load(effects: true);
       expect(reopened.state.single.upcomingDismissedAt, now);
-      expect(native.pending, contains(original.id.hashCode));
+      expect(native.pending, contains(stableNotificationId(original.id)));
       expect(native.schedules, 1);
     },
   );
@@ -528,7 +529,7 @@ void main() {
       );
       native.failSchedule = false;
       await notifications.scheduleReminderStrict(result.reminder!);
-      expect(native.pending, contains(original.id.hashCode));
+      expect(native.pending, contains(stableNotificationId(original.id)));
     },
   );
 
@@ -579,7 +580,7 @@ void main() {
       );
       await seed(original);
       final current = await load(effects: true);
-      expect(native.pending, contains(original.id.hashCode));
+      expect(native.pending, contains(stableNotificationId(original.id)));
       final lan = LanSyncService.forTesting();
       final client = HttpClient();
       try {
@@ -623,8 +624,11 @@ void main() {
         expect(foreign.upcomingDismissedAt, isNull);
         expect(foreign.recurrenceAnchorTime, DateTime(2030, 1, 1, 9));
         await current.refreshReminders();
-        expect(native.pending, isNot(contains(original.id.hashCode)));
-        expect(native.pending, contains('foreign'.hashCode));
+        expect(
+          native.pending,
+          isNot(contains(stableNotificationId(original.id))),
+        );
+        expect(native.pending, contains(stableNotificationId('foreign')));
       } finally {
         client.close(force: true);
         await lan.stopServer();

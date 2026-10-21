@@ -1,8 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dont_forget/ui/widgets/inline_feedback.dart';
 
 void main() {
+  testWidgets('Undo remains accessible above the Navigator route', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    late BuildContext pageContext;
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (_, child) => InlineFeedback(child: child!),
+        home: Builder(
+          builder: (context) {
+            pageContext = context;
+            return const Scaffold(body: Text('Task board'));
+          },
+        ),
+      ),
+    );
+    InlineFeedback.of(pageContext).showSnackBar(
+      SnackBar(
+        content: const Text('Deleted test item'),
+        action: SnackBarAction(label: 'Undo', onPressed: () {}),
+      ),
+    );
+    await tester.pump();
+    expect(find.bySemanticsLabel('Undo'), findsOneWidget);
+    expect(find.bySemanticsLabel('Deleted test item'), findsOneWidget);
+    expect(find.bySemanticsLabel('Task board'), findsOneWidget);
+    semantics.dispose();
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets(
     'feedback replaces in place, keeps input focus and retains Undo',
     (tester) async {
@@ -42,9 +73,14 @@ void main() {
       await tester.pump(const Duration(seconds: 20));
       expect(find.text('First result'), findsNothing);
       expect(find.text('Undo'), findsOneWidget);
-      await tester.tap(find.text('Undo'));
+      expect(focus.hasFocus, isTrue);
+      await tester.sendKeyEvent(LogicalKeyboardKey.f6);
+      await tester.pump();
+      expect(focus.hasFocus, isFalse);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pump();
       expect(undone, 1);
+      expect(focus.hasFocus, isTrue);
       expect(find.byKey(const ValueKey('inline-feedback')), findsNothing);
       await tester.pumpWidget(const SizedBox());
     },
