@@ -8,6 +8,7 @@ import 'package:dont_forget/services/recovery/backup_inspector.dart';
 import 'package:dont_forget/ui/screens/backup_preview_screen.dart';
 import 'package:dont_forget/ui/screens/settings_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -164,6 +165,47 @@ void main() {
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     },
+  );
+
+  testWidgets(
+    'checksum has its own button semantics and toggles through accessibility',
+    (tester) async {
+      final handle = tester.ensureSemantics();
+      try {
+        final inspector = _Inspector()..handler = (_) async => _preview();
+        await showPreview(tester, inspector);
+        await choose(tester);
+        await tester.pumpAndSettle();
+        final checksum = find.text(l10n.get('backupPreviewDigest'));
+        await tester.ensureVisible(checksum);
+        await tester.pumpAndSettle();
+        final collapsed = tester.getSemantics(checksum);
+        final collapsedData = collapsed.getSemanticsData();
+        expect(collapsedData.label, l10n.get('backupPreviewDigest'));
+        expect(collapsedData.flagsCollection.isButton, isTrue);
+        expect(collapsedData.hasAction(SemanticsAction.tap), isTrue);
+        expect(collapsedData.hint, contains('Collapsed'));
+
+        // Exercise the screen-reader action, not a coordinate tap.
+        collapsed.owner!.performAction(collapsed.id, SemanticsAction.tap);
+        await tester.pumpAndSettle();
+        expect(find.text(_preview().digest), findsOneWidget);
+        final expanded = tester.getSemantics(checksum);
+        final expandedData = expanded.getSemanticsData();
+        expect(expandedData.label, l10n.get('backupPreviewDigest'));
+        expect(expandedData.flagsCollection.isButton, isTrue);
+        expect(expandedData.hasAction(SemanticsAction.tap), isTrue);
+        expect(expandedData.hint, contains('Expanded'));
+        expanded.owner!.performAction(expanded.id, SemanticsAction.tap);
+        await tester.pumpAndSettle();
+        expect(find.text(_preview().digest), findsNothing);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+      } finally {
+        handle.dispose();
+      }
+    },
+    variant: const TargetPlatformVariant({TargetPlatform.macOS}),
   );
 
   testWidgets(

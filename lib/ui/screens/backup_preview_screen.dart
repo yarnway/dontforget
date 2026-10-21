@@ -147,6 +147,7 @@ class _BackupPreviewScreenState extends State<BackupPreviewScreen> {
         result.missingMedia > 0 || result.unresolvedReferences > 0;
     return Card.outlined(
       key: const ValueKey('backup-preview-result'),
+      semanticContainer: false,
       margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -226,6 +227,7 @@ class _BackupPreviewScreenState extends State<BackupPreviewScreen> {
             const SizedBox(height: 12),
             ExpansionTile(
               key: ValueKey('backup-preview-digest-${result.digest}'),
+              internalAddSemanticForOnTap: true,
               tilePadding: EdgeInsets.zero,
               title: Text(l10n.get('backupPreviewDigest')),
               childrenPadding: const EdgeInsets.only(bottom: 12),
