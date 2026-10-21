@@ -28,6 +28,9 @@ class ReminderNoticePanel extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final reminder = reminders.first;
     final upcoming = reminder.triggerTime?.isAfter(now) ?? false;
+    final categoryCount = reminders
+        .where((item) => (item.triggerTime?.isAfter(now) ?? false) == upcoming)
+        .length;
     return Container(
       key: const ValueKey('reminder-notice-panel'),
       margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
@@ -51,7 +54,7 @@ class ReminderNoticePanel extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '${l10n.get(upcoming ? 'upcomingReminder' : 'dueReminder')} · ${reminders.length}',
+                  '${l10n.get(upcoming ? 'upcomingReminder' : 'dueReminder')} · $categoryCount',
                   style: Theme.of(context).textTheme.labelMedium,
                 ),
               ),

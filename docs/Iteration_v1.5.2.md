@@ -69,6 +69,8 @@ macOS 27.0.1 arm64，Dart 3.12.2；每档 10 次预热、100 次采样。使用�
 
 本轮不关闭历史版本的签名、设备、真实旧库和完整通知矩阵门槛；旧候选的原生证据不能自动转移给 v1.5.2。
 
+后续 Mac 真机提醒观察、发现的界面问题与修复记录见 [Mac 提醒阶段验收](Native_Acceptance_v1.5.2.md)。录音及播放按用户后续指示暂不验收。
+
 ## DeepSeek 模型名称校正
 
 按用户追加授权，一并修正配置映射。2026-10-21 核对[官方 API 模型列表](https://api-docs.deepseek.com/api/list-models/)和[模型说明](https://api-docs.deepseek.com/quick_start/pricing/)：API 标识为 `deepseek-flash` 与 `deepseek-v4-pro`，产品版本名不直接当作请求标识。

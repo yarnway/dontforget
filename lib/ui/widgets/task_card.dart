@@ -305,7 +305,9 @@ class _TaskCardState extends ConsumerState<TaskCard> {
           Icons.spa_outlined,
           colors.primary,
         ),
-      if (task.isDynamicallyPromoted && !task.isCompleted)
+      if (task.isDynamicallyPromoted &&
+          !task.isCompleted &&
+          task.quadrantLevel == 1)
         _badge(
           l10n.get('promotedToQ1Badge'),
           Icons.bolt_outlined,

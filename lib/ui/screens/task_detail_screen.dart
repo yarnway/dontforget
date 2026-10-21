@@ -731,7 +731,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 ),
 
                 // Dynamic Promotion Alert Banner
-                if (_isDynamicallyPromoted) ...[
+                if (!_isCompleted &&
+                    _selectedQuadrant == 1 &&
+                    _isDynamicallyPromoted) ...[
                   const SizedBox(height: 10),
                   Container(
                     padding: const EdgeInsets.symmetric(

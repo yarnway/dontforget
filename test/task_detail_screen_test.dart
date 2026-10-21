@@ -197,6 +197,34 @@ void main() {
       expect(find.text('保存修改'), findsOneWidget);
     },
   );
+  testWidgets('promotion alert appears only for active promoted Q1 tasks', (
+    tester,
+  ) async {
+    for (final scenario in [
+      (quadrant: 3, completed: true, promoted: true, visible: false),
+      (quadrant: 3, completed: false, promoted: true, visible: false),
+      (quadrant: 1, completed: true, promoted: true, visible: false),
+      (quadrant: 1, completed: false, promoted: false, visible: false),
+      (quadrant: 1, completed: false, promoted: true, visible: true),
+    ]) {
+      await openDetail(
+        tester,
+        Reminder(
+          id: 'detail-promotion-visibility',
+          taskTitle: 'Promotion visibility QA',
+          quadrantLevel: scenario.quadrant,
+          isCompleted: scenario.completed,
+          isDynamicallyPromoted: scenario.promoted,
+        ),
+      );
+      final expected = scenario.visible ? findsOneWidget : findsNothing;
+      expect(find.text('已根据临近提醒时间自动跃迁至 Q1'), expected);
+      expect(find.text('任务距离触发已不足 24 小时，底层自动跃迁为紧急且重要，触发系统强提醒。'), expected);
+      expect(find.text('撤回至 Q2'), expected);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+    }
+  });
   testWidgets('deleting a detail route retains Undo and restores the task', (
     tester,
   ) async {
