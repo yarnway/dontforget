@@ -1,5 +1,5 @@
-import '../../services/notification_service.dart';
 import 'inline_feedback.dart';
+import '../../data/database_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
@@ -8,16 +8,30 @@ import '../../l10n/app_localizations.dart';
 import '../screens/task_detail_screen.dart';
 
 /// 情境事后摘要汇总浮层 (Context Catch-Up Digest)
-class ContextDigestSheet extends ConsumerWidget {
+class ContextDigestSheet extends ConsumerStatefulWidget {
   final List<Reminder> digestReminders;
 
-  const ContextDigestSheet({
-    super.key,
-    required this.digestReminders,
-  });
+  const ContextDigestSheet({super.key, required this.digestReminders});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ContextDigestSheet> createState() => _ContextDigestSheetState();
+}
+
+class _ContextDigestSheetState extends ConsumerState<ContextDigestSheet> {
+  DataGeneration? _digestGeneration;
+
+  @override
+  void initState() {
+    super.initState();
+    try {
+      _digestGeneration = ref.read(databaseHelperProvider).captureGeneration();
+    } on DatabaseAccessException {
+      // Keep the snapshot readable while writes are unavailable.
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -54,7 +68,11 @@ class ContextDigestSheet extends ConsumerWidget {
                   color: Colors.teal.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.summarize_outlined, color: Colors.teal, size: 20),
+                child: const Icon(
+                  Icons.summarize_outlined,
+                  color: Colors.teal,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -63,13 +81,18 @@ class ContextDigestSheet extends ConsumerWidget {
                   children: [
                     Text(
                       l10n.get('contextDigestTitle'),
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     Text(
                       l10n.get('contextDigestDesc'),
                       style: TextStyle(
                         fontSize: 12,
-                        color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                        color: isDark
+                            ? Colors.grey.shade400
+                            : Colors.grey.shade600,
                       ),
                     ),
                   ],
@@ -82,8 +105,12 @@ class ContextDigestSheet extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '${digestReminders.length} ${l10n.get('itemsCount')}',
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.teal),
+                  '${widget.digestReminders.length} ${l10n.get('itemsCount')}',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.teal,
+                  ),
                 ),
               ),
             ],
@@ -96,21 +123,31 @@ class ContextDigestSheet extends ConsumerWidget {
           Flexible(
             child: ListView.separated(
               shrinkWrap: true,
-              itemCount: digestReminders.length,
+              itemCount: widget.digestReminders.length,
               separatorBuilder: (_, __) => const Divider(height: 1),
               itemBuilder: (context, index) {
-                final task = digestReminders[index];
+                final task = widget.digestReminders[index];
                 final isQ3 = task.quadrantLevel == 3;
 
                 return ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 2,
+                  ),
                   leading: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
-                      color: (isQ3 ? Colors.blue : Colors.green).withValues(alpha: 0.15),
+                      color: (isQ3 ? Colors.blue : Colors.green).withValues(
+                        alpha: 0.15,
+                      ),
                       borderRadius: BorderRadius.circular(4),
                       border: Border.all(
-                        color: (isQ3 ? Colors.blue : Colors.green).withValues(alpha: 0.4),
+                        color: (isQ3 ? Colors.blue : Colors.green).withValues(
+                          alpha: 0.4,
+                        ),
                       ),
                     ),
                     child: Text(
@@ -124,7 +161,10 @@ class ContextDigestSheet extends ConsumerWidget {
                   ),
                   title: Text(
                     task.taskTitle,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -133,7 +173,9 @@ class ContextDigestSheet extends ConsumerWidget {
                           task.taskSummary!,
                           style: TextStyle(
                             fontSize: 11,
-                            color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                            color: isDark
+                                ? Colors.grey.shade400
+                                : Colors.grey.shade600,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -146,17 +188,46 @@ class ContextDigestSheet extends ConsumerWidget {
                         icon: const Icon(Icons.check_circle_outline, size: 20),
                         tooltip: l10n.get('markDone'),
                         onPressed: () async {
-                          await ref.read(remindersProvider.notifier).updateReminder(
-                                task.copyWith(isCompleted: true),
-                              );
-                          await NotificationService().cancelReminder(task.id);
-                          if (!context.mounted) return;
-                          InlineFeedback.of(context).showSnackBar(
-                            SnackBar(
-                              duration: const Duration(seconds: 1),
-                              content: Text('${l10n.get('taskCompleted')}: ${task.taskTitle}'),
-                            ),
-                          );
+                          try {
+                            final database = ref.read(databaseHelperProvider);
+                            final generation = _digestGeneration;
+                            if (generation == null) {
+                              throw StateError('Digest unavailable');
+                            }
+                            final current = ref
+                                .read(remindersProvider)
+                                .where((item) => item.id == task.id)
+                                .firstOrNull;
+                            if (current == null) return;
+                            final notifications = ref.read(
+                              notificationServiceProvider,
+                            );
+                            await database.runOperation(generation, () async {
+                              await ref
+                                  .read(remindersProvider.notifier)
+                                  .updateReminder(
+                                    current.copyWith(isCompleted: true),
+                                  );
+                              await notifications.cancelReminder(current.id);
+                            });
+                            database.checkGeneration(generation);
+                            if (!context.mounted) return;
+                            InlineFeedback.of(context).showSnackBar(
+                              SnackBar(
+                                duration: const Duration(seconds: 1),
+                                content: Text(
+                                  '${l10n.get('taskCompleted')}: ${current.taskTitle}',
+                                ),
+                              ),
+                            );
+                          } catch (_) {
+                            if (!context.mounted) return;
+                            InlineFeedback.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(l10n.get('reminderUpdateFailed')),
+                              ),
+                            );
+                          }
                         },
                       ),
                       IconButton(

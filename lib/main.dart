@@ -8,6 +8,8 @@ import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 import 'data/database_helper.dart';
 import 'models/reminder.dart';
+import 'services/recovery/storage_bootstrap.dart';
+import 'ui/screens/storage_unavailable_screen.dart';
 import 'app.dart';
 
 void _writeCrashLog(dynamic error, StackTrace? stack) {
@@ -16,13 +18,18 @@ void _writeCrashLog(dynamic error, StackTrace? stack) {
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       String logDir;
       if (Platform.isWindows) {
-        final localAppData = Platform.environment['LOCALAPPDATA'] ??
+        final localAppData =
+            Platform.environment['LOCALAPPDATA'] ??
             Platform.environment['APPDATA'] ??
             Platform.environment['USERPROFILE'] ??
             '.';
         logDir = p.join(localAppData, 'DontForget', 'logs');
       } else {
-        logDir = p.join(Platform.environment['HOME'] ?? '.', '.dontforget', 'logs');
+        logDir = p.join(
+          Platform.environment['HOME'] ?? '.',
+          '.dontforget',
+          'logs',
+        );
       }
       final dir = Directory(logDir);
       if (!dir.existsSync()) {
@@ -54,8 +61,10 @@ Usage:
 
   if (args.contains('--list') || args.contains('-l')) {
     final dbHelper = DatabaseHelper.instance;
-    final db = await dbHelper.database;
-    final res = await db.query('Reminders', where: 'is_completed = 0');
+    final res = await dbHelper.read(
+      dbHelper.captureGeneration(),
+      (db) => db.query('Reminders', where: 'is_completed = 0'),
+    );
     stdout.writeln('📋 Active Reminders (${res.length}):');
     for (final item in res) {
       final quad = item['quadrant_level'];
@@ -76,8 +85,9 @@ Usage:
     }
 
     final dbHelper = DatabaseHelper.instance;
-    final db = await dbHelper.database;
-    final title = content.length > 30 ? '${content.substring(0, 30)}...' : content;
+    final title = content.length > 30
+        ? '${content.substring(0, 30)}...'
+        : content;
     final reminder = Reminder(
       id: const Uuid().v4(),
       taskTitle: title,
@@ -87,7 +97,10 @@ Usage:
       importanceLevel: 'Important',
       triggerTime: DateTime.now().add(const Duration(hours: 2)),
     );
-    await db.insert('Reminders', reminder.toJson());
+    await dbHelper.writeTransaction(
+      dbHelper.captureGeneration(),
+      (db) => db.insert('Reminders', reminder.toJson()),
+    );
     stdout.writeln('✅ [DontForget CLI] Reminder created: "$title"');
     return;
   }
@@ -96,59 +109,95 @@ Usage:
 void main(List<String> args) async {
   if (args.isNotEmpty &&
       (args.contains('--add') ||
-       args.contains('-a') ||
-       args.contains('--list') ||
-       args.contains('-l') ||
-       args.contains('--help') ||
-       args.contains('-h'))) {
-    await _handleCli(args);
-    exit(0);
+          args.contains('-a') ||
+          args.contains('--list') ||
+          args.contains('-l') ||
+          args.contains('--help') ||
+          args.contains('-h'))) {
+    final helpOnly = args.contains('--help') || args.contains('-h');
+    try {
+      if (!helpOnly) {
+        WidgetsFlutterBinding.ensureInitialized();
+        await StorageBootstrap(DatabaseHelper.instance).prepare();
+      }
+      await _handleCli(args);
+      if (!helpOnly) {
+        await DatabaseHelper.instance.close(createBackup: false);
+      }
+      exit(0);
+    } catch (error) {
+      final busy =
+          error is DatabaseAccessException &&
+          error.code == DatabaseAccessError.ownedByAnotherProcess;
+      stderr.writeln(
+        busy
+            ? 'Local data is in use. Quit the other DontForget instance before using CLI.'
+            : 'The command did not finish. Check saved data and recovery records before retrying.',
+      );
+      exit(busy ? 75 : 1);
+    }
   }
 
-  runZonedGuarded(() async {
-    WidgetsFlutterBinding.ensureInitialized();
+  runZonedGuarded(
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
 
-    // Catch framework-level errors
-    FlutterError.onError = (FlutterErrorDetails details) {
-      FlutterError.presentError(details);
-      _writeCrashLog(details.exception, details.stack);
-    };
+      // Catch framework-level errors
+      FlutterError.onError = (FlutterErrorDetails details) {
+        FlutterError.presentError(details);
+        _writeCrashLog(details.exception, details.stack);
+      };
 
-    PlatformDispatcher.instance.onError = (error, stack) {
-      _writeCrashLog(error, stack);
-      return true;
-    };
-    
-    // Initialize window manager safely on desktop platforms
-    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      try {
-        await windowManager.ensureInitialized();
-        const windowOptions = WindowOptions(
-          size: Size(1000, 700),
-          center: true,
-          title: "DontForget",
-        );
-        windowManager.waitUntilReadyToShow(windowOptions, () async {
-          try {
-            await windowManager.show();
-            await windowManager.focus();
-            // Prevent default close so we can hide to tray instead
-            await windowManager.setPreventClose(true);
-          } catch (e, st) {
-            _writeCrashLog('windowManager show error: $e', st);
-          }
-        });
-      } catch (e, st) {
-        _writeCrashLog('windowManager ensureInitialized error: $e', st);
+      PlatformDispatcher.instance.onError = (error, stack) {
+        _writeCrashLog(error, stack);
+        return true;
+      };
+
+      // Initialize window manager safely on desktop platforms
+      if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+        try {
+          await windowManager.ensureInitialized();
+          const windowOptions = WindowOptions(
+            size: Size(1000, 700),
+            center: true,
+            title: "DontForget",
+          );
+          windowManager.waitUntilReadyToShow(windowOptions, () async {
+            try {
+              await windowManager.show();
+              await windowManager.focus();
+              // Prevent default close so we can hide to tray instead
+              await windowManager.setPreventClose(true);
+            } catch (e, st) {
+              _writeCrashLog('windowManager show error: $e', st);
+            }
+          });
+        } catch (e, st) {
+          _writeCrashLog('windowManager ensureInitialized error: $e', st);
+        }
       }
-    }
 
-    runApp(
-      const ProviderScope(
-        child: MyApp(),
-      ),
-    );
-  }, (error, stack) {
-    _writeCrashLog('Unhandled Zone Error: $error', stack);
-  });
+      // Recovery and process ownership precede every provider, migration and
+      // notification startup side effect. Never fall through to default data.
+      try {
+        final helper = DatabaseHelper.instance;
+        await StorageBootstrap(helper).prepare();
+      } catch (error) {
+        runApp(
+          StorageUnavailableScreen(
+            busy:
+                error is DatabaseAccessException &&
+                error.code == DatabaseAccessError.ownedByAnotherProcess,
+            onExit: () => exit(1),
+          ),
+        );
+        return;
+      }
+
+      runApp(const ProviderScope(child: MyApp()));
+    },
+    (error, stack) {
+      _writeCrashLog('Unhandled Zone Error: $error', stack);
+    },
+  );
 }

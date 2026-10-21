@@ -1,4 +1,5 @@
 import '../widgets/reminder_notice_panel.dart';
+import '../../data/database_helper.dart';
 import '../widgets/inline_feedback.dart';
 import 'dart:async';
 import 'dart:io';
@@ -111,6 +112,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _checkDueReminders() {
+    final database = ref.read(databaseHelperProvider);
+    final DataGeneration generation;
+    try {
+      generation = database.captureGeneration();
+    } on DatabaseAccessException {
+      return;
+    }
     final reminders = ref.read(remindersProvider);
     final now = DateTime.now();
 
@@ -121,26 +129,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             r.triggerTime!.isAfter(now.subtract(const Duration(minutes: 15))) &&
             !_promptedReminderIds.contains(reminderOccurrenceKey(r))) {
           _promptedReminderIds.add(reminderOccurrenceKey(r));
-          NotificationService().fireReminderNow(r);
+          unawaited(
+            database
+                .runOperation(generation, () async {
+                  await ref
+                      .read(notificationServiceProvider)
+                      .fireReminderNow(r);
+                })
+                .catchError((Object _) {}),
+          );
         }
       }
     }
 
     // 情境感知触发器检测 (检测 Wi-Fi SSID 接入)
-    ContextTriggerService().detectCurrentWifiSsid().then((ssid) {
-      if (ssid != null && mounted) {
-        final matched = ContextTriggerService().evaluateContextTriggers(
-          reminders,
-          ssid: ssid,
-        );
-        for (final m in matched) {
-          NotificationService().showWindowsToast(
-            '📍 情境感知提醒 [已连接 $ssid]',
-            m.taskTitle,
-          );
-        }
-      }
-    });
+    ContextTriggerService()
+        .detectCurrentWifiSsid()
+        .then((ssid) {
+          if (ssid != null && mounted && database.isCurrent(generation)) {
+            final matched = ContextTriggerService().evaluateContextTriggers(
+              reminders,
+              ssid: ssid,
+            );
+            for (final m in matched) {
+              unawaited(
+                database
+                    .runOperation(generation, () async {
+                      await ref
+                          .read(notificationServiceProvider)
+                          .showWindowsToast(
+                            '📍 情境感知提醒 [已连接 $ssid]',
+                            m.taskTitle,
+                          );
+                    })
+                    .catchError((Object _) {}),
+              );
+            }
+          }
+        })
+        .catchError((Object _) {});
 
     // 动态跃迁周期扫描
     ref
@@ -221,8 +248,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       final updated = next == null
           ? task.copyWith(isCompleted: true)
           : task.copyWith(triggerTime: next, isCompleted: false);
-      await ref.read(remindersProvider.notifier).updateReminder(updated);
-      await NotificationService().scheduleReminder(updated);
+      final database = ref.read(databaseHelperProvider);
+      final generation = database.captureGeneration();
+      final notifications = ref.read(notificationServiceProvider);
+      await database.runOperation(generation, () async {
+        await ref.read(remindersProvider.notifier).updateReminder(updated);
+        await notifications.scheduleReminder(updated);
+      });
+      database.checkGeneration(generation);
       if (!mounted) return;
       _dismissNotice(reminder);
       InlineFeedback.of(context).showSnackBar(
@@ -313,23 +346,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ),
             onPressed: () async {
               Navigator.of(ctx).pop();
-              final count = await ref
-                  .read(remindersProvider.notifier)
-                  .clearCompletedReminders();
-              if (mounted) {
-                InlineFeedback.of(context).hideCurrentSnackBar();
-                InlineFeedback.of(context).showSnackBar(
-                  SnackBar(
-                    duration: const Duration(seconds: 3),
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+              try {
+                final database = ref.read(databaseHelperProvider);
+                final generation = database.captureGeneration();
+                final count = await database.runOperation(generation, () async {
+                  return ref
+                      .read(remindersProvider.notifier)
+                      .clearCompletedReminders();
+                });
+                database.checkGeneration(generation);
+                if (mounted) {
+                  InlineFeedback.of(context).hideCurrentSnackBar();
+                  InlineFeedback.of(context).showSnackBar(
+                    SnackBar(
+                      duration: const Duration(seconds: 3),
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      content: Text(
+                        '${l10n.get('clearedCompletedSuccess')} ($count)',
+                      ),
                     ),
-                    content: Text(
-                      '${l10n.get('clearedCompletedSuccess')} ($count)',
-                    ),
-                  ),
-                );
+                  );
+                }
+              } catch (_) {
+                if (mounted) {
+                  InlineFeedback.of(context).showSnackBar(
+                    SnackBar(content: Text(l10n.get('taskDeleteFailed'))),
+                  );
+                }
               }
             },
             child: Text(
@@ -1104,10 +1150,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     ),
                     tooltip: l10n.get('contextProfileSwitch'),
                     splashRadius: 18,
-                    onSelected: (profile) {
-                      ref
-                          .read(contextProfileProvider.notifier)
-                          .setProfile(profile);
+                    onSelected: (profile) async {
+                      try {
+                        await ref
+                            .read(contextProfileProvider.notifier)
+                            .setProfile(profile);
+                      } catch (_) {
+                        if (!context.mounted) return;
+                        InlineFeedback.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(l10n.get('reminderUpdateFailed')),
+                          ),
+                        );
+                      }
                     },
                     itemBuilder: (context) => [
                       PopupMenuItem(

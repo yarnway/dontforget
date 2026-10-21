@@ -36,6 +36,8 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     setState(() => _isDecomposing = true);
     final l10n = AppLocalizations.of(context);
     try {
+      final database = ref.read(databaseHelperProvider);
+      final generation = database.captureGeneration();
       final settings = ref.read(settingsProvider);
       final habits = await ref
           .read(llmServiceProvider)
@@ -45,6 +47,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
             language: settings.language,
           );
       if (!mounted) return;
+      database.checkGeneration(generation);
       // Preserve edits made while the request was running, and do not revive a deleted task.
       final current = ref
           .read(remindersProvider)
@@ -53,7 +56,11 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       if (current == null) return;
       await ref
           .read(remindersProvider.notifier)
-          .updateReminder(current.copyWith(subTasks: jsonEncode(habits)));
+          .updateReminderForGeneration(
+            current.copyWith(subTasks: jsonEncode(habits)),
+            generation,
+          );
+      database.checkGeneration(generation);
       _showMessage(l10n.get('addMicroHabitsAsSubtasks'));
     } catch (_) {
       _showMessage(l10n.get('taskBreakdownFailed'));
@@ -75,12 +82,17 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       final updated = next == null
           ? task.copyWith(isCompleted: completed)
           : task.copyWith(triggerTime: next, isCompleted: false);
-      await ref.read(remindersProvider.notifier).updateReminder(updated);
-      if (updated.isCompleted) {
-        await notifications.cancelReminder(task.id);
-      } else if (updated.triggerTime?.isAfter(DateTime.now()) ?? false) {
-        await notifications.scheduleReminder(updated);
-      }
+      final database = ref.read(databaseHelperProvider);
+      final generation = database.captureGeneration();
+      await database.runOperation(generation, () async {
+        await ref.read(remindersProvider.notifier).updateReminder(updated);
+        if (updated.isCompleted) {
+          await notifications.cancelReminder(task.id);
+        } else if (updated.triggerTime?.isAfter(DateTime.now()) ?? false) {
+          await notifications.scheduleReminder(updated);
+        }
+      });
+      database.checkGeneration(generation);
       if (next != null) {
         _showMessage(
           '${l10n.get('periodicNext')}${next.toString().substring(0, 16)}',
@@ -102,8 +114,13 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     final notifications = ref.read(notificationServiceProvider);
     final feedback = InlineFeedback.of(context);
     try {
-      await notifier.deleteReminder(task.id);
-      await notifications.cancelReminder(task.id);
+      final database = ref.read(databaseHelperProvider);
+      final generation = database.captureGeneration();
+      await database.runOperation(generation, () async {
+        await notifier.deleteReminder(task.id);
+        await notifications.cancelReminder(task.id);
+      });
+      database.checkGeneration(generation);
       if (!feedback.mounted) return;
       feedback.showSnackBar(
         SnackBar(
@@ -112,11 +129,13 @@ class _TaskCardState extends ConsumerState<TaskCard> {
             label: l10n.get('undo'),
             onPressed: () async {
               try {
-                await notifier.addReminder(task);
-                if (!task.isCompleted &&
-                    (task.triggerTime?.isAfter(DateTime.now()) ?? false)) {
-                  await notifications.scheduleReminder(task);
-                }
+                await database.runOperation(generation, () async {
+                  await notifier.addReminder(task);
+                  if (!task.isCompleted &&
+                      (task.triggerTime?.isAfter(DateTime.now()) ?? false)) {
+                    await notifications.scheduleReminder(task);
+                  }
+                });
               } catch (_) {
                 if (feedback.mounted) {
                   feedback.showSnackBar(
@@ -239,7 +258,11 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         final updated = widget.task.spacedRepetitionLevel > 0
             ? service.disableCard(widget.task)
             : service.enableCard(widget.task);
-        await ref.read(remindersProvider.notifier).updateReminder(updated);
+        final database = ref.read(databaseHelperProvider);
+        final generation = database.captureGeneration();
+        await database.runOperation(generation, () async {
+          await ref.read(remindersProvider.notifier).updateReminder(updated);
+        });
       } catch (_) {
         _showMessage(l10n.get('reminderUpdateFailed'));
       } finally {

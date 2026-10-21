@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
+import 'package:sqflite/sqflite.dart';
 import '../data/database_helper.dart';
 import '../models/reminder.dart';
 
@@ -22,9 +23,17 @@ class LanSyncServerInfo {
 
 class LanSyncService {
   static final LanSyncService instance = LanSyncService._internal();
-  LanSyncService._internal();
+  LanSyncService._internal() : _bindAddress = InternetAddress.anyIPv4;
 
+  @visibleForTesting
+  LanSyncService.forTesting() : _bindAddress = InternetAddress.loopbackIPv4;
+
+  final InternetAddress _bindAddress;
   HttpServer? _server;
+  Future<LanSyncServerInfo>? _starting;
+  Future<void>? _stopping;
+  final Set<Future<void>> _handlers = {};
+  bool _accepting = false;
   String _currentPin = '';
   int _serverPort = 42888;
   String _localIp = '127.0.0.1';
@@ -44,8 +53,8 @@ class LanSyncService {
         for (final addr in iface.addresses) {
           if (!addr.isLoopback &&
               (addr.address.startsWith('192.168.') ||
-               addr.address.startsWith('10.') ||
-               addr.address.startsWith('172.'))) {
+                  addr.address.startsWith('10.') ||
+                  addr.address.startsWith('172.'))) {
             return addr.address;
           }
         }
@@ -69,121 +78,172 @@ class LanSyncService {
     required DatabaseHelper dbHelper,
     VoidCallback? onDataChanged,
   }) async {
+    if (_stopping != null) await _stopping;
     if (_server != null) {
-      return LanSyncServerInfo(
-        isRunning: true,
-        ip: _localIp,
-        port: _serverPort,
-        pin: _currentPin,
-      );
+      return _serverInfo();
     }
+    final starting = _starting ??= _startServer(port, dbHelper, onDataChanged);
+    try {
+      return await starting;
+    } finally {
+      if (identical(_starting, starting)) _starting = null;
+    }
+  }
 
-    _serverPort = port;
+  LanSyncServerInfo _serverInfo() => LanSyncServerInfo(
+    isRunning: _server != null && _accepting,
+    ip: _localIp,
+    port: _serverPort,
+    pin: _currentPin,
+  );
+
+  Future<LanSyncServerInfo> _startServer(
+    int port,
+    DatabaseHelper dbHelper,
+    VoidCallback? onDataChanged,
+  ) async {
     _currentPin = _generatePin();
-    _localIp = await getLocalIpAddress();
+    _localIp = _bindAddress.isLoopback
+        ? _bindAddress.address
+        : await getLocalIpAddress();
 
     try {
-      _server = await HttpServer.bind(
-        InternetAddress.anyIPv4,
-        _serverPort,
-        shared: true,
-      );
-
-      _server!.listen((HttpRequest request) async {
-        try {
-          request.response.headers.add('Access-Control-Allow-Origin', '*');
-          request.response.headers.add('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-          request.response.headers.add('Access-Control-Allow-Headers', '*');
-
-          if (request.method == 'OPTIONS') {
-            request.response.statusCode = HttpStatus.ok;
-            await request.response.close();
-            return;
-          }
-
-          final path = request.uri.path;
-          if (path == '/status' && request.method == 'GET') {
-            final respData = {
-              'status': 'ok',
-              'hostname': Platform.localHostname,
-              'os': Platform.operatingSystem,
-            };
-            request.response.headers.contentType = ContentType.json;
-            request.response.write(jsonEncode(respData));
-            await request.response.close();
-            return;
-          }
-
-          if (path == '/sync' && request.method == 'POST') {
-            final bodyBytes = await request.fold<List<int>>([], (prev, element) => prev..addAll(element));
-            final bodyStr = utf8.decode(bodyBytes);
-            final Map<String, dynamic> data = jsonDecode(bodyStr);
-
-            final incomingPin = data['pin']?.toString();
-            if (incomingPin != _currentPin) {
-              request.response.statusCode = HttpStatus.unauthorized;
-              request.response.write(jsonEncode({'error': 'Invalid PIN'}));
-              await request.response.close();
-              return;
-            }
-
-            final incomingReminders = (data['reminders'] as List? ?? [])
-                .map((e) => Reminder.fromJson(e as Map<String, dynamic>))
-                .toList();
-
-            final db = await dbHelper.database;
-            for (final rem in incomingReminders) {
-              final existing = await db.query('Reminders', where: 'id = ?', whereArgs: [rem.id]);
-              if (existing.isEmpty) {
-                await db.insert('Reminders', rem.toJson());
-              } else {
-                // Keep the completed status if completed on either peer
-                final isExistingCompleted = (existing.first['is_completed'] as int?) == 1;
-                if (!isExistingCompleted && rem.isCompleted) {
-                  await db.update('Reminders', rem.toJson(), where: 'id = ?', whereArgs: [rem.id]);
-                }
-              }
-            }
-
-            onDataChanged?.call();
-
-            // Return all local reminders back to sender
-            final currentLocal = await db.query('Reminders');
-            request.response.headers.contentType = ContentType.json;
-            request.response.write(jsonEncode({
-              'status': 'success',
-              'reminders': currentLocal,
-            }));
-            await request.response.close();
-            return;
-          }
-
-          request.response.statusCode = HttpStatus.notFound;
-          await request.response.close();
-        } catch (e) {
-          debugPrint('LAN sync request handling error: $e');
-          request.response.statusCode = HttpStatus.internalServerError;
-          await request.response.close();
-        }
+      final server = await HttpServer.bind(_bindAddress, port);
+      _server = server;
+      _serverPort = server.port;
+      _accepting = _stopping == null;
+      server.listen((request) {
+        final handler = _handleRequest(request, dbHelper, onDataChanged);
+        _handlers.add(handler);
+        unawaited(handler.then<void>((_) => _handlers.remove(handler)));
       });
-
-      return LanSyncServerInfo(
-        isRunning: true,
-        ip: _localIp,
-        port: _serverPort,
-        pin: _currentPin,
-      );
+      return _serverInfo();
     } catch (e) {
-      debugPrint('Failed to start LAN sync server: $e');
       _server = null;
+      _accepting = false;
+      _currentPin = '';
       rethrow;
     }
   }
 
-  Future<void> stopServer() async {
-    if (_server != null) {
-      await _server!.close(force: true);
+  Future<void> _handleRequest(
+    HttpRequest request,
+    DatabaseHelper dbHelper,
+    VoidCallback? onDataChanged,
+  ) async {
+    try {
+      request.response.persistentConnection = false;
+      request.response.headers.add('Access-Control-Allow-Origin', '*');
+      request.response.headers.add(
+        'Access-Control-Allow-Methods',
+        'GET, POST, OPTIONS',
+      );
+      request.response.headers.add('Access-Control-Allow-Headers', '*');
+      if (!_accepting) {
+        await _respond(request, HttpStatus.serviceUnavailable, {
+          'error': 'Sync server is stopping',
+        });
+        return;
+      }
+      if (request.method == 'OPTIONS') {
+        await _respond(request, HttpStatus.ok, const {});
+        return;
+      }
+      if (request.uri.path == '/status' && request.method == 'GET') {
+        await _respond(request, HttpStatus.ok, {
+          'status': 'ok',
+          'hostname': Platform.localHostname,
+          'os': Platform.operatingSystem,
+        });
+        return;
+      }
+      if (request.uri.path != '/sync' || request.method != 'POST') {
+        await _respond(request, HttpStatus.notFound, const {});
+        return;
+      }
+
+      // Capture at admission, before waiting for even the request body. A body
+      // arriving after recovery must not be admitted against the new database.
+      final generation = dbHelper.captureGeneration();
+      final data = _decode(
+        await request
+            .cast<List<int>>()
+            .transform(utf8.decoder)
+            .join()
+            .timeout(const Duration(seconds: 30)),
+      );
+      if (data['pin']?.toString() != _currentPin) {
+        await _respond(request, HttpStatus.unauthorized, {
+          'error': 'Invalid PIN',
+        });
+        return;
+      }
+      final incoming = _reminders(data);
+      final current = await dbHelper.writeTransaction(generation, (
+        transaction,
+      ) async {
+        await _merge(transaction, incoming);
+        return transaction.query('Reminders');
+      });
+      dbHelper.checkGeneration(generation);
+      _notify(onDataChanged);
+      await _respond(request, HttpStatus.ok, {
+        'status': 'success',
+        'reminders': current,
+      });
+    } on DatabaseAccessException catch (error) {
+      await _respond(request, HttpStatus.serviceUnavailable, {
+        'error': 'Database unavailable for sync',
+        'code': error.code.name,
+      });
+    } on FormatException {
+      await _respond(request, HttpStatus.badRequest, {
+        'error': 'Invalid sync data',
+      });
+    } on TimeoutException {
+      await _respond(request, HttpStatus.requestTimeout, {
+        'error': 'Sync request timed out',
+      });
+    } catch (_) {
+      await _respond(request, HttpStatus.internalServerError, {
+        'error': 'Sync failed',
+      });
+    }
+  }
+
+  Future<void> _respond(
+    HttpRequest request,
+    int status,
+    Map<String, Object?> data,
+  ) async {
+    try {
+      request.response.statusCode = status;
+      request.response.headers.contentType = ContentType.json;
+      request.response.write(jsonEncode(data));
+      await request.response.close();
+    } catch (_) {
+      // A disconnected peer must not leave an unhandled handler Future behind.
+    }
+  }
+
+  Future<void> stopServer() {
+    _accepting = false;
+    return _stopping ??= _stopServer().whenComplete(() => _stopping = null);
+  }
+
+  Future<void> _stopServer() async {
+    try {
+      // Also drain a bind already requested by the UI before maintenance began.
+      try {
+        await _starting;
+      } catch (_) {}
+      final server = _server;
       _server = null;
+      await server?.close();
+      while (_handlers.isNotEmpty) {
+        await Future.wait(List<Future<void>>.of(_handlers));
+      }
+    } finally {
       _currentPin = '';
     }
   }
@@ -195,51 +255,99 @@ class LanSyncService {
     required DatabaseHelper dbHelper,
     VoidCallback? onDataChanged,
   }) async {
-    final client = HttpClient()..connectionTimeout = const Duration(seconds: 5);
+    HttpClient? client;
     try {
-      final db = await dbHelper.database;
-      final localRecords = await db.query('Reminders');
+      final generation = dbHelper.captureGeneration();
+      final localRecords = await dbHelper.read(
+        generation,
+        (db) => db.query('Reminders'),
+      );
+      dbHelper.checkGeneration(generation);
+      client = HttpClient()..connectionTimeout = const Duration(seconds: 5);
 
-      final uri = Uri.parse('http://$peerIp:$port/sync');
+      final uri = Uri(scheme: 'http', host: peerIp, port: port, path: '/sync');
       final request = await client.postUrl(uri);
       request.headers.contentType = ContentType.json;
-      
-      final payload = {
-        'pin': pin,
-        'reminders': localRecords,
-      };
+
+      final payload = {'pin': pin, 'reminders': localRecords};
       request.write(jsonEncode(payload));
-      final response = await request.close();
+      final response = await request.close().timeout(
+        const Duration(seconds: 30),
+      );
 
       if (response.statusCode == HttpStatus.ok) {
-        final respStr = await response.transform(utf8.decoder).join();
-        final Map<String, dynamic> data = jsonDecode(respStr);
-        final peerReminders = (data['reminders'] as List? ?? [])
-            .map((e) => Reminder.fromJson(e as Map<String, dynamic>))
-            .toList();
-
-        for (final rem in peerReminders) {
-          final existing = await db.query('Reminders', where: 'id = ?', whereArgs: [rem.id]);
-          if (existing.isEmpty) {
-            await db.insert('Reminders', rem.toJson());
-          } else {
-            final isExistingCompleted = (existing.first['is_completed'] as int?) == 1;
-            if (!isExistingCompleted && rem.isCompleted) {
-              await db.update('Reminders', rem.toJson(), where: 'id = ?', whereArgs: [rem.id]);
-            }
-          }
-        }
-
-        onDataChanged?.call();
+        final respStr = await response
+            .transform(utf8.decoder)
+            .join()
+            .timeout(const Duration(seconds: 30));
+        dbHelper.checkGeneration(generation);
+        final peerReminders = _reminders(_decode(respStr));
+        // The network exchange holds no database scope. Only this short atomic
+        // merge re-enters storage, using the original pre-network generation.
+        await dbHelper.writeTransaction(
+          generation,
+          (transaction) => _merge(transaction, peerReminders),
+        );
+        dbHelper.checkGeneration(generation);
+        _notify(onDataChanged);
         return true;
       } else {
         return false;
       }
-    } catch (e) {
-      debugPrint('Error syncing with peer $peerIp: $e');
+    } catch (_) {
       return false;
     } finally {
-      client.close();
+      client?.close(force: true);
+    }
+  }
+
+  static Map<String, dynamic> _decode(String value) {
+    final decoded = jsonDecode(value);
+    if (decoded is! Map<String, dynamic>) {
+      throw const FormatException('Invalid sync data');
+    }
+    return decoded;
+  }
+
+  static List<Reminder> _reminders(Map<String, dynamic> data) {
+    try {
+      return (data['reminders'] as List? ?? [])
+          .map((row) => Reminder.fromJson(row as Map<String, dynamic>))
+          .toList();
+    } catch (_) {
+      throw const FormatException('Invalid sync reminders');
+    }
+  }
+
+  static Future<void> _merge(
+    DatabaseExecutor db,
+    List<Reminder> incoming,
+  ) async {
+    for (final reminder in incoming) {
+      final existing = await db.query(
+        'Reminders',
+        where: 'id = ?',
+        whereArgs: [reminder.id],
+      );
+      if (existing.isEmpty) {
+        await db.insert('Reminders', reminder.toJson());
+      } else if (existing.first['is_completed'] != 1 && reminder.isCompleted) {
+        // Keep completed status if either peer completed this task.
+        await db.update(
+          'Reminders',
+          reminder.toJson(),
+          where: 'id = ?',
+          whereArgs: [reminder.id],
+        );
+      }
+    }
+  }
+
+  static void _notify(VoidCallback? callback) {
+    try {
+      callback?.call();
+    } catch (_) {
+      debugPrint('LAN sync completed; its UI refresh callback failed.');
     }
   }
 }

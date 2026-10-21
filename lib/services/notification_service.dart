@@ -18,11 +18,105 @@ class NotificationService {
   NotificationService.forTesting(
     this.flutterLocalNotificationsPlugin, {
     required this.usesNativeNotifications,
-  });
+    DateTime Function()? now,
+  }) : _now = now ?? DateTime.now;
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
   final bool usesNativeNotifications;
+  DateTime Function() _now = DateTime.now;
   Future<void>? _initialization;
+  bool _initialized = false;
+  bool _maintenance = false;
+  bool _maintenanceReady = false;
+  Future<void>? _pausing;
+  bool _strictFailures = false;
+  final Set<Future<void>> _operations = {};
+
+  bool get isPausedForMaintenance => _maintenance;
+
+  Future<void> _track(Future<void> Function() action) {
+    final result = Future<void>.sync(action);
+    late final Future<void> settled;
+    settled = result
+        .then<void>((_) {}, onError: (Object _, StackTrace __) {})
+        .whenComplete(() => _operations.remove(settled));
+    _operations.add(settled);
+    return result;
+  }
+
+  /// Stops timer delivery immediately, drains scheduling already in flight,
+  /// then cancels native requests. A plugin error deliberately leaves it paused.
+  Future<void> pauseForMaintenance() {
+    if (_strictFailures) {
+      return Future.error(
+        StateError('Notification rebuilding is in progress.'),
+      );
+    }
+    if (_pausing != null) return _pausing!;
+    _maintenance = true;
+    _maintenanceReady = false;
+    _invalidateTimers();
+    return _pausing = _drainAndCancelAll().whenComplete(() => _pausing = null);
+  }
+
+  Future<void> _drainAndCancelAll() async {
+    await Future.wait(List<Future<void>>.of(_operations));
+    await Future.wait(List<Future<void>>.of(_nativeOperations.values));
+    if (usesNativeNotifications) {
+      await flutterLocalNotificationsPlugin.cancelAll();
+    }
+    _maintenanceReady = true;
+  }
+
+  void _invalidateTimers() {
+    _revisions.clear();
+    _scheduledReminders.clear();
+    for (final timer in _activeTimers.values) {
+      timer.cancel();
+    }
+    _activeTimers.clear();
+  }
+
+  /// Caller supplies the final database state after commit or rollback. Errors
+  /// are observable here, unlike legacy best-effort UI notification requests.
+  Future<void> resumeFromReminders(Iterable<Reminder> reminders) async {
+    if (!_maintenance || !_maintenanceReady || _strictFailures) {
+      throw StateError('Notification maintenance is not ready to resume.');
+    }
+    _strictFailures = true;
+    try {
+      final startedAt = _now();
+      for (final reminder in reminders) {
+        if (!reminder.isCompleted &&
+            (reminder.triggerTime?.isAfter(startedAt) ?? false)) {
+          await _scheduleReminder(reminder);
+        }
+      }
+      _maintenance = false;
+      _maintenanceReady = false;
+      // Timers start only after the whole rebuild succeeds. An occurrence that
+      // became due while native scheduling was blocked is delivered once now.
+      for (final reminder in _scheduledReminders.values) {
+        _armTimer(reminder, _revisions[reminder.id]!);
+      }
+    } catch (_) {
+      _invalidateTimers();
+      _maintenanceReady = false;
+      if (usesNativeNotifications) {
+        try {
+          await flutterLocalNotificationsPlugin.cancelAll();
+          _maintenanceReady = true;
+        } catch (_) {
+          // The caller keeps recovery blocked and can retry reconciliation.
+        }
+      } else {
+        _maintenanceReady = true;
+      }
+      rethrow;
+    } finally {
+      _strictFailures = false;
+    }
+  }
 
   final Map<String, Timer> _activeTimers = {};
   final Map<String, int> _revisions = {};
@@ -52,19 +146,26 @@ class NotificationService {
   /// Reconcile future native requests when the session's focus policy changes.
   /// Timers remain active so suppressed due tasks can be recorded by the app.
   Future<void> reconcileNotificationPolicy() async {
+    if (_maintenance) return;
     await Future.wait(
       List<Reminder>.of(_scheduledReminders.values)
-          .where(
-            (r) =>
-                r.quadrantLevel >= 3 && r.triggerTime!.isAfter(DateTime.now()),
-          )
+          .where((r) => r.quadrantLevel >= 3 && r.triggerTime!.isAfter(_now()))
           .map(scheduleReminder),
     );
   }
 
   Stream<Reminder> get onReminderDue => _reminderDueController.stream;
 
-  Future<void> init() => _initialization ??= _initialize();
+  Future<void> init() {
+    if (_initialization != null) return _initialization!;
+    late final Future<void> pending;
+    pending = _initialize().whenComplete(() {
+      if (!_initialized && identical(_initialization, pending)) {
+        _initialization = null;
+      }
+    });
+    return _initialization = pending;
+  }
 
   Future<void> _initialize() async {
     try {
@@ -88,19 +189,33 @@ class NotificationService {
               macOS: initializationSettingsDarwin,
             );
 
-        await flutterLocalNotificationsPlugin.initialize(
+        final initialized = await flutterLocalNotificationsPlugin.initialize(
           initializationSettings,
           onDidReceiveNotificationResponse: (details) {
             // Handle notification tap
           },
         );
+        if (initialized == false) {
+          throw StateError('Native notification initialization failed.');
+        }
       }
+      _initialized = true;
     } catch (e) {
+      if (_strictFailures) rethrow;
       debugPrint('Notification init error: $e');
     }
   }
 
-  Future<void> scheduleReminder(Reminder reminder) async {
+  Future<void> scheduleReminder(Reminder reminder) {
+    if (_maintenance) {
+      return Future.error(
+        StateError('Notifications are paused for maintenance.'),
+      );
+    }
+    return _track(() => _scheduleReminder(reminder));
+  }
+
+  Future<void> _scheduleReminder(Reminder reminder) async {
     // Invalidate older schedules immediately, before cancellation or permission
     // requests yield. Native mutations for one task must also finish in order.
     final revision = ++_nextRevision;
@@ -123,11 +238,12 @@ class NotificationService {
     await init();
     if (_revisions[reminder.id] != revision) return;
 
-    final now = DateTime.now();
+    final now = _now();
     final difference = reminder.triggerTime!.difference(now);
 
     // If already overdue
     if (difference.isNegative) {
+      if (_maintenance) return;
       _scheduledReminders.remove(reminder.id);
       // If it passed within the last 30 seconds, fire it immediately
       if (difference.inSeconds > -30) {
@@ -137,12 +253,7 @@ class NotificationService {
     }
 
     // In-process timer for all platforms (vital on Windows)
-    _activeTimers[reminder.id] = Timer(difference, () {
-      if (_revisions[reminder.id] == revision) {
-        _scheduledReminders.remove(reminder.id);
-        fireReminderNow(reminder);
-      }
-    });
+    if (!_maintenance) _armTimer(reminder, revision);
 
     // Native mobile/Darwin scheduling if supported
     if (usesNativeNotifications && !isSuppressed(reminder)) {
@@ -225,12 +336,35 @@ class NotificationService {
           );
         });
       } catch (e) {
+        if (_strictFailures) rethrow;
         debugPrint('Mobile zonedSchedule error: $e');
       }
     }
   }
 
-  Future<void> cancelReminder(String id) async {
+  void _armTimer(Reminder reminder, int revision) {
+    final remaining = reminder.triggerTime!.difference(_now());
+    _activeTimers[reminder.id] = Timer(
+      remaining.isNegative ? Duration.zero : remaining,
+      () {
+        if (!_maintenance && _revisions[reminder.id] == revision) {
+          _scheduledReminders.remove(reminder.id);
+          fireReminderNow(reminder);
+        }
+      },
+    );
+  }
+
+  Future<void> cancelReminder(String id) {
+    if (_maintenance) {
+      return Future.error(
+        StateError('Notifications are paused for maintenance.'),
+      );
+    }
+    return _track(() => _cancelReminder(id));
+  }
+
+  Future<void> _cancelReminder(String id) async {
     _revisions.remove(id);
     _scheduledReminders.remove(id);
     _activeTimers.remove(id)?.cancel();
@@ -263,11 +397,18 @@ class NotificationService {
           id,
           () => flutterLocalNotificationsPlugin.cancel(id.hashCode),
         );
-      } catch (_) {}
+      } catch (_) {
+        if (_strictFailures) rethrow;
+      }
     }
   }
 
-  Future<void> fireReminderNow(Reminder reminder) async {
+  Future<void> fireReminderNow(Reminder reminder) {
+    if (_maintenance) return Future<void>.value();
+    return _track(() => _fireReminderNow(reminder));
+  }
+
+  Future<void> _fireReminderNow(Reminder reminder) async {
     _activeTimers.remove(reminder.id)?.cancel();
     _scheduledReminders.remove(reminder.id);
 

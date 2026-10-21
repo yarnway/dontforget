@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
+import '../data/database_helper.dart';
 import '../models/media_record.dart';
 import '../models/reminder.dart';
 import '../models/agent_models.dart';
@@ -52,9 +54,30 @@ final homeControllerProvider = StateNotifierProvider<HomeController, HomeState>(
 
 class HomeController extends StateNotifier<HomeState> {
   final Ref _ref;
+  final DatabaseHelper _database;
   final _audioRecorder = AudioRecorder();
+  final Future<XFile?> Function(ImageSource) _pickImage;
+  final Future<XFile?> Function() _pickVideo;
+  final Future<PlatformFile?> Function() _pickFile;
+  final Future<String> Function(String) _importFile;
+  final Map<Object, DataGeneration> _pending = {};
+  DataGeneration? _recordingGeneration;
 
-  HomeController(this._ref) : super(HomeState());
+  HomeController(
+    this._ref, {
+    Future<XFile?> Function(ImageSource)? pickImage,
+    Future<XFile?> Function()? pickVideo,
+    Future<PlatformFile?> Function()? pickFile,
+    Future<String> Function(String)? importFile,
+  }) : _database = _ref.read(databaseHelperProvider),
+       _pickImage =
+           pickImage ?? ((source) => ImagePicker().pickImage(source: source)),
+       _pickVideo =
+           pickVideo ??
+           (() => ImagePicker().pickVideo(source: ImageSource.gallery)),
+       _pickFile = pickFile ?? (() => FilePicker.pickFile(type: FileType.any)),
+       _importFile = importFile ?? LocalMediaStore().importFile,
+       super(HomeState());
 
   @override
   void dispose() {
@@ -62,117 +85,223 @@ class HomeController extends StateNotifier<HomeState> {
     super.dispose();
   }
 
-  Future<String> _saveFileToLocal(String tempPath) =>
-      LocalMediaStore().importFile(tempPath);
+  bool _isCurrent(DataGeneration generation) =>
+      mounted && _database.isCurrent(generation);
+
+  void _check(DataGeneration generation) {
+    _database.checkGeneration(generation);
+    if (!mounted) {
+      throw StateError('Input controller is no longer active.');
+    }
+  }
+
+  DataGeneration? _beginInput() {
+    if (!mounted) {
+      return null;
+    }
+    try {
+      return _database.captureGeneration();
+    } on DatabaseAccessException {
+      state = state.copyWith(error: '数据暂时不可用，请稍后重试。');
+      return null;
+    }
+  }
+
+  void _publishPendingCount() {
+    if (mounted) {
+      // Operation bookkeeping can settle after maintenance; only current work
+      // contributes to the new session, and no old result/error is published.
+      state = state.copyWith(
+        pendingTasksCount: _pending.values.where(_database.isCurrent).length,
+      );
+    }
+  }
+
+  Object _startPending(DataGeneration generation) {
+    _check(generation);
+    final operation = Object();
+    _pending[operation] = generation;
+    state = state.copyWith(error: null);
+    _publishPendingCount();
+    return operation;
+  }
+
+  void _finishPending(Object operation) {
+    _pending.remove(operation);
+    _publishPendingCount();
+  }
+
+  void _reportError(DataGeneration generation, String message) {
+    if (_isCurrent(generation)) {
+      state = state.copyWith(error: message);
+    }
+  }
+
+  void _launch(
+    DataGeneration generation,
+    Future<void> Function() action, {
+    required String failureMessage,
+    bool explainModelError = false,
+  }) {
+    final operation = _startPending(generation);
+    unawaited(
+      Future<void>(() async {
+        try {
+          _check(generation);
+          await action();
+        } catch (error) {
+          if (_isCurrent(generation)) {
+            final message = explainModelError
+                ? '$failureMessage: ${_ref.read(llmServiceProvider).formatErrorMessage(error)}'
+                : failureMessage;
+            _reportError(generation, message);
+          }
+        } finally {
+          _finishPending(operation);
+        }
+      }),
+    );
+  }
+
+  Future<String> _saveFileToLocal(String path, DataGeneration generation) =>
+      _database.runOperation(generation, () async {
+        _check(generation);
+        return _importFile(path);
+      });
+
+  Future<void> _saveTasks(
+    List<Reminder> tasks,
+    DataGeneration generation, {
+    String? recordId,
+  }) async {
+    for (final task in tasks) {
+      _check(generation);
+      final saved = recordId == null ? task : task.copyWith(recordId: recordId);
+      await _ref
+          .read(remindersProvider.notifier)
+          .addReminderForGeneration(saved, generation);
+      _check(generation);
+      final notifications = _ref.read(notificationServiceProvider);
+      await _database.runOperation(generation, () async {
+        _check(generation);
+        await notifications.scheduleReminder(saved);
+      });
+      _check(generation);
+    }
+  }
+
+  Future<String> _saveMedia(
+    String type,
+    String path,
+    DataGeneration generation,
+  ) async {
+    _check(generation);
+    final id = const Uuid().v4();
+    await _ref
+        .read(mediaRecordsProvider.notifier)
+        .addRecordForGeneration(
+          MediaRecord(
+            id: id,
+            type: type,
+            contentOrPath: path,
+            createdAt: DateTime.now(),
+          ),
+          generation,
+        );
+    _check(generation);
+    return id;
+  }
 
   Future<MultiAgentExecutionResult> processWithMultiAgent(
     String complexGoal,
+  ) async {
+    final generation = _database.captureGeneration();
+    return _processWithMultiAgent(complexGoal, generation);
+  }
+
+  Future<MultiAgentExecutionResult> _processWithMultiAgent(
+    String complexGoal,
+    DataGeneration generation,
   ) async {
     final trimmed = complexGoal.trim();
     if (trimmed.isEmpty) {
       throw Exception('目标内容不能为空');
     }
-
-    state = state.copyWith(
-      pendingTasksCount: state.pendingTasksCount + 1,
-      error: null,
-    );
-
+    final operation = _startPending(generation);
     try {
-      final multiAgentService = _ref.read(multiAgentServiceProvider);
+      final service = _ref.read(multiAgentServiceProvider);
       final settings = _ref.read(settingsProvider);
       final existingTasks = _ref.read(remindersProvider);
-      final notificationService = _ref.read(notificationServiceProvider);
-
-      final result = await multiAgentService.executePipeline(
+      final result = await service.executePipeline(
         trimmed,
         settings: settings,
         existingTasks: existingTasks,
       );
-
-      for (final task in result.scheduledTasks) {
-        await _ref.read(remindersProvider.notifier).addReminder(task);
-        await notificationService.scheduleReminder(task);
-      }
-
+      _check(generation);
+      await _saveTasks(result.scheduledTasks, generation);
       return result;
-    } catch (e) {
-      state = state.copyWith(error: '多智能体协同处理异常: $e');
+    } catch (error) {
+      _reportError(generation, '多智能体协同处理异常: $error');
       rethrow;
     } finally {
-      final remaining = (state.pendingTasksCount - 1).clamp(0, 999);
-      state = state.copyWith(pendingTasksCount: remaining);
+      _finishPending(operation);
     }
   }
 
   Future<void> processText(String text) async {
     final trimmed = text.trim();
-    if (trimmed.isEmpty) return;
-
-    // 支持通过 /agent 或 /goal 指令触发三智能体微型协作流水线
+    if (trimmed.isEmpty) {
+      return;
+    }
+    final generation = _beginInput();
+    if (generation == null) {
+      return;
+    }
     if (trimmed.startsWith('/agent ') || trimmed.startsWith('/goal ')) {
-      final goalContent = trimmed.replaceFirst(
-        RegExp(r'^/(agent|goal)\s+'),
-        '',
-      );
-      if (goalContent.isNotEmpty) {
+      final goal = trimmed.replaceFirst(RegExp(r'^/(agent|goal)\s+'), '');
+      if (goal.isNotEmpty) {
         try {
-          await processWithMultiAgent(goalContent);
-          return;
+          await _processWithMultiAgent(goal, generation);
         } catch (_) {
-          // Error already set in state
-          return;
+          // The same generation owns both the command and its error state.
         }
+        return;
       }
     }
-
-    // Immediately update background count so UI stays completely non-blocking
-    state = state.copyWith(
-      pendingTasksCount: state.pendingTasksCount + 1,
-      error: null,
-    );
-
-    // Saving locally without an AI account is a supported mode, not an error.
-    Future(() async {
-      try {
-        final settings = _ref.read(settingsProvider);
-        if (settings.apiKey.trim().isEmpty) {
-          await _saveLocalText(trimmed);
-          return;
-        }
-        final llmService = _ref.read(llmServiceProvider);
-        List<Reminder> tasks;
-        try {
-          tasks = await llmService.extractTasks(trimmed, settings);
-        } catch (e) {
-          await _saveLocalText(trimmed);
-          state = state.copyWith(
-            error: '${llmService.formatErrorMessage(e)}\n已保存为本地事项，请在详情中设置提醒时间。',
-          );
-          return;
-        }
-        if (tasks.isEmpty) {
-          await _saveLocalText(trimmed);
-        } else {
-          for (final task in tasks) {
-            await _ref.read(remindersProvider.notifier).addReminder(task);
-            await _ref.read(notificationServiceProvider).scheduleReminder(task);
-          }
-        }
-      } catch (_) {
-        // A storage failure must not be reported as a successful local fallback.
-        state = state.copyWith(error: '事项未能完整保存，请检查本地存储后重试。');
-      } finally {
-        final remaining = (state.pendingTasksCount - 1).clamp(0, 999);
-        state = state.copyWith(pendingTasksCount: remaining);
+    _launch(generation, () async {
+      final settings = _ref.read(settingsProvider);
+      if (settings.apiKey.trim().isEmpty) {
+        await _saveLocalText(trimmed, generation);
+        return;
       }
-    });
+      final service = _ref.read(llmServiceProvider);
+      List<Reminder> tasks;
+      try {
+        tasks = await service.extractTasks(trimmed, settings);
+      } catch (error) {
+        // A failed old request must not create a fallback in a restored DB.
+        _check(generation);
+        await _saveLocalText(trimmed, generation);
+        _reportError(
+          generation,
+          '${service.formatErrorMessage(error)}\n已保存为本地事项，请在详情中设置提醒时间。',
+        );
+        return;
+      }
+      _check(generation);
+      if (tasks.isEmpty) {
+        await _saveLocalText(trimmed, generation);
+      } else {
+        await _saveTasks(tasks, generation);
+      }
+    }, failureMessage: '事项未能完整保存，请检查本地存储后重试。');
   }
 
-  Future<void> _saveLocalText(String text) async {
+  Future<void> _saveLocalText(String text, DataGeneration generation) async {
+    _check(generation);
     await _ref
         .read(remindersProvider.notifier)
-        .addReminder(
+        .addReminderForGeneration(
           Reminder(
             id: const Uuid().v4(),
             taskTitle: text.length > 25 ? '${text.substring(0, 25)}...' : text,
@@ -180,42 +309,70 @@ class HomeController extends StateNotifier<HomeState> {
             quadrantLevel: 2,
             urgencyLevel: 'General',
             importanceLevel: 'Important',
-            // Parsing did not supply a time. Never invent a two-hour reminder.
           ),
+          generation,
         );
+    _check(generation);
   }
 
   Future<bool> startRecording() async {
+    final generation = _beginInput();
+    if (generation == null) {
+      return false;
+    }
+    var started = false;
     try {
-      if (await _audioRecorder.hasPermission()) {
-        final tempDir = await getTemporaryDirectory();
-        // On macOS this may be a bundle-specific cache directory that has not
-        // been created yet. AVFoundation can accept start and then fail to
-        // create the audio file asynchronously, leaving stop without a result.
+      final permitted = await _audioRecorder.hasPermission();
+      _check(generation);
+      if (!permitted) {
+        return false;
+      }
+      final tempDir = await getTemporaryDirectory();
+      _check(generation);
+      await _database.runOperation(generation, () async {
         await tempDir.create(recursive: true);
+        _check(generation);
         final path =
             '${tempDir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
         await _audioRecorder.start(const RecordConfig(), path: path);
-        state = state.copyWith(isRecording: true, error: null);
-        return true;
+        started = true;
+      });
+      _check(generation);
+      _recordingGeneration = generation;
+      state = state.copyWith(isRecording: true, error: null);
+      return true;
+    } catch (error) {
+      if (started) {
+        try {
+          await _audioRecorder.stop();
+        } catch (_) {}
       }
-    } catch (e) {
-      state = state.copyWith(error: '启动录音失败: $e');
+      _reportError(generation, '启动录音失败: $error');
+      return false;
     }
-    return false;
   }
 
   Future<void> stopRecordingAndProcess() async {
+    final generation = _recordingGeneration;
+    if (!mounted || !state.isRecording || generation == null) {
+      return;
+    }
+    _recordingGeneration = null;
     try {
-      if (state.isRecording) {
-        final path = await _audioRecorder.stop();
+      // Stopping an old native capture is cleanup; it never obtains a new data
+      // ticket. Its payload can only be processed under the original ticket.
+      final path = await _audioRecorder.stop();
+      if (mounted) {
         state = state.copyWith(isRecording: false);
-        if (path != null) {
-          _processAudio(path);
-        }
       }
-    } catch (e) {
-      state = state.copyWith(isRecording: false, error: '录音停止异常: $e');
+      if (path != null && _isCurrent(generation)) {
+        _processAudio(path, generation);
+      }
+    } catch (error) {
+      if (mounted) {
+        state = state.copyWith(isRecording: false);
+      }
+      _reportError(generation, '录音停止异常: $error');
     }
   }
 
@@ -227,241 +384,169 @@ class HomeController extends StateNotifier<HomeState> {
     }
   }
 
-  Future<void> _processAudio(String path) async {
-    state = state.copyWith(
-      pendingTasksCount: state.pendingTasksCount + 1,
-      error: null,
-    );
-    Future(() async {
-      try {
-        final savedPath = await _saveFileToLocal(path);
+  void _processAudio(String path, DataGeneration generation) {
+    _launch(
+      generation,
+      () async {
+        final savedPath = await _saveFileToLocal(path, generation);
+        _check(generation);
         final settings = _ref.read(settingsProvider);
-        final llmService = _ref.read(llmServiceProvider);
-        final notificationService = _ref.read(notificationServiceProvider);
-
-        final uuid = const Uuid().v4();
-        final mediaRecord = MediaRecord(
-          id: uuid,
-          type: 'audio',
-          contentOrPath: savedPath,
-          createdAt: DateTime.now(),
-        );
-        await _ref.read(mediaRecordsProvider.notifier).addRecord(mediaRecord);
-
+        final service = _ref.read(llmServiceProvider);
+        final id = await _saveMedia('audio', savedPath, generation);
         try {
-          final text = await llmService.transcribeAudio(savedPath, settings);
-          final tasks = await llmService.extractTasks(text, settings);
-
-          for (var task in tasks) {
-            final t = task.copyWith(recordId: uuid);
-            await _ref.read(remindersProvider.notifier).addReminder(t);
-            await notificationService.scheduleReminder(t);
-          }
-        } on AudioTranscriptionUnsupportedException catch (ex) {
-          // Graceful fallback for models without whisper (like DeepSeek)
+          final text = await service.transcribeAudio(savedPath, settings);
+          _check(generation);
+          final tasks = await service.extractTasks(text, settings);
+          _check(generation);
+          await _saveTasks(tasks, generation, recordId: id);
+        } on AudioTranscriptionUnsupportedException catch (error) {
+          _check(generation);
           final now = DateTime.now();
           final nowStr =
               '${now.month}月${now.day}日 ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-          final voiceReminder = Reminder(
-            id: const Uuid().v4(),
-            recordId: uuid,
-            taskTitle: '语音待办 ($nowStr)',
-            taskSummary: '原声录音已保存，点击左侧麦克风图标可随时回放',
-            quadrantLevel: 2,
-            urgencyLevel: 'General',
-            importanceLevel: 'Important',
-          );
           await _ref
               .read(remindersProvider.notifier)
-              .addReminder(voiceReminder);
+              .addReminderForGeneration(
+                Reminder(
+                  id: const Uuid().v4(),
+                  recordId: id,
+                  taskTitle: '语音待办 ($nowStr)',
+                  taskSummary: '原声录音已保存，点击左侧麦克风图标可随时回放',
+                  quadrantLevel: 2,
+                  urgencyLevel: 'General',
+                  importanceLevel: 'Important',
+                ),
+                generation,
+              );
+          _check(generation);
           if (settings.apiKey.trim().isNotEmpty) {
-            state = state.copyWith(error: '${ex.message} (已创建原声任务，请手动设置提醒时间)');
+            _reportError(generation, '${error.message} (已创建原声任务，请手动设置提醒时间)');
           }
         }
-      } catch (e) {
-        final friendlyMsg = _ref.read(llmServiceProvider).formatErrorMessage(e);
-        state = state.copyWith(error: '语音解析提示: $friendlyMsg');
-      } finally {
-        final remaining = (state.pendingTasksCount - 1).clamp(0, 999);
-        state = state.copyWith(pendingTasksCount: remaining);
-      }
-    });
+      },
+      failureMessage: '语音解析提示',
+      explainModelError: true,
+    );
   }
 
   Future<void> processImageWithSource(ImageSource source) async {
-    final picker = ImagePicker();
-    final xFile = await picker.pickImage(source: source);
-    if (xFile == null) return;
-
-    state = state.copyWith(
-      pendingTasksCount: state.pendingTasksCount + 1,
-      error: null,
-    );
-    Future(() async {
-      try {
-        final savedPath = await _saveFileToLocal(xFile.path);
-        final bytes = await File(savedPath).readAsBytes();
-        final base64Image = base64Encode(bytes);
-
-        final uuid = const Uuid().v4();
-        final mediaRecord = MediaRecord(
-          id: uuid,
-          type: 'image',
-          contentOrPath: savedPath,
-          createdAt: DateTime.now(),
-        );
-        await _ref.read(mediaRecordsProvider.notifier).addRecord(mediaRecord);
-
-        final settings = _ref.read(settingsProvider);
-        final llmService = _ref.read(llmServiceProvider);
-        final notificationService = _ref.read(notificationServiceProvider);
-
-        final tasks = await llmService.extractTasksFromImage(
-          base64Image,
-          settings,
-        );
-
-        for (var task in tasks) {
-          final t = task.copyWith(recordId: uuid);
-          await _ref.read(remindersProvider.notifier).addReminder(t);
-          await notificationService.scheduleReminder(t);
-        }
-      } catch (e) {
-        final friendlyMsg = _ref.read(llmServiceProvider).formatErrorMessage(e);
-        state = state.copyWith(error: '图片识别提示: $friendlyMsg');
-      } finally {
-        final remaining = (state.pendingTasksCount - 1).clamp(0, 999);
-        state = state.copyWith(pendingTasksCount: remaining);
-      }
-    });
-  }
-
-  Future<void> processImage() async {
-    await processImageWithSource(ImageSource.gallery);
-  }
-
-  Future<void> processFile() async {
+    final generation = _beginInput();
+    if (generation == null) {
+      return;
+    }
     try {
-      final file = await FilePicker.pickFile(type: FileType.any);
-      if (file == null || file.path == null) return;
-
-      final originalPath = file.path!;
-      final fileName = file.name;
-
-      state = state.copyWith(
-        pendingTasksCount: state.pendingTasksCount + 1,
-        error: null,
-      );
-
-      Future(() async {
-        try {
-          final savedPath = await _saveFileToLocal(originalPath);
-          final uuid = const Uuid().v4();
-          final mediaRecord = MediaRecord(
-            id: uuid,
-            type: 'file',
-            contentOrPath: savedPath,
-            createdAt: DateTime.now(),
-          );
-          await _ref.read(mediaRecordsProvider.notifier).addRecord(mediaRecord);
-
-          String fileContent = '';
-          try {
-            final f = File(savedPath);
-            final len = await f.length();
-            if (len < 500 * 1024) {
-              fileContent = await f.readAsString();
-            } else {
-              fileContent =
-                  '文档附件: $fileName (文件大小: ${(len / 1024).toStringAsFixed(1)} KB)';
-            }
-          } catch (_) {
-            fileContent = '文档附件: $fileName';
-          }
-
+      final selected = await _pickImage(source);
+      _check(generation);
+      if (selected == null) {
+        return;
+      }
+      _launch(
+        generation,
+        () async {
+          final savedPath = await _saveFileToLocal(selected.path, generation);
+          _check(generation);
+          final bytes = await File(savedPath).readAsBytes();
+          _check(generation);
+          final id = await _saveMedia('image', savedPath, generation);
           final settings = _ref.read(settingsProvider);
-          final llmService = _ref.read(llmServiceProvider);
-          final notificationService = _ref.read(notificationServiceProvider);
-
-          final tasks = await llmService.extractTasksFromFile(
-            fileName,
-            fileContent,
+          final service = _ref.read(llmServiceProvider);
+          final tasks = await service.extractTasksFromImage(
+            base64Encode(bytes),
             settings,
           );
+          _check(generation);
+          await _saveTasks(tasks, generation, recordId: id);
+        },
+        failureMessage: '图片识别提示',
+        explainModelError: true,
+      );
+    } catch (error) {
+      _reportError(generation, '图片选择失败: $error');
+    }
+  }
 
-          for (var task in tasks) {
-            final t = task.copyWith(recordId: uuid);
-            await _ref.read(remindersProvider.notifier).addReminder(t);
-            await notificationService.scheduleReminder(t);
+  Future<void> processImage() => processImageWithSource(ImageSource.gallery);
+
+  Future<void> processFile() async {
+    final generation = _beginInput();
+    if (generation == null) {
+      return;
+    }
+    try {
+      final file = await _pickFile();
+      _check(generation);
+      if (file == null || file.path == null) {
+        return;
+      }
+      _launch(
+        generation,
+        () async {
+          final savedPath = await _saveFileToLocal(file.path!, generation);
+          _check(generation);
+          final id = await _saveMedia('file', savedPath, generation);
+          String content;
+          try {
+            final saved = File(savedPath);
+            final length = await saved.length();
+            _check(generation);
+            content = length < 500 * 1024
+                ? await saved.readAsString()
+                : '文档附件: ${file.name} (文件大小: ${(length / 1024).toStringAsFixed(1)} KB)';
+          } catch (_) {
+            _check(generation);
+            content = '文档附件: ${file.name}';
           }
-        } catch (e) {
-          final friendlyMsg = _ref
+          _check(generation);
+          final settings = _ref.read(settingsProvider);
+          final tasks = await _ref
               .read(llmServiceProvider)
-              .formatErrorMessage(e);
-          state = state.copyWith(error: '文档解析提示: $friendlyMsg');
-        } finally {
-          final remaining = (state.pendingTasksCount - 1).clamp(0, 999);
-          state = state.copyWith(pendingTasksCount: remaining);
-        }
-      });
-    } catch (e) {
-      state = state.copyWith(error: '文件选择失败: $e');
+              .extractTasksFromFile(file.name, content, settings);
+          _check(generation);
+          await _saveTasks(tasks, generation, recordId: id);
+        },
+        failureMessage: '文档解析提示',
+        explainModelError: true,
+      );
+    } catch (error) {
+      _reportError(generation, '文件选择失败: $error');
     }
   }
 
   Future<void> processVideo() async {
+    final generation = _beginInput();
+    if (generation == null) {
+      return;
+    }
     try {
-      final picker = ImagePicker();
-      final xFile = await picker.pickVideo(source: ImageSource.gallery);
-      if (xFile == null) return;
-
-      state = state.copyWith(
-        pendingTasksCount: state.pendingTasksCount + 1,
-        error: null,
-      );
-
-      Future(() async {
-        try {
-          final savedPath = await _saveFileToLocal(xFile.path);
-          final uuid = const Uuid().v4();
-          final mediaRecord = MediaRecord(
-            id: uuid,
-            type: 'video',
-            contentOrPath: savedPath,
-            createdAt: DateTime.now(),
-          );
-          await _ref.read(mediaRecordsProvider.notifier).addRecord(mediaRecord);
-
+      final selected = await _pickVideo();
+      _check(generation);
+      if (selected == null) {
+        return;
+      }
+      _launch(
+        generation,
+        () async {
+          final savedPath = await _saveFileToLocal(selected.path, generation);
+          _check(generation);
+          final id = await _saveMedia('video', savedPath, generation);
           final settings = _ref.read(settingsProvider);
-          final llmService = _ref.read(llmServiceProvider);
-          final notificationService = _ref.read(notificationServiceProvider);
-
-          final tasks = await llmService.extractTasksFromVideo(
-            xFile.name,
-            settings,
-          );
-
-          for (var task in tasks) {
-            final t = task.copyWith(recordId: uuid);
-            await _ref.read(remindersProvider.notifier).addReminder(t);
-            await notificationService.scheduleReminder(t);
-          }
-        } catch (e) {
-          final friendlyMsg = _ref
+          final tasks = await _ref
               .read(llmServiceProvider)
-              .formatErrorMessage(e);
-          state = state.copyWith(error: '视频处理提示: $friendlyMsg');
-        } finally {
-          final remaining = (state.pendingTasksCount - 1).clamp(0, 999);
-          state = state.copyWith(pendingTasksCount: remaining);
-        }
-      });
-    } catch (e) {
-      state = state.copyWith(error: '视频选择失败: $e');
+              .extractTasksFromVideo(selected.name, settings);
+          _check(generation);
+          await _saveTasks(tasks, generation, recordId: id);
+        },
+        failureMessage: '视频处理提示',
+        explainModelError: true,
+      );
+    } catch (error) {
+      _reportError(generation, '视频选择失败: $error');
     }
   }
 
   void clearError() {
-    state = state.copyWith(error: null);
+    if (mounted) {
+      state = state.copyWith(error: null);
+    }
   }
 }

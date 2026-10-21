@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -8,12 +9,24 @@ import 'package:sqflite/sqflite.dart' as sqflite;
 import '../models/settings.dart';
 import '../models/legacy_credentials.dart';
 
+part 'database_access.dart';
+
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   Database? _database;
   Future<Database>? _opening;
   Future<void>? _backup;
   Future<void>? _closing;
+  _AccessState _accessState = _AccessState.ready;
+  int _generation = 0;
+  int _activeOperations = 0;
+  Completer<void>? _drained;
+  DatabaseMaintenanceLease? _maintenance;
+  Future<String>? _ownershipOpening;
+  String? _ownedDirectory;
+  RandomAccessFile? _ownershipLock;
+  static final Map<String, DatabaseHelper> _directoryOwners = {};
+  static final Object _operationZoneKey = Object();
   final String? _directory;
   final DatabaseFactory? _factory;
 
@@ -24,10 +37,195 @@ class DatabaseHelper {
     : _directory = directory,
       _factory = factory;
 
-  Future<Database> get database async {
-    if (_closing != null) await _closing;
+  /// Raw handles are only available on an explicitly isolated test helper.
+  @visibleForTesting
+  Future<Database> get database {
+    if (_directory == null) {
+      throw StateError('Use scoped database operations.');
+    }
+    return runOperation(captureGeneration(), _openDatabase);
+  }
+
+  DataGeneration captureGeneration() {
+    _checkReady();
+    return DataGeneration._(this, _generation);
+  }
+
+  bool isCurrent(DataGeneration generation) =>
+      _accessState == _AccessState.ready &&
+      identical(generation._owner, this) &&
+      generation._value == _generation;
+
+  void checkGeneration(DataGeneration generation) {
+    _checkReady();
+    if (!identical(generation._owner, this) ||
+        generation._value != _generation) {
+      throw const DatabaseAccessException(DatabaseAccessError.staleGeneration);
+    }
+  }
+
+  void _checkReady() {
+    if (_accessState == _AccessState.faulted) {
+      throw const DatabaseAccessException(DatabaseAccessError.faulted);
+    }
+    if (_accessState != _AccessState.ready) {
+      throw const DatabaseAccessException(DatabaseAccessError.maintenance);
+    }
+  }
+
+  /// Includes non-SQL side effects in maintenance draining without opening a DB.
+  Future<T> runOperation<T>(
+    DataGeneration generation,
+    Future<T> Function() operation,
+  ) {
+    final inherited = Zone.current[_operationZoneKey];
+    final nested =
+        inherited is _OperationAdmission &&
+        inherited.active &&
+        identical(inherited.helper, this) &&
+        identical(inherited.generation, generation);
+    if (!nested) checkGeneration(generation);
+    _activeOperations++;
+    final admission = _OperationAdmission(this, generation);
+    return runZoned(() async {
+      try {
+        return await operation();
+      } finally {
+        admission.active = false;
+        _activeOperations--;
+        if (_activeOperations == 0) {
+          _drained?.complete();
+          _drained = null;
+        }
+      }
+    }, zoneValues: {_operationZoneKey: admission});
+  }
+
+  Future<T> read<T>(
+    DataGeneration generation,
+    Future<T> Function(DatabaseExecutor) operation,
+  ) => runOperation(generation, () async {
+    final scope = _ScopedExecutor(await _openDatabase(), writable: false);
+    try {
+      return await operation(scope);
+    } finally {
+      await scope.finish();
+    }
+  });
+
+  Future<T> writeTransaction<T>(
+    DataGeneration generation,
+    Future<T> Function(Transaction) operation,
+  ) => runOperation(generation, () async {
+    final db = await _openDatabase();
+    return db.transaction((txn) async {
+      final scope = _ScopedExecutor(txn, writable: true);
+      try {
+        return await operation(scope);
+      } finally {
+        await scope.finish();
+      }
+    });
+  });
+
+  Future<void> _waitForOperations() {
+    if (_activeOperations == 0) return Future<void>.value();
+    return (_drained ??= Completer<void>()).future;
+  }
+
+  void _checkOutsideOperation() {
+    final admission = Zone.current[_operationZoneKey];
+    if (admission is _OperationAdmission &&
+        admission.active &&
+        identical(admission.helper, this)) {
+      throw StateError('Cannot drain a database operation from itself.');
+    }
+  }
+
+  Future<DatabaseMaintenanceLease> beginMaintenance() {
+    _checkOutsideOperation();
+    _checkReady();
+    _accessState = _AccessState.maintenance;
+    _generation++;
+    return _beginMaintenance();
+  }
+
+  Future<DatabaseMaintenanceLease> _beginMaintenance() async {
+    try {
+      await _waitForOperations();
+      final directory = await _acquireOwnership();
+      return _maintenance = DatabaseMaintenanceLease._(this, directory);
+    } catch (_) {
+      _accessState = _AccessState.faulted;
+      rethrow;
+    }
+  }
+
+  /// Obtains process ownership before startup inspects a recovery journal.
+  /// This does not open, initialize, or migrate the database.
+  Future<String> acquireOwnership() =>
+      runOperation(captureGeneration(), _acquireOwnership);
+
+  Future<String> _acquireOwnership() {
+    if (_ownedDirectory != null) return Future.value(_ownedDirectory!);
+    return _ownershipOpening ??= _lockDirectory().whenComplete(() {
+      _ownershipOpening = null;
+    });
+  }
+
+  Future<String> _lockDirectory() async {
+    final directory = await _getDatabaseDirectory();
+    final canonical = await Directory(directory).resolveSymbolicLinks();
+    if (_directoryOwners.containsKey(canonical)) {
+      throw const DatabaseAccessException(
+        DatabaseAccessError.ownedByAnotherProcess,
+      );
+    }
+    _directoryOwners[canonical] = this;
+    RandomAccessFile? handle;
+    try {
+      final lockFile = File(join(canonical, '.dontforget.owner.lock'));
+      final type = await FileSystemEntity.type(
+        lockFile.path,
+        followLinks: false,
+      );
+      if (type != FileSystemEntityType.notFound &&
+          type != FileSystemEntityType.file) {
+        throw const DatabaseAccessException(
+          DatabaseAccessError.ownedByAnotherProcess,
+        );
+      }
+      handle = await lockFile.open(mode: FileMode.append);
+      await handle.lock(FileLock.exclusive);
+      _ownershipLock = handle;
+      _ownedDirectory = canonical;
+      return canonical;
+    } catch (_) {
+      await handle?.close();
+      if (identical(_directoryOwners[canonical], this)) {
+        _directoryOwners.remove(canonical);
+      }
+      throw const DatabaseAccessException(
+        DatabaseAccessError.ownedByAnotherProcess,
+      );
+    }
+  }
+
+  Future<void> _releaseOwnership() async {
+    final directory = _ownedDirectory;
+    final handle = _ownershipLock;
+    if (handle == null) return;
+    await handle.close();
+    _ownershipLock = null;
+    _ownedDirectory = null;
+    if (identical(_directoryOwners[directory], this)) {
+      _directoryOwners.remove(directory);
+    }
+  }
+
+  Future<Database> _openDatabase({bool allowRecovery = false}) async {
     if (_database != null) return _database!;
-    final opening = _opening ??= _initDB('dont_forget_v3.db');
+    final opening = _opening ??= _initDB(allowRecovery: allowRecovery);
     try {
       return _database = await opening;
     } finally {
@@ -69,20 +267,27 @@ class DatabaseHelper {
     return await sqflite.getDatabasesPath();
   }
 
-  Future<Database> _initDB(String filePath) async {
+  void _initializeFactory() {
     // Initialize FFI for desktop platforms
     if (_factory == null &&
         (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
     }
+  }
 
-    final dbDir = await _getDatabaseDirectory();
+  Future<Database> _initDB({bool allowRecovery = false}) async {
+    _initializeFactory();
+    final dbDir = await _acquireOwnership();
+    if (!allowRecovery && await _hasRecoveryJournal(dbDir)) {
+      throw const DatabaseRecoveryRequiredException();
+    }
+    const filePath = 'dont_forget_v3.db';
     final targetPath = join(dbDir, filePath);
 
     // Auto-migrate legacy DB from previous development/relative path if target doesn't exist
     final targetFile = File(targetPath);
-    if (_directory == null && !targetFile.existsSync()) {
+    if (!allowRecovery && _directory == null && !targetFile.existsSync()) {
       try {
         final legacyDir = join(
           Directory.current.path,
@@ -110,18 +315,28 @@ class DatabaseHelper {
     );
   }
 
-  Future<void> createMirrorBackup() async {
-    if (_closing != null) return _closing;
-    return _backup ??= _createMirrorBackup().whenComplete(() => _backup = null);
+  static Future<bool> _hasRecoveryJournal(String directory) async =>
+      await FileSystemEntity.type(
+        join(directory, 'recovery.pending.json'),
+        followLinks: false,
+      ) !=
+      FileSystemEntityType.notFound;
+
+  Future<void> createMirrorBackup() {
+    final generation = captureGeneration();
+    return _backup ??= runOperation(
+      generation,
+      _createMirrorBackup,
+    ).whenComplete(() => _backup = null);
   }
 
   Future<void> _createMirrorBackup() async {
-    final db = await database;
+    final db = await _openDatabase();
     await _backupDatabase(db);
   }
 
   Future<void> _backupDatabase(Database db) async {
-    final dbDir = await _getDatabaseDirectory();
+    final dbDir = await _acquireOwnership();
     final mirrorPath = join(dbDir, 'dont_forget_v3.mirror.db');
     final snapshotPath = join(dbDir, 'ha_snapshot.json');
     final temporary = await Directory(dbDir).createTemp('backup-');
@@ -313,21 +528,54 @@ CREATE TABLE Reminders (
     }
   }
 
-  Future<void> close() {
-    return _closing ??= _close().whenComplete(() => _closing = null);
+  /// Normal shutdown creates the existing mirror backup unless explicitly
+  /// disabled by a caller such as a read-only CLI command.
+  Future<void> close({bool createBackup = true}) {
+    if (_closing != null) return _closing!;
+    _checkOutsideOperation();
+    if (_accessState == _AccessState.maintenance) {
+      throw const DatabaseAccessException(DatabaseAccessError.maintenance);
+    }
+    final wasFaulted = _accessState == _AccessState.faulted;
+    final pendingBackup = _backup;
+    _accessState = wasFaulted ? _AccessState.faulted : _AccessState.closing;
+    _generation++;
+    return _closing =
+        _close(
+          backup: createBackup && !wasFaulted,
+          pendingBackup: pendingBackup,
+        ).whenComplete(() {
+          _closing = null;
+          if (_accessState == _AccessState.closing) {
+            _accessState = _AccessState.ready;
+          }
+        });
   }
 
-  Future<void> _close() async {
-    // No database is opened just to close an unused helper.
+  Future<void> _close({
+    required bool backup,
+    required Future<void>? pendingBackup,
+  }) async {
     try {
-      if (_backup != null) await _backup;
-      if (_opening != null) _database = await _opening;
+      await _waitForOperations();
+      if (pendingBackup != null) await pendingBackup;
       final db = _database;
-      if (db != null) await _backupDatabase(db);
+      if (backup && db != null) await _backupDatabase(db);
     } finally {
-      final db = _database;
-      _database = null;
-      await db?.close();
+      try {
+        await _closeDatabase();
+        await _releaseOwnership();
+      } catch (_) {
+        _accessState = _AccessState.faulted;
+        rethrow;
+      }
     }
+  }
+
+  Future<void> _closeDatabase() async {
+    final db = _database;
+    if (db == null) return;
+    await db.close();
+    _database = null;
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/database_helper.dart';
@@ -19,60 +20,107 @@ final databaseHelperProvider = Provider<DatabaseHelper>((ref) {
   return DatabaseHelper.instance;
 });
 
-final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>((ref) {
+final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>((
+  ref,
+) {
   return SettingsNotifier(ref.read(databaseHelperProvider));
 });
 
 class SettingsNotifier extends StateNotifier<AppSettings> {
   final DatabaseHelper _dbHelper;
   late final Future<void> ready;
+  DataGeneration? _stateGeneration;
 
   SettingsNotifier(this._dbHelper) : super(AppSettings.defaults()) {
     ready = _loadSettings();
+    // A consumer may await ready later; still observe an early startup failure.
+    unawaited(ready.then<void>((_) {}, onError: (Object _, StackTrace __) {}));
   }
 
   Future<void> _loadSettings() async {
-    try {
-      final db = await _dbHelper.database;
-      final res = await db.query('Settings', where: 'id = ?', whereArgs: ['default']);
-      if (res.isNotEmpty && mounted) {
-        state = AppSettings.fromJson(res.first);
-      }
-    } catch (_) {
-      debugPrint('Settings could not be loaded; using unconfigured defaults.');
+    final generation = _dbHelper.captureGeneration();
+    final rows = await _dbHelper.read(
+      generation,
+      (db) => db.query('Settings', where: 'id = ?', whereArgs: ['default']),
+    );
+    _dbHelper.checkGeneration(generation);
+    _stateGeneration = generation;
+    if (rows.isNotEmpty && mounted) {
+      state = AppSettings.fromJson(rows.first);
     }
   }
 
   Future<void> updateSettings(AppSettings newSettings) async {
-    // Do not allow a delayed startup read to overwrite a user's saved values.
+    // Capture before waiting for startup: maintenance must not retarget a save.
+    final generation = _dbHelper.captureGeneration();
+    if (_stateGeneration != null) {
+      _dbHelper.checkGeneration(_stateGeneration!);
+    }
     await ready;
-    final db = await _dbHelper.database;
+    _dbHelper.checkGeneration(generation);
+    _dbHelper.checkGeneration(_stateGeneration!);
     final saved = newSettings.copyWith();
-    await db.transaction((txn) async {
+    await _dbHelper.writeTransaction(generation, (txn) async {
       await txn.delete('Settings', where: 'id = ?', whereArgs: ['default']);
       await txn.insert('Settings', {...saved.toJson(), 'id': 'default'});
     });
-    if (mounted) state = AppSettings.fromJson({...saved.toJson(), 'id': 'default'});
+    _dbHelper.checkGeneration(generation);
+    if (mounted) {
+      state = AppSettings.fromJson({...saved.toJson(), 'id': 'default'});
+    }
   }
 }
 
-final remindersProvider = StateNotifierProvider<RemindersNotifier, List<Reminder>>((ref) {
-  return RemindersNotifier(ref.read(databaseHelperProvider));
-});
+final remindersProvider =
+    StateNotifierProvider<RemindersNotifier, List<Reminder>>((ref) {
+      return RemindersNotifier(
+        ref.read(databaseHelperProvider),
+        notifications: ref.read(notificationServiceProvider),
+      );
+    });
 
 class RemindersNotifier extends StateNotifier<List<Reminder>> {
   final DatabaseHelper _dbHelper;
+  final NotificationService _notifications;
   late final Future<void> ready;
   Future<void> _operations = Future<void>.value();
+  DataGeneration? _stateGeneration;
 
-  RemindersNotifier(this._dbHelper) : super([]) {
-    ready = _enqueue(_loadReminders);
+  RemindersNotifier(this._dbHelper, {NotificationService? notifications})
+    : _notifications = notifications ?? NotificationService(),
+      super([]) {
+    ready = _enqueue(
+      (generation) => _loadReminders(generation, startup: true),
+      requiresCurrentState: false,
+    );
+    unawaited(ready.then<void>((_) {}, onError: (Object _, StackTrace __) {}));
   }
 
-  // Startup reads, refreshes and mutations share one order. A failed operation
-  // reaches its caller but does not prevent the next operation from running.
-  Future<T> _enqueue<T>(Future<T> Function() operation) {
-    final result = _operations.then((_) => operation());
+  // Capture at enqueue time, not when an older queued operation completes.
+  // Failed operations reach their caller without poisoning subsequent work.
+  Future<T> _enqueue<T>(
+    Future<T> Function(DataGeneration generation) operation, {
+    DataGeneration? generation,
+    bool requiresCurrentState = true,
+  }) async {
+    final ticket = generation ?? _dbHelper.captureGeneration();
+    _dbHelper.checkGeneration(ticket);
+    if (requiresCurrentState && _stateGeneration != null) {
+      _dbHelper.checkGeneration(_stateGeneration!);
+    }
+    final result = _operations.then((_) {
+      _dbHelper.checkGeneration(ticket);
+      if (requiresCurrentState) {
+        final stateGeneration = _stateGeneration;
+        if (stateGeneration == null) {
+          throw const DatabaseAccessException(
+            DatabaseAccessError.staleGeneration,
+          );
+        }
+        _dbHelper.checkGeneration(stateGeneration);
+      }
+      return operation(ticket);
+    });
     _operations = result.then<void>(
       (_) {},
       onError: (Object _, StackTrace __) {},
@@ -80,35 +128,64 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     return result;
   }
 
-  Future<void> _loadReminders() async {
+  Future<void> _loadReminders(
+    DataGeneration generation, {
+    bool startup = false,
+  }) async {
     try {
-      final db = await _dbHelper.database;
-      final res = await db.query('Reminders');
-      if (!mounted) return;
-      final list = res.map((r) => Reminder.fromJson(r)).toList();
+      final rows = await _dbHelper.read(
+        generation,
+        (db) => db.query('Reminders'),
+      );
+      _dbHelper.checkGeneration(generation);
+      if (!mounted) {
+        return;
+      }
+      final list = rows.map(Reminder.fromJson).toList();
+      _stateGeneration = generation;
       state = list;
       final now = DateTime.now();
       for (final reminder in list) {
+        _dbHelper.checkGeneration(generation);
+        if (!mounted) {
+          return;
+        }
         if (!reminder.isCompleted &&
             reminder.triggerTime != null &&
             reminder.triggerTime!.isAfter(now)) {
-          NotificationService().scheduleReminder(reminder);
+          await _dbHelper.runOperation(generation, () async {
+            _dbHelper.checkGeneration(generation);
+            await _notifications.scheduleReminder(reminder);
+          });
         }
       }
-      // Already inside the queue: do not enqueue and await ourselves.
-      await _applyDynamicUrgency();
-    } catch (e, stack) {
-      // A failed refresh or promotion must not erase already loaded tasks.
-      if (mounted) debugPrint('Warning: Reminders load error: $e\n$stack');
+      await _applyDynamicUrgency(generation);
+    } catch (error, stack) {
+      // Generation/maintenance failures must reach startup and mutation callers.
+      _dbHelper.checkGeneration(generation);
+      if (startup) {
+        rethrow;
+      }
+      if (mounted) {
+        debugPrint('Warning: Reminders load error: $error\n$stack');
+      }
     }
   }
 
-  Future<void> addReminder(Reminder reminder) => _enqueue(() async {
-    final db = await _dbHelper.database;
-    if (!mounted) return;
+  Future<void> addReminder(Reminder reminder) async {
+    final generation = _dbHelper.captureGeneration();
+    await addReminderForGeneration(reminder, generation);
+  }
+
+  Future<void> addReminderForGeneration(
+    Reminder reminder,
+    DataGeneration generation,
+  ) => _enqueue((ticket) async {
+    if (!mounted) {
+      return;
+    }
     Reminder toAdd = reminder;
     final replacements = <String, Reminder>{};
-
     if (toAdd.linkedTaskIds.isEmpty && state.isNotEmpty) {
       final suggestedIds = const BiDirectionalLinkService()
           .findSuggestedLinkedIds(toAdd, state);
@@ -124,8 +201,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         }
       }
     }
-
-    await db.transaction((txn) async {
+    await _dbHelper.writeTransaction(ticket, (txn) async {
       await txn.insert('Reminders', toAdd.toJson());
       for (final other in replacements.values) {
         await txn.update(
@@ -136,14 +212,26 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         );
       }
     });
+    _dbHelper.checkGeneration(ticket);
     if (mounted) {
       state = [for (final item in state) replacements[item.id] ?? item, toAdd];
     }
-  });
+  }, generation: generation);
 
-  Future<void> updateReminder(Reminder reminder) {
-    // Capture the requested field changes before waiting. This preserves an
-    // unrelated edit or promotion committed by an earlier queued operation.
+  Future<void> updateReminder(Reminder reminder) async {
+    final generation = _dbHelper.captureGeneration();
+    await updateReminderForGeneration(reminder, generation);
+  }
+
+  Future<void> updateReminderForGeneration(
+    Reminder reminder,
+    DataGeneration generation,
+  ) async {
+    _dbHelper.checkGeneration(generation);
+    if (_stateGeneration != null) {
+      _dbHelper.checkGeneration(_stateGeneration!);
+    }
+    // Preserve field changes requested before waiting behind another edit.
     final changes = reminder.toJson()..remove('id');
     if (mounted) {
       for (final existing in state) {
@@ -154,104 +242,120 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         }
       }
     }
-    return _enqueue(() async {
-      final db = await _dbHelper.database;
-      if (!mounted || changes.isEmpty) return;
+    await _enqueue((ticket) async {
+      if (!mounted || changes.isEmpty) {
+        return;
+      }
       final matches = state.where((item) => item.id == reminder.id);
-      if (matches.isEmpty) return;
+      if (matches.isEmpty) {
+        return;
+      }
       final updated = Reminder.fromJson({
         ...matches.first.toJson(),
         ...changes,
       });
-      final count = await db.update(
-        'Reminders',
-        changes,
-        where: 'id = ?',
-        whereArgs: [reminder.id],
+      final count = await _dbHelper.writeTransaction(
+        ticket,
+        (txn) => txn.update(
+          'Reminders',
+          changes,
+          where: 'id = ?',
+          whereArgs: [reminder.id],
+        ),
       );
+      _dbHelper.checkGeneration(ticket);
       if (mounted && count > 0) {
         state = [
           for (final item in state)
             if (item.id == reminder.id) updated else item,
         ];
       }
-    });
+    }, generation: generation);
   }
 
-  Future<void> linkTwoTasks(String id1, String id2) => _enqueue(() async {
-    if (id1 == id2) return;
-    final db = await _dbHelper.database;
-    if (!mounted) return;
-    final byId = {for (final item in state) item.id: item};
-    final task1 = byId[id1];
-    final task2 = byId[id2];
-    if (task1 == null || task2 == null) return;
-    final replacements = <String, Reminder>{
-      if (!task1.linkedTaskIds.contains(id2))
-        id1: task1.copyWith(linkedTaskIds: [...task1.linkedTaskIds, id2]),
-      if (!task2.linkedTaskIds.contains(id1))
-        id2: task2.copyWith(linkedTaskIds: [...task2.linkedTaskIds, id1]),
-    };
-    await db.transaction((txn) async {
-      for (final item in replacements.values) {
-        await txn.update(
-          'Reminders',
-          {'linked_task_ids': item.toJson()['linked_task_ids']},
-          where: 'id = ?',
-          whereArgs: [item.id],
-        );
-      }
-    });
-    if (mounted && replacements.isNotEmpty) {
-      state = [for (final item in state) replacements[item.id] ?? item];
-    }
-  });
+  Future<void> linkTwoTasks(String id1, String id2) =>
+      _enqueue((generation) async {
+        if (id1 == id2 || !mounted) {
+          return;
+        }
+        final byId = {for (final item in state) item.id: item};
+        final task1 = byId[id1], task2 = byId[id2];
+        if (task1 == null || task2 == null) {
+          return;
+        }
+        final replacements = <String, Reminder>{
+          if (!task1.linkedTaskIds.contains(id2))
+            id1: task1.copyWith(linkedTaskIds: [...task1.linkedTaskIds, id2]),
+          if (!task2.linkedTaskIds.contains(id1))
+            id2: task2.copyWith(linkedTaskIds: [...task2.linkedTaskIds, id1]),
+        };
+        await _dbHelper.writeTransaction(generation, (txn) async {
+          for (final item in replacements.values) {
+            await txn.update(
+              'Reminders',
+              {'linked_task_ids': item.toJson()['linked_task_ids']},
+              where: 'id = ?',
+              whereArgs: [item.id],
+            );
+          }
+        });
+        _dbHelper.checkGeneration(generation);
+        if (mounted && replacements.isNotEmpty) {
+          state = [for (final item in state) replacements[item.id] ?? item];
+        }
+      });
 
-  Future<void> unlinkTwoTasks(String id1, String id2) => _enqueue(() async {
-    final db = await _dbHelper.database;
-    if (!mounted) return;
-    final replacements = <String, Reminder>{};
-    for (final item in state) {
-      final otherId = item.id == id1 ? id2 : (item.id == id2 ? id1 : null);
-      if (otherId != null && item.linkedTaskIds.contains(otherId)) {
-        replacements[item.id] = item.copyWith(
-          linkedTaskIds: item.linkedTaskIds
-              .where((id) => id != otherId)
-              .toList(),
-        );
-      }
-    }
-    await db.transaction((txn) async {
-      for (final item in replacements.values) {
-        await txn.update(
-          'Reminders',
-          {'linked_task_ids': item.toJson()['linked_task_ids']},
-          where: 'id = ?',
-          whereArgs: [item.id],
-        );
-      }
-    });
-    if (mounted && replacements.isNotEmpty) {
-      state = [for (final item in state) replacements[item.id] ?? item];
-    }
-  });
+  Future<void> unlinkTwoTasks(String id1, String id2) =>
+      _enqueue((generation) async {
+        if (!mounted) {
+          return;
+        }
+        final replacements = <String, Reminder>{};
+        for (final item in state) {
+          final otherId = item.id == id1 ? id2 : (item.id == id2 ? id1 : null);
+          if (otherId != null && item.linkedTaskIds.contains(otherId)) {
+            replacements[item.id] = item.copyWith(
+              linkedTaskIds: item.linkedTaskIds
+                  .where((id) => id != otherId)
+                  .toList(),
+            );
+          }
+        }
+        await _dbHelper.writeTransaction(generation, (txn) async {
+          for (final item in replacements.values) {
+            await txn.update(
+              'Reminders',
+              {'linked_task_ids': item.toJson()['linked_task_ids']},
+              where: 'id = ?',
+              whereArgs: [item.id],
+            );
+          }
+        });
+        _dbHelper.checkGeneration(generation);
+        if (mounted && replacements.isNotEmpty) {
+          state = [for (final item in state) replacements[item.id] ?? item];
+        }
+      });
 
   Future<int> scanAndApplyDynamicUrgency() => _enqueue(_applyDynamicUrgency);
 
-  Future<int> _applyDynamicUrgency() async {
-    if (!mounted) return 0;
+  Future<int> _applyDynamicUrgency(DataGeneration generation) async {
+    _dbHelper.checkGeneration(generation);
+    if (!mounted) {
+      return 0;
+    }
     final original = state;
     final updatedList = const DynamicUrgencyService().evaluatePromotions(
       original,
     );
-    if (identical(updatedList, original)) return 0;
+    if (identical(updatedList, original)) {
+      return 0;
+    }
     final promoted = [
       for (var i = 0; i < updatedList.length; i++)
         if (!identical(updatedList[i], original[i])) updatedList[i],
     ];
-    final db = await _dbHelper.database;
-    if (!mounted) return 0;
-    await db.transaction((txn) async {
+    await _dbHelper.writeTransaction(generation, (txn) async {
       for (final item in promoted) {
         await txn.update(
           'Reminders',
@@ -265,56 +369,108 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         );
       }
     });
-    if (mounted) state = updatedList;
+    _dbHelper.checkGeneration(generation);
+    if (mounted) {
+      state = updatedList;
+    }
     return promoted.length;
   }
 
-  Future<void> deleteReminder(String id) => _enqueue(() async {
-    final db = await _dbHelper.database;
-    if (!mounted) return;
-    await db.delete('Reminders', where: 'id = ?', whereArgs: [id]);
-    if (mounted) state = state.where((r) => r.id != id).toList();
+  Future<void> deleteReminder(String id) => _enqueue((generation) async {
+    await _deleteReminder(id, generation);
   });
 
-  Future<int> clearCompletedReminders() => _enqueue(() async {
-    final db = await _dbHelper.database;
-    if (!mounted) return 0;
-    final count = await db.delete('Reminders', where: 'is_completed = 1');
-    if (mounted) state = state.where((r) => !r.isCompleted).toList();
+  Future<void> deleteReminderForGeneration(
+    String id,
+    DataGeneration generation,
+  ) =>
+      _enqueue((ticket) => _deleteReminder(id, ticket), generation: generation);
+
+  Future<void> _deleteReminder(String id, DataGeneration generation) async {
+    if (!mounted) {
+      return;
+    }
+    await _dbHelper.writeTransaction(
+      generation,
+      (txn) => txn.delete('Reminders', where: 'id = ?', whereArgs: [id]),
+    );
+    _dbHelper.checkGeneration(generation);
+    if (mounted) {
+      state = state.where((r) => r.id != id).toList();
+    }
+  }
+
+  Future<int> clearCompletedReminders() => _enqueue((generation) async {
+    if (!mounted) {
+      return 0;
+    }
+    final count = await _dbHelper.writeTransaction(
+      generation,
+      (txn) => txn.delete('Reminders', where: 'is_completed = 1'),
+    );
+    _dbHelper.checkGeneration(generation);
+    if (mounted) {
+      state = state.where((r) => !r.isCompleted).toList();
+    }
     return count;
   });
 
-  Future<void> refreshReminders() => _enqueue(_loadReminders);
+  Future<void> refreshReminders() =>
+      _enqueue(_loadReminders, requiresCurrentState: false);
 }
 
-final mediaRecordsProvider = StateNotifierProvider<MediaRecordsNotifier, List<MediaRecord>>((ref) {
-  return MediaRecordsNotifier(ref.read(databaseHelperProvider));
-});
+final mediaRecordsProvider =
+    StateNotifierProvider<MediaRecordsNotifier, List<MediaRecord>>((ref) {
+      return MediaRecordsNotifier(ref.read(databaseHelperProvider));
+    });
 
 class MediaRecordsNotifier extends StateNotifier<List<MediaRecord>> {
   final DatabaseHelper _dbHelper;
   late final Future<void> ready;
+  DataGeneration? _stateGeneration;
 
   MediaRecordsNotifier(this._dbHelper) : super([]) {
     ready = _loadRecords();
+    unawaited(ready.then<void>((_) {}, onError: (Object _, StackTrace __) {}));
   }
 
   Future<void> _loadRecords() async {
-    try {
-      final db = await _dbHelper.database;
-      final rows = await db.query('MediaRecords');
-      if (mounted) state = rows.map(MediaRecord.fromJson).toList();
-    } catch (error) {
-      debugPrint('Media records could not be loaded: $error');
+    final generation = _dbHelper.captureGeneration();
+    final rows = await _dbHelper.read(
+      generation,
+      (db) => db.query('MediaRecords'),
+    );
+    _dbHelper.checkGeneration(generation);
+    _stateGeneration = generation;
+    if (mounted) {
+      state = rows.map(MediaRecord.fromJson).toList();
     }
   }
 
   Future<void> addRecord(MediaRecord record) async {
-    // A late startup read must not replace a newly captured attachment.
+    final generation = _dbHelper.captureGeneration();
+    await addRecordForGeneration(record, generation);
+  }
+
+  Future<void> addRecordForGeneration(
+    MediaRecord record,
+    DataGeneration generation,
+  ) async {
+    _dbHelper.checkGeneration(generation);
+    if (_stateGeneration != null) {
+      _dbHelper.checkGeneration(_stateGeneration!);
+    }
     await ready;
-    final db = await _dbHelper.database;
-    await db.insert('MediaRecords', record.toJson());
-    if (mounted) state = [...state, record];
+    _dbHelper.checkGeneration(generation);
+    _dbHelper.checkGeneration(_stateGeneration!);
+    await _dbHelper.writeTransaction(
+      generation,
+      (txn) => txn.insert('MediaRecords', record.toJson()),
+    );
+    _dbHelper.checkGeneration(generation);
+    if (mounted) {
+      state = [...state, record];
+    }
   }
 }
 
@@ -341,7 +497,9 @@ final multiAgentServiceProvider = Provider<MultiAgentService>((ref) {
   );
 });
 
-final spacedRepetitionServiceProvider = Provider<SpacedRepetitionService>((ref) {
+final spacedRepetitionServiceProvider = Provider<SpacedRepetitionService>((
+  ref,
+) {
   return const SpacedRepetitionService();
 });
 
@@ -364,15 +522,18 @@ class ImmersiveModeNotifier extends StateNotifier<bool> {
   }
 }
 
-final immersiveModeProvider = StateNotifierProvider<ImmersiveModeNotifier, bool>((ref) {
-  return ImmersiveModeNotifier(ref.read(notificationServiceProvider));
-});
+final immersiveModeProvider =
+    StateNotifierProvider<ImmersiveModeNotifier, bool>((ref) {
+      return ImmersiveModeNotifier(ref.read(notificationServiceProvider));
+    });
 
 final dynamicUrgencyServiceProvider = Provider<DynamicUrgencyService>((ref) {
   return const DynamicUrgencyService();
 });
 
-final biDirectionalLinkServiceProvider = Provider<BiDirectionalLinkService>((ref) {
+final biDirectionalLinkServiceProvider = Provider<BiDirectionalLinkService>((
+  ref,
+) {
   return const BiDirectionalLinkService();
 });
 
@@ -382,16 +543,30 @@ final contextTriggerServiceProvider = Provider<ContextTriggerService>((ref) {
 
 class ContextProfileNotifier extends StateNotifier<ContextProfile> {
   final ContextTriggerService _service;
-  ContextProfileNotifier(this._service) : super(_service.currentProfile);
+  final DatabaseHelper _database;
+  final NotificationService _notifications;
+  ContextProfileNotifier(this._service, this._database, this._notifications)
+    : super(_service.currentProfile);
 
-  void setProfile(ContextProfile profile) {
-    _service.switchProfile(profile);
-    NotificationService().reconcileNotificationPolicy();
-    state = profile;
+  Future<void> setProfile(ContextProfile profile) async {
+    final generation = _database.captureGeneration();
+    await _database.runOperation(generation, () async {
+      _database.checkGeneration(generation);
+      _service.switchProfile(profile);
+      await _notifications.reconcileNotificationPolicy();
+    });
+    _database.checkGeneration(generation);
+    if (mounted) {
+      state = profile;
+    }
   }
 }
 
-final contextProfileProvider = StateNotifierProvider<ContextProfileNotifier, ContextProfile>((ref) {
-  return ContextProfileNotifier(ref.read(contextTriggerServiceProvider));
-});
-
+final contextProfileProvider =
+    StateNotifierProvider<ContextProfileNotifier, ContextProfile>((ref) {
+      return ContextProfileNotifier(
+        ref.read(contextTriggerServiceProvider),
+        ref.read(databaseHelperProvider),
+        ref.read(notificationServiceProvider),
+      );
+    });

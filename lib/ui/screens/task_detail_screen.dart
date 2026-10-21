@@ -1,4 +1,5 @@
 import '../widgets/inline_feedback.dart';
+import '../../data/database_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
@@ -28,6 +29,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   late String _selectedRecurrenceRule;
   late bool _isCompleted;
   late List<String> _linkedTaskIds;
+  DataGeneration? _editorGeneration;
   bool _isSaving = false;
   bool _isDeleting = false;
   bool get _isMutating => _isSaving || _isDeleting;
@@ -42,6 +44,11 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   @override
   void initState() {
     super.initState();
+    try {
+      _editorGeneration = ref.read(databaseHelperProvider).captureGeneration();
+    } on DatabaseAccessException {
+      // Opening during maintenance leaves the form readable but unable to save.
+    }
     _titleController = TextEditingController(text: widget.task.taskTitle);
     _summaryController = TextEditingController(
       text: widget.task.taskSummary ?? '',
@@ -211,18 +218,24 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     final feedback = InlineFeedback.of(context);
     setState(() => _isSaving = true);
     try {
-      await notifier.updateReminder(updatedTask);
-      if (!mounted) return;
-      final saved = ref
-          .read(remindersProvider)
-          .where((task) => task.id == updatedTask.id)
-          .firstOrNull;
-      if (saved == null) throw StateError('Task no longer exists');
-      await notifications.cancelReminder(saved.id);
-      if (!saved.isCompleted &&
-          (saved.triggerTime?.isAfter(DateTime.now()) ?? false)) {
-        await notifications.scheduleReminder(saved);
-      }
+      final database = ref.read(databaseHelperProvider);
+      final generation = _editorGeneration;
+      if (generation == null) throw StateError('Editor unavailable');
+      await database.runOperation(generation, () async {
+        await notifier.updateReminder(updatedTask);
+        if (!mounted) return;
+        final saved = ref
+            .read(remindersProvider)
+            .where((task) => task.id == updatedTask.id)
+            .firstOrNull;
+        if (saved == null) throw StateError('Task no longer exists');
+        await notifications.cancelReminder(saved.id);
+        if (!saved.isCompleted &&
+            (saved.triggerTime?.isAfter(DateTime.now()) ?? false)) {
+          await notifications.scheduleReminder(saved);
+        }
+      });
+      database.checkGeneration(generation);
       if (!mounted) return;
       feedback.showSnackBar(SnackBar(content: Text(l10n.get('save'))));
       setState(() => _isSaving = false);
@@ -257,8 +270,14 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     final feedback = InlineFeedback.of(context);
     setState(() => _isDeleting = true);
     try {
-      await notifier.deleteReminder(task.id);
-      await notifications.cancelReminder(task.id);
+      final database = ref.read(databaseHelperProvider);
+      final generation = _editorGeneration;
+      if (generation == null) throw StateError('Editor unavailable');
+      await database.runOperation(generation, () async {
+        await notifier.deleteReminder(task.id);
+        await notifications.cancelReminder(task.id);
+      });
+      database.checkGeneration(generation);
       if (feedback.mounted) {
         feedback.showSnackBar(
           SnackBar(
@@ -267,11 +286,13 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
               label: l10n.get('undo'),
               onPressed: () async {
                 try {
-                  await notifier.addReminder(task);
-                  if (!task.isCompleted &&
-                      (task.triggerTime?.isAfter(DateTime.now()) ?? false)) {
-                    await notifications.scheduleReminder(task);
-                  }
+                  await database.runOperation(generation, () async {
+                    await notifier.addReminder(task);
+                    if (!task.isCompleted &&
+                        (task.triggerTime?.isAfter(DateTime.now()) ?? false)) {
+                      await notifications.scheduleReminder(task);
+                    }
+                  });
                 } catch (_) {
                   if (feedback.mounted) {
                     feedback.showSnackBar(
@@ -448,6 +469,42 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     );
   }
 
+  Future<void> _changeLink(String otherId, {required bool remove}) async {
+    if (_isMutating) return;
+    final l10n = AppLocalizations.of(context);
+    setState(() => _isSaving = true);
+    try {
+      final database = ref.read(databaseHelperProvider);
+      final generation = _editorGeneration;
+      if (generation == null) throw StateError('Editor unavailable');
+      final notifier = ref.read(remindersProvider.notifier);
+      await database.runOperation(generation, () async {
+        if (remove) {
+          await notifier.unlinkTwoTasks(widget.task.id, otherId);
+        } else {
+          await notifier.linkTwoTasks(widget.task.id, otherId);
+        }
+      });
+      database.checkGeneration(generation);
+      if (!mounted) return;
+      setState(() {
+        if (remove) {
+          _linkedTaskIds.remove(otherId);
+        } else if (!_linkedTaskIds.contains(otherId)) {
+          _linkedTaskIds.add(otherId);
+        }
+      });
+    } catch (_) {
+      if (mounted) {
+        InlineFeedback.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.get('reminderUpdateFailed'))),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
   Widget _buildLinkedTaskChip(
     String linkedId,
     List<Reminder> allReminders,
@@ -505,14 +562,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
           ),
           const SizedBox(width: 6),
           InkWell(
-            onTap: () {
-              setState(() {
-                _linkedTaskIds.remove(linkedId);
-              });
-              ref
-                  .read(remindersProvider.notifier)
-                  .unlinkTwoTasks(widget.task.id, linkedId);
-            },
+            onTap: () => _changeLink(linkedId, remove: true),
             child: const Icon(Icons.close, size: 14, color: Colors.grey),
           ),
         ],
@@ -557,14 +607,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                           item.taskTitle,
                           style: const TextStyle(fontSize: 13),
                         ),
-                        onTap: () {
+                        onTap: () async {
                           Navigator.pop(ctx);
-                          setState(() {
-                            _linkedTaskIds.add(item.id);
-                          });
-                          ref
-                              .read(remindersProvider.notifier)
-                              .linkTwoTasks(widget.task.id, item.id);
+                          await _changeLink(item.id, remove: false);
                         },
                       );
                     },
