@@ -391,14 +391,27 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
   Future<ReminderActionResult> addReminderForGeneration(
     Reminder reminder,
     DataGeneration generation,
-  ) => _enqueue(
+  ) => _insertReminderForGeneration(reminder, generation, suggestLinks: true);
+
+  /// Undo restores the saved row without treating it as newly authored content.
+  /// The deletion generation also prevents old Undo actions crossing recovery.
+  Future<ReminderActionResult> restoreDeletedReminder(
+    Reminder reminder,
+    DataGeneration generation,
+  ) => _insertReminderForGeneration(reminder, generation, suggestLinks: false);
+
+  Future<ReminderActionResult> _insertReminderForGeneration(
+    Reminder reminder,
+    DataGeneration generation, {
+    required bool suggestLinks,
+  }) => _enqueue(
     (ticket) => _dbHelper.runOperation(ticket, () async {
       if (!mounted) {
         throw StateError('Reminder state is no longer active.');
       }
       Reminder toAdd = reminder;
       final replacements = <String, Reminder>{};
-      if (toAdd.linkedTaskIds.isEmpty && state.isNotEmpty) {
+      if (suggestLinks && toAdd.linkedTaskIds.isEmpty && state.isNotEmpty) {
         final suggestedIds = const BiDirectionalLinkService()
             .findSuggestedLinkedIds(toAdd, state);
         if (suggestedIds.isNotEmpty) {

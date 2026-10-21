@@ -288,7 +288,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 try {
                   final restored = await database.runOperation(
                     generation,
-                    () => notifier.addReminder(deleted),
+                    () => notifier.restoreDeletedReminder(deleted, generation),
                   );
                   if (restored.nativeSyncFailed && feedback.mounted) {
                     feedback.showSnackBar(

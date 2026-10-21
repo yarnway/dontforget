@@ -145,7 +145,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
               try {
                 final restored = await database.runOperation(
                   generation,
-                  () => notifier.addReminder(deleted),
+                  () => notifier.restoreDeletedReminder(deleted, generation),
                 );
                 if (restored.nativeSyncFailed && feedback.mounted) {
                   feedback.showSnackBar(

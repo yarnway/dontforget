@@ -31,6 +31,11 @@ class _ObservedRemindersNotifier extends RemindersNotifier {
   Future<ReminderActionResult> addReminder(Reminder task) =>
       _observe(super.addReminder(task));
   @override
+  Future<ReminderActionResult> restoreDeletedReminder(
+    Reminder task,
+    DataGeneration generation,
+  ) => _observe(super.restoreDeletedReminder(task, generation));
+  @override
   Future<ReminderActionResult> updateReminder(
     Reminder task, {
     Reminder? baseline,

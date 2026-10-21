@@ -377,9 +377,64 @@ void main() {
       original.copyWith(taskTitle: 'Latest content'),
     );
     final deleted = await current.deleteReminder(original.id);
-    await current.addReminder(deleted.reminder!);
+    await current.restoreDeletedReminder(
+      deleted.reminder!,
+      helper.captureGeneration(),
+    );
     expect(native.scheduled.last.taskTitle, 'Latest content');
     expect((await saved('undo')).taskTitle, 'Latest content');
+  });
+
+  for (final linked in [false, true]) {
+    test(
+      'undo preserves saved relationships and other rows (linked=$linked)',
+      () async {
+        final original = task('restore').copyWith(
+          taskTitle: 'Shared synthetic acceptance content',
+          linkedTaskIds: linked ? ['peer'] : [],
+        );
+        final peer = task('peer').copyWith(
+          taskTitle: 'Shared synthetic acceptance content',
+          linkedTaskIds: linked ? [original.id] : [],
+        );
+        await database.insert('Reminders', original.toJson());
+        await database.insert('Reminders', peer.toJson());
+        final current = await load();
+        final generation = helper.captureGeneration();
+        final deleted = await current.deleteReminder(original.id);
+        final restored = await current.restoreDeletedReminder(
+          deleted.reminder!,
+          generation,
+        );
+        expect(restored.reminder!.toJson(), original.toJson());
+        expect((await saved(original.id)).toJson(), original.toJson());
+        expect((await saved(peer.id)).toJson(), peer.toJson());
+        expect(native.scheduled.single.toJson(), original.toJson());
+      },
+    );
+  }
+
+  test('undo from an earlier dataset cannot insert or schedule', () async {
+    final current = await load();
+    final original = task('old-undo');
+    await current.addReminder(original);
+    final generation = helper.captureGeneration();
+    final deleted = await current.deleteReminder(original.id);
+    native.scheduled.clear();
+    final lease = await helper.beginMaintenance();
+    await lease.resume();
+    await expectLater(
+      current.restoreDeletedReminder(deleted.reminder!, generation),
+      throwsA(
+        isA<DatabaseAccessException>().having(
+          (e) => e.code,
+          'code',
+          DatabaseAccessError.staleGeneration,
+        ),
+      ),
+    );
+    expect(await database.query('Reminders'), isEmpty);
+    expect(native.scheduled, isEmpty);
   });
 
   test(
