@@ -10,6 +10,37 @@ class AppLocalizations {
 
   static const Map<String, Map<String, String>> _localizedValues = {
     'en': {
+      'notificationPermissionTitle': 'System notifications',
+      'notificationPermissionChecking': 'Checking permission…',
+      'notificationPermissionGranted': 'Allowed',
+      'notificationPermissionProvisional': 'Quiet notifications allowed',
+      'notificationPermissionNotEnabled':
+          'Not enabled (not yet allowed or turned off)',
+      'notificationPermissionUnknown': 'Status unavailable',
+      'notificationPermissionUnsupported':
+          'System permission query unavailable',
+      'notificationPermissionHint':
+          'Allow notifications here. If previously denied, enable them in system notification settings and refresh. Permission does not confirm delivery.',
+      'notificationPermissionUnsupportedHint':
+          'This platform currently uses in-app reminders. Keep the app running to receive them.',
+      'notificationPermissionPresentationHint':
+          'System banners or sounds may be off. Review notification settings if needed.',
+      'notificationPermissionRequestFailed':
+          'Could not request permission. Try again or check system settings.',
+      'notificationPermissionRequest': 'Allow notifications',
+      'notificationPermissionRefresh': 'Refresh status',
+      'notificationExactAlarmTitle': 'Precise reminders',
+      'notificationExactAlarmHint':
+          'Android uses this access for precise scheduling. Without it, reminders may fail to schedule or be delayed.',
+      'notificationExactAlarmRequest': 'Allow precise reminders',
+      'notificationRetryReminders': 'Retry reminder scheduling',
+      'notificationRetryFinished':
+          'Processed {total} reminder schedules. Delivery still depends on system permissions and policies.',
+      'notificationRetryPartial':
+          '{failed} of {total} reminder schedules still failed. Check permissions and try again.',
+      'notificationRetryEmpty': 'No reminder schedules need updating.',
+      'notificationRetryFailed':
+          'Could not finish retrying. Wait for data recovery to finish, then try again.',
       'localInputHint': 'Local note · reminder in details',
       'upcomingReminder': 'Due soon',
       'upcomingReminderHint':
@@ -187,8 +218,10 @@ class AppLocalizations {
       'snooze5Min': 'Snooze 5 Min',
       'iKnow': 'Got it',
       'snoozeSuccess': 'Postponed for 5 minutes',
-      'reminderNativeSyncFailed': 'Saved, but system reminders could not be updated. Check notification permissions and save the task again.',
-      'reminderOccurrenceChanged': 'This reminder has changed. Please use its current state.',
+      'reminderNativeSyncFailed':
+          'Saved, but system reminders could not be updated. Check notification permissions and save the task again.',
+      'reminderOccurrenceChanged':
+          'This reminder has changed. Please use its current state.',
       'taskCompleted': 'Task marked as completed',
       'playingAudio': 'Playing voice note...',
       'playOrPreview': 'Play / preview attachment',
@@ -407,6 +440,28 @@ class AppLocalizations {
       'viewInGraph': 'View in Graph',
     },
     'zh': {
+      'notificationPermissionTitle': '系统通知',
+      'notificationPermissionChecking': '正在查询权限…',
+      'notificationPermissionGranted': '已允许',
+      'notificationPermissionProvisional': '已允许静默通知',
+      'notificationPermissionNotEnabled': '未开启（尚未授权或已关闭）',
+      'notificationPermissionUnknown': '状态暂不可用',
+      'notificationPermissionUnsupported': '无法查询系统通知权限',
+      'notificationPermissionHint':
+          '可在这里请求通知权限。若此前已拒绝，请在系统通知设置中开启后刷新。权限允许不代表通知已送达。',
+      'notificationPermissionUnsupportedHint': '此平台目前使用应用内提醒，请保持应用运行。',
+      'notificationPermissionPresentationHint': '系统横幅或声音可能已关闭，可按需在系统通知设置中调整。',
+      'notificationPermissionRequestFailed': '无法请求权限，请重试或检查系统设置。',
+      'notificationPermissionRequest': '允许通知',
+      'notificationPermissionRefresh': '刷新状态',
+      'notificationExactAlarmTitle': '精确提醒',
+      'notificationExactAlarmHint': 'Android 使用此权限按时安排提醒；未开启时可能无法安排或发生延迟。',
+      'notificationExactAlarmRequest': '允许精确提醒',
+      'notificationRetryReminders': '重新安排提醒',
+      'notificationRetryFinished': '已处理 {total} 项提醒安排，实际送达仍受系统权限和策略影响。',
+      'notificationRetryPartial': '{total} 项提醒安排中仍有 {failed} 项失败，请检查权限后重试。',
+      'notificationRetryEmpty': '没有需要更新的提醒安排。',
+      'notificationRetryFailed': '未能完成重试。如正在恢复数据，请等待完成后再试。',
       'localInputHint': '本地记录 · 详情设提醒',
       'upcomingReminder': '即将到期',
       'upcomingReminderHint': '5 分钟内到期 · 应用打开时在此提前提示',
@@ -752,6 +807,34 @@ class AppLocalizations {
       'viewInGraph': '在图谱中定位',
     },
     'ja': {
+      'notificationPermissionTitle': 'システム通知',
+      'notificationPermissionChecking': '権限を確認中…',
+      'notificationPermissionGranted': '許可済み',
+      'notificationPermissionProvisional': '静かな通知を許可済み',
+      'notificationPermissionNotEnabled': '未有効（未許可またはオフ）',
+      'notificationPermissionUnknown': '状態を取得できません',
+      'notificationPermissionUnsupported': 'システム権限を照会できません',
+      'notificationPermissionHint':
+          'ここで通知を許可できます。拒否済みの場合はシステムの通知設定で有効にして更新してください。許可は配信完了を意味しません。',
+      'notificationPermissionUnsupportedHint':
+          'このプラットフォームでは現在アプリ内のリマインダーを使用します。アプリを起動したままにしてください。',
+      'notificationPermissionPresentationHint':
+          'システムのバナーや音がオフの場合があります。必要に応じて通知設定を確認してください。',
+      'notificationPermissionRequestFailed':
+          '権限を要求できませんでした。再試行するかシステム設定を確認してください。',
+      'notificationPermissionRequest': '通知を許可',
+      'notificationPermissionRefresh': '状態を更新',
+      'notificationExactAlarmTitle': '正確なリマインダー',
+      'notificationExactAlarmHint':
+          'Android で正確に予定するために使います。未許可の場合、予定できないか遅れることがあります。',
+      'notificationExactAlarmRequest': '正確な通知を許可',
+      'notificationRetryReminders': 'リマインダーを再設定',
+      'notificationRetryFinished':
+          '{total} 件の通知予定を処理しました。配信はシステムの権限や設定に左右されます。',
+      'notificationRetryPartial':
+          '{total} 件中 {failed} 件の通知予定が失敗しました。権限を確認して再試行してください。',
+      'notificationRetryEmpty': '更新が必要な通知予定はありません。',
+      'notificationRetryFailed': '再試行を完了できませんでした。データ復元中の場合は完了後に再試行してください。',
       'localInputHint': 'メモ · 詳細で通知を設定',
       'upcomingReminder': 'まもなく期限',
       'upcomingReminderHint': '5 分以内に期限 · アプリ使用中にここで事前表示',
@@ -904,7 +987,8 @@ class AppLocalizations {
       'snooze5Min': '5分後再通知',
       'iKnow': '了解',
       'snoozeSuccess': '5分延期しました',
-      'reminderNativeSyncFailed': '保存しましたが、システム通知を更新できませんでした。通知権限を確認してタスクを再保存してください。',
+      'reminderNativeSyncFailed':
+          '保存しましたが、システム通知を更新できませんでした。通知権限を確認してタスクを再保存してください。',
       'reminderOccurrenceChanged': 'このリマインダーは変更されました。最新の状態で操作してください。',
       'taskCompleted': 'タスクを完了にしました',
       'playingAudio': '音声録音を再生中...',

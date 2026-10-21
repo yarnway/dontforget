@@ -43,6 +43,8 @@ class _Native implements FlutterLocalNotificationsPlugin {
       case #cancel:
         pending.remove(call.positionalArguments[0]);
         return Future<void>.value();
+      case #getNotificationAppLaunchDetails:
+        return Future<NotificationAppLaunchDetails?>.value();
       case #cancelAll:
         cancellations++;
         if (failCancelAll) {

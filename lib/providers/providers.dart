@@ -119,7 +119,8 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     this._dbHelper, {
     NotificationService? notifications,
     bool runLoadEffects = true,
-  }) : _notifications = notifications ?? NotificationService(),
+  }) : _notifications =
+           notifications ?? NotificationService.forDatabase(_dbHelper),
        super([]) {
     ready = _enqueue(
       (generation) =>
@@ -220,6 +221,57 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     final generation = _dbHelper.captureGeneration();
     await addReminderForGeneration(reminder, generation);
   }
+
+  /// Explicitly reconcile saved occurrences after permission or native errors.
+  /// This does not edit tasks, acknowledge past occurrences, or request access.
+  Future<({int attempted, int failed})> retryNotificationDelivery({
+    DateTime? now,
+  }) => _enqueue(
+    (generation) => _dbHelper.runOperation(generation, () async {
+      void checkCurrent() {
+        _dbHelper.checkGeneration(generation);
+        if (!mounted) throw StateError('Reminder state is no longer active.');
+        if (_notifications.isPausedForMaintenance) {
+          throw StateError('Notification recovery is in progress.');
+        }
+      }
+
+      checkCurrent();
+      final rows = await _dbHelper.read(
+        generation,
+        (db) => db.query('Reminders'),
+      );
+      checkCurrent();
+      var attempted = 0;
+      var failed = 0;
+      for (final row in rows) {
+        checkCurrent();
+        final reminder = Reminder.fromJson(row);
+        final cancel =
+            reminder.isCompleted ||
+            reminder.noticeAcknowledgedAt != null ||
+            reminder.triggerTime == null;
+        // Existing overdue notices remain available. Retrying must not replay
+        // them, erase their delivered banner, or persist an acknowledgement.
+        if (!cancel && !reminder.triggerTime!.isAfter(now ?? DateTime.now())) {
+          continue;
+        }
+        attempted++;
+        try {
+          if (cancel) {
+            await _notifications.cancelReminderStrict(reminder.id);
+          } else {
+            await _notifications.scheduleReminderStrict(reminder);
+          }
+        } catch (_) {
+          failed++;
+        }
+        // Recovery/disposal is not a native failure to collect and continue.
+        checkCurrent();
+      }
+      return (attempted: attempted, failed: failed);
+    }),
+  );
 
   Future<void> addReminderForGeneration(
     Reminder reminder,
@@ -741,7 +793,7 @@ final llmServiceProvider = Provider<LLMService>((ref) {
 });
 
 final notificationServiceProvider = Provider<NotificationService>((ref) {
-  return NotificationService();
+  return NotificationService.forDatabase(ref.read(databaseHelperProvider));
 });
 
 final lanSyncServiceProvider = Provider<LanSyncService>((ref) {

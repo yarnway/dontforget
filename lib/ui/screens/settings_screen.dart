@@ -1,4 +1,5 @@
 import '../widgets/inline_feedback.dart';
+import '../widgets/notification_permission_panel.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -602,6 +603,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                   ),
 
+                  const SizedBox(height: 14),
+
+                  NotificationPermissionPanel(
+                    onRetryReminders: () => ref
+                        .read(remindersProvider.notifier)
+                        .retryNotificationDelivery(),
+                  ),
                   const SizedBox(height: 14),
 
                   // Language Setting

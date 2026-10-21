@@ -30,6 +30,10 @@ class _ConsoleLauncher extends ConsoleUrlLauncher {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  const notificationsChannel = MethodChannel(
+    'dexterous.com/flutter/local_notifications',
+  );
   test('desktop console commands await the actual process result', () async {
     const url = 'https://platform.deepseek.com/api_keys';
     for (final entry in {
@@ -95,9 +99,32 @@ void main() {
     late ProviderContainer container;
     late _PendingProbe probe;
     late _ConsoleLauncher launcher;
+    final notificationCalls = <String>[];
     final l10n = AppLocalizations(const Locale('en'));
 
     setUp(() async {
+      notificationCalls.clear();
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(notificationsChannel, (call) async {
+            notificationCalls.add(call.method);
+            switch (call.method) {
+              case 'areNotificationsEnabled':
+              case 'canScheduleExactNotifications':
+                return true;
+              case 'checkPermissions':
+                return {
+                  'isEnabled': true,
+                  'isAlertEnabled': true,
+                  'isSoundEnabled': true,
+                  'isBadgeEnabled': true,
+                  'isProvisionalEnabled': false,
+                };
+              default:
+                throw UnsupportedError(
+                  'Unexpected notification call: ${call.method}',
+                );
+            }
+          });
       sqfliteFfiInit();
       directory = await Directory.systemTemp.createTemp('settings-lifecycle-');
       database = DatabaseHelper.forTesting(directory.path, databaseFactoryFfi);
@@ -114,6 +141,8 @@ void main() {
     });
 
     tearDown(() async {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(notificationsChannel, null);
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(SystemChannels.platform, null);
       container.dispose();
@@ -147,6 +176,11 @@ void main() {
       await tester.pump();
       await tester.tap(find.text('Open settings'));
       await tester.pumpAndSettle();
+      expect(notificationCalls, isNotEmpty);
+      expect(
+        notificationCalls.where((call) => call.startsWith('request')),
+        isEmpty,
+      );
     }
 
     Future<void> tapAction(WidgetTester tester, String text) async {

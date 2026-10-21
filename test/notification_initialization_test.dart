@@ -29,6 +29,8 @@ class _NativeNotifications implements FlutterLocalNotificationsPlugin {
         return _initialize();
       case #cancel:
         return _cancel();
+      case #getNotificationAppLaunchDetails:
+        return Future<NotificationAppLaunchDetails?>.value();
       case #zonedSchedule:
         calls.add('schedule');
         return Future<void>.value();

@@ -5,21 +5,60 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
 import '../models/reminder.dart';
+import '../models/notification_payload.dart';
+import '../data/database_helper.dart';
 import 'context_trigger_service.dart';
 
 class NotificationService {
-  static final NotificationService _instance = NotificationService._internal();
-  factory NotificationService() => _instance;
-  NotificationService._internal()
+  static final _instances = Expando<NotificationService>();
+  factory NotificationService() =>
+      NotificationService.forDatabase(DatabaseHelper.instance);
+  factory NotificationService.forDatabase(DatabaseHelper database) =>
+      _instances[database] ??= NotificationService._internal(database);
+  NotificationService._internal(DatabaseHelper database)
     : flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin(),
-      usesNativeNotifications = !Platform.isWindows && !Platform.isLinux;
+      usesNativeNotifications = !Platform.isWindows && !Platform.isLinux,
+      _readDatasetEpoch = database.readNotificationEpoch;
 
   @visibleForTesting
   NotificationService.forTesting(
     this.flutterLocalNotificationsPlugin, {
     required this.usesNativeNotifications,
     DateTime Function()? now,
-  }) : _now = now ?? DateTime.now;
+    Future<String> Function()? readDatasetEpoch,
+  }) : _now = now ?? DateTime.now,
+       _readDatasetEpoch = readDatasetEpoch ?? _testDatasetEpoch;
+
+  static Future<String> _testDatasetEpoch() async =>
+      '00000000-0000-4000-8000-000000000001';
+
+  final Future<String> Function() _readDatasetEpoch;
+  String? _datasetEpoch;
+  String? get datasetEpoch => _datasetEpoch;
+  final _payloads = StreamController<String>.broadcast();
+  final List<String> _pendingPayloads = [];
+  Stream<String> get onNotificationPayload => _payloads.stream;
+  List<String> takePendingNotificationPayloads() {
+    final pending = List<String>.of(_pendingPayloads);
+    _pendingPayloads.clear();
+    return pending;
+  }
+
+  void _receiveNotificationResponse(NotificationResponse response) {
+    if (response.notificationResponseType !=
+            NotificationResponseType.selectedNotification ||
+        (response.actionId?.isNotEmpty ?? false)) {
+      return;
+    }
+    final payload = response.payload;
+    if (NotificationPayload.tryParse(payload) == null) return;
+    if (_payloads.hasListener) {
+      _payloads.add(payload!);
+    } else {
+      if (_pendingPayloads.length >= 32) _pendingPayloads.removeAt(0);
+      _pendingPayloads.add(payload!);
+    }
+  }
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
   final bool usesNativeNotifications;
@@ -85,6 +124,7 @@ class NotificationService {
     }
     _strictFailures = true;
     try {
+      _datasetEpoch = await _readDatasetEpoch();
       final startedAt = _now();
       for (final reminder in reminders) {
         if (!reminder.isCompleted &&
@@ -171,6 +211,7 @@ class NotificationService {
   Future<void> _initialize() async {
     try {
       tz.initializeTimeZones();
+      _datasetEpoch = await _readDatasetEpoch();
 
       if (usesNativeNotifications) {
         const AndroidInitializationSettings initializationSettingsAndroid =
@@ -178,9 +219,9 @@ class NotificationService {
 
         const DarwinInitializationSettings initializationSettingsDarwin =
             DarwinInitializationSettings(
-              requestSoundPermission: true,
-              requestBadgePermission: true,
-              requestAlertPermission: true,
+              requestSoundPermission: false,
+              requestBadgePermission: false,
+              requestAlertPermission: false,
             );
 
         const InitializationSettings initializationSettings =
@@ -192,12 +233,23 @@ class NotificationService {
 
         final initialized = await flutterLocalNotificationsPlugin.initialize(
           initializationSettings,
-          onDidReceiveNotificationResponse: (details) {
-            // Handle notification tap
-          },
+          onDidReceiveNotificationResponse: _receiveNotificationResponse,
         );
-        if (initialized == false) {
+        // In plugin 17.2.x Darwin returns the authorization request result.
+        // With every request flag false it returns false after successfully
+        // registering callbacks. Android's false still means initialization
+        // failed; exceptions on every platform remain failures.
+        final darwin =
+            defaultTargetPlatform == TargetPlatform.iOS ||
+            defaultTargetPlatform == TargetPlatform.macOS;
+        if (initialized == false && !darwin) {
           throw StateError('Native notification initialization failed.');
+        }
+        final launch = await flutterLocalNotificationsPlugin
+            .getNotificationAppLaunchDetails();
+        if (launch?.didNotificationLaunchApp == true &&
+            launch?.notificationResponse != null) {
+          _receiveNotificationResponse(launch!.notificationResponse!);
         }
       }
       _initialized = true;
@@ -258,6 +310,9 @@ class NotificationService {
     if (!_initialized && (strict || _strictFailures)) {
       throw StateError('Native notification initialization failed.');
     }
+    final epoch = await _readDatasetEpoch();
+    if (_revisions[reminder.id] != revision) return;
+    _datasetEpoch = epoch;
 
     final now = _now();
     final difference = reminder.triggerTime!.difference(now);
@@ -354,6 +409,10 @@ class NotificationService {
             androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
             uiLocalNotificationDateInterpretation:
                 UILocalNotificationDateInterpretation.absoluteTime,
+            payload: NotificationPayload.forReminder(
+              reminder,
+              datasetEpoch: epoch,
+            ).encode(),
           );
         });
       } catch (e) {

@@ -25,6 +25,10 @@ class _Native implements FlutterLocalNotificationsPlugin {
         return failInitialize
             ? Future<bool>.error(StateError('Synthetic initialization failure'))
             : Future<bool>.value(true);
+      case #getNotificationAppLaunchDetails:
+        return Future<NotificationAppLaunchDetails?>.value(
+          const NotificationAppLaunchDetails(false),
+        );
       case #cancel:
         cancellations++;
         if (failCancel) {

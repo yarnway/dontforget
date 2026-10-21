@@ -29,6 +29,8 @@ class NativeProbe implements FlutterLocalNotificationsPlugin {
       case #cancel:
         pending.remove(i.positionalArguments[0]);
         return Future<void>.value();
+      case #getNotificationAppLaunchDetails:
+        return Future<NotificationAppLaunchDetails?>.value();
       case #zonedSchedule:
         return schedule(i);
       default:

@@ -101,6 +101,34 @@ void main() {
   testWidgets('settings opens a read-only preview without saving settings', (
     tester,
   ) async {
+    const notificationsChannel = MethodChannel(
+      'dexterous.com/flutter/local_notifications',
+    );
+    final notificationCalls = <String>[];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(notificationsChannel, (call) async {
+          notificationCalls.add(call.method);
+          switch (call.method) {
+            case 'areNotificationsEnabled':
+            case 'canScheduleExactNotifications':
+              return true;
+            case 'checkPermissions':
+              return {
+                'isEnabled': true,
+                'isAlertEnabled': true,
+                'isSoundEnabled': true,
+                'isProvisionalEnabled': false,
+              };
+            default:
+              throw UnsupportedError(
+                'Unexpected notification call: ${call.method}',
+              );
+          }
+        });
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(notificationsChannel, null),
+    );
     final settings = _Settings();
     await tester.pumpWidget(
       ProviderScope(
@@ -114,6 +142,11 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    expect(notificationCalls, isNotEmpty);
+    expect(
+      notificationCalls.where((call) => call.startsWith('request')),
+      isEmpty,
+    );
     final entry = find.byKey(const ValueKey('settings-backup-preview'));
     await tester.ensureVisible(entry);
     await tester.tap(entry);

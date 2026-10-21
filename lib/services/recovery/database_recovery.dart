@@ -9,6 +9,7 @@ import 'package:uuid/uuid.dart';
 import '../../data/database_helper.dart';
 import '../../models/legacy_credentials.dart';
 import '../../models/reminder.dart';
+import '../notification_epoch_store.dart';
 import '../notification_service.dart';
 import 'backup_inspector.dart';
 
@@ -106,7 +107,7 @@ class DatabaseRecovery {
     NotificationService? notifications,
     this.checkpoint,
   }) : inspector = inspector ?? BackupInspector.platform(),
-       notifications = notifications ?? NotificationService();
+       notifications = notifications ?? NotificationService.forDatabase(database);
 
   final DatabaseHelper database;
   final BackupInspector inspector;
@@ -204,6 +205,7 @@ class DatabaseRecovery {
     _RecoveryJournal? journal;
     var committed = false;
     var paused = false;
+    var epochRotationFailed = false;
     try {
       await notifications.pauseForMaintenance();
       paused = true;
@@ -305,6 +307,15 @@ class DatabaseRecovery {
       );
       await _writeJournal(pending, journal);
       await _at(RecoveryCheckpoint.journalPrepared);
+      try {
+        // The prepared journal makes a failed identity change retryable at
+        // startup. Invalidate old clicks even if every restored row is equal,
+        // before either database is moved or new notifications are enabled.
+        await _rotateNotificationEpoch(lease);
+      } catch (_) {
+        epochRotationFailed = true;
+        rethrow;
+      }
       await original.rename(p.join(operation.path, 'displaced.db'));
       await _at(RecoveryCheckpoint.originalMoved);
       await _install(candidate, original, operation);
@@ -327,10 +338,12 @@ class DatabaseRecovery {
       rethrow;
     } catch (error) {
       try {
-        if (committed || !paused) {
+        if (committed || !paused || epochRotationFailed) {
           // The durable commit is the decision. Never roll it back because
           // notification rebuilding or archival failed; startup must finish
-          // that same decision.
+          // that same decision. An epoch write failure also stays closed with
+          // its prepared journal; never enable notifications with the old
+          // identity or install data after the required rotation failed.
           throw const DatabaseRecoveryException(rolledBack: false);
         }
         if (journal != null) {
@@ -380,6 +393,7 @@ class DatabaseRecovery {
         await _requireRollbackJournal(File(lease.path));
         await _requireStandalone(lease.path);
         await lease.validateAndOpen(migrate: false);
+        await _rotateNotificationEpoch(lease);
         await _resumeNotifications(lease);
         await _archiveJournal(pending, operation, 'completed.json');
         await lease.closeWithoutBackup();
@@ -426,6 +440,7 @@ class DatabaseRecovery {
         throw const FormatException();
       }
     }
+    await _rotateNotificationEpoch(lease);
     final pending = File(p.join(lease.directory, journalName));
     await _writeJournal(pending, journal.withState('rollingBack'));
     await _at(RecoveryCheckpoint.rollbackStarted);
@@ -444,6 +459,12 @@ class DatabaseRecovery {
     await lease.closeWithoutBackup();
     await lease.validateAndOpen();
     await lease.resume();
+  }
+
+  Future<void> _rotateNotificationEpoch(DatabaseMaintenanceLease lease) async {
+    // Maintenance retains the directory ownership lock. This identity is
+    // deliberately outside the database and every business backup format.
+    await NotificationEpochStore(Directory(lease.directory)).rotate();
   }
 
   Future<void> _resumeNotifications(DatabaseMaintenanceLease lease) async {

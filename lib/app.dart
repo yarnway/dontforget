@@ -1,4 +1,5 @@
 import 'ui/widgets/inline_feedback.dart';
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,8 +8,13 @@ import 'package:window_manager/window_manager.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'providers/providers.dart';
 import 'providers/recovery_coordinator.dart';
+import 'data/database_helper.dart';
+import 'models/reminder.dart';
+import 'services/notification_route_service.dart';
+import 'services/notification_service.dart';
 import 'ui/screens/home_screen.dart';
 import 'ui/screens/recovery_outcome_screen.dart';
+import 'ui/screens/task_detail_screen.dart';
 import 'l10n/app_localizations.dart';
 
 class MyApp extends ConsumerStatefulWidget {
@@ -20,17 +26,181 @@ class MyApp extends ConsumerStatefulWidget {
 
 class _MyAppState extends ConsumerState<MyApp>
     with WindowListener, TrayListener, WidgetsBindingObserver {
+  late final NotificationService _notifications;
+  late final RecoveryCoordinator _recovery;
+  late final NotificationRouteService _notificationRoutes;
+  StreamSubscription<String>? _notificationSubscription;
+  GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  DataGeneration? _routeDataGeneration;
+  RemindersNotifier? _routeReminders;
+  int _routeInitialization = 0;
+  int _navigationEpoch = 0;
+  RecoveryPhase _lastRecoveryPhase = RecoveryPhase.idle;
+  bool _routeDataReady = false;
+  bool _routeFramePending = false;
+
   bool get _isDesktop =>
       Platform.isWindows || Platform.isLinux || Platform.isMacOS;
 
   @override
   void initState() {
     super.initState();
+    _notifications = ref.read(notificationServiceProvider);
+    _recovery = ref.read(recoveryCoordinatorProvider);
+    _navigationEpoch = _recovery.navigationEpoch;
+    _lastRecoveryPhase = _recovery.state.phase;
+    _notificationRoutes = NotificationRouteService(
+      readSnapshot: _notificationSnapshot,
+      openReminder: _openNotificationReminder,
+    );
+    _notificationSubscription = _notifications.onNotificationPayload.listen(
+      _receiveNotificationPayload,
+    );
+    for (final payload in _notifications.takePendingNotificationPayloads()) {
+      _receiveNotificationPayload(payload);
+    }
+    _recovery.addListener(_onRecoveryChanged);
+    _prepareNotificationRoutes();
     WidgetsBinding.instance.addObserver(this);
     if (_isDesktop) {
       windowManager.addListener(this);
       trayManager.addListener(this);
       _initTray();
+    }
+  }
+
+  void _receiveNotificationPayload(String payload) {
+    if (!mounted) return;
+    try {
+      _notificationRoutes.receive(payload);
+    } catch (error) {
+      // A temporarily unavailable navigator keeps the click queued for the
+      // next readiness signal. It must never turn a click into a data write.
+      debugPrint('Notification route deferred: $error');
+    }
+    _scheduleNotificationRoutes();
+  }
+
+  void _onRecoveryChanged() {
+    final phase = _recovery.state.phase;
+    final enteringRecovery =
+        _lastRecoveryPhase == RecoveryPhase.idle && phase != RecoveryPhase.idle;
+    _lastRecoveryPhase = phase;
+    _routeInitialization++;
+    _routeDataReady = false;
+    _routeDataGeneration = null;
+    _routeReminders = null;
+    _notificationRoutes.setReady(
+      false,
+      // Only discard clicks from before recovery. Notifications rebuilt with
+      // the new epoch may be clicked while providers or navigation are loading;
+      // keep them queued and reject any old epoch at the final readiness check.
+      discardPending: enteringRecovery,
+    );
+    if (_navigationEpoch != _recovery.navigationEpoch) {
+      _navigationEpoch = _recovery.navigationEpoch;
+      // Reusing this GlobalKey would reparent the previous Navigator and retain
+      // stale editors even though MaterialApp has a new recovery epoch key.
+      _navigatorKey = GlobalKey<NavigatorState>();
+    }
+    if (phase == RecoveryPhase.idle) {
+      _prepareNotificationRoutes();
+    }
+  }
+
+  Future<void> _prepareNotificationRoutes() async {
+    if (_recovery.state.phase != RecoveryPhase.idle) return;
+    final initialization = ++_routeInitialization;
+    final database = ref.read(databaseHelperProvider);
+    try {
+      final generation = database.captureGeneration();
+      final reminders = ref.read(remindersProvider.notifier);
+      await Future.wait([reminders.ready, _notifications.init()]);
+      if (!mounted ||
+          initialization != _routeInitialization ||
+          _recovery.state.phase != RecoveryPhase.idle ||
+          !database.isCurrent(generation) ||
+          !identical(reminders, ref.read(remindersProvider.notifier))) {
+        return;
+      }
+      _routeDataGeneration = generation;
+      _routeReminders = reminders;
+      _routeDataReady = true;
+      _scheduleNotificationRoutes();
+    } catch (error) {
+      // Recovery/read errors are handled by their owning screens. A route is
+      // never allowed to bypass a failed load by treating an empty list as data.
+      debugPrint('Notification routes unavailable: $error');
+    }
+  }
+
+  NotificationRouteSnapshot? _notificationSnapshot() {
+    if (!mounted ||
+        !_routeDataReady ||
+        _recovery.state.phase != RecoveryPhase.idle ||
+        _notifications.isPausedForMaintenance) {
+      return null;
+    }
+    final generation = _routeDataGeneration;
+    final epoch = _notifications.datasetEpoch;
+    if (generation == null ||
+        epoch == null ||
+        !ref.read(databaseHelperProvider).isCurrent(generation) ||
+        !identical(_routeReminders, ref.read(remindersProvider.notifier))) {
+      return null;
+    }
+    return NotificationRouteSnapshot(
+      datasetEpoch: epoch,
+      reminders: ref.read(remindersProvider),
+    );
+  }
+
+  void _scheduleNotificationRoutes() {
+    if (!mounted || !_routeDataReady || _routeFramePending) return;
+    _routeFramePending = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _routeFramePending = false;
+      if (!mounted ||
+          !_routeDataReady ||
+          _recovery.state.phase != RecoveryPhase.idle ||
+          _navigatorKey.currentState == null) {
+        return;
+      }
+      try {
+        _notificationRoutes.setReady(true);
+      } catch (error) {
+        debugPrint('Notification navigation unavailable: $error');
+      }
+    });
+    WidgetsBinding.instance.scheduleFrame();
+  }
+
+  bool _openNotificationReminder(Reminder reminder) {
+    final navigator = _navigatorKey.currentState;
+    if (!mounted ||
+        navigator == null ||
+        _recovery.state.phase != RecoveryPhase.idle) {
+      return false;
+    }
+    unawaited(
+      navigator.push<void>(
+        MaterialPageRoute<void>(
+          settings: RouteSettings(name: '/notification/${reminder.id}'),
+          builder: (_) => TaskDetailScreen(task: reminder),
+        ),
+      ),
+    );
+    if (_isDesktop) unawaited(_showNotificationWindow());
+    return true;
+  }
+
+  Future<void> _showNotificationWindow() async {
+    try {
+      await windowManager.show();
+      await windowManager.focus();
+    } catch (_) {
+      // Desktop activation can be unavailable while the Flutter route remains
+      // usable (including widget tests and a host without a window manager).
     }
   }
 
@@ -60,6 +230,10 @@ class _MyAppState extends ConsumerState<MyApp>
 
   @override
   void dispose() {
+    _routeInitialization++;
+    _recovery.removeListener(_onRecoveryChanged);
+    unawaited(_notificationSubscription?.cancel());
+    _notificationRoutes.dispose();
     WidgetsBinding.instance.removeObserver(this);
     if (_isDesktop) {
       windowManager.removeListener(this);
@@ -142,6 +316,7 @@ class _MyAppState extends ConsumerState<MyApp>
       // Discard old editors, pending Undo, draft settings and navigation state
       // only after the data decision and provider reload have completed.
       key: ValueKey(recovery.navigationEpoch),
+      navigatorKey: _navigatorKey,
       title: "DontForget",
       debugShowCheckedModeBanner: false,
       locale: Locale(settings.language),
@@ -199,30 +374,36 @@ class _MyAppState extends ConsumerState<MyApp>
         ),
       ),
       themeMode: ThemeMode.system,
-      builder: (context, child) => InlineFeedback(
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            ExcludeSemantics(
-              excluding: recoveryState.working,
-              child: ExcludeFocus(
+      builder: (context, child) {
+        // MaterialApp can finish replacing its Navigator a frame after the
+        // provider future becomes ready. Retry from this subtree's build so a
+        // queued click is not stranded by an earlier null currentState check.
+        _scheduleNotificationRoutes();
+        return InlineFeedback(
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ExcludeSemantics(
                 excluding: recoveryState.working,
-                child: IgnorePointer(
-                  ignoring: recoveryState.working,
-                  child: child!,
+                child: ExcludeFocus(
+                  excluding: recoveryState.working,
+                  child: IgnorePointer(
+                    ignoring: recoveryState.working,
+                    child: child!,
+                  ),
                 ),
               ),
-            ),
-            if (recoveryState.working)
-              RecoveryOutcomeScreen(
-                phase: recoveryState.phase,
-                rollbackDirectory: null,
-                onContinue: () {},
-                onExit: () {},
-              ),
-          ],
-        ),
-      ),
+              if (recoveryState.working)
+                RecoveryOutcomeScreen(
+                  phase: recoveryState.phase,
+                  rollbackDirectory: null,
+                  onContinue: () {},
+                  onExit: () {},
+                ),
+            ],
+          ),
+        );
+      },
       home: recoveryState.terminal
           ? RecoveryOutcomeScreen(
               phase: recoveryState.phase,

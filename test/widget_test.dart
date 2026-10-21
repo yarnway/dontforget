@@ -1,4 +1,3 @@
-import 'package:dont_forget/services/notification_service.dart';
 import 'package:dont_forget/ui/widgets/reminder_notice_panel.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
@@ -62,7 +61,13 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
           const MethodChannel('dexterous.com/flutter/local_notifications'),
-          (call) async => call.method == 'initialize' ? true : null,
+          (call) async => switch (call.method) {
+            'initialize' => true,
+            'getNotificationAppLaunchDetails' => {
+              'notificationLaunchedApp': false,
+            },
+            _ => null,
+          },
         );
     sqfliteFfiInit();
     testDirectory = await Directory.systemTemp.createTemp('dontforget-widget-');
@@ -80,6 +85,8 @@ void main() {
     );
     await container.read(settingsProvider.notifier).ready;
     await container.read(remindersProvider.notifier).ready;
+    // Finish identity file I/O before entering a widget fake-async zone.
+    await container.read(notificationServiceProvider).init();
   });
   tearDownAll(() async {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -257,8 +264,12 @@ void main() {
         () => container.read(remindersProvider.notifier).updateReminder(due),
       );
       final savedDue = current(due.id);
-      await NotificationService().fireReminderNow(savedDue);
-      await NotificationService().fireReminderNow(savedDue);
+      await container
+          .read(notificationServiceProvider)
+          .fireReminderNow(savedDue);
+      await container
+          .read(notificationServiceProvider)
+          .fireReminderNow(savedDue);
       await tester.pump();
       expect(find.byType(ReminderNoticePanel), findsOneWidget);
       expect(
@@ -297,7 +308,9 @@ void main() {
       }
       await applyNoticeAction(tester, '我知道了');
       expect(current(due.id).noticeAcknowledgedAt, isNotNull);
-      await NotificationService().fireReminderNow(savedDue);
+      await container
+          .read(notificationServiceProvider)
+          .fireReminderNow(savedDue);
       await tester.pump();
       expect(find.byKey(const ValueKey('reminder-notice-panel')), findsNothing);
       final edited = current(due.id).copyWith(
@@ -306,7 +319,9 @@ void main() {
       await tester.runAsync(
         () => container.read(remindersProvider.notifier).updateReminder(edited),
       );
-      await NotificationService().fireReminderNow(current(edited.id));
+      await container
+          .read(notificationServiceProvider)
+          .fireReminderNow(current(edited.id));
       await tester.pump();
       await applyNoticeAction(tester, '稍后 5 分钟提醒');
       final snoozed = container
@@ -317,7 +332,9 @@ void main() {
         inInclusiveRange(4, 5),
       );
       await tester.runAsync(
-        () => NotificationService().cancelReminder(edited.id),
+        () => container
+            .read(notificationServiceProvider)
+            .cancelReminder(edited.id),
       );
       final dueAgain = snoozed.copyWith(
         triggerTime: DateTime.now().subtract(const Duration(seconds: 5)),
@@ -327,7 +344,9 @@ void main() {
             container.read(remindersProvider.notifier).updateReminder(dueAgain),
       );
       final savedDueAgain = current(dueAgain.id);
-      await NotificationService().fireReminderNow(savedDueAgain);
+      await container
+          .read(notificationServiceProvider)
+          .fireReminderNow(savedDueAgain);
       await tester.pump();
       await applyNoticeAction(tester, '标为已完成');
       expect(
@@ -337,7 +356,9 @@ void main() {
             .isCompleted,
         isTrue,
       );
-      await NotificationService().fireReminderNow(savedDueAgain);
+      await container
+          .read(notificationServiceProvider)
+          .fireReminderNow(savedDueAgain);
       await tester.pump();
       expect(find.byKey(const ValueKey('reminder-notice-panel')), findsNothing);
       await tester.pumpWidget(const SizedBox());

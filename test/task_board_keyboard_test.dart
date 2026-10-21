@@ -28,6 +28,14 @@ void main() {
       );
     }
     messenger.setMockMethodCallHandler(
+      const MethodChannel('dexterous.com/flutter/local_notifications'),
+      (call) async => switch (call.method) {
+        'initialize' => true,
+        'getNotificationAppLaunchDetails' => {'notificationLaunchedApp': false},
+        _ => null,
+      },
+    );
+    messenger.setMockMethodCallHandler(
       const MethodChannel('xyz.luan/audioplayers'),
       (call) async {
         if (call.method == 'create') {
@@ -48,6 +56,8 @@ void main() {
     );
     await container.read(settingsProvider.notifier).ready;
     await container.read(remindersProvider.notifier).ready;
+    // Complete real filesystem identity I/O outside the widget fake-async zone.
+    await container.read(notificationServiceProvider).init();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
           const MethodChannel('com.llfbandit.record/messages'),

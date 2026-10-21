@@ -36,6 +36,10 @@ class _Native implements FlutterLocalNotificationsPlugin {
     switch (call.memberName) {
       case #initialize:
         return Future<bool>.value(true);
+      case #getNotificationAppLaunchDetails:
+        return Future<NotificationAppLaunchDetails?>.value(
+          const NotificationAppLaunchDetails(false),
+        );
       case #cancelAll:
         pending.clear();
         return Future<void>.value();

@@ -54,3 +54,35 @@ python3 scripts/generate_recovery_acceptance_fixture.py \
 2. 阶段 3A 已完成当前提醒确认/延后持久化及对应迁移、备份与恢复格式源码回归；新候选原生复测仍待执行，调度结果持久化与剩余来源统一留在 3C。
 3. 接入可见权限状态、通知热/冷启动点击路由及调度失败重试，开展重启、循环、延后与取消的闭环验收。
 4. 其他系统、休眠、时区/DST、正式签名环境及真实用户库保持独立待验；录音/播放验收继续跳过。
+
+## 2026-10-21：schema 9 候选升级与提醒持久化验收
+
+本次核验的是源码 `3d68c83958e9cc8664faf4cb261759218a6055c7` 的 [CI 39570026069](https://github.com/yarnway/dontforget/actions/runs/39570026069)。质量检查和 Windows、Android、Linux、macOS、iOS 候选全部成功，发布步骤按非标签构建跳过。Mac ZIP 为 23,737,558 字节，SHA-256 `0cc86bc6aa1112e5c4bb4af8e5c24207c1e60a21d6f074cfb389c9a1cba8379d`；来源清单、大小、摘要及隔离派生内容检查通过。
+
+独立身份为 `com.example.dontForget.acceptance.schema9-r39570026069`，应用位于忽略目录 `build/native_acceptance/schema9-r39570026069/dont_forget.app`。只读进程句柄核实数据库和 owner lock 均处于该身份的沙箱。派生副本仍只改变外层身份、显示名和签名；受保护框架/资源及可执行文件非签名字节保持一致，codesign deep/strict 通过。它不代表原签名或公证包验收，不触碰真实用户库及其通知。
+
+| 场景 | 完成情况与证据 |
+| --- | --- |
+| v8 → v9 原生升级 | 正常退出新隔离应用、确认进程不存在并取得其 owner lock 后，保留空白 v9 原库，再安装合成 v8 基线副本。重开应用实际执行迁移；三表逐行匹配预期，任务 1、文本记录 1、设置 1，五个新增字段为规定默认值。 |
+| v9 原生恢复 | 原生文件选择器打开 `candidate-v9.sqlite`，预览任务 4、文本记录 1、设置 1，无密钥和不可访问附件。确认 1→4 后显示完成；三表逐行匹配候选，独立 rollback 逐行匹配升级后基线，pending journal 已归档。 |
+| 本地时间显示 | 卡片正确显示合成 UTC 时间对应的 Asia/Shanghai 时刻：16:53、16:54、16:50 和 20:00。修复覆盖本机显示，本次未切换系统时区或验证 DST。 |
+| 确认后重启 | 16:54:31 对 `QA 1 ACK DUE` 点击 Got it，数据库写入确认时间；正常退出并重开后仍保留任务，但不再出现它的到期提示。只剩另一条未确认的提醒。 |
+| 延后后重启 | 16:55:06.936131 延后 `QA 2 SNOOZE DAILY`，新时间 17:00:06.936131，与延后时间精确相差 300 秒；修订为 1，原循环基准仍为 16:54。原生日志记录取消旧请求并接受同 ID `570587817` 的新请求。重启后数据逐行保持，界面只显示延后后的即将到期状态。 |
+| 退出后延后通知 | 再次正常退出且核实进程不存在。17:00:06.110 系统记录 Delivering 和 Presenting as banner，NotificationCenter 于 17:00:06.111 记录 displaying as banner，日志标识 `B0B3-E1A6`。该平台按整秒计划，数据库保留微秒。证据是系统送达/展示日志，不表示用户已读。 |
+| 延后后的每日循环 | 重开应用显示该提醒到期。点击完成后，下一次为 10 月 22 日 16:54，修订为 2，清空本次延后状态，保留原基准；没有变成 17:00。 |
+| 提前完成与月末循环 | 提前完成每日任务，将 10 月 22 日 16:50 推至 23 日 16:50。月末任务连续完成两次，从 10 月 31 日 20:00 经 11 月 30 日回到 12 月 31 日，原始月末基准保持。这些数据在后续退出重开后仍保持。 |
+| 关闭验收数据和通知 | 通过应用恢复原先保存的空白 v9 备份，界面四区任务均为 0；当前三表逐行匹配原空库，完整验收任务保存在新的独立 rollback。17:04:47.174 系统记录移除所有待发及已送达通知，未重新安排未来任务；无 pending journal，应用正常退出。 |
+
+只保留合成数据，路径为 `/private/tmp/dontforget-schema9-fixtures-r39570026069`。关键只读证据包括 `upgrade-native-readback.json`、`candidate-native-readback.json`、`ack-before-restart.json`、`snoozed-native-readback.json`、`snooze-after-restart.json`、`cycle-after-snooze.json`、`native-delayed-delivery.log`、`cleanup-readback.json` 和 `native-cleanup.log`。恢复操作目录分别为 `recovery-08165294-9089-426d-afb7-586c5f2df25b` 和清理时的 `recovery-01a902f9-98fb-49da-b027-ccb026ef8754`；保留回退材料，不自动删除。
+
+新增可重复的 schema 9 合成样本工具：
+
+```sh
+python3 scripts/generate_reminder_acceptance_fixture.py \
+  --output /private/tmp/dontforget-schema9-unique-fixtures \
+  --start-at 2026-10-21T08:50:00Z --due-minutes 3
+```
+
+输出目录须全新。工具使用冻结的 v8/v9 schema，生成升级基线、预期迁移结果、v9 JSON/SQLite 候选及摘要清单；不会读写应用数据或启动程序。13 项新增脚本测试与既有测试合计 47 项通过。
+
+本次关闭了阶段 3A 的上述 Mac 隔离验收项；权限拒绝/再次授权、版本化 payload 点击及冷启动路由属于后续 3B 源码，不从此候选继承真机通过结论。其他设备、休眠、DST、调度持久重试和真实用户数据恢复仍独立待验；录音和播放验收继续跳过。
