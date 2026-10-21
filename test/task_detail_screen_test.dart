@@ -23,7 +23,8 @@ void main() {
       databaseFactoryFfi,
     );
     container = ProviderContainer(
-        overrides: [databaseHelperProvider.overrideWithValue(testDatabase)]);
+      overrides: [databaseHelperProvider.overrideWithValue(testDatabase)],
+    );
     await container.read(settingsProvider.notifier).ready;
     await container.read(remindersProvider.notifier).ready;
   });
@@ -85,4 +86,69 @@ void main() {
       expect(find.text('保存修改'), findsOneWidget);
     },
   );
+  testWidgets('deleting a detail route retains Undo and restores the task', (
+    tester,
+  ) async {
+    final task = Reminder(
+      id: 'delete-route-qa',
+      taskTitle: 'Delete route QA',
+      quadrantLevel: 1,
+    );
+    await tester.runAsync(
+      () => container.read(remindersProvider.notifier).addReminder(task),
+    );
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          locale: const Locale('zh'),
+          supportedLocales: const [Locale('zh')],
+          localizationsDelegates: const [
+            AppLocalizationsDelegate(),
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          builder: (_, child) => InlineFeedback(child: child!),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: TextButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => TaskDetailScreen(task: task),
+                  ),
+                ),
+                child: const Text('Open QA'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Open QA'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.delete_outline_rounded));
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(
+      container.read(remindersProvider).any((r) => r.id == task.id),
+      isFalse,
+    );
+    await tester.pump(const Duration(seconds: 20));
+    expect(find.text('撤销'), findsOneWidget);
+    await tester.tap(find.text('撤销'));
+    await tester.runAsync(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+    });
+    await tester.pumpAndSettle();
+    expect(
+      container.read(remindersProvider).any((r) => r.id == task.id),
+      isTrue,
+    );
+    await tester.pumpWidget(const SizedBox());
+  });
 }
