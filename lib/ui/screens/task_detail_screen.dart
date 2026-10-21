@@ -943,16 +943,17 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                           ),
                           const Spacer(),
                           if (_selectedTime != null) ...[
-                            Text(
-                              '${l10n.get('timeRemaining')}: ${_formatTimeRemaining(l10n)}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: _selectedTime!.isBefore(DateTime.now())
-                                    ? Colors.red.shade400
-                                    : primaryColor,
-                                fontWeight: FontWeight.w600,
+                            if (!_isCompleted)
+                              Text(
+                                '${l10n.get('timeRemaining')}: ${_formatTimeRemaining(l10n)}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: _selectedTime!.isBefore(DateTime.now())
+                                      ? Colors.red.shade400
+                                      : primaryColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                            ),
                             const SizedBox(width: 6),
                             IconButton(
                               icon: const Icon(Icons.clear, size: 16),

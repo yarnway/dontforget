@@ -8,6 +8,7 @@ import '../../providers/providers.dart';
 import '../../services/llm_service.dart';
 import '../../services/lan_sync_service.dart';
 import '../../l10n/app_localizations.dart';
+import 'backup_preview_screen.dart';
 
 typedef ConsoleProcessRunner =
     Future<ProcessResult> Function(String executable, List<String> arguments);
@@ -130,9 +131,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final settings = ref.read(settingsProvider);
     _apiKeyController = TextEditingController(text: settings.apiKey);
     _baseUrlController = TextEditingController(text: settings.baseUrl);
-    _modelNameController = TextEditingController(
-      text: settings.modelName,
-    );
+    _modelNameController = TextEditingController(text: settings.modelName);
     _selectedLang = settings.language;
 
     for (var p in _providers) {
@@ -583,6 +582,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  Card.outlined(
+                    margin: EdgeInsets.zero,
+                    child: ListTile(
+                      key: const ValueKey('settings-backup-preview'),
+                      leading: const Icon(Icons.fact_check_outlined),
+                      title: Text(l10n.get('backupPreviewTitle')),
+                      subtitle: Text(l10n.get('backupPreviewReadOnly')),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const BackupPreviewScreen(),
+                        ),
+                      ),
                     ),
                   ),
 

@@ -215,12 +215,17 @@ void main() {
           quadrantLevel: scenario.quadrant,
           isCompleted: scenario.completed,
           isDynamicallyPromoted: scenario.promoted,
+          triggerTime: DateTime.now().subtract(const Duration(hours: 1)),
         ),
       );
       final expected = scenario.visible ? findsOneWidget : findsNothing;
       expect(find.text('已根据临近提醒时间自动跃迁至 Q1'), expected);
       expect(find.text('任务距离触发已不足 24 小时，底层自动跃迁为紧急且重要，触发系统强提醒。'), expected);
       expect(find.text('撤回至 Q2'), expected);
+      expect(
+        find.text('距离提醒: 已到期'),
+        scenario.completed ? findsNothing : findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     }
