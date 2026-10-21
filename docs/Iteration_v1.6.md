@@ -111,6 +111,10 @@ Android 元数据来源核对了 [AOSP SQLiteConnection](https://android.googles
 
 隔离验收使用临时真实 SQLite/JSON、实际恢复引擎和应用 widget、loopback LAN、可控模型/原生通知实现；没有替换用户数据库。文件选择器、候选包原生恢复和系统通知送达仍属于独立原生验收范围。
 
+本切片源码 `fd74ad9b815f9d348a33f1b59625c90a8b384163` 已提交并推送 main，[CI 39561632757](https://github.com/yarnway/dontforget/actions/runs/39561632757) 全部通过：质量检查、Windows/Android/Linux/macOS/iOS 候选、Windows 安装/升级/卸载、三个桌面平台启动检查及各平台清单摘要核验。未创建发布标签或草稿；Android 为测试签名、iOS 未签名、Mac 未公证，仍不等于原生恢复或系统通知业务验收。
+
+本机仅下载并复核该 Mac ZIP，未安装或启动：23,707,529 字节，SHA-256 为 `8d4b39742c75935cd866a35bb8f3d58b2dda24643912d41999e02b478db67aa9`。清单、源码身份、大小、摘要和 ZIP CRC 均通过；CI 的 macOS 启动记录范围为解包进程存活 10 秒，明确标记 UI 和通知验收未执行。工作区中其他并行架构文档、图表脚本及编辑器配置改动保留，未纳入本切片提交。
+
 剩余任务：
 
 - 候选应用包上的隔离目录恢复与原生通知取消/重建、重启续检；分别保留数据库、provider、原生请求和到期观察证据。
