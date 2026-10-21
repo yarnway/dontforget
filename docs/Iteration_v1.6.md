@@ -164,6 +164,8 @@ Android 元数据来源核对了 [AOSP SQLiteConnection](https://android.googles
 
 本切片使用临时数据库、mock 原生插件和应用 widget；上一阶段 fd74ad9 派生包的原生验收不自动覆盖这次 schema 9 源码。尚未发布完整 v1.6，包版本继续为 1.5.2+3，以源码 revision 区分候选。
 
+本切片源码已提交并推送 main：`3d68c83958e9cc8664faf4cb261759218a6055c7`，对应 [CI 39570026069](https://github.com/yarnway/dontforget/actions/runs/39570026069)。云端 Analyze and test 已成功；截至本次记录，五个平台候选构建仍在运行，新候选原生复测未执行。候选构建和原生业务验收分别核验，不继承旧候选通过结论。
+
 剩余任务：
 
 1. **3B 权限与点击**：可见权限状态、拒绝/再次授权、Android 精确提醒能力；版本化通知 payload、前后台和冷启动点击路由、删除/完成/旧修订/恢复后的迟到点击隔离。
