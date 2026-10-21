@@ -81,7 +81,9 @@ class PriorityModelRouter {
     final attempts = <String>[];
     final failures = <String, AiFailureKind>{};
     final elapsed = Stopwatch()..start();
+    var totalBudgetExpired = false;
     for (final profile in selected) {
+      if (totalBudgetExpired) break;
       if (cancelToken?.isCancelled ?? false) throw cancelToken!.cancelError!;
       if (!profile.isConfigured) {
         failures[profile.id] = AiFailureKind.configuration;
@@ -97,7 +99,8 @@ class PriorityModelRouter {
       }
       final remaining = totalTimeout - elapsed.elapsed;
       if (remaining <= Duration.zero) break;
-      final limit = remaining < attemptTimeout ? remaining : attemptTimeout;
+      final usesRemainingBudget = remaining <= attemptTimeout;
+      final limit = usesRemainingBudget ? remaining : attemptTimeout;
       final attemptToken = CancelToken();
       var settled = false;
       // Ignore cancellation after this attempt finishes, and never forward the
@@ -114,11 +117,18 @@ class PriorityModelRouter {
             ]).timeout(
               limit,
               onTimeout: () {
+                // Timer resolution may round a sub-millisecond remainder down.
+                // Once the total-budget timer fires, never launch another host.
+                if (usesRemainingBudget) totalBudgetExpired = true;
                 attemptToken.cancel('Attempt timed out');
                 throw TimeoutException('Attempt timed out');
               },
             );
         if (cancelToken?.isCancelled ?? false) throw cancelToken!.cancelError!;
+        if (elapsed.elapsed >= totalTimeout) {
+          totalBudgetExpired = true;
+          throw TimeoutException('Total request budget expired');
+        }
         _health.remove(profile.id);
         return AiRouteResult(
           value,
