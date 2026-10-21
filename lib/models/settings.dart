@@ -14,20 +14,28 @@ class AppSettings {
   });
 
   /// API identifiers differ from product/version display names. Only normalize
-  /// known Flash aliases on DeepSeek's official endpoint; custom gateways and
+  /// known aliases on DeepSeek's official endpoint; custom gateways and
   /// unknown models must keep the user's choice. Do not rewrite saved data.
   String get requestModelName {
     final uri = Uri.tryParse(baseUrl.trim());
     final model = modelName.trim();
     if (uri?.scheme == 'https' &&
         uri?.host == 'api.deepseek.com' &&
-        const ['', '/', '/v1', '/v1/'].contains(uri?.path) &&
-        const {
-          'deepseek-v4.1-flash',
-          'deepseek-v4-flash',
-          'deepseek-v4-flash-vision-exp',
-        }.contains(model)) {
-      return 'deepseek-flash';
+        uri?.port == 443 &&
+        uri?.userInfo == '' &&
+        uri?.hasQuery == false &&
+        uri?.hasFragment == false &&
+        const ['', '/', '/v1', '/v1/'].contains(uri?.path)) {
+      return const {
+            'deepseek-flash': 'deepseek-flash',
+            'deepseek-v4.1-flash': 'deepseek-flash',
+            'deepseek-v4.1-flash-1017': 'deepseek-flash',
+            'deepseek-v4-flash': 'deepseek-flash',
+            'deepseek-v4-flash-vision-exp': 'deepseek-flash',
+            'deepseek-v4-pro': 'deepseek-v4-pro',
+            'deepseek-v4-pro-0813': 'deepseek-v4-pro',
+          }[model.toLowerCase()] ??
+          model;
     }
     return model;
   }

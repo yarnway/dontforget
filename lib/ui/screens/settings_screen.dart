@@ -1,11 +1,52 @@
 import '../widgets/inline_feedback.dart';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/providers.dart';
 import '../../services/llm_service.dart';
 import '../../services/lan_sync_service.dart';
 import '../../l10n/app_localizations.dart';
+
+typedef ConsoleProcessRunner =
+    Future<ProcessResult> Function(String executable, List<String> arguments);
+
+/// Desktop browser handoff, injectable without launching real apps in tests.
+class ConsoleUrlLauncher {
+  const ConsoleUrlLauncher({this.runProcess = Process.run});
+  final ConsoleProcessRunner runProcess;
+
+  Future<bool> open(String url, {TargetPlatform? platform}) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null ||
+        !const ['http', 'https'].contains(uri.scheme) ||
+        uri.host.isEmpty) {
+      return false;
+    }
+    final target = platform ?? defaultTargetPlatform;
+    final (String, List<String>)? command = switch (target) {
+      TargetPlatform.windows => (
+        'rundll32',
+        ['url.dll,FileProtocolHandler', url],
+      ),
+      TargetPlatform.macOS => ('open', [url]),
+      TargetPlatform.linux => ('xdg-open', [url]),
+      _ => null,
+    };
+    if (command == null) return false;
+    try {
+      final result = await runProcess(command.$1, command.$2);
+      return result.exitCode == 0;
+    } catch (_) {
+      return false;
+    }
+  }
+}
+
+final consoleUrlLauncherProvider = Provider<ConsoleUrlLauncher>(
+  (_) => const ConsoleUrlLauncher(),
+);
 
 class ModelProvider {
   final String name;
@@ -89,7 +130,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final settings = ref.read(settingsProvider);
     _apiKeyController = TextEditingController(text: settings.apiKey);
     _baseUrlController = TextEditingController(text: settings.baseUrl);
-    _modelNameController = TextEditingController(text: settings.requestModelName);
+    _modelNameController = TextEditingController(
+      text: settings.modelName,
+    );
     _selectedLang = settings.language;
 
     for (var p in _providers) {
@@ -190,9 +233,83 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  void _openConsoleUrl(String url) {
-    if (Platform.isWindows) {
-      Process.run('cmd', ['/c', 'start', '', url]);
+  bool _isOpeningConsole = false;
+
+  Future<void> _openConsoleUrl(String url) async {
+    if (_isOpeningConsole) return;
+    setState(() => _isOpeningConsole = true);
+    try {
+      final opened = await ref.read(consoleUrlLauncherProvider).open(url);
+      if (!mounted || opened) return;
+      final l10n = AppLocalizations.of(context);
+      var copying = false;
+      var copyFailed = false;
+      final copied = await showDialog<bool>(
+        context: context,
+        builder: (_) => StatefulBuilder(
+          builder: (dialogContext, updateDialog) => AlertDialog(
+            title: Text(l10n.get('consoleOpenFallbackTitle')),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.get('consoleOpenFallbackHint')),
+                  const SizedBox(height: 12),
+                  SelectableText(
+                    url,
+                    key: const ValueKey('console-fallback-url'),
+                  ),
+                  if (copyFailed) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      l10n.get('linkCopyFailed'),
+                      style: TextStyle(
+                        color: Theme.of(dialogContext).colorScheme.error,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: Text(l10n.get('close')),
+              ),
+              FilledButton.icon(
+                onPressed: copying
+                    ? null
+                    : () async {
+                        updateDialog(() => copying = true);
+                        try {
+                          await Clipboard.setData(ClipboardData(text: url));
+                          if (dialogContext.mounted) {
+                            Navigator.pop(dialogContext, true);
+                          }
+                        } catch (_) {
+                          if (dialogContext.mounted) {
+                            updateDialog(() {
+                              copying = false;
+                              copyFailed = true;
+                            });
+                          }
+                        }
+                      },
+                icon: const Icon(Icons.copy_outlined, size: 18),
+                label: Text(l10n.get('copyLink')),
+              ),
+            ],
+          ),
+        ),
+      );
+      if (copied == true && mounted) {
+        InlineFeedback.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.get('linkCopied'))));
+      }
+    } finally {
+      if (mounted) setState(() => _isOpeningConsole = false);
     }
   }
 
@@ -202,10 +319,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     try {
       final llmService = ref.read(llmServiceProvider);
       final results = await llmService.probeLocalInferenceEndpoints();
-      setState(() => _probeResults = results);
+      if (mounted) setState(() => _probeResults = results);
     } catch (_) {
+      if (mounted) {
+        InlineFeedback.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).get('probeFailed')),
+          ),
+        );
+      }
     } finally {
-      setState(() => _isProbing = false);
+      if (mounted) setState(() => _isProbing = false);
     }
   }
 
@@ -234,18 +358,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final dbHelper = ref.read(databaseHelperProvider);
     if (_isLanServerRunning) {
       await lanSync.stopServer();
+      if (!mounted) return;
       setState(() {
         _isLanServerRunning = false;
         _lanPin = '';
       });
     } else {
       try {
+        final reminders = ref.read(remindersProvider.notifier);
         final info = await lanSync.startServer(
           dbHelper: dbHelper,
           onDataChanged: () {
-            ref.read(remindersProvider.notifier).refreshReminders();
+            if (reminders.mounted) reminders.refreshReminders();
           },
         );
+        if (!mounted) return;
         setState(() {
           _isLanServerRunning = true;
           _lanIp = info.ip;
@@ -304,7 +431,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Widget _buildConsoleLinkChip(String label, String url) {
     return InkWell(
-      onTap: () => _openConsoleUrl(url),
+      onTap: _isOpeningConsole ? null : () => _openConsoleUrl(url),
       borderRadius: BorderRadius.circular(4),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -516,7 +643,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             DropdownMenuItem(value: 'ja', child: Text('日本語')),
                           ],
                           onChanged: (val) {
-                            if (val != null) { setState(() => _selectedLang = val); }
+                            if (val != null) {
+                              setState(() => _selectedLang = val);
+                            }
                           },
                         ),
                       ],
@@ -905,11 +1034,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               color: Theme.of(context).colorScheme.primary,
                             ),
                             const SizedBox(width: 8),
-                            Text(
-                              l10n.get('llmConfigTitle'),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 14,
+                            Expanded(
+                              child: Text(
+                                l10n.get('llmConfigTitle'),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                ),
                               ),
                             ),
                           ],
@@ -985,6 +1116,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                         const SizedBox(height: 16),
                         DropdownButtonFormField<ModelProvider>(
+                          isExpanded: true,
                           decoration: InputDecoration(
                             labelText: l10n.get('presetProvider'),
                             border: OutlineInputBorder(
@@ -1005,7 +1137,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             ..._providers.map(
                               (p) => DropdownMenuItem(
                                 value: p,
-                                child: Text(p.name),
+                                child: Text(
+                                  p.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             ),
                           ],
@@ -1104,6 +1240,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                         const SizedBox(height: 14),
                         TextField(
+                          key: const ValueKey('settings-model-name'),
                           controller: _modelNameController,
                           decoration: InputDecoration(
                             labelText: l10n.get('modelNameLabel'),

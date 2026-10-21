@@ -16,6 +16,10 @@ void main() {
       'https://api.deepseek.com.evil.example',
       'http://api.deepseek.com',
       'https://api.deepseek.com/custom',
+      'https://api.deepseek.com:8443',
+      'https://user@api.deepseek.com',
+      'https://api.deepseek.com?gateway=custom',
+      'https://api.deepseek.com#custom',
     ]) {
       expect(
         configured.copyWith(baseUrl: url).requestModelName,
@@ -31,6 +35,89 @@ void main() {
       'future-custom-model',
     );
   });
+
+  test(
+    'version display names keep Flash and Pro in their own API families',
+    () {
+      const aliases = {
+        'deepseek-flash': 'deepseek-flash',
+        'deepseek-v4.1-flash': 'deepseek-flash',
+        'DeepSeek-V4.1-Flash-1017': 'deepseek-flash',
+        'deepseek-v4-flash': 'deepseek-flash',
+        'deepseek-v4-flash-vision-exp': 'deepseek-flash',
+        'deepseek-v4-pro': 'deepseek-v4-pro',
+        'DeepSeek-V4-Pro-0813': 'deepseek-v4-pro',
+      };
+      for (final entry in aliases.entries) {
+        for (final base in [
+          'https://api.deepseek.com',
+          'https://api.deepseek.com/v1/',
+        ]) {
+          final settings = configured.copyWith(
+            baseUrl: base,
+            modelName: entry.key,
+          );
+          expect(settings.requestModelName, entry.value);
+          expect(settings.toJson()['model_name'], entry.key);
+        }
+        expect(
+          configured
+              .copyWith(
+                baseUrl: 'https://gateway.example/v1',
+                modelName: entry.key,
+              )
+              .requestModelName,
+          entry.key,
+        );
+      }
+      expect(
+        configured
+            .copyWith(modelName: 'DeepSeek-V4.1-Pro-future')
+            .requestModelName,
+        'DeepSeek-V4.1-Pro-future',
+      );
+    },
+  );
+
+  test(
+    'a Pro version sends the Pro API identifier in the actual request',
+    () async {
+      final dio = Dio();
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            expect(options.data['model'], 'deepseek-v4-pro');
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                statusCode: 200,
+                data: {
+                  'choices': [
+                    {
+                      'message': {
+                        'content':
+                            '{"tasks":[{"title":"Pro fixture","quadrant":2}]}',
+                      },
+                    },
+                  ],
+                },
+              ),
+            );
+          },
+        ),
+      );
+      try {
+        final settings = configured.copyWith(modelName: 'DeepSeek-V4-Pro-0813');
+        final tasks = await LLMService(
+          client: dio,
+        ).extractTasks('fixture', settings);
+        expect(tasks.single.taskTitle, 'Pro fixture');
+        expect(settings.modelName, 'DeepSeek-V4-Pro-0813');
+      } finally {
+        dio.close();
+      }
+    },
+  );
 
   test(
     'extraction sends the API model identifier without changing saved settings',

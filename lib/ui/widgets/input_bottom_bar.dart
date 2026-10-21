@@ -13,27 +13,17 @@ class InputBottomBar extends ConsumerStatefulWidget {
   ConsumerState<InputBottomBar> createState() => _InputBottomBarState();
 }
 
-class _InputBottomBarState extends ConsumerState<InputBottomBar>
-    with SingleTickerProviderStateMixin {
+class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   final _textController = TextEditingController();
   final _focusNode = FocusNode();
-  late AnimationController _animationController;
   bool _isLongPressRecording = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
-  }
+  Future<bool>? _pendingRecordingStart;
+  bool _isFinishingLongPress = false;
 
   @override
   void dispose() {
     _textController.dispose();
     _focusNode.dispose();
-    _animationController.dispose();
     super.dispose();
   }
 
@@ -42,6 +32,40 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar>
     if (text.isEmpty) return;
     _textController.clear();
     ref.read(homeControllerProvider.notifier).processText(text);
+  }
+
+  Future<void> _startLongPressRecording() async {
+    if (_pendingRecordingStart != null ||
+        ref.read(homeControllerProvider).isRecording) {
+      return;
+    }
+    _focusNode.unfocus();
+    HapticFeedback.heavyImpact();
+    setState(() => _isLongPressRecording = true);
+    final operation = ref
+        .read(homeControllerProvider.notifier)
+        .startRecording();
+    _pendingRecordingStart = operation;
+    final started = await operation;
+    if (mounted && !started) setState(() => _isLongPressRecording = false);
+  }
+
+  Future<void> _finishLongPressRecording() async {
+    final operation = _pendingRecordingStart;
+    if (operation == null || _isFinishingLongPress) return;
+    _isFinishingLongPress = true;
+    final controller = ref.read(homeControllerProvider.notifier);
+    HapticFeedback.mediumImpact();
+    setState(() => _isLongPressRecording = false);
+    // Permission or native startup may finish after the user releases their press.
+    // Wait for that same start before stopping, so a late start cannot keep recording.
+    if (await operation) await controller.stopRecordingAndProcess();
+    if (mounted && identical(_pendingRecordingStart, operation)) {
+      setState(() {
+        _pendingRecordingStart = null;
+        _isFinishingLongPress = false;
+      });
+    }
   }
 
   void _showMediaOptionsSheet(BuildContext context) {
@@ -210,42 +234,27 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar>
             ),
 
             // Mic toggle button (for desktop click or single tap)
-            AnimatedBuilder(
-              animation: _animationController,
-              builder: (context, child) {
-                return Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: isRecording
-                        ? [
-                            BoxShadow(
-                              color: Colors.red.withValues(
-                                alpha: 0.4 * _animationController.value,
-                              ),
-                              blurRadius: 8 * _animationController.value,
-                              spreadRadius: 2 * _animationController.value,
-                            ),
-                          ]
-                        : [],
-                  ),
-                  child: IconButton(
-                    icon: Icon(
-                      isRecording
-                          ? Icons.stop_circle_rounded
-                          : Icons.mic_none_rounded,
-                      color: isRecording ? Colors.red : Colors.grey.shade600,
-                      size: 22,
-                    ),
-                    splashRadius: 18,
-                    tooltip: isRecording
-                        ? l10n.get('recordingClickStop')
-                        : l10n.get('inputHint'),
-                    onPressed: () => ref
-                        .read(homeControllerProvider.notifier)
-                        .toggleRecording(),
-                  ),
-                );
-              },
+            _RecordingPulse(
+              active: isRecording,
+              child: IconButton(
+                icon: Icon(
+                  isRecording
+                      ? Icons.stop_circle_rounded
+                      : Icons.mic_none_rounded,
+                  color: isRecording
+                      ? Colors.red
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
+                  size: 22,
+                ),
+                tooltip: isRecording
+                    ? l10n.get('recordingClickStop')
+                    : l10n.get('recordingStart'),
+                onPressed: _pendingRecordingStart != null
+                    ? null
+                    : () => ref
+                          .read(homeControllerProvider.notifier)
+                          .toggleRecording(),
+              ),
             ),
 
             const SizedBox(width: 4),
@@ -259,27 +268,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar>
                     _focusNode.requestFocus();
                   }
                 },
-                onLongPressStart: (_) async {
-                  _focusNode.unfocus();
-                  HapticFeedback.heavyImpact();
-                  setState(() => _isLongPressRecording = true);
-                  await ref
-                      .read(homeControllerProvider.notifier)
-                      .startRecording();
-                },
-                onLongPressEnd: (_) async {
-                  HapticFeedback.mediumImpact();
-                  setState(() => _isLongPressRecording = false);
-                  await ref
-                      .read(homeControllerProvider.notifier)
-                      .stopRecordingAndProcess();
-                },
-                onLongPressCancel: () async {
-                  setState(() => _isLongPressRecording = false);
-                  await ref
-                      .read(homeControllerProvider.notifier)
-                      .stopRecordingAndProcess();
-                },
+                onLongPressStart: (_) => _startLongPressRecording(),
+                onLongPressEnd: (_) => _finishLongPressRecording(),
+                onLongPressCancel: _finishLongPressRecording,
                 child: isRecording
                     ? Row(
                         children: [
@@ -376,18 +367,23 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar>
             // Right Send button (Wireframe)
             Container(
               margin: const EdgeInsets.only(left: 4),
-              child: IconButton(
-                icon: const Icon(Icons.arrow_upward_rounded, size: 18),
-                style: IconButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.all(5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(6),
+              child: ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _textController,
+                builder: (context, value, _) => IconButton(
+                  icon: const Icon(Icons.arrow_upward_rounded, size: 18),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    padding: const EdgeInsets.all(5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                   ),
+                  tooltip: l10n.get('send'),
+                  onPressed: value.text.trim().isEmpty || isRecording
+                      ? null
+                      : _submitText,
                 ),
-                tooltip: l10n.get('send'),
-                onPressed: _submitText,
               ),
             ),
           ],
@@ -395,4 +391,81 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar>
       ),
     );
   }
+}
+
+/// Keep the microphone still when idle, hidden, or reduced motion is requested.
+/// Passing the button as [child] also keeps animation ticks out of its subtree.
+class _RecordingPulse extends StatefulWidget {
+  const _RecordingPulse({required this.active, required this.child});
+  final bool active;
+  final Widget child;
+
+  @override
+  State<_RecordingPulse> createState() => _RecordingPulseState();
+}
+
+class _RecordingPulseState extends State<_RecordingPulse>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncAnimation();
+  }
+
+  @override
+  void didUpdateWidget(covariant _RecordingPulse oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncAnimation();
+  }
+
+  void _syncAnimation() {
+    final shouldAnimate =
+        widget.active &&
+        TickerMode.valuesOf(context).enabled &&
+        !MediaQuery.disableAnimationsOf(context);
+    if (shouldAnimate && !_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    } else if (!shouldAnimate && _controller.isAnimating) {
+      _controller.stop();
+      _controller.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: _controller,
+    child: widget.child,
+    builder: (context, child) => DecoratedBox(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: widget.active && _controller.isAnimating
+            ? [
+                BoxShadow(
+                  color: Colors.red.withValues(alpha: 0.4 * _controller.value),
+                  blurRadius: 8 * _controller.value,
+                  spreadRadius: 2 * _controller.value,
+                ),
+              ]
+            : const [],
+      ),
+      child: child,
+    ),
+  );
 }

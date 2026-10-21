@@ -9,6 +9,7 @@ import 'package:audioplayers/audioplayers.dart';
 import '../../models/reminder.dart';
 import '../../providers/providers.dart';
 import '../../providers/home_controller.dart';
+import '../../providers/task_search_provider.dart';
 import '../../services/notification_service.dart';
 import 'settings_screen.dart';
 import 'dashboard_screen.dart';
@@ -48,6 +49,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   bool _isSearchOpen = false;
   final _searchController = TextEditingController();
   String _searchQuery = '';
+  Timer? _searchDebounce;
+  final _noticeClock = ValueNotifier(DateTime.now());
 
   @override
   void initState() {
@@ -78,7 +81,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Periodic heartbeat check (every 10 seconds) to ensure reminders are never missed
     _heartbeatTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       _checkDueReminders();
-      if (mounted) setState(() {});
+      if (mounted) _noticeClock.value = DateTime.now();
     });
   }
 
@@ -86,6 +89,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
+    _searchDebounce?.cancel();
+    _noticeClock.dispose();
     _shortcutFocus.dispose();
     _heartbeatTimer?.cancel();
     _dueSubscription?.cancel();
@@ -101,7 +106,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       // Desktop/mobile timers can pause while hidden or asleep. Reconcile from
       // current task state instead of waiting for another timer/broadcast.
       _checkDueReminders();
-      setState(() {});
+      _noticeClock.value = DateTime.now();
     }
   }
 
@@ -138,7 +143,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     });
 
     // 动态跃迁周期扫描
-    ref.read(remindersProvider.notifier).scanAndApplyDynamicUrgency();
+    ref
+        .read(remindersProvider.notifier)
+        .scanAndApplyDynamicUrgency()
+        .catchError((Object _) {
+          // The next heartbeat can retry. Failed persistence must not become an
+          // unhandled asynchronous error or interrupt foreground due notices.
+          return 0;
+        });
   }
 
   void _queueDueReminder(Reminder reminder) {
@@ -157,8 +169,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     setState(() => _dueNotices[key] = current.first);
   }
 
-  List<Reminder> _visibleNotices(List<Reminder> reminders) {
-    final now = DateTime.now();
+  List<Reminder> _visibleNotices(List<Reminder> reminders, DateTime now) {
     return reminders.where((r) {
       if (r.isCompleted ||
           r.triggerTime == null ||
@@ -335,7 +346,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final l10n = AppLocalizations.of(context);
     ref.read(homeControllerProvider.notifier).clearError();
     setState(() {
-      for (final reminder in _visibleNotices(ref.read(remindersProvider))) {
+      for (final reminder in _visibleNotices(
+        ref.read(remindersProvider),
+        DateTime.now(),
+      )) {
         final phase = reminder.triggerTime!.isAfter(DateTime.now())
             ? 'upcoming'
             : 'due';
@@ -906,6 +920,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         HardwareKeyboard.instance.isControlPressed ||
         HardwareKeyboard.instance.isMetaPressed;
 
+    if (event.logicalKey == LogicalKeyboardKey.escape && _isSearchOpen) {
+      _closeSearch();
+      return;
+    }
+    if (isCtrl && event.logicalKey == LogicalKeyboardKey.keyF) {
+      setState(() => _isSearchOpen = true);
+      return;
+    }
+
     // Ctrl+K -> Command Palette
     if (isCtrl && event.logicalKey == LogicalKeyboardKey.keyK) {
       _openCommandPalette();
@@ -932,13 +955,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
   }
 
+  void _closeSearch() {
+    _searchDebounce?.cancel();
+    setState(() {
+      _isSearchOpen = false;
+      _searchController.clear();
+      _searchQuery = '';
+    });
+  }
+
+  void _updateSearch(String query) {
+    _searchDebounce?.cancel();
+    if (query.trim().isEmpty) {
+      setState(() => _searchQuery = '');
+      return;
+    }
+    _searchDebounce = Timer(const Duration(milliseconds: 150), () {
+      if (mounted) setState(() => _searchQuery = query);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final reminders = ref.watch(remindersProvider);
     final l10n = AppLocalizations.of(context);
     final homeState = ref.watch(homeControllerProvider);
     final spacedService = ref.watch(spacedRepetitionServiceProvider);
-    final dueCardsCount = spacedService.getDueCards(reminders).length;
     final currentProfile = ref.watch(contextProfileProvider);
     final suppressedCount = ContextTriggerService().suppressedReminders.length;
 
@@ -985,16 +1027,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           leading: _isSearchOpen
               ? IconButton(
                   icon: const Icon(Icons.arrow_back, size: 20),
-                  onPressed: () => setState(() {
-                    _isSearchOpen = false;
-                    _searchController.clear();
-                    _searchQuery = '';
-                  }),
+                  tooltip: l10n.get('close'),
+                  onPressed: _closeSearch,
                 )
               : null,
           title: _isSearchOpen
               ? TextField(
                   controller: _searchController,
+                  key: const ValueKey('task-search-field'),
                   autofocus: true,
                   style: const TextStyle(fontSize: 14),
                   decoration: InputDecoration(
@@ -1005,17 +1045,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     ),
                     border: InputBorder.none,
                   ),
-                  onChanged: (val) => setState(() => _searchQuery = val),
+                  onChanged: _updateSearch,
                 )
               : Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      l10n.get('appTitle'),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 17,
-                        letterSpacing: 0.5,
+                    Flexible(
+                      child: Text(
+                        l10n.get('appTitle'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 17,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -1034,10 +1078,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   if (_searchQuery.isNotEmpty)
                     IconButton(
                       icon: const Icon(Icons.clear, size: 18),
-                      onPressed: () => setState(() {
+                      tooltip: l10n.get('clearSearch'),
+                      onPressed: () {
                         _searchController.clear();
-                        _searchQuery = '';
-                      }),
+                        _updateSearch('');
+                      },
                     ),
                   const SizedBox(width: 6),
                 ]
@@ -1139,9 +1184,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       ),
                     ],
                   ),
-                  Badge(
-                    isLabelVisible: dueCardsCount + suppressedCount > 0,
-                    label: Text('${dueCardsCount + suppressedCount}'),
+                  ValueListenableBuilder<DateTime>(
+                    valueListenable: _noticeClock,
+                    builder: (context, _, child) {
+                      final count =
+                          spacedService.getDueCards(reminders).length +
+                          suppressedCount;
+                      return Badge(
+                        isLabelVisible: count > 0,
+                        label: Text('$count'),
+                        child: child,
+                      );
+                    },
                     child: IconButton(
                       icon: const Icon(Icons.more_horiz_rounded),
                       tooltip: l10n.get('moreTools'),
@@ -1165,12 +1219,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             bottom: false,
             child: Column(
               children: [
-                ReminderNoticePanel(
-                  reminders: _visibleNotices(reminders),
-                  now: DateTime.now(),
-                  onDismiss: _dismissNotice,
-                  onSnooze: (r) => _actOnNotice(r, snooze: true),
-                  onComplete: (r) => _actOnNotice(r, snooze: false),
+                ValueListenableBuilder<DateTime>(
+                  valueListenable: _noticeClock,
+                  builder: (context, _, _) {
+                    final now = DateTime.now();
+                    return ReminderNoticePanel(
+                      reminders: _visibleNotices(reminders, now),
+                      now: now,
+                      onDismiss: _dismissNotice,
+                      onSnooze: (r) => _actOnNotice(r, snooze: true),
+                      onComplete: (r) => _actOnNotice(r, snooze: false),
+                    );
+                  },
                 ),
                 if (_contextDigest.any(
                   (item) =>
@@ -1188,23 +1248,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   child: _isSearchOpen && _searchQuery.trim().isNotEmpty
                       ? Builder(
                           builder: (context) {
-                            final q = _searchQuery.trim().toLowerCase();
-                            final searchResults = reminders.where((r) {
-                              if (r.taskTitle.toLowerCase().contains(q)) {
-                                return true;
-                              }
-                              if ((r.taskSummary ?? '').toLowerCase().contains(
-                                q,
-                              )) {
-                                return true;
-                              }
-                              if (r.getSubTasksList().any(
-                                (sub) => sub.toLowerCase().contains(q),
-                              )) {
-                                return true;
-                              }
-                              return false;
-                            }).toList();
+                            final searchResults = ref.watch(
+                              taskSearchResultsProvider(_searchQuery),
+                            );
+                            final resultIndices = {
+                              for (var i = 0; i < searchResults.length; i++)
+                                searchResults[i].id: i,
+                            };
 
                             if (searchResults.isEmpty) {
                               return Center(
@@ -1248,14 +1298,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                 ),
                                 Expanded(
                                   child: ListView.builder(
+                                    key: ValueKey(
+                                      'search-results-$_searchQuery',
+                                    ),
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 12,
                                       vertical: 4,
                                     ),
                                     itemCount: searchResults.length,
+                                    findChildIndexCallback: (key) =>
+                                        key is ValueKey<String>
+                                        ? resultIndices[key.value]
+                                        : null,
                                     itemBuilder: (context, index) {
                                       final task = searchResults[index];
                                       return TaskCard(
+                                        key: ValueKey(task.id),
                                         task: task,
                                         onPlayMedia: () {
                                           if (task.recordId != null) {

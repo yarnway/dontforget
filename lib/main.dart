@@ -42,7 +42,7 @@ Future<void> _handleCli(List<String> args) async {
   if (args.contains('--help') || args.contains('-h')) {
     stdout.writeln('''
 ======================================================
- DontForget Geek CLI v1.5.1
+ DontForget Geek CLI v1.5.2
 ======================================================
 Usage:
   dont_forget --add <content>   (-a) Quickly record a reminder

@@ -11,6 +11,7 @@ class QuadrantView extends ConsumerStatefulWidget {
   final Widget titleIcon;
   final List<Reminder> allReminders;
   final Color bgColor;
+  final bool showHeader;
   final void Function(String recordId) onPlayMedia;
 
   const QuadrantView({
@@ -19,6 +20,7 @@ class QuadrantView extends ConsumerStatefulWidget {
     required this.titleIcon,
     required this.allReminders,
     required this.bgColor,
+    this.showHeader = true,
     required this.onPlayMedia,
   });
 
@@ -29,51 +31,49 @@ class QuadrantView extends ConsumerStatefulWidget {
 class _QuadrantViewState extends ConsumerState<QuadrantView> {
   bool _isQ4FoldExpanded = false;
   bool _completedExpanded = false;
+  final _pendingMoves = <String>{};
 
-  IconData _getEmptyStateIcon() {
-    switch (widget.level) {
-      case 1:
-        return Icons.local_fire_department_outlined;
-      case 2:
-        return Icons.star_outline_rounded;
-      case 3:
-        return Icons.bolt_outlined;
-      case 4:
-      default:
-        return Icons.coffee_outlined;
+  IconData _getEmptyStateIcon() => switch (widget.level) {
+    1 => Icons.local_fire_department_outlined,
+    2 => Icons.star_outline_rounded,
+    3 => Icons.bolt_outlined,
+    _ => Icons.coffee_outlined,
+  };
+
+  String _getLevelTitle(AppLocalizations l10n) =>
+      l10n.get('cat${widget.level}');
+
+  Future<void> _moveReminder(Reminder task) async {
+    if (task.quadrantLevel == widget.level || !_pendingMoves.add(task.id)) {
+      return;
     }
-  }
-
-  String _getEmptyStateText(AppLocalizations l10n) {
-    switch (widget.level) {
-      case 1:
-        return l10n.get('emptyQ1');
-      case 2:
-        return l10n.get('emptyQ2');
-      case 3:
-        return l10n.get('emptyQ3');
-      case 4:
-      default:
-        return l10n.get('emptyQ4');
-    }
-  }
-
-  String _getLevelTitle(AppLocalizations l10n) {
-    switch (widget.level) {
-      case 1:
-        return l10n.get('cat1');
-      case 2:
-        return l10n.get('cat2');
-      case 3:
-        return l10n.get('cat3');
-      case 4:
-      default:
-        return l10n.get('cat4');
+    final l10n = AppLocalizations.of(context);
+    final title = _getLevelTitle(l10n);
+    try {
+      await ref
+          .read(remindersProvider.notifier)
+          .updateReminder(task.copyWith(quadrantLevel: widget.level));
+      if (!mounted) return;
+      InlineFeedback.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${l10n.get('movedToQuadrant')}$title: ${task.taskTitle}',
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      InlineFeedback.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.get('reminderUpdateFailed'))));
+    } finally {
+      _pendingMoves.remove(task.id);
     }
   }
 
   Widget _buildDraggableCard(Reminder task) {
     return LongPressDraggable<Reminder>(
+      key: ValueKey('task-${task.id}'),
       data: task,
       // Keep ordinary clicks on the card's controls out of the drag gesture.
       delay: const Duration(milliseconds: 500),
@@ -103,236 +103,186 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
     );
   }
 
+  Widget _taskList(
+    AppLocalizations l10n,
+    List<Reminder> active,
+    List<Reminder> completed,
+    List<Reminder> folded,
+  ) {
+    // Only lightweight data is flattened. Cards, including expanded completed
+    // and stagnant sections, are constructed only for the viewport + cache.
+    final rows = <Object>[
+      ...active,
+      if (completed.isNotEmpty) 'completed',
+      if (_completedExpanded) ...completed,
+      if (folded.isNotEmpty) 'folded',
+      if (_isQ4FoldExpanded) ...folded,
+    ];
+    final indices = <String, int>{};
+    for (var i = 0; i < rows.length; i++) {
+      final row = rows[i];
+      indices[row is Reminder ? 'task-${row.id}' : '$row-${widget.level}'] = i;
+    }
+    return ListView.builder(
+      key: PageStorageKey('quadrant-list-${widget.level}'),
+      primary: false,
+      itemCount: rows.length,
+      findChildIndexCallback: (key) {
+        if (key is! ValueKey<String>) return null;
+        return indices[key.value];
+      },
+      itemBuilder: (context, index) {
+        final row = rows[index];
+        if (row is Reminder) return _buildDraggableCard(row);
+        final isCompleted = row == 'completed';
+        final expanded = isCompleted ? _completedExpanded : _isQ4FoldExpanded;
+        final label = isCompleted
+            ? l10n.get('completed')
+            : l10n.get('autoCollapsedNotice');
+        final count = isCompleted ? completed.length : folded.length;
+        return Semantics(
+          key: ValueKey('$row-${widget.level}'),
+          expanded: expanded,
+          child: TextButton.icon(
+            onPressed: () => setState(() {
+              if (isCompleted) {
+                _completedExpanded = !_completedExpanded;
+              } else {
+                _isQ4FoldExpanded = !_isQ4FoldExpanded;
+              }
+            }),
+            icon: Icon(
+              expanded ? Icons.expand_less : Icons.expand_more,
+              size: 18,
+            ),
+            label: Text('$label ($count)'),
+            style: TextButton.styleFrom(
+              animationDuration: Duration.zero,
+              foregroundColor: Theme.of(context).colorScheme.primary,
+              alignment: Alignment.centerLeft,
+              minimumSize: const Size(0, 44),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final allTasks = widget.allReminders
-        .where((r) => r.quadrantLevel == widget.level)
-        .toList();
-    final tasks = allTasks.where((r) => !r.isCompleted).toList();
-    final completed = allTasks.where((r) => r.isCompleted).toList();
+    final dynamicService = ref.watch(dynamicUrgencyServiceProvider);
+    final active = <Reminder>[];
+    final completed = <Reminder>[];
+    final folded = <Reminder>[];
+    for (final task in widget.allReminders) {
+      if (task.quadrantLevel != widget.level) continue;
+      if (task.isCompleted) {
+        completed.add(task);
+      } else if (widget.level == 4 && dynamicService.isQ4StagnantFolded(task)) {
+        folded.add(task);
+      } else {
+        active.add(task);
+      }
+    }
+    final isEmpty = active.isEmpty && completed.isEmpty && folded.isEmpty;
+    final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Subtle wireframe container styling
-    final Color outlineColor = Theme.of(
-      context,
-    ).colorScheme.outlineVariant.withValues(alpha: 0.65);
-    final Color surfaceColor = Theme.of(
-      context,
-    ).colorScheme.surfaceContainerLow;
-
-    // Q4 自动折叠逻辑：将停滞超 48 小时的低优先级任务归入可折叠区
-    final dynamicService = ref.watch(dynamicUrgencyServiceProvider);
-    final List<Reminder> activeTasks;
-    final List<Reminder> foldedTasks;
-
-    if (widget.level == 4) {
-      activeTasks = tasks
-          .where((t) => !dynamicService.isQ4StagnantFolded(t))
-          .toList();
-      foldedTasks = tasks
-          .where((t) => dynamicService.isQ4StagnantFolded(t))
-          .toList();
-    } else {
-      activeTasks = tasks;
-      foldedTasks = const [];
-    }
-
     return DragTarget<Reminder>(
-      onAcceptWithDetails: (details) {
-        final task = details.data;
-        if (task.quadrantLevel != widget.level) {
-          ref
-              .read(remindersProvider.notifier)
-              .updateReminder(task.copyWith(quadrantLevel: widget.level));
-          InlineFeedback.of(context).hideCurrentSnackBar();
-          InlineFeedback.of(context).showSnackBar(
-            SnackBar(
-              duration: const Duration(seconds: 2),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              content: Text(
-                '${l10n.get('movedToQuadrant')}${_getLevelTitle(l10n)}: ${task.taskTitle}',
-              ),
-            ),
-          );
-        }
-      },
+      onWillAcceptWithDetails: (details) =>
+          details.data.quadrantLevel != widget.level &&
+          !_pendingMoves.contains(details.data.id),
+      onAcceptWithDetails: (details) => _moveReminder(details.data),
       builder: (context, candidateData, rejectedData) {
         final isHovered = candidateData.isNotEmpty;
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
+        // Theme already animates its color pairs together. Animating only this
+        // surface again leaves an old background behind the new foreground.
+        return Container(
+          key: ValueKey('quadrant-surface-${widget.level}'),
           decoration: BoxDecoration(
             color: isHovered
-                ? widget.bgColor.withValues(alpha: isDark ? 0.22 : 0.12)
-                : surfaceColor,
+                ? Color.alphaBlend(
+                    widget.bgColor.withValues(alpha: isDark ? 0.22 : 0.12),
+                    colors.surfaceContainerLow,
+                  )
+                : colors.surfaceContainerLow,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: isHovered ? widget.bgColor : outlineColor,
+              color: isHovered
+                  ? widget.bgColor
+                  : colors.outlineVariant.withValues(alpha: 0.65),
               width: isHovered ? 2.0 : 1.0,
             ),
-            boxShadow: isHovered
-                ? [
-                    BoxShadow(
-                      color: widget.bgColor.withValues(alpha: 0.3),
-                      blurRadius: 10,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : [],
           ),
-          padding: const EdgeInsets.all(12),
+          padding: widget.showHeader
+              ? const EdgeInsets.all(12)
+              : const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header bar with minimal title icon and professional reminder term
-              Padding(
-                padding: const EdgeInsets.only(left: 4, top: 2, bottom: 6),
-                child: Row(
-                  children: [
-                    widget.titleIcon,
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        _getLevelTitle(l10n),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.2,
-                          color: isDark
-                              ? Colors.grey.shade300
-                              : Colors.grey.shade800,
+              if (widget.showHeader)
+                Padding(
+                  padding: const EdgeInsets.only(left: 4, top: 2, bottom: 6),
+                  child: Row(
+                    children: [
+                      widget.titleIcon,
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          _getLevelTitle(l10n),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: colors.onSurface,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${tasks.length}',
-                      style: Theme.of(context).textTheme.labelMedium,
-                    ),
-                  ],
-                ),
-              ),
-
-              // Tasks information feed
-              Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  child: allTasks.isEmpty
-                      ? Center(
-                          key: const ValueKey('empty'),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                _getEmptyStateIcon(),
-                                size: 32,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                _getEmptyStateText(l10n),
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView(
-                          key: const ValueKey('list'),
-                          physics: const BouncingScrollPhysics(),
-                          children: [
-                            // 活跃待办列表
-                            for (final task in activeTasks)
-                              _buildDraggableCard(task),
-
-                            if (completed.isNotEmpty) ...[
-                              TextButton.icon(
-                                key: ValueKey('completed-${widget.level}'),
-                                onPressed: () => setState(
-                                  () =>
-                                      _completedExpanded = !_completedExpanded,
-                                ),
-                                icon: Icon(
-                                  _completedExpanded
-                                      ? Icons.expand_less
-                                      : Icons.expand_more,
-                                  size: 18,
-                                ),
-                                label: Text(
-                                  '${l10n.get('completed')} (${completed.length})',
-                                ),
-                              ),
-                              if (_completedExpanded)
-                                for (final task in completed)
-                                  _buildDraggableCard(task),
-                            ],
-
-                            // Q4 长期停滞冗余备忘自动折叠面板
-                            if (foldedTasks.isNotEmpty) ...[
-                              InkWell(
-                                onTap: () {
-                                  setState(
-                                    () =>
-                                        _isQ4FoldExpanded = !_isQ4FoldExpanded,
-                                  );
-                                },
-                                borderRadius: BorderRadius.circular(6),
-                                child: Container(
-                                  margin: const EdgeInsets.symmetric(
-                                    vertical: 4,
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 5,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.withValues(
-                                      alpha: isDark ? 0.14 : 0.08,
-                                    ),
-                                    borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(
-                                      color: Colors.grey.withValues(alpha: 0.2),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        _isQ4FoldExpanded
-                                            ? Icons.keyboard_arrow_down
-                                            : Icons.keyboard_arrow_right,
-                                        size: 16,
-                                        color: Colors.grey.shade500,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Expanded(
-                                        child: Text(
-                                          '${l10n.get('autoCollapsedNotice')} (${foldedTasks.length})',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.grey.shade500,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              if (_isQ4FoldExpanded)
-                                for (final task in foldedTasks)
-                                  _buildDraggableCard(task),
-                            ],
-                          ],
+                      const SizedBox(width: 8),
+                      Semantics(
+                        label:
+                            '${l10n.get('pending')}: ${active.length + folded.length}',
+                        excludeSemantics: true,
+                        child: Text(
+                          '${active.length + folded.length}',
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(color: colors.onSurfaceVariant),
                         ),
+                      ),
+                    ],
+                  ),
                 ),
+              Expanded(
+                child: isEmpty
+                    ? Center(
+                        child: SingleChildScrollView(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _getEmptyStateIcon(),
+                                  size: 32,
+                                  color: colors.onSurfaceVariant,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  l10n.get('emptyQ${widget.level}'),
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: colors.onSurfaceVariant,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      )
+                    : _taskList(l10n, active, completed, folded),
               ),
             ],
           ),

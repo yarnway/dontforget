@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:dont_forget/app.dart';
 import 'package:dont_forget/models/reminder.dart';
+import 'package:dont_forget/ui/widgets/task_board.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -78,7 +79,7 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(container: container, child: const MyApp()),
     );
-    // Use pump with fixed duration due to infinite breathing mic animation
+    // Advance entrance transitions without waiting for periodic reminder work.
     await tester.pump(const Duration(seconds: 1));
 
     // Verify '+' button is present
@@ -111,6 +112,9 @@ void main() {
   ) async {
     addTearDown(() => tester.view.resetPhysicalSize());
     addTearDown(() => tester.view.resetDevicePixelRatio());
+    addTearDown(
+      tester.binding.platformDispatcher.clearPlatformBrightnessTestValue,
+    );
     tester.view.devicePixelRatio = 1;
     await tester.runAsync(() async {
       final notifier = container.read(remindersProvider.notifier);
@@ -172,6 +176,26 @@ void main() {
           ).writeAsBytes(bytes!.buffer.asUint8List());
           image.dispose();
         });
+        tester.binding.platformDispatcher.platformBrightnessTestValue =
+            Brightness.dark;
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        expect(
+          Theme.of(tester.element(find.byType(TaskBoard))).brightness,
+          Brightness.dark,
+        );
+        await tester.runAsync(() async {
+          final image = await boundary.toImage();
+          final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
+          await File(
+            'dist/ui-preview/workspace-dark-${width.toInt()}.png',
+          ).writeAsBytes(bytes!.buffer.asUint8List());
+          image.dispose();
+        });
+        tester.binding.platformDispatcher.clearPlatformBrightnessTestValue();
+        await tester.pump();
       }
       await tester.pumpWidget(const SizedBox());
     }
@@ -368,4 +392,47 @@ void main() {
     );
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets(
+    'idle heartbeat preserves the board and search supports keyboard dismissal',
+    (tester) async {
+      await tester.runAsync(
+        () => container
+            .read(remindersProvider.notifier)
+            .addReminder(
+              Reminder(
+                id: 'search-shortcuts',
+                taskTitle: 'Searchable headline',
+                taskSummary: 'search fixture',
+                quadrantLevel: 1,
+              ),
+            ),
+      );
+      await tester.pumpWidget(
+        UncontrolledProviderScope(container: container, child: const MyApp()),
+      );
+      await tester.pump();
+      final board = tester.widget<TaskBoard>(find.byType(TaskBoard));
+      await tester.pump(const Duration(seconds: 10));
+      await tester.pump();
+      expect(tester.widget<TaskBoard>(find.byType(TaskBoard)), same(board));
+
+      await tester.tap(find.byType(TextField));
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      final search = find.byKey(const ValueKey('task-search-field'));
+      expect(search, findsOneWidget);
+      await tester.enterText(search, 'search fixture');
+      await tester.pump(const Duration(milliseconds: 160));
+      expect(find.text('搜索结果 (1)'), findsOneWidget);
+      await tester.enterText(search, 'pending debounce');
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(search, findsNothing);
+      expect(find.byType(TaskBoard), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
 }

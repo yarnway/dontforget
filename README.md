@@ -1,141 +1,70 @@
-# 别忘了 (DontForget)
+# 别忘了 · DontForget
 
-<div align="center">
+本地优先的备忘与任务工作台。随手记录文字、录音和附件，按紧急提醒、重点跟进、常规待办与备忘便签管理事项；需要智能提取时，再连接自己配置的模型服务。
 
-![DontForget Logo](assets/app_icon.png)
+[![Flutter](https://img.shields.io/badge/Flutter-3.44.9-02569B?logo=flutter)](https://flutter.dev)
+[![Source](https://img.shields.io/badge/Source-v1.5.2-007F83)](docs/Iteration_v1.5.2.md)
 
-**端侧隐私第一 · 大模型驱动 · 3D 全息 AI 视觉 · 全平台智能备忘与任务调度系统**
+[使用指南](docs/User_Guide.md) · [开发指南](docs/Developer_Guide.md) · [架构](docs/Architecture_Design.md) · [变更日志](docs/Changelog.md)
 
-[![Flutter Version](https://img.shields.io/badge/Flutter-3.44.9-02569B?logo=flutter)](https://flutter.dev)
-[![Dart Version](https://img.shields.io/badge/Dart-3.12%2B-0175C2?logo=dart)](https://dart.dev)
-[![Source Version](https://img.shields.io/badge/Source-v1.5.1-00E5FF)](docs/Iteration_v1.5.1.md)
-[![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Android%20%7C%20iOS-blue)](#-全平台支持与系统要求)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+## v1.5.2：更稳、更易用的任务工作台
 
-[功能特性](#-核心特性) • [下载体验](#-快速下载与安装) • [使用指南](docs/User_Guide.md) • [技术架构](docs/Architecture_Design.md) • [开发构建](docs/Developer_Guide.md) • [变更日志](docs/Changelog.md)
+当前为源码候选，验证范围见[本轮迭代记录](docs/Iteration_v1.5.2.md)。
 
-</div>
+- **浏览更集中**：手机窄屏通过分类切换浏览完整列表；平板和桌面保留四象限，已完成和长期停留的便签可折叠。
+- **减少无效工作**：任务列表按需创建卡片，搜索复用标题、摘要和子任务索引；提醒心跳局部刷新，空闲输入栏不再持续运行动画。
+- **操作更明确**：任务卡提供可点击和键盘操作的菜单、48px 完成按钮、可换行标签，支持放大字体和减少动态效果。
+- **写入更可靠**：任务修改、刷新和动态优先级扫描按顺序执行；多任务关联和批量优先级变化通过事务提交，失败不提前展示成功。
+- **附件更安全**：同名导入文件保存在独立目录，保留原文件名，避免覆盖旧附件。
 
----
+v1.6 的恢复预览、可回退恢复、持久化提醒确认及多模型自动降级仍按[后续计划](docs/Iteration_v1.6.md)推进，不计为本版已完成功能。
 
-## 📖 项目简介
+## 日常使用
 
-在信息碎片化时代，灵感与待办事项往往转瞬即逝。**别忘了 (DontForget)** 致力于打造下一代智能备忘体验：
-您可以输入文字、录音或图片，由配置的大模型提取任务、评估提醒时间并分类。任务和配置使用本地 SQLite 保存。调用远程 AI 时，相关内容会发送至您配置的服务商；数据库、API Key 与备份目前未实现应用层加密。需要本机推理时请选择本地模型。
+1. 直接输入事项。未配置模型时，保存为本地记录，在详情中设置提醒时间。
+2. 点击录音按钮或长按输入区记录语音，也可从 `+` 导入图片、文件或视频。
+3. 在任务卡标记完成、打开详情，或通过操作菜单管理任务。桌面可长按拖动到其他分类。
+4. 使用搜索查找标题、摘要和子任务。`Ctrl/Cmd+F` 打开搜索，`Esc` 关闭；`Ctrl/Cmd+K` 打开更多功能。
+5. 设置页可配置模型、选择中文/English/日本語，并备份已保存的数据。
 
-## v1.5.1 稳定性迭代（源码候选）
+提醒在应用内集中展示，延后、完成与关闭提示均不抢走输入焦点。系统通知能力与权限、平台和应用运行状态有关；已验证范围与未完成项分别记录在版本验收文档中。
 
-- 清除内置凭据，保留用户配置，设置保存失败时明确提示。
-- 设置页支持手动备份已保存的数据，覆盖设置、任务与附件索引。
-- 修复重复提醒的月末、闰年与错过周期处理，以及取消复习后的日期残留。
-- 增加回归测试与构建前质量检查。
-- [项目梳理、验证记录与后续版本计划](docs/Iteration_v1.5.1.md)。
+## 数据与模型
 
----
+任务、附件索引和配置使用本机 SQLite 保存；导入的附件另存于本机文件目录。未配置模型也可以保存文字与原声记录。
 
-## ✨ 核心特性
+AI 解析会将相关内容直接发送至您配置的服务商。应用不提供内置 API Key；请在设置中填入自己的服务地址、模型标识与密钥，需要本机推理时使用本地模型。
 
-### 🌌 1. 3D 全息 AI 空间粒子系统 (Astra & DeepSeek 灵感)
-- **参数化 3D 点云塑形**：620+ 空间粒子汇聚成精致的立体 LOGO 与双轴倾斜交错的天体轨道环，拥有逼真的三维透视投影与近大远小景深层级；
-- **深空星光与 4 芒光学十字星刺**：150 颗自主呼吸的深空恒星背景，高能耀斑恒星自动激发光学衍射十字星芒刺；
-- **线束脉冲传输**：粒子连线编织出光纤线缆，白蓝色高能光子以不同速度在节点间飞驰穿梭，呈现大模型神经网络突触放电的磅礴算力感；
-- **流体阻尼与波纹推散**：鼠标轻扫激起能量涟漪，点击引爆 3D 冲击波；推散后的粒子在微重力阻尼模型下**如星云般缓慢、丝滑、悠闲地凝聚复位**，手感极佳。
+数据库、API Key 与备份目前没有应用层加密。现有备份包含任务、配置和附件路径，**不包含附件文件本体**；恢复执行尚未实现。
 
-### 🧠 2. 大模型智能评估「提前量（Lead Time）」
-- 告别在事件发生瞬间才提示的手忙脚乱！大模型结合生活经验智能推算提前提醒时机：
-  - **会议 / 沟通**：提前 15 ~ 30 分钟提醒（留出准备与入会时间）；
-  - **差旅 / 出行 / 赶车**：提前 60 ~ 120 分钟提醒（留出通勤与安检时间）；
-  - **工作汇报 / 材料截止**：提前 1 ~ 3 小时提醒（留出收尾与复核时间）；
-  - **即刻行动**：准点即时提醒；
-  - **普通无定时待办**：合理避开深夜，智能推演安排在今晚 20:00 或明早工作时间。
+## 平台与下载
 
-### 🧼 3. 极简主义纯图标线框 UI
-- **彻底去除干扰**：移除了所有“重要且紧急/不重要不紧急”文字，移除“Q1/Q2/Q3/Q4”代号，并去除了右上角冗余的计数微标；
-- **纯粹矢量微标**：以 🔥（核心）、⭐（重要）、⚡（协同）、☕（休闲）纯图标呈现，视线焦点回归待办卡片本身；
-- **状态感知**：微型呼吸 LED 状态灯常驻标题栏旁（绿色待机/青蓝推理中），通知提示 3 秒自动平滑退场。
+从 [GitHub Releases](https://github.com/yarnway/dontforget/releases) 查看实际可用的版本。源码版本、CI 候选包与正式发布分别记录，不将构建成功当作设备验收通过。
 
-### 🔒 4. 本地优先与自主配置 (Local-First, BYOK)
-- 遵循 **BYOK (Bring Your Own Key)** 模式，用户直接对接大模型服务商（DeepSeek、Gemini 或自定义 API）；
-- 备忘记录、附件与配置保存在本机；AI 请求直连所配置的模型服务商。应用不再提供内置 API Key。
+| 平台 | 工程要求 | 交付说明 |
+| --- | --- | --- |
+| Windows | Windows 10/11 x64 | 安装包与便携归档；设备功能需独立验收 |
+| macOS | macOS 12.0+ | 候选归档未公证 |
+| Linux | GTK 3 桌面环境，x64 | 归档包；发行版兼容性需验证 |
+| Android | Android 7.0 / API 24+ | 测试签名 APK/AAB；正式签名单独处理 |
+| iOS | iOS 15.0+ | CI 产物未签名，安装需有效签名 |
 
-### 🎙️ 5. 全能多模态随手记
-- **文字记录**：自然语言直接输入，支持任意模糊时间与重复周期（每天、工作日、每周、每月）；
-- **语音备忘**：一键录音，自动保存并调用模型转录解析，卡片支持随时重播原始录音；
-- **图片与截图提取**：支持上传便签照片、会议白板截图，Vision 大模型自动提炼待办；
-- **文档与视频关联**：本地多媒体素材快速预览与关联。
+## 本地开发
 
----
-
-## 💻 全平台支持与系统要求
-
-| 平台 | 最低系统版本 | 架构 | 特性支持 |
-|---|---|---|---|
-| **Windows** | Windows 10 / 11 | x64 | 包含运行库；支持托盘，安装与运行兼容性待发布前验收 |
-| **macOS** | 工程最低配置 macOS 12.0 | x64 / ARM64 (Apple Silicon) | 候选包未公证；原生运行兼容性待验收 |
-| **Linux** | Ubuntu 20.04 LTS / Debian 11+ | x64 | GTK 3 原生窗口与系统托盘 |
-| **Android** | Android 7.0 (API 24) 及以上 | ARM64 / ARMv7 | 移动端触摸手势优化、通知推播 |
-| **iOS** | 工程最低配置 iOS 15.0 | ARM64 | CI 仅生成未签名候选包；安装与真机验收需要有效签名 |
-
----
-
-## 🚀 快速下载与安装
-
-前往 [GitHub Releases](https://github.com/yarnway/dontforget/releases) 查看已发布的安装包。当前源码候选版本为 **v1.5.1**，尚未完成五平台打包与真机验收；下载版本以 Releases 页面为准：
-
-- **Windows 独立安装版**：下载对应版本的 `DontForget_Setup_v*.exe`，双击根据向导安装。
-- **Windows 绿色免安装版**：下载对应版本的 `DontForget_Portable_v*.zip`，解压后双击 `dont_forget.exe` 即可使用。
-
----
-
-## ⚙️ 快速配置大模型
-
-启动应用后，点击右上角齿轮图标 ⚙️ 进入设置：
-
-1. **选择预设服务商**：
-   - **DeepSeek**（推荐）：提供高性价比的大模型解析能力；
-   - **Gemini**：具备极强的多模态图文解析能力；
-   - **自定义**：兼容任何 OpenAI 规范接口（如本地 Ollama、OneAPI、vLLM 等）。
-2. **填入 API Key**，点击保存即可开始使用！
-3. **语言选择**：可在简体中文、English、日本語之间任意无缝切换。
-
----
-
-## 📚 详细文档导航
-
-DontForget 提供了详尽的模块化技术与使用文档：
-
-- 📖 **[用户使用指南 (User Guide)](docs/User_Guide.md)**：各功能详细操作流程、多模态录制技巧、卡片管理与快捷操作。
-- 🏛️ **[系统架构设计 (Architecture Design)](docs/Architecture_Design.md)**：Clean Architecture 架构划分、Riverpod 状态流与 SQLite FFI 持久化方案。
-- 🛠️ **[开发者与源码构建手册 (Developer Guide)](docs/Developer_Guide.md)**：本地开发环境搭建、源码目录结构、自动化测试与调试指南。
-- 📦 **[打包发布与持续集成 (Packaging & Deployment)](docs/Packaging_and_Deployment.md)**：Inno Setup 打包脚本、Windows 7-11 动态库内嵌机制与 GitHub Actions 云端 CI/CD。
-- 🌌 **[3D 全息视觉与物理交互设计 (AI Vision & 3D Effects)](docs/AI_Vision_and_3D_Effects.md)**：3D 点云数学模型、深空星光十字芒、线束脉冲与阻尼慢速复位物理白皮书。
-- 📝 **[版本演进日志 (Changelog)](docs/Changelog.md)**：从 v1.0.0 到当前版本的演变历程。
-
----
-
-## 🔨 开发者本地快速构建
+使用 Flutter 3.44.9 / Dart 3.12.2 和仓库 lockfile：
 
 ```bash
-# 1. 克隆代码仓库
-git clone https://github.com/yarnway/dontforget.git
-cd DontForget
-
-# 2. 安装 Flutter 依赖
-flutter pub get
-
-# 3. 运行静态代码扫描与全量测试
-flutter analyze
-flutter test
-
-# 4. 本地运行调试 (Windows)
-flutter run -d windows
-
-# 5. 一键打包 Windows 生产发布包 (Setup.exe + Portable.zip)
-powershell -ExecutionPolicy Bypass -File .\scripts\package_windows.ps1
+flutter pub get --enforce-lockfile
+flutter analyze --no-pub
+flutter test --no-pub
+python3 -m unittest discover -s scripts/tests -v
+flutter run -d macos # 或 windows / linux / 已连接移动设备
 ```
 
----
+搜索计算基准使用隔离合成数据，不读取用户数据库：
 
-## 📄 开源许可证
+```bash
+dart run scripts/benchmark_task_search.dart
+```
 
-本项目采用 [MIT License](LICENSE) 开源许可证。欢迎提交 Issue 或 Pull Request 共同改进！
+构建脚本和签名限制见[打包与部署指南](docs/Packaging_and_Deployment.md)。

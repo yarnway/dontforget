@@ -10,10 +10,12 @@ class AppLocalizations {
 
   static const Map<String, Map<String, String>> _localizedValues = {
     'en': {
-      'localInputHint': 'Local note · set reminder time in details',
+      'localInputHint': 'Local note · reminder in details',
       'upcomingReminder': 'Due soon',
-      'upcomingReminderHint': 'Due within 5 minutes · shown here while the app is open',
-      'reminderUpdateFailed': 'Could not update this reminder. Please try again.',
+      'upcomingReminderHint':
+          'Due within 5 minutes · shown here while the app is open',
+      'reminderUpdateFailed':
+          'Could not update this reminder. Please try again.',
 
       'appTitle': "Don't Forget",
       'settings': 'Settings',
@@ -29,8 +31,10 @@ class AppLocalizations {
       'backupNow': 'Back up saved data',
       'backupSuccess': 'Local backup created.',
       'backupFailed': 'Backup failed. Check local storage and try again.',
-      'backupDescription': 'Backs up saved tasks, settings (including API keys), and attachment paths on this device. Files themselves are not copied. Backups are not encrypted.',
-      'settingsSaveFailed': 'Could not save settings. Check local storage and try again.',
+      'backupDescription':
+          'Backs up saved tasks, settings (including API keys), and attachment paths on this device. Files themselves are not copied. Backups are not encrypted.',
+      'settingsSaveFailed':
+          'Could not save settings. Check local storage and try again.',
       'baseUrl': 'API Base URL',
       'modelName': 'Model Name',
       'language': 'Language',
@@ -42,6 +46,23 @@ class AppLocalizations {
       'completed': 'Completed',
       'pending': 'Pending',
       'quadrantDist': 'Category Distribution',
+      'taskActions': 'Task actions',
+      'removeReviewCard': 'Remove from review cards',
+      'expandSubtasks': 'Expand subtasks',
+      'collapseSubtasks': 'Collapse subtasks',
+      'taskDeleteFailed': 'Could not delete this task. Please try again.',
+      'taskBreakdownFailed':
+          'Could not break down this task. Please try again later.',
+      'recordingStart': 'Start recording',
+      'clearSearch': 'Clear search',
+      'consoleOpenFallbackTitle': 'Open this page in your browser',
+      'consoleOpenFallbackHint':
+          'Copy this address and open it in your browser.',
+      'copyLink': 'Copy link',
+      'linkCopied': 'Link copied.',
+      'linkCopyFailed':
+          'Could not copy. Select the address and copy it manually.',
+      'probeFailed': 'Could not check local engines. Please try again.',
       'cat1': 'Urgent Alert',
       'cat2': 'Key Focus',
       'cat3': 'Routine Task',
@@ -63,7 +84,8 @@ class AppLocalizations {
       // Home & Dialogs
       'clearCompleted': 'Clear Completed',
       'clearCompletedTitle': 'Clear Completed Tasks',
-      'clearCompletedConfirm': 'Clear all completed historical tasks? This action cannot be undone.',
+      'clearCompletedConfirm':
+          'Clear all completed historical tasks? This action cannot be undone.',
       'noCompletedToClear': 'No completed tasks to clear',
       'clearedCompletedSuccess': 'Successfully cleared completed tasks',
       'confirm': 'Confirm',
@@ -76,17 +98,21 @@ class AppLocalizations {
       'taskCompleted': 'Task marked as completed',
       'playingAudio': 'Playing voice note...',
       'playOrPreview': 'Play / preview attachment',
-      'mediaUnavailable': 'Attachment record could not be loaded. Please restart and try again.',
-      'audioPlaybackFailed': 'Could not play the recording. Check that the local file is available.',
+      'mediaUnavailable':
+          'Attachment record could not be loaded. Please restart and try again.',
+      'audioPlaybackFailed':
+          'Could not play the recording. Check that the local file is available.',
       'cannotLoadImage': 'Cannot load image',
       'localPath': 'Local Path',
       'contentPreview': 'Content Preview',
-      'binaryFileNotice': 'This is a binary file and has been linked as an attachment.',
+      'binaryFileNotice':
+          'This is a binary file and has been linked as an attachment.',
       'close': 'Close',
       'openedVideo': 'Opened video with system player',
       // Input Bar
       'uploadMaterial': 'Upload Material to AI',
-      'uploadMaterialDesc': 'AI will analyze the content and create reminders automatically',
+      'uploadMaterialDesc':
+          'AI will analyze the content and create reminders automatically',
       'takePhoto': 'Camera',
       'galleryPhoto': 'Gallery',
       'importFile': 'Files',
@@ -136,7 +162,8 @@ class AppLocalizations {
       'overdue': 'Overdue',
       // Privacy & Onboarding
       'privacyShieldTitle': 'Local storage · You choose the AI provider',
-      'privacyShieldDesc': 'Tasks, attachments and API keys are stored locally without application-level encryption. AI requests send the relevant content to your configured provider. Use a local model to keep inference on your device.',
+      'privacyShieldDesc':
+          'Tasks, attachments and API keys are stored locally without application-level encryption. AI requests send the relevant content to your configured provider. Use a local model to keep inference on your device.',
       'ollamaLocal': 'Ollama (Local Offline LLM)',
       'ollamaDesc': 'Zero barrier · Offline, no API Key required',
       'getKeyGuide': 'Get API Key',
@@ -151,7 +178,8 @@ class AppLocalizations {
       'dragHint': 'Long press card to drag across quadrants',
       // AI Productivity Coach
       'aiReviewTitle': 'AI Productivity Coach & Review',
-      'aiReviewSubtitle': 'Personal productivity diagnosis and action tips based on your Eisenhower matrix',
+      'aiReviewSubtitle':
+          'Personal productivity diagnosis and action tips based on your Eisenhower matrix',
       'generateAiReview': 'Generate AI Review',
       'regenerateAiReview': 'Regenerate Review',
       'generatingAiReview': 'AI Coach is analyzing your task patterns...',
@@ -159,22 +187,25 @@ class AppLocalizations {
       'reportCopied': 'Productivity report copied to clipboard',
       // Edge AI & Cognitive Engine
       'emotionFilteredBadge': '⛵ Empty Boat Purified',
-      'breakdownHabits': '🧠 5-Min Micro Habits',
+      'breakdownHabits': '5-Min Micro Habits',
       'breakdownLoading': 'AI is decomposing micro habits...',
       'stagnantHint': 'Stagnant > 24h: Tap to break down resistance',
       'subTasksTitle': 'Actionable Micro Habits',
       'addMicroHabitsAsSubtasks': 'Micro habits generated',
       'localEngineProbe': 'Edge AI Inference Probe',
-      'probeDesc': 'Detect local inference backends (Ollama, vLLM, llama.cpp) with zero cloud relay',
+      'probeDesc':
+          'Detect local inference backends (Ollama, vLLM, llama.cpp) with zero cloud relay',
       'probeNow': 'Probe Local Engines',
       'probing': 'Probing ports...',
       'probeSuccess': 'Detected active local engine: ',
-      'probeNotFound': 'No local engine active (Ollama:11434, vLLM:8000, llama.cpp:8080)',
+      'probeNotFound':
+          'No local engine active (Ollama:11434, vLLM:8000, llama.cpp:8080)',
       'applyToSettings': 'Apply to Current Settings',
       'appliedLocalEngine': 'Switched to local engine!',
       // Decentralized LAN Sync
       'lanSyncTitle': 'Decentralized LAN Sync',
-      'lanSyncDesc': 'PIN-protected HTTP sync on the same Wi-Fi. Traffic is not encrypted; use a trusted network.',
+      'lanSyncDesc':
+          'PIN-protected HTTP sync on the same Wi-Fi. Traffic is not encrypted; use a trusted network.',
       'startLanServer': 'Start Sync Service',
       'stopLanServer': 'Stop Sync Service',
       'lanServerRunning': 'Sync service listening at: ',
@@ -187,13 +218,14 @@ class AppLocalizations {
       'syncSuccess': 'LAN Sync successful! Merged tasks.',
       'syncFailed': 'Sync failed. Please check IP, PIN, and firewall.',
       // Semantic Search
-      'searchHint': 'Search tasks by keyword or semantics...',
+      'searchHint': 'Search titles, summaries and subtasks...',
       'searchResults': 'Search Results',
       'allTasks': 'All Tasks',
       'noSearchResult': 'No matching tasks found',
       // Multi-Agent Architecture
       'multiAgentTitle': 'Multi-Agent Collective Pipeline',
-      'multiAgentDesc': '1 Manager Agent + 2 Execution Agents (Decomposer & Scheduler)',
+      'multiAgentDesc':
+          '1 Manager Agent + 2 Execution Agents (Decomposer & Scheduler)',
       'managerRole': 'Manager Agent (Global Priority)',
       'decomposerRole': 'Decomposer Agent (Goal Breakdown)',
       'schedulerRole': 'Scheduler Agent (DP Timeline Fitting)',
@@ -201,15 +233,19 @@ class AppLocalizations {
       'agentComplete': 'Multi-Agent successfully scheduled milestone pipeline',
       // Immersive Preparation Mode
       'immersiveMode': 'Immersive Preparation Mode',
-      'immersiveModeDesc': 'Silent suppression of non-critical Q3/Q4 notifications during deep focus',
+      'immersiveModeDesc':
+          'Silent suppression of non-critical Q3/Q4 notifications during deep focus',
       'immersiveActive': 'Immersive Mode Active (Q3/Q4 Silenced)',
       'immersiveDisabled': 'Immersive Mode Deactivated',
-      'filterQ3Q4Notice': 'Notification suppressed by Immersive Preparation Mode',
+      'filterQ3Q4Notice':
+          'Notification suppressed by Immersive Preparation Mode',
       // Spaced Repetition Flashcards
       'spacedRepetitionTitle': 'Spaced Repetition Review Deck',
-      'spacedRepetitionSubtitle': 'Ebbinghaus memory curve for critical technology mastery',
+      'spacedRepetitionSubtitle':
+          'Ebbinghaus memory curve for critical technology mastery',
       'reviewToday': 'Reviews Due Today',
-      'noReviewsToday': 'All knowledge cards reviewed for today! Keep up the great work.',
+      'noReviewsToday':
+          'All knowledge cards reviewed for today! Keep up the great work.',
       'flipCard': 'Tap card to flip answer',
       'markRemembered': 'Mastered (Next Stage)',
       'markDifficult': 'Hard (Reset to Stage 1)',
@@ -217,22 +253,26 @@ class AppLocalizations {
       'convertCard': 'Turn into Review Card',
       // Dynamic Programming Scheduling
       'dpScheduleTitle': 'DP Free Slot Scheduling',
-      'dpScheduleDesc': 'Finds optimal contiguous calendar slots for Q2 tasks with minimal fragmentation',
+      'dpScheduleDesc':
+          'Finds optimal contiguous calendar slots for Q2 tasks with minimal fragmentation',
       'dpScheduled': 'Scheduled into optimal slot',
       'fragmentationSaved': 'Calendar fragmentation minimized',
       // Command Palette & Geek Control
       'commandPalette': 'Command Palette',
-      'cmdHint': 'Type a command (/search, /add, /focus, /export, /sync, /cards)...',
+      'cmdHint':
+          'Type a command (/search, /add, /focus, /export, /sync, /cards)...',
       'keyboardShortcuts': 'Keyboard Shortcuts',
       // Data Export
       'exportExcel': 'Export Excel Pivot Compatible CSV',
-      'exportExcelDesc': 'RFC 4180 CSV with UTF-8 BOM ready for Excel 2019+ Pivot Tables',
+      'exportExcelDesc':
+          'RFC 4180 CSV with UTF-8 BOM ready for Excel 2019+ Pivot Tables',
       'exportSuccess': 'Exported successfully to: ',
       'exportFailed': 'Export failed',
       'openExportFolder': 'Open Directory',
       // v1.5.0 Knowledge Graph & Network
       'knowledgeGraphTitle': 'Knowledge Graph',
-      'knowledgeGraphSubtitle': 'Local semantic bi-directional linking topology',
+      'knowledgeGraphSubtitle':
+          'Local semantic bi-directional linking topology',
       'graphNodes': 'Nodes',
       'graphEdges': 'Links',
       'resetGraphView': 'Reset View',
@@ -242,7 +282,8 @@ class AppLocalizations {
       'itemsCount': 'items',
       // v1.5.0 Context-Aware Triggers & Catch-Up Digest
       'contextDigestTitle': 'Context Catch-Up Digest',
-      'contextDigestDesc': 'Aggregated secondary tasks suppressed during deep focus / office mode',
+      'contextDigestDesc':
+          'Aggregated secondary tasks suppressed during deep focus / office mode',
       'noSuppressedTasks': 'No suppressed notifications in current session',
       'contextProfileSwitch': 'Context Profile',
       'profileGeneral': 'General (Default)',
@@ -260,7 +301,8 @@ class AppLocalizations {
       // v1.5.0 Dynamic Urgency Routing
       'promotedToQ1Badge': '⚡ Promoted to Q1',
       'dynamicPromotedAlertTitle': 'Dynamic Urgency Promotion',
-      'dynamicPromotedAlertDesc': 'Due within 24 hours. Automatically elevated to Q1 with priority notification.',
+      'dynamicPromotedAlertDesc':
+          'Due within 24 hours. Automatically elevated to Q1 with priority notification.',
       'revertToQ2': 'Revert to Q2',
       'autoCollapsedNotice': 'Stagnant notes auto-folded',
       // v1.5.0 Bi-directional Linking
@@ -271,7 +313,7 @@ class AppLocalizations {
       'viewInGraph': 'View in Graph',
     },
     'zh': {
-      'localInputHint': '本地记录 · 提醒时间请在详情设置',
+      'localInputHint': '本地记录 · 详情设提醒',
       'upcomingReminder': '即将到期',
       'upcomingReminderHint': '5 分钟内到期 · 应用打开时在此提前提示',
       'reminderUpdateFailed': '提醒更新失败，请重试。',
@@ -303,6 +345,20 @@ class AppLocalizations {
       'completed': '已完成',
       'pending': '进行中',
       'quadrantDist': '事项分类分布',
+      'taskActions': '任务操作',
+      'removeReviewCard': '移出复习卡片',
+      'expandSubtasks': '展开子任务',
+      'collapseSubtasks': '收起子任务',
+      'taskDeleteFailed': '删除失败，请重试。',
+      'taskBreakdownFailed': '拆解失败，请稍后重试。',
+      'recordingStart': '开始录音',
+      'clearSearch': '清除搜索',
+      'consoleOpenFallbackTitle': '无法自动打开网页',
+      'consoleOpenFallbackHint': '请复制下面的网址，在浏览器中打开。',
+      'copyLink': '复制链接',
+      'linkCopied': '链接已复制。',
+      'linkCopyFailed': '复制失败，请选择网址后手动复制。',
+      'probeFailed': '本地引擎检测失败，请重试。',
       'cat1': '紧急提醒',
       'cat2': '重点跟进',
       'cat3': '常规待办',
@@ -397,7 +453,8 @@ class AppLocalizations {
       'overdue': '已到期',
       // 隐私与配置引导
       'privacyShieldTitle': '本地存储 · 自主选择 AI 服务商',
-      'privacyShieldDesc': '任务、附件和 API Key 保存在本机，目前未实现应用层加密。使用 AI 时，相关内容会发送给您配置的模型服务商；选择本地模型可让推理留在本机。',
+      'privacyShieldDesc':
+          '任务、附件和 API Key 保存在本机，目前未实现应用层加密。使用 AI 时，相关内容会发送给您配置的模型服务商；选择本地模型可让推理留在本机。',
       'ollamaLocal': 'Ollama (本地离线大模型)',
       'ollamaDesc': '0 门槛 · 离线无需申请 Key',
       'getKeyGuide': '获取 Key 指引',
@@ -420,7 +477,7 @@ class AppLocalizations {
       'reportCopied': '已复制效能复盘报告至剪贴板',
       // 端侧大模型与认知干预
       'emotionFilteredBadge': '⛵ 空船效应已重构',
-      'breakdownHabits': '🧠 5分钟微习惯拆解',
+      'breakdownHabits': '5分钟微习惯拆解',
       'breakdownLoading': 'AI 正在拆解 5 分钟微习惯行动项...',
       'stagnantHint': '已停滞超24小时 · 建议点击拆解消除行动阻力',
       'subTasksTitle': '已拆解微习惯步骤',
@@ -448,7 +505,7 @@ class AppLocalizations {
       'syncSuccess': '局域网同步成功！已合并对端事项。',
       'syncFailed': '同步失败，请检查对端 IP、配对码及局域网防火墙。',
       // 语义搜索
-      'searchHint': '全局语义搜索：输入关键词或任务意图...',
+      'searchHint': '搜索标题、摘要和子任务…',
       'searchResults': '搜索结果',
       'allTasks': '全部事项',
       'noSearchResult': '未找到匹配的事项',
@@ -532,7 +589,7 @@ class AppLocalizations {
       'viewInGraph': '在图谱中定位',
     },
     'ja': {
-      'localInputHint': 'ローカル記録 · 通知時刻は詳細で設定',
+      'localInputHint': 'メモ · 詳細で通知を設定',
       'upcomingReminder': 'まもなく期限',
       'upcomingReminderHint': '5 分以内に期限 · アプリ使用中にここで事前表示',
       'reminderUpdateFailed': 'リマインダーを更新できませんでした。再試行してください。',
@@ -551,7 +608,8 @@ class AppLocalizations {
       'backupNow': '保存済みデータをバックアップ',
       'backupSuccess': 'ローカルバックアップを作成しました。',
       'backupFailed': 'バックアップに失敗しました。ストレージを確認して再試行してください。',
-      'backupDescription': '保存済みタスク、設定（APIキーを含む）、添付ファイルのパスを端末内にバックアップします。ファイル本体はコピーされません。バックアップは暗号化されません。',
+      'backupDescription':
+          '保存済みタスク、設定（APIキーを含む）、添付ファイルのパスを端末内にバックアップします。ファイル本体はコピーされません。バックアップは暗号化されません。',
       'settingsSaveFailed': '設定を保存できませんでした。ストレージを確認して再試行してください。',
       'baseUrl': 'ベースURL',
       'modelName': 'モデル名',
@@ -564,6 +622,20 @@ class AppLocalizations {
       'completed': '完了',
       'pending': '進行中',
       'quadrantDist': 'カテゴリー分布',
+      'taskActions': 'タスク操作',
+      'removeReviewCard': '復習カードから削除',
+      'expandSubtasks': 'サブタスクを展開',
+      'collapseSubtasks': 'サブタスクを折りたたむ',
+      'taskDeleteFailed': 'タスクを削除できませんでした。再試行してください。',
+      'taskBreakdownFailed': 'タスクを分解できませんでした。後でもう一度お試しください。',
+      'recordingStart': '録音を開始',
+      'clearSearch': '検索をクリア',
+      'consoleOpenFallbackTitle': 'ブラウザーでこのページを開く',
+      'consoleOpenFallbackHint': '下のURLをコピーしてブラウザーで開いてください。',
+      'copyLink': 'リンクをコピー',
+      'linkCopied': 'リンクをコピーしました。',
+      'linkCopyFailed': 'コピーできませんでした。URLを選択して手動でコピーしてください。',
+      'probeFailed': 'ローカルエンジンの確認に失敗しました。もう一度お試しください。',
       'cat1': '緊急リマインド',
       'cat2': '重要タスク',
       'cat3': '日常タスク',
@@ -658,7 +730,8 @@ class AppLocalizations {
       'overdue': '期限超過',
       // プライバシーとガイド
       'privacyShieldTitle': 'ローカル保存 · AIプロバイダーを選択',
-      'privacyShieldDesc': 'タスク、添付ファイル、APIキーは端末内に保存されますが、アプリによる暗号化は未実装です。AI利用時は関連する内容を設定済みプロバイダーへ送信します。端末内で推論するにはローカルモデルを選択してください。',
+      'privacyShieldDesc':
+          'タスク、添付ファイル、APIキーは端末内に保存されますが、アプリによる暗号化は未実装です。AI利用時は関連する内容を設定済みプロバイダーへ送信します。端末内で推論するにはローカルモデルを選択してください。',
       'ollamaLocal': 'Ollama (ローカルオフラインLLM)',
       'ollamaDesc': '設定不要 · オフライン、APIキー不要',
       'getKeyGuide': 'APIキー取得',
@@ -681,7 +754,7 @@ class AppLocalizations {
       'reportCopied': '振り返りレポートをクリップボードにコピーしました',
       // エッジAIと認知介入
       'emotionFilteredBadge': '⛵ エンプティボート再構築',
-      'breakdownHabits': '🧠 5分間マイクロ習慣分解',
+      'breakdownHabits': '5分間マイクロ習慣分解',
       'breakdownLoading': 'AIが5分間のマイクロ習慣を分解中...',
       'stagnantHint': '24時間以上停滞中 · タップして行動障壁を解消',
       'subTasksTitle': '分解されたマイクロ習慣',
@@ -691,12 +764,14 @@ class AppLocalizations {
       'probeNow': 'ローカル推论エンジンを検出',
       'probing': 'ポートをスキャン中...',
       'probeSuccess': 'アクティブなローカル推論エンジンを検出: ',
-      'probeNotFound': 'ローカル推論エンジンが見つかりません (Ollama:11434, vLLM:8000, llama.cpp:8080)',
+      'probeNotFound':
+          'ローカル推論エンジンが見つかりません (Ollama:11434, vLLM:8000, llama.cpp:8080)',
       'applyToSettings': '現在の設定に適用',
       'appliedLocalEngine': 'ローカルエンジンに切り替えました！',
       // 分散型LAN同期
       'lanSyncTitle': '分散型LANローカル同期',
-      'lanSyncDesc': '同じWi-Fi内でPIN認証によるHTTP同期。通信は暗号化されません。信頼できるネットワークで利用してください。',
+      'lanSyncDesc':
+          '同じWi-Fi内でPIN認証によるHTTP同期。通信は暗号化されません。信頼できるネットワークで利用してください。',
       'startLanServer': '同期サービスを開始',
       'stopLanServer': '同期サービスを停止',
       'lanServerRunning': '同期サービス稼働中: ',
@@ -709,7 +784,7 @@ class AppLocalizations {
       'syncSuccess': 'LAN同期に成功しました！タスクをマージしました。',
       'syncFailed': '同期に失敗しました。IP、PIN、ファイアウォールを確認してください。',
       // セマンティック検索
-      'searchHint': 'キーワードまたは自然言語で検索...',
+      'searchHint': 'タイトル・概要・サブタスクを検索…',
       'searchResults': '検索結果',
       'allTasks': 'すべてのタスク',
       'noSearchResult': '一致するタスクが見つかりませんでした',
@@ -807,7 +882,8 @@ class AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
   const AppLocalizationsDelegate();
 
   @override
-  bool isSupported(Locale locale) => ['en', 'zh', 'ja'].contains(locale.languageCode);
+  bool isSupported(Locale locale) =>
+      ['en', 'zh', 'ja'].contains(locale.languageCode);
 
   @override
   Future<AppLocalizations> load(Locale locale) async {

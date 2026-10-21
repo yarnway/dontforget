@@ -10,6 +10,7 @@ import '../models/media_record.dart';
 import '../models/reminder.dart';
 import '../models/agent_models.dart';
 import '../services/llm_service.dart';
+import '../services/local_media_store.dart';
 import 'providers.dart';
 
 class HomeState {
@@ -61,14 +62,8 @@ class HomeController extends StateNotifier<HomeState> {
     super.dispose();
   }
 
-  Future<String> _saveFileToLocal(String tempPath) async {
-    final appDir = await getApplicationDocumentsDirectory();
-    await appDir.create(recursive: true);
-    final fileName = tempPath.split(Platform.pathSeparator).last;
-    final savedPath = '${appDir.path}/$fileName';
-    await File(tempPath).copy(savedPath);
-    return savedPath;
-  }
+  Future<String> _saveFileToLocal(String tempPath) =>
+      LocalMediaStore().importFile(tempPath);
 
   Future<MultiAgentExecutionResult> processWithMultiAgent(
     String complexGoal,

@@ -63,9 +63,21 @@ final remindersProvider = StateNotifierProvider<RemindersNotifier, List<Reminder
 class RemindersNotifier extends StateNotifier<List<Reminder>> {
   final DatabaseHelper _dbHelper;
   late final Future<void> ready;
+  Future<void> _operations = Future<void>.value();
 
   RemindersNotifier(this._dbHelper) : super([]) {
-    ready = _loadReminders();
+    ready = _enqueue(_loadReminders);
+  }
+
+  // Startup reads, refreshes and mutations share one order. A failed operation
+  // reaches its caller but does not prevent the next operation from running.
+  Future<T> _enqueue<T>(Future<T> Function() operation) {
+    final result = _operations.then((_) => operation());
+    _operations = result.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace __) {},
+    );
+    return result;
   }
 
   Future<void> _loadReminders() async {
@@ -77,172 +89,202 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       state = list;
       final now = DateTime.now();
       for (final reminder in list) {
-        if (!reminder.isCompleted && reminder.triggerTime != null && reminder.triggerTime!.isAfter(now)) {
+        if (!reminder.isCompleted &&
+            reminder.triggerTime != null &&
+            reminder.triggerTime!.isAfter(now)) {
           NotificationService().scheduleReminder(reminder);
         }
       }
-      // 启动时自动执行 Q2 动态跃迁扫描
-      await scanAndApplyDynamicUrgency();
+      // Already inside the queue: do not enqueue and await ourselves.
+      await _applyDynamicUrgency();
     } catch (e, stack) {
-      if (!mounted) return;
-      debugPrint('Warning: Reminders load error: $e\n$stack');
-      state = [];
+      // A failed refresh or promotion must not erase already loaded tasks.
+      if (mounted) debugPrint('Warning: Reminders load error: $e\n$stack');
     }
   }
 
-  Future<void> addReminder(Reminder reminder) async {
+  Future<void> addReminder(Reminder reminder) => _enqueue(() async {
     final db = await _dbHelper.database;
+    if (!mounted) return;
     Reminder toAdd = reminder;
+    final replacements = <String, Reminder>{};
 
-    // 智能双向链接发现：若新任务未指定关联项，自动与语义相关度高的历史任务建立双向互联
     if (toAdd.linkedTaskIds.isEmpty && state.isNotEmpty) {
-      final suggestedIds = const BiDirectionalLinkService().findSuggestedLinkedIds(toAdd, state);
+      final suggestedIds = const BiDirectionalLinkService()
+          .findSuggestedLinkedIds(toAdd, state);
       if (suggestedIds.isNotEmpty) {
         toAdd = toAdd.copyWith(linkedTaskIds: suggestedIds);
-        // 对被推荐的历史任务也反向添加当前任务 ID
-        for (final otherId in suggestedIds) {
-          final idx = state.indexWhere((r) => r.id == otherId);
-          if (idx != -1) {
-            final other = state[idx];
-            if (!other.linkedTaskIds.contains(toAdd.id)) {
-              final updatedOther = other.copyWith(
-                linkedTaskIds: [...other.linkedTaskIds, toAdd.id],
-              );
-              await db.update('Reminders', updatedOther.toJson(), where: 'id = ?', whereArgs: [other.id]);
-              state = [
-                for (final r in state)
-                  if (r.id == other.id) updatedOther else r
-              ];
-            }
+        for (final other in state) {
+          if (suggestedIds.contains(other.id) &&
+              !other.linkedTaskIds.contains(toAdd.id)) {
+            replacements[other.id] = other.copyWith(
+              linkedTaskIds: [...other.linkedTaskIds, toAdd.id],
+            );
           }
         }
       }
     }
 
-    await db.insert('Reminders', toAdd.toJson());
-    state = [...state, toAdd];
+    await db.transaction((txn) async {
+      await txn.insert('Reminders', toAdd.toJson());
+      for (final other in replacements.values) {
+        await txn.update(
+          'Reminders',
+          {'linked_task_ids': other.toJson()['linked_task_ids']},
+          where: 'id = ?',
+          whereArgs: [other.id],
+        );
+      }
+    });
+    if (mounted) {
+      state = [for (final item in state) replacements[item.id] ?? item, toAdd];
+    }
+  });
+
+  Future<void> updateReminder(Reminder reminder) {
+    // Capture the requested field changes before waiting. This preserves an
+    // unrelated edit or promotion committed by an earlier queued operation.
+    final changes = reminder.toJson()..remove('id');
+    if (mounted) {
+      for (final existing in state) {
+        if (existing.id == reminder.id) {
+          final before = existing.toJson();
+          changes.removeWhere((key, value) => before[key] == value);
+          break;
+        }
+      }
+    }
+    return _enqueue(() async {
+      final db = await _dbHelper.database;
+      if (!mounted || changes.isEmpty) return;
+      final matches = state.where((item) => item.id == reminder.id);
+      if (matches.isEmpty) return;
+      final updated = Reminder.fromJson({
+        ...matches.first.toJson(),
+        ...changes,
+      });
+      final count = await db.update(
+        'Reminders',
+        changes,
+        where: 'id = ?',
+        whereArgs: [reminder.id],
+      );
+      if (mounted && count > 0) {
+        state = [
+          for (final item in state)
+            if (item.id == reminder.id) updated else item,
+        ];
+      }
+    });
   }
 
-  Future<void> updateReminder(Reminder reminder) async {
-    final db = await _dbHelper.database;
-    await db.update('Reminders', reminder.toJson(), where: 'id = ?', whereArgs: [reminder.id]);
-    state = [
-      for (final r in state)
-        if (r.id == reminder.id) reminder else r
-    ];
-  }
-
-  Future<void> linkTwoTasks(String id1, String id2) async {
+  Future<void> linkTwoTasks(String id1, String id2) => _enqueue(() async {
     if (id1 == id2) return;
-    final idx1 = state.indexWhere((r) => r.id == id1);
-    final idx2 = state.indexWhere((r) => r.id == id2);
-    if (idx1 == -1 || idx2 == -1) return;
-
     final db = await _dbHelper.database;
-    final task1 = state[idx1];
-    final task2 = state[idx2];
-
-    Reminder? new1;
-    Reminder? new2;
-
-    if (!task1.linkedTaskIds.contains(id2)) {
-      new1 = task1.copyWith(linkedTaskIds: [...task1.linkedTaskIds, id2]);
-      await db.update('Reminders', new1.toJson(), where: 'id = ?', whereArgs: [id1]);
-    }
-    if (!task2.linkedTaskIds.contains(id1)) {
-      new2 = task2.copyWith(linkedTaskIds: [...task2.linkedTaskIds, id1]);
-      await db.update('Reminders', new2.toJson(), where: 'id = ?', whereArgs: [id2]);
-    }
-
-    state = [
-      for (final r in state)
-        if (r.id == id1 && new1 != null)
-          new1
-        else if (r.id == id2 && new2 != null)
-          new2
-        else
-          r
-    ];
-  }
-
-  Future<void> unlinkTwoTasks(String id1, String id2) async {
-    final idx1 = state.indexWhere((r) => r.id == id1);
-    final idx2 = state.indexWhere((r) => r.id == id2);
-
-    final db = await _dbHelper.database;
-    Reminder? new1;
-    Reminder? new2;
-
-    if (idx1 != -1) {
-      final task1 = state[idx1];
-      if (task1.linkedTaskIds.contains(id2)) {
-        new1 = task1.copyWith(
-          linkedTaskIds: task1.linkedTaskIds.where((id) => id != id2).toList(),
+    if (!mounted) return;
+    final byId = {for (final item in state) item.id: item};
+    final task1 = byId[id1];
+    final task2 = byId[id2];
+    if (task1 == null || task2 == null) return;
+    final replacements = <String, Reminder>{
+      if (!task1.linkedTaskIds.contains(id2))
+        id1: task1.copyWith(linkedTaskIds: [...task1.linkedTaskIds, id2]),
+      if (!task2.linkedTaskIds.contains(id1))
+        id2: task2.copyWith(linkedTaskIds: [...task2.linkedTaskIds, id1]),
+    };
+    await db.transaction((txn) async {
+      for (final item in replacements.values) {
+        await txn.update(
+          'Reminders',
+          {'linked_task_ids': item.toJson()['linked_task_ids']},
+          where: 'id = ?',
+          whereArgs: [item.id],
         );
-        await db.update('Reminders', new1.toJson(), where: 'id = ?', whereArgs: [id1]);
+      }
+    });
+    if (mounted && replacements.isNotEmpty) {
+      state = [for (final item in state) replacements[item.id] ?? item];
+    }
+  });
+
+  Future<void> unlinkTwoTasks(String id1, String id2) => _enqueue(() async {
+    final db = await _dbHelper.database;
+    if (!mounted) return;
+    final replacements = <String, Reminder>{};
+    for (final item in state) {
+      final otherId = item.id == id1 ? id2 : (item.id == id2 ? id1 : null);
+      if (otherId != null && item.linkedTaskIds.contains(otherId)) {
+        replacements[item.id] = item.copyWith(
+          linkedTaskIds: item.linkedTaskIds
+              .where((id) => id != otherId)
+              .toList(),
+        );
       }
     }
-    if (idx2 != -1) {
-      final task2 = state[idx2];
-      if (task2.linkedTaskIds.contains(id1)) {
-        new2 = task2.copyWith(
-          linkedTaskIds: task2.linkedTaskIds.where((id) => id != id1).toList(),
+    await db.transaction((txn) async {
+      for (final item in replacements.values) {
+        await txn.update(
+          'Reminders',
+          {'linked_task_ids': item.toJson()['linked_task_ids']},
+          where: 'id = ?',
+          whereArgs: [item.id],
         );
-        await db.update('Reminders', new2.toJson(), where: 'id = ?', whereArgs: [id2]);
       }
+    });
+    if (mounted && replacements.isNotEmpty) {
+      state = [for (final item in state) replacements[item.id] ?? item];
     }
+  });
 
-    state = [
-      for (final r in state)
-        if (r.id == id1 && new1 != null)
-          new1
-        else if (r.id == id2 && new2 != null)
-          new2
-        else
-          r
-    ];
-  }
+  Future<int> scanAndApplyDynamicUrgency() => _enqueue(_applyDynamicUrgency);
 
-  /// 扫描待办列表，自动执行 Q2 -> Q1 动态跃迁
-  Future<int> scanAndApplyDynamicUrgency() async {
+  Future<int> _applyDynamicUrgency() async {
     if (!mounted) return 0;
-    const dynamicService = DynamicUrgencyService();
-    final updatedList = dynamicService.evaluatePromotions(state);
-    int promotedCount = 0;
-
+    final original = state;
+    final updatedList = const DynamicUrgencyService().evaluatePromotions(
+      original,
+    );
+    if (identical(updatedList, original)) return 0;
+    final promoted = [
+      for (var i = 0; i < updatedList.length; i++)
+        if (!identical(updatedList[i], original[i])) updatedList[i],
+    ];
     final db = await _dbHelper.database;
-    for (int i = 0; i < updatedList.length; i++) {
-      if (!mounted) return promotedCount;
-      final updated = updatedList[i];
-      final original = state[i];
-      if (updated.quadrantLevel != original.quadrantLevel && updated.isDynamicallyPromoted) {
-        promotedCount++;
-        await db.update('Reminders', updated.toJson(), where: 'id = ?', whereArgs: [updated.id]);
+    if (!mounted) return 0;
+    await db.transaction((txn) async {
+      for (final item in promoted) {
+        await txn.update(
+          'Reminders',
+          {
+            'quadrant_level': item.quadrantLevel,
+            'original_quadrant_level': item.originalQuadrantLevel,
+            'is_dynamically_promoted': item.isDynamicallyPromoted ? 1 : 0,
+          },
+          where: 'id = ?',
+          whereArgs: [item.id],
+        );
       }
-    }
-
-    if (promotedCount > 0 && mounted) {
-      state = updatedList;
-    }
-    return promotedCount;
+    });
+    if (mounted) state = updatedList;
+    return promoted.length;
   }
 
-  Future<void> deleteReminder(String id) async {
+  Future<void> deleteReminder(String id) => _enqueue(() async {
     final db = await _dbHelper.database;
+    if (!mounted) return;
     await db.delete('Reminders', where: 'id = ?', whereArgs: [id]);
-    state = state.where((r) => r.id != id).toList();
-  }
+    if (mounted) state = state.where((r) => r.id != id).toList();
+  });
 
-  Future<int> clearCompletedReminders() async {
+  Future<int> clearCompletedReminders() => _enqueue(() async {
     final db = await _dbHelper.database;
+    if (!mounted) return 0;
     final count = await db.delete('Reminders', where: 'is_completed = 1');
-    state = state.where((r) => !r.isCompleted).toList();
+    if (mounted) state = state.where((r) => !r.isCompleted).toList();
     return count;
-  }
+  });
 
-  Future<void> refreshReminders() async {
-    await _loadReminders();
-  }
+  Future<void> refreshReminders() => _enqueue(_loadReminders);
 }
 
 final mediaRecordsProvider = StateNotifierProvider<MediaRecordsNotifier, List<MediaRecord>>((ref) {

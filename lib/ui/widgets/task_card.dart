@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
 import '../../providers/providers.dart';
-import '../../services/notification_service.dart';
 import '../../l10n/app_localizations.dart';
 import '../screens/task_detail_screen.dart';
 
@@ -13,11 +12,7 @@ class TaskCard extends ConsumerStatefulWidget {
   final Reminder task;
   final VoidCallback onPlayMedia;
 
-  const TaskCard({
-    super.key,
-    required this.task,
-    required this.onPlayMedia,
-  });
+  const TaskCard({super.key, required this.task, required this.onPlayMedia});
 
   @override
   ConsumerState<TaskCard> createState() => _TaskCardState();
@@ -25,287 +20,368 @@ class TaskCard extends ConsumerStatefulWidget {
 
 class _TaskCardState extends ConsumerState<TaskCard> {
   bool _isDecomposing = false;
+  bool _isUpdating = false;
+  bool _isDeleting = false;
   bool _showSubtasks = true;
 
-  Future<void> _decomposeToMicroHabits() async {
-    if (_isDecomposing) return;
-    setState(() => _isDecomposing = true);
+  bool get _isBusy => _isUpdating || _isDeleting;
 
+  void _showMessage(String message) {
+    if (!mounted) return;
+    InlineFeedback.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _decomposeToMicroHabits() async {
+    if (_isDecomposing || _isBusy) return;
+    setState(() => _isDecomposing = true);
+    final l10n = AppLocalizations.of(context);
     try {
       final settings = ref.read(settingsProvider);
-      final llmService = ref.read(llmServiceProvider);
-      final habits = await llmService.decomposeTaskToMicroHabits(
-        widget.task,
-        settings,
-        language: settings.language,
-      );
+      final habits = await ref
+          .read(llmServiceProvider)
+          .decomposeTaskToMicroHabits(
+            widget.task,
+            settings,
+            language: settings.language,
+          );
+      if (!mounted) return;
+      // Preserve edits made while the request was running, and do not revive a deleted task.
+      final current = ref
+          .read(remindersProvider)
+          .where((task) => task.id == widget.task.id)
+          .firstOrNull;
+      if (current == null) return;
+      await ref
+          .read(remindersProvider.notifier)
+          .updateReminder(current.copyWith(subTasks: jsonEncode(habits)));
+      _showMessage(l10n.get('addMicroHabitsAsSubtasks'));
+    } catch (_) {
+      _showMessage(l10n.get('taskBreakdownFailed'));
+    } finally {
+      if (mounted) setState(() => _isDecomposing = false);
+    }
+  }
 
-      final updated = widget.task.copyWith(
-        subTasks: jsonEncode(habits),
-      );
+  Future<void> _setCompleted(bool completed) async {
+    if (_isBusy) return;
+    setState(() => _isUpdating = true);
+    final l10n = AppLocalizations.of(context);
+    final task = widget.task;
+    final notifications = ref.read(notificationServiceProvider);
+    try {
+      final next = completed && task.isRecurring
+          ? task.getNextOccurrence()
+          : null;
+      final updated = next == null
+          ? task.copyWith(isCompleted: completed)
+          : task.copyWith(triggerTime: next, isCompleted: false);
       await ref.read(remindersProvider.notifier).updateReminder(updated);
-
-      if (mounted) {
-        final l10n = AppLocalizations.of(context);
-        InlineFeedback.of(context).hideCurrentSnackBar();
-        InlineFeedback.of(context).showSnackBar(
-          SnackBar(
-            duration: const Duration(seconds: 2),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            content: Text(l10n.get('addMicroHabitsAsSubtasks')),
-          ),
+      if (updated.isCompleted) {
+        await notifications.cancelReminder(task.id);
+      } else if (updated.triggerTime?.isAfter(DateTime.now()) ?? false) {
+        await notifications.scheduleReminder(updated);
+      }
+      if (next != null) {
+        _showMessage(
+          '${l10n.get('periodicNext')}${next.toString().substring(0, 16)}',
         );
       }
-    } catch (e) {
-      if (mounted) {
-        InlineFeedback.of(context).showSnackBar(
-          SnackBar(
-            content: Text('拆解失败: $e'),
-            behavior: SnackBarBehavior.floating,
+    } catch (_) {
+      _showMessage(l10n.get('reminderUpdateFailed'));
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
+  Future<void> _deleteTask() async {
+    if (_isBusy) return;
+    setState(() => _isDeleting = true);
+    final task = widget.task;
+    final l10n = AppLocalizations.of(context);
+    final notifier = ref.read(remindersProvider.notifier);
+    final notifications = ref.read(notificationServiceProvider);
+    final feedback = InlineFeedback.of(context);
+    try {
+      await notifier.deleteReminder(task.id);
+      await notifications.cancelReminder(task.id);
+      if (!feedback.mounted) return;
+      feedback.showSnackBar(
+        SnackBar(
+          content: Text('${l10n.get('deletedTask')}: ${task.taskTitle}'),
+          action: SnackBarAction(
+            label: l10n.get('undo'),
+            onPressed: () async {
+              try {
+                await notifier.addReminder(task);
+                if (!task.isCompleted &&
+                    (task.triggerTime?.isAfter(DateTime.now()) ?? false)) {
+                  await notifications.scheduleReminder(task);
+                }
+              } catch (_) {
+                if (feedback.mounted) {
+                  feedback.showSnackBar(
+                    SnackBar(content: Text(l10n.get('reminderUpdateFailed'))),
+                  );
+                }
+              }
+            },
           ),
+        ),
+      );
+    } catch (_) {
+      if (feedback.mounted) {
+        feedback.showSnackBar(
+          SnackBar(content: Text(l10n.get('taskDeleteFailed'))),
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _isDecomposing = false);
-      }
+      if (mounted) setState(() => _isDeleting = false);
     }
   }
 
-  void _deleteTask(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final notifier = ref.read(remindersProvider.notifier);
-    notifier.deleteReminder(widget.task.id);
-    NotificationService().cancelReminder(widget.task.id);
-
-    InlineFeedback.of(context).hideCurrentSnackBar();
-    InlineFeedback.of(context).showSnackBar(
-      SnackBar(
-        duration: const Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        content: Text('${l10n.get('deletedTask')}: ${widget.task.taskTitle}'),
-        action: SnackBarAction(
-          label: l10n.get('undo'),
-          textColor: Colors.amberAccent,
-          onPressed: () {
-            notifier.addReminder(widget.task);
-            if (widget.task.triggerTime != null && widget.task.triggerTime!.isAfter(DateTime.now())) {
-              NotificationService().scheduleReminder(widget.task);
-            }
-          },
+  void _openDetails() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => TaskDetailScreen(
+          task: widget.task,
+          onPlayMedia: widget.onPlayMedia,
         ),
       ),
     );
   }
 
-  void _showContextMenu(BuildContext context, Offset globalPosition) async {
-    final l10n = AppLocalizations.of(context);
-    final value = await showMenu<String>(
+  PopupMenuItem<String> _menuItem(
+    String value,
+    IconData icon,
+    String label, {
+    bool destructive = false,
+  }) {
+    final colors = Theme.of(context).colorScheme;
+    final color = destructive ? colors.error : colors.onSurface;
+    return PopupMenuItem(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(label, style: TextStyle(color: color)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<PopupMenuEntry<String>> _menuItems(AppLocalizations l10n) => [
+    _menuItem('edit', Icons.edit_outlined, l10n.get('editTask')),
+    _menuItem(
+      'toggle',
+      widget.task.isCompleted
+          ? Icons.radio_button_unchecked
+          : Icons.check_circle_outline,
+      l10n.get(widget.task.isCompleted ? 'markUndone' : 'markDone'),
+    ),
+    _menuItem(
+      'decompose',
+      Icons.psychology_outlined,
+      l10n.get('breakdownHabits'),
+    ),
+    _menuItem(
+      'toggle_review',
+      Icons.school_outlined,
+      widget.task.spacedRepetitionLevel > 0
+          ? l10n.get('removeReviewCard')
+          : l10n.get('convertCard'),
+    ),
+    const PopupMenuDivider(),
+    _menuItem(
+      'delete',
+      Icons.delete_outline,
+      l10n.get('deleteTask'),
+      destructive: true,
+    ),
+  ];
+
+  Future<void> _showContextMenu(Offset position) async {
+    if (_isBusy) return;
+    final action = await showMenu<String>(
       context: context,
       position: RelativeRect.fromLTRB(
-        globalPosition.dx,
-        globalPosition.dy,
-        globalPosition.dx + 1,
-        globalPosition.dy + 1,
+        position.dx,
+        position.dy,
+        position.dx + 1,
+        position.dy + 1,
       ),
-      items: [
-        PopupMenuItem(
-          value: 'edit',
-          child: Row(
-            children: [
-              const Icon(Icons.edit_outlined, size: 16),
-              const SizedBox(width: 8),
-              Text(l10n.get('editTask')),
-            ],
-          ),
-        ),
-        PopupMenuItem(
-          value: 'toggle',
-          child: Row(
-            children: [
-              Icon(
-                widget.task.isCompleted ? Icons.radio_button_unchecked : Icons.check_circle_outline,
-                size: 16,
-              ),
-              const SizedBox(width: 8),
-              Text(widget.task.isCompleted ? l10n.get('markUndone') : l10n.get('markDone')),
-            ],
-          ),
-        ),
-        PopupMenuItem(
-          value: 'decompose',
-          child: Row(
-            children: [
-              const Icon(Icons.psychology_outlined, size: 16, color: Colors.indigoAccent),
-              const SizedBox(width: 8),
-              Text(l10n.get('breakdownHabits')),
-            ],
-          ),
-        ),
-        PopupMenuItem(
-          value: 'toggle_review',
-          child: Row(
-            children: [
-              Icon(
-                widget.task.spacedRepetitionLevel > 0 ? Icons.school : Icons.school_outlined,
-                size: 16,
-                color: Colors.amber,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                widget.task.spacedRepetitionLevel > 0
-                    ? '移出复习卡片'
-                    : l10n.get('convertCard'),
-              ),
-            ],
-          ),
-        ),
-        const PopupMenuDivider(),
-        PopupMenuItem(
-          value: 'delete',
-          child: Row(
-            children: [
-              const Icon(Icons.delete_outline, size: 16, color: Colors.red),
-              const SizedBox(width: 8),
-              Text(l10n.get('deleteTask'), style: const TextStyle(color: Colors.red)),
-            ],
-          ),
-        ),
-      ],
+      color: Theme.of(context).colorScheme.surfaceContainer,
+      surfaceTintColor: Colors.transparent,
+      items: _menuItems(AppLocalizations.of(context)),
     );
+    if (mounted && action != null) await _onAction(action);
+  }
 
-    if (!context.mounted) return;
-
-    if (value == 'edit') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => TaskDetailScreen(task: widget.task, onPlayMedia: widget.onPlayMedia),
-        ),
-      );
-    } else if (value == 'toggle') {
+  Future<void> _onAction(String action) async {
+    if (_isBusy) return;
+    if (action == 'edit') {
+      _openDetails();
+    } else if (action == 'toggle') {
       HapticFeedback.selectionClick();
-      final updated = widget.task.copyWith(isCompleted: !widget.task.isCompleted);
-      ref.read(remindersProvider.notifier).updateReminder(updated);
-      if (updated.isCompleted) {
-        NotificationService().cancelReminder(widget.task.id);
-      } else if (updated.triggerTime != null && updated.triggerTime!.isAfter(DateTime.now())) {
-        NotificationService().scheduleReminder(updated);
+      await _setCompleted(!widget.task.isCompleted);
+    } else if (action == 'decompose') {
+      await _decomposeToMicroHabits();
+    } else if (action == 'delete') {
+      await _deleteTask();
+    } else if (action == 'toggle_review') {
+      setState(() => _isUpdating = true);
+      final l10n = AppLocalizations.of(context);
+      try {
+        final service = ref.read(spacedRepetitionServiceProvider);
+        final updated = widget.task.spacedRepetitionLevel > 0
+            ? service.disableCard(widget.task)
+            : service.enableCard(widget.task);
+        await ref.read(remindersProvider.notifier).updateReminder(updated);
+      } catch (_) {
+        _showMessage(l10n.get('reminderUpdateFailed'));
+      } finally {
+        if (mounted) setState(() => _isUpdating = false);
       }
-    } else if (value == 'decompose') {
-      _decomposeToMicroHabits();
-    } else if (value == 'toggle_review') {
-      final spacedService = ref.read(spacedRepetitionServiceProvider);
-      final updated = widget.task.spacedRepetitionLevel > 0
-          ? spacedService.disableCard(widget.task)
-          : spacedService.enableCard(widget.task);
-      ref.read(remindersProvider.notifier).updateReminder(updated);
-      InlineFeedback.of(context).showSnackBar(
-        SnackBar(
-          content: Text(updated.spacedRepetitionLevel > 0
-              ? '已转为艾宾浩斯复习卡片！将按记忆遗忘曲线安排深度复盘。'
-              : '已从复习卡片移出。'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    } else if (value == 'delete') {
-      _deleteTask(context);
     }
+  }
+
+  Widget _badge(String label, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(label, style: TextStyle(fontSize: 11, color: color)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = Theme.of(context).colorScheme;
     final task = widget.task;
-
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final subTasks = task.getSubTasksList();
+    final priorityColor = switch (task.quadrantLevel) {
+      1 => isDark ? Colors.red.shade300 : Colors.red.shade700,
+      2 => isDark ? Colors.orange.shade300 : Colors.orange.shade800,
+      3 => isDark ? Colors.blue.shade300 : Colors.blue.shade700,
+      _ => isDark ? Colors.green.shade300 : Colors.green.shade700,
+    };
     IconData? mediaIcon;
     if (task.recordId != null) {
-      final records = ref.watch(mediaRecordsProvider);
-      final media = records.where((m) => m.id == task.recordId).firstOrNull;
-      if (media?.type == 'audio') {
-        mediaIcon = Icons.mic_none;
-      } else if (media?.type == 'image') {
-        mediaIcon = Icons.image_outlined;
-      } else if (media?.type == 'video') {
-        mediaIcon = Icons.videocam_outlined;
-      } else if (media?.type == 'file') {
-        mediaIcon = Icons.description_outlined;
-      }
+      final media = ref.watch(
+        mediaRecordsProvider.select(
+          (records) =>
+              records.where((record) => record.id == task.recordId).firstOrNull,
+        ),
+      );
+      mediaIcon = switch (media?.type) {
+        'audio' => Icons.mic_none,
+        'image' => Icons.image_outlined,
+        'video' => Icons.videocam_outlined,
+        'file' => Icons.description_outlined,
+        _ => null,
+      };
     }
+    final metadata = <Widget>[
+      if (task.isEmotionFiltered)
+        _badge(
+          l10n.get('emotionFilteredBadge'),
+          Icons.spa_outlined,
+          colors.primary,
+        ),
+      if (task.isDynamicallyPromoted && !task.isCompleted)
+        _badge(
+          l10n.get('promotedToQ1Badge'),
+          Icons.bolt_outlined,
+          colors.error,
+        ),
+      if (task.triggerTime != null)
+        _badge(
+          task.triggerTime.toString().substring(0, 16),
+          Icons.access_time,
+          colors.onSurfaceVariant,
+        ),
+      if (task.isRecurring)
+        _badge(
+          task.recurrenceDescription ?? l10n.get('recurrencePeriodic'),
+          Icons.autorenew_rounded,
+          colors.primary,
+        ),
+      if (task.spacedRepetitionLevel > 0)
+        _badge(
+          'Lv.${task.spacedRepetitionLevel}',
+          Icons.school_outlined,
+          colors.primary,
+        ),
+      if (task.linkedTaskIds.isNotEmpty)
+        _badge('${task.linkedTaskIds.length}', Icons.link, colors.primary),
+      if (task.contextTrigger?.isNotEmpty ?? false)
+        _badge(
+          l10n.get('contextTriggerTitle'),
+          Icons.near_me_outlined,
+          colors.primary,
+        ),
+    ];
+    final showBreakdown =
+        subTasks.isEmpty &&
+        !task.isCompleted &&
+        (task.quadrantLevel == 2 || task.isStagnant(hours: 24));
 
-    Color priorityColor;
-    switch (task.quadrantLevel) {
-      case 1:
-        priorityColor = Colors.red.shade400;
-        break;
-      case 2:
-        priorityColor = Colors.orange.shade400;
-        break;
-      case 3:
-        priorityColor = Colors.blue.shade400;
-        break;
-      case 4:
-      default:
-        priorityColor = Colors.green.shade400;
-        break;
-    }
-
-    final subTasksList = task.getSubTasksList();
-    final isStagnant = task.isStagnant(hours: 24);
-
-      final dynamicService = ref.watch(dynamicUrgencyServiceProvider);
-      final q4Opacity = dynamicService.calculateQ4VisualOpacity(task);
-
-      return Dismissible(
-      key: Key(task.id),
-      direction: DismissDirection.endToStart,
+    return Dismissible(
+      key: ValueKey(task.id),
+      direction: _isBusy ? DismissDirection.none : DismissDirection.endToStart,
       background: Container(
-        margin: const EdgeInsets.only(bottom: 6),
+        margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
-          color: Colors.red.shade400.withValues(alpha: 0.85),
-          borderRadius: BorderRadius.circular(6),
+          color: colors.errorContainer,
+          borderRadius: BorderRadius.circular(12),
         ),
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 16),
-        child: const Icon(Icons.delete_outline, color: Colors.white, size: 20),
+        child: Icon(Icons.delete_outline, color: colors.onErrorContainer),
       ),
-      onDismissed: (_) => _deleteTask(context),
-      child: Opacity(
-        opacity: q4Opacity,
-        child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeInOut,
-        margin: const EdgeInsets.only(bottom: 6),
+      // The provider removes a successfully deleted row. A failed write leaves it usable.
+      confirmDismiss: (_) async {
+        await _deleteTask();
+        return false;
+      },
+      // Animate the inherited theme once. A second background-only animation
+      // can leave a white card behind already-light dark-theme text.
+      child: Container(
+        key: ValueKey('task-surface-${task.id}'),
+        margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
-          color: task.isCompleted
-              ? (isDark ? Colors.black26 : Colors.grey.shade100.withValues(alpha: 0.6))
-              : (isDark ? Colors.black.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.75)),
-          borderRadius: BorderRadius.circular(6),
+          color: task.isCompleted ? colors.surfaceContainerLow : colors.surface,
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: task.isCompleted
-                ? Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.35)
-                : priorityColor.withValues(alpha: 0.35),
-            width: 1.0,
+                ? colors.outlineVariant
+                : priorityColor.withValues(alpha: 0.3),
           ),
         ),
         child: InkWell(
-          borderRadius: BorderRadius.circular(6),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => TaskDetailScreen(task: task, onPlayMedia: widget.onPlayMedia),
-              ),
-            );
-          },
-          onSecondaryTapUp: (details) {
-            _showContextMenu(context, details.globalPosition);
-          },
+          borderRadius: BorderRadius.circular(12),
+          onTap: _openDetails,
+          onSecondaryTapUp: (details) =>
+              _showContextMenu(details.globalPosition),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            padding: const EdgeInsets.all(10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -313,479 +389,208 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Micro Status Indicator Light on the edge
                     Padding(
-                      padding: const EdgeInsets.only(top: 5, right: 6),
-                      child: Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: task.isCompleted ? Colors.grey.shade400 : priorityColor,
-                          boxShadow: task.isCompleted
-                              ? []
-                              : [
-                                  BoxShadow(
-                                    color: priorityColor.withValues(alpha: 0.6),
-                                    blurRadius: 4,
-                                    spreadRadius: 0.5,
-                                  ),
-                                ],
-                        ),
+                      padding: const EdgeInsets.only(top: 16, right: 8),
+                      child: Icon(
+                        Icons.circle,
+                        size: 6,
+                        color: task.isCompleted
+                            ? colors.onSurfaceVariant
+                            : priorityColor,
                       ),
                     ),
-
-                    // Media attachment icon if any
-                    if (mediaIcon != null) ...[
-                      IconButton(
-                        tooltip: l10n.get('playOrPreview'),
-                        onPressed: widget.onPlayMedia,
-                        constraints: const BoxConstraints(
-                          minWidth: 40,
-                          minHeight: 40,
-                        ),
-                        padding: const EdgeInsets.all(8),
-                        icon: Icon(mediaIcon, size: 20,
-                            color: Theme.of(context).colorScheme.primary),
-                      ),
-                    ],
-
-                    // Main Info Stream (Title, Summary, Recurrence/Time wireframe tags)
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  task.taskTitle,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.color
-                                        ?.withValues(alpha: task.isCompleted ? 0.65 : 1.0),
-                                    decoration: task.isCompleted ? TextDecoration.lineThrough : null,
-                                    height: 1.25,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              // Empty Boat Purified Badge
-                              if (task.isEmotionFiltered)
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 4),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                    decoration: BoxDecoration(
-                                      color: Colors.teal.withValues(alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(3),
-                                      border: Border.all(
-                                        color: Colors.teal.withValues(alpha: 0.35),
-                                        width: 0.7,
-                                      ),
-                                    ),
-                                    child: Text(
-                                      l10n.get('emotionFilteredBadge'),
-                                      style: TextStyle(
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w600,
-                                        color: isDark ? Colors.tealAccent : Colors.teal.shade700,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              // Dynamic Urgency Promotion Golden Lightning Badge
-                              if (task.isDynamicallyPromoted && !task.isCompleted)
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 4),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                    decoration: BoxDecoration(
-                                      color: Colors.amber.withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(3),
-                                      border: Border.all(
-                                        color: Colors.amber.withValues(alpha: 0.6),
-                                        width: 0.8,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(Icons.bolt, size: 10, color: Colors.amber),
-                                        const SizedBox(width: 2),
-                                        Text(
-                                          l10n.get('promotedToQ1Badge'),
-                                          style: TextStyle(
-                                            fontSize: 9.5,
-                                            fontWeight: FontWeight.bold,
-                                            color: isDark ? Colors.amberAccent : Colors.amber.shade800,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                            ],
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 7),
+                        child: Text(
+                          task.taskTitle,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            height: 1.35,
+                            color: task.isCompleted
+                                ? colors.onSurfaceVariant
+                                : colors.onSurface,
+                            decoration: task.isCompleted
+                                ? TextDecoration.lineThrough
+                                : null,
                           ),
-                          if (task.taskSummary != null && task.taskSummary!.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Text(
-                                task.taskSummary!,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.color
-                                      ?.withValues(alpha: task.isCompleted ? 0.35 : 0.65),
-                                  height: 1.2,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          if (task.triggerTime != null || task.isRecurring || task.spacedRepetitionLevel > 0 || task.linkedTaskIds.isNotEmpty || (task.contextTrigger != null && task.contextTrigger!.isNotEmpty) || (isStagnant && subTasksList.isEmpty))
-                            Padding(
-                              padding: const EdgeInsets.only(top: 4),
-                              child: Wrap(
-                                spacing: 4,
-                                runSpacing: 2,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  if (task.linkedTaskIds.isNotEmpty)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                      decoration: BoxDecoration(
-                                        color: Colors.indigoAccent.withValues(alpha: 0.12),
-                                        borderRadius: BorderRadius.circular(3),
-                                        border: Border.all(
-                                          color: Colors.indigoAccent.withValues(alpha: 0.4),
-                                          width: 0.7,
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Icon(Icons.link, size: 10, color: Colors.indigoAccent),
-                                          const SizedBox(width: 2),
-                                          Text(
-                                            '${task.linkedTaskIds.length}',
-                                            style: const TextStyle(
-                                              fontSize: 9.5,
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.indigoAccent,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  if (task.contextTrigger != null && task.contextTrigger!.isNotEmpty)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                      decoration: BoxDecoration(
-                                        color: Colors.teal.withValues(alpha: 0.12),
-                                        borderRadius: BorderRadius.circular(3),
-                                        border: Border.all(
-                                          color: Colors.teal.withValues(alpha: 0.4),
-                                          width: 0.7,
-                                        ),
-                                      ),
-                                      child: const Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(Icons.near_me_outlined, size: 10, color: Colors.teal),
-                                        ],
-                                      ),
-                                    ),
-                                  if (task.spacedRepetitionLevel > 0)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                      decoration: BoxDecoration(
-                                        color: Colors.amber.withValues(alpha: 0.15),
-                                        border: Border.all(
-                                          color: Colors.amber.withValues(alpha: 0.5),
-                                          width: 0.8,
-                                        ),
-                                        borderRadius: BorderRadius.circular(3),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Icon(Icons.school, size: 10, color: Colors.amber),
-                                          const SizedBox(width: 2),
-                                          Text(
-                                            'Lv.${task.spacedRepetitionLevel}',
-                                            style: const TextStyle(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.amber,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  if (task.isRecurring)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                                          width: 0.8,
-                                        ),
-                                        borderRadius: BorderRadius.circular(3),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(Icons.autorenew_rounded, size: 10, color: Theme.of(context).colorScheme.primary),
-                                          const SizedBox(width: 2),
-                                          Text(
-                                            task.recurrenceDescription ?? l10n.get('recurrencePeriodic'),
-                                            style: TextStyle(
-                                              fontSize: 10,
-                                              fontWeight: FontWeight.w600,
-                                              color: Theme.of(context).colorScheme.primary,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  if (task.triggerTime != null)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                          color: Colors.grey.withValues(alpha: 0.3),
-                                          width: 0.8,
-                                        ),
-                                        borderRadius: BorderRadius.circular(3),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(Icons.access_time, size: 10, color: Colors.grey.shade600),
-                                          const SizedBox(width: 2),
-                                          Text(
-                                            task.triggerTime.toString().substring(0, 16),
-                                            style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  // Stagnant Task Warning Hint
-                                  if (isStagnant && subTasksList.isEmpty)
-                                    InkWell(
-                                      onTap: _decomposeToMicroHabits,
-                                      borderRadius: BorderRadius.circular(3),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                                        decoration: BoxDecoration(
-                                          color: Colors.amber.withValues(alpha: 0.15),
-                                          border: Border.all(
-                                            color: Colors.amber.shade700.withValues(alpha: 0.4),
-                                            width: 0.8,
-                                          ),
-                                          borderRadius: BorderRadius.circular(3),
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            const Icon(Icons.bolt, size: 10, color: Colors.amber),
-                                            const SizedBox(width: 2),
-                                            Text(
-                                              l10n.get('stagnantHint'),
-                                              style: TextStyle(
-                                                fontSize: 9.5,
-                                                fontWeight: FontWeight.w600,
-                                                color: isDark ? Colors.amberAccent : Colors.amber.shade900,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-
-                    // Trailing: Compact Checkbox
-                    Padding(
-                      padding: const EdgeInsets.only(left: 4),
-                      child: SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: Checkbox(
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
-                          activeColor: Theme.of(context).colorScheme.primary,
-                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          value: task.isCompleted,
-                          onChanged: (val) {
-                            HapticFeedback.selectionClick();
-                            if (val == true && task.isRecurring) {
-                              final nextTime = task.getNextOccurrence();
-                              if (nextTime != null) {
-                                final nextTask = task.copyWith(triggerTime: nextTime, isCompleted: false);
-                                ref.read(remindersProvider.notifier).updateReminder(nextTask);
-                                NotificationService().scheduleReminder(nextTask);
-
-                                InlineFeedback.of(context).hideCurrentSnackBar();
-                                InlineFeedback.of(context).showSnackBar(
-                                  SnackBar(
-                                    duration: const Duration(seconds: 3),
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                    content: Text('${l10n.get('periodicNext')}${nextTime.toString().substring(0, 16)}'),
-                                  ),
-                                );
-                                return;
-                              }
-                            }
-
-                            final updatedTask = task.copyWith(isCompleted: val);
-                            ref.read(remindersProvider.notifier).updateReminder(updatedTask);
-                            if (val == true) {
-                              NotificationService().cancelReminder(task.id);
-                            } else if (updatedTask.triggerTime != null &&
-                                updatedTask.triggerTime!.isAfter(DateTime.now())) {
-                              NotificationService().scheduleReminder(updatedTask);
-                            }
-                          },
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                    ),
+                    SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: Checkbox(
+                        key: ValueKey('complete-${task.id}'),
+                        semanticLabel:
+                            '${l10n.get(task.isCompleted ? 'markUndone' : 'markDone')}: ${task.taskTitle}',
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        materialTapTargetSize: MaterialTapTargetSize.padded,
+                        value: task.isCompleted,
+                        onChanged: _isBusy
+                            ? null
+                            : (value) {
+                                HapticFeedback.selectionClick();
+                                if (value != null) _setCompleted(value);
+                              },
+                      ),
+                    ),
+                    PopupMenuButton<String>(
+                      key: ValueKey('actions-${task.id}'),
+                      tooltip: l10n.get('taskActions'),
+                      enabled: !_isBusy,
+                      constraints: const BoxConstraints(
+                        minWidth: 200,
+                        maxWidth: 320,
+                      ),
+                      color: colors.surfaceContainer,
+                      surfaceTintColor: Colors.transparent,
+                      icon: Icon(
+                        Icons.more_horiz_rounded,
+                        size: 20,
+                        color: colors.onSurfaceVariant,
+                      ),
+                      itemBuilder: (_) => _menuItems(l10n),
+                      onSelected: _onAction,
                     ),
                   ],
                 ),
-
-                // Micro-Habits Subtasks Section
-                if (subTasksList.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.indigo.withValues(alpha: 0.04),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                        color: Colors.indigoAccent.withValues(alpha: 0.2),
-                        width: 0.6,
+                if (task.taskSummary?.isNotEmpty ?? false)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 14, top: 2),
+                    child: Text(
+                      task.taskSummary!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colors.onSurfaceVariant,
+                        height: 1.4,
                       ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.psychology, size: 12, color: Colors.indigoAccent),
-                            const SizedBox(width: 4),
-                            Text(
-                              l10n.get('subTasksTitle'),
-                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.indigoAccent),
+                  ),
+                if (metadata.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Wrap(spacing: 6, runSpacing: 6, children: metadata),
+                  ),
+                if (mediaIcon != null)
+                  Row(
+                    children: [
+                      IconButton(
+                        tooltip: l10n.get('playOrPreview'),
+                        onPressed: widget.onPlayMedia,
+                        color: colors.primary,
+                        constraints: const BoxConstraints(
+                          minWidth: 48,
+                          minHeight: 48,
+                        ),
+                        icon: Icon(mediaIcon, size: 20),
+                      ),
+                      Expanded(
+                        child: Text(
+                          l10n.get('playOrPreview'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                if (subTasks.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Semantics(
+                    expanded: _showSubtasks,
+                    child: TextButton(
+                      key: ValueKey('subtasks-${task.id}'),
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size(48, 48),
+                        foregroundColor: colors.primary,
+                        alignment: Alignment.centerLeft,
+                      ),
+                      onPressed: () =>
+                          setState(() => _showSubtasks = !_showSubtasks),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.checklist_rounded, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '${l10n.get('subTasksTitle')} (${subTasks.length})',
                             ),
-                            const Spacer(),
-                            InkWell(
-                              onTap: () => setState(() => _showSubtasks = !_showSubtasks),
-                              child: Icon(
-                                _showSubtasks ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                                size: 14,
-                                color: Colors.grey,
+                          ),
+                          Tooltip(
+                            message: l10n.get(
+                              _showSubtasks
+                                  ? 'collapseSubtasks'
+                                  : 'expandSubtasks',
+                            ),
+                            child: Icon(
+                              _showSubtasks
+                                  ? Icons.expand_less
+                                  : Icons.expand_more,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (_showSubtasks)
+                    for (final subTask in subTasks)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 2, 8, 6),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '•  ',
+                              style: TextStyle(color: colors.primary),
+                            ),
+                            Expanded(
+                              child: Text(
+                                subTask,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  height: 1.4,
+                                  color: colors.onSurfaceVariant,
+                                ),
                               ),
                             ),
                           ],
                         ),
-                        if (_showSubtasks) ...[
-                          const SizedBox(height: 2),
-                          for (final habit in subTasksList)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2, left: 2),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 4, right: 4),
-                                    child: Container(
-                                      width: 4,
-                                      height: 4,
-                                      decoration: const BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: Colors.indigoAccent,
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Text(
-                                      habit,
-                                      style: TextStyle(
-                                        fontSize: 10.5,
-                                        color: Theme.of(context).textTheme.bodySmall?.color?.withValues(alpha: 0.85),
-                                        height: 1.25,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
-                      ],
+                      ),
+                ] else if (showBreakdown)
+                  TextButton.icon(
+                    onPressed: _isDecomposing || _isBusy
+                        ? null
+                        : _decomposeToMicroHabits,
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                      foregroundColor: colors.primary,
+                    ),
+                    icon: _isDecomposing
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.auto_awesome_outlined, size: 18),
+                    label: Text(
+                      l10n.get(
+                        _isDecomposing ? 'breakdownLoading' : 'breakdownHabits',
+                      ),
                     ),
                   ),
-                ] else if (task.quadrantLevel == 2 && !task.isCompleted) ...[
-                  // Decompose button for Q2 tasks without micro habits
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4, left: 12),
-                    child: _isDecomposing
-                        ? Row(
-                            children: [
-                              const SizedBox(
-                                width: 10,
-                                height: 10,
-                                child: CircularProgressIndicator(strokeWidth: 1.5),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                l10n.get('breakdownLoading'),
-                                style: const TextStyle(fontSize: 10, color: Colors.indigoAccent),
-                              ),
-                            ],
-                          )
-                        : InkWell(
-                            onTap: _decomposeToMicroHabits,
-                            borderRadius: BorderRadius.circular(4),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 2),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.auto_awesome, size: 11, color: Colors.indigoAccent),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    l10n.get('breakdownHabits'),
-                                    style: const TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.indigoAccent,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                  ),
-                ],
               ],
             ),
           ),
         ),
-      ),
       ),
     );
   }
