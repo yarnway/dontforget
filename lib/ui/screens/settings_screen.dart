@@ -1,5 +1,6 @@
 import '../widgets/inline_feedback.dart';
 import 'ai_profiles_screen.dart';
+import 'backup_preview_screen.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -921,6 +922,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       subtitle: const Text('管理任务提取模型、顺序与自动切换'),
                       trailing: const Icon(Icons.chevron_right),
                       onTap: _isSaving ? null : _openModelProfiles,
+                    ),
+                  ),
+                  Material(
+                    color: Colors.transparent,
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.restore_page_outlined),
+                      title: const Text('检查备份'),
+                      subtitle: const Text('只读预览内容、缺失附件与兼容性'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => const BackupPreviewScreen())),
                     ),
                   ),
                   // AI Configuration (Wireframe style)
