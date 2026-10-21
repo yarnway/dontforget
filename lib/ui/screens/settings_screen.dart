@@ -1,4 +1,5 @@
 import '../widgets/inline_feedback.dart';
+import 'ai_profiles_screen.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -89,7 +90,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final settings = ref.read(settingsProvider);
     _apiKeyController = TextEditingController(text: settings.apiKey);
     _baseUrlController = TextEditingController(text: settings.baseUrl);
-    _modelNameController = TextEditingController(text: settings.requestModelName);
+    _modelNameController = TextEditingController(
+      text: settings.requestModelName,
+    );
     _selectedLang = settings.language;
 
     for (var p in _providers) {
@@ -143,6 +146,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     });
   }
 
+  Future<void> _openModelProfiles() async {
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const AiProfilesScreen()));
+    if (!mounted) return;
+    final current = ref.read(settingsProvider);
+    setState(() {
+      _apiKeyController.text = current.apiKey;
+      _baseUrlController.text = current.baseUrl;
+      _modelNameController.text = current.requestModelName;
+      _selectedProvider = null;
+    });
+  }
+
   bool _isSaving = false;
   bool _isBackingUp = false;
 
@@ -166,7 +183,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (_isSaving) return;
     setState(() => _isSaving = true);
     final settings = ref.read(settingsProvider);
+    final profiles = settings.aiProfiles.toList();
+    final primary = profiles.indexWhere((p) => p.enabled);
+    if (primary >= 0) {
+      profiles[primary] = profiles[primary].copyWith(
+        settings: profiles[primary].settings.copyWith(
+          apiKey: _apiKeyController.text.trim(),
+          baseUrl: _baseUrlController.text.trim(),
+          modelName: _modelNameController.text.trim(),
+        ),
+      );
+    }
     final newSettings = settings.copyWith(
+      aiProfiles: profiles,
       apiKey: _apiKeyController.text.trim(),
       baseUrl: _baseUrlController.text.trim(),
       modelName: _modelNameController.text.trim(),
@@ -516,7 +545,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             DropdownMenuItem(value: 'ja', child: Text('日本語')),
                           ],
                           onChanged: (val) {
-                            if (val != null) { setState(() => _selectedLang = val); }
+                            if (val != null) {
+                              setState(() => _selectedLang = val);
+                            }
                           },
                         ),
                       ],
@@ -881,6 +912,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                   const SizedBox(height: 14),
 
+                  Material(
+                    color: Colors.transparent,
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.swap_vert),
+                      title: const Text('多个模型与优先级'),
+                      subtitle: const Text('管理任务提取模型、顺序与自动切换'),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: _isSaving ? null : _openModelProfiles,
+                    ),
+                  ),
                   // AI Configuration (Wireframe style)
                   Container(
                     padding: const EdgeInsets.all(16),

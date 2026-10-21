@@ -13,6 +13,43 @@ class AiProfile {
   final AppSettings settings;
   final bool enabled;
 
+  AiProfile copyWith({String? label, AppSettings? settings, bool? enabled}) =>
+      AiProfile(
+        id: id,
+        label: label ?? this.label,
+        settings: settings ?? this.settings,
+        enabled: enabled ?? this.enabled,
+      );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'label': label,
+    'enabled': enabled,
+    'base_url': settings.baseUrl,
+    'model_name': settings.modelName,
+    'api_key': settings.apiKey,
+  };
+  factory AiProfile.fromJson(Map<String, dynamic> value) {
+    if (value['id'] is! String ||
+        value['label'] is! String ||
+        value['enabled'] is! bool ||
+        value['base_url'] is! String ||
+        value['model_name'] is! String ||
+        value['api_key'] is! String) {
+      throw const FormatException('Invalid model configuration');
+    }
+    return AiProfile(
+      id: value['id'],
+      label: value['label'],
+      enabled: value['enabled'],
+      settings: AppSettings.defaults().copyWith(
+        baseUrl: value['base_url'],
+        modelName: value['model_name'],
+        apiKey: value['api_key'],
+      ),
+    );
+  }
+
   bool get isConfigured {
     final uri = Uri.tryParse(settings.baseUrl);
     return id.isNotEmpty &&

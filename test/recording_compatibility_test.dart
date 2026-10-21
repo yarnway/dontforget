@@ -1,5 +1,9 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:dio/dio.dart';
+import 'package:dont_forget/models/ai_profile.dart';
+import 'package:dont_forget/models/settings.dart';
+import 'package:dont_forget/services/llm_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -39,6 +43,7 @@ void main() {
   late _TestNotifications notifications;
   String? recordingPath;
   bool produceAudio = false;
+  late Dio modelClient;
 
   test(
     'background completion keeps feedback until it is explicitly cleared',
@@ -101,10 +106,12 @@ void main() {
       databaseFactoryFfi,
     );
     notifications = _TestNotifications();
+    modelClient = Dio();
     container = ProviderContainer(
       overrides: [
         databaseHelperProvider.overrideWithValue(database),
         notificationServiceProvider.overrideWithValue(notifications),
+        llmServiceProvider.overrideWithValue(LLMService(client: modelClient)),
       ],
     );
     await container.read(settingsProvider.notifier).ready;
@@ -114,12 +121,82 @@ void main() {
 
   tearDown(() async {
     container.dispose();
+    modelClient.close();
     await disposed.future;
     await database.close();
     messenger.setMockMethodCallHandler(recorder, null);
     messenger.setMockMethodCallHandler(paths, null);
     await directory.delete(recursive: true);
   });
+
+  for (final fallback in [false, true]) {
+    test('model failures save one local task, fallback=$fallback', () async {
+      final attempts = <String>[];
+      modelClient.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            attempts.add(options.uri.host);
+            handler.reject(
+              DioException(
+                requestOptions: options,
+                type: DioExceptionType.badResponse,
+                response: Response(requestOptions: options, statusCode: 401),
+              ),
+            );
+          },
+        ),
+      );
+      await container
+          .read(settingsProvider.notifier)
+          .updateSettings(
+            AppSettings.defaults().copyWith(
+              aiFallbackEnabled: fallback,
+              aiProfiles: ['one', 'two']
+                  .map(
+                    (id) => AiProfile(
+                      id: id,
+                      label: id,
+                      settings: AppSettings.defaults().copyWith(
+                        baseUrl: 'https://$id.example/v1',
+                        modelName: 'fixture',
+                        apiKey: 'synthetic-key',
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
+          );
+      await container
+          .read(homeControllerProvider.notifier)
+          .processText('single local fallback');
+      for (
+        var i = 0;
+        i < 200 && container.read(homeControllerProvider).pendingTasksCount > 0;
+        i++
+      ) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect(container.read(homeControllerProvider).pendingTasksCount, 0);
+      expect(
+        attempts,
+        fallback ? ['one.example', 'two.example'] : ['one.example'],
+      );
+      final db = await database.database;
+      final rows = await db.query('Reminders');
+      expect(rows, hasLength(1));
+      expect(rows.single['task_summary'], 'single local fallback');
+      expect(rows.single['trigger_time'], isNull);
+      expect(notifications.scheduled, isEmpty);
+      expect(
+        container.read(homeControllerProvider).error,
+        contains('已保存为本地事项'),
+      );
+      expect(
+        container.read(homeControllerProvider).error,
+        isNot(contains('synthetic-key')),
+      );
+    });
+  }
 
   test(
     'recording uses explicit AAC config and stops without inventing an audio file',

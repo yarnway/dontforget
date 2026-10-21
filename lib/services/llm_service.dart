@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../models/settings.dart';
+import 'ai/priority_router.dart';
 import '../models/reminder.dart';
 import 'package:uuid/uuid.dart';
 
@@ -18,6 +19,7 @@ class LLMService {
     persistentConnection: true,
   ));
   final Dio _dio;
+  final PriorityModelRouter _router = PriorityModelRouter();
 
   Future<List<Reminder>> extractTasks(
       String text, AppSettings settings) async {
@@ -121,6 +123,18 @@ $truncatedContent
   }
 
   Future<List<Reminder>> _sendExtractionRequestWithRetry(AppSettings settings, List<Map<String, dynamic>> userMessages, {int maxRetries = 2}) async {
+    if (settings.aiProfiles.isNotEmpty) {
+      final result = await _router.execute<List<Reminder>>(
+        profiles: settings.effectiveProfiles,
+        allowFallback: settings.aiFallbackEnabled,
+        request: (profile, token) async {
+          final tasks = await _sendExtractionRequest(profile.settings, userMessages, cancelToken: token);
+          if (tasks.isEmpty) throw const FormatException('No valid tasks');
+          return tasks;
+        },
+      );
+      return result.value;
+    }
     int attempts = 0;
     while (attempts < maxRetries) {
       try {
@@ -136,7 +150,7 @@ $truncatedContent
     return [];
   }
 
-  Future<List<Reminder>> _sendExtractionRequest(AppSettings settings, List<Map<String, dynamic>> userMessages) async {
+  Future<List<Reminder>> _sendExtractionRequest(AppSettings settings, List<Map<String, dynamic>> userMessages, {CancelToken? cancelToken}) async {
     if (settings.apiKey.isEmpty) {
       throw Exception('API Key is not configured.');
     }
@@ -207,6 +221,7 @@ Output strictly in valid JSON object matching this structure:
 
       final response = await _dio.post(
         '${settings.baseUrl}/chat/completions',
+        cancelToken: cancelToken,
         options: Options(
           headers: {
             'Authorization': 'Bearer ${settings.apiKey}',

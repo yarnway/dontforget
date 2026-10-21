@@ -16,6 +16,19 @@ void main() {
       table: await db.query(table, orderBy: 'id'),
   };
 
+  Map<String, List<Map<String, Object?>>> migrated() => {
+    ...before,
+    'Settings': before['Settings']!
+        .map(
+          (row) => <String, Object?>{
+            ...row,
+            'ai_profiles_json': '[]',
+            'ai_fallback_enabled': 0,
+          },
+        )
+        .toList(),
+  };
+
   setUp(() async {
     sqfliteFfiInit();
     directory = await Directory.systemTemp.createTemp('dontforget-v7-upgrade-');
@@ -83,8 +96,8 @@ void main() {
     'historical v7 schema preserves all fields through upgrade and backup',
     () async {
       final db = await helper.database;
-      expect(await db.getVersion(), 8);
-      expect(await rows(db), before);
+      expect(await db.getVersion(), 9);
+      expect(await rows(db), migrated());
       expect(
         (await db.rawQuery('PRAGMA integrity_check')).single.values.single,
         'ok',
@@ -103,10 +116,10 @@ void main() {
         'MediaRecords': 'media_records',
         'Reminders': 'reminders',
       }.entries) {
-        expect(snapshot[entry.value], before[entry.key]);
+        expect(snapshot[entry.value], migrated()[entry.key]);
       }
       await helper.close();
-      expect(await rows(await helper.database), before);
+      expect(await rows(await helper.database), migrated());
       // The synthetic missing attachment path is preserved, not silently rewritten.
       expect(
         File(
@@ -149,8 +162,8 @@ void main() {
       );
       await inspection.close();
       final upgraded = await helper.database;
-      expect(await upgraded.getVersion(), 8);
-      expect(await rows(upgraded), before);
+      expect(await upgraded.getVersion(), 9);
+      expect(await rows(upgraded), migrated());
     },
   );
 }

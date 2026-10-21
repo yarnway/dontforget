@@ -103,7 +103,7 @@ class DatabaseHelper {
     return (_factory ?? databaseFactory).openDatabase(
       targetPath,
       options: OpenDatabaseOptions(
-        version: 8,
+        version: 9,
         onCreate: _createDB,
         onUpgrade: _upgradeDB,
       ),
@@ -131,7 +131,7 @@ class DatabaseHelper {
       // from the same point in time. Never copy an open SQLite file directly.
       final data = await db.transaction(
         (txn) async => <String, Object?>{
-          'version': 8,
+          'version': 9,
           'timestamp': DateTime.now().toUtc().toIso8601String(),
           'settings': await txn.query('Settings'),
           'media_records': await txn.query('MediaRecords'),
@@ -141,7 +141,7 @@ class DatabaseHelper {
       final temporaryMirror = join(temporary.path, 'mirror.db');
       mirror = await (_factory ?? databaseFactory).openDatabase(
         temporaryMirror,
-        options: OpenDatabaseOptions(version: 8, onCreate: _createDB),
+        options: OpenDatabaseOptions(version: 9, onCreate: _createDB),
       );
       await mirror.transaction((txn) async {
         for (final entry in const {
@@ -184,7 +184,9 @@ CREATE TABLE Settings (
   api_key TEXT,
   base_url TEXT,
   model_name TEXT,
-  language TEXT
+  language TEXT,
+  ai_profiles_json TEXT NOT NULL DEFAULT '[]',
+  ai_fallback_enabled INTEGER NOT NULL DEFAULT 0
 )
 ''');
 
@@ -228,6 +230,15 @@ CREATE TABLE Reminders (
   }
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 9) {
+      await db.execute(
+        "ALTER TABLE Settings ADD COLUMN ai_profiles_json TEXT NOT NULL DEFAULT '[]'",
+      );
+      await db.execute(
+        'ALTER TABLE Settings ADD COLUMN ai_fallback_enabled INTEGER NOT NULL DEFAULT 0',
+      );
+    }
+
     if (oldVersion < 8) {
       final settings = await db.query('Settings');
       for (final row in settings) {
