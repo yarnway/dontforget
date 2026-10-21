@@ -84,6 +84,13 @@ class _Notifications implements NotificationService {
   Future<void> cancelReminder(String id) async {}
 
   @override
+  Future<void> scheduleReminderStrict(Reminder reminder) =>
+      scheduleReminder(reminder);
+
+  @override
+  Future<void> cancelReminderStrict(String id) => cancelReminder(id);
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
@@ -679,7 +686,14 @@ void main() {
       final gate = notifications.gate = _Gate();
       await home.processText('Two tasks');
       await llm.started.future;
-      llm.result.complete([task('first'), task('second')]);
+      llm.result.complete([
+        task(
+          'first',
+        ).copyWith(triggerTime: DateTime.now().add(const Duration(hours: 1))),
+        task(
+          'second',
+        ).copyWith(triggerTime: DateTime.now().add(const Duration(hours: 2))),
+      ]);
       await gate.started.future;
       var drained = false;
       final pendingMaintenance = database.beginMaintenance().then((lease) {

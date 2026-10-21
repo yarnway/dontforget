@@ -1,4 +1,5 @@
 import 'inline_feedback.dart';
+import '../formatters/local_date_time.dart';
 import '../../data/database_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -199,24 +200,26 @@ class _ContextDigestSheetState extends ConsumerState<ContextDigestSheet> {
                                 .where((item) => item.id == task.id)
                                 .firstOrNull;
                             if (current == null) return;
-                            final notifications = ref.read(
-                              notificationServiceProvider,
-                            );
-                            await database.runOperation(generation, () async {
-                              await ref
+                            final result = await database.runOperation(
+                              generation,
+                              () => ref
                                   .read(remindersProvider.notifier)
-                                  .updateReminder(
-                                    current.copyWith(isCompleted: true),
-                                  );
-                              await notifications.cancelReminder(current.id);
-                            });
+                                  .completeOccurrence(current),
+                            );
                             database.checkGeneration(generation);
                             if (!context.mounted) return;
                             InlineFeedback.of(context).showSnackBar(
                               SnackBar(
                                 duration: const Duration(seconds: 1),
                                 content: Text(
-                                  '${l10n.get('taskCompleted')}: ${current.taskTitle}',
+                                  result.nativeSyncFailed
+                                      ? l10n.get('reminderNativeSyncFailed')
+                                      : result.disposition ==
+                                            ReminderActionDisposition.stale
+                                      ? l10n.get('reminderOccurrenceChanged')
+                                      : result.reminder?.isCompleted == false
+                                      ? '${l10n.get('periodicNext')}${formatLocalDateTime(result.reminder!.triggerTime!)}'
+                                      : '${l10n.get('taskCompleted')}: ${current.taskTitle}',
                                 ),
                               ),
                             );

@@ -60,6 +60,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
           .updateReminderForGeneration(
             current.copyWith(subTasks: jsonEncode(habits)),
             generation,
+            baseline: current,
           );
       database.checkGeneration(generation);
       _showMessage(l10n.get('addMicroHabitsAsSubtasks'));
@@ -75,7 +76,6 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     setState(() => _isUpdating = true);
     final l10n = AppLocalizations.of(context);
     final task = widget.task;
-    final notifications = ref.read(notificationServiceProvider);
     try {
       if (completed) {
         final result = await ref
@@ -94,23 +94,18 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       } else {
         final database = ref.read(databaseHelperProvider);
         final generation = database.captureGeneration();
-        await database.runOperation(generation, () async {
-          await ref
+        final result = await database.runOperation(
+          generation,
+          () => ref
               .read(remindersProvider.notifier)
-              .updateReminder(task.copyWith(isCompleted: false));
-          final saved = ref
-              .read(remindersProvider)
-              .where((r) => r.id == task.id)
-              .firstOrNull;
-          if (saved != null) {
-            try {
-              await notifications.scheduleReminderStrict(saved);
-            } catch (_) {
-              database.checkGeneration(generation);
-              _showMessage(l10n.get('reminderNativeSyncFailed'));
-            }
-          }
-        });
+              .updateReminder(
+                task.copyWith(isCompleted: false),
+                baseline: task,
+              ),
+        );
+        if (result.nativeSyncFailed) {
+          _showMessage(l10n.get('reminderNativeSyncFailed'));
+        }
         database.checkGeneration(generation);
       }
     } catch (_) {
@@ -126,31 +121,39 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     final task = widget.task;
     final l10n = AppLocalizations.of(context);
     final notifier = ref.read(remindersProvider.notifier);
-    final notifications = ref.read(notificationServiceProvider);
     final feedback = InlineFeedback.of(context);
     try {
       final database = ref.read(databaseHelperProvider);
       final generation = database.captureGeneration();
-      await database.runOperation(generation, () async {
-        await notifier.deleteReminder(task.id);
-        await notifications.cancelReminder(task.id);
-      });
+      final result = await database.runOperation(
+        generation,
+        () => notifier.deleteReminder(task.id),
+      );
+      final deleted = result.reminder ?? task;
       database.checkGeneration(generation);
       if (!feedback.mounted) return;
       feedback.showSnackBar(
         SnackBar(
-          content: Text('${l10n.get('deletedTask')}: ${task.taskTitle}'),
+          content: Text(
+            result.nativeSyncFailed
+                ? l10n.get('reminderNativeDeleteFailed')
+                : '${l10n.get('deletedTask')}: ${deleted.taskTitle}',
+          ),
           action: SnackBarAction(
             label: l10n.get('undo'),
             onPressed: () async {
               try {
-                await database.runOperation(generation, () async {
-                  await notifier.addReminder(task);
-                  if (!task.isCompleted &&
-                      (task.triggerTime?.isAfter(DateTime.now()) ?? false)) {
-                    await notifications.scheduleReminder(task);
-                  }
-                });
+                final restored = await database.runOperation(
+                  generation,
+                  () => notifier.addReminder(deleted),
+                );
+                if (restored.nativeSyncFailed && feedback.mounted) {
+                  feedback.showSnackBar(
+                    SnackBar(
+                      content: Text(l10n.get('reminderNativeSyncFailed')),
+                    ),
+                  );
+                }
               } catch (_) {
                 if (feedback.mounted) {
                   feedback.showSnackBar(
@@ -276,7 +279,9 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         final database = ref.read(databaseHelperProvider);
         final generation = database.captureGeneration();
         await database.runOperation(generation, () async {
-          await ref.read(remindersProvider.notifier).updateReminder(updated);
+          await ref
+              .read(remindersProvider.notifier)
+              .updateReminder(updated, baseline: widget.task);
         });
       } catch (_) {
         _showMessage(l10n.get('reminderUpdateFailed'));

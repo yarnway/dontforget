@@ -102,6 +102,12 @@ class ReminderActionResult {
   bool get accepted => disposition != ReminderActionDisposition.stale;
 }
 
+class ReminderBatchResult {
+  const ReminderBatchResult({this.changed = 0, this.nativeSyncFailures = 0});
+  final int changed;
+  final int nativeSyncFailures;
+}
+
 class StaleReminderOccurrenceException implements Exception {
   const StaleReminderOccurrenceException();
 }
@@ -114,6 +120,8 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
   late final Future<void> ready;
   Future<void> _operations = Future<void>.value();
   DataGeneration? _stateGeneration;
+  final Set<String> _pendingNotificationRetries = {};
+  final Set<String> _pendingNotificationCancellations = {};
 
   RemindersNotifier(
     this._dbHelper, {
@@ -177,13 +185,21 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         return;
       }
       final list = rows.map(Reminder.fromJson).toList();
+      final previousGeneration = _stateGeneration;
+      if (previousGeneration != null &&
+          !_dbHelper.isCurrent(previousGeneration)) {
+        _pendingNotificationRetries.clear();
+        _pendingNotificationCancellations.clear();
+      }
       _stateGeneration = generation;
       state = list;
       // Recovery already rebuilt notifications from the committed database.
       // Loading UI state must not reschedule or mutate it a second time.
       if (!runEffects) return;
+      // Promote before scheduling so startup uses the final saved priority.
+      await _applyDynamicUrgency(generation, synchronize: false);
       final now = DateTime.now();
-      for (final reminder in list) {
+      for (final reminder in state) {
         _dbHelper.checkGeneration(generation);
         if (!mounted) {
           return;
@@ -193,18 +209,17 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
             reminder.triggerTime == null) {
           await _dbHelper.runOperation(generation, () async {
             _dbHelper.checkGeneration(generation);
-            await _notifications.cancelReminder(reminder.id);
+            await _synchronizeReminder(reminder, generation);
           });
         } else if (!reminder.isCompleted &&
             reminder.triggerTime != null &&
             reminder.triggerTime!.isAfter(now)) {
           await _dbHelper.runOperation(generation, () async {
             _dbHelper.checkGeneration(generation);
-            await _notifications.scheduleReminder(reminder);
+            await _synchronizeReminder(reminder, generation);
           });
         }
       }
-      await _applyDynamicUrgency(generation);
     } catch (error, stack) {
       // Generation/maintenance failures must reach startup and mutation callers.
       _dbHelper.checkGeneration(generation);
@@ -217,9 +232,9 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     }
   }
 
-  Future<void> addReminder(Reminder reminder) async {
+  Future<ReminderActionResult> addReminder(Reminder reminder) async {
     final generation = _dbHelper.captureGeneration();
-    await addReminderForGeneration(reminder, generation);
+    return addReminderForGeneration(reminder, generation);
   }
 
   /// Explicitly reconcile saved occurrences after permission or native errors.
@@ -244,13 +259,17 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       checkCurrent();
       var attempted = 0;
       var failed = 0;
+      final existingIds = <String>{};
       for (final row in rows) {
         checkCurrent();
         final reminder = Reminder.fromJson(row);
+        existingIds.add(reminder.id);
         final cancel =
             reminder.isCompleted ||
             reminder.noticeAcknowledgedAt != null ||
-            reminder.triggerTime == null;
+            reminder.triggerTime == null ||
+            (!reminder.triggerTime!.isAfter(now ?? DateTime.now()) &&
+                _pendingNotificationCancellations.contains(reminder.id));
         // Existing overdue notices remain available. Retrying must not replay
         // them, erase their delivered banner, or persist an acknowledgement.
         if (!cancel && !reminder.triggerTime!.isAfter(now ?? DateTime.now())) {
@@ -263,66 +282,112 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           } else {
             await _notifications.scheduleReminderStrict(reminder);
           }
+          _pendingNotificationRetries.remove(reminder.id);
+          _pendingNotificationCancellations.remove(reminder.id);
         } catch (_) {
+          _pendingNotificationRetries.add(reminder.id);
+          if (cancel) _pendingNotificationCancellations.add(reminder.id);
           failed++;
         }
         // Recovery/disposal is not a native failure to collect and continue.
+        checkCurrent();
+      }
+      // A failed cancellation can outlive the saved row in this session.
+      // Retain that ID until cancellation succeeds; do not recreate the task.
+      for (final id in _pendingNotificationRetries.difference(existingIds)) {
+        checkCurrent();
+        attempted++;
+        try {
+          await _notifications.cancelReminderStrict(id);
+          _pendingNotificationRetries.remove(id);
+          _pendingNotificationCancellations.remove(id);
+        } catch (_) {
+          failed++;
+        }
         checkCurrent();
       }
       return (attempted: attempted, failed: failed);
     }),
   );
 
-  Future<void> addReminderForGeneration(
+  Future<ReminderActionResult> addReminderForGeneration(
     Reminder reminder,
     DataGeneration generation,
-  ) => _enqueue((ticket) async {
-    if (!mounted) {
-      return;
-    }
-    Reminder toAdd = reminder;
-    final replacements = <String, Reminder>{};
-    if (toAdd.linkedTaskIds.isEmpty && state.isNotEmpty) {
-      final suggestedIds = const BiDirectionalLinkService()
-          .findSuggestedLinkedIds(toAdd, state);
-      if (suggestedIds.isNotEmpty) {
-        toAdd = toAdd.copyWith(linkedTaskIds: suggestedIds);
-        for (final other in state) {
-          if (suggestedIds.contains(other.id) &&
-              !other.linkedTaskIds.contains(toAdd.id)) {
-            replacements[other.id] = other.copyWith(
-              linkedTaskIds: [...other.linkedTaskIds, toAdd.id],
-            );
+  ) => _enqueue(
+    (ticket) => _dbHelper.runOperation(ticket, () async {
+      if (!mounted) {
+        throw StateError('Reminder state is no longer active.');
+      }
+      Reminder toAdd = reminder;
+      final replacements = <String, Reminder>{};
+      if (toAdd.linkedTaskIds.isEmpty && state.isNotEmpty) {
+        final suggestedIds = const BiDirectionalLinkService()
+            .findSuggestedLinkedIds(toAdd, state);
+        if (suggestedIds.isNotEmpty) {
+          toAdd = toAdd.copyWith(linkedTaskIds: suggestedIds);
+          for (final other in state) {
+            if (suggestedIds.contains(other.id) &&
+                !other.linkedTaskIds.contains(toAdd.id)) {
+              replacements[other.id] = other.copyWith(
+                linkedTaskIds: [...other.linkedTaskIds, toAdd.id],
+              );
+            }
           }
         }
       }
-    }
-    await _dbHelper.writeTransaction(ticket, (txn) async {
-      await txn.insert('Reminders', toAdd.toJson());
-      for (final other in replacements.values) {
-        await txn.update(
-          'Reminders',
-          {'linked_task_ids': other.toJson()['linked_task_ids']},
-          where: 'id = ?',
-          whereArgs: [other.id],
-        );
+      await _dbHelper.writeTransaction(ticket, (txn) async {
+        await txn.insert('Reminders', toAdd.toJson());
+        for (final other in replacements.values) {
+          await txn.update(
+            'Reminders',
+            {'linked_task_ids': other.toJson()['linked_task_ids']},
+            where: 'id = ?',
+            whereArgs: [other.id],
+          );
+        }
+      });
+      _dbHelper.checkGeneration(ticket);
+      if (mounted) {
+        state = [
+          for (final item in state) replacements[item.id] ?? item,
+          toAdd,
+        ];
       }
-    });
-    _dbHelper.checkGeneration(ticket);
-    if (mounted) {
-      state = [for (final item in state) replacements[item.id] ?? item, toAdd];
-    }
-  }, generation: generation);
+      return ReminderActionResult(
+        ReminderActionDisposition.applied,
+        reminder: toAdd,
+        nativeSyncFailed:
+            _pendingNotificationRetries.contains(toAdd.id) ||
+                (!toAdd.isCompleted &&
+                    toAdd.noticeAcknowledgedAt == null &&
+                    (toAdd.triggerTime?.isAfter(DateTime.now()) ?? false))
+            ? await _synchronizeReminder(toAdd, ticket)
+            : false,
+      );
+    }),
+    generation: generation,
+  );
 
-  Future<void> updateReminder(Reminder reminder) async {
+  Future<ReminderActionResult> updateReminder(
+    Reminder reminder, {
+    Reminder? baseline,
+  }) async {
     final generation = _dbHelper.captureGeneration();
-    await updateReminderForGeneration(reminder, generation);
+    return updateReminderForGeneration(
+      reminder,
+      generation,
+      baseline: baseline,
+    );
   }
 
-  Future<void> updateReminderForGeneration(
+  Future<ReminderActionResult> updateReminderForGeneration(
     Reminder reminder,
-    DataGeneration generation,
-  ) async {
+    DataGeneration generation, {
+    Reminder? baseline,
+  }) async {
+    if (baseline != null && baseline.id != reminder.id) {
+      throw ArgumentError('Reminder edit baseline does not match.');
+    }
     _dbHelper.checkGeneration(generation);
     if (_stateGeneration != null) {
       _dbHelper.checkGeneration(_stateGeneration!);
@@ -331,53 +396,144 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     final changes = reminder.toJson()
       ..remove('id')
       ..removeWhere((key, _) => _noticeMetadata.contains(key));
-    if (mounted) {
-      for (final existing in state) {
-        if (existing.id == reminder.id) {
-          final before = existing.toJson();
-          changes.removeWhere((key, value) => before[key] == value);
-          break;
+    final before =
+        baseline ?? state.where((r) => r.id == reminder.id).firstOrNull;
+    if (before != null) {
+      final values = before.toJson();
+      changes.removeWhere((key, value) => values[key] == value);
+    }
+    return _enqueue(
+      (ticket) => _dbHelper.runOperation(ticket, () async {
+        if (!mounted) {
+          throw StateError('Reminder state is no longer active.');
         }
+        var needsNotificationSync = false;
+        var cancelOverdue = false;
+        final updated = await _dbHelper.writeTransaction(ticket, (txn) async {
+          final rows = await txn.query(
+            'Reminders',
+            where: 'id = ?',
+            whereArgs: [reminder.id],
+          );
+          if (rows.isEmpty) throw StateError('Task no longer exists.');
+          final current = Reminder.fromJson(rows.single);
+          var saved = Reminder.fromJson({...current.toJson(), ...changes});
+          if (_scheduleChanged(current, saved)) {
+            cancelOverdue = true;
+            // A whole old Reminder can carry the pre-snooze time even when its
+            // caller intended only a title edit. Never resurrect that occurrence.
+            if (reminder.noticeRevision != current.noticeRevision) {
+              throw const StaleReminderOccurrenceException();
+            }
+            saved = saved.copyWith(
+              noticeRevision: current.noticeRevision + 1,
+              noticeAcknowledgedAt: null,
+              upcomingDismissedAt: null,
+              snoozedAt: null,
+              recurrenceAnchorTime: null,
+            );
+          }
+          needsNotificationSync =
+              _nativeContentChanged(current, saved) ||
+              (changes.isEmpty &&
+                  _pendingNotificationRetries.contains(saved.id));
+          if (changes.isNotEmpty) {
+            await txn.update(
+              'Reminders',
+              saved.toJson()..remove('id'),
+              where: 'id = ?',
+              whereArgs: [saved.id],
+            );
+          }
+          return saved;
+        });
+        _dbHelper.checkGeneration(ticket);
+        _publish([updated]);
+        return ReminderActionResult(
+          changes.isEmpty
+              ? ReminderActionDisposition.alreadyApplied
+              : ReminderActionDisposition.applied,
+          reminder: updated,
+          nativeSyncFailed: needsNotificationSync
+              ? await _synchronizeReminder(
+                  updated,
+                  ticket,
+                  cancelOverdue: cancelOverdue,
+                )
+              : false,
+        );
+      }),
+      generation: generation,
+    );
+  }
+
+  static bool _nativeContentChanged(Reminder a, Reminder b) =>
+      _scheduleChanged(a, b) ||
+      a.taskTitle != b.taskTitle ||
+      a.taskSummary != b.taskSummary ||
+      a.quadrantLevel != b.quadrantLevel;
+
+  /// Runs inside the mutation queue and its database admission, after commit.
+  /// A native failure never turns a saved row into a failed database write.
+  Future<bool> _synchronizeReminder(
+    Reminder reminder,
+    DataGeneration generation, {
+    bool cancelOverdue = false,
+  }) async {
+    _dbHelper.checkGeneration(generation);
+    if (!mounted) throw StateError('Reminder state is no longer active.');
+    final cancel =
+        reminder.isCompleted ||
+        reminder.noticeAcknowledgedAt != null ||
+        reminder.triggerTime == null;
+    if (!cancel && !reminder.triggerTime!.isAfter(DateTime.now())) {
+      // Do not replay an overdue occurrence or erase its delivered banner.
+      // Moving a future alarm into the past must still remove its old request.
+      return cancelOverdue ||
+              _pendingNotificationCancellations.contains(reminder.id)
+          ? _synchronizeNotification(
+              reminder.id,
+              generation,
+              () => _notifications.cancelReminderStrict(reminder.id),
+              cancellation: true,
+            )
+          : false;
+    }
+    return _synchronizeNotification(
+      reminder.id,
+      generation,
+      () => cancel
+          ? _notifications.cancelReminderStrict(reminder.id)
+          : _notifications.scheduleReminderStrict(reminder),
+      cancellation: cancel,
+    );
+  }
+
+  Future<bool> _synchronizeNotification(
+    String id,
+    DataGeneration generation,
+    Future<void> Function() action, {
+    bool cancellation = false,
+  }) async {
+    _dbHelper.checkGeneration(generation);
+    if (!mounted) throw StateError('Reminder state is no longer active.');
+    var failed = false;
+    try {
+      await action();
+      _pendingNotificationRetries.remove(id);
+      _pendingNotificationCancellations.remove(id);
+    } catch (_) {
+      failed = true;
+      _pendingNotificationRetries.add(id);
+      if (cancellation) {
+        _pendingNotificationCancellations.add(id);
+      } else {
+        _pendingNotificationCancellations.remove(id);
       }
     }
-    await _enqueue((ticket) async {
-      if (!mounted || changes.isEmpty) {
-        return;
-      }
-      final updated = await _dbHelper.writeTransaction(ticket, (txn) async {
-        final rows = await txn.query(
-          'Reminders',
-          where: 'id = ?',
-          whereArgs: [reminder.id],
-        );
-        if (rows.isEmpty) return null;
-        final current = Reminder.fromJson(rows.single);
-        var saved = Reminder.fromJson({...current.toJson(), ...changes});
-        if (_scheduleChanged(current, saved)) {
-          // A whole old Reminder can carry the pre-snooze time even when its
-          // caller intended only a title edit. Never resurrect that occurrence.
-          if (reminder.noticeRevision != current.noticeRevision) {
-            throw const StaleReminderOccurrenceException();
-          }
-          saved = saved.copyWith(
-            noticeRevision: current.noticeRevision + 1,
-            noticeAcknowledgedAt: null,
-            upcomingDismissedAt: null,
-            snoozedAt: null,
-            recurrenceAnchorTime: null,
-          );
-        }
-        await txn.update(
-          'Reminders',
-          saved.toJson()..remove('id'),
-          where: 'id = ?',
-          whereArgs: [saved.id],
-        );
-        return saved;
-      });
-      _dbHelper.checkGeneration(ticket);
-      if (updated != null) _publish([updated]);
-    }, generation: generation);
+    _dbHelper.checkGeneration(generation);
+    if (!mounted) throw StateError('Reminder state is no longer active.');
+    return failed;
   }
 
   static const _noticeMetadata = {
@@ -561,17 +717,15 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           reconciled.add(result);
           continue;
         }
-        var failed = false;
-        try {
-          final saved = result.reminder!;
-          if (saved.isCompleted || saved.noticeAcknowledgedAt != null) {
-            await _notifications.cancelReminderStrict(saved.id);
-          } else {
-            await _notifications.scheduleReminderStrict(saved);
-          }
-        } catch (_) {
-          failed = true;
-        }
+        final saved = result.reminder!;
+        final failed = await _synchronizeNotification(
+          saved.id,
+          generation,
+          () => saved.isCompleted || saved.noticeAcknowledgedAt != null
+              ? _notifications.cancelReminderStrict(saved.id)
+              : _notifications.scheduleReminderStrict(saved),
+          cancellation: saved.isCompleted || saved.noticeAcknowledgedAt != null,
+        );
         _dbHelper.checkGeneration(generation);
         reconciled.add(
           ReminderActionResult(
@@ -649,83 +803,143 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         }
       });
 
-  Future<int> scanAndApplyDynamicUrgency() => _enqueue(_applyDynamicUrgency);
+  Future<ReminderBatchResult> scanAndApplyDynamicUrgency() =>
+      _enqueue(_applyDynamicUrgency);
 
-  Future<int> _applyDynamicUrgency(DataGeneration generation) async {
+  Future<ReminderBatchResult> _applyDynamicUrgency(
+    DataGeneration generation, {
+    bool synchronize = true,
+  }) {
     _dbHelper.checkGeneration(generation);
     if (!mounted) {
-      return 0;
+      throw StateError('Reminder state is no longer active.');
     }
-    final original = state;
-    final updatedList = const DynamicUrgencyService().evaluatePromotions(
-      original,
-    );
-    if (identical(updatedList, original)) {
-      return 0;
+    // Most heartbeats have no candidate. Avoid a whole-table SQL read/write
+    // transaction in that case; a LAN refresh evaluates its newly loaded rows.
+    final candidates = const DynamicUrgencyService().evaluatePromotions(state);
+    if (identical(candidates, state)) {
+      return Future.value(const ReminderBatchResult());
     }
-    final promoted = [
-      for (var i = 0; i < updatedList.length; i++)
-        if (!identical(updatedList[i], original[i])) updatedList[i],
-    ];
-    await _dbHelper.writeTransaction(generation, (txn) async {
-      for (final item in promoted) {
-        await txn.update(
+    return _dbHelper.runOperation(generation, () async {
+      final result = await _dbHelper.writeTransaction(generation, (txn) async {
+        // LAN writes may have changed a row since the last provider refresh.
+        final original = (await txn.query(
           'Reminders',
-          {
-            'quadrant_level': item.quadrantLevel,
-            'original_quadrant_level': item.originalQuadrantLevel,
-            'is_dynamically_promoted': item.isDynamicallyPromoted ? 1 : 0,
-          },
-          where: 'id = ?',
-          whereArgs: [item.id],
+        )).map(Reminder.fromJson).toList();
+        final updated = const DynamicUrgencyService().evaluatePromotions(
+          original,
         );
+        final promoted = [
+          for (var i = 0; i < updated.length; i++)
+            if (!identical(updated[i], original[i])) updated[i],
+        ];
+        for (final item in promoted) {
+          await txn.update(
+            'Reminders',
+            {
+              'quadrant_level': item.quadrantLevel,
+              'original_quadrant_level': item.originalQuadrantLevel,
+              'is_dynamically_promoted': item.isDynamicallyPromoted ? 1 : 0,
+            },
+            where: 'id = ?',
+            whereArgs: [item.id],
+          );
+        }
+        return (updated: updated, promoted: promoted);
+      });
+      _dbHelper.checkGeneration(generation);
+      if (mounted) state = result.updated;
+      var failures = 0;
+      if (synchronize) {
+        for (final item in result.promoted) {
+          if (await _synchronizeReminder(item, generation)) failures++;
+        }
       }
+      return ReminderBatchResult(
+        changed: result.promoted.length,
+        nativeSyncFailures: failures,
+      );
     });
-    _dbHelper.checkGeneration(generation);
-    if (mounted) {
-      state = updatedList;
-    }
-    return promoted.length;
   }
 
-  Future<void> deleteReminder(String id) => _enqueue((generation) async {
-    await _deleteReminder(id, generation);
-  });
+  Future<ReminderActionResult> deleteReminder(String id) =>
+      _enqueue((generation) => _deleteReminder(id, generation));
 
-  Future<void> deleteReminderForGeneration(
+  Future<ReminderActionResult> deleteReminderForGeneration(
     String id,
     DataGeneration generation,
   ) =>
       _enqueue((ticket) => _deleteReminder(id, ticket), generation: generation);
 
-  Future<void> _deleteReminder(String id, DataGeneration generation) async {
+  Future<ReminderActionResult> _deleteReminder(
+    String id,
+    DataGeneration generation,
+  ) => _dbHelper.runOperation(generation, () async {
     if (!mounted) {
-      return;
+      throw StateError('Reminder state is no longer active.');
     }
-    await _dbHelper.writeTransaction(
-      generation,
-      (txn) => txn.delete('Reminders', where: 'id = ?', whereArgs: [id]),
-    );
+    final deleted = await _dbHelper.writeTransaction(generation, (txn) async {
+      final rows = await txn.query(
+        'Reminders',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      await txn.delete('Reminders', where: 'id = ?', whereArgs: [id]);
+      return rows.isEmpty ? null : Reminder.fromJson(rows.single);
+    });
     _dbHelper.checkGeneration(generation);
     if (mounted) {
       state = state.where((r) => r.id != id).toList();
     }
-  }
-
-  Future<int> clearCompletedReminders() => _enqueue((generation) async {
-    if (!mounted) {
-      return 0;
-    }
-    final count = await _dbHelper.writeTransaction(
-      generation,
-      (txn) => txn.delete('Reminders', where: 'is_completed = 1'),
+    return ReminderActionResult(
+      deleted == null
+          ? ReminderActionDisposition.alreadyApplied
+          : ReminderActionDisposition.applied,
+      reminder: deleted,
+      nativeSyncFailed: await _synchronizeNotification(
+        id,
+        generation,
+        () => _notifications.cancelReminderStrict(id),
+        cancellation: true,
+      ),
     );
-    _dbHelper.checkGeneration(generation);
-    if (mounted) {
-      state = state.where((r) => !r.isCompleted).toList();
-    }
-    return count;
   });
+
+  Future<ReminderBatchResult> clearCompletedReminders() => _enqueue(
+    (generation) => _dbHelper.runOperation(generation, () async {
+      if (!mounted) {
+        throw StateError('Reminder state is no longer active.');
+      }
+      final ids = await _dbHelper.writeTransaction(generation, (txn) async {
+        final rows = await txn.query(
+          'Reminders',
+          columns: ['id'],
+          where: 'is_completed = 1',
+        );
+        await txn.delete('Reminders', where: 'is_completed = 1');
+        return rows.map((row) => row['id'] as String).toList();
+      });
+      _dbHelper.checkGeneration(generation);
+      if (mounted) {
+        state = state.where((r) => !r.isCompleted).toList();
+      }
+      var failures = 0;
+      for (final id in ids) {
+        if (await _synchronizeNotification(
+          id,
+          generation,
+          () => _notifications.cancelReminderStrict(id),
+          cancellation: true,
+        )) {
+          failures++;
+        }
+      }
+      return ReminderBatchResult(
+        changed: ids.length,
+        nativeSyncFailures: failures,
+      );
+    }),
+  );
 
   Future<void> refreshReminders() =>
       _enqueue(_loadReminders, requiresCurrentState: false);

@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/widgets.dart';
+import '../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
@@ -225,16 +227,17 @@ class HomeController extends StateNotifier<HomeState> {
     for (final task in tasks) {
       _check(generation);
       final saved = recordId == null ? task : task.copyWith(recordId: recordId);
-      await _ref
+      final result = await _ref
           .read(remindersProvider.notifier)
           .addReminderForGeneration(saved, generation);
       _check(generation);
-      final notifications = _ref.read(notificationServiceProvider);
-      await _database.runOperation(generation, () async {
-        _check(generation);
-        await notifications.scheduleReminder(saved);
-      });
-      _check(generation);
+      if (result.nativeSyncFailed) {
+        final language = _ref.read(settingsProvider).language;
+        _reportError(
+          generation,
+          AppLocalizations(Locale(language)).get('reminderNativeSyncFailed'),
+        );
+      }
     }
   }
 

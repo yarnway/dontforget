@@ -465,7 +465,7 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet> {
     try {
       final spacedService = ref.read(spacedRepetitionServiceProvider);
       final updatedTask = spacedService.reviewCard(task, remembered);
-      await ref.read(remindersProvider.notifier).updateReminder(updatedTask);
+      await ref.read(remindersProvider.notifier).updateReminder(updatedTask, baseline: task);
       if (!mounted || !_isCurrent) return;
 
       setState(() {

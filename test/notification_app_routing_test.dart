@@ -50,6 +50,11 @@ class _Notifications extends NotificationService {
   Future<void> scheduleReminder(Reminder reminder) async {}
   @override
   Future<void> cancelReminder(String id) async {}
+  @override
+  Future<void> scheduleReminderStrict(Reminder reminder) =>
+      scheduleReminder(reminder);
+  @override
+  Future<void> cancelReminderStrict(String id) => cancelReminder(id);
 }
 
 class _Context extends ContextTriggerService {

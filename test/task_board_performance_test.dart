@@ -22,13 +22,20 @@ class _ControlledReminders extends RemindersNotifier {
   Reminder? requested;
 
   @override
-  Future<void> updateReminder(Reminder reminder) async {
+  Future<ReminderActionResult> updateReminder(
+    Reminder reminder, {
+    Reminder? baseline,
+  }) async {
     requested = reminder;
     await saved.future;
     state = [
       for (final old in state)
         if (old.id == reminder.id) reminder else old,
     ];
+    return ReminderActionResult(
+      ReminderActionDisposition.applied,
+      reminder: reminder,
+    );
   }
 }
 

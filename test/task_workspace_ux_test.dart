@@ -50,11 +50,13 @@ class _Notifications implements NotificationService {
     await scheduleReminder(task);
     if (failNative) throw StateError('isolated native scheduling failure');
   }
+
   @override
   Future<void> cancelReminderStrict(String id) async {
     await cancelReminder(id);
     if (failNative) throw StateError('isolated native cancellation failure');
   }
+
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
@@ -317,6 +319,8 @@ void main() {
       await tester.runAsync(
         () => container.read(remindersProvider.notifier).addReminder(task),
       );
+      notifications.canceled.clear();
+      notifications.scheduled.clear();
       final db = await tester.runAsync(() => database.database);
       await tester.runAsync(
         () => db!.execute(
@@ -372,10 +376,13 @@ void main() {
           await tester.pump(const Duration(milliseconds: 100));
         }
         expect(container.read(remindersProvider).single.isCompleted, !reopen);
-        final stored = await tester.runAsync(() => database.read(
-          database.captureGeneration(),
-          (db) => db.query('Reminders', where: 'id = ?', whereArgs: [task.id]),
-        ));
+        final stored = await tester.runAsync(
+          () => database.read(
+            database.captureGeneration(),
+            (db) =>
+                db.query('Reminders', where: 'id = ?', whereArgs: [task.id]),
+          ),
+        );
         expect(stored!.single['is_completed'], reopen ? 0 : 1);
         expect(find.text(message), findsOneWidget);
         expect(find.text('提醒更新失败，请重试。'), findsNothing);
@@ -396,6 +403,8 @@ void main() {
     await tester.runAsync(
       () => container.read(remindersProvider.notifier).addReminder(task),
     );
+    notifications.canceled.clear();
+    notifications.scheduled.clear();
     final db = await tester.runAsync(() => database.database);
     await tester.runAsync(
       () => db!.execute(
@@ -432,6 +441,8 @@ void main() {
       await tester.runAsync(
         () => container.read(remindersProvider.notifier).addReminder(task),
       );
+      notifications.canceled.clear();
+      notifications.scheduled.clear();
       await show(tester, card(task.id));
       await tester.drag(find.byType(TaskCard), const Offset(-700, 0));
       for (var i = 0; i < 50 && find.text('撤销').evaluate().isEmpty; i++) {

@@ -15,10 +15,11 @@ import 'package:dont_forget/services/notification_service.dart';
 
 // Observe the real queued SQLite operation instead of assuming it finishes in 50 ms.
 class _ObservedRemindersNotifier extends RemindersNotifier {
-  _ObservedRemindersNotifier(super.database);
+  _ObservedRemindersNotifier(super.database, NotificationService notifications)
+    : super(notifications: notifications);
   Future<void>? lastWrite;
 
-  Future<void> _observe(Future<void> operation) {
+  Future<T> _observe<T>(Future<T> operation) {
     lastWrite = operation.then<void>(
       (_) {},
       onError: (Object _, StackTrace __) {},
@@ -27,12 +28,16 @@ class _ObservedRemindersNotifier extends RemindersNotifier {
   }
 
   @override
-  Future<void> addReminder(Reminder task) => _observe(super.addReminder(task));
+  Future<ReminderActionResult> addReminder(Reminder task) =>
+      _observe(super.addReminder(task));
   @override
-  Future<void> updateReminder(Reminder task) =>
-      _observe(super.updateReminder(task));
+  Future<ReminderActionResult> updateReminder(
+    Reminder task, {
+    Reminder? baseline,
+  }) => _observe(super.updateReminder(task, baseline: baseline));
   @override
-  Future<void> deleteReminder(String id) => _observe(super.deleteReminder(id));
+  Future<ReminderActionResult> deleteReminder(String id) =>
+      _observe(super.deleteReminder(id));
 }
 
 class _DetailNotifications implements NotificationService {
@@ -45,7 +50,11 @@ class _DetailNotifications implements NotificationService {
   @override
   Future<void> scheduleReminder(Reminder task) async => scheduled.add(task);
   @override
-  Future<void> cancelReminderStrict(String id) => cancelReminder(id);
+  Future<void> cancelReminderStrict(String id) async {
+    await cancelReminder(id);
+    if (failNative) throw StateError('isolated native cancellation failure');
+  }
+
   @override
   Future<void> scheduleReminderStrict(Reminder task) async {
     reconciled.add(task);
@@ -80,7 +89,10 @@ void main() {
       overrides: [
         databaseHelperProvider.overrideWithValue(testDatabase),
         remindersProvider.overrideWith(
-          (ref) => notifier = _ObservedRemindersNotifier(testDatabase),
+          (ref) => notifier = _ObservedRemindersNotifier(
+            testDatabase,
+            notifications,
+          ),
         ),
         notificationServiceProvider.overrideWithValue(notifications),
       ],
@@ -289,6 +301,7 @@ void main() {
       quadrantLevel: 1,
     );
     await tester.runAsync(() => notifier.addReminder(task));
+    notifications.canceled.clear();
     final db = await tester.runAsync(() => testDatabase.database);
     await tester.runAsync(
       () => db!.execute(
@@ -324,6 +337,7 @@ void main() {
       quadrantLevel: 1,
     );
     await tester.runAsync(() => notifier.addReminder(task));
+    notifications.canceled.clear();
     final db = await tester.runAsync(() => testDatabase.database);
     await tester.runAsync(
       () => db!.execute(
@@ -558,6 +572,7 @@ void main() {
         ),
       );
       await tester.pump();
+      notifications.scheduled.clear();
       await tester.ensureVisible(find.text('保存修改'));
       await performWrite(tester, find.text('保存修改'));
       final saved = container
@@ -582,6 +597,7 @@ void main() {
       await tester.runAsync(() => notifier.addReminder(task));
       await openDetail(tester, task);
       await tester.runAsync(() => notifier.deleteReminder(task.id));
+      notifications.canceled.clear();
       await tester.pump();
       await tester.enterText(
         find.byWidgetPredicate(
@@ -603,4 +619,50 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     },
   );
+  for (final dialog in [false, true]) {
+    testWidgets(
+      '${dialog ? 'dialog' : 'detail'} deletion reports native failure and keeps Undo',
+      (tester) async {
+        final task = Reminder(
+          id: 'cancel-failure-$dialog',
+          taskTitle: 'Undo after cancel failure',
+          quadrantLevel: 3,
+          triggerTime: DateTime.now().add(const Duration(hours: 2)),
+        );
+        await tester.runAsync(() => notifier.addReminder(task));
+        final saved = container
+            .read(remindersProvider)
+            .singleWhere((r) => r.id == task.id);
+        await openDetail(tester, task, dialog: dialog);
+        notifications.failNative = true;
+        try {
+          final button = dialog
+              ? find.byIcon(Icons.delete_outline)
+              : find.byIcon(Icons.delete_outline_rounded);
+          await tester.ensureVisible(button);
+          await performWrite(tester, button);
+          expect(
+            container.read(remindersProvider).where((r) => r.id == task.id),
+            isEmpty,
+          );
+          expect(
+            find.text('任务已删除，但系统提醒未能移除。请在设置中点击“重新安排提醒”重试。'),
+            findsOneWidget,
+          );
+          expect(find.text('删除失败，请重试。'), findsNothing);
+          expect(find.text('撤销'), findsOneWidget);
+          notifications.failNative = false;
+          await performWrite(tester, find.text('撤销'));
+          final restored = container
+              .read(remindersProvider)
+              .singleWhere((r) => r.id == task.id);
+          expect(restored.toJson(), saved.toJson());
+          expect(notifications.scheduled.last.toJson(), saved.toJson());
+          await tester.pumpWidget(const SizedBox());
+        } finally {
+          notifications.failNative = false;
+        }
+      },
+    );
+  }
 }

@@ -228,10 +228,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     ref
         .read(remindersProvider.notifier)
         .scanAndApplyDynamicUrgency()
+        .then((result) {
+          if (mounted && _runtimeActive && result.nativeSyncFailures > 0) {
+            InlineFeedback.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  AppLocalizations.of(context).get('reminderNativeSyncFailed'),
+                ),
+              ),
+            );
+          }
+        })
         .catchError((Object _) {
           // The next heartbeat can retry. Failed persistence must not become an
           // unhandled asynchronous error or interrupt foreground due notices.
-          return 0;
         });
   }
 
@@ -415,11 +425,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               try {
                 final database = ref.read(databaseHelperProvider);
                 final generation = database.captureGeneration();
-                final count = await database.runOperation(generation, () async {
-                  return ref
-                      .read(remindersProvider.notifier)
-                      .clearCompletedReminders();
-                });
+                final result = await database.runOperation(
+                  generation,
+                  () async {
+                    return ref
+                        .read(remindersProvider.notifier)
+                        .clearCompletedReminders();
+                  },
+                );
                 database.checkGeneration(generation);
                 if (mounted && _runtimeActive) {
                   InlineFeedback.of(context).hideCurrentSnackBar();
@@ -431,7 +444,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         borderRadius: BorderRadius.circular(8),
                       ),
                       content: Text(
-                        '${l10n.get('clearedCompletedSuccess')} ($count)',
+                        result.nativeSyncFailures > 0
+                            ? l10n.get('reminderNativeDeleteFailed')
+                            : '${l10n.get('clearedCompletedSuccess')} (${result.changed})',
                       ),
                     ),
                   );

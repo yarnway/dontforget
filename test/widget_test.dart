@@ -16,6 +16,7 @@ import 'package:dont_forget/ui/widgets/task_board.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const recorderChannel = MethodChannel('com.llfbandit.record/messages');
+  final platformChannels = <MethodChannel>[];
   late Directory testDirectory;
   late DatabaseHelper testDatabase;
   late ProviderContainer container;
@@ -69,6 +70,25 @@ void main() {
             _ => null,
           },
         );
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    platformChannels.addAll(const [
+      MethodChannel('xyz.luan/audioplayers.global'),
+      MethodChannel('xyz.luan/audioplayers.global/events'),
+      MethodChannel('xyz.luan/audioplayers'),
+      MethodChannel('tray_manager'),
+    ]);
+    for (final channel in platformChannels) {
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        if (call.method == 'create') {
+          final id = (call.arguments as Map)['playerId'];
+          final events = MethodChannel('xyz.luan/audioplayers/events/$id');
+          platformChannels.add(events);
+          messenger.setMockMethodCallHandler(events, (_) async => null);
+        }
+        return null;
+      });
+    }
     sqfliteFfiInit();
     testDirectory = await Directory.systemTemp.createTemp('dontforget-widget-');
     testDatabase = DatabaseHelper.forTesting(
@@ -89,12 +109,17 @@ void main() {
     await container.read(notificationServiceProvider).init();
   });
   tearDownAll(() async {
+    await container.read(notificationServiceProvider).pauseForMaintenance();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
           const MethodChannel('dexterous.com/flutter/local_notifications'),
           null,
         );
     container.dispose();
+    for (final channel in platformChannels) {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null);
+    }
     await testDatabase.close();
     await testDirectory.delete(recursive: true);
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
@@ -398,8 +423,16 @@ void main() {
     );
     await applyNoticeAction(tester, '我知道了');
     expect(current(task.id).noticeAcknowledgedAt, isNotNull);
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
-    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    // Lifecycle callbacks enqueue database/notification work. Run them in the
+    // real async zone just like writes, rather than suspending that queue in
+    // fake async while the next runAsync command waits for it.
+    await tester.runAsync(() async {
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await container
+          .read(remindersProvider.notifier)
+          .scanAndApplyDynamicUrgency();
+    });
     await tester.pump();
     expect(find.byKey(const ValueKey('reminder-notice-panel')), findsNothing);
     await tester.runAsync(

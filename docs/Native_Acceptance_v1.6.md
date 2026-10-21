@@ -86,3 +86,31 @@ python3 scripts/generate_reminder_acceptance_fixture.py \
 输出目录须全新。工具使用冻结的 v8/v9 schema，生成升级基线、预期迁移结果、v9 JSON/SQLite 候选及摘要清单；不会读写应用数据或启动程序。13 项新增脚本测试与既有测试合计 47 项通过。
 
 本次关闭了阶段 3A 的上述 Mac 隔离验收项；权限拒绝/再次授权、版本化 payload 点击及冷启动路由属于后续 3B 源码，不从此候选继承真机通过结论。其他设备、休眠、DST、调度持久重试和真实用户数据恢复仍独立待验；录音和播放验收继续跳过。
+
+## 2026-10-21：3B 新候选权限与点击验收
+
+源码 `639a2b9513910a608b6ee56c546c8e9fc409f60e` 的 [CI 39575684866](https://github.com/yarnway/dontforget/actions/runs/39575684866) 全部成功：质量、五平台构建与产物校验通过，三个桌面平台启动检查和 Windows 安装升级卸载检查通过。云端 Flutter 575 项通过、1 项 macOS 临时路径别名专属测试按平台跳过，Python 47 项通过；本机 Flutter 576 项全部通过。未触发发布。
+
+新 Mac ZIP 为 23,790,888 字节，SHA-256 `ff3ca1c53c829bb37231aa2affdbfbf9a92e37d5abc3c7a9db80e61225c5d005`。独立派生身份 `com.example.dontForget.acceptance.permissions-r39575684866`，路径 `build/native_acceptance/permissions-r39575684866/dont_forget.app`。来源、受保护内容和签名校验通过；进程 96940 的数据库和 owner lock 位于该独立容器。初始 schema 9、设置 1、其他业务记录 0；未触碰真实用户数据。
+
+已完成的原生观察：
+
+- 启动和设置页查询没有自动申请权限；页面显示“未开启（尚未授权或已关闭）”，手动刷新仍保持该状态。
+- 点击“允许通知”后系统出现本次独立身份的授权提示。允许后页面回读“已允许”，授权按钮消失。空数据点击“重新安排提醒”显示没有需要更新的安排。
+- 通过原生文件选择、确认和恢复流程导入四条合成任务，恢复完成。三张表逐行匹配候选，本地通知身份已旋转，pending journal 归档。操作目录 `recovery-19d69b47-a419-4780-a78b-379d90490007` 保留原空库回退。
+- 英文设置页仍显示 Allowed，显式重排反馈 Processed 4 reminder schedules。17:29:10 系统接受四条请求，无原生错误；再次只读核对全部业务行未改变，任务没有被确认、完成或修改修订。
+- 系统在 17:31:29.129 和 17:32:29.104 分别送达两条任务，并记录横幅展示，ID 为 `197498460`/`570587817`。这仅证明系统送达和展示，点击路由另行核验。
+
+工具期间曾返回 `noWindowsAvailable`；用户将独立窗口置于前台后，上述权限与恢复操作恢复可用。通知中心读取随后出现 timeoutReached，已请用户打开通知中心以完成点击；不能将工具超时写成产品路由失败或通过。
+
+合成输入与证据保留在 `/private/tmp/dontforget-permissions-fixtures-r39575684866`。其中 `restored-and-retried-readback.json` 保存恢复及重排后的业务状态，`initial-epoch.json`/`restored-epoch.json` 保存身份变化，`native-restore-retry.log` 和 `native-click-delivery.log` 保存本次独立身份的有界通知记录。`before-cold-click.json` 证明 17:33:57 应用进程不存在，所有任务仍未确认，可作为冷启动点击前基线。
+
+### 3B 隔离清理与本阶段边界
+
+20:15:57 已完成通过应用恢复初始空基线。重连原生界面后，工作台四区任务均为 0；20:25:12 的只读数据库核验确认 schema 9、integrity_check=ok，Settings 1、MediaRecords 0、Reminders 0，三张表逐行匹配 `empty-before-restore.db`，无 pending journal。本地通知身份已旋转为 `b0a38932-fc84-40e9-a493-f5888a673a64`。
+
+清理操作 `recovery-6e57ed62-c253-451a-bd2e-b1771c3580cb` 已归档 committed 结果，保留 candidate、displaced、rollback、原始备份和完成记录；rollback 的三张表逐行匹配本次四任务 `candidate-v9.sqlite`。没有删除回退材料，也没有修改真实用户库。
+
+`native-cleanup.log` 记录 20:15:57.761 移除该独立身份的全部待发及已送达请求；20:15:57.762 usernoted 移除 `197498460`、`570587817` 的已送达记录，NotificationCenter 同时移除两个横幅。`cleanup-readback.json` 保存上述空库和身份读回证据。窗口观察期间曾出现过期画面/点击无效，重连后以当前界面、数据库和有界系统日志交叉核验完成结果，不据此声称曾完成通知点击。
+
+本阶段已完成权限状态、显式重排、系统送达和清理；Mac 热点击与冷启动点击仍待验收。后续 3C-1 的 594 项源码回归及统一调度改动尚未从本次旧候选继承原生通过结论；新候选须按其源码 revision 单独核验。录音与播放验收继续跳过。

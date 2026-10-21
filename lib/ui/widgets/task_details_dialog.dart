@@ -105,24 +105,13 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
             : current.recurrenceDescription,
       );
       final notifier = ref.read(remindersProvider.notifier);
-      final notifications = ref.read(notificationServiceProvider);
-      var nativeSyncFailed = false;
-      await database.runOperation(generation, () async {
-        await notifier.updateReminder(updated);
-        final saved = ref
-            .read(remindersProvider)
-            .where((task) => task.id == updated.id)
-            .firstOrNull;
-        if (saved == null) throw StateError('Task no longer exists');
-        try {
-          await notifications.scheduleReminderStrict(saved);
-        } catch (_) {
-          nativeSyncFailed = true;
-        }
-      });
+      final result = await database.runOperation(
+        generation,
+        () => notifier.updateReminder(updated, baseline: current),
+      );
       database.checkGeneration(generation);
       if (!mounted) return;
-      if (nativeSyncFailed) {
+      if (result.nativeSyncFailed) {
         _showFailure('reminderNativeSyncFailed');
         return;
       }
@@ -142,7 +131,6 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
     if (_isBusy) return;
     final l10n = AppLocalizations.of(context);
     final notifier = ref.read(remindersProvider.notifier);
-    final notifications = ref.read(notificationServiceProvider);
     final database = ref.read(databaseHelperProvider);
     final feedback = InlineFeedback.of(context);
     setState(() => _isBusy = true);
@@ -154,26 +142,35 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
           .where((task) => task.id == widget.task.id)
           .firstOrNull;
       if (task == null) throw StateError('Task no longer exists');
-      await database.runOperation(generation, () async {
-        await notifier.deleteReminder(task.id);
-        await notifications.cancelReminder(task.id);
-      });
+      final result = await database.runOperation(
+        generation,
+        () => notifier.deleteReminder(task.id),
+      );
+      final deleted = result.reminder ?? task;
       database.checkGeneration(generation);
       if (!mounted) return;
       feedback.showSnackBar(
         SnackBar(
-          content: Text('${l10n.get('deletedTask')}: ${task.taskTitle}'),
+          content: Text(
+            result.nativeSyncFailed
+                ? l10n.get('reminderNativeDeleteFailed')
+                : '${l10n.get('deletedTask')}: ${deleted.taskTitle}',
+          ),
           action: SnackBarAction(
             label: l10n.get('undo'),
             onPressed: () async {
               try {
-                await database.runOperation(generation, () async {
-                  await notifier.addReminder(task);
-                  if (!task.isCompleted &&
-                      (task.triggerTime?.isAfter(DateTime.now()) ?? false)) {
-                    await notifications.scheduleReminder(task);
-                  }
-                });
+                final restored = await database.runOperation(
+                  generation,
+                  () => notifier.addReminder(deleted),
+                );
+                if (restored.nativeSyncFailed && feedback.mounted) {
+                  feedback.showSnackBar(
+                    SnackBar(
+                      content: Text(l10n.get('reminderNativeSyncFailed')),
+                    ),
+                  );
+                }
               } catch (_) {
                 if (feedback.mounted) {
                   feedback.showSnackBar(

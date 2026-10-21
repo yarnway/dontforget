@@ -220,6 +220,8 @@ class AppLocalizations {
       'snoozeSuccess': 'Postponed for 5 minutes',
       'reminderNativeSyncFailed':
           'Saved, but system reminders could not be updated. Check notification permissions and save the task again.',
+      'reminderNativeDeleteFailed':
+          'Tasks were deleted, but system reminders could not be removed. Retry from Settings → Rearrange reminders.',
       'reminderOccurrenceChanged':
           'This reminder has changed. Please use its current state.',
       'taskCompleted': 'Task marked as completed',
@@ -607,6 +609,7 @@ class AppLocalizations {
       'iKnow': '我知道了',
       'snoozeSuccess': '已推迟 5 分钟后再次提醒',
       'reminderNativeSyncFailed': '已保存，但系统提醒未能更新。请检查通知权限并重新保存任务。',
+      'reminderNativeDeleteFailed': '任务已删除，但系统提醒未能移除。请在设置中点击“重新安排提醒”重试。',
       'reminderOccurrenceChanged': '此提醒已变化，请根据最新状态操作。',
       'taskCompleted': '事项已标为完成',
       'playingAudio': '正在播放原声录音...',
@@ -989,6 +992,8 @@ class AppLocalizations {
       'snoozeSuccess': '5分延期しました',
       'reminderNativeSyncFailed':
           '保存しましたが、システム通知を更新できませんでした。通知権限を確認してタスクを再保存してください。',
+      'reminderNativeDeleteFailed':
+          'タスクは削除しましたが、システム通知を削除できませんでした。設定の通知再設定から再試行してください。',
       'reminderOccurrenceChanged': 'このリマインダーは変更されました。最新の状態で操作してください。',
       'taskCompleted': 'タスクを完了にしました',
       'playingAudio': '音声録音を再生中...',

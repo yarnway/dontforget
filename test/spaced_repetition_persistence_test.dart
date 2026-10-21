@@ -57,11 +57,18 @@ class _ControlledReminders extends RemindersNotifier {
   final writes = <Completer<void>>[];
 
   @override
-  Future<void> updateReminder(Reminder task) async {
+  Future<ReminderActionResult> updateReminder(
+    Reminder task, {
+    Reminder? baseline,
+  }) async {
     final completion = Completer<void>();
     writes.add(completion);
     await completion.future;
     if (mounted) state = [task];
+    return ReminderActionResult(
+      ReminderActionDisposition.applied,
+      reminder: task,
+    );
   }
 }
 

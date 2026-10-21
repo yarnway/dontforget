@@ -103,7 +103,7 @@ void main() {
       );
       final added = current.addReminder(task('gamma'));
       await Future.wait([deleted, edited, added]);
-      expect(await scan, 1);
+      expect((await scan).changed, 1);
       expect(current.state.map((item) => item.id), ['beta', 'gamma']);
       final promoted = current.state.first;
       expect(promoted.taskTitle, 'Edited beta');
@@ -139,7 +139,7 @@ void main() {
     expect((await stored('alpha')).quadrantLevel, 2);
     expect((await stored('beta')).quadrantLevel, 2);
     await database.execute('DROP TRIGGER reject_promotion');
-    expect(await current.scanAndApplyDynamicUrgency(), 2);
+    expect((await current.scanAndApplyDynamicUrgency()).changed, 2);
     expect(current.state.every((item) => item.quadrantLevel == 1), isTrue);
   });
 

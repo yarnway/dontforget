@@ -96,6 +96,8 @@ void main() {
       quadrantLevel: 2,
     );
     await container.read(remindersProvider.notifier).addReminder(task);
+    notifications.canceled.clear();
+    notifications.scheduled.clear();
   });
 
   tearDown(() async {
@@ -342,6 +344,41 @@ void main() {
       );
       expect(notifications.canceled, canceledBeforeComplete);
       expect(notifications.scheduled, scheduledBeforeComplete);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+  testWidgets(
+    'context digest completion advances a recurring occurrence once',
+    (tester) async {
+      final recurring = task.copyWith(
+        isRecurring: true,
+        recurrenceRule: 'daily',
+        triggerTime: DateTime.now().add(const Duration(hours: 2)),
+      );
+      await tester.runAsync(
+        () => container
+            .read(remindersProvider.notifier)
+            .updateReminder(recurring),
+      );
+      final current = container.read(remindersProvider).single;
+      notifications.scheduled.clear();
+      await show(tester, ContextDigestSheet(digestReminders: [current]));
+      final button = tester.widget<IconButton>(
+        find.byWidgetPredicate(
+          (widget) => widget is IconButton && widget.tooltip == 'Mark as Done',
+        ),
+      );
+      await tester.runAsync(button.onPressed as Future<void> Function());
+      await tester.pumpAndSettle();
+      final next = container.read(remindersProvider).single;
+      expect(next.isCompleted, isFalse);
+      expect(
+        next.triggerTime,
+        current.triggerTime!.add(const Duration(days: 1)),
+      );
+      expect(next.noticeRevision, current.noticeRevision + 1);
+      expect(notifications.scheduled, [task.id]);
+      expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     },
   );

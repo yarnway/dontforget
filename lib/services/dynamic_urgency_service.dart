@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import '../models/reminder.dart';
 
 /// 任务状态动态跃迁与视觉衰减调度服务 (Dynamic Urgency Routing)
@@ -17,7 +16,9 @@ class DynamicUrgencyService {
     bool changed = false;
 
     final result = reminders.map((reminder) {
-      if (reminder.isCompleted || reminder.triggerTime == null) {
+      if (reminder.isCompleted ||
+          reminder.noticeAcknowledgedAt != null ||
+          reminder.triggerTime == null) {
         return reminder;
       }
 
@@ -27,7 +28,6 @@ class DynamicUrgencyService {
         // 如果在未来 24 小时之内（且尚未过去太久）
         if (diff.inSeconds > 0 && diff <= promotionThreshold) {
           changed = true;
-          debugPrint('⚡ [DynamicUrgency] 任务自动动态跃迁: [${reminder.taskTitle}] Q2 -> Q1 (剩余 ${diff.inHours} 小时)');
           return reminder.copyWith(
             quadrantLevel: 1,
             originalQuadrantLevel: 2,
@@ -44,8 +44,13 @@ class DynamicUrgencyService {
 
   /// 计算 Q4 (不重要不紧急) 任务的视觉衰减透明度
   /// 停滞超 48 小时后开始按时间渐进衰减，最低降至 0.35
-  double calculateQ4VisualOpacity(Reminder reminder, {int thresholdHours = 48}) {
-    if (reminder.quadrantLevel != 4 || reminder.isCompleted || reminder.createdAt == null) {
+  double calculateQ4VisualOpacity(
+    Reminder reminder, {
+    int thresholdHours = 48,
+  }) {
+    if (reminder.quadrantLevel != 4 ||
+        reminder.isCompleted ||
+        reminder.createdAt == null) {
       return 1.0;
     }
 
@@ -62,7 +67,9 @@ class DynamicUrgencyService {
 
   /// 判定 Q4 任务是否处于可折叠的冗余停滞状态
   bool isQ4StagnantFolded(Reminder reminder, {int thresholdHours = 48}) {
-    if (reminder.quadrantLevel != 4 || reminder.isCompleted || reminder.createdAt == null) {
+    if (reminder.quadrantLevel != 4 ||
+        reminder.isCompleted ||
+        reminder.createdAt == null) {
       return false;
     }
     final ageHours = DateTime.now().difference(reminder.createdAt!).inHours;

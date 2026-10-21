@@ -50,14 +50,19 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
     final l10n = AppLocalizations.of(context);
     final title = _getLevelTitle(l10n);
     try {
-      await ref
+      final result = await ref
           .read(remindersProvider.notifier)
-          .updateReminder(task.copyWith(quadrantLevel: widget.level));
+          .updateReminder(
+            task.copyWith(quadrantLevel: widget.level),
+            baseline: task,
+          );
       if (!mounted) return;
       InlineFeedback.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '${l10n.get('movedToQuadrant')}$title: ${task.taskTitle}',
+            result.nativeSyncFailed
+                ? l10n.get('reminderNativeSyncFailed')
+                : '${l10n.get('movedToQuadrant')}$title: ${task.taskTitle}',
           ),
         ),
       );

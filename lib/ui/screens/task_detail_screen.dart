@@ -215,31 +215,19 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     );
 
     final notifier = ref.read(remindersProvider.notifier);
-    final notifications = ref.read(notificationServiceProvider);
     final feedback = InlineFeedback.of(context);
     setState(() => _isSaving = true);
     try {
       final database = ref.read(databaseHelperProvider);
       final generation = _editorGeneration;
       if (generation == null) throw StateError('Editor unavailable');
-      var nativeSyncFailed = false;
-      await database.runOperation(generation, () async {
-        await notifier.updateReminder(updatedTask);
-        if (!mounted) return;
-        final saved = ref
-            .read(remindersProvider)
-            .where((task) => task.id == updatedTask.id)
-            .firstOrNull;
-        if (saved == null) throw StateError('Task no longer exists');
-        try {
-          await notifications.scheduleReminderStrict(saved);
-        } catch (_) {
-          nativeSyncFailed = true;
-        }
-      });
+      final result = await database.runOperation(
+        generation,
+        () => notifier.updateReminder(updatedTask, baseline: current),
+      );
       database.checkGeneration(generation);
       if (!mounted) return;
-      if (nativeSyncFailed) {
+      if (result.nativeSyncFailed) {
         feedback.showSnackBar(
           SnackBar(content: Text(l10n.get('reminderNativeSyncFailed'))),
         );
@@ -273,7 +261,6 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       return;
     }
     final notifier = ref.read(remindersProvider.notifier);
-    final notifications = ref.read(notificationServiceProvider);
     // The feedback host survives this route and owns Undo after the editor closes.
     final feedback = InlineFeedback.of(context);
     setState(() => _isDeleting = true);
@@ -281,26 +268,35 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       final database = ref.read(databaseHelperProvider);
       final generation = _editorGeneration;
       if (generation == null) throw StateError('Editor unavailable');
-      await database.runOperation(generation, () async {
-        await notifier.deleteReminder(task.id);
-        await notifications.cancelReminder(task.id);
-      });
+      final result = await database.runOperation(
+        generation,
+        () => notifier.deleteReminder(task.id),
+      );
+      final deleted = result.reminder ?? task;
       database.checkGeneration(generation);
       if (feedback.mounted) {
         feedback.showSnackBar(
           SnackBar(
-            content: Text('${l10n.get('deletedTask')}: ${task.taskTitle}'),
+            content: Text(
+              result.nativeSyncFailed
+                  ? l10n.get('reminderNativeDeleteFailed')
+                  : '${l10n.get('deletedTask')}: ${deleted.taskTitle}',
+            ),
             action: SnackBarAction(
               label: l10n.get('undo'),
               onPressed: () async {
                 try {
-                  await database.runOperation(generation, () async {
-                    await notifier.addReminder(task);
-                    if (!task.isCompleted &&
-                        (task.triggerTime?.isAfter(DateTime.now()) ?? false)) {
-                      await notifications.scheduleReminder(task);
-                    }
-                  });
+                  final restored = await database.runOperation(
+                    generation,
+                    () => notifier.addReminder(deleted),
+                  );
+                  if (restored.nativeSyncFailed && feedback.mounted) {
+                    feedback.showSnackBar(
+                      SnackBar(
+                        content: Text(l10n.get('reminderNativeSyncFailed')),
+                      ),
+                    );
+                  }
                 } catch (_) {
                   if (feedback.mounted) {
                     feedback.showSnackBar(
