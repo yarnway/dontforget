@@ -114,3 +114,14 @@ python3 scripts/generate_reminder_acceptance_fixture.py \
 `native-cleanup.log` 记录 20:15:57.761 移除该独立身份的全部待发及已送达请求；20:15:57.762 usernoted 移除 `197498460`、`570587817` 的已送达记录，NotificationCenter 同时移除两个横幅。`cleanup-readback.json` 保存上述空库和身份读回证据。窗口观察期间曾出现过期画面/点击无效，重连后以当前界面、数据库和有界系统日志交叉核验完成结果，不据此声称曾完成通知点击。
 
 本阶段已完成权限状态、显式重排、系统送达和清理；Mac 热点击与冷启动点击仍待验收。后续 3C-1 的 594 项源码回归及统一调度改动尚未从本次旧候选继承原生通过结论；新候选须按其源码 revision 单独核验。录音与播放验收继续跳过。
+
+
+## 2026-10-21：3C-1 候选包核验与隔离副本准备
+
+源码 `886254f100945ea978e3d759a415596e33f4ec58` 对应 [CI 39601538766](https://github.com/yarnway/dontforget/actions/runs/39601538766)，质量及五个平台候选均成功，发布步骤按非标签条件跳过。云端 Flutter 593 通过、1 项 macOS 专属条件跳过，Python 47 通过；本机功能改动 594 项全量通过，随后纯文案修正的 27 项界面回归通过。
+
+Mac 原始候选为 `DontForget_macOS_unnotarized_v1.5.2.zip`，23,798,328 字节，SHA-256 `e7ad27bae4e72b01a06797cf9c2988ddbbcdeed1726c0688f0f82d5512d287a0`。下载的外层 GitHub artifact 同样通过官方摘要 `0175a1be5d424a9d5f9896812e9275bc4069e72144004d44b5edf39de5284605` 检查；本机 `verify_artifacts.py` 再次验证内层包的大小、摘要、版本、平台和完整源码 revision。清单及 ZIP 保存在 `build/ci_artifacts/3c1-r39601538766`。
+
+隔离派生身份为 `com.example.dontForget.acceptance.scheduling-r39601538766`，副本位于 `build/native_acceptance/scheduling-r39601538766/dont_forget.app`。准备脚本完成受保护内容比较和 codesign 校验，未启动或注册此副本。其状态为“包来源与隔离副本准备通过，原生业务验收待执行”，不继承旧 `permissions-r39575684866` 的业务通过结论。CI Mac 记录仅为解包后 10 秒原生进程启动检查，UI/通知业务验收均未执行，原包仍未公证。
+
+后续先使用全新合成数据验收新候选的编辑/删除/撤销与动态晋级调度，以及 Mac 热点击、冷启动与旧通知隔离；跨重启取消补偿和持久重试属下一源码阶段。保留前一隔离空基线和回退材料，录音与播放验收继续跳过。
