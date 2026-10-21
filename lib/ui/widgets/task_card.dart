@@ -1,3 +1,4 @@
+import 'inline_feedback.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -46,8 +47,8 @@ class _TaskCardState extends ConsumerState<TaskCard> {
 
       if (mounted) {
         final l10n = AppLocalizations.of(context);
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
+        InlineFeedback.of(context).hideCurrentSnackBar();
+        InlineFeedback.of(context).showSnackBar(
           SnackBar(
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
@@ -58,7 +59,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        InlineFeedback.of(context).showSnackBar(
           SnackBar(
             content: Text('拆解失败: $e'),
             behavior: SnackBarBehavior.floating,
@@ -78,8 +79,8 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     notifier.deleteReminder(widget.task.id);
     NotificationService().cancelReminder(widget.task.id);
 
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
+    InlineFeedback.of(context).hideCurrentSnackBar();
+    InlineFeedback.of(context).showSnackBar(
       SnackBar(
         duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
@@ -201,7 +202,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
           ? spacedService.disableCard(widget.task)
           : spacedService.enableCard(widget.task);
       ref.read(remindersProvider.notifier).updateReminder(updated);
-      ScaffoldMessenger.of(context).showSnackBar(
+      InlineFeedback.of(context).showSnackBar(
         SnackBar(
           content: Text(updated.spacedRepetitionLevel > 0
               ? '已转为艾宾浩斯复习卡片！将按记忆遗忘曲线安排深度复盘。'
@@ -637,8 +638,8 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                                 ref.read(remindersProvider.notifier).updateReminder(nextTask);
                                 NotificationService().scheduleReminder(nextTask);
 
-                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                                ScaffoldMessenger.of(context).showSnackBar(
+                                InlineFeedback.of(context).hideCurrentSnackBar();
+                                InlineFeedback.of(context).showSnackBar(
                                   SnackBar(
                                     duration: const Duration(seconds: 3),
                                     behavior: SnackBarBehavior.floating,

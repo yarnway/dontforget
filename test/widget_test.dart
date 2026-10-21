@@ -1,3 +1,5 @@
+import 'package:dont_forget/services/notification_service.dart';
+import 'package:dont_forget/ui/widgets/reminder_notice_panel.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
 import 'dart:ui' as ui;
@@ -40,6 +42,11 @@ void main() {
             'Unexpected recorder operation: ${call.method}',
           );
         });
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('dexterous.com/flutter/local_notifications'),
+          (call) async => call.method == 'initialize' ? true : null,
+        );
     sqfliteFfiInit();
     testDirectory = await Directory.systemTemp.createTemp('dontforget-widget-');
     testDatabase = DatabaseHelper.forTesting(
@@ -53,6 +60,11 @@ void main() {
     await container.read(remindersProvider.notifier).ready;
   });
   tearDownAll(() async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+          const MethodChannel('dexterous.com/flutter/local_notifications'),
+          null,
+        );
     container.dispose();
     await testDatabase.close();
     await testDirectory.delete(recursive: true);
@@ -103,11 +115,28 @@ void main() {
     await tester.runAsync(() async {
       final notifier = container.read(remindersProvider.notifier);
       for (final task in [
-        Reminder(id: 'ui-review-1', taskTitle: '准备周会材料', taskSummary: '整理进度、风险与本周计划', quadrantLevel: 1),
-        Reminder(id: 'ui-review-2', taskTitle: '完善产品使用指南', taskSummary: '补充首次使用与常见问题', quadrantLevel: 2),
+        Reminder(
+          id: 'ui-review-1',
+          taskTitle: '准备周会材料',
+          taskSummary: '整理进度、风险与本周计划',
+          quadrantLevel: 1,
+        ),
+        Reminder(
+          id: 'ui-review-2',
+          taskTitle: '完善产品使用指南',
+          taskSummary: '补充首次使用与常见问题',
+          quadrantLevel: 2,
+        ),
         Reminder(id: 'ui-review-3', taskTitle: '记录阅读笔记', quadrantLevel: 4),
-        Reminder(id: 'ui-review-done', taskTitle: '完成昨日复盘', quadrantLevel: 1, isCompleted: true),
-      ]) { await notifier.addReminder(task); }
+        Reminder(
+          id: 'ui-review-done',
+          taskTitle: '完成昨日复盘',
+          quadrantLevel: 1,
+          isCompleted: true,
+        ),
+      ]) {
+        await notifier.addReminder(task);
+      }
     });
     for (final width in [375.0, 768.0, 1440.0]) {
       tester.view.physicalSize = Size(width, 900);
@@ -147,4 +176,153 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     }
   });
+  testWidgets(
+    'upcoming and repeated due events stay inline without stealing input focus',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      final upcoming = Reminder(
+        id: 'quiet-upcoming',
+        taskTitle: '提前准备材料',
+        quadrantLevel: 3,
+        triggerTime: DateTime.now().add(const Duration(minutes: 2)),
+      );
+      await tester.runAsync(
+        () => container.read(remindersProvider.notifier).addReminder(upcoming),
+      );
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const RepaintBoundary(
+            key: ValueKey('quiet-preview'),
+            child: MyApp(),
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('即将到期 · 1'), findsOneWidget);
+      final input = find.byType(TextField);
+      await tester.tap(input);
+      final editable = tester.widget<EditableText>(find.byType(EditableText));
+      final due = upcoming.copyWith(
+        triggerTime: DateTime.now().subtract(const Duration(seconds: 1)),
+      );
+      await tester.runAsync(
+        () => container.read(remindersProvider.notifier).updateReminder(due),
+      );
+      await NotificationService().fireReminderNow(due);
+      await NotificationService().fireReminderNow(due);
+      await tester.pump();
+      expect(find.byType(ReminderNoticePanel), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('reminder-notice-panel')),
+        findsOneWidget,
+      );
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(SnackBar), findsNothing);
+      expect(editable.focusNode.hasFocus, isTrue);
+      for (final width in [375.0, 768.0, 1440.0]) {
+        tester.view.physicalSize = Size(width, 900);
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(tester.takeException(), isNull);
+        expect(
+          find.widgetWithText(TextButton, '稍后 5 分钟提醒').hitTestable(),
+          findsOneWidget,
+        );
+        expect(find.byType(TextField).hitTestable(), findsOneWidget);
+        if (const bool.fromEnvironment('UI_PREVIEW')) {
+          final boundary = tester.renderObject<RenderRepaintBoundary>(
+            find.byKey(const ValueKey('quiet-preview')),
+          );
+          await tester.runAsync(() async {
+            final image = await boundary.toImage();
+            final bytes = await image.toByteData(
+              format: ui.ImageByteFormat.png,
+            );
+            final directory = Directory('dist/ui-preview/quiet');
+            await directory.create(recursive: true);
+            await File(
+              '${directory.path}/workspace-${width.toInt()}.png',
+            ).writeAsBytes(bytes!.buffer.asUint8List());
+            image.dispose();
+          });
+        }
+      }
+      await tester.tap(find.widgetWithText(TextButton, '我知道了'));
+      await tester.pump();
+      await NotificationService().fireReminderNow(due);
+      await tester.pump();
+      expect(find.byKey(const ValueKey('reminder-notice-panel')), findsNothing);
+      final edited = due.copyWith(
+        triggerTime: DateTime.now().subtract(const Duration(seconds: 3)),
+      );
+      await tester.runAsync(
+        () => container.read(remindersProvider.notifier).updateReminder(edited),
+      );
+      await NotificationService().fireReminderNow(edited);
+      await tester.pump();
+      await tester.runAsync(
+        () => tester.tap(find.widgetWithText(TextButton, '稍后 5 分钟提醒')),
+      );
+      for (var i = 0; i < 30; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 10)),
+        );
+        await tester.pump();
+        if (container
+            .read(remindersProvider)
+            .firstWhere((r) => r.id == edited.id)
+            .triggerTime!
+            .isAfter(DateTime.now())) {
+          break;
+        }
+      }
+      final snoozed = container
+          .read(remindersProvider)
+          .firstWhere((r) => r.id == edited.id);
+      expect(
+        snoozed.triggerTime!.difference(DateTime.now()).inMinutes,
+        inInclusiveRange(4, 5),
+      );
+      await tester.runAsync(
+        () => NotificationService().cancelReminder(edited.id),
+      );
+      final dueAgain = snoozed.copyWith(
+        triggerTime: DateTime.now().subtract(const Duration(seconds: 5)),
+      );
+      await tester.runAsync(
+        () =>
+            container.read(remindersProvider.notifier).updateReminder(dueAgain),
+      );
+      await NotificationService().fireReminderNow(dueAgain);
+      await tester.pump();
+      await tester.runAsync(
+        () => tester.tap(find.widgetWithText(TextButton, '标为已完成')),
+      );
+      for (var i = 0; i < 30; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 10)),
+        );
+        await tester.pump();
+        if (container
+            .read(remindersProvider)
+            .firstWhere((r) => r.id == edited.id)
+            .isCompleted) {
+          break;
+        }
+      }
+      expect(
+        container
+            .read(remindersProvider)
+            .firstWhere((r) => r.id == edited.id)
+            .isCompleted,
+        isTrue,
+      );
+      await NotificationService().fireReminderNow(dueAgain);
+      await tester.pump();
+      expect(find.byKey(const ValueKey('reminder-notice-panel')), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
 }

@@ -201,7 +201,7 @@ void main() {
     },
   );
 
-  test('low priority due reminder does not request an in-app sound', () async {
+  test('due reminders never add an in-app sound on top of native delivery', () async {
     final sounds = <MethodCall>[];
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(SystemChannels.platform, (call) async {
@@ -221,7 +221,7 @@ void main() {
       await service.fireReminderNow(task('audible', 1));
       expect(
         sounds.where((call) => call.method == 'SystemSound.play'),
-        hasLength(1),
+        isEmpty,
       );
     } finally {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger

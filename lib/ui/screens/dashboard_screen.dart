@@ -1,3 +1,4 @@
+import '../widgets/inline_feedback.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -47,8 +48,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     if (_reviewReport == null || _reviewReport!.isEmpty) return;
     Clipboard.setData(ClipboardData(text: _reviewReport!));
     HapticFeedback.lightImpact();
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
+    InlineFeedback.of(context).hideCurrentSnackBar();
+    InlineFeedback.of(context).showSnackBar(
       SnackBar(
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,

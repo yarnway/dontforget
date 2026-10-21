@@ -1,3 +1,4 @@
+import 'inline_feedback.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
@@ -87,8 +88,8 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
 
     Navigator.of(context).pop();
 
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
+    InlineFeedback.of(context).hideCurrentSnackBar();
+    InlineFeedback.of(context).showSnackBar(
       SnackBar(
         duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,

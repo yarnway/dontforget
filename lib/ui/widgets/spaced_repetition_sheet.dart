@@ -1,3 +1,4 @@
+import 'inline_feedback.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -453,7 +454,7 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet> {
       }
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    InlineFeedback.of(context).showSnackBar(
       SnackBar(
         content: Text(
           remembered

@@ -1,3 +1,5 @@
+import '../widgets/reminder_notice_panel.dart';
+import '../widgets/inline_feedback.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -34,6 +36,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   StreamSubscription<List<Reminder>>? _catchUpDigestSubscription;
   StreamSubscription<List<Reminder>>? _suppressedSubscription;
   final Set<String> _promptedReminderIds = {};
+  final Set<String> _dismissedNotices = {};
+  final Map<String, Reminder> _dueNotices = {};
+  final Set<String> _noticeOperations = {};
+  List<Reminder> _contextDigest = [];
   final _shortcutFocus = FocusNode(
     debugLabel: 'workspace-shortcuts',
     skipTraversal: true,
@@ -48,25 +54,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     // Listen to notification service broadcast stream
     _dueSubscription = NotificationService().onReminderDue.listen((reminder) {
-      _showDueReminderDialog(reminder);
+      _queueDueReminder(reminder);
     });
 
-    // 监听情境事后摘要通知并弹出聚合抽屉
+    // 聚合情境摘要为页面入口，由用户选择何时查看。
     _catchUpDigestSubscription = ContextTriggerService().onCatchUpDigestReady
         .listen((digestList) {
           if (!mounted || digestList.isEmpty) return;
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-            builder: (_) => ContextDigestSheet(digestReminders: digestList),
-          );
-          if (Platform.isWindows) {
-            NotificationService().showWindowsToast(
-              '情境专注时段已结束',
-              '已为您自动聚合 ${digestList.length} 项次要事务待处理',
-            );
-          }
+          setState(() => _contextDigest = digestList);
         });
 
     // 监听拦截队列更新以便即时刷新情境徽标
@@ -81,6 +76,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Periodic heartbeat check (every 10 seconds) to ensure reminders are never missed
     _heartbeatTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       _checkDueReminders();
+      if (mounted) setState(() {});
     });
   }
 
@@ -105,8 +101,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         // If due and within the last 15 minutes and not yet prompted
         if (r.triggerTime!.isBefore(now) &&
             r.triggerTime!.isAfter(now.subtract(const Duration(minutes: 15))) &&
-            !_promptedReminderIds.contains(r.id)) {
-          _promptedReminderIds.add(r.id);
+            !_promptedReminderIds.contains(reminderOccurrenceKey(r))) {
+          _promptedReminderIds.add(reminderOccurrenceKey(r));
           NotificationService().fireReminderNow(r);
         }
       }
@@ -132,164 +128,98 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ref.read(remindersProvider.notifier).scanAndApplyDynamicUrgency();
   }
 
-  void _showDueReminderDialog(Reminder reminder) {
+  void _queueDueReminder(Reminder reminder) {
     if (!mounted) return;
+    final key = reminderOccurrenceKey(reminder);
+    final current = ref
+        .read(remindersProvider)
+        .where(
+          (r) =>
+              r.id == reminder.id &&
+              !r.isCompleted &&
+              reminderOccurrenceKey(r) == key,
+        );
+    if (current.isEmpty || _dismissedNotices.contains('due/$key')) return;
+    _promptedReminderIds.add(key);
+    setState(() => _dueNotices[key] = current.first);
+  }
+
+  List<Reminder> _visibleNotices(List<Reminder> reminders) {
+    final now = DateTime.now();
+    return reminders.where((r) {
+      if (r.isCompleted ||
+          r.triggerTime == null ||
+          NotificationService().isSuppressed(r)) {
+        return false;
+      }
+      final key = reminderOccurrenceKey(r);
+      final upcoming = r.triggerTime!.isAfter(now);
+      if (_dismissedNotices.contains('${upcoming ? 'upcoming' : 'due'}/$key')) {
+        return false;
+      }
+      return upcoming
+          ? r.triggerTime!.difference(now) <= const Duration(minutes: 5)
+          : _dueNotices.containsKey(key);
+    }).toList()..sort((a, b) => a.triggerTime!.compareTo(b.triggerTime!));
+  }
+
+  void _dismissNotice(Reminder reminder) {
+    final phase = reminder.triggerTime!.isAfter(DateTime.now())
+        ? 'upcoming'
+        : 'due';
+    setState(() {
+      _dismissedNotices.add('$phase/${reminderOccurrenceKey(reminder)}');
+      _dueNotices.remove(reminderOccurrenceKey(reminder));
+    });
+  }
+
+  Future<void> _actOnNotice(Reminder reminder, {required bool snooze}) async {
+    if (!_noticeOperations.add(reminder.id)) return;
     final l10n = AppLocalizations.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogCtx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: BorderSide(
-            color: Theme.of(context).colorScheme.outlineVariant,
-            width: 1,
+    try {
+      // Re-read before acting; an edited/deleted/completed item is no longer this occurrence.
+      final current = ref
+          .read(remindersProvider)
+          .where(
+            (r) =>
+                r.id == reminder.id &&
+                !r.isCompleted &&
+                reminderOccurrenceKey(r) == reminderOccurrenceKey(reminder),
+          );
+      if (current.isEmpty) return;
+      final task = current.first;
+      final next = snooze
+          ? DateTime.now().add(const Duration(minutes: 5))
+          : task.isRecurring
+          ? task.getNextOccurrence()
+          : null;
+      final updated = next == null
+          ? task.copyWith(isCompleted: true)
+          : task.copyWith(triggerTime: next, isCompleted: false);
+      await ref.read(remindersProvider.notifier).updateReminder(updated);
+      await NotificationService().scheduleReminder(updated);
+      if (!mounted) return;
+      _dismissNotice(reminder);
+      InlineFeedback.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            snooze
+                ? l10n.get('snoozeSuccess')
+                : next != null
+                ? '${l10n.get('periodicNext')}${next.toString().substring(0, 16)}'
+                : l10n.get('taskCompleted'),
           ),
         ),
-        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        title: Row(
-          children: [
-            Icon(
-              Icons.alarm_on_rounded,
-              color: Theme.of(context).colorScheme.primary,
-              size: 24,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              l10n.get('dueReminder'),
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              reminder.taskTitle,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            if (reminder.taskSummary != null &&
-                reminder.taskSummary!.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                reminder.taskSummary!,
-                style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-              ),
-            ],
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(Icons.access_time, size: 14, color: Colors.grey.shade600),
-                const SizedBox(width: 4),
-                Text(
-                  reminder.triggerTime != null
-                      ? reminder.triggerTime.toString().substring(0, 16)
-                      : l10n.get('now'),
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                ),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              // Snooze 5 minutes
-              final snoozed = reminder.copyWith(
-                triggerTime: DateTime.now().add(const Duration(minutes: 5)),
-              );
-              ref.read(remindersProvider.notifier).updateReminder(snoozed);
-              NotificationService().scheduleReminder(snoozed);
-              _promptedReminderIds.remove(reminder.id);
-              Navigator.of(dialogCtx).pop();
-
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  duration: const Duration(seconds: 3),
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  content: Text(l10n.get('snoozeSuccess')),
-                ),
-              );
-            },
-            child: Text(
-              l10n.get('snooze5Min'),
-              style: const TextStyle(fontSize: 13),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogCtx).pop(),
-            child: Text(
-              l10n.get('iKnow'),
-              style: const TextStyle(fontSize: 13),
-            ),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
-              ),
-            ),
-            onPressed: () {
-              Navigator.of(dialogCtx).pop();
-              if (reminder.isRecurring) {
-                final nextTime = reminder.getNextOccurrence();
-                if (nextTime != null) {
-                  final nextTask = reminder.copyWith(
-                    triggerTime: nextTime,
-                    isCompleted: false,
-                  );
-                  ref.read(remindersProvider.notifier).updateReminder(nextTask);
-                  NotificationService().scheduleReminder(nextTask);
-                  _promptedReminderIds.remove(reminder.id);
-
-                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      duration: const Duration(seconds: 3),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      content: Text(
-                        '${l10n.get('periodicNext')}${nextTime.toString().substring(0, 16)}',
-                      ),
-                    ),
-                  );
-                  return;
-                }
-              }
-
-              final completed = reminder.copyWith(isCompleted: true);
-              ref.read(remindersProvider.notifier).updateReminder(completed);
-              NotificationService().cancelReminder(reminder.id);
-
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  duration: const Duration(seconds: 3),
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  content: Text(l10n.get('taskCompleted')),
-                ),
-              );
-            },
-            child: Text(
-              l10n.get('markDone'),
-              style: const TextStyle(fontSize: 13),
-            ),
-          ),
-        ],
-      ),
-    );
+      );
+    } catch (_) {
+      if (mounted) {
+        InlineFeedback.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.get('reminderUpdateFailed'))),
+        );
+      }
+    } finally {
+      _noticeOperations.remove(reminder.id);
+    }
   }
 
   void _confirmClearCompleted() {
@@ -300,8 +230,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         .where((r) => r.isCompleted)
         .length;
     if (completedCount == 0) {
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
+      InlineFeedback.of(context).hideCurrentSnackBar();
+      InlineFeedback.of(context).showSnackBar(
         SnackBar(
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,
@@ -362,8 +292,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   .read(remindersProvider.notifier)
                   .clearCompletedReminders();
               if (mounted) {
-                ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                ScaffoldMessenger.of(context).showSnackBar(
+                InlineFeedback.of(context).hideCurrentSnackBar();
+                InlineFeedback.of(context).showSnackBar(
                   SnackBar(
                     duration: const Duration(seconds: 3),
                     behavior: SnackBarBehavior.floating,
@@ -390,9 +320,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void _clearAllNotices() {
     final l10n = AppLocalizations.of(context);
     ref.read(homeControllerProvider.notifier).clearError();
-    _promptedReminderIds.clear();
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
+    setState(() {
+      for (final reminder in _visibleNotices(ref.read(remindersProvider))) {
+        final phase = reminder.triggerTime!.isAfter(DateTime.now())
+            ? 'upcoming'
+            : 'due';
+        _dismissedNotices.add('$phase/${reminderOccurrenceKey(reminder)}');
+      }
+      _dueNotices.clear();
+      _contextDigest = [];
+    });
+    InlineFeedback.of(context).hideCurrentSnackBar();
+    InlineFeedback.of(context).showSnackBar(
       SnackBar(
         duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
@@ -561,8 +500,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         Process.run('cmd', ['/c', 'start', '', filePath]);
       } catch (_) {}
     }
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
+    InlineFeedback.of(context).hideCurrentSnackBar();
+    InlineFeedback.of(context).showSnackBar(
       SnackBar(
         duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
@@ -579,7 +518,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final records = ref.read(mediaRecordsProvider);
     final media = records.where((m) => m.id == recordId).firstOrNull;
     if (media == null) {
-      ScaffoldMessenger.of(
+      InlineFeedback.of(
         context,
       ).showSnackBar(SnackBar(content: Text(l10n.get('mediaUnavailable'))));
       return;
@@ -590,15 +529,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         await _audioPlayer.play(DeviceFileSource(media.contentOrPath));
       } catch (_) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
+          InlineFeedback.of(context).showSnackBar(
             SnackBar(content: Text(l10n.get('audioPlaybackFailed'))),
           );
         }
         return;
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
+        InlineFeedback.of(context).hideCurrentSnackBar();
+        InlineFeedback.of(context).showSnackBar(
           SnackBar(
             duration: const Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
@@ -623,8 +562,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     notifier.toggle();
     final isActive = ref.read(immersiveModeProvider);
     final l10n = AppLocalizations.of(context);
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
+    InlineFeedback.of(context).hideCurrentSnackBar();
+    InlineFeedback.of(context).showSnackBar(
       SnackBar(
         duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
@@ -656,10 +595,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _openContextDigest() {
-    final suppressed = ContextTriggerService().suppressedReminders;
+    final active = ref.read(remindersProvider);
+    final ids = {
+      ..._contextDigest.map((r) => r.id),
+      ...ContextTriggerService().suppressedReminders.map((r) => r.id),
+    };
+    final suppressed = active
+        .where((r) => ids.contains(r.id) && !r.isCompleted)
+        .toList();
     if (suppressed.isEmpty) {
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
+      InlineFeedback.of(context).hideCurrentSnackBar();
+      InlineFeedback.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.of(context).get('noSuppressedTasks')),
           behavior: SnackBarBehavior.floating,
@@ -667,11 +613,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
       return;
     }
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => ContextDigestSheet(digestReminders: suppressed),
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => Scaffold(
+          appBar: AppBar(
+            title: Text(AppLocalizations.of(context).get('contextDigestTitle')),
+          ),
+          body: ContextDigestSheet(digestReminders: suppressed),
+        ),
+      ),
     );
   }
 
@@ -697,8 +647,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     try {
       final file = await exportService.exportToFile(reminders);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
+      InlineFeedback.of(context).hideCurrentSnackBar();
+      InlineFeedback.of(context).showSnackBar(
         SnackBar(
           duration: const Duration(seconds: 5),
           behavior: SnackBarBehavior.floating,
@@ -716,7 +666,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      InlineFeedback.of(context).showSnackBar(
         SnackBar(
           content: Text('${l10n.get('exportFailed')}: $e'),
           backgroundColor: Colors.redAccent,
@@ -789,7 +739,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ref
                     .read(homeControllerProvider.notifier)
                     .processWithMultiAgent(goal);
-                ScaffoldMessenger.of(context).showSnackBar(
+                InlineFeedback.of(context).showSnackBar(
                   SnackBar(
                     content: Text(l10n.get('agentProcessing')),
                     duration: const Duration(seconds: 3),
@@ -846,7 +796,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               .read(remindersProvider.notifier)
               .scanAndApplyDynamicUrgency();
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
+            InlineFeedback.of(context).showSnackBar(
               SnackBar(
                 content: Text('${l10n.get('dynamicPromotedCount')}: $count'),
                 behavior: SnackBarBehavior.floating,
@@ -980,8 +930,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     ref.listen<HomeState>(homeControllerProvider, (previous, next) {
       if (next.error != null) {
-        ScaffoldMessenger.of(context).hideCurrentSnackBar();
-        ScaffoldMessenger.of(context).showSnackBar(
+        InlineFeedback.of(context).hideCurrentSnackBar();
+        InlineFeedback.of(context).showSnackBar(
           SnackBar(
             duration: const Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
@@ -1201,6 +1151,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             bottom: false,
             child: Column(
               children: [
+                ReminderNoticePanel(
+                  reminders: _visibleNotices(reminders),
+                  now: DateTime.now(),
+                  onDismiss: _dismissNotice,
+                  onSnooze: (r) => _actOnNotice(r, snooze: true),
+                  onComplete: (r) => _actOnNotice(r, snooze: false),
+                ),
+                if (_contextDigest.any(
+                  (item) =>
+                      reminders.any((r) => r.id == item.id && !r.isCompleted),
+                ))
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: _openContextDigest,
+                      icon: const Icon(Icons.summarize_outlined, size: 18),
+                      label: Text(l10n.get('contextDigestTitle')),
+                    ),
+                  ),
                 Expanded(
                   child: _isSearchOpen && _searchQuery.trim().isNotEmpty
                       ? Builder(

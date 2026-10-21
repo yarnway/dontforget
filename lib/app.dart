@@ -1,3 +1,4 @@
+import 'ui/widgets/inline_feedback.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -179,6 +180,7 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener, TrayListener
         ),
       ),
       themeMode: ThemeMode.system,
+      builder: (context, child) => InlineFeedback(child: child!),
       home: const HomeScreen(),
     );
   }

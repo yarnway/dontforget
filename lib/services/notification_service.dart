@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
-import 'package:window_manager/window_manager.dart';
 import '../models/reminder.dart';
 import 'context_trigger_service.dart';
 
@@ -43,7 +41,7 @@ class NotificationService {
     unawaited(reconcileNotificationPolicy());
   }
 
-  bool _isSuppressed(Reminder reminder) {
+  bool isSuppressed(Reminder reminder) {
     final profile = ContextTriggerService().currentProfile;
     return reminder.quadrantLevel >= 3 &&
         (isImmersiveModeActive ||
@@ -147,7 +145,7 @@ class NotificationService {
     });
 
     // Native mobile/Darwin scheduling if supported
-    if (usesNativeNotifications && !_isSuppressed(reminder)) {
+    if (usesNativeNotifications && !isSuppressed(reminder)) {
       try {
         String channelId;
         String channelName;
@@ -212,7 +210,7 @@ class NotificationService {
         );
 
         await _enqueueNative(reminder.id, () async {
-          if (_revisions[reminder.id] != revision || _isSuppressed(reminder)) {
+          if (_revisions[reminder.id] != revision || isSuppressed(reminder)) {
             return;
           }
           await flutterLocalNotificationsPlugin.zonedSchedule(
@@ -293,14 +291,8 @@ class NotificationService {
     // Notify UI / Stream listeners
     _reminderDueController.add(reminder);
 
-    // Play in-app alert sound
-    try {
-      if (reminder.quadrantLevel <= 2) {
-        await SystemSound.play(SystemSoundType.alert);
-      }
-    } catch (_) {}
-
-    // On Windows, trigger native Toast and bring window to front
+    // Native notifications own the sound policy. Do not add another app sound
+    // or steal keyboard focus when an occurrence arrives.
     if (Platform.isWindows) {
       final summary =
           reminder.taskSummary != null && reminder.taskSummary!.isNotEmpty
@@ -312,13 +304,6 @@ class NotificationService {
         summary,
         playSound: reminder.quadrantLevel <= 2,
       );
-
-      if (reminder.quadrantLevel <= 2) {
-        try {
-          await windowManager.show();
-          await windowManager.focus();
-        } catch (_) {}
-      }
     }
   }
 

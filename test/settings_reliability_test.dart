@@ -1,3 +1,4 @@
+import 'package:dont_forget/ui/widgets/inline_feedback.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -36,16 +37,17 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const MaterialApp(
-          locale: Locale('zh'),
-          supportedLocales: [Locale('zh')],
-          localizationsDelegates: [
+        child: MaterialApp(
+          locale: const Locale('zh'),
+          supportedLocales: const [Locale('zh')],
+          localizationsDelegates: const [
             AppLocalizationsDelegate(),
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          home: SettingsScreen(),
+          builder: (context, child) => InlineFeedback(child: child!),
+          home: const SettingsScreen(),
         ),
       ),
     );

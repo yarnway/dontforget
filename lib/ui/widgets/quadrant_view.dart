@@ -1,3 +1,4 @@
+import 'inline_feedback.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
@@ -144,8 +145,8 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
           ref
               .read(remindersProvider.notifier)
               .updateReminder(task.copyWith(quadrantLevel: widget.level));
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          ScaffoldMessenger.of(context).showSnackBar(
+          InlineFeedback.of(context).hideCurrentSnackBar();
+          InlineFeedback.of(context).showSnackBar(
             SnackBar(
               duration: const Duration(seconds: 2),
               behavior: SnackBarBehavior.floating,

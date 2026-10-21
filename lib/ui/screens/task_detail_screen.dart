@@ -1,3 +1,4 @@
+import '../widgets/inline_feedback.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
@@ -86,7 +87,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     final l10n = AppLocalizations.of(context);
     final title = _titleController.text.trim();
     if (title.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      InlineFeedback.of(context).showSnackBar(
         SnackBar(
           duration: const Duration(seconds: 2),
           content: Text(l10n.get('taskTitleLabel')),
@@ -159,8 +160,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       notifService.scheduleReminder(updatedTask);
     }
 
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
+    InlineFeedback.of(context).hideCurrentSnackBar();
+    InlineFeedback.of(context).showSnackBar(
       SnackBar(
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
@@ -180,8 +181,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
     Navigator.of(context).pop();
 
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
+    InlineFeedback.of(context).hideCurrentSnackBar();
+    InlineFeedback.of(context).showSnackBar(
       SnackBar(
         duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,

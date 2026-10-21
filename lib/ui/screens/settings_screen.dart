@@ -1,3 +1,4 @@
+import '../widgets/inline_feedback.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -156,7 +157,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
     if (!mounted) return;
     setState(() => _isBackingUp = false);
-    ScaffoldMessenger.of(context).showSnackBar(
+    InlineFeedback.of(context).showSnackBar(
       SnackBar(content: Text(AppLocalizations.of(context).get(messageKey))),
     );
   }
@@ -176,7 +177,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       if (mounted) Navigator.pop(context);
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        InlineFeedback.of(context).showSnackBar(
           SnackBar(
             content: Text(
               AppLocalizations.of(context).get('settingsSaveFailed'),
@@ -217,8 +218,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       _selectedProvider = null;
     });
 
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
+    InlineFeedback.of(context).hideCurrentSnackBar();
+    InlineFeedback.of(context).showSnackBar(
       SnackBar(
         duration: const Duration(seconds: 2),
         behavior: SnackBarBehavior.floating,
@@ -252,7 +253,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         });
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(
+          InlineFeedback.of(
             context,
           ).showSnackBar(SnackBar(content: Text('启动服务失败: $e')));
         }
@@ -265,7 +266,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final ip = _targetIpController.text.trim();
     final pin = _targetPinController.text.trim();
     if (ip.isEmpty || pin.isEmpty) {
-      ScaffoldMessenger.of(
+      InlineFeedback.of(
         context,
       ).showSnackBar(SnackBar(content: Text(l10n.get('syncFailed'))));
       return;
@@ -286,8 +287,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     if (mounted) {
       setState(() => _isSyncing = false);
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
+      InlineFeedback.of(context).hideCurrentSnackBar();
+      InlineFeedback.of(context).showSnackBar(
         SnackBar(
           duration: const Duration(seconds: 3),
           behavior: SnackBarBehavior.floating,

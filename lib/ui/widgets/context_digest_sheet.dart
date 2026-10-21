@@ -1,3 +1,5 @@
+import '../../services/notification_service.dart';
+import 'inline_feedback.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
@@ -143,11 +145,13 @@ class ContextDigestSheet extends ConsumerWidget {
                       IconButton(
                         icon: const Icon(Icons.check_circle_outline, size: 20),
                         tooltip: l10n.get('markDone'),
-                        onPressed: () {
-                          ref.read(remindersProvider.notifier).updateReminder(
+                        onPressed: () async {
+                          await ref.read(remindersProvider.notifier).updateReminder(
                                 task.copyWith(isCompleted: true),
                               );
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          await NotificationService().cancelReminder(task.id);
+                          if (!context.mounted) return;
+                          InlineFeedback.of(context).showSnackBar(
                             SnackBar(
                               duration: const Duration(seconds: 1),
                               content: Text('${l10n.get('taskCompleted')}: ${task.taskTitle}'),

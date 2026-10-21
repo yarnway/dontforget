@@ -1,3 +1,4 @@
+import 'package:dont_forget/ui/widgets/inline_feedback.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'dart:io';
 import 'package:dont_forget/data/database_helper.dart';
@@ -55,6 +56,7 @@ void main() {
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
+            builder: (context, child) => InlineFeedback(child: child!),
             home: TaskDetailScreen(task: task),
           ),
         ),
