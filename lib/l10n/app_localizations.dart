@@ -221,7 +221,7 @@ class AppLocalizations {
       'reminderNativeSyncFailed':
           'Saved, but system reminders could not be updated. Check notification permissions and save the task again.',
       'reminderNativeDeleteFailed':
-          'Tasks were deleted, but system reminders could not be removed. Retry from Settings → Rearrange reminders.',
+          'Tasks were deleted, but system reminders could not be removed. In Settings, select “Retry reminder scheduling”.',
       'reminderOccurrenceChanged':
           'This reminder has changed. Please use its current state.',
       'taskCompleted': 'Task marked as completed',
@@ -993,7 +993,7 @@ class AppLocalizations {
       'reminderNativeSyncFailed':
           '保存しましたが、システム通知を更新できませんでした。通知権限を確認してタスクを再保存してください。',
       'reminderNativeDeleteFailed':
-          'タスクは削除しましたが、システム通知を削除できませんでした。設定の通知再設定から再試行してください。',
+          'タスクは削除しましたが、システム通知を削除できませんでした。設定の「リマインダーを再設定」から再試行してください。',
       'reminderOccurrenceChanged': 'このリマインダーは変更されました。最新の状態で操作してください。',
       'taskCompleted': 'タスクを完了にしました',
       'playingAudio': '音声録音を再生中...',
