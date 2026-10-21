@@ -12,15 +12,40 @@ class AudioTranscriptionUnsupportedException implements Exception {
 }
 
 class LLMService {
-  LLMService({Dio? client}) : _dio = client ?? Dio(BaseOptions(
+  LLMService({Dio? client, this.probeClientFactory}) : _dio = client ?? Dio(BaseOptions(
     connectTimeout: const Duration(seconds: 10),
     receiveTimeout: const Duration(seconds: 25),
     persistentConnection: true,
   ));
   final Dio _dio;
+  final Dio Function()? probeClientFactory;
+  final Set<Dio> _probeClients = {};
+  bool _disposed = false;
+
+  void _checkActive() {
+    if (_disposed) throw StateError('Model session has ended.');
+  }
+
+  /// End transport work owned by this provider session. A restored session gets
+  /// a fresh service; old request chains cannot continue using old credentials.
+  void dispose() {
+    _disposed = true;
+    _dio.close(force: true);
+    for (final client in _probeClients) {
+      client.close(force: true);
+    }
+  }
+
+  Future<Response<dynamic>> _post(String url, {Options? options, Object? data}) async {
+    _checkActive();
+    final response = await _dio.post(url, options: options, data: data);
+    _checkActive();
+    return response;
+  }
 
   Future<List<Reminder>> extractTasks(
       String text, AppSettings settings) async {
+    _checkActive();
     return _sendExtractionRequestWithRetry(settings, [
       {'role': 'user', 'content': text},
     ]);
@@ -28,6 +53,7 @@ class LLMService {
 
   Future<List<Reminder>> extractTasksFromImage(
       String base64Image, AppSettings settings) async {
+    _checkActive();
     try {
       return await _sendExtractionRequestWithRetry(settings, [
         {
@@ -47,6 +73,7 @@ class LLMService {
         }
       ]);
     } catch (e) {
+      _checkActive();
       // Graceful fallback if model doesn't support multimodal vision (e.g. DeepSeek)
       final now = DateTime.now();
       final nowStr = '${now.month}月${now.day}日 ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
@@ -66,6 +93,7 @@ class LLMService {
 
   Future<List<Reminder>> extractTasksFromFile(
       String fileName, String fileContent, AppSettings settings) async {
+    _checkActive();
     final truncatedContent = fileContent.length > 2500
         ? '${fileContent.substring(0, 2500)}...\n[文件内容较长，已截取前段分析]'
         : fileContent;
@@ -82,7 +110,9 @@ $truncatedContent
     try {
       final tasks = await extractTasks(prompt, settings);
       if (tasks.isNotEmpty) return tasks;
-    } catch (_) {}
+    } catch (_) {
+      _checkActive();
+    }
 
     final now = DateTime.now();
     return [
@@ -100,12 +130,15 @@ $truncatedContent
 
   Future<List<Reminder>> extractTasksFromVideo(
       String fileName, AppSettings settings) async {
+    _checkActive();
     final now = DateTime.now();
     final prompt = '用户记录了视频任务，视频文件名为: "$fileName"。请为此视频生成一个待办任务标题、行动摘要，并安排合理的提醒时间。';
     try {
       final tasks = await extractTasks(prompt, settings);
       if (tasks.isNotEmpty) return tasks;
-    } catch (_) {}
+    } catch (_) {
+      _checkActive();
+    }
 
     return [
       Reminder(
@@ -121,11 +154,13 @@ $truncatedContent
   }
 
   Future<List<Reminder>> _sendExtractionRequestWithRetry(AppSettings settings, List<Map<String, dynamic>> userMessages, {int maxRetries = 2}) async {
+    _checkActive();
     int attempts = 0;
     while (attempts < maxRetries) {
       try {
         return await _sendExtractionRequest(settings, userMessages);
       } catch (e) {
+        _checkActive();
         attempts++;
         if (attempts >= maxRetries || !_canRetry(e)) {
           rethrow;
@@ -137,6 +172,7 @@ $truncatedContent
   }
 
   Future<List<Reminder>> _sendExtractionRequest(AppSettings settings, List<Map<String, dynamic>> userMessages) async {
+    _checkActive();
     if (settings.apiKey.isEmpty) {
       throw Exception('API Key is not configured.');
     }
@@ -205,7 +241,7 @@ Output strictly in valid JSON object matching this structure:
         ...userMessages,
       ];
 
-      final response = await _dio.post(
+      final response = await _post(
         '${settings.baseUrl}/chat/completions',
         options: Options(
           headers: {
@@ -347,6 +383,7 @@ Output strictly in valid JSON object matching this structure:
         );
       }).toList();
     } catch (e) {
+      _checkActive();
       rethrow;
     }
   }
@@ -456,6 +493,7 @@ Output strictly in valid JSON object matching this structure:
   }
 
   Future<String> transcribeAudio(String filePath, AppSettings settings) async {
+    _checkActive();
     if (settings.apiKey.isEmpty) {
       // The local recording remains useful without an AI account. Route this
       // through the original-audio memo fallback so it has a playback entry.
@@ -484,7 +522,7 @@ Output strictly in valid JSON object matching this structure:
         'model': 'whisper-1',
       });
 
-      final response = await _dio.post(
+      final response = await _post(
         targetUrl,
         options: Options(
           headers: {
@@ -496,6 +534,7 @@ Output strictly in valid JSON object matching this structure:
 
       return response.data['text'] ?? '';
     } catch (e) {
+      _checkActive();
       if (e is AudioTranscriptionUnsupportedException) rethrow;
       throw AudioTranscriptionUnsupportedException('语音转文字失败，已自动保存原声备忘录');
     }
@@ -506,6 +545,7 @@ Output strictly in valid JSON object matching this structure:
     AppSettings settings, {
     String language = 'zh',
   }) async {
+    _checkActive();
     if (reminders.isEmpty) {
       if (language == 'en') {
         return 'No tasks recorded yet. Add some tasks and your AI Productivity Coach will give you a comprehensive analysis!';
@@ -551,7 +591,7 @@ Include:
 ''';
 
       try {
-        final response = await _dio.post(
+        final response = await _post(
           '${settings.baseUrl}/chat/completions',
           options: Options(
             headers: {
@@ -585,6 +625,7 @@ Include:
           return content;
         }
       } catch (_) {
+        _checkActive();
         // Fallback to local intelligent analysis if LLM fails
       }
     }
@@ -663,94 +704,110 @@ Include:
   // ==========================================
 
   Future<List<LocalInferenceEndpoint>> probeLocalInferenceEndpoints() async {
+    _checkActive();
     final List<LocalInferenceEndpoint> results = [];
-    final testDio = Dio(BaseOptions(
+    final testDio = probeClientFactory?.call() ?? Dio(BaseOptions(
       connectTimeout: const Duration(milliseconds: 1500),
       receiveTimeout: const Duration(milliseconds: 1500),
     ));
 
-    // 1. Ollama (default 11434)
+    _probeClients.add(testDio);
     try {
-      final sw = Stopwatch()..start();
-      final res = await testDio.get('http://127.0.0.1:11434/api/tags');
-      sw.stop();
-      String? modelName;
-      if (res.data != null && res.data['models'] is List && (res.data['models'] as List).isNotEmpty) {
-        modelName = res.data['models'][0]['name'];
+      // 1. Ollama (default 11434)
+      try {
+        final sw = Stopwatch()..start();
+        _checkActive();
+        final res = await testDio.get('http://127.0.0.1:11434/api/tags');
+        _checkActive();
+        sw.stop();
+        String? modelName;
+        if (res.data != null && res.data['models'] is List && (res.data['models'] as List).isNotEmpty) {
+          modelName = res.data['models'][0]['name'];
+        }
+        modelName ??= 'qwen2.5:latest';
+        results.add(LocalInferenceEndpoint(
+          name: 'Ollama',
+          url: 'http://127.0.0.1:11434/v1',
+          port: 11434,
+          isAvailable: true,
+          recommendedModel: modelName,
+          latencyMs: sw.elapsedMilliseconds,
+        ));
+      } catch (_) {
+        _checkActive();
+        results.add(LocalInferenceEndpoint(
+          name: 'Ollama',
+          url: 'http://127.0.0.1:11434/v1',
+          port: 11434,
+          isAvailable: false,
+        ));
       }
-      modelName ??= 'qwen2.5:latest';
-      results.add(LocalInferenceEndpoint(
-        name: 'Ollama',
-        url: 'http://127.0.0.1:11434/v1',
-        port: 11434,
-        isAvailable: true,
-        recommendedModel: modelName,
-        latencyMs: sw.elapsedMilliseconds,
-      ));
-    } catch (_) {
-      results.add(LocalInferenceEndpoint(
-        name: 'Ollama',
-        url: 'http://127.0.0.1:11434/v1',
-        port: 11434,
-        isAvailable: false,
-      ));
-    }
 
-    // 2. vLLM / sglang (default 8000)
-    try {
-      final sw = Stopwatch()..start();
-      final res = await testDio.get('http://127.0.0.1:8000/v1/models');
-      sw.stop();
-      String? modelName;
-      if (res.data != null && res.data['data'] is List && (res.data['data'] as List).isNotEmpty) {
-        modelName = res.data['data'][0]['id'];
+      // 2. vLLM / sglang (default 8000)
+      try {
+        final sw = Stopwatch()..start();
+        _checkActive();
+        final res = await testDio.get('http://127.0.0.1:8000/v1/models');
+        _checkActive();
+        sw.stop();
+        String? modelName;
+        if (res.data != null && res.data['data'] is List && (res.data['data'] as List).isNotEmpty) {
+          modelName = res.data['data'][0]['id'];
+        }
+        modelName ??= 'default-model';
+        results.add(LocalInferenceEndpoint(
+          name: 'vLLM / sglang',
+          url: 'http://127.0.0.1:8000/v1',
+          port: 8000,
+          isAvailable: true,
+          recommendedModel: modelName,
+          latencyMs: sw.elapsedMilliseconds,
+        ));
+      } catch (_) {
+        _checkActive();
+        results.add(LocalInferenceEndpoint(
+          name: 'vLLM / sglang',
+          url: 'http://127.0.0.1:8000/v1',
+          port: 8000,
+          isAvailable: false,
+        ));
       }
-      modelName ??= 'default-model';
-      results.add(LocalInferenceEndpoint(
-        name: 'vLLM / sglang',
-        url: 'http://127.0.0.1:8000/v1',
-        port: 8000,
-        isAvailable: true,
-        recommendedModel: modelName,
-        latencyMs: sw.elapsedMilliseconds,
-      ));
-    } catch (_) {
-      results.add(LocalInferenceEndpoint(
-        name: 'vLLM / sglang',
-        url: 'http://127.0.0.1:8000/v1',
-        port: 8000,
-        isAvailable: false,
-      ));
-    }
 
-    // 3. llama.cpp (default 8080)
-    try {
-      final sw = Stopwatch()..start();
-      final res = await testDio.get('http://127.0.0.1:8080/v1/models');
-      sw.stop();
-      String? modelName;
-      if (res.data != null && res.data['data'] is List && (res.data['data'] as List).isNotEmpty) {
-        modelName = res.data['data'][0]['id'];
+      // 3. llama.cpp (default 8080)
+      try {
+        final sw = Stopwatch()..start();
+        _checkActive();
+        final res = await testDio.get('http://127.0.0.1:8080/v1/models');
+        _checkActive();
+        sw.stop();
+        String? modelName;
+        if (res.data != null && res.data['data'] is List && (res.data['data'] as List).isNotEmpty) {
+          modelName = res.data['data'][0]['id'];
+        }
+        modelName ??= 'llama-3.2-1b';
+        results.add(LocalInferenceEndpoint(
+          name: 'llama.cpp',
+          url: 'http://127.0.0.1:8080/v1',
+          port: 8080,
+          isAvailable: true,
+          recommendedModel: modelName,
+          latencyMs: sw.elapsedMilliseconds,
+        ));
+      } catch (_) {
+        _checkActive();
+        results.add(LocalInferenceEndpoint(
+          name: 'llama.cpp',
+          url: 'http://127.0.0.1:8080/v1',
+          port: 8080,
+          isAvailable: false,
+        ));
       }
-      modelName ??= 'llama-3.2-1b';
-      results.add(LocalInferenceEndpoint(
-        name: 'llama.cpp',
-        url: 'http://127.0.0.1:8080/v1',
-        port: 8080,
-        isAvailable: true,
-        recommendedModel: modelName,
-        latencyMs: sw.elapsedMilliseconds,
-      ));
-    } catch (_) {
-      results.add(LocalInferenceEndpoint(
-        name: 'llama.cpp',
-        url: 'http://127.0.0.1:8080/v1',
-        port: 8080,
-        isAvailable: false,
-      ));
-    }
 
-    return results;
+      return results;
+    } finally {
+      _probeClients.remove(testDio);
+      testDio.close(force: true);
+    }
   }
 
   // ==========================================
@@ -762,6 +819,7 @@ Include:
     AppSettings settings, {
     String language = 'zh',
   }) async {
+    _checkActive();
     final langInstruction = language == 'en'
         ? 'Output 3 micro habits in English'
         : (language == 'ja'
@@ -781,7 +839,7 @@ Strictly return a JSON object with a "habits" array of strings:
 
     if (settings.apiKey.isNotEmpty) {
       try {
-        final response = await _dio.post(
+        final response = await _post(
           '${settings.baseUrl}/chat/completions',
           options: Options(
             headers: {
@@ -824,6 +882,7 @@ Strictly return a JSON object with a "habits" array of strings:
           if (list.isNotEmpty) return list;
         }
       } catch (_) {
+        _checkActive();
         // Fall back to heuristic rule generator
       }
     }

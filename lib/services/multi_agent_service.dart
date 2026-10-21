@@ -13,14 +13,25 @@ class MultiAgentService {
   MultiAgentService({
     this.llmService,
     this.dpScheduler = const DPSchedulerService(),
-  });
-
-  static final MultiAgentService instance = MultiAgentService();
-
-  final Dio _dio = Dio(BaseOptions(
+    Dio? client,
+  }) : _dio = client ?? Dio(BaseOptions(
     connectTimeout: const Duration(seconds: 12),
     receiveTimeout: const Duration(seconds: 25),
   ));
+
+  static final MultiAgentService instance = MultiAgentService();
+
+  final Dio _dio;
+  bool _disposed = false;
+
+  void dispose() {
+    _disposed = true;
+    _dio.close(force: true);
+  }
+
+  void _checkActive() {
+    if (_disposed) throw StateError('Model session has ended.');
+  }
 
   Future<MultiAgentExecutionResult> executePipeline(
     String userInput, {
@@ -28,6 +39,7 @@ class MultiAgentService {
     List<Reminder>? existingTasks,
     String language = 'zh',
   }) async {
+    _checkActive();
     final effectiveSettings = settings ?? AppSettings(
       id: 'default',
       apiKey: '',
@@ -103,6 +115,7 @@ Strictly return a JSON object:
           if (decoded['needs_decomposition'] is bool) needsDecomposition = decoded['needs_decomposition'];
         }
       } catch (_) {}
+      _checkActive();
     }
 
     trace.add(AgentStep(
@@ -174,6 +187,7 @@ Strictly return a JSON object:
           }
         }
       } catch (_) {}
+      _checkActive();
     }
 
     if (milestones.isEmpty) {

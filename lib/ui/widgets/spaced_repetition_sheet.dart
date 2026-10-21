@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../models/reminder.dart';
 import '../../providers/providers.dart';
+import '../../services/recovery/runtime_gate.dart';
 import '../../l10n/app_localizations.dart';
 
 class SpacedRepetitionSheet extends ConsumerStatefulWidget {
@@ -25,6 +26,18 @@ class SpacedRepetitionSheet extends ConsumerStatefulWidget {
 class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet> {
   int _currentIndex = 0;
   bool _isFlipped = false;
+  bool _isSaving = false;
+  late final RuntimeRecoveryGate _runtime;
+  late final RuntimeRecoveryToken? _birth;
+
+  @override
+  void initState() {
+    super.initState();
+    _runtime = ref.read(runtimeRecoveryGateProvider);
+    _birth = _runtime.paused ? null : _runtime.capture();
+  }
+
+  bool get _isCurrent => mounted && _runtime.isCurrent(_birth);
 
   @override
   Widget build(BuildContext context) {
@@ -411,7 +424,9 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet> {
                     loc.translate('markDifficult'),
                     style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                   ),
-                  onPressed: () => _handleReviewResult(currentTask, false, dueCards.length),
+                  onPressed: _isSaving || !_isCurrent
+                      ? null
+                      : () => _handleReviewResult(currentTask, false, dueCards.length),
                 ),
               ),
               const SizedBox(width: 14),
@@ -430,7 +445,9 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet> {
                     loc.translate('markRemembered'),
                     style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                   ),
-                  onPressed: () => _handleReviewResult(currentTask, true, dueCards.length),
+                  onPressed: _isSaving || !_isCurrent
+                      ? null
+                      : () => _handleReviewResult(currentTask, true, dueCards.length),
                 ),
               ),
             ],
@@ -441,29 +458,41 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet> {
     );
   }
 
-  void _handleReviewResult(Reminder task, bool remembered, int remainingCount) {
-    final spacedService = ref.read(spacedRepetitionServiceProvider);
-    final updatedTask = spacedService.reviewCard(task, remembered);
+  Future<void> _handleReviewResult(Reminder task, bool remembered, int remainingCount) async {
+    if (!_isCurrent || _isSaving) return;
+    setState(() => _isSaving = true);
+    final loc = AppLocalizations.of(context);
+    try {
+      final spacedService = ref.read(spacedRepetitionServiceProvider);
+      final updatedTask = spacedService.reviewCard(task, remembered);
+      await ref.read(remindersProvider.notifier).updateReminder(updatedTask);
+      if (!mounted || !_isCurrent) return;
 
-    ref.read(remindersProvider.notifier).updateReminder(updatedTask);
-
-    setState(() {
-      _isFlipped = false;
-      if (_currentIndex >= remainingCount - 1) {
-        _currentIndex = 0;
-      }
-    });
-
-    InlineFeedback.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          remembered
-              ? '已晋级到第 ${updatedTask.spacedRepetitionLevel} 记忆阶梯！下次复习: ${DateFormat('MM-dd').format(updatedTask.nextReviewAt!)}'
-              : '已重置回第 1 阶梯，将在 24 小时后重新安排复习。',
+      setState(() {
+        _isFlipped = false;
+        if (_currentIndex >= remainingCount - 1) {
+          _currentIndex = 0;
+        }
+      });
+      InlineFeedback.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            remembered
+                ? '已晋级到第 ${updatedTask.spacedRepetitionLevel} 记忆阶梯！下次复习: ${DateFormat('MM-dd').format(updatedTask.nextReviewAt!)}'
+                : '已重置回第 1 阶梯，将在 24 小时后重新安排复习。',
+          ),
+          duration: const Duration(seconds: 2),
         ),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+      );
+    } catch (_) {
+      if (mounted && _isCurrent) {
+        InlineFeedback.of(context).showSnackBar(
+          SnackBar(content: Text(loc.get('reminderUpdateFailed'))),
+        );
+      }
+    } finally {
+      if (_isCurrent) setState(() => _isSaving = false);
+    }
   }
 
   Color _getQuadrantColor(int level) {

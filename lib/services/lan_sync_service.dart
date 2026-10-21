@@ -30,10 +30,58 @@ class LanSyncService {
 
   final InternetAddress _bindAddress;
   HttpServer? _server;
+  HttpServer? _closingServer;
   Future<LanSyncServerInfo>? _starting;
   Future<void>? _stopping;
   final Set<Future<void>> _handlers = {};
   bool _accepting = false;
+  bool _recoveryPaused = false;
+  int _recoveryEpoch = 0;
+  Future<void>? _pausing;
+  final Set<HttpClient> _clients = {};
+  final Set<Future<bool>> _syncs = {};
+  String _lastPin = '';
+
+  bool get pausedForRecovery => _recoveryPaused;
+
+  void _checkRuntime(int epoch) {
+    if (_recoveryPaused || epoch != _recoveryEpoch) {
+      throw StateError('LAN synchronization is paused for data recovery.');
+    }
+  }
+
+  Future<void> pauseForRecovery() {
+    if (_pausing != null) return _pausing!;
+    if (!_recoveryPaused) {
+      _recoveryPaused = true;
+      _recoveryEpoch++;
+    }
+    _accepting = false;
+    for (final client in List<HttpClient>.of(_clients)) {
+      client.close(force: true);
+    }
+    return _pausing = _pauseForRecovery().whenComplete(() => _pausing = null);
+  }
+
+  Future<void> _pauseForRecovery() async {
+    // Force-close peer sockets so incomplete request bodies cannot hold a
+    // recovery hostage. Already admitted database transactions still drain.
+    if (_closingServer case final closing?) await closing.close(force: true);
+    final stopping = _stopping ??= _stopServer(
+      force: true,
+    ).whenComplete(() => _stopping = null);
+    await stopping;
+    while (_syncs.isNotEmpty) {
+      await Future.wait(List<Future<bool>>.of(_syncs));
+    }
+  }
+
+  void resumeAfterRecovery() {
+    if (_pausing != null) throw StateError('LAN cleanup is still running.');
+    _recoveryPaused = false;
+    // A new server/PIN is created only by a new explicit start request.
+  }
+
   String _currentPin = '';
   int _serverPort = 42888;
   String _localIp = '127.0.0.1';
@@ -78,11 +126,19 @@ class LanSyncService {
     required DatabaseHelper dbHelper,
     VoidCallback? onDataChanged,
   }) async {
+    final epoch = _recoveryEpoch;
+    _checkRuntime(epoch);
     if (_stopping != null) await _stopping;
+    _checkRuntime(epoch);
     if (_server != null) {
       return _serverInfo();
     }
-    final starting = _starting ??= _startServer(port, dbHelper, onDataChanged);
+    final starting = _starting ??= _startServer(
+      port,
+      dbHelper,
+      onDataChanged,
+      epoch,
+    );
     try {
       return await starting;
     } finally {
@@ -101,14 +157,24 @@ class LanSyncService {
     int port,
     DatabaseHelper dbHelper,
     VoidCallback? onDataChanged,
+    int epoch,
   ) async {
-    _currentPin = _generatePin();
+    _checkRuntime(epoch);
+    do {
+      _currentPin = _generatePin();
+    } while (_currentPin == _lastPin);
+    _lastPin = _currentPin;
     _localIp = _bindAddress.isLoopback
         ? _bindAddress.address
         : await getLocalIpAddress();
 
     try {
+      _checkRuntime(epoch);
       final server = await HttpServer.bind(_bindAddress, port);
+      if (_recoveryPaused || epoch != _recoveryEpoch) {
+        await server.close(force: true);
+        _checkRuntime(epoch);
+      }
       _server = server;
       _serverPort = server.port;
       _accepting = _stopping == null;
@@ -131,6 +197,7 @@ class LanSyncService {
     DatabaseHelper dbHelper,
     VoidCallback? onDataChanged,
   ) async {
+    final epoch = _recoveryEpoch;
     try {
       request.response.persistentConnection = false;
       request.response.headers.add('Access-Control-Allow-Origin', '*');
@@ -172,6 +239,7 @@ class LanSyncService {
             .join()
             .timeout(const Duration(seconds: 30)),
       );
+      _checkRuntime(epoch);
       if (data['pin']?.toString() != _currentPin) {
         await _respond(request, HttpStatus.unauthorized, {
           'error': 'Invalid PIN',
@@ -186,6 +254,7 @@ class LanSyncService {
         return transaction.query('Reminders');
       });
       dbHelper.checkGeneration(generation);
+      _checkRuntime(epoch);
       _notify(onDataChanged);
       await _respond(request, HttpStatus.ok, {
         'status': 'success',
@@ -231,7 +300,7 @@ class LanSyncService {
     return _stopping ??= _stopServer().whenComplete(() => _stopping = null);
   }
 
-  Future<void> _stopServer() async {
+  Future<void> _stopServer({bool force = false}) async {
     try {
       // Also drain a bind already requested by the UI before maintenance began.
       try {
@@ -239,11 +308,13 @@ class LanSyncService {
       } catch (_) {}
       final server = _server;
       _server = null;
-      await server?.close();
+      _closingServer = server;
+      await server?.close(force: force || _recoveryPaused);
       while (_handlers.isNotEmpty) {
         await Future.wait(List<Future<void>>.of(_handlers));
       }
     } finally {
+      _closingServer = null;
       _currentPin = '';
     }
   }
@@ -254,19 +325,46 @@ class LanSyncService {
     required String pin,
     required DatabaseHelper dbHelper,
     VoidCallback? onDataChanged,
-  }) async {
+  }) {
+    final epoch = _recoveryEpoch;
+    if (_recoveryPaused) return Future.value(false);
+    final syncing = _syncWithPeer(
+      peerIp,
+      port,
+      pin,
+      dbHelper,
+      onDataChanged,
+      epoch,
+    );
+    _syncs.add(syncing);
+    unawaited(syncing.then<void>((_) => _syncs.remove(syncing)));
+    return syncing;
+  }
+
+  Future<bool> _syncWithPeer(
+    String peerIp,
+    int port,
+    String pin,
+    DatabaseHelper dbHelper,
+    VoidCallback? onDataChanged,
+    int epoch,
+  ) async {
     HttpClient? client;
     try {
+      _checkRuntime(epoch);
       final generation = dbHelper.captureGeneration();
       final localRecords = await dbHelper.read(
         generation,
         (db) => db.query('Reminders'),
       );
       dbHelper.checkGeneration(generation);
+      _checkRuntime(epoch);
       client = HttpClient()..connectionTimeout = const Duration(seconds: 5);
+      _clients.add(client);
 
       final uri = Uri(scheme: 'http', host: peerIp, port: port, path: '/sync');
       final request = await client.postUrl(uri);
+      _checkRuntime(epoch);
       request.headers.contentType = ContentType.json;
 
       final payload = {'pin': pin, 'reminders': localRecords};
@@ -281,6 +379,7 @@ class LanSyncService {
             .join()
             .timeout(const Duration(seconds: 30));
         dbHelper.checkGeneration(generation);
+        _checkRuntime(epoch);
         final peerReminders = _reminders(_decode(respStr));
         // The network exchange holds no database scope. Only this short atomic
         // merge re-enters storage, using the original pre-network generation.
@@ -289,6 +388,7 @@ class LanSyncService {
           (transaction) => _merge(transaction, peerReminders),
         );
         dbHelper.checkGeneration(generation);
+        _checkRuntime(epoch);
         _notify(onDataChanged);
         return true;
       } else {
@@ -298,6 +398,7 @@ class LanSyncService {
       return false;
     } finally {
       client?.close(force: true);
+      _clients.remove(client);
     }
   }
 

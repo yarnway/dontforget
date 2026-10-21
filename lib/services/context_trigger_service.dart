@@ -6,11 +6,11 @@ import '../models/reminder.dart';
 
 /// 情境环境模式
 enum ContextProfile {
-  general,  // 通用默认模式
-  office,   // 办公环境
+  general, // 通用默认模式
+  office, // 办公环境
   deepWork, // 深度高压专注
-  home,     // 家庭生活
-  commute,  // 移动通勤
+  home, // 家庭生活
+  commute, // 移动通勤
 }
 
 /// 情境触发器定义规则
@@ -25,17 +25,18 @@ class ContextTriggerRule {
     this.prompt,
   });
 
-  factory ContextTriggerRule.fromJson(Map<String, dynamic> json) => ContextTriggerRule(
+  factory ContextTriggerRule.fromJson(Map<String, dynamic> json) =>
+      ContextTriggerRule(
         type: json['type'] as String? ?? 'wifi',
         value: json['value'] as String? ?? '',
         prompt: json['prompt'] as String?,
       );
 
   Map<String, dynamic> toJson() => {
-        'type': type,
-        'value': value,
-        if (prompt != null) 'prompt': prompt,
-      };
+    'type': type,
+    'value': value,
+    if (prompt != null) 'prompt': prompt,
+  };
 
   String toJsonString() => jsonEncode(toJson());
 
@@ -53,7 +54,25 @@ class ContextTriggerRule {
 
 /// 情境感知触发器与事后摘要服务 (Context-Aware Triggers & Catch-Up Digest)
 class ContextTriggerService {
-  static final ContextTriggerService _instance = ContextTriggerService._internal();
+  static final ContextTriggerService _instance =
+      ContextTriggerService._internal();
+
+  @visibleForTesting
+  ContextTriggerService.forTesting();
+
+  int _recoveryEpoch = 0;
+
+  /// Preserve the user's focus policy while forgetting tasks and environment
+  /// observations from the replaced data session. Late Wi-Fi probes cannot
+  /// populate the new session's cache.
+  void resetForRecovery() {
+    _recoveryEpoch++;
+    _sessionTriggeredTaskIds.clear();
+    _suppressedReminders.clear();
+    _detectedSsid = null;
+    _suppressedUpdateController.add(const []);
+  }
+
   factory ContextTriggerService() => _instance;
   ContextTriggerService._internal();
 
@@ -68,7 +87,8 @@ class ContextTriggerService {
 
   /// 专注情境下被拦截静音的次要任务队列（Q3 与 Q4）
   final List<Reminder> _suppressedReminders = [];
-  List<Reminder> get suppressedReminders => List.unmodifiable(_suppressedReminders);
+  List<Reminder> get suppressedReminders =>
+      List.unmodifiable(_suppressedReminders);
 
   final StreamController<ContextProfile> _profileController =
       StreamController<ContextProfile>.broadcast();
@@ -76,11 +96,13 @@ class ContextTriggerService {
 
   final StreamController<List<Reminder>> _catchUpDigestController =
       StreamController<List<Reminder>>.broadcast();
-  Stream<List<Reminder>> get onCatchUpDigestReady => _catchUpDigestController.stream;
+  Stream<List<Reminder>> get onCatchUpDigestReady =>
+      _catchUpDigestController.stream;
 
   final StreamController<List<Reminder>> _suppressedUpdateController =
       StreamController<List<Reminder>>.broadcast();
-  Stream<List<Reminder>> get onSuppressedUpdated => _suppressedUpdateController.stream;
+  Stream<List<Reminder>> get onSuppressedUpdated =>
+      _suppressedUpdateController.stream;
 
   /// 切换当前情境环境
   void switchProfile(ContextProfile newProfile) {
@@ -92,8 +114,10 @@ class ContextTriggerService {
     debugPrint('📍 [ContextEngine] 情境切换: $oldProfile -> $newProfile');
 
     // 若从高压专注/办公环境退出到通用/家庭环境，自动生成事后摘要汇总
-    if ((oldProfile == ContextProfile.deepWork || oldProfile == ContextProfile.office) &&
-        (newProfile == ContextProfile.general || newProfile == ContextProfile.home)) {
+    if ((oldProfile == ContextProfile.deepWork ||
+            oldProfile == ContextProfile.office) &&
+        (newProfile == ContextProfile.general ||
+            newProfile == ContextProfile.home)) {
       triggerCatchUpDigest();
     }
   }
@@ -118,12 +142,16 @@ class ContextTriggerService {
   /// 判定当前通知是否应当在情境下被底层拦截
   bool shouldInterceptNotification(Reminder reminder) {
     final isHighFocus =
-        _currentProfile == ContextProfile.deepWork || _currentProfile == ContextProfile.office;
-    if (isHighFocus && (reminder.quadrantLevel == 3 || reminder.quadrantLevel == 4)) {
+        _currentProfile == ContextProfile.deepWork ||
+        _currentProfile == ContextProfile.office;
+    if (isHighFocus &&
+        (reminder.quadrantLevel == 3 || reminder.quadrantLevel == 4)) {
       // 记录到拦截队列中待事后摘要
       if (!_suppressedReminders.any((r) => r.id == reminder.id)) {
         _suppressedReminders.add(reminder);
-        _suppressedUpdateController.add(List.unmodifiable(_suppressedReminders));
+        _suppressedUpdateController.add(
+          List.unmodifiable(_suppressedReminders),
+        );
       }
       return true;
     }
@@ -132,14 +160,19 @@ class ContextTriggerService {
 
   /// 嗅探当前 Wi-Fi SSID (仅在 Windows 原生命令行执行 netsh，防卡顿超时处理)
   Future<String?> detectCurrentWifiSsid() async {
-    if (!Platform.isWindows || Platform.environment.containsKey('FLUTTER_TEST')) return null;
+    final recoveryEpoch = _recoveryEpoch;
+    if (!Platform.isWindows ||
+        Platform.environment.containsKey('FLUTTER_TEST')) {
+      return null;
+    }
     try {
-      final result = await Process.run(
-        'netsh',
-        ['wlan', 'show', 'interfaces'],
-        runInShell: true,
-      ).timeout(const Duration(seconds: 2));
+      final result = await Process.run('netsh', [
+        'wlan',
+        'show',
+        'interfaces',
+      ], runInShell: true).timeout(const Duration(seconds: 2));
 
+      if (recoveryEpoch != _recoveryEpoch) return null;
       if (result.exitCode == 0) {
         final stdout = result.stdout.toString();
         final lines = stdout.split('\n');
@@ -164,7 +197,10 @@ class ContextTriggerService {
   }
 
   /// 扫描待办列表，匹配符合当前情境感知触发规则的任务
-  List<Reminder> evaluateContextTriggers(List<Reminder> reminders, {String? ssid}) {
+  List<Reminder> evaluateContextTriggers(
+    List<Reminder> reminders, {
+    String? ssid,
+  }) {
     final activeSsid = (ssid ?? _detectedSsid)?.toLowerCase();
     final currentProfileStr = _currentProfile.name.toLowerCase();
 
@@ -192,7 +228,9 @@ class ContextTriggerService {
       if (isMatch) {
         _sessionTriggeredTaskIds.add(reminder.id);
         matched.add(reminder);
-        debugPrint('📍 [ContextEngine] 命中情境触发器: [${reminder.taskTitle}] (${rule.type}: ${rule.value})');
+        debugPrint(
+          '📍 [ContextEngine] 命中情境触发器: [${reminder.taskTitle}] (${rule.type}: ${rule.value})',
+        );
       }
     }
 

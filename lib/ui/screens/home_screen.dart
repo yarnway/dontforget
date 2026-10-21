@@ -12,6 +12,7 @@ import '../../providers/providers.dart';
 import '../../providers/home_controller.dart';
 import '../../providers/task_search_provider.dart';
 import '../../services/notification_service.dart';
+import '../../services/recovery/runtime_gate.dart';
 import 'settings_screen.dart';
 import 'dashboard_screen.dart';
 import '../widgets/task_card.dart';
@@ -34,6 +35,45 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen>
     with WidgetsBindingObserver {
   final _audioPlayer = AudioPlayer();
+  late final RuntimeRecoveryGate _runtime;
+  late final RuntimeRecoveryToken? _birth;
+  late final NotificationService _notifications;
+  late final ContextTriggerService _contextTriggers;
+  Future<void> _playbackOperations = Future<void>.value();
+  bool _playbackStarted = false;
+
+  bool get _runtimeActive => mounted && _runtime.isCurrent(_birth);
+
+  Future<void> _serializePlayback(Future<void> Function() operation) {
+    final result = _playbackOperations.then((_) => operation());
+    _playbackOperations = result.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace __) {},
+    );
+    return result;
+  }
+
+  Future<void> _quiesce() async {
+    _heartbeatTimer?.cancel();
+    _searchDebounce?.cancel();
+    await Future.wait([
+      if (_dueSubscription != null) _dueSubscription!.cancel(),
+      if (_catchUpDigestSubscription != null)
+        _catchUpDigestSubscription!.cancel(),
+      if (_suppressedSubscription != null) _suppressedSubscription!.cancel(),
+      _serializePlayback(() async {
+        if (_playbackStarted) {
+          await _audioPlayer.stop();
+          _playbackStarted = false;
+        }
+      }),
+    ]);
+    _promptedReminderIds.clear();
+    _dismissedNotices.clear();
+    _dueNotices.clear();
+    _contextDigest = [];
+  }
+
   Timer? _heartbeatTimer;
   StreamSubscription<Reminder>? _dueSubscription;
   StreamSubscription<List<Reminder>>? _catchUpDigestSubscription;
@@ -56,38 +96,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void initState() {
     super.initState();
+    _runtime = ref.read(runtimeRecoveryGateProvider);
+    _birth = _runtime.paused ? null : _runtime.capture();
+    _notifications = ref.read(notificationServiceProvider);
+    _contextTriggers = ref.read(contextTriggerServiceProvider);
+    if (_birth == null) return;
+    _runtime.register(this, _quiesce);
     WidgetsBinding.instance.addObserver(this);
 
     // Listen to notification service broadcast stream
-    _dueSubscription = NotificationService().onReminderDue.listen((reminder) {
+    _dueSubscription = _notifications.onReminderDue.listen((reminder) {
       _queueDueReminder(reminder);
     });
 
     // 聚合情境摘要为页面入口，由用户选择何时查看。
-    _catchUpDigestSubscription = ContextTriggerService().onCatchUpDigestReady
-        .listen((digestList) {
-          if (!mounted || digestList.isEmpty) return;
-          setState(() => _contextDigest = digestList);
-        });
+    _catchUpDigestSubscription = _contextTriggers.onCatchUpDigestReady.listen((
+      digestList,
+    ) {
+      if (!mounted || !_runtimeActive || digestList.isEmpty) return;
+      setState(() => _contextDigest = digestList);
+    });
 
     // 监听拦截队列更新以便即时刷新情境徽标
-    _suppressedSubscription = ContextTriggerService().onSuppressedUpdated
-        .listen((_) {
-          if (mounted) setState(() {});
-        });
+    _suppressedSubscription = _contextTriggers.onSuppressedUpdated.listen((_) {
+      if (mounted && _runtimeActive) setState(() {});
+    });
 
     // 启动时触发 Wi-Fi 嗅探与情境感知
-    ContextTriggerService().detectCurrentWifiSsid();
+    _contextTriggers.detectCurrentWifiSsid();
 
     // Periodic heartbeat check (every 10 seconds) to ensure reminders are never missed
     _heartbeatTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       _checkDueReminders();
-      if (mounted) _noticeClock.value = DateTime.now();
+      if (mounted && _runtimeActive) _noticeClock.value = DateTime.now();
     });
   }
 
   @override
   void dispose() {
+    _runtime.unregister(this);
     WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
     _searchDebounce?.cancel();
@@ -97,13 +144,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _dueSubscription?.cancel();
     _catchUpDigestSubscription?.cancel();
     _suppressedSubscription?.cancel();
-    _audioPlayer.dispose();
+    unawaited(
+      _serializePlayback(
+        () => _audioPlayer.dispose(),
+      ).catchError((Object _) {}),
+    );
     super.dispose();
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && mounted) {
+    if (state == AppLifecycleState.resumed && _runtimeActive) {
       // Desktop/mobile timers can pause while hidden or asleep. Reconcile from
       // current task state instead of waiting for another timer/broadcast.
       _checkDueReminders();
@@ -112,6 +163,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _checkDueReminders() {
+    if (!mounted || !_runtimeActive) return;
     final database = ref.read(databaseHelperProvider);
     final DataGeneration generation;
     try {
@@ -143,11 +195,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
 
     // 情境感知触发器检测 (检测 Wi-Fi SSID 接入)
-    ContextTriggerService()
+    _contextTriggers
         .detectCurrentWifiSsid()
         .then((ssid) {
-          if (ssid != null && mounted && database.isCurrent(generation)) {
-            final matched = ContextTriggerService().evaluateContextTriggers(
+          if (ssid != null &&
+              _runtimeActive &&
+              database.isCurrent(generation)) {
+            final matched = _contextTriggers.evaluateContextTriggers(
               reminders,
               ssid: ssid,
             );
@@ -181,7 +235,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _queueDueReminder(Reminder reminder) {
-    if (!mounted) return;
+    if (!mounted || !_runtimeActive) return;
     final key = reminderOccurrenceKey(reminder);
     final current = ref
         .read(remindersProvider)
@@ -200,7 +254,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     return reminders.where((r) {
       if (r.isCompleted ||
           r.triggerTime == null ||
-          NotificationService().isSuppressed(r)) {
+          _notifications.isSuppressed(r)) {
         return false;
       }
       final key = reminderOccurrenceKey(r);
@@ -226,6 +280,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Future<void> _actOnNotice(Reminder reminder, {required bool snooze}) async {
+    if (!mounted || !_runtimeActive) return;
     if (!_noticeOperations.add(reminder.id)) return;
     final l10n = AppLocalizations.of(context);
     try {
@@ -256,7 +311,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         await notifications.scheduleReminder(updated);
       });
       database.checkGeneration(generation);
-      if (!mounted) return;
+      if (!mounted || !_runtimeActive) return;
       _dismissNotice(reminder);
       InlineFeedback.of(context).showSnackBar(
         SnackBar(
@@ -270,7 +325,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ),
       );
     } catch (_) {
-      if (mounted) {
+      if (mounted && _runtimeActive) {
         InlineFeedback.of(context).showSnackBar(
           SnackBar(content: Text(l10n.get('reminderUpdateFailed'))),
         );
@@ -281,6 +336,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _confirmClearCompleted() {
+    if (!mounted || !_runtimeActive) return;
     final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final completedCount = ref
@@ -345,6 +401,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               ),
             ),
             onPressed: () async {
+              if (!mounted || !_runtimeActive) return;
               Navigator.of(ctx).pop();
               try {
                 final database = ref.read(databaseHelperProvider);
@@ -355,7 +412,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       .clearCompletedReminders();
                 });
                 database.checkGeneration(generation);
-                if (mounted) {
+                if (mounted && _runtimeActive) {
                   InlineFeedback.of(context).hideCurrentSnackBar();
                   InlineFeedback.of(context).showSnackBar(
                     SnackBar(
@@ -371,7 +428,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   );
                 }
               } catch (_) {
-                if (mounted) {
+                if (mounted && _runtimeActive) {
                   InlineFeedback.of(context).showSnackBar(
                     SnackBar(content: Text(l10n.get('taskDeleteFailed'))),
                   );
@@ -586,9 +643,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _playMedia(String recordId) async {
+    if (!mounted || !_runtimeActive) return;
     final l10n = AppLocalizations.of(context);
-    await ref.read(mediaRecordsProvider.notifier).ready;
-    if (!mounted) return;
+    try {
+      await ref.read(mediaRecordsProvider.notifier).ready;
+    } catch (_) {
+      return;
+    }
+    if (!mounted || !_runtimeActive) return;
     final records = ref.read(mediaRecordsProvider);
     final media = records.where((m) => m.id == recordId).firstOrNull;
     if (media == null) {
@@ -600,16 +662,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     if (media.type == 'audio') {
       try {
-        await _audioPlayer.play(DeviceFileSource(media.contentOrPath));
+        await _serializePlayback(() async {
+          if (!mounted || !_runtimeActive) return;
+          _playbackStarted = true;
+          await _audioPlayer.play(DeviceFileSource(media.contentOrPath));
+        });
       } catch (_) {
-        if (mounted) {
+        if (mounted && _runtimeActive) {
           InlineFeedback.of(context).showSnackBar(
             SnackBar(content: Text(l10n.get('audioPlaybackFailed'))),
           );
         }
         return;
       }
-      if (mounted) {
+      if (mounted && _runtimeActive) {
         InlineFeedback.of(context).hideCurrentSnackBar();
         InlineFeedback.of(context).showSnackBar(
           SnackBar(
@@ -632,6 +698,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _toggleImmersiveMode() {
+    if (!mounted || !_runtimeActive) return;
     final notifier = ref.read(immersiveModeProvider.notifier);
     notifier.toggle();
     final isActive = ref.read(immersiveModeProvider);
@@ -665,14 +732,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _openSpacedRepetitionSheet() {
+    if (!mounted || !_runtimeActive) return;
     SpacedRepetitionSheet.show(context);
   }
 
   void _openContextDigest() {
+    if (!mounted || !_runtimeActive) return;
     final active = ref.read(remindersProvider);
     final ids = {
       ..._contextDigest.map((r) => r.id),
-      ...ContextTriggerService().suppressedReminders.map((r) => r.id),
+      ..._contextTriggers.suppressedReminders.map((r) => r.id),
     };
     final suppressed = active
         .where((r) => ids.contains(r.id) && !r.isCompleted)
@@ -715,12 +784,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Future<void> _exportCsvData() async {
+    if (!mounted || !_runtimeActive) return;
     final l10n = AppLocalizations.of(context);
     final reminders = ref.read(remindersProvider);
     final exportService = ref.read(dataExportServiceProvider);
     try {
       final file = await exportService.exportToFile(reminders);
-      if (!mounted) return;
+      if (!mounted || !_runtimeActive) return;
       InlineFeedback.of(context).hideCurrentSnackBar();
       InlineFeedback.of(context).showSnackBar(
         SnackBar(
@@ -739,7 +809,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ),
       );
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || !_runtimeActive) return;
       InlineFeedback.of(context).showSnackBar(
         SnackBar(
           content: Text('${l10n.get('exportFailed')}: $e'),
@@ -750,6 +820,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _showMultiAgentGoalDialog() {
+    if (!mounted || !_runtimeActive) return;
     final l10n = AppLocalizations.of(context);
     final textController = TextEditingController();
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -807,12 +878,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             icon: const Icon(Icons.rocket_launch, size: 16),
             label: const Text('启动三智能体协同'),
             onPressed: () {
+              if (!mounted || !_runtimeActive) return;
               final goal = textController.text.trim();
               if (goal.isNotEmpty) {
                 Navigator.pop(ctx);
-                ref
-                    .read(homeControllerProvider.notifier)
-                    .processWithMultiAgent(goal);
+                unawaited(
+                  ref
+                      .read(homeControllerProvider.notifier)
+                      .processWithMultiAgent(goal)
+                      .then<void>(
+                        (_) {},
+                        onError: (Object _, StackTrace __) {
+                          // Current-session failures are exposed by HomeState;
+                          // canceled old sessions must not become unhandled errors.
+                        },
+                      ),
+                );
                 InlineFeedback.of(context).showSnackBar(
                   SnackBar(
                     content: Text(l10n.get('agentProcessing')),
@@ -866,10 +947,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         icon: Icons.bolt,
         shortcut: 'U',
         onExecute: () async {
+          if (!mounted || !_runtimeActive) return;
           final count = await ref
               .read(remindersProvider.notifier)
               .scanAndApplyDynamicUrgency();
-          if (mounted) {
+          if (mounted && _runtimeActive) {
             InlineFeedback.of(context).showSnackBar(
               SnackBar(
                 content: Text('${l10n.get('dynamicPromotedCount')}: $count'),
@@ -1002,6 +1084,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _closeSearch() {
+    if (!mounted || !_runtimeActive) return;
     _searchDebounce?.cancel();
     setState(() {
       _isSearchOpen = false;
@@ -1011,13 +1094,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _updateSearch(String query) {
+    if (!mounted || !_runtimeActive) return;
     _searchDebounce?.cancel();
     if (query.trim().isEmpty) {
       setState(() => _searchQuery = '');
       return;
     }
     _searchDebounce = Timer(const Duration(milliseconds: 150), () {
-      if (mounted) setState(() => _searchQuery = query);
+      if (mounted && _runtimeActive) setState(() => _searchQuery = query);
     });
   }
 
@@ -1028,10 +1112,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final homeState = ref.watch(homeControllerProvider);
     final spacedService = ref.watch(spacedRepetitionServiceProvider);
     final currentProfile = ref.watch(contextProfileProvider);
-    final suppressedCount = ContextTriggerService().suppressedReminders.length;
+    final suppressedCount = _contextTriggers.suppressedReminders.length;
 
     ref.listen<HomeState>(homeControllerProvider, (previous, next) {
-      if (next.error != null) {
+      if (_runtimeActive && next.error != null) {
         InlineFeedback.of(context).hideCurrentSnackBar();
         InlineFeedback.of(context).showSnackBar(
           SnackBar(
@@ -1151,12 +1235,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     tooltip: l10n.get('contextProfileSwitch'),
                     splashRadius: 18,
                     onSelected: (profile) async {
+                      if (!mounted || !_runtimeActive) return;
                       try {
                         await ref
                             .read(contextProfileProvider.notifier)
                             .setProfile(profile);
                       } catch (_) {
-                        if (!context.mounted) return;
+                        if (!mounted || !_runtimeActive || !context.mounted) {
+                          return;
+                        }
                         InlineFeedback.of(context).showSnackBar(
                           SnackBar(
                             content: Text(l10n.get('reminderUpdateFailed')),

@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/providers.dart';
 import '../../services/llm_service.dart';
-import '../../services/lan_sync_service.dart';
 import '../../l10n/app_localizations.dart';
 import 'backup_preview_screen.dart';
 
@@ -142,7 +141,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       }
     }
 
-    final lanSync = LanSyncService.instance;
+    final lanSync = ref.read(lanSyncServiceProvider);
     _isLanServerRunning = lanSync.isRunning;
     _lanIp = lanSync.localIp;
     _lanPin = lanSync.pin;
@@ -353,7 +352,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _toggleLanServer() async {
-    final lanSync = LanSyncService.instance;
+    final lanSync = ref.read(lanSyncServiceProvider);
     final dbHelper = ref.read(databaseHelperProvider);
     if (_isLanServerRunning) {
       await lanSync.stopServer();
@@ -399,7 +398,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
 
     setState(() => _isSyncing = true);
-    final lanSync = LanSyncService.instance;
+    final lanSync = ref.read(lanSyncServiceProvider);
     final dbHelper = ref.read(databaseHelperProvider);
 
     final success = await lanSync.syncWithPeer(

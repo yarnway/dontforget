@@ -6,7 +6,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'providers/providers.dart';
+import 'providers/recovery_coordinator.dart';
 import 'ui/screens/home_screen.dart';
+import 'ui/screens/recovery_outcome_screen.dart';
 import 'l10n/app_localizations.dart';
 
 class MyApp extends ConsumerStatefulWidget {
@@ -16,12 +18,15 @@ class MyApp extends ConsumerStatefulWidget {
   ConsumerState<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends ConsumerState<MyApp> with WindowListener, TrayListener {
-  bool get _isDesktop => Platform.isWindows || Platform.isLinux || Platform.isMacOS;
+class _MyAppState extends ConsumerState<MyApp>
+    with WindowListener, TrayListener, WidgetsBindingObserver {
+  bool get _isDesktop =>
+      Platform.isWindows || Platform.isLinux || Platform.isMacOS;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     if (_isDesktop) {
       windowManager.addListener(this);
       trayManager.addListener(this);
@@ -34,23 +39,17 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener, TrayListener
     try {
       // Note: Windows icon must be .ico format and bundled in assets
       await trayManager.setIcon(
-        Platform.isWindows 
-          ? 'assets/app_icon.ico' 
-          : 'assets/app_icon.png' // Fallback for macOS and Linux
+        Platform.isWindows
+            ? 'assets/app_icon.ico'
+            : 'assets/app_icon.png', // Fallback for macOS and Linux
       );
       // The Linux tray backend does not implement tooltips.
       if (!Platform.isLinux) await trayManager.setToolTip("DontForget");
       Menu menu = Menu(
         items: [
-          MenuItem(
-            key: 'show_window',
-            label: '显示应用',
-          ),
+          MenuItem(key: 'show_window', label: '显示应用'),
           MenuItem.separator(),
-          MenuItem(
-            key: 'exit_app',
-            label: '退出',
-          ),
+          MenuItem(key: 'exit_app', label: '退出'),
         ],
       );
       await trayManager.setContextMenu(menu);
@@ -61,6 +60,7 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener, TrayListener
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     if (_isDesktop) {
       windowManager.removeListener(this);
       trayManager.removeListener(this);
@@ -72,6 +72,7 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener, TrayListener
   @override
   void onWindowClose() async {
     if (!_isDesktop) return;
+    if (ref.read(recoveryCoordinatorProvider).state.working) return;
     try {
       // Hide window instead of closing
       bool isPreventClose = await windowManager.isPreventClose();
@@ -108,6 +109,11 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener, TrayListener
         windowManager.show();
         windowManager.focus();
       } else if (menuItem.key == 'exit_app') {
+        if (ref.read(recoveryCoordinatorProvider).state.working) {
+          windowManager.show();
+          windowManager.focus();
+          return;
+        }
         try {
           trayManager.destroy();
         } catch (_) {}
@@ -120,13 +126,22 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener, TrayListener
   }
 
   @override
+  Future<bool> didPopRoute() async =>
+      ref.read(recoveryCoordinatorProvider).state.phase != RecoveryPhase.idle;
+
+  @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
+    final recovery = ref.watch(recoveryCoordinatorProvider);
+    final recoveryState = recovery.state;
 
     // Morandi-inspired minimal palette
     const primaryColor = Color(0xFF7A8B8B); // A muted, grayish cyan/teal
 
     return MaterialApp(
+      // Discard old editors, pending Undo, draft settings and navigation state
+      // only after the data decision and provider reload have completed.
+      key: ValueKey(recovery.navigationEpoch),
       title: "DontForget",
       debugShowCheckedModeBanner: false,
       locale: Locale(settings.language),
@@ -157,7 +172,9 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener, TrayListener
         cardTheme: CardThemeData(
           elevation: 2,
           shadowColor: Colors.black.withValues(alpha: 0.05),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
       ),
       darkTheme: ThemeData(
@@ -176,12 +193,44 @@ class _MyAppState extends ConsumerState<MyApp> with WindowListener, TrayListener
         cardTheme: CardThemeData(
           elevation: 4,
           shadowColor: Colors.black.withValues(alpha: 0.2),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
       ),
       themeMode: ThemeMode.system,
-      builder: (context, child) => InlineFeedback(child: child!),
-      home: const HomeScreen(),
+      builder: (context, child) => InlineFeedback(
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            ExcludeSemantics(
+              excluding: recoveryState.working,
+              child: ExcludeFocus(
+                excluding: recoveryState.working,
+                child: IgnorePointer(
+                  ignoring: recoveryState.working,
+                  child: child!,
+                ),
+              ),
+            ),
+            if (recoveryState.working)
+              RecoveryOutcomeScreen(
+                phase: recoveryState.phase,
+                rollbackDirectory: null,
+                onContinue: () {},
+                onExit: () {},
+              ),
+          ],
+        ),
+      ),
+      home: recoveryState.terminal
+          ? RecoveryOutcomeScreen(
+              phase: recoveryState.phase,
+              rollbackDirectory: recoveryState.rollbackDirectory,
+              onContinue: recovery.acknowledge,
+              onExit: () => exit(1),
+            )
+          : const HomeScreen(),
     );
   }
 }

@@ -13,6 +13,7 @@ import '../models/reminder.dart';
 import '../models/agent_models.dart';
 import '../services/llm_service.dart';
 import '../services/local_media_store.dart';
+import '../services/recovery/runtime_gate.dart';
 import 'providers.dart';
 
 class HomeState {
@@ -55,7 +56,12 @@ final homeControllerProvider = StateNotifierProvider<HomeController, HomeState>(
 class HomeController extends StateNotifier<HomeState> {
   final Ref _ref;
   final DatabaseHelper _database;
-  final _audioRecorder = AudioRecorder();
+  final AudioRecorder _audioRecorder;
+  final Future<Directory> Function() _temporaryDirectory;
+  final RuntimeRecoveryGate _runtime;
+  late final RuntimeRecoveryToken? _birth;
+  Future<void> _recorderOperations = Future<void>.value();
+  bool _nativeRecording = false;
   final Future<XFile?> Function(ImageSource) _pickImage;
   final Future<XFile?> Function() _pickVideo;
   final Future<PlatformFile?> Function() _pickFile;
@@ -69,7 +75,12 @@ class HomeController extends StateNotifier<HomeState> {
     Future<XFile?> Function()? pickVideo,
     Future<PlatformFile?> Function()? pickFile,
     Future<String> Function(String)? importFile,
-  }) : _database = _ref.read(databaseHelperProvider),
+    AudioRecorder? audioRecorder,
+    Future<Directory> Function()? temporaryDirectory,
+  }) : _runtime = _ref.read(runtimeRecoveryGateProvider),
+       _audioRecorder = audioRecorder ?? AudioRecorder(),
+       _temporaryDirectory = temporaryDirectory ?? getTemporaryDirectory,
+       _database = _ref.read(databaseHelperProvider),
        _pickImage =
            pickImage ?? ((source) => ImagePicker().pickImage(source: source)),
        _pickVideo =
@@ -77,18 +88,55 @@ class HomeController extends StateNotifier<HomeState> {
            (() => ImagePicker().pickVideo(source: ImageSource.gallery)),
        _pickFile = pickFile ?? (() => FilePicker.pickFile(type: FileType.any)),
        _importFile = importFile ?? LocalMediaStore().importFile,
-       super(HomeState());
+       super(HomeState()) {
+    _birth = _runtime.paused ? null : _runtime.capture();
+    if (_birth != null) _runtime.register(this, _quiesce);
+  }
 
   @override
   void dispose() {
-    _audioRecorder.dispose();
+    _runtime.unregister(this);
+    unawaited(
+      _serializeRecorder(() async {
+        try {
+          await _discardRecording();
+        } finally {
+          await _audioRecorder.dispose();
+        }
+      }).catchError((Object _) {}),
+    );
     super.dispose();
   }
 
+  Future<T> _serializeRecorder<T>(Future<T> Function() action) {
+    final result = _recorderOperations.then((_) => action());
+    _recorderOperations = result.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace __) {},
+    );
+    return result;
+  }
+
+  Future<void> _discardRecording() async {
+    _recordingGeneration = null;
+    if (_nativeRecording) {
+      // cancel removes the unconfirmed temporary capture; it never imports it.
+      await _audioRecorder.cancel();
+      _nativeRecording = false;
+    }
+  }
+
+  Future<void> _quiesce() async {
+    _pending.clear();
+    if (mounted) state = HomeState();
+    await _serializeRecorder(_discardRecording);
+  }
+
   bool _isCurrent(DataGeneration generation) =>
-      mounted && _database.isCurrent(generation);
+      mounted && _runtime.isCurrent(_birth) && _database.isCurrent(generation);
 
   void _check(DataGeneration generation) {
+    _runtime.check(_birth);
     _database.checkGeneration(generation);
     if (!mounted) {
       throw StateError('Input controller is no longer active.');
@@ -96,7 +144,7 @@ class HomeController extends StateNotifier<HomeState> {
   }
 
   DataGeneration? _beginInput() {
-    if (!mounted) {
+    if (!mounted || !_runtime.isCurrent(_birth)) {
       return null;
     }
     try {
@@ -108,7 +156,7 @@ class HomeController extends StateNotifier<HomeState> {
   }
 
   void _publishPendingCount() {
-    if (mounted) {
+    if (mounted && _runtime.isCurrent(_birth)) {
       // Operation bookkeeping can settle after maintenance; only current work
       // contributes to the new session, and no old result/error is published.
       state = state.copyWith(
@@ -215,6 +263,7 @@ class HomeController extends StateNotifier<HomeState> {
   Future<MultiAgentExecutionResult> processWithMultiAgent(
     String complexGoal,
   ) async {
+    _runtime.check(_birth);
     final generation = _database.captureGeneration();
     return _processWithMultiAgent(complexGoal, generation);
   }
@@ -317,36 +366,34 @@ class HomeController extends StateNotifier<HomeState> {
 
   Future<bool> startRecording() async {
     final generation = _beginInput();
-    if (generation == null) {
-      return false;
-    }
-    var started = false;
+    if (generation == null) return false;
     try {
       final permitted = await _audioRecorder.hasPermission();
       _check(generation);
-      if (!permitted) {
-        return false;
-      }
-      final tempDir = await getTemporaryDirectory();
+      if (!permitted) return false;
+      final tempDir = await _temporaryDirectory();
       _check(generation);
-      await _database.runOperation(generation, () async {
+      return await _serializeRecorder(() async {
+        _check(generation);
+        if (_nativeRecording) return true;
         await tempDir.create(recursive: true);
         _check(generation);
-        final path =
-            '${tempDir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
-        await _audioRecorder.start(const RecordConfig(), path: path);
-        started = true;
-      });
-      _check(generation);
-      _recordingGeneration = generation;
-      state = state.copyWith(isRecording: true, error: null);
-      return true;
-    } catch (error) {
-      if (started) {
+        final path = '${tempDir.path}/audio_${const Uuid().v4()}.m4a';
         try {
-          await _audioRecorder.stop();
-        } catch (_) {}
-      }
+          _nativeRecording = true;
+          await _audioRecorder.start(const RecordConfig(), path: path);
+          _check(generation);
+          _recordingGeneration = generation;
+          state = state.copyWith(isRecording: true, error: null);
+          return true;
+        } catch (_) {
+          // Native start may have succeeded before the runtime was paused.
+          // Cleanup is serialized ahead of the recovery quiesce completion.
+          if (_nativeRecording) await _discardRecording();
+          rethrow;
+        }
+      });
+    } catch (error) {
       _reportError(generation, '启动录音失败: $error');
       return false;
     }
@@ -354,24 +401,32 @@ class HomeController extends StateNotifier<HomeState> {
 
   Future<void> stopRecordingAndProcess() async {
     final generation = _recordingGeneration;
-    if (!mounted || !state.isRecording || generation == null) {
-      return;
-    }
+    if (generation == null) return;
     _recordingGeneration = null;
     try {
-      // Stopping an old native capture is cleanup; it never obtains a new data
-      // ticket. Its payload can only be processed under the original ticket.
-      final path = await _audioRecorder.stop();
-      if (mounted) {
+      final path = await _serializeRecorder(() async {
+        if (!_isCurrent(generation)) {
+          await _discardRecording();
+          return null;
+        }
+        final path = await _audioRecorder.stop();
+        _nativeRecording = false;
+        if (!_isCurrent(generation)) {
+          // Stop raced recovery. The result was never confirmed for import.
+          if (path != null) {
+            final temporary = File(path);
+            if (await temporary.exists()) await temporary.delete();
+          }
+          return null;
+        }
+        return path;
+      });
+      if (_isCurrent(generation)) {
         state = state.copyWith(isRecording: false);
-      }
-      if (path != null && _isCurrent(generation)) {
-        _processAudio(path, generation);
+        if (path != null) _processAudio(path, generation);
       }
     } catch (error) {
-      if (mounted) {
-        state = state.copyWith(isRecording: false);
-      }
+      if (_isCurrent(generation)) state = state.copyWith(isRecording: false);
       _reportError(generation, '录音停止异常: $error');
     }
   }
@@ -393,6 +448,7 @@ class HomeController extends StateNotifier<HomeState> {
         final settings = _ref.read(settingsProvider);
         final service = _ref.read(llmServiceProvider);
         final id = await _saveMedia('audio', savedPath, generation);
+        _check(generation);
         try {
           final text = await service.transcribeAudio(savedPath, settings);
           _check(generation);
@@ -448,6 +504,7 @@ class HomeController extends StateNotifier<HomeState> {
           final bytes = await File(savedPath).readAsBytes();
           _check(generation);
           final id = await _saveMedia('image', savedPath, generation);
+          _check(generation);
           final settings = _ref.read(settingsProvider);
           final service = _ref.read(llmServiceProvider);
           final tasks = await service.extractTasksFromImage(
@@ -529,6 +586,7 @@ class HomeController extends StateNotifier<HomeState> {
           final savedPath = await _saveFileToLocal(selected.path, generation);
           _check(generation);
           final id = await _saveMedia('video', savedPath, generation);
+          _check(generation);
           final settings = _ref.read(settingsProvider);
           final tasks = await _ref
               .read(llmServiceProvider)
@@ -545,7 +603,7 @@ class HomeController extends StateNotifier<HomeState> {
   }
 
   void clearError() {
-    if (mounted) {
+    if (mounted && _runtime.isCurrent(_birth)) {
       state = state.copyWith(error: null);
     }
   }

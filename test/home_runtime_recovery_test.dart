@@ -1,0 +1,347 @@
+import 'dart:async';
+import 'dart:io';
+
+import 'package:dont_forget/data/database_helper.dart';
+import 'package:dont_forget/models/reminder.dart';
+import 'package:dont_forget/models/agent_models.dart';
+import 'package:dont_forget/l10n/app_localizations.dart';
+import 'package:dont_forget/services/multi_agent_service.dart';
+import 'package:dont_forget/services/notification_service.dart';
+import 'package:dont_forget/ui/screens/home_screen.dart';
+import 'package:dont_forget/ui/widgets/inline_feedback.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:dont_forget/models/settings.dart';
+import 'package:dont_forget/providers/home_controller.dart';
+import 'package:dont_forget/providers/providers.dart';
+import 'package:dont_forget/services/llm_service.dart';
+import 'package:dont_forget/services/recovery/runtime_gate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:record/record.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+class _Llm extends LLMService {
+  final started = Completer<void>();
+  final result = Completer<List<Reminder>>();
+  @override
+  Future<List<Reminder>> extractTasks(String text, AppSettings settings) {
+    started.complete();
+    return result.future;
+  }
+}
+
+class _Agent extends MultiAgentService {
+  final started = Completer<void>();
+  final result = Completer<MultiAgentExecutionResult>();
+  bool disposed = false;
+  @override
+  Future<MultiAgentExecutionResult> executePipeline(
+    String input, {
+    AppSettings? settings,
+    List<Reminder>? existingTasks,
+    String language = 'zh',
+  }) {
+    started.complete();
+    return result.future;
+  }
+
+  @override
+  void dispose() {
+    disposed = true;
+    super.dispose();
+  }
+}
+
+class _Recorder implements AudioRecorder {
+  Completer<void>? startRelease;
+  Completer<String?>? stopRelease;
+  final started = Completer<void>();
+  final stopped = Completer<void>();
+  int cancels = 0;
+  bool cancelFails = false;
+  @override
+  Future<bool> hasPermission({bool request = true}) async => true;
+  @override
+  Future<void> start(RecordConfig config, {required String path}) async {
+    started.complete();
+    await startRelease?.future;
+  }
+
+  @override
+  Future<String?> stop() async {
+    stopped.complete();
+    return await stopRelease?.future;
+  }
+
+  @override
+  Future<void> cancel() async {
+    cancels++;
+    if (cancelFails) throw StateError('native cancellation failed');
+  }
+
+  @override
+  Future<void> dispose() async {}
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  late Directory directory;
+  late DatabaseHelper database;
+  late RuntimeRecoveryGate gate;
+  late _Recorder recorder;
+  ProviderContainer? container;
+
+  Future<HomeController> controller({
+    _Llm? llm,
+    _Agent? agent,
+    Future<XFile?> Function(ImageSource)? picker,
+  }) async {
+    container = ProviderContainer(
+      overrides: [
+        databaseHelperProvider.overrideWithValue(database),
+        runtimeRecoveryGateProvider.overrideWithValue(gate),
+        if (llm != null) llmServiceProvider.overrideWithValue(llm),
+        notificationServiceProvider.overrideWithValue(
+          NotificationService.forTesting(
+            FlutterLocalNotificationsPlugin(),
+            usesNativeNotifications: false,
+          ),
+        ),
+        if (agent != null)
+          multiAgentServiceProvider.overrideWith((ref) {
+            ref.onDispose(agent.dispose);
+            return agent;
+          }),
+        homeControllerProvider.overrideWith(
+          (ref) => HomeController(
+            ref,
+            pickImage: picker,
+            audioRecorder: recorder,
+            temporaryDirectory: () async => directory,
+          ),
+        ),
+      ],
+    );
+    await container!.read(settingsProvider.notifier).ready;
+    if (llm != null) {
+      await container!
+          .read(settingsProvider.notifier)
+          .updateSettings(
+            container!.read(settingsProvider).copyWith(apiKey: 'isolated-test'),
+          );
+    }
+    await container!.read(remindersProvider.notifier).ready;
+    await container!.read(mediaRecordsProvider.notifier).ready;
+    return container!.read(homeControllerProvider.notifier);
+  }
+
+  Future<List<Map<String, Object?>>> rows(String table) =>
+      database.read(database.captureGeneration(), (db) => db.query(table));
+
+  setUp(() async {
+    sqfliteFfiInit();
+    directory = await Directory.systemTemp.createTemp('home-runtime-');
+    database = DatabaseHelper.forTesting(directory.path, databaseFactoryFfi);
+    gate = RuntimeRecoveryGate();
+    recorder = _Recorder();
+  });
+  tearDown(() async {
+    container?.dispose();
+    container = null;
+    await database.close();
+    await directory.delete(recursive: true);
+  });
+
+  test(
+    'pause does not await AI; late response and old controller input stay invalid after resume',
+    () async {
+      final llm = _Llm();
+      final home = await controller(llm: llm);
+      await home.processText('old input');
+      await llm.started.future;
+      final token = await gate.pause().timeout(const Duration(seconds: 2));
+      expect(home.state.pendingTasksCount, 0);
+      gate.resume(token);
+      llm.result.complete([
+        Reminder(id: 'old-result', taskTitle: 'old', quadrantLevel: 2),
+      ]);
+      await home.processText('late old controller input');
+      await Future<void>.delayed(Duration.zero);
+      expect(await rows('Reminders'), isEmpty);
+      expect(home.state.error, isNull);
+    },
+  );
+
+  test('a late file picker cannot import after runtime resume', () async {
+    final selection = Completer<XFile?>();
+    final home = await controller(picker: (_) => selection.future);
+    final picking = home.processImage();
+    final token = await gate.pause();
+    gate.resume(token);
+    selection.complete(XFile('${directory.path}/does-not-exist.jpg'));
+    await picking;
+    expect(await rows('MediaRecords'), isEmpty);
+    expect(home.state.error, isNull);
+  });
+
+  test(
+    'pause waits native start then cancels without importing its capture',
+    () async {
+      recorder.startRelease = Completer<void>();
+      final home = await controller();
+      final starting = home.startRecording();
+      await recorder.started.future;
+      var paused = false;
+      final pausing = gate.pause().then((token) {
+        paused = true;
+        return token;
+      });
+      await Future<void>.delayed(Duration.zero);
+      expect(paused, isFalse);
+      recorder.startRelease!.complete();
+      expect(await starting, isFalse);
+      final token = await pausing;
+      expect(recorder.cancels, 1);
+      expect(home.state.isRecording, isFalse);
+      expect(await rows('MediaRecords'), isEmpty);
+      gate.resume(token);
+    },
+  );
+
+  test(
+    'native cleanup failure blocks recovery and retry performs cleanup',
+    () async {
+      final home = await controller();
+      expect(await home.startRecording(), isTrue);
+      recorder.cancelFails = true;
+      await expectLater(gate.pause(), throwsStateError);
+      expect(gate.paused, isTrue);
+      recorder.cancelFails = false;
+      final token = await gate.pause();
+      expect(recorder.cancels, 2);
+      expect(await rows('MediaRecords'), isEmpty);
+      gate.resume(token);
+    },
+  );
+
+  test(
+    'stop racing recovery deletes the unconfirmed temporary capture',
+    () async {
+      final audio = File('${directory.path}/capture.m4a');
+      await audio.writeAsString('isolated capture');
+      recorder.stopRelease = Completer<String?>();
+      final home = await controller();
+      expect(await home.startRecording(), isTrue);
+      final stopping = home.stopRecordingAndProcess();
+      await recorder.stopped.future;
+      final pausing = gate.pause();
+      recorder.stopRelease!.complete(audio.path);
+      await stopping;
+      final token = await pausing;
+      expect(await audio.exists(), isFalse);
+      expect(await rows('MediaRecords'), isEmpty);
+      gate.resume(token);
+    },
+  );
+
+  test(
+    'controller constructed while paused remains inert after resume',
+    () async {
+      final token = await gate.pause();
+      final home = await controller();
+      gate.resume(token);
+      await home.processText('must not be saved');
+      expect(await rows('Reminders'), isEmpty);
+      container!.invalidate(homeControllerProvider);
+      final fresh = container!.read(homeControllerProvider.notifier);
+      await fresh.processText('new session');
+      for (var i = 0; i < 50 && fresh.state.pendingTasksCount > 0; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      expect((await rows('Reminders')).single['task_title'], 'new session');
+    },
+  );
+  testWidgets(
+    'multi-agent launch consumes a late shutdown failure after recovery',
+    (tester) async {
+      final messenger =
+          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+      final audioChannels = <MethodChannel>[
+        const MethodChannel('xyz.luan/audioplayers.global'),
+        const MethodChannel('xyz.luan/audioplayers.global/events'),
+        const MethodChannel('xyz.luan/audioplayers'),
+      ];
+      for (final channel in audioChannels.take(2)) {
+        messenger.setMockMethodCallHandler(channel, (_) async => null);
+      }
+      messenger.setMockMethodCallHandler(audioChannels.last, (call) async {
+        if (call.method == 'create') {
+          final playerId = (call.arguments as Map)['playerId'];
+          final channel = MethodChannel(
+            'xyz.luan/audioplayers/events/$playerId',
+          );
+          audioChannels.add(channel);
+          messenger.setMockMethodCallHandler(channel, (_) async => null);
+        }
+        return null;
+      });
+      addTearDown(() {
+        for (final channel in audioChannels) {
+          messenger.setMockMethodCallHandler(channel, null);
+        }
+      });
+      final agent = _Agent();
+      await tester.runAsync(() => controller(agent: agent));
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container!,
+          child: MaterialApp(
+            locale: const Locale('zh'),
+            supportedLocales: const [Locale('zh')],
+            localizationsDelegates: const [
+              AppLocalizationsDelegate(),
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            builder: (_, child) => InlineFeedback(child: child!),
+            home: const HomeScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.more_horiz_rounded));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('多智能体微型协作流水线'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.byType(TextField),
+        ),
+        '旧会话待处理项目',
+      );
+      await tester.tap(find.text('启动三智能体协同'));
+      await tester.pump();
+      expect(agent.started.isCompleted, isTrue);
+      await tester.runAsync(() async {
+        final token = await gate.pause();
+        container!.invalidate(multiAgentServiceProvider);
+        expect(agent.disposed, isTrue);
+        gate.resume(token);
+        agent.result.completeError(StateError('old transport was closed'));
+        await Future<void>.delayed(Duration.zero);
+      });
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+      expect(await tester.runAsync(() => rows('Reminders')), isEmpty);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+}

@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../services/recovery/runtime_gate.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/database_helper.dart';
@@ -18,6 +19,10 @@ import '../services/context_trigger_service.dart';
 
 final databaseHelperProvider = Provider<DatabaseHelper>((ref) {
   return DatabaseHelper.instance;
+});
+
+final runtimeRecoveryGateProvider = Provider<RuntimeRecoveryGate>((ref) {
+  return RuntimeRecoveryGate();
 });
 
 final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>((
@@ -76,6 +81,7 @@ final remindersProvider =
       return RemindersNotifier(
         ref.read(databaseHelperProvider),
         notifications: ref.read(notificationServiceProvider),
+        runLoadEffects: !ref.read(runtimeRecoveryGateProvider).paused,
       );
     });
 
@@ -86,11 +92,15 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
   Future<void> _operations = Future<void>.value();
   DataGeneration? _stateGeneration;
 
-  RemindersNotifier(this._dbHelper, {NotificationService? notifications})
-    : _notifications = notifications ?? NotificationService(),
-      super([]) {
+  RemindersNotifier(
+    this._dbHelper, {
+    NotificationService? notifications,
+    bool runLoadEffects = true,
+  }) : _notifications = notifications ?? NotificationService(),
+       super([]) {
     ready = _enqueue(
-      (generation) => _loadReminders(generation, startup: true),
+      (generation) =>
+          _loadReminders(generation, startup: true, runEffects: runLoadEffects),
       requiresCurrentState: false,
     );
     unawaited(ready.then<void>((_) {}, onError: (Object _, StackTrace __) {}));
@@ -131,6 +141,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
   Future<void> _loadReminders(
     DataGeneration generation, {
     bool startup = false,
+    bool runEffects = true,
   }) async {
     try {
       final rows = await _dbHelper.read(
@@ -144,6 +155,9 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       final list = rows.map(Reminder.fromJson).toList();
       _stateGeneration = generation;
       state = list;
+      // Recovery already rebuilt notifications from the committed database.
+      // Loading UI state must not reschedule or mutate it a second time.
+      if (!runEffects) return;
       final now = DateTime.now();
       for (final reminder in list) {
         _dbHelper.checkGeneration(generation);
@@ -475,7 +489,9 @@ class MediaRecordsNotifier extends StateNotifier<List<MediaRecord>> {
 }
 
 final llmServiceProvider = Provider<LLMService>((ref) {
-  return LLMService();
+  final service = LLMService();
+  ref.onDispose(service.dispose);
+  return service;
 });
 
 final notificationServiceProvider = Provider<NotificationService>((ref) {
@@ -491,10 +507,12 @@ final dpSchedulerServiceProvider = Provider<DPSchedulerService>((ref) {
 });
 
 final multiAgentServiceProvider = Provider<MultiAgentService>((ref) {
-  return MultiAgentService(
+  final service = MultiAgentService(
     llmService: ref.read(llmServiceProvider),
     dpScheduler: ref.read(dpSchedulerServiceProvider),
   );
+  ref.onDispose(service.dispose);
+  return service;
 });
 
 final spacedRepetitionServiceProvider = Provider<SpacedRepetitionService>((

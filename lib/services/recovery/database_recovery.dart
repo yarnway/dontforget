@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
+import 'package:sqflite_common_ffi/sqflite_ffi.dart' show DatabaseExecutor;
 import 'package:uuid/uuid.dart';
 
 import '../../data/database_helper.dart';
@@ -28,14 +29,63 @@ class RecoveryInterruption implements Exception {
   const RecoveryInterruption();
 }
 
+enum RecoveryFailureOutcome { unchanged, rolledBack, restartRequired }
+
+enum RecoveryFailureReason {
+  sourceChanged,
+  currentDataChanged,
+  invalidPlan,
+  operationFailed,
+}
+
 class DatabaseRecoveryException implements Exception {
-  const DatabaseRecoveryException({required this.rolledBack});
-  final bool rolledBack;
+  const DatabaseRecoveryException({
+    required bool rolledBack,
+    this.reason = RecoveryFailureReason.operationFailed,
+    this.rollbackDirectory,
+  }) : outcome = rolledBack
+           ? RecoveryFailureOutcome.rolledBack
+           : RecoveryFailureOutcome.restartRequired;
+
+  const DatabaseRecoveryException.unchanged({
+    required this.reason,
+    this.rollbackDirectory,
+  }) : outcome = RecoveryFailureOutcome.unchanged;
+
+  final RecoveryFailureOutcome outcome;
+  final RecoveryFailureReason reason;
+  final String? rollbackDirectory;
+  bool get rolledBack => outcome == RecoveryFailureOutcome.rolledBack;
+  bool get canContinue => outcome != RecoveryFailureOutcome.restartRequired;
 
   @override
-  String toString() => rolledBack
-      ? 'DatabaseRecoveryException(rolledBack)'
-      : 'DatabaseRecoveryException(recoveryRequired)';
+  String toString() =>
+      'DatabaseRecoveryException(${outcome.name}, ${reason.name})';
+}
+
+/// A single confirmation bound to one database and one logical data snapshot.
+/// Only [DatabaseRecovery.prepare] can issue a plan. Preparing does not create
+/// its operation directory, pause producers, or replace the primary database.
+final class RecoveryPlan {
+  RecoveryPlan._(this._owner, {
+    required this.source,
+    required this.preview,
+    required Map<String, int> currentCounts,
+    required this.operationId,
+    required this.rollbackDirectory,
+    required this.currentSnapshotDigest,
+    required this.generation,
+  }) : currentCounts = Map.unmodifiable(currentCounts);
+
+  final DatabaseHelper _owner;
+  final File source;
+  final BackupPreview preview;
+  final Map<String, int> currentCounts;
+  final String operationId;
+  final String rollbackDirectory;
+  final String currentSnapshotDigest;
+  final DataGeneration generation;
+  bool _consumed = false;
 }
 
 class DatabaseRecoveryResult {
@@ -44,8 +94,7 @@ class DatabaseRecoveryResult {
   final String rollbackDirectory;
 }
 
-/// Internal recovery engine. The UI must not expose replacement until it can
-/// coordinate producer shutdown, notification reconciliation and confirmation.
+/// Recovery engine used behind the confirmation and runtime coordinator.
 /// Files are retained per operation; fixed mirror/JSON backups are never used
 /// as rollback material. Flush + rename covers process interruption, not a
 /// claim of directory-fsync durability during sudden device power loss.
@@ -66,26 +115,91 @@ class DatabaseRecovery {
 
   Future<void> _at(RecoveryCheckpoint point) async => checkpoint?.call(point);
 
-  Future<DatabaseRecoveryResult> restore(
+  /// Read-only preparation. A transaction gives all three business tables one
+  /// consistent view; no user rows or backup files are written here.
+  Future<RecoveryPlan> prepare(
     File source, {
     required String expectedDigest,
   }) async {
     if (!_hashPattern.hasMatch(expectedDigest)) {
-      throw const DatabaseRecoveryException(rolledBack: false);
+      throw const DatabaseRecoveryException.unchanged(
+        reason: RecoveryFailureReason.invalidPlan,
+      );
     }
-    final preview = await inspector.inspect(source);
-    if (preview.digest != expectedDigest) {
+    final inspected = await inspector.inspect(source);
+    if (inspected.digest != expectedDigest) {
       throw const BackupInspectionException(
         BackupInspectionError.sourceChanged,
       );
     }
-    // Ensure the old database exists and is readable before taking maintenance.
     final generation = database.captureGeneration();
-    await database.read(
-      generation,
-      (db) => db.rawQuery('PRAGMA integrity_check'),
+    final snapshot = await database.writeTransaction(generation, _snapshot);
+    final directory = await database.acquireOwnership();
+    database.checkGeneration(generation);
+    final id = const Uuid().v4();
+    return RecoveryPlan._(
+      database,
+      source: File(p.normalize(source.absolute.path)),
+      preview: BackupPreview(
+        version: inspected.version,
+        digest: inspected.digest,
+        counts: Map.unmodifiable(inspected.counts),
+        containsCredentials: inspected.containsCredentials,
+        missingMedia: inspected.missingMedia,
+        unresolvedReferences: inspected.unresolvedReferences,
+        timestamp: inspected.timestamp,
+      ),
+      currentCounts: snapshot.counts,
+      operationId: id,
+      rollbackDirectory: p.join(directory, 'recovery-$id'),
+      currentSnapshotDigest: snapshot.digest,
+      generation: generation,
     );
-    final lease = await database.beginMaintenance();
+  }
+
+  Future<DatabaseRecoveryResult> restore(
+    File source, {
+    required String expectedDigest,
+  }) async =>
+      restorePlan(await prepare(source, expectedDigest: expectedDigest));
+
+  Future<DatabaseRecoveryResult> restorePlan(RecoveryPlan plan) async {
+    // Distinguish a stale confirmation from a currently unavailable database.
+    // Even a consumed plan cannot turn a faulted gate into a safe-to-retry error.
+    try {
+      database.captureGeneration();
+    } on DatabaseAccessException {
+      throw DatabaseRecoveryException(
+        rolledBack: false,
+        rollbackDirectory: plan.rollbackDirectory,
+      );
+    }
+    if (!identical(plan._owner, database) || plan._consumed) {
+      throw const DatabaseRecoveryException.unchanged(
+        reason: RecoveryFailureReason.invalidPlan,
+      );
+    }
+    plan._consumed = true;
+    if (!database.isCurrent(plan.generation)) {
+      throw DatabaseRecoveryException.unchanged(
+        reason: RecoveryFailureReason.currentDataChanged,
+        rollbackDirectory: plan.rollbackDirectory,
+      );
+    }
+    late final DatabaseMaintenanceLease lease;
+    try {
+      lease = await database.beginMaintenance();
+    } catch (_) {
+      throw DatabaseRecoveryException(
+        rolledBack: false,
+        rollbackDirectory: plan.rollbackDirectory,
+      );
+    }
+    final source = plan.source;
+    final preview = plan.preview;
+    final expectedDigest = preview.digest;
+    final id = plan.operationId;
+    final operation = Directory(plan.rollbackDirectory);
     _RecoveryJournal? journal;
     var committed = false;
     var paused = false;
@@ -94,14 +208,47 @@ class DatabaseRecovery {
       paused = true;
       final pending = File(p.join(lease.directory, journalName));
       if (await pending.exists()) throw const FormatException();
-      final id = const Uuid().v4();
-      final operation = Directory(p.join(lease.directory, 'recovery-$id'));
+      if (!_idPattern.hasMatch(id) ||
+          operation.path != p.join(lease.directory, 'recovery-$id') ||
+          await FileSystemEntity.type(operation.path, followLinks: false) !=
+              FileSystemEntityType.notFound) {
+        throw DatabaseRecoveryException.unchanged(
+          reason: RecoveryFailureReason.invalidPlan,
+          rollbackDirectory: plan.rollbackDirectory,
+        );
+      }
+      await lease.validateAndOpen();
+      final current = await lease.read(_snapshot);
+      if (current.digest != plan.currentSnapshotDigest) {
+        throw DatabaseRecoveryException.unchanged(
+          reason: RecoveryFailureReason.currentDataChanged,
+          rollbackDirectory: plan.rollbackDirectory,
+        );
+      }
+      try {
+        final latest = await inspector.inspect(source);
+        if (latest.digest != expectedDigest) {
+          throw const BackupInspectionException(
+            BackupInspectionError.sourceChanged,
+          );
+        }
+      } on BackupInspectionException {
+        throw DatabaseRecoveryException.unchanged(
+          reason: RecoveryFailureReason.sourceChanged,
+          rollbackDirectory: plan.rollbackDirectory,
+        );
+      }
       await operation.create();
+      await _requireDirectory(operation);
+      if (await operation.resolveSymbolicLinks() != operation.path) {
+        throw const FormatException();
+      }
       final input = File(p.join(operation.path, 'source.backup'));
       await _copyBounded(source, input, inspector.maxBytes);
       if (await _digest(input) != expectedDigest) {
-        throw const BackupInspectionException(
-          BackupInspectionError.sourceChanged,
+        throw DatabaseRecoveryException.unchanged(
+          reason: RecoveryFailureReason.sourceChanged,
+          rollbackDirectory: plan.rollbackDirectory,
         );
       }
       await inspector.inspect(input);
@@ -177,7 +324,7 @@ class DatabaseRecovery {
     } on RecoveryInterruption {
       lease.fail();
       rethrow;
-    } catch (_) {
+    } catch (error) {
       try {
         if (committed || !paused) {
           // The durable commit is the decision. Never roll it back because
@@ -195,9 +342,18 @@ class DatabaseRecovery {
       } catch (_) {
         await _keepNotificationsPaused();
         lease.fail();
-        throw const DatabaseRecoveryException(rolledBack: false);
+        throw DatabaseRecoveryException(
+          rolledBack: false,
+          rollbackDirectory: plan.rollbackDirectory,
+        );
       }
-      throw const DatabaseRecoveryException(rolledBack: true);
+      if (error is DatabaseRecoveryException && error.canContinue) {
+        rethrow;
+      }
+      throw DatabaseRecoveryException(
+        rolledBack: true,
+        rollbackDirectory: plan.rollbackDirectory,
+      );
     }
   }
 
@@ -437,4 +593,35 @@ Future<void> _requireRollbackJournal(File file) async {
   } finally {
     await handle.close();
   }
+}
+
+class _LogicalSnapshot {
+  const _LogicalSnapshot(this.counts, this.digest);
+  final Map<String, int> counts;
+  final String digest;
+}
+
+Future<_LogicalSnapshot> _snapshot(DatabaseExecutor database) async {
+  final tables = <String, List<String>>{};
+  final counts = <String, int>{};
+  for (final table in const {
+    'Settings': 'settings',
+    'MediaRecords': 'media_records',
+    'Reminders': 'reminders',
+  }.entries) {
+    final rows = await database.query(table.key);
+    counts[table.value] = rows.length;
+    // Stable for SQLite row order, column order and schema-preserving rewrites.
+    // Values include credentials but only the SHA-256 digest leaves this method.
+    tables[table.value] = [
+      for (final row in rows)
+        jsonEncode({
+          for (final key in row.keys.toList()..sort()) key: row[key],
+        }),
+    ]..sort();
+  }
+  return _LogicalSnapshot(
+    counts,
+    sha256.convert(utf8.encode(jsonEncode(tables))).toString(),
+  );
 }

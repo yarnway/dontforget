@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/providers.dart';
 import '../../l10n/app_localizations.dart';
-import '../../services/llm_service.dart';
+import '../../services/recovery/runtime_gate.dart';
 import '../widgets/ai_background_effect.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -16,29 +16,42 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  late final RuntimeRecoveryGate _runtime;
+  late final RuntimeRecoveryToken? _birth;
+
+  @override
+  void initState() {
+    super.initState();
+    _runtime = ref.read(runtimeRecoveryGateProvider);
+    _birth = _runtime.paused ? null : _runtime.capture();
+  }
+
+  bool get _isCurrent => mounted && _runtime.isCurrent(_birth);
+
   bool _isLoadingReport = false;
   String? _reviewReport;
 
   Future<void> _generateReport() async {
+    if (!_isCurrent || _isLoadingReport) return;
     final reminders = ref.read(remindersProvider);
     final settings = ref.read(settingsProvider);
     if (reminders.isEmpty) return;
 
     setState(() => _isLoadingReport = true);
     try {
-      final report = await LLMService().generateReviewReport(
+      final report = await ref.read(llmServiceProvider).generateReviewReport(
         reminders,
         settings,
         language: settings.language,
       );
-      if (mounted) {
+      if (_isCurrent) {
         setState(() {
           _reviewReport = report;
           _isLoadingReport = false;
         });
       }
     } catch (e) {
-      if (mounted) {
+      if (_isCurrent) {
         setState(() => _isLoadingReport = false);
       }
     }

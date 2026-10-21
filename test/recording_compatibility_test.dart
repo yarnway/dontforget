@@ -88,6 +88,8 @@ void main() {
             return recordingPath;
           }
           return null; // No audio file or external AI request in this test.
+        case 'cancel':
+          return null; // Discard an unconfirmed native start.
         case 'dispose':
           disposed.complete();
           return null;

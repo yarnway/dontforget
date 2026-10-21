@@ -2,17 +2,30 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as paths;
 
 import '../../l10n/app_localizations.dart';
+import '../../providers/recovery_coordinator.dart';
 import '../../services/recovery/backup_inspector.dart';
+import '../../services/recovery/database_recovery.dart';
+import '../widgets/recovery_confirmation_dialog.dart';
 
-/// Inspects a selected backup without opening or replacing the live database.
+/// Inspects read-only, then offers a separately acknowledged recovery plan.
 class BackupPreviewScreen extends StatefulWidget {
-  const BackupPreviewScreen({super.key, this.inspector, this.pickPath});
+  const BackupPreviewScreen({
+    super.key,
+    this.inspector,
+    this.pickPath,
+    this.prepareRestore,
+    this.executeRestore,
+  });
 
   final BackupInspector? inspector;
   final Future<String?> Function()? pickPath;
+  final Future<RecoveryPlan> Function(File source, BackupPreview preview)?
+  prepareRestore;
+  final Future<void> Function(RecoveryPlan plan)? executeRestore;
 
   @override
   State<BackupPreviewScreen> createState() => _BackupPreviewScreenState();
@@ -21,11 +34,14 @@ class BackupPreviewScreen extends StatefulWidget {
 class _BackupPreviewScreenState extends State<BackupPreviewScreen> {
   BackupInspectionCancellation? _cancellation;
   BackupPreview? _preview;
+  File? _source;
   String? _fileName;
   String? _messageKey;
+  String? _restoreMessageKey;
   bool _failed = false;
   bool _busy = false;
   bool _cancelling = false;
+  bool _reviewingRestore = false;
   int _request = 0;
 
   @override
@@ -36,7 +52,7 @@ class _BackupPreviewScreenState extends State<BackupPreviewScreen> {
   }
 
   Future<void> _check() async {
-    if (_busy) return;
+    if (_busy || _reviewingRestore) return;
     final request = ++_request;
     final cancellation = BackupInspectionCancellation();
     _cancellation = cancellation;
@@ -45,8 +61,10 @@ class _BackupPreviewScreenState extends State<BackupPreviewScreen> {
       _busy = true;
       _cancelling = false;
       _preview = null;
+      _source = null;
       _fileName = null;
       _messageKey = null;
+      _restoreMessageKey = null;
       _failed = false;
     });
     try {
@@ -67,6 +85,7 @@ class _BackupPreviewScreenState extends State<BackupPreviewScreen> {
           _messageKey = 'backupPreviewCancelled';
         } else {
           _preview = result;
+          _source = File(selected);
         }
       });
     } on BackupInspectionException catch (error) {
@@ -109,6 +128,76 @@ class _BackupPreviewScreenState extends State<BackupPreviewScreen> {
           _cancelling = false;
           _cancellation = null;
         });
+      }
+    }
+  }
+
+  Future<void> _reviewRestore() async {
+    final preview = _preview;
+    final source = _source;
+    if (_busy || _reviewingRestore || preview == null || source == null) return;
+    final request = ++_request;
+    var executing = false;
+    setState(() {
+      _reviewingRestore = true;
+      _messageKey = null;
+      _restoreMessageKey = null;
+      _failed = false;
+    });
+    try {
+      // Read the provider only when recovery is requested. Inspection remains
+      // independently usable and never creates a coordinator or changes data.
+      final plan = widget.prepareRestore != null
+          ? await widget.prepareRestore!(source, preview)
+          : await ProviderScope.containerOf(
+              context,
+              listen: false,
+            ).read(recoveryCoordinatorProvider).prepare(source, preview);
+      if (!mounted || request != _request) return;
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (_) => RecoveryConfirmationDialog(
+          preview: plan.preview,
+          currentCounts: plan.currentCounts,
+          rollbackDirectory: plan.rollbackDirectory,
+        ),
+      );
+      if (!mounted || request != _request || confirmed != true) return;
+      executing = true;
+      if (widget.executeRestore != null) {
+        await widget.executeRestore!(plan);
+      } else {
+        await ProviderScope.containerOf(
+          context,
+          listen: false,
+        ).read(recoveryCoordinatorProvider).restore(plan);
+      }
+    } on BackupInspectionException catch (error) {
+      if (!mounted || request != _request) return;
+      setState(() {
+        _restoreMessageKey = executing
+            ? 'backupRestoreExecutionFailed'
+            : error.code == BackupInspectionError.sourceChanged
+            ? 'backupRestoreChanged'
+            : 'backupRestorePrepareFailed';
+        if (error.code == BackupInspectionError.sourceChanged) {
+          _failed = true;
+          _messageKey = _restoreMessageKey;
+          _restoreMessageKey = null;
+          _preview = null;
+          _source = null;
+        }
+      });
+    } catch (_) {
+      if (!mounted || request != _request) return;
+      setState(() {
+        _restoreMessageKey = executing
+            ? 'backupRestoreExecutionFailed'
+            : 'backupRestorePrepareFailed';
+      });
+    } finally {
+      if (mounted && request == _request) {
+        setState(() => _reviewingRestore = false);
       }
     }
   }
@@ -238,6 +327,29 @@ class _BackupPreviewScreenState extends State<BackupPreviewScreen> {
                 SelectableText(result.digest, style: theme.textTheme.bodySmall),
               ],
             ),
+            const SizedBox(height: 12),
+            if (_restoreMessageKey != null) ...[
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  l10n.get(_restoreMessageKey!),
+                  style: TextStyle(color: colors.error),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            FilledButton.icon(
+              key: const ValueKey('backup-restore-review'),
+              onPressed: _reviewingRestore ? null : _reviewRestore,
+              icon: const Icon(Icons.restore),
+              label: Text(
+                l10n.get(
+                  _reviewingRestore
+                      ? 'backupRestorePreparing'
+                      : 'backupRestoreReview',
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -277,7 +389,7 @@ class _BackupPreviewScreenState extends State<BackupPreviewScreen> {
                   children: [
                     FilledButton.icon(
                       key: const ValueKey('backup-preview-select'),
-                      onPressed: _busy ? null : _check,
+                      onPressed: _busy || _reviewingRestore ? null : _check,
                       icon: const Icon(Icons.folder_open_outlined),
                       label: Text(
                         l10n.get(

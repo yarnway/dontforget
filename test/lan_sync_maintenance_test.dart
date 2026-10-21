@@ -386,4 +386,163 @@ void main() {
       }
     },
   );
+  test(
+    'recovery stops server, expires PIN, and requires explicit restart',
+    () async {
+      final old = await service.startServer(port: 0, dbHelper: helper);
+      await service.pauseForRecovery();
+      expect(service.isRunning, isFalse);
+      expect(service.pin, isEmpty);
+      await expectLater(
+        service.startServer(port: 0, dbHelper: helper),
+        throwsStateError,
+      );
+      expect(
+        await service.syncWithPeer(
+          peerIp: '127.0.0.1',
+          port: old.port,
+          pin: old.pin,
+          dbHelper: helper,
+        ),
+        isFalse,
+      );
+      service.resumeAfterRecovery();
+      expect(service.isRunning, isFalse);
+      final fresh = await service.startServer(port: 0, dbHelper: helper);
+      expect(fresh.pin, isNot(old.pin));
+      final stalePin = LanSyncServerInfo(
+        isRunning: true,
+        ip: fresh.ip,
+        port: fresh.port,
+        pin: old.pin,
+      );
+      expect(
+        (await post(stalePin, [reminder('stale')])).status,
+        HttpStatus.unauthorized,
+      );
+      expect((await post(fresh, [reminder('fresh')])).status, HttpStatus.ok);
+      expect((await rows()).single['id'], 'fresh');
+    },
+  );
+
+  test(
+    'recovery cancels a stalled client without awaiting the remote response',
+    () async {
+      final remote = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      peers.add(remote);
+      final received = Completer<HttpRequest>();
+      remote.listen((request) async {
+        await request.drain<void>();
+        received.complete(request);
+      });
+      var callbacks = 0;
+      final syncing = service.syncWithPeer(
+        peerIp: '127.0.0.1',
+        port: remote.port,
+        pin: '123456',
+        dbHelper: helper,
+        onDataChanged: () => callbacks++,
+      );
+      final request = await received.future.timeout(const Duration(seconds: 5));
+      await service.pauseForRecovery().timeout(const Duration(seconds: 5));
+      service.resumeAfterRecovery();
+      expect(await syncing, isFalse);
+      try {
+        request.response.write(
+          jsonEncode({
+            'reminders': [reminder('old-peer').toJson()],
+          }),
+        );
+        await request.response.close();
+      } catch (_) {}
+      expect(callbacks, 0);
+      expect(await rows(), isEmpty);
+    },
+  );
+
+  test(
+    'recovery drains admitted writes but suppresses old server callbacks',
+    () async {
+      var callbacks = 0;
+      final server = await service.startServer(
+        port: 0,
+        dbHelper: helper,
+        onDataChanged: () => callbacks++,
+      );
+      helper.writeEntered = Completer<void>();
+      helper.allowWrite = Completer<void>();
+      final response = post(server, [
+        reminder('admitted'),
+      ]).then<void>((_) {}, onError: (Object _, StackTrace __) {});
+      await helper.writeEntered!.future.timeout(const Duration(seconds: 5));
+      var paused = false;
+      final pausing = service.pauseForRecovery().then((_) => paused = true);
+      await Future<void>.delayed(Duration.zero);
+      expect(paused, isFalse);
+      helper.allowWrite!.complete();
+      await pausing;
+      await response;
+      expect(callbacks, 0);
+      expect((await rows()).single['id'], 'admitted');
+    },
+  );
+  test(
+    'recovery closes an incomplete peer body instead of waiting for its timeout',
+    () async {
+      final server = await service.startServer(port: 0, dbHelper: helper);
+      helper.captured = Completer<void>();
+      final client = HttpClient();
+      try {
+        final request = await client.postUrl(
+          Uri(
+            scheme: 'http',
+            host: '127.0.0.1',
+            port: server.port,
+            path: '/sync',
+          ),
+        );
+        request.bufferOutput = false;
+        request.contentLength = 100;
+        request.add([123]);
+        await request.flush();
+        await helper.captured!.future.timeout(const Duration(seconds: 5));
+        await service.pauseForRecovery().timeout(const Duration(seconds: 5));
+        expect(service.isRunning, isFalse);
+        expect(await rows(), isEmpty);
+      } finally {
+        client.close(force: true);
+      }
+    },
+  );
+  test(
+    'recovery also interrupts peer bodies when a normal server stop is already draining',
+    () async {
+      final server = await service.startServer(port: 0, dbHelper: helper);
+      helper.captured = Completer<void>();
+      final client = HttpClient();
+      try {
+        final request = await client.postUrl(
+          Uri(
+            scheme: 'http',
+            host: '127.0.0.1',
+            port: server.port,
+            path: '/sync',
+          ),
+        );
+        request.bufferOutput = false;
+        request.contentLength = 100;
+        request.add([123]);
+        await request.flush();
+        await helper.captured!.future.timeout(const Duration(seconds: 5));
+        final stopping = service.stopServer();
+        await Future<void>.delayed(Duration.zero);
+        await service.pauseForRecovery().timeout(const Duration(seconds: 5));
+        await stopping;
+        expect(service.isRunning, isFalse);
+        expect(await rows(), isEmpty);
+      } finally {
+        client.close(force: true);
+      }
+    },
+  );
 }

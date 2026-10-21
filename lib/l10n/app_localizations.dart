@@ -34,7 +34,8 @@ class AppLocalizations {
       'backupDescription':
           'Backs up saved tasks, settings (including API keys), and attachment paths on this device. Files themselves are not copied. Backups are not encrypted.',
       'backupPreviewTitle': 'Check backup',
-      'backupPreviewReadOnly': 'Check only. Your current data stays unchanged.',
+      'backupPreviewReadOnly':
+          'Checking leaves your data unchanged. Recovery requires a separate confirmation.',
       'backupPreviewIntro':
           'Inspect a JSON snapshot or a standalone SQLite backup before deciding how to recover it.',
       'backupPreviewSupport': 'Supports v7 and v8 backups up to 64 MB.',
@@ -73,6 +74,57 @@ class AppLocalizations {
           'Choose a completed standalone backup, not a database that is in use.',
       'backupPreviewSourceChanged':
           'The backup changed during inspection. Choose a completed backup and try again.',
+      'backupRestoreReview': 'Review restore',
+      'backupRestorePreparing': 'Preparing confirmation…',
+      'backupRestoreTitle': 'Restore backup',
+      'backupRestoreReplacement':
+          'This replaces all saved tasks, input records and settings. It does not merge them with your current data.',
+      'backupRestoreCurrent': 'Current',
+      'backupRestoreCandidate': 'Backup',
+      'backupRestoreDrafts':
+          'Unsaved drafts and pending AI results will be discarded. Finish or save anything you want to keep before continuing.',
+      'backupRestoreLan':
+          'LAN sync will stop. Restart it manually after recovery if needed.',
+      'backupRestoreFiles':
+          'Attachment files are not included. Missing files and unresolved references will remain unavailable after recovery.',
+      'backupRestoreRollback': 'Planned rollback location',
+      'backupRestoreOperationDirectory': 'Recovery files location',
+      'backupRestoreOperationNotice':
+          'This location may not have been created yet. If files are present, keep them for recovery or troubleshooting.',
+      'backupRestoreRollbackNotice':
+          'A separate copy of your current saved data will be kept here before replacement. This copy is not encrypted.',
+      'backupRestoreAcknowledge':
+          'I understand that my current saved data will be replaced.',
+      'backupRestoreConfirm': 'Replace and restore',
+      'backupRestoreCancel': 'Cancel',
+      'backupRestorePrepareFailed':
+          'Could not prepare recovery. Your saved data was not replaced. Check storage access and choose the backup again.',
+      'backupRestoreChanged':
+          'The backup or current data changed. Check the backup again to review an up-to-date confirmation.',
+      'backupRestoreExecutionFailed':
+          'Recovery did not finish. Check the recovery status before trying again.',
+      'backupRestoreBusyTitle': 'Restoring your data',
+      'backupRestoreQuiescing':
+          'Stopping sync and waiting for active writes to finish…',
+      'backupRestoreRestoring':
+          'Preparing rollback data and restoring the backup…',
+      'backupRestoreReloading': 'Rebuilding tasks, settings and reminders…',
+      'backupRestoreBusyNotice': 'Keep the app open until a result is shown.',
+      'backupRestoreSucceededTitle': 'Recovery complete',
+      'backupRestoreSucceededBody':
+          'The backup is now your saved data. Tasks, settings and reminders have been rebuilt. LAN sync remains off.',
+      'backupRestoreRolledBackTitle':
+          'Recovery failed · previous data restored',
+      'backupRestoreRolledBackBody':
+          'The backup could not be applied. Your previous saved data and reminders were restored. Unsaved drafts and pending AI results were discarded. LAN sync remains off.',
+      'backupRestoreNotAppliedTitle': 'Recovery was not applied',
+      'backupRestoreNotAppliedBody':
+          'Your saved data was not replaced. Review the backup again before retrying. Tasks in progress may have stopped; LAN sync remains off.',
+      'backupRestoreBlockedTitle': 'Recovery needs a restart',
+      'backupRestoreBlockedBody':
+          'The app cannot safely resume editing. Keep your existing data and any recovery files. Quit and reopen the app to retry recovery; if the issue persists, keep these files for troubleshooting.',
+      'backupRestoreContinue': 'Continue to tasks',
+      'backupRestoreExit': 'Quit app',
       'settingsSaveFailed':
           'Could not save settings. Check local storage and try again.',
       'baseUrl': 'API Base URL',
@@ -374,7 +426,7 @@ class AppLocalizations {
       'backupFailed': '备份失败，请检查本地存储后重试。',
       'backupDescription': '在本机备份已保存的任务、设置（含 API Key）和附件路径；不复制附件文件。备份未加密。',
       'backupPreviewTitle': '检查备份',
-      'backupPreviewReadOnly': '只检查，不改现有数据。',
+      'backupPreviewReadOnly': '检查不改变现有数据，恢复需另行确认。',
       'backupPreviewIntro': '检查 JSON 快照或独立 SQLite 镜像，先了解备份内容，再决定如何恢复。',
       'backupPreviewSupport': '支持 v7、v8 备份，文件上限 64 MB。',
       'backupPreviewSelect': '选择备份',
@@ -403,6 +455,43 @@ class AppLocalizations {
       'backupPreviewTooLarge': '备份超过检查上限，请选择较小的备份。',
       'backupPreviewNotStandalone': '请选择已完成的独立备份，不要选择正在使用的数据库。',
       'backupPreviewSourceChanged': '检查时备份发生变化，请选择已完成的备份后重试。',
+      'backupRestoreReview': '核对恢复内容',
+      'backupRestorePreparing': '正在准备确认信息…',
+      'backupRestoreTitle': '恢复备份',
+      'backupRestoreReplacement': '这会替换全部已保存的任务、输入记录和设置，不会与当前数据合并。',
+      'backupRestoreCurrent': '当前',
+      'backupRestoreCandidate': '备份',
+      'backupRestoreDrafts': '未保存的草稿和进行中的 AI 结果将作废。请先完成或保存需要保留的内容。',
+      'backupRestoreLan': '局域网同步将停止；恢复完成后如需同步，请手动重启。',
+      'backupRestoreFiles': '备份不包含附件文件。缺失的文件和未解析引用在恢复后仍不可用。',
+      'backupRestoreRollback': '预定回退位置',
+      'backupRestoreOperationDirectory': '本次恢复记录位置',
+      'backupRestoreOperationNotice': '此位置可能尚未创建；若已有文件，请保留以便恢复或排查。',
+      'backupRestoreRollbackNotice': '替换前会在此保留当前已保存数据的独立副本。此副本未加密。',
+      'backupRestoreAcknowledge': '我已了解：当前已保存的数据将被替换。',
+      'backupRestoreConfirm': '替换并恢复',
+      'backupRestoreCancel': '取消',
+      'backupRestorePrepareFailed': '无法准备恢复，已保存的数据未被替换。请检查存储访问权限并重新选择备份。',
+      'backupRestoreChanged': '备份或当前数据已变化，请重新检查备份并核对最新确认信息。',
+      'backupRestoreExecutionFailed': '恢复尚未完成，请先核对恢复状态再重试。',
+      'backupRestoreBusyTitle': '正在恢复数据',
+      'backupRestoreQuiescing': '正在停止同步并等待已开始的写入完成…',
+      'backupRestoreRestoring': '正在准备回退副本并恢复备份…',
+      'backupRestoreReloading': '正在重建任务、设置和提醒状态…',
+      'backupRestoreBusyNotice': '请保持应用打开，直到显示处理结果。',
+      'backupRestoreSucceededTitle': '恢复完成',
+      'backupRestoreSucceededBody': '备份已成为当前数据，任务、设置和提醒状态已重建。局域网同步保持关闭。',
+      'backupRestoreRolledBackTitle': '恢复失败 · 已还原先前数据',
+      'backupRestoreRolledBackBody':
+          '备份未能应用，先前已保存的数据和提醒已还原。未保存的草稿和进行中的 AI 结果已作废，局域网同步保持关闭。',
+      'backupRestoreNotAppliedTitle': '未应用恢复',
+      'backupRestoreNotAppliedBody':
+          '已保存的数据未被替换。请重新核对备份后重试。进行中的任务可能已停止，局域网同步保持关闭。',
+      'backupRestoreBlockedTitle': '需要重启以继续恢复',
+      'backupRestoreBlockedBody':
+          '目前无法安全继续编辑。请保留现有数据与恢复文件（如有），退出并重新打开应用以重试恢复；若仍有问题，请保留这些文件以便排查。',
+      'backupRestoreContinue': '返回任务',
+      'backupRestoreExit': '退出应用',
       'settingsSaveFailed': '设置保存失败，请检查本地存储后重试。',
       'baseUrl': '接口基础地址',
       'modelName': '模型名称',
@@ -681,7 +770,7 @@ class AppLocalizations {
       'backupDescription':
           '保存済みタスク、設定（APIキーを含む）、添付ファイルのパスを端末内にバックアップします。ファイル本体はコピーされません。バックアップは暗号化されません。',
       'backupPreviewTitle': 'バックアップを確認',
-      'backupPreviewReadOnly': '確認のみ。現在のデータは変更しません。',
+      'backupPreviewReadOnly': '確認ではデータを変更しません。復元には別途確認が必要です。',
       'backupPreviewIntro': 'JSONスナップショットまたは独立したSQLiteバックアップの内容を確認します。',
       'backupPreviewSupport': 'v7・v8に対応。ファイル上限は64 MBです。',
       'backupPreviewSelect': 'バックアップを選択',
@@ -711,6 +800,49 @@ class AppLocalizations {
       'backupPreviewTooLarge': '確認できる上限を超えています。小さいバックアップを選択してください。',
       'backupPreviewNotStandalone': '使用中のデータベースではなく、完了済みの独立したバックアップを選択してください。',
       'backupPreviewSourceChanged': '確認中にバックアップが変更されました。完了済みのバックアップを選び直してください。',
+      'backupRestoreReview': '復元内容を確認',
+      'backupRestorePreparing': '確認情報を準備中…',
+      'backupRestoreTitle': 'バックアップを復元',
+      'backupRestoreReplacement':
+          '保存済みのタスク、入力記録、設定をすべて置き換えます。現在のデータとの統合は行いません。',
+      'backupRestoreCurrent': '現在',
+      'backupRestoreCandidate': 'バックアップ',
+      'backupRestoreDrafts': '未保存の下書きと処理中のAIの結果は破棄されます。残したい内容は先に完了または保存してください。',
+      'backupRestoreLan': 'LAN同期は停止します。復元後、必要に応じて手動で再開してください。',
+      'backupRestoreFiles': '添付ファイル本体は含まれません。見つからないファイルや未解決の参照は、復元後も利用できません。',
+      'backupRestoreRollback': '復元前のコピーの保存予定先',
+      'backupRestoreOperationDirectory': '復元用ファイルの保存先',
+      'backupRestoreOperationNotice':
+          'この場所はまだ作成されていない場合があります。ファイルがある場合は、復元や調査のために保管してください。',
+      'backupRestoreRollbackNotice':
+          '置き換える前に、現在の保存済みデータを独立したコピーとしてここに保管します。このコピーは暗号化されません。',
+      'backupRestoreAcknowledge': '現在の保存済みデータが置き換わることを理解しました。',
+      'backupRestoreConfirm': '置き換えて復元',
+      'backupRestoreCancel': 'キャンセル',
+      'backupRestorePrepareFailed':
+          '復元を準備できませんでした。保存済みデータは置き換えていません。ストレージのアクセス権を確認し、バックアップを選び直してください。',
+      'backupRestoreChanged':
+          'バックアップまたは現在のデータが変更されました。バックアップを確認し直して、最新の内容を確認してください。',
+      'backupRestoreExecutionFailed': '復元が完了していません。再試行する前に復元の状態を確認してください。',
+      'backupRestoreBusyTitle': 'データを復元中',
+      'backupRestoreQuiescing': '同期を停止し、開始済みの書き込みの完了を待っています…',
+      'backupRestoreRestoring': '復元前のコピーを保存し、バックアップを復元しています…',
+      'backupRestoreReloading': 'タスク、設定、リマインダーを再構築しています…',
+      'backupRestoreBusyNotice': '結果が表示されるまでアプリを開いたままにしてください。',
+      'backupRestoreSucceededTitle': '復元が完了しました',
+      'backupRestoreSucceededBody':
+          'バックアップが現在のデータになりました。タスク、設定、リマインダーを再構築しました。LAN同期は停止したままです。',
+      'backupRestoreRolledBackTitle': '復元失敗 · 以前のデータに戻しました',
+      'backupRestoreRolledBackBody':
+          'バックアップを適用できませんでした。以前の保存済みデータとリマインダーを戻しました。未保存の下書きと処理中のAIの結果は破棄され、LAN同期は停止したままです。',
+      'backupRestoreNotAppliedTitle': '復元は適用されていません',
+      'backupRestoreNotAppliedBody':
+          '保存済みデータは置き換えていません。バックアップを再確認してから再試行してください。処理中のタスクが停止している場合があります。LAN同期は停止したままです。',
+      'backupRestoreBlockedTitle': '復元を続けるには再起動が必要です',
+      'backupRestoreBlockedBody':
+          '安全に編集を再開できません。既存のデータと復元用ファイルがある場合は保管してください。アプリを終了して開き直し、復元を再試行してください。解決しない場合も、調査のためファイルを削除しないでください。',
+      'backupRestoreContinue': 'タスクに戻る',
+      'backupRestoreExit': 'アプリを終了',
       'settingsSaveFailed': '設定を保存できませんでした。ストレージを確認して再試行してください。',
       'baseUrl': 'ベースURL',
       'modelName': 'モデル名',
