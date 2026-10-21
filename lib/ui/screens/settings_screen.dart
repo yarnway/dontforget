@@ -25,7 +25,7 @@ const List<ModelProvider> _providers = [
   ModelProvider(
     'DeepSeek (推荐默认)',
     'https://api.deepseek.com',
-    'deepseek-v4-flash-vision-exp',
+    'deepseek-flash',
   ),
   ModelProvider(
     'Gemini (Google 官方)',
@@ -89,12 +89,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final settings = ref.read(settingsProvider);
     _apiKeyController = TextEditingController(text: settings.apiKey);
     _baseUrlController = TextEditingController(text: settings.baseUrl);
-    _modelNameController = TextEditingController(text: settings.modelName);
+    _modelNameController = TextEditingController(text: settings.requestModelName);
     _selectedLang = settings.language;
 
     for (var p in _providers) {
       if (p.defaultBaseUrl == settings.baseUrl &&
-          p.defaultModel == settings.modelName) {
+          p.defaultModel == settings.requestModelName) {
         _selectedProvider = p;
         break;
       }

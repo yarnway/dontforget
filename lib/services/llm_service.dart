@@ -12,11 +12,12 @@ class AudioTranscriptionUnsupportedException implements Exception {
 }
 
 class LLMService {
-  final Dio _dio = Dio(BaseOptions(
+  LLMService({Dio? client}) : _dio = client ?? Dio(BaseOptions(
     connectTimeout: const Duration(seconds: 10),
     receiveTimeout: const Duration(seconds: 25),
     persistentConnection: true,
   ));
+  final Dio _dio;
 
   Future<List<Reminder>> extractTasks(
       String text, AppSettings settings) async {
@@ -126,7 +127,7 @@ $truncatedContent
         return await _sendExtractionRequest(settings, userMessages);
       } catch (e) {
         attempts++;
-        if (attempts >= maxRetries) {
+        if (attempts >= maxRetries || !_canRetry(e)) {
           rethrow;
         }
         await Future.delayed(const Duration(seconds: 2));
@@ -213,7 +214,7 @@ Output strictly in valid JSON object matching this structure:
           },
         ),
         data: {
-          'model': settings.modelName,
+          'model': settings.requestModelName,
           'messages': messages,
           'temperature': 0.1,
           'max_tokens': 2048,
@@ -346,7 +347,7 @@ Output strictly in valid JSON object matching this structure:
         );
       }).toList();
     } catch (e) {
-      throw Exception(formatErrorMessage(e));
+      rethrow;
     }
   }
 
@@ -409,39 +410,49 @@ Output strictly in valid JSON object matching this structure:
     return {'tasks': []};
   }
 
-  String formatErrorMessage(dynamic e) {
-    if (e is DioException) {
-      if (e.type == DioExceptionType.connectionTimeout || 
-          e.type == DioExceptionType.receiveTimeout || 
-          e.type == DioExceptionType.sendTimeout) {
-        return '网络请求超时，大模型响应缓慢';
+  bool _canRetry(Object error) {
+    if (error is! DioException) return false;
+    // Configuration/authentication errors cannot improve through repetition.
+    // Do not automatically replay an ambiguous send/receive timeout.
+    return error.type == DioExceptionType.connectionTimeout ||
+        const [429, 502, 503, 504].contains(error.response?.statusCode);
+  }
+
+  String formatErrorMessage(dynamic error) {
+    if (error is DioException) {
+      if (error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.receiveTimeout ||
+          error.type == DioExceptionType.sendTimeout) {
+        return 'AI 响应较慢，请稍后重试。';
       }
-      if (e.type == DioExceptionType.connectionError) {
-        return '网络连接异常，无法连通模型服务器';
+      if (error.type == DioExceptionType.connectionError) {
+        return '暂时无法连接 AI 服务，请检查网络。';
       }
-      final statusCode = e.response?.statusCode;
-      if (statusCode == 401) {
-        return 'API Key 无效或未授权，请检查设置';
+      final code = error.response?.statusCode;
+      if (code == 401 || code == 403) return 'AI 服务尚未授权，请检查设置中的密钥。';
+      if (code == 402) return 'AI 服务余额不足，请检查服务商账户。';
+      if (code == 429) return 'AI 服务繁忙，请稍后重试。';
+      // Classify untrusted responses without showing raw text, request IDs,
+      // credentials or HTML. Some providers return strings/lists instead of maps.
+      final data = error.response?.data;
+      final detail = data is Map ? data['error'] : null;
+      final message = detail is Map ? detail['message'] : null;
+      final errorCode = detail is Map ? detail['code'] : null;
+      final modelError = errorCode == 'model_not_found' ||
+          (message is String && message.toLowerCase().contains('model') &&
+              (message.toLowerCase().contains('support') ||
+               message.toLowerCase().contains('not found')));
+      if (code == 404 || modelError) {
+        return '当前模型不可用，请检查设置中的模型和服务地址。';
       }
-      if (statusCode == 402) {
-        return '大模型账户余额不足，请前往服务商充值';
-      }
-      if (statusCode == 429) {
-        return '调用过于频繁或并发超限，请稍后重试';
-      }
-      if (statusCode == 404) {
-        return '模型或接口地址不存在，请检查设置中的模型名称与 URL';
-      }
-      final serverMsg = e.response?.data?['error']?['message'] ?? e.response?.data?['message'];
-      if (serverMsg != null) {
-        return '服务接口提示: $serverMsg';
-      }
-      return '网络请求错误 (HTTP $statusCode)';
+      if (code == 400 || code == 422) return 'AI 配置暂不可用，请检查模型设置。';
+      return 'AI 服务暂不可用，请稍后重试。';
     }
-    if (e is FormatException) {
-      return '大模型输出非标准数据，已为您智能降级处理';
+    if (error is AudioTranscriptionUnsupportedException) {
+      return '当前服务不支持语音转文字，原声录音仍可使用。';
     }
-    return e.toString().replaceAll('Exception: ', '');
+    if (error is FormatException) return '暂未识别出有效任务，可在详情中手动完善。';
+    return '暂未完成智能解析，可检查 AI 设置后重试。';
   }
 
   Future<String> transcribeAudio(String filePath, AppSettings settings) async {
@@ -549,7 +560,7 @@ Include:
             },
           ),
           data: {
-            'model': settings.modelName,
+            'model': settings.requestModelName,
             'messages': [
               {
                 'role': 'system',
@@ -779,7 +790,7 @@ Strictly return a JSON object with a "habits" array of strings:
             },
           ),
           data: {
-            'model': settings.modelName,
+            'model': settings.requestModelName,
             'messages': [
               {
                 'role': 'system',

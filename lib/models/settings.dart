@@ -13,11 +13,30 @@ class AppSettings {
     required this.language,
   });
 
+  /// API identifiers differ from product/version display names. Only normalize
+  /// known Flash aliases on DeepSeek's official endpoint; custom gateways and
+  /// unknown models must keep the user's choice. Do not rewrite saved data.
+  String get requestModelName {
+    final uri = Uri.tryParse(baseUrl.trim());
+    final model = modelName.trim();
+    if (uri?.scheme == 'https' &&
+        uri?.host == 'api.deepseek.com' &&
+        const ['', '/', '/v1', '/v1/'].contains(uri?.path) &&
+        const {
+          'deepseek-v4.1-flash',
+          'deepseek-v4-flash',
+          'deepseek-v4-flash-vision-exp',
+        }.contains(model)) {
+      return 'deepseek-flash';
+    }
+    return model;
+  }
+
   factory AppSettings.defaults() => AppSettings(
     id: 'default',
     apiKey: '',
     baseUrl: 'https://api.deepseek.com',
-    modelName: 'deepseek-v4-flash-vision-exp',
+    modelName: 'deepseek-flash',
     language: 'zh',
   );
 
