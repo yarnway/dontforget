@@ -142,4 +142,44 @@ Mac 原始候选为 `DontForget_macOS_unnotarized_v1.5.2.zip`，23,798,328 字�
 | 热启动送达 | 22:46:48.136 系统 Delivering，22:46:48.138 NotificationCenter displaying as banner；Q3 `hasSound: false`。应用当时运行。读取通知中心超时，未完成热点击。 |
 | 退出后送达 | 正常退出且确认候选进程不存在后，22:47:48.116 系统 Delivering，22:47:48.117 displaying as banner，仍为静音。未完成冷启动点击，不把送达等同于点击或已读。 |
 
-证据文件：`offline-seed-evidence.json`、`deleted-native-readback.json`、`native-edit.log`、`native-hot-delivery.log`、`native-cold-delivery.log`。旧候选已正常退出；合成任务和回退基线继续保留，后续在新候选完成撤销、清理及稳定 ID 原生验收。录音/播放现已允许，但本节尚未执行，不宣称通过。
+证据文件：`offline-seed-evidence.json`、`deleted-native-readback.json`、`native-edit.log`、`native-hot-delivery.log`、`native-cold-delivery.log`。23:05 通过应用逐条删除剩余三条合成提醒；只读回查 Reminders=0、MediaRecords=1（合成文本）、Settings=1，完整性正常。系统日志确认两条已送达通知移除及未来请求取消，应用正常退出。编辑后的三任务库已用 SQLite backup API 保存为 `before-cleanup-consistent.db`，原始四任务样本和空基线继续保留；`cleanup-native-readback.json` 与 `native-cleanup.log` 记录收尾。录音按钮尝试未观察到授权提示、录音状态或新音频文件，不能确认录音开始，播放也未执行。后续在新候选完成撤销及稳定 ID 原生验收。
+
+
+## 2026-10-21：3C-2 持久调度候选
+
+源码 `8f2a40ebb4cbcdab63830af5fea5e03d2266f900` 已提交 main 并推送。[CI 39622115301](https://github.com/yarnway/dontforget/actions/runs/39622115301) 的质量及五平台候选全部成功，发布步骤按非标签条件跳过。云端 Flutter 610 项通过、1 项 macOS 临时路径别名测试按平台跳过；Python 47 项通过。本机同版工具链静态分析无问题，611 项 Flutter 与 47 项 Python 全部通过。本机只有 Command Line Tools、没有可用的 xcodebuild，Mac 原生构建未完成；本轮使用 CI 产物验收。
+
+本机纯 Dart 合成测量：200 条提醒首次分配并记录计划结果约 642 ms，200 次取消记录约 545 ms，日志 33,860 字节。仅覆盖本地日志 I/O，不包含原生调度、送达或应用启动；大规模任务、启动帧耗时和跨平台性能仍待测量。
+
+Mac ZIP 为 23,822,455 字节，SHA-256 `edcf6bcac571e7508b0ffcdc21bb5a2dc3416d435bbff7bcb9da2b3c494bd7c4`；外层 GitHub artifact 摘要 `cc7ddab7f935aeaf04b4995ed173e22a8cb70baaa13f468d31bf7da001752c12`。下载分段超时后仅续传缺失字节，完整摘要通过。`verify_artifacts.py` 核实完整源码 revision，隔离派生内容和 codesign 检查通过。原始产物保存在 `build/ci_artifacts/3c2-r39622115301`，独立身份 `com.example.dontForget.acceptance.durable-r39622115301`，副本在 `build/native_acceptance/durable-r39622115301/dont_forget.app`；仍不代表原签名或公证验收。
+
+新容器初始 schema 9、任务/记录均为 0，通知日志为空。系统在 23:20:05 明确记录 didGrant=1，重开后的设置页回读 Allowed。正常退出、核实进程不存在并取得 owner lock 后，保存原空库，以 SQLite backup API 安装四条无密钥合成任务；属于离线样本准备，不计本轮原生恢复入口通过。
+
+| 验收项 | 完成情况与边界 |
+| --- | --- |
+| 删除与可访问撤销 | 原生菜单删除 QA 4，任务数 4→3；Undo 现在能被 AX 树读取且可点击，执行后 3→4。ID `315234779` 从 schedule→cancel→schedule 保持一致。但业务行比对发现撤销自动增加关联，完整撤销正确性暂未通过，问题已修复于 `3a0d58d`，新包另行复测。 |
+| 编辑与重启 | QA 3 选择 Tomorrow 09:00 并保存，时间变为 2026-10-22 09:00、notice_revision=1，ID `1329258270` 不变；退出重开后业务行逐行不变，四个 ID 均保持。标题粘贴未实际改变内容，标题输入不计通过。 |
+| 热状态系统送达 | 23:26:22.129 系统 Delivering，23:26:22.131 NotificationCenter displaying as banner，ID `1967836952`，日志标识 C9D0-0AF4。 |
+| 退出后系统送达 | 候选已正常退出，进程缺席读回为 23:27:22.032；23:27:22.111 系统 Delivering、23:27:22.112 展示横幅，ID `167290217`，日志标识 2660-58A9。 |
+| 热/冷点击 | 两次通知中心读取及控制中心入口均 timeoutReached，未能执行点击。送达/横幅不能替代点击路由验收；没有把工具失败归因于产品路由。 |
+| 跨重启补取消与失败重排 | 应用退出并持锁，保存一致数据库和日志后，离线删去 QA 4 业务行而保留 schedule 日志，并把 QA 3 记录置为 failed。重启后 QA 4 没有复活，日志改为 cancel/submitted；系统 23:28:15.422 发起取消原标识 8F98-2101。QA 3 沿用 ID `1329258270` 取消重排，23:28:15.451 系统接受请求，日志变为 schedule/submitted、attempts 增加。两条已到期实例的日志完全未变、未重放、未自动确认。此为受控故障注入，非真实原生报错或系统重启。 |
+| 录音/播放 | 首次请求后 TCC 授权后来生效，退出前生成了约 47.6 秒临时录音，未完成保存；保留文件。再次打开后原生按钮明确显示 Recording，点击停止后创建原声任务及媒体索引，持久文件 119,941 字节、AAC/44.1 kHz/双声道、6.221497 秒。附件点击后插件播放调用返回成功并显示 Playing voice note。正常退出重开，任务内容及文件 SHA-256 不变，再次点击播放成功。未配置密钥，源码空密钥分支直接保留原声，不发送云端转写。此证据覆盖录音/保存/重启与播放调用，实际扬声器听感和音质仍待人工确认。 |
+| 收尾 | 保存 `before-cleanup-consistent.db` 后通过应用删除三条剩余合成任务。23:29:33/45 系统与通知中心确认两条已送达通知移除，23:29:58 取消最后未来请求。只读数据库 Reminders=0、MediaRecords=1（合成文本）、Settings=1，integrity_check=ok；四个保留 ID 均为 cancel/submitted。应用正常退出，不删除回退材料。 |
+
+样本和证据在 `/private/tmp/dontforget-durable-session-r39622115301`：`initial-scheduled.json`、`deleted.json`、`undone.json`、`edited.json`、`restarted.json`、`before-cold-click.json`、`before-gap-consistent.db`、`before-gap-journal.json`、`gap-injection.json`、`reconciled-gap.json`、`cleanup-readback.json` 与四份 `native-*.log`。真实用户容器未读写，其他运行中的隔离实例未关闭。
+
+本阶段完成了稳定 ID、编辑后重启、系统送达、受控失败重排及取消补偿的 Mac 隔离验证。下一步为 `3a0d58d` 的新包撤销关系复测；热/冷点击、标题输入、扬声器听感、真实原生故障、权限拒绝后重试、系统重启/休眠/DST 仍各自待验。
+
+录音续验发生在合成提醒清理之后：最终该隔离容器保留 1 条无提醒时间的原声验收任务和 2 条媒体记录（合成文本/短录音），没有新增定时通知；原声文件和首次临时录音均保留，应用再次正常退出。`saved-audio-readback.json`、`audio-before-restart.json`、`audio-after-restart.json`、`audio-session-consistent.db` 保存元数据与一致性证据，没有将录音内容提交 GitHub。
+
+## 2026-10-21：撤销关系修复候选
+
+`3a0d58d2d7ace4fbd527d181cf0eb27a0c85c3b3` 对应 [CI 39625619466](https://github.com/yarnway/dontforget/actions/runs/39625619466) 全部成功：质量检查、五平台构建和工作流内产物验证均通过，非标签发布跳过。云端 Flutter 613 通过、1 项 macOS 专属条件跳过，Python 47 通过；本机 Flutter 614 全量通过、静态分析无问题。
+
+Mac ZIP 为 23,822,422 字节，SHA-256 `32de8c5ec10e9bc542a6f72e96861d7536b8f51093fa0f6c842e5080f8fd2f9a`；外层 artifact 摘要 `0f24aa215e5242c2cf493e139abd2fe79f52980c84acc3dda829f9595f9df506`。来源/大小/摘要/完整 revision 校验及隔离派生内容、codesign 校验通过。原包位于 `build/ci_artifacts/undo-r39625619466`，新身份 `com.example.dontForget.acceptance.undo-r39625619466`，副本位于 `build/native_acceptance/undo-r39625619466/dont_forget.app`。
+
+2026-10-22 07:24–07:27 完成原生复测。首次启动工具长时间未返回，返回后重新核实源码 HEAD 未改变、新容器为空且 schema 9/日志正常。正常退出并持锁保存空基线后，离线安装新生成的四条无密钥合成任务。重开应用原生删除 QA 4，数量 4→3；点击可访问 Undo 后回到 4，四条任务的全部业务字段逐行等于删除前，所有关联仍为空，四个原生 ID 不变。该比对关闭了 `3a0d58d` 撤销关系修复的 Mac 原生验收项。
+
+本轮新身份未申请通知权限，范围是原生 UI、业务数据和本地调度 ID 一致性；通知系统送达证据仍属于前述 `durable-r39622115301`，不混用候选身份。保留一致数据库快照后，通过应用删除四条合成任务。收尾数据库 Reminders=0、MediaRecords=1、Settings=1，integrity_check=ok，四个日志条目均 cancel/submitted；核实应用进程已退出。
+
+证据位于 `/private/tmp/dontforget-undo-session-r39625619466`：`before-delete.json`、`deleted.json`、`undone.json`、`undo-verdict.json`、`before-cleanup-consistent.db`、`cleanup-readback.json`、`native-undo-cleanup.log`、`closed.json`。本轮涉及的源码、回归、CI 和隔离原生验收均按 revision 独立记录；热/冷点击仍因通知中心工具超时未关闭，不据此宣称 v1.6 已完成正式发布验收。
