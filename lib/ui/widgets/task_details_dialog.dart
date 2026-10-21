@@ -1,4 +1,5 @@
 import 'inline_feedback.dart';
+import '../formatters/local_date_time.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
@@ -105,16 +106,29 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
       );
       final notifier = ref.read(remindersProvider.notifier);
       final notifications = ref.read(notificationServiceProvider);
+      var nativeSyncFailed = false;
       await database.runOperation(generation, () async {
         await notifier.updateReminder(updated);
-        await notifications.cancelReminder(updated.id);
-        if (!updated.isCompleted &&
-            (updated.triggerTime?.isAfter(DateTime.now()) ?? false)) {
-          await notifications.scheduleReminder(updated);
+        final saved = ref
+            .read(remindersProvider)
+            .where((task) => task.id == updated.id)
+            .firstOrNull;
+        if (saved == null) throw StateError('Task no longer exists');
+        try {
+          await notifications.scheduleReminderStrict(saved);
+        } catch (_) {
+          nativeSyncFailed = true;
         }
       });
       database.checkGeneration(generation);
       if (!mounted) return;
+      if (nativeSyncFailed) {
+        _showFailure('reminderNativeSyncFailed');
+        return;
+      }
+      InlineFeedback.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.get('save'))));
       setState(() => _isBusy = false);
       Navigator.of(context).pop();
     } catch (_) {
@@ -181,7 +195,7 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
   }
 
   Future<void> _pickTime() async {
-    final initialDate = _selectedTime ?? DateTime.now();
+    final initialDate = _selectedTime?.toLocal() ?? DateTime.now();
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: initialDate,
@@ -431,8 +445,9 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            _selectedTime?.toString().substring(0, 16) ??
-                                l10n.get('notSet'),
+                            _selectedTime != null
+                                ? formatLocalDateTime(_selectedTime!)
+                                : l10n.get('notSet'),
                             style: TextStyle(
                               fontSize: 13,
                               color: _selectedTime == null

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'stored_datetime.dart';
 
 class TaskBitmask {
   static const int quadrant1 = 1 << 0;
@@ -40,7 +41,7 @@ class Reminder {
   final bool isCompleted;
   final bool isRecurring;
   final String?
-      recurrenceRule; // 'none', 'daily', 'workday', 'weekly', 'monthly', 'yearly'
+  recurrenceRule; // 'none', 'daily', 'workday', 'weekly', 'monthly', 'yearly'
   final String? recurrenceDescription;
   final bool isEmotionFiltered; // '空船效应' 情绪去噪重构标识
   final String? subTasks; // JSON 格式微习惯原子项列表
@@ -49,6 +50,11 @@ class Reminder {
   final DateTime? nextReviewAt; // 下一次间隔复习时间
   final List<String> linkedTaskIds; // 双向关联的任务 ID 列表
   final String? contextTrigger; // 情境感知触发规则 JSON
+  final int noticeRevision;
+  final DateTime? noticeAcknowledgedAt;
+  final DateTime? upcomingDismissedAt;
+  final DateTime? snoozedAt;
+  final DateTime? recurrenceAnchorTime;
 
   Reminder({
     required this.id,
@@ -72,8 +78,24 @@ class Reminder {
     this.nextReviewAt,
     this.linkedTaskIds = const [],
     this.contextTrigger,
-  })  : originalQuadrantLevel = originalQuadrantLevel ?? quadrantLevel,
-        createdAt = createdAt ?? DateTime.now();
+    this.noticeRevision = 0,
+    this.noticeAcknowledgedAt,
+    this.upcomingDismissedAt,
+    this.snoozedAt,
+    this.recurrenceAnchorTime,
+  }) : originalQuadrantLevel = originalQuadrantLevel ?? quadrantLevel,
+       createdAt = createdAt ?? DateTime.now() {
+    if (noticeRevision < 0) {
+      throw ArgumentError.value(noticeRevision, 'noticeRevision');
+    }
+  }
+
+  /// One occurrence remains stable across timezone serialization and restart.
+  String get occurrenceIdentity => jsonEncode([
+    id,
+    triggerTime?.toUtc().microsecondsSinceEpoch,
+    noticeRevision,
+  ]);
 
   int get bitmask {
     int mask = 0;
@@ -126,6 +148,12 @@ class Reminder {
 
     final qLevel = json['quadrant_level'] as int;
     final origQLevel = (json['original_quadrant_level'] as int?) ?? qLevel;
+    final revision = json.containsKey('notice_revision')
+        ? json['notice_revision']
+        : 0;
+    if (revision is! int || revision < 0) {
+      throw const FormatException('Invalid notice revision');
+    }
 
     return Reminder(
       id: json['id'] as String,
@@ -134,59 +162,65 @@ class Reminder {
       taskSummary: json['task_summary'] as String?,
       quadrantLevel: qLevel,
       originalQuadrantLevel: origQLevel,
-      isDynamicallyPromoted: json['is_dynamically_promoted'] == 1 ||
+      isDynamicallyPromoted:
+          json['is_dynamically_promoted'] == 1 ||
           json['is_dynamically_promoted'] == true,
       urgencyLevel: json['urgency_level'] as String?,
       importanceLevel: json['importance_level'] as String?,
-      triggerTime: json['trigger_time'] != null
-          ? DateTime.parse(json['trigger_time'] as String)
-          : null,
+      triggerTime: _storedDate(json['trigger_time']),
       isCompleted: json['is_completed'] == 1 || json['is_completed'] == true,
       isRecurring: (json['is_recurring'] is int)
           ? (json['is_recurring'] as int) == 1
           : (json['is_recurring'] is bool
-              ? (json['is_recurring'] as bool)
-              : false),
+                ? (json['is_recurring'] as bool)
+                : false),
       recurrenceRule: json['recurrence_rule'] as String? ?? 'none',
       recurrenceDescription: json['recurrence_description'] as String?,
-      isEmotionFiltered: json['is_emotion_filtered'] == 1 ||
+      isEmotionFiltered:
+          json['is_emotion_filtered'] == 1 ||
           json['is_emotion_filtered'] == true,
       subTasks: json['sub_tasks'] as String?,
-      createdAt: json['created_at'] != null
-          ? DateTime.tryParse(json['created_at'] as String)
-          : null,
+      createdAt: _storedDate(json['created_at']),
       spacedRepetitionLevel: (json['review_level'] as int?) ?? 0,
-      nextReviewAt: json['next_review_at'] != null
-          ? DateTime.tryParse(json['next_review_at'] as String)
-          : null,
+      nextReviewAt: _storedDate(json['next_review_at']),
       linkedTaskIds: linkedIds,
       contextTrigger: json['context_trigger'] as String?,
+      noticeRevision: revision,
+      noticeAcknowledgedAt: _storedDate(json['notice_acknowledged_at']),
+      upcomingDismissedAt: _storedDate(json['upcoming_dismissed_at']),
+      snoozedAt: _storedDate(json['snoozed_at']),
+      recurrenceAnchorTime: _storedDate(json['recurrence_anchor_time']),
     );
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'record_id': recordId,
-        'task_title': taskTitle,
-        'task_summary': taskSummary,
-        'quadrant_level': quadrantLevel,
-        'original_quadrant_level': originalQuadrantLevel,
-        'is_dynamically_promoted': isDynamicallyPromoted ? 1 : 0,
-        'urgency_level': urgencyLevel,
-        'importance_level': importanceLevel,
-        'trigger_time': triggerTime?.toIso8601String(),
-        'is_completed': isCompleted ? 1 : 0,
-        'is_recurring': isRecurring ? 1 : 0,
-        'recurrence_rule': recurrenceRule ?? 'none',
-        'recurrence_description': recurrenceDescription,
-        'is_emotion_filtered': isEmotionFiltered ? 1 : 0,
-        'sub_tasks': subTasks,
-        'created_at': createdAt?.toIso8601String(),
-        'review_level': spacedRepetitionLevel,
-        'next_review_at': nextReviewAt?.toIso8601String(),
-        'linked_task_ids': jsonEncode(linkedTaskIds),
-        'context_trigger': contextTrigger,
-      };
+    'id': id,
+    'record_id': recordId,
+    'task_title': taskTitle,
+    'task_summary': taskSummary,
+    'quadrant_level': quadrantLevel,
+    'original_quadrant_level': originalQuadrantLevel,
+    'is_dynamically_promoted': isDynamicallyPromoted ? 1 : 0,
+    'urgency_level': urgencyLevel,
+    'importance_level': importanceLevel,
+    'trigger_time': triggerTime?.toIso8601String(),
+    'is_completed': isCompleted ? 1 : 0,
+    'is_recurring': isRecurring ? 1 : 0,
+    'recurrence_rule': recurrenceRule ?? 'none',
+    'recurrence_description': recurrenceDescription,
+    'is_emotion_filtered': isEmotionFiltered ? 1 : 0,
+    'sub_tasks': subTasks,
+    'created_at': createdAt?.toIso8601String(),
+    'review_level': spacedRepetitionLevel,
+    'next_review_at': nextReviewAt?.toIso8601String(),
+    'linked_task_ids': jsonEncode(linkedTaskIds),
+    'context_trigger': contextTrigger,
+    'notice_revision': noticeRevision,
+    'notice_acknowledged_at': noticeAcknowledgedAt?.toIso8601String(),
+    'upcoming_dismissed_at': upcomingDismissedAt?.toIso8601String(),
+    'snoozed_at': snoozedAt?.toIso8601String(),
+    'recurrence_anchor_time': recurrenceAnchorTime?.toIso8601String(),
+  };
 
   /// Advance at least one occurrence and skip missed occurrences. Calendar
   /// construction preserves wall-clock time across daylight-saving changes.
@@ -203,7 +237,7 @@ class Reminder {
       return null;
     }
     final cutoff = after ?? DateTime.now();
-    final base = triggerTime ?? cutoff;
+    final base = recurrenceAnchorTime ?? triggerTime ?? cutoff;
     final localCutoff = base.isUtc ? cutoff.toUtc() : cutoff.toLocal();
     DateTime calendar(int year, int month, int day) => base.isUtc
         ? DateTime.utc(
@@ -289,11 +323,17 @@ class Reminder {
     Object? nextReviewAt = _unchanged,
     List<String>? linkedTaskIds,
     Object? contextTrigger = _unchanged,
+    int? noticeRevision,
+    Object? noticeAcknowledgedAt = _unchanged,
+    Object? upcomingDismissedAt = _unchanged,
+    Object? snoozedAt = _unchanged,
+    Object? recurrenceAnchorTime = _unchanged,
   }) {
     return Reminder(
       id: id,
-      recordId:
-          identical(recordId, _unchanged) ? this.recordId : recordId as String?,
+      recordId: identical(recordId, _unchanged)
+          ? this.recordId
+          : recordId as String?,
       taskTitle: taskTitle ?? this.taskTitle,
       taskSummary: identical(taskSummary, _unchanged)
           ? this.taskSummary
@@ -321,8 +361,9 @@ class Reminder {
           ? this.recurrenceDescription
           : recurrenceDescription as String?,
       isEmotionFiltered: isEmotionFiltered ?? this.isEmotionFiltered,
-      subTasks:
-          identical(subTasks, _unchanged) ? this.subTasks : subTasks as String?,
+      subTasks: identical(subTasks, _unchanged)
+          ? this.subTasks
+          : subTasks as String?,
       createdAt: createdAt ?? this.createdAt,
       spacedRepetitionLevel:
           spacedRepetitionLevel ?? this.spacedRepetitionLevel,
@@ -333,6 +374,19 @@ class Reminder {
       contextTrigger: identical(contextTrigger, _unchanged)
           ? this.contextTrigger
           : contextTrigger as String?,
+      noticeRevision: noticeRevision ?? this.noticeRevision,
+      noticeAcknowledgedAt: identical(noticeAcknowledgedAt, _unchanged)
+          ? this.noticeAcknowledgedAt
+          : noticeAcknowledgedAt as DateTime?,
+      upcomingDismissedAt: identical(upcomingDismissedAt, _unchanged)
+          ? this.upcomingDismissedAt
+          : upcomingDismissedAt as DateTime?,
+      snoozedAt: identical(snoozedAt, _unchanged)
+          ? this.snoozedAt
+          : snoozedAt as DateTime?,
+      recurrenceAnchorTime: identical(recurrenceAnchorTime, _unchanged)
+          ? this.recurrenceAnchorTime
+          : recurrenceAnchorTime as DateTime?,
     );
   }
 
@@ -355,4 +409,9 @@ class Reminder {
     }
     return false;
   }
+}
+
+DateTime? _storedDate(Object? value) {
+  if (value == null) return null;
+  return parseStoredDateTime(value);
 }

@@ -12,6 +12,7 @@ import '../models/legacy_credentials.dart';
 part 'database_access.dart';
 
 class DatabaseHelper {
+  static const schemaVersion = 9;
   static final DatabaseHelper instance = DatabaseHelper._init();
   Database? _database;
   Future<Database>? _opening;
@@ -223,9 +224,15 @@ class DatabaseHelper {
     }
   }
 
-  Future<Database> _openDatabase({bool allowRecovery = false}) async {
+  Future<Database> _openDatabase({
+    bool allowRecovery = false,
+    bool migrate = true,
+  }) async {
     if (_database != null) return _database!;
-    final opening = _opening ??= _initDB(allowRecovery: allowRecovery);
+    final opening = _opening ??= _initDB(
+      allowRecovery: allowRecovery,
+      migrate: migrate,
+    );
     try {
       return _database = await opening;
     } finally {
@@ -276,7 +283,10 @@ class DatabaseHelper {
     }
   }
 
-  Future<Database> _initDB({bool allowRecovery = false}) async {
+  Future<Database> _initDB({
+    bool allowRecovery = false,
+    bool migrate = true,
+  }) async {
     _initializeFactory();
     final dbDir = await _acquireOwnership();
     if (!allowRecovery && await _hasRecoveryJournal(dbDir)) {
@@ -308,9 +318,10 @@ class DatabaseHelper {
     return (_factory ?? databaseFactory).openDatabase(
       targetPath,
       options: OpenDatabaseOptions(
-        version: 8,
-        onCreate: _createDB,
-        onUpgrade: _upgradeDB,
+        version: migrate ? schemaVersion : null,
+        readOnly: !migrate,
+        onCreate: migrate ? _createDB : null,
+        onUpgrade: migrate ? _upgradeDB : null,
       ),
     );
   }
@@ -346,7 +357,7 @@ class DatabaseHelper {
       // from the same point in time. Never copy an open SQLite file directly.
       final data = await db.transaction(
         (txn) async => <String, Object?>{
-          'version': 8,
+          'version': schemaVersion,
           'timestamp': DateTime.now().toUtc().toIso8601String(),
           'settings': await txn.query('Settings'),
           'media_records': await txn.query('MediaRecords'),
@@ -356,7 +367,10 @@ class DatabaseHelper {
       final temporaryMirror = join(temporary.path, 'mirror.db');
       mirror = await (_factory ?? databaseFactory).openDatabase(
         temporaryMirror,
-        options: OpenDatabaseOptions(version: 8, onCreate: _createDB),
+        options: OpenDatabaseOptions(
+          version: schemaVersion,
+          onCreate: _createDB,
+        ),
       );
       await mirror.transaction((txn) async {
         for (final entry in const {
@@ -437,12 +451,32 @@ CREATE TABLE Reminders (
   is_dynamically_promoted INTEGER DEFAULT 0,
   linked_task_ids TEXT,
   context_trigger TEXT,
+  notice_revision INTEGER NOT NULL DEFAULT 0,
+  notice_acknowledged_at TEXT,
+  upcoming_dismissed_at TEXT,
+  snoozed_at TEXT,
+  recurrence_anchor_time TEXT,
   FOREIGN KEY (record_id) REFERENCES MediaRecords (id) ON DELETE CASCADE
 )
 ''');
   }
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 9) {
+      // These columns are new in v9. Let failures roll back the entire
+      // migration instead of hiding an incomplete reminder-state schema.
+      await db.execute(
+        'ALTER TABLE Reminders ADD COLUMN notice_revision INTEGER NOT NULL DEFAULT 0',
+      );
+      for (final column in [
+        'notice_acknowledged_at',
+        'upcoming_dismissed_at',
+        'snoozed_at',
+        'recurrence_anchor_time',
+      ]) {
+        await db.execute('ALTER TABLE Reminders ADD COLUMN $column TEXT');
+      }
+    }
     if (oldVersion < 8) {
       final settings = await db.query('Settings');
       for (final row in settings) {

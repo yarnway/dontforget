@@ -11,6 +11,23 @@ void main() {
   late DatabaseHelper helper;
   late Map<String, List<Map<String, Object?>>> before;
 
+  Map<String, List<Map<String, Object?>>> getUpgradedRows() => {
+    for (final table in before.entries)
+      table.key: [
+        for (final row in table.value)
+          {
+            ...row,
+            if (table.key == 'Reminders') ...{
+              'notice_revision': 0,
+              'notice_acknowledged_at': null,
+              'upcoming_dismissed_at': null,
+              'snoozed_at': null,
+              'recurrence_anchor_time': null,
+            },
+          },
+      ],
+  };
+
   Future<Map<String, List<Map<String, Object?>>>> rows(Database db) async => {
     for (final table in ['Settings', 'MediaRecords', 'Reminders'])
       table: await db.query(table, orderBy: 'id'),
@@ -83,8 +100,8 @@ void main() {
     'historical v7 schema preserves all fields through upgrade and backup',
     () async {
       final db = await helper.database;
-      expect(await db.getVersion(), 8);
-      expect(await rows(db), before);
+      expect(await db.getVersion(), DatabaseHelper.schemaVersion);
+      expect(await rows(db), getUpgradedRows());
       expect(
         (await db.rawQuery('PRAGMA integrity_check')).single.values.single,
         'ok',
@@ -103,10 +120,10 @@ void main() {
         'MediaRecords': 'media_records',
         'Reminders': 'reminders',
       }.entries) {
-        expect(snapshot[entry.value], before[entry.key]);
+        expect(snapshot[entry.value], getUpgradedRows()[entry.key]);
       }
       await helper.close();
-      expect(await rows(await helper.database), before);
+      expect(await rows(await helper.database), getUpgradedRows());
       // The synthetic missing attachment path is preserved, not silently rewritten.
       expect(
         File(
@@ -149,8 +166,8 @@ void main() {
       );
       await inspection.close();
       final upgraded = await helper.database;
-      expect(await upgraded.getVersion(), 8);
-      expect(await rows(upgraded), before);
+      expect(await upgraded.getVersion(), DatabaseHelper.schemaVersion);
+      expect(await rows(upgraded), getUpgradedRows());
     },
   );
 }

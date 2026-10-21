@@ -186,7 +186,15 @@ void main() {
           subTasks: '["First step"]',
           contextTrigger: '{"type":"profile","value":"home"}',
           createdAt: DateTime.utc(2026),
-        ).toJson(),
+        ).toJson()..removeWhere(
+          (key, _) => const {
+            'notice_revision',
+            'notice_acknowledged_at',
+            'upcoming_dismissed_at',
+            'snoozed_at',
+            'recurrence_anchor_time',
+          }.contains(key),
+        ),
       ],
     };
   });
@@ -253,7 +261,7 @@ void main() {
           final source = File(paths.join(appDirectory.path, name));
           final originalDigest = await digest(source);
           final result = await inspector.inspect(source);
-          expect(result.version, 8);
+          expect(result.version, DatabaseHelper.schemaVersion);
           expect(result.containsCredentials, isFalse);
           expect(await digest(source), originalDigest);
           expect(await digest(primary), primaryDigest);
@@ -283,7 +291,7 @@ void main() {
     },
   );
 
-  for (final version in [6, 9, 99]) {
+  for (final version in [6, 10, 99]) {
     for (final format in ['json', 'sqlite']) {
       test(
         'rejects unsupported v$version $format without changing it',

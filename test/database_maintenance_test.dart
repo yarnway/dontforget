@@ -676,7 +676,7 @@ void main() {
         );
         expect(
           (await db.rawQuery('PRAGMA user_version')).single.values.single,
-          8,
+          DatabaseHelper.schemaVersion,
         );
         expect(await db.rawQuery("PRAGMA table_info('Settings')"), isNotEmpty);
         expect(await db.rawQuery('SELECT * FROM Settings'), hasLength(1));

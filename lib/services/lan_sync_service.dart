@@ -431,12 +431,34 @@ class LanSyncService {
         whereArgs: [reminder.id],
       );
       if (existing.isEmpty) {
-        await db.insert('Reminders', reminder.toJson());
+        // A peer's acknowledgement belongs to that device. Keep the shared
+        // effective time and recurrence anchor, but start a local occurrence.
+        await db.insert(
+          'Reminders',
+          reminder
+              .copyWith(
+                noticeRevision: 0,
+                noticeAcknowledgedAt: null,
+                upcomingDismissedAt: null,
+              )
+              .toJson(),
+        );
       } else if (existing.first['is_completed'] != 1 && reminder.isCompleted) {
-        // Keep completed status if either peer completed this task.
+        // Completion wins, but stale peer fields must not overwrite this
+        // device's newer title, snooze time, or locally assigned revision.
+        final current = Reminder.fromJson(existing.single);
         await db.update(
           'Reminders',
-          reminder.toJson(),
+          current
+              .copyWith(
+                isCompleted: true,
+                noticeRevision: current.noticeRevision + 1,
+                noticeAcknowledgedAt: null,
+                upcomingDismissedAt: null,
+                snoozedAt: null,
+                recurrenceAnchorTime: null,
+              )
+              .toJson(),
           where: 'id = ?',
           whereArgs: [reminder.id],
         );

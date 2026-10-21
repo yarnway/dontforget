@@ -40,10 +40,21 @@ class _ControlledHomeController extends HomeController {
 class _Notifications implements NotificationService {
   final scheduled = <Reminder>[];
   final canceled = <String>[];
+  bool failNative = false;
   @override
   Future<void> scheduleReminder(Reminder task) async => scheduled.add(task);
   @override
   Future<void> cancelReminder(String id) async => canceled.add(id);
+  @override
+  Future<void> scheduleReminderStrict(Reminder task) async {
+    await scheduleReminder(task);
+    if (failNative) throw StateError('isolated native scheduling failure');
+  }
+  @override
+  Future<void> cancelReminderStrict(String id) async {
+    await cancelReminder(id);
+    if (failNative) throw StateError('isolated native cancellation failure');
+  }
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
@@ -333,6 +344,46 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     },
   );
+
+  for (final reopen in [false, true]) {
+    testWidgets(
+      '${reopen ? 'reopening' : 'completion'} native failure reports the task is saved',
+      (tester) async {
+        final task = Reminder(
+          id: 'native-failure',
+          taskTitle: 'Persist before native reconciliation',
+          quadrantLevel: 3,
+          triggerTime: DateTime.now().add(const Duration(hours: 1)),
+          isCompleted: reopen,
+        );
+        await tester.runAsync(
+          () => container.read(remindersProvider.notifier).addReminder(task),
+        );
+        notifications.failNative = true;
+        await show(tester, card(task.id));
+        await tester.runAsync(
+          () => tester.tap(find.byKey(ValueKey('complete-${task.id}'))),
+        );
+        const message = '已保存，但系统提醒未能更新。请检查通知权限并重新保存任务。';
+        for (var i = 0; i < 50 && find.text(message).evaluate().isEmpty; i++) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 20)),
+          );
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+        expect(container.read(remindersProvider).single.isCompleted, !reopen);
+        final stored = await tester.runAsync(() => database.read(
+          database.captureGeneration(),
+          (db) => db.query('Reminders', where: 'id = ?', whereArgs: [task.id]),
+        ));
+        expect(stored!.single['is_completed'], reopen ? 0 : 1);
+        expect(find.text(message), findsOneWidget);
+        expect(find.text('提醒更新失败，请重试。'), findsNothing);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+      },
+    );
+  }
 
   testWidgets('failed swipe deletion retains the card and reports failure', (
     tester,

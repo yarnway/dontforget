@@ -67,7 +67,8 @@ class DatabaseRecoveryException implements Exception {
 /// Only [DatabaseRecovery.prepare] can issue a plan. Preparing does not create
 /// its operation directory, pause producers, or replace the primary database.
 final class RecoveryPlan {
-  RecoveryPlan._(this._owner, {
+  RecoveryPlan._(
+    this._owner, {
     required this.source,
     required this.preview,
     required Map<String, int> currentCounts,
@@ -378,9 +379,11 @@ class DatabaseRecovery {
         await _requireDigest(File(lease.path), journal.newDigest);
         await _requireRollbackJournal(File(lease.path));
         await _requireStandalone(lease.path);
-        await lease.validateAndOpen();
+        await lease.validateAndOpen(migrate: false);
         await _resumeNotifications(lease);
         await _archiveJournal(pending, operation, 'completed.json');
+        await lease.closeWithoutBackup();
+        await lease.validateAndOpen();
         await lease.resume();
       } else {
         await _rollback(lease, journal);
@@ -435,9 +438,11 @@ class DatabaseRecovery {
     await _install(rollback, current, operation);
     await _at(RecoveryCheckpoint.rollbackInstalled);
     await _requireDigest(current, journal.oldDigest);
-    await lease.validateAndOpen();
+    await lease.validateAndOpen(migrate: false);
     await _resumeNotifications(lease);
     await _archiveJournal(pending, operation, 'rolled-back.json');
+    await lease.closeWithoutBackup();
+    await lease.validateAndOpen();
     await lease.resume();
   }
 

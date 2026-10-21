@@ -22,7 +22,7 @@ void main() {
 
   test('Fresh database has no bundled credentials and supports CRUD', () async {
     final db = await helper.database;
-    expect(await db.getVersion(), 8);
+    expect(await db.getVersion(), DatabaseHelper.schemaVersion);
     expect((await db.query('Settings')).single['api_key'], isEmpty);
     await db.insert(
       'Reminders',
@@ -106,7 +106,7 @@ void main() {
     final snapshot = jsonDecode(
       await File(join(directory.path, 'ha_snapshot.json')).readAsString(),
     );
-    expect(snapshot['version'], 8);
+    expect(snapshot['version'], DatabaseHelper.schemaVersion);
     expect(snapshot['media_records'].single['id'], 'media');
     await db.update('Reminders', {'task_title': 'Updated'});
     await helper.createMirrorBackup();
@@ -177,7 +177,20 @@ void main() {
   );
 
   test('v7 migration preserves user configuration and records', () async {
-    final db = await helper.database;
+    final db = await databaseFactoryFfi.openDatabase(
+      join(directory.path, 'dont_forget_v3.db'),
+      options: OpenDatabaseOptions(
+        version: 7,
+        onCreate: (db, _) async {
+          for (final statement in (await File(
+            'test/fixtures/schema_v7.sql',
+          ).readAsString()).split(';')) {
+            if (statement.trim().isNotEmpty) await db.execute(statement);
+          }
+          await db.insert('Settings', {'id': 'default'});
+        },
+      ),
+    );
     await db.update('Settings', {
       'api_key': 'my-own-key',
       'model_name': 'my-model',
@@ -185,16 +198,20 @@ void main() {
     });
     await db.insert(
       'Reminders',
-      Reminder(
-        id: 'existing',
-        taskTitle: 'Existing',
-        quadrantLevel: 3,
-      ).toJson(),
+      Reminder(id: 'existing', taskTitle: 'Existing', quadrantLevel: 3).toJson()
+        ..removeWhere(
+          (key, _) =>
+              key.startsWith('notice_') ||
+              const {
+                'upcoming_dismissed_at',
+                'snoozed_at',
+                'recurrence_anchor_time',
+              }.contains(key),
+        ),
     );
-    await db.setVersion(7);
-    await helper.close();
+    await db.close();
     final upgraded = await helper.database;
-    expect(await upgraded.getVersion(), 8);
+    expect(await upgraded.getVersion(), DatabaseHelper.schemaVersion);
     final settings = (await upgraded.query('Settings')).single;
     expect(settings['api_key'], 'my-own-key');
     expect(settings['model_name'], 'my-model');

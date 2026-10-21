@@ -7,6 +7,7 @@ import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as paths;
 import 'package:sqflite/sqflite.dart' as sqflite;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import '../../models/stored_datetime.dart';
 
 enum BackupInspectionError {
   cancelled,
@@ -67,7 +68,7 @@ class BackupPreview {
   final DateTime? timestamp;
 }
 
-/// Inspects a bounded private copy of one standalone v7/v8 export.
+/// Inspects a bounded private copy of one standalone v7/v8/v9 export.
 ///
 /// Never opens the source through SQLite, imports data, opens the app database,
 /// or reads attachment contents. Symlinks (including parent directories) and
@@ -164,7 +165,7 @@ class BackupInspector {
         )).single.values.single;
         _checkVersion(version);
         token.throwIfCancelled();
-        await _checkSchema(database, token);
+        await _checkSchema(database, token, version as int);
         final integrity = await database.rawQuery('PRAGMA integrity_check(1)');
         if (integrity.length != 1 || integrity.single.values.single != 'ok') {
           _fail(BackupInspectionError.invalidData);
@@ -382,9 +383,23 @@ const _columns = {
   },
 };
 
+const _reminderNoticeColumns = {
+  'notice_revision': 'n',
+  'notice_acknowledged_at': 'd?',
+  'upcoming_dismissed_at': 'd?',
+  'snoozed_at': 'd?',
+  'recurrence_anchor_time': 'd?',
+};
+
+Map<String, String> _columnsFor(String table, int version) => {
+  ..._columns[table]!,
+  if (table == 'reminders' && version >= 9) ..._reminderNoticeColumns,
+};
+
 Future<void> _checkSchema(
   Database database,
   BackupInspectionCancellation token,
+  int version,
 ) async {
   final objects = await database.rawQuery(
     'SELECT name,type,tbl_name,sql FROM sqlite_master LIMIT 16',
@@ -457,7 +472,7 @@ Future<void> _checkSchema(
       fields = await database.rawQuery('PRAGMA table_info(${table.key})');
     }
     token.throwIfCancelled();
-    final expected = _columns[table.value]!;
+    final expected = _columnsFor(table.value, version);
     if (fields.length != expected.length ||
         !fields
             .map((field) => field['name'])
@@ -471,7 +486,7 @@ Future<void> _checkSchema(
       final kind = expected[name]![0];
       final sqlType = name == 'is_completed'
           ? 'BOOLEAN'
-          : ['b', 'q', 'i'].contains(kind)
+          : ['b', 'q', 'i', 'n'].contains(kind)
           ? 'INTEGER'
           : 'TEXT';
       final primaryKey = name == 'id' && table.key != 'Settings';
@@ -482,6 +497,7 @@ Future<void> _checkSchema(
         'is_emotion_filtered',
         'review_level',
         'is_dynamically_promoted',
+        'notice_revision',
       }.contains(name);
       final validDefault = defaultsToZero
           ? defaultValue == '0'
@@ -516,7 +532,7 @@ Future<void> _checkSchema(
 }
 
 void _checkVersion(Object? value) {
-  if (value is! int || (value != 7 && value != 8)) {
+  if (value is! int || !const {7, 8, 9}.contains(value)) {
     _fail(BackupInspectionError.unsupportedVersion);
   }
 }
@@ -661,34 +677,6 @@ Object? _decodeJson(String text) {
   return jsonDecode(text);
 }
 
-final _isoDate = RegExp(
-  r'^(\d{4})-(\d{2})-(\d{2})[Tt](\d{2}):(\d{2}):(\d{2})(?:\.\d{1,9})?(?:[Zz]|[+-](\d{2}):?(\d{2}))?$',
-);
-
-DateTime? _strictDate(Object? value) {
-  if (value is! String) {
-    return null;
-  }
-  final match = _isoDate.firstMatch(value);
-  if (match == null) {
-    return null;
-  }
-  int part(int index) => int.parse(match.group(index)!);
-  final year = part(1), month = part(2), day = part(3);
-  if (year < 1 ||
-      month < 1 ||
-      month > 12 ||
-      day < 1 ||
-      day > DateTime.utc(year, month + 1, 0).day ||
-      part(4) > 23 ||
-      part(5) > 59 ||
-      part(6) > 59 ||
-      (match.group(7) != null && (part(7) > 23 || part(8) > 59))) {
-    return null;
-  }
-  return DateTime.tryParse(value);
-}
-
 _Validated _validate(Map<String, dynamic> data, int maxRows) {
   _checkVersion(data['version']);
   if (data.length != 5 ||
@@ -701,7 +689,7 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
   }
   final timestamp = data['timestamp'] == null
       ? null
-      : _strictDate(data['timestamp']);
+      : tryParseStoredDateTime(data['timestamp']);
   if (data['timestamp'] != null && timestamp == null) {
     _fail(BackupInspectionError.invalidData);
   }
@@ -717,7 +705,7 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
     }
     counts[table] = rows.length;
     ids[table] = {};
-    final fields = _columns[table]!;
+    final fields = _columnsFor(table, data['version'] as int);
     for (final row in rows) {
       if (row is! Map ||
           row.length != fields.length ||
@@ -731,10 +719,11 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
         }
         final valid = switch (type[0]) {
           's' => value is String,
-          'd' => _strictDate(value) != null,
+          'd' => tryParseStoredDateTime(value) != null,
           'b' => value is int && (value == 0 || value == 1),
           'q' => value is int && value >= 1 && value <= 4,
           'i' => value is int && value >= 0 && value <= 5,
+          'n' => value is int && value >= 0,
           _ => false,
         };
         if (!valid) {

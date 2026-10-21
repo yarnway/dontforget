@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/reminder.dart';
 
-String reminderOccurrenceKey(Reminder reminder) =>
-    '${reminder.id}/${reminder.triggerTime?.toIso8601String()}';
+String reminderOccurrenceKey(Reminder reminder) => reminder.occurrenceIdentity;
 
 /// One compact, non-modal place for upcoming and due items. Never takes focus.
 class ReminderNoticePanel extends StatelessWidget {
@@ -14,8 +13,10 @@ class ReminderNoticePanel extends StatelessWidget {
     required this.onDismiss,
     required this.onSnooze,
     required this.onComplete,
+    this.busyIds = const {},
   });
   final List<Reminder> reminders;
+  final Set<String> busyIds;
   final DateTime now;
   final ValueChanged<Reminder> onDismiss;
   final ValueChanged<Reminder> onSnooze;
@@ -27,6 +28,7 @@ class ReminderNoticePanel extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).colorScheme;
     final reminder = reminders.first;
+    final busy = busyIds.contains(reminder.id);
     final upcoming = reminder.triggerTime?.isAfter(now) ?? false;
     final categoryCount = reminders
         .where((item) => (item.triggerTime?.isAfter(now) ?? false) == upcoming)
@@ -60,7 +62,7 @@ class ReminderNoticePanel extends StatelessWidget {
               ),
               IconButton(
                 tooltip: l10n.get('iKnow'),
-                onPressed: () => onDismiss(reminder),
+                onPressed: busy ? null : () => onDismiss(reminder),
                 icon: const Icon(Icons.close, size: 18),
                 visualDensity: VisualDensity.compact,
               ),
@@ -85,15 +87,15 @@ class ReminderNoticePanel extends StatelessWidget {
               spacing: 4,
               children: [
                 TextButton(
-                  onPressed: () => onSnooze(reminder),
+                  onPressed: busy ? null : () => onSnooze(reminder),
                   child: Text(l10n.get('snooze5Min')),
                 ),
                 TextButton(
-                  onPressed: () => onComplete(reminder),
+                  onPressed: busy ? null : () => onComplete(reminder),
                   child: Text(l10n.get('markDone')),
                 ),
                 TextButton(
-                  onPressed: () => onDismiss(reminder),
+                  onPressed: busy ? null : () => onDismiss(reminder),
                   child: Text(l10n.get('iKnow')),
                 ),
               ],

@@ -1,4 +1,5 @@
 import '../widgets/inline_feedback.dart';
+import '../formatters/local_date_time.dart';
 import '../../data/database_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -221,6 +222,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       final database = ref.read(databaseHelperProvider);
       final generation = _editorGeneration;
       if (generation == null) throw StateError('Editor unavailable');
+      var nativeSyncFailed = false;
       await database.runOperation(generation, () async {
         await notifier.updateReminder(updatedTask);
         if (!mounted) return;
@@ -229,14 +231,20 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             .where((task) => task.id == updatedTask.id)
             .firstOrNull;
         if (saved == null) throw StateError('Task no longer exists');
-        await notifications.cancelReminder(saved.id);
-        if (!saved.isCompleted &&
-            (saved.triggerTime?.isAfter(DateTime.now()) ?? false)) {
-          await notifications.scheduleReminder(saved);
+        try {
+          await notifications.scheduleReminderStrict(saved);
+        } catch (_) {
+          nativeSyncFailed = true;
         }
       });
       database.checkGeneration(generation);
       if (!mounted) return;
+      if (nativeSyncFailed) {
+        feedback.showSnackBar(
+          SnackBar(content: Text(l10n.get('reminderNativeSyncFailed'))),
+        );
+        return;
+      }
       feedback.showSnackBar(SnackBar(content: Text(l10n.get('save'))));
       setState(() => _isSaving = false);
       Navigator.of(context).pop();
@@ -321,7 +329,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   }
 
   Future<void> _pickDateTime() async {
-    final initialDate = _selectedTime ?? DateTime.now();
+    final initialDate = _selectedTime?.toLocal() ?? DateTime.now();
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: initialDate,
@@ -1043,7 +1051,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                               const SizedBox(width: 10),
                               Text(
                                 _selectedTime != null
-                                    ? _selectedTime.toString().substring(0, 16)
+                                    ? formatLocalDateTime(_selectedTime!)
                                     : l10n.get('notSet'),
                                 style: TextStyle(
                                   fontSize: 14,

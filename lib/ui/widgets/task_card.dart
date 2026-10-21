@@ -1,4 +1,5 @@
 import 'inline_feedback.dart';
+import '../formatters/local_date_time.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -76,27 +77,41 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     final task = widget.task;
     final notifications = ref.read(notificationServiceProvider);
     try {
-      final next = completed && task.isRecurring
-          ? task.getNextOccurrence()
-          : null;
-      final updated = next == null
-          ? task.copyWith(isCompleted: completed)
-          : task.copyWith(triggerTime: next, isCompleted: false);
-      final database = ref.read(databaseHelperProvider);
-      final generation = database.captureGeneration();
-      await database.runOperation(generation, () async {
-        await ref.read(remindersProvider.notifier).updateReminder(updated);
-        if (updated.isCompleted) {
-          await notifications.cancelReminder(task.id);
-        } else if (updated.triggerTime?.isAfter(DateTime.now()) ?? false) {
-          await notifications.scheduleReminder(updated);
+      if (completed) {
+        final result = await ref
+            .read(remindersProvider.notifier)
+            .completeOccurrence(task);
+        if (result.disposition == ReminderActionDisposition.stale) {
+          _showMessage(l10n.get('reminderOccurrenceChanged'));
+        } else if (result.nativeSyncFailed) {
+          _showMessage(l10n.get('reminderNativeSyncFailed'));
+        } else if (result.reminder?.isCompleted == false &&
+            result.reminder?.triggerTime != null) {
+          _showMessage(
+            '${l10n.get('periodicNext')}${formatLocalDateTime(result.reminder!.triggerTime!)}',
+          );
         }
-      });
-      database.checkGeneration(generation);
-      if (next != null) {
-        _showMessage(
-          '${l10n.get('periodicNext')}${next.toString().substring(0, 16)}',
-        );
+      } else {
+        final database = ref.read(databaseHelperProvider);
+        final generation = database.captureGeneration();
+        await database.runOperation(generation, () async {
+          await ref
+              .read(remindersProvider.notifier)
+              .updateReminder(task.copyWith(isCompleted: false));
+          final saved = ref
+              .read(remindersProvider)
+              .where((r) => r.id == task.id)
+              .firstOrNull;
+          if (saved != null) {
+            try {
+              await notifications.scheduleReminderStrict(saved);
+            } catch (_) {
+              database.checkGeneration(generation);
+              _showMessage(l10n.get('reminderNativeSyncFailed'));
+            }
+          }
+        });
+        database.checkGeneration(generation);
       }
     } catch (_) {
       _showMessage(l10n.get('reminderUpdateFailed'));
@@ -338,7 +353,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         ),
       if (task.triggerTime != null)
         _badge(
-          task.triggerTime.toString().substring(0, 16),
+          formatLocalDateTime(task.triggerTime!),
           Icons.access_time,
           colors.onSurfaceVariant,
         ),

@@ -88,6 +88,7 @@ class NotificationService {
       final startedAt = _now();
       for (final reminder in reminders) {
         if (!reminder.isCompleted &&
+            reminder.noticeAcknowledgedAt == null &&
             (reminder.triggerTime?.isAfter(startedAt) ?? false)) {
           await _scheduleReminder(reminder);
         }
@@ -215,21 +216,38 @@ class NotificationService {
     return _track(() => _scheduleReminder(reminder));
   }
 
-  Future<void> _scheduleReminder(Reminder reminder) async {
+  /// Interactive persistence already succeeded. Let the caller report a native
+  /// failure separately instead of treating the saved task as a failed write.
+  Future<void> scheduleReminderStrict(Reminder reminder) {
+    if (_maintenance) {
+      return Future.error(
+        StateError('Notifications are paused for maintenance.'),
+      );
+    }
+    return _track(() => _scheduleReminder(reminder, strict: true));
+  }
+
+  Future<void> _scheduleReminder(
+    Reminder reminder, {
+    bool strict = false,
+  }) async {
     // Invalidate older schedules immediately, before cancellation or permission
     // requests yield. Native mutations for one task must also finish in order.
     final revision = ++_nextRevision;
     _revisions[reminder.id] = revision;
     _scheduledReminders.remove(reminder.id);
-    if (reminder.triggerTime != null && !reminder.isCompleted) {
+    if (reminder.triggerTime != null &&
+        !reminder.isCompleted &&
+        reminder.noticeAcknowledgedAt == null) {
       _scheduledReminders[reminder.id] = reminder;
     }
     _activeTimers.remove(reminder.id)?.cancel();
-    await _cancelNative(reminder.id);
+    await _cancelNative(reminder.id, strict: strict);
 
     if (_revisions[reminder.id] != revision ||
         reminder.triggerTime == null ||
-        reminder.isCompleted) {
+        reminder.isCompleted ||
+        reminder.noticeAcknowledgedAt != null) {
       return;
     }
 
@@ -237,6 +255,9 @@ class NotificationService {
     // schedules share one permission/initialization request.
     await init();
     if (_revisions[reminder.id] != revision) return;
+    if (!_initialized && (strict || _strictFailures)) {
+      throw StateError('Native notification initialization failed.');
+    }
 
     final now = _now();
     final difference = reminder.triggerTime!.difference(now);
@@ -336,7 +357,7 @@ class NotificationService {
           );
         });
       } catch (e) {
-        if (_strictFailures) rethrow;
+        if (strict || _strictFailures) rethrow;
         debugPrint('Mobile zonedSchedule error: $e');
       }
     }
@@ -364,11 +385,20 @@ class NotificationService {
     return _track(() => _cancelReminder(id));
   }
 
-  Future<void> _cancelReminder(String id) async {
+  Future<void> cancelReminderStrict(String id) {
+    if (_maintenance) {
+      return Future.error(
+        StateError('Notifications are paused for maintenance.'),
+      );
+    }
+    return _track(() => _cancelReminder(id, strict: true));
+  }
+
+  Future<void> _cancelReminder(String id, {bool strict = false}) async {
     _revisions.remove(id);
     _scheduledReminders.remove(id);
     _activeTimers.remove(id)?.cancel();
-    await _cancelNative(id);
+    await _cancelNative(id, strict: strict);
   }
 
   Future<void> _enqueueNative(String id, Future<void> Function() action) async {
@@ -390,7 +420,7 @@ class NotificationService {
     }
   }
 
-  Future<void> _cancelNative(String id) async {
+  Future<void> _cancelNative(String id, {bool strict = false}) async {
     if (usesNativeNotifications) {
       try {
         await _enqueueNative(
@@ -398,7 +428,7 @@ class NotificationService {
           () => flutterLocalNotificationsPlugin.cancel(id.hashCode),
         );
       } catch (_) {
-        if (_strictFailures) rethrow;
+        if (strict || _strictFailures) rethrow;
       }
     }
   }
@@ -409,6 +439,7 @@ class NotificationService {
   }
 
   Future<void> _fireReminderNow(Reminder reminder) async {
+    if (reminder.isCompleted || reminder.noticeAcknowledgedAt != null) return;
     _activeTimers.remove(reminder.id)?.cancel();
     _scheduledReminders.remove(reminder.id);
 

@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/ui/screens/task_detail_screen.dart';
+import 'package:dont_forget/ui/widgets/task_details_dialog.dart';
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/services/notification_service.dart';
 
@@ -37,10 +38,26 @@ class _ObservedRemindersNotifier extends RemindersNotifier {
 class _DetailNotifications implements NotificationService {
   final canceled = <String>[];
   final scheduled = <Reminder>[];
+  final reconciled = <Reminder>[];
+  bool failNative = false;
   @override
   Future<void> cancelReminder(String id) async => canceled.add(id);
   @override
   Future<void> scheduleReminder(Reminder task) async => scheduled.add(task);
+  @override
+  Future<void> cancelReminderStrict(String id) => cancelReminder(id);
+  @override
+  Future<void> scheduleReminderStrict(Reminder task) async {
+    reconciled.add(task);
+    await cancelReminder(task.id);
+    if (failNative) throw StateError('isolated native update failure');
+    if (!task.isCompleted &&
+        task.noticeAcknowledgedAt == null &&
+        (task.triggerTime?.isAfter(DateTime.now()) ?? false)) {
+      await scheduleReminder(task);
+    }
+  }
+
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
@@ -111,7 +128,11 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Future<void> openDetail(WidgetTester tester, Reminder task) async {
+  Future<void> openDetail(
+    WidgetTester tester,
+    Reminder task, {
+    bool dialog = false,
+  }) async {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
@@ -130,7 +151,9 @@ void main() {
               body: TextButton(
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => TaskDetailScreen(task: task),
+                    builder: (_) => dialog
+                        ? Scaffold(body: TaskDetailsDialog(task: task))
+                        : TaskDetailScreen(task: task),
                   ),
                 ),
                 child: const Text('Open QA'),
@@ -336,6 +359,94 @@ void main() {
       );
     }
   });
+
+  for (final dialog in [false, true]) {
+    testWidgets(
+      '${dialog ? 'dialog' : 'full detail'} native failure keeps saved changes open for retry',
+      (tester) async {
+        final task = Reminder(
+          id: 'native-save-retry-$dialog',
+          taskTitle: 'Before native failure',
+          quadrantLevel: 3,
+          triggerTime: DateTime.now().add(const Duration(hours: 1)),
+        );
+        await tester.runAsync(() => notifier.addReminder(task));
+        await openDetail(tester, task, dialog: dialog);
+        await tester.enterText(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is TextField &&
+                widget.controller?.text == task.taskTitle,
+          ),
+          'Saved despite native failure',
+        );
+        if (!dialog) {
+          // This also changes occurrence metadata on persistence. Native must
+          // receive that committed revision, never the pre-save UI candidate.
+          await tester.ensureVisible(find.text('+15分钟'));
+          await tester.tap(find.text('+15分钟'));
+        } else {
+          // A background schedule change while the dialog is open must also
+          // be retained and supplied to native reconciliation.
+          await tester.runAsync(
+            () => notifier.updateReminder(
+              task.copyWith(
+                triggerTime: DateTime.now().add(const Duration(minutes: 30)),
+              ),
+            ),
+          );
+        }
+        final save = find.text(dialog ? '保存' : '保存修改');
+        notifications.failNative = true;
+        try {
+          await tester.ensureVisible(save);
+          await performWrite(tester, save);
+          expect(
+            find.byType(dialog ? TaskDetailsDialog : TaskDetailScreen),
+            findsOneWidget,
+          );
+          const warning = '已保存，但系统提醒未能更新。请检查通知权限并重新保存任务。';
+          expect(find.text(warning), findsOneWidget);
+          expect(find.text('提醒更新失败，请重试。'), findsNothing);
+          final saved = container
+              .read(remindersProvider)
+              .firstWhere((item) => item.id == task.id);
+          expect(saved.taskTitle, 'Saved despite native failure');
+          expect(saved.noticeRevision, task.noticeRevision + 1);
+          final rows = await tester.runAsync(
+            () => testDatabase.read(
+              testDatabase.captureGeneration(),
+              (db) =>
+                  db.query('Reminders', where: 'id = ?', whereArgs: [task.id]),
+            ),
+          );
+          expect(rows!.single, saved.toJson());
+          expect(notifications.reconciled.last.toJson(), saved.toJson());
+
+          notifications.failNative = false;
+          await tester.ensureVisible(save);
+          await performWrite(tester, save);
+          expect(
+            find.byType(dialog ? TaskDetailsDialog : TaskDetailScreen),
+            findsNothing,
+          );
+          expect(find.text(warning), findsNothing);
+          expect(notifications.scheduled.last.toJson(), saved.toJson());
+          expect(
+            container
+                .read(remindersProvider)
+                .firstWhere((item) => item.id == task.id)
+                .noticeRevision,
+            saved.noticeRevision,
+          );
+          expect(tester.takeException(), isNull);
+          await tester.pumpWidget(const SizedBox());
+        } finally {
+          notifications.failNative = false;
+        }
+      },
+    );
+  }
 
   testWidgets('save closes the editor after the queued change is persisted', (
     tester,

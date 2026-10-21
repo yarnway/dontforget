@@ -1,7 +1,7 @@
 import 'inline_feedback.dart';
+import '../formatters/local_date_time.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import '../../models/reminder.dart';
 import '../../providers/providers.dart';
 import '../../services/recovery/runtime_gate.dart';
@@ -391,7 +391,7 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet> {
                               const Icon(Icons.info_outline, size: 16, color: Colors.blue),
                               const SizedBox(width: 8),
                               Text(
-                                '提醒时间: ${currentTask.triggerTime != null ? DateFormat('yyyy-MM-dd HH:mm').format(currentTask.triggerTime!) : '未设置'}',
+                                '提醒时间: ${currentTask.triggerTime != null ? formatLocalDateTime(currentTask.triggerTime!) : '未设置'}',
                                 style: const TextStyle(fontSize: 12),
                               ),
                             ],
@@ -478,7 +478,7 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet> {
         SnackBar(
           content: Text(
             remembered
-                ? '已晋级到第 ${updatedTask.spacedRepetitionLevel} 记忆阶梯！下次复习: ${DateFormat('MM-dd').format(updatedTask.nextReviewAt!)}'
+                ? '已晋级到第 ${updatedTask.spacedRepetitionLevel} 记忆阶梯！下次复习: ${formatLocalDateTime(updatedTask.nextReviewAt!, pattern: 'MM-dd')}'
                 : '已重置回第 1 阶梯，将在 24 小时后重新安排复习。',
           ),
           duration: const Duration(seconds: 2),

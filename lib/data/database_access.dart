@@ -48,6 +48,7 @@ class DatabaseMaintenanceLease {
   bool _ended = false;
   bool _busy = false;
   bool _validatedOpen = false;
+  int? _validatedVersion;
 
   void _checkActive() {
     if (_ended || !identical(_helper._maintenance, this)) {
@@ -69,6 +70,7 @@ class DatabaseMaintenanceLease {
 
   Future<void> closeWithoutBackup() => _perform(() async {
     _validatedOpen = false;
+    _validatedVersion = null;
     try {
       await _helper._closeDatabase();
     } catch (_) {
@@ -79,14 +81,20 @@ class DatabaseMaintenanceLease {
 
   /// Opens the current primary using the application's schema callbacks.
   /// A pending recovery journal is deliberately allowed only through this lease.
-  Future<void> validateAndOpen() => _perform(() async {
+  /// Pending journals must be reconciled without migrations, which would
+  /// change the file identity before the durable decision can be archived.
+  Future<void> validateAndOpen({bool migrate = true}) => _perform(() async {
     _validatedOpen = false;
+    _validatedVersion = null;
     if (await FileSystemEntity.type(path, followLinks: false) !=
         FileSystemEntityType.file) {
       throw StateError('Recovery requires an existing primary database.');
     }
-    final database = await _helper._openDatabase(allowRecovery: true);
-    await _checkIntegrity(database);
+    final database = await _helper._openDatabase(
+      allowRecovery: true,
+      migrate: migrate,
+    );
+    _validatedVersion = await _checkIntegrity(database, allowLegacy: !migrate);
     _validatedOpen = true;
   });
 
@@ -106,15 +114,23 @@ class DatabaseMaintenanceLease {
         }
       });
 
-  Future<void> _checkIntegrity(Database database) async {
+  Future<int> _checkIntegrity(
+    Database database, {
+    bool allowLegacy = false,
+  }) async {
     final rows = await database.rawQuery('PRAGMA integrity_check');
     if (rows.length != 1 || rows.single.values.single != 'ok') {
       throw StateError('Database integrity check failed.');
     }
     final version = await database.rawQuery('PRAGMA user_version');
-    if (version.length != 1 || version.single.values.single != 8) {
+    final acceptedVersions = allowLegacy
+        ? {7, 8, DatabaseHelper.schemaVersion}
+        : {DatabaseHelper.schemaVersion};
+    if (version.length != 1 ||
+        !acceptedVersions.contains(version.single.values.single)) {
       throw StateError('Database schema version does not match.');
     }
+    return version.single.values.single as int;
   }
 
   Future<String> _candidatePath(String candidate) async {
@@ -151,7 +167,7 @@ class DatabaseMaintenanceLease {
     final database = await (_helper._factory ?? databaseFactory).openDatabase(
       target,
       options: OpenDatabaseOptions(
-        version: 8,
+        version: DatabaseHelper.schemaVersion,
         singleInstance: false,
         onCreate: _helper._createDB,
       ),
@@ -182,7 +198,7 @@ class DatabaseMaintenanceLease {
     final database = await (_helper._factory ?? databaseFactory).openDatabase(
       target,
       options: OpenDatabaseOptions(
-        version: 8,
+        version: DatabaseHelper.schemaVersion,
         singleInstance: false,
         onUpgrade: _helper._upgradeDB,
       ),
@@ -205,6 +221,12 @@ class DatabaseMaintenanceLease {
 
   Future<void> resume() async {
     _checkActive();
+    if (_validatedVersion != null &&
+        _validatedVersion != DatabaseHelper.schemaVersion) {
+      throw StateError(
+        'Upgrade and validate the database before resuming access.',
+      );
+    }
     // An unresolved journal must never be bypassed by returning an open handle.
     if (await DatabaseHelper._hasRecoveryJournal(directory)) {
       throw const DatabaseRecoveryRequiredException();

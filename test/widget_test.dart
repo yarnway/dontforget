@@ -20,6 +20,22 @@ void main() {
   late Directory testDirectory;
   late DatabaseHelper testDatabase;
   late ProviderContainer container;
+  late _ObservedReminders reminders;
+
+  Future<void> applyNoticeAction(WidgetTester tester, String label) async {
+    await tester.runAsync(() async {
+      final previous = reminders.lastAction;
+      await tester.tap(find.widgetWithText(TextButton, label));
+      final action = reminders.lastAction;
+      expect(action, isNotNull);
+      expect(action, isNot(same(previous)));
+      await action!.timeout(const Duration(seconds: 5));
+    });
+    await tester.pump();
+  }
+
+  Reminder current(String id) =>
+      container.read(remindersProvider).firstWhere((item) => item.id == id);
   setUpAll(() async {
     if (const bool.fromEnvironment('UI_PREVIEW')) {
       const fontPath = String.fromEnvironment('PREVIEW_FONT');
@@ -55,7 +71,12 @@ void main() {
       databaseFactoryFfi,
     );
     container = ProviderContainer(
-      overrides: [databaseHelperProvider.overrideWithValue(testDatabase)],
+      overrides: [
+        databaseHelperProvider.overrideWithValue(testDatabase),
+        remindersProvider.overrideWith(
+          (ref) => reminders = _ObservedReminders(testDatabase),
+        ),
+      ],
     );
     await container.read(settingsProvider.notifier).ready;
     await container.read(remindersProvider.notifier).ready;
@@ -235,8 +256,9 @@ void main() {
       await tester.runAsync(
         () => container.read(remindersProvider.notifier).updateReminder(due),
       );
-      await NotificationService().fireReminderNow(due);
-      await NotificationService().fireReminderNow(due);
+      final savedDue = current(due.id);
+      await NotificationService().fireReminderNow(savedDue);
+      await NotificationService().fireReminderNow(savedDue);
       await tester.pump();
       expect(find.byType(ReminderNoticePanel), findsOneWidget);
       expect(
@@ -273,35 +295,20 @@ void main() {
           });
         }
       }
-      await tester.tap(find.widgetWithText(TextButton, '我知道了'));
-      await tester.pump();
-      await NotificationService().fireReminderNow(due);
+      await applyNoticeAction(tester, '我知道了');
+      expect(current(due.id).noticeAcknowledgedAt, isNotNull);
+      await NotificationService().fireReminderNow(savedDue);
       await tester.pump();
       expect(find.byKey(const ValueKey('reminder-notice-panel')), findsNothing);
-      final edited = due.copyWith(
+      final edited = current(due.id).copyWith(
         triggerTime: DateTime.now().subtract(const Duration(seconds: 3)),
       );
       await tester.runAsync(
         () => container.read(remindersProvider.notifier).updateReminder(edited),
       );
-      await NotificationService().fireReminderNow(edited);
+      await NotificationService().fireReminderNow(current(edited.id));
       await tester.pump();
-      await tester.runAsync(
-        () => tester.tap(find.widgetWithText(TextButton, '稍后 5 分钟提醒')),
-      );
-      for (var i = 0; i < 30; i++) {
-        await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 10)),
-        );
-        await tester.pump();
-        if (container
-            .read(remindersProvider)
-            .firstWhere((r) => r.id == edited.id)
-            .triggerTime!
-            .isAfter(DateTime.now())) {
-          break;
-        }
-      }
+      await applyNoticeAction(tester, '稍后 5 分钟提醒');
       final snoozed = container
           .read(remindersProvider)
           .firstWhere((r) => r.id == edited.id);
@@ -319,23 +326,10 @@ void main() {
         () =>
             container.read(remindersProvider.notifier).updateReminder(dueAgain),
       );
-      await NotificationService().fireReminderNow(dueAgain);
+      final savedDueAgain = current(dueAgain.id);
+      await NotificationService().fireReminderNow(savedDueAgain);
       await tester.pump();
-      await tester.runAsync(
-        () => tester.tap(find.widgetWithText(TextButton, '标为已完成')),
-      );
-      for (var i = 0; i < 30; i++) {
-        await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 10)),
-        );
-        await tester.pump();
-        if (container
-            .read(remindersProvider)
-            .firstWhere((r) => r.id == edited.id)
-            .isCompleted) {
-          break;
-        }
-      }
+      await applyNoticeAction(tester, '标为已完成');
       expect(
         container
             .read(remindersProvider)
@@ -343,7 +337,7 @@ void main() {
             .isCompleted,
         isTrue,
       );
-      await NotificationService().fireReminderNow(dueAgain);
+      await NotificationService().fireReminderNow(savedDueAgain);
       await tester.pump();
       expect(find.byKey(const ValueKey('reminder-notice-panel')), findsNothing);
       await tester.pumpWidget(const SizedBox());
@@ -381,8 +375,8 @@ void main() {
       tester.widget<TextField>(find.byType(TextField)).focusNode!.hasFocus,
       isTrue,
     );
-    await tester.tap(find.text('我知道了'));
-    await tester.pump();
+    await applyNoticeAction(tester, '我知道了');
+    expect(current(task.id).noticeAcknowledgedAt, isNotNull);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pump();
@@ -435,4 +429,40 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     },
   );
+}
+
+// Observe completion of the real database and native work, rather than relying
+// on a fixed delay or treating persistent reminder actions as synchronous.
+class _ObservedReminders extends RemindersNotifier {
+  _ObservedReminders(super.database);
+
+  Future<ReminderActionResult>? lastAction;
+
+  @override
+  Future<ReminderActionResult> acknowledgeOccurrence(
+    Reminder expected, {
+    required ReminderNoticePhase phase,
+    DateTime? now,
+  }) => lastAction = super.acknowledgeOccurrence(
+    expected,
+    phase: phase,
+    now: now,
+  );
+
+  @override
+  Future<ReminderActionResult> snoozeOccurrence(
+    Reminder expected, {
+    DateTime? now,
+    Duration duration = const Duration(minutes: 5),
+  }) => lastAction = super.snoozeOccurrence(
+    expected,
+    now: now,
+    duration: duration,
+  );
+
+  @override
+  Future<ReminderActionResult> completeOccurrence(
+    Reminder expected, {
+    DateTime? now,
+  }) => lastAction = super.completeOccurrence(expected, now: now);
 }

@@ -85,6 +85,29 @@ final remindersProvider =
       );
     });
 
+enum ReminderNoticePhase { upcoming, due }
+
+enum ReminderActionDisposition { applied, alreadyApplied, stale }
+
+class ReminderActionResult {
+  const ReminderActionResult(
+    this.disposition, {
+    this.reminder,
+    this.nativeSyncFailed = false,
+  });
+
+  final ReminderActionDisposition disposition;
+  final Reminder? reminder;
+  final bool nativeSyncFailed;
+  bool get accepted => disposition != ReminderActionDisposition.stale;
+}
+
+class StaleReminderOccurrenceException implements Exception {
+  const StaleReminderOccurrenceException();
+}
+
+enum _ReminderAction { acknowledgeUpcoming, acknowledgeDue, snooze, complete }
+
 class RemindersNotifier extends StateNotifier<List<Reminder>> {
   final DatabaseHelper _dbHelper;
   final NotificationService _notifications;
@@ -164,7 +187,14 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         if (!mounted) {
           return;
         }
-        if (!reminder.isCompleted &&
+        if (reminder.isCompleted ||
+            reminder.noticeAcknowledgedAt != null ||
+            reminder.triggerTime == null) {
+          await _dbHelper.runOperation(generation, () async {
+            _dbHelper.checkGeneration(generation);
+            await _notifications.cancelReminder(reminder.id);
+          });
+        } else if (!reminder.isCompleted &&
             reminder.triggerTime != null &&
             reminder.triggerTime!.isAfter(now)) {
           await _dbHelper.runOperation(generation, () async {
@@ -246,7 +276,9 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       _dbHelper.checkGeneration(_stateGeneration!);
     }
     // Preserve field changes requested before waiting behind another edit.
-    final changes = reminder.toJson()..remove('id');
+    final changes = reminder.toJson()
+      ..remove('id')
+      ..removeWhere((key, _) => _noticeMetadata.contains(key));
     if (mounted) {
       for (final existing in state) {
         if (existing.id == reminder.id) {
@@ -260,32 +292,246 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       if (!mounted || changes.isEmpty) {
         return;
       }
-      final matches = state.where((item) => item.id == reminder.id);
-      if (matches.isEmpty) {
-        return;
-      }
-      final updated = Reminder.fromJson({
-        ...matches.first.toJson(),
-        ...changes,
-      });
-      final count = await _dbHelper.writeTransaction(
-        ticket,
-        (txn) => txn.update(
+      final updated = await _dbHelper.writeTransaction(ticket, (txn) async {
+        final rows = await txn.query(
           'Reminders',
-          changes,
           where: 'id = ?',
           whereArgs: [reminder.id],
-        ),
-      );
+        );
+        if (rows.isEmpty) return null;
+        final current = Reminder.fromJson(rows.single);
+        var saved = Reminder.fromJson({...current.toJson(), ...changes});
+        if (_scheduleChanged(current, saved)) {
+          // A whole old Reminder can carry the pre-snooze time even when its
+          // caller intended only a title edit. Never resurrect that occurrence.
+          if (reminder.noticeRevision != current.noticeRevision) {
+            throw const StaleReminderOccurrenceException();
+          }
+          saved = saved.copyWith(
+            noticeRevision: current.noticeRevision + 1,
+            noticeAcknowledgedAt: null,
+            upcomingDismissedAt: null,
+            snoozedAt: null,
+            recurrenceAnchorTime: null,
+          );
+        }
+        await txn.update(
+          'Reminders',
+          saved.toJson()..remove('id'),
+          where: 'id = ?',
+          whereArgs: [saved.id],
+        );
+        return saved;
+      });
       _dbHelper.checkGeneration(ticket);
-      if (mounted && count > 0) {
-        state = [
-          for (final item in state)
-            if (item.id == reminder.id) updated else item,
-        ];
-      }
+      if (updated != null) _publish([updated]);
     }, generation: generation);
   }
+
+  static const _noticeMetadata = {
+    'notice_revision',
+    'notice_acknowledged_at',
+    'upcoming_dismissed_at',
+    'snoozed_at',
+    'recurrence_anchor_time',
+  };
+
+  static bool _sameTime(DateTime? a, DateTime? b) =>
+      a == null ? b == null : b != null && a.isAtSameMomentAs(b);
+
+  static bool _scheduleChanged(Reminder a, Reminder b) =>
+      !_sameTime(a.triggerTime, b.triggerTime) ||
+      a.isCompleted != b.isCompleted ||
+      a.isRecurring != b.isRecurring ||
+      a.recurrenceRule != b.recurrenceRule;
+
+  void _publish(Iterable<Reminder> saved) {
+    if (!mounted) return;
+    final changes = {for (final reminder in saved) reminder.id: reminder};
+    state = [for (final item in state) changes[item.id] ?? item];
+  }
+
+  Future<ReminderActionResult> acknowledgeOccurrence(
+    Reminder expected, {
+    required ReminderNoticePhase phase,
+    DateTime? now,
+  }) => _actOnOccurrences(
+    [expected],
+    [
+      phase == ReminderNoticePhase.upcoming
+          ? _ReminderAction.acknowledgeUpcoming
+          : _ReminderAction.acknowledgeDue,
+    ],
+    now ?? DateTime.now(),
+  ).then((results) => results.single);
+
+  Future<List<ReminderActionResult>> acknowledgeOccurrences(
+    List<Reminder> expected, {
+    DateTime? now,
+  }) {
+    final at = now ?? DateTime.now();
+    final snapshot = List<Reminder>.of(expected);
+    return _actOnOccurrences(snapshot, [
+      for (final item in snapshot)
+        item.triggerTime?.isAfter(at) ?? false
+            ? _ReminderAction.acknowledgeUpcoming
+            : _ReminderAction.acknowledgeDue,
+    ], at);
+  }
+
+  Future<ReminderActionResult> snoozeOccurrence(
+    Reminder expected, {
+    DateTime? now,
+    Duration duration = const Duration(minutes: 5),
+  }) {
+    if (duration <= Duration.zero) {
+      return Future.error(ArgumentError.value(duration, 'duration'));
+    }
+    return _actOnOccurrences(
+      [expected],
+      [_ReminderAction.snooze],
+      now ?? DateTime.now(),
+      snoozeDuration: duration,
+    ).then((results) => results.single);
+  }
+
+  Future<ReminderActionResult> completeOccurrence(
+    Reminder expected, {
+    DateTime? now,
+  }) => _actOnOccurrences(
+    [expected],
+    [_ReminderAction.complete],
+    now ?? DateTime.now(),
+  ).then((results) => results.single);
+
+  Future<List<ReminderActionResult>> _actOnOccurrences(
+    List<Reminder> expected,
+    List<_ReminderAction> actions,
+    DateTime now, {
+    Duration snoozeDuration = const Duration(minutes: 5),
+  }) => _enqueue(
+    (generation) => _dbHelper.runOperation(generation, () async {
+      if (!mounted) {
+        return [
+          for (final _ in expected)
+            const ReminderActionResult(ReminderActionDisposition.stale),
+        ];
+      }
+      final results = await _dbHelper.writeTransaction(generation, (txn) async {
+        final saved = <ReminderActionResult>[];
+        for (var index = 0; index < expected.length; index++) {
+          final wanted = expected[index];
+          final action = actions[index];
+          final rows = await txn.query(
+            'Reminders',
+            where: 'id = ?',
+            whereArgs: [wanted.id],
+          );
+          final current = rows.isEmpty ? null : Reminder.fromJson(rows.single);
+          if (current == null ||
+              current.isCompleted ||
+              current.occurrenceIdentity != wanted.occurrenceIdentity ||
+              (action == _ReminderAction.snooze &&
+                  current.noticeAcknowledgedAt != null) ||
+              (action != _ReminderAction.complete &&
+                  current.triggerTime == null) ||
+              ((action == _ReminderAction.snooze ||
+                      action == _ReminderAction.acknowledgeDue) &&
+                  current.triggerTime!.isAfter(now))) {
+            saved.add(
+              const ReminderActionResult(ReminderActionDisposition.stale),
+            );
+            continue;
+          }
+          Reminder next;
+          if (action == _ReminderAction.acknowledgeUpcoming ||
+              action == _ReminderAction.acknowledgeDue) {
+            final upcoming = action == _ReminderAction.acknowledgeUpcoming;
+            if ((upcoming
+                    ? current.upcomingDismissedAt
+                    : current.noticeAcknowledgedAt) !=
+                null) {
+              saved.add(
+                ReminderActionResult(
+                  ReminderActionDisposition.alreadyApplied,
+                  reminder: current,
+                ),
+              );
+              continue;
+            }
+            next = upcoming
+                ? current.copyWith(upcomingDismissedAt: now)
+                : current.copyWith(noticeAcknowledgedAt: now);
+          } else {
+            final snooze = action == _ReminderAction.snooze;
+            // A retained calendar anchor can precede the current occurrence.
+            // Completing that occurrence early must still advance past it.
+            final cutoff = current.triggerTime?.isAfter(now) ?? false
+                ? current.triggerTime!
+                : now;
+            final nextTime = snooze
+                ? now.add(snoozeDuration)
+                : current.getNextOccurrence(after: cutoff);
+            next = current.copyWith(
+              triggerTime: nextTime ?? current.triggerTime,
+              isCompleted: nextTime == null,
+              noticeRevision: current.noticeRevision + 1,
+              noticeAcknowledgedAt: null,
+              upcomingDismissedAt: null,
+              snoozedAt: snooze ? now : null,
+              recurrenceAnchorTime: snooze || nextTime != null
+                  ? current.recurrenceAnchorTime ?? current.triggerTime
+                  : null,
+            );
+          }
+          await txn.update(
+            'Reminders',
+            next.toJson()..remove('id'),
+            where: 'id = ?',
+            whereArgs: [next.id],
+          );
+          saved.add(
+            ReminderActionResult(
+              ReminderActionDisposition.applied,
+              reminder: next,
+            ),
+          );
+        }
+        return saved;
+      });
+      _dbHelper.checkGeneration(generation);
+      _publish(results.map((r) => r.reminder).whereType<Reminder>());
+      final reconciled = <ReminderActionResult>[];
+      for (var index = 0; index < results.length; index++) {
+        final result = results[index];
+        if (!result.accepted ||
+            actions[index] == _ReminderAction.acknowledgeUpcoming) {
+          reconciled.add(result);
+          continue;
+        }
+        var failed = false;
+        try {
+          final saved = result.reminder!;
+          if (saved.isCompleted || saved.noticeAcknowledgedAt != null) {
+            await _notifications.cancelReminderStrict(saved.id);
+          } else {
+            await _notifications.scheduleReminderStrict(saved);
+          }
+        } catch (_) {
+          failed = true;
+        }
+        _dbHelper.checkGeneration(generation);
+        reconciled.add(
+          ReminderActionResult(
+            result.disposition,
+            reminder: result.reminder,
+            nativeSyncFailed: failed,
+          ),
+        );
+      }
+      return reconciled;
+    }),
+  );
 
   Future<void> linkTwoTasks(String id1, String id2) =>
       _enqueue((generation) async {

@@ -36,6 +36,19 @@ class _Notifications implements NotificationService {
   Future<void> scheduleReminder(Reminder task) async => scheduled.add(task.id);
 
   @override
+  Future<void> cancelReminderStrict(String id) => cancelReminder(id);
+
+  @override
+  Future<void> scheduleReminderStrict(Reminder task) async {
+    await cancelReminder(task.id);
+    if (!task.isCompleted &&
+        task.noticeAcknowledgedAt == null &&
+        (task.triggerTime?.isAfter(DateTime.now()) ?? false)) {
+      await scheduleReminder(task);
+    }
+  }
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
@@ -203,6 +216,10 @@ void main() {
               .read(remindersProvider.notifier)
               .updateReminder(task.copyWith(taskTitle: 'Restored task'));
         });
+        // Refresh legitimately cancels native requests for this restored task
+        // without a trigger. The stale editor must add no further native work.
+        final canceledBeforeSave = List<String>.of(notifications.canceled);
+        final scheduledBeforeSave = List<String>.of(notifications.scheduled);
         await tester.runAsync(
           command(tester, detail ? 'Save Changes' : 'Save'),
         );
@@ -216,7 +233,8 @@ void main() {
           find.text('Could not update this reminder. Please try again.'),
           findsOneWidget,
         );
-        expect(notifications.canceled, isEmpty);
+        expect(notifications.canceled, canceledBeforeSave);
+        expect(notifications.scheduled, scheduledBeforeSave);
         await tester.pumpWidget(const SizedBox());
       },
     );
@@ -308,6 +326,8 @@ void main() {
     (tester) async {
       await show(tester, ContextDigestSheet(digestReminders: [task]));
       await tester.runAsync(advanceGeneration);
+      final canceledBeforeComplete = List<String>.of(notifications.canceled);
+      final scheduledBeforeComplete = List<String>.of(notifications.scheduled);
       final button = tester.widget<IconButton>(
         find.byWidgetPredicate(
           (widget) => widget is IconButton && widget.tooltip == 'Mark as Done',
@@ -320,7 +340,8 @@ void main() {
         find.text('Could not update this reminder. Please try again.'),
         findsOneWidget,
       );
-      expect(notifications.canceled, isEmpty);
+      expect(notifications.canceled, canceledBeforeComplete);
+      expect(notifications.scheduled, scheduledBeforeComplete);
       await tester.pumpWidget(const SizedBox());
     },
   );

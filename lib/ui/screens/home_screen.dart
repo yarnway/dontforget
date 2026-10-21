@@ -1,6 +1,7 @@
 import '../widgets/reminder_notice_panel.dart';
 import '../../data/database_helper.dart';
 import '../widgets/inline_feedback.dart';
+import '../formatters/local_date_time.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -69,7 +70,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       }),
     ]);
     _promptedReminderIds.clear();
-    _dismissedNotices.clear();
     _dueNotices.clear();
     _contextDigest = [];
   }
@@ -79,7 +79,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   StreamSubscription<List<Reminder>>? _catchUpDigestSubscription;
   StreamSubscription<List<Reminder>>? _suppressedSubscription;
   final Set<String> _promptedReminderIds = {};
-  final Set<String> _dismissedNotices = {};
   final Map<String, Reminder> _dueNotices = {};
   final Set<String> _noticeOperations = {};
   List<Reminder> _contextDigest = [];
@@ -175,7 +174,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final now = DateTime.now();
 
     for (final r in reminders) {
-      if (!r.isCompleted && r.triggerTime != null) {
+      if (!r.isCompleted &&
+          r.triggerTime != null &&
+          r.noticeAcknowledgedAt == null) {
         // If due and within the last 15 minutes and not yet prompted
         if (r.triggerTime!.isBefore(now) &&
             r.triggerTime!.isAfter(now.subtract(const Duration(minutes: 15))) &&
@@ -243,9 +244,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           (r) =>
               r.id == reminder.id &&
               !r.isCompleted &&
+              r.noticeAcknowledgedAt == null &&
               reminderOccurrenceKey(r) == key,
         );
-    if (current.isEmpty || _dismissedNotices.contains('due/$key')) return;
+    if (current.isEmpty) return;
     _promptedReminderIds.add(key);
     setState(() => _dueNotices[key] = current.first);
   }
@@ -259,7 +261,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       }
       final key = reminderOccurrenceKey(r);
       final upcoming = r.triggerTime!.isAfter(now);
-      if (_dismissedNotices.contains('${upcoming ? 'upcoming' : 'due'}/$key')) {
+      if (r.noticeAcknowledgedAt != null ||
+          (upcoming && r.upcomingDismissedAt != null)) {
         return false;
       }
       return upcoming
@@ -269,61 +272,66 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }).toList()..sort((a, b) => a.triggerTime!.compareTo(b.triggerTime!));
   }
 
-  void _dismissNotice(Reminder reminder) {
-    final phase = reminder.triggerTime!.isAfter(DateTime.now())
-        ? 'upcoming'
-        : 'due';
-    setState(() {
-      _dismissedNotices.add('$phase/${reminderOccurrenceKey(reminder)}');
-      _dueNotices.remove(reminderOccurrenceKey(reminder));
-    });
+  Future<void> _dismissNotice(Reminder reminder) async {
+    final now = DateTime.now();
+    await _performNoticeAction(
+      reminder,
+      () => ref
+          .read(remindersProvider.notifier)
+          .acknowledgeOccurrence(
+            reminder,
+            phase: reminder.triggerTime!.isAfter(now)
+                ? ReminderNoticePhase.upcoming
+                : ReminderNoticePhase.due,
+            now: now,
+          ),
+    );
   }
 
   Future<void> _actOnNotice(Reminder reminder, {required bool snooze}) async {
-    if (!mounted || !_runtimeActive) return;
-    if (!_noticeOperations.add(reminder.id)) return;
+    await _performNoticeAction(
+      reminder,
+      () => snooze
+          ? ref.read(remindersProvider.notifier).snoozeOccurrence(reminder)
+          : ref.read(remindersProvider.notifier).completeOccurrence(reminder),
+      snooze: snooze,
+    );
+  }
+
+  Future<void> _performNoticeAction(
+    Reminder reminder,
+    Future<ReminderActionResult> Function() action, {
+    bool? snooze,
+  }) async {
+    if (!_runtimeActive || !_noticeOperations.add(reminder.id)) return;
+    setState(() {});
     final l10n = AppLocalizations.of(context);
     try {
-      // Re-read before acting; an edited/deleted/completed item is no longer this occurrence.
-      final current = ref
-          .read(remindersProvider)
-          .where(
-            (r) =>
-                r.id == reminder.id &&
-                !r.isCompleted &&
-                reminderOccurrenceKey(r) == reminderOccurrenceKey(reminder),
-          );
-      if (current.isEmpty) return;
-      final task = current.first;
-      final next = snooze
-          ? DateTime.now().add(const Duration(minutes: 5))
-          : task.isRecurring
-          ? task.getNextOccurrence()
-          : null;
-      final updated = next == null
-          ? task.copyWith(isCompleted: true)
-          : task.copyWith(triggerTime: next, isCompleted: false);
-      final database = ref.read(databaseHelperProvider);
-      final generation = database.captureGeneration();
-      final notifications = ref.read(notificationServiceProvider);
-      await database.runOperation(generation, () async {
-        await ref.read(remindersProvider.notifier).updateReminder(updated);
-        await notifications.scheduleReminder(updated);
-      });
-      database.checkGeneration(generation);
+      final result = await action();
       if (!mounted || !_runtimeActive) return;
-      _dismissNotice(reminder);
-      InlineFeedback.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            snooze
-                ? l10n.get('snoozeSuccess')
-                : next != null
-                ? '${l10n.get('periodicNext')}${next.toString().substring(0, 16)}'
-                : l10n.get('taskCompleted'),
-          ),
-        ),
-      );
+      if (result.disposition == ReminderActionDisposition.stale) {
+        InlineFeedback.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.get('reminderOccurrenceChanged'))),
+        );
+        return;
+      }
+      setState(() => _dueNotices.remove(reminderOccurrenceKey(reminder)));
+      String? message;
+      if (result.nativeSyncFailed) {
+        message = l10n.get('reminderNativeSyncFailed');
+      } else if (snooze != null) {
+        final saved = result.reminder;
+        message = snooze
+            ? l10n.get('snoozeSuccess')
+            : saved != null && !saved.isCompleted && saved.triggerTime != null
+            ? '${l10n.get('periodicNext')}${formatLocalDateTime(saved.triggerTime!)}'
+            : l10n.get('taskCompleted');
+      }
+      if (message != null) {
+        InlineFeedback.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
+      }
     } catch (_) {
       if (mounted && _runtimeActive) {
         InlineFeedback.of(context).showSnackBar(
@@ -332,6 +340,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       }
     } finally {
       _noticeOperations.remove(reminder.id);
+      if (_runtimeActive) setState(() {});
     }
   }
 
@@ -445,31 +454,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  void _clearAllNotices() {
+  Future<void> _clearAllNotices() async {
+    if (!_runtimeActive || _noticeOperations.isNotEmpty) return;
     final l10n = AppLocalizations.of(context);
-    ref.read(homeControllerProvider.notifier).clearError();
-    setState(() {
-      for (final reminder in _visibleNotices(
-        ref.read(remindersProvider),
-        DateTime.now(),
-      )) {
-        final phase = reminder.triggerTime!.isAfter(DateTime.now())
-            ? 'upcoming'
-            : 'due';
-        _dismissedNotices.add('$phase/${reminderOccurrenceKey(reminder)}');
+    final now = DateTime.now();
+    final visible = _visibleNotices(ref.read(remindersProvider), now);
+    setState(() => _noticeOperations.addAll(visible.map((r) => r.id)));
+    try {
+      final results = await ref
+          .read(remindersProvider.notifier)
+          .acknowledgeOccurrences(visible, now: now);
+      if (!mounted || !_runtimeActive) return;
+      ref.read(homeControllerProvider.notifier).clearError();
+      setState(() {
+        for (final reminder in visible) {
+          _dueNotices.remove(reminderOccurrenceKey(reminder));
+        }
+        _contextDigest = [];
+      });
+      final message = results.any((r) => r.nativeSyncFailed)
+          ? 'reminderNativeSyncFailed'
+          : results.any((r) => r.disposition == ReminderActionDisposition.stale)
+          ? 'reminderOccurrenceChanged'
+          : 'noticesCleared';
+      InlineFeedback.of(context).hideCurrentSnackBar();
+      InlineFeedback.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.get(message))));
+    } catch (_) {
+      if (mounted && _runtimeActive) {
+        InlineFeedback.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.get('reminderUpdateFailed'))),
+        );
       }
-      _dueNotices.clear();
-      _contextDigest = [];
-    });
-    InlineFeedback.of(context).hideCurrentSnackBar();
-    InlineFeedback.of(context).showSnackBar(
-      SnackBar(
-        duration: const Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        content: Text(l10n.get('noticesCleared')),
-      ),
-    );
+    } finally {
+      _noticeOperations.removeAll(visible.map((r) => r.id));
+      if (_runtimeActive) setState(() {});
+    }
   }
 
   void _showImageDialog(String filePath) {
@@ -1368,6 +1389,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     return ReminderNoticePanel(
                       reminders: _visibleNotices(reminders, now),
                       now: now,
+                      busyIds: _noticeOperations,
                       onDismiss: _dismissNotice,
                       onSnooze: (r) => _actOnNotice(r, snooze: true),
                       onComplete: (r) => _actOnNotice(r, snooze: false),
