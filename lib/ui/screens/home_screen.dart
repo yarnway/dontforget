@@ -29,7 +29,8 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with WidgetsBindingObserver {
   final _audioPlayer = AudioPlayer();
   Timer? _heartbeatTimer;
   StreamSubscription<Reminder>? _dueSubscription;
@@ -51,6 +52,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     // Listen to notification service broadcast stream
     _dueSubscription = NotificationService().onReminderDue.listen((reminder) {
@@ -82,6 +84,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
     _shortcutFocus.dispose();
     _heartbeatTimer?.cancel();
@@ -90,6 +93,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _suppressedSubscription?.cancel();
     _audioPlayer.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) {
+      // Desktop/mobile timers can pause while hidden or asleep. Reconcile from
+      // current task state instead of waiting for another timer/broadcast.
+      _checkDueReminders();
+      setState(() {});
+    }
   }
 
   void _checkDueReminders() {
@@ -159,7 +172,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       }
       return upcoming
           ? r.triggerTime!.difference(now) <= const Duration(minutes: 5)
-          : _dueNotices.containsKey(key);
+          : _dueNotices.containsKey(key) ||
+                now.difference(r.triggerTime!) <= const Duration(minutes: 15);
     }).toList()..sort((a, b) => a.triggerTime!.compareTo(b.triggerTime!));
   }
 

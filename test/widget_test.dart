@@ -325,4 +325,47 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     },
   );
+  testWidgets('due notice recovers a missed broadcast without restarting', (
+    tester,
+  ) async {
+    final task = Reminder(
+      id: 'missed-due-event',
+      taskTitle: 'First expiry recovery',
+      quadrantLevel: 3,
+      triggerTime: DateTime.now().add(const Duration(minutes: 2)),
+    );
+    await tester.runAsync(
+      () => container.read(remindersProvider.notifier).addReminder(task),
+    );
+    await tester.pumpWidget(
+      UncontrolledProviderScope(container: container, child: const MyApp()),
+    );
+    await tester.pump();
+    await tester.tap(find.byType(TextField));
+    // A restored/edited task can reach the page without a broadcast; the database
+    // remains authoritative even if a native timer/foreground callback was missed.
+    final due = task.copyWith(
+      triggerTime: DateTime.now().subtract(const Duration(seconds: 1)),
+    );
+    await tester.runAsync(
+      () => container.read(remindersProvider.notifier).updateReminder(due),
+    );
+    await tester.pump();
+    expect(find.byKey(const ValueKey('reminder-notice-panel')), findsOneWidget);
+    expect(find.text('标为已完成'), findsOneWidget);
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).focusNode!.hasFocus,
+      isTrue,
+    );
+    await tester.tap(find.text('我知道了'));
+    await tester.pump();
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(find.byKey(const ValueKey('reminder-notice-panel')), findsNothing);
+    await tester.runAsync(
+      () => container.read(remindersProvider.notifier).deleteReminder(task.id),
+    );
+    await tester.pumpWidget(const SizedBox());
+  });
 }
