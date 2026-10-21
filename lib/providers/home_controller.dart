@@ -20,8 +20,8 @@ class HomeState {
   final String? error;
 
   HomeState({
-    this.isLoading = false, 
-    this.isRecording = false, 
+    this.isLoading = false,
+    this.isRecording = false,
     this.pendingTasksCount = 0,
     this.error,
   });
@@ -29,8 +29,8 @@ class HomeState {
   bool get isProcessingInBackground => pendingTasksCount > 0;
 
   HomeState copyWith({
-    bool? isLoading, 
-    bool? isRecording, 
+    bool? isLoading,
+    bool? isRecording,
     int? pendingTasksCount,
     Object? error = _unchanged,
   }) {
@@ -43,9 +43,11 @@ class HomeState {
   }
 }
 
-final homeControllerProvider = StateNotifierProvider<HomeController, HomeState>((ref) {
-  return HomeController(ref);
-});
+final homeControllerProvider = StateNotifierProvider<HomeController, HomeState>(
+  (ref) {
+    return HomeController(ref);
+  },
+);
 
 class HomeController extends StateNotifier<HomeState> {
   final Ref _ref;
@@ -68,7 +70,9 @@ class HomeController extends StateNotifier<HomeState> {
     return savedPath;
   }
 
-  Future<MultiAgentExecutionResult> processWithMultiAgent(String complexGoal) async {
+  Future<MultiAgentExecutionResult> processWithMultiAgent(
+    String complexGoal,
+  ) async {
     final trimmed = complexGoal.trim();
     if (trimmed.isEmpty) {
       throw Exception('目标内容不能为空');
@@ -112,7 +116,10 @@ class HomeController extends StateNotifier<HomeState> {
 
     // 支持通过 /agent 或 /goal 指令触发三智能体微型协作流水线
     if (trimmed.startsWith('/agent ') || trimmed.startsWith('/goal ')) {
-      final goalContent = trimmed.replaceFirst(RegExp(r'^/(agent|goal)\s+'), '');
+      final goalContent = trimmed.replaceFirst(
+        RegExp(r'^/(agent|goal)\s+'),
+        '',
+      );
       if (goalContent.isNotEmpty) {
         try {
           await processWithMultiAgent(goalContent);
@@ -130,57 +137,57 @@ class HomeController extends StateNotifier<HomeState> {
       error: null,
     );
 
-    // Asynchronously execute in background
+    // Saving locally without an AI account is a supported mode, not an error.
     Future(() async {
-      final llmService = _ref.read(llmServiceProvider);
       try {
         final settings = _ref.read(settingsProvider);
-        final notificationService = _ref.read(notificationServiceProvider);
-        
-        final tasks = await llmService.extractTasks(trimmed, settings);
-        
-        if (tasks.isEmpty) {
-          // Fallback if model returns empty tasks
-          final fallbackReminder = Reminder(
-            id: const Uuid().v4(),
-            taskTitle: trimmed.length > 25 ? '${trimmed.substring(0, 25)}...' : trimmed,
-            taskSummary: trimmed,
-            quadrantLevel: 2,
-            urgencyLevel: 'General',
-            importanceLevel: 'Important',
-            triggerTime: DateTime.now().add(const Duration(hours: 2)),
+        if (settings.apiKey.trim().isEmpty) {
+          await _saveLocalText(trimmed);
+          return;
+        }
+        final llmService = _ref.read(llmServiceProvider);
+        List<Reminder> tasks;
+        try {
+          tasks = await llmService.extractTasks(trimmed, settings);
+        } catch (e) {
+          await _saveLocalText(trimmed);
+          state = state.copyWith(
+            error: '${llmService.formatErrorMessage(e)}\n已保存为本地事项，请在详情中设置提醒时间。',
           );
-          await _ref.read(remindersProvider.notifier).addReminder(fallbackReminder);
-          await notificationService.scheduleReminder(fallbackReminder);
+          return;
+        }
+        if (tasks.isEmpty) {
+          await _saveLocalText(trimmed);
         } else {
-          for (var task in tasks) {
+          for (final task in tasks) {
             await _ref.read(remindersProvider.notifier).addReminder(task);
-            await notificationService.scheduleReminder(task);
+            await _ref.read(notificationServiceProvider).scheduleReminder(task);
           }
         }
-      } catch (e) {
-        final friendlyMsg = llmService.formatErrorMessage(e);
-        // Zero data loss: Auto-save task as fallback with auto-generated reminder time
-        final fallbackReminder = Reminder(
-          id: const Uuid().v4(),
-          taskTitle: trimmed.length > 25 ? '${trimmed.substring(0, 25)}...' : trimmed,
-          taskSummary: trimmed,
-          quadrantLevel: 2,
-          urgencyLevel: 'General',
-          importanceLevel: 'Important',
-          triggerTime: DateTime.now().add(const Duration(hours: 2)),
-        );
-        await _ref.read(remindersProvider.notifier).addReminder(fallbackReminder);
-        await _ref.read(notificationServiceProvider).scheduleReminder(fallbackReminder);
-        
-        state = state.copyWith(
-          error: '$friendlyMsg\n(已为您直接创建任务，您可随时在卡片中编辑详情)',
-        );
+      } catch (_) {
+        // A storage failure must not be reported as a successful local fallback.
+        state = state.copyWith(error: '事项未能完整保存，请检查本地存储后重试。');
       } finally {
         final remaining = (state.pendingTasksCount - 1).clamp(0, 999);
         state = state.copyWith(pendingTasksCount: remaining);
       }
     });
+  }
+
+  Future<void> _saveLocalText(String text) async {
+    await _ref
+        .read(remindersProvider.notifier)
+        .addReminder(
+          Reminder(
+            id: const Uuid().v4(),
+            taskTitle: text.length > 25 ? '${text.substring(0, 25)}...' : text,
+            taskSummary: text,
+            quadrantLevel: 2,
+            urgencyLevel: 'General',
+            importanceLevel: 'Important',
+            // Parsing did not supply a time. Never invent a two-hour reminder.
+          ),
+        );
   }
 
   Future<bool> startRecording() async {
@@ -191,7 +198,8 @@ class HomeController extends StateNotifier<HomeState> {
         // been created yet. AVFoundation can accept start and then fail to
         // create the audio file asynchronously, leaving stop without a result.
         await tempDir.create(recursive: true);
-        final path = '${tempDir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
+        final path =
+            '${tempDir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
         await _audioRecorder.start(const RecordConfig(), path: path);
         state = state.copyWith(isRecording: true, error: null);
         return true;
@@ -235,7 +243,7 @@ class HomeController extends StateNotifier<HomeState> {
         final settings = _ref.read(settingsProvider);
         final llmService = _ref.read(llmServiceProvider);
         final notificationService = _ref.read(notificationServiceProvider);
-        
+
         final uuid = const Uuid().v4();
         final mediaRecord = MediaRecord(
           id: uuid,
@@ -257,7 +265,8 @@ class HomeController extends StateNotifier<HomeState> {
         } on AudioTranscriptionUnsupportedException catch (ex) {
           // Graceful fallback for models without whisper (like DeepSeek)
           final now = DateTime.now();
-          final nowStr = '${now.month}月${now.day}日 ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+          final nowStr =
+              '${now.month}月${now.day}日 ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
           final voiceReminder = Reminder(
             id: const Uuid().v4(),
             recordId: uuid,
@@ -266,11 +275,13 @@ class HomeController extends StateNotifier<HomeState> {
             quadrantLevel: 2,
             urgencyLevel: 'General',
             importanceLevel: 'Important',
-            triggerTime: now.add(const Duration(hours: 2)),
           );
-          await _ref.read(remindersProvider.notifier).addReminder(voiceReminder);
-          await notificationService.scheduleReminder(voiceReminder);
-          state = state.copyWith(error: '${ex.message} (已创建原声任务)');
+          await _ref
+              .read(remindersProvider.notifier)
+              .addReminder(voiceReminder);
+          if (settings.apiKey.trim().isNotEmpty) {
+            state = state.copyWith(error: '${ex.message} (已创建原声任务，请手动设置提醒时间)');
+          }
         }
       } catch (e) {
         final friendlyMsg = _ref.read(llmServiceProvider).formatErrorMessage(e);
@@ -296,7 +307,7 @@ class HomeController extends StateNotifier<HomeState> {
         final savedPath = await _saveFileToLocal(xFile.path);
         final bytes = await File(savedPath).readAsBytes();
         final base64Image = base64Encode(bytes);
-        
+
         final uuid = const Uuid().v4();
         final mediaRecord = MediaRecord(
           id: uuid,
@@ -309,8 +320,11 @@ class HomeController extends StateNotifier<HomeState> {
         final settings = _ref.read(settingsProvider);
         final llmService = _ref.read(llmServiceProvider);
         final notificationService = _ref.read(notificationServiceProvider);
-        
-        final tasks = await llmService.extractTasksFromImage(base64Image, settings);
+
+        final tasks = await llmService.extractTasksFromImage(
+          base64Image,
+          settings,
+        );
 
         for (var task in tasks) {
           final t = task.copyWith(recordId: uuid);
@@ -333,9 +347,7 @@ class HomeController extends StateNotifier<HomeState> {
 
   Future<void> processFile() async {
     try {
-      final file = await FilePicker.pickFile(
-        type: FileType.any,
-      );
+      final file = await FilePicker.pickFile(type: FileType.any);
       if (file == null || file.path == null) return;
 
       final originalPath = file.path!;
@@ -365,7 +377,8 @@ class HomeController extends StateNotifier<HomeState> {
             if (len < 500 * 1024) {
               fileContent = await f.readAsString();
             } else {
-              fileContent = '文档附件: $fileName (文件大小: ${(len / 1024).toStringAsFixed(1)} KB)';
+              fileContent =
+                  '文档附件: $fileName (文件大小: ${(len / 1024).toStringAsFixed(1)} KB)';
             }
           } catch (_) {
             fileContent = '文档附件: $fileName';
@@ -375,7 +388,11 @@ class HomeController extends StateNotifier<HomeState> {
           final llmService = _ref.read(llmServiceProvider);
           final notificationService = _ref.read(notificationServiceProvider);
 
-          final tasks = await llmService.extractTasksFromFile(fileName, fileContent, settings);
+          final tasks = await llmService.extractTasksFromFile(
+            fileName,
+            fileContent,
+            settings,
+          );
 
           for (var task in tasks) {
             final t = task.copyWith(recordId: uuid);
@@ -383,7 +400,9 @@ class HomeController extends StateNotifier<HomeState> {
             await notificationService.scheduleReminder(t);
           }
         } catch (e) {
-          final friendlyMsg = _ref.read(llmServiceProvider).formatErrorMessage(e);
+          final friendlyMsg = _ref
+              .read(llmServiceProvider)
+              .formatErrorMessage(e);
           state = state.copyWith(error: '文档解析提示: $friendlyMsg');
         } finally {
           final remaining = (state.pendingTasksCount - 1).clamp(0, 999);
@@ -422,7 +441,10 @@ class HomeController extends StateNotifier<HomeState> {
           final llmService = _ref.read(llmServiceProvider);
           final notificationService = _ref.read(notificationServiceProvider);
 
-          final tasks = await llmService.extractTasksFromVideo(xFile.name, settings);
+          final tasks = await llmService.extractTasksFromVideo(
+            xFile.name,
+            settings,
+          );
 
           for (var task in tasks) {
             final t = task.copyWith(recordId: uuid);
@@ -430,7 +452,9 @@ class HomeController extends StateNotifier<HomeState> {
             await notificationService.scheduleReminder(t);
           }
         } catch (e) {
-          final friendlyMsg = _ref.read(llmServiceProvider).formatErrorMessage(e);
+          final friendlyMsg = _ref
+              .read(llmServiceProvider)
+              .formatErrorMessage(e);
           state = state.copyWith(error: '视频处理提示: $friendlyMsg');
         } finally {
           final remaining = (state.pendingTasksCount - 1).clamp(0, 999);

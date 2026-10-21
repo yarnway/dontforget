@@ -1,3 +1,4 @@
+import '../../providers/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -74,7 +75,10 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar>
                 ),
                 Text(
                   l10n.get('uploadMaterial'),
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -155,7 +159,10 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar>
               const SizedBox(height: 6),
               Text(
                 label,
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
@@ -168,6 +175,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final homeState = ref.watch(homeControllerProvider);
+    final isLocalMode = ref.watch(
+      settingsProvider.select((s) => s.apiKey.trim().isEmpty),
+    );
     final isRecording = homeState.isRecording || _isLongPressRecording;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -177,7 +187,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar>
         margin: const EdgeInsets.fromLTRB(10, 0, 10, 8),
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         decoration: BoxDecoration(
-          color: isDark ? Colors.black.withValues(alpha: 0.35) : Colors.white.withValues(alpha: 0.85),
+          color: isDark
+              ? Colors.black.withValues(alpha: 0.35)
+              : Colors.white.withValues(alpha: 0.85),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isRecording
@@ -207,22 +219,30 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar>
                     boxShadow: isRecording
                         ? [
                             BoxShadow(
-                              color: Colors.red.withValues(alpha: 0.4 * _animationController.value),
+                              color: Colors.red.withValues(
+                                alpha: 0.4 * _animationController.value,
+                              ),
                               blurRadius: 8 * _animationController.value,
                               spreadRadius: 2 * _animationController.value,
-                            )
+                            ),
                           ]
                         : [],
                   ),
                   child: IconButton(
                     icon: Icon(
-                      isRecording ? Icons.stop_circle_rounded : Icons.mic_none_rounded,
+                      isRecording
+                          ? Icons.stop_circle_rounded
+                          : Icons.mic_none_rounded,
                       color: isRecording ? Colors.red : Colors.grey.shade600,
                       size: 22,
                     ),
                     splashRadius: 18,
-                    tooltip: isRecording ? l10n.get('recordingClickStop') : l10n.get('inputHint'),
-                    onPressed: () => ref.read(homeControllerProvider.notifier).toggleRecording(),
+                    tooltip: isRecording
+                        ? l10n.get('recordingClickStop')
+                        : l10n.get('inputHint'),
+                    onPressed: () => ref
+                        .read(homeControllerProvider.notifier)
+                        .toggleRecording(),
                   ),
                 );
               },
@@ -243,16 +263,22 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar>
                   _focusNode.unfocus();
                   HapticFeedback.heavyImpact();
                   setState(() => _isLongPressRecording = true);
-                  await ref.read(homeControllerProvider.notifier).startRecording();
+                  await ref
+                      .read(homeControllerProvider.notifier)
+                      .startRecording();
                 },
                 onLongPressEnd: (_) async {
                   HapticFeedback.mediumImpact();
                   setState(() => _isLongPressRecording = false);
-                  await ref.read(homeControllerProvider.notifier).stopRecordingAndProcess();
+                  await ref
+                      .read(homeControllerProvider.notifier)
+                      .stopRecordingAndProcess();
                 },
                 onLongPressCancel: () async {
                   setState(() => _isLongPressRecording = false);
-                  await ref.read(homeControllerProvider.notifier).stopRecordingAndProcess();
+                  await ref
+                      .read(homeControllerProvider.notifier)
+                      .stopRecordingAndProcess();
                 },
                 child: isRecording
                     ? Row(
@@ -287,11 +313,20 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar>
                         focusNode: _focusNode,
                         style: const TextStyle(fontSize: 13),
                         decoration: InputDecoration(
-                          hintText: l10n.get('inputHint'),
-                          hintStyle: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                          hintText: l10n.get(
+                            isLocalMode ? 'localInputHint' : 'inputHint',
+                          ),
+                          hintMaxLines: 2,
+                          hintStyle: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade500,
+                          ),
                           border: InputBorder.none,
                           isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 8,
+                          ),
                         ),
                         onSubmitted: (_) => _submitText(),
                       ),
@@ -306,7 +341,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar>
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(4),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.4),
                     width: 1,
                   ),
                 ),
@@ -345,7 +382,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar>
                   backgroundColor: Theme.of(context).colorScheme.primary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.all(5),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
                 ),
                 tooltip: l10n.get('send'),
                 onPressed: _submitText,

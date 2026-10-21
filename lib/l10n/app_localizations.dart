@@ -10,6 +10,7 @@ class AppLocalizations {
 
   static const Map<String, Map<String, String>> _localizedValues = {
     'en': {
+      'localInputHint': 'Local note · set reminder time in details',
       'upcomingReminder': 'Due soon',
       'upcomingReminderHint': 'Due within 5 minutes · shown here while the app is open',
       'reminderUpdateFailed': 'Could not update this reminder. Please try again.',
@@ -270,6 +271,7 @@ class AppLocalizations {
       'viewInGraph': 'View in Graph',
     },
     'zh': {
+      'localInputHint': '本地记录 · 提醒时间请在详情设置',
       'upcomingReminder': '即将到期',
       'upcomingReminderHint': '5 分钟内到期 · 应用打开时在此提前提示',
       'reminderUpdateFailed': '提醒更新失败，请重试。',
@@ -530,6 +532,7 @@ class AppLocalizations {
       'viewInGraph': '在图谱中定位',
     },
     'ja': {
+      'localInputHint': 'ローカル記録 · 通知時刻は詳細で設定',
       'upcomingReminder': 'まもなく期限',
       'upcomingReminderHint': '5 分以内に期限 · アプリ使用中にここで事前表示',
       'reminderUpdateFailed': 'リマインダーを更新できませんでした。再試行してください。',

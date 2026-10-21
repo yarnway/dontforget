@@ -197,9 +197,69 @@ void main() {
       final saved = File(media.single['content_or_path'] as String);
       expect(saved.path, startsWith('${directory.path}/missing/documents/'));
       expect(await saved.readAsBytes(), [1, 5, 1, 2]);
-      expect(notifications.scheduled, hasLength(1));
+      expect(notifications.scheduled, isEmpty);
+      expect(reminders.single['trigger_time'], isNull);
       expect(container.read(homeControllerProvider).isRecording, isFalse);
-      expect(container.read(homeControllerProvider).error, contains('已创建原声任务'));
+      expect(container.read(homeControllerProvider).error, isNull);
+    },
+  );
+
+  test(
+    'local text entry is quiet and does not invent a reminder time',
+    () async {
+      final controller = container.read(homeControllerProvider.notifier);
+      final errors = <String>[];
+      final finished = Completer<void>();
+      final subscription = container.listen(homeControllerProvider, (
+        before,
+        after,
+      ) {
+        if (after.error != null) errors.add(after.error!);
+        if ((before?.pendingTasksCount ?? 0) > 0 &&
+            after.pendingTasksCount == 0 &&
+            !finished.isCompleted) {
+          finished.complete();
+        }
+      });
+      await controller.processText('提醒我下午一点半开会');
+      await finished.future.timeout(const Duration(seconds: 5));
+      subscription.close();
+      final db = await database.database;
+      final rows = await db.query('Reminders');
+      expect(rows, hasLength(1));
+      expect(rows.single['task_summary'], '提醒我下午一点半开会');
+      expect(rows.single['trigger_time'], isNull);
+      expect(errors, isEmpty);
+      expect(notifications.scheduled, isEmpty);
+    },
+  );
+
+  test(
+    'local text write failure remains visible and is not retried as success',
+    () async {
+      final db = await database.database;
+      await db.execute(
+        "CREATE TRIGGER fail_save BEFORE INSERT ON Reminders BEGIN SELECT RAISE(ABORT, 'disk failure'); END",
+      );
+      final finished = Completer<void>();
+      final subscription = container.listen(homeControllerProvider, (
+        before,
+        after,
+      ) {
+        if ((before?.pendingTasksCount ?? 0) > 0 &&
+            after.pendingTasksCount == 0 &&
+            !finished.isCompleted) {
+          finished.complete();
+        }
+      });
+      await container
+          .read(homeControllerProvider.notifier)
+          .processText('保存失败样本');
+      await finished.future.timeout(const Duration(seconds: 5));
+      subscription.close();
+      expect(await db.query('Reminders'), isEmpty);
+      expect(container.read(homeControllerProvider).error, contains('未能完整保存'));
+      expect(notifications.scheduled, isEmpty);
     },
   );
 
