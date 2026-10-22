@@ -1,0 +1,100 @@
+{
+  "source_revision": "708586a9d167d0951d32290be368536278a54312",
+  "scope": "Flutter test JIT diagnostic; real SQL/provider/journal with recording OS transport; not native profile or OS delivery",
+  "fixture_root": "/var/folders/88/bthgt42573qb11t30vh_z8780000gn/T/dontforget-batch-scaling-KbWPVh",
+  "results": [
+    {
+      "tasks": 100,
+      "runs": [
+        {
+          "mode": "new_journal",
+          "elapsed_us": 293444,
+          "scope": "Full provider.ready including real SQL, urgency, journal, ID allocation and timers; recording OS transport, no OS delivery",
+          "tasks": 100,
+          "journal_entries": 100,
+          "native_schedule_calls": 100,
+          "native_cancel_calls": 100,
+          "native_reset_calls": 1,
+          "journal_atomic_replacements": 87,
+          "journal_bytes_written": 1077717,
+          "journal_successful_write_us": 120355
+        },
+        {
+          "mode": "reopen_submitted_journal",
+          "elapsed_us": 202132,
+          "scope": "Full provider.ready including real SQL, urgency, journal, ID allocation and timers; recording OS transport, no OS delivery",
+          "tasks": 100,
+          "journal_entries": 100,
+          "native_schedule_calls": 100,
+          "native_cancel_calls": 100,
+          "native_reset_calls": 0,
+          "journal_atomic_replacements": 82,
+          "journal_bytes_written": 1667641,
+          "journal_successful_write_us": 96514
+        }
+      ]
+    },
+    {
+      "tasks": 1000,
+      "runs": [
+        {
+          "mode": "new_journal",
+          "elapsed_us": 1790152,
+          "scope": "Full provider.ready including real SQL, urgency, journal, ID allocation and timers; recording OS transport, no OS delivery",
+          "tasks": 1000,
+          "journal_entries": 1000,
+          "native_schedule_calls": 1000,
+          "native_cancel_calls": 1000,
+          "native_reset_calls": 1,
+          "journal_atomic_replacements": 763,
+          "journal_bytes_written": 79104343,
+          "journal_successful_write_us": 965655
+        },
+        {
+          "mode": "reopen_submitted_journal",
+          "elapsed_us": 2171069,
+          "scope": "Full provider.ready including real SQL, urgency, journal, ID allocation and timers; recording OS transport, no OS delivery",
+          "tasks": 1000,
+          "journal_entries": 1000,
+          "native_schedule_calls": 1000,
+          "native_cancel_calls": 1000,
+          "native_reset_calls": 0,
+          "journal_atomic_replacements": 781,
+          "journal_bytes_written": 160303660,
+          "journal_successful_write_us": 1218787
+        }
+      ]
+    },
+    {
+      "tasks": 10000,
+      "runs": [
+        {
+          "mode": "new_journal",
+          "elapsed_us": 44255833,
+          "scope": "Full provider.ready including real SQL, urgency, journal, ID allocation and timers; recording OS transport, no OS delivery",
+          "tasks": 10000,
+          "journal_entries": 10000,
+          "native_schedule_calls": 10000,
+          "native_cancel_calls": 10000,
+          "native_reset_calls": 1,
+          "journal_atomic_replacements": 6916,
+          "journal_bytes_written": 6870186796,
+          "journal_successful_write_us": 27511497
+        },
+        {
+          "mode": "reopen_submitted_journal",
+          "elapsed_us": 68501518,
+          "scope": "Full provider.ready including real SQL, urgency, journal, ID allocation and timers; recording OS transport, no OS delivery",
+          "tasks": 10000,
+          "journal_entries": 10000,
+          "native_schedule_calls": 10000,
+          "native_cancel_calls": 10000,
+          "native_reset_calls": 0,
+          "journal_atomic_replacements": 6078,
+          "journal_bytes_written": 12542101833,
+          "journal_successful_write_us": 40108528
+        }
+      ]
+    }
+  ]
+}

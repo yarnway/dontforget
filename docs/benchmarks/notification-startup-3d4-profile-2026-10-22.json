@@ -1,0 +1,1198 @@
+{
+  "scope": "Synthetic macOS profile harness; storage startup excludes reconciliation; full notification startup uses a recording OS transport; frames are real engine timings. Foreground validity is recorded per segment, never inferred from completion.",
+  "source_revision": "708586a9d167d0951d32290be368536278a54312",
+  "fixture_version": 2,
+  "notification_startup_included": true,
+  "fixture_source": "Exact task rows from KaPI1r baseline; notification-only copy uses fixed 2099 trigger",
+  "segments": [
+    {
+      "label": "100 storage startup",
+      "wall_us": 25918,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "100 backup",
+      "wall_us": 44814,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "100 board 375.0",
+      "wall_us": 6535513,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "100 board 768.0",
+      "wall_us": 6548845,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "100 board 1440.0",
+      "wall_us": 6553409,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "100 full notification startup",
+      "wall_us": 257973,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "1000 storage startup",
+      "wall_us": 33059,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "1000 backup",
+      "wall_us": 161585,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "1000 board 375.0",
+      "wall_us": 6527416,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "1000 board 768.0",
+      "wall_us": 6573263,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "1000 board 1440.0",
+      "wall_us": 6560225,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "1000 full notification startup",
+      "wall_us": 3102269,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "10000 storage startup",
+      "wall_us": 361004,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "10000 backup",
+      "wall_us": 1506979,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "10000 board 375.0",
+      "wall_us": 6526668,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "10000 board 768.0",
+      "wall_us": 6594176,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "10000 board 1440.0",
+      "wall_us": 6565459,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "10000 full notification startup",
+      "wall_us": 128817352,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    }
+  ],
+  "window_events": [],
+  "build_mode": "profile",
+  "phase": "complete",
+  "recorded_at": "2026-10-22T06:05:04.717999Z",
+  "dart": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+  "os": "Version 27.0.1 (Build 26A434)",
+  "harness_entry_to_first_raster_us": 160364,
+  "errors": [],
+  "results": [
+    {
+      "tasks": 100,
+      "task_rows_sha256": "9f447e6f64fe90312b0631d8e2969ecd0b94956d7c91eea1d854fde001608488",
+      "storage_startup": {
+        "samples": 5,
+        "p50_us": 2076,
+        "p95_us": 2112,
+        "max_us": 2112
+      },
+      "consistent_backup": {
+        "samples": 5,
+        "p50_us": 5179,
+        "p95_us": 7195,
+        "max_us": 7195
+      },
+      "search_index_build_us": 53,
+      "indexed_search": {
+        "samples": 50,
+        "p50_us": 22,
+        "p95_us": 26,
+        "max_us": 30
+      },
+      "backup_json_bytes": 72665,
+      "backup_mirror_bytes": 49152,
+      "views": [
+        {
+          "requested_width": 375.0,
+          "actual_width": 375.0,
+          "height": 727.0,
+          "device_pixel_ratio": 2.0,
+          "mounted_cards": 3,
+          "install_to_frame_build": {
+            "samples": 5,
+            "p50_us": 15479,
+            "p95_us": 19347,
+            "max_us": 19347
+          },
+          "first_board_build": {
+            "samples": 5,
+            "p50_us": 5959,
+            "p95_us": 9953,
+            "max_us": 9953
+          },
+          "first_board_raster": {
+            "samples": 5,
+            "p50_us": 862,
+            "p95_us": 982,
+            "max_us": 982
+          },
+          "first_board_vsync_wait": {
+            "samples": 5,
+            "p50_us": 95,
+            "p95_us": 106,
+            "max_us": 106
+          },
+          "first_board_frame_total": {
+            "samples": 5,
+            "p50_us": 7083,
+            "p95_us": 10920,
+            "max_us": 10920
+          },
+          "scroll_build": {
+            "samples": 481,
+            "p50_us": 229,
+            "p95_us": 1132,
+            "max_us": 3256
+          },
+          "scroll_raster": {
+            "samples": 481,
+            "p50_us": 736,
+            "p95_us": 1107,
+            "max_us": 1501
+          },
+          "scroll_wall_us": 4008322,
+          "scroll_vsync_wait": {
+            "samples": 481,
+            "p50_us": 134,
+            "p95_us": 158,
+            "max_us": 641
+          },
+          "scroll_build_to_raster_gap": {
+            "samples": 481,
+            "p50_us": 44,
+            "p95_us": 59,
+            "max_us": 355
+          },
+          "scroll_build_cadence": {
+            "samples": 480,
+            "p50_us": 8334,
+            "p95_us": 8415,
+            "max_us": 8857
+          },
+          "scroll_total": {
+            "samples": 481,
+            "p50_us": 1141,
+            "p95_us": 2062,
+            "max_us": 4135
+          },
+          "build_over_16_67ms": 0,
+          "raster_over_16_67ms": 0
+        },
+        {
+          "requested_width": 768.0,
+          "actual_width": 768.0,
+          "height": 775.0,
+          "device_pixel_ratio": 2.0,
+          "mounted_cards": 8,
+          "install_to_frame_build": {
+            "samples": 5,
+            "p50_us": 16467,
+            "p95_us": 22404,
+            "max_us": 22404
+          },
+          "first_board_build": {
+            "samples": 5,
+            "p50_us": 9856,
+            "p95_us": 11109,
+            "max_us": 11109
+          },
+          "first_board_raster": {
+            "samples": 5,
+            "p50_us": 565,
+            "p95_us": 840,
+            "max_us": 840
+          },
+          "first_board_vsync_wait": {
+            "samples": 5,
+            "p50_us": 125,
+            "p95_us": 200,
+            "max_us": 200
+          },
+          "first_board_frame_total": {
+            "samples": 5,
+            "p50_us": 10950,
+            "p95_us": 11896,
+            "max_us": 11896
+          },
+          "scroll_build": {
+            "samples": 481,
+            "p50_us": 272,
+            "p95_us": 1285,
+            "max_us": 2701
+          },
+          "scroll_raster": {
+            "samples": 481,
+            "p50_us": 1005,
+            "p95_us": 1401,
+            "max_us": 1882
+          },
+          "scroll_wall_us": 4008260,
+          "scroll_vsync_wait": {
+            "samples": 481,
+            "p50_us": 139,
+            "p95_us": 158,
+            "max_us": 252
+          },
+          "scroll_build_to_raster_gap": {
+            "samples": 481,
+            "p50_us": 46,
+            "p95_us": 65,
+            "max_us": 130
+          },
+          "scroll_build_cadence": {
+            "samples": 480,
+            "p50_us": 8333,
+            "p95_us": 8416,
+            "max_us": 8445
+          },
+          "scroll_total": {
+            "samples": 481,
+            "p50_us": 1464,
+            "p95_us": 2441,
+            "max_us": 3830
+          },
+          "build_over_16_67ms": 0,
+          "raster_over_16_67ms": 0
+        },
+        {
+          "requested_width": 1440.0,
+          "actual_width": 1440.0,
+          "height": 791.0,
+          "device_pixel_ratio": 2.0,
+          "mounted_cards": 8,
+          "install_to_frame_build": {
+            "samples": 5,
+            "p50_us": 16072,
+            "p95_us": 20447,
+            "max_us": 20447
+          },
+          "first_board_build": {
+            "samples": 5,
+            "p50_us": 10619,
+            "p95_us": 16258,
+            "max_us": 16258
+          },
+          "first_board_raster": {
+            "samples": 5,
+            "p50_us": 499,
+            "p95_us": 529,
+            "max_us": 529
+          },
+          "first_board_vsync_wait": {
+            "samples": 5,
+            "p50_us": 161,
+            "p95_us": 205,
+            "max_us": 205
+          },
+          "first_board_frame_total": {
+            "samples": 5,
+            "p50_us": 11333,
+            "p95_us": 17043,
+            "max_us": 17043
+          },
+          "scroll_build": {
+            "samples": 481,
+            "p50_us": 296,
+            "p95_us": 1179,
+            "max_us": 2841
+          },
+          "scroll_raster": {
+            "samples": 481,
+            "p50_us": 1082,
+            "p95_us": 1495,
+            "max_us": 1876
+          },
+          "scroll_wall_us": 4008203,
+          "scroll_vsync_wait": {
+            "samples": 481,
+            "p50_us": 143,
+            "p95_us": 166,
+            "max_us": 954
+          },
+          "scroll_build_to_raster_gap": {
+            "samples": 481,
+            "p50_us": 47,
+            "p95_us": 65,
+            "max_us": 248
+          },
+          "scroll_build_cadence": {
+            "samples": 480,
+            "p50_us": 8333,
+            "p95_us": 8361,
+            "max_us": 9146
+          },
+          "scroll_total": {
+            "samples": 481,
+            "p50_us": 1600,
+            "p95_us": 2379,
+            "max_us": 4305
+          },
+          "build_over_16_67ms": 0,
+          "raster_over_16_67ms": 0
+        }
+      ],
+      "process_rss_bytes_after_size": 204701696,
+      "notification_task_rows_sha256": "24ea095ad0281024ec57fa270ce7c5874aacf929a8137f306fa7cacde35b1024",
+      "full_notification_startup": [
+        {
+          "mode": "new_journal",
+          "elapsed_us": 125981,
+          "scope": "Full provider.ready including real SQL, urgency, journal, ID allocation and timers; recording OS transport, no OS delivery",
+          "tasks": 100,
+          "journal_entries": 100,
+          "native_schedule_calls": 100,
+          "native_cancel_calls": 100,
+          "native_reset_calls": 1,
+          "journal_atomic_replacements": 78,
+          "journal_bytes_written": 965801,
+          "journal_successful_write_us": 71958
+        },
+        {
+          "mode": "reopen_submitted_journal",
+          "elapsed_us": 124331,
+          "scope": "Full provider.ready including real SQL, urgency, journal, ID allocation and timers; recording OS transport, no OS delivery",
+          "tasks": 100,
+          "journal_entries": 100,
+          "native_schedule_calls": 100,
+          "native_cancel_calls": 100,
+          "native_reset_calls": 0,
+          "journal_atomic_replacements": 73,
+          "journal_bytes_written": 1484927,
+          "journal_successful_write_us": 81558
+        }
+      ]
+    },
+    {
+      "tasks": 1000,
+      "task_rows_sha256": "de99e7ca45aa063708717c41f711b506c2a3ca5c11eb8c0092919797cd7e59e0",
+      "storage_startup": {
+        "samples": 5,
+        "p50_us": 5412,
+        "p95_us": 5684,
+        "max_us": 5684
+      },
+      "consistent_backup": {
+        "samples": 5,
+        "p50_us": 16453,
+        "p95_us": 16907,
+        "max_us": 16907
+      },
+      "search_index_build_us": 387,
+      "indexed_search": {
+        "samples": 50,
+        "p50_us": 225,
+        "p95_us": 248,
+        "max_us": 252
+      },
+      "backup_json_bytes": 729665,
+      "backup_mirror_bytes": 266240,
+      "views": [
+        {
+          "requested_width": 375.0,
+          "actual_width": 375.0,
+          "height": 727.0,
+          "device_pixel_ratio": 2.0,
+          "mounted_cards": 3,
+          "install_to_frame_build": {
+            "samples": 5,
+            "p50_us": 14211,
+            "p95_us": 16055,
+            "max_us": 16055
+          },
+          "first_board_build": {
+            "samples": 5,
+            "p50_us": 6085,
+            "p95_us": 6313,
+            "max_us": 6313
+          },
+          "first_board_raster": {
+            "samples": 5,
+            "p50_us": 1031,
+            "p95_us": 1102,
+            "max_us": 1102
+          },
+          "first_board_vsync_wait": {
+            "samples": 5,
+            "p50_us": 110,
+            "p95_us": 158,
+            "max_us": 158
+          },
+          "first_board_frame_total": {
+            "samples": 5,
+            "p50_us": 7359,
+            "p95_us": 7474,
+            "max_us": 7474
+          },
+          "scroll_build": {
+            "samples": 481,
+            "p50_us": 233,
+            "p95_us": 1114,
+            "max_us": 3478
+          },
+          "scroll_raster": {
+            "samples": 481,
+            "p50_us": 732,
+            "p95_us": 1057,
+            "max_us": 1259
+          },
+          "scroll_wall_us": 4008394,
+          "scroll_vsync_wait": {
+            "samples": 481,
+            "p50_us": 137,
+            "p95_us": 159,
+            "max_us": 333
+          },
+          "scroll_build_to_raster_gap": {
+            "samples": 481,
+            "p50_us": 44,
+            "p95_us": 61,
+            "max_us": 87
+          },
+          "scroll_build_cadence": {
+            "samples": 480,
+            "p50_us": 8333,
+            "p95_us": 8418,
+            "max_us": 8513
+          },
+          "scroll_total": {
+            "samples": 481,
+            "p50_us": 1154,
+            "p95_us": 1818,
+            "max_us": 4409
+          },
+          "build_over_16_67ms": 0,
+          "raster_over_16_67ms": 0
+        },
+        {
+          "requested_width": 768.0,
+          "actual_width": 768.0,
+          "height": 775.0,
+          "device_pixel_ratio": 2.0,
+          "mounted_cards": 8,
+          "install_to_frame_build": {
+            "samples": 5,
+            "p50_us": 21741,
+            "p95_us": 23732,
+            "max_us": 23732
+          },
+          "first_board_build": {
+            "samples": 5,
+            "p50_us": 9299,
+            "p95_us": 12544,
+            "max_us": 12544
+          },
+          "first_board_raster": {
+            "samples": 5,
+            "p50_us": 564,
+            "p95_us": 857,
+            "max_us": 857
+          },
+          "first_board_vsync_wait": {
+            "samples": 5,
+            "p50_us": 87,
+            "p95_us": 210,
+            "max_us": 210
+          },
+          "first_board_frame_total": {
+            "samples": 5,
+            "p50_us": 10063,
+            "p95_us": 13108,
+            "max_us": 13108
+          },
+          "scroll_build": {
+            "samples": 481,
+            "p50_us": 276,
+            "p95_us": 1084,
+            "max_us": 2560
+          },
+          "scroll_raster": {
+            "samples": 481,
+            "p50_us": 1009,
+            "p95_us": 1335,
+            "max_us": 1876
+          },
+          "scroll_wall_us": 4008114,
+          "scroll_vsync_wait": {
+            "samples": 481,
+            "p50_us": 143,
+            "p95_us": 162,
+            "max_us": 414
+          },
+          "scroll_build_to_raster_gap": {
+            "samples": 481,
+            "p50_us": 47,
+            "p95_us": 66,
+            "max_us": 144
+          },
+          "scroll_build_cadence": {
+            "samples": 480,
+            "p50_us": 8333,
+            "p95_us": 8358,
+            "max_us": 8592
+          },
+          "scroll_total": {
+            "samples": 481,
+            "p50_us": 1495,
+            "p95_us": 2551,
+            "max_us": 3953
+          },
+          "build_over_16_67ms": 0,
+          "raster_over_16_67ms": 0
+        },
+        {
+          "requested_width": 1440.0,
+          "actual_width": 1440.0,
+          "height": 791.0,
+          "device_pixel_ratio": 2.0,
+          "mounted_cards": 8,
+          "install_to_frame_build": {
+            "samples": 5,
+            "p50_us": 17546,
+            "p95_us": 18654,
+            "max_us": 18654
+          },
+          "first_board_build": {
+            "samples": 5,
+            "p50_us": 10768,
+            "p95_us": 13773,
+            "max_us": 13773
+          },
+          "first_board_raster": {
+            "samples": 5,
+            "p50_us": 488,
+            "p95_us": 772,
+            "max_us": 772
+          },
+          "first_board_vsync_wait": {
+            "samples": 5,
+            "p50_us": 126,
+            "p95_us": 191,
+            "max_us": 191
+          },
+          "first_board_frame_total": {
+            "samples": 5,
+            "p50_us": 11326,
+            "p95_us": 14483,
+            "max_us": 14483
+          },
+          "scroll_build": {
+            "samples": 481,
+            "p50_us": 281,
+            "p95_us": 1439,
+            "max_us": 2940
+          },
+          "scroll_raster": {
+            "samples": 481,
+            "p50_us": 1051,
+            "p95_us": 1478,
+            "max_us": 1787
+          },
+          "scroll_wall_us": 4008130,
+          "scroll_vsync_wait": {
+            "samples": 481,
+            "p50_us": 133,
+            "p95_us": 163,
+            "max_us": 232
+          },
+          "scroll_build_to_raster_gap": {
+            "samples": 481,
+            "p50_us": 46,
+            "p95_us": 62,
+            "max_us": 122
+          },
+          "scroll_build_cadence": {
+            "samples": 480,
+            "p50_us": 8333,
+            "p95_us": 8420,
+            "max_us": 8470
+          },
+          "scroll_total": {
+            "samples": 481,
+            "p50_us": 1529,
+            "p95_us": 2573,
+            "max_us": 3993
+          },
+          "build_over_16_67ms": 0,
+          "raster_over_16_67ms": 0
+        }
+      ],
+      "process_rss_bytes_after_size": 211271680,
+      "notification_task_rows_sha256": "7218b32759ce3a4d6215d9d0108177ddae2ff372a509fe14a5fba00169024910",
+      "full_notification_startup": [
+        {
+          "mode": "new_journal",
+          "elapsed_us": 1326569,
+          "scope": "Full provider.ready including real SQL, urgency, journal, ID allocation and timers; recording OS transport, no OS delivery",
+          "tasks": 1000,
+          "journal_entries": 1000,
+          "native_schedule_calls": 1000,
+          "native_cancel_calls": 1000,
+          "native_reset_calls": 1,
+          "journal_atomic_replacements": 654,
+          "journal_bytes_written": 67468897,
+          "journal_successful_write_us": 862608
+        },
+        {
+          "mode": "reopen_submitted_journal",
+          "elapsed_us": 1761197,
+          "scope": "Full provider.ready including real SQL, urgency, journal, ID allocation and timers; recording OS transport, no OS delivery",
+          "tasks": 1000,
+          "journal_entries": 1000,
+          "native_schedule_calls": 1000,
+          "native_cancel_calls": 1000,
+          "native_reset_calls": 0,
+          "journal_atomic_replacements": 652,
+          "journal_bytes_written": 133823115,
+          "journal_successful_write_us": 1080218
+        }
+      ]
+    },
+    {
+      "tasks": 10000,
+      "task_rows_sha256": "400c2386e425cafaffbbe8e8e6ed76e136ae94cd19f94bb745b8560c854d66d2",
+      "storage_startup": {
+        "samples": 5,
+        "p50_us": 60000,
+        "p95_us": 67519,
+        "max_us": 67519
+      },
+      "consistent_backup": {
+        "samples": 5,
+        "p50_us": 143809,
+        "p95_us": 144988,
+        "max_us": 144988
+      },
+      "search_index_build_us": 4566,
+      "indexed_search": {
+        "samples": 50,
+        "p50_us": 2160,
+        "p95_us": 2377,
+        "max_us": 4009
+      },
+      "backup_json_bytes": 7344665,
+      "backup_mirror_bytes": 2539520,
+      "views": [
+        {
+          "requested_width": 375.0,
+          "actual_width": 375.0,
+          "height": 727.0,
+          "device_pixel_ratio": 2.0,
+          "mounted_cards": 3,
+          "install_to_frame_build": {
+            "samples": 5,
+            "p50_us": 11366,
+            "p95_us": 20342,
+            "max_us": 20342
+          },
+          "first_board_build": {
+            "samples": 5,
+            "p50_us": 7656,
+            "p95_us": 7837,
+            "max_us": 7837
+          },
+          "first_board_raster": {
+            "samples": 5,
+            "p50_us": 926,
+            "p95_us": 1048,
+            "max_us": 1048
+          },
+          "first_board_vsync_wait": {
+            "samples": 5,
+            "p50_us": 132,
+            "p95_us": 145,
+            "max_us": 145
+          },
+          "first_board_frame_total": {
+            "samples": 5,
+            "p50_us": 8799,
+            "p95_us": 9034,
+            "max_us": 9034
+          },
+          "scroll_build": {
+            "samples": 481,
+            "p50_us": 250,
+            "p95_us": 1303,
+            "max_us": 2570
+          },
+          "scroll_raster": {
+            "samples": 481,
+            "p50_us": 773,
+            "p95_us": 1064,
+            "max_us": 1444
+          },
+          "scroll_wall_us": 4008424,
+          "scroll_vsync_wait": {
+            "samples": 481,
+            "p50_us": 140,
+            "p95_us": 159,
+            "max_us": 1060
+          },
+          "scroll_build_to_raster_gap": {
+            "samples": 481,
+            "p50_us": 45,
+            "p95_us": 57,
+            "max_us": 477
+          },
+          "scroll_build_cadence": {
+            "samples": 480,
+            "p50_us": 8332,
+            "p95_us": 8359,
+            "max_us": 9281
+          },
+          "scroll_total": {
+            "samples": 481,
+            "p50_us": 1218,
+            "p95_us": 2102,
+            "max_us": 3595
+          },
+          "build_over_16_67ms": 0,
+          "raster_over_16_67ms": 0
+        },
+        {
+          "requested_width": 768.0,
+          "actual_width": 768.0,
+          "height": 775.0,
+          "device_pixel_ratio": 2.0,
+          "mounted_cards": 8,
+          "install_to_frame_build": {
+            "samples": 5,
+            "p50_us": 24256,
+            "p95_us": 24560,
+            "max_us": 24560
+          },
+          "first_board_build": {
+            "samples": 5,
+            "p50_us": 12065,
+            "p95_us": 15557,
+            "max_us": 15557
+          },
+          "first_board_raster": {
+            "samples": 5,
+            "p50_us": 523,
+            "p95_us": 762,
+            "max_us": 762
+          },
+          "first_board_vsync_wait": {
+            "samples": 5,
+            "p50_us": 106,
+            "p95_us": 116,
+            "max_us": 116
+          },
+          "first_board_frame_total": {
+            "samples": 5,
+            "p50_us": 12845,
+            "p95_us": 16220,
+            "max_us": 16220
+          },
+          "scroll_build": {
+            "samples": 481,
+            "p50_us": 269,
+            "p95_us": 1023,
+            "max_us": 3104
+          },
+          "scroll_raster": {
+            "samples": 481,
+            "p50_us": 995,
+            "p95_us": 1377,
+            "max_us": 1751
+          },
+          "scroll_wall_us": 4008190,
+          "scroll_vsync_wait": {
+            "samples": 481,
+            "p50_us": 139,
+            "p95_us": 158,
+            "max_us": 1795
+          },
+          "scroll_build_to_raster_gap": {
+            "samples": 481,
+            "p50_us": 46,
+            "p95_us": 67,
+            "max_us": 431
+          },
+          "scroll_build_cadence": {
+            "samples": 480,
+            "p50_us": 8332,
+            "p95_us": 8418,
+            "max_us": 9938
+          },
+          "scroll_total": {
+            "samples": 481,
+            "p50_us": 1459,
+            "p95_us": 2394,
+            "max_us": 4277
+          },
+          "build_over_16_67ms": 0,
+          "raster_over_16_67ms": 0
+        },
+        {
+          "requested_width": 1440.0,
+          "actual_width": 1440.0,
+          "height": 791.0,
+          "device_pixel_ratio": 2.0,
+          "mounted_cards": 8,
+          "install_to_frame_build": {
+            "samples": 5,
+            "p50_us": 16905,
+            "p95_us": 21309,
+            "max_us": 21309
+          },
+          "first_board_build": {
+            "samples": 5,
+            "p50_us": 11154,
+            "p95_us": 12085,
+            "max_us": 12085
+          },
+          "first_board_raster": {
+            "samples": 5,
+            "p50_us": 538,
+            "p95_us": 657,
+            "max_us": 657
+          },
+          "first_board_vsync_wait": {
+            "samples": 5,
+            "p50_us": 101,
+            "p95_us": 179,
+            "max_us": 179
+          },
+          "first_board_frame_total": {
+            "samples": 5,
+            "p50_us": 11721,
+            "p95_us": 12845,
+            "max_us": 12845
+          },
+          "scroll_build": {
+            "samples": 481,
+            "p50_us": 288,
+            "p95_us": 892,
+            "max_us": 2631
+          },
+          "scroll_raster": {
+            "samples": 481,
+            "p50_us": 1037,
+            "p95_us": 1397,
+            "max_us": 1801
+          },
+          "scroll_wall_us": 4008101,
+          "scroll_vsync_wait": {
+            "samples": 481,
+            "p50_us": 144,
+            "p95_us": 166,
+            "max_us": 747
+          },
+          "scroll_build_to_raster_gap": {
+            "samples": 481,
+            "p50_us": 47,
+            "p95_us": 65,
+            "max_us": 382
+          },
+          "scroll_build_cadence": {
+            "samples": 480,
+            "p50_us": 8333,
+            "p95_us": 8364,
+            "max_us": 8942
+          },
+          "scroll_total": {
+            "samples": 481,
+            "p50_us": 1556,
+            "p95_us": 2447,
+            "max_us": 4125
+          },
+          "build_over_16_67ms": 0,
+          "raster_over_16_67ms": 0
+        }
+      ],
+      "process_rss_bytes_after_size": 249806848,
+      "notification_task_rows_sha256": "a7764363912d31030c561a753b71e896a0df0374502f3a305677046d21b69311",
+      "full_notification_startup": [
+        {
+          "mode": "new_journal",
+          "elapsed_us": 48529586,
+          "scope": "Full provider.ready including real SQL, urgency, journal, ID allocation and timers; recording OS transport, no OS delivery",
+          "tasks": 10000,
+          "journal_entries": 10000,
+          "native_schedule_calls": 10000,
+          "native_cancel_calls": 10000,
+          "native_reset_calls": 1,
+          "journal_atomic_replacements": 5394,
+          "journal_bytes_written": 5196857727,
+          "journal_successful_write_us": 30230460
+        },
+        {
+          "mode": "reopen_submitted_journal",
+          "elapsed_us": 80166574,
+          "scope": "Full provider.ready including real SQL, urgency, journal, ID allocation and timers; recording OS transport, no OS delivery",
+          "tasks": 10000,
+          "journal_entries": 10000,
+          "native_schedule_calls": 10000,
+          "native_cancel_calls": 10000,
+          "native_reset_calls": 0,
+          "journal_atomic_replacements": 4381,
+          "journal_bytes_written": 9040189834,
+          "journal_successful_write_us": 50088346
+        }
+      ]
+    }
+  ]
+}

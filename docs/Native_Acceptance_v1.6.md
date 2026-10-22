@@ -241,3 +241,39 @@ Mac ZIP 为 23,822,422 字节，SHA-256 `32de8c5ec10e9bc542a6f72e96861d7536b8f51
 最新性能 ZIP 为 27,821,226 字节，SHA-256 `d339c8f3ccf164900e96216bec80576cd11c63685a0e57b08fb66070950183b3`，源码 `41a9e54428323cfa04e0cf7f25fe09c93d19fe23`。独立副本 `build/native_acceptance/perf-clean-r39719290459/dont_forget.app`，身份 `com.example.dontForget.acceptance.perf-clean-r39719290459`。当前不存在该容器/进程的运行证据，不把 Finder 尝试视为启动成功。此前本轮已运行的基线与优化后性能进程已退出；没有操作旧 `permissions-r39575684866` 进程。
 
 有效性能对比、四份原始报告、完整通知对账边界和下一步任务见 [阶段 3D-3 记录](Iteration_v1.6.md)。下一验收顺序为：新性能包完整前台复测与超时后重开；新产品隔离 fixture + 真实可回退故障后的前台自动重试；通知冷启动点击和热点击。通知授权/界面工具仍为本轮阻塞项，录音/播放允许但没有新增验收证据。原包、派生副本、容器与旧回退材料均保留。
+
+
+## 2026-10-22：阶段 3D-4 / 3C-5 批量对账与前台失败重试
+
+批量实现 `708586a9d167d0951d32290be368536278a54312` 的产品 CI 首次因 Linux 文件系统时序相关断言失败；`b722da66382043b5b7254f9957f116d6ff497ad6` 仅修订该测试，随后 [CI 39731158073](https://github.com/yarnway/dontforget/actions/runs/39731158073) 质量与五平台候选全部成功。云端 Flutter 657 通过 / 1 平台跳过、Python 47 通过，本机 Flutter 658 通过、静态分析无问题。非标签发布跳过，版本仍为 1.5.2+3 / schema 9。
+
+- 产品 Mac ZIP 23,861,025 字节，SHA-256 `a6920f9007c5d53ba4f458c46f190d52d2bcb547ed2d57c4d139ec2e7f72355c`；完整 revision、大小、摘要及派生受保护内容和 codesign 均核验通过。原包位于 `build/ci_artifacts/batch-r39731158073`，副本为 `build/native_acceptance/batch-r39731158073/dont_forget.app`，新身份 `com.example.dontForget.acceptance.batch-r39731158073`。
+- 独立 [profile CI 39730823023](https://github.com/yarnway/dontforget/actions/runs/39730823023) 使用 `708586a`。ZIP 27,827,626 字节、SHA-256 `fbbf60d0354b409ce06d415265094ad85deddafa61aa441bc74520bca59e37f5`；新身份 `com.example.dontForget.acceptance.perf-batch-r39730823023`。18 段全部前台完成，测量覆盖真实数据库和日志，OS 传输为记录器；原始报告和分规模数值见 [迭代记录](Iteration_v1.6.md)。完成后正常退出并确认进程缺席。
+- 前一性能候选 `perf-clean-r39719290459` 本轮完成有效前台运行、主动隐藏超时、资源释放及同进程重跑。原始失败报告保留；重跑窗口高度多 1 逻辑像素，不能替代严格同尺寸配对比较。详见迭代记录，不再沿用上一节“尚未启动”状态。
+
+产品原生验收由代理使用界面工具执行，未要求用户手动操作。首次 Flutter 按钮反馈没有更新，切入全屏后控件可用；系统授权卡片可以读取并执行“允许”。本轮数据仅包含四条合成文本任务，无 API 密钥、无录音。
+
+| 验收项 | 证据与边界 |
+| --- | --- |
+| 原生恢复与权限 | 保存空基线后，通过选择器、结构预览、覆盖确认和勾选执行恢复，出现 Recovery complete；三张业务表逐行匹配 `candidate-v9.sqlite`。14:11:44 四条 schedule/submitted、attempts=2，权限 Allowed；空库回退位于 `recovery-f81a74bb-0747-4de5-8fc2-b68e8d80a5f7`。 |
+| 可回退真实写入故障 | 精确隔离目录先核验 schema 9、四个合成 ID、正常日志和非链接路径，14:12:09 开始将目录 0755 临时改为 0555，最多 40 秒 finally 恢复。点击 Retry reminder scheduling 后原生 UI 显示 4/4 失败；失败期间日志字节不变，没有伪造 pending/failed 文件。14:12:49 恢复 0755，并独立核对。 |
+| 前台自动补重试 | 之后未再点击 Retry，14:14:25.567–.594 四条 attempts 从 2→4，全部 schedule/submitted，四个 ID 不变，三张业务表逐行匹配原样本。14:18–14:20 再次读取仍为 4，健康计划没有重复重排。该证据验证日志写入前失败的会话内自动恢复；不等于 OS 插件报错、跨系统重启或后台运行验收。 |
+| 系统送达 | 14:17:03、14:18:03 分别出现 ID 1967836952 / 167290217 的 Delivering、Presenting 与 displaying as banner 系统记录。候选当时仍运行，送达不能替代点击路由。 |
+| 发现并修复的界面问题 | 自动重试成功后仍显示旧的“4 of 4 … still failed”。`ca7a3809941eb00887cc989c7d6cc10ac9c86d32` 将中英日文明确为上次手动重试结果，状态刷新/前台恢复时清除旧反馈；读取失败继续显示不可用。本机 660 项 Flutter 全量、20 项面板测试、静态分析通过。该修复不在本节原生 `b722da6` 候选中，不能把旧包实测记成修复包复测。 |
+
+首轮输入及空基线在 `/private/tmp/dontforget-batch-native-r39731158073`；故障前后、自动重试、系统日志位于 `build/native_acceptance/batch-r39731158073`。原始用户容器和其他已运行候选未修改，全部回退副本保留。
+
+
+为捕捉通知横幅，另生成 `/private/tmp/dontforget-batch-click-r39731158073` 并通过原生确认恢复，原四任务保留在 `recovery-679ebdc7-fb0d-4aa1-ae66-3166ebbf1ffa`。14:23:14 正常退出并确认原 PID 19557 缺席；14:26:26.139 系统向 ID 1967836952 送达，随即读取 NotificationCenter AX 和截图均 timeoutReached，14:26:57 候选进程仍缺席，没有执行冷点击。之后由工具显式重开候选（PID 34211），14:27:26.111 第二条系统送达时再次读取 AX+截图仍 timeoutReached，没有执行热点击。此次没有把显式启动、应用内到期横幅或系统送达写成通知点击通过。重开后的业务三表逐行未变、四个原生 ID 不变，已过期任务未被隐式确认。
+
+14:28:37 通过原生覆盖确认恢复最初 `empty-baseline.json`，界面显示“恢复完成”并回到四区全 0；三张业务表逐行等于空基线、integrity_check=ok、通知 epoch 已换代且 entries=[]。应用取消全部 pending 请求返回成功，系统明确移除两条 delivered 通知。回退 `recovery-a5521eb9-69e5-4293-aea9-976d7469a71c/rollback.db` 与第二轮四任务样本逐行匹配，保留不删；目录权限保持 0755。正常退出后进程缺席，证据为 `cleanup-readback.json`、`system-cleanup-events.log`、`closed.json`。本轮没有新增录音、播放或模型服务请求。
+
+当前剩余：通知热/冷/迟到点击仍受系统通知界面读取超时阻塞；权限拒绝后恢复、OS 插件真实报错、系统重启/休眠/时区/DST、完整产品启动与更大规模日志写入、恢复重建批次、多模型设置与迁移、其他平台业务及正式签名发布继续分阶段推进。录音/播放仍允许，听感未新增验收结论。
+
+
+最终界面修复候选 `ca7a380` 的 Mac 包已由 [CI 39733597774](https://github.com/yarnway/dontforget/actions/runs/39733597774) 构建，本机独立校验完整 revision、ZIP 大小/摘要和派生签名。ZIP 23,862,545 字节，SHA-256 `36848d04f74da3ae1df33c068ce7a940412057943515e89cdc62fa6a7716f96e`；文件位于 `build/ci_artifacts/feedback-r39733597774`，独立身份 `com.example.dontForget.acceptance.feedback-r39733597774`。
+
+在新空容器原生打开设置，点击“重新安排提醒”后显示“上次手动重试没有需要更新的提醒安排。”；点击“刷新状态”后旧反馈消失，摘要仍为全 0。未请求此身份的通知权限，未导入任务或发送通知；三张业务表与初始空库逐行相同，integrity_check=ok、journal entries=0，随后正常退出并确认进程缺席。证据 `build/native_acceptance/feedback-r39733597774/native-feedback-readback.json`。此原生复测验证最终包的中文历史结果和刷新行为；返回失败/异常、前台恢复刷新及读取失败显示不可用由 20 项面板回归覆盖，未把空队列称为再次真实故障演练。
+
+
+最终 CI 独立回读：`39733597774` 整体 success，质量、macOS / Android / Linux / Windows / iOS 五个平台均 success，非标签发布步骤按条件跳过。云端 Flutter 659 通过 / 1 项平台跳过、Python 47 通过；本机 Flutter 660 通过、静态分析无问题。三桌面启动和 Windows 安装升级卸载属于 CI 内检查，未扩大为全部设备业务验收。代码已推送 main；本轮原生产品、最终面板候选与两个性能进程均正常退出，原包、隔离容器和回退材料保留。
