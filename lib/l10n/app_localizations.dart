@@ -46,12 +46,13 @@ class AppLocalizations {
       'notificationExactAlarmRequest': 'Allow precise reminders',
       'notificationRetryReminders': 'Retry reminder scheduling',
       'notificationRetryFinished':
-          'Processed {total} reminder schedules. Delivery still depends on system permissions and policies.',
+          'Last manual retry: processed {total} reminder schedules. Delivery still depends on system permissions and policies.',
       'notificationRetryPartial':
-          '{failed} of {total} reminder schedules still failed. Check permissions and try again.',
-      'notificationRetryEmpty': 'No reminder schedules need updating.',
+          'Last manual retry: {failed} of {total} reminder schedules failed. Refresh to check their current status.',
+      'notificationRetryEmpty':
+          'Last manual retry: no reminder schedules needed updating.',
       'notificationRetryFailed':
-          'Could not finish retrying. Wait for data recovery to finish, then try again.',
+          'The last manual retry could not finish. Refresh to check the current status. If data recovery is running, wait for it to finish.',
       'localInputHint': 'Local note · reminder in details',
       'upcomingReminder': 'Due soon',
       'upcomingReminderHint':
@@ -480,10 +481,11 @@ class AppLocalizations {
       'notificationExactAlarmHint': 'Android 使用此权限按时安排提醒；未开启时可能无法安排或发生延迟。',
       'notificationExactAlarmRequest': '允许精确提醒',
       'notificationRetryReminders': '重新安排提醒',
-      'notificationRetryFinished': '已处理 {total} 项提醒安排，实际送达仍受系统权限和策略影响。',
-      'notificationRetryPartial': '{total} 项提醒安排中仍有 {failed} 项失败，请检查权限后重试。',
-      'notificationRetryEmpty': '没有需要更新的提醒安排。',
-      'notificationRetryFailed': '未能完成重试。如正在恢复数据，请等待完成后再试。',
+      'notificationRetryFinished': '上次手动重试已处理 {total} 项提醒安排，实际送达仍受系统权限和策略影响。',
+      'notificationRetryPartial':
+          '上次手动重试：{total} 项提醒安排中有 {failed} 项失败。可刷新查看当前状态。',
+      'notificationRetryEmpty': '上次手动重试没有需要更新的提醒安排。',
+      'notificationRetryFailed': '上次手动重试未能完成。可刷新查看当前状态；如正在恢复数据，请等待完成。',
       'localInputHint': '本地记录 · 详情设提醒',
       'upcomingReminder': '即将到期',
       'upcomingReminderHint': '5 分钟内到期 · 应用打开时在此提前提示',
@@ -862,11 +864,12 @@ class AppLocalizations {
       'notificationExactAlarmRequest': '正確な通知を許可',
       'notificationRetryReminders': 'リマインダーを再設定',
       'notificationRetryFinished':
-          '{total} 件の通知予定を処理しました。配信はシステムの権限や設定に左右されます。',
+          '前回の手動再試行で {total} 件の通知予定を処理しました。配信はシステムの権限や設定に左右されます。',
       'notificationRetryPartial':
-          '{total} 件中 {failed} 件の通知予定が失敗しました。権限を確認して再試行してください。',
-      'notificationRetryEmpty': '更新が必要な通知予定はありません。',
-      'notificationRetryFailed': '再試行を完了できませんでした。データ復元中の場合は完了後に再試行してください。',
+          '前回の手動再試行では {total} 件中 {failed} 件が失敗しました。状態を更新して現在の予定を確認してください。',
+      'notificationRetryEmpty': '前回の手動再試行では更新が必要な通知予定はありませんでした。',
+      'notificationRetryFailed':
+          '前回の手動再試行を完了できませんでした。状態を更新して現在の予定を確認してください。データ復元中の場合は完了をお待ちください。',
       'localInputHint': 'メモ · 詳細で通知を設定',
       'upcomingReminder': 'まもなく期限',
       'upcomingReminderHint': '5 分以内に期限 · アプリ使用中にここで事前表示',

@@ -85,7 +85,13 @@ class _NotificationPermissionPanelState
   ) async {
     if (_busy) return;
     final generation = _generation;
-    setState(() => _busy = true);
+    setState(() {
+      _busy = true;
+      // Manual retry feedback describes that attempt, not the current queue.
+      // A later refresh may follow a successful automatic retry.
+      _retryResult = null;
+      _retryFailed = false;
+    });
     final result = await operation();
     if (!mounted || generation != _generation) return;
     await _readSchedule(generation, supported: result.canRequestNotifications);

@@ -333,6 +333,64 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  for (final throws in [false, true]) {
+    testWidgets('refresh replaces old manual retry feedback (throws=$throws)', (
+      tester,
+    ) async {
+      var unavailable = false;
+      var retries = 0;
+      final backend = _Backend();
+      await show(
+        tester,
+        backend,
+        onRetryReminders: () async {
+          retries++;
+          if (throws) throw StateError('temporary failure');
+          return (attempted: 4, failed: 4);
+        },
+        onReadScheduleStatus: () async {
+          if (unavailable) throw StateError('status unavailable');
+          return const NotificationScheduleStatus(
+            upcoming: 4,
+            submitted: 4,
+            needsAttention: 0,
+            cancellations: 0,
+            overdueUnconfirmed: 0,
+          );
+        },
+      );
+      final retry = find.byKey(const ValueKey('notification-reminders-retry'));
+      final feedback = find.byKey(const ValueKey('notification-retry-result'));
+      await tester.ensureVisible(retry);
+      await tester.tap(retry);
+      await tester.pumpAndSettle();
+      // A durable summary alone cannot erase a failure before journal writing.
+      expect(feedback, findsOneWidget);
+      final refresh = find.byKey(refreshKey);
+      await tester.ensureVisible(refresh);
+      await tester.tap(refresh);
+      await tester.pumpAndSettle();
+      expect(feedback, findsNothing);
+      expect(retries, 1);
+
+      await tester.ensureVisible(retry);
+      await tester.tap(retry);
+      await tester.pumpAndSettle();
+      expect(feedback, findsOneWidget);
+      unavailable = true;
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      expect(feedback, findsNothing);
+      expect(
+        find.text(l10n.get('notificationScheduleUnavailable')),
+        findsOneWidget,
+      );
+      expect(retries, 2);
+      expect(backend.requests, 0);
+    });
+  }
+
   testWidgets(
     'schedule summary refresh and explicit retry use fresh saved state',
     (tester) async {
