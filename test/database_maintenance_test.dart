@@ -568,6 +568,55 @@ void main() {
   );
 
   test(
+    'candidate batches retain all rows and roll back earlier batches on failure',
+    () async {
+      final lease = await helper.beginMaintenance();
+      final staging = await Directory(
+        paths.join(lease.directory, 'recovery-batches'),
+      ).create();
+      final rows = [for (var i = 0; i < 1001; i++) reminder('batch-$i')];
+      final candidate = paths.join(staging.path, 'complete.db');
+      await lease.createCandidateFromRows(candidate, {
+        'Settings': [],
+        'MediaRecords': [],
+        'Reminders': rows,
+      });
+      final complete = await databaseFactoryFfi.openDatabase(candidate);
+      try {
+        expect(
+          await complete.query('Reminders', orderBy: 'id'),
+          [...rows]
+            ..sort((a, b) => (a['id'] as String).compareTo(b['id'] as String)),
+        );
+      } finally {
+        await complete.close();
+      }
+      final failed = paths.join(staging.path, 'failed.db');
+      await expectLater(
+        lease.createCandidateFromRows(failed, {
+          'Settings': [],
+          'MediaRecords': [],
+          // The duplicate is in the third chunk, after two batch commits.
+          'Reminders': [...rows.take(1000), reminder('batch-0')],
+        }),
+        throwsA(isA<DatabaseException>()),
+      );
+      final rolledBack = await databaseFactoryFfi.openDatabase(failed);
+      try {
+        expect(await rolledBack.query('Reminders'), isEmpty);
+        expect(await rolledBack.rawQuery('PRAGMA integrity_check'), [
+          {'integrity_check': 'ok'},
+        ]);
+      } finally {
+        await rolledBack.close();
+      }
+      expect(factory.primaryOpens, 0);
+      expect(await File(lease.path).exists(), isFalse);
+      await lease.resume();
+    },
+  );
+
+  test(
     'explicit shutdown without backup preserves artifacts and releases ownership',
     () async {
       final generation = helper.captureGeneration();
