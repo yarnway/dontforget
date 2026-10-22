@@ -9,8 +9,9 @@ import '../benchmark/incremental_journal_experiment.dart';
 const usage =
     '''Usage: dart run scripts/evaluate_incremental_journal.dart --fixture PATH
 Reads a closed synthetic ha_snapshot.json (10000 tasks), preserving its rows.
-Compares v1 replacement and an evaluation-only append log using identical
-256-entry pending/submitted batches, once empty and once already submitted.
+Compares v1 replacement, indexed append, and indexed append with a checkpoint
+every 24 frames, using identical 256-entry pending/submitted batches. Each
+variant runs once empty and once already submitted. Checkpoint costs are included.
 Output is JSON on stdout. No OS notification or application data is changed.
 --help prints this help; no files are created until arguments/fixture validate.
 ''';
@@ -42,17 +43,18 @@ Future<void> main(List<String> args) async {
   final reports = <Map<String, Object>>[];
   try {
     final currentDir = await Directory('${root.path}/current').create();
-    final experimentDir = await Directory('${root.path}/experiment').create();
+    final directories = <String, Directory>{};
+    for (final name in ['indexed', 'segmented_24']) {
+      final dir = await Directory('${root.path}/$name').create();
+      directories[name] = dir;
+      await IncrementalJournalExperiment(
+        dir,
+      ).checkpoint(NotificationJournalSnapshot(epoch, {}));
+    }
     var current = NotificationJournal(currentDir);
-    var experiment = IncrementalJournalExperiment(experimentDir);
     await current.reset(epoch);
-    await experiment.checkpoint(NotificationJournalSnapshot(epoch, {}));
     for (final mode in ['first', 'reopen']) {
       current = NotificationJournal(currentDir);
-      experiment = IncrementalJournalExperiment(experimentDir);
-      final open = Stopwatch()..start();
-      await experiment.open();
-      final replayMicros = open.elapsedMicroseconds;
       final batches = <List<NotificationJournalEntry>>[];
       final watch = Stopwatch()..start();
       for (var offset = 0; offset < rows.length; offset += 256) {
@@ -91,29 +93,59 @@ Future<void> main(List<String> args) async {
       }
       final currentMicros = watch.elapsedMicroseconds;
       final expected = (await current.read())!;
-      watch.reset();
-      for (final batch in batches) {
-        await experiment.append(epoch, batch);
-      }
-      final appendMicros = watch.elapsedMicroseconds;
-      watch.reset();
-      final recovered = await IncrementalJournalExperiment(
-        experimentDir,
-      ).open();
-      final fullReplayMicros = watch.elapsedMicroseconds;
-      if (jsonEncode(recovered.toJson()) != jsonEncode(expected.toJson())) {
-        throw StateError('Recovered experiment does not equal v1');
-      }
-      final bytesBeforeCheckpoint = experiment.writtenBytes;
-      watch.reset();
-      await experiment.checkpoint(recovered);
-      final compactMicros = watch.elapsedMicroseconds;
-      final reopened = IncrementalJournalExperiment(experimentDir);
-      watch.reset();
-      final compacted = await reopened.open();
-      final compactOpenMicros = watch.elapsedMicroseconds;
-      if (jsonEncode(compacted.toJson()) != jsonEncode(expected.toJson())) {
-        throw StateError('Checkpoint state differs');
+      final variants = <Map<String, Object>>[];
+      for (final (name, directory) in directories.entries.map(
+        (e) => (e.key, e.value),
+      )) {
+        final experiment = IncrementalJournalExperiment(
+          directory,
+          checkpointEveryFrames: name == 'indexed' ? 0 : 24,
+        );
+        watch.reset();
+        await experiment.open();
+        final priorOpenMicros = watch.elapsedMicroseconds;
+        watch.reset();
+        for (final batch in batches) {
+          await experiment.append(epoch, batch);
+        }
+        final appendMicros = watch.elapsedMicroseconds;
+        final bytesBeforeCheckpoint = experiment.writtenBytes;
+        final flushesBeforeCheckpoint = experiment.flushes;
+        final periodicCheckpoints = experiment.checkpoints;
+        final periodicCheckpointMicros = experiment.checkpointMicroseconds;
+        final replay = IncrementalJournalExperiment(directory);
+        watch.reset();
+        final recovered = await replay.open();
+        final fullReplayMicros = watch.elapsedMicroseconds;
+        if (jsonEncode(recovered.toJson()) != jsonEncode(expected.toJson())) {
+          throw StateError('Recovered $name does not equal v1');
+        }
+        watch.reset();
+        await experiment.checkpoint(recovered);
+        final compactMicros = watch.elapsedMicroseconds;
+        final reopened = IncrementalJournalExperiment(directory);
+        watch.reset();
+        final compacted = await reopened.open();
+        final compactOpenMicros = watch.elapsedMicroseconds;
+        if (jsonEncode(compacted.toJson()) != jsonEncode(expected.toJson())) {
+          throw StateError('Checkpoint state differs for $name');
+        }
+        variants.add({
+          'variant': name,
+          'append_including_periodic_checkpoint_us': appendMicros,
+          'written_including_periodic_checkpoint_bytes': bytesBeforeCheckpoint,
+          'flushes_including_periodic_checkpoint': flushesBeforeCheckpoint,
+          'periodic_checkpoints': periodicCheckpoints,
+          'periodic_checkpoint_us': periodicCheckpointMicros,
+          'tail_replay_frames': replay.replayedFrames,
+          'open_before_final_checkpoint_us': fullReplayMicros,
+          'final_checkpoint_us': compactMicros,
+          'final_checkpoint_bytes':
+              experiment.writtenBytes - bytesBeforeCheckpoint,
+          'compacted_open_us': compactOpenMicros,
+          'prior_checkpoint_open_us': priorOpenMicros,
+          'equivalent_after_replay_and_checkpoint': true,
+        });
       }
       reports.add({
         'mode': mode,
@@ -122,21 +154,14 @@ Future<void> main(List<String> args) async {
         'v1_us': currentMicros,
         'v1_writes': current.writeStatistics.replacements,
         'v1_bytes': current.writeStatistics.bytes,
-        'append_us': appendMicros,
-        'uncompacted_replay_us': fullReplayMicros,
-        'append_bytes': bytesBeforeCheckpoint,
-        'append_flushes': experiment.flushes - 3,
-        'checkpoint_us': compactMicros,
-        'checkpoint_bytes': experiment.writtenBytes - bytesBeforeCheckpoint,
-        'prior_checkpoint_open_us': replayMicros,
-        'compacted_open_us': compactOpenMicros,
-        'equivalent_after_replay_and_checkpoint': true,
+        'variants': variants,
       });
     }
     stdout.writeln(
       const JsonEncoder.withIndent('  ').convert({
         'scope':
-            'Dart JIT journal-only experiment; sequential implementations; no OS effects; not product startup',
+            'Dart JIT journal-only experiment v2; v1 then indexed then segmented; checkpoint costs included; no OS effects or product startup',
+        'protocol_version': 2,
         'fixture_file_sha256': IncrementalJournalExperiment.digest(
           fixtureBytes,
         ),

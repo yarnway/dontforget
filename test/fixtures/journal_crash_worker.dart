@@ -13,6 +13,24 @@ Future<void> main(List<String> args) async {
   final dir = Directory(args[0]);
   final mode = args[1];
   const epoch = '00000000-0000-4000-8000-000000000001';
+  if (mode.startsWith('segment:')) {
+    final log = IncrementalJournalExperiment(dir, checkpointEveryFrames: 2);
+    final old = await log.open();
+    final point = mode.substring('segment:'.length);
+    Future<void> at(String boundaryName) async {
+      if (point == boundaryName) await boundary();
+    }
+
+    log.appendHook = at;
+    log.checkpointHook = at;
+    await log.append(old.epoch, [
+      NotificationJournalEntry.decode({
+        ...old.entries.values.single.toJson(),
+        'status': 'submitted',
+      }),
+    ]);
+    throw StateError('Requested segment boundary was not reached');
+  }
   if (mode.startsWith('checkpoint:')) {
     final log = IncrementalJournalExperiment(dir);
     final old = await log.open();

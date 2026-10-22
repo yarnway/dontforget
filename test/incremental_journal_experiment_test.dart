@@ -140,6 +140,99 @@ void main() {
     },
   );
 
+  test(
+    'incremental validation rejects a whole batch without reserving IDs',
+    () async {
+      await log.append(epoch, [entry('pending')]);
+      final before = await log.delta.readAsBytes();
+      final good = NotificationJournalEntry.decode({
+        ...entry('pending').toJson(),
+        'reminderId': 'new',
+        'nativeId': 18,
+      });
+      final bad = NotificationJournalEntry.decode({
+        ...entry('pending').toJson(),
+        'reminderId': 'collision',
+      });
+      await expectLater(log.append(epoch, [good, bad]), throwsFormatException);
+      expect(log.snapshot!.entries.keys, ['合成任务']);
+      expect(await log.delta.readAsBytes(), before);
+      await log.append(epoch, [good]);
+      expect((await IncrementalJournalExperiment(dir).open()).entries.keys, [
+        '合成任务',
+        'new',
+      ]);
+    },
+  );
+
+  test(
+    'periodic checkpoints bound replay while preserving all reserved IDs',
+    () async {
+      log = IncrementalJournalExperiment(dir, checkpointEveryFrames: 3);
+      await log.open();
+      for (var i = 0; i < 7; i++) {
+        await log.append(epoch, [
+          NotificationJournalEntry.decode({
+            ...entry('pending').toJson(),
+            'reminderId': 'task-$i',
+            'nativeId': 100 + i,
+          }),
+        ]);
+        final reopened = IncrementalJournalExperiment(dir);
+        final state = await reopened.open();
+        expect(reopened.replayedFrames, (i + 1) % 3);
+        expect(state.entries.length, i + 1);
+      }
+      expect(log.checkpoints, 2);
+      final before = await log.delta.readAsBytes();
+      await expectLater(
+        log.append(epoch, [
+          NotificationJournalEntry.decode({
+            ...entry('pending').toJson(),
+            'reminderId': 'late-collision',
+            'nativeId': 100,
+          }),
+        ]),
+        throwsFormatException,
+      );
+      expect(await log.delta.readAsBytes(), before);
+      await expectLater(
+        log.checkpoint(NotificationJournalSnapshot(epoch, {})),
+        throwsFormatException,
+      );
+    },
+  );
+
+  for (final point in ['before_publish', 'after_publish']) {
+    test(
+      'checkpoint error at $point requires reopen before further writes',
+      () async {
+        await log.append(epoch, [entry('pending')]);
+        log.checkpointHook = (at) async {
+          if (at == point) throw const FileSystemException('checkpoint fault');
+        };
+        await expectLater(
+          log.checkpoint(log.snapshot!),
+          throwsA(isA<FileSystemException>()),
+        );
+        expect(log.snapshot, isNull);
+        await expectLater(
+          log.append(epoch, [entry('submitted')]),
+          throwsStateError,
+        );
+        log.checkpointHook = null;
+        await log.open();
+        await log.append(epoch, [entry('submitted')]);
+        expect(
+          (await IncrementalJournalExperiment(
+            dir,
+          ).open()).entries.values.single.status,
+          'submitted',
+        );
+      },
+    );
+  }
+
   Future<void> crash(String mode) async {
     final child = await Process.start('dart', [
       '--packages=.dart_tool/package_config.json',
@@ -166,6 +259,36 @@ void main() {
     }
   }
 
+  for (final point in [
+    'half_frame_written',
+    'frame_flushed',
+    'snapshot_flushed',
+    'before_publish',
+    'after_publish',
+  ]) {
+    test(
+      'process kill at segmented $point recovers a complete prefix',
+      () async {
+        await log.append(epoch, [entry('pending')]);
+        await crash('segment:$point');
+        final reopened = IncrementalJournalExperiment(dir);
+        final state = await reopened.open();
+        expect(state.epoch, epoch);
+        expect(state.entries.values.single.nativeId, 17);
+        expect(
+          state.entries.values.single.status,
+          point == 'half_frame_written' ? 'pending' : 'submitted',
+        );
+        expect(reopened.ignoredTailBytes > 0, point == 'half_frame_written');
+        expect(
+          reopened.replayedFrames,
+          point == 'after_publish'
+              ? 0
+              : (point == 'half_frame_written' ? 1 : 2),
+        );
+      },
+    );
+  }
   for (final point in ['snapshot_flushed', 'before_publish', 'after_publish']) {
     test(
       'process kill at checkpoint $point selects a whole generation',
