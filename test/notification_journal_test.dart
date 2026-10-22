@@ -174,4 +174,213 @@ void main() {
         ? 'Creating symlinks needs host permission.'
         : false,
   );
+
+  test(
+    'cached snapshots are immutable and stay unchanged after later writes',
+    () async {
+      await journal.reset(epoch);
+      await journal.reserve(epoch, 'task');
+      final first = (await journal.read())!;
+      expect(() => first.entries.clear(), throwsUnsupportedError);
+      await journal.record(
+        epoch,
+        'task',
+        action: 'schedule',
+        status: 'pending',
+      );
+      expect(first.entries['task']!.status, 'reserved');
+      expect((await journal.read())!.entries['task']!.status, 'pending');
+      final original = Map<String, NotificationJournalEntry>.of(first.entries);
+      final snapshot = NotificationJournalSnapshot(epoch, original);
+      original.clear();
+      expect(snapshot.entries, hasLength(1));
+    },
+  );
+
+  test(
+    'same-size external edits with unchanged mtime invalidate the cache',
+    () async {
+      await journal.reset(epoch);
+      await journal.reserve(epoch, 'task');
+      final file = File('${directory.path}/${NotificationJournal.fileName}');
+      final modified = await file.lastModified();
+      final original = await file.readAsString();
+      await journal.read();
+      final edited = original.replaceFirst('"attempts":0', '"attempts":7');
+      expect(edited.length, original.length);
+      await file.writeAsString(edited, flush: true);
+      await file.setLastModified(modified);
+      expect((await journal.read())!.entries['task']!.attempts, 7);
+      await journal.record(epoch, 'task', action: 'cancel', status: 'pending');
+      expect(
+        (await NotificationJournal(
+          directory,
+        ).read())!.entries['task']!.attempts,
+        8,
+      );
+    },
+  );
+
+  test(
+    'a warm cache cannot hide corruption or restore a removed file',
+    () async {
+      await journal.reset(epoch);
+      await journal.reserve(epoch, 'task');
+      await journal.read();
+      final file = File('${directory.path}/${NotificationJournal.fileName}');
+      final original = await file.readAsString();
+      final corrupted = '!${original.substring(1)}';
+      await file.writeAsString(corrupted);
+      await expectLater(journal.read(), throwsFormatException);
+      await expectLater(journal.reset(epoch), throwsFormatException);
+      await expectLater(
+        journal.record(epoch, 'task', action: 'cancel', status: 'pending'),
+        throwsFormatException,
+      );
+      expect(await file.readAsString(), corrupted);
+      await file.delete();
+      expect(await journal.read(), isNull);
+      await expectLater(journal.reserve(epoch, 'new'), throwsStateError);
+      await journal.reset(nextEpoch);
+      expect((await journal.read())!.entries, isEmpty);
+    },
+  );
+
+  test('invalid updates cannot poison cached or persisted state', () async {
+    await journal.reset(epoch);
+    await journal.reserve(epoch, 'task');
+    final file = File('${directory.path}/${NotificationJournal.fileName}');
+    final before = await file.readAsString();
+    await expectLater(
+      journal.record(epoch, 'task', action: 'cancel', status: 'invalid'),
+      throwsFormatException,
+    );
+    await expectLater(
+      journal.record(
+        epoch,
+        'task',
+        action: 'schedule',
+        status: 'pending',
+        noticeRevision: -1,
+      ),
+      throwsFormatException,
+    );
+    await expectLater(journal.reserve(epoch, ''), throwsFormatException);
+    await expectLater(journal.reset('invalid-epoch'), throwsFormatException);
+    expect(await file.readAsString(), before);
+    expect((await journal.read())!.entries['task']!.status, 'reserved');
+    await journal.record(epoch, 'task', action: 'cancel', status: 'submitted');
+    expect(
+      (await NotificationJournal(directory).read())!.entries['task']!.status,
+      'submitted',
+    );
+  });
+
+  test(
+    'a staged write refuses valid intervening changes and cleans its own temporary file',
+    () async {
+      await journal.reset(epoch);
+      await journal.reserve(epoch, 'task');
+      final file = File('${directory.path}/${NotificationJournal.fileName}');
+      final original = await file.readAsString();
+      final edited = original.replaceFirst('"attempts":0', '"attempts":9');
+      var intervene = true;
+      final writer = NotificationJournal.forTesting(directory, () async {
+        if (intervene) {
+          intervene = false;
+          await file.writeAsString(edited, flush: true);
+        }
+      });
+      await expectLater(
+        writer.record(epoch, 'task', action: 'cancel', status: 'pending'),
+        throwsFormatException,
+      );
+      expect(await file.readAsString(), edited);
+      expect(
+        await directory.list().where((f) => f.path.endsWith('.tmp')).toList(),
+        isEmpty,
+      );
+      await writer.record(epoch, 'task', action: 'cancel', status: 'pending');
+      expect(
+        (await NotificationJournal(
+          directory,
+        ).read())!.entries['task']!.attempts,
+        10,
+      );
+    },
+  );
+
+  test(
+    'a failure after staging never promotes the uncommitted cache',
+    () async {
+      await journal.reset(epoch);
+      await journal.reserve(epoch, 'task');
+      final file = File('${directory.path}/${NotificationJournal.fileName}');
+      final original = await file.readAsString();
+      var fail = true;
+      final writer = NotificationJournal.forTesting(directory, () async {
+        if (fail) {
+          throw const FileSystemException('synthetic replacement failure');
+        }
+      });
+      await expectLater(
+        writer.record(epoch, 'task', action: 'cancel', status: 'pending'),
+        throwsA(isA<FileSystemException>()),
+      );
+      expect(await file.readAsString(), original);
+      expect((await writer.read())!.entries['task']!.attempts, 0);
+      fail = false;
+      await writer.record(epoch, 'task', action: 'cancel', status: 'pending');
+      expect(
+        (await NotificationJournal(
+          directory,
+        ).read())!.entries['task']!.attempts,
+        1,
+      );
+    },
+  );
+
+  test(
+    'warm-cache reads reject a replacement symlink',
+    () async {
+      await journal.reset(epoch);
+      await journal.reserve(epoch, 'task');
+      final file = File('${directory.path}/${NotificationJournal.fileName}');
+      final target = File('${directory.path}/unrelated')
+        ..writeAsStringSync('preserved');
+      await file.delete();
+      await Link(file.path).create(target.path);
+      await expectLater(journal.read(), throwsFormatException);
+      await expectLater(
+        journal.record(epoch, 'task', action: 'cancel', status: 'pending'),
+        throwsFormatException,
+      );
+      expect(await target.readAsString(), 'preserved');
+    },
+    skip: Platform.isWindows
+        ? 'Creating symlinks needs host permission.'
+        : false,
+  );
+
+  test('cached content does not bypass the file size limit', () async {
+    await journal.reset(epoch);
+    await journal.reserve(epoch, 'task');
+    final file = File('${directory.path}/${NotificationJournal.fileName}');
+    final before = await file.readAsBytes();
+    final handle = await file.open(mode: FileMode.write);
+    await handle.truncate(NotificationJournal.maxBytes + 1);
+    await handle.close();
+    await expectLater(journal.read(), throwsFormatException);
+    await expectLater(
+      journal.record(epoch, 'task', action: 'cancel', status: 'pending'),
+      throwsFormatException,
+    );
+    expect(await file.length(), NotificationJournal.maxBytes + 1);
+    await file.writeAsBytes(before);
+    await journal.record(epoch, 'task', action: 'cancel', status: 'pending');
+    expect(
+      (await NotificationJournal(directory).read())!.entries['task']!.attempts,
+      1,
+    );
+  });
 }

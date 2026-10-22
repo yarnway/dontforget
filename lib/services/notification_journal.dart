@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
@@ -10,11 +11,17 @@ import '../models/notification_payload.dart';
 /// Platform-local operational state. Never imported from business backups.
 /// Every operation must run under the database directory's ownership gate.
 class NotificationJournal {
-  NotificationJournal(this.directory);
+  NotificationJournal(this.directory) : _beforeReplace = null;
+
+  /// Fault injection at the staging boundary; production callers use the
+  /// ordinary constructor and retain the database ownership gate.
+  NotificationJournal.forTesting(this.directory, this._beforeReplace);
   static const fileName = 'notification-journal.json';
   static const maxBytes = 16 * 1024 * 1024;
   final Directory directory;
   Future<void> _tail = Future.value();
+  final Future<void> Function()? _beforeReplace;
+  _JournalCache? _cache;
 
   Future<T> _serialize<T>(Future<T> Function() action) {
     final next = _tail.then((_) => action());
@@ -26,7 +33,10 @@ class NotificationJournal {
 
   Future<void> reset(String epoch) => _serialize(() async {
     await _read(); // Refuse corrupt/symlink state; never silently discard it.
-    await _write(NotificationJournalSnapshot(epoch, {}));
+    if (!NotificationPayload.isValidDatasetEpoch(epoch)) {
+      throw const FormatException('Invalid notification journal epoch.');
+    }
+    await _write(NotificationJournalSnapshot(epoch, {}), {});
   });
 
   Future<NotificationJournalEntry> reserve(String epoch, String reminderId) =>
@@ -46,10 +56,8 @@ class NotificationJournal {
           status: 'reserved',
           attempts: 0,
         );
-        state.entries[reminderId] = entry;
-        await _write(
-          state,
-        ); // Allocation precedes the first native side effect.
+        NotificationJournalEntry.decode(entry.toJson());
+        await _writeEntry(state, entry); // Allocation precedes native effects.
         return entry;
       });
 
@@ -65,7 +73,7 @@ class NotificationJournal {
     final state = await _require(epoch);
     final previous = state.entries[reminderId];
     if (previous == null) throw StateError('Notification ID not reserved.');
-    state.entries[reminderId] = NotificationJournalEntry(
+    final entry = NotificationJournalEntry(
       reminderId: reminderId,
       nativeId: previous.nativeId,
       action: action,
@@ -76,8 +84,22 @@ class NotificationJournal {
       attemptedAt:
           attemptedAt?.toUtc().toIso8601String() ?? previous.attemptedAt,
     );
-    await _write(state);
+    // Existing entries were validated on read and cannot be mutated by readers.
+    // Validate the changed record before staging any bytes.
+    NotificationJournalEntry.decode(entry.toJson());
+    await _writeEntry(state, entry);
   });
+
+  Future<void> _writeEntry(
+    NotificationJournalSnapshot state,
+    NotificationJournalEntry entry,
+  ) async {
+    final entries = Map<String, NotificationJournalEntry>.of(state.entries);
+    entries[entry.reminderId] = entry;
+    final encoded = Map<String, String>.of(_cache!.encodedEntries);
+    encoded[entry.reminderId] = jsonEncode(entry.toJson());
+    await _write(NotificationJournalSnapshot(state.epoch, entries), encoded);
+  }
 
   Future<NotificationJournalSnapshot> _require(String epoch) async {
     final state = await _read();
@@ -96,23 +118,50 @@ class NotificationJournal {
   }
 
   File get _file => File(p.join(directory.path, fileName));
-  Future<NotificationJournalSnapshot?> _read() async {
+  Future<Uint8List?> _readBytes() async {
     await _checkDirectory();
     final type = await FileSystemEntity.type(_file.path, followLinks: false);
     if (type == FileSystemEntityType.notFound) return null;
     if (type != FileSystemEntityType.file || await _file.length() > maxBytes) {
       throw const FormatException('Invalid notification journal file.');
     }
-    return NotificationJournalSnapshot.decode(
-      jsonDecode(await _file.readAsString()),
-    );
+    final bytes = await _file.readAsBytes();
+    if (bytes.length > maxBytes) {
+      throw const FormatException('Invalid notification journal file.');
+    }
+    return bytes;
   }
 
-  Future<void> _write(NotificationJournalSnapshot state) async {
-    // Also validate writes, so an invalid caller cannot poison future startup.
-    final encoded = jsonEncode(state.toJson());
-    NotificationJournalSnapshot.decode(jsonDecode(encoded));
-    if (utf8.encode(encoded).length > maxBytes) {
+  Future<NotificationJournalSnapshot?> _read() async {
+    final bytes = await _readBytes();
+    if (bytes == null) {
+      _cache = null;
+      return null;
+    }
+    final cached = _cache;
+    // Check content, not mtime/length: equal-size external edits must be seen.
+    if (cached != null && _sameBytes(cached.bytes, bytes)) {
+      return cached.snapshot;
+    }
+    final snapshot = NotificationJournalSnapshot.decode(
+      jsonDecode(utf8.decode(bytes)),
+    );
+    _cache = _JournalCache(bytes, snapshot);
+    return snapshot;
+  }
+
+  Future<void> _write(
+    NotificationJournalSnapshot state,
+    Map<String, String> encodedEntries,
+  ) async {
+    final expected = _cache?.bytes;
+    // Reuse validated per-record encodings while retaining one atomic file.
+    // Keep encoding order/format compatible with version 1 journals.
+    final bytes = utf8.encode(
+      '{"version":1,"epoch":${jsonEncode(state.epoch)},'
+      '"entries":[${encodedEntries.values.join(',')}]}',
+    );
+    if (bytes.length > maxBytes) {
       throw const FormatException('Notification journal size limit reached.');
     }
     final temporary = File('${_file.path}.${const Uuid().v4()}.tmp');
@@ -121,12 +170,47 @@ class NotificationJournal {
         FileSystemEntityType.notFound) {
       throw const FormatException('Notification journal staging file exists.');
     }
-    await temporary.writeAsString(encoded, flush: true);
-    await _checkDirectory();
-    await _read();
-    // Never unlink the last valid target to make replacement succeed.
-    await temporary.rename(_file.path);
+    try {
+      await temporary.writeAsBytes(bytes, flush: true);
+      await _beforeReplace?.call();
+      final current = await _readBytes();
+      if (!_sameBytes(expected, current)) {
+        // Includes valid external edits and removal. Do not overwrite them.
+        throw const FormatException(
+          'Notification journal changed during write.',
+        );
+      }
+      // Never unlink the last valid target to make replacement succeed.
+      await temporary.rename(_file.path);
+      _cache = _JournalCache(bytes, state, encodedEntries);
+    } finally {
+      // Only our random staging file is disposable; preserve the target.
+      if (await FileSystemEntity.type(temporary.path, followLinks: false) ==
+          FileSystemEntityType.file) {
+        await temporary.delete();
+      }
+    }
   }
+}
+
+bool _sameBytes(Uint8List? a, Uint8List? b) {
+  if (identical(a, b)) return true;
+  if (a == null || b == null || a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return false;
+  }
+  return true;
+}
+
+class _JournalCache {
+  _JournalCache(this.bytes, this.snapshot, [this._encodedEntries]);
+  final Uint8List bytes;
+  final NotificationJournalSnapshot snapshot;
+  Map<String, String>? _encodedEntries;
+  Map<String, String> get encodedEntries => _encodedEntries ??= {
+    for (final entry in snapshot.entries.values)
+      entry.reminderId: jsonEncode(entry.toJson()),
+  };
 }
 
 /// Stable across Dart processes and platforms; persisted allocation resolves
@@ -141,7 +225,10 @@ int stableNotificationId(String reminderId) {
 }
 
 class NotificationJournalSnapshot {
-  NotificationJournalSnapshot(this.epoch, this.entries);
+  NotificationJournalSnapshot(
+    this.epoch,
+    Map<String, NotificationJournalEntry> entries,
+  ) : entries = Map.unmodifiable(entries);
   final String epoch;
   final Map<String, NotificationJournalEntry> entries;
   Map<String, Object?> toJson() => {

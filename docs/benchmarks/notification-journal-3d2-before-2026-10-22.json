@@ -1,0 +1,63 @@
+{
+  "scope": "Synthetic local journal only; no SQLite, native calls, startup or frames",
+  "runtime": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+  "os": "Version 27.0.1 (Build 26A434)",
+  "warmups": 2,
+  "samples": 7,
+  "results": [
+    {
+      "records": 100,
+      "journal_bytes": 19374,
+      "read": {
+        "p50_us": 1314,
+        "p95_us": 1824
+      },
+      "read_and_summary": {
+        "p50_us": 604,
+        "p95_us": 714
+      },
+      "eight_cancel_journal_roundtrips": {
+        "p50_us": 20895,
+        "p95_us": 22619
+      },
+      "process_rss_bytes_after_size": 216530944
+    },
+    {
+      "records": 1000,
+      "journal_bytes": 195775,
+      "read": {
+        "p50_us": 1618,
+        "p95_us": 1803
+      },
+      "read_and_summary": {
+        "p50_us": 1863,
+        "p95_us": 2230
+      },
+      "eight_cancel_journal_roundtrips": {
+        "p50_us": 102816,
+        "p95_us": 112254
+      },
+      "process_rss_bytes_after_size": 247988224
+    },
+    {
+      "records": 10000,
+      "journal_bytes": 1977776,
+      "read": {
+        "p50_us": 16125,
+        "p95_us": 16229
+      },
+      "read_and_summary": {
+        "p50_us": 16563,
+        "p95_us": 17913
+      },
+      "eight_cancel_journal_roundtrips": {
+        "p50_us": 975132,
+        "p95_us": 990066
+      },
+      "process_rss_bytes_after_size": 384958464
+    }
+  ],
+  "fixture_version": 1,
+  "comparison": "2026-10-22 phase 3D-2; identical script, task IDs, sizes, warmups and samples",
+  "implementation": "5662916 baseline"
+}

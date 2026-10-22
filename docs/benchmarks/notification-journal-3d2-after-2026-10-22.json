@@ -1,0 +1,63 @@
+{
+  "scope": "Synthetic local journal only; no SQLite, native calls, startup or frames",
+  "runtime": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+  "os": "Version 27.0.1 (Build 26A434)",
+  "warmups": 2,
+  "samples": 7,
+  "results": [
+    {
+      "records": 100,
+      "journal_bytes": 19374,
+      "read": {
+        "p50_us": 251,
+        "p95_us": 535
+      },
+      "read_and_summary": {
+        "p50_us": 268,
+        "p95_us": 356
+      },
+      "eight_cancel_journal_roundtrips": {
+        "p50_us": 11711,
+        "p95_us": 12631
+      },
+      "process_rss_bytes_after_size": 223739904
+    },
+    {
+      "records": 1000,
+      "journal_bytes": 195775,
+      "read": {
+        "p50_us": 212,
+        "p95_us": 244
+      },
+      "read_and_summary": {
+        "p50_us": 382,
+        "p95_us": 470
+      },
+      "eight_cancel_journal_roundtrips": {
+        "p50_us": 20115,
+        "p95_us": 22149
+      },
+      "process_rss_bytes_after_size": 258015232
+    },
+    {
+      "records": 10000,
+      "journal_bytes": 1977776,
+      "read": {
+        "p50_us": 1103,
+        "p95_us": 1198
+      },
+      "read_and_summary": {
+        "p50_us": 1705,
+        "p95_us": 1792
+      },
+      "eight_cancel_journal_roundtrips": {
+        "p50_us": 113304,
+        "p95_us": 118192
+      },
+      "process_rss_bytes_after_size": 411844608
+    }
+  ],
+  "fixture_version": 1,
+  "comparison": "2026-10-22 phase 3D-2; identical script, task IDs, sizes, warmups and samples",
+  "implementation": "phase 3D-2 byte-checked immutable journal cache"
+}
