@@ -17,7 +17,11 @@ import sys
 
 
 def merge(report, process_start_us):
-    entry = datetime.fromisoformat(report['dart_entry_utc'])
+    stamp = report['dart_entry_utc']
+    # macOS's bundled Python 3.9 does not accept Dart's UTC Z suffix yet.
+    if not isinstance(stamp, str):
+        raise ValueError('Entry timestamp must be text')
+    entry = datetime.fromisoformat(stamp[:-1] + '+00:00' if stamp.endswith('Z') else stamp)
     if entry.utcoffset() is None:
         raise ValueError('Entry timestamp needs a timezone')
     entry_us = round(entry.timestamp() * 1_000_000)

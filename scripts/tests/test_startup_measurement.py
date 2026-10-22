@@ -33,3 +33,8 @@ class StartupMeasurementTest(unittest.TestCase):
             data = self.sample()
             data['milestones_us']['storage_ready'] = value
             with self.assertRaises(ValueError): module.merge(data, 1792648800000000)
+
+    def test_dart_utc_suffix_matches_offset_form_on_system_python(self):
+        data = self.sample()
+        data['dart_entry_utc'] = '2026-10-22T06:00:00.000000Z'
+        self.assertEqual(module.merge(data, 1792648800000000)['process_to_dart_entry_us'], 0)
