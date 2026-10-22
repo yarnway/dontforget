@@ -9,6 +9,27 @@ void main() {
   const next = '00000000-0000-4000-8000-000000000002';
   late Directory dir;
   late IncrementalJournalExperiment log;
+  late String dartExecutable;
+  setUpAll(() async {
+    // Use the SDK that supplied package:flutter, even when Flutter was invoked
+    // by absolute path and no dart command is available in the caller's PATH.
+    final config = File('.dart_tool/package_config.json').absolute;
+    final packages =
+        (jsonDecode(await config.readAsString()) as Map)['packages'] as List;
+    final flutter = packages.singleWhere((p) => p['name'] == 'flutter') as Map;
+    final sdk = Directory.fromUri(
+      config.uri.resolve(flutter['rootUri'] as String),
+    ).parent.parent;
+    final executable = File(
+      '${sdk.path}/bin/cache/dart-sdk/bin/dart${Platform.isWindows ? '.exe' : ''}',
+    );
+    if (!await executable.exists()) {
+      throw StateError(
+        'The current Flutter SDK has no bundled Dart executable',
+      );
+    }
+    dartExecutable = executable.path;
+  });
   NotificationJournalEntry entry(String status) => NotificationJournalEntry(
     reminderId: '合成任务',
     nativeId: 17,
@@ -234,7 +255,7 @@ void main() {
   }
 
   Future<void> crash(String mode) async {
-    final child = await Process.start('dart', [
+    final child = await Process.start(dartExecutable, [
       '--packages=.dart_tool/package_config.json',
       'test/fixtures/journal_crash_worker.dart',
       dir.path,

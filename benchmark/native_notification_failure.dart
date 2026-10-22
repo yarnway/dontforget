@@ -49,6 +49,7 @@ class _NativeFailureState extends State<NativeNotificationFailurePanel> {
   final _plugin = FlutterLocalNotificationsPlugin();
   Directory? _root;
   bool _busy = true;
+  bool _ready = false;
   String _status = 'Opening acceptance-only state…';
   Map<String, Object?> _report = {};
   final _task = Reminder(
@@ -120,6 +121,7 @@ class _NativeFailureState extends State<NativeNotificationFailurePanel> {
         );
       }
       await _observe('opened_saved_state');
+      _ready = true;
     } catch (error) {
       _status = 'Acceptance unavailable: ${error.runtimeType}';
     } finally {
@@ -139,6 +141,7 @@ class _NativeFailureState extends State<NativeNotificationFailurePanel> {
       'pid': pid,
       'at': DateTime.now().toUtc().toIso8601String(),
       'journal': journal?.toJson(),
+      if (error != null) 'error_type': error.runtimeType.toString(),
       if (error is PlatformException)
         'platform_error': {'code': error.code, 'details': error.details},
     });
@@ -158,7 +161,7 @@ class _NativeFailureState extends State<NativeNotificationFailurePanel> {
   }
 
   Future<void> _schedule(String? mode) async {
-    if (_busy || _database == null) return;
+    if (_busy || !_ready) return;
     setState(() => _busy = true);
     try {
       await _service?.pauseForMaintenance();
@@ -177,7 +180,9 @@ class _NativeFailureState extends State<NativeNotificationFailurePanel> {
           mode: mode,
         );
       } catch (error) {
-        await _observe('native_call_failed', error: error, mode: mode);
+        // Only the bridge's NSError details establish a real OS rejection.
+        // Storage or initialization errors must not be labelled as one.
+        await _observe('request_failed', error: error, mode: mode);
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -185,7 +190,7 @@ class _NativeFailureState extends State<NativeNotificationFailurePanel> {
   }
 
   Future<void> _cleanup() async {
-    if (_busy || _database == null) return;
+    if (_busy || !_ready) return;
     setState(() => _busy = true);
     try {
       _service ??= NotificationService.forTesting(
@@ -198,6 +203,8 @@ class _NativeFailureState extends State<NativeNotificationFailurePanel> {
       final pending = await _plugin.pendingNotificationRequests();
       if (pending.isNotEmpty) throw StateError('Owned native requests remain');
       await _observe('cleanup_no_pending_requests');
+    } catch (error) {
+      await _observe('cleanup_failed', error: error);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -230,25 +237,21 @@ class _NativeFailureState extends State<NativeNotificationFailurePanel> {
             SelectableText('Report: ${_root!.path}/native-failure-report.json'),
           const SizedBox(height: 16),
           FilledButton(
-            onPressed: _busy || _database == null
+            onPressed: _busy || !_ready
                 ? null
                 : () => _schedule('empty_content'),
             child: const Text('Probe empty notification content'),
           ),
           OutlinedButton(
-            onPressed: _busy || _database == null
-                ? null
-                : () => _schedule('past_date'),
+            onPressed: _busy || !_ready ? null : () => _schedule('past_date'),
             child: const Text('Probe past calendar date'),
           ),
           OutlinedButton(
-            onPressed: _busy || _database == null
-                ? null
-                : () => _schedule(null),
+            onPressed: _busy || !_ready ? null : () => _schedule(null),
             child: const Text('Retry valid product request'),
           ),
           OutlinedButton(
-            onPressed: _busy || _database == null ? null : _cleanup,
+            onPressed: _busy || !_ready ? null : _cleanup,
             child: const Text('Cancel isolated OS requests'),
           ),
         ],
