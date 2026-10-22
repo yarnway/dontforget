@@ -4,6 +4,7 @@ if [[ $# -gt 0 ]]; then
   if [[ $# -eq 1 && "$1" == "--help" ]]; then
     echo 'Usage: bash scripts/build_macos_performance.sh'
     echo 'Builds a separate macOS profile harness with an explicit single-task real OS failure probe; does not run it or touch application data.'
+    echo 'The idle UI also offers focused 10000-task/768px build-layout-GC diagnostics. Instrumented timings must not be mixed with baseline profiles.'
     exit 0
   fi
   echo 'Unknown arguments. Use --help.' >&2
@@ -40,6 +41,7 @@ manifest = {'version': release, 'build_number': build, 'platform': 'macos',
             'scope': 'ISOLATED_PERFORMANCE_HARNESS_NOT_PRODUCT_CANDIDATE',
             'entrypoint': 'benchmark/workspace_profile.dart',
             'native_failure_probe': 'MANUAL_SINGLE_SYNTHETIC_TASK_REAL_OS_CALLBACK_ONLY',
+            'frame_diagnostics': 'OPT_IN_SELF_VM_LOOPBACK_10000_TASKS_768PX_NOT_BASELINE',
             'artifacts': [{'file': archive.name, 'bytes': archive.stat().st_size, 'sha256': digest(archive)}]}
 (out / 'macos-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
 (out / 'macos-SHA256SUMS.txt').write_text(f"{manifest['artifacts'][0]['sha256']}  {archive.name}\n")

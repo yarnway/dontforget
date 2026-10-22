@@ -12,6 +12,7 @@ import 'dart:ui' show FramePhase;
 import 'package:crypto/crypto.dart';
 import 'notification_startup.dart';
 import 'native_notification_failure.dart';
+import 'frame_diagnostics.dart';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/models/reminder.dart';
@@ -115,6 +116,8 @@ class _BenchmarkState extends State<_Benchmark>
   int? _entryToFrame;
   bool _running = false;
   bool _includeNotificationStartup = true;
+  bool _focusedDiagnostics = false;
+  FrameDiagnostics? _frameDiagnostics;
   final _windowEvents = <Map<String, Object>>[];
   final _segments = <Map<String, Object?>>[];
 
@@ -230,7 +233,10 @@ class _BenchmarkState extends State<_Benchmark>
       'viewport_protocol': 'fixed-height-792-v1',
       'first_frame_protocol':
           'one warmup then five fresh board/provider mounts',
-      'notification_startup_included': _includeNotificationStartup,
+      'focused_768_diagnostics': _focusedDiagnostics,
+      'timing_comparable_to_baseline': !_focusedDiagnostics,
+      'notification_startup_included':
+          _includeNotificationStartup && !_focusedDiagnostics,
       'fixture_source':
           'Exact task rows from KaPI1r baseline; notification-only copy uses fixed 2099 trigger',
       'segments': _segments,
@@ -266,15 +272,19 @@ class _BenchmarkState extends State<_Benchmark>
     _segments.clear();
     _windowEvents.clear();
     _errors.clear();
+    var completed = false;
     try {
       final support = await getApplicationSupportDirectory();
       _root = await Directory(support.path).createTemp('isolated-performance-');
       stdout.writeln('ISOLATED_BENCHMARK_RESULT=${_root!.path}/results.json');
+      if (_focusedDiagnostics) {
+        _frameDiagnostics = await FrameDiagnostics.start();
+      }
       await _prepareForeground();
       await WidgetsBinding.instance.waitUntilFirstFrameRasterized.timeout(
         const Duration(seconds: 10),
       );
-      for (final count in [100, 1000, 10000]) {
+      for (final count in _focusedDiagnostics ? [10000] : [100, 1000, 10000]) {
         await _status(
           'Measuring $count synthetic tasks: storage startup and backup',
         );
@@ -382,7 +392,8 @@ class _BenchmarkState extends State<_Benchmark>
         };
         _results.add(result);
         try {
-          for (final width in [375.0, 768.0, 1440.0]) {
+          for (final width
+              in _focusedDiagnostics ? [768.0] : [375.0, 768.0, 1440.0]) {
             await _status(
               'Measuring $count tasks: ${width.toInt()}px list frames',
             );
@@ -406,7 +417,7 @@ class _BenchmarkState extends State<_Benchmark>
           }
         }
         result['process_rss_bytes_after_size'] = ProcessInfo.currentRss;
-        if (_includeNotificationStartup) {
+        if (_includeNotificationStartup && !_focusedDiagnostics) {
           await _status(
             'Measuring $count complete startup notifications (recording OS transport)',
           );
@@ -430,15 +441,18 @@ class _BenchmarkState extends State<_Benchmark>
           await _record(_progress);
         }
       }
-      await _status(
-        'Completed. Synthetic data and results are preserved for review.',
-      );
-      await _record('complete');
+      completed = true;
     } catch (error) {
       _errors.add(error.toString());
       if (mounted) setState(() => _progress = 'Benchmark failed: $error');
-      await _record('failed');
     } finally {
+      final diagnostics = _frameDiagnostics;
+      _frameDiagnostics = null;
+      try {
+        await diagnostics?.close();
+      } catch (error) {
+        _errors.add('Diagnostics cleanup failed: ${error.runtimeType}');
+      }
       if (mounted) setState(() => _tasks = null);
       final database = _database;
       _database = null;
@@ -446,9 +460,22 @@ class _BenchmarkState extends State<_Benchmark>
         await database?.close(createBackup: false);
       } catch (error) {
         _errors.add('Database cleanup failed: $error');
-        await _record('failed');
       }
-      if (mounted) setState(() => _running = false);
+      // Completion is published only after profiling state and storage close.
+      // A cleanup failure must not leave an apparently valid complete report.
+      try {
+        await _record(completed && _errors.isEmpty ? 'complete' : 'failed');
+      } catch (error) {
+        _errors.add('Final report write failed: ${error.runtimeType}');
+      }
+      if (mounted) {
+        setState(() {
+          _running = false;
+          _progress = completed && _errors.isEmpty
+              ? 'Completed. Synthetic data and results are preserved for review.'
+              : 'Benchmark failed: ${_errors.lastOrNull ?? 'window closed'}';
+        });
+      }
     }
   }
 
@@ -504,6 +531,7 @@ class _BenchmarkState extends State<_Benchmark>
     final firstFrameIntervals = <(int, int)>[];
     final installTimes = <int>[];
     final viewports = <Map<String, Object>>[];
+    final diagnosticFrames = <Map<String, Object?>>[];
     for (var sample = 0; sample < 6; sample++) {
       final start = developer.Timeline.now;
       final watch = Stopwatch()..start();
@@ -536,6 +564,10 @@ class _BenchmarkState extends State<_Benchmark>
       if (sample > 0) {
         firstFrameIntervals.add((start, end));
         installTimes.add(watch.elapsedMicroseconds);
+        final diagnostics = _frameDiagnostics;
+        if (diagnostics != null) {
+          diagnosticFrames.add(await diagnostics.capture(start, end));
+        }
       }
       await Future<void>.delayed(const Duration(milliseconds: 150));
     }
@@ -604,6 +636,7 @@ class _BenchmarkState extends State<_Benchmark>
       'requested_width': width,
       'requested_height': _boardHeight,
       'sample_viewports': viewports,
+      if (diagnosticFrames.isNotEmpty) 'diagnostic_frames': diagnosticFrames,
       'first_board_build_samples_us': first
           .map((t) => t.buildDuration.inMicroseconds)
           .toList(),
@@ -690,6 +723,16 @@ class _BenchmarkState extends State<_Benchmark>
                   setState(() => _includeNotificationStartup = value ?? true),
               title: const Text(
                 'Include full notification startup (can take several minutes)',
+              ),
+              controlAffinity: ListTileControlAffinity.leading,
+            ),
+          if (!_running)
+            CheckboxListTile(
+              value: _focusedDiagnostics,
+              onChanged: (value) =>
+                  setState(() => _focusedDiagnostics = value ?? false),
+              title: const Text(
+                'Diagnose 10000 tasks at 768px (instrumented timings)',
               ),
               controlAffinity: ListTileControlAffinity.leading,
             ),
