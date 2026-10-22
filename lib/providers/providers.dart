@@ -274,7 +274,8 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     }
   }
 
-  // Bound native work while allowing independent intents/results to share a
+  // Bound admitted work while the service separately caps native calls.
+  // Allow independent intents/results to share a
   // durable journal replacement. Future.wait drains the batch before recovery
   // or a following batch can proceed, even when one operation throws.
   Future<void> _startupBatches<T>(
@@ -284,7 +285,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     final pending = <Future<void>>[];
     for (final value in values) {
       pending.add(operation(value));
-      if (pending.length == 32) {
+      if (pending.length == NotificationService.reconciliationBatchSize) {
         await Future.wait(pending);
         pending.clear();
       }

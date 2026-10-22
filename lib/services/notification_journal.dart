@@ -24,7 +24,7 @@ class NotificationJournal {
   final Future<void> Function()? _beforeReplace;
   _JournalCache? _cache;
   List<_JournalChange>? _pendingChanges;
-  static const _maxBatchSize = 64;
+  static const _maxBatchSize = 256;
   int _replacements = 0;
   int _writtenBytes = 0;
   int _writeMicros = 0;

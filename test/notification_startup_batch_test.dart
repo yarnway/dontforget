@@ -62,6 +62,7 @@ class _Native implements FlutterLocalNotificationsPlugin {
       case #getNotificationAppLaunchDetails:
         return Future.value(const NotificationAppLaunchDetails(false));
       case #cancelAll:
+        expect(active, 0, reason: 'Cleanup must drain admitted native work');
         pending.clear();
         return Future<void>.value();
       case #cancel:
@@ -95,7 +96,7 @@ void main() {
     );
     final db = await helper.database;
     final batch = db.batch();
-    for (var i = 0; i < 65; i++) {
+    for (var i = 0; i < 257; i++) {
       batch.insert(
         'Reminders',
         Reminder(
@@ -134,7 +135,7 @@ void main() {
       native.release!.complete();
       await loaded;
       expect(native.peakActive, 32);
-      expect(native.pending, hasLength(65));
+      expect(native.pending, hasLength(257));
       final state = (await helper.withNotificationJournal((j) => j.read()))!;
       expect(
         state.entries.values.every(
@@ -156,11 +157,11 @@ void main() {
       notifier = RemindersNotifier(helper, notifications: service);
       await notifier!.ready;
       final state = (await helper.withNotificationJournal((j) => j.read()))!;
-      expect(native.pending, hasLength(64));
+      expect(native.pending, hasLength(256));
       expect(state.entries['task-4']!.status, 'failed');
       expect(
         state.entries.values.where((e) => e.status == 'submitted'),
-        hasLength(64),
+        hasLength(256),
       );
       final beforeSchedules = native.schedules;
       native.failSchedules.clear();
@@ -171,7 +172,7 @@ void main() {
       );
       expect(result, (attempted: 1, failed: 0));
       expect(native.schedules, beforeSchedules + 1);
-      expect(native.pending, hasLength(65));
+      expect(native.pending, hasLength(257));
       expect(
         (await helper.withNotificationJournal(
           (j) => j.read(),
@@ -202,14 +203,51 @@ void main() {
       await stopped;
       final lease = await pausing;
       expect(native.active, 0);
-      expect(native.schedules, 32);
+      expect(native.schedules, 256);
       final state = (await helper.withNotificationJournal((j) => j.read()))!;
-      expect(state.entries, hasLength(32));
+      expect(state.entries, hasLength(256));
       expect(
         state.entries.values.every((e) => e.status == 'submitted'),
         isTrue,
       );
       await lease.resume();
+    },
+  );
+  test(
+    'recovery batches drain failures before cleanup and can rebuild again',
+    () async {
+      await service.init();
+      await service.pauseForMaintenance();
+      final tasks = (await (await helper.database).query(
+        'Reminders',
+      )).map(Reminder.fromJson).toList();
+      native.release = Completer<void>();
+      native.failSchedules.add(stableNotificationId('task-4'));
+      final failed = expectLater(
+        service.resumeFromReminders(tasks),
+        throwsStateError,
+      );
+      await native.firstBatch.future.timeout(const Duration(seconds: 5));
+      expect(native.active, 32);
+      expect(service.isPausedForMaintenance, isTrue);
+      native.release!.complete();
+      await failed;
+      expect(native.schedules, 256);
+      expect(native.active, 0);
+      expect(native.pending, isEmpty);
+      expect(service.isPausedForMaintenance, isTrue);
+      final before = (await helper.withNotificationJournal((j) => j.read()))!;
+      expect(before.entries, hasLength(256));
+      expect(before.entries['task-4']!.status, 'failed');
+      native.failSchedules.clear();
+      await service.resumeFromReminders(tasks);
+      expect(native.pending, hasLength(257));
+      expect(native.peakActive, 32);
+      expect(service.isPausedForMaintenance, isFalse);
+      final after = (await helper.withNotificationJournal((j) => j.read()))!;
+      for (final entry in before.entries.values) {
+        expect(after.entries[entry.reminderId]!.nativeId, entry.nativeId);
+      }
     },
   );
 }

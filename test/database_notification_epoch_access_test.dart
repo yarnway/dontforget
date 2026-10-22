@@ -171,6 +171,50 @@ void main() {
   );
 
   test(
+    'maintenance sidecars may overlap but keep SQL and lease release closed',
+    () async {
+      await database.database;
+      final lease = await database.beginMaintenance();
+      await lease.validateAndOpen();
+      final firstRelease = Completer<void>();
+      final secondRelease = Completer<void>();
+      final entered = Completer<void>();
+      var count = 0;
+      Future<void> sidecar(Completer<void> release) =>
+          database.withNotificationJournal((_) async {
+            if (++count == 2) entered.complete();
+            await release.future;
+          });
+      final first = sidecar(firstRelease);
+      final second = sidecar(secondRelease);
+      await entered.future;
+      expect(
+        () => lease.read((db) => db.query('Reminders')),
+        throwsA(isA<DatabaseAccessException>()),
+      );
+      expect(
+        () => lease.closeWithoutBackup(),
+        throwsA(isA<DatabaseAccessException>()),
+      );
+      expect(() => lease.fail(), throwsA(isA<DatabaseAccessException>()));
+      await expectLater(
+        lease.resume(),
+        throwsA(isA<DatabaseAccessException>()),
+      );
+      firstRelease.complete();
+      await first;
+      await expectLater(
+        lease.resume(),
+        throwsA(isA<DatabaseAccessException>()),
+      );
+      secondRelease.complete();
+      await second;
+      await lease.resume();
+      expect(await database.readNotificationEpoch(), isNotEmpty);
+    },
+  );
+
+  test(
     'an admitted producer can finish an epoch read while maintenance drains',
     () async {
       final entered = Completer<void>();

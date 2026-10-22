@@ -47,19 +47,36 @@ class DatabaseMaintenanceLease {
   String get path => join(directory, 'dont_forget_v3.db');
   bool _ended = false;
   bool _busy = false;
+  int _notificationOperations = 0;
   bool _validatedOpen = false;
   int? _validatedVersion;
 
-  void _checkActive() {
+  void _checkIdentity() {
     if (_ended || !identical(_helper._maintenance, this)) {
       throw const DatabaseAccessException(DatabaseAccessError.expiredScope);
     }
     if (_helper._accessState == _AccessState.faulted) {
       throw const DatabaseAccessException(DatabaseAccessError.faulted);
     }
+  }
+
+  void _checkActive() {
+    _checkIdentity();
+    if (_busy || _notificationOperations != 0) {
+      throw const DatabaseAccessException(DatabaseAccessError.maintenance);
+    }
+  }
+
+  // Only the ownership-checked epoch/journal helpers may use this admission.
+  // Their own stores serialize writes. SQL/file replacement and lease release
+  // stay blocked until every admitted sidecar operation has settled.
+  Future<T> _performNotification<T>(Future<T> Function() action) {
+    _checkIdentity();
     if (_busy) {
       throw const DatabaseAccessException(DatabaseAccessError.maintenance);
     }
+    _notificationOperations++;
+    return Future<T>.sync(action).whenComplete(() => _notificationOperations--);
   }
 
   Future<T> _perform<T>(Future<T> Function() action) {
@@ -177,11 +194,19 @@ class DatabaseMaintenanceLease {
         for (final table in tables.reversed) {
           await transaction.delete(table);
         }
+        var batch = transaction.batch();
+        var pending = 0;
         for (final table in tables) {
           for (final row in rows[table]!) {
-            await transaction.insert(table, row);
+            batch.insert(table, row);
+            if (++pending == 500) {
+              await batch.commit(noResult: true);
+              batch = transaction.batch();
+              pending = 0;
+            }
           }
         }
+        if (pending != 0) await batch.commit(noResult: true);
       });
       await _checkIntegrity(database);
     } finally {
@@ -243,7 +268,7 @@ class DatabaseMaintenanceLease {
     if (_ended || !identical(_helper._maintenance, this)) {
       throw const DatabaseAccessException(DatabaseAccessError.expiredScope);
     }
-    if (_busy) {
+    if (_busy || _notificationOperations != 0) {
       throw const DatabaseAccessException(DatabaseAccessError.maintenance);
     }
     _ended = true;

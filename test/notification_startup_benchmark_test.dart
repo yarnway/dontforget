@@ -26,7 +26,7 @@ void main() {
               triggerTime: DateTime.utc(2099, 1, 1),
             ),
         ]);
-        expect(results.length, 2);
+        expect(results.length, 3);
         for (final result in results) {
           expect(result['journal_entries'], 12);
           expect(result['native_schedule_calls'], 12);
@@ -34,7 +34,9 @@ void main() {
           expect(result['elapsed_us'], greaterThan(0));
         }
         expect(results.first['native_reset_calls'], 1);
-        expect(results.last['native_reset_calls'], 0);
+        expect(results[1]['native_reset_calls'], 0);
+        expect(results.last['mode'], 'maintenance_rebuild');
+        expect(results.last['native_reset_calls'], 2);
       } finally {
         await root.delete(recursive: true);
       }

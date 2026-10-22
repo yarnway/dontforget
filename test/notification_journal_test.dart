@@ -79,10 +79,10 @@ void main() {
     await journal.reset(epoch);
     writes = 0;
     final allocated = await Future.wait([
-      for (var i = 0; i < 130; i++) journal.reserve(epoch, 'batch-$i'),
+      for (var i = 0; i < 530; i++) journal.reserve(epoch, 'batch-$i'),
     ]);
     expect(writes, 3);
-    expect(allocated.map((e) => e.nativeId).toSet(), hasLength(130));
+    expect(allocated.map((e) => e.nativeId).toSet(), hasLength(530));
     writes = 0;
     await Future.wait([
       for (var i = 0; i < 32; i++)

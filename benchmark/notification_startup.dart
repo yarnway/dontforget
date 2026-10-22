@@ -7,6 +7,7 @@ import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/providers/providers.dart';
 import 'package:dont_forget/services/notification_service.dart';
+import 'package:dont_forget/services/notification_epoch_store.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -62,7 +63,11 @@ Future<List<Map<String, Object>>> measureNotificationStartup(
   final transport = RecordingNotificationTransport();
   final results = <Map<String, Object>>[];
   Map<String, int>? previousIds;
-  for (final mode in ['new_journal', 'reopen_submitted_journal']) {
+  for (final mode in [
+    'new_journal',
+    'reopen_submitted_journal',
+    'maintenance_rebuild',
+  ]) {
     final helper = DatabaseHelper.forTesting(
       directory.path,
       databaseFactoryFfi,
@@ -73,19 +78,35 @@ Future<List<Map<String, Object>>> measureNotificationStartup(
       database: helper,
     );
     final watch = Stopwatch()..start();
-    final container = ProviderContainer(
-      overrides: [
-        databaseHelperProvider.overrideWithValue(helper),
-        remindersProvider.overrideWith(
-          (_) => RemindersNotifier(helper, notifications: service),
-        ),
-      ],
-    );
+    ProviderContainer? container;
     try {
-      await Future.wait([
-        container.read(settingsProvider.notifier).ready,
-        container.read(remindersProvider.notifier).ready,
-      ]);
+      if (mode == 'maintenance_rebuild') {
+        await service.pauseForMaintenance();
+        final lease = await helper.beginMaintenance();
+        try {
+          await lease.validateAndOpen();
+          await NotificationEpochStore(Directory(lease.directory)).rotate();
+          final rows = await lease.read((db) => db.query('Reminders'));
+          await service.resumeFromReminders(rows.map(Reminder.fromJson));
+          await lease.resume();
+        } catch (_) {
+          lease.fail();
+          rethrow;
+        }
+      } else {
+        container = ProviderContainer(
+          overrides: [
+            databaseHelperProvider.overrideWithValue(helper),
+            remindersProvider.overrideWith(
+              (_) => RemindersNotifier(helper, notifications: service),
+            ),
+          ],
+        );
+        await Future.wait([
+          container.read(settingsProvider.notifier).ready,
+          container.read(remindersProvider.notifier).ready,
+        ]);
+      }
       watch.stop();
       final snapshot = (await helper.withNotificationJournal((j) => j.read()))!;
       if (snapshot.entries.length != tasks.length ||
@@ -111,9 +132,10 @@ Future<List<Map<String, Object>>> measureNotificationStartup(
       results.add({
         'mode': mode,
         'elapsed_us': watch.elapsedMicroseconds,
-        'scope':
-            'Full provider.ready including real SQL, urgency, journal, '
-            'ID allocation and timers; recording OS transport, no OS delivery',
+        'scope': mode == 'maintenance_rebuild'
+            ? 'Maintenance gate, epoch rotation and notification rebuild from saved rows; excludes backup validation and SQL replacement; recording OS transport'
+            : 'Full provider.ready including real SQL, urgency, journal, '
+                  'ID allocation and timers; recording OS transport, no OS delivery',
         'tasks': tasks.length,
         'journal_entries': snapshot.entries.length,
         'native_schedule_calls': transport.schedules,
@@ -128,7 +150,7 @@ Future<List<Map<String, Object>>> measureNotificationStartup(
       final retained = Map<int, String>.of(transport.pending);
       await service.pauseForMaintenance();
       transport.pending.addAll(retained);
-      container.dispose();
+      container?.dispose();
       await helper.close(createBackup: false);
       transport.cancellations = transport.schedules = transport.resets = 0;
     }

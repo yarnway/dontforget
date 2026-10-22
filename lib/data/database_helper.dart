@@ -231,7 +231,7 @@ class DatabaseHelper {
     }
     final lease = _maintenance;
     if (_accessState == _AccessState.maintenance && lease != null) {
-      return lease._perform(owned);
+      return lease._performNotification(owned);
     }
     // A new caller cannot join the gap while earlier operations are draining
     // and no exclusive maintenance lease has been issued yet.

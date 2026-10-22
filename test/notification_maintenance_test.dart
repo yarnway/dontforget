@@ -18,11 +18,11 @@ class _Native implements FlutterLocalNotificationsPlugin {
   int cancellations = 0;
 
   Future<void> _schedule(Invocation call) async {
-    schedules++;
-    if (blockScheduleNumber == null || schedules == blockScheduleNumber) {
+    final callNumber = ++schedules;
+    if (blockScheduleNumber == null || callNumber == blockScheduleNumber) {
       await scheduling?.future;
     }
-    if (schedules == failOnScheduleNumber) {
+    if (callNumber == failOnScheduleNumber) {
       failCancelAll = true;
       throw StateError('synthetic partial rebuild and cleanup failure');
     }

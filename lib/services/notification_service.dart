@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -35,6 +36,33 @@ class NotificationService {
            readDatasetEpoch ??
            database?.readNotificationEpoch ??
            _testDatasetEpoch;
+
+  // Journal admission and OS concurrency are independent: larger groups can
+  // share durable writes without flooding the platform notification plugin.
+  static const reconciliationBatchSize = 256;
+  static const nativeConcurrency = 32;
+  final _nativeWaiters = Queue<Completer<void>>();
+  int _activeNative = 0;
+
+  Future<void> _runNative(Future<void> Function() action) async {
+    if (_activeNative >= nativeConcurrency) {
+      final waiter = Completer<void>();
+      _nativeWaiters.addLast(waiter);
+      await waiter.future;
+    } else {
+      _activeNative++;
+    }
+    try {
+      await action();
+    } finally {
+      if (_nativeWaiters.isNotEmpty) {
+        // Transfer the permit directly; a new arrival cannot steal it.
+        _nativeWaiters.removeFirst().complete();
+      } else {
+        _activeNative--;
+      }
+    }
+  }
 
   final DatabaseHelper? _database;
   Future<void>? _journalPreparation;
@@ -75,7 +103,9 @@ class NotificationService {
     Reminder? schedule,
   }) async {
     final database = _database;
-    if (database == null) return action(stableNotificationId(id));
+    if (database == null) {
+      return _runNative(() => action(stableNotificationId(id)));
+    }
     await init();
     await _prepareJournal();
     final epoch = _journalEpoch!;
@@ -101,7 +131,7 @@ class NotificationService {
       ),
     );
     try {
-      await action(entry.nativeId);
+      await _runNative(() => action(entry.nativeId));
       await record('submitted');
     } catch (_) {
       // A failed result write leaves a durable pending intent. Preserve the
@@ -211,13 +241,21 @@ class NotificationService {
       _datasetEpoch = await _readDatasetEpoch();
       if (_database != null && usesNativeNotifications) await init();
       final startedAt = _now();
+      final batch = <Future<void>>[];
       for (final reminder in reminders) {
         if (!reminder.isCompleted &&
             reminder.noticeAcknowledgedAt == null &&
             (reminder.triggerTime?.isAfter(startedAt) ?? false)) {
-          await _scheduleReminder(reminder);
+          batch.add(_scheduleReminder(reminder));
+          if (batch.length == reconciliationBatchSize) {
+            // Default Future.wait drains every admitted task on failure before
+            // cleanup cancels all native requests. No later batch is admitted.
+            await Future.wait(batch);
+            batch.clear();
+          }
         }
       }
+      await Future.wait(batch);
       _maintenance = false;
       _maintenanceReady = false;
       // Timers start only after the whole rebuild succeeds. An occurrence that
