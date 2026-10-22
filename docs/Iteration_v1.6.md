@@ -423,6 +423,23 @@ Android 元数据来源核对了 [AOSP SQLiteConnection](https://android.googles
 2. 万条对账仍需 48.53/80.17 s，继续减少全量 JSON 重写和批次固定成本，并测量完整产品冷启动；恢复后重建路径另做门禁验证再扩展批次。
 3. 权限拒绝后恢复、真实 OS 调度异常、系统重启/休眠/时区/DST、多模型配置迁移与降级、其他平台业务及正式签名发布。录音和播放允许继续验收，本轮未新增相关实测。
 
+### 2026-10-22：阶段 3D-5 降低对账写入与产品冷启动测量
+
+本阶段先合并正在进行的通知 epoch 读取，完成后仍重新检查文件，rotate 保持顺序屏障；不长期缓存身份。日志增加 begin 操作，把稳定 ID 分配及 pending 意图放进同一次原子提交，调用方只有落盘成功才取得原生 ID。日志 v1 格式、同 ID 串行、碰撞处理、原文件字节核对、64 条写入批次与 32 条原生并发上限保持。
+
+本机诊断（Flutter test JIT，不作为原生性能结论）万条首次/重开为 9.74/15.30 s，原子替换 1255/1254 次、写入 1.297/2.588 GB。原生 profile 将继续使用完全相同的 100/1000/10000 任务与 2099 通知副本，通过任务行摘要核对；不混用 JIT 和原生数值。
+
+完整产品启动新增独立 release 测量构建：真实 `lib/main.dart`、恢复 bootstrap、真实 providers、窗口、路由和 OS 通知插件保持；仅开启被动时间标记，普通产品构建不开启。记录 Dart 入口、存储验证、设置/任务加载、首帧 raster 完成信号、完整通知对账和路由可用帧。三分钟未就绪记录 timeout，失败不写成 complete；报告只允许写入 acceptance 隔离容器，不包含任务内容或密钥。
+
+运行方法（固定 Flutter 3.44.9 / Dart 3.12.2，Mac 构建需 Xcode）：
+
+1. `bash scripts/build_macos_performance.sh` 构建现有 profile；`bash scripts/build_macos_startup_measurement.sh` 构建产品启动测量包。两者 `--help` 可查看范围，未知参数先拒绝；CI performance workflow 分别构建并上传两个独立 artifact。
+2. 分别通过 `prepare_macos_acceptance.py` 校验清单和完整源码 SHA，生成全新 acceptance 身份；仅在对应隔离容器准备合成样本。UI 启动由原生界面工具操作，不用脚本启动应用。
+3. 产品在容器 Application Support 下的 `startup-traces` 写入每进程独立 JSON。候选仍运行时执行 `python3 scripts/read_macos_startup_measurement.py --report /absolute/path/to/startup-traces/report.json`，只读校验精确 bundle/PID 并合并内核进程创建时间，输出完整新进程到各里程碑耗时。测量不包含工具启动/读取延迟，也不等于系统重启或磁盘缓存冷启动。
+4. native profile 使用记录器传输；产品测量使用真实 OS 插件，调度 API 返回与系统实际保留/送达数量分开核验。完成后在同一隔离容器恢复空基线、取消合成通知并保留回退。
+
+当前源码阶段验证：663 项 Flutter 全量、50 项 Python 测试通过，静态分析无问题；原生性能及完整产品启动结果待本轮候选形成后追加，通知点击和权限拒绝恢复继续独立验收。
+
 ## 阶段 4：界面和多平台交付
 
 恢复入口统一状态文案：检查中、可恢复、需处理、恢复中、成功、失败可回退。

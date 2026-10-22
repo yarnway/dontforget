@@ -11,6 +11,7 @@ import 'models/reminder.dart';
 import 'services/recovery/storage_bootstrap.dart';
 import 'ui/screens/storage_unavailable_screen.dart';
 import 'app.dart';
+import 'services/startup_trace.dart';
 
 void _writeCrashLog(dynamic error, StackTrace? stack) {
   try {
@@ -107,6 +108,7 @@ Usage:
 }
 
 void main(List<String> args) async {
+  StartupTrace.start();
   if (args.isNotEmpty &&
       (args.contains('--add') ||
           args.contains('-a') ||
@@ -141,6 +143,8 @@ void main(List<String> args) async {
   runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
+      StartupTrace.bind();
+      StartupTrace.mark('binding_ready');
 
       // Catch framework-level errors
       FlutterError.onError = (FlutterErrorDetails details) {
@@ -166,6 +170,7 @@ void main(List<String> args) async {
             try {
               await windowManager.show();
               await windowManager.focus();
+              StartupTrace.mark('window_shown');
               // Prevent default close so we can hide to tray instead
               await windowManager.setPreventClose(true);
             } catch (e, st) {
@@ -181,8 +186,13 @@ void main(List<String> args) async {
       // notification startup side effect. Never fall through to default data.
       try {
         final helper = DatabaseHelper.instance;
+        if (StartupTrace.enabled) {
+          StartupTrace.attach(await helper.acquireOwnership());
+        }
         await StorageBootstrap(helper).prepare();
+        StartupTrace.mark('storage_ready');
       } catch (error) {
+        StartupTrace.fail('storage');
         runApp(
           StorageUnavailableScreen(
             busy:

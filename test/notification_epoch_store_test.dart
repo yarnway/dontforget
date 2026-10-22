@@ -75,6 +75,31 @@ void main() {
   });
 
   test(
+    'in-flight reads coalesce but completed reads revalidate bytes',
+    () async {
+      final store = NotificationEpochStore(
+        directory,
+        newEpoch: () => firstEpoch,
+      );
+      final first = store.readOrCreate();
+      expect(identical(first, store.readOrCreate()), isTrue);
+      expect(await first, firstEpoch);
+      await file.writeAsString(
+        jsonEncode({'version': 1, 'epoch': secondEpoch}),
+      );
+      final second = store.readOrCreate();
+      expect(identical(first, second), isFalse);
+      expect(await second, secondEpoch);
+      await file.writeAsString('corrupt');
+      final failed = store.readOrCreate();
+      expect(identical(failed, store.readOrCreate()), isTrue);
+      await expectLater(failed, throwsFormatException);
+      await file.writeAsString(jsonEncode({'version': 1, 'epoch': firstEpoch}));
+      expect(await store.readOrCreate(), firstEpoch);
+    },
+  );
+
+  test(
     'corrupt, future, oversized and unknown-file formats never regenerate',
     () async {
       for (final invalid in [

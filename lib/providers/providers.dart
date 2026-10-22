@@ -11,6 +11,7 @@ import '../models/media_record.dart';
 import '../services/llm_service.dart';
 import '../services/notification_service.dart';
 import '../services/notification_journal.dart';
+import '../services/startup_trace.dart';
 import '../services/lan_sync_service.dart';
 import '../services/dp_scheduler_service.dart';
 import '../services/multi_agent_service.dart';
@@ -62,6 +63,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     if (rows.isNotEmpty && mounted) {
       state = AppSettings.fromJson(rows.first);
     }
+    StartupTrace.mark('settings_loaded');
   }
 
   Future<void> updateSettings(AppSettings newSettings) async {
@@ -203,6 +205,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       }
       _stateGeneration = generation;
       state = list;
+      StartupTrace.mark('tasks_loaded');
       // Recovery already rebuilt notifications from the committed database.
       // Loading UI state must not reschedule or mutate it a second time.
       if (!runEffects) return;

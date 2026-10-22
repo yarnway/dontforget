@@ -18,6 +18,61 @@ void main() {
   });
   tearDown(() => directory.delete(recursive: true));
 
+  test('begin atomically allocates IDs and persists pending intents', () async {
+    await journal.reset(epoch);
+    var writes = 0;
+    journal = NotificationJournal.forTesting(directory, () async => writes++);
+    final begun = await Future.wait([
+      for (var i = 0; i < 32; i++)
+        journal.begin(
+          epoch,
+          'begin-$i',
+          action: 'schedule',
+          triggerUtcMicros: 123,
+          noticeRevision: 2,
+          attemptedAt: DateTime.utc(2026),
+        ),
+    ]);
+    expect(writes, 1);
+    final saved = (await NotificationJournal(directory).read())!;
+    expect(saved.entries, hasLength(32));
+    expect(
+      saved.entries.values.every(
+        (e) => e.status == 'pending' && e.attempts == 1,
+      ),
+      isTrue,
+    );
+    final next = await journal.begin(
+      epoch,
+      'begin-0',
+      action: 'cancel',
+      attemptedAt: DateTime.utc(2026),
+    );
+    expect(next.nativeId, begun.first.nativeId);
+    expect(next.attempts, 2);
+    expect(next.triggerUtcMicros, isNull);
+  });
+
+  test(
+    'failed begin returns no ID and preserves previous durable state',
+    () async {
+      await journal.reset(epoch);
+      journal = NotificationJournal.forTesting(directory, () async {
+        throw const FileSystemException('injected staging failure');
+      });
+      await expectLater(
+        journal.begin(
+          epoch,
+          'new',
+          action: 'cancel',
+          attemptedAt: DateTime.utc(2026),
+        ),
+        throwsA(isA<FileSystemException>()),
+      );
+      expect((await NotificationJournal(directory).read())!.entries, isEmpty);
+    },
+  );
+
   test('concurrent intents are durable in bounded atomic batches', () async {
     var writes = 0;
     journal = NotificationJournal.forTesting(directory, () async => writes++);

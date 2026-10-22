@@ -12,6 +12,7 @@ import 'data/database_helper.dart';
 import 'models/reminder.dart';
 import 'services/notification_route_service.dart';
 import 'services/notification_service.dart';
+import 'services/startup_trace.dart';
 import 'ui/screens/home_screen.dart';
 import 'ui/screens/recovery_outcome_screen.dart';
 import 'ui/screens/task_detail_screen.dart';
@@ -126,11 +127,13 @@ class _MyAppState extends ConsumerState<MyApp>
       _routeDataGeneration = generation;
       _routeReminders = reminders;
       _routeDataReady = true;
+      StartupTrace.mark('notifications_ready');
       _scheduleNotificationRoutes();
     } catch (error) {
       // Recovery/read errors are handled by their owning screens. A route is
       // never allowed to bypass a failed load by treating an empty list as data.
       debugPrint('Notification routes unavailable: $error');
+      StartupTrace.fail('notification_routes');
     }
   }
 
@@ -168,6 +171,7 @@ class _MyAppState extends ConsumerState<MyApp>
       }
       try {
         _notificationRoutes.setReady(true);
+        StartupTrace.mark('routes_ready_frame');
       } catch (error) {
         debugPrint('Notification navigation unavailable: $error');
       }

@@ -60,20 +60,48 @@ class NotificationJournal {
   }
 
   Future<NotificationJournalEntry> reserve(String epoch, String reminderId) =>
-      _change(epoch, reminderId, (previous, used) {
-        if (previous != null) return previous;
-        var id = stableNotificationId(reminderId);
-        while (used.contains(id)) {
-          id = id == 0x7fffffff ? 1 : id + 1;
-        }
-        return NotificationJournalEntry(
-          reminderId: reminderId,
-          nativeId: id,
-          action: 'cancel',
-          status: 'reserved',
-          attempts: 0,
-        );
-      });
+      _change(
+        epoch,
+        reminderId,
+        (previous, used) => previous ?? _allocate(reminderId, used),
+      );
+
+  NotificationJournalEntry _allocate(String reminderId, Set<int> used) {
+    var id = stableNotificationId(reminderId);
+    while (used.contains(id)) {
+      id = id == 0x7fffffff ? 1 : id + 1;
+    }
+    return NotificationJournalEntry(
+      reminderId: reminderId,
+      nativeId: id,
+      action: 'cancel',
+      status: 'reserved',
+      attempts: 0,
+    );
+  }
+
+  /// Allocate (or retain) the ID and persist its pending intent in one commit.
+  /// The native caller receives no ID until that commit succeeds.
+  Future<NotificationJournalEntry> begin(
+    String epoch,
+    String reminderId, {
+    required String action,
+    int? triggerUtcMicros,
+    int? noticeRevision,
+    required DateTime attemptedAt,
+  }) => _change(epoch, reminderId, (previous, used) {
+    final entry = previous ?? _allocate(reminderId, used);
+    return NotificationJournalEntry(
+      reminderId: reminderId,
+      nativeId: entry.nativeId,
+      action: action,
+      status: 'pending',
+      attempts: entry.attempts + 1,
+      triggerUtcMicros: triggerUtcMicros,
+      noticeRevision: noticeRevision,
+      attemptedAt: attemptedAt.toUtc().toIso8601String(),
+    );
+  });
 
   Future<void> record(
     String epoch,

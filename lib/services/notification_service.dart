@@ -80,7 +80,14 @@ class NotificationService {
     await _prepareJournal();
     final epoch = _journalEpoch!;
     final entry = await database.withNotificationJournal(
-      (j) => j.reserve(epoch, id),
+      (j) => j.begin(
+        epoch,
+        id,
+        action: schedule == null ? 'cancel' : 'schedule',
+        triggerUtcMicros: schedule?.triggerTime?.toUtc().microsecondsSinceEpoch,
+        noticeRevision: schedule?.noticeRevision,
+        attemptedAt: _now(),
+      ),
     );
     Future<void> record(String status) => database.withNotificationJournal(
       (j) => j.record(
@@ -93,7 +100,6 @@ class NotificationService {
         attemptedAt: _now(),
       ),
     );
-    await record('pending');
     try {
       await action(entry.nativeId);
       await record('submitted');

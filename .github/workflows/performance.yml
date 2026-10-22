@@ -24,3 +24,23 @@ jobs:
           path: dist/performance/*
           if-no-files-found: error
           retention-days: 30
+  product_startup:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.9'
+          channel: stable
+          cache: true
+      - name: Build actual product entrypoint with passive startup markers
+        run: bash scripts/build_macos_startup_measurement.sh
+      - name: Verify startup measurement identity and hash
+        run: python3 scripts/verify_artifacts.py dist/startup --platform macos --revision "$GITHUB_SHA"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: macos-startup-measurement
+          path: dist/startup/*
+          if-no-files-found: error
+          retention-days: 30

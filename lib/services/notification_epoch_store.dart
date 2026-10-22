@@ -19,6 +19,7 @@ final class NotificationEpochStore {
   final Directory directory;
   final String Function() _newEpoch;
   Future<void> _tail = Future<void>.value();
+  Future<String>? _pendingRead;
 
   Future<T> _serialize<T>(Future<T> Function() operation) {
     final result = _tail.then((_) => operation());
@@ -26,18 +27,31 @@ final class NotificationEpochStore {
     return result;
   }
 
-  Future<String> readOrCreate() => _serialize(() async {
-    await _requireDirectory();
-    final existing = await _readExisting();
-    if (existing != null) return existing;
-    return _writeNew(previous: null);
-  });
+  Future<String> readOrCreate() {
+    // Share only an in-flight read. A later call still revalidates the actual
+    // file; rotations are ordering barriers, not a long-lived epoch cache.
+    if (_pendingRead != null) return _pendingRead!;
+    late final Future<String> pending;
+    pending =
+        _serialize(() async {
+          await _requireDirectory();
+          final existing = await _readExisting();
+          if (existing != null) return existing;
+          return _writeNew(previous: null);
+        }).whenComplete(() {
+          if (identical(_pendingRead, pending)) _pendingRead = null;
+        });
+    return _pendingRead = pending;
+  }
 
-  Future<String> rotate() => _serialize(() async {
-    await _requireDirectory();
-    final existing = await _readExisting();
-    return _writeNew(previous: existing);
-  });
+  Future<String> rotate() {
+    _pendingRead = null;
+    return _serialize(() async {
+      await _requireDirectory();
+      final existing = await _readExisting();
+      return _writeNew(previous: existing);
+    });
+  }
 
   File get _file => File(p.join(directory.path, fileName));
 
