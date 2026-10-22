@@ -26,7 +26,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:window_manager/window_manager.dart';
 
 const _revision = String.fromEnvironment('BENCHMARK_REVISION');
-final _entryClock = Stopwatch()..start();
+final _entryClock = Stopwatch();
 
 Map<String, Object> distribution(List<int> values) {
   if (values.isEmpty) throw StateError('No measured samples');
@@ -53,6 +53,9 @@ List<Reminder> syntheticTasks(int count, DateTime now) => List.generate(
 );
 
 Future<void> main() async {
+  // Top-level Dart fields are lazy: initialize/start before any await, not at
+  // the first report read after rasterization.
+  _entryClock.start();
   WidgetsFlutterBinding.ensureInitialized();
   if (!Platform.isMacOS ||
       !kProfileMode ||
