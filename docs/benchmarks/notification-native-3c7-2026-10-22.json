@@ -1,0 +1,292 @@
+{
+  "source_revision": "25e5abe27b72f5e5d393116f50bf131301988327",
+  "platform": "macOS",
+  "scope": "Real OS delivery and UI clicks using isolated synthetic data; no real user data, clock changes, media or AI calls",
+  "source_manifest": {
+    "version": "1.5.2",
+    "build_number": "3",
+    "revision": "25e5abe27b72f5e5d393116f50bf131301988327",
+    "platform": "macos",
+    "signing": "not-notarized",
+    "runtime_acceptance": "STARTUP_SMOKE_ONLY",
+    "artifacts": [
+      {
+        "file": "DontForget_macOS_unnotarized_v1.5.2.zip",
+        "bytes": 23865013,
+        "sha256": "410f96e530f5b72bb09ed26344e0ccb1b570049de2fb2a579eb21ab1fde96de8"
+      }
+    ]
+  },
+  "deleted_task": {
+    "bundle": "com.example.dontForget.acceptance.native-r39742373065",
+    "transport": "real OS",
+    "fault": {
+      "bundle": "com.example.dontForget.acceptance.native-r39742373065",
+      "file": "/Users/james/Library/Containers/com.example.dontForget.acceptance.native-r39742373065/Data/Library/Application Support/com.example.dontForget.acceptance.native-r39742373065/databases/notification-journal.json",
+      "original_mode": "0o644",
+      "started_at": "2026-10-22T08:08:55.429289+00:00",
+      "scope": "40 second unreadable journal only; database directory remains writable; original bytes retained",
+      "restored_at": "2026-10-22T08:09:35.435328+00:00",
+      "bytes_unchanged": true
+    },
+    "click_local": "2026-10-22T16:10:05.612+08:00",
+    "callback_pid": 11041,
+    "expected": "native contents callback reaches running process, deleted task does not open or reappear",
+    "observed": "board retains 3 tasks, no details route; cancel submitted automatically after fault recovery",
+    "window_ax": "Window: \"DontForget\", App: 别忘了·隔离验收 native-r39742373065.\n0 standard window DontForget, Secondary Actions: Raise\n\t1 container 别忘了·隔离验收 native-r39742373065\n\t\t2 button (settable) Close\n\t\t\t3 text (settable) Tasks were deleted, but system reminders could not be removed. In Settings, select “Retry reminder scheduling”.\n\t\t\t4 button (settable) Undo\n\t\t\t5 button (settable)\n\t\t\t6 container (settable) Reminder Due · 1\nQA 1 ACK DUE\nUrgent Alert\nPending: 0\nKey Focus\nPending: 0\nRoutine Task\nPending: 3\nMemo & Notes\nPending: 0\n\t\t\t\t7 container (settable)\n\t\t\t\t\t8 container (settable) Don't Forget\n\t\t\t\t\t9 button (settable)\n\t\t\t\t\t10 button (settable)\n\t\t\t\t\t11 button (settable)\n\t\t\t\t\t12 button (settable)\n\t\t\t\t13 button (settable)\n\t\t\t\t14 button (settable) Snooze 5 Min\n\t\t\t\t15 button (settable) Mark as Done\n\t\t\t\t16 button (settable) Got it\n\t\t\t\t17 text (settable) No urgent tasks\n\t\t\t\t18 text (settable) No key focus tasks\n\t\t\t\t19 container (settable)\n\t\t\t\t\t20 container (settable) QA 1 ACK DUE\nSynthetic isolated recovery acceptance data.\n2026-10-22 16:07\n\t\t\t\t\t\t21 checkbox (settable, integer) Mark as Done: QA 1 ACK DUE, Value: 0\n\t\t\t\t\t\t22 button (settable)\n\t\t\t\t\t23 container (settable) QA 3 DAILY EARLY\nSynthetic isolated recovery acceptance data.\n2026-10-23 16:04\nRecurring\n\t\t\t\t\t\t24 checkbox (settable, integer) Mark as Done: QA 3 DAILY EARLY, Value: 0\n\t\t\t\t\t\t25 button (settable)\n\t\t\t\t26 text (settable) No memos or notes\n\t\t\t\t27 button (settable)\n\t\t\t\t28 button (settable)\n\t\t\t\t29 text field (settable)\n\t\t\t\t30 button (settable)\n\t31 close button\n\t32 full screen button Help: this button also has an action to zoom the window, Secondary Actions: zoom the window\n\t33 minimize button\n\t34 text DontForget\n35 menu bar\n\t36 dont_forget\n\t37 Edit\n\t38 View\n\t39 Window\n\t40 Help\n\nThe focused UI element is 1 container 别忘了·隔离验收 native-r39742373065",
+    "readback": {
+      "checked_at": "2026-10-22T08:10:57.128255+00:00",
+      "deleted_id_absent": true,
+      "remaining_business_rows_match_original": true,
+      "tasks": 3,
+      "integrity_check": "ok",
+      "journal": {
+        "version": 1,
+        "epoch": "f72750a9-04b4-4eaa-8ef0-906a07dd1cb6",
+        "entries": [
+          {
+            "reminderId": "qa-ack-due",
+            "nativeId": 1967836952,
+            "action": "schedule",
+            "status": "submitted",
+            "attempts": 2,
+            "triggerUtcMicros": 1792656448403000,
+            "noticeRevision": 0,
+            "attemptedAt": "2026-10-22T08:04:55.496775Z"
+          },
+          {
+            "reminderId": "qa-snooze-daily",
+            "nativeId": 167290217,
+            "action": "cancel",
+            "status": "submitted",
+            "attempts": 3,
+            "triggerUtcMicros": null,
+            "noticeRevision": null,
+            "attemptedAt": "2026-10-22T08:10:32.348751Z"
+          },
+          {
+            "reminderId": "qa-daily-early",
+            "nativeId": 1329258270,
+            "action": "schedule",
+            "status": "submitted",
+            "attempts": 2,
+            "triggerUtcMicros": 1792742668403000,
+            "noticeRevision": 0,
+            "attemptedAt": "2026-10-22T08:04:55.496793Z"
+          },
+          {
+            "reminderId": "qa-month-end",
+            "nativeId": 315234779,
+            "action": "schedule",
+            "status": "submitted",
+            "attempts": 2,
+            "triggerUtcMicros": 1793448000000000,
+            "noticeRevision": 0,
+            "attemptedAt": "2026-10-22T08:04:55.496799Z"
+          }
+        ]
+      },
+      "dataset_epoch": {
+        "version": 1,
+        "epoch": "f72750a9-04b4-4eaa-8ef0-906a07dd1cb6"
+      }
+    },
+    "system_events": [
+      "2026-10-22 16:07:28.087 Df usernoted[2515:1ebbc7a] [com.apple.unc:application] Delivering <NotificationRecord app:\"com.example.dontForget.acceptance.native-r39742373065\" ident:\"C9D0-0AF4\" req:\"1967836952\" uuid:\"C09BB76A\" source:\"DF6D6AEF\" dismissAfterDefaultAction:true> to [ .alert .lockScreen .notificationCenter ]: updatedExisting: false",
+      "2026-10-22 16:08:28.096 Df usernoted[2515:1ebe27e] [com.apple.unc:application] Delivering <NotificationRecord app:\"com.example.dontForget.acceptance.native-r39742373065\" ident:\"2660-58A9\" req:\"167290217\" uuid:\"0520A527\" source:\"DF6D6AEF\" dismissAfterDefaultAction:true> to [ .alert .lockScreen .notificationCenter ]: updatedExisting: false",
+      "2026-10-22 16:10:05.612 Df usernoted[2515:1ebe294] [com.apple.unc:application] Received response <NotificationRecord app:\"com.example.dontForget.acceptance.native-r39742373065\" ident:\"2660-58A9\" req:\"167290217\" uuid:\"0520A527\" source:\"DF6D6AEF\" dismissAfterDefaultAction:true <response action: contents actIdent:  foreground: true text: nil> >",
+      "2026-10-22 16:10:05.612 Df usernoted[2515:1ebe294] [com.apple.unc:application] Notifying UserNotifications client com.example.dontForget.acceptance.native-r39742373065:11041 about response <NotificationRecord app:\"com.example.dontForget.acceptance.native-r39742373065\" ident:\"2660-58A9\" req:\"167290217\" uuid:\"0520A527\" source:\"DF6D6AEF\" dismissAfterDefaultAction:true <response action: contents actIdent:  foreground: true text: nil> >"
+    ]
+  },
+  "old_epoch": {
+    "bundle": "com.example.dontForget.acceptance.epoch-r39742373065",
+    "rotation": {
+      "bundle": "com.example.dontForget.acceptance.epoch-r39742373065",
+      "before": "c55b8635-ff97-40be-b239-6257507d5cfa",
+      "after": "956ff9d8-dfa9-40d4-bf50-08bf1c933316",
+      "journal_unchanged": true,
+      "application_absent_before_lock": true,
+      "scope": "Interrupted dataset replacement simulation using production epoch store under owner lock; no business or OS notification edits",
+      "rotated_at": "2026-10-22T08:15:09.970864Z"
+    },
+    "boundary": "Controlled interruption simulation: production epoch store called under owner lock while app absent; existing business rows, journal and native notification unchanged. This does not claim normal restore leaves stale notifications.",
+    "click_local": "2026-10-22T16:16:53.158+08:00",
+    "new_pid": 21264,
+    "observed": "cold OS click launches app; unchanged current task stays on board, no details route",
+    "window_ax": "The following is a diff from the previous accessibility tree for Window: \"DontForget\" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.\n+\t\t12 container (settable) Reminder Due · 1\nQA OLD EPOCH\nUrgent Alert\nPending: 0\nKey Focus\nPending: 0\nRoutine Task\nPending: 1\nMemo & Notes\nPending: 0\n+\t\t\t13 container (settable)\n+\t\t\t\t14 container (settable) Don't Forget\n+\t\t\t\t15 button (settable)\n+\t\t\t\t16 button (settable)\n+\t\t\t\t17 button (settable)\n+\t\t\t\t18 button (settable)\n+\t\t\t19 button (settable)\n+\t\t\t20 button (settable) Snooze 5 Min\n+\t\t\t21 button (settable) Mark as Done\n+\t\t\t22 button (settable) Got it\n+\t\t\t23 text (settable) No urgent tasks\n+\t\t\t24 text (settable) No key focus tasks\n+\t\t\t25 container (settable) QA OLD EPOCH\nSynthetic isolated recovery acceptance data.\n2026-10-22 16:16\n+\t\t\t\t26 checkbox (settable, integer) Mark as Done: QA OLD EPOCH, Value: 0\n+\t\t\t\t27 button (settable)\n+\t\t\t28 text (settable) No memos or notes\n+\t\t\t29 button (settable)\n+\t\t\t30 button (settable)\n+\t\t\t31 text field (settable)\n+\t\t\t32 button (settable)\nThe focused UI element is 1 container 别忘了·隔离验收 epoch-r39742373065",
+    "readback": {
+      "checked_at": "2026-10-22T08:17:50.465858+00:00",
+      "all_business_rows_match_original": true,
+      "tasks": 1,
+      "epoch_after_rotation_preserved": true,
+      "integrity_check": "ok",
+      "journal": {
+        "version": 1,
+        "epoch": "956ff9d8-dfa9-40d4-bf50-08bf1c933316",
+        "entries": []
+      },
+      "dataset_epoch": {
+        "version": 1,
+        "epoch": "956ff9d8-dfa9-40d4-bf50-08bf1c933316"
+      }
+    },
+    "system_events": [
+      "2026-10-22 16:16:16.114 Df usernoted[2515:1ec40d1] [com.apple.unc:application] Delivering <NotificationRecord app:\"com.example.dontForget.acceptance.epoch-r39742373065\" ident:\"C9D0-0AF4\" req:\"1967836952\" uuid:\"DB2D4A3B\" source:\"8F094417\" dismissAfterDefaultAction:true> to [ .alert .lockScreen .notificationCenter ]: updatedExisting: false",
+      "2026-10-22 16:16:53.158 Df usernoted[2515:1ec40e2] [com.apple.unc:application] Received response <NotificationRecord app:\"com.example.dontForget.acceptance.epoch-r39742373065\" ident:\"C9D0-0AF4\" req:\"1967836952\" uuid:\"DB2D4A3B\" source:\"8F094417\" dismissAfterDefaultAction:true <response action: contents actIdent:  foreground: true text: nil> >",
+      "2026-10-22 16:16:53.162 Df usernoted[2515:1ec4753] [com.apple.unc:application] Launching com.example.dontForget.acceptance.epoch-r39742373065 at path <private> for response"
+    ]
+  },
+  "late_click": {
+    "bundle": "com.example.dontForget.acceptance.native-r39742373065",
+    "launch": "process absent before click, observed OS launch before attaching UI",
+    "observed": "Task Details / QA 1 ACK DUE / 2026-10-22 16:07 / Once; no implicit edits",
+    "window_ax": "The following is a diff from the previous accessibility tree for Window: \"DontForget\" with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.\n+\t\t12 container (settable)\n+\t\t\t13 button (settable)\n+\t\t\t14 container (settable) Task Details\n+\t\t\t15 button (settable)\n+\t\t\t16 button (settable)\n+\t\t\t17 text (settable) Routine Task\n+\t\t\t18 text (settable) In Progress\n+\t\t\t19 text (settable) Task Title\n+\t\t\t20 text field (settable)\n+\t\t\t21 text (settable) Supplemental Details\n+\t\t\t22 text field (settable)\n+\t\t\t23 text (settable) Reminder Time\n+\t\t\t24 text (settable) Time Remaining: Overdue\n+\t\t\t25 button (settable)\n+\t\t\t26 text (settable) 2026-10-22 16:07\n点击修改\n+\t\t\t27 button (settable) +15 Min\n+\t\t\t28 button (settable) +1 Hour\n+\t\t\t29 button (settable) Tonight 20:00\n+\t\t\t30 button (settable) Tomorrow 09:00\n+\t\t\t31 text (settable) Priority Category\n+\t\t\t32 text (settable) Urgent Alert\n+\t\t\t33 text (settable) Key Focus\n+\t\t\t34 text (settable) Routine Task\n+\t\t\t35 text (settable) Memo & Notes\n+\t\t\t36 text (settable) Recurrence\n+\t\t\t37 button (settable) Once (No repeat)\n+\t\t\t38 text (settable) Bi-directional Links\n+\t\t\t39 button (settable) View in Graph\n+\t\t\t40 text (settable) No linked tasks yet\n+\t\t\t41 button (settable) Link Task\n+\t\t\t42 text (settable) Context-Aware Trigger\n+\t\t\t43 text (settable) None\n+\t\t\t44 text (settable) Wi-Fi SSID\n+\t\t\t45 text (settable) Context Profile\n+\t\t\t46 text (settable) 附件素材已关联 (qa-synthetic-text)\n+\t\t\t47 button (settable) Save Changes\nThe focused UI element is 1 container 别忘了·隔离验收 native-r39742373065",
+    "readback": {
+      "checked_at": "2026-10-22T08:26:02.128094+00:00",
+      "business_rows_unchanged_except_prior_explicit_delete": true,
+      "implicit_acknowledgement_completion_snooze": false,
+      "tasks": 3,
+      "integrity_check": "ok",
+      "journal": {
+        "version": 1,
+        "epoch": "f72750a9-04b4-4eaa-8ef0-906a07dd1cb6",
+        "entries": [
+          {
+            "reminderId": "qa-ack-due",
+            "nativeId": 1967836952,
+            "action": "schedule",
+            "status": "submitted",
+            "attempts": 2,
+            "triggerUtcMicros": 1792656448403000,
+            "noticeRevision": 0,
+            "attemptedAt": "2026-10-22T08:04:55.496775Z"
+          },
+          {
+            "reminderId": "qa-snooze-daily",
+            "nativeId": 167290217,
+            "action": "cancel",
+            "status": "submitted",
+            "attempts": 3,
+            "triggerUtcMicros": null,
+            "noticeRevision": null,
+            "attemptedAt": "2026-10-22T08:10:32.348751Z"
+          },
+          {
+            "reminderId": "qa-daily-early",
+            "nativeId": 1329258270,
+            "action": "schedule",
+            "status": "submitted",
+            "attempts": 4,
+            "triggerUtcMicros": 1792742668403000,
+            "noticeRevision": 0,
+            "attemptedAt": "2026-10-22T08:24:20.564750Z"
+          },
+          {
+            "reminderId": "qa-month-end",
+            "nativeId": 315234779,
+            "action": "schedule",
+            "status": "submitted",
+            "attempts": 4,
+            "triggerUtcMicros": 1793448000000000,
+            "noticeRevision": 0,
+            "attemptedAt": "2026-10-22T08:24:20.564767Z"
+          }
+        ]
+      },
+      "pid": 27009,
+      "notification_delivery_local": "2026-10-22T16:07:28.087+08:00",
+      "notification_click_local": "2026-10-22T16:24:20.168+08:00",
+      "lateness_after_trigger_seconds": 1011.765
+    },
+    "system_events": [
+      "2026-10-22 16:24:20.168 Df usernoted[2515:1ec7c5c] [com.apple.unc:application] Received response <NotificationRecord app:\"com.example.dontForget.acceptance.native-r39742373065\" ident:\"C9D0-0AF4\" req:\"1967836952\" uuid:\"C09BB76A\" source:\"DF6D6AEF\" dismissAfterDefaultAction:true <response action: contents actIdent:  foreground: true text: nil> >",
+      "2026-10-22 16:24:20.173 Df usernoted[2515:1ec97cc] [com.apple.unc:application] Launching com.example.dontForget.acceptance.native-r39742373065 at path <private> for response"
+    ]
+  },
+  "cleanup": [
+    {
+      "bundle": "com.example.dontForget.acceptance.native-r39742373065",
+      "process_absent": true,
+      "current_equals_empty_baseline": true,
+      "integrity_check": "ok",
+      "journal_empty": true,
+      "rollback": "/Users/james/Library/Containers/com.example.dontForget.acceptance.native-r39742373065/Data/Library/Application Support/com.example.dontForget.acceptance.native-r39742373065/databases/recovery-4c3506d3-681e-4807-bd35-2e89fd2557b1/rollback.db",
+      "rollback_all_tables_match_expected": true,
+      "rollback_tasks": 3,
+      "checked_at": "2026-10-22T08:28:06.408541+00:00"
+    },
+    {
+      "bundle": "com.example.dontForget.acceptance.epoch-r39742373065",
+      "process_absent": true,
+      "current_equals_empty_baseline": true,
+      "integrity_check": "ok",
+      "journal_empty": true,
+      "rollback": "/Users/james/Library/Containers/com.example.dontForget.acceptance.epoch-r39742373065/Data/Library/Application Support/com.example.dontForget.acceptance.epoch-r39742373065/databases/recovery-bd487d13-5f72-4e85-9e5a-f554a9cc257c/rollback.db",
+      "rollback_all_tables_match_expected": true,
+      "rollback_tasks": 1,
+      "checked_at": "2026-10-22T08:19:33.525793+00:00"
+    }
+  ],
+  "notification_styles_restored": "Both identities persistent -> temporary; permissions retained as Allowed",
+  "remaining": [
+    "Real OS scheduling failure across system reboot",
+    "Sleep, timezone and DST",
+    "Other platforms and signed release",
+    "Recording and playback subjective acceptance"
+  ],
+  "copy_fix_acceptance": {
+    "source_revision": "88ab2484add63e42f60d22b99ef5151afa40fa19",
+    "source_manifest": {
+      "version": "1.5.2",
+      "build_number": "3",
+      "revision": "88ab2484add63e42f60d22b99ef5151afa40fa19",
+      "platform": "macos",
+      "signing": "not-notarized",
+      "runtime_acceptance": "STARTUP_SMOKE_ONLY",
+      "artifacts": [
+        {
+          "file": "DontForget_macOS_unnotarized_v1.5.2.zip",
+          "bytes": 23865073,
+          "sha256": "6b8c727b2cae5c5d34c3ff62102406160aa1d83e9e1ba0bfa6d5cd0242245283"
+        }
+      ]
+    },
+    "bundle": "com.example.dontForget.acceptance.copy-r39747956305",
+    "scope": "English detail UI acceptance after direct navigation, separate from prior notification-click binary; no microphone or playback action",
+    "visible_labels": [
+      "Click to change",
+      "Linked input record",
+      "Play / preview attachment"
+    ],
+    "internal_record_id_hidden": true,
+    "window_ax": "Window: \"DontForget\", App: 别忘了·隔离验收 copy-r39747956305.\n0 standard window DontForget, Secondary Actions: Raise\n\t1 container 别忘了·隔离验收 copy-r39747956305\n\t\t2 container (settable)\n\t\t\t3 button (settable)\n\t\t\t4 container (settable) Task Details\n\t\t\t5 button (settable)\n\t\t\t6 button (settable)\n\t\t\t7 text (settable) Routine Task\n\t\t\t8 text (settable) In Progress\n\t\t\t9 text (settable) Task Title\n\t\t\t10 text field (settable)\n\t\t\t11 text (settable) Supplemental Details\n\t\t\t12 text field (settable)\n\t\t\t13 text (settable) Reminder Time\n\t\t\t14 text (settable) Time Remaining: Overdue\n\t\t\t15 button (settable)\n\t\t\t16 text (settable) 2026-10-22 16:16\nClick to change\n\t\t\t17 button (settable) +15 Min\n\t\t\t18 button (settable) +1 Hour\n\t\t\t19 button (settable) Tonight 20:00\n\t\t\t20 button (settable) Tomorrow 09:00\n\t\t\t21 text (settable) Priority Category\n\t\t\t22 text (settable) Urgent Alert\n\t\t\t23 text (settable) Key Focus\n\t\t\t24 text (settable) Routine Task\n\t\t\t25 text (settable) Memo & Notes\n\t\t\t26 text (settable) Recurrence\n\t\t\t27 button (settable) Once (No repeat)\n\t\t\t28 text (settable) Bi-directional Links\n\t\t\t29 button (settable) View in Graph\n\t\t\t30 text (settable) No linked tasks yet\n\t\t\t31 button (settable) Link Task\n\t\t\t32 text (settable) Context-Aware Trigger\n\t\t\t33 text (settable) None\n\t\t\t34 text (settable) Wi-Fi SSID\n\t\t\t35 text (settable) Context Profile\n\t\t\t36 text (settable) Linked input record\n\t\t\t37 button (settable) Play / preview attachment\n\t\t\t38 button (settable) Save Changes\n\t39 text DontForget\n40 menu bar\n\t41 dont_forget\n\t42 Edit\n\t43 View\n\t44 Window\n\t45 Help\n\nThe focused UI element is 1 container 别忘了·隔离验收 copy-r39747956305",
+    "cleanup": {
+      "bundle": "com.example.dontForget.acceptance.copy-r39747956305",
+      "process_absent": true,
+      "current_equals_empty_baseline": true,
+      "integrity_check": "ok",
+      "journal_empty": true,
+      "rollback": "/Users/james/Library/Containers/com.example.dontForget.acceptance.copy-r39747956305/Data/Library/Application Support/com.example.dontForget.acceptance.copy-r39747956305/databases/recovery-6482d94e-c722-4c20-a1e0-003e9ee54b9f/rollback.db",
+      "rollback_all_tables_match_expected": true,
+      "rollback_tasks": 1,
+      "checked_at": "2026-10-22T08:38:57.210503+00:00"
+    },
+    "checked_at": "2026-10-22T08:40:18.160858+00:00"
+  },
+  "final_ci": {
+    "run_id": 39747956305,
+    "source_revision": "88ab2484add63e42f60d22b99ef5151afa40fa19",
+    "quality": "success",
+    "platform_builds": [
+      "android",
+      "ios",
+      "macos",
+      "linux",
+      "windows"
+    ],
+    "flutter_local_passed": 666,
+    "flutter_ci_passed": 665,
+    "flutter_ci_platform_skipped": 1,
+    "python_passed": 51
+  }
+}
