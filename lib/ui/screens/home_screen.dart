@@ -13,6 +13,8 @@ import '../../providers/providers.dart';
 import '../../providers/home_controller.dart';
 import '../../providers/task_search_provider.dart';
 import '../../services/notification_service.dart';
+import '../../services/notification_permission_service.dart';
+import '../../services/notification_retry_coordinator.dart';
 import '../../services/recovery/runtime_gate.dart';
 import 'settings_screen.dart';
 import 'dashboard_screen.dart';
@@ -58,6 +60,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _heartbeatTimer?.cancel();
     _searchDebounce?.cancel();
     await Future.wait([
+      if (_notificationRetries != null) _notificationRetries!.stop(),
       if (_dueSubscription != null) _dueSubscription!.cancel(),
       if (_catchUpDigestSubscription != null)
         _catchUpDigestSubscription!.cancel(),
@@ -75,6 +78,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Timer? _heartbeatTimer;
+  NotificationRetryCoordinator? _notificationRetries;
   StreamSubscription<Reminder>? _dueSubscription;
   StreamSubscription<List<Reminder>>? _catchUpDigestSubscription;
   StreamSubscription<List<Reminder>>? _suppressedSubscription;
@@ -124,9 +128,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // 启动时触发 Wi-Fi 嗅探与情境感知
     _contextTriggers.detectCurrentWifiSsid();
 
-    // Periodic heartbeat check (every 10 seconds) to ensure reminders are never missed
+    _notificationRetries = NotificationRetryCoordinator(
+      run: (isActive) async {
+        if (!_runtimeActive || !isActive()) return;
+        // This is a read-only query: a late answer can be discarded safely.
+        // Do not let a stuck platform read hold up runtime recovery draining.
+        final permission = await NotificationPermissionService()
+            .refresh()
+            .timeout(const Duration(seconds: 5));
+        if (!_runtimeActive ||
+            !isActive() ||
+            !permission.canRequestNotifications) {
+          return;
+        }
+        final allowed =
+            permission.authorization.status ==
+                NotificationPermissionStatus.granted ||
+            permission.authorization.status ==
+                NotificationPermissionStatus.provisional;
+        final exactAllowed =
+            !permission.supportsExactAlarms ||
+            permission.exactAlarms == NotificationPermissionStatus.granted;
+        await ref
+            .read(remindersProvider.notifier)
+            .retryFailedNotificationDelivery(
+              canSchedule: allowed && exactAllowed,
+              isActive: () => _runtimeActive && isActive(),
+            );
+      },
+    );
+    _notificationRetries!.setForeground(
+      WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed,
+    );
+
+    // Refresh app-visible reminders and retry a bounded batch while foreground.
     _heartbeatTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       _checkDueReminders();
+      unawaited(_notificationRetries?.tick());
       if (mounted && _runtimeActive) _noticeClock.value = DateTime.now();
     });
   }
@@ -140,6 +178,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _noticeClock.dispose();
     _shortcutFocus.dispose();
     _heartbeatTimer?.cancel();
+    unawaited(_notificationRetries?.stop());
     _dueSubscription?.cancel();
     _catchUpDigestSubscription?.cancel();
     _suppressedSubscription?.cancel();
@@ -153,7 +192,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    _notificationRetries?.setForeground(state == AppLifecycleState.resumed);
     if (state == AppLifecycleState.resumed && _runtimeActive) {
+      unawaited(_notificationRetries?.tick());
       // Desktop/mobile timers can pause while hidden or asleep. Reconcile from
       // current task state instead of waiting for another timer/broadcast.
       _checkDueReminders();

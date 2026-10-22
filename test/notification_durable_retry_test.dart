@@ -7,8 +7,10 @@ import 'package:dont_forget/providers/providers.dart';
 import 'package:dont_forget/services/notification_journal.dart';
 import 'package:dont_forget/services/notification_epoch_store.dart';
 import 'package:dont_forget/services/notification_service.dart';
+import 'package:dont_forget/services/notification_schedule_reader.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class _Native implements FlutterLocalNotificationsPlugin {
@@ -17,6 +19,7 @@ class _Native implements FlutterLocalNotificationsPlugin {
   bool failCancel = false;
   bool failSchedule = false;
   String? launchPayload;
+  void Function()? onSchedule;
   @override
   dynamic noSuchMethod(Invocation i) {
     switch (i.memberName) {
@@ -53,6 +56,7 @@ class _Native implements FlutterLocalNotificationsPlugin {
       case #zonedSchedule:
         final id = i.positionalArguments[0] as int;
         calls.add('schedule:$id');
+        onSchedule?.call();
         if (failSchedule) {
           return Future<void>.error(StateError('synthetic scheduling failure'));
         }
@@ -271,6 +275,327 @@ void main() {
       expect(next.epoch, isNot(previous.epoch));
       expect(next.entries.keys, ['new-dataset']);
       expect(native.pending.keys, [stableNotificationId('new-dataset')]);
+    },
+  );
+
+  test(
+    'quiet retry waits for durable cooldown and leaves healthy schedules alone',
+    () async {
+      await notifier.addReminder(task('healthy'));
+      native.failSchedule = true;
+      await notifier.addReminder(task('retry-quiet'));
+      final failed = (await snapshot()).entries['retry-quiet']!;
+      final before = notifier.state.map((r) => r.toJson()).toList();
+      native.failSchedule = false;
+      native.calls.clear();
+      expect(
+        await notifier.retryFailedNotificationDelivery(
+          canSchedule: true,
+          isActive: () => true,
+          now: DateTime.parse(
+            failed.attemptedAt!,
+          ).add(const Duration(seconds: 59)),
+        ),
+        (attempted: 0, failed: 0),
+      );
+      expect(native.calls, isEmpty);
+      expect(
+        await notifier.retryFailedNotificationDelivery(
+          canSchedule: true,
+          isActive: () => true,
+          now: DateTime.parse(
+            failed.attemptedAt!,
+          ).add(const Duration(seconds: 60)),
+        ),
+        (attempted: 1, failed: 0),
+      );
+      expect(native.calls, [
+        'cancel:${failed.nativeId}',
+        'schedule:${failed.nativeId}',
+      ]);
+      expect((await snapshot()).entries['retry-quiet']!.status, 'submitted');
+      expect(notifier.state.map((r) => r.toJson()).toList(), before);
+    },
+  );
+
+  test(
+    'quiet retry bounds a batch and completes the remainder on another pass',
+    () async {
+      native.failSchedule = true;
+      for (var i = 0; i < 10; i++) {
+        await notifier.addReminder(task('batch-$i'));
+      }
+      native.failSchedule = false;
+      native.calls.clear();
+      final now = DateTime.now().add(const Duration(minutes: 2));
+      expect(
+        await notifier.retryFailedNotificationDelivery(
+          canSchedule: true,
+          isActive: () => true,
+          now: now,
+        ),
+        (attempted: 8, failed: 0),
+      );
+      expect(
+        native.calls.where((c) => c.startsWith('schedule:')),
+        hasLength(8),
+      );
+      expect(
+        await notifier.retryFailedNotificationDelivery(
+          canSchedule: true,
+          isActive: () => true,
+          now: now,
+        ),
+        (attempted: 2, failed: 0),
+      );
+      expect(
+        (await snapshot()).entries.values.where((e) => e.unfinished),
+        isEmpty,
+      );
+      expect(native.calls, isNot(contains('cancelAll')));
+    },
+  );
+
+  test(
+    'denied permission skips planning without starving deleted-task cancellation',
+    () async {
+      native.failSchedule = true;
+      for (var i = 0; i < 9; i++) {
+        await notifier.addReminder(task('denied-$i'));
+      }
+      native.failSchedule = false;
+      await notifier.addReminder(task('retired'));
+      native.failCancel = true;
+      await notifier.deleteReminder('retired');
+      final retired = (await snapshot()).entries['retired']!;
+      native.failCancel = false;
+      native.calls.clear();
+      final now = DateTime.now().add(const Duration(minutes: 2));
+      expect(
+        await notifier.retryFailedNotificationDelivery(
+          canSchedule: false,
+          isActive: () => true,
+          now: now,
+        ),
+        (attempted: 0, failed: 0),
+      );
+      expect(
+        await notifier.retryFailedNotificationDelivery(
+          canSchedule: false,
+          isActive: () => true,
+          now: now,
+        ),
+        (attempted: 1, failed: 0),
+      );
+      expect(native.calls, ['cancel:${retired.nativeId}']);
+      expect((await snapshot()).entries['retired']!.status, 'submitted');
+      expect(notifier.state, hasLength(9));
+    },
+  );
+
+  test(
+    'expired current failure is not replayed but stale cancellation is retried',
+    () async {
+      final epoch = await helper.readNotificationEpoch();
+      final past = DateTime.now().subtract(const Duration(hours: 1));
+      final reminders = [
+        task('expired').copyWith(triggerTime: past),
+        task('cancel-past').copyWith(triggerTime: past),
+      ];
+      await helper.writeTransaction(helper.captureGeneration(), (db) async {
+        for (final r in reminders) {
+          await db.insert('Reminders', r.toJson());
+        }
+      });
+      await helper.withNotificationJournal((j) async {
+        await j.reset(epoch);
+        for (final r in reminders) {
+          await j.reserve(epoch, r.id);
+          await j.record(
+            epoch,
+            r.id,
+            action: r.id == 'expired' ? 'schedule' : 'cancel',
+            status: 'failed',
+            triggerUtcMicros: past.toUtc().microsecondsSinceEpoch,
+            noticeRevision: r.noticeRevision,
+            attemptedAt: past,
+          );
+        }
+      });
+      final result = await notifier.retryFailedNotificationDelivery(
+        canSchedule: false,
+        isActive: () => true,
+      );
+      expect(result, (attempted: 1, failed: 0));
+      expect(native.calls, [
+        'launch',
+        'cancel:${stableNotificationId('cancel-past')}',
+      ]);
+      final journal = await snapshot();
+      expect(journal.entries['expired']!.status, 'failed');
+      expect(journal.entries['cancel-past']!.status, 'submitted');
+    },
+  );
+
+  test(
+    'foreground loss after one operation stops the remainder of the batch',
+    () async {
+      native.failSchedule = true;
+      await notifier.addReminder(task('first'));
+      await notifier.addReminder(task('second'));
+      var active = true;
+      native.failSchedule = false;
+      native.onSchedule = () => active = false;
+      native.calls.clear();
+      expect(
+        await notifier.retryFailedNotificationDelivery(
+          canSchedule: true,
+          isActive: () => active,
+          now: DateTime.now().add(const Duration(minutes: 2)),
+        ),
+        (attempted: 1, failed: 0),
+      );
+      expect(
+        native.calls.where((c) => c.startsWith('schedule:')),
+        hasLength(1),
+      );
+      expect(
+        (await snapshot()).entries.values.where((e) => e.unfinished),
+        hasLength(1),
+      );
+    },
+  );
+
+  test(
+    'status reads do not initialize native notifications or rewrite local journal',
+    () async {
+      final empty = await NotificationScheduleReader(helper).read();
+      expect(empty.upcoming, 0);
+      expect(native.calls, isEmpty);
+      expect(await helper.withNotificationJournal((j) => j.read()), isNull);
+      await notifier.addReminder(task('submitted'));
+      native.failSchedule = true;
+      await notifier.addReminder(task('failed'));
+      native.calls.clear();
+      final file = File('${directory.path}/${NotificationJournal.fileName}');
+      final before = await file.readAsString();
+      final result = await NotificationScheduleReader(helper).read();
+      expect(result.upcoming, 2);
+      expect(result.submitted, 1);
+      expect(result.needsAttention, 1);
+      expect(await file.readAsString(), before);
+      expect(native.calls, isEmpty);
+    },
+  );
+
+  test('status read and quiet retry fail closed on corrupt journal', () async {
+    await notifier.addReminder(task('valid'));
+    final file = File('${directory.path}/${NotificationJournal.fileName}');
+    final before = await file.readAsString();
+    await file.writeAsString('{broken');
+    native.calls.clear();
+    await expectLater(
+      NotificationScheduleReader(helper).read(),
+      throwsFormatException,
+    );
+    await expectLater(
+      notifier.retryFailedNotificationDelivery(
+        canSchedule: true,
+        isActive: () => true,
+      ),
+      throwsFormatException,
+    );
+    expect(await file.readAsString(), '{broken');
+    expect(native.calls, isEmpty);
+    await file.writeAsString(before);
+  });
+
+  test(
+    'repeated failures retain cooldown and the same identity after reopening',
+    () async {
+      native.failSchedule = true;
+      await notifier.addReminder(task('still-failing'));
+      final first = (await snapshot()).entries['still-failing']!;
+      await restart();
+      final reopened = (await snapshot()).entries['still-failing']!;
+      expect(reopened.status, 'failed');
+      expect(reopened.nativeId, first.nativeId);
+      native.calls.clear();
+      expect(
+        await notifier.retryFailedNotificationDelivery(
+          canSchedule: true,
+          isActive: () => true,
+          now: DateTime.parse(
+            reopened.attemptedAt!,
+          ).add(const Duration(seconds: 59)),
+        ),
+        (attempted: 0, failed: 0),
+      );
+      expect(native.calls, isEmpty);
+      expect(
+        await notifier.retryFailedNotificationDelivery(
+          canSchedule: true,
+          isActive: () => true,
+          now: DateTime.parse(
+            reopened.attemptedAt!,
+          ).add(const Duration(seconds: 60)),
+        ),
+        (attempted: 1, failed: 1),
+      );
+      final retried = (await snapshot()).entries['still-failing']!;
+      expect(retried.status, 'failed');
+      expect(retried.nativeId, first.nativeId);
+      expect(retried.attempts, greaterThan(reopened.attempts));
+      native.failSchedule = false;
+    },
+  );
+
+  test(
+    'settings reader provider does not construct the scheduling controller',
+    () async {
+      final container = ProviderContainer(
+        overrides: [
+          databaseHelperProvider.overrideWithValue(helper),
+          notificationServiceProvider.overrideWithValue(service),
+        ],
+      );
+      addTearDown(container.dispose);
+      expect(container.exists(remindersProvider), isFalse);
+      final result = await container.read(
+        notificationScheduleStatusReaderProvider,
+      )();
+      expect(result.upcoming, 0);
+      expect(container.exists(remindersProvider), isFalse);
+      expect(native.calls, isEmpty);
+    },
+  );
+
+  test(
+    'status and quiet retry ignore an old dataset journal without rewriting it',
+    () async {
+      await notifier.addReminder(task('current'));
+      final file = File('${directory.path}/${NotificationJournal.fileName}');
+      final before = await file.readAsString();
+      await service.pauseForMaintenance();
+      final lease = await helper.beginMaintenance();
+      await NotificationEpochStore(Directory(lease.directory)).rotate();
+      await lease.resume();
+      // Read-only status does not require resuming the paused native service.
+      native.calls.clear();
+      final result = await NotificationScheduleReader(helper).read();
+      expect(result.upcoming, 1);
+      expect(result.submitted, 0);
+      expect(result.needsAttention, 1);
+      expect(await file.readAsString(), before);
+      expect(native.calls, isEmpty);
+      await expectLater(
+        notifier.retryFailedNotificationDelivery(
+          canSchedule: true,
+          isActive: () => true,
+        ),
+        throwsA(isA<DatabaseAccessException>()),
+      );
+      expect(await file.readAsString(), before);
     },
   );
 }

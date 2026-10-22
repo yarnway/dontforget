@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dont_forget/l10n/app_localizations.dart';
+import 'package:dont_forget/models/notification_schedule_status.dart';
 import 'package:dont_forget/services/notification_permission_service.dart';
 import 'package:dont_forget/ui/widgets/notification_permission_panel.dart';
 import 'package:flutter/material.dart';
@@ -56,7 +57,9 @@ void main() {
     WidgetTester tester,
     _Backend backend, {
     Locale locale = const Locale('en'),
+    bool settle = true,
     Future<({int attempted, int failed})> Function()? onRetryReminders,
+    Future<NotificationScheduleStatus> Function()? onReadScheduleStatus,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -73,12 +76,17 @@ void main() {
             child: NotificationPermissionPanel(
               service: NotificationPermissionService(backend: backend),
               onRetryReminders: onRetryReminders,
+              onReadScheduleStatus: onReadScheduleStatus,
             ),
           ),
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    if (settle) {
+      await tester.pumpAndSettle();
+    } else {
+      await tester.pump();
+    }
   }
 
   String? status(WidgetTester tester) =>
@@ -194,6 +202,13 @@ void main() {
           backend,
           locale: locale,
           onRetryReminders: () async => (attempted: 0, failed: 0),
+          onReadScheduleStatus: () async => const NotificationScheduleStatus(
+            upcoming: 1234,
+            submitted: 1000,
+            needsAttention: 234,
+            cancellations: 3,
+            overdueUnconfirmed: 2,
+          ),
         );
         expect(
           find.byKey(const ValueKey('notification-exact-alarm-status')),
@@ -314,6 +329,122 @@ void main() {
     expect(tester.widget<TextButton>(find.byKey(refreshKey)).onPressed, isNull);
     await tester.pumpWidget(const SizedBox());
     pending.complete((attempted: 1, failed: 0));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'schedule summary refresh and explicit retry use fresh saved state',
+    (tester) async {
+      var reads = 0;
+      var retries = 0;
+      await show(
+        tester,
+        _Backend(),
+        onReadScheduleStatus: () async {
+          reads++;
+          return NotificationScheduleStatus(
+            upcoming: 4,
+            submitted: retries == 0 ? 1 : 4,
+            needsAttention: retries == 0 ? 3 : 0,
+            cancellations: 0,
+            overdueUnconfirmed: 2,
+          );
+        },
+        onRetryReminders: () async {
+          retries++;
+          return (attempted: 3, failed: 0);
+        },
+      );
+      final summary = find.byKey(
+        const ValueKey('notification-schedule-status'),
+      );
+      String expected(int submitted, int attention) => l10n
+          .get('notificationScheduleSummary')
+          .replaceAll('{upcoming}', '4')
+          .replaceAll('{submitted}', '$submitted')
+          .replaceAll('{attention}', '$attention')
+          .replaceAll('{cancellations}', '0');
+      expect(tester.widget<Text>(summary).data, expected(1, 3));
+      expect(
+        find.text(
+          l10n.get('notificationScheduleOverdue').replaceAll('{count}', '2'),
+        ),
+        findsOneWidget,
+      );
+      final refresh = find.byKey(refreshKey);
+      await tester.ensureVisible(refresh);
+      await tester.tap(refresh);
+      await tester.pumpAndSettle();
+      expect(reads, 2);
+      expect(retries, 0);
+      final retry = find.byKey(const ValueKey('notification-reminders-retry'));
+      await tester.ensureVisible(retry);
+      await tester.tap(retry);
+      await tester.pumpAndSettle();
+      expect(reads, 3);
+      expect(retries, 1);
+      expect(tester.widget<Text>(summary).data, expected(4, 0));
+    },
+  );
+
+  testWidgets(
+    'schedule read failure is unavailable rather than an empty queue',
+    (tester) async {
+      await show(
+        tester,
+        _Backend(),
+        onReadScheduleStatus: () async {
+          throw StateError('synthetic unavailable');
+        },
+      );
+      expect(
+        find.text(l10n.get('notificationScheduleUnavailable')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('unsupported platforms do not read a native schedule journal', (
+    tester,
+  ) async {
+    var reads = 0;
+    await show(
+      tester,
+      _Backend()..platform = TargetPlatform.windows,
+      onReadScheduleStatus: () async {
+        reads++;
+        throw StateError('must not read');
+      },
+    );
+    expect(reads, 0);
+    expect(
+      find.byKey(const ValueKey('notification-schedule-status')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('pending schedule read is ignored after panel removal', (
+    tester,
+  ) async {
+    final gate = Completer<NotificationScheduleStatus>();
+    await show(
+      tester,
+      _Backend(),
+      onReadScheduleStatus: () => gate.future,
+      settle: false,
+    );
+    await tester.pumpWidget(const SizedBox());
+    gate.complete(
+      const NotificationScheduleStatus(
+        upcoming: 0,
+        submitted: 0,
+        needsAttention: 0,
+        cancellations: 0,
+        overdueUnconfirmed: 0,
+      ),
+    );
     await tester.pump();
     expect(tester.takeException(), isNull);
   });

@@ -10,6 +10,17 @@ class AppLocalizations {
 
   static const Map<String, Map<String, String>> _localizedValues = {
     'en': {
+      "notificationScheduleTitle": "Reminder schedules",
+      "notificationScheduleChecking": "Reading saved schedules…",
+      "notificationScheduleUnavailable":
+          "Schedule records unavailable. Try refreshing later.",
+      "notificationScheduleSummary":
+          "Upcoming {upcoming} · Submitted {submitted} · Needs review {attention} · Cancellations pending {cancellations}",
+      "notificationScheduleOverdue":
+          "{count} past occurrences have no confirmed scheduling result. They will not be replayed.",
+      "notificationScheduleHint":
+          "Submitted does not confirm delivery. With permission allowed, the app periodically retries unfinished schedules while open in the foreground. Use Retry reminder scheduling to rebuild unverified schedules now.",
+
       'notificationPermissionTitle': 'System notifications',
       'notificationPermissionChecking': 'Checking permission…',
       'notificationPermissionGranted': 'Allowed',
@@ -442,6 +453,15 @@ class AppLocalizations {
       'viewInGraph': 'View in Graph',
     },
     'zh': {
+      "notificationScheduleTitle": "提醒安排",
+      "notificationScheduleChecking": "正在读取安排记录…",
+      "notificationScheduleUnavailable": "暂时无法读取安排记录，请稍后刷新。",
+      "notificationScheduleSummary":
+          "未来提醒 {upcoming} · 已提交 {submitted} · 待核实 {attention} · 待取消 {cancellations}",
+      "notificationScheduleOverdue": "{count} 次已到期提醒未确认安排结果，不会重复提醒。",
+      "notificationScheduleHint":
+          "已提交不代表通知已送达。权限允许时，应用在前台会定期重试未完成的安排；也可点击“重新安排提醒”立即重建待核实的安排。",
+
       'notificationPermissionTitle': '系统通知',
       'notificationPermissionChecking': '正在查询权限…',
       'notificationPermissionGranted': '已允许',
@@ -810,6 +830,15 @@ class AppLocalizations {
       'viewInGraph': '在图谱中定位',
     },
     'ja': {
+      "notificationScheduleTitle": "通知の予定",
+      "notificationScheduleChecking": "保存済みの予定を読み取り中…",
+      "notificationScheduleUnavailable": "予定を読み取れません。しばらくしてから更新してください。",
+      "notificationScheduleSummary":
+          "今後 {upcoming} · 送信済み {submitted} · 要確認 {attention} · 取消待ち {cancellations}",
+      "notificationScheduleOverdue": "期限を過ぎた {count} 件の設定結果は未確認です。再通知はしません。",
+      "notificationScheduleHint":
+          "送信済みでも配信は未確認です。権限が許可され、アプリが前面にある間は未完了の予定を定期的に再試行します。「リマインダーを再設定」で未確認の予定を今すぐ再設定できます。",
+
       'notificationPermissionTitle': 'システム通知',
       'notificationPermissionChecking': '権限を確認中…',
       'notificationPermissionGranted': '許可済み',

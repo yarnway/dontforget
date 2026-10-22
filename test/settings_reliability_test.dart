@@ -8,6 +8,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/providers/providers.dart';
+import 'package:dont_forget/models/notification_schedule_status.dart';
 import 'package:dont_forget/ui/screens/settings_screen.dart';
 
 void main() {
@@ -19,7 +20,18 @@ void main() {
     directory = await Directory.systemTemp.createTemp('dontforget-settings-');
     helper = DatabaseHelper.forTesting(directory.path, databaseFactoryFfi);
     container = ProviderContainer(
-      overrides: [databaseHelperProvider.overrideWithValue(helper)],
+      overrides: [
+        notificationScheduleStatusReaderProvider.overrideWithValue(
+          () async => const NotificationScheduleStatus(
+            upcoming: 0,
+            submitted: 0,
+            needsAttention: 0,
+            cancellations: 0,
+            overdueUnconfirmed: 0,
+          ),
+        ),
+        databaseHelperProvider.overrideWithValue(helper),
+      ],
     );
     final notifier = container.read(settingsProvider.notifier);
     await notifier.ready;

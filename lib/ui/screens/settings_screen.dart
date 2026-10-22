@@ -606,6 +606,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const SizedBox(height: 14),
 
                   NotificationPermissionPanel(
+                    onReadScheduleStatus: ref.read(
+                      notificationScheduleStatusReaderProvider,
+                    ),
                     onRetryReminders: () => ref
                         .read(remindersProvider.notifier)
                         .retryNotificationDelivery(),

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/models/settings.dart';
 import 'package:dont_forget/providers/providers.dart';
+import 'package:dont_forget/models/notification_schedule_status.dart';
 import 'package:dont_forget/services/recovery/backup_inspector.dart';
 import 'package:dont_forget/ui/screens/backup_preview_screen.dart';
 import 'package:dont_forget/ui/screens/settings_screen.dart';
@@ -132,7 +133,18 @@ void main() {
     final settings = _Settings();
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [settingsProvider.overrideWith((_) => settings)],
+        overrides: [
+          notificationScheduleStatusReaderProvider.overrideWithValue(
+            () async => const NotificationScheduleStatus(
+              upcoming: 0,
+              submitted: 0,
+              needsAttention: 0,
+              cancellations: 0,
+              overdueUnconfirmed: 0,
+            ),
+          ),
+          settingsProvider.overrideWith((_) => settings),
+        ],
         child: const MaterialApp(
           locale: Locale('en'),
           supportedLocales: [Locale('en')],

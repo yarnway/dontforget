@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/database_helper.dart';
 import '../models/settings.dart';
 import '../models/reminder.dart';
+import '../models/notification_schedule_status.dart';
+import '../services/notification_schedule_reader.dart';
 import '../models/media_record.dart';
 import '../services/llm_service.dart';
 import '../services/notification_service.dart';
@@ -21,6 +23,12 @@ import '../services/context_trigger_service.dart';
 final databaseHelperProvider = Provider<DatabaseHelper>((ref) {
   return DatabaseHelper.instance;
 });
+
+/// Reading settings must not instantiate the reminder scheduling controller.
+final notificationScheduleStatusReaderProvider =
+    Provider<Future<NotificationScheduleStatus> Function()>((ref) {
+      return NotificationScheduleReader(ref.read(databaseHelperProvider)).read;
+    });
 
 final runtimeRecoveryGateProvider = Provider<RuntimeRecoveryGate>((ref) {
   return RuntimeRecoveryGate();
@@ -123,6 +131,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
   DataGeneration? _stateGeneration;
   final Set<String> _pendingNotificationRetries = {};
   final Set<String> _pendingNotificationCancellations = {};
+  String? _notificationRetryCursor;
 
   RemindersNotifier(
     this._dbHelper, {
@@ -286,7 +295,10 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     if (reminder.triggerTime == null || reminder.triggerTime!.isAfter(now)) {
       return false;
     }
-    if (_pendingNotificationCancellations.contains(reminder.id)) return true;
+    if (_pendingNotificationCancellations.contains(reminder.id) ||
+        (entry?.action == 'cancel' && (entry?.unfinished ?? false))) {
+      return true;
+    }
     // Preserve a delivered current occurrence. Cancel a previous occurrence
     // when a time edit committed but the process exited before native sync.
     return entry?.action == 'schedule' &&
@@ -299,6 +311,92 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     final generation = _dbHelper.captureGeneration();
     return addReminderForGeneration(reminder, generation);
   }
+
+  /// Quiet foreground retries process only durable unfinished work. A manual
+  /// rebuild remains immediate and can reconcile unrecorded schedules too.
+  Future<({int attempted, int failed})> retryFailedNotificationDelivery({
+    required bool canSchedule,
+    required bool Function() isActive,
+    DateTime? now,
+  }) => _enqueue(
+    (generation) => _dbHelper.runOperation(generation, () async {
+      void checkCurrent() {
+        _dbHelper.checkGeneration(generation);
+        if (!mounted || _notifications.isPausedForMaintenance) {
+          throw StateError('Reminder runtime is unavailable.');
+        }
+      }
+
+      checkCurrent();
+      if (!isActive()) return (attempted: 0, failed: 0);
+      final instant = now ?? DateTime.now();
+      final entries = await _notificationEntries(generation);
+      checkCurrent();
+      final candidates =
+          entries.values.where((entry) {
+            if (!entry.unfinished) return false;
+            final attempted = DateTime.tryParse(entry.attemptedAt ?? '');
+            // A clock moved backwards must not strand a retry indefinitely.
+            return attempted == null ||
+                instant.difference(attempted).abs() >=
+                    const Duration(minutes: 1);
+          }).toList()..sort(
+            (a, b) => (a.attemptedAt ?? '').compareTo(b.attemptedAt ?? ''),
+          );
+      var attempted = 0;
+      var failed = 0;
+      final cursor = candidates.indexWhere(
+        (e) => e.reminderId == _notificationRetryCursor,
+      );
+      final start = cursor < 0 ? 0 : cursor + 1;
+      // Bound both native calls and SQL reads. Rotate so permission-blocked
+      // schedules cannot starve cancellation work later in the journal.
+      final batch = [
+        ...candidates.skip(start),
+        ...candidates.take(start),
+      ].take(8);
+      for (final entry in batch) {
+        checkCurrent();
+        if (!isActive()) break;
+        _notificationRetryCursor = entry.reminderId;
+        final rows = await _dbHelper.read(
+          generation,
+          (db) => db.query(
+            'Reminders',
+            where: 'id = ?',
+            whereArgs: [entry.reminderId],
+            limit: 1,
+          ),
+        );
+        checkCurrent();
+        if (!isActive()) break;
+        final reminder = rows.isEmpty ? null : Reminder.fromJson(rows.single);
+        final cancel =
+            reminder == null ||
+            reminder.isCompleted ||
+            reminder.noticeAcknowledgedAt != null ||
+            reminder.triggerTime == null ||
+            _requiresPastCancellation(reminder, entry, instant);
+        // Do not replay an expired current occurrence, even after a failure.
+        if (!cancel &&
+            (!canSchedule || !reminder.triggerTime!.isAfter(instant))) {
+          continue;
+        }
+        attempted++;
+        if (await _synchronizeNotification(
+          entry.reminderId,
+          generation,
+          () => cancel
+              ? _notifications.cancelReminderStrict(entry.reminderId)
+              : _notifications.scheduleReminderStrict(reminder),
+          cancellation: cancel,
+        )) {
+          failed++;
+        }
+      }
+      return (attempted: attempted, failed: failed);
+    }),
+  );
 
   /// Explicitly reconcile saved occurrences after permission or native errors.
   /// This does not edit tasks, acknowledge past occurrences, or request access.

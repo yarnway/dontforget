@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../models/notification_schedule_status.dart';
 import '../../services/notification_permission_service.dart';
 
 /// Permission checks never display an operating-system prompt. Requests are
@@ -12,9 +13,11 @@ class NotificationPermissionPanel extends StatefulWidget {
     super.key,
     this.service,
     this.onRetryReminders,
+    this.onReadScheduleStatus,
   });
 
   final NotificationPermissionService? service;
+  final Future<NotificationScheduleStatus> Function()? onReadScheduleStatus;
   final Future<({int attempted, int failed})> Function()? onRetryReminders;
 
   @override
@@ -32,6 +35,8 @@ class _NotificationPermissionPanelState
   int _generation = 0;
   ({int attempted, int failed})? _retryResult;
   bool _retryFailed = false;
+  NotificationScheduleStatus? _schedule;
+  bool _scheduleFailed = false;
 
   @override
   void initState() {
@@ -49,6 +54,8 @@ class _NotificationPermissionPanelState
       _busy = false;
       _refreshQueued = false;
       _snapshot = null;
+      _schedule = null;
+      _scheduleFailed = false;
       _retryResult = null;
       _retryFailed = false;
       _service = widget.service ?? NotificationPermissionService();
@@ -81,6 +88,8 @@ class _NotificationPermissionPanelState
     setState(() => _busy = true);
     final result = await operation();
     if (!mounted || generation != _generation) return;
+    await _readSchedule(generation, supported: result.canRequestNotifications);
+    if (!mounted || generation != _generation) return;
     setState(() {
       _snapshot = result;
       _busy = false;
@@ -108,6 +117,11 @@ class _NotificationPermissionPanelState
       failed = true;
     }
     if (!mounted || generation != _generation) return;
+    await _readSchedule(
+      generation,
+      supported: _snapshot?.canRequestNotifications ?? false,
+    );
+    if (!mounted || generation != _generation) return;
     setState(() {
       _retryResult = result;
       _retryFailed = failed;
@@ -117,6 +131,21 @@ class _NotificationPermissionPanelState
       _refreshQueued = false;
       unawaited(_run(_service.refresh));
     }
+  }
+
+  Future<void> _readSchedule(int generation, {required bool supported}) async {
+    final read = widget.onReadScheduleStatus;
+    if (read == null || !supported) return;
+    NotificationScheduleStatus? value;
+    var failed = false;
+    try {
+      value = await read();
+    } catch (_) {
+      failed = true;
+    }
+    if (!mounted || generation != _generation) return;
+    _schedule = value;
+    _scheduleFailed = failed;
   }
 
   String _statusKey(NotificationPermissionStatus status) => switch (status) {
@@ -210,6 +239,56 @@ class _NotificationPermissionPanelState
               const SizedBox(height: 6),
               Text(
                 l10n.get('notificationExactAlarmHint'),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+            if (canRequest && widget.onReadScheduleStatus != null) ...[
+              const Divider(height: 24),
+              Text(
+                l10n.get('notificationScheduleTitle'),
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 6),
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  _scheduleFailed
+                      ? l10n.get('notificationScheduleUnavailable')
+                      : _schedule == null
+                      ? l10n.get('notificationScheduleChecking')
+                      : l10n
+                            .get('notificationScheduleSummary')
+                            .replaceAll('{upcoming}', '${_schedule!.upcoming}')
+                            .replaceAll(
+                              '{submitted}',
+                              '${_schedule!.submitted}',
+                            )
+                            .replaceAll(
+                              '{attention}',
+                              '${_schedule!.needsAttention}',
+                            )
+                            .replaceAll(
+                              '{cancellations}',
+                              '${_schedule!.cancellations}',
+                            ),
+                  key: const ValueKey('notification-schedule-status'),
+                ),
+              ),
+              if ((_schedule?.overdueUnconfirmed ?? 0) > 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    l10n
+                        .get('notificationScheduleOverdue')
+                        .replaceAll(
+                          '{count}',
+                          '${_schedule!.overdueUnconfirmed}',
+                        ),
+                  ),
+                ),
+              const SizedBox(height: 6),
+              Text(
+                l10n.get('notificationScheduleHint'),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ],

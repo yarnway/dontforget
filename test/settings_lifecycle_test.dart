@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/providers/providers.dart';
+import 'package:dont_forget/models/notification_schedule_status.dart';
 import 'package:dont_forget/services/llm_service.dart';
 import 'package:dont_forget/ui/screens/settings_screen.dart';
 import 'package:dont_forget/ui/widgets/inline_feedback.dart';
@@ -132,6 +133,15 @@ void main() {
       launcher = _ConsoleLauncher();
       container = ProviderContainer(
         overrides: [
+          notificationScheduleStatusReaderProvider.overrideWithValue(
+            () async => const NotificationScheduleStatus(
+              upcoming: 0,
+              submitted: 0,
+              needsAttention: 0,
+              cancellations: 0,
+              overdueUnconfirmed: 0,
+            ),
+          ),
           databaseHelperProvider.overrideWithValue(database),
           llmServiceProvider.overrideWithValue(probe),
           consoleUrlLauncherProvider.overrideWithValue(launcher),

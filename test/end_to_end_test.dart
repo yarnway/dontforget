@@ -2,6 +2,7 @@ import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/providers/providers.dart';
+import 'package:dont_forget/services/notification_schedule_reader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -58,8 +59,19 @@ void main() {
       testDirectory.path,
       databaseFactoryFfi,
     );
+    // Finish file-backed reads outside the widget fake clock. This navigation
+    // fixture has no task mutations; actual reader semantics are covered by the
+    // isolated durable-notification integration tests.
+    final scheduleStatus = await NotificationScheduleReader(
+      testDatabase,
+    ).read();
     container = ProviderContainer(
-      overrides: [databaseHelperProvider.overrideWithValue(testDatabase)],
+      overrides: [
+        databaseHelperProvider.overrideWithValue(testDatabase),
+        notificationScheduleStatusReaderProvider.overrideWithValue(
+          () async => scheduleStatus,
+        ),
+      ],
     );
     await container.read(settingsProvider.notifier).ready;
     await container.read(remindersProvider.notifier).ready;
