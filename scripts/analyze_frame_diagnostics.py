@@ -67,6 +67,7 @@ def summarize_frame(frame):
 
 def analyze(report):
     if (report.get('phase') != 'complete' or report.get('errors') != [] or
+            report.get('restart_required') is True or
             report.get('focused_768_diagnostics') is not True or
             report.get('timing_comparable_to_baseline') is not False):
         raise ValueError('A completed focused diagnostic report is required')

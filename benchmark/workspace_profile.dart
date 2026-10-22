@@ -117,6 +117,7 @@ class _BenchmarkState extends State<_Benchmark>
   bool _running = false;
   bool _includeNotificationStartup = true;
   bool _focusedDiagnostics = false;
+  bool _restartRequired = false;
   FrameDiagnostics? _frameDiagnostics;
   final _windowEvents = <Map<String, Object>>[];
   final _segments = <Map<String, Object?>>[];
@@ -235,6 +236,7 @@ class _BenchmarkState extends State<_Benchmark>
           'one warmup then five fresh board/provider mounts',
       'focused_768_diagnostics': _focusedDiagnostics,
       'timing_comparable_to_baseline': !_focusedDiagnostics,
+      'restart_required': _restartRequired,
       'notification_startup_included':
           _includeNotificationStartup && !_focusedDiagnostics,
       'fixture_source':
@@ -266,7 +268,7 @@ class _BenchmarkState extends State<_Benchmark>
   }
 
   Future<void> _run() async {
-    if (_running) return;
+    if (_running || _restartRequired) return;
     setState(() => _running = true);
     _results.clear();
     _segments.clear();
@@ -443,6 +445,9 @@ class _BenchmarkState extends State<_Benchmark>
       }
       completed = true;
     } catch (error) {
+      // A diagnostic RPC can fail after changing VM-wide recording state.
+      // Require a fresh process before accepting another timing baseline.
+      if (_focusedDiagnostics) _restartRequired = true;
       _errors.add(error.toString());
       if (mounted) setState(() => _progress = 'Benchmark failed: $error');
     } finally {
@@ -451,6 +456,7 @@ class _BenchmarkState extends State<_Benchmark>
       try {
         await diagnostics?.close();
       } catch (error) {
+        _restartRequired = true;
         _errors.add('Diagnostics cleanup failed: ${error.runtimeType}');
       }
       if (mounted) setState(() => _tasks = null);
@@ -459,6 +465,7 @@ class _BenchmarkState extends State<_Benchmark>
       try {
         await database?.close(createBackup: false);
       } catch (error) {
+        _restartRequired = true;
         _errors.add('Database cleanup failed: $error');
       }
       // Completion is published only after profiling state and storage close.
@@ -473,7 +480,8 @@ class _BenchmarkState extends State<_Benchmark>
           _running = false;
           _progress = completed && _errors.isEmpty
               ? 'Completed. Synthetic data and results are preserved for review.'
-              : 'Benchmark failed: ${_errors.lastOrNull ?? 'window closed'}';
+              : 'Benchmark failed: ${_errors.lastOrNull ?? 'window closed'}'
+                    '${_restartRequired ? ' Restart this isolated app before another run.' : ''}';
         });
       }
     }
@@ -719,8 +727,11 @@ class _BenchmarkState extends State<_Benchmark>
           if (!_running)
             CheckboxListTile(
               value: _includeNotificationStartup,
-              onChanged: (value) =>
-                  setState(() => _includeNotificationStartup = value ?? true),
+              onChanged: _restartRequired
+                  ? null
+                  : (value) => setState(
+                      () => _includeNotificationStartup = value ?? true,
+                    ),
               title: const Text(
                 'Include full notification startup (can take several minutes)',
               ),
@@ -729,8 +740,10 @@ class _BenchmarkState extends State<_Benchmark>
           if (!_running)
             CheckboxListTile(
               value: _focusedDiagnostics,
-              onChanged: (value) =>
-                  setState(() => _focusedDiagnostics = value ?? false),
+              onChanged: _restartRequired
+                  ? null
+                  : (value) =>
+                        setState(() => _focusedDiagnostics = value ?? false),
               title: const Text(
                 'Diagnose 10000 tasks at 768px (instrumented timings)',
               ),
@@ -738,17 +751,20 @@ class _BenchmarkState extends State<_Benchmark>
             ),
           if (!_running)
             FilledButton(
-              onPressed: _run,
+              onPressed: _restartRequired ? null : _run,
               child: const Text('Start isolated measurement'),
             ),
           if (!_running)
             Builder(
               builder: (context) => TextButton(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const NativeNotificationFailurePanel(),
-                  ),
-                ),
+                onPressed: _restartRequired
+                    ? null
+                    : () => Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) =>
+                              const NativeNotificationFailurePanel(),
+                        ),
+                      ),
                 child: const Text('Open isolated real OS failure probe'),
               ),
             ),
