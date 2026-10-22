@@ -1,0 +1,19 @@
+{
+  "scope": "Synthetic macOS profile harness; storage startup excludes reconciliation; full notification startup uses a recording OS transport; frames are real engine timings. Foreground validity is recorded per segment, never inferred from completion.",
+  "source_revision": "41a9e54428323cfa04e0cf7f25fe09c93d19fe23",
+  "fixture_version": 2,
+  "notification_startup_included": false,
+  "fixture_source": "Exact task rows from KaPI1r baseline; notification-only copy uses fixed 2099 trigger",
+  "segments": [],
+  "window_events": [],
+  "build_mode": "profile",
+  "phase": "failed",
+  "recorded_at": "2026-10-22T05:46:31.099188Z",
+  "dart": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+  "os": "Version 27.0.1 (Build 26A434)",
+  "harness_entry_to_first_raster_us": 192500,
+  "errors": [
+    "Bad state: Benchmark window did not become foreground"
+  ],
+  "results": []
+}

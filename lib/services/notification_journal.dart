@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -22,6 +23,19 @@ class NotificationJournal {
   Future<void> _tail = Future.value();
   final Future<void> Function()? _beforeReplace;
   _JournalCache? _cache;
+  List<_JournalChange>? _pendingChanges;
+  static const _maxBatchSize = 64;
+  int _replacements = 0;
+  int _writtenBytes = 0;
+  int _writeMicros = 0;
+
+  /// Process-local diagnostics for successful replacements; contains no task
+  /// content and is neither persisted nor used to decide notification state.
+  ({int replacements, int bytes, int elapsedMicros}) get writeStatistics => (
+    replacements: _replacements,
+    bytes: _writtenBytes,
+    elapsedMicros: _writeMicros,
+  );
 
   Future<T> _serialize<T>(Future<T> Function() action) {
     final next = _tail.then((_) => action());
@@ -29,36 +43,36 @@ class NotificationJournal {
     return next;
   }
 
-  Future<NotificationJournalSnapshot?> read() => _serialize(_read);
+  Future<NotificationJournalSnapshot?> read() {
+    _pendingChanges = null; // A read is an ordering barrier for queued writes.
+    return _serialize(_read);
+  }
 
-  Future<void> reset(String epoch) => _serialize(() async {
-    await _read(); // Refuse corrupt/symlink state; never silently discard it.
-    if (!NotificationPayload.isValidDatasetEpoch(epoch)) {
-      throw const FormatException('Invalid notification journal epoch.');
-    }
-    await _write(NotificationJournalSnapshot(epoch, {}), {});
-  });
+  Future<void> reset(String epoch) {
+    _pendingChanges = null; // Never combine mutations across an epoch reset.
+    return _serialize(() async {
+      await _read(); // Refuse corrupt/symlink state; never silently discard it.
+      if (!NotificationPayload.isValidDatasetEpoch(epoch)) {
+        throw const FormatException('Invalid notification journal epoch.');
+      }
+      await _write(NotificationJournalSnapshot(epoch, {}), {});
+    });
+  }
 
   Future<NotificationJournalEntry> reserve(String epoch, String reminderId) =>
-      _serialize(() async {
-        final state = await _require(epoch);
-        final existing = state.entries[reminderId];
-        if (existing != null) return existing;
-        final used = state.entries.values.map((e) => e.nativeId).toSet();
+      _change(epoch, reminderId, (previous, used) {
+        if (previous != null) return previous;
         var id = stableNotificationId(reminderId);
         while (used.contains(id)) {
           id = id == 0x7fffffff ? 1 : id + 1;
         }
-        final entry = NotificationJournalEntry(
+        return NotificationJournalEntry(
           reminderId: reminderId,
           nativeId: id,
           action: 'cancel',
           status: 'reserved',
           attempts: 0,
         );
-        NotificationJournalEntry.decode(entry.toJson());
-        await _writeEntry(state, entry); // Allocation precedes native effects.
-        return entry;
       });
 
   Future<void> record(
@@ -69,11 +83,9 @@ class NotificationJournal {
     int? triggerUtcMicros,
     int? noticeRevision,
     DateTime? attemptedAt,
-  }) => _serialize(() async {
-    final state = await _require(epoch);
-    final previous = state.entries[reminderId];
+  }) => _change(epoch, reminderId, (previous, _) {
     if (previous == null) throw StateError('Notification ID not reserved.');
-    final entry = NotificationJournalEntry(
+    return NotificationJournalEntry(
       reminderId: reminderId,
       nativeId: previous.nativeId,
       action: action,
@@ -84,21 +96,70 @@ class NotificationJournal {
       attemptedAt:
           attemptedAt?.toUtc().toIso8601String() ?? previous.attemptedAt,
     );
-    // Existing entries were validated on read and cannot be mutated by readers.
-    // Validate the changed record before staging any bytes.
-    NotificationJournalEntry.decode(entry.toJson());
-    await _writeEntry(state, entry);
-  });
+  }).then<void>((_) {});
 
-  Future<void> _writeEntry(
-    NotificationJournalSnapshot state,
-    NotificationJournalEntry entry,
-  ) async {
-    final entries = Map<String, NotificationJournalEntry>.of(state.entries);
-    entries[entry.reminderId] = entry;
-    final encoded = Map<String, String>.of(_cache!.encodedEntries);
-    encoded[entry.reminderId] = jsonEncode(entry.toJson());
-    await _write(NotificationJournalSnapshot(state.epoch, entries), encoded);
+  Future<NotificationJournalEntry> _change(
+    String epoch,
+    String id,
+    NotificationJournalEntry Function(NotificationJournalEntry?, Set<int>)
+    apply,
+  ) {
+    var batch = _pendingChanges;
+    if (batch == null ||
+        batch.length >= _maxBatchSize ||
+        batch.first.epoch != epoch) {
+      batch = [];
+      _pendingChanges = batch;
+      final queued = batch;
+      // The queued operation owns all caller admissions until its durable
+      // write finishes. Results never complete from an in-memory intent.
+      unawaited(_serialize(() => _commitChanges(queued)));
+    }
+    final change = _JournalChange(epoch, id, apply);
+    batch.add(change);
+    return change.result.future;
+  }
+
+  Future<void> _commitChanges(List<_JournalChange> changes) async {
+    // Collect callers admitted during this event turn, without delaying a
+    // pending intent behind any native effect. Reads/resets seal the batch.
+    await Future<void>.delayed(Duration.zero);
+    if (identical(_pendingChanges, changes)) _pendingChanges = null;
+    try {
+      final state = await _require(changes.first.epoch);
+      final entries = Map<String, NotificationJournalEntry>.of(state.entries);
+      final encoded = Map<String, String>.of(_cache!.encodedEntries);
+      final used = entries.values.map((e) => e.nativeId).toSet();
+      final results = <NotificationJournalEntry>[];
+      var modified = false;
+      for (final change in changes) {
+        final previous = entries[change.id];
+        final entry = change.apply(previous, used);
+        if (!identical(previous, entry)) {
+          NotificationJournalEntry.decode(entry.toJson());
+          entries[change.id] = entry;
+          used.add(entry.nativeId);
+          encoded[change.id] = jsonEncode(entry.toJson());
+          modified = true;
+        }
+        results.add(entry);
+      }
+      if (modified) {
+        await _write(
+          NotificationJournalSnapshot(state.epoch, entries),
+          encoded,
+        );
+      }
+      for (var i = 0; i < changes.length; i++) {
+        changes[i].result.complete(results[i]);
+      }
+    } catch (error, stack) {
+      // One atomic replacement, one outcome. On any validation/staging error
+      // every caller observes failure and the previous durable file survives.
+      for (final change in changes) {
+        change.result.completeError(error, stack);
+      }
+    }
   }
 
   Future<NotificationJournalSnapshot> _require(String epoch) async {
@@ -154,6 +215,7 @@ class NotificationJournal {
     NotificationJournalSnapshot state,
     Map<String, String> encodedEntries,
   ) async {
+    final watch = Stopwatch()..start();
     final expected = _cache?.bytes;
     // Reuse validated per-record encodings while retaining one atomic file.
     // Keep encoding order/format compatible with version 1 journals.
@@ -183,6 +245,9 @@ class NotificationJournal {
       // Never unlink the last valid target to make replacement succeed.
       await temporary.rename(_file.path);
       _cache = _JournalCache(bytes, state, encodedEntries);
+      _replacements++;
+      _writtenBytes += bytes.length;
+      _writeMicros += watch.elapsedMicroseconds;
     } finally {
       // Only our random staging file is disposable; preserve the target.
       if (await FileSystemEntity.type(temporary.path, followLinks: false) ==
@@ -200,6 +265,15 @@ bool _sameBytes(Uint8List? a, Uint8List? b) {
     if (a[i] != b[i]) return false;
   }
   return true;
+}
+
+class _JournalChange {
+  _JournalChange(this.epoch, this.id, this.apply);
+  final String epoch;
+  final String id;
+  final NotificationJournalEntry Function(NotificationJournalEntry?, Set<int>)
+  apply;
+  final result = Completer<NotificationJournalEntry>();
 }
 
 class _JournalCache {

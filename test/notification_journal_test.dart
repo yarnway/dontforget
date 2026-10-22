@@ -18,6 +18,121 @@ void main() {
   });
   tearDown(() => directory.delete(recursive: true));
 
+  test('concurrent intents are durable in bounded atomic batches', () async {
+    var writes = 0;
+    journal = NotificationJournal.forTesting(directory, () async => writes++);
+    await journal.reset(epoch);
+    writes = 0;
+    final allocated = await Future.wait([
+      for (var i = 0; i < 130; i++) journal.reserve(epoch, 'batch-$i'),
+    ]);
+    expect(writes, 3);
+    expect(allocated.map((e) => e.nativeId).toSet(), hasLength(130));
+    writes = 0;
+    await Future.wait([
+      for (var i = 0; i < 32; i++)
+        journal.record(
+          epoch,
+          'batch-$i',
+          action: 'schedule',
+          status: 'pending',
+          triggerUtcMicros: 123,
+          noticeRevision: 2,
+        ),
+    ]);
+    expect(writes, 1);
+    // Reopening is the crash boundary: no submitted result has been written.
+    final reopened = (await NotificationJournal(directory).read())!;
+    expect(reopened.entries.values.where((e) => e.unfinished), hasLength(32));
+    expect(reopened.entries['batch-0']!.attempts, 1);
+    expect(reopened.entries['batch-0']!.nativeId, allocated.first.nativeId);
+  });
+
+  test('reads and resets remain ordering barriers between batches', () async {
+    await journal.reset(epoch);
+    final first = journal.reserve(epoch, 'before-read');
+    final observed = journal.read();
+    final later = journal.reserve(epoch, 'after-read');
+    expect((await observed)!.entries.keys, ['before-read']);
+    await Future.wait([first, later]);
+    final oldWrite = journal.record(
+      epoch,
+      'before-read',
+      action: 'cancel',
+      status: 'pending',
+    );
+    final reset = journal.reset(nextEpoch);
+    final newWrite = journal.reserve(nextEpoch, 'new');
+    await Future.wait<void>([oldWrite, reset, newWrite.then((_) {})]);
+    final finalState = (await journal.read())!;
+    expect(finalState.epoch, nextEpoch);
+    expect(finalState.entries.keys, ['new']);
+  });
+
+  test('invalid member rolls back the entire queued mutation batch', () async {
+    await journal.reset(epoch);
+    final file = File('${directory.path}/${NotificationJournal.fileName}');
+    final before = await file.readAsBytes();
+    final good = journal.reserve(epoch, 'good');
+    final bad = journal.reserve(epoch, '');
+    await Future.wait([
+      expectLater(good, throwsFormatException),
+      expectLater(bad, throwsFormatException),
+    ]);
+    expect(await file.readAsBytes(), before);
+    expect((await journal.read())!.entries, isEmpty);
+    expect((await journal.reserve(epoch, 'retry')).reminderId, 'retry');
+  });
+
+  test(
+    'failed batch replacement exposes no successful callers or IDs',
+    () async {
+      await journal.reset(epoch);
+      final file = File('${directory.path}/${NotificationJournal.fileName}');
+      final before = await file.readAsBytes();
+      journal = NotificationJournal.forTesting(directory, () async {
+        throw const FileSystemException('Synthetic batch write failure');
+      });
+      final results = [
+        for (var i = 0; i < 32; i++)
+          expectLater(
+            journal.reserve(epoch, 'failed-$i'),
+            throwsA(isA<FileSystemException>()),
+          ),
+      ];
+      await Future.wait(results);
+      expect(await file.readAsBytes(), before);
+      expect((await NotificationJournal(directory).read())!.entries, isEmpty);
+      expect(
+        await directory.list().where((e) => e.path.endsWith('.tmp')).toList(),
+        isEmpty,
+      );
+    },
+  );
+
+  test(
+    'duplicate IDs in a batch preserve ordering and attempt counts',
+    () async {
+      await journal.reset(epoch);
+      final reservations = await Future.wait([
+        journal.reserve(epoch, 'same'),
+        journal.reserve(epoch, 'same'),
+      ]);
+      expect(reservations.first.nativeId, reservations.last.nativeId);
+      await Future.wait([
+        journal.record(epoch, 'same', action: 'schedule', status: 'pending'),
+        journal.record(epoch, 'same', action: 'schedule', status: 'submitted'),
+        journal.record(epoch, 'same', action: 'cancel', status: 'pending'),
+      ]);
+      final saved = (await NotificationJournal(
+        directory,
+      ).read())!.entries['same']!;
+      expect(saved.action, 'cancel');
+      expect(saved.status, 'pending');
+      expect(saved.attempts, 2);
+    },
+  );
+
   test(
     'stable ID has a pinned cross-process vector and distinguishes escaped IDs',
     () {

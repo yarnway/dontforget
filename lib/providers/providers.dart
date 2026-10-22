@@ -214,9 +214,13 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       // request. Retained ID allocations let startup find those orphaned
       // requests even when no failed-cancel result was written.
       final existingIds = state.map((r) => r.id).toSet();
-      for (final entry in journal.values) {
-        if (!existingIds.contains(entry.reminderId) &&
-            entry.needsCancellation) {
+      await _startupBatches(
+        journal.values.where(
+          (entry) =>
+              !existingIds.contains(entry.reminderId) &&
+              entry.needsCancellation,
+        ),
+        (entry) async {
           await _dbHelper.runOperation(
             generation,
             () => _synchronizeNotification(
@@ -226,10 +230,10 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
               cancellation: true,
             ),
           );
-        }
-      }
+        },
+      );
       final now = DateTime.now();
-      for (final reminder in state) {
+      await _startupBatches(state, (reminder) async {
         _dbHelper.checkGeneration(generation);
         if (!mounted) {
           return;
@@ -254,7 +258,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
             await _synchronizeReminder(reminder, generation);
           });
         }
-      }
+      });
     } catch (error, stack) {
       // Generation/maintenance failures must reach startup and mutation callers.
       _dbHelper.checkGeneration(generation);
@@ -265,6 +269,24 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         debugPrint('Warning: Reminders load error: $error\n$stack');
       }
     }
+  }
+
+  // Bound native work while allowing independent intents/results to share a
+  // durable journal replacement. Future.wait drains the batch before recovery
+  // or a following batch can proceed, even when one operation throws.
+  Future<void> _startupBatches<T>(
+    Iterable<T> values,
+    Future<void> Function(T) operation,
+  ) async {
+    final pending = <Future<void>>[];
+    for (final value in values) {
+      pending.add(operation(value));
+      if (pending.length == 32) {
+        await Future.wait(pending);
+        pending.clear();
+      }
+    }
+    await Future.wait(pending);
   }
 
   Future<Map<String, NotificationJournalEntry>> _notificationEntries(

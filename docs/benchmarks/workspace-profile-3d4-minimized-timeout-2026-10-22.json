@@ -1,0 +1,135 @@
+{
+  "scope": "Synthetic macOS profile harness; storage startup excludes reconciliation; full notification startup uses a recording OS transport; frames are real engine timings. Foreground validity is recorded per segment, never inferred from completion.",
+  "source_revision": "41a9e54428323cfa04e0cf7f25fe09c93d19fe23",
+  "fixture_version": 2,
+  "notification_startup_included": false,
+  "fixture_source": "Exact task rows from KaPI1r baseline; notification-only copy uses fixed 2099 trigger",
+  "segments": [
+    {
+      "label": "100 storage startup",
+      "wall_us": 11976,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "100 backup",
+      "wall_us": 46362,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "100 board 375.0",
+      "wall_us": 13317814,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": false,
+        "visible": false,
+        "minimized": true,
+        "lifecycle": "hidden"
+      },
+      "events": [
+        {
+          "event": "blur",
+          "timeline_us": 747722660279
+        },
+        {
+          "event": "minimize",
+          "timeline_us": 747722667163
+        },
+        {
+          "event": "lifecycle:inactive",
+          "timeline_us": 747722667794
+        },
+        {
+          "event": "lifecycle:hidden",
+          "timeline_us": 747722667798
+        }
+      ],
+      "uninterrupted_foreground": false
+    }
+  ],
+  "window_events": [
+    {
+      "event": "blur",
+      "timeline_us": 747722660279
+    },
+    {
+      "event": "minimize",
+      "timeline_us": 747722667163
+    },
+    {
+      "event": "lifecycle:inactive",
+      "timeline_us": 747722667794
+    },
+    {
+      "event": "lifecycle:hidden",
+      "timeline_us": 747722667798
+    }
+  ],
+  "build_mode": "profile",
+  "phase": "failed",
+  "recorded_at": "2026-10-22T05:50:17.802708Z",
+  "dart": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+  "os": "Version 27.0.1 (Build 26A434)",
+  "harness_entry_to_first_raster_us": 192500,
+  "errors": [
+    "TimeoutException after 0:00:10.000000: Future not completed"
+  ],
+  "results": [
+    {
+      "tasks": 100,
+      "task_rows_sha256": "9f447e6f64fe90312b0631d8e2969ecd0b94956d7c91eea1d854fde001608488",
+      "storage_startup": {
+        "samples": 5,
+        "p50_us": 1716,
+        "p95_us": 1914,
+        "max_us": 1914
+      },
+      "consistent_backup": {
+        "samples": 5,
+        "p50_us": 5621,
+        "p95_us": 5846,
+        "max_us": 5846
+      },
+      "search_index_build_us": 44,
+      "indexed_search": {
+        "samples": 50,
+        "p50_us": 22,
+        "p95_us": 34,
+        "max_us": 35
+      },
+      "backup_json_bytes": 72665,
+      "backup_mirror_bytes": 49152,
+      "views": []
+    }
+  ]
+}

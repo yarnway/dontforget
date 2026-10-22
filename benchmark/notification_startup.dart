@@ -105,6 +105,9 @@ Future<List<Map<String, Object>>> measureNotificationStartup(
         throw StateError('Notification ID changed across reopen');
       }
       previousIds = ids;
+      final writes = await helper.withNotificationJournal(
+        (journal) async => journal.writeStatistics,
+      );
       results.add({
         'mode': mode,
         'elapsed_us': watch.elapsedMicroseconds,
@@ -116,6 +119,9 @@ Future<List<Map<String, Object>>> measureNotificationStartup(
         'native_schedule_calls': transport.schedules,
         'native_cancel_calls': transport.cancellations,
         'native_reset_calls': transport.resets,
+        'journal_atomic_replacements': writes.replacements,
+        'journal_bytes_written': writes.bytes,
+        'journal_successful_write_us': writes.elapsedMicros,
       });
     } finally {
       // Emulate process exit: stop timers, retain the OS model and journal.
