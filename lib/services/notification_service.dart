@@ -10,6 +10,7 @@ import '../models/notification_payload.dart';
 import '../data/database_helper.dart';
 import 'context_trigger_service.dart';
 import 'notification_journal.dart';
+import 'macos_notification_scheduler.dart';
 
 class NotificationService {
   static final _instances = Expando<NotificationService>();
@@ -20,6 +21,9 @@ class NotificationService {
   NotificationService._internal(DatabaseHelper database)
     : flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin(),
       usesNativeNotifications = !Platform.isWindows && !Platform.isLinux,
+      macScheduler = Platform.isMacOS
+          ? const MacOSNotificationScheduler()
+          : null,
       _database = database,
       _readDatasetEpoch = database.readNotificationEpoch;
 
@@ -30,6 +34,7 @@ class NotificationService {
     DateTime Function()? now,
     Future<String> Function()? readDatasetEpoch,
     DatabaseHelper? database,
+    this.macScheduler,
   }) : _now = now ?? DateTime.now,
        _database = database,
        _readDatasetEpoch =
@@ -175,6 +180,7 @@ class NotificationService {
   }
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+  final MacOSNotificationScheduler? macScheduler;
   final bool usesNativeNotifications;
   DateTime Function() _now = DateTime.now;
   Future<void>? _initialization;
@@ -548,9 +554,23 @@ class NotificationService {
           if (_revisions[reminder.id] != revision || isSuppressed(reminder)) {
             return;
           }
-          await _journalNative(
-            reminder.id,
-            (nativeId) => flutterLocalNotificationsPlugin.zonedSchedule(
+          await _journalNative(reminder.id, (nativeId) {
+            final payload = NotificationPayload.forReminder(
+              reminder,
+              datasetEpoch: epoch,
+            ).encode();
+            final mac = macScheduler;
+            if (mac != null) {
+              return mac.schedule(
+                nativeId: nativeId,
+                title: reminder.taskTitle,
+                body: reminder.taskSummary ?? 'You have a scheduled task',
+                trigger: reminder.triggerTime!,
+                playSound: playSound,
+                payload: payload,
+              );
+            }
+            return flutterLocalNotificationsPlugin.zonedSchedule(
               nativeId,
               reminder.taskTitle,
               reminder.taskSummary ?? 'You have a scheduled task',
@@ -559,13 +579,9 @@ class NotificationService {
               androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
               uiLocalNotificationDateInterpretation:
                   UILocalNotificationDateInterpretation.absoluteTime,
-              payload: NotificationPayload.forReminder(
-                reminder,
-                datasetEpoch: epoch,
-              ).encode(),
-            ),
-            schedule: reminder,
-          );
+              payload: payload,
+            );
+          }, schedule: reminder);
         });
       } catch (e) {
         if (strict || _strictFailures) rethrow;

@@ -6,6 +6,7 @@ import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/notification_payload.dart';
 import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/services/notification_epoch_store.dart';
+import 'package:dont_forget/services/macos_notification_scheduler.dart';
 import 'package:dont_forget/services/notification_service.dart';
 import 'package:dont_forget/services/recovery/backup_inspector.dart';
 import 'package:dont_forget/services/recovery/database_recovery.dart';
@@ -62,7 +63,9 @@ void main() {
     // Darwin additionally verifies the real plugin's serialized channel payload.
     if (!service.usesNativeNotifications) return;
     final schedules = nativeCalls
-        .where((call) => call.method == 'zonedSchedule')
+        .where(
+          (call) => call.method == 'zonedSchedule' || call.method == 'schedule',
+        )
         .toList();
     expect(schedules, hasLength(1));
     final payload = NotificationPayload.tryParse(
@@ -84,6 +87,13 @@ void main() {
     nativeCalls.clear();
     services.clear();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(MacOSNotificationScheduler.channel, (
+          call,
+        ) async {
+          nativeCalls.add(call);
+          return null;
+        });
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, (call) async {
           nativeCalls.add(call);
           // Darwin 17.2.x returns false when no permissions were requested;
@@ -103,6 +113,8 @@ void main() {
     await database.close(createBackup: false);
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(MacOSNotificationScheduler.channel, null);
     debugDefaultTargetPlatformOverride = null;
     await root.delete(recursive: true);
   });
@@ -409,7 +421,8 @@ void main() {
           expectNativeEpoch(service, after);
           if (service.usesNativeNotifications) {
             final schedule = nativeCalls.singleWhere(
-              (call) => call.method == 'zonedSchedule',
+              (call) =>
+                  call.method == 'zonedSchedule' || call.method == 'schedule',
             );
             final encoded = (schedule.arguments as Map)['payload'] as String;
             expect(encoded.length, lessThan(400));
