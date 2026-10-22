@@ -11,6 +11,7 @@ import 'dart:ui' show FramePhase;
 
 import 'package:crypto/crypto.dart';
 import 'notification_startup.dart';
+import 'native_notification_failure.dart';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/models/reminder.dart';
@@ -696,6 +697,17 @@ class _BenchmarkState extends State<_Benchmark>
             FilledButton(
               onPressed: _run,
               child: const Text('Start isolated measurement'),
+            ),
+          if (!_running)
+            Builder(
+              builder: (context) => TextButton(
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const NativeNotificationFailurePanel(),
+                  ),
+                ),
+                child: const Text('Open isolated real OS failure probe'),
+              ),
             ),
           Expanded(
             child: _tasks == null || _database == null
