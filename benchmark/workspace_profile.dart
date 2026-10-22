@@ -142,6 +142,26 @@ class _BenchmarkState extends State<_Benchmark>
     'lifecycle': WidgetsBinding.instance.lifecycleState?.name,
   };
 
+  bool _foreground(Map<String, Object?> state) =>
+      state['focused'] == true &&
+      state['visible'] == true &&
+      state['minimized'] == false &&
+      state['lifecycle'] == 'resumed';
+
+  Future<void> _prepareForeground() async {
+    // The explicit Start action may arrive through accessibility before macOS
+    // has activated the window. Activate once, then require observed readiness.
+    await windowManager.show();
+    await windowManager.focus();
+    final watch = Stopwatch()..start();
+    while (!_foreground(await _windowState())) {
+      if (watch.elapsed >= const Duration(seconds: 10)) {
+        throw StateError('Benchmark window did not become foreground');
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+  }
+
   Future<T> _segment<T>(String label, Future<T> Function() action) async {
     final before = await _windowState();
     final eventIndex = _windowEvents.length;
@@ -152,11 +172,6 @@ class _BenchmarkState extends State<_Benchmark>
       watch.stop();
       final after = await _windowState();
       final events = _windowEvents.skip(eventIndex).toList();
-      bool foreground(Map<String, Object?> state) =>
-          state['focused'] == true &&
-          state['visible'] == true &&
-          state['minimized'] == false &&
-          state['lifecycle'] == 'resumed';
       _segments.add({
         'label': label,
         'wall_us': watch.elapsedMicroseconds,
@@ -164,8 +179,8 @@ class _BenchmarkState extends State<_Benchmark>
         'after': after,
         'events': events,
         'uninterrupted_foreground':
-            foreground(before) &&
-            foreground(after) &&
+            _foreground(before) &&
+            _foreground(after) &&
             events.every(
               (e) => e['event'] == 'focus' || e['event'] == 'lifecycle:resumed',
             ),
@@ -245,10 +260,13 @@ class _BenchmarkState extends State<_Benchmark>
     _windowEvents.clear();
     _errors.clear();
     try {
-      await WidgetsBinding.instance.waitUntilFirstFrameRasterized;
       final support = await getApplicationSupportDirectory();
       _root = await Directory(support.path).createTemp('isolated-performance-');
       stdout.writeln('ISOLATED_BENCHMARK_RESULT=${_root!.path}/results.json');
+      await _prepareForeground();
+      await WidgetsBinding.instance.waitUntilFirstFrameRasterized.timeout(
+        const Duration(seconds: 10),
+      );
       for (final count in [100, 1000, 10000]) {
         await _status(
           'Measuring $count synthetic tasks: storage startup and backup',
@@ -371,9 +389,14 @@ class _BenchmarkState extends State<_Benchmark>
           }
         } finally {
           if (mounted) setState(() => _tasks = null);
-          await _frame();
-          _database = null;
-          await helper.close(createBackup: false);
+          try {
+            await _frame();
+          } finally {
+            // A hidden window stops producing frames. Resource release must
+            // still happen when the frame wait itself times out.
+            await helper.close(createBackup: false);
+            _database = null;
+          }
         }
         result['process_rss_bytes_after_size'] = ProcessInfo.currentRss;
         if (_includeNotificationStartup) {
@@ -408,12 +431,16 @@ class _BenchmarkState extends State<_Benchmark>
       _errors.add(error.toString());
       if (mounted) setState(() => _progress = 'Benchmark failed: $error');
       await _record('failed');
+    } finally {
       if (mounted) setState(() => _tasks = null);
-      await _frame();
       final database = _database;
       _database = null;
-      await database?.close(createBackup: false);
-    } finally {
+      try {
+        await database?.close(createBackup: false);
+      } catch (error) {
+        _errors.add('Database cleanup failed: $error');
+        await _record('failed');
+      }
       if (mounted) setState(() => _running = false);
     }
   }
