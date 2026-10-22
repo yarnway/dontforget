@@ -1,0 +1,1341 @@
+{
+  "scope": "Synthetic macOS profile harness; storage startup excludes reconciliation; full notification startup uses a recording OS transport; frames are real engine timings. Foreground validity is recorded per segment, never inferred from completion.",
+  "source_revision": "0fb214301e42c658445abf68eea05bd286ff1e4e",
+  "fixture_version": 2,
+  "fixture_source": "Exact task rows from KaPI1r baseline; notification-only copy uses fixed 2099 trigger",
+  "segments": [
+    {
+      "label": "100 storage startup",
+      "wall_us": 17267,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "100 backup",
+      "wall_us": 69811,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "100 board 375.0",
+      "wall_us": 6568810,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "100 board 768.0",
+      "wall_us": 6678434,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "100 board 1440.0",
+      "wall_us": 6649222,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "100 full notification startup",
+      "wall_us": 1150539,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "1000 storage startup",
+      "wall_us": 33661,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "1000 backup",
+      "wall_us": 329944,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "1000 board 375.0",
+      "wall_us": 6535058,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "1000 board 768.0",
+      "wall_us": 6672012,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "1000 board 1440.0",
+      "wall_us": 6637363,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "1000 full notification startup",
+      "wall_us": 19923968,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "10000 storage startup",
+      "wall_us": 336200,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "10000 backup",
+      "wall_us": 3149097,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "10000 board 375.0",
+      "wall_us": 6552162,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "10000 board 768.0",
+      "wall_us": 6695745,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "10000 board 1440.0",
+      "wall_us": 6672486,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [],
+      "uninterrupted_foreground": true
+    },
+    {
+      "label": "10000 full notification startup",
+      "wall_us": 1323486070,
+      "before": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "after": {
+        "focused": true,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "resumed"
+      },
+      "events": [
+        {
+          "event": "lifecycle:inactive",
+          "timeline_us": 738898777618
+        },
+        {
+          "event": "lifecycle:hidden",
+          "timeline_us": 738898777619
+        },
+        {
+          "event": "lifecycle:inactive",
+          "timeline_us": 738906337595
+        },
+        {
+          "event": "lifecycle:resumed",
+          "timeline_us": 738906337600
+        },
+        {
+          "event": "lifecycle:inactive",
+          "timeline_us": 738991658508
+        },
+        {
+          "event": "lifecycle:hidden",
+          "timeline_us": 738991658509
+        },
+        {
+          "event": "lifecycle:inactive",
+          "timeline_us": 738994434550
+        },
+        {
+          "event": "lifecycle:resumed",
+          "timeline_us": 738994434555
+        },
+        {
+          "event": "lifecycle:inactive",
+          "timeline_us": 739104608620
+        },
+        {
+          "event": "lifecycle:hidden",
+          "timeline_us": 739104608621
+        },
+        {
+          "event": "lifecycle:inactive",
+          "timeline_us": 739129528655
+        },
+        {
+          "event": "lifecycle:resumed",
+          "timeline_us": 739129528661
+        },
+        {
+          "event": "lifecycle:inactive",
+          "timeline_us": 739372288599
+        },
+        {
+          "event": "lifecycle:hidden",
+          "timeline_us": 739372288601
+        },
+        {
+          "event": "lifecycle:inactive",
+          "timeline_us": 739374043013
+        },
+        {
+          "event": "lifecycle:resumed",
+          "timeline_us": 739374043019
+        },
+        {
+          "event": "lifecycle:inactive",
+          "timeline_us": 739437563619
+        },
+        {
+          "event": "lifecycle:hidden",
+          "timeline_us": 739437563620
+        },
+        {
+          "event": "lifecycle:inactive",
+          "timeline_us": 739526276913
+        },
+        {
+          "event": "lifecycle:resumed",
+          "timeline_us": 739526276919
+        }
+      ],
+      "uninterrupted_foreground": false
+    }
+  ],
+  "window_events": [
+    {
+      "event": "lifecycle:inactive",
+      "timeline_us": 738898777618
+    },
+    {
+      "event": "lifecycle:hidden",
+      "timeline_us": 738898777619
+    },
+    {
+      "event": "lifecycle:inactive",
+      "timeline_us": 738906337595
+    },
+    {
+      "event": "lifecycle:resumed",
+      "timeline_us": 738906337600
+    },
+    {
+      "event": "lifecycle:inactive",
+      "timeline_us": 738991658508
+    },
+    {
+      "event": "lifecycle:hidden",
+      "timeline_us": 738991658509
+    },
+    {
+      "event": "lifecycle:inactive",
+      "timeline_us": 738994434550
+    },
+    {
+      "event": "lifecycle:resumed",
+      "timeline_us": 738994434555
+    },
+    {
+      "event": "lifecycle:inactive",
+      "timeline_us": 739104608620
+    },
+    {
+      "event": "lifecycle:hidden",
+      "timeline_us": 739104608621
+    },
+    {
+      "event": "lifecycle:inactive",
+      "timeline_us": 739129528655
+    },
+    {
+      "event": "lifecycle:resumed",
+      "timeline_us": 739129528661
+    },
+    {
+      "event": "lifecycle:inactive",
+      "timeline_us": 739372288599
+    },
+    {
+      "event": "lifecycle:hidden",
+      "timeline_us": 739372288601
+    },
+    {
+      "event": "lifecycle:inactive",
+      "timeline_us": 739374043013
+    },
+    {
+      "event": "lifecycle:resumed",
+      "timeline_us": 739374043019
+    },
+    {
+      "event": "lifecycle:inactive",
+      "timeline_us": 739437563619
+    },
+    {
+      "event": "lifecycle:hidden",
+      "timeline_us": 739437563620
+    },
+    {
+      "event": "lifecycle:inactive",
+      "timeline_us": 739526276913
+    },
+    {
+      "event": "lifecycle:resumed",
+      "timeline_us": 739526276919
+    }
+  ],
+  "build_mode": "profile",
+  "phase": "complete",
+  "recorded_at": "2026-10-22T03:40:28.949227Z",
+  "dart": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+  "os": "Version 27.0.1 (Build 26A434)",
+  "harness_entry_to_first_raster_us": 239397,
+  "errors": [],
+  "results": [
+    {
+      "tasks": 100,
+      "task_rows_sha256": "9f447e6f64fe90312b0631d8e2969ecd0b94956d7c91eea1d854fde001608488",
+      "storage_startup": {
+        "samples": 5,
+        "p50_us": 2624,
+        "p95_us": 3112,
+        "max_us": 3112
+      },
+      "consistent_backup": {
+        "samples": 5,
+        "p50_us": 8658,
+        "p95_us": 9776,
+        "max_us": 9776
+      },
+      "search_index_build_us": 48,
+      "indexed_search": {
+        "samples": 50,
+        "p50_us": 20,
+        "p95_us": 21,
+        "max_us": 21
+      },
+      "backup_json_bytes": 72665,
+      "backup_mirror_bytes": 49152,
+      "views": [
+        {
+          "requested_width": 375.0,
+          "actual_width": 375.0,
+          "height": 726.0,
+          "device_pixel_ratio": 2.0,
+          "mounted_cards": 4,
+          "install_to_frame_build": {
+            "samples": 5,
+            "p50_us": 17447,
+            "p95_us": 24071,
+            "max_us": 24071
+          },
+          "first_board_build": {
+            "samples": 5,
+            "p50_us": 8839,
+            "p95_us": 9951,
+            "max_us": 9951
+          },
+          "first_board_raster": {
+            "samples": 5,
+            "p50_us": 1092,
+            "p95_us": 1314,
+            "max_us": 1314
+          },
+          "first_board_vsync_wait": {
+            "samples": 5,
+            "p50_us": 189,
+            "p95_us": 195,
+            "max_us": 195
+          },
+          "first_board_frame_total": {
+            "samples": 5,
+            "p50_us": 10026,
+            "p95_us": 11377,
+            "max_us": 11377
+          },
+          "scroll_build": {
+            "samples": 481,
+            "p50_us": 274,
+            "p95_us": 946,
+            "max_us": 3308
+          },
+          "scroll_raster": {
+            "samples": 481,
+            "p50_us": 818,
+            "p95_us": 1244,
+            "max_us": 1779
+          },
+          "scroll_wall_us": 4008373,
+          "scroll_vsync_wait": {
+            "samples": 481,
+            "p50_us": 137,
+            "p95_us": 166,
+            "max_us": 203
+          },
+          "scroll_build_to_raster_gap": {
+            "samples": 481,
+            "p50_us": 48,
+            "p95_us": 70,
+            "max_us": 145
+          },
+          "scroll_build_cadence": {
+            "samples": 480,
+            "p50_us": 8333,
+            "p95_us": 8366,
+            "max_us": 8403
+          },
+          "scroll_total": {
+            "samples": 481,
+            "p50_us": 1302,
+            "p95_us": 2279,
+            "max_us": 4500
+          },
+          "build_over_16_67ms": 0,
+          "raster_over_16_67ms": 0
+        },
+        {
+          "requested_width": 768.0,
+          "actual_width": 768.0,
+          "height": 774.0,
+          "device_pixel_ratio": 2.0,
+          "mounted_cards": 12,
+          "install_to_frame_build": {
+            "samples": 5,
+            "p50_us": 32185,
+            "p95_us": 40814,
+            "max_us": 40814
+          },
+          "first_board_build": {
+            "samples": 5,
+            "p50_us": 22476,
+            "p95_us": 30718,
+            "max_us": 30718
+          },
+          "first_board_raster": {
+            "samples": 5,
+            "p50_us": 1115,
+            "p95_us": 1287,
+            "max_us": 1287
+          },
+          "first_board_vsync_wait": {
+            "samples": 5,
+            "p50_us": 126,
+            "p95_us": 140,
+            "max_us": 140
+          },
+          "first_board_frame_total": {
+            "samples": 5,
+            "p50_us": 23648,
+            "p95_us": 31323,
+            "max_us": 31323
+          },
+          "scroll_build": {
+            "samples": 481,
+            "p50_us": 296,
+            "p95_us": 1207,
+            "max_us": 2480
+          },
+          "scroll_raster": {
+            "samples": 481,
+            "p50_us": 1017,
+            "p95_us": 1397,
+            "max_us": 1635
+          },
+          "scroll_wall_us": 4008340,
+          "scroll_vsync_wait": {
+            "samples": 481,
+            "p50_us": 137,
+            "p95_us": 170,
+            "max_us": 1231
+          },
+          "scroll_build_to_raster_gap": {
+            "samples": 481,
+            "p50_us": 48,
+            "p95_us": 68,
+            "max_us": 484
+          },
+          "scroll_build_cadence": {
+            "samples": 480,
+            "p50_us": 8332,
+            "p95_us": 8406,
+            "max_us": 9406
+          },
+          "scroll_total": {
+            "samples": 481,
+            "p50_us": 1522,
+            "p95_us": 2431,
+            "max_us": 4051
+          },
+          "build_over_16_67ms": 0,
+          "raster_over_16_67ms": 0
+        },
+        {
+          "requested_width": 1440.0,
+          "actual_width": 1440.0,
+          "height": 790.0,
+          "device_pixel_ratio": 2.0,
+          "mounted_cards": 12,
+          "install_to_frame_build": {
+            "samples": 5,
+            "p50_us": 32951,
+            "p95_us": 40916,
+            "max_us": 40916
+          },
+          "first_board_build": {
+            "samples": 5,
+            "p50_us": 17580,
+            "p95_us": 27108,
+            "max_us": 27108
+          },
+          "first_board_raster": {
+            "samples": 5,
+            "p50_us": 1000,
+            "p95_us": 1091,
+            "max_us": 1091
+          },
+          "first_board_vsync_wait": {
+            "samples": 5,
+            "p50_us": 161,
+            "p95_us": 189,
+            "max_us": 189
+          },
+          "first_board_frame_total": {
+            "samples": 5,
+            "p50_us": 18720,
+            "p95_us": 28117,
+            "max_us": 28117
+          },
+          "scroll_build": {
+            "samples": 481,
+            "p50_us": 281,
+            "p95_us": 790,
+            "max_us": 2900
+          },
+          "scroll_raster": {
+            "samples": 481,
+            "p50_us": 1032,
+            "p95_us": 1466,
+            "max_us": 1867
+          },
+          "scroll_wall_us": 4008320,
+          "scroll_vsync_wait": {
+            "samples": 481,
+            "p50_us": 133,
+            "p95_us": 167,
+            "max_us": 1652
+          },
+          "scroll_build_to_raster_gap": {
+            "samples": 481,
+            "p50_us": 47,
+            "p95_us": 63,
+            "max_us": 274
+          },
+          "scroll_build_cadence": {
+            "samples": 480,
+            "p50_us": 8332,
+            "p95_us": 8406,
+            "max_us": 9837
+          },
+          "scroll_total": {
+            "samples": 481,
+            "p50_us": 1509,
+            "p95_us": 2506,
+            "max_us": 3929
+          },
+          "build_over_16_67ms": 0,
+          "raster_over_16_67ms": 0
+        }
+      ],
+      "process_rss_bytes_after_size": 157581312,
+      "notification_task_rows_sha256": "24ea095ad0281024ec57fa270ce7c5874aacf929a8137f306fa7cacde35b1024",
+      "full_notification_startup": [
+        {
+          "mode": "new_journal",
+          "elapsed_us": 596068,
+          "scope": "Full provider.ready including real SQL, urgency, journal, ID allocation and timers; recording OS transport, no OS delivery",
+          "tasks": 100,
+          "journal_entries": 100,
+          "native_schedule_calls": 100,
+          "native_cancel_calls": 100,
+          "native_reset_calls": 1
+        },
+        {
+          "mode": "reopen_submitted_journal",
+          "elapsed_us": 519867,
+          "scope": "Full provider.ready including real SQL, urgency, journal, ID allocation and timers; recording OS transport, no OS delivery",
+          "tasks": 100,
+          "journal_entries": 100,
+          "native_schedule_calls": 100,
+          "native_cancel_calls": 100,
+          "native_reset_calls": 0
+        }
+      ]
+    },
+    {
+      "tasks": 1000,
+      "task_rows_sha256": "de99e7ca45aa063708717c41f711b506c2a3ca5c11eb8c0092919797cd7e59e0",
+      "storage_startup": {
+        "samples": 5,
+        "p50_us": 5343,
+        "p95_us": 5823,
+        "max_us": 5823
+      },
+      "consistent_backup": {
+        "samples": 5,
+        "p50_us": 43480,
+        "p95_us": 44040,
+        "max_us": 44040
+      },
+      "search_index_build_us": 378,
+      "indexed_search": {
+        "samples": 50,
+        "p50_us": 206,
+        "p95_us": 230,
+        "max_us": 269
+      },
+      "backup_json_bytes": 729665,
+      "backup_mirror_bytes": 266240,
+      "views": [
+        {
+          "requested_width": 375.0,
+          "actual_width": 375.0,
+          "height": 726.0,
+          "device_pixel_ratio": 2.0,
+          "mounted_cards": 4,
+          "install_to_frame_build": {
+            "samples": 5,
+            "p50_us": 15319,
+            "p95_us": 17558,
+            "max_us": 17558
+          },
+          "first_board_build": {
+            "samples": 5,
+            "p50_us": 8793,
+            "p95_us": 9679,
+            "max_us": 9679
+          },
+          "first_board_raster": {
+            "samples": 5,
+            "p50_us": 1121,
+            "p95_us": 1213,
+            "max_us": 1213
+          },
+          "first_board_vsync_wait": {
+            "samples": 5,
+            "p50_us": 156,
+            "p95_us": 173,
+            "max_us": 173
+          },
+          "first_board_frame_total": {
+            "samples": 5,
+            "p50_us": 10201,
+            "p95_us": 11021,
+            "max_us": 11021
+          },
+          "scroll_build": {
+            "samples": 481,
+            "p50_us": 230,
+            "p95_us": 766,
+            "max_us": 3476
+          },
+          "scroll_raster": {
+            "samples": 481,
+            "p50_us": 749,
+            "p95_us": 1059,
+            "max_us": 1510
+          },
+          "scroll_wall_us": 4008180,
+          "scroll_vsync_wait": {
+            "samples": 481,
+            "p50_us": 132,
+            "p95_us": 162,
+            "max_us": 414
+          },
+          "scroll_build_to_raster_gap": {
+            "samples": 481,
+            "p50_us": 45,
+            "p95_us": 62,
+            "max_us": 364
+          },
+          "scroll_build_cadence": {
+            "samples": 480,
+            "p50_us": 8333,
+            "p95_us": 8365,
+            "max_us": 8617
+          },
+          "scroll_total": {
+            "samples": 481,
+            "p50_us": 1178,
+            "p95_us": 2038,
+            "max_us": 4566
+          },
+          "build_over_16_67ms": 0,
+          "raster_over_16_67ms": 0
+        },
+        {
+          "requested_width": 768.0,
+          "actual_width": 768.0,
+          "height": 774.0,
+          "device_pixel_ratio": 2.0,
+          "mounted_cards": 12,
+          "install_to_frame_build": {
+            "samples": 5,
+            "p50_us": 29746,
+            "p95_us": 41428,
+            "max_us": 41428
+          },
+          "first_board_build": {
+            "samples": 5,
+            "p50_us": 17993,
+            "p95_us": 29954,
+            "max_us": 29954
+          },
+          "first_board_raster": {
+            "samples": 5,
+            "p50_us": 1107,
+            "p95_us": 1407,
+            "max_us": 1407
+          },
+          "first_board_vsync_wait": {
+            "samples": 5,
+            "p50_us": 135,
+            "p95_us": 149,
+            "max_us": 149
+          },
+          "first_board_frame_total": {
+            "samples": 5,
+            "p50_us": 19623,
+            "p95_us": 31134,
+            "max_us": 31134
+          },
+          "scroll_build": {
+            "samples": 481,
+            "p50_us": 276,
+            "p95_us": 910,
+            "max_us": 2799
+          },
+          "scroll_raster": {
+            "samples": 481,
+            "p50_us": 1021,
+            "p95_us": 1414,
+            "max_us": 1702
+          },
+          "scroll_wall_us": 4008466,
+          "scroll_vsync_wait": {
+            "samples": 481,
+            "p50_us": 135,
+            "p95_us": 163,
+            "max_us": 628
+          },
+          "scroll_build_to_raster_gap": {
+            "samples": 481,
+            "p50_us": 47,
+            "p95_us": 64,
+            "max_us": 92
+          },
+          "scroll_build_cadence": {
+            "samples": 480,
+            "p50_us": 8333,
+            "p95_us": 8370,
+            "max_us": 8831
+          },
+          "scroll_total": {
+            "samples": 481,
+            "p50_us": 1512,
+            "p95_us": 2248,
+            "max_us": 4151
+          },
+          "build_over_16_67ms": 0,
+          "raster_over_16_67ms": 0
+        },
+        {
+          "requested_width": 1440.0,
+          "actual_width": 1440.0,
+          "height": 790.0,
+          "device_pixel_ratio": 2.0,
+          "mounted_cards": 12,
+          "install_to_frame_build": {
+            "samples": 5,
+            "p50_us": 32944,
+            "p95_us": 33768,
+            "max_us": 33768
+          },
+          "first_board_build": {
+            "samples": 5,
+            "p50_us": 16960,
+            "p95_us": 23289,
+            "max_us": 23289
+          },
+          "first_board_raster": {
+            "samples": 5,
+            "p50_us": 974,
+            "p95_us": 1575,
+            "max_us": 1575
+          },
+          "first_board_vsync_wait": {
+            "samples": 5,
+            "p50_us": 132,
+            "p95_us": 157,
+            "max_us": 157
+          },
+          "first_board_frame_total": {
+            "samples": 5,
+            "p50_us": 18107,
+            "p95_us": 24667,
+            "max_us": 24667
+          },
+          "scroll_build": {
+            "samples": 481,
+            "p50_us": 262,
+            "p95_us": 751,
+            "max_us": 2478
+          },
+          "scroll_raster": {
+            "samples": 481,
+            "p50_us": 1009,
+            "p95_us": 1481,
+            "max_us": 1883
+          },
+          "scroll_wall_us": 4008307,
+          "scroll_vsync_wait": {
+            "samples": 481,
+            "p50_us": 134,
+            "p95_us": 167,
+            "max_us": 344
+          },
+          "scroll_build_to_raster_gap": {
+            "samples": 481,
+            "p50_us": 46,
+            "p95_us": 65,
+            "max_us": 386
+          },
+          "scroll_build_cadence": {
+            "samples": 480,
+            "p50_us": 8332,
+            "p95_us": 8407,
+            "max_us": 8605
+          },
+          "scroll_total": {
+            "samples": 481,
+            "p50_us": 1477,
+            "p95_us": 2468,
+            "max_us": 3874
+          },
+          "build_over_16_67ms": 0,
+          "raster_over_16_67ms": 0
+        }
+      ],
+      "process_rss_bytes_after_size": 188858368,
+      "notification_task_rows_sha256": "7218b32759ce3a4d6215d9d0108177ddae2ff372a509fe14a5fba00169024910",
+      "full_notification_startup": [
+        {
+          "mode": "new_journal",
+          "elapsed_us": 8909643,
+          "scope": "Full provider.ready including real SQL, urgency, journal, ID allocation and timers; recording OS transport, no OS delivery",
+          "tasks": 1000,
+          "journal_entries": 1000,
+          "native_schedule_calls": 1000,
+          "native_cancel_calls": 1000,
+          "native_reset_calls": 1
+        },
+        {
+          "mode": "reopen_submitted_journal",
+          "elapsed_us": 10991540,
+          "scope": "Full provider.ready including real SQL, urgency, journal, ID allocation and timers; recording OS transport, no OS delivery",
+          "tasks": 1000,
+          "journal_entries": 1000,
+          "native_schedule_calls": 1000,
+          "native_cancel_calls": 1000,
+          "native_reset_calls": 0
+        }
+      ]
+    },
+    {
+      "tasks": 10000,
+      "task_rows_sha256": "400c2386e425cafaffbbe8e8e6ed76e136ae94cd19f94bb745b8560c854d66d2",
+      "storage_startup": {
+        "samples": 5,
+        "p50_us": 56243,
+        "p95_us": 57061,
+        "max_us": 57061
+      },
+      "consistent_backup": {
+        "samples": 5,
+        "p50_us": 409499,
+        "p95_us": 419535,
+        "max_us": 419535
+      },
+      "search_index_build_us": 5355,
+      "indexed_search": {
+        "samples": 50,
+        "p50_us": 2318,
+        "p95_us": 2483,
+        "max_us": 2667
+      },
+      "backup_json_bytes": 7344665,
+      "backup_mirror_bytes": 2539520,
+      "views": [
+        {
+          "requested_width": 375.0,
+          "actual_width": 375.0,
+          "height": 726.0,
+          "device_pixel_ratio": 2.0,
+          "mounted_cards": 4,
+          "install_to_frame_build": {
+            "samples": 5,
+            "p50_us": 16332,
+            "p95_us": 23708,
+            "max_us": 23708
+          },
+          "first_board_build": {
+            "samples": 5,
+            "p50_us": 9669,
+            "p95_us": 11818,
+            "max_us": 11818
+          },
+          "first_board_raster": {
+            "samples": 5,
+            "p50_us": 958,
+            "p95_us": 1084,
+            "max_us": 1084
+          },
+          "first_board_vsync_wait": {
+            "samples": 5,
+            "p50_us": 107,
+            "p95_us": 176,
+            "max_us": 176
+          },
+          "first_board_frame_total": {
+            "samples": 5,
+            "p50_us": 10623,
+            "p95_us": 13074,
+            "max_us": 13074
+          },
+          "scroll_build": {
+            "samples": 481,
+            "p50_us": 232,
+            "p95_us": 1173,
+            "max_us": 3181
+          },
+          "scroll_raster": {
+            "samples": 481,
+            "p50_us": 725,
+            "p95_us": 1032,
+            "max_us": 1366
+          },
+          "scroll_wall_us": 4008343,
+          "scroll_vsync_wait": {
+            "samples": 481,
+            "p50_us": 133,
+            "p95_us": 160,
+            "max_us": 2394
+          },
+          "scroll_build_to_raster_gap": {
+            "samples": 481,
+            "p50_us": 43,
+            "p95_us": 62,
+            "max_us": 284
+          },
+          "scroll_build_cadence": {
+            "samples": 480,
+            "p50_us": 8333,
+            "p95_us": 8367,
+            "max_us": 10585
+          },
+          "scroll_total": {
+            "samples": 481,
+            "p50_us": 1150,
+            "p95_us": 2122,
+            "max_us": 4184
+          },
+          "build_over_16_67ms": 0,
+          "raster_over_16_67ms": 0
+        },
+        {
+          "requested_width": 768.0,
+          "actual_width": 768.0,
+          "height": 774.0,
+          "device_pixel_ratio": 2.0,
+          "mounted_cards": 12,
+          "install_to_frame_build": {
+            "samples": 5,
+            "p50_us": 38902,
+            "p95_us": 49247,
+            "max_us": 49247
+          },
+          "first_board_build": {
+            "samples": 5,
+            "p50_us": 28151,
+            "p95_us": 38362,
+            "max_us": 38362
+          },
+          "first_board_raster": {
+            "samples": 5,
+            "p50_us": 846,
+            "p95_us": 1225,
+            "max_us": 1225
+          },
+          "first_board_vsync_wait": {
+            "samples": 5,
+            "p50_us": 131,
+            "p95_us": 161,
+            "max_us": 161
+          },
+          "first_board_frame_total": {
+            "samples": 5,
+            "p50_us": 29194,
+            "p95_us": 39332,
+            "max_us": 39332
+          },
+          "scroll_build": {
+            "samples": 481,
+            "p50_us": 268,
+            "p95_us": 812,
+            "max_us": 3187
+          },
+          "scroll_raster": {
+            "samples": 481,
+            "p50_us": 970,
+            "p95_us": 1334,
+            "max_us": 1892
+          },
+          "scroll_wall_us": 4008335,
+          "scroll_vsync_wait": {
+            "samples": 481,
+            "p50_us": 134,
+            "p95_us": 160,
+            "max_us": 1453
+          },
+          "scroll_build_to_raster_gap": {
+            "samples": 481,
+            "p50_us": 46,
+            "p95_us": 65,
+            "max_us": 452
+          },
+          "scroll_build_cadence": {
+            "samples": 480,
+            "p50_us": 8333,
+            "p95_us": 8363,
+            "max_us": 9622
+          },
+          "scroll_total": {
+            "samples": 481,
+            "p50_us": 1437,
+            "p95_us": 2334,
+            "max_us": 4537
+          },
+          "build_over_16_67ms": 0,
+          "raster_over_16_67ms": 0
+        },
+        {
+          "requested_width": 1440.0,
+          "actual_width": 1440.0,
+          "height": 790.0,
+          "device_pixel_ratio": 2.0,
+          "mounted_cards": 12,
+          "install_to_frame_build": {
+            "samples": 5,
+            "p50_us": 36348,
+            "p95_us": 38471,
+            "max_us": 38471
+          },
+          "first_board_build": {
+            "samples": 5,
+            "p50_us": 25000,
+            "p95_us": 29556,
+            "max_us": 29556
+          },
+          "first_board_raster": {
+            "samples": 5,
+            "p50_us": 834,
+            "p95_us": 1128,
+            "max_us": 1128
+          },
+          "first_board_vsync_wait": {
+            "samples": 5,
+            "p50_us": 83,
+            "p95_us": 189,
+            "max_us": 189
+          },
+          "first_board_frame_total": {
+            "samples": 5,
+            "p50_us": 26373,
+            "p95_us": 30269,
+            "max_us": 30269
+          },
+          "scroll_build": {
+            "samples": 481,
+            "p50_us": 282,
+            "p95_us": 865,
+            "max_us": 2565
+          },
+          "scroll_raster": {
+            "samples": 481,
+            "p50_us": 1017,
+            "p95_us": 1429,
+            "max_us": 1900
+          },
+          "scroll_wall_us": 4008290,
+          "scroll_vsync_wait": {
+            "samples": 481,
+            "p50_us": 137,
+            "p95_us": 167,
+            "max_us": 470
+          },
+          "scroll_build_to_raster_gap": {
+            "samples": 481,
+            "p50_us": 47,
+            "p95_us": 66,
+            "max_us": 111
+          },
+          "scroll_build_cadence": {
+            "samples": 480,
+            "p50_us": 8333,
+            "p95_us": 8386,
+            "max_us": 8668
+          },
+          "scroll_total": {
+            "samples": 481,
+            "p50_us": 1516,
+            "p95_us": 2455,
+            "max_us": 4292
+          },
+          "build_over_16_67ms": 0,
+          "raster_over_16_67ms": 0
+        }
+      ],
+      "process_rss_bytes_after_size": 206454784,
+      "notification_task_rows_sha256": "a7764363912d31030c561a753b71e896a0df0374502f3a305677046d21b69311",
+      "full_notification_startup": [
+        {
+          "mode": "new_journal",
+          "elapsed_us": 492408668,
+          "scope": "Full provider.ready including real SQL, urgency, journal, ID allocation and timers; recording OS transport, no OS delivery",
+          "tasks": 10000,
+          "journal_entries": 10000,
+          "native_schedule_calls": 10000,
+          "native_cancel_calls": 10000,
+          "native_reset_calls": 1
+        },
+        {
+          "mode": "reopen_submitted_journal",
+          "elapsed_us": 830952407,
+          "scope": "Full provider.ready including real SQL, urgency, journal, ID allocation and timers; recording OS transport, no OS delivery",
+          "tasks": 10000,
+          "journal_entries": 10000,
+          "native_schedule_calls": 10000,
+          "native_cancel_calls": 10000,
+          "native_reset_calls": 0
+        }
+      ]
+    }
+  ]
+}

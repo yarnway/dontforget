@@ -1,0 +1,18 @@
+{
+  "scope": "Synthetic macOS profile harness; storage startup excludes reconciliation; full notification startup uses a recording OS transport; frames are real engine timings. Foreground validity is recorded per segment, never inferred from completion.",
+  "source_revision": "0fb214301e42c658445abf68eea05bd286ff1e4e",
+  "fixture_version": 2,
+  "fixture_source": "Exact task rows from KaPI1r baseline; notification-only copy uses fixed 2099 trigger",
+  "segments": [],
+  "window_events": [],
+  "build_mode": "profile",
+  "phase": "failed",
+  "recorded_at": "2026-10-22T03:07:45.023216Z",
+  "dart": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+  "os": "Version 27.0.1 (Build 26A434)",
+  "harness_entry_to_first_raster_us": 239397,
+  "errors": [
+    "TimeoutException after 0:00:10.000000: Future not completed"
+  ],
+  "results": []
+}
