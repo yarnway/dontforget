@@ -468,16 +468,26 @@ class DatabaseHelper {
         ),
       );
       await mirror.transaction((txn) async {
+        // Bound command memory while avoiding one isolate/platform round trip
+        // per row. Every batch still belongs to this single SQL transaction.
+        var batch = txn.batch();
+        var queued = 0;
         for (final entry in const {
           'Settings': 'settings',
           'MediaRecords': 'media_records',
           'Reminders': 'reminders',
         }.entries) {
-          await txn.delete(entry.key);
+          batch.delete(entry.key);
           for (final row in data[entry.value] as List<Map<String, Object?>>) {
-            await txn.insert(entry.key, row);
+            batch.insert(entry.key, row);
+            if (++queued == 512) {
+              await batch.commit(noResult: true);
+              batch = txn.batch();
+              queued = 0;
+            }
           }
         }
+        await batch.commit(noResult: true);
       });
       final check = await mirror.rawQuery('PRAGMA integrity_check');
       if (check.length != 1 || check.single.values.single != 'ok') {

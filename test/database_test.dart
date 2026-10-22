@@ -117,6 +117,125 @@ void main() {
   });
 
   test(
+    'large backup preserves all tables across batch boundaries and replacement',
+    () async {
+      final db = await helper.database;
+      await db.update('Settings', {'api_key': 'synthetic-key'});
+      final batch = db.batch();
+      for (var i = 0; i < 1050; i++) {
+        batch.insert('MediaRecords', {
+          'id': 'media-$i',
+          'type': 'audio',
+          'content_or_path': '/synthetic/$i',
+          'created_at': '2026-10-22T00:00:00.000Z',
+        });
+        batch.insert(
+          'Reminders',
+          Reminder(
+            id: 'task-$i',
+            recordId: 'media-$i',
+            taskTitle: 'Synthetic $i',
+            quadrantLevel: i % 4 + 1,
+          ).toJson(),
+        );
+      }
+      await batch.commit(noResult: true);
+      for (var pass = 0; pass < 2; pass++) {
+        if (pass == 1) {
+          await db.delete(
+            'Reminders',
+            where: 'id = ?',
+            whereArgs: ['task-1049'],
+          );
+        }
+        await helper.createMirrorBackup();
+        final json =
+            jsonDecode(
+                  await File(
+                    join(directory.path, 'ha_snapshot.json'),
+                  ).readAsString(),
+                )
+                as Map;
+        final mirror = await databaseFactoryFfi.openDatabase(
+          join(directory.path, 'dont_forget_v3.mirror.db'),
+          options: OpenDatabaseOptions(readOnly: true, singleInstance: false),
+        );
+        try {
+          for (final entry in {
+            'Settings': 'settings',
+            'MediaRecords': 'media_records',
+            'Reminders': 'reminders',
+          }.entries) {
+            final expected = await db.query(entry.key);
+            expect(await mirror.query(entry.key), expected);
+            expect(json[entry.value], expected);
+          }
+          expect(
+            (await mirror.rawQuery(
+              'PRAGMA integrity_check',
+            )).single.values.single,
+            'ok',
+          );
+        } finally {
+          await mirror.close();
+        }
+      }
+    },
+  );
+
+  test(
+    'failure after an earlier backup batch preserves both old artifacts',
+    () async {
+      final db = await helper.database;
+      await helper.createMirrorBackup();
+      final names = ['dont_forget_v3.mirror.db', 'ha_snapshot.json'];
+      final before = {
+        for (final name in names)
+          name: await File(join(directory.path, name)).readAsBytes(),
+      };
+      // Only this disposable fixture has a relaxed schema. Row 700 fails the
+      // real mirror's NOT NULL constraint after the first batch has executed.
+      await db.execute('ALTER TABLE Reminders RENAME TO OriginalReminders');
+      await db.execute(
+        'CREATE TABLE Reminders AS SELECT * FROM OriginalReminders',
+      );
+      try {
+        final batch = db.batch();
+        for (var i = 0; i < 800; i++) {
+          final row = Reminder(
+            id: '$i',
+            taskTitle: 'Synthetic $i',
+            quadrantLevel: 1,
+          ).toJson();
+          if (i == 700) row['task_title'] = null;
+          batch.insert('Reminders', row);
+        }
+        await batch.commit(noResult: true);
+        await expectLater(
+          helper.createMirrorBackup(),
+          throwsA(isA<DatabaseException>()),
+        );
+        for (final name in names) {
+          expect(
+            await File(join(directory.path, name)).readAsBytes(),
+            before[name],
+          );
+        }
+        expect(
+          await directory
+              .list()
+              .where((e) => basename(e.path).startsWith('backup-'))
+              .toList(),
+          isEmpty,
+        );
+      } finally {
+        await db.execute('DROP TABLE Reminders');
+        await db.execute('ALTER TABLE OriginalReminders RENAME TO Reminders');
+      }
+    },
+  );
+
+  test(
     'Failed backup keeps the previous mirror and reports the failure',
     () async {
       final db = await helper.database;

@@ -1,5 +1,6 @@
 import 'inline_feedback.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
 import '../../providers/providers.dart';
@@ -123,18 +124,26 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
       if (folded.isNotEmpty) 'folded',
       if (_isQ4FoldExpanded) ...folded,
     ];
-    final indices = <String, int>{};
-    for (var i = 0; i < rows.length; i++) {
-      final row = rows[i];
-      indices[row is Reminder ? 'task-${row.id}' : '$row-${widget.level}'] = i;
-    }
+    // A fresh sliver needs no key lookup. Build the full index only when
+    // Flutter reconciles existing children after an edit/reorder.
+    Map<String, int>? indices;
     return ListView.builder(
       key: PageStorageKey('quadrant-list-${widget.level}'),
       primary: false,
+      // Four short desktop panels should not each prebuild a phone-sized
+      // cache. Keep a quarter viewport ahead/behind each panel.
+      scrollCacheExtent: const ScrollCacheExtent.viewport(0.25),
       itemCount: rows.length,
       findChildIndexCallback: (key) {
         if (key is! ValueKey<String>) return null;
-        return indices[key.value];
+        indices ??= {
+          for (var i = 0; i < rows.length; i++)
+            rows[i] is Reminder
+                    ? 'task-${(rows[i] as Reminder).id}'
+                    : '${rows[i]}-${widget.level}':
+                i,
+        };
+        return indices![key.value];
       },
       itemBuilder: (context, index) {
         final row = rows[index];
