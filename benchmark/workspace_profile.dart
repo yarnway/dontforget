@@ -27,6 +27,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:window_manager/window_manager.dart';
 
+const _boardHeight = 792.0;
+const _windowHeight = 940.0;
+
 const _revision = String.fromEnvironment('BENCHMARK_REVISION');
 final _entryClock = Stopwatch();
 
@@ -79,7 +82,7 @@ Future<void> main() async {
   await windowManager.ensureInitialized();
   await windowManager.waitUntilReadyToShow(
     const WindowOptions(
-      size: Size(1440, 900),
+      size: Size(1440, _windowHeight),
       minimumSize: Size(375, 800),
       title: 'DontForget · Isolated performance benchmark',
     ),
@@ -223,6 +226,9 @@ class _BenchmarkState extends State<_Benchmark>
           'Synthetic macOS profile harness; storage startup excludes reconciliation; full notification startup uses a recording OS transport; frames are real engine timings. Foreground validity is recorded per segment, never inferred from completion.',
       'source_revision': _revision,
       'fixture_version': 2,
+      'viewport_protocol': 'fixed-height-792-v1',
+      'first_frame_protocol':
+          'one warmup then five fresh board/provider mounts',
       'notification_startup_included': _includeNotificationStartup,
       'fixture_source':
           'Exact task rows from KaPI1r baseline; notification-only copy uses fixed 2099 trigger',
@@ -490,12 +496,13 @@ class _BenchmarkState extends State<_Benchmark>
     double width,
   ) async {
     await windowManager
-        .setSize(Size(width, 900))
+        .setSize(Size(width, _windowHeight))
         .timeout(const Duration(seconds: 10));
     await Future<void>.delayed(const Duration(milliseconds: 300));
     await _frame();
     final firstFrameIntervals = <(int, int)>[];
     final installTimes = <int>[];
+    final viewports = <Map<String, Object>>[];
     for (var sample = 0; sample < 6; sample++) {
       final start = developer.Timeline.now;
       final watch = Stopwatch()..start();
@@ -507,6 +514,24 @@ class _BenchmarkState extends State<_Benchmark>
       await _frame();
       watch.stop();
       final end = developer.Timeline.now;
+      final context = _boardKey.currentContext;
+      if (context == null || !context.mounted) {
+        throw StateError('Benchmark board unavailable');
+      }
+      final size = (context.findRenderObject() as RenderBox).size;
+      if ((size.width - width).abs() > .01 ||
+          (size.height - _boardHeight).abs() > .01) {
+        throw StateError(
+          'Fixed viewport $width x $_boardHeight unavailable: $size',
+        );
+      }
+      viewports.add({
+        'sample': sample,
+        'warmup': sample == 0,
+        'width': size.width,
+        'height': size.height,
+        'device_pixel_ratio': MediaQuery.devicePixelRatioOf(context),
+      });
       if (sample > 0) {
         firstFrameIntervals.add((start, end));
         installTimes.add(watch.elapsedMicroseconds);
@@ -576,6 +601,14 @@ class _BenchmarkState extends State<_Benchmark>
         .toList();
     final result = <String, Object>{
       'requested_width': width,
+      'requested_height': _boardHeight,
+      'sample_viewports': viewports,
+      'first_board_build_samples_us': first
+          .map((t) => t.buildDuration.inMicroseconds)
+          .toList(),
+      'first_board_total_samples_us': first
+          .map((t) => t.totalSpan.inMicroseconds)
+          .toList(),
       'actual_width': size.width,
       'height': size.height,
       'device_pixel_ratio': pixelRatio,
@@ -639,7 +672,10 @@ class _BenchmarkState extends State<_Benchmark>
     home: Scaffold(
       body: Column(
         children: [
-          Padding(padding: const EdgeInsets.all(8), child: Text(_progress)),
+          SizedBox(
+            height: 40,
+            child: Center(child: Text(_progress, maxLines: 2)),
+          ),
           if (!_running)
             CheckboxListTile(
               value: _includeNotificationStartup,
@@ -664,21 +700,27 @@ class _BenchmarkState extends State<_Benchmark>
                       databaseHelperProvider.overrideWithValue(_database!),
                     ],
                     child: IgnorePointer(
-                      child: SizedBox.expand(
-                        key: _boardKey,
-                        child: TaskBoard(
-                          reminders: _tasks!,
-                          onPlayMedia: (_) {},
+                      child: Align(
+                        alignment: Alignment.topCenter,
+                        child: SizedBox(
+                          key: _boardKey,
+                          width: double.infinity,
+                          height: _boardHeight,
+                          child: TaskBoard(
+                            reminders: _tasks!,
+                            onPlayMedia: (_) {},
+                          ),
                         ),
                       ),
                     ),
                   ),
           ),
           if (_root != null)
-            Padding(
-              padding: const EdgeInsets.all(8),
+            SizedBox(
+              height: 40,
               child: SelectableText(
                 'Results: ${_root!.path}/results.json',
+                maxLines: 1,
                 style: const TextStyle(fontSize: 11),
               ),
             ),
