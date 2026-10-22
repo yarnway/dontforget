@@ -129,7 +129,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
   late final Future<void> ready;
   Future<void> _operations = Future<void>.value();
   DataGeneration? _stateGeneration;
-  final Set<String> _pendingNotificationRetries = {};
+  final Map<String, DateTime?> _pendingNotificationRetries = {};
   final Set<String> _pendingNotificationCancellations = {};
   String? _notificationRetryCursor;
 
@@ -280,7 +280,9 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
 
   void _rememberUnfinished(Iterable<NotificationJournalEntry> entries) {
     for (final entry in entries.where((e) => e.unfinished)) {
-      _pendingNotificationRetries.add(entry.reminderId);
+      _pendingNotificationRetries[entry.reminderId] = DateTime.tryParse(
+        entry.attemptedAt ?? '',
+      );
       if (entry.action == 'cancel') {
         _pendingNotificationCancellations.add(entry.reminderId);
       }
@@ -312,8 +314,9 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     return addReminderForGeneration(reminder, generation);
   }
 
-  /// Quiet foreground retries process only durable unfinished work. A manual
-  /// rebuild remains immediate and can reconcile unrecorded schedules too.
+  /// Quiet foreground retries process durable unfinished work and failures
+  /// observed before an intent could be persisted (for example plugin init).
+  /// A manual rebuild remains immediate and reconciles all saved occurrences.
   Future<({int attempted, int failed})> retryFailedNotificationDelivery({
     required bool canSchedule,
     required bool Function() isActive,
@@ -332,22 +335,29 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       final instant = now ?? DateTime.now();
       final entries = await _notificationEntries(generation);
       checkCurrent();
+      final failureTimes = <String, DateTime?>{
+        for (final entry in entries.values)
+          if (entry.unfinished)
+            entry.reminderId: DateTime.tryParse(entry.attemptedAt ?? ''),
+        for (final failure in _pendingNotificationRetries.entries)
+          if (!(entries[failure.key]?.unfinished ?? false))
+            failure.key: failure.value,
+      };
       final candidates =
-          entries.values.where((entry) {
-            if (!entry.unfinished) return false;
-            final attempted = DateTime.tryParse(entry.attemptedAt ?? '');
+          failureTimes.keys.where((id) {
+            final attempted = failureTimes[id];
             // A clock moved backwards must not strand a retry indefinitely.
             return attempted == null ||
                 instant.difference(attempted).abs() >=
                     const Duration(minutes: 1);
           }).toList()..sort(
-            (a, b) => (a.attemptedAt ?? '').compareTo(b.attemptedAt ?? ''),
+            (a, b) => (failureTimes[a]?.microsecondsSinceEpoch ?? 0).compareTo(
+              failureTimes[b]?.microsecondsSinceEpoch ?? 0,
+            ),
           );
       var attempted = 0;
       var failed = 0;
-      final cursor = candidates.indexWhere(
-        (e) => e.reminderId == _notificationRetryCursor,
-      );
+      final cursor = candidates.indexOf(_notificationRetryCursor ?? '');
       final start = cursor < 0 ? 0 : cursor + 1;
       // Bound both native calls and SQL reads. Rotate so permission-blocked
       // schedules cannot starve cancellation work later in the journal.
@@ -355,18 +365,14 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         ...candidates.skip(start),
         ...candidates.take(start),
       ].take(8);
-      for (final entry in batch) {
+      for (final id in batch) {
         checkCurrent();
         if (!isActive()) break;
-        _notificationRetryCursor = entry.reminderId;
+        _notificationRetryCursor = id;
         final rows = await _dbHelper.read(
           generation,
-          (db) => db.query(
-            'Reminders',
-            where: 'id = ?',
-            whereArgs: [entry.reminderId],
-            limit: 1,
-          ),
+          (db) =>
+              db.query('Reminders', where: 'id = ?', whereArgs: [id], limit: 1),
         );
         checkCurrent();
         if (!isActive()) break;
@@ -376,7 +382,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
             reminder.isCompleted ||
             reminder.noticeAcknowledgedAt != null ||
             reminder.triggerTime == null ||
-            _requiresPastCancellation(reminder, entry, instant);
+            _requiresPastCancellation(reminder, entries[id], instant);
         // Do not replay an expired current occurrence, even after a failure.
         if (!cancel &&
             (!canSchedule || !reminder.triggerTime!.isAfter(instant))) {
@@ -384,10 +390,10 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         }
         attempted++;
         if (await _synchronizeNotification(
-          entry.reminderId,
+          id,
           generation,
           () => cancel
-              ? _notifications.cancelReminderStrict(entry.reminderId)
+              ? _notifications.cancelReminderStrict(id)
               : _notifications.scheduleReminderStrict(reminder),
           cancellation: cancel,
         )) {
@@ -454,7 +460,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           _pendingNotificationRetries.remove(reminder.id);
           _pendingNotificationCancellations.remove(reminder.id);
         } catch (_) {
-          _pendingNotificationRetries.add(reminder.id);
+          _pendingNotificationRetries[reminder.id] = DateTime.now();
           if (cancel) _pendingNotificationCancellations.add(reminder.id);
           failed++;
         }
@@ -464,7 +470,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       // A failed cancellation can outlive the saved row in this session.
       // Retain that ID until cancellation succeeds; do not recreate the task.
       final orphaned = <String>{
-        ..._pendingNotificationRetries.difference(existingIds),
+        ..._pendingNotificationRetries.keys.toSet().difference(existingIds),
         for (final entry in journal.values)
           if (!existingIds.contains(entry.reminderId) &&
               entry.needsCancellation)
@@ -478,6 +484,8 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           _pendingNotificationRetries.remove(id);
           _pendingNotificationCancellations.remove(id);
         } catch (_) {
+          _pendingNotificationRetries[id] = DateTime.now();
+          _pendingNotificationCancellations.add(id);
           failed++;
         }
         checkCurrent();
@@ -546,7 +554,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         ReminderActionDisposition.applied,
         reminder: toAdd,
         nativeSyncFailed:
-            _pendingNotificationRetries.contains(toAdd.id) ||
+            _pendingNotificationRetries.containsKey(toAdd.id) ||
                 (!toAdd.isCompleted &&
                     toAdd.noticeAcknowledgedAt == null &&
                     (toAdd.triggerTime?.isAfter(DateTime.now()) ?? false))
@@ -625,7 +633,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           needsNotificationSync =
               _nativeContentChanged(current, saved) ||
               (changes.isEmpty &&
-                  _pendingNotificationRetries.contains(saved.id));
+                  _pendingNotificationRetries.containsKey(saved.id));
           if (changes.isNotEmpty) {
             await txn.update(
               'Reminders',
@@ -713,7 +721,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       _pendingNotificationCancellations.remove(id);
     } catch (_) {
       failed = true;
-      _pendingNotificationRetries.add(id);
+      _pendingNotificationRetries[id] = DateTime.now();
       if (cancellation) {
         _pendingNotificationCancellations.add(id);
       } else {

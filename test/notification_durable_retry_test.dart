@@ -18,12 +18,18 @@ class _Native implements FlutterLocalNotificationsPlugin {
   final calls = <String>[];
   bool failCancel = false;
   bool failSchedule = false;
+  bool failInitialize = false;
   String? launchPayload;
   void Function()? onSchedule;
   @override
   dynamic noSuchMethod(Invocation i) {
     switch (i.memberName) {
       case #initialize:
+        if (failInitialize) {
+          return Future<bool>.error(
+            StateError('synthetic initialization failure'),
+          );
+        }
         return Future<bool>.value(true);
       case #getNotificationAppLaunchDetails:
         calls.add('launch');
@@ -119,6 +125,136 @@ void main() {
     await helper.close(createBackup: false);
     await directory.delete(recursive: true);
   });
+
+  test(
+    'foreground retry recovers initialization failure before journal creation',
+    () async {
+      native.failInitialize = true;
+      expect(
+        (await notifier.addReminder(task('early-failure'))).nativeSyncFailed,
+        isTrue,
+      );
+      expect(await helper.withNotificationJournal((j) => j.read()), isNull);
+      native.failInitialize = false;
+      final result = await notifier.retryFailedNotificationDelivery(
+        canSchedule: true,
+        isActive: () => true,
+        now: DateTime.now().add(const Duration(minutes: 2)),
+      );
+      expect(result, (attempted: 1, failed: 0));
+      expect((await snapshot()).entries['early-failure']!.status, 'submitted');
+      expect(native.pending.length, 1);
+    },
+  );
+
+  test(
+    'unrecorded failures respect cooldown, permission and foreground gates',
+    () async {
+      native.failInitialize = true;
+      await notifier.addReminder(task('early-gated'));
+      native.failInitialize = false;
+      for (final (allowed, active, at) in [
+        (true, true, DateTime.now()),
+        (false, true, DateTime.now().add(const Duration(minutes: 2))),
+        (true, false, DateTime.now().add(const Duration(minutes: 2))),
+      ]) {
+        expect(
+          await notifier.retryFailedNotificationDelivery(
+            canSchedule: allowed,
+            isActive: () => active,
+            now: at,
+          ),
+          (attempted: 0, failed: 0),
+        );
+      }
+      expect(await helper.withNotificationJournal((j) => j.read()), isNull);
+    },
+  );
+
+  test('unrecorded failure batches remain bounded and rotate', () async {
+    native.failInitialize = true;
+    for (var i = 0; i < 10; i++) {
+      await notifier.addReminder(task('early-batch-$i'));
+    }
+    native.failInitialize = false;
+    final at = DateTime.now().add(const Duration(minutes: 2));
+    expect(
+      await notifier.retryFailedNotificationDelivery(
+        canSchedule: true,
+        isActive: () => true,
+        now: at,
+      ),
+      (attempted: 8, failed: 0),
+    );
+    expect(native.pending.length, 8);
+    expect(
+      await notifier.retryFailedNotificationDelivery(
+        canSchedule: true,
+        isActive: () => true,
+        now: at,
+      ),
+      (attempted: 2, failed: 0),
+    );
+    expect(native.pending.length, 10);
+    expect(
+      await notifier.retryFailedNotificationDelivery(
+        canSchedule: true,
+        isActive: () => true,
+        now: at,
+      ),
+      (attempted: 0, failed: 0),
+    );
+  });
+
+  test(
+    'early cancellation failure is retried without recreating a deleted row',
+    () async {
+      native.failInitialize = true;
+      await notifier.addReminder(task('early-deleted'));
+      expect(
+        (await notifier.deleteReminder('early-deleted')).nativeSyncFailed,
+        isTrue,
+      );
+      native.failInitialize = false;
+      expect(
+        await notifier.retryFailedNotificationDelivery(
+          canSchedule: false,
+          isActive: () => true,
+          now: DateTime.now().add(const Duration(minutes: 2)),
+        ),
+        (attempted: 1, failed: 0),
+      );
+      expect(notifier.state, isEmpty);
+      expect(native.pending, isEmpty);
+      expect((await snapshot()).entries['early-deleted']!.action, 'cancel');
+    },
+  );
+
+  test(
+    'startup initialization failure retries despite an older submitted journal',
+    () async {
+      await notifier.addReminder(task('early-reopen'));
+      final old = (await snapshot()).entries['early-reopen']!;
+      native.failInitialize = true;
+      await restart();
+      expect(
+        (await snapshot()).entries['early-reopen']!.attempts,
+        old.attempts,
+      );
+      native.failInitialize = false;
+      expect(
+        await notifier.retryFailedNotificationDelivery(
+          canSchedule: true,
+          isActive: () => true,
+          now: DateTime.now().add(const Duration(minutes: 2)),
+        ),
+        (attempted: 1, failed: 0),
+      );
+      final repaired = (await snapshot()).entries['early-reopen']!;
+      expect(repaired.nativeId, old.nativeId);
+      expect(repaired.attempts, old.attempts + 2);
+    },
+  );
 
   test(
     'failed scheduling retries after service and database reopen with the same ID',
