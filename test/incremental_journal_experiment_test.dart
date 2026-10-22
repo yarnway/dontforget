@@ -289,6 +289,62 @@ void main() {
       },
     );
   }
+  for (final point in [
+    'half_frame_written',
+    'frame_flushed',
+    'snapshot_flushed',
+    'before_publish',
+    'after_publish',
+  ]) {
+    test(
+      '10000 fixture identities survive segmented process kill at $point',
+      () async {
+        final entries = <String, NotificationJournalEntry>{};
+        final used = <int>{};
+        // Same ordered synthetic IDs, trigger and collision allocation as the
+        // 10000-row journal benchmark; business task content is never in a log.
+        for (var i = 0; i < 10000; i++) {
+          final id = 'synthetic-$i';
+          var nativeId = stableNotificationId(id);
+          while (!used.add(nativeId)) {
+            nativeId = nativeId == 0x7fffffff ? 1 : nativeId + 1;
+          }
+          entries[id] = NotificationJournalEntry(
+            reminderId: id,
+            nativeId: nativeId,
+            action: 'schedule',
+            status: 'submitted',
+            attempts: 2,
+            triggerUtcMicros: DateTime.utc(2099).microsecondsSinceEpoch,
+            noticeRevision: 0,
+            attemptedAt: DateTime.utc(2026, 10, 22).toIso8601String(),
+          );
+        }
+        final before = NotificationJournalSnapshot(epoch, entries);
+        await log.checkpoint(before);
+        await crash('segment_bulk:$point');
+        final reopened = IncrementalJournalExperiment(dir);
+        final state = await reopened.open();
+        final expected = {...entries};
+        if (point != 'half_frame_written') {
+          expected['synthetic-0'] = NotificationJournalEntry.decode({
+            ...entries['synthetic-0']!.toJson(),
+            'status': 'pending',
+            'attempts': 3,
+          });
+        }
+        expect(
+          state.toJson(),
+          NotificationJournalSnapshot(epoch, expected).toJson(),
+        );
+        expect(state.entries.length, 10000);
+        expect(
+          {for (final e in state.entries.values) e.reminderId: e.nativeId},
+          {for (final e in before.entries.values) e.reminderId: e.nativeId},
+        );
+      },
+    );
+  }
   for (final point in ['snapshot_flushed', 'before_publish', 'after_publish']) {
     test(
       'process kill at checkpoint $point selects a whole generation',

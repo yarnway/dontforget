@@ -13,10 +13,14 @@ Future<void> main(List<String> args) async {
   final dir = Directory(args[0]);
   final mode = args[1];
   const epoch = '00000000-0000-4000-8000-000000000001';
-  if (mode.startsWith('segment:')) {
-    final log = IncrementalJournalExperiment(dir, checkpointEveryFrames: 2);
+  if (mode.startsWith('segment:') || mode.startsWith('segment_bulk:')) {
+    final bulk = mode.startsWith('segment_bulk:');
+    final log = IncrementalJournalExperiment(
+      dir,
+      checkpointEveryFrames: bulk ? 1 : 2,
+    );
     final old = await log.open();
-    final point = mode.substring('segment:'.length);
+    final point = mode.substring(mode.indexOf(':') + 1);
     Future<void> at(String boundaryName) async {
       if (point == boundaryName) await boundary();
     }
@@ -25,8 +29,9 @@ Future<void> main(List<String> args) async {
     log.checkpointHook = at;
     await log.append(old.epoch, [
       NotificationJournalEntry.decode({
-        ...old.entries.values.single.toJson(),
-        'status': 'submitted',
+        ...old.entries.values.first.toJson(),
+        'status': bulk ? 'pending' : 'submitted',
+        if (bulk) 'attempts': old.entries.values.first.attempts + 1,
       }),
     ]);
     throw StateError('Requested segment boundary was not reached');
