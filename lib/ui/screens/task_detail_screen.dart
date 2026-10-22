@@ -1063,7 +1063,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                               ),
                               const Spacer(),
                               Text(
-                                '点击修改',
+                                l10n.get('tapToChange'),
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: primaryColor,
@@ -1571,7 +1571,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            '附件素材已关联 (${widget.task.recordId})',
+                            l10n.get('linkedInputRecord'),
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey.shade700,
@@ -1584,9 +1584,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                               Icons.play_arrow_rounded,
                               size: 16,
                             ),
-                            label: const Text(
-                              '播放/预览',
-                              style: TextStyle(fontSize: 12),
+                            label: Text(
+                              l10n.get('playOrPreview'),
+                              style: const TextStyle(fontSize: 12),
                             ),
                             onPressed: widget.onPlayMedia,
                           ),
