@@ -183,3 +183,13 @@ Mac ZIP 为 23,822,422 字节，SHA-256 `32de8c5ec10e9bc542a6f72e96861d7536b8f51
 本轮新身份未申请通知权限，范围是原生 UI、业务数据和本地调度 ID 一致性；通知系统送达证据仍属于前述 `durable-r39622115301`，不混用候选身份。保留一致数据库快照后，通过应用删除四条合成任务。收尾数据库 Reminders=0、MediaRecords=1、Settings=1，integrity_check=ok，四个日志条目均 cancel/submitted；核实应用进程已退出。
 
 证据位于 `/private/tmp/dontforget-undo-session-r39625619466`：`before-delete.json`、`deleted.json`、`undone.json`、`undo-verdict.json`、`before-cleanup-consistent.db`、`cleanup-readback.json`、`native-undo-cleanup.log`、`closed.json`。本轮涉及的源码、回归、CI 和隔离原生验收均按 revision 独立记录；热/冷点击仍因通知中心工具超时未关闭，不据此宣称 v1.6 已完成正式发布验收。
+
+## 2026-10-22：3C-3 调度状态与前台重试候选准备
+
+源码 `6504bc1f438a694df5ab6707db2478821764117c` 的 Mac 候选来自 [CI 39706276489](https://github.com/yarnway/dontforget/actions/runs/39706276489)。本机独立核验清单版本 1.5.2+3、平台、完整 revision、文件大小与 SHA-256；ZIP `DontForget_macOS_unnotarized_v1.5.2.zip` 为 23,843,152 字节，SHA-256 `25931d43c7d3195fb110ac08c9ca6675ea32c8495616e2d16a0b5b9951e6f816`。原包和清单保存在 `build/ci_artifacts/status-r39706276489`。本次通过 `gh run download` 下载并核验内层包，未另行保存或声称独立核验外层 artifact ZIP 摘要。
+
+已生成全新独立身份 `com.example.dontForget.acceptance.status-r39706276489`，副本位于 `build/native_acceptance/status-r39706276489/dont_forget.app`，受保护内容逐字节核验和派生 codesign 检查通过。准备工具没有注册或启动应用，没有创建/导入业务验收数据，也未访问用户运行库。
+
+这一步只关闭候选来源、完整性和隔离副本准备；新状态界面、前台有界重试、权限拒绝后的补处理、通知热/冷点击及迟到点击仍需该候选原生验收。此前系统送达、自动化回归或旧候选结果不替代本轮点击通过；录音/播放允许继续验收，但本轮没有新增听感证据。正式签名、公证与其他设备业务验收仍独立待办。
+
+交付收尾：上述 CI 整体成功，质量检查与五平台候选均通过；三桌面启动检查、Windows 安装升级卸载和全部包身份校验成功。云端 Flutter 633 项通过、1 项平台跳过，Python 47 项通过；源码本机 Flutter 634 项通过。此记录未追加新的原生界面操作或系统通知点击通过结论。
