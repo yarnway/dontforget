@@ -9,6 +9,8 @@ import 'dart:io';
 import 'dart:math' as math;
 import 'dart:ui' show FramePhase;
 
+import 'package:crypto/crypto.dart';
+import 'notification_startup.dart';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/models/reminder.dart';
@@ -95,7 +97,8 @@ class _Benchmark extends StatefulWidget {
   State<_Benchmark> createState() => _BenchmarkState();
 }
 
-class _BenchmarkState extends State<_Benchmark> {
+class _BenchmarkState extends State<_Benchmark>
+    with WidgetsBindingObserver, WindowListener {
   GlobalKey _boardKey = GlobalKey();
   final _timings = <FrameTiming>[];
   List<Reminder>? _tasks;
@@ -106,18 +109,86 @@ class _BenchmarkState extends State<_Benchmark> {
   Directory? _root;
   final _errors = <String>[];
   int? _entryToFrame;
+  bool _running = false;
+  final _windowEvents = <Map<String, Object>>[];
+  final _segments = <Map<String, Object?>>[];
+
+  void _event(String name) =>
+      _windowEvents.add({'event': name, 'timeline_us': developer.Timeline.now});
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) =>
+      _event('lifecycle:${state.name}');
+  @override
+  void onWindowFocus() => _event('focus');
+  @override
+  void onWindowBlur() => _event('blur');
+  @override
+  void onWindowMinimize() => _event('minimize');
+  @override
+  void onWindowRestore() => _event('restore');
+
+  Future<Map<String, Object?>> _windowState() async => {
+    'focused': await windowManager.isFocused().timeout(
+      const Duration(seconds: 5),
+    ),
+    'visible': await windowManager.isVisible().timeout(
+      const Duration(seconds: 5),
+    ),
+    'minimized': await windowManager.isMinimized().timeout(
+      const Duration(seconds: 5),
+    ),
+    'lifecycle': WidgetsBinding.instance.lifecycleState?.name,
+  };
+
+  Future<T> _segment<T>(String label, Future<T> Function() action) async {
+    final before = await _windowState();
+    final eventIndex = _windowEvents.length;
+    final watch = Stopwatch()..start();
+    try {
+      return await action();
+    } finally {
+      watch.stop();
+      final after = await _windowState();
+      final events = _windowEvents.skip(eventIndex).toList();
+      bool foreground(Map<String, Object?> state) =>
+          state['focused'] == true &&
+          state['visible'] == true &&
+          state['minimized'] == false &&
+          state['lifecycle'] == 'resumed';
+      _segments.add({
+        'label': label,
+        'wall_us': watch.elapsedMicroseconds,
+        'before': before,
+        'after': after,
+        'events': events,
+        'uninterrupted_foreground':
+            foreground(before) &&
+            foreground(after) &&
+            events.every(
+              (e) => e['event'] == 'focus' || e['event'] == 'lifecycle:resumed',
+            ),
+      });
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     SchedulerBinding.instance.addTimingsCallback(_receiveTimings);
-    WidgetsBinding.instance.addPostFrameCallback((_) => unawaited(_run()));
+    WidgetsBinding.instance.addObserver(this);
+    windowManager.addListener(this);
+    WidgetsBinding.instance.waitUntilFirstFrameRasterized.then((_) {
+      _entryToFrame = _entryClock.elapsedMicroseconds;
+    });
   }
 
   void _receiveTimings(List<FrameTiming> values) => _timings.addAll(values);
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    windowManager.removeListener(this);
     SchedulerBinding.instance.removeTimingsCallback(_receiveTimings);
     super.dispose();
   }
@@ -133,9 +204,13 @@ class _BenchmarkState extends State<_Benchmark> {
     if (root == null) return;
     final report = {
       'scope':
-          'Synthetic macOS profile harness; storage startup excludes OS launch, native notification reconciliation and network; list frames are real Flutter engine timings',
+          'Synthetic macOS profile harness; storage startup excludes reconciliation; full notification startup uses a recording OS transport; frames are real engine timings. Foreground validity is recorded per segment, never inferred from completion.',
       'source_revision': _revision,
-      'fixture_version': 1,
+      'fixture_version': 2,
+      'fixture_source':
+          'Exact task rows from KaPI1r baseline; notification-only copy uses fixed 2099 trigger',
+      'segments': _segments,
+      'window_events': _windowEvents,
       'build_mode': 'profile',
       'phase': phase,
       'recorded_at': DateTime.now().toUtc().toIso8601String(),
@@ -161,9 +236,14 @@ class _BenchmarkState extends State<_Benchmark> {
   }
 
   Future<void> _run() async {
+    if (_running) return;
+    setState(() => _running = true);
+    _results.clear();
+    _segments.clear();
+    _windowEvents.clear();
+    _errors.clear();
     try {
       await WidgetsBinding.instance.waitUntilFirstFrameRasterized;
-      _entryToFrame = _entryClock.elapsedMicroseconds;
       final support = await getApplicationSupportDirectory();
       _root = await Directory(support.path).createTemp('isolated-performance-');
       stdout.writeln('ISOLATED_BENCHMARK_RESULT=${_root!.path}/results.json');
@@ -174,7 +254,14 @@ class _BenchmarkState extends State<_Benchmark> {
         final directory = await Directory(
           '${_root!.path}/tasks-$count',
         ).create();
-        final tasks = syntheticTasks(count, DateTime.now());
+        final tasks = syntheticTasks(
+          count,
+          DateTime.parse(switch (count) {
+            100 => '2026-10-22T10:21:25.551217',
+            1000 => '2026-10-22T10:23:40.074174',
+            _ => '2026-10-22T10:24:00.391143',
+          }),
+        );
         var helper = DatabaseHelper.forTesting(
           directory.path,
           databaseFactoryFfi,
@@ -191,47 +278,51 @@ class _BenchmarkState extends State<_Benchmark> {
         }
         final startup = <int>[];
         List<Reminder> loaded = [];
-        for (var sample = 0; sample < 6; sample++) {
-          helper = DatabaseHelper.forTesting(
-            directory.path,
-            databaseFactoryFfi,
-          );
-          final watch = Stopwatch()..start();
-          final container = ProviderContainer(
-            overrides: [
-              databaseHelperProvider.overrideWithValue(helper),
-              remindersProvider.overrideWith(
-                (_) => RemindersNotifier(helper, runLoadEffects: false),
-              ),
-            ],
-          );
-          final settings = container.read(settingsProvider.notifier);
-          final reminders = container.read(remindersProvider.notifier);
-          try {
-            await Future.wait([settings.ready, reminders.ready]);
-            watch.stop();
-            if (sample > 0) startup.add(watch.elapsedMicroseconds);
-            loaded = [...container.read(remindersProvider)];
-            if (loaded.length != count ||
-                container.read(settingsProvider).apiKey.isNotEmpty) {
-              throw StateError('Synthetic storage fixture mismatch');
+        await _segment('$count storage startup', () async {
+          for (var sample = 0; sample < 6; sample++) {
+            helper = DatabaseHelper.forTesting(
+              directory.path,
+              databaseFactoryFfi,
+            );
+            final watch = Stopwatch()..start();
+            final container = ProviderContainer(
+              overrides: [
+                databaseHelperProvider.overrideWithValue(helper),
+                remindersProvider.overrideWith(
+                  (_) => RemindersNotifier(helper, runLoadEffects: false),
+                ),
+              ],
+            );
+            final settings = container.read(settingsProvider.notifier);
+            final reminders = container.read(remindersProvider.notifier);
+            try {
+              await Future.wait([settings.ready, reminders.ready]);
+              watch.stop();
+              if (sample > 0) startup.add(watch.elapsedMicroseconds);
+              loaded = [...container.read(remindersProvider)];
+              if (loaded.length != count ||
+                  container.read(settingsProvider).apiKey.isNotEmpty) {
+                throw StateError('Synthetic storage fixture mismatch');
+              }
+            } finally {
+              container.dispose();
+              await helper.close(createBackup: false);
             }
-          } finally {
-            container.dispose();
-            await helper.close(createBackup: false);
           }
-        }
+        });
         helper = DatabaseHelper.forTesting(directory.path, databaseFactoryFfi);
         _database = helper;
         await helper.database;
         final backups = <int>[];
-        for (var sample = 0; sample < 6; sample++) {
-          final watch = Stopwatch()..start();
-          await helper.createMirrorBackup();
-          watch.stop();
-          if (sample > 0) backups.add(watch.elapsedMicroseconds);
-          await _verifyBackup(directory, tasks);
-        }
+        await _segment('$count backup', () async {
+          for (var sample = 0; sample < 6; sample++) {
+            final watch = Stopwatch()..start();
+            await helper.createMirrorBackup();
+            watch.stop();
+            if (sample > 0) backups.add(watch.elapsedMicroseconds);
+            await _verifyBackup(directory, tasks);
+          }
+        });
         final indexBuild = Stopwatch()..start();
         final index = TaskSearchIndex(loaded);
         indexBuild.stop();
@@ -245,6 +336,11 @@ class _BenchmarkState extends State<_Benchmark> {
         }
         final result = <String, Object>{
           'tasks': count,
+          'task_rows_sha256': sha256
+              .convert(
+                utf8.encode(jsonEncode(tasks.map((r) => r.toJson()).toList())),
+              )
+              .toString(),
           'storage_startup': distribution(startup),
           'consistent_backup': distribution(backups),
           'search_index_build_us': indexBuild.elapsedMicroseconds,
@@ -264,7 +360,10 @@ class _BenchmarkState extends State<_Benchmark> {
               'Measuring $count tasks: ${width.toInt()}px list frames',
             );
             (result['views'] as List<Map<String, Object>>).add(
-              await _measureBoard(loaded, width),
+              await _segment(
+                '$count board $width',
+                () => _measureBoard(loaded, width),
+              ),
             );
             await _record(_progress);
           }
@@ -275,6 +374,27 @@ class _BenchmarkState extends State<_Benchmark> {
           await helper.close(createBackup: false);
         }
         result['process_rss_bytes_after_size'] = ProcessInfo.currentRss;
+        await _status(
+          'Measuring $count complete startup notifications (recording OS transport)',
+        );
+        final notificationTasks = tasks
+            .map((r) => r.copyWith(triggerTime: DateTime.utc(2099, 1, 1)))
+            .toList();
+        result['notification_task_rows_sha256'] = sha256
+            .convert(
+              utf8.encode(
+                jsonEncode(notificationTasks.map((r) => r.toJson()).toList()),
+              ),
+            )
+            .toString();
+        result['full_notification_startup'] = await _segment(
+          '$count full notification startup',
+          () => measureNotificationStartup(
+            Directory('${_root!.path}/notifications-$count'),
+            notificationTasks,
+          ),
+        );
+        await _record(_progress);
       }
       await _status(
         'Completed. Synthetic data and results are preserved for review.',
@@ -289,6 +409,8 @@ class _BenchmarkState extends State<_Benchmark> {
       final database = _database;
       _database = null;
       await database?.close(createBackup: false);
+    } finally {
+      if (mounted) setState(() => _running = false);
     }
   }
 
@@ -336,7 +458,9 @@ class _BenchmarkState extends State<_Benchmark> {
     List<Reminder> tasks,
     double width,
   ) async {
-    await windowManager.setSize(Size(width, 900));
+    await windowManager
+        .setSize(Size(width, 900))
+        .timeout(const Duration(seconds: 10));
     await Future<void>.delayed(const Duration(milliseconds: 300));
     await _frame();
     final firstFrameIntervals = <(int, int)>[];
@@ -387,16 +511,20 @@ class _BenchmarkState extends State<_Benchmark> {
     position.jumpTo(0);
     await _frame();
     final start = developer.Timeline.now;
-    await position.animateTo(
-      math.min(position.maxScrollExtent, 3000),
-      duration: const Duration(seconds: 2),
-      curve: Curves.linear,
-    );
-    await position.animateTo(
-      0,
-      duration: const Duration(seconds: 2),
-      curve: Curves.linear,
-    );
+    await position
+        .animateTo(
+          math.min(position.maxScrollExtent, 3000),
+          duration: const Duration(seconds: 2),
+          curve: Curves.linear,
+        )
+        .timeout(const Duration(seconds: 10));
+    await position
+        .animateTo(
+          0,
+          duration: const Duration(seconds: 2),
+          curve: Curves.linear,
+        )
+        .timeout(const Duration(seconds: 10));
     final end = developer.Timeline.now;
     // Engine timing callbacks are batched; wait before selecting by timestamps.
     await Future<void>.delayed(const Duration(milliseconds: 1200));
@@ -422,6 +550,15 @@ class _BenchmarkState extends State<_Benchmark> {
       'device_pixel_ratio': pixelRatio,
       'mounted_cards': cards,
       'install_to_frame_build': distribution(installTimes),
+      'first_board_build': distribution(
+        first.map((t) => t.buildDuration.inMicroseconds).toList(),
+      ),
+      'first_board_raster': distribution(
+        first.map((t) => t.rasterDuration.inMicroseconds).toList(),
+      ),
+      'first_board_vsync_wait': distribution(
+        first.map((t) => t.vsyncOverhead.inMicroseconds).toList(),
+      ),
       'first_board_frame_total': distribution(
         first.map((t) => t.totalSpan.inMicroseconds).toList(),
       ),
@@ -431,6 +568,24 @@ class _BenchmarkState extends State<_Benchmark> {
       'scroll_raster': distribution(
         frames.map((t) => t.rasterDuration.inMicroseconds).toList(),
       ),
+      'scroll_wall_us': end - start,
+      'scroll_vsync_wait': distribution(
+        frames.map((t) => t.vsyncOverhead.inMicroseconds).toList(),
+      ),
+      'scroll_build_to_raster_gap': distribution(
+        frames
+            .map(
+              (t) =>
+                  t.timestampInMicroseconds(FramePhase.rasterStart) -
+                  t.timestampInMicroseconds(FramePhase.buildFinish),
+            )
+            .toList(),
+      ),
+      'scroll_build_cadence': distribution([
+        for (var i = 1; i < frames.length; i++)
+          frames[i].timestampInMicroseconds(FramePhase.buildStart) -
+              frames[i - 1].timestampInMicroseconds(FramePhase.buildStart),
+      ]),
       'scroll_total': distribution(
         frames.map((t) => t.totalSpan.inMicroseconds).toList(),
       ),
@@ -454,6 +609,11 @@ class _BenchmarkState extends State<_Benchmark> {
       body: Column(
         children: [
           Padding(padding: const EdgeInsets.all(8), child: Text(_progress)),
+          if (!_running)
+            FilledButton(
+              onPressed: _run,
+              child: const Text('Start isolated measurement'),
+            ),
           Expanded(
             child: _tasks == null || _database == null
                 ? const Center(child: Text('Isolated synthetic benchmark'))
