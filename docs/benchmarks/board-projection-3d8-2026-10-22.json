@@ -1,0 +1,44 @@
+{
+  "scope": "Alternating pure Dart JIT projection only, not frame or product startup timings",
+  "fixture_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+  "runtime": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+  "results": [
+    {
+      "layout": "compact",
+      "legacy": {
+        "samples": 100,
+        "p50_us": 61,
+        "p95_us": 85,
+        "max_us": 474
+      },
+      "projected": {
+        "samples": 100,
+        "p50_us": 33,
+        "p95_us": 44,
+        "max_us": 75
+      }
+    },
+    {
+      "layout": "four_panels",
+      "legacy": {
+        "samples": 100,
+        "p50_us": 150,
+        "p95_us": 185,
+        "max_us": 244
+      },
+      "projected": {
+        "samples": 100,
+        "p50_us": 92,
+        "p95_us": 107,
+        "max_us": 155
+      }
+    }
+  ],
+  "implementation_revision": "6205968338d7f278cd1749a1f55d3379f6c72657",
+  "diagnostic_script_revision": "7be2d914ab0f8bf97adf4924423ac3ad6e5c0828",
+  "limitations": [
+    "Data projection only; no Flutter UI, engine frame, OS scheduling or product startup timing",
+    "One JIT process with 30 warmups and 100 alternating measured samples per implementation",
+    "Not evidence that the 768 logical pixel native tail variation has been resolved"
+  ]
+}

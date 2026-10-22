@@ -387,3 +387,39 @@ Mac ZIP 为 23,822,422 字节，SHA-256 `32de8c5ec10e9bc542a6f72e96861d7536b8f51
 剩余任务：真实 OS add 拒绝后的持久重试、跨系统重启、睡眠、时区/DST。系统菜单读取 timeoutReached，睡眠键 keyNotFound，因此睡眠未执行；开机时间前后仍为 2026-10-13，未发生系统重启。没有修改锁屏/电源保护，也没有退出其他用户应用。不能把模拟错误或本轮应用重开记为这三项通过。多模型配置、其他平台业务、正式签名发布继续后续阶段。
 
 [机器可读证据](benchmarks/notification-os-callback-3c8-2026-10-22.json) · [冷启动正确详情](benchmarks/notification-os-callback-3c8-2026-10-22.png)。录音和播放允许，本轮未新增录音或听感验收。
+
+## 2026-10-22：阶段 3D-8 宽屏新候选与崩溃恢复
+
+看板源码 `6205968338d7f278cd1749a1f55d3379f6c72657` 的 [测量构建 39757723420](https://github.com/yarnway/dontforget/actions/runs/39757723420) 成功。profile ZIP 为 27,878,189 字节，SHA-256 `0bbdcc07d7a4941a7852cc9ade9721c5a26ee024d87f1ba1d65e343b56cde084`；完整清单、源码 SHA、派生受保护内容和 codesign 校验通过，隔离身份为 `com.example.dontForget.acceptance.wide-r39757723420`。
+
+完成情况：
+
+1. 三轮 54/54 片段为全程前台，errors 为空；全部 162 次看板挂载为目标宽度 × 792、DPR 2。三个规模与上阶段任务及通知副本摘要相同。
+2. 万条 1440 宽首帧 build 的合并 15 样本 p50/max 为 11.30/15.86 ms，375 宽为 7.18/8.36 ms；768 宽为 12.78/17.44 ms，有两次超过 16.67 ms。旧基线 768 宽最大值为 14.89 ms，不能忽略这项反向变化。先前一次中途失焦轮次全量保留并排除，再取得第三轮有效样本。
+3. 只读交替 JIT 诊断显示四区数据投影 p50 从 150 µs 减至 92 µs；它不测 Flutter 帧，不足以解释上述 768 宽波动。新旧原生测量相隔约一小时，仍需同一时段交替运行。
+4. 增量索引和每 24 帧检查点使用同一万条夹具，在独立临时目录完成三个进程的等价复测；分段末尾只重放 8 帧，约 34–38 ms。26 项日志实验回归通过，五个万条子进程 SIGKILL 边界核对完整状态和全部稳定 ID。没有执行断电、系统重启或真实 OS 通知，生产仍为 v1 日志。
+5. 测量包正常退出，最后一次精确进程检查确认 wide、fixed 和 probe 三个本轮目标均无进程。历史隔离数据、回退副本和测量目录保留，没有清理用户容器。
+
+[原生前台帧与排除样本](benchmarks/wide-first-frame-3d8-2026-10-22.json) · [纯投影诊断](benchmarks/board-projection-3d8-2026-10-22.json) · [索引、分段及崩溃边界](benchmarks/indexed-segmented-journal-3d8-2026-10-22.json)。这里的看板挂载不等于产品冷启动，记录器对账不等于系统通知送达。
+
+## 2026-10-22：阶段 3C-9 OS 负例候选与权限阻塞
+
+`5367a8b0ef18de4ee7e62182e02e7dd37fc0961a` 的 [产品 CI 39758791793](https://github.com/yarnway/dontforget/actions/runs/39758791793) 及 [测量构建 39758794353](https://github.com/yarnway/dontforget/actions/runs/39758794353) 均成功。含单任务 OS 负例入口的 profile ZIP 为 27,900,592 字节，SHA-256 `0c0e729d8c052602176b476618a9d31a149141ce0d19775371fd2013deb7ad40`；源码、文件清单及派生签名验证通过，身份为 `com.example.dontForget.acceptance.probe-r39758794353`。它是独立验收工具，未进入正式产品入口。
+
+探针计划对一条 2099 年合成任务改变发出的空内容或过去日期，仍调用生产桥及真实 OS API；不能伪造错误。重开时读取同一独立目录的原有日志，不主动调度，便于验证 failed 持久化和同 ID 的有效请求重试。后续 `7be2d91` 源码增加完整初始化成功门禁、错误类型及清理失败记录；普通异常不得算作真实 NSError。该工具修订尚未打入已准备的 `5367a8b` 包，原生验收前需重建并核验。
+
+| 验收项 | 本轮结果 |
+| --- | --- |
+| 用户授权 | 已明确允许操作旧 `fixed-r39752935632` 与新 `probe-r39758794353`。 |
+| 旧版交替对照启动 | 授权后工具仍返回 `Computer Use was not approved to use 别忘了·隔离验收 fixed-r39752935632`，没有启动新的测量。 |
+| 单任务 OS 探针启动 | 工具返回相同类型拒绝，目标为 `别忘了·隔离验收 probe-r39758794353`。探针未启动、未提交 OS 请求。 |
+| OS 拒绝、failed 重开和同 ID 重试 | 未执行。只有未来读到 `native_schedule_failed` 与真实 OS domain/code 才可计入；API 接受负例不能记作失败。 |
+| 系统重启、睡眠/唤醒 | 未执行，没有将应用退出或测试子进程 SIGKILL 记作系统验收。 |
+
+这属于原生工具尚未取得两个 app 的操作权限，用户授权本身已有记录；本轮没有反复要求手动点击、改应用身份或使用其他自动化绕过。最后确认两个目标均无进程，候选与合成数据留存。[准备与阻塞证据](benchmarks/notification-os-probe-3c9-2026-10-22.json)。
+
+主体源码 `3ccd1fe` 的 [CI 39783468820](https://github.com/yarnway/dontforget/actions/runs/39783468820) 质量与五平台全部成功，云端 Flutter 694 通过 / 1 平台条件跳过、Python 51 通过；本机 Flutter 695 项、Python 51 项通过。主体产品代码与原生测量 `6205968` 一致；后续验收工具的改动另列源码与检查，CI 不替代被阻塞的原生步骤。
+
+`7be2d91` 同时修复测试子进程对 PATH Dart 的隐式依赖，改用当前 Flutter SDK 配套可执行文件；在原先失败的 PATH 环境下，静态分析和完整 695 项测试通过。最终 [CI 39802691717](https://github.com/yarnway/dontforget/actions/runs/39802691717) 工作流 completed/success，质量为 Flutter 694 通过 / 1 平台条件跳过、Python 51 通过，Android/iOS/macOS/Windows job success。Linux 构建、原生启动、包摘要核验、上传及 Complete job 步骤 success，但顶层仍返回 in_progress/null；独立 job 接口及无缓存回读一致，保留为汇总字段差异，未将其改写成 job success。该提交仅涉及验收工具、诊断脚本及测试，没有产品 `lib/` 或 macOS 代码差异。
+
+剩余任务：同一时段旧/新交替测量和 768 宽尾部排查；真实 OS 拒绝、failed 跨进程保留及同 ID 重试；系统重启、睡眠/唤醒、时区/DST；增量日志迁移/所有权/大小边界/代际回收；多模型持久化与降级、其他平台业务及正式签名发布。录音和播放允许，本轮未新增相关实测。

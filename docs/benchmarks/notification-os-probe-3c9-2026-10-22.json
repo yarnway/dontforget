@@ -1,0 +1,106 @@
+{
+  "scope": "Prepared isolated native acceptance; OS negative probe and new baseline run not executed because CUA app approval remained unavailable",
+  "date": "2026-10-22",
+  "user_authorization": "Explicitly approved both fixed-r39752935632 and probe-r39758794353",
+  "prepared_probe": {
+    "revision": "5367a8b0ef18de4ee7e62182e02e7dd37fc0961a",
+    "performance_run": "https://github.com/yarnway/dontforget/actions/runs/39758794353",
+    "product_ci": "https://github.com/yarnway/dontforget/actions/runs/39758791793",
+    "ci_conclusion": "success",
+    "scope": "ISOLATED_PERFORMANCE_HARNESS_NOT_PRODUCT_CANDIDATE",
+    "artifact": "DontForget_macOS_profile_benchmark.zip",
+    "bytes": 27900592,
+    "sha256": "0c0e729d8c052602176b476618a9d31a149141ce0d19775371fd2013deb7ad40",
+    "bundle_id": "com.example.dontForget.acceptance.probe-r39758794353",
+    "archive_and_derived_signature_verified": true,
+    "native_started": false,
+    "os_requests_submitted": false
+  },
+  "control_attempts_after_user_authorization": [
+    {
+      "target": "fixed-r39752935632",
+      "result": "Computer Use was not approved to use 别忘了·隔离验收 fixed-r39752935632",
+      "new_measurement_started": false
+    },
+    {
+      "target": "probe-r39758794353",
+      "result": "Computer Use was not approved to use 别忘了·隔离验收 probe-r39758794353",
+      "native_probe_started": false
+    }
+  ],
+  "runtime_readback": {
+    "exact_target_processes_absent": [
+      "wide-r39757723420",
+      "fixed-r39752935632",
+      "probe-r39758794353"
+    ],
+    "candidate_and_isolated_data_retained": true,
+    "approval_bypassed": false
+  },
+  "acceptance": {
+    "real_os_rejection": "NOT_RUN",
+    "failed_journal_across_app_restart": "NOT_RUN",
+    "valid_retry_same_native_id": "NOT_RUN",
+    "system_reboot": "NOT_RUN",
+    "system_sleep_resume": "NOT_RUN"
+  },
+  "next_acceptance_criteria": [
+    "Restore CUA access to the already-authorized exact app identities",
+    "Alternate baseline and optimized foreground measurements using the same fixture and fixed height",
+    "Only native_schedule_failed with actual OS domain/code establishes OS rejection; accepted negative input is not a failure",
+    "If the OS rejects a request, quit and reopen the same probe, verify durable failed state and native ID, then retry valid content",
+    "Cancel only owned isolated OS requests and read back an empty pending request list",
+    "Run system reboot and sleep/resume separately; application restart and owned child SIGKILL are not substitutes"
+  ],
+  "subsequent_source_hardening": {
+    "revision": "7be2d914ab0f8bf97adf4924423ac3ad6e5c0828",
+    "scope": "Require complete initialization before enabling probe actions; classify generic errors separately from OS NSError; report cleanup failure",
+    "included_in_prepared_probe": false,
+    "native_rebuild_and_verification_required": true
+  },
+  "final_source_validation": {
+    "revision": "7be2d914ab0f8bf97adf4924423ac3ad6e5c0828",
+    "local": {
+      "flutter_passed": 695,
+      "python_passed": 51,
+      "analysis": "success",
+      "crash_worker_without_path_dart": "passed_after_fix"
+    },
+    "ci": {
+      "url": "https://github.com/yarnway/dontforget/actions/runs/39802691717",
+      "workflow_status": "completed",
+      "workflow_conclusion": "success",
+      "quality": {
+        "status": "completed",
+        "conclusion": "success",
+        "flutter_passed": 694,
+        "flutter_platform_skipped": 1,
+        "python_passed": 51,
+        "analysis": "success"
+      },
+      "completed_success_jobs": [
+        "android",
+        "ios",
+        "macos",
+        "windows"
+      ],
+      "linux": {
+        "job_id": 119908844157,
+        "top_level_status": "in_progress",
+        "top_level_conclusion": null,
+        "top_level_completed_at": null,
+        "successful_steps": [
+          "Build Linux archive",
+          "Linux native startup smoke check",
+          "Verify packaged hashes and source identity",
+          "Upload candidate packages and manifests",
+          "Complete job"
+        ],
+        "complete_step_at": "2026-10-22T15:17:36Z",
+        "note": "Workflow is completed/success and every Linux step is complete, but the job top-level fields remain stale across list, direct and no-cache reads; not rewritten as job success"
+      },
+      "release": "skipped_non_tag"
+    },
+    "product_lib_and_macos_identical_to_native_measurement_revision": "6205968338d7f278cd1749a1f55d3379f6c72657"
+  }
+}

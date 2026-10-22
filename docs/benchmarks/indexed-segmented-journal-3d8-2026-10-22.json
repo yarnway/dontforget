@@ -1,0 +1,297 @@
+{
+  "scope": "Dart JIT journal-only experiment v2; v1 then indexed then segmented; checkpoint costs included; no OS effects or product startup",
+  "source_revision": "5b3ab6e",
+  "fixture_file_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+  "task_rows_sha256": "7775cb832916e5136a3d6759d5e6507dc1a528b565dd36a4664a745e11d4b05c",
+  "runs": [
+    {
+      "scope": "Dart JIT journal-only experiment v2; v1 then indexed then segmented; checkpoint costs included; no OS effects or product startup",
+      "protocol_version": 2,
+      "fixture_file_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+      "task_rows_sha256": "7775cb832916e5136a3d6759d5e6507dc1a528b565dd36a4664a745e11d4b05c",
+      "runtime": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "results": [
+        {
+          "mode": "first",
+          "entries": 10000,
+          "batch_size": 256,
+          "v1_us": 538991,
+          "v1_writes": 80,
+          "v1_bytes": 85231254,
+          "variants": [
+            {
+              "variant": "indexed",
+              "append_including_periodic_checkpoint_us": 115508,
+              "written_including_periodic_checkpoint_bytes": 4547715,
+              "flushes_including_periodic_checkpoint": 80,
+              "periodic_checkpoints": 0,
+              "periodic_checkpoint_us": 0,
+              "tail_replay_frames": 80,
+              "open_before_final_checkpoint_us": 96754,
+              "final_checkpoint_us": 41309,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 37033,
+              "prior_checkpoint_open_us": 975,
+              "equivalent_after_replay_and_checkpoint": true
+            },
+            {
+              "variant": "segmented_24",
+              "append_including_periodic_checkpoint_us": 192305,
+              "written_including_periodic_checkpoint_bytes": 8295600,
+              "flushes_including_periodic_checkpoint": 89,
+              "periodic_checkpoints": 3,
+              "periodic_checkpoint_us": 72554,
+              "tail_replay_frames": 8,
+              "open_before_final_checkpoint_us": 34483,
+              "final_checkpoint_us": 34149,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 27949,
+              "prior_checkpoint_open_us": 864,
+              "equivalent_after_replay_and_checkpoint": true
+            }
+          ]
+        },
+        {
+          "mode": "reopen",
+          "entries": 10000,
+          "batch_size": 256,
+          "v1_us": 840355,
+          "v1_writes": 80,
+          "v1_bytes": 162678720,
+          "variants": [
+            {
+              "variant": "indexed",
+              "append_including_periodic_checkpoint_us": 108720,
+              "written_including_periodic_checkpoint_bytes": 4547715,
+              "flushes_including_periodic_checkpoint": 80,
+              "periodic_checkpoints": 0,
+              "periodic_checkpoint_us": 0,
+              "tail_replay_frames": 80,
+              "open_before_final_checkpoint_us": 121672,
+              "final_checkpoint_us": 34559,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 28847,
+              "prior_checkpoint_open_us": 28146,
+              "equivalent_after_replay_and_checkpoint": true
+            },
+            {
+              "variant": "segmented_24",
+              "append_including_periodic_checkpoint_us": 230066,
+              "written_including_periodic_checkpoint_bytes": 10649386,
+              "flushes_including_periodic_checkpoint": 89,
+              "periodic_checkpoints": 3,
+              "periodic_checkpoint_us": 117017,
+              "tail_replay_frames": 8,
+              "open_before_final_checkpoint_us": 39992,
+              "final_checkpoint_us": 41801,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 37277,
+              "prior_checkpoint_open_us": 28864,
+              "equivalent_after_replay_and_checkpoint": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scope": "Dart JIT journal-only experiment v2; v1 then indexed then segmented; checkpoint costs included; no OS effects or product startup",
+      "protocol_version": 2,
+      "fixture_file_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+      "task_rows_sha256": "7775cb832916e5136a3d6759d5e6507dc1a528b565dd36a4664a745e11d4b05c",
+      "runtime": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "results": [
+        {
+          "mode": "first",
+          "entries": 10000,
+          "batch_size": 256,
+          "v1_us": 525011,
+          "v1_writes": 80,
+          "v1_bytes": 85231254,
+          "variants": [
+            {
+              "variant": "indexed",
+              "append_including_periodic_checkpoint_us": 111545,
+              "written_including_periodic_checkpoint_bytes": 4547715,
+              "flushes_including_periodic_checkpoint": 80,
+              "periodic_checkpoints": 0,
+              "periodic_checkpoint_us": 0,
+              "tail_replay_frames": 80,
+              "open_before_final_checkpoint_us": 98531,
+              "final_checkpoint_us": 36518,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 29317,
+              "prior_checkpoint_open_us": 1032,
+              "equivalent_after_replay_and_checkpoint": true
+            },
+            {
+              "variant": "segmented_24",
+              "append_including_periodic_checkpoint_us": 199671,
+              "written_including_periodic_checkpoint_bytes": 8295600,
+              "flushes_including_periodic_checkpoint": 89,
+              "periodic_checkpoints": 3,
+              "periodic_checkpoint_us": 67476,
+              "tail_replay_frames": 8,
+              "open_before_final_checkpoint_us": 33900,
+              "final_checkpoint_us": 39855,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 28759,
+              "prior_checkpoint_open_us": 558,
+              "equivalent_after_replay_and_checkpoint": true
+            }
+          ]
+        },
+        {
+          "mode": "reopen",
+          "entries": 10000,
+          "batch_size": 256,
+          "v1_us": 815278,
+          "v1_writes": 80,
+          "v1_bytes": 162678720,
+          "variants": [
+            {
+              "variant": "indexed",
+              "append_including_periodic_checkpoint_us": 109978,
+              "written_including_periodic_checkpoint_bytes": 4547715,
+              "flushes_including_periodic_checkpoint": 80,
+              "periodic_checkpoints": 0,
+              "periodic_checkpoint_us": 0,
+              "tail_replay_frames": 80,
+              "open_before_final_checkpoint_us": 123214,
+              "final_checkpoint_us": 38794,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 35166,
+              "prior_checkpoint_open_us": 28265,
+              "equivalent_after_replay_and_checkpoint": true
+            },
+            {
+              "variant": "segmented_24",
+              "append_including_periodic_checkpoint_us": 218436,
+              "written_including_periodic_checkpoint_bytes": 10649386,
+              "flushes_including_periodic_checkpoint": 89,
+              "periodic_checkpoints": 3,
+              "periodic_checkpoint_us": 105866,
+              "tail_replay_frames": 8,
+              "open_before_final_checkpoint_us": 37672,
+              "final_checkpoint_us": 35186,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 31505,
+              "prior_checkpoint_open_us": 35296,
+              "equivalent_after_replay_and_checkpoint": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scope": "Dart JIT journal-only experiment v2; v1 then indexed then segmented; checkpoint costs included; no OS effects or product startup",
+      "protocol_version": 2,
+      "fixture_file_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+      "task_rows_sha256": "7775cb832916e5136a3d6759d5e6507dc1a528b565dd36a4664a745e11d4b05c",
+      "runtime": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "results": [
+        {
+          "mode": "first",
+          "entries": 10000,
+          "batch_size": 256,
+          "v1_us": 528846,
+          "v1_writes": 80,
+          "v1_bytes": 85231254,
+          "variants": [
+            {
+              "variant": "indexed",
+              "append_including_periodic_checkpoint_us": 130882,
+              "written_including_periodic_checkpoint_bytes": 4547715,
+              "flushes_including_periodic_checkpoint": 80,
+              "periodic_checkpoints": 0,
+              "periodic_checkpoint_us": 0,
+              "tail_replay_frames": 80,
+              "open_before_final_checkpoint_us": 99102,
+              "final_checkpoint_us": 41611,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 36149,
+              "prior_checkpoint_open_us": 995,
+              "equivalent_after_replay_and_checkpoint": true
+            },
+            {
+              "variant": "segmented_24",
+              "append_including_periodic_checkpoint_us": 200873,
+              "written_including_periodic_checkpoint_bytes": 8295600,
+              "flushes_including_periodic_checkpoint": 89,
+              "periodic_checkpoints": 3,
+              "periodic_checkpoint_us": 72060,
+              "tail_replay_frames": 8,
+              "open_before_final_checkpoint_us": 34862,
+              "final_checkpoint_us": 34279,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 28608,
+              "prior_checkpoint_open_us": 634,
+              "equivalent_after_replay_and_checkpoint": true
+            }
+          ]
+        },
+        {
+          "mode": "reopen",
+          "entries": 10000,
+          "batch_size": 256,
+          "v1_us": 811335,
+          "v1_writes": 80,
+          "v1_bytes": 162678720,
+          "variants": [
+            {
+              "variant": "indexed",
+              "append_including_periodic_checkpoint_us": 131211,
+              "written_including_periodic_checkpoint_bytes": 4547715,
+              "flushes_including_periodic_checkpoint": 80,
+              "periodic_checkpoints": 0,
+              "periodic_checkpoint_us": 0,
+              "tail_replay_frames": 80,
+              "open_before_final_checkpoint_us": 129914,
+              "final_checkpoint_us": 40950,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 28613,
+              "prior_checkpoint_open_us": 28896,
+              "equivalent_after_replay_and_checkpoint": true
+            },
+            {
+              "variant": "segmented_24",
+              "append_including_periodic_checkpoint_us": 239450,
+              "written_including_periodic_checkpoint_bytes": 10649386,
+              "flushes_including_periodic_checkpoint": 89,
+              "periodic_checkpoints": 3,
+              "periodic_checkpoint_us": 109397,
+              "tail_replay_frames": 8,
+              "open_before_final_checkpoint_us": 36734,
+              "final_checkpoint_us": 37003,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 29325,
+              "prior_checkpoint_open_us": 33969,
+              "equivalent_after_replay_and_checkpoint": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "decision": "Indexed deltas plus a checkpoint every 24 frames are promising in the journal-only experiment. Keep production v1 until ownership, migration, bounded storage and generation reclamation are designed and verified.",
+  "crash_validation": {
+    "test_file": "test/incremental_journal_experiment_test.dart",
+    "total_tests": 26,
+    "large_fixture_process_kill_cases": 5,
+    "large_fixture_records": 10000,
+    "points": [
+      "half_frame_written",
+      "frame_flushed",
+      "snapshot_flushed",
+      "before_publish",
+      "after_publish"
+    ],
+    "assertions": "All 10000 entries and native IDs equal the prior state or the expected one-entry pending update; never a mixed prefix.",
+    "limitations": [
+      "SIGKILL of owned test processes, not power failure",
+      "No OS notification is involved in journal-only tests",
+      "No production migration, ownership protocol or old-generation reclamation shipped"
+    ],
+    "test_revision": "7be2d914ab0f8bf97adf4924423ac3ad6e5c0828",
+    "runtime_resolution": "Use the Dart SDK bundled with the current package:flutter dependency; full suite passed with no Dart available in PATH"
+  }
+}
