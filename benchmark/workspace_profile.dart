@@ -110,6 +110,7 @@ class _BenchmarkState extends State<_Benchmark>
   final _errors = <String>[];
   int? _entryToFrame;
   bool _running = false;
+  bool _includeNotificationStartup = true;
   final _windowEvents = <Map<String, Object>>[];
   final _segments = <Map<String, Object?>>[];
 
@@ -207,6 +208,7 @@ class _BenchmarkState extends State<_Benchmark>
           'Synthetic macOS profile harness; storage startup excludes reconciliation; full notification startup uses a recording OS transport; frames are real engine timings. Foreground validity is recorded per segment, never inferred from completion.',
       'source_revision': _revision,
       'fixture_version': 2,
+      'notification_startup_included': _includeNotificationStartup,
       'fixture_source':
           'Exact task rows from KaPI1r baseline; notification-only copy uses fixed 2099 trigger',
       'segments': _segments,
@@ -374,27 +376,29 @@ class _BenchmarkState extends State<_Benchmark>
           await helper.close(createBackup: false);
         }
         result['process_rss_bytes_after_size'] = ProcessInfo.currentRss;
-        await _status(
-          'Measuring $count complete startup notifications (recording OS transport)',
-        );
-        final notificationTasks = tasks
-            .map((r) => r.copyWith(triggerTime: DateTime.utc(2099, 1, 1)))
-            .toList();
-        result['notification_task_rows_sha256'] = sha256
-            .convert(
-              utf8.encode(
-                jsonEncode(notificationTasks.map((r) => r.toJson()).toList()),
-              ),
-            )
-            .toString();
-        result['full_notification_startup'] = await _segment(
-          '$count full notification startup',
-          () => measureNotificationStartup(
-            Directory('${_root!.path}/notifications-$count'),
-            notificationTasks,
-          ),
-        );
-        await _record(_progress);
+        if (_includeNotificationStartup) {
+          await _status(
+            'Measuring $count complete startup notifications (recording OS transport)',
+          );
+          final notificationTasks = tasks
+              .map((r) => r.copyWith(triggerTime: DateTime.utc(2099, 1, 1)))
+              .toList();
+          result['notification_task_rows_sha256'] = sha256
+              .convert(
+                utf8.encode(
+                  jsonEncode(notificationTasks.map((r) => r.toJson()).toList()),
+                ),
+              )
+              .toString();
+          result['full_notification_startup'] = await _segment(
+            '$count full notification startup',
+            () => measureNotificationStartup(
+              Directory('${_root!.path}/notifications-$count'),
+              notificationTasks,
+            ),
+          );
+          await _record(_progress);
+        }
       }
       await _status(
         'Completed. Synthetic data and results are preserved for review.',
@@ -609,6 +613,16 @@ class _BenchmarkState extends State<_Benchmark>
       body: Column(
         children: [
           Padding(padding: const EdgeInsets.all(8), child: Text(_progress)),
+          if (!_running)
+            CheckboxListTile(
+              value: _includeNotificationStartup,
+              onChanged: (value) =>
+                  setState(() => _includeNotificationStartup = value ?? true),
+              title: const Text(
+                'Include full notification startup (can take several minutes)',
+              ),
+              controlAffinity: ListTileControlAffinity.leading,
+            ),
           if (!_running)
             FilledButton(
               onPressed: _run,
