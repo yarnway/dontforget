@@ -193,3 +193,29 @@ Mac ZIP 为 23,822,422 字节，SHA-256 `32de8c5ec10e9bc542a6f72e96861d7536b8f51
 这一步只关闭候选来源、完整性和隔离副本准备；新状态界面、前台有界重试、权限拒绝后的补处理、通知热/冷点击及迟到点击仍需该候选原生验收。此前系统送达、自动化回归或旧候选结果不替代本轮点击通过；录音/播放允许继续验收，但本轮没有新增听感证据。正式签名、公证与其他设备业务验收仍独立待办。
 
 交付收尾：上述 CI 整体成功，质量检查与五平台候选均通过；三桌面启动检查、Windows 安装升级卸载和全部包身份校验成功。云端 Flutter 633 项通过、1 项平台跳过，Python 47 项通过；源码本机 Flutter 634 项通过。此记录未追加新的原生界面操作或系统通知点击通过结论。
+
+
+## 2026-10-22：阶段 3D-2 日志优化候选与性能测量
+
+源码 `eec2ace947a5b0ae67b6a17fd361f9d2a689a7f4`（日志优化 `6703824`，随后修正测量计时入口）已推送 main。[CI 39709820687](https://github.com/yarnway/dontforget/actions/runs/39709820687) 质量与五平台候选全部成功：云端 Flutter 641 通过、1 项平台跳过，Python 47 通过；本机 Flutter 642 通过、静态分析无问题。三桌面启动、Windows 安装升级卸载和产物身份/摘要门禁通过；非标签发布跳过。
+
+- 产品 ZIP `DontForget_macOS_unnotarized_v1.5.2.zip`：23,845,093 字节，SHA-256 `e1b0d7aebb19a5096796993eda240a0bb5f84721e01bab8ff442d70722828b31`。本机清单与 ZIP 保存在 `build/ci_artifacts/journal-r39709820687`，独立校验版本、完整 revision、大小和摘要通过。
+- 产品派生副本 `build/native_acceptance/journal-r39709820687/dont_forget.app`，身份 `com.example.dontForget.acceptance.journal-r39709820687`。隔离签名、受保护框架与资源内容核验通过；仅通过此身份运行，不访问原应用业务库。
+- [profile 构建 39709822788](https://github.com/yarnway/dontforget/actions/runs/39709822788) 的独立性能 ZIP：27,780,232 字节，SHA-256 `295a59c1fb332b893b2584c43979c2d5b3f6b4e0d1294a8317127f533c0220b2`。派生身份 `com.example.dontForget.acceptance.perf-r39709822788`，全部实际读写在该容器新建目录；不执行通知、模型或录音。它是单独 profile 入口，不能代替产品 release 原生验收。性能结果与范围参见 [迭代记录](Iteration_v1.6.md)、[首次报告](benchmarks/workspace-profile-2026-10-22.json) 与 [复测报告](benchmarks/workspace-profile-repeat-2026-10-22.json)。复测有明显帧总耗时及存储耗时波动，保留原始值；性能稳定性仍待诊断。
+
+本轮产品原生结果（时间为本机 UTC+8）：
+
+| 验收项 | 实际证据与边界 |
+| --- | --- |
+| 原生恢复 | 新候选初始四区为空，保存独立空基线。通过文件选择器、结构预览、覆盖确认、勾选与恢复按钮导入本轮四条无密钥/无录音合成任务；10:30:55 恢复完成，三张业务表逐行匹配候选。首次回退目录 `recovery-409718f1-dbed-43fa-831d-91d3ef5af8fd` 保留空库。 |
+| 未授权与提交状态 | 未授权时 UI 为 Not enabled，四条日志仍为 submitted，attempts=2；macOS 插件没有抛出权限错误。UI 明确 Submitted does not confirm delivery。本次不能把未授权情况称为真实失败重试。 |
+| 授权与摘要刷新 | 在应用点击 Allow notifications，系统通知中心显示精确隔离身份，执行“允许”；应用自动更新 Allowed。四条未来记录显示 Upcoming 4 / Submitted 4 / Needs review 0 / Cancellations pending 0。 |
+| 前台健康记录 | 10:33:20 至 10:34:21，持续 60.84 秒观察期间四条日志字节对应内容相同，尝试次数未增加。覆盖健康记录不重复安排；未产生 pending/failed 原生错误，不能称为失败自动重试通过。 |
+| 系统送达 | 10:35:34.124，ID 1967836952 送达；10:35:34.131 系统展示 banner。10:36:34.106，ID 167290217 送达；10:36:34.111 展示 banner。均为本轮隔离应用，候选仍运行；这不是热/冷点击证据。 |
+| 手动原生重建 | 到期后摘要 Upcoming 2 / Submitted 2；点击 Retry reminder scheduling，反馈 Processed 2 reminder schedules。两条未来任务 attempts 从 2→4，稳定 ID 1329258270 / 315234779 不变；两条已过期记录 attempts 保持 2，没有重放，也没有自动确认或修改 notice_revision。 |
+| 通知点击阻塞 | 通知授权卡片可读取及操作，但到期通知中心 AX、图像和 ControlCenter 读取均报 timeoutReached。尝试 [Apple 文档](https://support.apple.com/en-us/102650) 的 Fn-N 入口时，原生工具报 keyNotFound("fn")。未成功点击通知；热点击、冷启动点击及迟到点击继续待验，不以系统送达替代。 |
+| 清理与回退 | 10:38:56 经应用完整恢复空基线，四区均为 0，三张表逐行匹配原空库、integrity_check=ok，通知 epoch 已换代、日志为空。系统日志记录 removeAllDeliveredNotifications 并移除两条已送达记录；应用通知取消返回成功。四条合成任务保留在 `recovery-289e4c98-b305-4705-9c5c-4af761114b10/rollback.db`，没有直接删除业务数据或回退材料。随后正常退出，进程检查确认产品候选不再运行。 |
+
+合成输入保存在 `/private/tmp/dontforget-journal-native-r39709820687`，前台前后与手动重建证据保存在 `build/native_acceptance/journal-r39709820687`。本轮没有新录音或云端请求；录音/播放仍允许后续验收，既有听感与标题输入待验项保持。两个本轮独立进程最终均已退出；性能程序退出后改用应用清单和进程核验，避免再次读取关闭窗口导致工具重新启动应用。
+
+剩余任务：真实 pending/failed 条目在前台自动重试、通知热/冷/迟到点击；完整产品冷启动及通知对账、首次列表构建与备份优化、测量分段/前后台诊断；权限拒绝恢复、系统重启/休眠/时区/DST、多模型配置迁移与降级、其他平台业务真机及正式签名发布。
