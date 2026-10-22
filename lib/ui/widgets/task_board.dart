@@ -2,12 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/providers.dart';
+import 'task_board_data.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/reminder.dart';
 import 'quadrant_view.dart';
 
 /// A single readable category on phones, four quadrants on larger workspaces.
-class TaskBoard extends StatefulWidget {
+class TaskBoard extends ConsumerStatefulWidget {
   final List<Reminder> reminders;
   final void Function(String) onPlayMedia;
 
@@ -18,10 +21,11 @@ class TaskBoard extends StatefulWidget {
   });
 
   @override
-  State<TaskBoard> createState() => _TaskBoardState();
+  ConsumerState<TaskBoard> createState() => _TaskBoardState();
 }
 
-class _TaskBoardState extends State<TaskBoard> with WidgetsBindingObserver {
+class _TaskBoardState extends ConsumerState<TaskBoard>
+    with WidgetsBindingObserver {
   static const _icons = [
     Icons.notifications_active_outlined,
     Icons.star_outline_rounded,
@@ -166,26 +170,31 @@ class _TaskBoardState extends State<TaskBoard> with WidgetsBindingObserver {
       colors.secondary,
       colors.primary,
     ];
-    final grouped = List.generate(4, (_) => <Reminder>[]);
-    final pending = List.filled(4, 0);
-    for (final reminder in widget.reminders) {
-      final index = reminder.quadrantLevel - 1;
-      if (index < 0 || index >= grouped.length) continue;
-      grouped[index].add(reminder);
-      if (!reminder.isCompleted) pending[index]++;
-    }
-    Widget panel(int index, {bool showHeader = true}) => QuadrantView(
-      key: ValueKey('quadrant-${index + 1}'),
-      level: index + 1,
-      showHeader: showHeader,
-      titleIcon: Icon(_icons[index], size: 20, color: categoryColors[index]),
-      allReminders: grouped[index],
-      bgColor: categoryColors[index],
-      onPlayMedia: widget.onPlayMedia,
-    );
-
+    final urgency = ref.watch(dynamicUrgencyServiceProvider);
     return LayoutBuilder(
       builder: (context, constraints) {
+        final data = TaskBoardData.project(
+          widget.reminders,
+          visibleCategory: constraints.maxWidth < 640
+              ? _selectedCategory
+              : null,
+          isFolded: urgency.isQ4StagnantFolded,
+        );
+        final pending = data.pending;
+        Widget panel(int index, {bool showHeader = true}) => QuadrantView(
+          key: ValueKey('quadrant-${index + 1}'),
+          level: index + 1,
+          showHeader: showHeader,
+          titleIcon: Icon(
+            _icons[index],
+            size: 20,
+            color: categoryColors[index],
+          ),
+          allReminders: const [],
+          sections: data.sections[index],
+          bgColor: categoryColors[index],
+          onPlayMedia: widget.onPlayMedia,
+        );
         if (constraints.maxWidth < 640) {
           return Padding(
             padding: constraints.maxHeight < 320

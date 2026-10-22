@@ -6,6 +6,7 @@ import '../../models/reminder.dart';
 import '../../providers/providers.dart';
 import '../../l10n/app_localizations.dart';
 import 'task_card.dart';
+import 'task_board_data.dart';
 
 class QuadrantView extends ConsumerStatefulWidget {
   final int level;
@@ -13,6 +14,7 @@ class QuadrantView extends ConsumerStatefulWidget {
   final List<Reminder> allReminders;
   final Color bgColor;
   final bool showHeader;
+  final TaskSectionData? sections;
   final void Function(String recordId) onPlayMedia;
 
   const QuadrantView({
@@ -22,6 +24,7 @@ class QuadrantView extends ConsumerStatefulWidget {
     required this.allReminders,
     required this.bgColor,
     this.showHeader = true,
+    this.sections,
     required this.onPlayMedia,
   });
 
@@ -109,21 +112,18 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
     );
   }
 
-  Widget _taskList(
-    AppLocalizations l10n,
-    List<Reminder> active,
-    List<Reminder> completed,
-    List<Reminder> folded,
-  ) {
-    // Only lightweight data is flattened. Cards, including expanded completed
-    // and stagnant sections, are constructed only for the viewport + cache.
-    final rows = <Object>[
-      ...active,
-      if (completed.isNotEmpty) 'completed',
-      if (_completedExpanded) ...completed,
-      if (folded.isNotEmpty) 'folded',
-      if (_isQ4FoldExpanded) ...folded,
-    ];
+  Widget _taskList(AppLocalizations l10n, TaskSectionData section) {
+    final completed = section.completed;
+    final folded = section.folded;
+    final count = section.rowCount(
+      completedExpanded: _completedExpanded,
+      foldedExpanded: _isQ4FoldExpanded,
+    );
+    Object rowAt(int index) => section.rowAt(
+      index,
+      completedExpanded: _completedExpanded,
+      foldedExpanded: _isQ4FoldExpanded,
+    );
     // A fresh sliver needs no key lookup. Build the full index only when
     // Flutter reconciles existing children after an edit/reorder.
     Map<String, int>? indices;
@@ -133,20 +133,20 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
       // Four short desktop panels should not each prebuild a phone-sized
       // cache. Keep a quarter viewport ahead/behind each panel.
       scrollCacheExtent: const ScrollCacheExtent.viewport(0.25),
-      itemCount: rows.length,
+      itemCount: count,
       findChildIndexCallback: (key) {
         if (key is! ValueKey<String>) return null;
         indices ??= {
-          for (var i = 0; i < rows.length; i++)
-            rows[i] is Reminder
-                    ? 'task-${(rows[i] as Reminder).id}'
-                    : '${rows[i]}-${widget.level}':
+          for (var i = 0; i < count; i++)
+            rowAt(i) is Reminder
+                    ? 'task-${(rowAt(i) as Reminder).id}'
+                    : '${rowAt(i)}-${widget.level}':
                 i,
         };
         return indices![key.value];
       },
       itemBuilder: (context, index) {
-        final row = rows[index];
+        final row = rowAt(index);
         if (row is Reminder) return _buildDraggableCard(row);
         final isCompleted = row == 'completed';
         final expanded = isCompleted ? _completedExpanded : _isQ4FoldExpanded;
@@ -185,21 +185,16 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final dynamicService = ref.watch(dynamicUrgencyServiceProvider);
-    final active = <Reminder>[];
-    final completed = <Reminder>[];
-    final folded = <Reminder>[];
-    for (final task in widget.allReminders) {
-      if (task.quadrantLevel != widget.level) continue;
-      if (task.isCompleted) {
-        completed.add(task);
-      } else if (widget.level == 4 && dynamicService.isQ4StagnantFolded(task)) {
-        folded.add(task);
-      } else {
-        active.add(task);
-      }
-    }
-    final isEmpty = active.isEmpty && completed.isEmpty && folded.isEmpty;
+    final sections =
+        widget.sections ??
+        TaskBoardData.project(
+          widget.allReminders,
+          visibleCategory: widget.level - 1,
+          isFolded: ref.watch(dynamicUrgencyServiceProvider).isQ4StagnantFolded,
+        ).sections[widget.level - 1];
+    final active = sections.active;
+    final folded = sections.folded;
+    final isEmpty = sections.isEmpty;
     final colors = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -296,7 +291,7 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
                           ),
                         ),
                       )
-                    : _taskList(l10n, active, completed, folded),
+                    : _taskList(l10n, sections),
               ),
             ],
           ),
