@@ -1,0 +1,246 @@
+{
+  "scope": "Isolated macOS native candidate; actual OS completion, permission denial and restoration, normal process reopen and notification cold click. No actual OS scheduling rejection or system sleep/reboot achieved.",
+  "revision": "ae9e88d17138f14d82e93964dd8ff67dcd6a7fdb",
+  "bundle": "com.example.dontForget.acceptance.os-r39752932522",
+  "artifact_manifest": {
+    "version": "1.5.2",
+    "build_number": "3",
+    "revision": "ae9e88d17138f14d82e93964dd8ff67dcd6a7fdb",
+    "platform": "macos",
+    "signing": "not-notarized",
+    "runtime_acceptance": "STARTUP_SMOKE_ONLY",
+    "artifacts": [
+      {
+        "file": "DontForget_macOS_unnotarized_v1.5.2.zip",
+        "bytes": 23865976,
+        "sha256": "f997cb20903ec775a507b252260e0fe4e2db735ec1c0ab0a513957e1f31976fb"
+      }
+    ]
+  },
+  "seed": {
+    "bundle": "com.example.dontForget.acceptance.os-r39752932522",
+    "scope": "offline synthetic fixture under owner lock; journal untouched; empty consistent baseline retained",
+    "seeded_at": "2026-10-22T09:18:50.827103+00:00",
+    "expected_rows_sha256": "f17b4c751166635fd0c4145c4580b8778884d407f326cfbf092eeb30ffb67d89",
+    "triggers": {
+      "qa-ack-due": "2026-10-22T09:24:50.827Z",
+      "qa-daily-early": "2026-10-23T09:18:50.827Z"
+    }
+  },
+  "unasked": {
+    "at": "2026-10-22T09:19:06.034589+00:00",
+    "pid": "71704",
+    "journal": {
+      "version": 1,
+      "epoch": "0eb9c7ab-da8a-4d31-b0de-f30e17c9f37e",
+      "entries": [
+        {
+          "reminderId": "qa-ack-due",
+          "nativeId": 1967836952,
+          "action": "schedule",
+          "status": "submitted",
+          "attempts": 2,
+          "triggerUtcMicros": 1792661090827000,
+          "noticeRevision": 0,
+          "attemptedAt": "2026-10-22T09:18:57.732864Z"
+        },
+        {
+          "reminderId": "qa-daily-early",
+          "nativeId": 1329258270,
+          "action": "schedule",
+          "status": "submitted",
+          "attempts": 2,
+          "triggerUtcMicros": 1792747130827000,
+          "noticeRevision": 0,
+          "attemptedAt": "2026-10-22T09:18:57.733522Z"
+        }
+      ]
+    }
+  },
+  "denied_manual_retry": {
+    "at": "2026-10-22T09:21:15.086076+00:00",
+    "journal": {
+      "version": 1,
+      "epoch": "0eb9c7ab-da8a-4d31-b0de-f30e17c9f37e",
+      "entries": [
+        {
+          "reminderId": "qa-ack-due",
+          "nativeId": 1967836952,
+          "action": "schedule",
+          "status": "submitted",
+          "attempts": 4,
+          "triggerUtcMicros": 1792661090827000,
+          "noticeRevision": 0,
+          "attemptedAt": "2026-10-22T09:20:58.024556Z"
+        },
+        {
+          "reminderId": "qa-daily-early",
+          "nativeId": 1329258270,
+          "action": "schedule",
+          "status": "submitted",
+          "attempts": 4,
+          "triggerUtcMicros": 1792747130827000,
+          "noticeRevision": 0,
+          "attemptedAt": "2026-10-22T09:20:58.032779Z"
+        }
+      ]
+    }
+  },
+  "normal_process_reopen": {
+    "at": "2026-10-22T09:22:49.387059+00:00",
+    "pid": "74067",
+    "journal": {
+      "version": 1,
+      "epoch": "0eb9c7ab-da8a-4d31-b0de-f30e17c9f37e",
+      "entries": [
+        {
+          "reminderId": "qa-ack-due",
+          "nativeId": 1967836952,
+          "action": "schedule",
+          "status": "submitted",
+          "attempts": 6,
+          "triggerUtcMicros": 1792661090827000,
+          "noticeRevision": 0,
+          "attemptedAt": "2026-10-22T09:22:01.850726Z"
+        },
+        {
+          "reminderId": "qa-daily-early",
+          "nativeId": 1329258270,
+          "action": "schedule",
+          "status": "submitted",
+          "attempts": 6,
+          "triggerUtcMicros": 1792747130827000,
+          "noticeRevision": 0,
+          "attemptedAt": "2026-10-22T09:22:01.850914Z"
+        }
+      ]
+    },
+    "ids_preserved": true,
+    "business_tables_unchanged": true
+  },
+  "notification_cold_click": {
+    "at": "2026-10-22T09:26:02.386850+00:00",
+    "pid": "76539",
+    "business_tables_unchanged": true,
+    "target_task": "qa-ack-due",
+    "notification_uuid": "C4EA71C3-6B50-492A-B15D-0CD841D81D79"
+  },
+  "system_events": [
+    {
+      "timestamp": "2026-10-22 17:18:57.623663+0800",
+      "eventMessage": "Setting modern authorization [] for com.example.dontForget.acceptance.os-r39752932522",
+      "messageType": "Debug"
+    },
+    {
+      "timestamp": "2026-10-22 17:18:57.732502+0800",
+      "eventMessage": "Added request <NotificationRecord app:\"com.example.dontForget.acceptance.os-r39752932522\" ident:\"C9D0-0AF4\" req:\"1967836952\" uuid:\"B5978A6F\" source:\"7DE3F1FD\" dismissAfterDefaultAction:true>",
+      "messageType": "Info"
+    },
+    {
+      "timestamp": "2026-10-22 17:18:57.733230+0800",
+      "eventMessage": "Added request <NotificationRecord app:\"com.example.dontForget.acceptance.os-r39752932522\" ident:\"B016-D339\" req:\"1329258270\" uuid:\"5C7CB0F0\" source:\"7DE3F1FD\" dismissAfterDefaultAction:true>",
+      "messageType": "Info"
+    },
+    {
+      "timestamp": "2026-10-22 17:20:42.794991+0800",
+      "eventMessage": "Setting modern authorization [badge, sound, alert] for com.example.dontForget.acceptance.os-r39752932522",
+      "messageType": "Debug"
+    },
+    {
+      "timestamp": "2026-10-22 17:20:42.795182+0800",
+      "eventMessage": "Setting modern authorization [badge, sound, alert] for com.example.dontForget.acceptance.os-r39752932522",
+      "messageType": "Debug"
+    },
+    {
+      "timestamp": "2026-10-22 17:20:42.795656+0800",
+      "eventMessage": "Added request <NotificationRecord app:\"com.apple.notificationcenter.askpermissions\" ident:\"6FA7-BE4A\" req:\"com.example.dontForget.acceptance.os-r39752932522\" uuid:\"EBF31D73\" source:\"846DD3FB\" category:\"permission\" dismissAfterDefaultAction:true>",
+      "messageType": "Info"
+    },
+    {
+      "timestamp": "2026-10-22 17:20:42.912466+0800",
+      "eventMessage": "Delivering <NotificationRecord app:\"com.apple.notificationcenter.askpermissions\" ident:\"6FA7-BE4A\" req:\"com.example.dontForget.acceptance.os-r39752932522\" uuid:\"EBF31D73\" source:\"846DD3FB\" category:\"permission\" dismissAfterDefaultAction:true> to [ .alert ]: updatedExisting: false",
+      "messageType": "Default"
+    },
+    {
+      "timestamp": "2026-10-22 17:20:58.024347+0800",
+      "eventMessage": "Added request <NotificationRecord app:\"com.example.dontForget.acceptance.os-r39752932522\" ident:\"C9D0-0AF4\" req:\"1967836952\" uuid:\"4A06A434\" source:\"7DE3F1FD\" dismissAfterDefaultAction:true>",
+      "messageType": "Info"
+    },
+    {
+      "timestamp": "2026-10-22 17:20:58.032566+0800",
+      "eventMessage": "Added request <NotificationRecord app:\"com.example.dontForget.acceptance.os-r39752932522\" ident:\"B016-D339\" req:\"1329258270\" uuid:\"5476B20C\" source:\"7DE3F1FD\" dismissAfterDefaultAction:true>",
+      "messageType": "Info"
+    },
+    {
+      "timestamp": "2026-10-22 17:22:01.732535+0800",
+      "eventMessage": "Setting modern authorization [badge, sound, alert] for com.example.dontForget.acceptance.os-r39752932522",
+      "messageType": "Debug"
+    },
+    {
+      "timestamp": "2026-10-22 17:22:01.850494+0800",
+      "eventMessage": "Added request <NotificationRecord app:\"com.example.dontForget.acceptance.os-r39752932522\" ident:\"C9D0-0AF4\" req:\"1967836952\" uuid:\"1D3DAB0A\" source:\"7DE3F1FD\" dismissAfterDefaultAction:true>",
+      "messageType": "Info"
+    },
+    {
+      "timestamp": "2026-10-22 17:22:01.850723+0800",
+      "eventMessage": "Added request <NotificationRecord app:\"com.example.dontForget.acceptance.os-r39752932522\" ident:\"B016-D339\" req:\"1329258270\" uuid:\"3600DFD5\" source:\"7DE3F1FD\" dismissAfterDefaultAction:true>",
+      "messageType": "Info"
+    },
+    {
+      "timestamp": "2026-10-22 17:24:50.125457+0800",
+      "eventMessage": "Delivering <NotificationRecord app:\"com.example.dontForget.acceptance.os-r39752932522\" ident:\"C9D0-0AF4\" req:\"1967836952\" uuid:\"C4EA71C3\" source:\"7DE3F1FD\" dismissAfterDefaultAction:true> to [ .alert .lockScreen .notificationCenter ]: updatedExisting: false",
+      "messageType": "Default"
+    },
+    {
+      "timestamp": "2026-10-22 17:25:14.268555+0800",
+      "eventMessage": "Received response <NotificationRecord app:\"com.example.dontForget.acceptance.os-r39752932522\" ident:\"C9D0-0AF4\" req:\"1967836952\" uuid:\"C4EA71C3\" source:\"7DE3F1FD\" dismissAfterDefaultAction:true <response action: contents actIdent:  foreground: true text: nil> >",
+      "messageType": "Default"
+    },
+    {
+      "timestamp": "2026-10-22 17:25:14.274749+0800",
+      "eventMessage": "Launching com.example.dontForget.acceptance.os-r39752932522 at path <private> for response",
+      "messageType": "Default"
+    },
+    {
+      "timestamp": "2026-10-22 17:25:14.440030+0800",
+      "eventMessage": "Setting modern authorization [badge, sound, alert] for com.example.dontForget.acceptance.os-r39752932522",
+      "messageType": "Debug"
+    },
+    {
+      "timestamp": "2026-10-22 17:25:14.565281+0800",
+      "eventMessage": "Added request <NotificationRecord app:\"com.example.dontForget.acceptance.os-r39752932522\" ident:\"B016-D339\" req:\"1329258270\" uuid:\"3B601BBF\" source:\"7DE3F1FD\" dismissAfterDefaultAction:true>",
+      "messageType": "Info"
+    },
+    {
+      "timestamp": "2026-10-22 17:26:45.252114+0800",
+      "eventMessage": "removeAllDeliveredNotifications for com.example.dontForget.acceptance.os-r39752932522",
+      "messageType": "Default"
+    },
+    {
+      "timestamp": "2026-10-22 17:26:45.252269+0800",
+      "eventMessage": "removeAllDeliveredNotifications for com.example.dontForget.acceptance.os-r39752932522",
+      "messageType": "Default"
+    },
+    {
+      "timestamp": "2026-10-22 17:26:45.283223+0800",
+      "eventMessage": "removeAllDeliveredNotifications for com.example.dontForget.acceptance.os-r39752932522",
+      "messageType": "Default"
+    }
+  ],
+  "cleanup": {
+    "at": "2026-10-22T09:27:40.829061+00:00",
+    "process_absent": true,
+    "empty_baseline_exact": true,
+    "journal_empty": true,
+    "rollback_all_business_tables_match": true,
+    "rollback": "/Users/james/Library/Containers/com.example.dontForget.acceptance.os-r39752932522/Data/Library/Application Support/com.example.dontForget.acceptance.os-r39752932522/databases/recovery-79401a05-c863-4ab3-a3d8-d73aa653871e/rollback.db",
+    "rollback_tasks": 2,
+    "temporary_alert_style_restored": true,
+    "permission_left_allowed": true
+  },
+  "remaining": {
+    "actual_os_schedule_rejection": "NOT_OBSERVED: this macOS accepts requests while permission is denied; do not equate denial with an API error",
+    "system_sleep": "NOT_EXECUTED: system UI timeoutReached; native sleep keys XF86Eject/Eject return keyNotFound",
+    "system_reboot": "NOT_EXECUTED: original boot time remains Oct 13, 2026; application relaunch is distinct"
+  }
+}

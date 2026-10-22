@@ -1,0 +1,154 @@
+{
+  "scope": "Dart JIT journal-only experiment; sequential implementations; no OS effects; not product startup",
+  "source_revision": "d17391a",
+  "fixture_file_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+  "task_rows_sha256": "7775cb832916e5136a3d6759d5e6507dc1a528b565dd36a4664a745e11d4b05c",
+  "runs": [
+    {
+      "scope": "Dart JIT journal-only experiment; sequential implementations; no OS effects; not product startup",
+      "fixture_file_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+      "task_rows_sha256": "7775cb832916e5136a3d6759d5e6507dc1a528b565dd36a4664a745e11d4b05c",
+      "runtime": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "results": [
+        {
+          "mode": "first",
+          "entries": 10000,
+          "batch_size": 256,
+          "v1_us": 633463,
+          "v1_writes": 80,
+          "v1_bytes": 85231254,
+          "append_us": 638839,
+          "uncompacted_replay_us": 606044,
+          "append_bytes": 4547715,
+          "append_flushes": 80,
+          "checkpoint_us": 40703,
+          "checkpoint_bytes": 2033899,
+          "prior_checkpoint_open_us": 1577,
+          "compacted_open_us": 29412,
+          "equivalent_after_replay_and_checkpoint": true
+        },
+        {
+          "mode": "reopen",
+          "entries": 10000,
+          "batch_size": 256,
+          "v1_us": 852423,
+          "v1_writes": 80,
+          "v1_bytes": 162678720,
+          "append_us": 1152455,
+          "uncompacted_replay_us": 1179253,
+          "append_bytes": 4547715,
+          "append_flushes": 80,
+          "checkpoint_us": 35898,
+          "checkpoint_bytes": 2033899,
+          "prior_checkpoint_open_us": 34757,
+          "compacted_open_us": 29913,
+          "equivalent_after_replay_and_checkpoint": true
+        }
+      ]
+    },
+    {
+      "scope": "Dart JIT journal-only experiment; sequential implementations; no OS effects; not product startup",
+      "fixture_file_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+      "task_rows_sha256": "7775cb832916e5136a3d6759d5e6507dc1a528b565dd36a4664a745e11d4b05c",
+      "runtime": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "results": [
+        {
+          "mode": "first",
+          "entries": 10000,
+          "batch_size": 256,
+          "v1_us": 566119,
+          "v1_writes": 80,
+          "v1_bytes": 85231254,
+          "append_us": 623753,
+          "uncompacted_replay_us": 593775,
+          "append_bytes": 4547715,
+          "append_flushes": 80,
+          "checkpoint_us": 34588,
+          "checkpoint_bytes": 2033899,
+          "prior_checkpoint_open_us": 1626,
+          "compacted_open_us": 34602,
+          "equivalent_after_replay_and_checkpoint": true
+        },
+        {
+          "mode": "reopen",
+          "entries": 10000,
+          "batch_size": 256,
+          "v1_us": 817411,
+          "v1_writes": 80,
+          "v1_bytes": 162678720,
+          "append_us": 1139693,
+          "uncompacted_replay_us": 1173431,
+          "append_bytes": 4547715,
+          "append_flushes": 80,
+          "checkpoint_us": 36610,
+          "checkpoint_bytes": 2033899,
+          "prior_checkpoint_open_us": 32567,
+          "compacted_open_us": 28431,
+          "equivalent_after_replay_and_checkpoint": true
+        }
+      ]
+    },
+    {
+      "scope": "Dart JIT journal-only experiment; sequential implementations; no OS effects; not product startup",
+      "fixture_file_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+      "task_rows_sha256": "7775cb832916e5136a3d6759d5e6507dc1a528b565dd36a4664a745e11d4b05c",
+      "runtime": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "results": [
+        {
+          "mode": "first",
+          "entries": 10000,
+          "batch_size": 256,
+          "v1_us": 556927,
+          "v1_writes": 80,
+          "v1_bytes": 85231254,
+          "append_us": 626288,
+          "uncompacted_replay_us": 607477,
+          "append_bytes": 4547715,
+          "append_flushes": 80,
+          "checkpoint_us": 36966,
+          "checkpoint_bytes": 2033899,
+          "prior_checkpoint_open_us": 1587,
+          "compacted_open_us": 29117,
+          "equivalent_after_replay_and_checkpoint": true
+        },
+        {
+          "mode": "reopen",
+          "entries": 10000,
+          "batch_size": 256,
+          "v1_us": 825453,
+          "v1_writes": 80,
+          "v1_bytes": 162678720,
+          "append_us": 1159979,
+          "uncompacted_replay_us": 1184565,
+          "append_bytes": 4547715,
+          "append_flushes": 80,
+          "checkpoint_us": 39116,
+          "checkpoint_bytes": 2033899,
+          "prior_checkpoint_open_us": 34624,
+          "compacted_open_us": 33324,
+          "equivalent_after_replay_and_checkpoint": true
+        }
+      ]
+    }
+  ],
+  "decision": "Keep production v1. Append bytes decrease but this prototype increases CPU/latency and replay cost. No format migration.",
+  "crash_validation": {
+    "test_file": "test/incremental_journal_experiment_test.dart",
+    "test_count": 12,
+    "boundaries": [
+      "v1 staging before rename",
+      "v1 pending commit before external effect",
+      "v1 external recorder acknowledged before result commit",
+      "v1 submitted commit",
+      "incremental checkpoint flushed",
+      "incremental before manifest publish",
+      "incremental after manifest publish"
+    ],
+    "termination": "SIGKILL only to owned child test processes; no actual OS notification in worker",
+    "limitations": [
+      "Not sudden power loss or filesystem/device flush certification",
+      "Prototype has no production migration, locking, size limits or old-generation garbage collection",
+      "No system reboot or sleep evidence"
+    ]
+  }
+}
