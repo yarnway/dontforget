@@ -277,3 +277,51 @@ Mac ZIP 为 23,822,422 字节，SHA-256 `32de8c5ec10e9bc542a6f72e96861d7536b8f51
 
 
 最终 CI 独立回读：`39733597774` 整体 success，质量、macOS / Android / Linux / Windows / iOS 五个平台均 success，非标签发布步骤按条件跳过。云端 Flutter 659 通过 / 1 项平台跳过、Python 47 通过；本机 Flutter 660 通过、静态分析无问题。三桌面启动和 Windows 安装升级卸载属于 CI 内检查，未扩大为全部设备业务验收。代码已推送 main；本轮原生产品、最终面板候选与两个性能进程均正常退出，原包、隔离容器和回退材料保留。
+
+## 2026-10-22：阶段 3D-5 写入优化与完整产品启动
+
+源码 `a614f7dd1371af4bd86ac5e7c908af877e0df5ef` 的 [产品 CI 39736112657](https://github.com/yarnway/dontforget/actions/runs/39736112657) 质量和五平台均成功，云端 Flutter 662 通过 / 1 平台跳过、Python 50 通过，本机 Flutter 663 通过、静态分析无问题。版本仍为 1.5.2+3 / schema 9；未发布正式签名版本。
+
+| 产物 | 完整性与范围 |
+| --- | --- |
+| 常规产品 Mac ZIP | 23,862,086 字节，SHA-256 `5b05e1623a9c95318d3f6f7c95984e7c594e90949040a16f80fc83e4c769bb6a`，位于 `build/ci_artifacts/native-r39736112657`。 |
+| profile ZIP | [测量 CI 39736121636](https://github.com/yarnway/dontforget/actions/runs/39736121636)，27,830,666 字节，SHA-256 `5634b273b984e03d5756cdf3f66bedda2a835227d6feab49517ba9320ad373cc`。 |
+| 产品启动测量 ZIP | 同一测量 CI 独立 release 产物，23,885,186 字节，SHA-256 `82a856b4308e7c7bf89ebe40c23c183a4ec63ca89a04c98ab25dafb5288ba69f`。真实产品入口加被动计时，不能冒充未开启计时的常规发布包。 |
+
+三种包均重新核验完整源码 revision、大小、摘要；所有派生副本的受保护内容和 codesign 验证通过。profile 使用全新 `perf-r39736121636` 身份，18 段全部前台完成，原任务/通知副本摘要与阶段 3D-4 相同。万条首次 / 重开对账为 12.575 / 22.917 秒、1,255 / 1,254 次原子替换；累计写入 1.297 / 2.588 GB。OS 传输是记录器，完整指标与原始报告见 [迭代记录](Iteration_v1.6.md)。profile 完成后正常退出并确认进程缺席。
+
+完整产品测量使用 `cold100-r39736121636`、`cold1000-r39736121636`、`cold10000-r39736121636` 三个独立身份。空容器初始化退出后，在 owner lock 下插入相同 2099 合成业务行，不伪造 journal、不访问用户运行库；样本逐行摘要校验通过。应用由原生工具启动，采集器在进程仍运行时校验 bundle/PID，并读取内核进程创建时间。百条 / 千条 / 万条首次 / 万条已有日志重开的完整就绪时间分别为 0.320 / 1.326 / 19.595 / 28.880 秒；全部完整报告 outcome=complete，万条重开 ID 与业务行不变。
+
+这四次启动均 visible=true、focused=false、lifecycle=inactive：属于工具默认后台启动的新进程测量，不是全程前台、系统重启或清空磁盘缓存后的启动。首帧是 raster 完成信号，万条首帧早于任务加载；不能把 0.28 秒写成万条任务已显示。测量身份未申请通知权限，真实调度 API 返回成功不等于 OS 保留/送达全部请求。原始证据：[产品启动报告](benchmarks/product-startup-3d5-2026-10-22.json)。
+
+所有测量候选随后通过原生文件选择、结构预览、覆盖确认和勾选恢复空基线，界面显示恢复完成；只读验证三张表逐行与空基线一致、integrity_check=ok、journal entries=[]。回退副本分别含 100 / 1,000 / 10,000 条原任务且摘要与样本一致，保留在以下 recovery 目录；候选进程均已正常退出：
+
+- 百条：`recovery-35dbd90e-5e83-4096-bafd-862d64864130`。
+- 千条：`recovery-9696c261-71ad-40fb-a295-b71bb11b3e40`。
+- 万条：`recovery-65448309-8c32-4b1a-b125-68d979957666`。
+
+本机系统 Python 3.9 解析 Dart 的 UTC Z 后缀失败，`d2e2ad0` 已修复只读采集器并新增回归，51 项 Python 通过；该修复不改变上述二进制或通知业务逻辑。
+
+### 阶段 3C-6：权限拒绝后恢复
+
+常规产品派生身份为 `com.example.dontForget.acceptance.native-r39736112657`。代理直接操作原生界面：系统授权卡片选择“不允许”，系统设置该身份显示 off，应用显示 Not enabled；原生确认恢复四条无密钥合成提醒后仍明确未开启。此时 OS 调度 API 已返回成功，日志四条 submitted/attempts=2，界面没有把 submitted 当成权限允许或送达。
+
+随后仅在系统设置中开启此隔离身份，临时将其提醒样式设为持续以便点击验收；应用点击 Refresh status 后显示 Allowed。点击 Retry reminder scheduling 后显示处理 4 条安排，四条 attempts=4、schedule/submitted，原生 ID 与三张业务表均未变。证据为 `build/native_acceptance/native-r39736112657/{denied,allowed}-readback.json`。这关闭权限拒绝、系统开启、刷新和手动重排的闭环，不扩展为拒绝期间送达或自动补发过期提醒。
+
+### 通知冷启动点击与热点击：本候选通过
+
+本次使用持续提醒并在通知可见时重新绑定 NotificationCenter，取得精确隔离通知的 AX 内容。此前临时横幅的读取超时仍保留原记录；本轮新证据不追溯修改旧包结论。
+
+| 验收 | 原生证据 |
+| --- | --- |
+| 冷启动点击 | 15:14:57 正常退出且进程缺席；15:16:44.119 系统向 ID `1967836952` 送达 `QA 1 ACK DUE`，通知 UUID `19D5E035-5C8B-485E-9A07-6015D0EEBF84`。15:16:56.754 点击后系统记录 contents response，15:16:56.758 明确 Launching … for response；随后先通过进程只读检查发现 PID 73568，再绑定已运行窗口。实际页面为 Task Details / QA 1 ACK DUE / 15:16 / Once，未手动启动代替点击。 |
+| 工具结果核对 | 冷点击后继续读取已经关闭的通知窗口返回 noWindowsAvailable；该错误不等于点击未发生。没有重放点击，通过系统 response/launch、精确新进程和目标详情页三方确认动作生效。 |
+| 热点击 | 15:17:44.122 系统向 ID `167290217` 送达 `QA 2 SNOOZE DAILY`，UUID `F953AE15-56E5-4082-A92B-79051FC4CF27`。15:17:49.286 点击，系统向同一 PID 73568 回调 response；页面切换到 Task Details / QA 2 SNOOZE DAILY / 15:17 / Daily。 |
+| 数据与 ID | 点击后业务三表逐行与 fixture 一致，无隐式确认/完成/延后。冷启动只重排三条仍在未来的任务，attempts=6；已到期第一条保持 attempts=4。四个原生 ID 均未改变。 |
+| 清理 | 原生确认恢复 `empty-baseline.json`，显示恢复完成并回到四区全 0；三表逐行匹配初始空库、integrity_check=ok、epoch 换代、journal entries=[]。完整四任务回退保留在 `recovery-37c8d53f-d356-4e24-b6c1-738f0d397bcf/rollback.db`，逐行匹配输入样本。候选正常退出且进程缺席，仅该身份的提醒样式恢复为临时，通知权限保持 Allowed。 |
+
+可审阅证据：[权限与点击记录](benchmarks/notification-native-3c6-2026-10-22.json)、[冷启动目标页](benchmarks/notification-cold-click-3c6-2026-10-22.png)、[热点击目标页](benchmarks/notification-hot-click-3c6-2026-10-22.png)。现场原始日志和回退核验位于 `build/native_acceptance/native-r39736112657`；本轮全部 profile、启动测量与通知产品进程均已退出，历史隔离身份和用户数据未清理。
+
+最终源码 `d2e2ad0442090b1924d990931399a64854960830` 的 [CI 39738261734](https://github.com/yarnway/dontforget/actions/runs/39738261734) 质量及五平台全部成功：Flutter 662 通过 / 1 平台跳过、Python 51 通过，静态分析无问题。`d2e2ad0` 与实测产品 `a614f7d` 仅差 Python 采集器兼容修复及其回归测试，没有应用代码差异。三桌面启动、Windows 安装升级卸载属于 CI 检查，未扩大为其他平台业务真机验收。
+
+本阶段完成：通知日志写入优化、同数据集完整前台 profile、完整产品后台新进程启动基线、权限拒绝后恢复、Mac 通知冷启动与热点击、隔离恢复清理。剩余：完整产品前台重复测量与日志增量存储、恢复重建批次、旧 epoch/已删任务/迟到通知点击、OS 调度失败与系统重启/休眠/时区/DST、多模型迁移与降级、其他平台业务与正式签名发布。录音和播放仍允许，本轮未新增录音或听感验收。

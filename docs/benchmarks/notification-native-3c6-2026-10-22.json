@@ -1,0 +1,283 @@
+{
+  "source_revision": "a614f7dd1371af4bd86ac5e7c908af877e0df5ef",
+  "build_run": 39736112657,
+  "bundle": "com.example.dontForget.acceptance.native-r39736112657",
+  "mode": "ordinary release product; native OS API and UI; synthetic tasks; no keys or audio",
+  "permission_ui_sequence": [
+    "system request denied",
+    "app Not enabled",
+    "restore four synthetic tasks through native confirmation",
+    "system setting enable exact isolated bundle",
+    "app Refresh status -> Allowed",
+    "manual retry -> processed 4 schedules"
+  ],
+  "cold_click": {
+    "process_absent_before_delivery": {
+      "process_absent": true,
+      "checked_at": "2026-10-22T07:14:57.798953+00:00",
+      "expected_cold_due": "2026-10-22T07:16:44.660Z",
+      "expected_hot_due": "2026-10-22T07:17:44.660Z"
+    },
+    "notice_title": "QA 1 ACK DUE",
+    "notice_uuid": "19D5E035-5C8B-485E-9A07-6015D0EEBF84",
+    "clicked_at_local": "2026-10-22T15:16:56.754+08:00",
+    "launched_pid": 73568,
+    "post_click_page": "Task Details / QA 1 ACK DUE / 2026-10-22 15:16 / Once",
+    "tool_boundary": "After notification click, reading its closed window returned noWindowsAvailable. Exact app process was independently found before re-binding the UI; system logs confirm launch for notification response. No manual app launch substituted for the click."
+  },
+  "hot_click": {
+    "notice_title": "QA 2 SNOOZE DAILY",
+    "notice_uuid": "F953AE15-56E5-4082-A92B-79051FC4CF27",
+    "clicked_at_local": "2026-10-22T15:17:49.286+08:00",
+    "pid_before_and_after": 73568,
+    "post_click_page": "Task Details / QA 2 SNOOZE DAILY / 2026-10-22 15:17 / Daily"
+  },
+  "system_events": [
+    "2026-10-22 15:16:44.119 Df usernoted[2515:1e97515] [com.apple.unc:application] Delivering <NotificationRecord app:\"com.example.dontForget.acceptance.native-r39736112657\" ident:\"C9D0-0AF4\" req:\"1967836952\" uuid:\"19D5E035\" source:\"42F8B442\" dismissAfterDefaultAction:true> to [ .alert .lockScreen .notificationCenter ]: updatedExisting: false",
+    "2026-10-22 15:16:56.754 Df usernoted[2515:1e9597c] [com.apple.unc:application] Received response <NotificationRecord app:\"com.example.dontForget.acceptance.native-r39736112657\" ident:\"C9D0-0AF4\" req:\"1967836952\" uuid:\"19D5E035\" source:\"42F8B442\" dismissAfterDefaultAction:true <response action: contents actIdent:  foreground: true text: nil> >",
+    "2026-10-22 15:16:56.758 Df usernoted[2515:1e97515] [com.apple.unc:application] Launching com.example.dontForget.acceptance.native-r39736112657 at path <private> for response",
+    "2026-10-22 15:17:44.122 Df usernoted[2515:1e97824] [com.apple.unc:application] Delivering <NotificationRecord app:\"com.example.dontForget.acceptance.native-r39736112657\" ident:\"2660-58A9\" req:\"167290217\" uuid:\"F953AE15\" source:\"42F8B442\" dismissAfterDefaultAction:true> to [ .alert .lockScreen .notificationCenter ]: updatedExisting: false",
+    "2026-10-22 15:17:49.286 Df usernoted[2515:1e9808f] [com.apple.unc:application] Received response <NotificationRecord app:\"com.example.dontForget.acceptance.native-r39736112657\" ident:\"2660-58A9\" req:\"167290217\" uuid:\"F953AE15\" source:\"42F8B442\" dismissAfterDefaultAction:true <response action: contents actIdent:  foreground: true text: nil> >",
+    "2026-10-22 15:17:49.287 Df usernoted[2515:1e9808f] [com.apple.unc:application] Notifying UserNotifications client com.example.dontForget.acceptance.native-r39736112657:73568 about response <NotificationRecord app:\"com.example.dontForget.acceptance.native-r39736112657\" ident:\"2660-58A9\" req:\"167290217\" uuid:\"F953AE15\" source:\"42F8B442\" dismissAfterDefaultAction:true <response action: contents actIdent:  foreground: true text: nil> >",
+    "2026-10-22 15:17:49.288 Df usernoted[2515:1e9808f] [com.apple.unc:application] Bringing app com.example.dontForget.acceptance.native-r39736112657 front for response with URL: file:///Users/james/gitresources/opensources/dontforget/build/native_acceptance/native-r39736112657/dont_forget.app/"
+  ],
+  "screenshots": {
+    "cold": {
+      "file": "notification-cold-click-3c6-2026-10-22.png",
+      "sha256": "bd1802f861eff07c58e260b773646997a2299ad508c5806e89874f2ec020a652"
+    },
+    "hot": {
+      "file": "notification-hot-click-3c6-2026-10-22.png",
+      "sha256": "877c12ec21a360604ab451789e65927c6a71e6f115ad848690e9d7f732260a16"
+    }
+  },
+  "readbacks": {
+    "denied": {
+      "checked_at": "2026-10-22T07:14:01.476339+00:00",
+      "label": "denied",
+      "business_rows_unchanged": true,
+      "integrity_check": "ok",
+      "journal": {
+        "version": 1,
+        "epoch": "e3058d3f-7f34-4ca6-aaf2-1b0d16512473",
+        "entries": [
+          {
+            "reminderId": "qa-ack-due",
+            "nativeId": 1967836952,
+            "action": "schedule",
+            "status": "submitted",
+            "attempts": 2,
+            "triggerUtcMicros": 1792653404660000,
+            "noticeRevision": 0,
+            "attemptedAt": "2026-10-22T07:13:48.657938Z"
+          },
+          {
+            "reminderId": "qa-snooze-daily",
+            "nativeId": 167290217,
+            "action": "schedule",
+            "status": "submitted",
+            "attempts": 2,
+            "triggerUtcMicros": 1792653464660000,
+            "noticeRevision": 0,
+            "attemptedAt": "2026-10-22T07:13:48.665539Z"
+          },
+          {
+            "reminderId": "qa-daily-early",
+            "nativeId": 1329258270,
+            "action": "schedule",
+            "status": "submitted",
+            "attempts": 2,
+            "triggerUtcMicros": 1792739564660000,
+            "noticeRevision": 0,
+            "attemptedAt": "2026-10-22T07:13:48.672403Z"
+          },
+          {
+            "reminderId": "qa-month-end",
+            "nativeId": 315234779,
+            "action": "schedule",
+            "status": "submitted",
+            "attempts": 2,
+            "triggerUtcMicros": 1793448000000000,
+            "noticeRevision": 0,
+            "attemptedAt": "2026-10-22T07:13:48.678981Z"
+          }
+        ]
+      }
+    },
+    "allowed": {
+      "checked_at": "2026-10-22T07:14:39.840958+00:00",
+      "label": "allowed",
+      "business_rows_unchanged": true,
+      "integrity_check": "ok",
+      "journal": {
+        "version": 1,
+        "epoch": "e3058d3f-7f34-4ca6-aaf2-1b0d16512473",
+        "entries": [
+          {
+            "reminderId": "qa-ack-due",
+            "nativeId": 1967836952,
+            "action": "schedule",
+            "status": "submitted",
+            "attempts": 4,
+            "triggerUtcMicros": 1792653404660000,
+            "noticeRevision": 0,
+            "attemptedAt": "2026-10-22T07:14:34.757547Z"
+          },
+          {
+            "reminderId": "qa-snooze-daily",
+            "nativeId": 167290217,
+            "action": "schedule",
+            "status": "submitted",
+            "attempts": 4,
+            "triggerUtcMicros": 1792653464660000,
+            "noticeRevision": 0,
+            "attemptedAt": "2026-10-22T07:14:34.766117Z"
+          },
+          {
+            "reminderId": "qa-daily-early",
+            "nativeId": 1329258270,
+            "action": "schedule",
+            "status": "submitted",
+            "attempts": 4,
+            "triggerUtcMicros": 1792739564660000,
+            "noticeRevision": 0,
+            "attemptedAt": "2026-10-22T07:14:34.775031Z"
+          },
+          {
+            "reminderId": "qa-month-end",
+            "nativeId": 315234779,
+            "action": "schedule",
+            "status": "submitted",
+            "attempts": 4,
+            "triggerUtcMicros": 1793448000000000,
+            "noticeRevision": 0,
+            "attemptedAt": "2026-10-22T07:14:34.782973Z"
+          }
+        ]
+      }
+    },
+    "after-reopen": {
+      "checked_at": "2026-10-22T07:17:32.110341+00:00",
+      "label": "after-reopen",
+      "business_rows_unchanged": true,
+      "integrity_check": "ok",
+      "journal": {
+        "version": 1,
+        "epoch": "e3058d3f-7f34-4ca6-aaf2-1b0d16512473",
+        "entries": [
+          {
+            "reminderId": "qa-ack-due",
+            "nativeId": 1967836952,
+            "action": "schedule",
+            "status": "submitted",
+            "attempts": 4,
+            "triggerUtcMicros": 1792653404660000,
+            "noticeRevision": 0,
+            "attemptedAt": "2026-10-22T07:14:34.757547Z"
+          },
+          {
+            "reminderId": "qa-snooze-daily",
+            "nativeId": 167290217,
+            "action": "schedule",
+            "status": "submitted",
+            "attempts": 6,
+            "triggerUtcMicros": 1792653464660000,
+            "noticeRevision": 0,
+            "attemptedAt": "2026-10-22T07:16:57.018756Z"
+          },
+          {
+            "reminderId": "qa-daily-early",
+            "nativeId": 1329258270,
+            "action": "schedule",
+            "status": "submitted",
+            "attempts": 6,
+            "triggerUtcMicros": 1792739564660000,
+            "noticeRevision": 0,
+            "attemptedAt": "2026-10-22T07:16:57.018766Z"
+          },
+          {
+            "reminderId": "qa-month-end",
+            "nativeId": 315234779,
+            "action": "schedule",
+            "status": "submitted",
+            "attempts": 6,
+            "triggerUtcMicros": 1793448000000000,
+            "noticeRevision": 0,
+            "attemptedAt": "2026-10-22T07:16:57.018769Z"
+          }
+        ]
+      }
+    },
+    "after-click-attempt": {
+      "checked_at": "2026-10-22T07:18:09.829769+00:00",
+      "label": "after-click-attempt",
+      "business_rows_unchanged": true,
+      "integrity_check": "ok",
+      "journal": {
+        "version": 1,
+        "epoch": "e3058d3f-7f34-4ca6-aaf2-1b0d16512473",
+        "entries": [
+          {
+            "reminderId": "qa-ack-due",
+            "nativeId": 1967836952,
+            "action": "schedule",
+            "status": "submitted",
+            "attempts": 4,
+            "triggerUtcMicros": 1792653404660000,
+            "noticeRevision": 0,
+            "attemptedAt": "2026-10-22T07:14:34.757547Z"
+          },
+          {
+            "reminderId": "qa-snooze-daily",
+            "nativeId": 167290217,
+            "action": "schedule",
+            "status": "submitted",
+            "attempts": 6,
+            "triggerUtcMicros": 1792653464660000,
+            "noticeRevision": 0,
+            "attemptedAt": "2026-10-22T07:16:57.018756Z"
+          },
+          {
+            "reminderId": "qa-daily-early",
+            "nativeId": 1329258270,
+            "action": "schedule",
+            "status": "submitted",
+            "attempts": 6,
+            "triggerUtcMicros": 1792739564660000,
+            "noticeRevision": 0,
+            "attemptedAt": "2026-10-22T07:16:57.018766Z"
+          },
+          {
+            "reminderId": "qa-month-end",
+            "nativeId": 315234779,
+            "action": "schedule",
+            "status": "submitted",
+            "attempts": 6,
+            "triggerUtcMicros": 1793448000000000,
+            "noticeRevision": 0,
+            "attemptedAt": "2026-10-22T07:16:57.018769Z"
+          }
+        ]
+      }
+    },
+    "cleanup": {
+      "checked_at": "2026-10-22T07:19:47.274513+00:00",
+      "bundle": "com.example.dontForget.acceptance.native-r39736112657",
+      "process_absent": true,
+      "current_equals_empty_baseline": true,
+      "integrity_check": "ok",
+      "journal_empty": true,
+      "epoch_rotated": true,
+      "rollback": "/Users/james/Library/Containers/com.example.dontForget.acceptance.native-r39736112657/Data/Library/Application Support/com.example.dontForget.acceptance.native-r39736112657/databases/recovery-37c8d53f-d356-4e24-b6c1-738f0d397bcf/rollback.db",
+      "rollback_all_business_rows_match_fixture": true,
+      "native_ui_result": "恢复完成; four board sections zero",
+      "alert_style_reset": "temporary",
+      "permission_at_end": "allowed"
+    }
+  },
+  "scope_limits": [
+    "Same-session Mac cold process and hot click only; no OS reboot or late/stale notification acceptance",
+    "Used persistent alerts and a fresh NotificationCenter binding; prior temporary-banner failures are not retroactively passed",
+    "Permission recovery was followed by explicit refresh and manual scheduling; no claim of automatic expired reminder replay"
+  ]
+}
