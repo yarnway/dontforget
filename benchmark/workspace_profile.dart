@@ -522,7 +522,7 @@ class _BenchmarkState extends State<_Benchmark>
       if ((size.width - width).abs() > .01 ||
           (size.height - _boardHeight).abs() > .01) {
         throw StateError(
-          'Fixed viewport $width x $_boardHeight unavailable: $size',
+          'Fixed viewport $width x $_boardHeight unavailable: ${size.width} x ${size.height}',
         );
       }
       viewports.add({
@@ -673,8 +673,14 @@ class _BenchmarkState extends State<_Benchmark>
       body: Column(
         children: [
           SizedBox(
-            height: 40,
-            child: Center(child: Text(_progress, maxLines: 2)),
+            height: 32,
+            child: Center(
+              child: Text(
+                _progress,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ),
           if (!_running)
             CheckboxListTile(
@@ -717,7 +723,7 @@ class _BenchmarkState extends State<_Benchmark>
           ),
           if (_root != null)
             SizedBox(
-              height: 40,
+              height: 24,
               child: SelectableText(
                 'Results: ${_root!.path}/results.json',
                 maxLines: 1,
