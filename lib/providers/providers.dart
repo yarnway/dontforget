@@ -260,21 +260,23 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           // the SAME failed occurrence. Edits, pending crash intents and old
           // failures still reconcile immediately; manual rebuild is immediate.
           final entry = journal[reminder.id];
-          final attempted = DateTime.tryParse(entry?.attemptedAt ?? '');
-          if (entry?.status == 'failed' &&
-              entry?.action == 'schedule' &&
-              entry?.triggerUtcMicros ==
+          if (entry != null &&
+              entry.status == 'failed' &&
+              entry.action == 'schedule' &&
+              entry.triggerUtcMicros ==
                   reminder.triggerTime!.toUtc().microsecondsSinceEpoch &&
-              entry?.noticeRevision == reminder.noticeRevision &&
-              attempted != null &&
-              now.difference(attempted).abs() < const Duration(minutes: 1)) {
-            if (StartupTrace.retryEnabled) {
-              StartupTrace.notificationEvent('startup_failure_cooldown', {
-                'native_id': entry!.nativeId,
-                'attempts': entry.attempts,
-              });
+              entry.noticeRevision == reminder.noticeRevision) {
+            final attempted = DateTime.tryParse(entry.attemptedAt ?? '');
+            if (attempted != null &&
+                now.difference(attempted).abs() < const Duration(minutes: 1)) {
+              if (StartupTrace.retryEnabled) {
+                StartupTrace.notificationEvent('startup_failure_cooldown', {
+                  'native_id': entry.nativeId,
+                  'attempts': entry.attempts,
+                });
+              }
+              return;
             }
-            return;
           }
           await _dbHelper.runOperation(generation, () async {
             _dbHelper.checkGeneration(generation);
