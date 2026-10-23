@@ -15,6 +15,7 @@ import '../../providers/task_search_provider.dart';
 import '../../services/notification_service.dart';
 import '../../services/notification_permission_service.dart';
 import '../../services/notification_retry_coordinator.dart';
+import '../../services/time_zone_change_coordinator.dart';
 import '../../services/startup_trace.dart';
 import '../../services/recovery/runtime_gate.dart';
 import 'settings_screen.dart';
@@ -61,6 +62,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _heartbeatTimer?.cancel();
     _searchDebounce?.cancel();
     await Future.wait([
+      if (_timeZoneChanges != null) _timeZoneChanges!.stop(),
       if (_notificationRetries != null) _notificationRetries!.stop(),
       if (_dueSubscription != null) _dueSubscription!.cancel(),
       if (_catchUpDigestSubscription != null)
@@ -80,6 +82,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   Timer? _heartbeatTimer;
   NotificationRetryCoordinator? _notificationRetries;
+  TimeZoneChangeCoordinator? _timeZoneChanges;
   StreamSubscription<Reminder>? _dueSubscription;
   StreamSubscription<List<Reminder>>? _catchUpDigestSubscription;
   StreamSubscription<List<Reminder>>? _suppressedSubscription;
@@ -182,11 +185,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed,
     );
 
+    _timeZoneChanges = TimeZoneChangeCoordinator(
+      reload: () async {
+        if (!_runtimeActive) throw StateError('Runtime is no longer active.');
+        await ref.read(remindersProvider.notifier).refreshForTimeZoneChange();
+        if (!_runtimeActive) return;
+        final currentKeys = ref
+            .read(remindersProvider)
+            .map(reminderOccurrenceKey)
+            .toSet();
+        _promptedReminderIds.retainAll(currentKeys);
+        _dueNotices.removeWhere((key, _) => !currentKeys.contains(key));
+        _contextDigest = [];
+        StartupTrace.notificationEvent('time_zone_reconciled', {});
+      },
+    );
+    unawaited(_timeZoneChanges!.tick());
+
     // Refresh app-visible reminders and retry a bounded batch while foreground.
     _heartbeatTimer = Timer.periodic(const Duration(seconds: 10), (_) {
-      _checkDueReminders();
-      unawaited(_notificationRetries?.tick());
-      if (mounted && _runtimeActive) _noticeClock.value = DateTime.now();
+      unawaited(_refreshClockAndReminders());
     });
   }
 
@@ -199,6 +217,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _noticeClock.dispose();
     _shortcutFocus.dispose();
     _heartbeatTimer?.cancel();
+    unawaited(_timeZoneChanges?.stop());
     unawaited(_notificationRetries?.stop());
     _dueSubscription?.cancel();
     _catchUpDigestSubscription?.cancel();
@@ -215,12 +234,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _notificationRetries?.setForeground(state == AppLifecycleState.resumed);
     if (state == AppLifecycleState.resumed && _runtimeActive) {
-      unawaited(_notificationRetries?.tick());
       // Desktop/mobile timers can pause while hidden or asleep. Reconcile from
       // current task state instead of waiting for another timer/broadcast.
-      _checkDueReminders();
-      _noticeClock.value = DateTime.now();
+      unawaited(_refreshClockAndReminders());
     }
+  }
+
+  Future<void> _refreshClockAndReminders() async {
+    if (!_runtimeActive) return;
+    await _timeZoneChanges?.tick();
+    if (!_runtimeActive) return;
+    _checkDueReminders();
+    unawaited(_notificationRetries?.tick());
+    _noticeClock.value = DateTime.now();
   }
 
   void _checkDueReminders() {

@@ -134,6 +134,24 @@ void main() {
       });
 
       test(
+        'timezone refresh reparses saved tasks and preserves stable IDs',
+        () async {
+          notifier = RemindersNotifier(helper, notifications: service);
+          await notifier!.ready;
+          final before = List.of(notifier!.state);
+          final ids = Set.of(native.pending);
+          final rows = await (await helper.database).query('Reminders');
+          await notifier!.refreshForTimeZoneChange();
+          expect(notifier!.state.length, before.length);
+          expect(identical(notifier!.state.first, before.first), isFalse);
+          expect(native.pending, ids);
+          expect(native.schedules, 514);
+          expect(await (await helper.database).query('Reminders'), rows);
+          expect(native.peakActive, lessThanOrEqualTo(32));
+        },
+      );
+
+      test(
         'startup bounds native concurrency and persists intent before effects',
         () async {
           native.release = Completer<void>();

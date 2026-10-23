@@ -1188,6 +1188,13 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
 
   Future<void> refreshReminders() =>
       _enqueue(_loadReminders, requiresCurrentState: false);
+
+  /// Reparse floating local dates and rebuild timers/native requests together.
+  /// Propagate read/reconciliation errors so the timezone observer retries.
+  Future<void> refreshForTimeZoneChange() => _enqueue(
+    (generation) => _loadReminders(generation, startup: true),
+    requiresCurrentState: false,
+  );
 }
 
 final mediaRecordsProvider =

@@ -22,6 +22,18 @@ class MainFlutterWindow: NSWindow {
       Self.scheduleNotification(call.arguments, result: result)
     }
 
+    let systemTime = FlutterMethodChannel(
+      name: "dontforget/system_time",
+      binaryMessenger: flutterViewController.engine.binaryMessenger)
+    systemTime.setMethodCallHandler { call, result in
+      guard call.method == "timeZoneIdentifier" else {
+        result(FlutterMethodNotImplemented)
+        return
+      }
+      NSTimeZone.resetSystemTimeZone()
+      result(TimeZone.current.identifier)
+    }
+
     super.awakeFromNib()
   }
 
