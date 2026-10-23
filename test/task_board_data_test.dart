@@ -6,7 +6,7 @@ void main() {
   Reminder task(String id, int level, {bool done = false}) =>
       Reminder(id: id, taskTitle: id, quadrantLevel: level, isCompleted: done);
   test(
-    'one-pass projection preserves category order, counts and hidden folds',
+    'exact-sized projection preserves category order, counts and hidden folds',
     () {
       var checks = 0;
       final tasks = [
@@ -95,4 +95,35 @@ void main() {
       expect(data.pending[i], grouped.where((t) => !t.isCompleted).length);
     }
   });
+  test(
+    'single-use input is traversed once and each fold decision is used once',
+    () {
+      var iterations = 0;
+      Iterable<Reminder> input() sync* {
+        iterations++;
+        if (iterations > 1) throw StateError('single use');
+        yield task('a', 4);
+        yield task('b', 4);
+        yield task('bad', 99);
+      }
+
+      var folds = 0;
+      final data = TaskBoardData.project(
+        input(),
+        isFolded: (_) => ++folds == 1,
+      );
+      expect(iterations, 1);
+      expect(folds, 2);
+      expect(data.sections[3].folded.single.id, 'a');
+      expect(data.sections[3].active.single.id, 'b');
+      expect(data.pending, [0, 0, 0, 2]);
+      expect(
+        TaskBoardData.project(
+          [],
+          isFolded: (_) => true,
+        ).sections.every((s) => s.isEmpty),
+        isTrue,
+      );
+    },
+  );
 }

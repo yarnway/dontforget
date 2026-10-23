@@ -1,8 +1,10 @@
+import 'dart:typed_data';
+
 import '../../models/reminder.dart';
 
-/// Project the visible sections in one pass, preserving source order. Narrow
-/// boards only retain rows for the selected category; all four counts remain
-/// available. A section exposes list rows by offset without flattening copies.
+/// Classify once, then fill exact-sized buckets without growing/copying large
+/// reference arrays. Hidden categories retain only counts. Input order and fold
+/// decisions are preserved, including for a single-use Iterable.
 class TaskBoardData {
   TaskBoardData._(this.sections, this.pending);
 
@@ -14,30 +16,49 @@ class TaskBoardData {
     int? visibleCategory,
     required bool Function(Reminder) isFolded,
   }) {
-    final sections = List.generate(4, (_) => TaskSectionData());
+    final tasks = reminders is List<Reminder> ? reminders : reminders.toList();
+    final buckets = Uint8List(tasks.length);
+    final sizes = List.filled(12, 0);
     final pending = List.filled(4, 0);
-    for (final task in reminders) {
+    for (var i = 0; i < tasks.length; i++) {
+      final task = tasks[i];
       final index = task.quadrantLevel - 1;
-      if (index < 0 || index >= sections.length) continue;
+      buckets[i] = 255;
+      if (index < 0 || index >= 4) continue;
       if (!task.isCompleted) pending[index]++;
       if (visibleCategory != null && visibleCategory != index) continue;
-      final section = sections[index];
-      if (task.isCompleted) {
-        section.completed.add(task);
-      } else if (index == 3 && isFolded(task)) {
-        section.folded.add(task);
-      } else {
-        section.active.add(task);
-      }
+      final kind = task.isCompleted
+          ? 1
+          : (index == 3 && isFolded(task) ? 2 : 0);
+      final bucket = index * 3 + kind;
+      buckets[i] = bucket;
+      sizes[bucket]++;
     }
+    final rows = List.generate(
+      12,
+      (i) => sizes[i] == 0
+          ? <Reminder>[]
+          : List<Reminder>.filled(sizes[i], tasks.first, growable: false),
+    );
+    final offsets = List.filled(12, 0);
+    for (var i = 0; i < tasks.length; i++) {
+      final bucket = buckets[i];
+      if (bucket != 255) rows[bucket][offsets[bucket]++] = tasks[i];
+    }
+    final sections = List.generate(
+      4,
+      (i) => TaskSectionData._(rows[i * 3], rows[i * 3 + 1], rows[i * 3 + 2]),
+    );
     return TaskBoardData._(sections, pending);
   }
 }
 
 class TaskSectionData {
-  final active = <Reminder>[];
-  final completed = <Reminder>[];
-  final folded = <Reminder>[];
+  TaskSectionData() : this._([], [], []);
+  TaskSectionData._(this.active, this.completed, this.folded);
+  final List<Reminder> active;
+  final List<Reminder> completed;
+  final List<Reminder> folded;
   bool get isEmpty => active.isEmpty && completed.isEmpty && folded.isEmpty;
 
   int rowCount({
