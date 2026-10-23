@@ -1,0 +1,83 @@
+{
+  "state": "COMPLETED",
+  "completedAt": "2026-10-23T23:24:27.878534+08:00",
+  "targets": [
+    {
+      "path": "build/test_cache",
+      "bytes": 62101856,
+      "files": 1
+    },
+    {
+      "path": "build/unit_test_assets",
+      "bytes": 2121711,
+      "files": 12
+    },
+    {
+      "path": "build/native_assets",
+      "bytes": 1968039,
+      "files": 3
+    },
+    {
+      "path": ".dart_tool/hooks_runner",
+      "bytes": 24752874,
+      "files": 30
+    },
+    {
+      "path": ".dart_tool/flutter_build",
+      "bytes": 9025,
+      "files": 1
+    }
+  ],
+  "logicalBytes": 90953505,
+  "retainedNativePackages": [
+    "build/native_acceptance/timezone-r39952545684",
+    "build/native_acceptance/profile-final15-r39937296463",
+    "build/native_acceptance/product-final15-r39937296463",
+    "build/native_acceptance/profile-final-r39918373329",
+    "build/native_acceptance/upgrade-before-r39933362241",
+    "build/native_acceptance/upgrade-after-r39933362241"
+  ],
+  "boundaries": [
+    "No Library containers, user data, notification journals, SDK or shared package cache targeted.",
+    "All old native packages are currently retained as needed baselines or rollback material."
+  ],
+  "retainedFilesHashVerified": 65,
+  "planSha256": "45741b271bb58b09cf97ad726b34624f5ff2b5b212792f37c0ac5476efb5b83d",
+  "oldPackagesDeleted": 0,
+  "scope": "project-generated caches only; logical byte count is not an APFS physical-space guarantee",
+  "finalPass": {
+    "completedAt": "2026-10-23T23:31:32.146891+08:00",
+    "targets": [
+      {
+        "path": "build/test_cache",
+        "bytes": 62107016,
+        "files": 1
+      },
+      {
+        "path": "build/unit_test_assets",
+        "bytes": 2121711,
+        "files": 12
+      },
+      {
+        "path": "build/native_assets",
+        "bytes": 1968039,
+        "files": 3
+      },
+      {
+        "path": ".dart_tool/hooks_runner",
+        "bytes": 24752229,
+        "files": 30
+      },
+      {
+        "path": ".dart_tool/flutter_build",
+        "bytes": 9025,
+        "files": 1
+      }
+    ],
+    "logicalBytes": 90958020,
+    "retainedFilesHashVerified": 65,
+    "planSha256": "51ac0aebf4026fede72fa2c4fd7dd14e962b1f4b32783d283729f242ca06e617"
+  },
+  "logicalBytesDeletedAcrossBothPasses": 181911525,
+  "note": "The second pass removes caches recreated by follow-up verification. Cumulative bytes are not net physical space freed."
+}

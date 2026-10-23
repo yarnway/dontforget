@@ -3,11 +3,11 @@
   "version": "1.6.0+5",
   "schema": 10,
   "baseRevision": "c7780bf99fc2436745e91d8786d412dbf2aaac69",
-  "implementationRevision": "containing source commit",
+  "implementationRevision": "14fc6f8d4131f2db2239e4244988655d6716e160",
   "localValidation": {
     "flutter": "3.44.9",
     "dart": "3.12.2",
-    "flutterTestsPassed": 806,
+    "flutterTestsPassed": 807,
     "pythonTestsPassed": 63,
     "analyze": "PASS",
     "diffCheck": "PASS",
@@ -29,7 +29,9 @@
   "logDigests": {
     "dontforget-stage17-final-tests.log": "8d9e47978f9adea3abb7f60a7320264feea63747fb3c62bdd4fe1c68c9157a19",
     "dontforget-stage17-final-static.log": "dbda1833eee6bff630e87a8d9a264db72a23c5a1a8f2a23d8bea5c40c48107d3",
-    "dontforget-stage17-complete-python.log": "dc0504caac1405fd476645e6bd6bac2821fca89a88a2dd9c480be66417d2bcf0"
+    "dontforget-stage17-complete-python.log": "dc0504caac1405fd476645e6bd6bac2821fca89a88a2dd9c480be66417d2bcf0",
+    "dontforget-stage17-route-lifetime-full.log": "3dd5ab3fefb7db18883cf62b30cae205d1a77291d5a29d03b319e568247ba053",
+    "dontforget-stage17-route-lifetime-static.log": "e71e09448d39c15f4ae5e44bb92d880d9c4e3217b0c9968e5a884d26e364deeb"
   },
   "scope": [
     "v7/v8/v9 to v10 migration",
@@ -41,7 +43,8 @@
     "bounded extraction routing and cooldown",
     "no fallback after cancellation",
     "original text saved once",
-    "custom transcription endpoint and redirect credential isolation"
+    "custom transcription endpoint and redirect credential isolation",
+    "per-request cancellation lifetime; finishing one route does not cancel another"
   ],
   "nativeFixtures": {
     "directory": "build/native_acceptance/models-stage17-materials",
@@ -70,7 +73,13 @@
     "manifestSha256": "d8360fce160f0781d6a1cc00ba49890bc773fb8081b2dd8285c1824c2f5b9f42"
   },
   "network": "isolated fake Dio transport only; no real provider call",
-  "ci": "PENDING_PUSH",
+  "ci": {
+    "runId": 39978855156,
+    "url": "https://github.com/yarnway/dontforget/actions/runs/39978855156",
+    "status": "pending",
+    "conclusion": null,
+    "checkedAt": "2026-10-23T23:32:13.211768+08:00"
+  },
   "nativeModelAcceptance": "NOT_RUN",
   "formalRelease": false,
   "remaining": [
@@ -80,5 +89,13 @@
     "persistent bounded health history and input cancellation UX",
     "10000-row pre-upgrade snapshot performance",
     "system power/DST and other-platform business acceptance"
-  ]
+  ],
+  "initialImplementationRevision": "2bdde9801cc12b50783c374cfbdad38132fd3416",
+  "cleanupRecord": "cleanup-4a-2026-10-23.json",
+  "priorCi": {
+    "runId": 39977699060,
+    "revision": "2bdde9801cc12b50783c374cfbdad38132fd3416",
+    "quality": "PASS",
+    "candidateBuilds": "superseded by lifetime follow-up; not final evidence"
+  }
 }
