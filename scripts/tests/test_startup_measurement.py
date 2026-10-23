@@ -1,6 +1,7 @@
 import importlib.util
 from pathlib import Path
 import unittest
+import subprocess
 
 spec = importlib.util.spec_from_file_location('startup_measurement', Path(__file__).resolve().parents[1] / 'read_macos_startup_measurement.py')
 module = importlib.util.module_from_spec(spec)
@@ -8,6 +9,15 @@ spec.loader.exec_module(module)
 
 
 class StartupMeasurementTest(unittest.TestCase):
+    def test_retry_build_help_and_unknown_arguments_do_not_build(self):
+        script = Path(__file__).resolve().parents[1] / 'build_macos_startup_measurement.sh'
+        help_result = subprocess.run(['bash', str(script), '--help'], capture_output=True, text=True)
+        self.assertEqual(help_result.returncode, 0)
+        self.assertIn('--retry-trace', help_result.stdout)
+        rejected = subprocess.run(['bash', str(script), '--retry-trace', '--unknown'], capture_output=True, text=True)
+        self.assertEqual(rejected.returncode, 64)
+        self.assertIn('Unknown arguments', rejected.stderr)
+
     def sample(self):
         return {'dart_entry_utc': '2026-10-22T06:00:00+00:00',
                 'milestones_us': {'storage_ready': 100, 'notifications_ready': 900},

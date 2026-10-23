@@ -15,6 +15,7 @@ import '../../providers/task_search_provider.dart';
 import '../../services/notification_service.dart';
 import '../../services/notification_permission_service.dart';
 import '../../services/notification_retry_coordinator.dart';
+import '../../services/startup_trace.dart';
 import '../../services/recovery/runtime_gate.dart';
 import 'settings_screen.dart';
 import 'dashboard_screen.dart';
@@ -149,12 +150,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         final exactAllowed =
             !permission.supportsExactAlarms ||
             permission.exactAlarms == NotificationPermissionStatus.granted;
-        await ref
+        if (StartupTrace.retryEnabled) {
+          StartupTrace.notificationEvent('foreground_retry_started', {
+            'authorization': permission.authorization.status.name,
+            'can_schedule': allowed && exactAllowed,
+          });
+        }
+        final result = await ref
             .read(remindersProvider.notifier)
             .retryFailedNotificationDelivery(
               canSchedule: allowed && exactAllowed,
               isActive: () => _runtimeActive && isActive(),
             );
+        if (StartupTrace.retryEnabled) {
+          final snapshot = await ref
+              .read(databaseHelperProvider)
+              .withNotificationJournal((journal) => journal.read());
+          StartupTrace.notificationEvent('foreground_retry_completed', {
+            'attempted': result.attempted,
+            'failed': result.failed,
+            'entries_total': snapshot?.entries.length,
+            'entries': snapshot?.entries.values
+                .take(16)
+                .map((e) => e.toJson())
+                .toList(),
+          });
+        }
       },
     );
     _notificationRetries!.setForeground(

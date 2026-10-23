@@ -257,7 +257,7 @@ void main() {
   );
 
   test(
-    'failed scheduling retries after service and database reopen with the same ID',
+    'recent failure survives reopen until foreground cooldown then retries with the same ID',
     () async {
       native.failSchedule = true;
       final saved = await notifier.addReminder(task('retry'));
@@ -269,10 +269,69 @@ void main() {
       await restart();
       final second = (await snapshot()).entries['retry']!;
       expect(second.nativeId, first.nativeId);
-      expect(second.status, 'submitted');
+      expect(second.status, 'failed');
+      expect(second.attempts, first.attempts);
+      expect(native.pending, isEmpty);
+      expect(native.calls.where((c) => c.startsWith('schedule:')), isEmpty);
+      expect(
+        await notifier.retryFailedNotificationDelivery(
+          canSchedule: true,
+          isActive: () => true,
+          now: DateTime.parse(
+            first.attemptedAt!,
+          ).add(const Duration(minutes: 1)),
+        ),
+        (attempted: 1, failed: 0),
+      );
+      expect((await snapshot()).entries['retry']!.status, 'submitted');
       expect(native.pending.keys, [first.nativeId]);
       expect(native.calls, isNot(contains('cancelAll')));
       expect(notifier.state.single.id, 'retry');
+    },
+  );
+
+  test(
+    'startup cooldown does not delay a changed occurrence or an old failure',
+    () async {
+      for (final changed in [true, false]) {
+        native.failSchedule = true;
+        final reminder = task('changed-$changed');
+        await notifier.addReminder(reminder);
+        final savedSnapshot = await snapshot();
+        final saved = savedSnapshot.entries[reminder.id]!;
+        if (changed) {
+          await helper.writeTransaction(
+            helper.captureGeneration(),
+            (db) => db.update(
+              'Reminders',
+              {
+                'trigger_time': reminder.triggerTime!
+                    .add(const Duration(days: 1))
+                    .toIso8601String(),
+                'notice_revision': reminder.noticeRevision + 1,
+              },
+              where: 'id = ?',
+              whereArgs: [reminder.id],
+            ),
+          );
+        } else {
+          await helper.withNotificationJournal(
+            (j) => j.record(
+              savedSnapshot.epoch,
+              reminder.id,
+              action: 'schedule',
+              status: 'failed',
+              triggerUtcMicros: saved.triggerUtcMicros,
+              noticeRevision: saved.noticeRevision,
+              attemptedAt: DateTime.now().subtract(const Duration(minutes: 2)),
+            ),
+          );
+        }
+        native.failSchedule = false;
+        await restart();
+        expect((await snapshot()).entries[reminder.id]!.status, 'submitted');
+        expect(native.pending.keys, contains(saved.nativeId));
+      }
     },
   );
 

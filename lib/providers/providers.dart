@@ -256,6 +256,26 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         } else if (!reminder.isCompleted &&
             reminder.triggerTime != null &&
             reminder.triggerTime!.isAfter(now)) {
+          // Restart must not bypass the persisted quiet-retry cooldown for
+          // the SAME failed occurrence. Edits, pending crash intents and old
+          // failures still reconcile immediately; manual rebuild is immediate.
+          final entry = journal[reminder.id];
+          final attempted = DateTime.tryParse(entry?.attemptedAt ?? '');
+          if (entry?.status == 'failed' &&
+              entry?.action == 'schedule' &&
+              entry?.triggerUtcMicros ==
+                  reminder.triggerTime!.toUtc().microsecondsSinceEpoch &&
+              entry?.noticeRevision == reminder.noticeRevision &&
+              attempted != null &&
+              now.difference(attempted).abs() < const Duration(minutes: 1)) {
+            if (StartupTrace.retryEnabled) {
+              StartupTrace.notificationEvent('startup_failure_cooldown', {
+                'native_id': entry!.nativeId,
+                'attempts': entry.attempts,
+              });
+            }
+            return;
+          }
           await _dbHelper.runOperation(generation, () async {
             _dbHelper.checkGeneration(generation);
             await _synchronizeReminder(reminder, generation);

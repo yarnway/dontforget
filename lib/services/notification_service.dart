@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
@@ -11,6 +12,7 @@ import '../data/database_helper.dart';
 import 'context_trigger_service.dart';
 import 'notification_journal.dart';
 import 'macos_notification_scheduler.dart';
+import 'startup_trace.dart';
 
 class NotificationService {
   static final _instances = Expando<NotificationService>();
@@ -138,12 +140,31 @@ class NotificationService {
     try {
       await _runNative(() => action(entry.nativeId));
       await record('submitted');
-    } catch (_) {
+      if (StartupTrace.retryEnabled) {
+        StartupTrace.notificationEvent('native_submitted', {
+          'native_id': entry.nativeId,
+          'action': schedule == null ? 'cancel' : 'schedule',
+        });
+      }
+    } catch (error) {
       // A failed result write leaves a durable pending intent. Preserve the
       // original native error if even failure bookkeeping cannot be written.
       try {
         await record('failed');
       } catch (_) {}
+      if (StartupTrace.retryEnabled) {
+        final details = error is PlatformException && error.details is Map
+            ? error.details as Map
+            : null;
+        StartupTrace.notificationEvent('native_failed', {
+          'native_id': entry.nativeId,
+          'action': schedule == null ? 'cancel' : 'schedule',
+          'error_type': error.runtimeType.toString(),
+          if (error is PlatformException) 'platform_code': error.code,
+          if (details?['domain'] is String) 'os_domain': details!['domain'],
+          if (details?['code'] is int) 'os_code': details!['code'],
+        });
+      }
       rethrow;
     }
   }

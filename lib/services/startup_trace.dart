@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:path/path.dart' as p;
 import 'package:window_manager/window_manager.dart';
 
@@ -12,6 +13,8 @@ import 'package:window_manager/window_manager.dart';
 /// notification transport and the actual main/app/provider path stay unchanged.
 class StartupTrace with WidgetsBindingObserver, WindowListener {
   static const enabled = bool.fromEnvironment('DONTFORGET_STARTUP_TRACE');
+  static const retryEnabled =
+      enabled && bool.fromEnvironment('DONTFORGET_RETRY_TRACE');
   static const revision = String.fromEnvironment('BENCHMARK_REVISION');
   static StartupTrace? _active;
 
@@ -28,6 +31,9 @@ class StartupTrace with WidgetsBindingObserver, WindowListener {
   static void attach(String directory) => _active?._attach(directory);
   static void mark(String name) => _active?._mark(name);
   static void fail(String stage) => _active?._finish('failed:$stage');
+  static void notificationEvent(String phase, Map<String, Object?> data) {
+    if (retryEnabled) _active?._notificationEvent(phase, data);
+  }
 
   StartupTrace._();
   final _clock = Stopwatch()..start();
@@ -37,6 +43,77 @@ class StartupTrace with WidgetsBindingObserver, WindowListener {
   Directory? _directory;
   Timer? _timeout;
   bool _finished = false;
+  final _retryEvents = <Map<String, Object?>>[];
+  Future<void> _retryWrites = Future.value();
+
+  void _notificationEvent(String phase, Map<String, Object?> data) {
+    if (_directory == null || _retryEvents.length >= 128) return;
+    _retryEvents.add({
+      'phase': phase,
+      'at': DateTime.now().toUtc().toIso8601String(),
+      'elapsed_us': _clock.elapsedMicroseconds,
+      'lifecycle': WidgetsBinding.instance.lifecycleState?.name,
+      ...data,
+    });
+    _retryWrites = _retryWrites.then((_) => _writeRetries()).catchError((
+      Object _,
+    ) {
+      debugPrint('Notification retry observation could not be saved.');
+    });
+  }
+
+  Future<void> _writeRetries() async {
+    final directory = Directory(
+      p.join(_directory!.parent.path, 'notification-retry-traces'),
+    );
+    await directory.create(recursive: true);
+    if (await directory.resolveSymbolicLinks() != directory.path) {
+      throw const FileSystemException('Unsafe retry report directory');
+    }
+    final window = <String, Object?>{};
+    try {
+      window['focused'] = await windowManager.isFocused().timeout(
+        const Duration(seconds: 3),
+      );
+      window['visible'] = await windowManager.isVisible().timeout(
+        const Duration(seconds: 3),
+      );
+      window['minimized'] = await windowManager.isMinimized().timeout(
+        const Duration(seconds: 3),
+      );
+    } catch (_) {
+      window['status'] = 'unavailable';
+    }
+    Object pending;
+    try {
+      pending =
+          (await FlutterLocalNotificationsPlugin()
+                  .pendingNotificationRequests()
+                  .timeout(const Duration(seconds: 3)))
+              .map((r) => r.id)
+              .toList();
+    } catch (_) {
+      pending = 'unknown';
+    }
+    final file = File(
+      p.join(directory.path, '${_entry.microsecondsSinceEpoch}-$pid.json'),
+    );
+    final temporary = File('${file.path}.tmp');
+    await temporary.writeAsString(
+      const JsonEncoder.withIndent('  ').convert({
+        'scope':
+            'Actual release product main/app/home/provider/native service; passive retry trace, no injected failures or manual retry hook',
+        'revision': revision,
+        'pid': pid,
+        'events': _retryEvents,
+        'window_at_write': window,
+        'window_events': _events,
+        'pending_native_ids_at_write': pending,
+      }),
+      flush: true,
+    );
+    await temporary.rename(file.path);
+  }
 
   void _bind() {
     WidgetsBinding.instance.addObserver(this);
@@ -78,7 +155,7 @@ class StartupTrace with WidgetsBindingObserver, WindowListener {
   }
 
   void _event(String name) {
-    if (!_finished && _events.length < 128) {
+    if ((!_finished || retryEnabled) && _events.length < 128) {
       _events.add({'event': name, 'elapsed_us': _clock.elapsedMicroseconds});
     }
   }
@@ -100,8 +177,10 @@ class StartupTrace with WidgetsBindingObserver, WindowListener {
     _finished = true;
     final elapsed = _clock.elapsedMicroseconds;
     _timeout?.cancel();
-    WidgetsBinding.instance.removeObserver(this);
-    windowManager.removeListener(this);
+    if (!retryEnabled) {
+      WidgetsBinding.instance.removeObserver(this);
+      windowManager.removeListener(this);
+    }
     unawaited(
       _write(outcome, elapsed).catchError((Object _) {
         // Measurement failure must not change normal product startup or recovery.
