@@ -30,6 +30,18 @@ def report():
 
 
 class GCFramesTest(unittest.TestCase):
+    def test_v2_requires_declared_fixture_and_shell(self):
+        r = report()
+        r.update(gc_observation_protocol='gc-only-deferred-30-v2',
+                 gc_task_count=1000, shell_theme_protocol='cached-default-theme-v2')
+        r['results'][0]['tasks'] = 1000
+        self.assertEqual(module.analyze(r)['tasks'], 1000)
+        for field, value in [('gc_task_count', 10000), ('shell_theme_protocol', 'unknown')]:
+            bad = copy.deepcopy(r)
+            bad[field] = value
+            with self.assertRaises(ValueError):
+                module.analyze(bad)
+
     def test_nested_scopes_union_and_clip_to_native_build(self):
         r = report()
         events = r['results'][0]['views'][0]['gc_timeline_capture']['events']

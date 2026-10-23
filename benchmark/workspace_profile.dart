@@ -118,6 +118,9 @@ class _BenchmarkState extends State<_Benchmark>
   bool _includeNotificationStartup = true;
   bool _focusedDiagnostics = false;
   bool _gcObservation = false;
+  int _gcTaskCount = 10000;
+  bool _legacyTheme = false;
+  late final ThemeData _stableTheme = ThemeData();
   bool get _focusedRun => _focusedDiagnostics || _gcObservation;
   bool _restartRequired = false;
   FrameDiagnostics? _frameDiagnostics;
@@ -234,14 +237,18 @@ class _BenchmarkState extends State<_Benchmark>
       'source_revision': _revision,
       'fixture_version': 2,
       'viewport_protocol': 'fixed-height-792-v1',
+      'shell_theme_protocol': _legacyTheme
+          ? 'legacy-default-theme-v1'
+          : 'cached-default-theme-v2',
       'first_frame_protocol': _gcObservation
           ? 'one warmup then thirty fresh board/provider mounts; deferred GC read'
           : 'one warmup then five fresh board/provider mounts',
       'focused_768_diagnostics': _focusedDiagnostics,
       'gc_observation': _gcObservation,
       'gc_observation_protocol': _gcObservation
-          ? 'gc-only-deferred-30-v1'
+          ? 'gc-only-deferred-30-v2'
           : null,
+      if (_gcObservation) 'gc_task_count': _gcTaskCount,
       'timing_comparable_to_baseline': !_focusedRun,
       'restart_required': _restartRequired,
       'notification_startup_included':
@@ -295,7 +302,10 @@ class _BenchmarkState extends State<_Benchmark>
       await WidgetsBinding.instance.waitUntilFirstFrameRasterized.timeout(
         const Duration(seconds: 10),
       );
-      for (final count in _focusedRun ? [10000] : [100, 1000, 10000]) {
+      for (final count
+          in _focusedRun
+              ? [_gcObservation ? _gcTaskCount : 10000]
+              : [100, 1000, 10000]) {
         await _status(
           'Measuring $count synthetic tasks: storage startup and backup',
         );
@@ -745,6 +755,10 @@ class _BenchmarkState extends State<_Benchmark>
 
   @override
   Widget build(BuildContext context) => MaterialApp(
+    // MaterialApp's null-theme fallback constructs a new ThemeData on every
+    // shell rebuild. Keep that allocation outside measured board mounts.
+    // The opt-in legacy control isolates this harness effect with the same app.
+    theme: _legacyTheme ? null : _stableTheme,
     locale: const Locale('en'),
     localizationsDelegates: const [AppLocalizationsDelegate()],
     builder: (_, child) => InlineFeedback(child: child!),
@@ -801,6 +815,34 @@ class _BenchmarkState extends State<_Benchmark>
                 'Observe GC at 768px (30 mounts, widget profiling off)',
               ),
               controlAffinity: ListTileControlAffinity.leading,
+            ),
+          if (!_running)
+            CheckboxListTile(
+              value: _legacyTheme,
+              onChanged: _restartRequired
+                  ? null
+                  : (value) => setState(() => _legacyTheme = value ?? false),
+              title: const Text(
+                'Rebuild default theme per mount (legacy shell)',
+              ),
+              controlAffinity: ListTileControlAffinity.leading,
+            ),
+          if (!_running && _gcObservation)
+            DropdownButton<int>(
+              value: _gcTaskCount,
+              onChanged: _restartRequired
+                  ? null
+                  : (value) => setState(() => _gcTaskCount = value!),
+              items: const [
+                DropdownMenuItem(
+                  value: 1000,
+                  child: Text('GC fixture: 1000 tasks'),
+                ),
+                DropdownMenuItem(
+                  value: 10000,
+                  child: Text('GC fixture: 10000 tasks'),
+                ),
+              ],
             ),
           if (!_running)
             FilledButton(

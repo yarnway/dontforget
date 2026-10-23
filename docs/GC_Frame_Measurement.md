@@ -2,7 +2,9 @@
 
 隔离 profile 工具提供三个互斥模式。默认完整测量保持原协议：100/1,000/10,000 条任务，375/768/1440 宽、792 高，每组一次预热和五次测量。详细组件诊断仅用于定位构建/布局/绘制，耗时不合入普通基线。
 
-`Observe GC at 768px` 使用相同万条任务夹具和 768 × 792 视口，一次预热后测量 30 次新看板/ProviderScope 挂载。组件 profiling 必须关闭；挂载期间没有时间线 RPC，全部挂载完成后只读取一次时间线。这个观测仍不是完全无观测的基线，不能直接与普通五次测量合并。
+`Observe GC at 768px` 使用相同任务夹具和 768 × 792 视口，一次预热后测量 30 次新看板/ProviderScope 挂载。协议 v2 可选择 1,000 或 10,000 条，报告必须声明数量；v1 固定万条。组件 profiling 必须关闭；挂载期间没有时间线 RPC，全部挂载完成后只读取一次时间线。这个观测仍不是完全无观测的基线，不能直接与普通五次测量合并。
+
+测量外壳默认缓存相同的 ThemeData，避免 MaterialApp 的默认主题在每次外壳重建时重新分配。`Rebuild default theme per mount (legacy shell)` 保留旧行为，允许同一包交替验证外壳影响。报告中的 `shell_theme_protocol` 必须一致才能比较产品优化；比较两种外壳时只能得出测量干扰的结论，不能称为产品提速。看板及 ProviderScope 仍每次重新挂载，不能缓存被测树。
 
 构建：`bash scripts/build_macos_performance.sh`，要求固定 Flutter 3.44.9、完整 Xcode 和 macOS。CI 也可构建独立验收包。准备具有全新身份的隔离副本，原生界面选择 GC 模式并点击 Start；保持全程前台，不同时下载、编译或运行其他测量。失败或清理状态不确定时，必须重开该隔离进程。
 
@@ -12,7 +14,7 @@
 python3 scripts/analyze_gc_frames.py --report /absolute/path/to/results.json
 ```
 
-分析器要求完成、无错误、全程前台、单次延后读取及 31 次固定视口挂载。以引擎 `FrameTiming` 的 buildStart/buildFinish 为区间，用该区间内的 Dart BUILD 确定 UI 线程。GC 类别中的 CollectNewGeneration、CollectOldGeneration、Scavenge 区间裁剪后取并集，排除工作线程与帧外事件。缺失配对、线程不明、区间不一致均拒绝，不把“未知”记为无 GC。
+分析器要求完成、无错误、全程前台、单次延后读取、31 次固定视口挂载，以及匹配的任务数量和外壳协议。以引擎 `FrameTiming` 的 buildStart/buildFinish 为区间，用该区间内的 Dart BUILD 确定 UI 线程。GC 类别中的 CollectNewGeneration、CollectOldGeneration、Scavenge 区间裁剪后取并集，排除工作线程与帧外事件。缺失配对、线程不明、区间不一致均拒绝，不把“未知”记为无 GC。
 
 报告按有/无同线程 GC 区间列出帧耗时分布和全部样本。区间重叠是关联证据，不是 GC 导致尾部的因果证明；GC scope 的墙钟时间也不是纯 CPU 时间。不得把嵌套 GC、工作线程耗时相加，或把扣除 GC 后的数值当成优化结果。产品优化仍需用普通协议交替复测，保留失败/失焦样本。
 

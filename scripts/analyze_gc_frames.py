@@ -71,19 +71,25 @@ def distribution(values):
 
 
 def analyze(report):
+    protocol = report.get('gc_observation_protocol')
+    expected_tasks = 10000 if protocol == 'gc-only-deferred-30-v1' else report.get('gc_task_count')
     if (report.get('phase') != 'complete' or report.get('errors') != [] or
             report.get('restart_required') is not False or
             report.get('gc_observation') is not True or
-            report.get('gc_observation_protocol') != 'gc-only-deferred-30-v1' or
+            protocol not in {'gc-only-deferred-30-v1', 'gc-only-deferred-30-v2'} or
             report.get('focused_768_diagnostics') is not False or
             report.get('timing_comparable_to_baseline') is not False):
         raise ValueError('Expected a complete GC-only observation')
+    if protocol.endswith('v2') and (expected_tasks not in {1000, 10000} or
+            report.get('shell_theme_protocol') not in {
+                'legacy-default-theme-v1', 'cached-default-theme-v2'}):
+        raise ValueError('Expected an explicit fixture size and shell protocol')
     segments = report.get('segments', [])
     if not segments or not all(s.get('uninterrupted_foreground') is True for s in segments):
         raise ValueError('Observation was not entirely foreground')
     results = report['results']
-    if len(results) != 1 or results[0]['tasks'] != 10000 or len(results[0]['views']) != 1:
-        raise ValueError('Expected the single 10000-task viewport')
+    if len(results) != 1 or results[0]['tasks'] != expected_tasks or len(results[0]['views']) != 1:
+        raise ValueError('Expected the single declared task viewport')
     view = results[0]['views'][0]
     mounts = view['sample_viewports']
     if (view['requested_width'] != 768 or len(mounts) != 31 or
@@ -123,6 +129,8 @@ def analyze(report):
     return {
         'scope': 'Observed association only, not proof of GC causation. Same-thread recognized GC scopes are clipped to native build intervals and unioned, never added across nested scopes or worker threads. Timings are not an unobserved baseline.',
         'source_revision': report['source_revision'],
+        **({'tasks': expected_tasks, 'shell_theme_protocol': report['shell_theme_protocol']}
+           if protocol.endswith('v2') else {}),
         'task_rows_sha256': results[0]['task_rows_sha256'],
         'event_count': len(capture['events']), 'frames': rows,
         'with_gc': distribution([r['build_us'] for r in rows if r['gc_scope_union_us'] > 0]),
