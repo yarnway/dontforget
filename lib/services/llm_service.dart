@@ -28,7 +28,7 @@ class LLMService {
   final Dio _dio;
   final lastExtraction = ValueNotifier<AiExtractionStatus?>(null);
   final PriorityModelRouter _router = PriorityModelRouter();
-  final CancelToken _routeCancellation = CancelToken();
+  final Set<CancelToken> _activeRoutes = {};
   final Dio Function()? probeClientFactory;
   final Set<Dio> _probeClients = {};
   bool _disposed = false;
@@ -41,7 +41,9 @@ class LLMService {
   /// a fresh service; old request chains cannot continue using old credentials.
   void dispose() {
     _disposed = true;
-    _routeCancellation.cancel('Model session ended');
+    for (final token in _activeRoutes.toList()) {
+      token.cancel('Model session ended');
+    }
     lastExtraction.dispose();
     _dio.close(force: true);
     for (final client in _probeClients) {
@@ -164,11 +166,13 @@ $truncatedContent
   Future<List<Reminder>> _sendExtractionRequestWithRetry(AppSettings settings, List<Map<String, dynamic>> userMessages, {int maxRetries = 2}) async {
     _checkActive();
     if (settings.aiProfiles.isNotEmpty) {
+      final cancellation = CancelToken();
+      _activeRoutes.add(cancellation);
       try {
       final result = await _router.execute<List<Reminder>>(
         profiles: settings.effectiveProfiles,
         allowFallback: settings.aiFallbackEnabled,
-        cancelToken: _routeCancellation,
+        cancelToken: cancellation,
         request: (profile, token) {
           _checkActive();
           return _sendExtractionRequest(profile.settings, userMessages,
@@ -183,6 +187,12 @@ $truncatedContent
       } catch (_) {
         if (!_disposed) lastExtraction.value = const AiExtractionStatus();
         rethrow;
+      } finally {
+        _activeRoutes.remove(cancellation);
+        // Complete the per-request cancellation future to release the router's
+        // settled listeners and transport tokens. A session-wide token would
+        // retain every completed request until the application exits.
+        cancellation.cancel('Route finished');
       }
     }
     // An explicitly empty list must not resurrect legacy credentials.

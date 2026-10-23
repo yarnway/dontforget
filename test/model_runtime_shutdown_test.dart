@@ -55,6 +55,58 @@ void main() {
     ],
   };
 
+  test('finishing one route does not cancel another active route', () async {
+    final dio = Dio();
+    final secondStarted = Completer<void>();
+    RequestInterceptorHandler? pending;
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          if (options.uri.host == 'pending.invalid') {
+            pending = handler;
+            secondStarted.complete();
+          } else {
+            handler.resolve(
+              Response(
+                requestOptions: options,
+                data: chat('{"tasks":[{"title":"finished task"}]}'),
+              ),
+            );
+          }
+        },
+      ),
+    );
+    final service = LLMService(client: dio);
+    AppSettings routed(String host) => settings.copyWith(
+      aiProfiles: [
+        AiProfile(
+          id: host,
+          label: host,
+          settings: settings.copyWith(baseUrl: 'https://$host/v1'),
+        ),
+      ],
+    );
+    final pendingResult = service.extractTasks(
+      'second synthetic input',
+      routed('pending.invalid'),
+    );
+    final rejected = expectLater(pendingResult, throwsA(isA<DioException>()));
+    await secondStarted.future;
+    final finished = await service.extractTasks(
+      'first synthetic input',
+      routed('finished.invalid'),
+    );
+    expect(finished.single.taskTitle, 'finished task');
+    service.dispose();
+    await rejected;
+    pending!.reject(
+      DioException(
+        requestOptions: RequestOptions(path: '/synthetic'),
+        type: DioExceptionType.cancel,
+      ),
+    );
+  });
+
   test(
     'disposing a model route cancels its transport and never calls fallback',
     () async {
