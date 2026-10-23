@@ -194,9 +194,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             .read(remindersProvider)
             .map(reminderOccurrenceKey)
             .toSet();
-        _promptedReminderIds.retainAll(currentKeys);
-        _dueNotices.removeWhere((key, _) => !currentKeys.contains(key));
-        _contextDigest = [];
+        setState(() {
+          _promptedReminderIds.retainAll(currentKeys);
+          _dueNotices.removeWhere((key, _) => !currentKeys.contains(key));
+          _contextDigest = [];
+        });
         StartupTrace.notificationEvent('time_zone_reconciled', {});
       },
     );
