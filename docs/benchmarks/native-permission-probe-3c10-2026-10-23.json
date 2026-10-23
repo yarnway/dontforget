@@ -1,0 +1,186 @@
+{
+  "scope": "Real macOS permission deny, app process restart, permission restoration and same-ID resubmission; scheduling remained accepted while denied, not an NSError failure test",
+  "report": {
+    "scope": "Explicitly altered synthetic request, real OS callback and production service/journal; not a spontaneous OS outage",
+    "source_revision": "c5453023413fa265fe5e64f60b30e5f053bb0259",
+    "events": [
+      {
+        "phase": "opened_saved_state",
+        "mode": null,
+        "pid": 4353,
+        "at": "2026-10-23T03:59:52.246858Z",
+        "journal": null,
+        "authorization": {
+          "status": "notEnabled",
+          "alerts_enabled": false,
+          "sounds_enabled": false
+        },
+        "pending_native_ids": []
+      },
+      {
+        "phase": "permission_requested",
+        "mode": null,
+        "pid": 4353,
+        "at": "2026-10-23T04:00:20.369791Z",
+        "journal": null,
+        "authorization": {
+          "status": "notEnabled",
+          "alerts_enabled": true,
+          "sounds_enabled": true
+        },
+        "pending_native_ids": []
+      },
+      {
+        "phase": "valid_retry_submitted",
+        "mode": null,
+        "pid": 4353,
+        "at": "2026-10-23T04:00:37.572491Z",
+        "journal": {
+          "version": 1,
+          "epoch": "005c1af5-cc75-45b9-8cad-10b72c494340",
+          "entries": [
+            {
+              "reminderId": "qa-native-os-rejection",
+              "nativeId": 733214976,
+              "action": "schedule",
+              "status": "submitted",
+              "attempts": 2,
+              "triggerUtcMicros": 4070908800000000,
+              "noticeRevision": 0,
+              "attemptedAt": "2026-10-23T04:00:37.569668Z"
+            }
+          ]
+        },
+        "authorization": {
+          "status": "notEnabled",
+          "alerts_enabled": true,
+          "sounds_enabled": true
+        },
+        "pending_native_ids": [
+          733214976
+        ]
+      },
+      {
+        "phase": "opened_saved_state",
+        "mode": null,
+        "pid": 5974,
+        "at": "2026-10-23T04:01:57.689129Z",
+        "journal": {
+          "version": 1,
+          "epoch": "005c1af5-cc75-45b9-8cad-10b72c494340",
+          "entries": [
+            {
+              "reminderId": "qa-native-os-rejection",
+              "nativeId": 733214976,
+              "action": "schedule",
+              "status": "submitted",
+              "attempts": 2,
+              "triggerUtcMicros": 4070908800000000,
+              "noticeRevision": 0,
+              "attemptedAt": "2026-10-23T04:00:37.569668Z"
+            }
+          ]
+        },
+        "authorization": {
+          "status": "notEnabled",
+          "alerts_enabled": true,
+          "sounds_enabled": true
+        },
+        "pending_native_ids": [
+          733214976
+        ]
+      },
+      {
+        "phase": "observed_native_state",
+        "mode": null,
+        "pid": 5974,
+        "at": "2026-10-23T04:02:24.478565Z",
+        "journal": {
+          "version": 1,
+          "epoch": "005c1af5-cc75-45b9-8cad-10b72c494340",
+          "entries": [
+            {
+              "reminderId": "qa-native-os-rejection",
+              "nativeId": 733214976,
+              "action": "schedule",
+              "status": "submitted",
+              "attempts": 2,
+              "triggerUtcMicros": 4070908800000000,
+              "noticeRevision": 0,
+              "attemptedAt": "2026-10-23T04:00:37.569668Z"
+            }
+          ]
+        },
+        "authorization": {
+          "status": "granted",
+          "alerts_enabled": true,
+          "sounds_enabled": true
+        },
+        "pending_native_ids": [
+          733214976
+        ]
+      },
+      {
+        "phase": "valid_retry_submitted",
+        "mode": null,
+        "pid": 5974,
+        "at": "2026-10-23T04:02:36.653325Z",
+        "journal": {
+          "version": 1,
+          "epoch": "005c1af5-cc75-45b9-8cad-10b72c494340",
+          "entries": [
+            {
+              "reminderId": "qa-native-os-rejection",
+              "nativeId": 733214976,
+              "action": "schedule",
+              "status": "submitted",
+              "attempts": 4,
+              "triggerUtcMicros": 4070908800000000,
+              "noticeRevision": 0,
+              "attemptedAt": "2026-10-23T04:02:36.650068Z"
+            }
+          ]
+        },
+        "authorization": {
+          "status": "granted",
+          "alerts_enabled": true,
+          "sounds_enabled": true
+        },
+        "pending_native_ids": [
+          733214976
+        ]
+      }
+    ]
+  },
+  "initial_pid": 4353,
+  "process_absent_before_reopen": true,
+  "reopened_pid": 5974,
+  "system_settings_switch_observed_off_then_on": true,
+  "denied_request_os_result": "ACCEPTED_PENDING_ONE",
+  "same_native_id": 733214976,
+  "real_os_rejection": "NOT_OBSERVED",
+  "system_reboot": "NOT_RUN",
+  "sleep_resume": "NOT_RUN",
+  "package_manifest": {
+    "version": "1.5.2",
+    "build_number": "3",
+    "platform": "macos",
+    "revision": "c5453023413fa265fe5e64f60b30e5f053bb0259",
+    "signing": "not-notarized",
+    "build_mode": "profile",
+    "scope": "ISOLATED_PERFORMANCE_HARNESS_NOT_PRODUCT_CANDIDATE",
+    "entrypoint": "benchmark/workspace_profile.dart",
+    "native_failure_probe": "MANUAL_SINGLE_SYNTHETIC_TASK_REAL_OS_CALLBACK_ONLY",
+    "frame_diagnostics": "OPT_IN_SELF_VM_LOOPBACK_10000_TASKS_768PX_NOT_BASELINE",
+    "artifacts": [
+      {
+        "file": "DontForget_macOS_profile_benchmark.zip",
+        "bytes": 28201744,
+        "sha256": "7d8178be4afbe993614f317b5eda9ba1a551ffa45c6dbdad0b439ca2da151182"
+      }
+    ]
+  },
+  "outer_artifact_bytes": 28127707,
+  "outer_artifact_sha256": "1cac60b5323f48924099c119b1e7838db86cf8837082023e26b9d81a4f750179",
+  "outer_crc_allowlist_inner_hash_and_codesign": "PASS"
+}

@@ -423,3 +423,29 @@ Mac ZIP 为 23,822,422 字节，SHA-256 `32de8c5ec10e9bc542a6f72e96861d7536b8f51
 `7be2d91` 同时修复测试子进程对 PATH Dart 的隐式依赖，改用当前 Flutter SDK 配套可执行文件；在原先失败的 PATH 环境下，静态分析和完整 695 项测试通过。最终 [CI 39802691717](https://github.com/yarnway/dontforget/actions/runs/39802691717) 工作流 completed/success，质量为 Flutter 694 通过 / 1 平台条件跳过、Python 51 通过，Android/iOS/macOS/Windows job success。Linux 构建、原生启动、包摘要核验、上传及 Complete job 步骤 success，但顶层仍返回 in_progress/null；独立 job 接口及无缓存回读一致，保留为汇总字段差异，未将其改写成 job success。该提交仅涉及验收工具、诊断脚本及测试，没有产品 `lib/` 或 macOS 代码差异。
 
 剩余任务：同一时段旧/新交替测量和 768 宽尾部排查；真实 OS 拒绝、failed 跨进程保留及同 ID 重试；系统重启、睡眠/唤醒、时区/DST；增量日志迁移/所有权/大小边界/代际回收；多模型持久化与降级、其他平台业务及正式签名发布。录音和播放允许，本轮未新增相关实测。
+
+## 2026-10-23：阶段 3D-9 同期交替测量与诊断候选
+
+完成情况：
+
+1. 早期工具权限拦截在用户补充授权后解除，继续操作原旧/新身份。A→B→A→B→A→B 各三轮默认完整 profile，108 个区段全前台，三档数据的 task/notification 哈希一致；固定高度 792、DPR 2，324 次挂载中有 270 个测量首帧，全部 build <16.667 ms。新版一次未取得前台的尝试保留，不计入统计。
+2. 万条任务 768 宽 build p50/max：旧版 10.731/14.301 ms，新版 10.565/14.148 ms。未复现之前 17.443 ms 尾部，不能据各三轮认定异常已消除或归因。375/1440 的全部样本和原始报告、启动/备份/日志统计均留存于[六轮记录](benchmarks/alternating-first-frame-3d9-2026-10-23.json)。
+3. 新版万条存储启动各轮 p50 60.104–60.815 ms，备份 148.171–153.376 ms，完整已有日志重开 3.247–3.333 秒，日志写入仍约 334 MB / 162 次替换。通知统计使用记录运输层，不能作为 OS 送达或完整进程冷启动。
+4. `9ebcffe`/`1476353` 的自身 VM 诊断、清理完成门禁和未知状态必须重开已实现；本机 Flutter 700、Python 56 和静态分析通过。[产品 CI 39812209714](https://github.com/yarnway/dontforget/actions/runs/39812209714) 质量及五平台成功，云端 699 通过 / 1 平台跳过、Python 56 通过；[测量 CI 39812302641](https://github.com/yarnway/dontforget/actions/runs/39812302641) 两项成功。
+5. 诊断包 `diag-r39812302641` 完成外层摘要/CRC/白名单、内部 manifest/hash、受保护内容及 codesign 核验。用户解锁后，两轮各五帧真实自身 VM 采集均全前台完成，状态恢复成功。两轮分别 3/5、4/5 帧出现 UI 线程新生代 GC 区间，约 2.0–3.9 ms；嵌套时间不相加，插桩额外分配尚不能与普通尾部建立因果。压缩原始报告与[首轮](benchmarks/frame-trace-summary-3d9-2026-10-23.json)/[重开后](benchmarks/frame-trace-after-restart-summary-3d9-2026-10-23.json)分析留存，不混入普通基线。
+
+受控最小化保持超过 10 秒，实际 TimeoutException 后 report failed / restart_required=true。重复启动/切换普通模式无效，目录数未变；旧 PID 缺席后新进程完成采集。第一次最小化被工具观察提早恢复，虽然 complete 但失焦，分析器拒绝。[超时与重开门禁](benchmarks/frame-timeout-gate-3d9-2026-10-23.json)。
+
+剩余：复现并据未插桩证据优化 768 宽尾部后默认协议复测；增量日志/索引和分段检查点仍需迁移、所有权、大小边界及代际回收。[完整机器记录](benchmarks/frame-diagnostics-3d9-2026-10-23.json)。
+
+## 2026-10-23：阶段 3C-10 OS 请求、进程重开与权限观测
+
+完成情况：
+
+1. `probe-r39807412561` 来自 [CI 39807412561](https://github.com/yarnway/dontforget/actions/runs/39807412561)，源码 `2da0c33709f08f017a887d76b04fb79c84d7fb78`。ZIP 27,901,155 B，SHA-256 `339663804fdb44211ef8e110bf317125f9d1b43152da5f132c40e1218eec3c37`，摘要、manifest、受保护内容及派生签名核验通过。它是隔离 profile 工具，非正式签名产品。
+2. 单条合成任务的空内容、过去日期请求均被真实 macOS 接受，报告为 `probe_accepted_by_os`。没有真实 NSError，不写成系统拒绝。
+3. 退出 PID 27291、确认进程缺席后重开 PID 30041，读回同一会话的 submitted/native ID `733214976`。有效请求复用该 ID，取消后通过 API 确认 pending 为空。[原始事件](benchmarks/native-os-probe-3c10-2026-10-23.json)。这不是 failed 跨进程验收，也不是系统重启。
+4. 探针未请求权限，所以当时不在系统通知列表中。`c545302` 增加显式请求按钮和独立权限/pending 读回，每次记录真实授权、alert/sound 与 pending IDs，未知值不改写为已授权。本机静态分析和 700 项 Flutter 测试通过并推送 main。[产品 CI 39889437264](https://github.com/yarnway/dontforget/actions/runs/39889437264) 质量及五平台、[测量构建 39889484900](https://github.com/yarnway/dontforget/actions/runs/39889484900) 两项均成功。
+5. 新 `probe-r39889484900` 的 manifest/hash/签名核验通过。实际拒绝权限，系统开关 off、应用 notEnabled，但有效请求仍被 OS 接受，pending 为 `[733214976]`。退出 PID 4353 并确认缺席，重开 PID 5974 保留拒绝状态、submitted 日志和 pending；系统开关恢复 on 后读回 granted，同 ID 重提后仍只有一条。没有把拒绝授权写成调度 NSError。[权限闭环原始记录](benchmarks/native-permission-probe-3c10-2026-10-23.json)。
+
+剩余：真实 `native_schedule_failed` + OS domain/code、failed 重开和同 ID 重试；系统重启、睡眠/唤醒、时区/DST；多模型持久化/迁移/设置及降级、其他平台业务和正式签名发布。录音和播放允许，本轮未新增相关实测。锁屏在用户手动解锁后解除，未更改系统安全策略。

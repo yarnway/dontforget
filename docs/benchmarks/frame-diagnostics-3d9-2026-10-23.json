@@ -1,0 +1,183 @@
+{
+  "date": "2026-10-23",
+  "scope": "Alternating native profiles, two real self-VM captures, real minimize timeout and rerun gate, native permission deny/reopen/restore; power acceptance pending",
+  "source_revision": "1476353d4e961bfde0d815d6a6886e9dfec911a3",
+  "product_lib_and_macos_unchanged_since": "6205968338d7f278cd1749a1f55d3379f6c72657",
+  "fixture": {
+    "records": 10000,
+    "file_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+    "reverified": true,
+    "modified": false
+  },
+  "prior_sample_analysis": {
+    "source": "wide-first-frame-3d8-2026-10-22.json",
+    "new_measurements": false,
+    "width": 768,
+    "old_and_new_mounted_cards": 8,
+    "new_run_build_p50_us": [
+      14228,
+      11453,
+      15212
+    ],
+    "new_run_raster_p50_us": [
+      634,
+      648,
+      567
+    ],
+    "inference": "Investigate the UI-thread pipeline first. These earlier samples do not distinguish text layout, disposal and GC, and do not establish a current paired comparison or root cause.",
+    "replacement_frame_includes_old_tree_disposal": true
+  },
+  "native_control": {
+    "user_authorization": "Already granted; user reports no pending approval card",
+    "fixed_after_session_refresh": "Computer Use was not approved to use 别忘了·隔离验收 fixed-r39752935632",
+    "wide_existing_identity": {
+      "ax_entry_read": true,
+      "measurement_started": true,
+      "bonjour_services_present": false,
+      "network_usage_description_present": false,
+      "authenticated_vm_uri_obtained": false,
+      "timeline_captured": false,
+      "original_four_dataset_directories_preserved": true,
+      "new_valid_runs": 3
+    },
+    "rebuilt_probe": "Computer Use was not approved to use 别忘了·隔离验收 probe-r39807412561",
+    "approval_bypassed": false,
+    "earlier_access_failures_resolved_after_user_authorization": true,
+    "current_diagnostic_gate": "RESOLVED_USER_UNLOCKED",
+    "native_acceptance_uses_cua_only": true
+  },
+  "source_changes": {
+    "default_full_profile_protocol": "Retained; focused diagnostics are opt-in and explicitly not comparable to baseline timings",
+    "focused_diagnostic_scope": "One 10000-task fixture, 768 x 792, five measured replacement-frame intervals",
+    "self_vm_boundary": "Authenticated loopback URI from Service.getInfo; PID must match this process; no URI or token persisted in reports",
+    "resource_bounds": "10 second RPC limit, release late connection, at most 50000 events per capture, restore previous VM streams and Flutter profiling flags",
+    "completion_gate": "Publish complete only after cleanup; uncertain diagnostics or cleanup require a fresh process and disable rerun",
+    "analyzer": "Read-only, foreground and fixed-viewport gates, thread-local pairing, clipped inclusive spans, no additive CPU-share or GC-causation claim",
+    "production_optimization_claimed": false
+  },
+  "local_validation": {
+    "flutter_passed": 700,
+    "python_passed": 56,
+    "analysis": "success",
+    "dart_service_boundary_tests": 5,
+    "python_trace_tests": 5,
+    "cli_unknown_args_rejected_before_work": true,
+    "native_self_vm_capture": "PASS_2_FOREGROUND_RUNS_5_FRAMES_EACH"
+  },
+  "rebuilt_probe": {
+    "run": "https://github.com/yarnway/dontforget/actions/runs/39807412561",
+    "ci_conclusion": "success",
+    "jobs": [
+      "profile",
+      "product_startup"
+    ],
+    "manifest": {
+      "version": "1.5.2",
+      "build_number": "3",
+      "platform": "macos",
+      "revision": "2da0c33709f08f017a887d76b04fb79c84d7fb78",
+      "signing": "not-notarized",
+      "build_mode": "profile",
+      "scope": "ISOLATED_PERFORMANCE_HARNESS_NOT_PRODUCT_CANDIDATE",
+      "entrypoint": "benchmark/workspace_profile.dart",
+      "native_failure_probe": "MANUAL_SINGLE_SYNTHETIC_TASK_REAL_OS_CALLBACK_ONLY",
+      "artifacts": [
+        {
+          "file": "DontForget_macOS_profile_benchmark.zip",
+          "bytes": 27901155,
+          "sha256": "339663804fdb44211ef8e110bf317125f9d1b43152da5f132c40e1218eec3c37"
+        }
+      ]
+    },
+    "outer_artifact_sha256": "d04cd4a6105e19939a549475d267138646b4f7c5caf9f403e166eeab4fe48a22",
+    "outer_artifact_bytes": 27827959,
+    "outer_digest_crc_and_filename_allowlist_verified": true,
+    "inner_manifest_revision_size_hash_verified": true,
+    "bundle_id": "com.example.dontForget.acceptance.probe-r39807412561",
+    "derived_protected_content_and_codesign": "PASS",
+    "source_contains_prior_readiness_gate": true,
+    "source_contains_new_frame_diagnostics": false,
+    "started": true,
+    "os_request_submitted": true,
+    "pending_os_requests_api_readback": "EMPTY_AFTER_CANCEL",
+    "raw_record": "native-os-probe-3c10-2026-10-23.json",
+    "initial_pid": 27291,
+    "reopened_pid": 30041,
+    "same_native_id": 733214976
+  },
+  "acceptance": {
+    "old_new_alternating_profile": "PASS_3_EACH_108_FOREGROUND_SEGMENTS",
+    "768_tail_root_cause": "NOT_ESTABLISHED",
+    "native_instrumented_frames": "PASS_2_RUNS",
+    "real_os_rejection": "NOT_OBSERVED_ALL_TRIED_REQUESTS_ACCEPTED",
+    "system_reboot": "NOT_RUN",
+    "sleep_resume": "NOT_RUN",
+    "same_native_id_submitted_state_across_app_restart": "PASS_OLD_AND_NEW_PROBES",
+    "same_native_id_failed_retry_across_restart": "NOT_RUN_NO_REAL_REJECTION",
+    "real_frame_timeout_and_fresh_process": "PASS",
+    "permission_deny_reopen_restore": "PASS_OS_ACCEPTED_REQUEST_WHILE_DENIED"
+  },
+  "final_ci": {
+    "source_revision": "1476353d4e961bfde0d815d6a6886e9dfec911a3",
+    "product_run": 39812209714,
+    "performance_run": 39812302641,
+    "status": "COMPLETED_SUCCESS",
+    "product_jobs": "QUALITY_AND_ALL_FIVE_PLATFORMS_SUCCESS",
+    "cloud_flutter_passed": 699,
+    "cloud_flutter_platform_skipped": 1,
+    "cloud_python_passed": 56,
+    "performance_jobs": "PROFILE_AND_PRODUCT_STARTUP_SUCCESS"
+  },
+  "paired_native_measurement": "alternating-first-frame-3d9-2026-10-23.json",
+  "diagnostic_package": {
+    "run": 39812302641,
+    "revision": "1476353d4e961bfde0d815d6a6886e9dfec911a3",
+    "outer_bytes": 28111613,
+    "outer_sha256": "e93fc8076f6b6990ac620a97f75fceaca84d574e6fe8422a360bac257cdb2f0d",
+    "inner_manifest": {
+      "version": "1.5.2",
+      "build_number": "3",
+      "platform": "macos",
+      "revision": "1476353d4e961bfde0d815d6a6886e9dfec911a3",
+      "signing": "not-notarized",
+      "build_mode": "profile",
+      "scope": "ISOLATED_PERFORMANCE_HARNESS_NOT_PRODUCT_CANDIDATE",
+      "entrypoint": "benchmark/workspace_profile.dart",
+      "native_failure_probe": "MANUAL_SINGLE_SYNTHETIC_TASK_REAL_OS_CALLBACK_ONLY",
+      "frame_diagnostics": "OPT_IN_SELF_VM_LOOPBACK_10000_TASKS_768PX_NOT_BASELINE",
+      "artifacts": [
+        {
+          "file": "DontForget_macOS_profile_benchmark.zip",
+          "bytes": 28184276,
+          "sha256": "dc1e87360afea5fa24d77a0cbed2d1718d52801d3a894135242e538221ce8d21"
+        }
+      ]
+    },
+    "outer_crc_allowlist_inner_hash_and_codesign": "PASS",
+    "bundle_id": "com.example.dontForget.acceptance.diag-r39812302641",
+    "ax_diagnostic_toggle_enabled": true,
+    "measurement_started": true,
+    "trace_reports": [
+      "frame-trace-3d9-2026-10-23.json.gz",
+      "frame-trace-after-restart-3d9-2026-10-23.json.gz"
+    ]
+  },
+  "permission_probe_followup": {
+    "revision": "c5453023413fa265fe5e64f60b30e5f053bb0259",
+    "change": "Explicit notification permission action plus independent authorization and pending OS request snapshots; unknown stays unknown",
+    "local_flutter_passed": 700,
+    "analysis": "success",
+    "performance_run": 39889484900,
+    "status": "CI_SUCCESS_NATIVE_DENY_REOPEN_RESTORE_PASS",
+    "product_run": 39889437264,
+    "raw_record": "native-permission-probe-3c10-2026-10-23.json"
+  },
+  "native_trace_summary": {
+    "first_run_summary": "frame-trace-summary-3d9-2026-10-23.json",
+    "fresh_process_summary": "frame-trace-after-restart-summary-3d9-2026-10-23.json",
+    "controlled_timeout": "frame-timeout-gate-3d9-2026-10-23.json",
+    "first_run_gc_frames": 3,
+    "fresh_process_gc_frames": 4,
+    "gc_causation_for_uninstrumented_tail": "NOT_ESTABLISHED"
+  }
+}

@@ -1,0 +1,131 @@
+{
+  "report": {
+    "scope": "Explicitly altered synthetic request, real OS callback and production service/journal; not a spontaneous OS outage",
+    "source_revision": "2da0c33709f08f017a887d76b04fb79c84d7fb78",
+    "events": [
+      {
+        "phase": "opened_saved_state",
+        "mode": null,
+        "pid": 27291,
+        "at": "2026-10-23T02:19:02.796580Z",
+        "journal": null
+      },
+      {
+        "phase": "probe_accepted_by_os",
+        "mode": "empty_content",
+        "pid": 27291,
+        "at": "2026-10-23T02:19:08.187046Z",
+        "journal": {
+          "version": 1,
+          "epoch": "b617ea54-1ce8-4f70-af36-249072b8c08b",
+          "entries": [
+            {
+              "reminderId": "qa-native-os-rejection",
+              "nativeId": 733214976,
+              "action": "schedule",
+              "status": "submitted",
+              "attempts": 2,
+              "triggerUtcMicros": 4070908800000000,
+              "noticeRevision": 0,
+              "attemptedAt": "2026-10-23T02:19:08.184927Z"
+            }
+          ]
+        }
+      },
+      {
+        "phase": "probe_accepted_by_os",
+        "mode": "past_date",
+        "pid": 27291,
+        "at": "2026-10-23T02:19:16.236427Z",
+        "journal": {
+          "version": 1,
+          "epoch": "b617ea54-1ce8-4f70-af36-249072b8c08b",
+          "entries": [
+            {
+              "reminderId": "qa-native-os-rejection",
+              "nativeId": 733214976,
+              "action": "schedule",
+              "status": "submitted",
+              "attempts": 4,
+              "triggerUtcMicros": 4070908800000000,
+              "noticeRevision": 0,
+              "attemptedAt": "2026-10-23T02:19:16.232843Z"
+            }
+          ]
+        }
+      },
+      {
+        "phase": "opened_saved_state",
+        "mode": null,
+        "pid": 30041,
+        "at": "2026-10-23T02:23:39.683846Z",
+        "journal": {
+          "version": 1,
+          "epoch": "b617ea54-1ce8-4f70-af36-249072b8c08b",
+          "entries": [
+            {
+              "reminderId": "qa-native-os-rejection",
+              "nativeId": 733214976,
+              "action": "schedule",
+              "status": "submitted",
+              "attempts": 4,
+              "triggerUtcMicros": 4070908800000000,
+              "noticeRevision": 0,
+              "attemptedAt": "2026-10-23T02:19:16.232843Z"
+            }
+          ]
+        }
+      },
+      {
+        "phase": "valid_retry_submitted",
+        "mode": null,
+        "pid": 30041,
+        "at": "2026-10-23T02:23:45.502838Z",
+        "journal": {
+          "version": 1,
+          "epoch": "b617ea54-1ce8-4f70-af36-249072b8c08b",
+          "entries": [
+            {
+              "reminderId": "qa-native-os-rejection",
+              "nativeId": 733214976,
+              "action": "schedule",
+              "status": "submitted",
+              "attempts": 6,
+              "triggerUtcMicros": 4070908800000000,
+              "noticeRevision": 0,
+              "attemptedAt": "2026-10-23T02:23:45.500938Z"
+            }
+          ]
+        }
+      },
+      {
+        "phase": "cleanup_no_pending_requests",
+        "mode": null,
+        "pid": 30041,
+        "at": "2026-10-23T02:23:50.669952Z",
+        "journal": {
+          "version": 1,
+          "epoch": "b617ea54-1ce8-4f70-af36-249072b8c08b",
+          "entries": [
+            {
+              "reminderId": "qa-native-os-rejection",
+              "nativeId": 733214976,
+              "action": "cancel",
+              "status": "submitted",
+              "attempts": 7,
+              "triggerUtcMicros": null,
+              "noticeRevision": null,
+              "attemptedAt": "2026-10-23T02:23:50.666602Z"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "quit_pid_absent_before_reopen": true,
+  "same_native_id": 733214976,
+  "real_os_rejection": "NOT_OBSERVED_OS_ACCEPTED_BOTH_NEGATIVE_REQUESTS",
+  "failed_across_restart": "NOT_RUN_NO_REAL_REJECTION",
+  "cleanup_pending_api_readback": "EMPTY",
+  "scope": "Isolated synthetic task, real OS; app restart is not system reboot"
+}

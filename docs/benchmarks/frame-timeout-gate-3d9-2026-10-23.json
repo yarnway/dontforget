@@ -1,0 +1,280 @@
+{
+  "scope": "Controlled minimize causes a real frame wait timeout; no VM/OS errors fabricated",
+  "failed_report": {
+    "scope": "Synthetic macOS profile harness; storage startup excludes reconciliation; full notification startup uses a recording OS transport; frames are real engine timings. Foreground validity is recorded per segment, never inferred from completion.",
+    "source_revision": "1476353d4e961bfde0d815d6a6886e9dfec911a3",
+    "fixture_version": 2,
+    "viewport_protocol": "fixed-height-792-v1",
+    "first_frame_protocol": "one warmup then five fresh board/provider mounts",
+    "focused_768_diagnostics": true,
+    "timing_comparable_to_baseline": false,
+    "restart_required": true,
+    "notification_startup_included": false,
+    "fixture_source": "Exact task rows from KaPI1r baseline; notification-only copy uses fixed 2099 trigger",
+    "segments": [
+      {
+        "label": "10000 storage startup",
+        "wall_us": 390772,
+        "before": {
+          "focused": true,
+          "visible": true,
+          "minimized": false,
+          "lifecycle": "resumed"
+        },
+        "after": {
+          "focused": true,
+          "visible": true,
+          "minimized": false,
+          "lifecycle": "resumed"
+        },
+        "events": [],
+        "uninterrupted_foreground": true
+      },
+      {
+        "label": "10000 backup",
+        "wall_us": 1655028,
+        "before": {
+          "focused": true,
+          "visible": true,
+          "minimized": false,
+          "lifecycle": "resumed"
+        },
+        "after": {
+          "focused": true,
+          "visible": true,
+          "minimized": false,
+          "lifecycle": "resumed"
+        },
+        "events": [],
+        "uninterrupted_foreground": true
+      },
+      {
+        "label": "10000 board 768.0",
+        "wall_us": 13876622,
+        "before": {
+          "focused": true,
+          "visible": true,
+          "minimized": false,
+          "lifecycle": "resumed"
+        },
+        "after": {
+          "focused": false,
+          "visible": false,
+          "minimized": true,
+          "lifecycle": "hidden"
+        },
+        "events": [
+          {
+            "event": "blur",
+            "timeline_us": 827872600059
+          },
+          {
+            "event": "minimize",
+            "timeline_us": 827872603488
+          },
+          {
+            "event": "lifecycle:inactive",
+            "timeline_us": 827872603827
+          },
+          {
+            "event": "lifecycle:hidden",
+            "timeline_us": 827872603832
+          }
+        ],
+        "uninterrupted_foreground": false
+      }
+    ],
+    "window_events": [
+      {
+        "event": "blur",
+        "timeline_us": 827872600059
+      },
+      {
+        "event": "minimize",
+        "timeline_us": 827872603488
+      },
+      {
+        "event": "lifecycle:inactive",
+        "timeline_us": 827872603827
+      },
+      {
+        "event": "lifecycle:hidden",
+        "timeline_us": 827872603832
+      }
+    ],
+    "build_mode": "profile",
+    "phase": "failed",
+    "recorded_at": "2026-10-23T04:06:08.719861Z",
+    "dart": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+    "os": "Version 27.0.1 (Build 26A434)",
+    "harness_entry_to_first_raster_us": 288119,
+    "errors": [
+      "TimeoutException after 0:00:10.000000: Future not completed"
+    ],
+    "results": [
+      {
+        "tasks": 10000,
+        "task_rows_sha256": "400c2386e425cafaffbbe8e8e6ed76e136ae94cd19f94bb745b8560c854d66d2",
+        "storage_startup": {
+          "samples": 5,
+          "p50_us": 64604,
+          "p95_us": 74134,
+          "max_us": 74134
+        },
+        "consistent_backup": {
+          "samples": 5,
+          "p50_us": 157479,
+          "p95_us": 166230,
+          "max_us": 166230
+        },
+        "search_index_build_us": 6366,
+        "indexed_search": {
+          "samples": 50,
+          "p50_us": 2228,
+          "p95_us": 2451,
+          "max_us": 2610
+        },
+        "backup_json_bytes": 7344665,
+        "backup_mirror_bytes": 2539520,
+        "views": []
+      }
+    ]
+  },
+  "rerun_and_checkbox_clicks_no_effect": true,
+  "directory_count_unchanged_at_3_after_clicks": true,
+  "failed_pid": 31855,
+  "failed_process_absent_before_reopen": true,
+  "fresh_process_completed_report": "/Users/james/Library/Containers/com.example.dontForget.acceptance.diag-r39812302641/Data/Library/Application Support/com.example.dontForget.acceptance.diag-r39812302641/isolated-performance-3jSQOj/results.json",
+  "fresh_restart_required": false,
+  "fresh_trace_summary": "frame-trace-after-restart-summary-3d9-2026-10-23.json",
+  "analyzer_rejected_failed_and_hidden_reports": true,
+  "short_minimize_attempt": {
+    "phase": "complete",
+    "errors": [],
+    "restart_required": false,
+    "window_events": [
+      {
+        "event": "blur",
+        "timeline_us": 827794702880
+      },
+      {
+        "event": "minimize",
+        "timeline_us": 827794704907
+      },
+      {
+        "event": "lifecycle:inactive",
+        "timeline_us": 827794705275
+      },
+      {
+        "event": "lifecycle:hidden",
+        "timeline_us": 827794705280
+      },
+      {
+        "event": "focus",
+        "timeline_us": 827795369286
+      },
+      {
+        "event": "restore",
+        "timeline_us": 827795369661
+      },
+      {
+        "event": "lifecycle:inactive",
+        "timeline_us": 827795428710
+      },
+      {
+        "event": "lifecycle:resumed",
+        "timeline_us": 827795428719
+      }
+    ],
+    "segments": [
+      {
+        "label": "10000 storage startup",
+        "wall_us": 407869,
+        "before": {
+          "focused": true,
+          "visible": true,
+          "minimized": false,
+          "lifecycle": "resumed"
+        },
+        "after": {
+          "focused": true,
+          "visible": true,
+          "minimized": false,
+          "lifecycle": "resumed"
+        },
+        "events": [],
+        "uninterrupted_foreground": true
+      },
+      {
+        "label": "10000 backup",
+        "wall_us": 1693071,
+        "before": {
+          "focused": true,
+          "visible": true,
+          "minimized": false,
+          "lifecycle": "resumed"
+        },
+        "after": {
+          "focused": true,
+          "visible": true,
+          "minimized": false,
+          "lifecycle": "resumed"
+        },
+        "events": [],
+        "uninterrupted_foreground": true
+      },
+      {
+        "label": "10000 board 768.0",
+        "wall_us": 7202345,
+        "before": {
+          "focused": true,
+          "visible": true,
+          "minimized": false,
+          "lifecycle": "resumed"
+        },
+        "after": {
+          "focused": true,
+          "visible": true,
+          "minimized": false,
+          "lifecycle": "resumed"
+        },
+        "events": [
+          {
+            "event": "blur",
+            "timeline_us": 827794702880
+          },
+          {
+            "event": "minimize",
+            "timeline_us": 827794704907
+          },
+          {
+            "event": "lifecycle:inactive",
+            "timeline_us": 827794705275
+          },
+          {
+            "event": "lifecycle:hidden",
+            "timeline_us": 827794705280
+          },
+          {
+            "event": "focus",
+            "timeline_us": 827795369286
+          },
+          {
+            "event": "restore",
+            "timeline_us": 827795369661
+          },
+          {
+            "event": "lifecycle:inactive",
+            "timeline_us": 827795428710
+          },
+          {
+            "event": "lifecycle:resumed",
+            "timeline_us": 827795428719
+          }
+        ],
+        "uninterrupted_foreground": false
+      }
+    ]
+  },
+  "short_minimize_attempt_not_in_perf_statistics": true
+}

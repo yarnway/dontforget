@@ -1,0 +1,1173 @@
+{
+  "scope": "Instrumented synthetic replacement frames; inclusive nested spans are not additive CPU shares; GC name matches are a heuristic, not proof of causation",
+  "source_revision": "1476353d4e961bfde0d815d6a6886e9dfec911a3",
+  "task_rows_sha256": "400c2386e425cafaffbbe8e8e6ed76e136ae94cd19f94bb745b8560c854d66d2",
+  "native_acceptance": "Trace analysis only; does not establish old/new performance improvement or OS notification acceptance",
+  "frames": [
+    {
+      "interval_us": 18544,
+      "incomplete_boundary_pairs": 1,
+      "top_inclusive_spans": [
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderPointerListener",
+          "count": 166,
+          "inclusive_us": 56319
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderFlex",
+          "count": 120,
+          "inclusive_us": 54220
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderPadding",
+          "count": 210,
+          "inclusive_us": 36669
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Padding",
+          "count": 105,
+          "inclusive_us": 29035
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Semantics",
+          "count": 219,
+          "inclusive_us": 28545
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderRepaintBoundary",
+          "count": 35,
+          "inclusive_us": 26550
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderSemanticsAnnotations",
+          "count": 415,
+          "inclusive_us": 26275
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderSemanticsGestureHandler",
+          "count": 48,
+          "inclusive_us": 25751
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderIgnorePointer",
+          "count": 12,
+          "inclusive_us": 24012
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Listener",
+          "count": 86,
+          "inclusive_us": 22597
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "VsyncProcessCallback",
+          "count": 1,
+          "inclusive_us": 16606
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Animator::BeginFrame",
+          "count": 1,
+          "inclusive_us": 16602
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderMouseRegion",
+          "count": 106,
+          "inclusive_us": 16046
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderConstrainedBox",
+          "count": 161,
+          "inclusive_us": 15511
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderDecoratedBox",
+          "count": 40,
+          "inclusive_us": 15324
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "KeyedSubtree",
+          "count": 17,
+          "inclusive_us": 15177
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderPositionedBox",
+          "count": 123,
+          "inclusive_us": 14917
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RawGestureDetector",
+          "count": 51,
+          "inclusive_us": 14389
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "GestureDetector",
+          "count": 40,
+          "inclusive_us": 14069
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "_RenderLayoutBuilder",
+          "count": 2,
+          "inclusive_us": 12909
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "LAYOUT (root)",
+          "count": 1,
+          "inclusive_us": 12250
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "LAYOUT",
+          "count": 1,
+          "inclusive_us": 12249
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderCustomPaint",
+          "count": 52,
+          "inclusive_us": 12227
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "DecoratedBox",
+          "count": 21,
+          "inclusive_us": 11875
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderMetaData",
+          "count": 10,
+          "inclusive_us": 11583
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "_RenderScrollSemantics",
+          "count": 8,
+          "inclusive_us": 11088
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderViewport",
+          "count": 8,
+          "inclusive_us": 11050
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Builder",
+          "count": 31,
+          "inclusive_us": 11028
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderSliverPadding",
+          "count": 8,
+          "inclusive_us": 10991
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderSliverList",
+          "count": 8,
+          "inclusive_us": 10978
+        }
+      ],
+      "gc_name_matches": [
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "CollectNewGeneration",
+          "count": 1,
+          "inclusive_us": 3213
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Scavenge",
+          "count": 1,
+          "inclusive_us": 3189
+        },
+        {
+          "pid": 31855,
+          "tid": 74879,
+          "name": "Scavenge",
+          "count": 1,
+          "inclusive_us": 3136
+        }
+      ]
+    },
+    {
+      "interval_us": 22406,
+      "incomplete_boundary_pairs": 3,
+      "top_inclusive_spans": [
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderPointerListener",
+          "count": 165,
+          "inclusive_us": 61019
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderFlex",
+          "count": 120,
+          "inclusive_us": 59248
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderPadding",
+          "count": 210,
+          "inclusive_us": 39289
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Semantics",
+          "count": 219,
+          "inclusive_us": 34057
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderRepaintBoundary",
+          "count": 35,
+          "inclusive_us": 28902
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderSemanticsAnnotations",
+          "count": 415,
+          "inclusive_us": 28254
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderSemanticsGestureHandler",
+          "count": 48,
+          "inclusive_us": 28003
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderIgnorePointer",
+          "count": 12,
+          "inclusive_us": 26438
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Padding",
+          "count": 105,
+          "inclusive_us": 25401
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Listener",
+          "count": 85,
+          "inclusive_us": 24879
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "VsyncProcessCallback",
+          "count": 1,
+          "inclusive_us": 21233
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Animator::BeginFrame",
+          "count": 1,
+          "inclusive_us": 21223
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderMouseRegion",
+          "count": 106,
+          "inclusive_us": 17336
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderConstrainedBox",
+          "count": 172,
+          "inclusive_us": 17077
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderDecoratedBox",
+          "count": 40,
+          "inclusive_us": 16585
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderPositionedBox",
+          "count": 123,
+          "inclusive_us": 16433
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "KeyedSubtree",
+          "count": 17,
+          "inclusive_us": 16386
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RawGestureDetector",
+          "count": 51,
+          "inclusive_us": 15878
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "GestureDetector",
+          "count": 40,
+          "inclusive_us": 15494
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "_RenderLayoutBuilder",
+          "count": 2,
+          "inclusive_us": 14274
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "LAYOUT (root)",
+          "count": 1,
+          "inclusive_us": 13527
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "LAYOUT",
+          "count": 1,
+          "inclusive_us": 13525
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Actions",
+          "count": 37,
+          "inclusive_us": 13431
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderCustomPaint",
+          "count": 56,
+          "inclusive_us": 13424
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "_ActionsScope",
+          "count": 37,
+          "inclusive_us": 13335
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderMetaData",
+          "count": 9,
+          "inclusive_us": 12753
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "DefaultSelectionStyle",
+          "count": 42,
+          "inclusive_us": 12294
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "_RenderScrollSemantics",
+          "count": 8,
+          "inclusive_us": 12159
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderViewport",
+          "count": 8,
+          "inclusive_us": 12109
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderSliverPadding",
+          "count": 8,
+          "inclusive_us": 12035
+        }
+      ],
+      "gc_name_matches": [
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "CollectOldGeneration",
+          "count": 1,
+          "inclusive_us": 2515
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "CollectNewGeneration",
+          "count": 1,
+          "inclusive_us": 2462
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Scavenge",
+          "count": 1,
+          "inclusive_us": 2437
+        },
+        {
+          "pid": 31855,
+          "tid": 75475,
+          "name": "Scavenge",
+          "count": 1,
+          "inclusive_us": 2430
+        }
+      ]
+    },
+    {
+      "interval_us": 15887,
+      "incomplete_boundary_pairs": 1,
+      "top_inclusive_spans": [
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderPointerListener",
+          "count": 166,
+          "inclusive_us": 46173
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderFlex",
+          "count": 120,
+          "inclusive_us": 44267
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderPadding",
+          "count": 210,
+          "inclusive_us": 32136
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderSemanticsAnnotations",
+          "count": 415,
+          "inclusive_us": 24206
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderRepaintBoundary",
+          "count": 35,
+          "inclusive_us": 21422
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderSemanticsGestureHandler",
+          "count": 48,
+          "inclusive_us": 20612
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderIgnorePointer",
+          "count": 12,
+          "inclusive_us": 18775
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Semantics",
+          "count": 219,
+          "inclusive_us": 18455
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Padding",
+          "count": 105,
+          "inclusive_us": 13855
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Listener",
+          "count": 85,
+          "inclusive_us": 13799
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "VsyncProcessCallback",
+          "count": 1,
+          "inclusive_us": 13736
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Animator::BeginFrame",
+          "count": 1,
+          "inclusive_us": 13728
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderMouseRegion",
+          "count": 106,
+          "inclusive_us": 13555
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderConstrainedBox",
+          "count": 168,
+          "inclusive_us": 13149
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderDecoratedBox",
+          "count": 40,
+          "inclusive_us": 12937
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderPositionedBox",
+          "count": 123,
+          "inclusive_us": 12541
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "_RenderLayoutBuilder",
+          "count": 2,
+          "inclusive_us": 10335
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "LAYOUT (root)",
+          "count": 1,
+          "inclusive_us": 9663
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "LAYOUT",
+          "count": 1,
+          "inclusive_us": 9662
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderCustomPaint",
+          "count": 54,
+          "inclusive_us": 9625
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "KeyedSubtree",
+          "count": 17,
+          "inclusive_us": 9072
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderMetaData",
+          "count": 9,
+          "inclusive_us": 9030
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RawGestureDetector",
+          "count": 51,
+          "inclusive_us": 8567
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "_RenderScrollSemantics",
+          "count": 8,
+          "inclusive_us": 8444
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderViewport",
+          "count": 8,
+          "inclusive_us": 8393
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderSliverPadding",
+          "count": 8,
+          "inclusive_us": 8327
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderSliverList",
+          "count": 8,
+          "inclusive_us": 8309
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "GestureDetector",
+          "count": 40,
+          "inclusive_us": 8273
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "BUILD",
+          "count": 10,
+          "inclusive_us": 7028
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "_FocusInheritedScope",
+          "count": 44,
+          "inclusive_us": 6958
+        }
+      ],
+      "gc_name_matches": []
+    },
+    {
+      "interval_us": 22330,
+      "incomplete_boundary_pairs": 1,
+      "top_inclusive_spans": [
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderPointerListener",
+          "count": 166,
+          "inclusive_us": 48038
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderFlex",
+          "count": 120,
+          "inclusive_us": 45828
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderPadding",
+          "count": 210,
+          "inclusive_us": 31780
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderSemanticsAnnotations",
+          "count": 415,
+          "inclusive_us": 23550
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderRepaintBoundary",
+          "count": 35,
+          "inclusive_us": 22546
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderSemanticsGestureHandler",
+          "count": 48,
+          "inclusive_us": 21757
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Semantics",
+          "count": 219,
+          "inclusive_us": 20057
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderIgnorePointer",
+          "count": 12,
+          "inclusive_us": 20007
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Listener",
+          "count": 85,
+          "inclusive_us": 15668
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Padding",
+          "count": 105,
+          "inclusive_us": 15634
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "VsyncProcessCallback",
+          "count": 1,
+          "inclusive_us": 13938
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Animator::BeginFrame",
+          "count": 1,
+          "inclusive_us": 13926
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderMouseRegion",
+          "count": 106,
+          "inclusive_us": 13898
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderConstrainedBox",
+          "count": 167,
+          "inclusive_us": 13194
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderDecoratedBox",
+          "count": 40,
+          "inclusive_us": 13157
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderPositionedBox",
+          "count": 123,
+          "inclusive_us": 12592
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "KeyedSubtree",
+          "count": 17,
+          "inclusive_us": 11766
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RawGestureDetector",
+          "count": 51,
+          "inclusive_us": 11322
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "GestureDetector",
+          "count": 40,
+          "inclusive_us": 11033
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "_RenderLayoutBuilder",
+          "count": 2,
+          "inclusive_us": 10761
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderCustomPaint",
+          "count": 55,
+          "inclusive_us": 10392
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "LAYOUT (root)",
+          "count": 1,
+          "inclusive_us": 10142
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "LAYOUT",
+          "count": 1,
+          "inclusive_us": 10138
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderMetaData",
+          "count": 9,
+          "inclusive_us": 9693
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "_RenderScrollSemantics",
+          "count": 8,
+          "inclusive_us": 9237
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderViewport",
+          "count": 8,
+          "inclusive_us": 9193
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderSliverPadding",
+          "count": 8,
+          "inclusive_us": 9110
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderSliverList",
+          "count": 8,
+          "inclusive_us": 9098
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Builder",
+          "count": 32,
+          "inclusive_us": 8483
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "_FocusInheritedScope",
+          "count": 44,
+          "inclusive_us": 8219
+        }
+      ],
+      "gc_name_matches": [
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "CollectNewGeneration",
+          "count": 1,
+          "inclusive_us": 2033
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Scavenge",
+          "count": 1,
+          "inclusive_us": 2008
+        },
+        {
+          "pid": 31855,
+          "tid": 75475,
+          "name": "Scavenge",
+          "count": 1,
+          "inclusive_us": 1987
+        }
+      ]
+    },
+    {
+      "interval_us": 18575,
+      "incomplete_boundary_pairs": 1,
+      "top_inclusive_spans": [
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderPointerListener",
+          "count": 166,
+          "inclusive_us": 45720
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderFlex",
+          "count": 120,
+          "inclusive_us": 43374
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderPadding",
+          "count": 210,
+          "inclusive_us": 31524
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderSemanticsAnnotations",
+          "count": 415,
+          "inclusive_us": 24827
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderRepaintBoundary",
+          "count": 35,
+          "inclusive_us": 21259
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderSemanticsGestureHandler",
+          "count": 48,
+          "inclusive_us": 20302
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Semantics",
+          "count": 219,
+          "inclusive_us": 19003
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderIgnorePointer",
+          "count": 12,
+          "inclusive_us": 18376
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Padding",
+          "count": 105,
+          "inclusive_us": 14232
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Listener",
+          "count": 85,
+          "inclusive_us": 13835
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "VsyncProcessCallback",
+          "count": 1,
+          "inclusive_us": 13756
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Animator::BeginFrame",
+          "count": 1,
+          "inclusive_us": 13752
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderMouseRegion",
+          "count": 106,
+          "inclusive_us": 13624
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderConstrainedBox",
+          "count": 169,
+          "inclusive_us": 12831
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderDecoratedBox",
+          "count": 40,
+          "inclusive_us": 12758
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderPositionedBox",
+          "count": 123,
+          "inclusive_us": 12117
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "_RenderLayoutBuilder",
+          "count": 2,
+          "inclusive_us": 10065
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderCustomPaint",
+          "count": 56,
+          "inclusive_us": 9647
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "KeyedSubtree",
+          "count": 17,
+          "inclusive_us": 9355
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "LAYOUT (root)",
+          "count": 1,
+          "inclusive_us": 9284
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "LAYOUT",
+          "count": 1,
+          "inclusive_us": 9282
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderMetaData",
+          "count": 9,
+          "inclusive_us": 8873
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RawGestureDetector",
+          "count": 51,
+          "inclusive_us": 8679
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "GestureDetector",
+          "count": 40,
+          "inclusive_us": 8371
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "_RenderScrollSemantics",
+          "count": 8,
+          "inclusive_us": 8314
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderViewport",
+          "count": 8,
+          "inclusive_us": 8253
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderSliverPadding",
+          "count": 8,
+          "inclusive_us": 8188
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "RenderSliverList",
+          "count": 8,
+          "inclusive_us": 8176
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Builder",
+          "count": 31,
+          "inclusive_us": 8004
+        },
+        {
+          "pid": 31855,
+          "tid": 259,
+          "name": "Actions",
+          "count": 37,
+          "inclusive_us": 7404
+        }
+      ],
+      "gc_name_matches": []
+    }
+  ],
+  "raw_trace": {
+    "gzip_file": "frame-trace-3d9-2026-10-23.json.gz",
+    "gzip_bytes": 348052,
+    "gzip_sha256": "6385a42c4001d4d1bf3aaf522bd342566f701c7ffe64f62e9b0ab6e210a7697a",
+    "json_bytes": 21021531,
+    "json_sha256": "8cbe8d3340b27be2ff8edd467c0c117de1a1de7a6a4f6cf4d4172785ba653e42"
+  }
+}
