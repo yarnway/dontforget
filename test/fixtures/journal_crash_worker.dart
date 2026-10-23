@@ -1,5 +1,6 @@
 // Child process for abrupt termination tests; uses only its supplied temp dir.
 import 'dart:io';
+import 'package:dont_forget/services/storage_directory_lease.dart';
 import 'package:dont_forget/services/notification_journal.dart';
 import '../../benchmark/incremental_journal_experiment.dart';
 import '../../benchmark/leased_incremental_journal.dart';
@@ -12,7 +13,7 @@ Future<void> boundary() async {
 
 Future<void> main(List<String> args) async {
   final dir = Directory(args[0]);
-  final mode = args[1];
+  var mode = args[1];
   const epoch = '00000000-0000-4000-8000-000000000001';
   if (mode.startsWith('leased:')) {
     final session = await LeasedIncrementalJournal.acquire(dir);
@@ -35,7 +36,7 @@ Future<void> main(List<String> args) async {
   }
   if (mode.startsWith('segment:') || mode.startsWith('segment_bulk:')) {
     final bulk = mode.startsWith('segment_bulk:');
-    final log = IncrementalJournalExperiment(
+    final log = IncrementalJournalEngine(
       dir,
       checkpointEveryFrames: bulk ? 1 : 2,
     );
@@ -57,7 +58,7 @@ Future<void> main(List<String> args) async {
     throw StateError('Requested segment boundary was not reached');
   }
   if (mode.startsWith('checkpoint:')) {
-    final log = IncrementalJournalExperiment(dir);
+    final log = IncrementalJournalEngine(dir);
     final old = await log.open();
     log.checkpointHook = (point) async {
       if (point == mode.substring('checkpoint:'.length)) await boundary();
@@ -70,9 +71,17 @@ Future<void> main(List<String> args) async {
     );
     return;
   }
-  final journal = mode == 'staged'
-      ? NotificationJournal.forTesting(dir, boundary)
-      : NotificationJournal(dir);
+  NotificationJournal? product;
+  if (mode.startsWith('product:')) {
+    final lease = await StorageDirectoryLease.acquire(dir);
+    product = await NotificationJournal.openOwned(lease, migrateLegacy: true);
+    mode = mode.substring('product:'.length);
+  }
+  final journal =
+      product ??
+      (mode == 'staged'
+          ? NotificationJournal.forTesting(dir, boundary)
+          : NotificationJournal(dir));
   final entry = await journal.begin(
     epoch,
     'task',

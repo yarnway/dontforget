@@ -262,7 +262,7 @@ void main() {
   });
 
   test(
-    'v1 product refuses an incremental selection until latest-state rollback',
+    'product opens selected incremental state and downgrade exports latest state',
     () async {
       session = await LeasedIncrementalJournal.acquire(dir);
       await session!.migrate();
@@ -270,9 +270,18 @@ void main() {
       await session!.close();
       session = null;
       final helper = DatabaseHelper.forTesting(dir.path, databaseFactoryFfi);
-      await expectLater(
-        helper.acquireOwnership(),
-        throwsA(isA<DatabaseRecoveryRequiredException>()),
+      await helper.acquireOwnership();
+      expect(
+        (await helper.withNotificationJournal(
+          (j) => j.read(),
+        ))!.entries.values.single.toJson(),
+        updated().toJson(),
+      );
+      expect(
+        await helper.withNotificationJournal(
+          (j) async => j.usesIncrementalStorage,
+        ),
+        isTrue,
       );
       await helper.close(createBackup: false);
       session = await LeasedIncrementalJournal.acquire(dir);

@@ -53,7 +53,7 @@ Future<void> main(List<String> args) async {
     for (final name in ['indexed', 'segmented_24']) {
       final dir = await Directory('${root.path}/$name').create();
       directories[name] = dir;
-      await IncrementalJournalExperiment(
+      await IncrementalJournalEngine(
         dir,
       ).checkpoint(NotificationJournalSnapshot(epoch, {}));
     }
@@ -108,7 +108,7 @@ Future<void> main(List<String> args) async {
       for (final (name, directory) in directories.entries.map(
         (e) => (e.key, e.value),
       )) {
-        final experiment = IncrementalJournalExperiment(
+        final experiment = IncrementalJournalEngine(
           directory,
           checkpointEveryFrames: name == 'indexed' ? 0 : 24,
         );
@@ -124,7 +124,7 @@ Future<void> main(List<String> args) async {
         final flushesBeforeCheckpoint = experiment.flushes;
         final periodicCheckpoints = experiment.checkpoints;
         final periodicCheckpointMicros = experiment.checkpointMicroseconds;
-        final replay = IncrementalJournalExperiment(directory);
+        final replay = IncrementalJournalEngine(directory);
         watch.reset();
         final recovered = await replay.open();
         final fullReplayMicros = watch.elapsedMicroseconds;
@@ -134,7 +134,7 @@ Future<void> main(List<String> args) async {
         watch.reset();
         await experiment.checkpoint(recovered);
         final compactMicros = watch.elapsedMicroseconds;
-        final reopened = IncrementalJournalExperiment(directory);
+        final reopened = IncrementalJournalEngine(directory);
         watch.reset();
         final compacted = await reopened.open();
         final compactOpenMicros = watch.elapsedMicroseconds;
@@ -232,10 +232,8 @@ Future<void> main(List<String> args) async {
               LeasedIncrementalJournal.maxManagedFiles,
           'leased_variant_uses_database_ownership_lock': true,
         },
-        'fixture_file_sha256': IncrementalJournalExperiment.digest(
-          fixtureBytes,
-        ),
-        'task_rows_sha256': IncrementalJournalExperiment.digest(
+        'fixture_file_sha256': IncrementalJournalEngine.digest(fixtureBytes),
+        'task_rows_sha256': IncrementalJournalEngine.digest(
           utf8.encode(jsonEncode(rows)),
         ),
         'runtime': Platform.version,

@@ -85,6 +85,12 @@ class DatabaseMaintenanceLease {
     return Future<T>.sync(action).whenComplete(() => _busy = false);
   }
 
+  /// Export the latest operational state before opening a v1-only binary.
+  /// The explicit v1 selector also prevents automatic upgrade on next launch.
+  Future<void> rollbackNotificationStorage() => _perform(() async {
+    await _helper._notificationJournal!.rollbackToV1();
+  });
+
   Future<void> closeWithoutBackup() => _perform(() async {
     _validatedOpen = false;
     _validatedVersion = null;

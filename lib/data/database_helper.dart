@@ -35,13 +35,20 @@ class DatabaseHelper {
   static final Object _operationZoneKey = Object();
   final String? _directory;
   final DatabaseFactory? _factory;
+  final bool migrateNotificationJournal;
 
-  DatabaseHelper._init() : _directory = null, _factory = null;
+  DatabaseHelper._init()
+    : _directory = null,
+      _factory = null,
+      migrateNotificationJournal = Platform.isMacOS;
 
   @visibleForTesting
-  DatabaseHelper.forTesting(String directory, DatabaseFactory factory)
-    : _directory = directory,
-      _factory = factory;
+  DatabaseHelper.forTesting(
+    String directory,
+    DatabaseFactory factory, {
+    this.migrateNotificationJournal = false,
+  }) : _directory = directory,
+       _factory = factory;
 
   /// Raw handles are only available on an explicitly isolated test helper.
   @visibleForTesting
@@ -196,9 +203,7 @@ class DatabaseHelper {
           DatabaseAccessError.ownedByAnotherProcess,
         );
       }
-      return action(
-        _notificationJournal ??= NotificationJournal(Directory(directory)),
-      );
+      return action(_notificationJournal!);
     }
 
     Future<T> admitted() async {
@@ -280,37 +285,13 @@ class DatabaseHelper {
     StorageDirectoryLease? handle;
     try {
       handle = await StorageDirectoryLease.acquire(Directory(canonical));
-      // This product still uses v1. Never open stale v1 state when an isolated
-      // migration selected another backend or left an unknown selection.
-      final selector = File(
-        join(canonical, NotificationJournal.storageSelectorFileName),
-      );
-      final type = await FileSystemEntity.type(
-        selector.path,
-        followLinks: false,
-      );
-      if (type != FileSystemEntityType.notFound) {
-        try {
-          if (type != FileSystemEntityType.file ||
-              await selector.length() > 4096) {
-            throw const FormatException('Unsafe journal selection');
-          }
-          final bytes = await selector.readAsBytes();
-          if (bytes.length > 4096) {
-            throw const FormatException('Oversized journal selection');
-          }
-          final selected = jsonDecode(utf8.decode(bytes));
-          if (selected is! Map ||
-              selected.length != 2 ||
-              selected['format'] != 1 ||
-              selected['backend'] != 'v1') {
-            throw const FormatException(
-              'Notification backend requires migration adapter',
-            );
-          }
-        } catch (_) {
-          throw const DatabaseRecoveryRequiredException();
-        }
+      try {
+        _notificationJournal = await NotificationJournal.openOwned(
+          handle,
+          migrateLegacy: migrateNotificationJournal,
+        );
+      } catch (_) {
+        throw const DatabaseRecoveryRequiredException();
       }
       _ownershipLock = handle;
       _ownedDirectory = canonical;
@@ -331,6 +312,7 @@ class DatabaseHelper {
     final directory = _ownedDirectory;
     final handle = _ownershipLock;
     if (handle == null) return;
+    await _notificationJournal?.close();
     await handle.close();
     _ownershipLock = null;
     _notificationEpochStore = null;

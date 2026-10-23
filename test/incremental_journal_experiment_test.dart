@@ -8,7 +8,7 @@ void main() {
   const epoch = '00000000-0000-4000-8000-000000000001';
   const next = '00000000-0000-4000-8000-000000000002';
   late Directory dir;
-  late IncrementalJournalExperiment log;
+  late IncrementalJournalEngine log;
   late String dartExecutable;
   setUpAll(() async {
     // Use the SDK that supplied package:flutter, even when Flutter was invoked
@@ -43,7 +43,7 @@ void main() {
         'incremental-test-',
       )).resolveSymbolicLinks(),
     );
-    log = IncrementalJournalExperiment(dir);
+    log = IncrementalJournalEngine(dir);
     await log.checkpoint(NotificationJournalSnapshot(epoch, {}));
   });
   tearDown(() => dir.delete(recursive: true));
@@ -51,7 +51,7 @@ void main() {
   test('oversized checkpoint preserves the selected generation', () async {
     final manifest = File('${dir.path}/current.json');
     final before = await manifest.readAsBytes();
-    final limited = IncrementalJournalExperiment(dir, maxCheckpointBytes: 120);
+    final limited = IncrementalJournalEngine(dir, maxCheckpointBytes: 120);
     await limited.open();
     await expectLater(
       limited.checkpoint(
@@ -61,9 +61,18 @@ void main() {
     );
     expect(await manifest.readAsBytes(), before);
     expect(limited.snapshot!.entries, isEmpty);
-    await limited.append(epoch, [entry('pending')]);
+    await expectLater(
+      limited.append(epoch, [entry('pending')]),
+      throwsStateError,
+    );
+    expect(await limited.delta.length(), 0);
+    expect((await IncrementalJournalEngine(dir).open()).entries, isEmpty);
+    // A failed oversized mutation has not poisoned a larger valid writer.
+    final normal = IncrementalJournalEngine(dir);
+    await normal.open();
+    await normal.append(epoch, [entry('pending')]);
     expect(
-      (await IncrementalJournalExperiment(
+      (await IncrementalJournalEngine(
         dir,
       ).open()).entries.values.single.nativeId,
       17,
@@ -73,7 +82,7 @@ void main() {
   test(
     'oversized append is rejected before log or in-memory changes',
     () async {
-      final limited = IncrementalJournalExperiment(dir, maxFrameBytes: 1024);
+      final limited = IncrementalJournalEngine(dir, maxFrameBytes: 1024);
       await limited.open();
       final huge = NotificationJournalEntry.decode({
         ...entry('pending').toJson(),
@@ -84,7 +93,7 @@ void main() {
       expect(limited.snapshot!.entries, isEmpty);
       await limited.append(epoch, [entry('pending')]);
       expect(
-        (await IncrementalJournalExperiment(
+        (await IncrementalJournalEngine(
           dir,
         ).open()).entries.values.single.nativeId,
         17,
@@ -95,7 +104,7 @@ void main() {
   test(
     'segment byte capacity requires a checkpoint and preserves ID',
     () async {
-      final limited = IncrementalJournalExperiment(dir, maxLogBytes: 1024);
+      final limited = IncrementalJournalEngine(dir, maxLogBytes: 1024);
       await limited.open();
       var reachedLimit = false;
       for (var n = 0; n < 20; n++) {
@@ -113,7 +122,7 @@ void main() {
       expect(reachedLimit, isTrue);
       await limited.checkpoint(limited.snapshot!);
       await limited.append(epoch, [entry('submitted')]);
-      final recovered = await IncrementalJournalExperiment(dir).open();
+      final recovered = await IncrementalJournalEngine(dir).open();
       expect(recovered.entries.values.single.nativeId, 17);
       expect(recovered.entries.values.single.status, 'submitted');
     },
@@ -126,7 +135,7 @@ void main() {
     for (final kind in ['manifest', 'checkpoint', 'log']) {
       if (kind == 'manifest') await manifest.writeAsString(' ' * 4097);
       if (kind == 'log') await log.delta.writeAsString(' ' * 101);
-      final reader = IncrementalJournalExperiment(
+      final reader = IncrementalJournalEngine(
         dir,
         maxCheckpointBytes: kind == 'checkpoint' ? 10 : 16 * 1024 * 1024,
         maxLogBytes: kind == 'log' ? 100 : 64 * 1024 * 1024,
@@ -148,14 +157,14 @@ void main() {
     selected['generation'] = 'f' * 36;
     await manifest.writeAsString(jsonEncode(selected));
     await expectLater(
-      IncrementalJournalExperiment(dir).open(),
+      IncrementalJournalEngine(dir).open(),
       throwsFormatException,
     );
   });
 
   test('oversized unterminated tail is not silently ignored', () async {
     await log.delta.writeAsString('x' * 1025);
-    final reader = IncrementalJournalExperiment(dir, maxFrameBytes: 1024);
+    final reader = IncrementalJournalEngine(dir, maxFrameBytes: 1024);
     await expectLater(reader.open(), throwsFormatException);
     expect(reader.snapshot, isNull);
   });
@@ -170,7 +179,7 @@ void main() {
       await manifest.delete();
       await Link(manifest.path).create(target.path);
       await expectLater(
-        IncrementalJournalExperiment(dir).open(),
+        IncrementalJournalEngine(dir).open(),
         throwsFormatException,
       );
       await expectLater(
@@ -211,7 +220,7 @@ void main() {
       await alias.create(dir.path);
       final before = await File('${dir.path}/current.json').readAsBytes();
       await expectLater(
-        IncrementalJournalExperiment(
+        IncrementalJournalEngine(
           Directory(alias.path),
         ).checkpoint(NotificationJournalSnapshot(epoch, {})),
         throwsFormatException,
@@ -223,14 +232,14 @@ void main() {
 
   test('replay and checkpoint retain pending intent and native ID', () async {
     await log.append(epoch, [entry('pending')]);
-    final pending = await IncrementalJournalExperiment(dir).open();
+    final pending = await IncrementalJournalEngine(dir).open();
     expect(pending.entries.values.single.nativeId, 17);
     expect(pending.entries.values.single.unfinished, isTrue);
     await log.append(epoch, [entry('submitted')]);
-    final state = await IncrementalJournalExperiment(dir).open();
+    final state = await IncrementalJournalEngine(dir).open();
     await log.checkpoint(state);
     expect(
-      (await IncrementalJournalExperiment(dir).open()).toJson(),
+      (await IncrementalJournalEngine(dir).open()).toJson(),
       state.toJson(),
     );
   });
@@ -244,7 +253,7 @@ void main() {
       final complete = await log.delta.readAsBytes();
       for (var n = prefix.length; n < complete.length; n++) {
         await log.delta.writeAsBytes(complete.sublist(0, n));
-        final reopened = IncrementalJournalExperiment(dir);
+        final reopened = IncrementalJournalEngine(dir);
         expect(
           (await reopened.open()).entries.values.single.status,
           'pending',
@@ -252,7 +261,7 @@ void main() {
         );
         expect(reopened.ignoredTailBytes, n - prefix.length);
       }
-      final reopened = IncrementalJournalExperiment(dir);
+      final reopened = IncrementalJournalEngine(dir);
       final recovered = await reopened.open();
       await expectLater(
         reopened.append(epoch, [entry('submitted')]),
@@ -261,7 +270,7 @@ void main() {
       await reopened.checkpoint(recovered);
       await reopened.append(epoch, [entry('submitted')]);
       expect(
-        (await IncrementalJournalExperiment(
+        (await IncrementalJournalEngine(
           dir,
         ).open()).entries.values.single.status,
         'submitted',
@@ -285,7 +294,7 @@ void main() {
       ]) {
         await log.delta.writeAsBytes(bytes);
         await expectLater(
-          IncrementalJournalExperiment(dir).open(),
+          IncrementalJournalEngine(dir).open(),
           throwsA(anything),
         );
       }
@@ -323,12 +332,12 @@ void main() {
       final file = File('${dir.path}/${manifest['generation']}.json');
       await file.writeAsString('{}');
       await expectLater(
-        IncrementalJournalExperiment(dir).open(),
+        IncrementalJournalEngine(dir).open(),
         throwsFormatException,
       );
       await file.delete();
       await expectLater(
-        IncrementalJournalExperiment(dir).open(),
+        IncrementalJournalEngine(dir).open(),
         throwsA(isA<FileSystemException>()),
       );
     },
@@ -352,7 +361,7 @@ void main() {
       expect(log.snapshot!.entries.keys, ['合成任务']);
       expect(await log.delta.readAsBytes(), before);
       await log.append(epoch, [good]);
-      expect((await IncrementalJournalExperiment(dir).open()).entries.keys, [
+      expect((await IncrementalJournalEngine(dir).open()).entries.keys, [
         '合成任务',
         'new',
       ]);
@@ -362,7 +371,7 @@ void main() {
   test(
     'periodic checkpoints bound replay while preserving all reserved IDs',
     () async {
-      log = IncrementalJournalExperiment(dir, checkpointEveryFrames: 3);
+      log = IncrementalJournalEngine(dir, checkpointEveryFrames: 3);
       await log.open();
       for (var i = 0; i < 7; i++) {
         await log.append(epoch, [
@@ -372,7 +381,7 @@ void main() {
             'nativeId': 100 + i,
           }),
         ]);
-        final reopened = IncrementalJournalExperiment(dir);
+        final reopened = IncrementalJournalEngine(dir);
         final state = await reopened.open();
         expect(reopened.replayedFrames, (i + 1) % 3);
         expect(state.entries.length, i + 1);
@@ -418,7 +427,7 @@ void main() {
         await log.open();
         await log.append(epoch, [entry('submitted')]);
         expect(
-          (await IncrementalJournalExperiment(
+          (await IncrementalJournalEngine(
             dir,
           ).open()).entries.values.single.status,
           'submitted',
@@ -465,7 +474,7 @@ void main() {
       () async {
         await log.append(epoch, [entry('pending')]);
         await crash('segment:$point');
-        final reopened = IncrementalJournalExperiment(dir);
+        final reopened = IncrementalJournalEngine(dir);
         final state = await reopened.open();
         expect(state.epoch, epoch);
         expect(state.entries.values.single.nativeId, 17);
@@ -517,7 +526,7 @@ void main() {
         final before = NotificationJournalSnapshot(epoch, entries);
         await log.checkpoint(before);
         await crash('segment_bulk:$point');
-        final reopened = IncrementalJournalExperiment(dir);
+        final reopened = IncrementalJournalEngine(dir);
         final state = await reopened.open();
         final expected = {...entries};
         if (point != 'half_frame_written') {
@@ -545,7 +554,7 @@ void main() {
       () async {
         await log.append(epoch, [entry('pending')]);
         await crash('checkpoint:$point');
-        final state = await IncrementalJournalExperiment(dir).open();
+        final state = await IncrementalJournalEngine(dir).open();
         expect(state.epoch, point == 'after_publish' ? next : epoch);
         expect(state.entries.values.single.status, 'pending');
         expect(state.entries.values.single.nativeId, 17);

@@ -46,8 +46,9 @@ class RecordingNotificationTransport
 
 Future<List<Map<String, Object>>> measureNotificationStartup(
   Directory directory,
-  List<Reminder> tasks,
-) async {
+  List<Reminder> tasks, {
+  bool incremental = true,
+}) async {
   await directory.create();
   final seed = DatabaseHelper.forTesting(directory.path, databaseFactoryFfi);
   try {
@@ -71,6 +72,7 @@ Future<List<Map<String, Object>>> measureNotificationStartup(
     final helper = DatabaseHelper.forTesting(
       directory.path,
       databaseFactoryFfi,
+      migrateNotificationJournal: incremental,
     );
     final service = NotificationService.forTesting(
       transport,
@@ -137,11 +139,16 @@ Future<List<Map<String, Object>>> measureNotificationStartup(
             : 'Full provider.ready including real SQL, urgency, journal, '
                   'ID allocation and timers; recording OS transport, no OS delivery',
         'tasks': tasks.length,
+        'journal_backend': await helper.withNotificationJournal(
+          (j) async => j.usesIncrementalStorage ? 'incremental' : 'v1',
+        ),
         'journal_entries': snapshot.entries.length,
         'native_schedule_calls': transport.schedules,
         'native_cancel_calls': transport.cancellations,
         'native_reset_calls': transport.resets,
-        'journal_atomic_replacements': writes.replacements,
+        'journal_payload_flushes': writes.replacements,
+        'journal_statistics_scope':
+            'Successful mutations and engine checkpoints; excludes migration and selection/retention metadata; elapsed_us includes all startup work',
         'journal_bytes_written': writes.bytes,
         'journal_successful_write_us': writes.elapsedMicros,
       });

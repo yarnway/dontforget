@@ -3,23 +3,70 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
 
 import '../models/notification_payload.dart';
+import 'notification_journal_model.dart';
+import 'selected_notification_journal.dart';
+import 'storage_directory_lease.dart';
+export 'notification_journal_model.dart';
 
 /// Platform-local operational state. Never imported from business backups.
 /// Every operation must run under the database directory's ownership gate.
 class NotificationJournal {
   NotificationJournal(this.directory) : _beforeReplace = null;
 
+  static Future<NotificationJournal> openOwned(
+    StorageDirectoryLease lease, {
+    required bool migrateLegacy,
+  }) async {
+    final journal = NotificationJournal(lease.directory);
+    journal._lease = lease;
+    journal._migrateLegacy = migrateLegacy;
+    journal._selected = await LeasedIncrementalJournal.attach(lease);
+    await journal.read();
+    return journal;
+  }
+
+  StorageDirectoryLease? _lease;
+  LeasedIncrementalJournal? _selected;
+  bool _migrateLegacy = false;
+  bool _closed = false;
+  int _scheduledOperations = 0;
+  Future<void>? _closeFuture;
+  bool get usesIncrementalStorage => _selected?.isIncremental ?? false;
+
+  /// Call while the owning database maintenance gate has drained operations.
+  Future<void> rollbackToV1() {
+    _pendingChanges = null;
+    return _serialize(() async {
+      _lease?.checkHeld();
+      if (_selected == null) throw StateError('An owned journal is required');
+      await _selected!.rollback();
+      _cache = null;
+    });
+  }
+
+  Future<void> close() {
+    _closed = true;
+    _pendingChanges = null;
+    Future<void> finish() async {
+      await _selected?.close();
+    }
+
+    return _closeFuture ??= _scheduledOperations == 0
+        ? finish()
+        : _tail.then((_) => finish());
+  }
+
   /// Fault injection at the staging boundary; production callers use the
   /// ordinary constructor and retain the database ownership gate.
   NotificationJournal.forTesting(this.directory, this._beforeReplace);
-  static const fileName = 'notification-journal.json';
-  static const storageSelectorFileName = 'notification-storage.json';
-  static const maxBytes = 16 * 1024 * 1024;
+  static const fileName = NotificationJournalFormat.fileName;
+  static const storageSelectorFileName =
+      NotificationJournalFormat.storageSelectorFileName;
+  static const maxBytes = NotificationJournalFormat.maxBytes;
   final Directory directory;
   Future<void> _tail = Future.value();
   final Future<void> Function()? _beforeReplace;
@@ -30,8 +77,10 @@ class NotificationJournal {
   int _writtenBytes = 0;
   int _writeMicros = 0;
 
-  /// Process-local diagnostics for successful replacements; contains no task
-  /// content and is neither persisted nor used to decide notification state.
+  /// Process-local payload/checkpoint diagnostics for successful mutations.
+  /// The legacy replacements field counts flushes on incremental storage;
+  /// migration and selection/retention metadata are excluded. No task content,
+  /// persistence or notification decisions depend on these counters.
   ({int replacements, int bytes, int elapsedMicros}) get writeStatistics => (
     replacements: _replacements,
     bytes: _writtenBytes,
@@ -39,7 +88,17 @@ class NotificationJournal {
   );
 
   Future<T> _serialize<T>(Future<T> Function() action) {
-    final next = _tail.then((_) => action());
+    if (_closed) {
+      return Future.error(StateError('Notification journal is closed'));
+    }
+    _scheduledOperations++;
+    final next = _tail.then((_) async {
+      try {
+        return await action();
+      } finally {
+        _scheduledOperations--;
+      }
+    });
     _tail = next.then<void>((_) {}, onError: (Object _, StackTrace __) {});
     return next;
   }
@@ -133,6 +192,9 @@ class NotificationJournal {
     NotificationJournalEntry Function(NotificationJournalEntry?, Set<int>)
     apply,
   ) {
+    if (_closed) {
+      return Future.error(StateError('Notification journal is closed'));
+    }
     var batch = _pendingChanges;
     if (batch == null ||
         batch.length >= _maxBatchSize ||
@@ -157,7 +219,9 @@ class NotificationJournal {
     try {
       final state = await _require(changes.first.epoch);
       final entries = Map<String, NotificationJournalEntry>.of(state.entries);
-      final encoded = Map<String, String>.of(_cache!.encodedEntries);
+      final encoded = usesIncrementalStorage
+          ? <String, String>{}
+          : Map<String, String>.of(_cache!.encodedEntries);
       final used = entries.values.map((e) => e.nativeId).toSet();
       final results = <NotificationJournalEntry>[];
       var modified = false;
@@ -168,7 +232,9 @@ class NotificationJournal {
           NotificationJournalEntry.decode(entry.toJson());
           entries[change.id] = entry;
           used.add(entry.nativeId);
-          encoded[change.id] = jsonEncode(entry.toJson());
+          if (!usesIncrementalStorage) {
+            encoded[change.id] = jsonEncode(entry.toJson());
+          }
           modified = true;
         }
         results.add(entry);
@@ -177,6 +243,9 @@ class NotificationJournal {
         await _write(
           NotificationJournalSnapshot(state.epoch, entries),
           encoded,
+          updates: {
+            for (final entry in results) entry.reminderId: entry,
+          }.values.toList(),
         );
       }
       for (var i = 0; i < changes.length; i++) {
@@ -223,6 +292,21 @@ class NotificationJournal {
   }
 
   Future<NotificationJournalSnapshot?> _read() async {
+    _lease?.checkHeld();
+    final selected = _selected;
+    if (selected != null) {
+      if (!selected.isIncremental &&
+          _migrateLegacy &&
+          await selected.permitsAutomaticMigration &&
+          await selected.read() != null) {
+        await selected.migrate();
+      }
+      if (selected.isIncremental) {
+        final snapshot = (await selected.read())!;
+        _cache = _JournalCache(null, snapshot);
+        return snapshot;
+      }
+    }
     final bytes = await _readBytes();
     if (bytes == null) {
       _cache = null;
@@ -242,9 +326,26 @@ class NotificationJournal {
 
   Future<void> _write(
     NotificationJournalSnapshot state,
-    Map<String, String> encodedEntries,
-  ) async {
+    Map<String, String> encodedEntries, {
+    List<NotificationJournalEntry>? updates,
+  }) async {
     final watch = Stopwatch()..start();
+    _lease?.checkHeld();
+    if (usesIncrementalStorage) {
+      final selected = _selected!;
+      final before = selected.writeStatistics;
+      if (updates == null) {
+        await selected.reset(state.epoch);
+      } else {
+        await selected.append(state.epoch, updates);
+      }
+      final after = selected.writeStatistics;
+      _cache = _JournalCache(null, state);
+      _replacements += after.flushes - before.flushes;
+      _writtenBytes += after.bytes - before.bytes;
+      _writeMicros += watch.elapsedMicroseconds;
+      return;
+    }
     final expected = _cache?.bytes;
     // Reuse validated per-record encodings while retaining one atomic file.
     // Keep encoding order/format compatible with version 1 journals.
@@ -307,140 +408,11 @@ class _JournalChange {
 
 class _JournalCache {
   _JournalCache(this.bytes, this.snapshot, [this._encodedEntries]);
-  final Uint8List bytes;
+  final Uint8List? bytes;
   final NotificationJournalSnapshot snapshot;
   Map<String, String>? _encodedEntries;
   Map<String, String> get encodedEntries => _encodedEntries ??= {
     for (final entry in snapshot.entries.values)
       entry.reminderId: jsonEncode(entry.toJson()),
   };
-}
-
-/// Stable across Dart processes and platforms; persisted allocation resolves
-/// collisions. JSON escaping distinguishes even unpaired UTF-16 surrogates.
-int stableNotificationId(String reminderId) {
-  final digest = sha256.convert(
-    utf8.encode('dontforget-native-id-v1:${jsonEncode(reminderId)}'),
-  );
-  final id =
-      int.parse(digest.toString().substring(0, 8), radix: 16) & 0x7fffffff;
-  return id == 0 ? 1 : id;
-}
-
-class NotificationJournalSnapshot {
-  NotificationJournalSnapshot(
-    this.epoch,
-    Map<String, NotificationJournalEntry> entries,
-  ) : entries = Map.unmodifiable(entries);
-  final String epoch;
-  final Map<String, NotificationJournalEntry> entries;
-  Map<String, Object?> toJson() => {
-    'version': 1,
-    'epoch': epoch,
-    'entries': entries.values.map((e) => e.toJson()).toList(),
-  };
-  factory NotificationJournalSnapshot.decode(dynamic value) {
-    if (value is! Map ||
-        value.length != 3 ||
-        value['version'] is! int ||
-        value['version'] != 1 ||
-        value['epoch'] is! String ||
-        !NotificationPayload.isValidDatasetEpoch(value['epoch'] as String) ||
-        value['entries'] is! List) {
-      throw const FormatException('Invalid notification journal.');
-    }
-    final entries = <String, NotificationJournalEntry>{};
-    final ids = <int>{};
-    for (final row in value['entries'] as List) {
-      final entry = NotificationJournalEntry.decode(row);
-      if (entries.containsKey(entry.reminderId) || !ids.add(entry.nativeId)) {
-        throw const FormatException('Duplicate notification identity.');
-      }
-      entries[entry.reminderId] = entry;
-    }
-    return NotificationJournalSnapshot(value['epoch'] as String, entries);
-  }
-}
-
-class NotificationJournalEntry {
-  const NotificationJournalEntry({
-    required this.reminderId,
-    required this.nativeId,
-    required this.action,
-    required this.status,
-    required this.attempts,
-    this.triggerUtcMicros,
-    this.noticeRevision,
-    this.attemptedAt,
-  });
-  final String reminderId;
-  final int nativeId;
-  final String action;
-  // submitted means the plugin call returned, never a delivery receipt.
-  final String status;
-  final int attempts;
-  final int? triggerUtcMicros;
-  final int? noticeRevision;
-  final String? attemptedAt;
-  bool get needsCancellation => action != 'cancel' || status != 'submitted';
-  bool get unfinished => status == 'pending' || status == 'failed';
-  Map<String, Object?> toJson() => {
-    'reminderId': reminderId,
-    'nativeId': nativeId,
-    'action': action,
-    'status': status,
-    'attempts': attempts,
-    'triggerUtcMicros': triggerUtcMicros,
-    'noticeRevision': noticeRevision,
-    'attemptedAt': attemptedAt,
-  };
-  factory NotificationJournalEntry.decode(dynamic row) {
-    if (row is! Map ||
-        row.length != 8 ||
-        row.keys.any(
-          (key) => !const {
-            'reminderId',
-            'nativeId',
-            'action',
-            'status',
-            'attempts',
-            'triggerUtcMicros',
-            'noticeRevision',
-            'attemptedAt',
-          }.contains(key),
-        ) ||
-        row['reminderId'] is! String ||
-        (row['reminderId'] as String).isEmpty ||
-        row['nativeId'] is! int ||
-        (row['nativeId'] as int) < 1 ||
-        (row['nativeId'] as int) > 0x7fffffff ||
-        !['schedule', 'cancel'].contains(row['action']) ||
-        ![
-          'reserved',
-          'pending',
-          'submitted',
-          'failed',
-        ].contains(row['status']) ||
-        row['attempts'] is! int ||
-        (row['attempts'] as int) < 0 ||
-        (row['triggerUtcMicros'] != null && row['triggerUtcMicros'] is! int) ||
-        (row['noticeRevision'] != null &&
-            (row['noticeRevision'] is! int ||
-                (row['noticeRevision'] as int) < 0)) ||
-        (row['attemptedAt'] != null &&
-            (row['attemptedAt'] is! String ||
-                DateTime.tryParse(row['attemptedAt'] as String) == null))) {
-      throw const FormatException('Invalid notification journal entry.');
-    }
-    return NotificationJournalEntry(
-      reminderId: row['reminderId'] as String,
-      nativeId: row['nativeId'] as int,
-      action: row['action'] as String,
-      status: row['status'] as String,
-      attempts: row['attempts'] as int,
-      triggerUtcMicros: row['triggerUtcMicros'] as int?,
-      noticeRevision: row['noticeRevision'] as int?,
-      attemptedAt: row['attemptedAt'] as String?,
-    );
-  }
 }

@@ -37,6 +37,8 @@ AI 解析会将相关内容直接发送至您配置的服务商。应用不提�
 
 数据库、API Key 与备份目前没有应用层加密。现有备份包含任务、配置和附件路径，**不包含附件文件本体**。当前源码支持恢复预览、确认后替换和失败回退，已完成范围见[原生验收记录](docs/Native_Acceptance_v1.6.md)；正式发布能力以对应版本记录为准。
 
+当前源码候选为 `1.6.0+4`（尚未正式发布）。macOS 通知日志升级与安装旧程序前的回退步骤见[日志维护说明](docs/Notification_Storage_Upgrade.md)。
+
 ## 平台与下载
 
 从 [GitHub Releases](https://github.com/yarnway/dontforget/releases) 查看实际可用的版本。源码版本、CI 候选包与正式发布分别记录，不将构建成功当作设备验收通过。

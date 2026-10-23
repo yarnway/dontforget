@@ -86,6 +86,7 @@ void main() {
   late Directory directory;
   late DatabaseHelper database;
   late ProviderContainer container;
+  var containerDisposed = false;
   late NotificationService notifications;
   late _Native native;
   late LanSyncService lan;
@@ -100,6 +101,7 @@ void main() {
       sha256.convert(await file.readAsBytes()).toString();
 
   setUp(() async {
+    containerDisposed = false;
     sqfliteFfiInit();
     final messenger =
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
@@ -132,11 +134,13 @@ void main() {
     database = DatabaseHelper.forTesting(
       p.join(directory.path, 'live'),
       databaseFactoryFfi,
+      migrateNotificationJournal: true,
     );
     native = _Native();
     notifications = NotificationService.forTesting(
       native,
       usesNativeNotifications: true,
+      database: database,
     );
     lan = LanSyncService.forTesting();
     inspector = BackupInspector(
@@ -227,7 +231,7 @@ void main() {
     if (release != null && !release!.isCompleted) release!.complete();
     await lan.stopServer();
     await notifications.pauseForMaintenance();
-    container.dispose();
+    if (!containerDisposed) container.dispose();
     await database.close(createBackup: false);
     await directory.delete(recursive: true);
     for (final channel in audioChannels) {
@@ -253,6 +257,45 @@ void main() {
       if (condition()) return;
     }
     fail('Recovery UI did not reach its expected state.');
+  }
+
+  Future<void> drainAndUnmount(WidgetTester tester) async {
+    // The real journal batches intents on an event-loop turn. Keep pumping
+    // the widget clock while filesystem callbacks finish before teardown.
+    var drained = false;
+    late Future<void> pausing;
+    await tester.runAsync(() async {
+      pausing = notifications.pauseForMaintenance();
+      unawaited(
+        pausing.then<void>(
+          (_) => drained = true,
+          onError: (Object _, StackTrace __) {
+            drained = true;
+          },
+        ),
+      );
+    });
+    await until(tester, () => drained);
+    await tester.runAsync(() => pausing);
+    await tester.pumpWidget(const SizedBox());
+    await tester.runAsync(() => lan.stopServer());
+    container.dispose();
+    containerDisposed = true;
+    var closed = false;
+    late Future<void> closing;
+    await tester.runAsync(() async {
+      closing = database.close(createBackup: false);
+      unawaited(
+        closing.then<void>(
+          (_) => closed = true,
+          onError: (Object _, StackTrace __) {
+            closed = true;
+          },
+        ),
+      );
+    });
+    await until(tester, () => closed);
+    await tester.runAsync(() => closing);
   }
 
   Future<void> tap(WidgetTester tester, String key) async {
@@ -425,7 +468,7 @@ void main() {
         expect(container.read(homeControllerProvider).isRecording, isFalse);
         expect(lan.isRunning, isFalse);
         expect(tester.takeException(), isNull);
-        await tester.pumpWidget(const SizedBox());
+        await drainAndUnmount(tester);
       },
     );
   }
@@ -462,7 +505,7 @@ void main() {
         isTrue,
       );
     });
-    await tester.pumpWidget(const SizedBox());
+    await drainAndUnmount(tester);
   });
 
   testWidgets(
@@ -527,7 +570,7 @@ void main() {
       expect(find.byType(HomeScreen), findsOneWidget);
       expect(find.text('STALE ORIGINAL DATA REPORT'), findsNothing);
       expect(tester.takeException(), isNull);
-      await tester.pumpWidget(const SizedBox());
+      await drainAndUnmount(tester);
     },
   );
 }
