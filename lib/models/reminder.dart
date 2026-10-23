@@ -390,6 +390,14 @@ class Reminder {
     );
   }
 
+  List<String>? _subTasksView;
+
+  /// Reuse parsed text during card rebuilds. Cache belongs to this immutable
+  /// reminder, never to a global map; copyWith naturally starts a fresh cache.
+  /// Keep getSubTasksList's historical mutable-copy contract for other callers.
+  List<String> get subTasksView =>
+      _subTasksView ??= List<String>.unmodifiable(getSubTasksList());
+
   List<String> getSubTasksList() {
     if (subTasks == null || subTasks!.trim().isEmpty) return [];
     try {

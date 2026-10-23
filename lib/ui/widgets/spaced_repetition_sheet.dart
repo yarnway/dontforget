@@ -353,7 +353,7 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet> {
                           const SizedBox(height: 16),
                         ],
 
-                        if (currentTask.getSubTasksList().isNotEmpty) ...[
+                        if (currentTask.subTasksView.isNotEmpty) ...[
                           const Text(
                             '微习惯 / 关键步骤:',
                             style: TextStyle(
@@ -362,7 +362,7 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet> {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          ...currentTask.getSubTasksList().map((sub) => Padding(
+                          ...currentTask.subTasksView.map((sub) => Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 2),
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,

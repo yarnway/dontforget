@@ -318,7 +318,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     final colors = Theme.of(context).colorScheme;
     final task = widget.task;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final subTasks = task.getSubTasksList();
+    final subTasks = task.subTasksView;
     final priorityColor = switch (task.quadrantLevel) {
       1 => isDark ? Colors.red.shade300 : Colors.red.shade700,
       2 => isDark ? Colors.orange.shade300 : Colors.orange.shade800,

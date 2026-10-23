@@ -18,4 +18,6 @@ python3 scripts/analyze_gc_frames.py --report /absolute/path/to/results.json
 
 报告按有/无同线程 GC 区间列出帧耗时分布和全部样本。区间重叠是关联证据，不是 GC 导致尾部的因果证明；GC scope 的墙钟时间也不是纯 CPU 时间。不得把嵌套 GC、工作线程耗时相加，或把扣除 GC 后的数值当成优化结果。产品优化仍需用普通协议交替复测，保留失败/失焦样本。
 
+产品候选的分配优化包括按不可变 Reminder 缓存只读子任务解析结果、窄屏分类焦点节点按需创建。解析缓存随任务对象释放，copyWith 得到新缓存，历史可变列表接口保留；不改变展开内容或存储格式。比较产品候选时两边必须使用相同的缓存主题外壳。此协议每次重建看板/ProviderScope，但复用同组任务对象，预热也会预热模型的惰性缓存；不能把结果称为首次解析或完整产品冷启动性能。
+
 参考：[Dart VM 时间线流与环形记录器](https://github.com/dart-lang/sdk/blob/main/runtime/docs/timeline.md)、[Flutter 内存与 GC 观测](https://docs.flutter.dev/tools/devtools/memory)。时间线记录器可能覆盖旧事件，所以缺少所需 BUILD/GC 边界的报告不能用来证明 GC 缺席。该模块不由正式产品入口导入，不改 VM 堆大小，不强制 GC。

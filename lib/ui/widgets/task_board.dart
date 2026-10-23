@@ -32,7 +32,9 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
     Icons.checklist_rounded,
     Icons.notes_rounded,
   ];
-  final _categoryFocus = List.generate(4, (_) => FocusNode());
+  List<FocusNode>? _categoryFocus;
+  List<FocusNode> get _categoryNodes =>
+      _categoryFocus ??= List.generate(4, (_) => FocusNode());
   int _selectedCategory = 0;
   Timer? _refresh;
 
@@ -65,7 +67,7 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
   void dispose() {
     _refresh?.cancel();
     WidgetsBinding.instance.removeObserver(this);
-    for (final node in _categoryFocus) {
+    for (final node in _categoryFocus ?? const <FocusNode>[]) {
       node.dispose();
     }
     super.dispose();
@@ -87,10 +89,10 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
     };
     if (next == null) return KeyEventResult.ignored;
     setState(() => _selectedCategory = next);
-    _categoryFocus[next].requestFocus();
+    _categoryNodes[next].requestFocus();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final target = _categoryFocus[next].context;
+      final target = _categoryNodes[next].context;
       if (target != null) {
         Scrollable.ensureVisible(
           target,
@@ -112,7 +114,7 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
         onKeyEvent: (_, event) => _handleCategoryKey(index, event),
         child: TextButton(
           key: ValueKey('category-${index + 1}'),
-          focusNode: _categoryFocus[index],
+          focusNode: _categoryNodes[index],
           onPressed: () => setState(() => _selectedCategory = index),
           style: TextButton.styleFrom(
             minimumSize: const Size(0, 56),
