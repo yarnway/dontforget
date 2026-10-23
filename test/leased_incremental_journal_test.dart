@@ -303,6 +303,24 @@ void main() {
     );
   });
 
+  test(
+    'zero-byte unknown files cannot bypass the managed entry limit',
+    () async {
+      session = await LeasedIncrementalJournal.acquire(dir);
+      await session!.migrate();
+      for (var i = 0; i < LeasedIncrementalJournal.maxManagedFiles; i++) {
+        await File('${session!.managed.path}/unknown-$i').create();
+      }
+      final before = await session!.managed.list().length;
+      await expectLater(session!.collect(), throwsFormatException);
+      expect(await session!.managed.list().length, before);
+      expect(
+        (await NotificationJournal(dir).read())!.toJson(),
+        original.toJson(),
+      );
+    },
+  );
+
   Future<void> killAt(String point) async {
     final child = await Process.start(dart, [
       '--packages=.dart_tool/package_config.json',

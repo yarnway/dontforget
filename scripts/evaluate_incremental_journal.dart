@@ -17,7 +17,7 @@ Output is JSON on stdout. No OS notification or application data is changed.
 The experiment bounds manifests at 4 KiB, checkpoints at 16 MiB, segments at
 64 MiB and frames at 4 MiB; links are rejected. Protocol v4 additionally measures
 the shared directory lease, v1 migration, latest-state rollback and generation
-reclamation with a 256 MiB managed directory budget. It does not enable the
+reclamation with a 256 MiB / 256-file managed directory budget. It does not enable the
 incremental backend in the product. No live app directory is opened.
 --help prints this help; no files are created until arguments/fixture validate.
 ''';
@@ -228,6 +228,8 @@ Future<void> main(List<String> args) async {
           'symlink_inputs_and_targets': 'rejected',
           'caller_exclusive_directory_required': true,
           'leased_variant_directory_budget_bytes': 256 * 1024 * 1024,
+          'leased_variant_max_managed_files':
+              LeasedIncrementalJournal.maxManagedFiles,
           'leased_variant_uses_database_ownership_lock': true,
         },
         'fixture_file_sha256': IncrementalJournalExperiment.digest(

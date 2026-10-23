@@ -20,6 +20,7 @@ class LeasedIncrementalJournal {
 
   static const selectorName = NotificationJournal.storageSelectorFileName;
   static const intentName = 'notification-rollback.intent.json';
+  static const maxManagedFiles = 256;
   final StorageDirectoryLease _lease;
   final int checkpointEveryFrames, maxDirectoryBytes;
   final int maxCheckpointBytes, maxLogBytes, maxFrameBytes;
@@ -313,6 +314,9 @@ class LeasedIncrementalJournal {
   Future<Map<String, int>> _files() async {
     final files = <String, int>{};
     await for (final item in managed.list(followLinks: false)) {
+      if (files.length >= maxManagedFiles) {
+        throw const FormatException('Managed journal file count exceeds limit');
+      }
       if (await FileSystemEntity.type(item.path, followLinks: false) !=
           FileSystemEntityType.file) {
         throw const FormatException('Unsafe file in managed journal directory');
