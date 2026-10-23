@@ -92,7 +92,8 @@ void main() {
       row['record_id'] = 'dated-media';
     }
     final tables = <String, List<Map<String, Object?>>>{
-      'settings': [AppSettings.defaults().toJson()],
+      'settings': [AppSettings.defaults().toJson()
+        ..remove('ai_profiles_json')..remove('ai_fallback_enabled')],
       'media_records': [
         if (date != null)
           {
@@ -183,7 +184,7 @@ void main() {
           );
           await recovery.restore(input, expectedDigest: preview.digest);
           final db = await live.database;
-          expect(await db.getVersion(), 9);
+          expect(await db.getVersion(), DatabaseHelper.schemaVersion);
           final row = (await db.query('Reminders')).single;
           expect(
             row,
@@ -197,7 +198,7 @@ void main() {
           await live.createMirrorBackup();
           for (final name in ['ha_snapshot.json', 'dont_forget_v3.mirror.db']) {
             final backup = File(p.join(directory.path, 'live', name));
-            expect((await inspector.inspect(backup)).version, 9);
+            expect((await inspector.inspect(backup)).version, DatabaseHelper.schemaVersion);
           }
         },
       );
@@ -250,7 +251,7 @@ void main() {
               (await inspector.inspect(
                 File(p.join(directory.path, 'live', 'ha_snapshot.json')),
               )).version,
-              9,
+              DatabaseHelper.schemaVersion,
             );
           },
         );
@@ -437,7 +438,7 @@ void main() {
         ).recoverInterrupted();
         await StorageBootstrap(live).prepare();
         final finalDb = await live.database;
-        expect(await finalDb.getVersion(), 9);
+        expect(await finalDb.getVersion(), DatabaseHelper.schemaVersion);
         final row = (await finalDb.query('Reminders')).single;
         expect(row['notice_revision'], 0);
         expect(
@@ -479,9 +480,9 @@ void main() {
       await lease.closeWithoutBackup();
       await lease.validateAndOpen();
       expect(tracking.opens.last!.readOnly, isFalse);
-      expect(tracking.opens.last!.version, 9);
+      expect(tracking.opens.last!.version, DatabaseHelper.schemaVersion);
       await lease.resume();
-      expect(await (await live.database).getVersion(), 9);
+      expect(await (await live.database).getVersion(), DatabaseHelper.schemaVersion);
     },
   );
 

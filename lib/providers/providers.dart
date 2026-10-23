@@ -75,7 +75,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     await ready;
     _dbHelper.checkGeneration(generation);
     _dbHelper.checkGeneration(_stateGeneration!);
-    final saved = newSettings.copyWith();
+    final saved = AppSettings.fromJson(newSettings.toJson());
     await _dbHelper.writeTransaction(generation, (txn) async {
       await txn.delete('Settings', where: 'id = ?', whereArgs: ['default']);
       await txn.insert('Settings', {...saved.toJson(), 'id': 'default'});

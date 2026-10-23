@@ -1,3 +1,4 @@
+import '../../models/settings.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -272,6 +273,13 @@ class DatabaseRecovery {
             if (isLegacyBundledCredential(row['api_key'] as String? ?? '')) {
               row['api_key'] = '';
             }
+          }
+        }
+        if (preview.version < 10) {
+          for (final row in decoded['settings'] as List) {
+            final migrated = AppSettings.fromJson(Map<String, dynamic>.from(row as Map)).toJson();
+            row['ai_profiles_json'] = migrated['ai_profiles_json'];
+            row['ai_fallback_enabled'] = 0;
           }
         }
         await lease.createCandidateFromRows(candidate.path, {

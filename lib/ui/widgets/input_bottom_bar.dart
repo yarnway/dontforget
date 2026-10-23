@@ -200,7 +200,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     final l10n = AppLocalizations.of(context);
     final homeState = ref.watch(homeControllerProvider);
     final isLocalMode = ref.watch(
-      settingsProvider.select((s) => s.apiKey.trim().isEmpty),
+      settingsProvider.select((s) => !s.hasConfiguredExtraction),
     );
     final isRecording = homeState.isRecording || _isLongPressRecording;
     final isDark = Theme.of(context).brightness == Brightness.dark;

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:dont_forget/models/settings.dart';
+import 'package:dont_forget/models/ai_profile.dart';
 import 'package:dont_forget/services/llm_service.dart';
 import 'package:dont_forget/services/multi_agent_service.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -53,6 +54,40 @@ void main() {
       },
     ],
   };
+
+  test(
+    'disposing a model route cancels its transport and never calls fallback',
+    () async {
+      final adapter = _LateAdapter();
+      final service = LLMService(client: Dio()..httpClientAdapter = adapter);
+      final routed = settings.copyWith(
+        aiProfiles: [
+          AiProfile(id: 'a', label: 'A', settings: settings),
+          AiProfile(
+            id: 'b',
+            label: 'B',
+            settings: settings.copyWith(
+              baseUrl: 'https://second.invalid/v1',
+              apiKey: 'second-only',
+            ),
+          ),
+        ],
+        aiFallbackEnabled: true,
+      );
+      final result = service.extractTasks('synthetic input', routed);
+      final rejected = expectLater(
+        result,
+        throwsA(anyOf(isA<DioException>(), isA<StateError>())),
+      );
+      await adapter.started.future;
+      service.dispose();
+      await rejected;
+      adapter.complete(chat('{"tasks":[{"title":"late task"}]}'));
+      await Future<void>.delayed(Duration.zero);
+      expect(adapter.requests, hasLength(1));
+      expect(adapter.requests.single.followRedirects, isFalse);
+    },
+  );
 
   test(
     'disposing multi-agent transport blocks a late manager response from starting decomposer',

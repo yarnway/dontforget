@@ -58,6 +58,8 @@ class _Native implements FlutterLocalNotificationsPlugin {
 }
 
 class _ReportService implements LLMService {
+  @override
+  final lastExtraction = ValueNotifier<AiExtractionStatus?>(null);
   final reply = Completer<String>();
   bool disposed = false;
   List<String> requestedTaskIds = [];

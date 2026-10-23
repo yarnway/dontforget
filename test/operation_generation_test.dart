@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:dio/dio.dart';
+import 'package:dont_forget/models/ai_profile.dart';
 
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/agent_models.dart';
@@ -197,7 +199,7 @@ void main() {
   }
 
   Future<HomeController> controller({
-    _DelayedLlm? llm,
+    LLMService? llm,
     _DelayedAgent? agent,
     Future<XFile?> Function(ImageSource)? pickImage,
     Future<XFile?> Function()? pickVideo,
@@ -553,6 +555,34 @@ void main() {
       expect((await rows('MediaRecords')).single['id'], 'new');
     },
   );
+
+  test('all configured models failing saves the original once without a reminder time', () async {
+    final dio = Dio();
+    final calls = <String>[];
+    dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
+      calls.add(options.uri.host);
+      handler.reject(DioException(requestOptions: options,
+        response: Response(requestOptions: options, statusCode: 401)));
+    }));
+    final service = LLMService(client: dio);
+    addTearDown(service.dispose);
+    final home = await controller(llm: service);
+    await container!.read(settingsProvider.notifier).updateSettings(
+      AppSettings.defaults().copyWith(aiProfiles: [
+        for (final id in ['a', 'b']) AiProfile(id: id, label: id,
+          settings: AppSettings.defaults().copyWith(
+            baseUrl: 'https://$id.invalid/v1', apiKey: 'fixture-$id')),
+      ], aiFallbackEnabled: true));
+    await home.processText('Synthetic original text');
+    await idle(home);
+    final saved = await rows('Reminders');
+    expect(calls, ['a.invalid', 'b.invalid']);
+    expect(saved, hasLength(1));
+    expect(saved.single['task_summary'], 'Synthetic original text');
+    expect(saved.single['trigger_time'], isNull);
+    expect(home.state.error, isNot(contains('fixture-')));
+    expect(home.state.error, contains('已保存为本地事项'));
+  });
 
   for (final fail in [false, true]) {
     test(

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:crypto/crypto.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -15,7 +16,7 @@ import '../services/storage_directory_lease.dart';
 part 'database_access.dart';
 
 class DatabaseHelper {
-  static const schemaVersion = 9;
+  static const schemaVersion = 10;
   static final DatabaseHelper instance = DatabaseHelper._init();
   Database? _database;
   Future<Database>? _opening;
@@ -421,6 +422,9 @@ class DatabaseHelper {
         readOnly: !migrate,
         onCreate: migrate ? _createDB : null,
         onUpgrade: migrate ? _upgradeDB : null,
+        onDowngrade: migrate ? (db, oldVersion, newVersion) async {
+          throw StateError('Database belongs to a newer app version.');
+        } : null,
       ),
     );
   }
@@ -522,7 +526,9 @@ CREATE TABLE Settings (
   api_key TEXT,
   base_url TEXT,
   model_name TEXT,
-  language TEXT
+  language TEXT,
+  ai_profiles_json TEXT NOT NULL DEFAULT '[]',
+  ai_fallback_enabled INTEGER NOT NULL DEFAULT 0
 )
 ''');
 
@@ -570,7 +576,36 @@ CREATE TABLE Reminders (
 ''');
   }
 
+  Future<void> _preserveUpgradeSnapshot(Database db, int oldVersion) async {
+    // Called inside SQLite's migration transaction, before any schema/data edit.
+    // This is a logical snapshot, never a copy of an open SQLite file. Failure
+    // aborts the upgrade. Unique directories preserve earlier rollback copies.
+    final rows = <String, Object?>{
+      'version': oldVersion,
+      'timestamp': DateTime.now().toIso8601String(),
+      'settings': await db.query('Settings'),
+      'media_records': await db.query('MediaRecords'),
+      'reminders': await db.query('Reminders'),
+    };
+    final bytes = utf8.encode(jsonEncode(rows));
+    final directory = await Directory(dirname(db.path)).createTemp(
+        'schema-upgrade-v$oldVersion-to-v$schemaVersion-');
+    final file = File(join(directory.path, 'snapshot.json'));
+    await file.writeAsBytes(bytes, flush: true);
+    if (sha256.convert(await file.readAsBytes()) != sha256.convert(bytes)) {
+      throw StateError('Upgrade rollback snapshot verification failed.');
+    }
+    await File(join(directory.path, 'manifest.json')).writeAsString(jsonEncode({
+      'sourceSchema': oldVersion,
+      'targetSchema': schemaVersion,
+      'snapshotSha256': sha256.convert(bytes).toString(),
+      'containsCredentials': (rows['settings'] as List).any(
+          (row) => (row['api_key'] as String? ?? '').isNotEmpty),
+    }), flush: true);
+  }
+
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    await _preserveUpgradeSnapshot(db, oldVersion);
     if (oldVersion < 9) {
       // These columns are new in v9. Let failures roll back the entire
       // migration instead of hiding an incomplete reminder-state schema.
@@ -597,6 +632,19 @@ CREATE TABLE Reminders (
             whereArgs: [row['id']],
           );
         }
+      }
+    }
+
+    if (oldVersion < 10) {
+      await db.execute("ALTER TABLE Settings ADD COLUMN ai_profiles_json TEXT NOT NULL DEFAULT '[]'");
+      await db.execute('ALTER TABLE Settings ADD COLUMN ai_fallback_enabled INTEGER NOT NULL DEFAULT 0');
+      for (final row in await db.query('Settings')) {
+        final legacy = Map<String, dynamic>.from(row)..remove('ai_profiles_json');
+        final migrated = AppSettings.fromJson(legacy).toJson();
+        await db.update('Settings', {
+          'ai_profiles_json': migrated['ai_profiles_json'],
+          'ai_fallback_enabled': 0,
+        }, where: 'id = ?', whereArgs: [row['id']]);
       }
     }
 

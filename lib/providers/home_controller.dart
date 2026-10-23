@@ -322,7 +322,7 @@ class HomeController extends StateNotifier<HomeState> {
     }
     _launch(generation, () async {
       final settings = _ref.read(settingsProvider);
-      if (settings.apiKey.trim().isEmpty) {
+      if (!settings.hasConfiguredExtraction) {
         await _saveLocalText(trimmed, generation);
         return;
       }

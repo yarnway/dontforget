@@ -40,7 +40,7 @@ class MultiAgentService {
     String language = 'zh',
   }) async {
     _checkActive();
-    final effectiveSettings = settings ?? AppSettings(
+    final effectiveSettings = settings?.primaryModelSettings ?? AppSettings(
       id: 'default',
       apiKey: '',
       baseUrl: '',
@@ -86,6 +86,7 @@ Strictly return a JSON object:
         final res = await _dio.post(
           '${effectiveSettings.baseUrl}/chat/completions',
           options: Options(
+            followRedirects: false,
             headers: {
               'Authorization': 'Bearer ${effectiveSettings.apiKey}',
               'Content-Type': 'application/json',
@@ -154,6 +155,7 @@ Strictly return a JSON object:
         final res = await _dio.post(
           '${effectiveSettings.baseUrl}/chat/completions',
           options: Options(
+            followRedirects: false,
             headers: {
               'Authorization': 'Bearer ${effectiveSettings.apiKey}',
               'Content-Type': 'application/json',

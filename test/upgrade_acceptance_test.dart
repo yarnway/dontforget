@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:dont_forget/data/database_helper.dart';
+import 'package:dont_forget/models/settings.dart';
 
 // Uses the historical schema directly, never a downgraded current database.
 void main() {
@@ -17,6 +18,7 @@ void main() {
         for (final row in table.value)
           {
             ...row,
+            if (table.key == 'Settings') ...AppSettings.fromJson(row).toJson(),
             if (table.key == 'Reminders') ...{
               'notice_revision': 0,
               'notice_acknowledged_at': null,

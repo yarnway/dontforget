@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import '../models/settings.dart';
+import 'ai/priority_router.dart';
 import '../models/reminder.dart';
 import 'package:uuid/uuid.dart';
 
@@ -11,6 +13,12 @@ class AudioTranscriptionUnsupportedException implements Exception {
   String toString() => message;
 }
 
+class AiExtractionStatus {
+  const AiExtractionStatus({this.label, this.usedFallback = false});
+  final String? label;
+  final bool usedFallback;
+}
+
 class LLMService {
   LLMService({Dio? client, this.probeClientFactory}) : _dio = client ?? Dio(BaseOptions(
     connectTimeout: const Duration(seconds: 10),
@@ -18,6 +26,9 @@ class LLMService {
     persistentConnection: true,
   ));
   final Dio _dio;
+  final lastExtraction = ValueNotifier<AiExtractionStatus?>(null);
+  final PriorityModelRouter _router = PriorityModelRouter();
+  final CancelToken _routeCancellation = CancelToken();
   final Dio Function()? probeClientFactory;
   final Set<Dio> _probeClients = {};
   bool _disposed = false;
@@ -30,15 +41,17 @@ class LLMService {
   /// a fresh service; old request chains cannot continue using old credentials.
   void dispose() {
     _disposed = true;
+    _routeCancellation.cancel('Model session ended');
+    lastExtraction.dispose();
     _dio.close(force: true);
     for (final client in _probeClients) {
       client.close(force: true);
     }
   }
 
-  Future<Response<dynamic>> _post(String url, {Options? options, Object? data}) async {
+  Future<Response<dynamic>> _post(String url, {Options? options, Object? data, CancelToken? cancelToken}) async {
     _checkActive();
-    final response = await _dio.post(url, options: options, data: data);
+    final response = await _dio.post(url, options: (options ?? Options()).copyWith(followRedirects: false), data: data, cancelToken: cancelToken);
     _checkActive();
     return response;
   }
@@ -85,7 +98,6 @@ class LLMService {
           quadrantLevel: 2,
           urgencyLevel: 'General',
           importanceLevel: 'Important',
-          triggerTime: _deduceDefaultTriggerTime(now, 2),
         )
       ];
     }
@@ -114,7 +126,6 @@ $truncatedContent
       _checkActive();
     }
 
-    final now = DateTime.now();
     return [
       Reminder(
         id: const Uuid().v4(),
@@ -123,7 +134,6 @@ $truncatedContent
         quadrantLevel: 2,
         urgencyLevel: 'General',
         importanceLevel: 'Important',
-        triggerTime: _deduceDefaultTriggerTime(now, 2),
       )
     ];
   }
@@ -131,7 +141,6 @@ $truncatedContent
   Future<List<Reminder>> extractTasksFromVideo(
       String fileName, AppSettings settings) async {
     _checkActive();
-    final now = DateTime.now();
     final prompt = '用户记录了视频任务，视频文件名为: "$fileName"。请为此视频生成一个待办任务标题、行动摘要，并安排合理的提醒时间。';
     try {
       final tasks = await extractTasks(prompt, settings);
@@ -148,13 +157,38 @@ $truncatedContent
         quadrantLevel: 2,
         urgencyLevel: 'General',
         importanceLevel: 'Important',
-        triggerTime: _deduceDefaultTriggerTime(now, 2),
       )
     ];
   }
 
   Future<List<Reminder>> _sendExtractionRequestWithRetry(AppSettings settings, List<Map<String, dynamic>> userMessages, {int maxRetries = 2}) async {
     _checkActive();
+    if (settings.aiProfiles.isNotEmpty) {
+      try {
+      final result = await _router.execute<List<Reminder>>(
+        profiles: settings.effectiveProfiles,
+        allowFallback: settings.aiFallbackEnabled,
+        cancelToken: _routeCancellation,
+        request: (profile, token) {
+          _checkActive();
+          return _sendExtractionRequest(profile.settings, userMessages,
+              cancelToken: token, strict: true);
+        },
+      );
+      _checkActive();
+      lastExtraction.value = AiExtractionStatus(
+        label: settings.effectiveProfiles.firstWhere((p) => p.id == result.profileId).label,
+        usedFallback: result.usedFallback);
+      return result.value;
+      } catch (_) {
+        if (!_disposed) lastExtraction.value = const AiExtractionStatus();
+        rethrow;
+      }
+    }
+    // An explicitly empty list must not resurrect legacy credentials.
+    if (!settings.hasConfiguredExtraction) {
+      throw AiRouteFailure(const {});
+    }
     int attempts = 0;
     while (attempts < maxRetries) {
       try {
@@ -171,7 +205,7 @@ $truncatedContent
     return [];
   }
 
-  Future<List<Reminder>> _sendExtractionRequest(AppSettings settings, List<Map<String, dynamic>> userMessages) async {
+  Future<List<Reminder>> _sendExtractionRequest(AppSettings settings, List<Map<String, dynamic>> userMessages, {CancelToken? cancelToken, bool strict = false}) async {
     _checkActive();
     if (settings.apiKey.isEmpty) {
       throw Exception('API Key is not configured.');
@@ -242,8 +276,10 @@ Output strictly in valid JSON object matching this structure:
       ];
 
       final response = await _post(
-        '${settings.baseUrl}/chat/completions',
+        '${settings.baseUrl.replaceFirst(RegExp(r'/+$'), '')}/chat/completions',
+        cancelToken: cancelToken,
         options: Options(
+          followRedirects: false,
           headers: {
             'Authorization': 'Bearer ${settings.apiKey}',
             'Content-Type': 'application/json',
@@ -281,6 +317,7 @@ Output strictly in valid JSON object matching this structure:
       try {
         decoded = jsonDecode(jsonStr);
       } catch (_) {
+        if (strict) throw const FormatException('Invalid task response');
         decoded = _tryRegexExtract(content);
       }
 
@@ -295,13 +332,18 @@ Output strictly in valid JSON object matching this structure:
         tasksList = decoded;
       }
 
-      if (tasksList.isEmpty) {
+      if (tasksList.isEmpty && !strict) {
         final regexResult = _tryRegexExtract(content);
         if (regexResult['tasks'] is List) {
           tasksList = regexResult['tasks'];
         }
       }
 
+      if (strict && (tasksList.isEmpty || tasksList.any((task) =>
+          task is! Map || task['title'] is! String ||
+          (task['title'] as String).trim().isEmpty))) {
+        throw const FormatException('Invalid task response');
+      }
       return tasksList.map((json) {
         DateTime? parsedTriggerTime;
         DateTime? parsedEventTime;
@@ -456,6 +498,7 @@ Output strictly in valid JSON object matching this structure:
   }
 
   String formatErrorMessage(dynamic error) {
+    if (error is AiRouteFailure) return '已启用的模型暂未完成任务提取，请检查模型配置或稍后重试。';
     if (error is DioException) {
       if (error.type == DioExceptionType.connectionTimeout ||
           error.type == DioExceptionType.receiveTimeout ||
@@ -494,6 +537,7 @@ Output strictly in valid JSON object matching this structure:
 
   Future<String> transcribeAudio(String filePath, AppSettings settings) async {
     _checkActive();
+    settings = settings.primaryModelSettings;
     if (settings.apiKey.isEmpty) {
       // The local recording remains useful without an AI account. Route this
       // through the original-audio memo fallback so it has a playback entry.
@@ -502,19 +546,18 @@ Output strictly in valid JSON object matching this structure:
       );
     }
 
-    String targetUrl;
-    if (settings.baseUrl.contains('openai.com')) {
-      targetUrl = 'https://api.openai.com/v1/audio/transcriptions';
-    } else if (settings.baseUrl.contains('deepseek.com') ||
-               settings.baseUrl.contains('googleapis.com') ||
-               settings.baseUrl.contains('moonshot.cn') ||
-               settings.baseUrl.contains('anthropic.com')) {
+    final endpoint = Uri.tryParse(settings.baseUrl.trim());
+    if (const {
+      'api.deepseek.com', 'generativelanguage.googleapis.com',
+      'api.moonshot.cn', 'api.anthropic.com',
+    }.contains(endpoint?.host)) {
       throw AudioTranscriptionUnsupportedException(
         '${settings.modelName} 未提供语音转文字接口，已自动为您保存原声备忘录',
       );
-    } else {
-      targetUrl = '${settings.baseUrl}/audio/transcriptions';
     }
+    // Preserve the configured endpoint, including gateway paths and ports.
+    // A provider name in a path/hostname never authorizes a different host.
+    final targetUrl = '${settings.baseUrl.trim().replaceFirst(RegExp(r'/+$'), '')}/audio/transcriptions';
 
     try {
       final formData = FormData.fromMap({
@@ -546,6 +589,7 @@ Output strictly in valid JSON object matching this structure:
     String language = 'zh',
   }) async {
     _checkActive();
+    settings = settings.primaryModelSettings;
     if (reminders.isEmpty) {
       if (language == 'en') {
         return 'No tasks recorded yet. Add some tasks and your AI Productivity Coach will give you a comprehensive analysis!';
@@ -820,6 +864,7 @@ Include:
     String language = 'zh',
   }) async {
     _checkActive();
+    settings = settings.primaryModelSettings;
     final langInstruction = language == 'en'
         ? 'Output 3 micro habits in English'
         : (language == 'ja'

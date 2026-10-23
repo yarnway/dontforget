@@ -1,3 +1,4 @@
+import '../../models/settings.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -68,7 +69,7 @@ class BackupPreview {
   final DateTime? timestamp;
 }
 
-/// Inspects a bounded private copy of one standalone v7/v8/v9 export.
+/// Inspects a bounded private copy of one standalone v7/v8/v9/v10 export.
 ///
 /// Never opens the source through SQLite, imports data, opens the app database,
 /// or reads attachment contents. Symlinks (including parent directories) and
@@ -394,6 +395,9 @@ const _reminderNoticeColumns = {
 Map<String, String> _columnsFor(String table, int version) => {
   ..._columns[table]!,
   if (table == 'reminders' && version >= 9) ..._reminderNoticeColumns,
+  if (table == 'settings' && version >= 10) ...{
+    'ai_profiles_json': 's', 'ai_fallback_enabled': 'b',
+  },
 };
 
 Future<void> _checkSchema(
@@ -498,9 +502,12 @@ Future<void> _checkSchema(
         'review_level',
         'is_dynamically_promoted',
         'notice_revision',
+        'ai_fallback_enabled',
       }.contains(name);
       final validDefault = defaultsToZero
           ? defaultValue == '0'
+          : name == 'ai_profiles_json'
+          ? defaultValue == "'[]'"
           : name == 'recurrence_rule'
           ? const ["'none'", '"none"'].contains(defaultValue)
           : defaultValue == null;
@@ -532,7 +539,7 @@ Future<void> _checkSchema(
 }
 
 void _checkVersion(Object? value) {
-  if (value is! int || !const {7, 8, 9}.contains(value)) {
+  if (value is! int || !const {7, 8, 9, 10}.contains(value)) {
     _fail(BackupInspectionError.unsupportedVersion);
   }
 }
@@ -740,6 +747,14 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
     _fail(BackupInspectionError.invalidData);
   }
   final settings = (data['settings'] as List).single as Map;
+  late AppSettings parsedSettings;
+  try {
+    // Validate the nested document too, including duplicate JSON keys.
+    if (data['version'] >= 10) _decodeJson(settings['ai_profiles_json'] as String);
+    parsedSettings = AppSettings.fromJson(Map<String, dynamic>.from(settings));
+  } catch (_) {
+    _fail(BackupInspectionError.invalidData);
+  }
   final mediaPaths = <String>[];
   for (final row in data['media_records']) {
     if (!const [
@@ -818,7 +833,8 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
     data['version'] as int,
     timestamp,
     counts,
-    (settings['api_key'] as String? ?? '').isNotEmpty,
+    parsedSettings.apiKey.isNotEmpty || parsedSettings.effectiveProfiles.any(
+      (p) => p.settings.apiKey.isNotEmpty),
     mediaPaths,
     unresolved,
   );

@@ -160,7 +160,8 @@ void main() {
       'version': 8,
       'timestamp': '2026-10-21T10:00:00.000+08:00',
       'settings': [
-        AppSettings.defaults().copyWith(apiKey: 'private-fixture-key').toJson(),
+        AppSettings.defaults().copyWith(apiKey: 'private-fixture-key').toJson()
+          ..remove('ai_profiles_json')..remove('ai_fallback_enabled'),
       ],
       'media_records': [
         {
@@ -291,7 +292,7 @@ void main() {
     },
   );
 
-  for (final version in [6, 10, 99]) {
+  for (final version in [6, 11, 99]) {
     for (final format in ['json', 'sqlite']) {
       test(
         'rejects unsupported v$version $format without changing it',

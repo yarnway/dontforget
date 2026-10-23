@@ -7,8 +7,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/providers.dart';
 import '../../services/llm_service.dart';
+import '../../models/settings.dart';
 import '../../l10n/app_localizations.dart';
 import 'backup_preview_screen.dart';
+import 'ai_profiles_screen.dart';
 
 typedef ConsoleProcessRunner =
     Future<ProcessResult> Function(String executable, List<String> arguments);
@@ -158,21 +160,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     super.dispose();
   }
 
-  String? _originOf(String url) {
-    final uri = Uri.tryParse(url.trim());
-    if (uri == null ||
-        !const ['http', 'https'].contains(uri.scheme) ||
-        uri.host.isEmpty) {
-      return null;
-    }
-    return uri.origin;
-  }
-
   void _onProviderChanged(ModelProvider? provider) {
     if (provider == null) return;
     setState(() {
-      final previousOrigin = _originOf(_baseUrlController.text);
-      if (previousOrigin != Uri.parse(provider.defaultBaseUrl).origin) {
+      if (_baseUrlController.text.trim() != provider.defaultBaseUrl) {
         _apiKeyController.clear();
       }
       _selectedProvider = provider;
@@ -182,6 +173,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           provider.defaultApiKey!.isNotEmpty) {
         _apiKeyController.text = provider.defaultApiKey!;
       }
+    });
+  }
+
+  Future<void> _openModelProfiles() async {
+    final saved = await Navigator.of(context).push<bool>(MaterialPageRoute(
+        builder: (_) => AiProfilesScreen(initialDraft: _modelDraft(ref.read(settingsProvider)))));
+    if (!mounted || saved != true) return;
+    final current = ref.read(settingsProvider);
+    setState(() {
+      _apiKeyController.text = current.apiKey;
+      _baseUrlController.text = current.baseUrl;
+      _modelNameController.text = current.modelName;
+      _selectedProvider = null;
     });
   }
 
@@ -204,16 +208,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Future<void> _saveSettings() async {
-    if (_isSaving) return;
-    setState(() => _isSaving = true);
-    final settings = ref.read(settingsProvider);
-    final newSettings = settings.copyWith(
+  AppSettings _modelDraft(AppSettings settings) {
+    final profiles = settings.effectiveProfiles.toList();
+    final changed = _apiKeyController.text.trim() != settings.apiKey ||
+        _baseUrlController.text.trim() != settings.baseUrl ||
+        _modelNameController.text.trim() != settings.modelName;
+    var primary = profiles.indexWhere((p) => p.enabled);
+    if (primary < 0 && changed && profiles.isNotEmpty) primary = 0;
+    if (primary >= 0 && changed) {
+      profiles[primary] = profiles[primary].copyWith(
+        enabled: _apiKeyController.text.trim().isNotEmpty,
+        settings: profiles[primary].settings.copyWith(
+          apiKey: _apiKeyController.text.trim(),
+          baseUrl: _baseUrlController.text.trim(),
+          modelName: _modelNameController.text.trim(),
+        ));
+    }
+    return settings.copyWith(
+      aiProfiles: profiles,
       apiKey: _apiKeyController.text.trim(),
       baseUrl: _baseUrlController.text.trim(),
       modelName: _modelNameController.text.trim(),
       language: _selectedLang,
     );
+  }
+
+  Future<void> _saveSettings() async {
+    if (_isSaving) return;
+    setState(() => _isSaving = true);
+    final settings = ref.read(settingsProvider);
+    final newSettings = _modelDraft(settings);
     try {
       await ref.read(settingsProvider.notifier).updateSettings(newSettings);
       if (mounted) Navigator.pop(context);
@@ -1037,6 +1061,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                   const SizedBox(height: 14),
 
+                  Material(color: Colors.transparent, child: ListTile(
+                    key: const ValueKey('settings-model-profiles'),
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.swap_vert),
+                    title: Text(l10n.get('aiProfilesEntry')),
+                    subtitle: Text(l10n.get('aiProfilesEntryHint')),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: _isSaving ? null : _openModelProfiles,
+                  )),
+                  ValueListenableBuilder<AiExtractionStatus?>(
+                    valueListenable: ref.watch(llmServiceProvider).lastExtraction,
+                    builder: (context, status, _) => status == null
+                        ? const SizedBox.shrink()
+                        : Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Text(status.label == null
+                                ? l10n.get('aiProfilesAllFailed')
+                                : '${l10n.get('aiProfilesLast').replaceAll('{name}', status.label!)}${status.usedFallback ? ' · ${l10n.get('aiProfilesUsedFallback')}' : ''}',
+                              style: Theme.of(context).textTheme.bodySmall)),
+                  ),
                   // AI Configuration (Wireframe style)
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -1253,8 +1297,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         const SizedBox(height: 10),
                         TextField(
                           controller: _baseUrlController,
+                          onChanged: (_) => _apiKeyController.clear(),
                           decoration: InputDecoration(
                             labelText: l10n.get('baseUrl'),
+                            helperText: l10n.get('aiProfilesUrlHint'),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(6),
                             ),

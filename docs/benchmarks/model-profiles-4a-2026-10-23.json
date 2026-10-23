@@ -1,0 +1,84 @@
+{
+  "phase": "4A",
+  "version": "1.6.0+5",
+  "schema": 10,
+  "baseRevision": "c7780bf99fc2436745e91d8786d412dbf2aaac69",
+  "implementationRevision": "containing source commit",
+  "localValidation": {
+    "flutter": "3.44.9",
+    "dart": "3.12.2",
+    "flutterTestsPassed": 806,
+    "pythonTestsPassed": 63,
+    "analyze": "PASS",
+    "diffCheck": "PASS",
+    "uiMatrix": {
+      "widths": [
+        375,
+        768,
+        1440
+      ],
+      "languages": [
+        "zh",
+        "en",
+        "ja"
+      ],
+      "textScale": 1.3,
+      "kind": "widget tests"
+    }
+  },
+  "logDigests": {
+    "dontforget-stage17-final-tests.log": "8d9e47978f9adea3abb7f60a7320264feea63747fb3c62bdd4fe1c68c9157a19",
+    "dontforget-stage17-final-static.log": "dbda1833eee6bff630e87a8d9a264db72a23c5a1a8f2a23d8bea5c40c48107d3",
+    "dontforget-stage17-complete-python.log": "dc0504caac1405fd476645e6bd6bac2821fca89a88a2dd9c480be66417d2bcf0"
+  },
+  "scope": [
+    "v7/v8/v9 to v10 migration",
+    "pre-migration logical rollback snapshot and v9 reconstruction",
+    "future-schema refusal",
+    "nested backup validation and credential detection",
+    "JSON/SQLite recovery including null preservation",
+    "ordered model editor and stale generation refusal",
+    "bounded extraction routing and cooldown",
+    "no fallback after cancellation",
+    "original text saved once",
+    "custom transcription endpoint and redirect credential isolation"
+  ],
+  "nativeFixtures": {
+    "directory": "build/native_acceptance/models-stage17-materials",
+    "files": {
+      "baseline-v9.json": {
+        "bytes": 1196,
+        "sha256": "57453f7ec63ac38b5d2b52b6ceb90c4cf5db2fdb4fb461541bf49be1481d8ef0"
+      },
+      "baseline-v9.sqlite": {
+        "bytes": 24576,
+        "sha256": "4d745f3c4bed8e1348a7ae305005243f1d6ab051679f535c45e3df7cf24d7206"
+      },
+      "candidate-v10.json": {
+        "bytes": 1855,
+        "sha256": "86b33d59e06cfa872e90e4478db37a73cb9a73d62462ad6bc5b01442aca74d6e"
+      },
+      "candidate-v10.sqlite": {
+        "bytes": 24576,
+        "sha256": "b63b0c346f24bd271f7d8c87dc5e89626f6c912fda09cd1fb967093e5c66bb32"
+      },
+      "expected-upgraded-v10.json": {
+        "bytes": 1449,
+        "sha256": "0d8d26833482fb124151f370a7a8ca0333515bf25fdf837ad4b00de78483256a"
+      }
+    },
+    "manifestSha256": "d8360fce160f0781d6a1cc00ba49890bc773fb8081b2dd8285c1824c2f5b9f42"
+  },
+  "network": "isolated fake Dio transport only; no real provider call",
+  "ci": "PENDING_PUSH",
+  "nativeModelAcceptance": "NOT_RUN",
+  "formalRelease": false,
+  "remaining": [
+    "exact candidate CI and package verification",
+    "native v9 to v10 upgrade/edit/order/reopen/restore/old-package rollback",
+    "real configured providers",
+    "persistent bounded health history and input cancellation UX",
+    "10000-row pre-upgrade snapshot performance",
+    "system power/DST and other-platform business acceptance"
+  ]
+}

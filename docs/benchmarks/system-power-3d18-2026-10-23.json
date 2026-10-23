@@ -1,0 +1,67 @@
+{
+  "phase": "3D-18",
+  "checkedAt": "2026-10-23T23:17:53.523490+08:00",
+  "status": "BLOCKED_NOT_ACCEPTED",
+  "relativeWakeCleanup": "UNCONFIRMED",
+  "previousAttempts": {
+    "relativeWakeSeconds": 60,
+    "writeZeroIOReturn": "0xe00002c1",
+    "pmsetRelativeWakeZeroExit": 70
+  },
+  "currentBoot": {
+    "exitCode": 0,
+    "stdout": "kern.bootsessionuuid: C5EA9BC6-4B3F-4A76-8AB5-B9751726418E",
+    "stderr": ""
+  },
+  "currentPower": {
+    "exitCode": 0,
+    "stdout": "System-wide power settings:\n SleepDisabled\t\t1\nCurrently in use:\n standby              1\n Sleep On Power Button 1\n hibernatefile        /var/vm/sleepimage\n powernap             1\n networkoversleep     0\n disksleep            10\n sleep                1 (sleep prevented by ChatGPT, UURemote, powerd)\n hibernatemode        3\n ttyskeepawake        1\n displaysleep         120\n tcpkeepalive         1\n powermode            2\n womp                 1",
+    "stderr": ""
+  },
+  "scheduledEvents": {
+    "exitCode": 0,
+    "stdout": "Scheduled power events:\n [0]  wake at 10/23/2026 15:52:11 by 'com.apple.alarm.user-invisible-com.apple.calaccessd.travelEngine.periodicRefreshTimer'\n [1]  wake at 10/24/2026 00:13:28 by 'com.apple.alarm.user-invisible-com.apple.acmd.alarm'",
+    "stderr": ""
+  },
+  "currentTimeZone": {
+    "exitCode": 0,
+    "stdout": "/var/db/timezone/zoneinfo/Asia/Shanghai",
+    "stderr": ""
+  },
+  "observedNativeSettings": {
+    "automaticDateTime": true,
+    "automaticTimeZone": true,
+    "timeZone": "Asia/Shanghai",
+    "pendingTimeZoneDefinitionsRequireReboot": true
+  },
+  "sleepDisabledChangedSincePriorPhase": {
+    "prior": false,
+    "current": true,
+    "changedByThisPhase": false
+  },
+  "uiAttempt": "System Settings Window > Bring All to Front followed by ctrl+F2 did not expose a usable system power menu.",
+  "virtualMachineReadOnlyProbe": {
+    "command": "prlctl list -a",
+    "exitCode": 253,
+    "result": "Unable to connect to Parallels Service; VM inventory unavailable."
+  },
+  "mutations": {
+    "relativeWake": false,
+    "scheduledEvents": false,
+    "sleepDisabled": false,
+    "hostDate": false,
+    "hostTimeZone": false,
+    "reboot": false,
+    "sleep": false
+  },
+  "remaining": [
+    "Confirm and clear the prior relative wake hardware state using a verifiable supported mechanism.",
+    "Complete isolated reminder evidence across actual system reboot and sleep/wake.",
+    "Complete actual DST boundary acceptance in an isolated OS environment."
+  ],
+  "sourceBoundary": "The installed pmset manual says relative wake events cannot be cancelled; a missing pmset -g sched row is not hardware readback. Source code does not prove installed driver state.",
+  "references": [
+    "https://github.com/apple-oss-distributions/IOKitUser/blob/main/pwr_mgt.subproj/IOPMAutoWake.c",
+    "https://github.com/apple-oss-distributions/xnu/blob/main/iokit/Kernel/IOPMrootDomain.cpp"
+  ]
+}
