@@ -1,0 +1,755 @@
+{
+  "phase": "3C-11",
+  "scope": "Real OS failure in controlled temporary installation-origin negative case; normal request mode, no fabricated NSError. Production notification service and native bridge, explicit retry button. App restarts, not system reboot.",
+  "recorded_at": "2026-10-23T05:33:39.386959+00:00",
+  "plan": {
+    "purpose": "Explicit negative OS notification-origin test; no NSError is fabricated. Only run in this fresh synthetic identity. If OS accepts, record accepted. Canonical retry only after temporary process is absent. Not a spontaneous OS outage.",
+    "bundle_id": "com.example.dontForget.acceptance.origin-r39889484900",
+    "source_revision": "c5453023413fa265fe5e64f60b30e5f053bb0259",
+    "canonical_app": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/origin-r39889484900/dont_forget.app",
+    "negative_origin_app": "/private/tmp/dontforget-native-origin-20261023-30xfq6y2/dont_forget.app",
+    "exact_regular_file_content_match": true,
+    "codesign_verified": true
+  },
+  "package": {
+    "ci_run": 39889484900,
+    "manifest": {
+      "version": "1.5.2",
+      "build_number": "3",
+      "platform": "macos",
+      "revision": "c5453023413fa265fe5e64f60b30e5f053bb0259",
+      "signing": "not-notarized",
+      "build_mode": "profile",
+      "scope": "ISOLATED_PERFORMANCE_HARNESS_NOT_PRODUCT_CANDIDATE",
+      "entrypoint": "benchmark/workspace_profile.dart",
+      "native_failure_probe": "MANUAL_SINGLE_SYNTHETIC_TASK_REAL_OS_CALLBACK_ONLY",
+      "frame_diagnostics": "OPT_IN_SELF_VM_LOOPBACK_10000_TASKS_768PX_NOT_BASELINE",
+      "artifacts": [
+        {
+          "file": "DontForget_macOS_profile_benchmark.zip",
+          "bytes": 28201744,
+          "sha256": "7d8178be4afbe993614f317b5eda9ba1a551ffa45c6dbdad0b439ca2da151182"
+        }
+      ]
+    },
+    "outer_bytes": 28127707,
+    "outer_sha256": "1cac60b5323f48924099c119b1e7838db86cf8837082023e26b9d81a4f750179",
+    "preparation": {
+      "scope": "derived-isolated-acceptance-copy-not-original-signed-candidate",
+      "source_revision": "c5453023413fa265fe5e64f60b30e5f053bb0259",
+      "source_manifest_sha256": "51bc311cbc489fbd75438e6ca6ee172f833fe3ac51e7aa26cac2e20325bd0eff",
+      "source_archive_sha256": "7d8178be4afbe993614f317b5eda9ba1a551ffa45c6dbdad0b439ca2da151182",
+      "source_manifest": {
+        "version": "1.5.2",
+        "build_number": "3",
+        "platform": "macos",
+        "revision": "c5453023413fa265fe5e64f60b30e5f053bb0259",
+        "signing": "not-notarized",
+        "build_mode": "profile",
+        "scope": "ISOLATED_PERFORMANCE_HARNESS_NOT_PRODUCT_CANDIDATE",
+        "entrypoint": "benchmark/workspace_profile.dart",
+        "native_failure_probe": "MANUAL_SINGLE_SYNTHETIC_TASK_REAL_OS_CALLBACK_ONLY",
+        "frame_diagnostics": "OPT_IN_SELF_VM_LOOPBACK_10000_TASKS_768PX_NOT_BASELINE",
+        "artifacts": [
+          {
+            "file": "DontForget_macOS_profile_benchmark.zip",
+            "bytes": 28201744,
+            "sha256": "7d8178be4afbe993614f317b5eda9ba1a551ffa45c6dbdad0b439ca2da151182"
+          }
+        ]
+      },
+      "bundle_id": "com.example.dontForget.acceptance.origin-r39889484900",
+      "app": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/origin-r39889484900/dont_forget.app",
+      "entitlements": {
+        "com.apple.security.app-sandbox": true,
+        "com.apple.security.cs.allow-jit": true,
+        "com.apple.security.device.audio-input": true,
+        "com.apple.security.files.user-selected.read-write": true,
+        "com.apple.security.get-task-allow": true,
+        "com.apple.security.network.client": true,
+        "com.apple.security.network.server": true
+      },
+      "changed_bundle_paths": [
+        "Contents/Info.plist",
+        "Contents/MacOS/dont_forget"
+      ],
+      "changed_info_keys": [
+        "CFBundleDisplayName",
+        "CFBundleIdentifier"
+      ],
+      "frameworks_and_resources_unchanged": true,
+      "protected_tree_sha256": "8c2dc873f15add250b8644e73157bd53f23af26928a53ccae59113274e897060",
+      "protected_tree": {
+        "Contents/Frameworks/App.framework": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/App": {
+          "symlink": "Versions/Current/App"
+        },
+        "Contents/Frameworks/App.framework/Resources": {
+          "symlink": "Versions/Current/Resources"
+        },
+        "Contents/Frameworks/App.framework/Versions": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/App": {
+          "sha256": "0346d5cb35808f56a0edb88cae314035d8a955f648e1d447fb9baeb7807e0ed8",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/Info.plist": {
+          "sha256": "08b03b58e4ff25c66f5e60193b2728ab5246563bc4f253211a5c4835bbc1d333",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/AssetManifest.bin": {
+          "sha256": "50c73da74698be20269b804719507b72ae5d75daf780a3b404bde559fbc2e4a5",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/FontManifest.json": {
+          "sha256": "cd7e03645bc44b2dd47b7cb626f51c4ecbf55a197ab77241628b47ac165fbe21",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/NOTICES.Z": {
+          "sha256": "4645c7a03f37c51339d37f800acfa53c40c91635cefa20e4746e106691f76aa0",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/NativeAssetsManifest.json": {
+          "sha256": "1f886d741ac6552a07906d60740dfc6ccf232bc70ff0c4889031a45069454a40",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/assets": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/assets/app_icon.ico": {
+          "sha256": "c098d3fc85cacff98b8e69811b48e9f0d852fcee278132d794411d978869cbf8",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/assets/app_icon.png": {
+          "sha256": "416efd77cde932d42ef34168da24dd428a495b1f4f34bbbd125a18d2add186a2",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/fonts": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/fonts/MaterialIcons-Regular.otf": {
+          "sha256": "4cecdf072f13ca411a60dd82248d54c701a7062d7ac69f8b7859debcc775bc2b",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/cupertino_icons": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/cupertino_icons/assets": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf": {
+          "sha256": "67c44fe9183b002e79dde7f6977e2988661c9a3e4a3c5fce968787efdbed823c",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/record_web": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/record_web/assets": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/record_web/assets/js": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/record_web/assets/js/record.fixwebmduration.js": {
+          "sha256": "c345ad5d2fffb357ada647b9b690693452a2001bc5912f1e9066876ce016399b",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/record_web/assets/js/record.worklet.js": {
+          "sha256": "ba7e0f4c841480ee78c0b54e7eadd44455b916fefdb07410ee46159d82dcc08e",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/shaders": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/shaders/ink_sparkle.frag": {
+          "sha256": "c4b3f5d1db405d50b8b7678d8bb446237f37ead86501e32c7a77fac963baff2d",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/shaders/stretch_effect.frag": {
+          "sha256": "50c8c225a68bcb36805a9d3fde5be28e315e666fd1c142a2d88f3fb5dfc7d9ff",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/_CodeSignature": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/_CodeSignature/CodeResources": {
+          "sha256": "940a4bbebbf02d432564f75c0b3e47ad9f76670d999f2a485c5b54029024297e",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/Current": {
+          "symlink": "A"
+        },
+        "Contents/Frameworks/FlutterMacOS.framework": {
+          "directory": true
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/FlutterMacOS": {
+          "symlink": "Versions/Current/FlutterMacOS"
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Resources": {
+          "symlink": "Versions/Current/Resources"
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions": {
+          "directory": true
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A": {
+          "directory": true
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/FlutterMacOS": {
+          "sha256": "f0fc6454291933090f49ccd3730c7973ef5b373bce635b12a1a6c2e0319d6de1",
+          "mode": 493
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/Resources": {
+          "directory": true
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/Resources/Info.plist": {
+          "sha256": "ab1f535b0873bf25217fed6d31f545c71498146a1b0635ba9a8026518f50e83d",
+          "mode": 420
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/Resources/PrivacyInfo.xcprivacy": {
+          "sha256": "42542470043a0a3af3ab452ae4355bf764b916b7a442d3c814f362241a794454",
+          "mode": 420
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/Resources/icudtl.dat": {
+          "sha256": "998367809a821d595928089c197b3f7959f0420f81f79d4d0daee53378492ed5",
+          "mode": 420
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/_CodeSignature": {
+          "directory": true
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/_CodeSignature/CodeResources": {
+          "sha256": "494489b48caa12700413322e776239c0705744b2a44e72b4999066ade1e8efcf",
+          "mode": 420
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/Current": {
+          "symlink": "A"
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Resources": {
+          "symlink": "Versions/Current/Resources"
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/Resources": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/Resources/Info.plist": {
+          "sha256": "ad0c388f5cbd2b8ca57a60799de39e686e341abb942164472bc4063909e52478",
+          "mode": 420
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/Resources/flutter_local_notifications_privacy.bundle": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/Resources/flutter_local_notifications_privacy.bundle/Contents": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/Resources/flutter_local_notifications_privacy.bundle/Contents/Info.plist": {
+          "sha256": "b26659898701f13c7601d4394df417ae5a43dd636afe1d4de531ff7dc7fd9b97",
+          "mode": 420
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/Resources/flutter_local_notifications_privacy.bundle/Contents/Resources": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/Resources/flutter_local_notifications_privacy.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+          "sha256": "1d821a83fb0a7583b0b03075050761341e367f37167f8398a631a30376cd6369",
+          "mode": 420
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/_CodeSignature": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/_CodeSignature/CodeResources": {
+          "sha256": "f22e817c1022c5ab19c29716f9054809acf0459c3a4a36dc8e5cbbc49bd338a8",
+          "mode": 420
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/flutter_local_notifications": {
+          "sha256": "e5b8277c51bb9b3c57f43a408a5e19fba6635d38139c65e1e08b50840b41c538",
+          "mode": 493
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/Current": {
+          "symlink": "A"
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/flutter_local_notifications": {
+          "symlink": "Versions/Current/flutter_local_notifications"
+        },
+        "Contents/Frameworks/objective_c.framework": {
+          "directory": true
+        },
+        "Contents/Frameworks/objective_c.framework/Resources": {
+          "symlink": "Versions/Current/Resources"
+        },
+        "Contents/Frameworks/objective_c.framework/Versions": {
+          "directory": true
+        },
+        "Contents/Frameworks/objective_c.framework/Versions/A": {
+          "directory": true
+        },
+        "Contents/Frameworks/objective_c.framework/Versions/A/Resources": {
+          "directory": true
+        },
+        "Contents/Frameworks/objective_c.framework/Versions/A/Resources/Info.plist": {
+          "sha256": "57f0160881d1040458efd11a5256f761775e915a0060496b4a79ccb902f8485c",
+          "mode": 420
+        },
+        "Contents/Frameworks/objective_c.framework/Versions/A/_CodeSignature": {
+          "directory": true
+        },
+        "Contents/Frameworks/objective_c.framework/Versions/A/_CodeSignature/CodeResources": {
+          "sha256": "8d91bc8b7e125eed13b8800bbb5edb28f94cf67d749b9b6db670eb5727f86c4c",
+          "mode": 420
+        },
+        "Contents/Frameworks/objective_c.framework/Versions/A/objective_c": {
+          "sha256": "7aa699e0586b4a063bf06df54247fb5413972e6d9c39019d0a459e33d6ef17ab",
+          "mode": 493
+        },
+        "Contents/Frameworks/objective_c.framework/Versions/Current": {
+          "symlink": "A"
+        },
+        "Contents/Frameworks/objective_c.framework/objective_c": {
+          "symlink": "Versions/Current/objective_c"
+        },
+        "Contents/Frameworks/sqlite3.framework": {
+          "directory": true
+        },
+        "Contents/Frameworks/sqlite3.framework/Resources": {
+          "symlink": "Versions/Current/Resources"
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions": {
+          "directory": true
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions/A": {
+          "directory": true
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions/A/Resources": {
+          "directory": true
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions/A/Resources/Info.plist": {
+          "sha256": "7bd8795d9bcbdebbb396fd334ec789265f9947fe36fff90cf6046fab60b209e9",
+          "mode": 420
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions/A/_CodeSignature": {
+          "directory": true
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions/A/_CodeSignature/CodeResources": {
+          "sha256": "1b801429a9d688e57ebd4a9a72ca5de5ef1f0c1f02fe2bf091e1bcd4809072ca",
+          "mode": 420
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions/A/sqlite3": {
+          "sha256": "4b720159f3d4bf16621997b4059c5a01c45efef77514ac40c65ca03ed4f6ecef",
+          "mode": 420
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions/Current": {
+          "symlink": "A"
+        },
+        "Contents/Frameworks/sqlite3.framework/sqlite3": {
+          "symlink": "Versions/Current/sqlite3"
+        },
+        "Contents/Resources/AppIcon.icns": {
+          "sha256": "7269175e84f1f99523142e74a032f80a66fa7fefa8040f703de8e522b6bbd867",
+          "mode": 420
+        },
+        "Contents/Resources/Assets.car": {
+          "sha256": "69190677f79c59a2cd71b84013919999caf62785c64234afba25e41e1ba9cd84",
+          "mode": 420
+        },
+        "Contents/Resources/Base.lproj": {
+          "directory": true
+        },
+        "Contents/Resources/Base.lproj/MainMenu.nib": {
+          "sha256": "e5ce99ac2d2a77b3db4d0ff31f266ef1e878737df97459d7e62fb31cc5109df1",
+          "mode": 420
+        },
+        "Contents/Resources/file_picker_darwin_file_picker_darwin.bundle": {
+          "directory": true
+        },
+        "Contents/Resources/file_picker_darwin_file_picker_darwin.bundle/Contents": {
+          "directory": true
+        },
+        "Contents/Resources/file_picker_darwin_file_picker_darwin.bundle/Contents/Info.plist": {
+          "sha256": "71b7227b1c19209a102ea401cabb4b7d7f782c531bfaaa46e2ec5c97b35a74a7",
+          "mode": 420
+        },
+        "Contents/Resources/file_picker_darwin_file_picker_darwin.bundle/Contents/Resources": {
+          "directory": true
+        },
+        "Contents/Resources/file_picker_darwin_file_picker_darwin.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+          "sha256": "204d035a88eab2281b3d914f46c796766ae78e3cb82537711928dca9e28dbbb8",
+          "mode": 420
+        },
+        "Contents/Resources/file_selector_macos_file_selector_macos.bundle": {
+          "directory": true
+        },
+        "Contents/Resources/file_selector_macos_file_selector_macos.bundle/Contents": {
+          "directory": true
+        },
+        "Contents/Resources/file_selector_macos_file_selector_macos.bundle/Contents/Info.plist": {
+          "sha256": "99834e8edfe7209248a246220e713cd00676dcc722faf586f1660c893e0eb9f9",
+          "mode": 420
+        },
+        "Contents/Resources/file_selector_macos_file_selector_macos.bundle/Contents/Resources": {
+          "directory": true
+        },
+        "Contents/Resources/file_selector_macos_file_selector_macos.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+          "sha256": "204d035a88eab2281b3d914f46c796766ae78e3cb82537711928dca9e28dbbb8",
+          "mode": 420
+        },
+        "Contents/Resources/record_macos_record_macos.bundle": {
+          "directory": true
+        },
+        "Contents/Resources/record_macos_record_macos.bundle/Contents": {
+          "directory": true
+        },
+        "Contents/Resources/record_macos_record_macos.bundle/Contents/Info.plist": {
+          "sha256": "f0d017482ef180fc75d5f5c0d87ca45b8b1de371c94ca3979d553c45b086b1d7",
+          "mode": 420
+        },
+        "Contents/Resources/record_macos_record_macos.bundle/Contents/Resources": {
+          "directory": true
+        },
+        "Contents/Resources/record_macos_record_macos.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+          "sha256": "c1b3b6b3c7c996fcd9589be21b9a670b5ce2c3a4f7aa5f55af5cf6470702de12",
+          "mode": 420
+        },
+        "Contents/Resources/sqflite_darwin_sqflite_darwin.bundle": {
+          "directory": true
+        },
+        "Contents/Resources/sqflite_darwin_sqflite_darwin.bundle/Contents": {
+          "directory": true
+        },
+        "Contents/Resources/sqflite_darwin_sqflite_darwin.bundle/Contents/Info.plist": {
+          "sha256": "cecd9f259bf2fa2dd1da9fabfc1d6cf81eecbaa02f60bc07a0f200c1900d447c",
+          "mode": 420
+        },
+        "Contents/Resources/sqflite_darwin_sqflite_darwin.bundle/Contents/Resources": {
+          "directory": true
+        },
+        "Contents/Resources/sqflite_darwin_sqflite_darwin.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+          "sha256": "47226a29608df206ad0a110e6afeb5a77ff575ac1df9c76bfdb2d6dfb3fafed1",
+          "mode": 420
+        }
+      },
+      "native_non_signature_identity": [
+        {
+          "cpu": 16777223,
+          "subtype": 3,
+          "signature_offset": 1067488,
+          "non_signature_sha256": "9b5777ddc253cc6ac470695b957379acfbd71cefb5697b10fe043b67e5fc9539",
+          "alignment": 14
+        },
+        {
+          "cpu": 16777228,
+          "subtype": 0,
+          "signature_offset": 1037584,
+          "non_signature_sha256": "445dd048d6316306a80daef101846fdfc3f55faebd6fa74663ca79e3780e5a48",
+          "alignment": 14
+        }
+      ],
+      "codesign_verify": "PASS",
+      "app_started": false,
+      "app_registered": false,
+      "database_acceptance": "NOT_PERFORMED",
+      "notification_acceptance": "NOT_PERFORMED",
+      "restart_acceptance": "NOT_PERFORMED",
+      "launch_requirement": "Register and launch only this exact non-temporary app through macOS; verify its independent sandbox container and database before restoring synthetic fixtures. macOS sandbox launch supplies the container Data working directory; no CUA cwd override is required. Do not invoke smoke_desktop.py or start the original bundle ID."
+    }
+  },
+  "current_revision": "c8bea5405b51173d89b1618814e1f096e3ed35a2",
+  "product_notification_service_and_bridge_unchanged": true,
+  "source_report": {
+    "path": "/Users/james/Library/Containers/com.example.dontForget.acceptance.origin-r39889484900/Data/Library/Application Support/com.example.dontForget.acceptance.origin-r39889484900/native-os-failure-7sRtzX/native-failure-report.json",
+    "sha256": "7b4a9b3da5aa415daa41c7331b24f60fc731c41b3665dc83731a04e2aa1e9d9d"
+  },
+  "report": {
+    "scope": "Explicitly altered synthetic request, real OS callback and production service/journal; not a spontaneous OS outage",
+    "source_revision": "c5453023413fa265fe5e64f60b30e5f053bb0259",
+    "events": [
+      {
+        "phase": "opened_saved_state",
+        "mode": null,
+        "pid": 68635,
+        "at": "2026-10-23T05:21:18.622266Z",
+        "journal": null,
+        "authorization": {
+          "status": "notEnabled",
+          "alerts_enabled": false,
+          "sounds_enabled": false
+        },
+        "pending_native_ids": []
+      },
+      {
+        "phase": "request_failed",
+        "mode": null,
+        "pid": 68635,
+        "at": "2026-10-23T05:21:28.491882Z",
+        "journal": {
+          "version": 1,
+          "epoch": "95f0a831-e0ad-48a1-b9c1-40f5da64e73f",
+          "entries": [
+            {
+              "reminderId": "qa-native-os-rejection",
+              "nativeId": 733214976,
+              "action": "schedule",
+              "status": "failed",
+              "attempts": 2,
+              "triggerUtcMicros": 4070908800000000,
+              "noticeRevision": 0,
+              "attemptedAt": "2026-10-23T05:21:28.489564Z"
+            }
+          ]
+        },
+        "authorization": {
+          "status": "notEnabled",
+          "alerts_enabled": false,
+          "sounds_enabled": false
+        },
+        "pending_native_ids": [],
+        "error_type": "PlatformException",
+        "platform_error": {
+          "code": "native_schedule_failed",
+          "details": {
+            "code": 1,
+            "domain": "UNErrorDomain"
+          }
+        }
+      },
+      {
+        "phase": "opened_saved_state",
+        "mode": null,
+        "pid": 70756,
+        "at": "2026-10-23T05:23:29.936199Z",
+        "journal": {
+          "version": 1,
+          "epoch": "95f0a831-e0ad-48a1-b9c1-40f5da64e73f",
+          "entries": [
+            {
+              "reminderId": "qa-native-os-rejection",
+              "nativeId": 733214976,
+              "action": "schedule",
+              "status": "failed",
+              "attempts": 2,
+              "triggerUtcMicros": 4070908800000000,
+              "noticeRevision": 0,
+              "attemptedAt": "2026-10-23T05:21:28.489564Z"
+            }
+          ]
+        },
+        "authorization": {
+          "status": "notEnabled",
+          "alerts_enabled": false,
+          "sounds_enabled": false
+        },
+        "pending_native_ids": []
+      },
+      {
+        "phase": "request_failed",
+        "mode": null,
+        "pid": 70756,
+        "at": "2026-10-23T05:23:56.706765Z",
+        "journal": {
+          "version": 1,
+          "epoch": "95f0a831-e0ad-48a1-b9c1-40f5da64e73f",
+          "entries": [
+            {
+              "reminderId": "qa-native-os-rejection",
+              "nativeId": 733214976,
+              "action": "schedule",
+              "status": "failed",
+              "attempts": 4,
+              "triggerUtcMicros": 4070908800000000,
+              "noticeRevision": 0,
+              "attemptedAt": "2026-10-23T05:23:56.702580Z"
+            }
+          ]
+        },
+        "authorization": {
+          "status": "notEnabled",
+          "alerts_enabled": false,
+          "sounds_enabled": false
+        },
+        "pending_native_ids": [],
+        "error_type": "PlatformException",
+        "platform_error": {
+          "code": "native_schedule_failed",
+          "details": {
+            "code": 1,
+            "domain": "UNErrorDomain"
+          }
+        }
+      },
+      {
+        "phase": "opened_saved_state",
+        "mode": null,
+        "pid": 71719,
+        "at": "2026-10-23T05:25:03.133285Z",
+        "journal": {
+          "version": 1,
+          "epoch": "95f0a831-e0ad-48a1-b9c1-40f5da64e73f",
+          "entries": [
+            {
+              "reminderId": "qa-native-os-rejection",
+              "nativeId": 733214976,
+              "action": "schedule",
+              "status": "failed",
+              "attempts": 4,
+              "triggerUtcMicros": 4070908800000000,
+              "noticeRevision": 0,
+              "attemptedAt": "2026-10-23T05:23:56.702580Z"
+            }
+          ]
+        },
+        "authorization": {
+          "status": "notEnabled",
+          "alerts_enabled": false,
+          "sounds_enabled": false
+        },
+        "pending_native_ids": []
+      },
+      {
+        "phase": "valid_retry_submitted",
+        "mode": null,
+        "pid": 71719,
+        "at": "2026-10-23T05:25:11.912479Z",
+        "journal": {
+          "version": 1,
+          "epoch": "95f0a831-e0ad-48a1-b9c1-40f5da64e73f",
+          "entries": [
+            {
+              "reminderId": "qa-native-os-rejection",
+              "nativeId": 733214976,
+              "action": "schedule",
+              "status": "submitted",
+              "attempts": 6,
+              "triggerUtcMicros": 4070908800000000,
+              "noticeRevision": 0,
+              "attemptedAt": "2026-10-23T05:25:11.909122Z"
+            }
+          ]
+        },
+        "authorization": {
+          "status": "notEnabled",
+          "alerts_enabled": false,
+          "sounds_enabled": false
+        },
+        "pending_native_ids": [
+          733214976
+        ]
+      },
+      {
+        "phase": "valid_retry_submitted",
+        "mode": null,
+        "pid": 71719,
+        "at": "2026-10-23T05:26:13.780435Z",
+        "journal": {
+          "version": 1,
+          "epoch": "95f0a831-e0ad-48a1-b9c1-40f5da64e73f",
+          "entries": [
+            {
+              "reminderId": "qa-native-os-rejection",
+              "nativeId": 733214976,
+              "action": "schedule",
+              "status": "submitted",
+              "attempts": 8,
+              "triggerUtcMicros": 4070908800000000,
+              "noticeRevision": 0,
+              "attemptedAt": "2026-10-23T05:26:13.776050Z"
+            }
+          ]
+        },
+        "authorization": {
+          "status": "notEnabled",
+          "alerts_enabled": false,
+          "sounds_enabled": false
+        },
+        "pending_native_ids": [
+          733214976
+        ]
+      },
+      {
+        "phase": "cleanup_no_pending_requests",
+        "mode": null,
+        "pid": 71719,
+        "at": "2026-10-23T05:26:32.022060Z",
+        "journal": {
+          "version": 1,
+          "epoch": "95f0a831-e0ad-48a1-b9c1-40f5da64e73f",
+          "entries": [
+            {
+              "reminderId": "qa-native-os-rejection",
+              "nativeId": 733214976,
+              "action": "cancel",
+              "status": "submitted",
+              "attempts": 9,
+              "triggerUtcMicros": null,
+              "noticeRevision": null,
+              "attemptedAt": "2026-10-23T05:26:32.012096Z"
+            }
+          ]
+        },
+        "authorization": {
+          "status": "notEnabled",
+          "alerts_enabled": false,
+          "sounds_enabled": false
+        },
+        "pending_native_ids": []
+      }
+    ]
+  },
+  "observation": {
+    "negative_origin_pids": [
+      68635,
+      70756
+    ],
+    "canonical_origin_pid": 71719,
+    "same_native_id": 733214976,
+    "failed_attempt_counts": [
+      2,
+      4
+    ],
+    "submitted_attempt_counts": [
+      6,
+      8
+    ],
+    "original_pid_absence_before_relaunch_observed": true,
+    "one_pending_after_repeated_submit": true,
+    "pending_empty_after_cancel": true,
+    "authorization_status_all_events": "notEnabled"
+  },
+  "cleanup": {
+    "read_back_at": "2026-10-23T05:33:39.386959+00:00",
+    "exact_executable_paths": [
+      "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/origin-r39889484900/dont_forget.app/Contents/MacOS/dont_forget",
+      "/private/tmp/dontforget-native-origin-20261023-30xfq6y2/dont_forget.app/Contents/MacOS/dont_forget",
+      "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/gc-before-r39900595838/dont_forget.app/Contents/MacOS/dont_forget",
+      "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/gc-after-r39901693129/dont_forget.app/Contents/MacOS/dont_forget"
+    ],
+    "matching_processes": [],
+    "sandbox_and_rollback_assets_retained": true
+  },
+  "limits": [
+    "Temporary-origin failure does not establish that all temporary paths or all permission denials yield NSError.",
+    "Install origin changed; request and bundle contents did not. Observed OS code is UNErrorDomain/1.",
+    "Explicit retries exercised product service and journal; real-OS automatic foreground resume coordinator still needs acceptance.",
+    "Pending acceptance does not prove authorization or delivery (this identity remains notEnabled).",
+    "System restart, sleep/wake and time-zone/DST not performed in this phase."
+  ],
+  "product_notification_journal_unchanged": true
+}
