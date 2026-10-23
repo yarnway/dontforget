@@ -1,0 +1,57 @@
+{
+  "scope": "Attempted normal sleep; command rejected, no system Sleep/Wake event recorded in observation window; not acceptance success",
+  "checkpoint": {
+    "scope": "Synthetic request checkpoint before power-event acceptance; not a power-event success claim",
+    "bundle_id": "com.example.dontForget.acceptance.probe-r39889484900",
+    "source_revision": "c5453023413fa265fe5e64f60b30e5f053bb0259",
+    "session_directory": "/Users/james/Library/Containers/com.example.dontForget.acceptance.probe-r39889484900/Data/Library/Application Support/com.example.dontForget.acceptance.probe-r39889484900/native-os-failure-8jSt7W",
+    "native_id": 733214976,
+    "pid": 5974,
+    "authorization": "granted",
+    "pending_native_ids": [
+      733214976
+    ],
+    "boot_session": "C5EA9BC6-4B3F-4A76-8AB5-B9751726418E",
+    "recorded_at_utc": "2026-10-23T04:09:22.322204+00:00",
+    "task_trigger": "2099-01-01T00:00:00Z",
+    "acceptance_boundary": "Request retention and durable identity; not due-notification delivery or timing",
+    "sleep": "COMMAND_REQUESTED_AWAITING_POWER_LOG",
+    "system_reboot": "NOT_RUN",
+    "before_sleep_utc": "2026-10-23T04:13:31.057869+00:00",
+    "before_sleep_boot_session": "C5EA9BC6-4B3F-4A76-8AB5-B9751726418E",
+    "checkpoint_commit": "7c27cb91b5dac8c5c5e91cb9a4aa7392e09e7f04",
+    "sleep_command_exit": 71,
+    "sleep_command_stdout": "Unable to sleep system: error 0xe00002e2",
+    "sleep_command_stderr": ""
+  },
+  "wake_attempts": [
+    {
+      "owner": "dontforget-isolated-3c10-20261023",
+      "wake_time_client": "2026-10-23T12:14:33+08:00",
+      "command_exit": 1,
+      "stdout": "",
+      "stderr": "/usr/bin/pmset: This operation must be run as root",
+      "owned_wake_readback": []
+    },
+    {
+      "owner": "dontforget-isolated-3c10-20261023",
+      "wake_time_client": "2026-10-23T12:14:42+08:00",
+      "command_exit": 1,
+      "stdout": "",
+      "stderr": "sudo: a password is required",
+      "owned_wake_readback": [],
+      "noninteractive_only_no_password_requested": true
+    }
+  ],
+  "power_log_query_exit": 0,
+  "sleep_wake_events_since_attempt": [],
+  "boot_session_after": "C5EA9BC6-4B3F-4A76-8AB5-B9751726418E",
+  "same_boot_session": true,
+  "system_menu_read": "CUA timeoutReached",
+  "system_restart": "NOT_RUN_NORMAL_SYSTEM_MENU_UNAVAILABLE",
+  "sleep_resume": "NOT_EXECUTED_PMSET_NOT_PERMITTED",
+  "privileged_power_settings_changed": false,
+  "other_apps_closed_or_forced": false,
+  "isolated_request_cleanup": "PENDING_API_EMPTY_AFTER_CANCEL",
+  "all_five_owned_acceptance_processes_absent_at_close": true
+}

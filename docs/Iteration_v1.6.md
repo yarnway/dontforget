@@ -660,7 +660,9 @@ Android 元数据来源核对了 [AOSP SQLiteConnection](https://android.googles
 
 新候选 `probe-r39889484900` 内部 ZIP 28,201,744 B，SHA-256 `7d8178be4afbe993614f317b5eda9ba1a551ffa45c6dbdad0b439ca2da151182`，外层/内部及派生签名核验通过。实际点击系统“不允许”，系统开关 off、应用 notEnabled，但有效调度仍成功，pending 只有 ID `733214976`。退出 PID 4353 并确认缺席，重开 PID 5974 保留拒绝状态、submitted 日志和 pending；系统开关恢复 on 后读回 granted，同 ID 重提后仍只有一条。alert/sound 偏好在拒绝时仍可能为 true，不能越过授权状态判断送达。[权限闭环原始记录](benchmarks/native-permission-probe-3c10-2026-10-23.json)。这不是 NSError 失败验收；当前 OS 接受了全部已尝试请求。[Apple 错误定义](https://developer.apple.com/documentation/usernotifications/unerror/notificationsnotallowed)是错误判据，不替代本机回调。
 
-完成清单：已核验探针、真实回调、已提交日志跨进程保留、同 ID 有效再提交、旧探针取消后 pending 为空、新候选权限拒绝/重开/恢复、权限观测入口与本机/CI 检查。剩余清单：真实 `native_schedule_failed` 与 OS domain/code、failed 跨重开保留和同 ID 重试；在可读回的隔离记录基础上验收系统重启、睡眠/唤醒及时间变化。应用重开不替代系统重启，当前两项电源事件均未执行。后续继续多模型持久化/迁移/设置及降级、其他平台业务与正式签名；录音/播放允许，本轮未新增相关实测。
+**电源事件尝试未通过。** 保存隔离请求、持久日志及 boot-session 检查点后，正常用户的一次性 wake 设置被系统要求 root，非交互管理员调用要求密码，读回没有创建本轮 wake 事件。正常 `pmset sleepnow` 返回 71 / `0xe00002e2`；本机 IOKit 头文件将该码定义为 not permitted。系统菜单原生读取 timeoutReached。之后电源日志查询成功，但自尝试时间起没有 Sleep/Wake/DarkWake，boot-session 不变，因此未实际睡眠或系统重启。未修改电源/锁屏保护，未退出或强制关闭其他用户应用。最后取消新探针请求，API 读回 pending 为空；本轮五个隔离进程退出，数据保留。[电源门禁与检查点](benchmarks/power-gates-3c10-2026-10-23.json)。
+
+完成清单：已核验探针、真实回调、已提交日志跨进程保留、同 ID 有效再提交、权限拒绝/重开/恢复、两探针取消后 pending 为空、权限观测入口与本机/CI 检查。剩余清单：真实 `native_schedule_failed` 与 OS domain/code、failed 跨重开保留和同 ID 重试；在正常电源操作能力可用后验收系统重启、睡眠/唤醒及时间变化。应用重开不替代系统重启。后续继续多模型持久化/迁移/设置及降级、其他平台业务与正式签名；录音/播放允许，本轮未新增相关实测。
 
 ## 阶段 4：界面和多平台交付
 

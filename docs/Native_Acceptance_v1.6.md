@@ -448,4 +448,6 @@ Mac ZIP 为 23,822,422 字节，SHA-256 `32de8c5ec10e9bc542a6f72e96861d7536b8f51
 4. 探针未请求权限，所以当时不在系统通知列表中。`c545302` 增加显式请求按钮和独立权限/pending 读回，每次记录真实授权、alert/sound 与 pending IDs，未知值不改写为已授权。本机静态分析和 700 项 Flutter 测试通过并推送 main。[产品 CI 39889437264](https://github.com/yarnway/dontforget/actions/runs/39889437264) 质量及五平台、[测量构建 39889484900](https://github.com/yarnway/dontforget/actions/runs/39889484900) 两项均成功。
 5. 新 `probe-r39889484900` 的 manifest/hash/签名核验通过。实际拒绝权限，系统开关 off、应用 notEnabled，但有效请求仍被 OS 接受，pending 为 `[733214976]`。退出 PID 4353 并确认缺席，重开 PID 5974 保留拒绝状态、submitted 日志和 pending；系统开关恢复 on 后读回 granted，同 ID 重提后仍只有一条。没有把拒绝授权写成调度 NSError。[权限闭环原始记录](benchmarks/native-permission-probe-3c10-2026-10-23.json)。
 
-剩余：真实 `native_schedule_failed` + OS domain/code、failed 重开和同 ID 重试；系统重启、睡眠/唤醒、时区/DST；多模型持久化/迁移/设置及降级、其他平台业务和正式签名发布。录音和播放允许，本轮未新增相关实测。锁屏在用户手动解锁后解除，未更改系统安全策略。
+6. 电源验收先保存请求/日志/boot-session 检查点。一致读回：wake 设置需要 root，非交互管理员调用需要密码，没有创建测试 wake；`pmset sleepnow` 返回 71 / not permitted `0xe00002e2`，系统菜单读取 timeoutReached。电源日志查询成功但没有新增 Sleep/Wake/DarkWake，boot-session 未变，故未执行实际睡眠或系统重启。新探针最后取消并读回 pending 为空，本轮五个隔离进程退出，数据保留。[电源尝试记录](benchmarks/power-gates-3c10-2026-10-23.json)。
+
+剩余：真实 `native_schedule_failed` + OS domain/code、failed 重开和同 ID 重试；正常电源操作能力可用后的系统重启、睡眠/唤醒、时区/DST；多模型持久化/迁移/设置及降级、其他平台业务和正式签名发布。录音和播放允许，本轮未新增相关实测。锁屏由用户解锁，电源/安全策略和其他用户应用保持原状。

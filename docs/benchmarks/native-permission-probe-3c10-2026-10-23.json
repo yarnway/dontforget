@@ -149,6 +149,64 @@
         "pending_native_ids": [
           733214976
         ]
+      },
+      {
+        "phase": "observed_native_state",
+        "mode": null,
+        "pid": 5974,
+        "at": "2026-10-23T04:13:08.692722Z",
+        "journal": {
+          "version": 1,
+          "epoch": "005c1af5-cc75-45b9-8cad-10b72c494340",
+          "entries": [
+            {
+              "reminderId": "qa-native-os-rejection",
+              "nativeId": 733214976,
+              "action": "schedule",
+              "status": "submitted",
+              "attempts": 4,
+              "triggerUtcMicros": 4070908800000000,
+              "noticeRevision": 0,
+              "attemptedAt": "2026-10-23T04:02:36.650068Z"
+            }
+          ]
+        },
+        "authorization": {
+          "status": "granted",
+          "alerts_enabled": true,
+          "sounds_enabled": true
+        },
+        "pending_native_ids": [
+          733214976
+        ]
+      },
+      {
+        "phase": "cleanup_no_pending_requests",
+        "mode": null,
+        "pid": 5974,
+        "at": "2026-10-23T04:14:58.520397Z",
+        "journal": {
+          "version": 1,
+          "epoch": "005c1af5-cc75-45b9-8cad-10b72c494340",
+          "entries": [
+            {
+              "reminderId": "qa-native-os-rejection",
+              "nativeId": 733214976,
+              "action": "cancel",
+              "status": "submitted",
+              "attempts": 5,
+              "triggerUtcMicros": null,
+              "noticeRevision": null,
+              "attemptedAt": "2026-10-23T04:14:58.515827Z"
+            }
+          ]
+        },
+        "authorization": {
+          "status": "granted",
+          "alerts_enabled": true,
+          "sounds_enabled": true
+        },
+        "pending_native_ids": []
       }
     ]
   },
@@ -159,8 +217,8 @@
   "denied_request_os_result": "ACCEPTED_PENDING_ONE",
   "same_native_id": 733214976,
   "real_os_rejection": "NOT_OBSERVED",
-  "system_reboot": "NOT_RUN",
-  "sleep_resume": "NOT_RUN",
+  "system_reboot": "NOT_RUN_NORMAL_SYSTEM_MENU_UNAVAILABLE",
+  "sleep_resume": "BLOCKED_NORMAL_SLEEP_NOT_PERMITTED",
   "package_manifest": {
     "version": "1.5.2",
     "build_number": "3",
@@ -182,5 +240,8 @@
   },
   "outer_artifact_bytes": 28127707,
   "outer_artifact_sha256": "1cac60b5323f48924099c119b1e7838db86cf8837082023e26b9d81a4f750179",
-  "outer_crc_allowlist_inner_hash_and_codesign": "PASS"
+  "outer_crc_allowlist_inner_hash_and_codesign": "PASS",
+  "cleanup_pending_api_readback": "EMPTY_AFTER_CANCEL",
+  "power_record": "power-gates-3c10-2026-10-23.json",
+  "owned_process_absent_after_cleanup": true
 }
