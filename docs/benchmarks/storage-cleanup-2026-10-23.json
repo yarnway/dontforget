@@ -1,0 +1,3562 @@
+{
+  "scope": "User-authorized cleanup after local tests and native acceptance. Generated project caches, obsolete verified packages and QA executables only. No Library containers, SQLite/rollback assets, baseline fixture, current/reference apps, SDK/global caches, Git, source or unrelated dirty work removed.",
+  "at": "2026-10-23T08:26:51.744499+00:00",
+  "before_scope_allocated_bytes": {
+    "/Users/james/gitresources/opensources/dontforget/build": 4785528832,
+    "/Users/james/gitresources/opensources/dontforget/.dart_tool": 49950720,
+    "/Users/james/gitresources/opensources/dontforget/dist": 162942976,
+    "/var/folders/88/bthgt42573qb11t30vh_z8780000gn/T/dontforget-foreground-origin-20261023-5x08_ekl": 58564608
+  },
+  "disk_free_before": 615321042944,
+  "selected_entries": [
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/basefg10000-r39736121636/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 58535936,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.basefg10000-r39736121636",
+        "source_revision": "a614f7dd1371af4bd86ac5e7c908af877e0df5ef",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/basefg10000-r39736121636/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/batch-r39731158073/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 58503168,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.batch-r39731158073",
+        "source_revision": "b722da66382043b5b7254f9957f116d6ff497ad6",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/batch-r39731158073/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/cache-r39914993147/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 77230080,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.cache-r39914993147",
+        "source_revision": "8b1961ea2a099f4095ea554a3d0614a26ade7b06",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/cache-r39914993147/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/cold100-r39736121636/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 58535936,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.cold100-r39736121636",
+        "source_revision": "a614f7dd1371af4bd86ac5e7c908af877e0df5ef",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/cold100-r39736121636/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/cold1000-r39736121636/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 58535936,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.cold1000-r39736121636",
+        "source_revision": "a614f7dd1371af4bd86ac5e7c908af877e0df5ef",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/cold1000-r39736121636/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/cold10000-r39736121636/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 58535936,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.cold10000-r39736121636",
+        "source_revision": "a614f7dd1371af4bd86ac5e7c908af877e0df5ef",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/cold10000-r39736121636/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/copy-r39747956305/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 58503168,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.copy-r39747956305",
+        "source_revision": "88ab2484add63e42f60d22b99ef5151afa40fa19",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/copy-r39747956305/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/diag-r39812302641/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 77148160,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.diag-r39812302641",
+        "source_revision": "1476353d4e961bfde0d815d6a6886e9dfec911a3",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/diag-r39812302641/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/durable-r39622115301/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 58421248,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.durable-r39622115301",
+        "source_revision": "8f2a40ebb4cbcdab63830af5fea5e03d2266f900",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/durable-r39622115301/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/epoch-r39742373065/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 58503168,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.epoch-r39742373065",
+        "source_revision": "25e5abe27b72f5e5d393116f50bf131301988327",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/epoch-r39742373065/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/feedback-r39733597774/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 58503168,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.feedback-r39733597774",
+        "source_revision": "ca7a3809941eb00887cc989c7d6cc10ac9c86d32",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/feedback-r39733597774/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/fixed-r39751469604/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 76197888,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.fixed-r39751469604",
+        "source_revision": "6b94019ad2abcee727fb86efd8f840a19dededed",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/fixed-r39751469604/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/fixed-r39752935632/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 76226560,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.fixed-r39752935632",
+        "source_revision": "ae9e88d17138f14d82e93964dd8ff67dcd6a7fdb",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/fixed-r39752935632/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/foreground-r39910780360/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 58564608,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.foreground-r39910780360",
+        "source_revision": "49c0cc1dc95efda9530f0979e3811a0471289eca",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/foreground-r39910780360/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/foreground-r39914993147/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 58564608,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.foreground-r39914993147",
+        "source_revision": "8b1961ea2a099f4095ea554a3d0614a26ade7b06",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/foreground-r39914993147/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/gc-after-r39901693129/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 77197312,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.gc-after-r39901693129",
+        "source_revision": "19c6a40059175936e09d3fb6e90c94c3f6d58d54",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/gc-after-r39901693129/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/gc-before-r39900595838/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 77197312,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.gc-before-r39900595838",
+        "source_revision": "3f6efebdaf63a8f07d4cadf18c6431763e883d41",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/gc-before-r39900595838/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/journal-r39709820687/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 58470400,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.journal-r39709820687",
+        "source_revision": "eec2ace947a5b0ae67b6a17fd361f9d2a689a7f4",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/journal-r39709820687/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/native-r39736112657/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 58503168,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.native-r39736112657",
+        "source_revision": "a614f7dd1371af4bd86ac5e7c908af877e0df5ef",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/native-r39736112657/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/native-r39742373065/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 58503168,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.native-r39742373065",
+        "source_revision": "25e5abe27b72f5e5d393116f50bf131301988327",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/native-r39742373065/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/optfg10000-r39742418043/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 58535936,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.optfg10000-r39742418043",
+        "source_revision": "25e5abe27b72f5e5d393116f50bf131301988327",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/optfg10000-r39742418043/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/origin-r39889484900/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 77180928,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.origin-r39889484900",
+        "source_revision": "c5453023413fa265fe5e64f60b30e5f053bb0259",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/origin-r39889484900/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/os-r39752932522/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 58499072,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.os-r39752932522",
+        "source_revision": "ae9e88d17138f14d82e93964dd8ff67dcd6a7fdb",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/os-r39752932522/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/perf-after-r39715027992/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 76132352,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.perf-after-r39715027992",
+        "source_revision": "403da02401e2e6d1a06f25d6bb9a94135e6ab664",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/perf-after-r39715027992/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/perf-batch-r39730823023/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 76165120,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.perf-batch-r39730823023",
+        "source_revision": "708586a9d167d0951d32290be368536278a54312",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/perf-batch-r39730823023/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/perf-before-r39714494785/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 76132352,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.perf-before-r39714494785",
+        "source_revision": "0fb214301e42c658445abf68eea05bd286ff1e4e",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/perf-before-r39714494785/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/perf-clean-r39719290459/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 76165120,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.perf-clean-r39719290459",
+        "source_revision": "41a9e54428323cfa04e0cf7f25fe09c93d19fe23",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/perf-clean-r39719290459/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/perf-final-r39716514799/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 76132352,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.perf-final-r39716514799",
+        "source_revision": "e78b3ff4fab7617c32e9aeea2e001deab2a3091c",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/perf-final-r39716514799/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/perf-r39709822788/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 76034048,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.perf-r39709822788",
+        "source_revision": "eec2ace947a5b0ae67b6a17fd361f9d2a689a7f4",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/perf-r39709822788/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/perf-r39736121636/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 76165120,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.perf-r39736121636",
+        "source_revision": "a614f7dd1371af4bd86ac5e7c908af877e0df5ef",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/perf-r39736121636/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/perf-r39742418043/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 76197888,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.perf-r39742418043",
+        "source_revision": "25e5abe27b72f5e5d393116f50bf131301988327",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/perf-r39742418043/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/permissions-r39575684866/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 58339328,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.permissions-r39575684866",
+        "source_revision": "639a2b9513910a608b6ee56c546c8e9fc409f60e",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/permissions-r39575684866/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/probe-r39758794353/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 76308480,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.probe-r39758794353",
+        "source_revision": "5367a8b0ef18de4ee7e62182e02e7dd37fc0961a",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/probe-r39758794353/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/probe-r39807412561/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 76308480,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.probe-r39807412561",
+        "source_revision": "2da0c33709f08f017a887d76b04fb79c84d7fb78",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/probe-r39807412561/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/probe-r39889484900/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 77180928,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.probe-r39889484900",
+        "source_revision": "c5453023413fa265fe5e64f60b30e5f053bb0259",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/probe-r39889484900/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/retry-r39715762698/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 58486784,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.retry-r39715762698",
+        "source_revision": "5846c2b83bd23bf63173d9349d8a889f160d9a10",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/retry-r39715762698/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/scheduling-r39601538766/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 58355712,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.scheduling-r39601538766",
+        "source_revision": "886254f100945ea978e3d759a415596e33f4ec58",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/scheduling-r39601538766/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/schema9-r39570026069/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 58208256,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.schema9-r39570026069",
+        "source_revision": "3d68c83958e9cc8664faf4cb261759218a6055c7",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/schema9-r39570026069/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/status-r39706276489/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 58454016,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.status-r39706276489",
+        "source_revision": "6504bc1f438a694df5ab6707db2478821764117c",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/status-r39706276489/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/tail-r39908329712/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 77197312,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.tail-r39908329712",
+        "source_revision": "0cd78fe69783c0bd3a5b665ab66d7d50e575d54b",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/tail-r39908329712/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/undo-r39625619466/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 58421248,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.undo-r39625619466",
+        "source_revision": "3a0d58d2d7ace4fbd527d181cf0eb27a0c85c3b3",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/undo-r39625619466/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/wide-r39757723420/dont_forget.app",
+      "category": "obsolete-isolated-QA-app",
+      "allocated_bytes_before": 76259328,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.wide-r39757723420",
+        "source_revision": "6205968338d7f278cd1749a1f55d3379f6c72657",
+        "preparation_retained": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/wide-r39757723420/acceptance-preparation.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/3c1-r39601538766/DontForget_macOS_unnotarized_v1.5.2.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 23801856,
+      "metadata": {
+        "sha256": "e7ad27bae4e72b01a06797cf9c2988ddbbcdeed1726c0688f0f82d5512d287a0",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/3c1-r39601538766/macos-manifest.json",
+        "revision": "886254f100945ea978e3d759a415596e33f4ec58"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/3c2-r39622115301/DontForget_macOS_unnotarized_v1.5.2.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 23826432,
+      "metadata": {
+        "sha256": "edcf6bcac571e7508b0ffcdc21bb5a2dc3416d435bbff7bcb9da2b3c494bd7c4",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/3c2-r39622115301/macos-manifest.json",
+        "revision": "8f2a40ebb4cbcdab63830af5fea5e03d2266f900"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/batch-r39731158073/DontForget_macOS_unnotarized_v1.5.2.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 23863296,
+      "metadata": {
+        "sha256": "a6920f9007c5d53ba4f458c46f190d52d2bcb547ed2d57c4d139ec2e7f72355c",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/batch-r39731158073/macos-manifest.json",
+        "revision": "b722da66382043b5b7254f9957f116d6ff497ad6"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/DontForget_macOS_profile_benchmark.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 28213248,
+      "metadata": {
+        "sha256": "ba7dab854cac034dd79f24f49d6d5b63d42e126a9ab76aed905013a78f15296d",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/macos-manifest.json",
+        "revision": "8b1961ea2a099f4095ea554a3d0614a26ade7b06"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/artifact.zip",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 28139520,
+      "metadata": {
+        "sha256": "91519b9c3254493bb31408f5adad62afa8224eaf7da5cfa0927e87f96a9758df",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-000",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "d6b54f86d0e867d9de0dfee547b3baf8151ab54fdfc0ff72164de63e13d97b50",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-001",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "a9870c5b6591d78e371e63db677acf74724c8865d38e99a3a4ea82878dbc06b9",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-002",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "40568fee1e6b0dc6c6dfebe90c1a1d756518d4094b291a8cf36b8862e857d94a",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-003",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "38d14952f82fc2f39c797cf678bdcdb89d3dbd4477ff5a9139052d384b35a607",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-004",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "1ebeda502d4a82d8d1700a661ac1aafa9208f7359f6b195759f12e549271ee46",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-005",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "e8e1adc4a7248049acd028f59207071ce20078309e0d1f683f25c2a1fdd269d0",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-006",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "c707d0e4d57eeee2e1fae0842e80ca0a84ab525da936d5cbdc8a522bcab29777",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-007",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "88f9f40ad3077b8792dfd704045a986d3653b67a966679681b674332ad727dc7",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-008",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "ac0b186d41961e991751a2759d37feb413ee4c820aa9992c56d9a1517ff91afb",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-009",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "b65b6a860f687f3d48dd6ce4f53e2c98dcec9894070b7fc8bc50528cbb99d109",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-010",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "9dbf0f7423d7ce2ce9ab3a2540f33b1303e944676c3629b79a3fc3cd90aa07ff",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-011",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "305646c5d4774a0fb41da1a04ddc234f077b18a3e1fbcfa6df5529d7375c4b0b",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-012",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "60fb37d75be4a51b4ab2c119d62bea96c9573f1c1e04a46e797bc837c6a0ba61",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-013",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "c146797b39641cb889455ed48c6f66b948baaa9cd1fb09f43be8a39e024fad92",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-014",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "00f9618924af9a465d16ec423b3d7884e0a0f2a142f11d6d2eef47e5c80ece45",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-015",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "eba8156d03b0db855800f32b019e6bf03d29b258115a998016bc4d3162e535ed",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-016",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "f3a387b8d0a1c571e143126ddd3c5c02742c6926d1e7518b22c895f09bc44438",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-017",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "ccff5ccca0b87a5c94a8b8010a0754fd01f404d67098563af74a7ce65a1b5451",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-018",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "cbe6b1968b7cabda63aea362f266cb1a5ef3a1f73d54e1b201b7c6033b89f227",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-019",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "69a134362491612bcb2a7d675e0bcdf1a67bfbfea1027ae0b17061c8abc533ce",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-020",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "04dbed885fd68f4a19049a8122de73d19359e0e430fb55a876d03a5eedf866a6",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-021",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "3321d959a8d4be54872d9fa690c2ec2fffc752d517cebe500e05d44c1492f29c",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-022",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "c838ff249c7242f04c3344922bab54fed2b64ac2a92563ebdfa5a4525418a92e",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-023",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "8bda25db6308c17325029eb19796f0908fd507fff82c766b173b8d5b9b8320f4",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-024",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "5129d4854925a321653181e9846a15b0ba5a54139acbda0243e7fb41bf4c97d9",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-025",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "74bce3bd168bcc2b0b173eab64414e129a90f23ff172d76481453db42b86b871",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/cache-api-r39914993147/chunk-026",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 876544,
+      "metadata": {
+        "sha256": "0f0a13e8a1dfee0689bd906037a21adfc8e7db102172a0aaa663f71e232d5c19",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/copy-r39747956305/DontForget_macOS_unnotarized_v1.5.2.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 23867392,
+      "metadata": {
+        "sha256": "6b8c727b2cae5c5d34c3ff62102406160aa1d83e9e1ba0bfa6d5cd0242245283",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/copy-r39747956305/macos-manifest.json",
+        "revision": "88ab2484add63e42f60d22b99ef5151afa40fa19"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/DontForget_macOS_profile_benchmark.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 28184576,
+      "metadata": {
+        "sha256": "dc1e87360afea5fa24d77a0cbed2d1718d52801d3a894135242e538221ce8d21",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/macos-manifest.json",
+        "revision": "1476353d4e961bfde0d815d6a6886e9dfec911a3"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/artifact.zip",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 28114944,
+      "metadata": {
+        "sha256": "e93fc8076f6b6990ac620a97f75fceaca84d574e6fe8422a360bac257cdb2f0d",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-000",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "89b26774b23e244b460be14a4ded587bbf7dfd4fe15968df2115f615ac9b3599",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-001",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "32cdd1bba02d3602dde2524c751e116cafbea5bbaad3d7f3c68a7f8fc14a4aed",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-002",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "a2189acdfec4f48a59564e15f03af4428bd981cdb9d9465fdead0cd5eb76e1ec",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-003",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "a166edca1de66f43fe2b9f9fd6492e053bcbb8f344e6515ed855790e0865dd2d",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-004",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "3be987b687798b605fe99cc8d816afaea35919da5b2aa7ef948fb70fa282b7fe",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-005",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "a24d77f456ed774cdea4964a18b707af861aaff727cf2d4ab86bcab1a751bf88",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-006",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "a0c23059c7c7a3af43812451ab19e6b2916e178e9e6ef86f54d64b63e3c39a16",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-007",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "ec01576b1162f3bce9b72422603ddd5db6f07e168f1d506d32ad5680451bbdee",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-008",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "7093050a6fcd30ccec3ea086f96189219504851fd89fd8c5236eea2af5a6ddb9",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-009",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "095fe447926cf9b4a05f816bd013a89032609ef3d6e54bb199ca7701174c920e",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-010",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "59e577b99343285620240b188abe4f0da050ab564a018aec78c43b5cfc05c5ec",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-011",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "866b427f465209131f3286ccbd9373589a079888ef3a5ee05b308060abe4eae9",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-012",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "8a86c2953ba293b2100e4f3cce3d656986bec2218ba77434decb4b77f43e49b3",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-013",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "8e7d896f881af9b6d76a98e3af49eece41c60209648ef036348669ebc8381976",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-014",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "3e894504b448b0e7eaef7a11f7831e7c7a4ac9581fd68ef2b0dddd639cd2a93a",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-015",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "b2a68cd849845784d84512468e586cf19102b9eb90fcde5719083928ded38aed",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-016",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "d7bfa9953bc2170810d324af4e77b0456f0816c387206b3e35318bf2ab2011f7",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-017",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "a4f06cbef5feaddb700cc773a49713dcf46fb1a7b290ab9fa31aebe5e7bb8dc2",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-018",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "d17ba82c5c294d963436bdf989e5192dfb34b2d34c09e73fa48208192f175666",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-019",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "ced025e74baaaa10a5609bdd49b980befe244eb06630c848b698d36e4cdf2840",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-020",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "196b82dd18d54cb299dc7dc8e7115d8a311f021d4e8f4d0fb9cb89a2fefa9b96",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-021",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "593a7cb0ed8c3ee7538e7d6a4d3a7405d274a6480c8f9b90a6060e2249cf2fd1",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-022",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "7e7a4480b3891df453a682b07137742debe5f712db2bd0e626562ce16397f92e",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-023",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "e305603a2a76636666265ff68749f5e8e26a7e87d5788faeb344ac9c0bd75849",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-024",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "43dc64cec171fed999b02bb49dcc1e465fd9fb7ee48a73c8d9c1bff1dd2251ca",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-025",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "82b46c48c872b6866bc147a95add9c0da9fe2af61198da4890530cc45c723f97",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/diag-api-r39812302641/chunk-026",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 851968,
+      "metadata": {
+        "sha256": "4377a44a3d6afe1a3c2d85828eb9ea15276f08dc96192f4ebd5c8c680ce86e53",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/feedback-r39733597774/DontForget_macOS_unnotarized_v1.5.2.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 23863296,
+      "metadata": {
+        "sha256": "36848d04f74da3ae1df33c068ce7a940412057943515e89cdc62fa6a7716f96e",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/feedback-r39733597774/macos-manifest.json",
+        "revision": "ca7a3809941eb00887cc989c7d6cc10ac9c86d32"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/artifact.zip",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 28139520,
+      "metadata": {
+        "sha256": "1315542a306f4100e936512169cd4290feea0d34ff3c8f85f6da27f781541a06",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-000",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "60735c04b27560971bbb9457091c903c96008aab79c1b98ffa3368ea0429d4c9",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-001",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "b7e8b97863212c551736e3d8544760c14f9c5beca7211af5e1469412bd41fd48",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-002",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "500e601889aa14016d5c87c548c751dfadf1a986e2a1158c108fd615a2be308e",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-003",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "8763a6870a210b3ccd6f0c9140657fb219ce59da648be1300580eb2376d3b2da",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-004",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "7197825afb81e05390be6deb9b561876ebf1940b26bd1b3104eb75a3e27a4999",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-005",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "010cc5a2c002645223d757f21393f09b17f566dba46ead785d33bd57e581e7d8",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-006",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "fdd7898d6e20573e72a9dad31e8a89816aeee1e2a2906054b511a4be03931943",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-007",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "93a99d0faca00511a871af6ebda8ca74cfcc5168af97b86862f01b741a69271f",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-008",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "7911c10907ecc9287059f448628279ecba61f454dfacee9da1529b8f3c4cfcf1",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-009",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "765ca2fc8fcc60d0aae1e9d48cf918ee81b12310d90fdf16e41caa3047f4a35f",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-010",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "60bad242c65c1b5030c26d912a348a4b18479b5c97b9f466eb01b3c4ae4c7658",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-011",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "ae06dc832d493af62286f56f837d6d73a0c08e4391e77897c749b4fde781e544",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-012",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "24b46dd9169d5e3abf9b93b4d50341c7fbb8418d1dd22ca2ba42bfc95592baad",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-013",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "8788be6f13458418051a668f807c94ef9f529e53d7f488c90816d6009e6ff64e",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-014",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "8f3868d5e4f5eb849583aa47e170605c3e1860ec69b642699a660be2b7f5c6c5",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-015",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "9998746e5950b874bcf5267ce9f3209144996e22b1bb55a5f55d18798ef71b05",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-016",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "d0706aabe3531b3d24bc05f3b5fd24574823258ef94de6fdecdefdf5453e1874",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-017",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "e2ed5edf162975b091a27a5136173fc51d2b7a31d23569b51b7775730d6f206a",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-018",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "9649900266c6eb798a5f71b15fe56b58779437719dfc8906a7caa3ba651c79a3",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-019",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "06374a293d3523f300fbeab4596ffce4d766a1714adf05dfc0ae8c933e04b35a",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-020",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "d03b8788696555a2874cb5e5ac8f4c8dc056b1ae7a271253b994423197e5f063",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-021",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "7fdbe77dfe66e1b779af7a8cc535ec978bd7250ee3e2cbdcea3d402eb7618bbb",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-022",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "814227f12a0c05a45b1cf815df459ca4940405a99370739af1595c50d786a531",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-023",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "f1ab0d134f0830f7c6e611344eeeef595e9b47303881ba6ee672f34d892de076",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-024",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "a8d362a17d4896fb367c349f29b3a0efcc6471e67d93935cac946af91efad56a",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-025",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "bd0499e64df2d37ff55046add057becd4ee15974c392724dba972faa88eb7c3f",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-profile-api-r39918373329/chunk-026",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 876544,
+      "metadata": {
+        "sha256": "bbefece3e5563e71b7804ba7ed3d26a41d798b33bac695812dab0b0e64559799",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/artifact.zip",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 23822336,
+      "metadata": {
+        "sha256": "770f532110b7155a67f103fcd7e8f5ece7633acc66d8d9b0e26aa2c45f3d4d99",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-000",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "d9d121d608c37a7529a3ddd4c86273d35c3672f8d2318a2b76aa11bd0307901f",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-001",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "914e0f4e16c0359fec8319466e93ea04f189f43b669291a00a661c14ba598d3e",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-002",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "445799d5a526e1d6106121e88e53bce6795d63ca35b2eb9c7e0d2a365406c144",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-003",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "2ef8b13d6b96834238eaae7b7cb8889c74eb170f91bb2dee7622c0ca779475d7",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-004",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "6cbfaa4feff2eb5fdba8bd3b76ca19a82e5c811890a31c64755d48a0cdaca3ed",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-005",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "c34c000b089181f5e5c019c9eb38a9918a8b835e3bc65e5b7ad8cfae3ba674df",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-006",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "a690f2f12e64950962e3d81fe9dc66f6c9c6cd05571245194b4f073b32d06565",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-007",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "a480a09c082d0364276eac6df50e51d401f50502b9cdacde5dcf7522386e519a",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-008",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "80dc9a04f103f9626a4a27ba0aac6cc3478440c19e62a1606e9931f32f860afd",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-009",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "367e0c91e3604c33311badd3cdbb30e4c7aa4c07536ea13ee6afe56faa14d8ca",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-010",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "52b100254562462e50c46af09a1ab5802207a52964b847a39340a9b48bb35361",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-011",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "b7074d21b8d5e6940c24651f7554bafe2d78027b27480f5d9159407e66c5518a",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-012",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "7674e8248b9a607709eb022602663f863f27f2e079254e4b8e3bee83274f802c",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-013",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "d754ecc6a675fa764fb415f690621a68274065362614b1123dfaacb1c6c64bf9",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-014",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "0a86636a70251f9ae5898ace1dad4397ecec00d482e6f60922f385e51f1819ca",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-015",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "bc78324759bdd6e185f5cca6fc6d9621547c1dc63ac6128c96bd1ef3645ab899",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-016",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "b42d470b6e3554d88fcdf23b34b7a256f1caac2afa478eb31dcfb81c5c782ace",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-017",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "e8c59031544e02cb93ca5f02b5118e762d7368e12246600a24f95b0d75b667d2",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-018",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "a35c83550137eb04c6c21d2f14937080213c1088090830f5dda6895ee34b7316",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-019",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "8c4cc24acbb1d548ccb0dc255c36efcf74dc2f0aff4ea3def15ed1f5813b38c6",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-020",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "5f1393c6e3babcb92917ea2fb8ca9b3f3484f04e273ac8c1bc293e2a5c6c300f",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-021",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "bca286818201fd0e935a08a1eeb93d239d67e2abbdcf4834b999b1c4fb4c9bf6",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/chunk-022",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 753664,
+      "metadata": {
+        "sha256": "839a4b4fcf47f6d88a7963484406a3f55fd40c941e88454edf7b5fee8a585127",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/DontForget_macOS_retry_measurement.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 23896064,
+      "metadata": {
+        "sha256": "cd0cd88d865ac45fc470fb470ee1c4007005f760a9f5e2cf99c88e0d060c7713",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/macos-manifest.json",
+        "revision": "8b1961ea2a099f4095ea554a3d0614a26ade7b06"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/artifact.zip",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 23818240,
+      "metadata": {
+        "sha256": "591aec6e95d80f1554f432d168e9dab94b4a3b246cd4df29ed68250307171247",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-000",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "a113a006378b7a913ee81ef3f961650ee159b18ed17e3aa003b5642c18d2379a",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-001",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "0d049b663de50b8a50ed69810cf6e740420cb42a94ea16124262c7583a103178",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-002",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "cec313100a9473e28c65b8ed52635be8ecd1334dc52428fbd328b5a2186503e5",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-003",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "1c9d8fb72faf86cf08fa31f56c253285064230f9c6cc465235fae5a588f44268",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-004",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "71857c70f7fcab7cda14738ba70aae34b81f09b4011566c704dfa545bd3a695a",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-005",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "e358feda4f14ece7029d6ad7fce56e5bba677099249b5a7f4defd83bf902f6b7",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-006",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "74e8c86fbf2e7b55b671f91841478515a7f2b5aec80904763c05fa653d3da325",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-007",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "357cc8393f941110470d9bf4fe56c2a4403c63e17c53980f0af5d6804a1d3732",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-008",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "b280ab3a88aafb0352b7a7519fb73f97a867d52406f5d648a04edd2287a6b723",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-009",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "22de8b78625c4c7aab0981c9bc6139f444a9579780d305236b2df2c253a15a5e",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-010",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "0b077d7500648a78d6a890461d1d50e4afc07ef0a7a0c89387f866aea0e8847a",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-011",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "40d20f63e9b609d8aee3851cf03b71966e3c42f6470b4fd8e00b62d83e25eb35",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-012",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "47c06ce04a6da79f807c6b196ee751c0c08ae0ad58d0c47e8e713a5ee136e067",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-013",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "8f29b97189dd316d534f6c0581d6fd438f6c12743b09be3fe46b294ef6afaa9e",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-014",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "5e16f2f4d0ddbed776d31d4a543c0f734c71eb74a90ff65db2f3b36d86ce8c30",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-015",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "88ea4c182d8383d7d96f1fa30d29c6f6fa2b32af2a0edb4e563c6b79e90fa7ac",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-016",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "60f7b12ed02da721c54497fc842931b4b0f9c9a321a045578064cc3344f3f41f",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-017",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "0f12ec4533ebb2612329add5ca1d021d7223003622e61a70b2aa07080d74ab80",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-018",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "1fb311e746f373a575cb781c94ab5dff2612055c50ac6faf9ab33279f4f4cf54",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-019",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "ba15c869f0e8f14facbc0bf2272079508bcd5afb5c3d647869cc71dff59fefa8",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-020",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "b7129966b3435a19e23181998bf238b65520e69ccc969d4a495dd6ff8e8811a4",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-021",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "87f170cf7565473a3612b2f43573dc6da64a551fa9b678709da69c0529504ad1",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/foreground-api-r39914993147/chunk-022",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 749568,
+      "metadata": {
+        "sha256": "75e6ca993af32d7997b0ff3bcd2c0f20bb7e25972cb121a018fbeb33ae1d1e6c",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/DontForget_macOS_profile_benchmark.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 28205056,
+      "metadata": {
+        "sha256": "8c82bb045bd6bb1b17fd7ffd1b9dd2d2d4614b3b9315932b6df94f0713b6d8d9",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/macos-manifest.json",
+        "revision": "3f6efebdaf63a8f07d4cadf18c6431763e883d41"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/artifact.zip",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 28135424,
+      "metadata": {
+        "sha256": "86539443beae21290f5e9cab794b44a2c615c3a67edc94e4b141990394182133",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-000",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "8d5eb78eb2ae0401576b117d5ec6912f8f9e9e44aba698e049d10c867e9772d6",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-001",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "2ee4c9170d6e98432022ba5af7c5a6de6e0444a5574ea6f063d98ebb97177976",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-002",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "e279c968908c784d2c46f8a3bf57eca5357b30d4ef95d99ace2824060d596e79",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-003",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "1cc14a44d1c4a809d1898918f428fbf09534e7c55a5c0b474b1961ee95590c0b",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-004",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "7aa9fdb827866d6cb0f6a4e9977f2ab2a940dea27cf711ca46df7347732353c5",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-005",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "6deeb474187f441bb20f38f8f7627cde85d4665b1680b8a294d8fdcb146c2a25",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-006",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "b438afc3479caa4860bd33abede6c89e5bc328f62c28e22a6fa25b4bbb649cb4",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-007",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "679a193146dbbc9166301767a831a61e4b53ba98710662fcb153c9279312d506",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-008",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "9293f36aa41f935573f671323833725b110cb0ae97fd264604dc5c2c6dc89127",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-009",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "8ec516487021b905021b7e9b59687e85372ad0cf08ad55f35b71e29d1b755770",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-010",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "d1404cc9c0e9be477a40b19b2d676ed8fc3f0b050a0404076e312a11902325c1",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-011",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "b9111c293dc40edd5da03027cdbf4a59834fbbc74022e0e75ae5fdf97b09115b",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-012",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "ab1bba738ef640a4995db6b40e387277484c39663bfa8c44a482cf35d4f53193",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-013",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "2954e50bf2d9481fcf990bd7abf7a45c2255a1bf25d999bb29af4ecab812347e",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-014",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "5e8d14a281c3db0d0f3abac3dc895a3fa81354e9773a3be4b83054649eb6d21e",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-015",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "3244081eb26f2486656a5dc7bde97ba7f1694b523d1a6f00a19829cbbf8079d0",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-016",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "65b99a135955976b766882d850a4ac52b261cbc2093b869d1d9683127f7805ed",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-017",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "dcf85e77d8b1aa6e8b93bea90d248eb6f24f1ee3073fc452b9e0e0b87c41c97e",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-018",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "fb2333f4860f3453231bb1d995cdc43cc91f632615215c1b1be7178eb9bf6a2f",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-019",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "179475450a11b2eee6dd28934148fc77858a6c4953e310ed4d449b0160affd07",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-020",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "56b149c8f1960cfc5a78a9fc330928b0003abf66805781f3bca47ac95912fc6f",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-021",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "a2cb8811e54371dfd1303116b38572e2d3b87c112812d4ea7cfd678372ab4841",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-022",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "e6dcc34413268b4f845037f7d86b9ea23b3903703b4c3349ae52874671aa809f",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-023",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "f4755b4938c4c9a6ab472f3555056a87283dc8a2d62c3a780a232fcbcc97696a",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-024",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "736ac4251ef47722eaf1ca1b2207004f0806508874ab06527117ca0d8b50745f",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-025",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "95520dd0fdf08aace8ffc06da4cd3fea7090d12132c9e8d67856eceb9edf5a61",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39900595838/chunk-026",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 872448,
+      "metadata": {
+        "sha256": "2675964e6c24268187ec452f6564b8de990c6af30c8005cfc394cfc1bacacc50",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/DontForget_macOS_profile_benchmark.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 28205056,
+      "metadata": {
+        "sha256": "7e45c16d8a515269369c8ae6edceb4ef26282539dcca6ae21ebb49ec2424ae70",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/macos-manifest.json",
+        "revision": "19c6a40059175936e09d3fb6e90c94c3f6d58d54"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/artifact.zip",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 28131328,
+      "metadata": {
+        "sha256": "b0d5ecb0c70fbcac725070f1e5a12713662a22f085174bf3d6300e8ed8cfeaad",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-000",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "2828fbc3e846f02d6f7528fafebea22b045996561b454f540b9ec4bd9b062611",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-001",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "63260878d29ca04bd95dfdec6366239ba3837a6505a96701dddfb838499b4e67",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-002",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "6857bf3828c1f8aff764ddac0b44baab740dfa918793fbaa9dfd52f6049587a0",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-003",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "7c1ee90e1d2bcc48e606c3d389bb39725a0135603a43af2018c8246a8d9bfd5b",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-004",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "69b0b00932eefedb69c9af3bf08374c0f334c71a86f76f63b078493784be2955",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-005",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "5862dfd371d8867e8e6d439cd9991a2045f51678707821fe446d3885c570f319",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-006",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "f16738c58b6223fbb455ed39ad1e6b1aaacd54ff679223709a77af0efb0a4d9c",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-007",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "4a37372235f9b3fc6e0d99d6fc7615c6d81da74997326c9b21ffbce818110728",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-008",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "292b26fa004716eafed58a2c2cd0caf93619d38634cd6a95f5e37723c0a0a6ad",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-009",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "4964147c71af47e9b22f0b93e22fcf236867b2480a79f89eb08e91fb39872f6b",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-010",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "42f10ccdc25af970cfeee0c63b3b2efcd4bb5ff12e6a5a115140be70aafc12f1",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-011",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "47b321e7056af30d9b01990bc1d0fe544744b9fe6b08d2754fca133e83181b22",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-012",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "3a2800f923aa651065539f10f7b6f6f02fd5e0636355e86b64ef7064ec812d40",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-013",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "ae45f11c168335a96141ff5ae15d2b4202ef589c62f3968596e798fca4e55149",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-014",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "27d195e7cd8cfc18f1266018f22b9a2dc8549e7320b89028c5dad482b9ecfa27",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-015",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "f70151cf66230887ae63089df5405cea8a1c0359ccf8db39ce79c8313e86f936",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-016",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "23d20060e0b9c887b297de245b315ee3827a698aea81bb8fa26c900c964531b6",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-017",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "25484a4f53e0f37189c6670ef80460108afa7f41de3059eced94da177b747426",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-018",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "2ff63d5949c8a41c676e1844ed11b68888cb1aea8b651f830902d224377fe881",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-019",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "f6b201f71890ccfdb81251b201c40ff5aafeb39c8d372dab6dda3a5d0748cd7f",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-020",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "209020c23a8b2b03a4b9ff8bb75f22cc76ea57271bd12cad52ffb2cb3f25d112",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-021",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "46de571bdbb5355a7d4bf2fef1491ea53a116f3386fbba979f970f1e24a90530",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-022",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "a0d60be840aa43d968edf4c7c95a978090f6eabdd378739dcbf567fcb7fc6405",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-023",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "c4a6feffa6f75aa3b3ee6415c0787b8328840bf7c74d3ce625406e0077a24647",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-024",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "b3fb1592962dbc8fbc72985c5ed4a9b43ae1def97b5c0a43a8c41f91f281f8a5",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-025",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "39eec8165dd2b28ac44f93849433302c30252f9a58e659d8b5516633d5edc472",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/gc-api-r39901693129/chunk-026",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 868352,
+      "metadata": {
+        "sha256": "a71f3f028c48a73d22cee9528db695439a834c3eecda43016ce82215aa894ad4",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/journal-r39709820687/DontForget_macOS_unnotarized_v1.5.2.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 23846912,
+      "metadata": {
+        "sha256": "e1b0d7aebb19a5096796993eda240a0bb5f84721e01bab8ff442d70722828b31",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/journal-r39709820687/macos-manifest.json",
+        "revision": "eec2ace947a5b0ae67b6a17fd361f9d2a689a7f4"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/native-r39736112657/DontForget_macOS_unnotarized_v1.5.2.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 23863296,
+      "metadata": {
+        "sha256": "5b05e1623a9c95318d3f6f7c95984e7c594e90949040a16f80fc83e4c769bb6a",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/native-r39736112657/macos-manifest.json",
+        "revision": "a614f7dd1371af4bd86ac5e7c908af877e0df5ef"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/native-r39742373065/DontForget_macOS_unnotarized_v1.5.2.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 23867392,
+      "metadata": {
+        "sha256": "410f96e530f5b72bb09ed26344e0ccb1b570049de2fb2a579eb21ab1fde96de8",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/native-r39742373065/macos-manifest.json",
+        "revision": "25e5abe27b72f5e5d393116f50bf131301988327"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/os-r39752932522/DontForget_macOS_unnotarized_v1.5.2.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 23867392,
+      "metadata": {
+        "sha256": "f997cb20903ec775a507b252260e0fe4e2db735ec1c0ab0a513957e1f31976fb",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/os-r39752932522/macos-manifest.json",
+        "revision": "ae9e88d17138f14d82e93964dd8ff67dcd6a7fdb"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/perf-after-r39715027992/DontForget_macOS_profile_benchmark.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 27815936,
+      "metadata": {
+        "sha256": "bec704996d4be8949f952c00c9a726b1f87db6bb912db4762daab63ca2f7ac79",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/perf-after-r39715027992/macos-manifest.json",
+        "revision": "403da02401e2e6d1a06f25d6bb9a94135e6ab664"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/perf-batch-r39730823023/DontForget_macOS_profile_benchmark.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 27828224,
+      "metadata": {
+        "sha256": "fbbf60d0354b409ce06d415265094ad85deddafa61aa441bc74520bca59e37f5",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/perf-batch-r39730823023/macos-manifest.json",
+        "revision": "708586a9d167d0951d32290be368536278a54312"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/perf-before-r39714494785/DontForget_macOS_profile_benchmark.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 27815936,
+      "metadata": {
+        "sha256": "dc5970db39d409be3e6b13fd058bf39f609a746199249328a415c4f047ae4b9b",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/perf-before-r39714494785/macos-manifest.json",
+        "revision": "0fb214301e42c658445abf68eea05bd286ff1e4e"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/perf-clean-r39719290459/DontForget_macOS_profile_benchmark.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 27824128,
+      "metadata": {
+        "sha256": "d339c8f3ccf164900e96216bec80576cd11c63685a0e57b08fb66070950183b3",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/perf-clean-r39719290459/macos-manifest.json",
+        "revision": "41a9e54428323cfa04e0cf7f25fe09c93d19fe23"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/perf-final-r39716514799/DontForget_macOS_profile_benchmark.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 27820032,
+      "metadata": {
+        "sha256": "e01ced0692a167c529c05d9bd9261c26b270964fdc02c8c56cb80c87833a11d7",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/perf-final-r39716514799/macos-manifest.json",
+        "revision": "e78b3ff4fab7617c32e9aeea2e001deab2a3091c"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/perf-r39709822788/DontForget_macOS_profile_benchmark.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 27783168,
+      "metadata": {
+        "sha256": "295a59c1fb332b893b2584c43979c2d5b3f6b4e0d1294a8317127f533c0220b2",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/perf-r39709822788/macos-manifest.json",
+        "revision": "eec2ace947a5b0ae67b6a17fd361f9d2a689a7f4"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/perf-r39736121636/DontForget_macOS_profile_benchmark.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 27832320,
+      "metadata": {
+        "sha256": "5634b273b984e03d5756cdf3f66bedda2a835227d6feab49517ba9320ad373cc",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/perf-r39736121636/macos-manifest.json",
+        "revision": "a614f7dd1371af4bd86ac5e7c908af877e0df5ef"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/perf-r39742418043/DontForget_macOS_profile_benchmark.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 27844608,
+      "metadata": {
+        "sha256": "b1e6cfedf006ab47ed4d288b1d992cd8e3a33bd2a8716e0726ed7b70b5bbf10c",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/perf-r39742418043/macos-manifest.json",
+        "revision": "25e5abe27b72f5e5d393116f50bf131301988327"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/perf-r39751469604/DontForget_macOS_profile_benchmark.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 27852800,
+      "metadata": {
+        "sha256": "0b4cada3320db5cecb69240dfe04d9eaef9553b78691a83e2527fecd20d30182",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/perf-r39751469604/macos-manifest.json",
+        "revision": "6b94019ad2abcee727fb86efd8f840a19dededed"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/perf-r39752935632/DontForget_macOS_profile_benchmark.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 27865088,
+      "metadata": {
+        "sha256": "d314655b93d244ebfd81721c044f10e23eed842c189bb98a652c5b46a9c746a8",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/perf-r39752935632/macos-manifest.json",
+        "revision": "ae9e88d17138f14d82e93964dd8ff67dcd6a7fdb"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/perf-r39757723420/DontForget_macOS_profile_benchmark.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 27881472,
+      "metadata": {
+        "sha256": "0bbdcc07d7a4941a7852cc9ade9721c5a26ee024d87f1ba1d65e343b56cde084",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/perf-r39757723420/macos-manifest.json",
+        "revision": "6205968338d7f278cd1749a1f55d3379f6c72657"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39807412561/DontForget_macOS_profile_benchmark.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 27901952,
+      "metadata": {
+        "sha256": "339663804fdb44211ef8e110bf317125f9d1b43152da5f132c40e1218eec3c37",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39807412561/macos-manifest.json",
+        "revision": "2da0c33709f08f017a887d76b04fb79c84d7fb78"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39807412561/artifact.zip",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 27828224,
+      "metadata": {
+        "sha256": "d04cd4a6105e19939a549475d267138646b4f7c5caf9f403e166eeab4fe48a22",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/DontForget_macOS_profile_benchmark.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 28205056,
+      "metadata": {
+        "sha256": "7d8178be4afbe993614f317b5eda9ba1a551ffa45c6dbdad0b439ca2da151182",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/macos-manifest.json",
+        "revision": "c5453023413fa265fe5e64f60b30e5f053bb0259"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/artifact.zip",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 28131328,
+      "metadata": {
+        "sha256": "1cac60b5323f48924099c119b1e7838db86cf8837082023e26b9d81a4f750179",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-000",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "737cd4fdafe30a005d9f717d4212aff7c256208a61bf3f0def2e2c226ed74fec",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-001",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "b9c59da2f189f198ca639c1bcd8ac2ce5e2d5862ae8deaac0417f2364cf85fea",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-002",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "038c85c38d84a32b1a088295762a7ed860099a7ea23daee5aeff965466843dc7",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-003",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "89db0d97837cd590d2e067d66f6c2aaeb8b88caf967c48241af7b37eae60a1bf",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-004",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "904ee0292a6b823fc742c1979ed4be978fcd0874d170e1040f7b43470fded4ca",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-005",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "5dfc314a7dcd4f693ef0c3403675b8c2f3ea57fc59acc05667b28391b41bac29",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-006",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "6fd31fc81b06abf7f08c166c9d37e6c09940b8605dabd52a987414a0108fa39d",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-007",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "2276f35b84d6516ee724e5bb520400e298620a59223322a324b0ceaa2581c9b8",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-008",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "f2a32c1e0d6d2c4230816630aa627fadd29b6207e9a96e43b78bab51a8b76286",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-009",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "4c1bb79079289758053bc826a94ef802d03370e553e088dee41aae78952bef4d",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-010",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "f1141634f642b077e5eb03599f38af9ee89822928920a8b835a2b147a1d0b9db",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-011",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "b4e6275fa91983f6186f0c8bc345032e99a25d47f2d364cef900736e60401244",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-012",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "4d5475652b4421a59df87995aa4a34a22fa77b6672a01d90f5334c22a1ef06a3",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-013",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "2c8e77e4c4b8c5e7aad408c96d2418852145e20bdc545dd0a0fc92084ea300cf",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-014",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "9f7de4d748c0e79a78cf3f7e3e56cae8930c8b0614b85c5623f8716901782082",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-015",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "ce9e65f8b3a80c555497e0ad6799201918d8d0077b4c93599dde5e92868bc713",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-016",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "12f03088ea08d585b4d784c2afbd684455f2bf4279af9b7c5fff90a66eb4ebda",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-017",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "a9d2b81f6c948726d258f46a0f7b36b63704589ba280cce2d315b7ffd6131669",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-018",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "ced732d3c1ae8c9aa9f30f00c1ddd8dfff46c9a2790f26d7a9dc7022b010c87d",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-019",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "353c934d7203b5f2dcef9a598109c4fffe9c3ba65d93f253ddddcff62e6d455b",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-020",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "b8ba3b9ac043cca16875c1c75806495cc0ea50c8b86c7562b09965c552b2b326",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-021",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "f476c37449e43eceec80001b986224f6db5d58ab79951dfc2f057fd489631405",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-022",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "352c745109d0029fe4e6dde07d26c166ee57b519cbaf0a927ded7d310c619db1",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-023",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "3af61041c67dd0a54d1b7b24a4afbc5428d680cdbfe520ad1c10910687b66eee",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-024",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "4dbc5b93984df8849150722f7433a45902d739f08049351dd5ab29e1a158b052",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-025",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "555afc3d3ea9a693f1b175033bcebbcb823dce554202307d4a819fcb265202b9",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-api-r39889484900/chunk-026",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 868352,
+      "metadata": {
+        "sha256": "1da8adfa809a95d8687766a7911e7ff06ae03f8f72f08626e8a666aebebf8fe2",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-r39758794353/DontForget_macOS_profile_benchmark.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 27901952,
+      "metadata": {
+        "sha256": "0c0e729d8c052602176b476618a9d31a149141ce0d19775371fd2013deb7ad40",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/probe-r39758794353/macos-manifest.json",
+        "revision": "5367a8b0ef18de4ee7e62182e02e7dd37fc0961a"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/DontForget_macOS_retry_measurement.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 23900160,
+      "metadata": {
+        "sha256": "ab196e814aabaf7a8f4c92ed00ec42be7afcdee6e722b56b908c39f848cd2486",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/macos-manifest.json",
+        "revision": "49c0cc1dc95efda9530f0979e3811a0471289eca"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/artifact.zip",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 23822336,
+      "metadata": {
+        "sha256": "1ac7ce3511975dd68ab2b031ad47cf84b16883ffa6a7fd6aeea9699e547f5a75",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-000",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "de158009ba5691ff4738130de25ab44cd79de30c607a1aec8b09a4a2c82b9569",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-001",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "8b27f2c1cf14a193d06e7363209825025a5a5c8ce56501ca98eeff969c03e68d",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-002",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "b02601eba7c30e814ff5404ba30c52360e2125f1172288793119aa5ea16872ef",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-003",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "c7ebefee2e58b89d6802d5cfb31c53ca68987b3d2042ee6f857251f8ce0e3f74",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-004",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "f638dd12151cc5e4412680aacfc104fb92cb83098cc3f250a7e15f7ab8357709",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-005",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "30731019bdded73d068a240ba7a6e7929dc8e3f84fcc0f62e52b03a58ee511c8",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-006",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "5d39fa68e1223f5767c7e7a23a468691a361c9867d6bee1ce2de9e0f296d4b76",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-007",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "d463b39a0d9914138579cd2229b463b42996331e2ca2ca23329258f1d643d96a",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-008",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "d6881802ae8ee3ff9e0f82ed418ae7b4ed06926b6cd04acb59643443b4c3ea7b",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-009",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "11e8c153e5d181f2503dc5d7578e893918791b477b3381e902ac4ae692afa789",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-010",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "50c7f172589838954c2d7c23818a95e25a9e1955bcd3958481fda6aeef41d825",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-011",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "856438a41b25b7660b6a06b90b019cd7d806dc6358ea72e81aa627eee0336f9f",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-012",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "65299cfaf55064189558d66adf8806b5e9c034f3f04bc615dac3acd420a3a7f3",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-013",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "f582d144b934c6149efc4029e09f5a3504140d9dd2ba8c8a717240c80cbab1e0",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-014",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "ead9c9efb400f1411810ca34b1cf14840a4ecf9198148445e1d4da1f0f6aef5e",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-015",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "8ab8b28884afca591dca6fd0bf36c0a739ffc6a3edf15712f2a08fd67f1899c4",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-016",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "b5205738a7a71cca70ceab13ad557c32516539d7204c5dd42a0cec8c202d4947",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-017",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "9c844d1dff6b52055d40844853a10cf85f0d92c750d03b9746c8933b4da3143d",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-018",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "a0ab5d6229215887736e46e7f008a10c2ee3fb0411c98186e079eeeeea6662c5",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-019",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "95e117fb33ef08800c779e628a03df9dc8d76a3c79fb952a70c65a1df56971c7",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-020",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "057119053f319568da7a0a80b54419ef3e85f3e80fea997c0d20911e8d1e6bf1",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-021",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "62739cab178e636abd79f8f4733b0882539633fcac8ba0e5bdf74f227e56a905",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-api-r39910780360/chunk-022",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 753664,
+      "metadata": {
+        "sha256": "8e8e463c6596adf9aa183aa1d536900f2a0f1f8d05920bd3b77a3e777042338f",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-r39715762698/DontForget_macOS_unnotarized_v1.5.2.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 23863296,
+      "metadata": {
+        "sha256": "610ce835ed3d1970904d647ba35e690dd017e83d778b7dc72fb8e93b5a56b420",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/retry-r39715762698/macos-manifest.json",
+        "revision": "5846c2b83bd23bf63173d9349d8a889f160d9a10"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/DontForget_macOS_profile_benchmark.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 28209152,
+      "metadata": {
+        "sha256": "52ad0fef027ada2fcc7aed7978fbb3400ac4acf95e54d62d3696c0d9f5344cdf",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/macos-manifest.json",
+        "revision": "0cd78fe69783c0bd3a5b665ab66d7d50e575d54b"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/artifact.zip",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 28135424,
+      "metadata": {
+        "sha256": "7636dee0ca0d3e39e388c8b4f34bf5feb892a58c364a86246705f2e569ca2994",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-000",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "c1600dcaf9b9a3def9548ca5edd478001db8be030a16df76bfbb7a59e18b37cf",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-001",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "048f12c05388c929906eabdecbc17861dece08ac2ec5651e6e24ab8b285732ce",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-002",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "4fc4bb41d3239199623e97273d3dbb69aeddc92c7d3bb6a4da6bbd6dfecbc9d2",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-003",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "1126b9e393b0f9798fe560789aa2541c8dc15ca12fc062853fe19b9d03f81702",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-004",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "88d98c39ae0b1766ab10f5873294d4fff183a50030693b433ca3aaaa171305c1",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-005",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "176c34784a31531026bcc7a8873f7da68bff979ee038ded15e1d1848b05492ac",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-006",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "b3de39b54d39d7062b9a0130886f2169799998a1372a53a837f26b1d2dc2803f",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-007",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "870bd391723faa9fd81201834086f0dab4851eb3f04b1d2688924311f6421103",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-008",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "84bb972457e3a2e03907cc65a49cf17f6cfe38c5050dba2478b1ddbd95d93bcd",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-009",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "e6049e7a97a34773cb168435e9496443a818875f01222b719831195e2d764890",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-010",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "631056b9d19a24a0c49077c116c5341374b3b10e614ffa32967c48fdbae52a9e",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-011",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "17f427d444e9149403ee699b8cc429526c5eefe7c4638f02aaed678fb24a8182",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-012",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "4b75406e4fee01452aa3d8edbac765427d7d3ed94362bee7a743136902131aa0",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-013",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "84d85dc661326bdba96a16f6aad759200f71846fd8f665b5bef9753a79eb5bdd",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-014",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "330bd6755055a5453cd9f32c2f3236482027e0604649b36969c6eef756e72148",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-015",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "c79250acdc530491d09d81aafa2b7ba2614a9bfbde73e95deb86af92580e1541",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-016",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "d0f0c8670540dddfc08d74c5425159f57aab37bd63363d1f0168b61038db38f4",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-017",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "e43c4eedbaf14614b45da69be159c514ae4398e68d0237e1b8f26fcf9a5e7e09",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-018",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "76d756786c2db707490c30e049ae9271a553017715793b5e99cc1489d3ee17ef",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-019",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "87c072202c88cefa7f3d5a8ebaed971be90cc981424721cd89cf1e0ebcbef897",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-020",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "0ade0c640bc2324fc275af4d53e7ab74a4b2dbfff104508cb4a9b9dcb5b823b8",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-021",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "287f82a7f9fa7c7580472422da1d6bea4cb2556abda66f88798da0cb979eb248",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-022",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "487dbbfb1a8bf84c141df16277a17210044e1bb276a52ad23d6c4361114e14b2",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-023",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "e7289efb2a3ed43062e9b9a2c13925d9d98cf5beafb31594fa8af0646df6b73a",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-024",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "5d9726c7fb99e0f6166110982dde6ba0d775e5796c40d66f13e665723fc8b103",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-025",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "30a26be07aa4e3b4e84cb8a3651480311d2d07fe5caecafd0cea8cdf16ba2aa2",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/shell-api-r39908329712/chunk-026",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 872448,
+      "metadata": {
+        "sha256": "82111f5a89367dda6740e8455d6398c6b8a9419a448ea05d9551987981c15650",
+        "verified_inner_package_retained": false
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/startup-r39736121636/DontForget_macOS_startup_measurement.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 23887872,
+      "metadata": {
+        "sha256": "82a856b4308e7c7bf89ebe40c23c183a4ec63ca89a04c98ab25dafb5288ba69f",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/startup-r39736121636/macos-manifest.json",
+        "revision": "a614f7dd1371af4bd86ac5e7c908af877e0df5ef"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/startup-r39742418043/DontForget_macOS_startup_measurement.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 23879680,
+      "metadata": {
+        "sha256": "5932551eb3f1d7f0a9b91d5d1fef58e01ba2398d85699a9fdd840888bc9f1645",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/startup-r39742418043/macos-manifest.json",
+        "revision": "25e5abe27b72f5e5d393116f50bf131301988327"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/status-r39706276489/DontForget_macOS_unnotarized_v1.5.2.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 23846912,
+      "metadata": {
+        "sha256": "25931d43c7d3195fb110ac08c9ca6675ea32c8495616e2d16a0b5b9951e6f816",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/status-r39706276489/macos-manifest.json",
+        "revision": "6504bc1f438a694df5ab6707db2478821764117c"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/artifact.zip",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 28139520,
+      "metadata": {
+        "sha256": "78c50b27bafae3930f2873a5a0204c40366f7591e3cae64a9f085bad5496f2ad",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-000",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "0b669383ab33acdcbeb2145113c722acc3b337849769c3e69fdf78fc4a0e0f69",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-001",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "ea00eb6f259416fedb603ca9a2d8cefc838f2cebd5804de0117026b219d81134",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-002",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "76587d2ee2d4990daaa8901829c516687f9fc2524304eff201e586a681f5a9c9",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-003",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "c44860c1e1c061b7ea647cd31eb0fe896ab9f8f15ed2b317866a1a7243572169",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-004",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "4d113ee361a1e61bc3a911ca11e7db4a82742a20f4b1a50726348cd805cc00cf",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-005",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "609246f2888ef22c3981665348a21aaeb2ee32aa563fe8d8ff52d03f97744672",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-006",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "4a74413ee29bc6f38ee980c10900476347d04b33c45cceb0a39d27caf3dcbead",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-007",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "5230d947ec8f98d65bb237c892d60d3a010c26bc61f76fbc8e2bb9f9f42942ec",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-008",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "439097b0aceffe502ab8c5b4db80d7f0591956ffb020c433aa4b891b0ac746b2",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-009",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "91355ab7547ff1ed8aba5eb0e51e50879a444055561d1a9952e7c07a0923633b",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-010",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "c40e9728f817d4d8ae04f39bd8aa4f198bbc1cf8976b34e05bacbac97710302a",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-011",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "7130cf5845528fe3f007c155f9e78becd635af30db39aad7170d6cac73656975",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-012",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "95688ca848eea979c10ac0da9d32e2fae26d731c9d4b51eba60ad43b6a43650e",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-013",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "8cc36702a29293922dfdf9c392727c67b65afd65f94cf85c4692a3eb5621da79",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-014",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "220d5c2513e793b291eeb3fc324465b91216e618fab74b5be13990a7671520ae",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-015",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "a71c6c6de851cbc133ab48f7487929c92e5468c0f4587a724bc1659380736601",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-016",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "c59c127a9fa812112da919d9cfdf6e013e6609551268b5a568b243f1ec51846e",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-017",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "8386829617f99be96c9498a98c4958c4c58625cb3ec6caccf173a7fbc4af58b7",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-018",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "b5dcd460c614d2e8501c61a377dd303f0784723fb9b346abf6cc8113a8edb447",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-019",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "2dc0926b11d40fb10badcc6710f11381d0f018a9b2e0c466a1ad8d7f88a02990",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-020",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "a248df12252c92ab1e45e0438f651b0abb6a0c0e86a555c11ed361fdc2aad449",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-021",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "6e7a6d0be3bd124c55c9717bcb79869a81f61c057843773493b7eeff3f7433fb",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-022",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "9815ca05fa7af927487984f0919f51ba0936678ff52ff5b2a300e3c636cb152c",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-023",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "e8c77826d4b6b9e1ba694e7f4cfd54fc38584f848aacf263d333f284ef415e05",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-024",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "357239586141bac2418b471539a57cde3a6873000edec4ff41c7dcc987ca88cd",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-025",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 1048576,
+      "metadata": {
+        "sha256": "a7ec5433a2394d46731905d62fbd18135ea3840e7507f31f43cc3ea6a37081e7",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/chunk-026",
+      "category": "duplicate-download-container-or-range",
+      "allocated_bytes_before": 876544,
+      "metadata": {
+        "sha256": "2f437e52c1735da498564d41bb41688b8a628d85cfe8eb86f72ff5c22e5975ec",
+        "verified_inner_package_retained": true
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/undo-r39625619466/DontForget_macOS_unnotarized_v1.5.2.zip",
+      "category": "obsolete-CI-package",
+      "allocated_bytes_before": 23826432,
+      "metadata": {
+        "sha256": "32de8c5ec10e9bc542a6f72e96861d7536b8f51093fa0f6c842e5080f8fd2f9a",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/undo-r39625619466/macos-manifest.json",
+        "revision": "3a0d58d2d7ace4fbd527d181cf0eb27a0c85c3b3"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/dist/acceptance-39546316267/DontForget_macOS_unnotarized_v1.5.2.zip",
+      "category": "obsolete-local-candidate-archive",
+      "allocated_bytes_before": 23498752,
+      "metadata": {
+        "sha256": "66667a4dda32eb263307fba82618209e8f7781f2cd428127935ac5b33af83ea6",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/dist/acceptance-39546316267/macos-manifest.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/dist/acceptance-39546316267/mac-test/dont_forget.app",
+      "category": "obsolete-local-candidate-app",
+      "allocated_bytes_before": 57671680,
+      "metadata": {
+        "revision": "a5621889425f6b2e9f89aab4e3ec2d5b319daf61"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/dist/acceptance-39551083757/DontForget_macOS_unnotarized_v1.5.2.zip",
+      "category": "obsolete-local-candidate-archive",
+      "allocated_bytes_before": 23498752,
+      "metadata": {
+        "sha256": "6a0aa46c1afcfb94c3d41a067ea22ce884987367a970d59f998043ccacd5ec7a",
+        "manifest_retained": "/Users/james/gitresources/opensources/dontforget/dist/acceptance-39551083757/macos-manifest.json"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/dist/acceptance-39551083757/mac-test/dont_forget.app",
+      "category": "obsolete-local-candidate-app",
+      "allocated_bytes_before": 57671680,
+      "metadata": {
+        "revision": "96819ea52bee3d04e74321aa015b4ba6efb9b6dc"
+      }
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/test_cache",
+      "category": "rebuildable-project-cache",
+      "allocated_bytes_before": 61931520,
+      "metadata": {}
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/unit_test_assets",
+      "category": "rebuildable-project-cache",
+      "allocated_bytes_before": 2150400,
+      "metadata": {}
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_assets",
+      "category": "rebuildable-project-cache",
+      "allocated_bytes_before": 1978368,
+      "metadata": {}
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/.dart_tool/flutter_build",
+      "category": "rebuildable-project-cache",
+      "allocated_bytes_before": 12288,
+      "metadata": {}
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/.dart_tool/hooks_runner",
+      "category": "rebuildable-project-cache",
+      "allocated_bytes_before": 47931392,
+      "metadata": {}
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/.dart_tool/lib",
+      "category": "rebuildable-project-cache",
+      "allocated_bytes_before": 1941504,
+      "metadata": {}
+    },
+    {
+      "path": "/var/folders/88/bthgt42573qb11t30vh_z8780000gn/T/dontforget-foreground-origin-20261023-5x08_ekl/dont_forget.app",
+      "category": "completed-controlled-origin-app",
+      "allocated_bytes_before": 58564608,
+      "metadata": {
+        "bundle_id": "com.example.dontForget.acceptance.foreground-r39918373329"
+      }
+    }
+  ],
+  "retained_apps": [
+    "foreground-r39918373329",
+    "profile-final-r39918373329",
+    "tail-final-r39910780360"
+  ],
+  "retained_inner_archives": [
+    "final-profile-api-r39918373329",
+    "final-retry-api-r39918373329",
+    "tail-final-api-r39910780360"
+  ],
+  "skipped": [
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/r39561632757/dont_forget.app",
+      "reason": "no preparation metadata; preserve"
+    }
+  ],
+  "status": "complete",
+  "after_scope_allocated_bytes": {
+    "/Users/james/gitresources/opensources/dontforget/build": 368381952,
+    "/Users/james/gitresources/opensources/dontforget/.dart_tool": 65536,
+    "/Users/james/gitresources/opensources/dontforget/dist": 602112,
+    "/var/folders/88/bthgt42573qb11t30vh_z8780000gn/T/dontforget-foreground-origin-20261023-5x08_ekl": 0
+  },
+  "scope_allocated_bytes_reduced": 4687937536,
+  "disk_free_after": 619875483648,
+  "removed_entries": 385,
+  "old_QA_apps_removed": 42,
+  "note": "du allocated reductions include APFS clones and are not guaranteed physical unique bytes. Whole-disk free change includes concurrent other applications. Preparation metadata, manifests, diagnostics, fixtures and backups retained."
+}

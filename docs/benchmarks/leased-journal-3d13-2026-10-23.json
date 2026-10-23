@@ -1,0 +1,515 @@
+{
+  "phase": "3D-13",
+  "scope": "Three independent Dart JIT processes; same closed 10000-row synthetic fixture. Journal-only, no OS effects or product startup. Append timing includes periodic checkpoints; replay, rollback and remigration are separately reported.",
+  "measured_revision": "8b1961ea2a099f4095ea554a3d0614a26ade7b06",
+  "current_revision": "9dca8cb0afdf73de5eb71ca41ce3c5fbe903e511",
+  "relevant_implementation_unchanged": true,
+  "summary": [
+    {
+      "mode": "first",
+      "variant": "v1",
+      "median_write_us": 602145,
+      "written_bytes": [
+        85231254,
+        85231254,
+        85231254
+      ]
+    },
+    {
+      "mode": "first",
+      "variant": "indexed",
+      "median_write_us": 128507,
+      "written_bytes": [
+        4547715,
+        4547715,
+        4547715
+      ],
+      "median_replay_us": 106820
+    },
+    {
+      "mode": "first",
+      "variant": "segmented_24",
+      "median_write_us": 215650,
+      "written_bytes": [
+        8295600,
+        8295600,
+        8295600
+      ],
+      "median_replay_us": 36821
+    },
+    {
+      "mode": "first",
+      "variant": "leased_segmented_24",
+      "median_write_us": 251593,
+      "written_bytes": [
+        8295600,
+        8295600,
+        8295600
+      ],
+      "median_replay_us": 38703,
+      "median_rollback_us": 31889,
+      "median_remigrate_us": 102052,
+      "managed_bytes": [
+        4878332,
+        4878332,
+        4878332
+      ]
+    },
+    {
+      "mode": "reopen",
+      "variant": "v1",
+      "median_write_us": 900489,
+      "written_bytes": [
+        162678720,
+        162678720,
+        162678720
+      ]
+    },
+    {
+      "mode": "reopen",
+      "variant": "indexed",
+      "median_write_us": 122759,
+      "written_bytes": [
+        4547715,
+        4547715,
+        4547715
+      ],
+      "median_replay_us": 130799
+    },
+    {
+      "mode": "reopen",
+      "variant": "segmented_24",
+      "median_write_us": 247633,
+      "written_bytes": [
+        10649386,
+        10649386,
+        10649386
+      ],
+      "median_replay_us": 38824
+    },
+    {
+      "mode": "reopen",
+      "variant": "leased_segmented_24",
+      "median_write_us": 296216,
+      "written_bytes": [
+        10649386,
+        10649386,
+        10649386
+      ],
+      "median_replay_us": 63137,
+      "median_rollback_us": 60590,
+      "median_remigrate_us": 98072,
+      "managed_bytes": [
+        7856101,
+        7856101,
+        7856101
+      ]
+    }
+  ],
+  "runs": [
+    {
+      "process_run": 1,
+      "report_sha256": "27800f822c06f9bf8962954f408c1cfc1f4dfe1854db9ffcde2030d92db001f8",
+      "report": {
+        "scope": "Dart JIT journal-only experiment v4; bounded files, leased migration/rollback and generation reclamation; v1 then indexed then segmented then leased; checkpoint costs included; no OS effects or product startup",
+        "protocol_version": 4,
+        "experiment_limits": {
+          "manifest_bytes": 4096,
+          "checkpoint_bytes": 16777216,
+          "segment_bytes": 67108864,
+          "frame_bytes": 4194304,
+          "symlink_inputs_and_targets": "rejected",
+          "caller_exclusive_directory_required": true,
+          "leased_variant_directory_budget_bytes": 268435456,
+          "leased_variant_max_managed_files": 256,
+          "leased_variant_uses_database_ownership_lock": true
+        },
+        "fixture_file_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+        "task_rows_sha256": "7775cb832916e5136a3d6759d5e6507dc1a528b565dd36a4664a745e11d4b05c",
+        "runtime": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+        "results": [
+          {
+            "mode": "first",
+            "entries": 10000,
+            "batch_size": 256,
+            "v1_us": 602145,
+            "v1_writes": 80,
+            "v1_bytes": 85231254,
+            "variants": [
+              {
+                "variant": "indexed",
+                "append_including_periodic_checkpoint_us": 144067,
+                "written_including_periodic_checkpoint_bytes": 4547715,
+                "flushes_including_periodic_checkpoint": 80,
+                "periodic_checkpoints": 0,
+                "periodic_checkpoint_us": 0,
+                "tail_replay_frames": 80,
+                "open_before_final_checkpoint_us": 106820,
+                "final_checkpoint_us": 48093,
+                "final_checkpoint_bytes": 2033899,
+                "compacted_open_us": 39859,
+                "prior_checkpoint_open_us": 1709,
+                "equivalent_after_replay_and_checkpoint": true
+              },
+              {
+                "variant": "segmented_24",
+                "append_including_periodic_checkpoint_us": 215650,
+                "written_including_periodic_checkpoint_bytes": 8295600,
+                "flushes_including_periodic_checkpoint": 89,
+                "periodic_checkpoints": 3,
+                "periodic_checkpoint_us": 79993,
+                "tail_replay_frames": 8,
+                "open_before_final_checkpoint_us": 36659,
+                "final_checkpoint_us": 36584,
+                "final_checkpoint_bytes": 2033899,
+                "compacted_open_us": 30609,
+                "prior_checkpoint_open_us": 883,
+                "equivalent_after_replay_and_checkpoint": true
+              },
+              {
+                "variant": "leased_segmented_24",
+                "prior_lease_and_open_us": 1432,
+                "append_including_periodic_checkpoint_us": 268251,
+                "written_including_periodic_checkpoint_bytes": 8295600,
+                "flushes_including_periodic_checkpoint": 89,
+                "periodic_checkpoints": 3,
+                "lease_and_replay_us": 39698,
+                "managed_bytes_after_reclamation": 4878332,
+                "rollback_latest_to_v1_us": 32524,
+                "remigrate_latest_v1_us": 103013,
+                "equivalent_after_replay_rollback_and_remigration": true
+              }
+            ]
+          },
+          {
+            "mode": "reopen",
+            "entries": 10000,
+            "batch_size": 256,
+            "v1_us": 900489,
+            "v1_writes": 80,
+            "v1_bytes": 162678720,
+            "variants": [
+              {
+                "variant": "indexed",
+                "append_including_periodic_checkpoint_us": 128661,
+                "written_including_periodic_checkpoint_bytes": 4547715,
+                "flushes_including_periodic_checkpoint": 80,
+                "periodic_checkpoints": 0,
+                "periodic_checkpoint_us": 0,
+                "tail_replay_frames": 80,
+                "open_before_final_checkpoint_us": 130799,
+                "final_checkpoint_us": 42426,
+                "final_checkpoint_bytes": 2033899,
+                "compacted_open_us": 36910,
+                "prior_checkpoint_open_us": 30291,
+                "equivalent_after_replay_and_checkpoint": true
+              },
+              {
+                "variant": "segmented_24",
+                "append_including_periodic_checkpoint_us": 247633,
+                "written_including_periodic_checkpoint_bytes": 10649386,
+                "flushes_including_periodic_checkpoint": 89,
+                "periodic_checkpoints": 3,
+                "periodic_checkpoint_us": 112812,
+                "tail_replay_frames": 8,
+                "open_before_final_checkpoint_us": 38602,
+                "final_checkpoint_us": 35193,
+                "final_checkpoint_bytes": 2033899,
+                "compacted_open_us": 31257,
+                "prior_checkpoint_open_us": 39172,
+                "equivalent_after_replay_and_checkpoint": true
+              },
+              {
+                "variant": "leased_segmented_24",
+                "prior_lease_and_open_us": 65358,
+                "append_including_periodic_checkpoint_us": 304390,
+                "written_including_periodic_checkpoint_bytes": 10649386,
+                "flushes_including_periodic_checkpoint": 89,
+                "periodic_checkpoints": 3,
+                "lease_and_replay_us": 67375,
+                "managed_bytes_after_reclamation": 7856101,
+                "rollback_latest_to_v1_us": 60590,
+                "remigrate_latest_v1_us": 98072,
+                "equivalent_after_replay_rollback_and_remigration": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "process_run": 2,
+      "report_sha256": "46040707f1f7452f86edb8fa367e6e48bdf1e3e9ef57067406b541675b544aba",
+      "report": {
+        "scope": "Dart JIT journal-only experiment v4; bounded files, leased migration/rollback and generation reclamation; v1 then indexed then segmented then leased; checkpoint costs included; no OS effects or product startup",
+        "protocol_version": 4,
+        "experiment_limits": {
+          "manifest_bytes": 4096,
+          "checkpoint_bytes": 16777216,
+          "segment_bytes": 67108864,
+          "frame_bytes": 4194304,
+          "symlink_inputs_and_targets": "rejected",
+          "caller_exclusive_directory_required": true,
+          "leased_variant_directory_budget_bytes": 268435456,
+          "leased_variant_max_managed_files": 256,
+          "leased_variant_uses_database_ownership_lock": true
+        },
+        "fixture_file_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+        "task_rows_sha256": "7775cb832916e5136a3d6759d5e6507dc1a528b565dd36a4664a745e11d4b05c",
+        "runtime": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+        "results": [
+          {
+            "mode": "first",
+            "entries": 10000,
+            "batch_size": 256,
+            "v1_us": 606806,
+            "v1_writes": 80,
+            "v1_bytes": 85231254,
+            "variants": [
+              {
+                "variant": "indexed",
+                "append_including_periodic_checkpoint_us": 128507,
+                "written_including_periodic_checkpoint_bytes": 4547715,
+                "flushes_including_periodic_checkpoint": 80,
+                "periodic_checkpoints": 0,
+                "periodic_checkpoint_us": 0,
+                "tail_replay_frames": 80,
+                "open_before_final_checkpoint_us": 107531,
+                "final_checkpoint_us": 43615,
+                "final_checkpoint_bytes": 2033899,
+                "compacted_open_us": 31259,
+                "prior_checkpoint_open_us": 1373,
+                "equivalent_after_replay_and_checkpoint": true
+              },
+              {
+                "variant": "segmented_24",
+                "append_including_periodic_checkpoint_us": 221746,
+                "written_including_periodic_checkpoint_bytes": 8295600,
+                "flushes_including_periodic_checkpoint": 89,
+                "periodic_checkpoints": 3,
+                "periodic_checkpoint_us": 76301,
+                "tail_replay_frames": 8,
+                "open_before_final_checkpoint_us": 42142,
+                "final_checkpoint_us": 42629,
+                "final_checkpoint_bytes": 2033899,
+                "compacted_open_us": 30189,
+                "prior_checkpoint_open_us": 719,
+                "equivalent_after_replay_and_checkpoint": true
+              },
+              {
+                "variant": "leased_segmented_24",
+                "prior_lease_and_open_us": 1491,
+                "append_including_periodic_checkpoint_us": 251593,
+                "written_including_periodic_checkpoint_bytes": 8295600,
+                "flushes_including_periodic_checkpoint": 89,
+                "periodic_checkpoints": 3,
+                "lease_and_replay_us": 38703,
+                "managed_bytes_after_reclamation": 4878332,
+                "rollback_latest_to_v1_us": 31889,
+                "remigrate_latest_v1_us": 97392,
+                "equivalent_after_replay_rollback_and_remigration": true
+              }
+            ]
+          },
+          {
+            "mode": "reopen",
+            "entries": 10000,
+            "batch_size": 256,
+            "v1_us": 935545,
+            "v1_writes": 80,
+            "v1_bytes": 162678720,
+            "variants": [
+              {
+                "variant": "indexed",
+                "append_including_periodic_checkpoint_us": 122759,
+                "written_including_periodic_checkpoint_bytes": 4547715,
+                "flushes_including_periodic_checkpoint": 80,
+                "periodic_checkpoints": 0,
+                "periodic_checkpoint_us": 0,
+                "tail_replay_frames": 80,
+                "open_before_final_checkpoint_us": 133024,
+                "final_checkpoint_us": 42232,
+                "final_checkpoint_bytes": 2033899,
+                "compacted_open_us": 31280,
+                "prior_checkpoint_open_us": 36776,
+                "equivalent_after_replay_and_checkpoint": true
+              },
+              {
+                "variant": "segmented_24",
+                "append_including_periodic_checkpoint_us": 249881,
+                "written_including_periodic_checkpoint_bytes": 10649386,
+                "flushes_including_periodic_checkpoint": 89,
+                "periodic_checkpoints": 3,
+                "periodic_checkpoint_us": 122477,
+                "tail_replay_frames": 8,
+                "open_before_final_checkpoint_us": 39339,
+                "final_checkpoint_us": 46659,
+                "final_checkpoint_bytes": 2033899,
+                "compacted_open_us": 38809,
+                "prior_checkpoint_open_us": 36837,
+                "equivalent_after_replay_and_checkpoint": true
+              },
+              {
+                "variant": "leased_segmented_24",
+                "prior_lease_and_open_us": 56318,
+                "append_including_periodic_checkpoint_us": 296216,
+                "written_including_periodic_checkpoint_bytes": 10649386,
+                "flushes_including_periodic_checkpoint": 89,
+                "periodic_checkpoints": 3,
+                "lease_and_replay_us": 63137,
+                "managed_bytes_after_reclamation": 7856101,
+                "rollback_latest_to_v1_us": 62132,
+                "remigrate_latest_v1_us": 99427,
+                "equivalent_after_replay_rollback_and_remigration": true
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "process_run": 3,
+      "report_sha256": "fc8fd5db00dfed09468cdc60bb24e3b81c173f16c459e438a9606099acc0a9eb",
+      "report": {
+        "scope": "Dart JIT journal-only experiment v4; bounded files, leased migration/rollback and generation reclamation; v1 then indexed then segmented then leased; checkpoint costs included; no OS effects or product startup",
+        "protocol_version": 4,
+        "experiment_limits": {
+          "manifest_bytes": 4096,
+          "checkpoint_bytes": 16777216,
+          "segment_bytes": 67108864,
+          "frame_bytes": 4194304,
+          "symlink_inputs_and_targets": "rejected",
+          "caller_exclusive_directory_required": true,
+          "leased_variant_directory_budget_bytes": 268435456,
+          "leased_variant_max_managed_files": 256,
+          "leased_variant_uses_database_ownership_lock": true
+        },
+        "fixture_file_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+        "task_rows_sha256": "7775cb832916e5136a3d6759d5e6507dc1a528b565dd36a4664a745e11d4b05c",
+        "runtime": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+        "results": [
+          {
+            "mode": "first",
+            "entries": 10000,
+            "batch_size": 256,
+            "v1_us": 559144,
+            "v1_writes": 80,
+            "v1_bytes": 85231254,
+            "variants": [
+              {
+                "variant": "indexed",
+                "append_including_periodic_checkpoint_us": 118005,
+                "written_including_periodic_checkpoint_bytes": 4547715,
+                "flushes_including_periodic_checkpoint": 80,
+                "periodic_checkpoints": 0,
+                "periodic_checkpoint_us": 0,
+                "tail_replay_frames": 80,
+                "open_before_final_checkpoint_us": 102960,
+                "final_checkpoint_us": 37215,
+                "final_checkpoint_bytes": 2033899,
+                "compacted_open_us": 31069,
+                "prior_checkpoint_open_us": 1171,
+                "equivalent_after_replay_and_checkpoint": true
+              },
+              {
+                "variant": "segmented_24",
+                "append_including_periodic_checkpoint_us": 186753,
+                "written_including_periodic_checkpoint_bytes": 8295600,
+                "flushes_including_periodic_checkpoint": 89,
+                "periodic_checkpoints": 3,
+                "periodic_checkpoint_us": 65860,
+                "tail_replay_frames": 8,
+                "open_before_final_checkpoint_us": 36821,
+                "final_checkpoint_us": 43287,
+                "final_checkpoint_bytes": 2033899,
+                "compacted_open_us": 35955,
+                "prior_checkpoint_open_us": 703,
+                "equivalent_after_replay_and_checkpoint": true
+              },
+              {
+                "variant": "leased_segmented_24",
+                "prior_lease_and_open_us": 1337,
+                "append_including_periodic_checkpoint_us": 237886,
+                "written_including_periodic_checkpoint_bytes": 8295600,
+                "flushes_including_periodic_checkpoint": 89,
+                "periodic_checkpoints": 3,
+                "lease_and_replay_us": 37035,
+                "managed_bytes_after_reclamation": 4878332,
+                "rollback_latest_to_v1_us": 26388,
+                "remigrate_latest_v1_us": 102052,
+                "equivalent_after_replay_rollback_and_remigration": true
+              }
+            ]
+          },
+          {
+            "mode": "reopen",
+            "entries": 10000,
+            "batch_size": 256,
+            "v1_us": 855063,
+            "v1_writes": 80,
+            "v1_bytes": 162678720,
+            "variants": [
+              {
+                "variant": "indexed",
+                "append_including_periodic_checkpoint_us": 114087,
+                "written_including_periodic_checkpoint_bytes": 4547715,
+                "flushes_including_periodic_checkpoint": 80,
+                "periodic_checkpoints": 0,
+                "periodic_checkpoint_us": 0,
+                "tail_replay_frames": 80,
+                "open_before_final_checkpoint_us": 130395,
+                "final_checkpoint_us": 36035,
+                "final_checkpoint_bytes": 2033899,
+                "compacted_open_us": 36172,
+                "prior_checkpoint_open_us": 29885,
+                "equivalent_after_replay_and_checkpoint": true
+              },
+              {
+                "variant": "segmented_24",
+                "append_including_periodic_checkpoint_us": 243044,
+                "written_including_periodic_checkpoint_bytes": 10649386,
+                "flushes_including_periodic_checkpoint": 89,
+                "periodic_checkpoints": 3,
+                "periodic_checkpoint_us": 117046,
+                "tail_replay_frames": 8,
+                "open_before_final_checkpoint_us": 38824,
+                "final_checkpoint_us": 40637,
+                "final_checkpoint_bytes": 2033899,
+                "compacted_open_us": 36985,
+                "prior_checkpoint_open_us": 31344,
+                "equivalent_after_replay_and_checkpoint": true
+              },
+              {
+                "variant": "leased_segmented_24",
+                "prior_lease_and_open_us": 55065,
+                "append_including_periodic_checkpoint_us": 280123,
+                "written_including_periodic_checkpoint_bytes": 10649386,
+                "flushes_including_periodic_checkpoint": 89,
+                "periodic_checkpoints": 3,
+                "lease_and_replay_us": 61473,
+                "managed_bytes_after_reclamation": 7856101,
+                "rollback_latest_to_v1_us": 59362,
+                "remigrate_latest_v1_us": 96756,
+                "equivalent_after_replay_rollback_and_remigration": true
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "validation": {
+    "incremental_engine_tests": 34,
+    "leased_adapter_tests": 22,
+    "local_flutter_tests": 739,
+    "local_python_tests": 63,
+    "analyze": "clean"
+  },
+  "production_backend": "v1",
+  "remaining": [
+    "production scheduler/recovery adapter integration",
+    "controlled upgrade and downgrade support for older binaries without the selection fence",
+    "multi-platform filesystem acceptance",
+    "power-loss and directory fsync durability"
+  ]
+}

@@ -1,0 +1,217 @@
+{
+  "source_revision": "9dca8cb0afdf73de5eb71ca41ce3c5fbe903e511",
+  "workflow_revision": "3a0772cf244339e494ac72d9fc66e94f659c64be",
+  "product_source_delta": "none; only .github/workflows/build_and_release.yml changed after native acceptance",
+  "local": {
+    "flutter": "3.44.9",
+    "dart": "3.12.2",
+    "flutter_tests_passed": 739,
+    "python_tests_passed": 63,
+    "analyze": "clean"
+  },
+  "final_ci": {
+    "run_id": 39927785276,
+    "url": "https://github.com/yarnway/dontforget/actions/runs/39927785276",
+    "quality_job": 120328331966,
+    "quality": "success",
+    "flutter_tests_passed": 738,
+    "flutter_tests_platform_skipped": 1,
+    "python_tests_passed": 63,
+    "quality_log_sha256": "4aefcb8814ddbb78af430cae3a72ade1135197dfc9ad1d6c8382fb9398147785",
+    "quality_evidence": [
+      "2026-10-23T08:53:26.1832629Z No issues found! (ran in 8.5s)",
+      "2026-10-23T08:54:50.4624929Z 01:14 +738 ~1: All tests passed!",
+      "2026-10-23T08:54:51.2966467Z Ran 63 tests in 0.445s"
+    ],
+    "platform_status": {
+      "Build ios candidate": "success",
+      "Build android candidate": "success",
+      "Build windows candidate": "success",
+      "Build macos candidate": "success",
+      "Build linux candidate": "success"
+    },
+    "status": "completed",
+    "conclusion": "success",
+    "head_sha": "3a0772cf244339e494ac72d9fc66e94f659c64be",
+    "jobs": [
+      {
+        "databaseId": 120328331966,
+        "name": "Analyze and test",
+        "startedAt": "2026-10-23T08:52:47Z",
+        "completedAt": "2026-10-23T08:54:53Z",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/39927785276/job/120328331966",
+        "checks": []
+      },
+      {
+        "databaseId": 120329170351,
+        "name": "Build ios candidate",
+        "startedAt": "2026-10-23T08:54:56Z",
+        "completedAt": "2026-10-23T08:58:16Z",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/39927785276/job/120329170351",
+        "checks": [
+          {
+            "name": "Verify packaged hashes and source identity",
+            "startedAt": "2026-10-23T08:58:10Z",
+            "completedAt": "2026-10-23T08:58:10Z",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "databaseId": 120329170364,
+        "name": "Build android candidate",
+        "startedAt": "2026-10-23T08:54:55Z",
+        "completedAt": "2026-10-23T09:01:21Z",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/39927785276/job/120329170364",
+        "checks": [
+          {
+            "name": "Verify packaged hashes and source identity",
+            "startedAt": "2026-10-23T09:01:12Z",
+            "completedAt": "2026-10-23T09:01:13Z",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "databaseId": 120329170406,
+        "name": "Build windows candidate",
+        "startedAt": "2026-10-23T08:54:56Z",
+        "completedAt": "2026-10-23T08:59:46Z",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/39927785276/job/120329170406",
+        "checks": [
+          {
+            "name": "Windows install upgrade and uninstall acceptance",
+            "startedAt": "2026-10-23T08:59:20Z",
+            "completedAt": "2026-10-23T08:59:26Z",
+            "conclusion": "success"
+          },
+          {
+            "name": "Windows native startup smoke check",
+            "startedAt": "2026-10-23T08:59:26Z",
+            "completedAt": "2026-10-23T08:59:37Z",
+            "conclusion": "success"
+          },
+          {
+            "name": "Verify packaged hashes and source identity",
+            "startedAt": "2026-10-23T08:59:37Z",
+            "completedAt": "2026-10-23T08:59:37Z",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "databaseId": 120329170453,
+        "name": "Build macos candidate",
+        "startedAt": "2026-10-23T08:54:57Z",
+        "completedAt": "2026-10-23T08:59:43Z",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/39927785276/job/120329170453",
+        "checks": [
+          {
+            "name": "macOS native startup smoke check",
+            "startedAt": "2026-10-23T08:59:21Z",
+            "completedAt": "2026-10-23T08:59:32Z",
+            "conclusion": "success"
+          },
+          {
+            "name": "Verify packaged hashes and source identity",
+            "startedAt": "2026-10-23T08:59:32Z",
+            "completedAt": "2026-10-23T08:59:32Z",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "databaseId": 120329170626,
+        "name": "Build linux candidate",
+        "startedAt": "2026-10-23T08:54:56Z",
+        "completedAt": "2026-10-23T08:59:35Z",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/39927785276/job/120329170626",
+        "checks": [
+          {
+            "name": "Linux native dependencies",
+            "startedAt": "2026-10-23T08:55:01Z",
+            "completedAt": "2026-10-23T08:57:44Z",
+            "conclusion": "success"
+          },
+          {
+            "name": "Linux native startup smoke check",
+            "startedAt": "2026-10-23T08:59:14Z",
+            "completedAt": "2026-10-23T08:59:29Z",
+            "conclusion": "success"
+          },
+          {
+            "name": "Verify packaged hashes and source identity",
+            "startedAt": "2026-10-23T08:59:29Z",
+            "completedAt": "2026-10-23T08:59:29Z",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "databaseId": 120331752078,
+        "name": "Prepare draft release after all packages pass",
+        "startedAt": "2026-10-23T09:01:22Z",
+        "completedAt": "2026-10-23T09:01:22Z",
+        "conclusion": "skipped",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/39927785276/job/120331752078",
+        "checks": []
+      }
+    ],
+    "linux_log_sha256": "980555f2475364507c86a543c7f9b2dcba725a3e6e7271370bec9b05b062b8bb",
+    "linux_evidence": [
+      "2026-10-23T08:57:19.0835957Z Fetched 112 MB in 2min 12s (845 kB/s)",
+      "2026-10-23T08:59:29.0995462Z linux: native process survived startup; UI and notifications remain unverified",
+      "2026-10-23T08:59:29.1853448Z Verified 1 package files; runtime and signing acceptance are separate."
+    ],
+    "release": "skipped for main branch run; no release published"
+  },
+  "measurement_ci": {
+    "run_id": 39918373329,
+    "head_sha": "9dca8cb0afdf73de5eb71ca41ce3c5fbe903e511",
+    "jobs": [
+      "profile",
+      "product_startup",
+      "product_retry"
+    ],
+    "all_success": true
+  },
+  "earlier_ci_failures": [
+    {
+      "run_id": 39918274331,
+      "cause": "45 minute Linux dependency download timeout; other four platform and quality jobs passed"
+    },
+    {
+      "run_id": 39924144221,
+      "cause": "explicit no-recommends dependency installation omitted GStreamer playbin runtime; native process exited -6; fixed by explicit base/good and media element checks"
+    },
+    {
+      "run_id": 39925298953,
+      "cause": "Linux dependency timeout after 12 minutes: Azure Ubuntu archive streamed CMake 11.2 MB over almost four minutes; switched exact Azure Ubuntu source URI to official Ubuntu HTTPS archive, retaining suites and signing keys"
+    }
+  ],
+  "after_cleanup_checks": {
+    "three_retained_archives_hashes": "PASS",
+    "three_retained_derivative_codesign": "PASS",
+    "exact_fixture_hash": "PASS",
+    "three_SQLite_snapshot_hashes": "PASS",
+    "raw_GC_reanalysis": "PASS",
+    "normal_108_segments_270_frames_recalculated": "PASS",
+    "final_18_foreground_segments": "PASS",
+    "deleted_targets_absent_and_retained_apps_present": "PASS",
+    "unrelated_dirty_docs_hashes_unchanged": "PASS"
+  },
+  "limits": [
+    "Production notification journal remains v1; incremental backend is experimental",
+    "Native pending proves acceptance, not delivery",
+    "Application restart and SIGKILL do not prove system reboot, sleep/wake or power-loss durability",
+    "GC tail remains; one supplemental final normal 10000/768 build frame measured 20113us",
+    "No new full product cold startup timing in this slice",
+    "v1.6 not formally published"
+  ]
+}

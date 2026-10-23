@@ -1,0 +1,4619 @@
+{
+  "phase": "3D-12",
+  "scope": "GC association only; cached theme, 768x792, 1 warmup + 30 measured mounts, 3 runs/size/revision. Grouped before/after with delayed replacement, not randomized or alternating; model objects reused, lazy cache warmed. Not a normal first-frame baseline or OS scheduling test.",
+  "fixture_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+  "runs": [
+    {
+      "variant": "before",
+      "name": "VGHkCk",
+      "report_path": "/Users/james/Library/Containers/com.example.dontForget.acceptance.tail-final-r39910780360/Data/Library/Application Support/com.example.dontForget.acceptance.tail-final-r39910780360/isolated-performance-VGHkCk/results.json",
+      "report_sha256": "56d98b9012d057a1ee3ab950df78f2003f39b5c435b034ecf27faef4c440579c",
+      "analysis": {
+        "scope": "Observed association only, not proof of GC causation. Same-thread recognized GC scopes are clipped to native build intervals and unioned, never added across nested scopes or worker threads. Timings are not an unobserved baseline.",
+        "source_revision": "49c0cc1dc95efda9530f0979e3811a0471289eca",
+        "tasks": 1000,
+        "shell_theme_protocol": "cached-default-theme-v2",
+        "task_rows_sha256": "de99e7ca45aa063708717c41f711b506c2a3ca5c11eb8c0092919797cd7e59e0",
+        "event_count": 7946,
+        "frames": [
+          {
+            "sample": 1,
+            "build_us": 4633,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 2,
+            "build_us": 4460,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 3,
+            "build_us": 4552,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 4,
+            "build_us": 9317,
+            "gc_scope_union_us": 4485,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 5,
+            "build_us": 3869,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 6,
+            "build_us": 3999,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 7,
+            "build_us": 4393,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 8,
+            "build_us": 9843,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 9,
+            "build_us": 11095,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 10,
+            "build_us": 17332,
+            "gc_scope_union_us": 6151,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 11,
+            "build_us": 8139,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 12,
+            "build_us": 6775,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 13,
+            "build_us": 9896,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 14,
+            "build_us": 11028,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 15,
+            "build_us": 11602,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 16,
+            "build_us": 17116,
+            "gc_scope_union_us": 5555,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 17,
+            "build_us": 10400,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 18,
+            "build_us": 11179,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 19,
+            "build_us": 11631,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 20,
+            "build_us": 11412,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 21,
+            "build_us": 12011,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 22,
+            "build_us": 17694,
+            "gc_scope_union_us": 5715,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 23,
+            "build_us": 9451,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 24,
+            "build_us": 11669,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 25,
+            "build_us": 11547,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 26,
+            "build_us": 10066,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 27,
+            "build_us": 8121,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 28,
+            "build_us": 14377,
+            "gc_scope_union_us": 4970,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 29,
+            "build_us": 8524,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 30,
+            "build_us": 9971,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          }
+        ],
+        "with_gc": {
+          "samples": 5,
+          "p50_us": 17116,
+          "p95_us": 17694,
+          "max_us": 17694,
+          "over_16667": 3
+        },
+        "without_gc": {
+          "samples": 25,
+          "p50_us": 9896,
+          "p95_us": 11669,
+          "max_us": 12011,
+          "over_16667": 0
+        }
+      }
+    },
+    {
+      "variant": "before",
+      "name": "8fTQ0a",
+      "report_path": "/Users/james/Library/Containers/com.example.dontForget.acceptance.tail-final-r39910780360/Data/Library/Application Support/com.example.dontForget.acceptance.tail-final-r39910780360/isolated-performance-8fTQ0a/results.json",
+      "report_sha256": "5ed03694354963975cb468d5094048f0b84df71314dcffce720661fb128d8ba6",
+      "analysis": {
+        "scope": "Observed association only, not proof of GC causation. Same-thread recognized GC scopes are clipped to native build intervals and unioned, never added across nested scopes or worker threads. Timings are not an unobserved baseline.",
+        "source_revision": "49c0cc1dc95efda9530f0979e3811a0471289eca",
+        "tasks": 1000,
+        "shell_theme_protocol": "cached-default-theme-v2",
+        "task_rows_sha256": "de99e7ca45aa063708717c41f711b506c2a3ca5c11eb8c0092919797cd7e59e0",
+        "event_count": 7922,
+        "frames": [
+          {
+            "sample": 1,
+            "build_us": 11162,
+            "gc_scope_union_us": 5160,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 2,
+            "build_us": 4117,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 3,
+            "build_us": 4041,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 4,
+            "build_us": 7451,
+            "gc_scope_union_us": 3076,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 5,
+            "build_us": 3566,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 6,
+            "build_us": 4314,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 7,
+            "build_us": 4475,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 8,
+            "build_us": 9415,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 9,
+            "build_us": 10207,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 10,
+            "build_us": 17045,
+            "gc_scope_union_us": 5995,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 11,
+            "build_us": 9079,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 12,
+            "build_us": 11307,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 13,
+            "build_us": 11827,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 14,
+            "build_us": 10729,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 15,
+            "build_us": 11597,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 16,
+            "build_us": 16546,
+            "gc_scope_union_us": 5590,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 17,
+            "build_us": 8889,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 18,
+            "build_us": 11352,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 19,
+            "build_us": 11248,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 20,
+            "build_us": 11339,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 21,
+            "build_us": 11446,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 22,
+            "build_us": 16892,
+            "gc_scope_union_us": 5801,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 23,
+            "build_us": 9894,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 24,
+            "build_us": 10821,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 25,
+            "build_us": 11150,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 26,
+            "build_us": 10440,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 27,
+            "build_us": 10416,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 28,
+            "build_us": 13411,
+            "gc_scope_union_us": 3496,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 29,
+            "build_us": 7605,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 30,
+            "build_us": 10234,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          }
+        ],
+        "with_gc": {
+          "samples": 6,
+          "p50_us": 13411,
+          "p95_us": 17045,
+          "max_us": 17045,
+          "over_16667": 2
+        },
+        "without_gc": {
+          "samples": 24,
+          "p50_us": 10234,
+          "p95_us": 11597,
+          "max_us": 11827,
+          "over_16667": 0
+        }
+      }
+    },
+    {
+      "variant": "before",
+      "name": "oSVfHK",
+      "report_path": "/Users/james/Library/Containers/com.example.dontForget.acceptance.tail-final-r39910780360/Data/Library/Application Support/com.example.dontForget.acceptance.tail-final-r39910780360/isolated-performance-oSVfHK/results.json",
+      "report_sha256": "b95fa85ea0105ac1cf203e05b2def0326871c97a7681dac7fac687a99f50bb66",
+      "analysis": {
+        "scope": "Observed association only, not proof of GC causation. Same-thread recognized GC scopes are clipped to native build intervals and unioned, never added across nested scopes or worker threads. Timings are not an unobserved baseline.",
+        "source_revision": "49c0cc1dc95efda9530f0979e3811a0471289eca",
+        "tasks": 1000,
+        "shell_theme_protocol": "cached-default-theme-v2",
+        "task_rows_sha256": "de99e7ca45aa063708717c41f711b506c2a3ca5c11eb8c0092919797cd7e59e0",
+        "event_count": 7938,
+        "frames": [
+          {
+            "sample": 1,
+            "build_us": 11315,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 2,
+            "build_us": 11604,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 3,
+            "build_us": 8521,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 4,
+            "build_us": 12614,
+            "gc_scope_union_us": 4098,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 5,
+            "build_us": 10549,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 6,
+            "build_us": 8031,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 7,
+            "build_us": 10300,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 8,
+            "build_us": 11521,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 9,
+            "build_us": 11715,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 10,
+            "build_us": 16525,
+            "gc_scope_union_us": 5595,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 11,
+            "build_us": 9047,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 12,
+            "build_us": 11568,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 13,
+            "build_us": 11690,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 14,
+            "build_us": 11493,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 15,
+            "build_us": 11233,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 16,
+            "build_us": 16953,
+            "gc_scope_union_us": 5799,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 17,
+            "build_us": 10181,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 18,
+            "build_us": 11692,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 19,
+            "build_us": 11969,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 20,
+            "build_us": 10818,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 21,
+            "build_us": 11119,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 22,
+            "build_us": 17353,
+            "gc_scope_union_us": 6174,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 23,
+            "build_us": 9793,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 24,
+            "build_us": 11691,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 25,
+            "build_us": 11109,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 26,
+            "build_us": 8040,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 27,
+            "build_us": 10321,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 28,
+            "build_us": 7249,
+            "gc_scope_union_us": 2810,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 29,
+            "build_us": 9681,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 30,
+            "build_us": 11520,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          }
+        ],
+        "with_gc": {
+          "samples": 5,
+          "p50_us": 16525,
+          "p95_us": 17353,
+          "max_us": 17353,
+          "over_16667": 2
+        },
+        "without_gc": {
+          "samples": 25,
+          "p50_us": 11119,
+          "p95_us": 11715,
+          "max_us": 11969,
+          "over_16667": 0
+        }
+      }
+    },
+    {
+      "variant": "before",
+      "name": "NjAuYN",
+      "report_path": "/Users/james/Library/Containers/com.example.dontForget.acceptance.tail-final-r39910780360/Data/Library/Application Support/com.example.dontForget.acceptance.tail-final-r39910780360/isolated-performance-NjAuYN/results.json",
+      "report_sha256": "f40016b6060b0e0c86a8a398ea48eb0f0e25eb3d24921956f1e3377d21c50f21",
+      "analysis": {
+        "scope": "Observed association only, not proof of GC causation. Same-thread recognized GC scopes are clipped to native build intervals and unioned, never added across nested scopes or worker threads. Timings are not an unobserved baseline.",
+        "source_revision": "49c0cc1dc95efda9530f0979e3811a0471289eca",
+        "tasks": 10000,
+        "shell_theme_protocol": "cached-default-theme-v2",
+        "task_rows_sha256": "400c2386e425cafaffbbe8e8e6ed76e136ae94cd19f94bb745b8560c854d66d2",
+        "event_count": 8265,
+        "frames": [
+          {
+            "sample": 1,
+            "build_us": 12783,
+            "gc_scope_union_us": 5222,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 2,
+            "build_us": 17411,
+            "gc_scope_union_us": 5419,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 3,
+            "build_us": 10510,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 4,
+            "build_us": 11986,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 5,
+            "build_us": 18651,
+            "gc_scope_union_us": 6097,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 6,
+            "build_us": 15106,
+            "gc_scope_union_us": 3872,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 7,
+            "build_us": 10207,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 8,
+            "build_us": 11639,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 9,
+            "build_us": 18120,
+            "gc_scope_union_us": 6619,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 10,
+            "build_us": 18211,
+            "gc_scope_union_us": 5601,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 11,
+            "build_us": 10879,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 12,
+            "build_us": 12205,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 13,
+            "build_us": 14486,
+            "gc_scope_union_us": 4256,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 14,
+            "build_us": 11272,
+            "gc_scope_union_us": 2421,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 15,
+            "build_us": 10736,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 16,
+            "build_us": 10844,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 17,
+            "build_us": 17552,
+            "gc_scope_union_us": 6285,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 18,
+            "build_us": 16569,
+            "gc_scope_union_us": 4649,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 19,
+            "build_us": 7856,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 20,
+            "build_us": 12791,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 21,
+            "build_us": 17262,
+            "gc_scope_union_us": 5558,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 22,
+            "build_us": 13938,
+            "gc_scope_union_us": 4313,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 23,
+            "build_us": 10771,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 24,
+            "build_us": 7901,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 25,
+            "build_us": 15235,
+            "gc_scope_union_us": 4675,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 26,
+            "build_us": 17299,
+            "gc_scope_union_us": 4924,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 27,
+            "build_us": 12072,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 28,
+            "build_us": 12185,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 29,
+            "build_us": 18545,
+            "gc_scope_union_us": 6825,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 30,
+            "build_us": 16261,
+            "gc_scope_union_us": 4100,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          }
+        ],
+        "with_gc": {
+          "samples": 16,
+          "p50_us": 16569,
+          "p95_us": 18651,
+          "max_us": 18651,
+          "over_16667": 8
+        },
+        "without_gc": {
+          "samples": 14,
+          "p50_us": 10844,
+          "p95_us": 12791,
+          "max_us": 12791,
+          "over_16667": 0
+        }
+      }
+    },
+    {
+      "variant": "before",
+      "name": "ilW6HR",
+      "report_path": "/Users/james/Library/Containers/com.example.dontForget.acceptance.tail-final-r39910780360/Data/Library/Application Support/com.example.dontForget.acceptance.tail-final-r39910780360/isolated-performance-ilW6HR/results.json",
+      "report_sha256": "9d842aa0673e7523f252d42220888924c5fcad3429061aa7fcb6248fdb35e236",
+      "analysis": {
+        "scope": "Observed association only, not proof of GC causation. Same-thread recognized GC scopes are clipped to native build intervals and unioned, never added across nested scopes or worker threads. Timings are not an unobserved baseline.",
+        "source_revision": "49c0cc1dc95efda9530f0979e3811a0471289eca",
+        "tasks": 10000,
+        "shell_theme_protocol": "cached-default-theme-v2",
+        "task_rows_sha256": "400c2386e425cafaffbbe8e8e6ed76e136ae94cd19f94bb745b8560c854d66d2",
+        "event_count": 8034,
+        "frames": [
+          {
+            "sample": 1,
+            "build_us": 7289,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 2,
+            "build_us": 10301,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 3,
+            "build_us": 8310,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 4,
+            "build_us": 15471,
+            "gc_scope_union_us": 4586,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 5,
+            "build_us": 11695,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 6,
+            "build_us": 12183,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 7,
+            "build_us": 18545,
+            "gc_scope_union_us": 6069,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 8,
+            "build_us": 9714,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 9,
+            "build_us": 7878,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 10,
+            "build_us": 8544,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 11,
+            "build_us": 14330,
+            "gc_scope_union_us": 3692,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 12,
+            "build_us": 11834,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 13,
+            "build_us": 17588,
+            "gc_scope_union_us": 6504,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 14,
+            "build_us": 14321,
+            "gc_scope_union_us": 4691,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 15,
+            "build_us": 11167,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 16,
+            "build_us": 8592,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 17,
+            "build_us": 16426,
+            "gc_scope_union_us": 5442,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 18,
+            "build_us": 17812,
+            "gc_scope_union_us": 5806,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 19,
+            "build_us": 10683,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 20,
+            "build_us": 12721,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 21,
+            "build_us": 11665,
+            "gc_scope_union_us": 3895,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 22,
+            "build_us": 15913,
+            "gc_scope_union_us": 4377,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 23,
+            "build_us": 11520,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 24,
+            "build_us": 10656,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 25,
+            "build_us": 17896,
+            "gc_scope_union_us": 6501,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 26,
+            "build_us": 16996,
+            "gc_scope_union_us": 5277,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 27,
+            "build_us": 11498,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 28,
+            "build_us": 11898,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 29,
+            "build_us": 17670,
+            "gc_scope_union_us": 6066,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          },
+          {
+            "sample": 30,
+            "build_us": 16986,
+            "gc_scope_union_us": 5009,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 77859,
+            "ui_tid": 259
+          }
+        ],
+        "with_gc": {
+          "samples": 13,
+          "p50_us": 16986,
+          "p95_us": 18545,
+          "max_us": 18545,
+          "over_16667": 7
+        },
+        "without_gc": {
+          "samples": 17,
+          "p50_us": 10683,
+          "p95_us": 12721,
+          "max_us": 12721,
+          "over_16667": 0
+        }
+      }
+    },
+    {
+      "variant": "before",
+      "name": "xx27j2",
+      "report_path": "/Users/james/Library/Containers/com.example.dontForget.acceptance.tail-final-r39910780360/Data/Library/Application Support/com.example.dontForget.acceptance.tail-final-r39910780360/isolated-performance-xx27j2/results.json",
+      "report_sha256": "f426c26486fcc66cf079bbcfc12a6be91de669d57deb312e200890748aa3357b",
+      "analysis": {
+        "scope": "Observed association only, not proof of GC causation. Same-thread recognized GC scopes are clipped to native build intervals and unioned, never added across nested scopes or worker threads. Timings are not an unobserved baseline.",
+        "source_revision": "49c0cc1dc95efda9530f0979e3811a0471289eca",
+        "tasks": 10000,
+        "shell_theme_protocol": "cached-default-theme-v2",
+        "task_rows_sha256": "400c2386e425cafaffbbe8e8e6ed76e136ae94cd19f94bb745b8560c854d66d2",
+        "event_count": 8065,
+        "frames": [
+          {
+            "sample": 1,
+            "build_us": 11364,
+            "gc_scope_union_us": 3619,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 2,
+            "build_us": 12306,
+            "gc_scope_union_us": 2745,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 3,
+            "build_us": 9818,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 4,
+            "build_us": 9321,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 5,
+            "build_us": 13493,
+            "gc_scope_union_us": 4310,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 6,
+            "build_us": 12676,
+            "gc_scope_union_us": 3069,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 7,
+            "build_us": 9826,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 8,
+            "build_us": 10722,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 9,
+            "build_us": 14207,
+            "gc_scope_union_us": 4822,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 10,
+            "build_us": 12050,
+            "gc_scope_union_us": 2220,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 11,
+            "build_us": 9824,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 12,
+            "build_us": 11615,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 13,
+            "build_us": 15207,
+            "gc_scope_union_us": 4631,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 14,
+            "build_us": 12554,
+            "gc_scope_union_us": 3716,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 15,
+            "build_us": 10830,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 16,
+            "build_us": 10682,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 17,
+            "build_us": 16587,
+            "gc_scope_union_us": 5617,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 18,
+            "build_us": 13686,
+            "gc_scope_union_us": 3317,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 19,
+            "build_us": 9770,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 20,
+            "build_us": 11489,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 21,
+            "build_us": 16793,
+            "gc_scope_union_us": 5550,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 22,
+            "build_us": 13564,
+            "gc_scope_union_us": 3024,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 23,
+            "build_us": 11052,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 24,
+            "build_us": 8850,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 25,
+            "build_us": 13021,
+            "gc_scope_union_us": 3822,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 26,
+            "build_us": 14217,
+            "gc_scope_union_us": 3673,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 27,
+            "build_us": 11286,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 28,
+            "build_us": 7240,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 29,
+            "build_us": 14692,
+            "gc_scope_union_us": 4300,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 8378,
+            "ui_tid": 259
+          },
+          {
+            "sample": 30,
+            "build_us": 13015,
+            "gc_scope_union_us": 3255,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 8378,
+            "ui_tid": 259
+          }
+        ],
+        "with_gc": {
+          "samples": 16,
+          "p50_us": 13493,
+          "p95_us": 16793,
+          "max_us": 16793,
+          "over_16667": 1
+        },
+        "without_gc": {
+          "samples": 14,
+          "p50_us": 9826,
+          "p95_us": 11615,
+          "max_us": 11615,
+          "over_16667": 0
+        }
+      }
+    },
+    {
+      "variant": "after",
+      "name": "z5kRce",
+      "report_path": "/Users/james/Library/Containers/com.example.dontForget.acceptance.profile-final-r39918373329/Data/Library/Application Support/com.example.dontForget.acceptance.profile-final-r39918373329/isolated-performance-z5kRce/results.json",
+      "report_sha256": "314a1791bc561aae4cba7c8bc70c18cd4f770af4a5a9df214cd39c0b736fa23b",
+      "analysis": {
+        "scope": "Observed association only, not proof of GC causation. Same-thread recognized GC scopes are clipped to native build intervals and unioned, never added across nested scopes or worker threads. Timings are not an unobserved baseline.",
+        "source_revision": "9dca8cb0afdf73de5eb71ca41ce3c5fbe903e511",
+        "tasks": 1000,
+        "shell_theme_protocol": "cached-default-theme-v2",
+        "task_rows_sha256": "de99e7ca45aa063708717c41f711b506c2a3ca5c11eb8c0092919797cd7e59e0",
+        "event_count": 7891,
+        "frames": [
+          {
+            "sample": 1,
+            "build_us": 4298,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 2,
+            "build_us": 4080,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 3,
+            "build_us": 9250,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 4,
+            "build_us": 12627,
+            "gc_scope_union_us": 3434,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 5,
+            "build_us": 9701,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 6,
+            "build_us": 8525,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 7,
+            "build_us": 6359,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 8,
+            "build_us": 10862,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 9,
+            "build_us": 9581,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 10,
+            "build_us": 14599,
+            "gc_scope_union_us": 4105,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 11,
+            "build_us": 9474,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 12,
+            "build_us": 10901,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 13,
+            "build_us": 11097,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 14,
+            "build_us": 10643,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 15,
+            "build_us": 8404,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 16,
+            "build_us": 13464,
+            "gc_scope_union_us": 4044,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 17,
+            "build_us": 8470,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 18,
+            "build_us": 11720,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 19,
+            "build_us": 11315,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 20,
+            "build_us": 10420,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 21,
+            "build_us": 11131,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 22,
+            "build_us": 12407,
+            "gc_scope_union_us": 3976,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 23,
+            "build_us": 8973,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 24,
+            "build_us": 9131,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 25,
+            "build_us": 11076,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 26,
+            "build_us": 10064,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 27,
+            "build_us": 10143,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 28,
+            "build_us": 14466,
+            "gc_scope_union_us": 4554,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 29,
+            "build_us": 8832,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 30,
+            "build_us": 8917,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          }
+        ],
+        "with_gc": {
+          "samples": 5,
+          "p50_us": 13464,
+          "p95_us": 14599,
+          "max_us": 14599,
+          "over_16667": 0
+        },
+        "without_gc": {
+          "samples": 25,
+          "p50_us": 9581,
+          "p95_us": 11315,
+          "max_us": 11720,
+          "over_16667": 0
+        }
+      }
+    },
+    {
+      "variant": "after",
+      "name": "hWklBz",
+      "report_path": "/Users/james/Library/Containers/com.example.dontForget.acceptance.profile-final-r39918373329/Data/Library/Application Support/com.example.dontForget.acceptance.profile-final-r39918373329/isolated-performance-hWklBz/results.json",
+      "report_sha256": "51cfc17f1241d23003821ae7c50086ed6bf8e5f2aa09894eb721aa686f357599",
+      "analysis": {
+        "scope": "Observed association only, not proof of GC causation. Same-thread recognized GC scopes are clipped to native build intervals and unioned, never added across nested scopes or worker threads. Timings are not an unobserved baseline.",
+        "source_revision": "9dca8cb0afdf73de5eb71ca41ce3c5fbe903e511",
+        "tasks": 1000,
+        "shell_theme_protocol": "cached-default-theme-v2",
+        "task_rows_sha256": "de99e7ca45aa063708717c41f711b506c2a3ca5c11eb8c0092919797cd7e59e0",
+        "event_count": 7926,
+        "frames": [
+          {
+            "sample": 1,
+            "build_us": 15639,
+            "gc_scope_union_us": 3934,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 2,
+            "build_us": 11675,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 3,
+            "build_us": 11351,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 4,
+            "build_us": 14805,
+            "gc_scope_union_us": 4968,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 5,
+            "build_us": 9218,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 6,
+            "build_us": 7843,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 7,
+            "build_us": 9333,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 8,
+            "build_us": 10733,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 9,
+            "build_us": 11282,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 10,
+            "build_us": 17416,
+            "gc_scope_union_us": 6006,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 11,
+            "build_us": 9403,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 12,
+            "build_us": 10694,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 13,
+            "build_us": 10922,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 14,
+            "build_us": 10962,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 15,
+            "build_us": 11779,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 16,
+            "build_us": 15291,
+            "gc_scope_union_us": 4542,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 17,
+            "build_us": 10317,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 18,
+            "build_us": 11155,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 19,
+            "build_us": 11465,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 20,
+            "build_us": 9982,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 21,
+            "build_us": 10870,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 22,
+            "build_us": 16093,
+            "gc_scope_union_us": 5911,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 23,
+            "build_us": 9335,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 24,
+            "build_us": 10973,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 25,
+            "build_us": 10727,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 26,
+            "build_us": 8701,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 27,
+            "build_us": 9725,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 28,
+            "build_us": 9865,
+            "gc_scope_union_us": 2939,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 29,
+            "build_us": 8304,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 30,
+            "build_us": 11469,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          }
+        ],
+        "with_gc": {
+          "samples": 6,
+          "p50_us": 15291,
+          "p95_us": 17416,
+          "max_us": 17416,
+          "over_16667": 1
+        },
+        "without_gc": {
+          "samples": 24,
+          "p50_us": 10727,
+          "p95_us": 11675,
+          "max_us": 11779,
+          "over_16667": 0
+        }
+      }
+    },
+    {
+      "variant": "after",
+      "name": "OQ4wGf",
+      "report_path": "/Users/james/Library/Containers/com.example.dontForget.acceptance.profile-final-r39918373329/Data/Library/Application Support/com.example.dontForget.acceptance.profile-final-r39918373329/isolated-performance-OQ4wGf/results.json",
+      "report_sha256": "e4caa61d47149694a4e2b0f8327fd0e7cf11ad9d481bc87c479228cf1f744341",
+      "analysis": {
+        "scope": "Observed association only, not proof of GC causation. Same-thread recognized GC scopes are clipped to native build intervals and unioned, never added across nested scopes or worker threads. Timings are not an unobserved baseline.",
+        "source_revision": "9dca8cb0afdf73de5eb71ca41ce3c5fbe903e511",
+        "tasks": 1000,
+        "shell_theme_protocol": "cached-default-theme-v2",
+        "task_rows_sha256": "de99e7ca45aa063708717c41f711b506c2a3ca5c11eb8c0092919797cd7e59e0",
+        "event_count": 7908,
+        "frames": [
+          {
+            "sample": 1,
+            "build_us": 11068,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 2,
+            "build_us": 10813,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 3,
+            "build_us": 9759,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 4,
+            "build_us": 15432,
+            "gc_scope_union_us": 5193,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 5,
+            "build_us": 7781,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 6,
+            "build_us": 10901,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 7,
+            "build_us": 10720,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 8,
+            "build_us": 11294,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 9,
+            "build_us": 8985,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 10,
+            "build_us": 11767,
+            "gc_scope_union_us": 4276,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 11,
+            "build_us": 8969,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 12,
+            "build_us": 11282,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 13,
+            "build_us": 9467,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 14,
+            "build_us": 11344,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 15,
+            "build_us": 11834,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 16,
+            "build_us": 16343,
+            "gc_scope_union_us": 4443,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 17,
+            "build_us": 9860,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 18,
+            "build_us": 11201,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 19,
+            "build_us": 11663,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 20,
+            "build_us": 8182,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 21,
+            "build_us": 9900,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 22,
+            "build_us": 16975,
+            "gc_scope_union_us": 5217,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 23,
+            "build_us": 8832,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 24,
+            "build_us": 11432,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 25,
+            "build_us": 11138,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 26,
+            "build_us": 5518,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 27,
+            "build_us": 10531,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 28,
+            "build_us": 7220,
+            "gc_scope_union_us": 2775,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 29,
+            "build_us": 8234,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 30,
+            "build_us": 9197,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          }
+        ],
+        "with_gc": {
+          "samples": 5,
+          "p50_us": 15432,
+          "p95_us": 16975,
+          "max_us": 16975,
+          "over_16667": 1
+        },
+        "without_gc": {
+          "samples": 25,
+          "p50_us": 10531,
+          "p95_us": 11663,
+          "max_us": 11834,
+          "over_16667": 0
+        }
+      }
+    },
+    {
+      "variant": "after",
+      "name": "Jp2hPy",
+      "report_path": "/Users/james/Library/Containers/com.example.dontForget.acceptance.profile-final-r39918373329/Data/Library/Application Support/com.example.dontForget.acceptance.profile-final-r39918373329/isolated-performance-Jp2hPy/results.json",
+      "report_sha256": "7532fd51b71c85f8f7e01a79b6b962722b7d5a632e0eb562219809ade3370814",
+      "analysis": {
+        "scope": "Observed association only, not proof of GC causation. Same-thread recognized GC scopes are clipped to native build intervals and unioned, never added across nested scopes or worker threads. Timings are not an unobserved baseline.",
+        "source_revision": "9dca8cb0afdf73de5eb71ca41ce3c5fbe903e511",
+        "tasks": 10000,
+        "shell_theme_protocol": "cached-default-theme-v2",
+        "task_rows_sha256": "400c2386e425cafaffbbe8e8e6ed76e136ae94cd19f94bb745b8560c854d66d2",
+        "event_count": 8093,
+        "frames": [
+          {
+            "sample": 1,
+            "build_us": 11216,
+            "gc_scope_union_us": 3577,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 2,
+            "build_us": 9404,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 3,
+            "build_us": 8564,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 4,
+            "build_us": 9684,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 5,
+            "build_us": 17077,
+            "gc_scope_union_us": 5030,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 6,
+            "build_us": 14571,
+            "gc_scope_union_us": 4069,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 7,
+            "build_us": 11013,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 8,
+            "build_us": 11489,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 9,
+            "build_us": 13353,
+            "gc_scope_union_us": 5294,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 10,
+            "build_us": 14461,
+            "gc_scope_union_us": 3441,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 11,
+            "build_us": 10906,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 12,
+            "build_us": 10644,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 13,
+            "build_us": 15926,
+            "gc_scope_union_us": 5052,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 14,
+            "build_us": 15752,
+            "gc_scope_union_us": 4052,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 15,
+            "build_us": 11135,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 16,
+            "build_us": 10598,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 17,
+            "build_us": 16536,
+            "gc_scope_union_us": 5942,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 18,
+            "build_us": 13280,
+            "gc_scope_union_us": 3382,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 19,
+            "build_us": 10340,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 20,
+            "build_us": 9047,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 21,
+            "build_us": 17203,
+            "gc_scope_union_us": 5198,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 22,
+            "build_us": 12320,
+            "gc_scope_union_us": 3864,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 23,
+            "build_us": 10208,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 24,
+            "build_us": 10093,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 25,
+            "build_us": 15959,
+            "gc_scope_union_us": 5450,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 26,
+            "build_us": 16058,
+            "gc_scope_union_us": 4872,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 27,
+            "build_us": 10011,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 28,
+            "build_us": 10313,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 29,
+            "build_us": 16695,
+            "gc_scope_union_us": 5400,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 30,
+            "build_us": 16649,
+            "gc_scope_union_us": 5012,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          }
+        ],
+        "with_gc": {
+          "samples": 15,
+          "p50_us": 15926,
+          "p95_us": 17203,
+          "max_us": 17203,
+          "over_16667": 3
+        },
+        "without_gc": {
+          "samples": 15,
+          "p50_us": 10313,
+          "p95_us": 11489,
+          "max_us": 11489,
+          "over_16667": 0
+        }
+      }
+    },
+    {
+      "variant": "after",
+      "name": "wepBz4",
+      "report_path": "/Users/james/Library/Containers/com.example.dontForget.acceptance.profile-final-r39918373329/Data/Library/Application Support/com.example.dontForget.acceptance.profile-final-r39918373329/isolated-performance-wepBz4/results.json",
+      "report_sha256": "6e44f9c8684293511d38b0461f71c3dc340a0d566d709c27213015e8887dacc9",
+      "analysis": {
+        "scope": "Observed association only, not proof of GC causation. Same-thread recognized GC scopes are clipped to native build intervals and unioned, never added across nested scopes or worker threads. Timings are not an unobserved baseline.",
+        "source_revision": "9dca8cb0afdf73de5eb71ca41ce3c5fbe903e511",
+        "tasks": 10000,
+        "shell_theme_protocol": "cached-default-theme-v2",
+        "task_rows_sha256": "400c2386e425cafaffbbe8e8e6ed76e136ae94cd19f94bb745b8560c854d66d2",
+        "event_count": 8089,
+        "frames": [
+          {
+            "sample": 1,
+            "build_us": 11714,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 2,
+            "build_us": 10262,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 3,
+            "build_us": 11550,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 4,
+            "build_us": 12184,
+            "gc_scope_union_us": 3673,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 5,
+            "build_us": 10754,
+            "gc_scope_union_us": 2019,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 6,
+            "build_us": 11084,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 7,
+            "build_us": 19030,
+            "gc_scope_union_us": 7304,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 8,
+            "build_us": 11011,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 9,
+            "build_us": 9942,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 10,
+            "build_us": 10668,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 11,
+            "build_us": 15271,
+            "gc_scope_union_us": 3788,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 12,
+            "build_us": 10684,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 13,
+            "build_us": 17942,
+            "gc_scope_union_us": 5851,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 14,
+            "build_us": 16524,
+            "gc_scope_union_us": 5467,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 15,
+            "build_us": 10323,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 16,
+            "build_us": 9777,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 17,
+            "build_us": 15171,
+            "gc_scope_union_us": 5288,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 18,
+            "build_us": 11351,
+            "gc_scope_union_us": 3414,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 19,
+            "build_us": 9056,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 20,
+            "build_us": 8170,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 21,
+            "build_us": 11576,
+            "gc_scope_union_us": 3577,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 22,
+            "build_us": 14183,
+            "gc_scope_union_us": 3335,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 23,
+            "build_us": 11439,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 24,
+            "build_us": 11334,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 25,
+            "build_us": 17279,
+            "gc_scope_union_us": 4754,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 26,
+            "build_us": 12320,
+            "gc_scope_union_us": 2986,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 27,
+            "build_us": 11295,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 28,
+            "build_us": 8245,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 29,
+            "build_us": 13053,
+            "gc_scope_union_us": 4195,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 30,
+            "build_us": 14733,
+            "gc_scope_union_us": 3271,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          }
+        ],
+        "with_gc": {
+          "samples": 14,
+          "p50_us": 14183,
+          "p95_us": 19030,
+          "max_us": 19030,
+          "over_16667": 3
+        },
+        "without_gc": {
+          "samples": 16,
+          "p50_us": 10668,
+          "p95_us": 11714,
+          "max_us": 11714,
+          "over_16667": 0
+        }
+      }
+    },
+    {
+      "variant": "after",
+      "name": "FFFtoW",
+      "report_path": "/Users/james/Library/Containers/com.example.dontForget.acceptance.profile-final-r39918373329/Data/Library/Application Support/com.example.dontForget.acceptance.profile-final-r39918373329/isolated-performance-FFFtoW/results.json",
+      "report_sha256": "76c6f15154dd2d228bdb9671e4ac703dcf7e162b723de560120ec63da74f327e",
+      "analysis": {
+        "scope": "Observed association only, not proof of GC causation. Same-thread recognized GC scopes are clipped to native build intervals and unioned, never added across nested scopes or worker threads. Timings are not an unobserved baseline.",
+        "source_revision": "9dca8cb0afdf73de5eb71ca41ce3c5fbe903e511",
+        "tasks": 10000,
+        "shell_theme_protocol": "cached-default-theme-v2",
+        "task_rows_sha256": "400c2386e425cafaffbbe8e8e6ed76e136ae94cd19f94bb745b8560c854d66d2",
+        "event_count": 8040,
+        "frames": [
+          {
+            "sample": 1,
+            "build_us": 11928,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 2,
+            "build_us": 10334,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 3,
+            "build_us": 11829,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 4,
+            "build_us": 16078,
+            "gc_scope_union_us": 5645,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 5,
+            "build_us": 14367,
+            "gc_scope_union_us": 3109,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 6,
+            "build_us": 9548,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 7,
+            "build_us": 19272,
+            "gc_scope_union_us": 7634,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 8,
+            "build_us": 11384,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 9,
+            "build_us": 7526,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 10,
+            "build_us": 8455,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 11,
+            "build_us": 14985,
+            "gc_scope_union_us": 3657,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 12,
+            "build_us": 10967,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 13,
+            "build_us": 16275,
+            "gc_scope_union_us": 5513,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 14,
+            "build_us": 17083,
+            "gc_scope_union_us": 5572,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 15,
+            "build_us": 10493,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 16,
+            "build_us": 10393,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 17,
+            "build_us": 15809,
+            "gc_scope_union_us": 5913,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 18,
+            "build_us": 13724,
+            "gc_scope_union_us": 3533,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 19,
+            "build_us": 10313,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 20,
+            "build_us": 9277,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 21,
+            "build_us": 16713,
+            "gc_scope_union_us": 5861,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 22,
+            "build_us": 13085,
+            "gc_scope_union_us": 3478,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 23,
+            "build_us": 11293,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 24,
+            "build_us": 11013,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 25,
+            "build_us": 16794,
+            "gc_scope_union_us": 5695,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 26,
+            "build_us": 16293,
+            "gc_scope_union_us": 4682,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 27,
+            "build_us": 11297,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 28,
+            "build_us": 11194,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 29,
+            "build_us": 15649,
+            "gc_scope_union_us": 4674,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          },
+          {
+            "sample": 30,
+            "build_us": 17470,
+            "gc_scope_union_us": 5136,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 9083,
+            "ui_tid": 259
+          }
+        ],
+        "with_gc": {
+          "samples": 14,
+          "p50_us": 16078,
+          "p95_us": 19272,
+          "max_us": 19272,
+          "over_16667": 5
+        },
+        "without_gc": {
+          "samples": 16,
+          "p50_us": 10493,
+          "p95_us": 11928,
+          "max_us": 11928,
+          "over_16667": 0
+        }
+      }
+    }
+  ],
+  "excluded_attempts": [
+    {
+      "variant": "before",
+      "name": "4uPdfI",
+      "reason": "Observation was not entirely foreground",
+      "report_sha256": "8080bc67319d205b230b8403f0db8c9210c8d9c1b71d0157f1a7c34b788560b8"
+    },
+    {
+      "variant": "before",
+      "name": "dapA3g",
+      "reason": "Expected a complete GC-only observation",
+      "report_sha256": "05d6fa2d6a35022d2f509e6eb1d783aa5c631c86d9364376539ff2899631671e"
+    },
+    {
+      "variant": "before",
+      "name": "ByDx5C",
+      "reason": "Expected a complete GC-only observation",
+      "report_sha256": "f048a7d22d740c9de2be8a21ba8c7950658e2fb3685ede04fe12cf9c1603f2f1"
+    },
+    {
+      "variant": "after",
+      "name": "Qng3Oj",
+      "reason": "Observation was not entirely foreground",
+      "report_sha256": "cef08c20e6a9a66f2c2fc54b5152bcb4936effb6301170b5b8b1d1ded3a58f41"
+    }
+  ],
+  "summary": [
+    {
+      "variant": "before",
+      "tasks": 1000,
+      "all": {
+        "samples": 90,
+        "p50_us": 10818,
+        "p95_us": 17045,
+        "max_us": 17694,
+        "over_16667": 7
+      },
+      "with_gc": {
+        "samples": 16,
+        "p50_us": 16525,
+        "p95_us": 17694,
+        "max_us": 17694,
+        "over_16667": 7
+      },
+      "without_gc": {
+        "samples": 74,
+        "p50_us": 10400,
+        "p95_us": 11715,
+        "max_us": 12011,
+        "over_16667": 0
+      }
+    },
+    {
+      "variant": "before",
+      "tasks": 10000,
+      "all": {
+        "samples": 90,
+        "p50_us": 12183,
+        "p95_us": 18120,
+        "max_us": 18651,
+        "over_16667": 16
+      },
+      "with_gc": {
+        "samples": 45,
+        "p50_us": 15235,
+        "p95_us": 18545,
+        "max_us": 18651,
+        "over_16667": 16
+      },
+      "without_gc": {
+        "samples": 45,
+        "p50_us": 10736,
+        "p95_us": 12205,
+        "max_us": 12791,
+        "over_16667": 0
+      }
+    },
+    {
+      "variant": "after",
+      "tasks": 1000,
+      "all": {
+        "samples": 90,
+        "p50_us": 10720,
+        "p95_us": 15639,
+        "max_us": 17416,
+        "over_16667": 2
+      },
+      "with_gc": {
+        "samples": 16,
+        "p50_us": 14599,
+        "p95_us": 17416,
+        "max_us": 17416,
+        "over_16667": 2
+      },
+      "without_gc": {
+        "samples": 74,
+        "p50_us": 10143,
+        "p95_us": 11675,
+        "max_us": 11834,
+        "over_16667": 0
+      }
+    },
+    {
+      "variant": "after",
+      "tasks": 10000,
+      "all": {
+        "samples": 90,
+        "p50_us": 11439,
+        "p95_us": 17279,
+        "max_us": 19272,
+        "over_16667": 11
+      },
+      "with_gc": {
+        "samples": 43,
+        "p50_us": 15752,
+        "p95_us": 17942,
+        "max_us": 19272,
+        "over_16667": 11
+      },
+      "without_gc": {
+        "samples": 47,
+        "p50_us": 10493,
+        "p95_us": 11714,
+        "max_us": 11928,
+        "over_16667": 0
+      }
+    }
+  ],
+  "raw": {
+    "file": "gc-product-raw-3d12-2026-10-23.json.gz",
+    "bytes": 1033968,
+    "sha256": "188ddb679a83fa3b829ef2bedb81648fc28724730732411f7bbcb53e7b10c788"
+  },
+  "packages": {
+    "before": {
+      "scope": "derived-isolated-acceptance-copy-not-original-signed-candidate",
+      "source_revision": "49c0cc1dc95efda9530f0979e3811a0471289eca",
+      "source_manifest_sha256": "25113e3eec27731c7892c891f4701b03d0135751fac32f06fb0b5eed45bfb679",
+      "source_archive_sha256": "7584bfd2983aed46c424ba2b0bde3161fb006b4952012a38a5a5bef16fad31e2",
+      "source_manifest": {
+        "version": "1.5.2",
+        "build_number": "3",
+        "platform": "macos",
+        "revision": "49c0cc1dc95efda9530f0979e3811a0471289eca",
+        "signing": "not-notarized",
+        "build_mode": "profile",
+        "scope": "ISOLATED_PERFORMANCE_HARNESS_NOT_PRODUCT_CANDIDATE",
+        "entrypoint": "benchmark/workspace_profile.dart",
+        "native_failure_probe": "MANUAL_SINGLE_SYNTHETIC_TASK_REAL_OS_CALLBACK_ONLY",
+        "frame_diagnostics": "OPT_IN_SELF_VM_LOOPBACK_10000_TASKS_768PX_NOT_BASELINE",
+        "gc_observation": "30_MOUNTS_WIDGET_PROFILING_OFF_ONE_DEFERRED_TIMELINE_READ",
+        "artifacts": [
+          {
+            "file": "DontForget_macOS_profile_benchmark.zip",
+            "bytes": 28209721,
+            "sha256": "7584bfd2983aed46c424ba2b0bde3161fb006b4952012a38a5a5bef16fad31e2"
+          }
+        ]
+      },
+      "bundle_id": "com.example.dontForget.acceptance.tail-final-r39910780360",
+      "app": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/tail-final-r39910780360/dont_forget.app",
+      "entitlements": {
+        "com.apple.security.app-sandbox": true,
+        "com.apple.security.cs.allow-jit": true,
+        "com.apple.security.device.audio-input": true,
+        "com.apple.security.files.user-selected.read-write": true,
+        "com.apple.security.get-task-allow": true,
+        "com.apple.security.network.client": true,
+        "com.apple.security.network.server": true
+      },
+      "changed_bundle_paths": [
+        "Contents/Info.plist",
+        "Contents/MacOS/dont_forget"
+      ],
+      "changed_info_keys": [
+        "CFBundleDisplayName",
+        "CFBundleIdentifier"
+      ],
+      "frameworks_and_resources_unchanged": true,
+      "protected_tree_sha256": "3adf2824bcb8e0ee206c479c7fac8706857c2c3093409bcf568ebe1c40ced39b",
+      "protected_tree": {
+        "Contents/Frameworks/App.framework": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/App": {
+          "symlink": "Versions/Current/App"
+        },
+        "Contents/Frameworks/App.framework/Resources": {
+          "symlink": "Versions/Current/Resources"
+        },
+        "Contents/Frameworks/App.framework/Versions": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/App": {
+          "sha256": "e102b7866b05014fcfeee29ff2f95a528d357e92184da8d18a2ef1067bff5b13",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/Info.plist": {
+          "sha256": "08b03b58e4ff25c66f5e60193b2728ab5246563bc4f253211a5c4835bbc1d333",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/AssetManifest.bin": {
+          "sha256": "50c73da74698be20269b804719507b72ae5d75daf780a3b404bde559fbc2e4a5",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/FontManifest.json": {
+          "sha256": "cd7e03645bc44b2dd47b7cb626f51c4ecbf55a197ab77241628b47ac165fbe21",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/NOTICES.Z": {
+          "sha256": "4645c7a03f37c51339d37f800acfa53c40c91635cefa20e4746e106691f76aa0",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/NativeAssetsManifest.json": {
+          "sha256": "1f886d741ac6552a07906d60740dfc6ccf232bc70ff0c4889031a45069454a40",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/assets": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/assets/app_icon.ico": {
+          "sha256": "c098d3fc85cacff98b8e69811b48e9f0d852fcee278132d794411d978869cbf8",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/assets/app_icon.png": {
+          "sha256": "416efd77cde932d42ef34168da24dd428a495b1f4f34bbbd125a18d2add186a2",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/fonts": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/fonts/MaterialIcons-Regular.otf": {
+          "sha256": "4cecdf072f13ca411a60dd82248d54c701a7062d7ac69f8b7859debcc775bc2b",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/cupertino_icons": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/cupertino_icons/assets": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf": {
+          "sha256": "67c44fe9183b002e79dde7f6977e2988661c9a3e4a3c5fce968787efdbed823c",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/record_web": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/record_web/assets": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/record_web/assets/js": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/record_web/assets/js/record.fixwebmduration.js": {
+          "sha256": "c345ad5d2fffb357ada647b9b690693452a2001bc5912f1e9066876ce016399b",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/record_web/assets/js/record.worklet.js": {
+          "sha256": "ba7e0f4c841480ee78c0b54e7eadd44455b916fefdb07410ee46159d82dcc08e",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/shaders": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/shaders/ink_sparkle.frag": {
+          "sha256": "c4b3f5d1db405d50b8b7678d8bb446237f37ead86501e32c7a77fac963baff2d",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/shaders/stretch_effect.frag": {
+          "sha256": "50c8c225a68bcb36805a9d3fde5be28e315e666fd1c142a2d88f3fb5dfc7d9ff",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/_CodeSignature": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/_CodeSignature/CodeResources": {
+          "sha256": "940a4bbebbf02d432564f75c0b3e47ad9f76670d999f2a485c5b54029024297e",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/Current": {
+          "symlink": "A"
+        },
+        "Contents/Frameworks/FlutterMacOS.framework": {
+          "directory": true
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/FlutterMacOS": {
+          "symlink": "Versions/Current/FlutterMacOS"
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Resources": {
+          "symlink": "Versions/Current/Resources"
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions": {
+          "directory": true
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A": {
+          "directory": true
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/FlutterMacOS": {
+          "sha256": "f0fc6454291933090f49ccd3730c7973ef5b373bce635b12a1a6c2e0319d6de1",
+          "mode": 493
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/Resources": {
+          "directory": true
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/Resources/Info.plist": {
+          "sha256": "ab1f535b0873bf25217fed6d31f545c71498146a1b0635ba9a8026518f50e83d",
+          "mode": 420
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/Resources/PrivacyInfo.xcprivacy": {
+          "sha256": "42542470043a0a3af3ab452ae4355bf764b916b7a442d3c814f362241a794454",
+          "mode": 420
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/Resources/icudtl.dat": {
+          "sha256": "998367809a821d595928089c197b3f7959f0420f81f79d4d0daee53378492ed5",
+          "mode": 420
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/_CodeSignature": {
+          "directory": true
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/_CodeSignature/CodeResources": {
+          "sha256": "494489b48caa12700413322e776239c0705744b2a44e72b4999066ade1e8efcf",
+          "mode": 420
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/Current": {
+          "symlink": "A"
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Resources": {
+          "symlink": "Versions/Current/Resources"
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/Resources": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/Resources/Info.plist": {
+          "sha256": "ad0c388f5cbd2b8ca57a60799de39e686e341abb942164472bc4063909e52478",
+          "mode": 420
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/Resources/flutter_local_notifications_privacy.bundle": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/Resources/flutter_local_notifications_privacy.bundle/Contents": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/Resources/flutter_local_notifications_privacy.bundle/Contents/Info.plist": {
+          "sha256": "b26659898701f13c7601d4394df417ae5a43dd636afe1d4de531ff7dc7fd9b97",
+          "mode": 420
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/Resources/flutter_local_notifications_privacy.bundle/Contents/Resources": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/Resources/flutter_local_notifications_privacy.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+          "sha256": "1d821a83fb0a7583b0b03075050761341e367f37167f8398a631a30376cd6369",
+          "mode": 420
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/_CodeSignature": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/_CodeSignature/CodeResources": {
+          "sha256": "f22e817c1022c5ab19c29716f9054809acf0459c3a4a36dc8e5cbbc49bd338a8",
+          "mode": 420
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/flutter_local_notifications": {
+          "sha256": "e5b8277c51bb9b3c57f43a408a5e19fba6635d38139c65e1e08b50840b41c538",
+          "mode": 493
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/Current": {
+          "symlink": "A"
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/flutter_local_notifications": {
+          "symlink": "Versions/Current/flutter_local_notifications"
+        },
+        "Contents/Frameworks/objective_c.framework": {
+          "directory": true
+        },
+        "Contents/Frameworks/objective_c.framework/Resources": {
+          "symlink": "Versions/Current/Resources"
+        },
+        "Contents/Frameworks/objective_c.framework/Versions": {
+          "directory": true
+        },
+        "Contents/Frameworks/objective_c.framework/Versions/A": {
+          "directory": true
+        },
+        "Contents/Frameworks/objective_c.framework/Versions/A/Resources": {
+          "directory": true
+        },
+        "Contents/Frameworks/objective_c.framework/Versions/A/Resources/Info.plist": {
+          "sha256": "57f0160881d1040458efd11a5256f761775e915a0060496b4a79ccb902f8485c",
+          "mode": 420
+        },
+        "Contents/Frameworks/objective_c.framework/Versions/A/_CodeSignature": {
+          "directory": true
+        },
+        "Contents/Frameworks/objective_c.framework/Versions/A/_CodeSignature/CodeResources": {
+          "sha256": "8d91bc8b7e125eed13b8800bbb5edb28f94cf67d749b9b6db670eb5727f86c4c",
+          "mode": 420
+        },
+        "Contents/Frameworks/objective_c.framework/Versions/A/objective_c": {
+          "sha256": "ed3fe9aeb1a50b5b1a9b5e3847c489a00cd8f6fcb3100b340f2f28bf15ebef94",
+          "mode": 493
+        },
+        "Contents/Frameworks/objective_c.framework/Versions/Current": {
+          "symlink": "A"
+        },
+        "Contents/Frameworks/objective_c.framework/objective_c": {
+          "symlink": "Versions/Current/objective_c"
+        },
+        "Contents/Frameworks/sqlite3.framework": {
+          "directory": true
+        },
+        "Contents/Frameworks/sqlite3.framework/Resources": {
+          "symlink": "Versions/Current/Resources"
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions": {
+          "directory": true
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions/A": {
+          "directory": true
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions/A/Resources": {
+          "directory": true
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions/A/Resources/Info.plist": {
+          "sha256": "7bd8795d9bcbdebbb396fd334ec789265f9947fe36fff90cf6046fab60b209e9",
+          "mode": 420
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions/A/_CodeSignature": {
+          "directory": true
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions/A/_CodeSignature/CodeResources": {
+          "sha256": "1b801429a9d688e57ebd4a9a72ca5de5ef1f0c1f02fe2bf091e1bcd4809072ca",
+          "mode": 420
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions/A/sqlite3": {
+          "sha256": "4b720159f3d4bf16621997b4059c5a01c45efef77514ac40c65ca03ed4f6ecef",
+          "mode": 420
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions/Current": {
+          "symlink": "A"
+        },
+        "Contents/Frameworks/sqlite3.framework/sqlite3": {
+          "symlink": "Versions/Current/sqlite3"
+        },
+        "Contents/Resources/AppIcon.icns": {
+          "sha256": "7269175e84f1f99523142e74a032f80a66fa7fefa8040f703de8e522b6bbd867",
+          "mode": 420
+        },
+        "Contents/Resources/Assets.car": {
+          "sha256": "69190677f79c59a2cd71b84013919999caf62785c64234afba25e41e1ba9cd84",
+          "mode": 420
+        },
+        "Contents/Resources/Base.lproj": {
+          "directory": true
+        },
+        "Contents/Resources/Base.lproj/MainMenu.nib": {
+          "sha256": "e5ce99ac2d2a77b3db4d0ff31f266ef1e878737df97459d7e62fb31cc5109df1",
+          "mode": 420
+        },
+        "Contents/Resources/file_picker_darwin_file_picker_darwin.bundle": {
+          "directory": true
+        },
+        "Contents/Resources/file_picker_darwin_file_picker_darwin.bundle/Contents": {
+          "directory": true
+        },
+        "Contents/Resources/file_picker_darwin_file_picker_darwin.bundle/Contents/Info.plist": {
+          "sha256": "71b7227b1c19209a102ea401cabb4b7d7f782c531bfaaa46e2ec5c97b35a74a7",
+          "mode": 420
+        },
+        "Contents/Resources/file_picker_darwin_file_picker_darwin.bundle/Contents/Resources": {
+          "directory": true
+        },
+        "Contents/Resources/file_picker_darwin_file_picker_darwin.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+          "sha256": "204d035a88eab2281b3d914f46c796766ae78e3cb82537711928dca9e28dbbb8",
+          "mode": 420
+        },
+        "Contents/Resources/file_selector_macos_file_selector_macos.bundle": {
+          "directory": true
+        },
+        "Contents/Resources/file_selector_macos_file_selector_macos.bundle/Contents": {
+          "directory": true
+        },
+        "Contents/Resources/file_selector_macos_file_selector_macos.bundle/Contents/Info.plist": {
+          "sha256": "99834e8edfe7209248a246220e713cd00676dcc722faf586f1660c893e0eb9f9",
+          "mode": 420
+        },
+        "Contents/Resources/file_selector_macos_file_selector_macos.bundle/Contents/Resources": {
+          "directory": true
+        },
+        "Contents/Resources/file_selector_macos_file_selector_macos.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+          "sha256": "204d035a88eab2281b3d914f46c796766ae78e3cb82537711928dca9e28dbbb8",
+          "mode": 420
+        },
+        "Contents/Resources/record_macos_record_macos.bundle": {
+          "directory": true
+        },
+        "Contents/Resources/record_macos_record_macos.bundle/Contents": {
+          "directory": true
+        },
+        "Contents/Resources/record_macos_record_macos.bundle/Contents/Info.plist": {
+          "sha256": "f0d017482ef180fc75d5f5c0d87ca45b8b1de371c94ca3979d553c45b086b1d7",
+          "mode": 420
+        },
+        "Contents/Resources/record_macos_record_macos.bundle/Contents/Resources": {
+          "directory": true
+        },
+        "Contents/Resources/record_macos_record_macos.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+          "sha256": "c1b3b6b3c7c996fcd9589be21b9a670b5ce2c3a4f7aa5f55af5cf6470702de12",
+          "mode": 420
+        },
+        "Contents/Resources/sqflite_darwin_sqflite_darwin.bundle": {
+          "directory": true
+        },
+        "Contents/Resources/sqflite_darwin_sqflite_darwin.bundle/Contents": {
+          "directory": true
+        },
+        "Contents/Resources/sqflite_darwin_sqflite_darwin.bundle/Contents/Info.plist": {
+          "sha256": "cecd9f259bf2fa2dd1da9fabfc1d6cf81eecbaa02f60bc07a0f200c1900d447c",
+          "mode": 420
+        },
+        "Contents/Resources/sqflite_darwin_sqflite_darwin.bundle/Contents/Resources": {
+          "directory": true
+        },
+        "Contents/Resources/sqflite_darwin_sqflite_darwin.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+          "sha256": "47226a29608df206ad0a110e6afeb5a77ff575ac1df9c76bfdb2d6dfb3fafed1",
+          "mode": 420
+        }
+      },
+      "native_non_signature_identity": [
+        {
+          "cpu": 16777223,
+          "subtype": 3,
+          "signature_offset": 1067488,
+          "non_signature_sha256": "9b5777ddc253cc6ac470695b957379acfbd71cefb5697b10fe043b67e5fc9539",
+          "alignment": 14
+        },
+        {
+          "cpu": 16777228,
+          "subtype": 0,
+          "signature_offset": 1037584,
+          "non_signature_sha256": "445dd048d6316306a80daef101846fdfc3f55faebd6fa74663ca79e3780e5a48",
+          "alignment": 14
+        }
+      ],
+      "codesign_verify": "PASS",
+      "app_started": false,
+      "app_registered": false,
+      "database_acceptance": "NOT_PERFORMED",
+      "notification_acceptance": "NOT_PERFORMED",
+      "restart_acceptance": "NOT_PERFORMED",
+      "launch_requirement": "Register and launch only this exact non-temporary app through macOS; verify its independent sandbox container and database before restoring synthetic fixtures. macOS sandbox launch supplies the container Data working directory; no CUA cwd override is required. Do not invoke smoke_desktop.py or start the original bundle ID."
+    },
+    "after": {
+      "scope": "derived-isolated-acceptance-copy-not-original-signed-candidate",
+      "source_revision": "9dca8cb0afdf73de5eb71ca41ce3c5fbe903e511",
+      "source_manifest_sha256": "bb7884acf52445f6f2993315d64108572a07800b93139c4b74f849262ad6ad8b",
+      "source_archive_sha256": "5f364d9d31c00277ee9e9eb5f8269a5c0920df3b4c5ac6a5dbdd12975adbe1d4",
+      "source_manifest": {
+        "version": "1.5.2",
+        "build_number": "3",
+        "platform": "macos",
+        "revision": "9dca8cb0afdf73de5eb71ca41ce3c5fbe903e511",
+        "signing": "not-notarized",
+        "build_mode": "profile",
+        "scope": "ISOLATED_PERFORMANCE_HARNESS_NOT_PRODUCT_CANDIDATE",
+        "entrypoint": "benchmark/workspace_profile.dart",
+        "native_failure_probe": "MANUAL_SINGLE_SYNTHETIC_TASK_REAL_OS_CALLBACK_ONLY",
+        "frame_diagnostics": "OPT_IN_SELF_VM_LOOPBACK_10000_TASKS_768PX_NOT_BASELINE",
+        "gc_observation": "30_MOUNTS_WIDGET_PROFILING_OFF_ONE_DEFERRED_TIMELINE_READ",
+        "artifacts": [
+          {
+            "file": "DontForget_macOS_profile_benchmark.zip",
+            "bytes": 28210363,
+            "sha256": "5f364d9d31c00277ee9e9eb5f8269a5c0920df3b4c5ac6a5dbdd12975adbe1d4"
+          }
+        ]
+      },
+      "bundle_id": "com.example.dontForget.acceptance.profile-final-r39918373329",
+      "app": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/profile-final-r39918373329/dont_forget.app",
+      "entitlements": {
+        "com.apple.security.app-sandbox": true,
+        "com.apple.security.cs.allow-jit": true,
+        "com.apple.security.device.audio-input": true,
+        "com.apple.security.files.user-selected.read-write": true,
+        "com.apple.security.get-task-allow": true,
+        "com.apple.security.network.client": true,
+        "com.apple.security.network.server": true
+      },
+      "changed_bundle_paths": [
+        "Contents/Info.plist",
+        "Contents/MacOS/dont_forget"
+      ],
+      "changed_info_keys": [
+        "CFBundleDisplayName",
+        "CFBundleIdentifier"
+      ],
+      "frameworks_and_resources_unchanged": true,
+      "protected_tree_sha256": "539c627c286adb2a8d02c7e507003588b56608232ec4e644efe9446adc74725b",
+      "protected_tree": {
+        "Contents/Frameworks/App.framework": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/App": {
+          "symlink": "Versions/Current/App"
+        },
+        "Contents/Frameworks/App.framework/Resources": {
+          "symlink": "Versions/Current/Resources"
+        },
+        "Contents/Frameworks/App.framework/Versions": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/App": {
+          "sha256": "e7332e01446c07a22dfeb7afbe36b2328026415127dffea724fbfa90259b1f8b",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/Info.plist": {
+          "sha256": "08b03b58e4ff25c66f5e60193b2728ab5246563bc4f253211a5c4835bbc1d333",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/AssetManifest.bin": {
+          "sha256": "50c73da74698be20269b804719507b72ae5d75daf780a3b404bde559fbc2e4a5",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/FontManifest.json": {
+          "sha256": "cd7e03645bc44b2dd47b7cb626f51c4ecbf55a197ab77241628b47ac165fbe21",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/NOTICES.Z": {
+          "sha256": "4645c7a03f37c51339d37f800acfa53c40c91635cefa20e4746e106691f76aa0",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/NativeAssetsManifest.json": {
+          "sha256": "1f886d741ac6552a07906d60740dfc6ccf232bc70ff0c4889031a45069454a40",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/assets": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/assets/app_icon.ico": {
+          "sha256": "c098d3fc85cacff98b8e69811b48e9f0d852fcee278132d794411d978869cbf8",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/assets/app_icon.png": {
+          "sha256": "416efd77cde932d42ef34168da24dd428a495b1f4f34bbbd125a18d2add186a2",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/fonts": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/fonts/MaterialIcons-Regular.otf": {
+          "sha256": "4cecdf072f13ca411a60dd82248d54c701a7062d7ac69f8b7859debcc775bc2b",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/cupertino_icons": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/cupertino_icons/assets": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/cupertino_icons/assets/CupertinoIcons.ttf": {
+          "sha256": "67c44fe9183b002e79dde7f6977e2988661c9a3e4a3c5fce968787efdbed823c",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/record_web": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/record_web/assets": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/record_web/assets/js": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/record_web/assets/js/record.fixwebmduration.js": {
+          "sha256": "c345ad5d2fffb357ada647b9b690693452a2001bc5912f1e9066876ce016399b",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/packages/record_web/assets/js/record.worklet.js": {
+          "sha256": "ba7e0f4c841480ee78c0b54e7eadd44455b916fefdb07410ee46159d82dcc08e",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/shaders": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/shaders/ink_sparkle.frag": {
+          "sha256": "c4b3f5d1db405d50b8b7678d8bb446237f37ead86501e32c7a77fac963baff2d",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/Resources/flutter_assets/shaders/stretch_effect.frag": {
+          "sha256": "50c8c225a68bcb36805a9d3fde5be28e315e666fd1c142a2d88f3fb5dfc7d9ff",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/A/_CodeSignature": {
+          "directory": true
+        },
+        "Contents/Frameworks/App.framework/Versions/A/_CodeSignature/CodeResources": {
+          "sha256": "940a4bbebbf02d432564f75c0b3e47ad9f76670d999f2a485c5b54029024297e",
+          "mode": 420
+        },
+        "Contents/Frameworks/App.framework/Versions/Current": {
+          "symlink": "A"
+        },
+        "Contents/Frameworks/FlutterMacOS.framework": {
+          "directory": true
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/FlutterMacOS": {
+          "symlink": "Versions/Current/FlutterMacOS"
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Resources": {
+          "symlink": "Versions/Current/Resources"
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions": {
+          "directory": true
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A": {
+          "directory": true
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/FlutterMacOS": {
+          "sha256": "f0fc6454291933090f49ccd3730c7973ef5b373bce635b12a1a6c2e0319d6de1",
+          "mode": 493
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/Resources": {
+          "directory": true
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/Resources/Info.plist": {
+          "sha256": "ab1f535b0873bf25217fed6d31f545c71498146a1b0635ba9a8026518f50e83d",
+          "mode": 420
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/Resources/PrivacyInfo.xcprivacy": {
+          "sha256": "42542470043a0a3af3ab452ae4355bf764b916b7a442d3c814f362241a794454",
+          "mode": 420
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/Resources/icudtl.dat": {
+          "sha256": "998367809a821d595928089c197b3f7959f0420f81f79d4d0daee53378492ed5",
+          "mode": 420
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/_CodeSignature": {
+          "directory": true
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/A/_CodeSignature/CodeResources": {
+          "sha256": "494489b48caa12700413322e776239c0705744b2a44e72b4999066ade1e8efcf",
+          "mode": 420
+        },
+        "Contents/Frameworks/FlutterMacOS.framework/Versions/Current": {
+          "symlink": "A"
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Resources": {
+          "symlink": "Versions/Current/Resources"
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/Resources": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/Resources/Info.plist": {
+          "sha256": "ad0c388f5cbd2b8ca57a60799de39e686e341abb942164472bc4063909e52478",
+          "mode": 420
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/Resources/flutter_local_notifications_privacy.bundle": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/Resources/flutter_local_notifications_privacy.bundle/Contents": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/Resources/flutter_local_notifications_privacy.bundle/Contents/Info.plist": {
+          "sha256": "b26659898701f13c7601d4394df417ae5a43dd636afe1d4de531ff7dc7fd9b97",
+          "mode": 420
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/Resources/flutter_local_notifications_privacy.bundle/Contents/Resources": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/Resources/flutter_local_notifications_privacy.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+          "sha256": "1d821a83fb0a7583b0b03075050761341e367f37167f8398a631a30376cd6369",
+          "mode": 420
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/_CodeSignature": {
+          "directory": true
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/_CodeSignature/CodeResources": {
+          "sha256": "f22e817c1022c5ab19c29716f9054809acf0459c3a4a36dc8e5cbbc49bd338a8",
+          "mode": 420
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/flutter_local_notifications": {
+          "sha256": "e5b8277c51bb9b3c57f43a408a5e19fba6635d38139c65e1e08b50840b41c538",
+          "mode": 493
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/Versions/Current": {
+          "symlink": "A"
+        },
+        "Contents/Frameworks/flutter_local_notifications.framework/flutter_local_notifications": {
+          "symlink": "Versions/Current/flutter_local_notifications"
+        },
+        "Contents/Frameworks/objective_c.framework": {
+          "directory": true
+        },
+        "Contents/Frameworks/objective_c.framework/Resources": {
+          "symlink": "Versions/Current/Resources"
+        },
+        "Contents/Frameworks/objective_c.framework/Versions": {
+          "directory": true
+        },
+        "Contents/Frameworks/objective_c.framework/Versions/A": {
+          "directory": true
+        },
+        "Contents/Frameworks/objective_c.framework/Versions/A/Resources": {
+          "directory": true
+        },
+        "Contents/Frameworks/objective_c.framework/Versions/A/Resources/Info.plist": {
+          "sha256": "57f0160881d1040458efd11a5256f761775e915a0060496b4a79ccb902f8485c",
+          "mode": 420
+        },
+        "Contents/Frameworks/objective_c.framework/Versions/A/_CodeSignature": {
+          "directory": true
+        },
+        "Contents/Frameworks/objective_c.framework/Versions/A/_CodeSignature/CodeResources": {
+          "sha256": "8d91bc8b7e125eed13b8800bbb5edb28f94cf67d749b9b6db670eb5727f86c4c",
+          "mode": 420
+        },
+        "Contents/Frameworks/objective_c.framework/Versions/A/objective_c": {
+          "sha256": "d6a174addc6f45f51d29a94fe7658cd8b0ca43ce5b8e84f2aae976ac0ed31a85",
+          "mode": 493
+        },
+        "Contents/Frameworks/objective_c.framework/Versions/Current": {
+          "symlink": "A"
+        },
+        "Contents/Frameworks/objective_c.framework/objective_c": {
+          "symlink": "Versions/Current/objective_c"
+        },
+        "Contents/Frameworks/sqlite3.framework": {
+          "directory": true
+        },
+        "Contents/Frameworks/sqlite3.framework/Resources": {
+          "symlink": "Versions/Current/Resources"
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions": {
+          "directory": true
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions/A": {
+          "directory": true
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions/A/Resources": {
+          "directory": true
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions/A/Resources/Info.plist": {
+          "sha256": "7bd8795d9bcbdebbb396fd334ec789265f9947fe36fff90cf6046fab60b209e9",
+          "mode": 420
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions/A/_CodeSignature": {
+          "directory": true
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions/A/_CodeSignature/CodeResources": {
+          "sha256": "1b801429a9d688e57ebd4a9a72ca5de5ef1f0c1f02fe2bf091e1bcd4809072ca",
+          "mode": 420
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions/A/sqlite3": {
+          "sha256": "4b720159f3d4bf16621997b4059c5a01c45efef77514ac40c65ca03ed4f6ecef",
+          "mode": 420
+        },
+        "Contents/Frameworks/sqlite3.framework/Versions/Current": {
+          "symlink": "A"
+        },
+        "Contents/Frameworks/sqlite3.framework/sqlite3": {
+          "symlink": "Versions/Current/sqlite3"
+        },
+        "Contents/Resources/AppIcon.icns": {
+          "sha256": "7269175e84f1f99523142e74a032f80a66fa7fefa8040f703de8e522b6bbd867",
+          "mode": 420
+        },
+        "Contents/Resources/Assets.car": {
+          "sha256": "69190677f79c59a2cd71b84013919999caf62785c64234afba25e41e1ba9cd84",
+          "mode": 420
+        },
+        "Contents/Resources/Base.lproj": {
+          "directory": true
+        },
+        "Contents/Resources/Base.lproj/MainMenu.nib": {
+          "sha256": "e5ce99ac2d2a77b3db4d0ff31f266ef1e878737df97459d7e62fb31cc5109df1",
+          "mode": 420
+        },
+        "Contents/Resources/file_picker_darwin_file_picker_darwin.bundle": {
+          "directory": true
+        },
+        "Contents/Resources/file_picker_darwin_file_picker_darwin.bundle/Contents": {
+          "directory": true
+        },
+        "Contents/Resources/file_picker_darwin_file_picker_darwin.bundle/Contents/Info.plist": {
+          "sha256": "71b7227b1c19209a102ea401cabb4b7d7f782c531bfaaa46e2ec5c97b35a74a7",
+          "mode": 420
+        },
+        "Contents/Resources/file_picker_darwin_file_picker_darwin.bundle/Contents/Resources": {
+          "directory": true
+        },
+        "Contents/Resources/file_picker_darwin_file_picker_darwin.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+          "sha256": "204d035a88eab2281b3d914f46c796766ae78e3cb82537711928dca9e28dbbb8",
+          "mode": 420
+        },
+        "Contents/Resources/file_selector_macos_file_selector_macos.bundle": {
+          "directory": true
+        },
+        "Contents/Resources/file_selector_macos_file_selector_macos.bundle/Contents": {
+          "directory": true
+        },
+        "Contents/Resources/file_selector_macos_file_selector_macos.bundle/Contents/Info.plist": {
+          "sha256": "99834e8edfe7209248a246220e713cd00676dcc722faf586f1660c893e0eb9f9",
+          "mode": 420
+        },
+        "Contents/Resources/file_selector_macos_file_selector_macos.bundle/Contents/Resources": {
+          "directory": true
+        },
+        "Contents/Resources/file_selector_macos_file_selector_macos.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+          "sha256": "204d035a88eab2281b3d914f46c796766ae78e3cb82537711928dca9e28dbbb8",
+          "mode": 420
+        },
+        "Contents/Resources/record_macos_record_macos.bundle": {
+          "directory": true
+        },
+        "Contents/Resources/record_macos_record_macos.bundle/Contents": {
+          "directory": true
+        },
+        "Contents/Resources/record_macos_record_macos.bundle/Contents/Info.plist": {
+          "sha256": "f0d017482ef180fc75d5f5c0d87ca45b8b1de371c94ca3979d553c45b086b1d7",
+          "mode": 420
+        },
+        "Contents/Resources/record_macos_record_macos.bundle/Contents/Resources": {
+          "directory": true
+        },
+        "Contents/Resources/record_macos_record_macos.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+          "sha256": "c1b3b6b3c7c996fcd9589be21b9a670b5ce2c3a4f7aa5f55af5cf6470702de12",
+          "mode": 420
+        },
+        "Contents/Resources/sqflite_darwin_sqflite_darwin.bundle": {
+          "directory": true
+        },
+        "Contents/Resources/sqflite_darwin_sqflite_darwin.bundle/Contents": {
+          "directory": true
+        },
+        "Contents/Resources/sqflite_darwin_sqflite_darwin.bundle/Contents/Info.plist": {
+          "sha256": "cecd9f259bf2fa2dd1da9fabfc1d6cf81eecbaa02f60bc07a0f200c1900d447c",
+          "mode": 420
+        },
+        "Contents/Resources/sqflite_darwin_sqflite_darwin.bundle/Contents/Resources": {
+          "directory": true
+        },
+        "Contents/Resources/sqflite_darwin_sqflite_darwin.bundle/Contents/Resources/PrivacyInfo.xcprivacy": {
+          "sha256": "47226a29608df206ad0a110e6afeb5a77ff575ac1df9c76bfdb2d6dfb3fafed1",
+          "mode": 420
+        }
+      },
+      "native_non_signature_identity": [
+        {
+          "cpu": 16777223,
+          "subtype": 3,
+          "signature_offset": 1067488,
+          "non_signature_sha256": "9b5777ddc253cc6ac470695b957379acfbd71cefb5697b10fe043b67e5fc9539",
+          "alignment": 14
+        },
+        {
+          "cpu": 16777228,
+          "subtype": 0,
+          "signature_offset": 1037584,
+          "non_signature_sha256": "445dd048d6316306a80daef101846fdfc3f55faebd6fa74663ca79e3780e5a48",
+          "alignment": 14
+        }
+      ],
+      "codesign_verify": "PASS",
+      "app_started": false,
+      "app_registered": false,
+      "database_acceptance": "NOT_PERFORMED",
+      "notification_acceptance": "NOT_PERFORMED",
+      "restart_acceptance": "NOT_PERFORMED",
+      "launch_requirement": "Register and launch only this exact non-temporary app through macOS; verify its independent sandbox container and database before restoring synthetic fixtures. macOS sandbox launch supplies the container Data working directory; no CUA cwd override is required. Do not invoke smoke_desktop.py or start the original bundle ID."
+    }
+  },
+  "limitation": "All accepted slow frames overlap recognized same-UI-thread GC scopes, an association not exclusive causality. 10000 maximum did not improve. Source 9d final includes timestamp fast path which is outside GC-only board frames."
+}

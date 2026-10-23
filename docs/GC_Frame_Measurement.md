@@ -20,4 +20,6 @@ python3 scripts/analyze_gc_frames.py --report /absolute/path/to/results.json
 
 产品候选的分配优化包括按不可变 Reminder 缓存只读子任务解析结果、窄屏分类焦点节点按需创建。解析缓存随任务对象释放，copyWith 得到新缓存，历史可变列表接口保留；不改变展开内容或存储格式。比较产品候选时两边必须使用相同的缓存主题外壳。此协议每次重建看板/ProviderScope，但复用同组任务对象，预热也会预热模型的惰性缓存；不能把结果称为首次解析或完整产品冷启动性能。
 
+2026-10-23 的[测量壳对照](benchmarks/gc-shell-3d12-2026-10-23.json)证明只缓存 ThemeData 并未稳定修复万条尾部。产品优化后的[普通交替复测](benchmarks/product-allocation-3d12-2026-10-23.json)与[GC 分组复测](benchmarks/gc-product-3d12-2026-10-23.json)分开保存；千条 GC 慢帧 7/90 → 2/90，万条 16/90 → 11/90，但万条 max 未改善。[最终源码单次普通补测](benchmarks/final-profile-3d12-2026-10-23.json)仍有 20.113 ms 的有效慢帧，不据此关闭尾部优化任务。
+
 参考：[Dart VM 时间线流与环形记录器](https://github.com/dart-lang/sdk/blob/main/runtime/docs/timeline.md)、[Flutter 内存与 GC 观测](https://docs.flutter.dev/tools/devtools/memory)。时间线记录器可能覆盖旧事件，所以缺少所需 BUILD/GC 边界的报告不能用来证明 GC 缺席。该模块不由正式产品入口导入，不改 VM 堆大小，不强制 GC。
