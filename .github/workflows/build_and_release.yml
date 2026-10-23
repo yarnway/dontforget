@@ -70,6 +70,16 @@ jobs:
         if: matrix.platform == 'linux'
         timeout-minutes: 12
         run: |
+          # The hosted Azure mirror can stream slowly without hitting APT's idle timeout.
+          # Use Ubuntu's official HTTPS archive; keep the existing suites and signing keys.
+          for sources in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
+            if [ -f "$sources" ]; then
+              sudo sed -i \
+                -e 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' \
+                -e 's|https://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' \
+                "$sources"
+            fi
+          done
           sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update
           sudo apt-get -o Acquire::Retries=2 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install --no-install-recommends -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-tools libasound2-dev libayatana-appindicator3-dev at-spi2-core xvfb xauth pulseaudio-utils ffmpeg
           for element in playbin audiopanorama autoaudiosink; do
