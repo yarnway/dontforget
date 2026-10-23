@@ -173,12 +173,16 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
     final urgency = ref.watch(dynamicUrgencyServiceProvider);
     return LayoutBuilder(
       builder: (context, constraints) {
+        // One clock reading gives every row the same boundary and avoids
+        // thousands of DateTime allocations in a large wide-board frame.
+        final projectionTime = DateTime.now();
         final data = TaskBoardData.project(
           widget.reminders,
           visibleCategory: constraints.maxWidth < 640
               ? _selectedCategory
               : null,
-          isFolded: urgency.isQ4StagnantFolded,
+          isFolded: (task) =>
+              urgency.isQ4StagnantFolded(task, now: projectionTime),
         );
         final pending = data.pending;
         Widget panel(int index, {bool showHeader = true}) => QuadrantView(

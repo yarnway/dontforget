@@ -66,13 +66,22 @@ class DynamicUrgencyService {
   }
 
   /// 判定 Q4 任务是否处于可折叠的冗余停滞状态
-  bool isQ4StagnantFolded(Reminder reminder, {int thresholdHours = 48}) {
+  bool isQ4StagnantFolded(
+    Reminder reminder, {
+    int thresholdHours = 48,
+    DateTime? now,
+  }) {
     if (reminder.quadrantLevel != 4 ||
         reminder.isCompleted ||
         reminder.createdAt == null) {
       return false;
     }
-    final ageHours = DateTime.now().difference(reminder.createdAt!).inHours;
+    // Match Duration.inHours truncation, including future timestamps, without
+    // allocating a Duration for every row in a large board projection.
+    final ageHours =
+        ((now ?? DateTime.now()).microsecondsSinceEpoch -
+            reminder.createdAt!.microsecondsSinceEpoch) ~/
+        Duration.microsecondsPerHour;
     return ageHours >= thresholdHours;
   }
 }

@@ -41,11 +41,21 @@ class _ControlledReminders extends RemindersNotifier {
 
 class _CountingUrgency extends DynamicUrgencyService {
   int checks = 0;
+  final referenceTimes = <DateTime?>{};
 
   @override
-  bool isQ4StagnantFolded(Reminder reminder, {int thresholdHours = 48}) {
+  bool isQ4StagnantFolded(
+    Reminder reminder, {
+    int thresholdHours = 48,
+    DateTime? now,
+  }) {
     checks++;
-    return super.isQ4StagnantFolded(reminder, thresholdHours: thresholdHours);
+    referenceTimes.add(now);
+    return super.isQ4StagnantFolded(
+      reminder,
+      thresholdHours: thresholdHours,
+      now: now,
+    );
   }
 }
 
@@ -79,6 +89,34 @@ void viewport(WidgetTester tester, double width) {
 }
 
 void main() {
+  testWidgets('all wide-board memo rows use one projection time', (
+    tester,
+  ) async {
+    viewport(tester, 768);
+    final urgency = _CountingUrgency();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [dynamicUrgencyServiceProvider.overrideWithValue(urgency)],
+        child: app(
+          TaskBoard(
+            reminders: List.generate(
+              10000,
+              (i) => task('$i', level: i % 4 + 1),
+            ),
+            onPlayMedia: (_) {},
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.byType(QuadrantView), findsNWidgets(4));
+    expect(urgency.checks, 2500);
+    expect(urgency.referenceTimes, hasLength(1));
+    expect(urgency.referenceTimes.single, isNotNull);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('5000 tasks build only the visible cards and scroll cache', (
     tester,
   ) async {
