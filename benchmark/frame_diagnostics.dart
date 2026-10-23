@@ -11,9 +11,10 @@ import 'package:vm_service/vm_service_io.dart';
 /// Connect only to this process's authenticated loopback VM service. No VM URI
 /// or authentication token is saved in a report or advertised over Bonjour.
 class FrameDiagnostics {
-  FrameDiagnostics._(this._service, this._oldStreams);
+  FrameDiagnostics._(this._service, this._oldStreams, this.profileWidgets);
   final VmService _service;
   final List<String> _oldStreams;
+  final bool profileWidgets;
   final _oldBuilds = debugProfileBuildsEnabled;
   final _oldLayouts = debugProfileLayoutsEnabled;
   final _oldPaints = debugProfilePaintsEnabled;
@@ -21,7 +22,7 @@ class FrameDiagnostics {
   bool _closed = false;
   static const _timeout = Duration(seconds: 10);
 
-  static Future<FrameDiagnostics> start() async {
+  static Future<FrameDiagnostics> start({bool profileWidgets = true}) async {
     VmService? service;
     try {
       final uri = (await developer.Service.getInfo()).serverUri;
@@ -46,7 +47,11 @@ class FrameDiagnostics {
           throw TimeoutException('Loopback service connection timed out');
         },
       );
-      return await attach(service, expectedPid: pid);
+      return await attach(
+        service,
+        expectedPid: pid,
+        profileWidgets: profileWidgets,
+      );
     } catch (error) {
       await service?.dispose();
       // Connection exceptions can include the authenticated URL.
@@ -58,11 +63,19 @@ class FrameDiagnostics {
   static Future<FrameDiagnostics> attach(
     VmService service, {
     required int expectedPid,
+    bool profileWidgets = true,
   }) async {
     FrameDiagnostics? session;
     try {
       final vm = await service.getVM().timeout(_timeout);
       if (vm.pid != expectedPid) throw StateError('VM process mismatch');
+      if (!profileWidgets &&
+          (debugProfileBuildsEnabled ||
+              debugProfileBuildsEnabledUserWidgets ||
+              debugProfileLayoutsEnabled ||
+              debugProfilePaintsEnabled)) {
+        throw StateError('GC observation requires widget profiling disabled');
+      }
       final flags = await service.getVMTimelineFlags().timeout(_timeout);
       if (![
         'Dart',
@@ -71,15 +84,17 @@ class FrameDiagnostics {
       ].every((name) => flags.availableStreams?.contains(name) ?? false)) {
         throw StateError('Required timeline streams unavailable');
       }
-      session = FrameDiagnostics._(service, [...?flags.recordedStreams]);
+      session = FrameDiagnostics._(service, [
+        ...?flags.recordedStreams,
+      ], profileWidgets);
       // A failed RPC can have taken effect. Always restore before disposal.
       session._armed = true;
       await service
           .setVMTimelineFlags(['Dart', 'GC', 'Embedder'])
           .timeout(_timeout);
-      debugProfileBuildsEnabled = true;
-      debugProfileLayoutsEnabled = true;
-      debugProfilePaintsEnabled = true;
+      debugProfileBuildsEnabled = profileWidgets;
+      debugProfileLayoutsEnabled = profileWidgets;
+      debugProfilePaintsEnabled = profileWidgets;
       await service.clearVMTimeline().timeout(_timeout);
       return session;
     } catch (_) {
@@ -103,8 +118,10 @@ class FrameDiagnostics {
         throw StateError('Missing or oversized frame timeline');
       }
       return {
-        'scope':
-            'Instrumented replacement frame; includes old-tree disposal; not comparable to uninstrumented baseline timings',
+        'scope': profileWidgets
+            ? 'Instrumented replacement frame; includes old-tree disposal; not comparable to uninstrumented baseline timings'
+            : 'GC observation without widget profiling; includes old-tree disposal; not an unobserved baseline',
+        'profile_widgets': profileWidgets,
         'from_us': from,
         'to_us': to,
         'vm_trace_origin_us': timeline.timeOriginMicros,

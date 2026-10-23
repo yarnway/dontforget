@@ -117,6 +117,8 @@ class _BenchmarkState extends State<_Benchmark>
   bool _running = false;
   bool _includeNotificationStartup = true;
   bool _focusedDiagnostics = false;
+  bool _gcObservation = false;
+  bool get _focusedRun => _focusedDiagnostics || _gcObservation;
   bool _restartRequired = false;
   FrameDiagnostics? _frameDiagnostics;
   final _windowEvents = <Map<String, Object>>[];
@@ -232,13 +234,18 @@ class _BenchmarkState extends State<_Benchmark>
       'source_revision': _revision,
       'fixture_version': 2,
       'viewport_protocol': 'fixed-height-792-v1',
-      'first_frame_protocol':
-          'one warmup then five fresh board/provider mounts',
+      'first_frame_protocol': _gcObservation
+          ? 'one warmup then thirty fresh board/provider mounts; deferred GC read'
+          : 'one warmup then five fresh board/provider mounts',
       'focused_768_diagnostics': _focusedDiagnostics,
-      'timing_comparable_to_baseline': !_focusedDiagnostics,
+      'gc_observation': _gcObservation,
+      'gc_observation_protocol': _gcObservation
+          ? 'gc-only-deferred-30-v1'
+          : null,
+      'timing_comparable_to_baseline': !_focusedRun,
       'restart_required': _restartRequired,
       'notification_startup_included':
-          _includeNotificationStartup && !_focusedDiagnostics,
+          _includeNotificationStartup && !_focusedRun,
       'fixture_source':
           'Exact task rows from KaPI1r baseline; notification-only copy uses fixed 2099 trigger',
       'segments': _segments,
@@ -279,14 +286,16 @@ class _BenchmarkState extends State<_Benchmark>
       final support = await getApplicationSupportDirectory();
       _root = await Directory(support.path).createTemp('isolated-performance-');
       stdout.writeln('ISOLATED_BENCHMARK_RESULT=${_root!.path}/results.json');
-      if (_focusedDiagnostics) {
-        _frameDiagnostics = await FrameDiagnostics.start();
+      if (_focusedRun) {
+        _frameDiagnostics = await FrameDiagnostics.start(
+          profileWidgets: _focusedDiagnostics,
+        );
       }
       await _prepareForeground();
       await WidgetsBinding.instance.waitUntilFirstFrameRasterized.timeout(
         const Duration(seconds: 10),
       );
-      for (final count in _focusedDiagnostics ? [10000] : [100, 1000, 10000]) {
+      for (final count in _focusedRun ? [10000] : [100, 1000, 10000]) {
         await _status(
           'Measuring $count synthetic tasks: storage startup and backup',
         );
@@ -394,8 +403,7 @@ class _BenchmarkState extends State<_Benchmark>
         };
         _results.add(result);
         try {
-          for (final width
-              in _focusedDiagnostics ? [768.0] : [375.0, 768.0, 1440.0]) {
+          for (final width in _focusedRun ? [768.0] : [375.0, 768.0, 1440.0]) {
             await _status(
               'Measuring $count tasks: ${width.toInt()}px list frames',
             );
@@ -419,7 +427,7 @@ class _BenchmarkState extends State<_Benchmark>
           }
         }
         result['process_rss_bytes_after_size'] = ProcessInfo.currentRss;
-        if (_includeNotificationStartup && !_focusedDiagnostics) {
+        if (_includeNotificationStartup && !_focusedRun) {
           await _status(
             'Measuring $count complete startup notifications (recording OS transport)',
           );
@@ -447,7 +455,7 @@ class _BenchmarkState extends State<_Benchmark>
     } catch (error) {
       // A diagnostic RPC can fail after changing VM-wide recording state.
       // Require a fresh process before accepting another timing baseline.
-      if (_focusedDiagnostics) _restartRequired = true;
+      if (_focusedRun) _restartRequired = true;
       _errors.add(error.toString());
       if (mounted) setState(() => _progress = 'Benchmark failed: $error');
     } finally {
@@ -540,7 +548,8 @@ class _BenchmarkState extends State<_Benchmark>
     final installTimes = <int>[];
     final viewports = <Map<String, Object>>[];
     final diagnosticFrames = <Map<String, Object?>>[];
-    for (var sample = 0; sample < 6; sample++) {
+    final measuredMounts = _gcObservation ? 30 : 5;
+    for (var sample = 0; sample <= measuredMounts; sample++) {
       final start = developer.Timeline.now;
       final watch = Stopwatch()..start();
       setState(() {
@@ -573,12 +582,20 @@ class _BenchmarkState extends State<_Benchmark>
         firstFrameIntervals.add((start, end));
         installTimes.add(watch.elapsedMicroseconds);
         final diagnostics = _frameDiagnostics;
-        if (diagnostics != null) {
+        if (diagnostics != null && !_gcObservation) {
           diagnosticFrames.add(await diagnostics.capture(start, end));
         }
       }
       await Future<void>.delayed(const Duration(milliseconds: 150));
     }
+    // A single read after all mounts avoids per-frame RPC and trace-JSON
+    // allocations perturbing the very GC events being observed.
+    final gcCapture = _gcObservation
+        ? await _frameDiagnostics!.capture(
+            firstFrameIntervals.first.$1,
+            developer.Timeline.now,
+          )
+        : null;
     final boardContext = _boardKey.currentContext!;
     if (!boardContext.mounted) throw StateError('Benchmark window closed');
     final pixelRatio = MediaQuery.devicePixelRatioOf(boardContext);
@@ -645,6 +662,26 @@ class _BenchmarkState extends State<_Benchmark>
       'requested_height': _boardHeight,
       'sample_viewports': viewports,
       if (diagnosticFrames.isNotEmpty) 'diagnostic_frames': diagnosticFrames,
+      if (gcCapture != null) ...{
+        'gc_timeline_capture': gcCapture,
+        'gc_timeline_reads': 1,
+        'observed_frames': [
+          for (var i = 0; i < first.length; i++)
+            {
+              'sample': i + 1,
+              'install_start_us': firstFrameIntervals[i].$1,
+              'install_end_us': firstFrameIntervals[i].$2,
+              'build_start_us': first[i].timestampInMicroseconds(
+                FramePhase.buildStart,
+              ),
+              'build_finish_us': first[i].timestampInMicroseconds(
+                FramePhase.buildFinish,
+              ),
+              'build_us': first[i].buildDuration.inMicroseconds,
+              'raster_us': first[i].rasterDuration.inMicroseconds,
+            },
+        ],
+      },
       'first_board_build_samples_us': first
           .map((t) => t.buildDuration.inMicroseconds)
           .toList(),
@@ -742,10 +779,26 @@ class _BenchmarkState extends State<_Benchmark>
               value: _focusedDiagnostics,
               onChanged: _restartRequired
                   ? null
-                  : (value) =>
-                        setState(() => _focusedDiagnostics = value ?? false),
+                  : (value) => setState(() {
+                      _focusedDiagnostics = value ?? false;
+                      if (_focusedDiagnostics) _gcObservation = false;
+                    }),
               title: const Text(
                 'Diagnose 10000 tasks at 768px (instrumented timings)',
+              ),
+              controlAffinity: ListTileControlAffinity.leading,
+            ),
+          if (!_running)
+            CheckboxListTile(
+              value: _gcObservation,
+              onChanged: _restartRequired
+                  ? null
+                  : (value) => setState(() {
+                      _gcObservation = value ?? false;
+                      if (_gcObservation) _focusedDiagnostics = false;
+                    }),
+              title: const Text(
+                'Observe GC at 768px (30 mounts, widget profiling off)',
               ),
               controlAffinity: ListTileControlAffinity.leading,
             ),

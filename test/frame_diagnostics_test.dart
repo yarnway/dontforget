@@ -79,6 +79,34 @@ void main() {
     debugProfilePaintsEnabled = original.$3;
   });
 
+  test('GC observation leaves per-widget profiling disabled', () async {
+    final service = _Service();
+    final session = await FrameDiagnostics.attach(
+      service,
+      expectedPid: 42,
+      profileWidgets: false,
+    );
+    expect(debugProfileBuildsEnabled, isFalse);
+    expect(debugProfileLayoutsEnabled, isFalse);
+    expect(debugProfilePaintsEnabled, isFalse);
+    expect((await session.capture(100, 150))['profile_widgets'], isFalse);
+    await session.close();
+    expect(service.disposals, 1);
+    expect(service.flags.last, ['GC']);
+  });
+
+  test('GC observation rejects pre-existing widget profiling', () async {
+    debugProfileBuildsEnabled = true;
+    final service = _Service();
+    await expectLater(
+      FrameDiagnostics.attach(service, expectedPid: 42, profileWidgets: false),
+      throwsStateError,
+    );
+    expect(service.flags, isEmpty);
+    expect(service.disposals, 1);
+    expect(debugProfileBuildsEnabled, isTrue);
+  });
+
   test(
     'rejects a different process before changing diagnostic state',
     () async {
