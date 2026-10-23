@@ -8,6 +8,7 @@ import 'dart:io';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/services/macos_notification_scheduler.dart';
+import 'package:dont_forget/services/notification_permission_service.dart';
 import 'package:dont_forget/services/notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -47,6 +48,9 @@ class _NativeFailureState extends State<NativeNotificationFailurePanel> {
   DatabaseHelper? _database;
   NotificationService? _service;
   final _plugin = FlutterLocalNotificationsPlugin();
+  late final _permissions = NotificationPermissionService(
+    backend: PluginNotificationPermissionBackend(plugin: _plugin),
+  );
   Directory? _root;
   bool _busy = true;
   bool _ready = false;
@@ -133,7 +137,20 @@ class _NativeFailureState extends State<NativeNotificationFailurePanel> {
     final journal = await _database!.withNotificationJournal((j) => j.read());
     final entries = journal?.entries.values.toList() ?? [];
     final saved = entries.where((e) => e.reminderId == _task.id).firstOrNull;
-    _status = '$phase · saved ${saved?.status ?? 'none'} · PID $pid';
+    final permission = await _permissions.refresh();
+    List<int>? pendingIds;
+    String? pendingReadError;
+    try {
+      pendingIds = (await _plugin.pendingNotificationRequests())
+          .map((request) => request.id)
+          .toList();
+    } catch (error) {
+      pendingReadError = error.runtimeType.toString();
+    }
+    _status =
+        '$phase · saved ${saved?.status ?? 'none'} · PID $pid'
+        ' · permission ${permission.authorization.status.name}'
+        ' · pending ${pendingIds?.length ?? 'unknown'}';
     final history = List<Object?>.of(_report['events'] as List? ?? []);
     history.add({
       'phase': phase,
@@ -141,6 +158,13 @@ class _NativeFailureState extends State<NativeNotificationFailurePanel> {
       'pid': pid,
       'at': DateTime.now().toUtc().toIso8601String(),
       'journal': journal?.toJson(),
+      'authorization': {
+        'status': permission.authorization.status.name,
+        'alerts_enabled': permission.authorization.alertsEnabled,
+        'sounds_enabled': permission.authorization.soundsEnabled,
+      },
+      'pending_native_ids': pendingIds,
+      if (pendingReadError != null) 'pending_read_error': pendingReadError,
       if (error != null) 'error_type': error.runtimeType.toString(),
       if (error is PlatformException)
         'platform_error': {'code': error.code, 'details': error.details},
@@ -158,6 +182,27 @@ class _NativeFailureState extends State<NativeNotificationFailurePanel> {
     );
     await temp.rename(p.join(_root!.path, 'native-failure-report.json'));
     if (mounted) setState(() {});
+  }
+
+  Future<void> _inspectPermission({bool request = false}) async {
+    if (_busy || !_ready) return;
+    setState(() => _busy = true);
+    try {
+      if (request) {
+        final result = await _permissions.requestNotifications();
+        await _observe(
+          result.requestFailed
+              ? 'permission_request_failed'
+              : 'permission_requested',
+        );
+      } else {
+        await _observe('observed_native_state');
+      }
+    } catch (error) {
+      _status = 'Native observation failed: ${error.runtimeType}';
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   Future<void> _schedule(String? mode) async {
@@ -236,6 +281,16 @@ class _NativeFailureState extends State<NativeNotificationFailurePanel> {
           if (_root != null)
             SelectableText('Report: ${_root!.path}/native-failure-report.json'),
           const SizedBox(height: 16),
+          OutlinedButton(
+            onPressed: _busy || !_ready
+                ? null
+                : () => _inspectPermission(request: true),
+            child: const Text('Request isolated notification permission'),
+          ),
+          OutlinedButton(
+            onPressed: _busy || !_ready ? null : _inspectPermission,
+            child: const Text('Read permission and pending OS requests'),
+          ),
           FilledButton(
             onPressed: _busy || !_ready
                 ? null
