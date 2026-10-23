@@ -24,6 +24,8 @@ python3 scripts/analyze_gc_frames.py --report /absolute/path/to/results.json
 
 参考：[Dart VM 时间线流与环形记录器](https://github.com/dart-lang/sdk/blob/main/runtime/docs/timeline.md)、[Flutter 内存与 GC 观测](https://docs.flutter.dev/tools/devtools/memory)。时间线记录器可能覆盖旧事件，所以缺少所需 BUILD/GC 边界的报告不能用来证明 GC 缺席。该模块不由正式产品入口导入，不改 VM 堆大小，不强制 GC。
 
-本轮候选将看板投影改为一次分类后填充定长分组，以 Uint8List 暂存分类，避免万条引用数组反复扩容；折叠判定仍只执行一次，顺序、计数和单次 Iterable 语义有回归覆盖。该变化尚需与保留的 `9dca8cb` 普通/GC 原生测量对照，不能仅由分配方式推断尾部已经改善。
+本轮曾试验一次分类后填充定长分组，以 Uint8List 暂存分类，避免万条引用数组反复扩容；顺序、计数和单次 Iterable 语义有回归覆盖。下面的原生对照决定了是否保留该方案。
 
 本轮[六轮普通交替复测](benchmarks/exact-size-board-3d14-2026-10-23.json)共 108 个全程前台片段、270 个首帧，旧新版均无 build >16.667 ms；万条/768 中位数却从 9.006 升到 11.085 ms，千条 max 从 10.807 升到 12.767 ms。定长两遍分组没有得到稳定收益支持，已撤回产品分组改动，保留单遍投影和新增语义回归。此对照同时包含增量日志接入，不能将全部差值归因于分组；历史 GC 尾部也不能凭本轮未复现而关闭。
+
+撤回后的 `838e508` [普通补测](benchmarks/final-native-profile-3d15-2026-10-23.json)为 18 个前台片段、45 个首帧，最大 build 12.928 ms；千条/768 p50/max 为 7.989/9.206 ms，万条为 10.967/12.381 ms。另各一轮 [GC 观察](benchmarks/final-gc-3d15-2026-10-23.json)：千条有/无 GC 的 p50 为 11.870/8.197 ms，万条为 11.235/8.756 ms，两组各 30 帧均未超过 16.667 ms。[原始时间线压缩记录](benchmarks/final-gc-raw-3d15-2026-10-23.json.gz)已独立重算一致。这些补测不是新的随机交替对照，也不证明历史偶发尾部已消失。

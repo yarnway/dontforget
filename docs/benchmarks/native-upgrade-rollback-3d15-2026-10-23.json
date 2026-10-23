@@ -1,0 +1,587 @@
+{
+  "phase": "3D-15",
+  "scope": "Actual macOS product entrypoint, one synthetic task, same isolated container, real native notification transport. App restarts are not system reboot. Startup timing was not all foreground and is excluded from performance claims.",
+  "before_revision": "9dca8cb0afdf73de5eb71ca41ce3c5fbe903e511",
+  "after_revision": "21282b6eed05770a9d5e9e5e8c1946d756d823be",
+  "bundle_id": "com.example.dontForget.acceptance.upgrade-stage15-r39933362241",
+  "rollback_materials": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/upgrade-stage15-materials",
+  "checks": {
+    "automatic_v1_migration": "PASS",
+    "original_v1_bytes_unchanged_before_rollback": "PASS",
+    "native_edit_trigger_and_revision": "PASS",
+    "same_native_id_after_edit": 1967836952,
+    "latest_v1_export": "PASS",
+    "old_binary_reopens_latest_export": "PASS",
+    "new_binary_respects_explicit_v1_pin": "PASS",
+    "explicit_remigration": "PASS",
+    "complete_task_cancels_os_request": "PASS",
+    "final_pending_native_ids": [],
+    "sqlite_integrity": "ok"
+  },
+  "old_v1": {
+    "version": 1,
+    "epoch": "4a594bf1-4d2b-4897-9750-65b2ceb89eb0",
+    "entries": [
+      {
+        "reminderId": "qa-ack-due",
+        "nativeId": 1967836952,
+        "action": "schedule",
+        "status": "submitted",
+        "attempts": 2,
+        "triggerUtcMicros": 1792835420246000,
+        "noticeRevision": 0,
+        "attemptedAt": "2026-10-23T09:50:48.838238Z"
+      }
+    ]
+  },
+  "latest_export_v1": {
+    "version": 1,
+    "epoch": "4a594bf1-4d2b-4897-9750-65b2ceb89eb0",
+    "entries": [
+      {
+        "reminderId": "qa-ack-due",
+        "nativeId": 1967836952,
+        "action": "schedule",
+        "status": "submitted",
+        "attempts": 6,
+        "triggerUtcMicros": 1792752778380373,
+        "noticeRevision": 1,
+        "attemptedAt": "2026-10-23T09:53:07.966628Z"
+      }
+    ]
+  },
+  "final_rows": [
+    {
+      "id": "qa-ack-due",
+      "task_title": "QA INCREMENTAL UPGRADE",
+      "trigger_time": "2026-10-23T18:52:58.380373",
+      "notice_revision": 2,
+      "is_completed": 1
+    }
+  ],
+  "traces": {
+    "startup-traces": [
+      {
+        "scope": "Actual product lib/main.dart release startup; real OS notification transport; passive instrumentation. First raster is the framework completion signal, not a GPU duration.",
+        "revision": "9dca8cb0afdf73de5eb71ca41ce3c5fbe903e511",
+        "pid": 87376,
+        "build_mode": "release",
+        "dart_entry_utc": "2026-10-23T09:47:56.550487Z",
+        "outcome": "complete",
+        "elapsed_to_outcome_us": 205476,
+        "milestones_us": {
+          "binding_ready": 653,
+          "window_shown": 17716,
+          "storage_ready": 25945,
+          "settings_loaded": 39104,
+          "tasks_loaded": 52211,
+          "notifications_ready": 64420,
+          "first_frame_rasterized": 200626,
+          "routes_ready_frame": 205475
+        },
+        "window_events": [
+          {
+            "event": "initial:null",
+            "elapsed_us": 613
+          }
+        ],
+        "window_at_outcome": {
+          "focused": false,
+          "visible": true,
+          "minimized": false,
+          "lifecycle": null
+        },
+        "dart": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+        "os": "Version 27.0.1 (Build 26A434)"
+      },
+      {
+        "scope": "Actual product lib/main.dart release startup; real OS notification transport; passive instrumentation. First raster is the framework completion signal, not a GPU duration.",
+        "revision": "9dca8cb0afdf73de5eb71ca41ce3c5fbe903e511",
+        "pid": 89780,
+        "build_mode": "release",
+        "dart_entry_utc": "2026-10-23T09:50:48.787592Z",
+        "outcome": "complete",
+        "elapsed_to_outcome_us": 53039,
+        "milestones_us": {
+          "binding_ready": 171,
+          "window_shown": 14996,
+          "storage_ready": 17534,
+          "settings_loaded": 26412,
+          "tasks_loaded": 32901,
+          "first_frame_rasterized": 37866,
+          "notifications_ready": 52309,
+          "routes_ready_frame": 53039
+        },
+        "window_events": [
+          {
+            "event": "initial:null",
+            "elapsed_us": 154
+          }
+        ],
+        "window_at_outcome": {
+          "focused": false,
+          "visible": true,
+          "minimized": false,
+          "lifecycle": null
+        },
+        "dart": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+        "os": "Version 27.0.1 (Build 26A434)"
+      },
+      {
+        "scope": "Actual product lib/main.dart release startup; real OS notification transport; passive instrumentation. First raster is the framework completion signal, not a GPU duration.",
+        "revision": "21282b6eed05770a9d5e9e5e8c1946d756d823be",
+        "pid": 90309,
+        "build_mode": "release",
+        "dart_entry_utc": "2026-10-23T09:51:28.387631Z",
+        "outcome": "complete",
+        "elapsed_to_outcome_us": 117096,
+        "milestones_us": {
+          "binding_ready": 628,
+          "window_shown": 13803,
+          "storage_ready": 23565,
+          "settings_loaded": 33353,
+          "tasks_loaded": 40049,
+          "notifications_ready": 56197,
+          "first_frame_rasterized": 107767,
+          "routes_ready_frame": 117095
+        },
+        "window_events": [
+          {
+            "event": "initial:null",
+            "elapsed_us": 586
+          }
+        ],
+        "window_at_outcome": {
+          "focused": false,
+          "visible": true,
+          "minimized": false,
+          "lifecycle": null
+        },
+        "dart": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+        "os": "Version 27.0.1 (Build 26A434)"
+      },
+      {
+        "scope": "Actual product lib/main.dart release startup; real OS notification transport; passive instrumentation. First raster is the framework completion signal, not a GPU duration.",
+        "revision": "9dca8cb0afdf73de5eb71ca41ce3c5fbe903e511",
+        "pid": 92570,
+        "build_mode": "release",
+        "dart_entry_utc": "2026-10-23T09:54:15.587105Z",
+        "outcome": "complete",
+        "elapsed_to_outcome_us": 79710,
+        "milestones_us": {
+          "binding_ready": 4707,
+          "window_shown": 21448,
+          "storage_ready": 29709,
+          "settings_loaded": 50297,
+          "tasks_loaded": 56221,
+          "first_frame_rasterized": 65893,
+          "notifications_ready": 76825,
+          "routes_ready_frame": 79709
+        },
+        "window_events": [
+          {
+            "event": "initial:null",
+            "elapsed_us": 4480
+          }
+        ],
+        "window_at_outcome": {
+          "focused": false,
+          "visible": true,
+          "minimized": false,
+          "lifecycle": null
+        },
+        "dart": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+        "os": "Version 27.0.1 (Build 26A434)"
+      },
+      {
+        "scope": "Actual product lib/main.dart release startup; real OS notification transport; passive instrumentation. First raster is the framework completion signal, not a GPU duration.",
+        "revision": "21282b6eed05770a9d5e9e5e8c1946d756d823be",
+        "pid": 92830,
+        "build_mode": "release",
+        "dart_entry_utc": "2026-10-23T09:54:35.803345Z",
+        "outcome": "complete",
+        "elapsed_to_outcome_us": 80578,
+        "milestones_us": {
+          "binding_ready": 3113,
+          "window_shown": 20080,
+          "storage_ready": 28267,
+          "settings_loaded": 46429,
+          "tasks_loaded": 52447,
+          "first_frame_rasterized": 59220,
+          "notifications_ready": 73051,
+          "routes_ready_frame": 80578
+        },
+        "window_events": [
+          {
+            "event": "initial:null",
+            "elapsed_us": 3059
+          }
+        ],
+        "window_at_outcome": {
+          "focused": false,
+          "visible": true,
+          "minimized": false,
+          "lifecycle": null
+        },
+        "dart": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+        "os": "Version 27.0.1 (Build 26A434)"
+      },
+      {
+        "scope": "Actual product lib/main.dart release startup; real OS notification transport; passive instrumentation. First raster is the framework completion signal, not a GPU duration.",
+        "revision": "21282b6eed05770a9d5e9e5e8c1946d756d823be",
+        "pid": 93294,
+        "build_mode": "release",
+        "dart_entry_utc": "2026-10-23T09:55:09.419994Z",
+        "outcome": "complete",
+        "elapsed_to_outcome_us": 55464,
+        "milestones_us": {
+          "binding_ready": 170,
+          "window_shown": 9261,
+          "storage_ready": 17744,
+          "settings_loaded": 25890,
+          "tasks_loaded": 32171,
+          "first_frame_rasterized": 37385,
+          "notifications_ready": 48288,
+          "routes_ready_frame": 55463
+        },
+        "window_events": [
+          {
+            "event": "initial:null",
+            "elapsed_us": 154
+          }
+        ],
+        "window_at_outcome": {
+          "focused": false,
+          "visible": true,
+          "minimized": false,
+          "lifecycle": null
+        },
+        "dart": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+        "os": "Version 27.0.1 (Build 26A434)"
+      }
+    ],
+    "notification-retry-traces": [
+      {
+        "scope": "Actual release product main/app/home/provider/native service; passive retry trace, no injected failures or manual retry hook",
+        "revision": "9dca8cb0afdf73de5eb71ca41ce3c5fbe903e511",
+        "pid": 89780,
+        "events": [
+          {
+            "phase": "native_submitted",
+            "at": "2026-10-23T09:50:48.831022Z",
+            "elapsed_us": 43434,
+            "lifecycle": null,
+            "native_id": 1967836952,
+            "action": "cancel"
+          },
+          {
+            "phase": "native_submitted",
+            "at": "2026-10-23T09:50:48.839887Z",
+            "elapsed_us": 52298,
+            "lifecycle": null,
+            "native_id": 1967836952,
+            "action": "schedule"
+          }
+        ],
+        "window_at_write": {
+          "focused": false,
+          "visible": true,
+          "minimized": false
+        },
+        "window_events": [
+          {
+            "event": "initial:null",
+            "elapsed_us": 154
+          }
+        ],
+        "pending_native_ids_at_write": [
+          1967836952
+        ]
+      },
+      {
+        "scope": "Actual release product main/app/home/provider/native service; passive retry trace, no injected failures or manual retry hook",
+        "revision": "21282b6eed05770a9d5e9e5e8c1946d756d823be",
+        "pid": 90309,
+        "events": [
+          {
+            "phase": "native_submitted",
+            "at": "2026-10-23T09:51:28.437470Z",
+            "elapsed_us": 49851,
+            "lifecycle": null,
+            "native_id": 1967836952,
+            "action": "cancel"
+          },
+          {
+            "phase": "native_submitted",
+            "at": "2026-10-23T09:51:28.443804Z",
+            "elapsed_us": 56184,
+            "lifecycle": null,
+            "native_id": 1967836952,
+            "action": "schedule"
+          },
+          {
+            "phase": "native_submitted",
+            "at": "2026-10-23T09:53:07.962464Z",
+            "elapsed_us": 99574422,
+            "lifecycle": "hidden",
+            "native_id": 1967836952,
+            "action": "cancel"
+          },
+          {
+            "phase": "native_submitted",
+            "at": "2026-10-23T09:53:07.967883Z",
+            "elapsed_us": 99579841,
+            "lifecycle": "hidden",
+            "native_id": 1967836952,
+            "action": "schedule"
+          }
+        ],
+        "window_at_write": {
+          "focused": true,
+          "visible": true,
+          "minimized": false
+        },
+        "window_events": [
+          {
+            "event": "initial:null",
+            "elapsed_us": 586
+          },
+          {
+            "event": "lifecycle:hidden",
+            "elapsed_us": 25596661
+          },
+          {
+            "event": "focus",
+            "elapsed_us": 25607008
+          }
+        ],
+        "pending_native_ids_at_write": [
+          1967836952
+        ]
+      },
+      {
+        "scope": "Actual release product main/app/home/provider/native service; passive retry trace, no injected failures or manual retry hook",
+        "revision": "9dca8cb0afdf73de5eb71ca41ce3c5fbe903e511",
+        "pid": 92570,
+        "events": [
+          {
+            "phase": "native_submitted",
+            "at": "2026-10-23T09:54:15.655477Z",
+            "elapsed_us": 68487,
+            "lifecycle": null,
+            "native_id": 1967836952,
+            "action": "cancel"
+          },
+          {
+            "phase": "native_submitted",
+            "at": "2026-10-23T09:54:15.663805Z",
+            "elapsed_us": 76814,
+            "lifecycle": null,
+            "native_id": 1967836952,
+            "action": "schedule"
+          }
+        ],
+        "window_at_write": {
+          "focused": false,
+          "visible": true,
+          "minimized": false
+        },
+        "window_events": [
+          {
+            "event": "initial:null",
+            "elapsed_us": 4480
+          }
+        ],
+        "pending_native_ids_at_write": [
+          1967836952
+        ]
+      },
+      {
+        "scope": "Actual release product main/app/home/provider/native service; passive retry trace, no injected failures or manual retry hook",
+        "revision": "21282b6eed05770a9d5e9e5e8c1946d756d823be",
+        "pid": 92830,
+        "events": [
+          {
+            "phase": "native_submitted",
+            "at": "2026-10-23T09:54:35.869913Z",
+            "elapsed_us": 66692,
+            "lifecycle": null,
+            "native_id": 1967836952,
+            "action": "cancel"
+          },
+          {
+            "phase": "native_submitted",
+            "at": "2026-10-23T09:54:35.876262Z",
+            "elapsed_us": 73040,
+            "lifecycle": null,
+            "native_id": 1967836952,
+            "action": "schedule"
+          }
+        ],
+        "window_at_write": {
+          "focused": false,
+          "visible": true,
+          "minimized": false
+        },
+        "window_events": [
+          {
+            "event": "initial:null",
+            "elapsed_us": 3059
+          }
+        ],
+        "pending_native_ids_at_write": [
+          1967836952
+        ]
+      },
+      {
+        "scope": "Actual release product main/app/home/provider/native service; passive retry trace, no injected failures or manual retry hook",
+        "revision": "21282b6eed05770a9d5e9e5e8c1946d756d823be",
+        "pid": 93294,
+        "events": [
+          {
+            "phase": "native_submitted",
+            "at": "2026-10-23T09:55:09.463989Z",
+            "elapsed_us": 43998,
+            "lifecycle": null,
+            "native_id": 1967836952,
+            "action": "cancel"
+          },
+          {
+            "phase": "native_submitted",
+            "at": "2026-10-23T09:55:09.468269Z",
+            "elapsed_us": 48278,
+            "lifecycle": null,
+            "native_id": 1967836952,
+            "action": "schedule"
+          },
+          {
+            "phase": "native_submitted",
+            "at": "2026-10-23T09:55:16.257536Z",
+            "elapsed_us": 6837517,
+            "lifecycle": null,
+            "native_id": 1967836952,
+            "action": "cancel"
+          }
+        ],
+        "window_at_write": {
+          "focused": false,
+          "visible": true,
+          "minimized": false
+        },
+        "window_events": [
+          {
+            "event": "initial:null",
+            "elapsed_us": 154
+          }
+        ],
+        "pending_native_ids_at_write": []
+      }
+    ]
+  },
+  "files": {
+    "synthetic-v9.json": {
+      "bytes": 1395,
+      "sha256": "30eda6d72a4af2d19d5dd60949e7ee2a33c74daa572448599df074cd3a18d06d"
+    },
+    "latest-export-v1.json": {
+      "bytes": 275,
+      "sha256": "c69280c9f6b5c8fa4f87e431c8977495d7672c2f1dae4ab272c90a10e7eaaa64"
+    },
+    "before-v1.json": {
+      "bytes": 275,
+      "sha256": "4364a4019d91aa551bf254c427dbb433ef6861107e58a614af0b851843fc5755"
+    },
+    "v1-pin-after-new-restart.json": {
+      "bytes": 27,
+      "sha256": "e25a578110c1f6d2ce029dcc13b00ab61923bff6c1ae78e5d164fb659209fd28"
+    },
+    "before-upgrade.sqlite": {
+      "bytes": 24576,
+      "sha256": "3dbb924879087810af35f4b982bd873ac01f89e757d1f518bc3350b467ce08ec"
+    },
+    "empty-baseline.sqlite": {
+      "bytes": 24576,
+      "sha256": "994f7f659c34fa4e42316f7f5b322351a5b409dd3415e96eba38084847225b70"
+    },
+    "startup-traces/1792749255587105-92570.json": {
+      "bytes": 1001,
+      "sha256": "27b1a5b34540e58853671c10bf974c4c79980c93b9e2253673384f9fb4a9b289"
+    },
+    "startup-traces/1792749275803345-92830.json": {
+      "bytes": 1001,
+      "sha256": "6a383d1ac412406cee62bedf9fe06588c4044b0e2d956d011df0ef5a2d03cdd3"
+    },
+    "startup-traces/1792749309419994-93294.json": {
+      "bytes": 998,
+      "sha256": "ec3a909ff3ecf20a43ad933dcaa49f388cd896c8eb087f902af88033d9285c52"
+    },
+    "startup-traces/1792748876550487-87376.json": {
+      "bytes": 1002,
+      "sha256": "ec65963f1a0075ddee9e0c704afdf4b64ad725d98611884d1265cef555d2a57f"
+    },
+    "startup-traces/1792749048787592-89780.json": {
+      "bytes": 999,
+      "sha256": "aacb5bce134599bd12276588e797f52dbbbba4f12a4a28d0dd5a31bf7bda58e0"
+    },
+    "startup-traces/1792749088387631-90309.json": {
+      "bytes": 1002,
+      "sha256": "82a1bd1f7f6fb3669203d5eccbd062306f554c48606107e0dfb0f7dd3c1d812f"
+    },
+    "after-edit-stopped-database/notification-storage.json": {
+      "bytes": 119,
+      "sha256": "e8f272cd3ca0d4fab5a988eab25c7c401ed923431d9e450346b31f7c7f4f50f9"
+    },
+    "after-edit-stopped-database/notification-journal.json": {
+      "bytes": 275,
+      "sha256": "4364a4019d91aa551bf254c427dbb433ef6861107e58a614af0b851843fc5755"
+    },
+    "after-edit-stopped-database/.dontforget.owner.lock": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "after-edit-stopped-database/notification-epoch.json": {
+      "bytes": 60,
+      "sha256": "aade5cbd77f87e1b2a0b8fbef51744c4d617934c87d1a5ba2751a719bdcd21ba"
+    },
+    "after-edit-stopped-database/dont_forget_v3.db": {
+      "bytes": 24576,
+      "sha256": "7cc0a3601fa361ad59224ad4fcd6b7d44440836f0d962de4427c6e6c92707908"
+    },
+    "after-edit-stopped-database/notification-incremental/a28c1895-82f3-49bf-8ee8-a254fd2e9503.log": {
+      "bytes": 3796,
+      "sha256": "5dd839d3bb6a41d273ba6fd2195c16e3bae7ed5a06acc55c547196cfaea01be8"
+    },
+    "after-edit-stopped-database/notification-incremental/source-v1.json": {
+      "bytes": 275,
+      "sha256": "4364a4019d91aa551bf254c427dbb433ef6861107e58a614af0b851843fc5755"
+    },
+    "after-edit-stopped-database/notification-incremental/a28c1895-82f3-49bf-8ee8-a254fd2e9503.json": {
+      "bytes": 275,
+      "sha256": "4364a4019d91aa551bf254c427dbb433ef6861107e58a614af0b851843fc5755"
+    },
+    "after-edit-stopped-database/notification-incremental/current.json": {
+      "bytes": 165,
+      "sha256": "e4d1631f38700b343e7304708655b163f3ef3876176cc8dfbda37ee28af5efbb"
+    },
+    "notification-retry-traces/1792749255587105-92570.json": {
+      "bytes": 876,
+      "sha256": "4ed3a6040308b97ae35191179a453df4a904ae1ade9d113cf964c9928d34fbc6"
+    },
+    "notification-retry-traces/1792749275803345-92830.json": {
+      "bytes": 876,
+      "sha256": "4a5e75c5bec332e5d0ed105ca29d2de66545563b37b57525e2cdb93deda0f559"
+    },
+    "notification-retry-traces/1792749309419994-93294.json": {
+      "bytes": 1058,
+      "sha256": "e342ad73ca47407780fa0a70587cbe9ec4b12ef813c7a9d0652a3f8aa9420f3b"
+    },
+    "notification-retry-traces/1792749048787592-89780.json": {
+      "bytes": 875,
+      "sha256": "e1f1593d6af0725d01a5cb8d31f796cced615efc0f282535574edfc4bfbbb027"
+    },
+    "notification-retry-traces/1792749088387631-90309.json": {
+      "bytes": 1431,
+      "sha256": "72db19cb0beaa3847a887b12ef8c391cbf4f6d3051c1114bd3947cecf3b9a5a5"
+    }
+  }
+}

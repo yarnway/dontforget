@@ -1,0 +1,385 @@
+{
+  "phase": "3D-15",
+  "source_revision": "21282b6eed05770a9d5e9e5e8c1946d756d823be",
+  "scope": "Shared production engine, JIT component measurements only; v1 then indexed then segmented then leased order. Does not prove native startup, UI speed or OS delivery. Entire latest v1 snapshot is bounded before append.",
+  "runs": [
+    {
+      "scope": "Dart JIT journal-only experiment v4; bounded files, leased migration/rollback and generation reclamation; v1 then indexed then segmented then leased; checkpoint costs included; no OS effects or product startup",
+      "protocol_version": 4,
+      "experiment_limits": {
+        "manifest_bytes": 4096,
+        "checkpoint_bytes": 16777216,
+        "segment_bytes": 67108864,
+        "frame_bytes": 4194304,
+        "symlink_inputs_and_targets": "rejected",
+        "caller_exclusive_directory_required": true,
+        "leased_variant_directory_budget_bytes": 268435456,
+        "leased_variant_max_managed_files": 256,
+        "leased_variant_uses_database_ownership_lock": true
+      },
+      "fixture_file_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+      "task_rows_sha256": "7775cb832916e5136a3d6759d5e6507dc1a528b565dd36a4664a745e11d4b05c",
+      "runtime": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "results": [
+        {
+          "mode": "first",
+          "entries": 10000,
+          "batch_size": 256,
+          "v1_us": 533900,
+          "v1_writes": 80,
+          "v1_bytes": 85231254,
+          "variants": [
+            {
+              "variant": "indexed",
+              "append_including_periodic_checkpoint_us": 171997,
+              "written_including_periodic_checkpoint_bytes": 4547715,
+              "flushes_including_periodic_checkpoint": 80,
+              "periodic_checkpoints": 0,
+              "periodic_checkpoint_us": 0,
+              "tail_replay_frames": 80,
+              "open_before_final_checkpoint_us": 145655,
+              "final_checkpoint_us": 52402,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 40440,
+              "prior_checkpoint_open_us": 1187,
+              "equivalent_after_replay_and_checkpoint": true
+            },
+            {
+              "variant": "segmented_24",
+              "append_including_periodic_checkpoint_us": 251114,
+              "written_including_periodic_checkpoint_bytes": 8295600,
+              "flushes_including_periodic_checkpoint": 89,
+              "periodic_checkpoints": 3,
+              "periodic_checkpoint_us": 92369,
+              "tail_replay_frames": 8,
+              "open_before_final_checkpoint_us": 47951,
+              "final_checkpoint_us": 50658,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 40105,
+              "prior_checkpoint_open_us": 620,
+              "equivalent_after_replay_and_checkpoint": true
+            },
+            {
+              "variant": "leased_segmented_24",
+              "prior_lease_and_open_us": 5973,
+              "append_including_periodic_checkpoint_us": 291253,
+              "written_including_periodic_checkpoint_bytes": 8295600,
+              "flushes_including_periodic_checkpoint": 89,
+              "periodic_checkpoints": 3,
+              "lease_and_replay_us": 54762,
+              "managed_bytes_after_reclamation": 4878332,
+              "rollback_latest_to_v1_us": 27941,
+              "remigrate_latest_v1_us": 103524,
+              "equivalent_after_replay_rollback_and_remigration": true
+            }
+          ]
+        },
+        {
+          "mode": "reopen",
+          "entries": 10000,
+          "batch_size": 256,
+          "v1_us": 807759,
+          "v1_writes": 80,
+          "v1_bytes": 162678720,
+          "variants": [
+            {
+              "variant": "indexed",
+              "append_including_periodic_checkpoint_us": 153258,
+              "written_including_periodic_checkpoint_bytes": 4547715,
+              "flushes_including_periodic_checkpoint": 80,
+              "periodic_checkpoints": 0,
+              "periodic_checkpoint_us": 0,
+              "tail_replay_frames": 80,
+              "open_before_final_checkpoint_us": 182382,
+              "final_checkpoint_us": 49869,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 39843,
+              "prior_checkpoint_open_us": 39518,
+              "equivalent_after_replay_and_checkpoint": true
+            },
+            {
+              "variant": "segmented_24",
+              "append_including_periodic_checkpoint_us": 320646,
+              "written_including_periodic_checkpoint_bytes": 10649386,
+              "flushes_including_periodic_checkpoint": 89,
+              "periodic_checkpoints": 3,
+              "periodic_checkpoint_us": 147446,
+              "tail_replay_frames": 8,
+              "open_before_final_checkpoint_us": 58851,
+              "final_checkpoint_us": 51454,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 40283,
+              "prior_checkpoint_open_us": 45439,
+              "equivalent_after_replay_and_checkpoint": true
+            },
+            {
+              "variant": "leased_segmented_24",
+              "prior_lease_and_open_us": 69537,
+              "append_including_periodic_checkpoint_us": 339990,
+              "written_including_periodic_checkpoint_bytes": 10649386,
+              "flushes_including_periodic_checkpoint": 89,
+              "periodic_checkpoints": 3,
+              "lease_and_replay_us": 73482,
+              "managed_bytes_after_reclamation": 7856101,
+              "rollback_latest_to_v1_us": 50139,
+              "remigrate_latest_v1_us": 108173,
+              "equivalent_after_replay_rollback_and_remigration": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scope": "Dart JIT journal-only experiment v4; bounded files, leased migration/rollback and generation reclamation; v1 then indexed then segmented then leased; checkpoint costs included; no OS effects or product startup",
+      "protocol_version": 4,
+      "experiment_limits": {
+        "manifest_bytes": 4096,
+        "checkpoint_bytes": 16777216,
+        "segment_bytes": 67108864,
+        "frame_bytes": 4194304,
+        "symlink_inputs_and_targets": "rejected",
+        "caller_exclusive_directory_required": true,
+        "leased_variant_directory_budget_bytes": 268435456,
+        "leased_variant_max_managed_files": 256,
+        "leased_variant_uses_database_ownership_lock": true
+      },
+      "fixture_file_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+      "task_rows_sha256": "7775cb832916e5136a3d6759d5e6507dc1a528b565dd36a4664a745e11d4b05c",
+      "runtime": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "results": [
+        {
+          "mode": "first",
+          "entries": 10000,
+          "batch_size": 256,
+          "v1_us": 546129,
+          "v1_writes": 80,
+          "v1_bytes": 85231254,
+          "variants": [
+            {
+              "variant": "indexed",
+              "append_including_periodic_checkpoint_us": 162301,
+              "written_including_periodic_checkpoint_bytes": 4547715,
+              "flushes_including_periodic_checkpoint": 80,
+              "periodic_checkpoints": 0,
+              "periodic_checkpoint_us": 0,
+              "tail_replay_frames": 80,
+              "open_before_final_checkpoint_us": 147387,
+              "final_checkpoint_us": 53687,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 40933,
+              "prior_checkpoint_open_us": 1126,
+              "equivalent_after_replay_and_checkpoint": true
+            },
+            {
+              "variant": "segmented_24",
+              "append_including_periodic_checkpoint_us": 259335,
+              "written_including_periodic_checkpoint_bytes": 8295600,
+              "flushes_including_periodic_checkpoint": 89,
+              "periodic_checkpoints": 3,
+              "periodic_checkpoint_us": 89477,
+              "tail_replay_frames": 8,
+              "open_before_final_checkpoint_us": 51755,
+              "final_checkpoint_us": 50847,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 40283,
+              "prior_checkpoint_open_us": 647,
+              "equivalent_after_replay_and_checkpoint": true
+            },
+            {
+              "variant": "leased_segmented_24",
+              "prior_lease_and_open_us": 1337,
+              "append_including_periodic_checkpoint_us": 284072,
+              "written_including_periodic_checkpoint_bytes": 8295600,
+              "flushes_including_periodic_checkpoint": 89,
+              "periodic_checkpoints": 3,
+              "lease_and_replay_us": 54552,
+              "managed_bytes_after_reclamation": 4878332,
+              "rollback_latest_to_v1_us": 30550,
+              "remigrate_latest_v1_us": 108240,
+              "equivalent_after_replay_rollback_and_remigration": true
+            }
+          ]
+        },
+        {
+          "mode": "reopen",
+          "entries": 10000,
+          "batch_size": 256,
+          "v1_us": 835934,
+          "v1_writes": 80,
+          "v1_bytes": 162678720,
+          "variants": [
+            {
+              "variant": "indexed",
+              "append_including_periodic_checkpoint_us": 153855,
+              "written_including_periodic_checkpoint_bytes": 4547715,
+              "flushes_including_periodic_checkpoint": 80,
+              "periodic_checkpoints": 0,
+              "periodic_checkpoint_us": 0,
+              "tail_replay_frames": 80,
+              "open_before_final_checkpoint_us": 175837,
+              "final_checkpoint_us": 47248,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 46978,
+              "prior_checkpoint_open_us": 39841,
+              "equivalent_after_replay_and_checkpoint": true
+            },
+            {
+              "variant": "segmented_24",
+              "append_including_periodic_checkpoint_us": 301918,
+              "written_including_periodic_checkpoint_bytes": 10649386,
+              "flushes_including_periodic_checkpoint": 89,
+              "periodic_checkpoints": 3,
+              "periodic_checkpoint_us": 141454,
+              "tail_replay_frames": 8,
+              "open_before_final_checkpoint_us": 57965,
+              "final_checkpoint_us": 50786,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 40650,
+              "prior_checkpoint_open_us": 46445,
+              "equivalent_after_replay_and_checkpoint": true
+            },
+            {
+              "variant": "leased_segmented_24",
+              "prior_lease_and_open_us": 73035,
+              "append_including_periodic_checkpoint_us": 342934,
+              "written_including_periodic_checkpoint_bytes": 10649386,
+              "flushes_including_periodic_checkpoint": 89,
+              "periodic_checkpoints": 3,
+              "lease_and_replay_us": 80849,
+              "managed_bytes_after_reclamation": 7856101,
+              "rollback_latest_to_v1_us": 50739,
+              "remigrate_latest_v1_us": 108811,
+              "equivalent_after_replay_rollback_and_remigration": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "scope": "Dart JIT journal-only experiment v4; bounded files, leased migration/rollback and generation reclamation; v1 then indexed then segmented then leased; checkpoint costs included; no OS effects or product startup",
+      "protocol_version": 4,
+      "experiment_limits": {
+        "manifest_bytes": 4096,
+        "checkpoint_bytes": 16777216,
+        "segment_bytes": 67108864,
+        "frame_bytes": 4194304,
+        "symlink_inputs_and_targets": "rejected",
+        "caller_exclusive_directory_required": true,
+        "leased_variant_directory_budget_bytes": 268435456,
+        "leased_variant_max_managed_files": 256,
+        "leased_variant_uses_database_ownership_lock": true
+      },
+      "fixture_file_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+      "task_rows_sha256": "7775cb832916e5136a3d6759d5e6507dc1a528b565dd36a4664a745e11d4b05c",
+      "runtime": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "results": [
+        {
+          "mode": "first",
+          "entries": 10000,
+          "batch_size": 256,
+          "v1_us": 539624,
+          "v1_writes": 80,
+          "v1_bytes": 85231254,
+          "variants": [
+            {
+              "variant": "indexed",
+              "append_including_periodic_checkpoint_us": 158523,
+              "written_including_periodic_checkpoint_bytes": 4547715,
+              "flushes_including_periodic_checkpoint": 80,
+              "periodic_checkpoints": 0,
+              "periodic_checkpoint_us": 0,
+              "tail_replay_frames": 80,
+              "open_before_final_checkpoint_us": 147927,
+              "final_checkpoint_us": 53633,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 41592,
+              "prior_checkpoint_open_us": 1153,
+              "equivalent_after_replay_and_checkpoint": true
+            },
+            {
+              "variant": "segmented_24",
+              "append_including_periodic_checkpoint_us": 250641,
+              "written_including_periodic_checkpoint_bytes": 8295600,
+              "flushes_including_periodic_checkpoint": 89,
+              "periodic_checkpoints": 3,
+              "periodic_checkpoint_us": 92078,
+              "tail_replay_frames": 8,
+              "open_before_final_checkpoint_us": 48215,
+              "final_checkpoint_us": 51028,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 40477,
+              "prior_checkpoint_open_us": 602,
+              "equivalent_after_replay_and_checkpoint": true
+            },
+            {
+              "variant": "leased_segmented_24",
+              "prior_lease_and_open_us": 5571,
+              "append_including_periodic_checkpoint_us": 287092,
+              "written_including_periodic_checkpoint_bytes": 8295600,
+              "flushes_including_periodic_checkpoint": 89,
+              "periodic_checkpoints": 3,
+              "lease_and_replay_us": 55807,
+              "managed_bytes_after_reclamation": 4878332,
+              "rollback_latest_to_v1_us": 31008,
+              "remigrate_latest_v1_us": 108953,
+              "equivalent_after_replay_rollback_and_remigration": true
+            }
+          ]
+        },
+        {
+          "mode": "reopen",
+          "entries": 10000,
+          "batch_size": 256,
+          "v1_us": 816122,
+          "v1_writes": 80,
+          "v1_bytes": 162678720,
+          "variants": [
+            {
+              "variant": "indexed",
+              "append_including_periodic_checkpoint_us": 159788,
+              "written_including_periodic_checkpoint_bytes": 4547715,
+              "flushes_including_periodic_checkpoint": 80,
+              "periodic_checkpoints": 0,
+              "periodic_checkpoint_us": 0,
+              "tail_replay_frames": 80,
+              "open_before_final_checkpoint_us": 182874,
+              "final_checkpoint_us": 50710,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 47144,
+              "prior_checkpoint_open_us": 39982,
+              "equivalent_after_replay_and_checkpoint": true
+            },
+            {
+              "variant": "segmented_24",
+              "append_including_periodic_checkpoint_us": 324755,
+              "written_including_periodic_checkpoint_bytes": 10649386,
+              "flushes_including_periodic_checkpoint": 89,
+              "periodic_checkpoints": 3,
+              "periodic_checkpoint_us": 148181,
+              "tail_replay_frames": 8,
+              "open_before_final_checkpoint_us": 55969,
+              "final_checkpoint_us": 54496,
+              "final_checkpoint_bytes": 2033899,
+              "compacted_open_us": 41783,
+              "prior_checkpoint_open_us": 48602,
+              "equivalent_after_replay_and_checkpoint": true
+            },
+            {
+              "variant": "leased_segmented_24",
+              "prior_lease_and_open_us": 66602,
+              "append_including_periodic_checkpoint_us": 356387,
+              "written_including_periodic_checkpoint_bytes": 10649386,
+              "flushes_including_periodic_checkpoint": 89,
+              "periodic_checkpoints": 3,
+              "lease_and_replay_us": 79466,
+              "managed_bytes_after_reclamation": 7856101,
+              "rollback_latest_to_v1_us": 45264,
+              "remigrate_latest_v1_us": 113416,
+              "equivalent_after_replay_rollback_and_remigration": true
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

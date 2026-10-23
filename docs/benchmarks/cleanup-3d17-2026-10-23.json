@@ -1,0 +1,1401 @@
+{
+  "scope": "Only verified obsolete QA app executables, duplicated artifact transports and rebuildable project test/native hook caches. All original inner archives/manifests, current and reference candidates, synthetic containers, SQLite backups, notification journals, fixture and user edits retained.",
+  "targets": [
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/tail-final-r39910780360/dont_forget.app",
+      "logical_bytes": 77112504,
+      "allocated_bytes": 77230080,
+      "files": 46
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/foreground-r39918373329/dont_forget.app",
+      "logical_bytes": 58447340,
+      "allocated_bytes": 58564608,
+      "files": 46
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/profile-stage15-r39933362241/dont_forget.app",
+      "logical_bytes": 77244114,
+      "allocated_bytes": 77361152,
+      "files": 46
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-000",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-001",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-002",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-003",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-004",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-005",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-006",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-007",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-008",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-009",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-010",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-011",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-012",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-013",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-014",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-015",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-016",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-017",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-018",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-019",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-020",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-021",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-022",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-023",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-024",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-025",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-026",
+      "logical_bytes": 938627,
+      "allocated_bytes": 942080,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/artifact.zip",
+      "logical_bytes": 28201603,
+      "allocated_bytes": 28205056,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-000",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-001",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-002",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-003",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-004",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-005",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-006",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-007",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-008",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-009",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-010",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-011",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-012",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-013",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-014",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-015",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-016",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-017",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-018",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-019",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-020",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-021",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-022",
+      "logical_bytes": 797517,
+      "allocated_bytes": 798720,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/artifact.zip",
+      "logical_bytes": 23866189,
+      "allocated_bytes": 23867392,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-000",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-001",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-002",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-003",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-004",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-005",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-006",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-007",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-008",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-009",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-010",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-011",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-012",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-013",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-014",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-015",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-016",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-017",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-018",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-019",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-020",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-021",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-022",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-023",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-024",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-025",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-026",
+      "logical_bytes": 931214,
+      "allocated_bytes": 933888,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/artifact.zip",
+      "logical_bytes": 28194190,
+      "allocated_bytes": 28196864,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-000",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-001",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-002",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-003",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-004",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-005",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-006",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-007",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-008",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-009",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-010",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-011",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-012",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-013",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-014",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-015",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-016",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-017",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-018",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-019",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-020",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-021",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-022",
+      "logical_bytes": 801675,
+      "allocated_bytes": 802816,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/artifact.zip",
+      "logical_bytes": 23870347,
+      "allocated_bytes": 23871488,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/test_cache",
+      "logical_bytes": 62011328,
+      "allocated_bytes": 62013440,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/unit_test_assets",
+      "logical_bytes": 2121711,
+      "allocated_bytes": 2150400,
+      "files": 12
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_assets",
+      "logical_bytes": 1968039,
+      "allocated_bytes": 1978368,
+      "files": 3
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/.dart_tool/hooks_runner",
+      "logical_bytes": 47790209,
+      "allocated_bytes": 48320512,
+      "files": 57
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/.dart_tool/flutter_build",
+      "logical_bytes": 9025,
+      "allocated_bytes": 12288,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/.dart_tool/lib",
+      "logical_bytes": 1934912,
+      "allocated_bytes": 1941504,
+      "files": 2
+    }
+  ],
+  "preserved_archives": [
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/macos-manifest.json",
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/DontForget_macOS_profile_benchmark.zip",
+    "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/tail-final-r39910780360/acceptance-preparation.json",
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/macos-manifest.json",
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/DontForget_macOS_retry_measurement.zip",
+    "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/foreground-r39918373329/acceptance-preparation.json",
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/macos-manifest.json",
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/DontForget_macOS_profile_benchmark.zip",
+    "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/profile-stage15-r39933362241/acceptance-preparation.json",
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/DontForget_macOS_profile_benchmark.zip",
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/DontForget_macOS_retry_measurement.zip",
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/DontForget_macOS_profile_benchmark.zip",
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/DontForget_macOS_retry_measurement.zip"
+  ],
+  "logical_bytes": 536903840,
+  "allocated_bytes": 537853952,
+  "completed_utc": "2026-10-23T10:32:19.927853+00:00",
+  "removed": [
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/tail-final-r39910780360/dont_forget.app",
+      "logical_bytes": 77112504,
+      "allocated_bytes": 77230080,
+      "files": 46
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/foreground-r39918373329/dont_forget.app",
+      "logical_bytes": 58447340,
+      "allocated_bytes": 58564608,
+      "files": 46
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/profile-stage15-r39933362241/dont_forget.app",
+      "logical_bytes": 77244114,
+      "allocated_bytes": 77361152,
+      "files": 46
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-000",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-001",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-002",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-003",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-004",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-005",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-006",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-007",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-008",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-009",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-010",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-011",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-012",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-013",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-014",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-015",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-016",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-017",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-018",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-019",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-020",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-021",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-022",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-023",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-024",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-025",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/chunk-026",
+      "logical_bytes": 938627,
+      "allocated_bytes": 942080,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/artifact.zip",
+      "logical_bytes": 28201603,
+      "allocated_bytes": 28205056,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-000",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-001",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-002",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-003",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-004",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-005",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-006",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-007",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-008",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-009",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-010",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-011",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-012",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-013",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-014",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-015",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-016",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-017",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-018",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-019",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-020",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-021",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/chunk-022",
+      "logical_bytes": 797517,
+      "allocated_bytes": 798720,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/artifact.zip",
+      "logical_bytes": 23866189,
+      "allocated_bytes": 23867392,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-000",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-001",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-002",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-003",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-004",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-005",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-006",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-007",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-008",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-009",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-010",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-011",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-012",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-013",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-014",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-015",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-016",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-017",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-018",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-019",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-020",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-021",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-022",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-023",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-024",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-025",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/chunk-026",
+      "logical_bytes": 931214,
+      "allocated_bytes": 933888,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/artifact.zip",
+      "logical_bytes": 28194190,
+      "allocated_bytes": 28196864,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-000",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-001",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-002",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-003",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-004",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-005",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-006",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-007",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-008",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-009",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-010",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-011",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-012",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-013",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-014",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-015",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-016",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-017",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-018",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-019",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-020",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-021",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/chunk-022",
+      "logical_bytes": 801675,
+      "allocated_bytes": 802816,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/artifact.zip",
+      "logical_bytes": 23870347,
+      "allocated_bytes": 23871488,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/test_cache",
+      "logical_bytes": 62011328,
+      "allocated_bytes": 62013440,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/unit_test_assets",
+      "logical_bytes": 2121711,
+      "allocated_bytes": 2150400,
+      "files": 12
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_assets",
+      "logical_bytes": 1968039,
+      "allocated_bytes": 1978368,
+      "files": 3
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/.dart_tool/hooks_runner",
+      "logical_bytes": 47790209,
+      "allocated_bytes": 48320512,
+      "files": 57
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/.dart_tool/flutter_build",
+      "logical_bytes": 9025,
+      "allocated_bytes": 12288,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/.dart_tool/lib",
+      "logical_bytes": 1934912,
+      "allocated_bytes": 1941504,
+      "files": 2
+    }
+  ],
+  "preserved_sha256": {
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/macos-manifest.json": "ad7b2c577cf1497d6558f48fa0833db08fd75d124925cc051d48fcb04a6568c9",
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-final15-r39937296463/DontForget_macOS_retry_measurement.zip": "3e07d4105bc821c13c3e190a643bbb58fd3f1351966f01c482523b73797ddbc1",
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/macos-manifest.json": "25113e3eec27731c7892c891f4701b03d0135751fac32f06fb0b5eed45bfb679",
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/product-stage15-r39933362241/DontForget_macOS_retry_measurement.zip": "0cc62a4e104333f0fe4e8ef62a5152af4377814108b54f2c56027f3a94953063",
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/macos-manifest.json": "c71c8dd91885f1bf1ae5cc67eaffd67a635de4f62c087c99cf67e8430ebd9f0e",
+    "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/foreground-r39918373329/acceptance-preparation.json": "12e3ef0310253537f827c24cd81c507c526e0f99f6c9f04f7efaa3522013a688",
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/tail-final-api-r39910780360/DontForget_macOS_profile_benchmark.zip": "7584bfd2983aed46c424ba2b0bde3161fb006b4952012a38a5a5bef16fad31e2",
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-stage15-r39933362241/DontForget_macOS_profile_benchmark.zip": "e64f09bb9d158d0a3d1870d8d6c442dd2b2f0f086cdad01b94ee7d1674843498",
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/profile-final15-r39937296463/DontForget_macOS_profile_benchmark.zip": "336d7a94621151d4b60e439c5047df78aed88722898a6831bd8d61bff1839d6a",
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/final-retry-api-r39918373329/DontForget_macOS_retry_measurement.zip": "e0feb440f57f5527d2a1193f9ca20898c9b37c31dcfb48e858da8b915e802a9a",
+    "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/profile-stage15-r39933362241/acceptance-preparation.json": "6f722fe905717220e5a3c78607966155e511c48c7ae71a6aedd964682582e392",
+    "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/tail-final-r39910780360/acceptance-preparation.json": "0e0551b2075acfd2a22576c6c65114b709a5c8685382d28e1e6ec3f4f6fb891b"
+  },
+  "protected_user_document_hashes": {
+    "/Users/james/gitresources/opensources/dontforget/docs/Architecture_Design.md": "d484c9824a433ea1dba22036092e72e9f3983ec60575efca270a89b252ff4e55",
+    "/Users/james/gitresources/opensources/dontforget/docs/Developer_Guide.md": "d0a3023151ba3bd328c52c4cbdf8ab7687150bc6868922c73607388f59a7f9e3"
+  },
+  "result": "PASS",
+  "storage_note": "Logical bytes and stat blocks are deleted-file accounting; APFS clone/snapshot reclamation is not inferred from these totals."
+}

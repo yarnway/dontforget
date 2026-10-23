@@ -1,0 +1,621 @@
+{
+  "phase": "3D-15",
+  "scope": "One supplemental observation per size on final source; not randomized before/after proof. Same fixed fixture and cached shell. Slow frames kept; overlap is association, not proof of causation.",
+  "runs": [
+    {
+      "directory": "/Users/james/Library/Containers/com.example.dontForget.acceptance.profile-final15-r39937296463/Data/Library/Application Support/com.example.dontForget.acceptance.profile-final15-r39937296463/isolated-performance-DXuSHn",
+      "analysis": {
+        "scope": "Observed association only, not proof of GC causation. Same-thread recognized GC scopes are clipped to native build intervals and unioned, never added across nested scopes or worker threads. Timings are not an unobserved baseline.",
+        "source_revision": "838e5087ce677ad2fcf69ba4e0cc6ffe42ba5bb4",
+        "tasks": 1000,
+        "shell_theme_protocol": "cached-default-theme-v2",
+        "task_rows_sha256": "de99e7ca45aa063708717c41f711b506c2a3ca5c11eb8c0092919797cd7e59e0",
+        "event_count": 7983,
+        "frames": [
+          {
+            "sample": 1,
+            "build_us": 6912,
+            "gc_scope_union_us": 2506,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 2,
+            "build_us": 8356,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 3,
+            "build_us": 6251,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 4,
+            "build_us": 8074,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 5,
+            "build_us": 11870,
+            "gc_scope_union_us": 2613,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 6,
+            "build_us": 8200,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 7,
+            "build_us": 11238,
+            "gc_scope_union_us": 3718,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 8,
+            "build_us": 12361,
+            "gc_scope_union_us": 3216,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 9,
+            "build_us": 8909,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 10,
+            "build_us": 6972,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 11,
+            "build_us": 11926,
+            "gc_scope_union_us": 2460,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 12,
+            "build_us": 8331,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 13,
+            "build_us": 11492,
+            "gc_scope_union_us": 3338,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 14,
+            "build_us": 12187,
+            "gc_scope_union_us": 4452,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 15,
+            "build_us": 8424,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 16,
+            "build_us": 8141,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 17,
+            "build_us": 12838,
+            "gc_scope_union_us": 2784,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 18,
+            "build_us": 8734,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 19,
+            "build_us": 11323,
+            "gc_scope_union_us": 3580,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 20,
+            "build_us": 11896,
+            "gc_scope_union_us": 3848,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 21,
+            "build_us": 8095,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 22,
+            "build_us": 8683,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 23,
+            "build_us": 11398,
+            "gc_scope_union_us": 2738,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 24,
+            "build_us": 7805,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 25,
+            "build_us": 11714,
+            "gc_scope_union_us": 3471,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 26,
+            "build_us": 12506,
+            "gc_scope_union_us": 3337,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 27,
+            "build_us": 8454,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 28,
+            "build_us": 7701,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 29,
+            "build_us": 12837,
+            "gc_scope_union_us": 2675,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 15519,
+            "ui_tid": 259
+          },
+          {
+            "sample": 30,
+            "build_us": 8197,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 15519,
+            "ui_tid": 259
+          }
+        ],
+        "with_gc": {
+          "samples": 14,
+          "p50_us": 11870,
+          "p95_us": 12838,
+          "max_us": 12838,
+          "over_16667": 0
+        },
+        "without_gc": {
+          "samples": 16,
+          "p50_us": 8197,
+          "p95_us": 8909,
+          "max_us": 8909,
+          "over_16667": 0
+        }
+      }
+    },
+    {
+      "directory": "/Users/james/Library/Containers/com.example.dontForget.acceptance.profile-final15-r39937296463/Data/Library/Application Support/com.example.dontForget.acceptance.profile-final15-r39937296463/isolated-performance-DyoUNk",
+      "analysis": {
+        "scope": "Observed association only, not proof of GC causation. Same-thread recognized GC scopes are clipped to native build intervals and unioned, never added across nested scopes or worker threads. Timings are not an unobserved baseline.",
+        "source_revision": "838e5087ce677ad2fcf69ba4e0cc6ffe42ba5bb4",
+        "tasks": 10000,
+        "shell_theme_protocol": "cached-default-theme-v2",
+        "task_rows_sha256": "400c2386e425cafaffbbe8e8e6ed76e136ae94cd19f94bb745b8560c854d66d2",
+        "event_count": 7989,
+        "frames": [
+          {
+            "sample": 1,
+            "build_us": 8223,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 2,
+            "build_us": 8958,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 3,
+            "build_us": 9153,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 4,
+            "build_us": 11235,
+            "gc_scope_union_us": 3155,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 5,
+            "build_us": 9782,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 6,
+            "build_us": 8756,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 7,
+            "build_us": 11699,
+            "gc_scope_union_us": 2607,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 8,
+            "build_us": 8700,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 9,
+            "build_us": 8514,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 10,
+            "build_us": 9264,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 11,
+            "build_us": 11113,
+            "gc_scope_union_us": 2881,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 12,
+            "build_us": 8836,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 13,
+            "build_us": 12309,
+            "gc_scope_union_us": 3881,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 14,
+            "build_us": 11241,
+            "gc_scope_union_us": 3472,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 15,
+            "build_us": 8232,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 16,
+            "build_us": 8592,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 17,
+            "build_us": 10654,
+            "gc_scope_union_us": 4041,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 18,
+            "build_us": 11344,
+            "gc_scope_union_us": 2639,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 19,
+            "build_us": 8103,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 20,
+            "build_us": 9920,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 21,
+            "build_us": 11197,
+            "gc_scope_union_us": 3889,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 22,
+            "build_us": 10885,
+            "gc_scope_union_us": 2339,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 23,
+            "build_us": 9990,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 24,
+            "build_us": 8643,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 25,
+            "build_us": 10913,
+            "gc_scope_union_us": 3761,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 26,
+            "build_us": 11244,
+            "gc_scope_union_us": 2442,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 27,
+            "build_us": 8340,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 28,
+            "build_us": 9329,
+            "gc_scope_union_us": 0,
+            "gc_names": [],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 29,
+            "build_us": 11514,
+            "gc_scope_union_us": 3241,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 16872,
+            "ui_tid": 259
+          },
+          {
+            "sample": 30,
+            "build_us": 10928,
+            "gc_scope_union_us": 3125,
+            "gc_names": [
+              "CollectNewGeneration",
+              "Scavenge"
+            ],
+            "pid": 16872,
+            "ui_tid": 259
+          }
+        ],
+        "with_gc": {
+          "samples": 13,
+          "p50_us": 11235,
+          "p95_us": 12309,
+          "max_us": 12309,
+          "over_16667": 0
+        },
+        "without_gc": {
+          "samples": 17,
+          "p50_us": 8756,
+          "p95_us": 9990,
+          "max_us": 9990,
+          "over_16667": 0
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,175 @@
+{
+  "source_revision": "838e5087ce677ad2fcf69ba4e0cc6ffe42ba5bb4",
+  "scope": "Final source passive-trace release product, native UI task loading/completion and actual OS scheduling/cancellation. This is not system reboot or all-foreground cold startup measurement.",
+  "bundle": "com.example.dontForget.acceptance.product-final15-r39937296463",
+  "scheduled_trace": {
+    "scope": "Actual release product main/app/home/provider/native service; passive retry trace, no injected failures or manual retry hook",
+    "revision": "838e5087ce677ad2fcf69ba4e0cc6ffe42ba5bb4",
+    "pid": 18660,
+    "events": [
+      {
+        "phase": "native_submitted",
+        "at": "2026-10-23T10:25:39.528978Z",
+        "elapsed_us": 59643,
+        "lifecycle": "inactive",
+        "native_id": 1967836952,
+        "action": "cancel"
+      },
+      {
+        "phase": "native_submitted",
+        "at": "2026-10-23T10:25:39.535720Z",
+        "elapsed_us": 66385,
+        "lifecycle": "inactive",
+        "native_id": 1967836952,
+        "action": "schedule"
+      }
+    ],
+    "window_at_write": {
+      "focused": false,
+      "visible": true,
+      "minimized": false
+    },
+    "window_events": [
+      {
+        "event": "initial:null",
+        "elapsed_us": 160
+      },
+      {
+        "event": "lifecycle:inactive",
+        "elapsed_us": 10148
+      }
+    ],
+    "pending_native_ids_at_write": [
+      1967836952
+    ]
+  },
+  "completed_trace": {
+    "scope": "Actual release product main/app/home/provider/native service; passive retry trace, no injected failures or manual retry hook",
+    "revision": "838e5087ce677ad2fcf69ba4e0cc6ffe42ba5bb4",
+    "pid": 18660,
+    "events": [
+      {
+        "phase": "native_submitted",
+        "at": "2026-10-23T10:25:39.528978Z",
+        "elapsed_us": 59643,
+        "lifecycle": "inactive",
+        "native_id": 1967836952,
+        "action": "cancel"
+      },
+      {
+        "phase": "native_submitted",
+        "at": "2026-10-23T10:25:39.535720Z",
+        "elapsed_us": 66385,
+        "lifecycle": "inactive",
+        "native_id": 1967836952,
+        "action": "schedule"
+      },
+      {
+        "phase": "native_submitted",
+        "at": "2026-10-23T10:26:36.211596Z",
+        "elapsed_us": 56742015,
+        "lifecycle": "inactive",
+        "native_id": 1967836952,
+        "action": "cancel"
+      }
+    ],
+    "window_at_write": {
+      "focused": false,
+      "visible": true,
+      "minimized": false
+    },
+    "window_events": [
+      {
+        "event": "initial:null",
+        "elapsed_us": 160
+      },
+      {
+        "event": "lifecycle:inactive",
+        "elapsed_us": 10148
+      }
+    ],
+    "pending_native_ids_at_write": []
+  },
+  "startup_traces": [
+    {
+      "scope": "Actual product lib/main.dart release startup; real OS notification transport; passive instrumentation. First raster is the framework completion signal, not a GPU duration.",
+      "revision": "838e5087ce677ad2fcf69ba4e0cc6ffe42ba5bb4",
+      "pid": 17863,
+      "build_mode": "release",
+      "dart_entry_utc": "2026-10-23T10:24:43.844849Z",
+      "outcome": "complete",
+      "elapsed_to_outcome_us": 177377,
+      "milestones_us": {
+        "binding_ready": 616,
+        "window_shown": 25040,
+        "storage_ready": 39181,
+        "settings_loaded": 50842,
+        "tasks_loaded": 58708,
+        "notifications_ready": 69229,
+        "first_frame_rasterized": 169839,
+        "routes_ready_frame": 177376
+      },
+      "window_events": [
+        {
+          "event": "initial:null",
+          "elapsed_us": 576
+        },
+        {
+          "event": "lifecycle:inactive",
+          "elapsed_us": 10409
+        }
+      ],
+      "window_at_outcome": {
+        "focused": false,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "inactive"
+      },
+      "dart": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "os": "Version 27.0.1 (Build 26A434)"
+    },
+    {
+      "scope": "Actual product lib/main.dart release startup; real OS notification transport; passive instrumentation. First raster is the framework completion signal, not a GPU duration.",
+      "revision": "838e5087ce677ad2fcf69ba4e0cc6ffe42ba5bb4",
+      "pid": 18660,
+      "build_mode": "release",
+      "dart_entry_utc": "2026-10-23T10:25:39.469336Z",
+      "outcome": "complete",
+      "elapsed_to_outcome_us": 70420,
+      "milestones_us": {
+        "binding_ready": 177,
+        "window_shown": 27242,
+        "storage_ready": 33018,
+        "settings_loaded": 42513,
+        "tasks_loaded": 49237,
+        "first_frame_rasterized": 54126,
+        "notifications_ready": 66398,
+        "routes_ready_frame": 70420
+      },
+      "window_events": [
+        {
+          "event": "initial:null",
+          "elapsed_us": 160
+        },
+        {
+          "event": "lifecycle:inactive",
+          "elapsed_us": 10148
+        }
+      ],
+      "window_at_outcome": {
+        "focused": false,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "inactive"
+      },
+      "dart": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "os": "Version 27.0.1 (Build 26A434)"
+    }
+  ],
+  "selected_backend": {
+    "format": 1,
+    "backend": "incremental",
+    "source_sha256": "62c51e6c4e32fd761c4cac56af855ab606ea37b1be203da7130421bd258928d5"
+  },
+  "final_pending_native_ids": []
+}

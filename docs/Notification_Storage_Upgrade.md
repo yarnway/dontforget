@@ -29,3 +29,5 @@ dart run scripts/notification_storage.dart --directory /absolute/path/to/databas
 ## 验证范围
 
 产品测试覆盖 v1/增量两条调度路径、持久 pending 先于外部效果、批量/并发上限、失败重试、恢复门禁排空、换代、回退固定 v1、关闭后拒绝写入、SQL/日志共享租约，以及 pending/外部记录器效果/submitted 三处 SIGKILL。引擎和迁移原有故障边界回归继续执行。记录器不是真实 OS；SIGKILL 不等于系统重启、睡眠或断电。原生候选与系统事件验收在阶段记录中单列。
+
+2026-10-23 已完成 [Mac 隔离升级和回退](benchmarks/native-upgrade-rollback-3d15-2026-10-23.json)：同一隔离身份由 `9dca8cb` 升级至 `21282b6`，修改未来任务的触发时间后导出最新 v1，旧二进制显示修改后的时间；再开新二进制仍保持显式 v1，手动升级后恢复增量格式。整个流程保持 native ID `1967836952`；最后完成任务，OS pending 为空。升级前一致 SQLite、副本摘要、原始 v1 和最新导出均保留。最终产品源码 `838e508` 另完成 [真实调度和取消烟测](benchmarks/final-product-3d15-2026-10-23.json)。这些结果不替代其他平台、系统重启或断电验收。

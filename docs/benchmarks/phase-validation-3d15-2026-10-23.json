@@ -1,0 +1,253 @@
+{
+  "product_source_revision": "838e5087ce677ad2fcf69ba4e0cc6ffe42ba5bb4",
+  "workflow_revision": "c4c468ca0e713070d9e024a076103ee22aae9497",
+  "source_delta": "Only build_and_release.yml changed from measured product to workflow revision",
+  "local": {
+    "flutter": "3.44.9",
+    "dart": "3.12.2",
+    "flutter_passed": 760,
+    "python_passed": 63,
+    "analyze": "clean"
+  },
+  "product_ci": {
+    "conclusion": "success",
+    "headSha": "c4c468ca0e713070d9e024a076103ee22aae9497",
+    "jobs": [
+      {
+        "completedAt": "2026-10-23T10:31:04Z",
+        "conclusion": "success",
+        "databaseId": 120366795399,
+        "name": "Analyze and test",
+        "startedAt": "2026-10-23T10:28:50Z",
+        "status": "completed",
+        "steps": [
+          {
+            "name": "Run flutter analyze --no-pub",
+            "conclusion": "success",
+            "startedAt": "2026-10-23T10:29:20Z",
+            "completedAt": "2026-10-23T10:29:27Z"
+          },
+          {
+            "name": "Run flutter test --no-pub --reporter expanded",
+            "conclusion": "success",
+            "startedAt": "2026-10-23T10:29:27Z",
+            "completedAt": "2026-10-23T10:31:01Z"
+          },
+          {
+            "name": "Run python -m unittest discover -s scripts/tests -v",
+            "conclusion": "success",
+            "startedAt": "2026-10-23T10:31:01Z",
+            "completedAt": "2026-10-23T10:31:02Z"
+          }
+        ],
+        "url": "https://github.com/yarnway/dontforget/actions/runs/39939386654/job/120366795399"
+      },
+      {
+        "completedAt": "2026-10-23T10:35:18Z",
+        "conclusion": "success",
+        "databaseId": 120367691817,
+        "name": "Build macos candidate",
+        "startedAt": "2026-10-23T10:31:10Z",
+        "status": "completed",
+        "steps": [
+          {
+            "name": "macOS native startup smoke check",
+            "conclusion": "success",
+            "startedAt": "2026-10-23T10:34:57Z",
+            "completedAt": "2026-10-23T10:35:08Z"
+          },
+          {
+            "name": "Verify packaged hashes and source identity",
+            "conclusion": "success",
+            "startedAt": "2026-10-23T10:35:08Z",
+            "completedAt": "2026-10-23T10:35:08Z"
+          }
+        ],
+        "url": "https://github.com/yarnway/dontforget/actions/runs/39939386654/job/120367691817"
+      },
+      {
+        "completedAt": "2026-10-23T10:33:31Z",
+        "conclusion": "success",
+        "databaseId": 120367691928,
+        "name": "Build linux candidate",
+        "startedAt": "2026-10-23T10:31:06Z",
+        "status": "completed",
+        "steps": [
+          {
+            "name": "Linux native dependencies",
+            "conclusion": "success",
+            "startedAt": "2026-10-23T10:31:11Z",
+            "completedAt": "2026-10-23T10:32:14Z"
+          },
+          {
+            "name": "Linux native startup smoke check",
+            "conclusion": "success",
+            "startedAt": "2026-10-23T10:33:16Z",
+            "completedAt": "2026-10-23T10:33:26Z"
+          },
+          {
+            "name": "Verify packaged hashes and source identity",
+            "conclusion": "success",
+            "startedAt": "2026-10-23T10:33:26Z",
+            "completedAt": "2026-10-23T10:33:26Z"
+          }
+        ],
+        "url": "https://github.com/yarnway/dontforget/actions/runs/39939386654/job/120367691928"
+      },
+      {
+        "completedAt": "2026-10-23T10:35:47Z",
+        "conclusion": "success",
+        "databaseId": 120367691936,
+        "name": "Build windows candidate",
+        "startedAt": "2026-10-23T10:31:06Z",
+        "status": "completed",
+        "steps": [
+          {
+            "name": "Windows install upgrade and uninstall acceptance",
+            "conclusion": "success",
+            "startedAt": "2026-10-23T10:35:23Z",
+            "completedAt": "2026-10-23T10:35:29Z"
+          },
+          {
+            "name": "Windows native startup smoke check",
+            "conclusion": "success",
+            "startedAt": "2026-10-23T10:35:29Z",
+            "completedAt": "2026-10-23T10:35:40Z"
+          },
+          {
+            "name": "Verify packaged hashes and source identity",
+            "conclusion": "success",
+            "startedAt": "2026-10-23T10:35:40Z",
+            "completedAt": "2026-10-23T10:35:40Z"
+          }
+        ],
+        "url": "https://github.com/yarnway/dontforget/actions/runs/39939386654/job/120367691936"
+      },
+      {
+        "completedAt": "2026-10-23T10:35:25Z",
+        "conclusion": "success",
+        "databaseId": 120367691955,
+        "name": "Build ios candidate",
+        "startedAt": "2026-10-23T10:31:08Z",
+        "status": "completed",
+        "steps": [
+          {
+            "name": "Verify packaged hashes and source identity",
+            "conclusion": "success",
+            "startedAt": "2026-10-23T10:35:17Z",
+            "completedAt": "2026-10-23T10:35:17Z"
+          }
+        ],
+        "url": "https://github.com/yarnway/dontforget/actions/runs/39939386654/job/120367691955"
+      },
+      {
+        "completedAt": "2026-10-23T10:37:34Z",
+        "conclusion": "success",
+        "databaseId": 120367692102,
+        "name": "Build android candidate",
+        "startedAt": "2026-10-23T10:31:06Z",
+        "status": "completed",
+        "steps": [
+          {
+            "name": "Build Android test-signed packages",
+            "conclusion": "success",
+            "startedAt": "2026-10-23T10:31:29Z",
+            "completedAt": "2026-10-23T10:37:24Z"
+          },
+          {
+            "name": "Verify packaged hashes and source identity",
+            "conclusion": "success",
+            "startedAt": "2026-10-23T10:37:24Z",
+            "completedAt": "2026-10-23T10:37:24Z"
+          }
+        ],
+        "url": "https://github.com/yarnway/dontforget/actions/runs/39939386654/job/120367692102"
+      },
+      {
+        "completedAt": "2026-10-23T10:37:34Z",
+        "conclusion": "skipped",
+        "databaseId": 120370225920,
+        "name": "Prepare draft release after all packages pass",
+        "startedAt": "2026-10-23T10:37:34Z",
+        "status": "completed",
+        "steps": [],
+        "url": "https://github.com/yarnway/dontforget/actions/runs/39939386654/job/120370225920"
+      }
+    ],
+    "status": "completed",
+    "url": "https://github.com/yarnway/dontforget/actions/runs/39939386654"
+  },
+  "performance_ci": {
+    "conclusion": "success",
+    "headSha": "838e5087ce677ad2fcf69ba4e0cc6ffe42ba5bb4",
+    "jobs": [
+      {
+        "completedAt": "2026-10-23T10:22:14Z",
+        "conclusion": "success",
+        "databaseId": 120361929002,
+        "name": "product_startup",
+        "startedAt": "2026-10-23T10:16:31Z",
+        "status": "completed",
+        "steps": [],
+        "url": "https://github.com/yarnway/dontforget/actions/runs/39937296463/job/120361929002"
+      },
+      {
+        "completedAt": "2026-10-23T10:15:07Z",
+        "conclusion": "success",
+        "databaseId": 120361930671,
+        "name": "product_retry",
+        "startedAt": "2026-10-23T10:11:17Z",
+        "status": "completed",
+        "steps": [],
+        "url": "https://github.com/yarnway/dontforget/actions/runs/39937296463/job/120361930671"
+      },
+      {
+        "completedAt": "2026-10-23T10:14:42Z",
+        "conclusion": "success",
+        "databaseId": 120361931445,
+        "name": "profile",
+        "startedAt": "2026-10-23T10:11:17Z",
+        "status": "completed",
+        "steps": [],
+        "url": "https://github.com/yarnway/dontforget/actions/runs/39937296463/job/120361931445"
+      }
+    ],
+    "status": "completed",
+    "url": "https://github.com/yarnway/dontforget/actions/runs/39937296463"
+  },
+  "quality_log_sha256": "170910cdb0dc59476efb618e353b89537ddf8d53baf3736b75f2a4901ede1c5f",
+  "quality_evidence": [
+    "Analyze and test\tUNKNOWN STEP\t2026-10-23T10:29:27.5945839Z No issues found! (ran in 7.3s)",
+    "Analyze and test\tUNKNOWN STEP\t2026-10-23T10:31:01.3367407Z 01:24 +759 ~1: All tests passed!",
+    "Analyze and test\tUNKNOWN STEP\t2026-10-23T10:31:02.1005262Z Ran 63 tests in 0.412s"
+  ],
+  "ci_flutter_passed": 759,
+  "ci_flutter_platform_skipped": 1,
+  "ci_python_passed": 63,
+  "resume_verification_utc": "2026-10-23T12:16:20.562111+00:00",
+  "evidence_readback": {
+    "retained_archive_and_preparation_hashes": 12,
+    "rollback_material_hashes": 26,
+    "ordinary_alternating_runs": 6,
+    "ordinary_alternating_frames": 270,
+    "ordinary_final_frames": 45,
+    "raw_gc_reports_reanalyzed": 2,
+    "protected_user_docs_unchanged": true
+  },
+  "earlier_failures": [
+    {
+      "run": 39937294674,
+      "cause": "Ubuntu runner mirror+file list still selected Azure; explicit mirror-list rewrite fixed by c4c468c"
+    },
+    {
+      "run": 39937296463,
+      "cause": "product_startup artifact upload ENOTFOUND; only failed job rerun succeeded"
+    }
+  ],
+  "limits": [
+    "Recording OS transport in 10000-task reconciliation; not actual delivery",
+    "GC association is not causation; historical rare frame tail remains open",
+    "System reboot, sleep/wake and power loss not accepted",
+    "Main build does not publish a release"
+  ]
+}

@@ -1,0 +1,117 @@
+{
+  "phase": "3D-16",
+  "before_utc": "2026-10-23T10:15:06.042767+00:00",
+  "boot_before": "kern.bootsessionuuid: C5EA9BC6-4B3F-4A76-8AB5-B9751726418E\nkern.boottime: { sec = 1791900480, usec = 728179 } Tue Oct 13 22:08:00 2026\n",
+  "timezone_before": "/private/var/db/timezone/tz/2026d.1.0/zoneinfo/Asia/Shanghai",
+  "native_timezone_change": "BLOCKED_BY_SYSTEM_TOUCH_ID_OR_ADMIN_AUTH; cancelled; auto time and auto zone remain on",
+  "native_power_menu": "NOT_ACCESSIBLE: keyboard focus did not expose menu; Finder screenshot blank",
+  "relative_wake": {
+    "command": [
+      "pmset",
+      "relative",
+      "wake",
+      "60"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "scheduled_readback": "No owned scheduled wake row; relative timers are imprecise and cannot be cancelled according to installed pmset man page; no successful wake claimed"
+  },
+  "sleep": {
+    "at_utc": "2026-10-23T10:15:06.050784+00:00",
+    "exit": 71,
+    "stdout": "Unable to sleep system: error 0xe00002e2\n",
+    "stderr": ""
+  },
+  "system_reboot": "NOT_PERFORMED",
+  "note": "No other applications or power assertions terminated; existing calendar/acmd wake schedules preserved.",
+  "boot_after": "kern.bootsessionuuid: C5EA9BC6-4B3F-4A76-8AB5-B9751726418E\nkern.boottime: { sec = 1791900480, usec = 728179 } Tue Oct 13 22:08:00 2026\n",
+  "post_sleep_attempt_native_trace": {
+    "scope": "Actual release product main/app/home/provider/native service; passive retry trace, no injected failures or manual retry hook",
+    "revision": "21282b6eed05770a9d5e9e5e8c1946d756d823be",
+    "pid": 9390,
+    "events": [
+      {
+        "phase": "native_submitted",
+        "at": "2026-10-23T10:14:24.451529Z",
+        "elapsed_us": 87942,
+        "lifecycle": "inactive",
+        "native_id": 1967836952,
+        "action": "cancel"
+      },
+      {
+        "phase": "native_submitted",
+        "at": "2026-10-23T10:14:37.304636Z",
+        "elapsed_us": 12941007,
+        "lifecycle": "inactive",
+        "native_id": 1967836952,
+        "action": "cancel"
+      },
+      {
+        "phase": "native_submitted",
+        "at": "2026-10-23T10:14:37.312471Z",
+        "elapsed_us": 12948839,
+        "lifecycle": "inactive",
+        "native_id": 1967836952,
+        "action": "schedule"
+      },
+      {
+        "phase": "native_submitted",
+        "at": "2026-10-23T10:15:13.846894Z",
+        "elapsed_us": 49483113,
+        "lifecycle": "inactive",
+        "native_id": 1967836952,
+        "action": "cancel"
+      }
+    ],
+    "window_at_write": {
+      "focused": false,
+      "visible": true,
+      "minimized": false
+    },
+    "window_events": [
+      {
+        "event": "initial:null",
+        "elapsed_us": 3006
+      },
+      {
+        "event": "lifecycle:inactive",
+        "elapsed_us": 15895
+      }
+    ],
+    "pending_native_ids_at_write": []
+  },
+  "final_pending_native_ids": [],
+  "timezone_after": "/private/var/db/timezone/tz/2026d.1.0/zoneinfo/Asia/Shanghai",
+  "scheduled_events_after": "Scheduled power events:\n [0]  wake at 10/23/2026 15:52:11 by 'com.apple.alarm.user-invisible-com.apple.calaccessd.travelEngine.periodicRefreshTimer'\n [1]  wake at 10/24/2026 00:13:28 by 'com.apple.alarm.user-invisible-com.apple.acmd.alarm'\n",
+  "sleep_result": "NOT_PERFORMED: pmset returned 71 / 0xe00002e2",
+  "relative_wake_cleanup": {
+    "scope": "Clear only the relative wake test value requested in this session; no sleep, restart, authorization changes or other scheduled event cancellation. Same public IOKit setting path used by pmset relative wake.",
+    "exit": 1,
+    "stdout": "WakeRelativeToSleep reset to 0; IOKit result=0xe00002c1\n",
+    "stderr": "",
+    "source": "#include <CoreFoundation/CoreFoundation.h>\n#include <IOKit/IOKitLib.h>\n#include <IOKit/pwr_mgt/IOPM.h>\n#include <stdio.h>\nint main(void) {\n io_registry_entry_t root = IORegistryEntryFromPath(kIOMainPortDefault, kIOPowerPlane \":/IOPowerConnection/IOPMrootDomain\");\n if (!root) return 2;\n int zero = 0;\n CFNumberRef value = CFNumberCreate(NULL, kCFNumberIntType, &zero);\n IOReturn result = IORegistryEntrySetCFProperty(root, CFSTR(kIOPMSettingDebugWakeRelativeKey), value);\n CFRelease(value); IOObjectRelease(root);\n printf(\"WakeRelativeToSleep reset to 0; IOKit result=0x%08x\\n\", result);\n return result == kIOReturnSuccess ? 0 : 1;\n}",
+    "reference": "https://github.com/apple-oss-distributions/IOKitUser/blob/main/pwr_mgt.subproj/IOPMAutoWake.c",
+    "limitation": "IOKit write acknowledgment, not independent hardware timer confirmation or successful wake acceptance."
+  },
+  "scheduled_events_after_cleanup": "Scheduled power events:\n [0]  wake at 10/23/2026 15:52:11 by 'com.apple.alarm.user-invisible-com.apple.calaccessd.travelEngine.periodicRefreshTimer'\n [1]  wake at 10/24/2026 00:13:28 by 'com.apple.alarm.user-invisible-com.apple.acmd.alarm'\n",
+  "relative_wake_cli_cleanup": {
+    "command": [
+      "pmset",
+      "relative",
+      "wake",
+      "0"
+    ],
+    "exit": 70,
+    "stdout": "Error parsing scheduled event.\n",
+    "stderr": "",
+    "limitation": "No hardware timer readback available; exit code alone does not establish state."
+  },
+  "resume_observation": {
+    "at_utc": "2026-10-23T12:18:33.864976+00:00",
+    "boot": "kern.bootsessionuuid: C5EA9BC6-4B3F-4A76-8AB5-B9751726418E\nkern.boottime: { sec = 1791900480, usec = 728179 } Tue Oct 13 22:08:00 2026\n",
+    "time_zone": "/var/db/timezone/zoneinfo/Asia/Shanghai",
+    "settings": "Native UI confirmed automatic date/time on, automatic timezone on, Hangzhou / China restored after Shanghai to New York test",
+    "time_zone_followup": "PASS on final 172c6bb candidate: bidirectional live timezone changes, same IDs, re-open, no changed task rows and pending-empty cleanup; see native-timezone-3c13-2026-10-23.json",
+    "relative_wake": "No independent hardware readback; not claimed cleared"
+  }
+}

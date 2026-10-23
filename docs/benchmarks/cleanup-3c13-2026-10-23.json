@@ -1,0 +1,196 @@
+{
+  "scope": "Only post-timezone-test generated project caches and verified artifact transport copies; no Library data or original package removed",
+  "completed_utc": "2026-10-23T12:48:51.615260+00:00",
+  "removed": [
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/test_cache",
+      "logical_bytes": 61943360,
+      "allocated_bytes": 61943808,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/unit_test_assets",
+      "logical_bytes": 2121711,
+      "allocated_bytes": 2150400,
+      "files": 12
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/native_assets",
+      "logical_bytes": 1968039,
+      "allocated_bytes": 1978368,
+      "files": 3
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/.dart_tool/hooks_runner",
+      "logical_bytes": 24753351,
+      "allocated_bytes": 25276416,
+      "files": 30
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/.dart_tool/flutter_build",
+      "logical_bytes": 9025,
+      "allocated_bytes": 12288,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-000",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-001",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-002",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-003",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-004",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-005",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-006",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-007",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-008",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-009",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-010",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-011",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-012",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-013",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-014",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-015",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-016",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-017",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-018",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-019",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-020",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-021",
+      "logical_bytes": 1048576,
+      "allocated_bytes": 1048576,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/chunk-022",
+      "logical_bytes": 802495,
+      "allocated_bytes": 802816,
+      "files": 1
+    },
+    {
+      "path": "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/artifact.zip",
+      "logical_bytes": 23871167,
+      "allocated_bytes": 23871488,
+      "files": 1
+    }
+  ],
+  "logical_bytes": 138537820,
+  "allocated_bytes": 139104256,
+  "retained_hashes": {
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/download-verification.json": "d067c6a786a2b8c87cb45335ccbc6d87e761a61bf733cbbb6fbcd001a447ef76",
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/macos-manifest.json": "147d6aae95b73a68e61cf5c190467100180d2a892e068c0ea306b8552efab8ac",
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/DontForget_macOS_retry_measurement.zip": "e65e31782a4de58bbf2b7f2b0ef7da02fa861623251a48d94afb480021510463",
+    "/Users/james/gitresources/opensources/dontforget/build/ci_artifacts/timezone-r39952545684/macos-SHA256SUMS.txt": "b53a82bf3a2e7117ac8f6f2eb569ab3e5b855db0f3041c4fc93d0b242a42012d"
+  },
+  "retained": [
+    "Final timezone app, original inner ZIP and manifest",
+    "Old/new upgrade pair and performance baseline",
+    "All isolated containers and 31 timezone rollback materials",
+    "All previous recovery materials and fixed fixture",
+    "Unrelated working tree edits and shared SDK/cache"
+  ],
+  "result": "PASS"
+}
