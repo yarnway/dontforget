@@ -48,6 +48,179 @@ void main() {
   });
   tearDown(() => dir.delete(recursive: true));
 
+  test('oversized checkpoint preserves the selected generation', () async {
+    final manifest = File('${dir.path}/current.json');
+    final before = await manifest.readAsBytes();
+    final limited = IncrementalJournalExperiment(dir, maxCheckpointBytes: 120);
+    await limited.open();
+    await expectLater(
+      limited.checkpoint(
+        NotificationJournalSnapshot(epoch, {'x': entry('pending')}),
+      ),
+      throwsStateError,
+    );
+    expect(await manifest.readAsBytes(), before);
+    expect(limited.snapshot!.entries, isEmpty);
+    await limited.append(epoch, [entry('pending')]);
+    expect(
+      (await IncrementalJournalExperiment(
+        dir,
+      ).open()).entries.values.single.nativeId,
+      17,
+    );
+  });
+
+  test(
+    'oversized append is rejected before log or in-memory changes',
+    () async {
+      final limited = IncrementalJournalExperiment(dir, maxFrameBytes: 1024);
+      await limited.open();
+      final huge = NotificationJournalEntry.decode({
+        ...entry('pending').toJson(),
+        'reminderId': 'x' * 3000,
+      });
+      await expectLater(limited.append(epoch, [huge]), throwsStateError);
+      expect(await limited.delta.length(), 0);
+      expect(limited.snapshot!.entries, isEmpty);
+      await limited.append(epoch, [entry('pending')]);
+      expect(
+        (await IncrementalJournalExperiment(
+          dir,
+        ).open()).entries.values.single.nativeId,
+        17,
+      );
+    },
+  );
+
+  test(
+    'segment byte capacity requires a checkpoint and preserves ID',
+    () async {
+      final limited = IncrementalJournalExperiment(dir, maxLogBytes: 1024);
+      await limited.open();
+      var reachedLimit = false;
+      for (var n = 0; n < 20; n++) {
+        final before = await limited.delta.readAsBytes();
+        final state = limited.snapshot!.toJson();
+        try {
+          await limited.append(epoch, [entry('pending')]);
+        } on StateError {
+          reachedLimit = true;
+          expect(await limited.delta.readAsBytes(), before);
+          expect(limited.snapshot!.toJson(), state);
+          break;
+        }
+      }
+      expect(reachedLimit, isTrue);
+      await limited.checkpoint(limited.snapshot!);
+      await limited.append(epoch, [entry('submitted')]);
+      final recovered = await IncrementalJournalExperiment(dir).open();
+      expect(recovered.entries.values.single.nativeId, 17);
+      expect(recovered.entries.values.single.status, 'submitted');
+    },
+  );
+
+  test('manifest, checkpoint and log reads enforce byte limits', () async {
+    final manifest = File('${dir.path}/current.json');
+    final manifestBytes = await manifest.readAsBytes();
+    final selected = jsonDecode(utf8.decode(manifestBytes)) as Map;
+    for (final kind in ['manifest', 'checkpoint', 'log']) {
+      if (kind == 'manifest') await manifest.writeAsString(' ' * 4097);
+      if (kind == 'log') await log.delta.writeAsString(' ' * 101);
+      final reader = IncrementalJournalExperiment(
+        dir,
+        maxCheckpointBytes: kind == 'checkpoint' ? 10 : 16 * 1024 * 1024,
+        maxLogBytes: kind == 'log' ? 100 : 64 * 1024 * 1024,
+      );
+      await expectLater(
+        reader.open(),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'limit',
+            contains('exceeds limit'),
+          ),
+        ),
+      );
+      expect(reader.snapshot, isNull);
+      await manifest.writeAsBytes(manifestBytes);
+      await log.delta.writeAsBytes([]);
+    }
+    selected['generation'] = 'f' * 36;
+    await manifest.writeAsString(jsonEncode(selected));
+    await expectLater(
+      IncrementalJournalExperiment(dir).open(),
+      throwsFormatException,
+    );
+  });
+
+  test('oversized unterminated tail is not silently ignored', () async {
+    await log.delta.writeAsString('x' * 1025);
+    final reader = IncrementalJournalExperiment(dir, maxFrameBytes: 1024);
+    await expectLater(reader.open(), throwsFormatException);
+    expect(reader.snapshot, isNull);
+  });
+
+  test(
+    'linked manifest cannot redirect reads or checkpoint publication',
+    () async {
+      final manifest = File('${dir.path}/current.json');
+      final bytes = await manifest.readAsBytes();
+      final target = File('${dir.path}/sentinel.json');
+      await target.writeAsBytes(bytes);
+      await manifest.delete();
+      await Link(manifest.path).create(target.path);
+      await expectLater(
+        IncrementalJournalExperiment(dir).open(),
+        throwsFormatException,
+      );
+      await expectLater(
+        log.checkpoint(NotificationJournalSnapshot(epoch, {})),
+        throwsFormatException,
+      );
+      expect(await target.readAsBytes(), bytes);
+      expect(
+        await FileSystemEntity.type(manifest.path, followLinks: false),
+        FileSystemEntityType.link,
+      );
+    },
+    skip: Platform.isWindows,
+  );
+
+  test(
+    'linked delta cannot redirect append and poisons the writer',
+    () async {
+      final target = File('${dir.path}/sentinel.log');
+      await target.writeAsString('unchanged');
+      final delta = log.delta;
+      await delta.delete();
+      await Link(delta.path).create(target.path);
+      await expectLater(
+        log.append(epoch, [entry('pending')]),
+        throwsFormatException,
+      );
+      expect(await target.readAsString(), 'unchanged');
+      expect(log.snapshot, isNull);
+    },
+    skip: Platform.isWindows,
+  );
+
+  test(
+    'linked root is not treated as an exclusively owned directory',
+    () async {
+      final alias = Link('${dir.path}/alias');
+      await alias.create(dir.path);
+      final before = await File('${dir.path}/current.json').readAsBytes();
+      await expectLater(
+        IncrementalJournalExperiment(
+          Directory(alias.path),
+        ).checkpoint(NotificationJournalSnapshot(epoch, {})),
+        throwsFormatException,
+      );
+      expect(await File('${dir.path}/current.json').readAsBytes(), before);
+    },
+    skip: Platform.isWindows,
+  );
+
   test('replay and checkpoint retain pending intent and native ID', () async {
     await log.append(epoch, [entry('pending')]);
     final pending = await IncrementalJournalExperiment(dir).open();

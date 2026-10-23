@@ -13,6 +13,8 @@ Compares v1 replacement, indexed append, and indexed append with a checkpoint
 every 24 frames, using identical 256-entry pending/submitted batches. Each
 variant runs once empty and once already submitted. Checkpoint costs are included.
 Output is JSON on stdout. No OS notification or application data is changed.
+The experiment bounds manifests at 4 KiB, checkpoints at 16 MiB, segments at
+64 MiB and frames at 4 MiB; links are rejected. The caller owns the directory.
 --help prints this help; no files are created until arguments/fixture validate.
 ''';
 
@@ -160,8 +162,16 @@ Future<void> main(List<String> args) async {
     stdout.writeln(
       const JsonEncoder.withIndent('  ').convert({
         'scope':
-            'Dart JIT journal-only experiment v2; v1 then indexed then segmented; checkpoint costs included; no OS effects or product startup',
-        'protocol_version': 2,
+            'Dart JIT journal-only experiment v3; bounded files and frames; v1 then indexed then segmented; checkpoint costs included; no OS effects or product startup',
+        'protocol_version': 3,
+        'experiment_limits': {
+          'manifest_bytes': 4096,
+          'checkpoint_bytes': 16 * 1024 * 1024,
+          'segment_bytes': 64 * 1024 * 1024,
+          'frame_bytes': 4 * 1024 * 1024,
+          'symlink_inputs_and_targets': 'rejected',
+          'caller_exclusive_directory_required': true,
+        },
         'fixture_file_sha256': IncrementalJournalExperiment.digest(
           fixtureBytes,
         ),
