@@ -71,8 +71,9 @@ jobs:
         timeout-minutes: 12
         run: |
           # The hosted Azure mirror can stream slowly without hitting APT's idle timeout.
-          # Use Ubuntu's official HTTPS archive; keep the existing suites and signing keys.
-          for sources in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
+          # Hosted runners may reach Azure through mirror+file sources as well.
+          # Keep suites, signing keys, and unrelated mirrors unchanged.
+          for sources in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources /etc/apt/apt-mirrors.txt /etc/apt/apt-mirrors-security.txt; do
             if [ -f "$sources" ]; then
               sudo sed -i \
                 -e 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' \
