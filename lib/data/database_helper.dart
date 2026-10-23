@@ -10,6 +10,7 @@ import '../models/settings.dart';
 import '../models/legacy_credentials.dart';
 import '../services/notification_epoch_store.dart';
 import '../services/notification_journal.dart';
+import '../services/storage_directory_lease.dart';
 
 part 'database_access.dart';
 
@@ -27,7 +28,7 @@ class DatabaseHelper {
   DatabaseMaintenanceLease? _maintenance;
   Future<String>? _ownershipOpening;
   String? _ownedDirectory;
-  RandomAccessFile? _ownershipLock;
+  StorageDirectoryLease? _ownershipLock;
   NotificationEpochStore? _notificationEpochStore;
   NotificationJournal? _notificationJournal;
   static final Map<String, DatabaseHelper> _directoryOwners = {};
@@ -276,29 +277,50 @@ class DatabaseHelper {
       );
     }
     _directoryOwners[canonical] = this;
-    RandomAccessFile? handle;
+    StorageDirectoryLease? handle;
     try {
-      final lockFile = File(join(canonical, '.dontforget.owner.lock'));
+      handle = await StorageDirectoryLease.acquire(Directory(canonical));
+      // This product still uses v1. Never open stale v1 state when an isolated
+      // migration selected another backend or left an unknown selection.
+      final selector = File(
+        join(canonical, NotificationJournal.storageSelectorFileName),
+      );
       final type = await FileSystemEntity.type(
-        lockFile.path,
+        selector.path,
         followLinks: false,
       );
-      if (type != FileSystemEntityType.notFound &&
-          type != FileSystemEntityType.file) {
-        throw const DatabaseAccessException(
-          DatabaseAccessError.ownedByAnotherProcess,
-        );
+      if (type != FileSystemEntityType.notFound) {
+        try {
+          if (type != FileSystemEntityType.file ||
+              await selector.length() > 4096) {
+            throw const FormatException('Unsafe journal selection');
+          }
+          final bytes = await selector.readAsBytes();
+          if (bytes.length > 4096) {
+            throw const FormatException('Oversized journal selection');
+          }
+          final selected = jsonDecode(utf8.decode(bytes));
+          if (selected is! Map ||
+              selected.length != 2 ||
+              selected['format'] != 1 ||
+              selected['backend'] != 'v1') {
+            throw const FormatException(
+              'Notification backend requires migration adapter',
+            );
+          }
+        } catch (_) {
+          throw const DatabaseRecoveryRequiredException();
+        }
       }
-      handle = await lockFile.open(mode: FileMode.append);
-      await handle.lock(FileLock.exclusive);
       _ownershipLock = handle;
       _ownedDirectory = canonical;
       return canonical;
-    } catch (_) {
+    } catch (error) {
       await handle?.close();
       if (identical(_directoryOwners[canonical], this)) {
         _directoryOwners.remove(canonical);
       }
+      if (error is DatabaseRecoveryRequiredException) rethrow;
       throw const DatabaseAccessException(
         DatabaseAccessError.ownedByAnotherProcess,
       );

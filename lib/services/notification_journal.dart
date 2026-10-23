@@ -18,6 +18,7 @@ class NotificationJournal {
   /// ordinary constructor and retain the database ownership gate.
   NotificationJournal.forTesting(this.directory, this._beforeReplace);
   static const fileName = 'notification-journal.json';
+  static const storageSelectorFileName = 'notification-storage.json';
   static const maxBytes = 16 * 1024 * 1024;
   final Directory directory;
   Future<void> _tail = Future.value();

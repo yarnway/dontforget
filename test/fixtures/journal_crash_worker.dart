@@ -2,6 +2,7 @@
 import 'dart:io';
 import 'package:dont_forget/services/notification_journal.dart';
 import '../../benchmark/incremental_journal_experiment.dart';
+import '../../benchmark/leased_incremental_journal.dart';
 
 Future<void> boundary() async {
   stdout.writeln('DURABLE_BOUNDARY');
@@ -13,6 +14,25 @@ Future<void> main(List<String> args) async {
   final dir = Directory(args[0]);
   final mode = args[1];
   const epoch = '00000000-0000-4000-8000-000000000001';
+  if (mode.startsWith('leased:')) {
+    final session = await LeasedIncrementalJournal.acquire(dir);
+    final point = mode.substring('leased:'.length);
+    session.hook = (at) async {
+      if (at == point) await boundary();
+    };
+    if (point == 'hold') {
+      await boundary();
+    } else if (point.startsWith('import_')) {
+      await session.migrate();
+    } else if (point.startsWith('rollback_')) {
+      await session.rollback();
+    } else if (point == 'generation_removed') {
+      await session.collect();
+    } else {
+      await session.checkpoint();
+    }
+    throw StateError('Requested leased boundary was not reached');
+  }
   if (mode.startsWith('segment:') || mode.startsWith('segment_bulk:')) {
     final bulk = mode.startsWith('segment_bulk:');
     final log = IncrementalJournalExperiment(

@@ -8,6 +8,11 @@ import 'package:crypto/crypto.dart';
 import 'package:dont_forget/services/notification_journal.dart';
 import 'package:uuid/uuid.dart';
 
+class JournalSegmentFull extends StateError {
+  JournalSegmentFull()
+    : super('Checkpoint required before reaching the log byte limit');
+}
+
 class IncrementalJournalExperiment {
   IncrementalJournalExperiment(
     this.directory, {
@@ -297,9 +302,7 @@ class IncrementalJournalExperiment {
     }
     if (logSize + bytes.length > maxLogBytes) {
       // No write occurred. A checkpoint can rotate the segment safely.
-      throw StateError(
-        'Checkpoint required before reaching the log byte limit',
-      );
+      throw JournalSegmentFull();
     }
     try {
       final file = await delta.open(mode: FileMode.append);

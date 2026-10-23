@@ -5,6 +5,7 @@ import 'dart:math' as math;
 
 import 'package:dont_forget/services/notification_journal.dart';
 import '../benchmark/incremental_journal_experiment.dart';
+import '../benchmark/leased_incremental_journal.dart';
 
 const usage =
     '''Usage: dart run scripts/evaluate_incremental_journal.dart --fixture PATH
@@ -14,7 +15,10 @@ every 24 frames, using identical 256-entry pending/submitted batches. Each
 variant runs once empty and once already submitted. Checkpoint costs are included.
 Output is JSON on stdout. No OS notification or application data is changed.
 The experiment bounds manifests at 4 KiB, checkpoints at 16 MiB, segments at
-64 MiB and frames at 4 MiB; links are rejected. The caller owns the directory.
+64 MiB and frames at 4 MiB; links are rejected. Protocol v4 additionally measures
+the shared directory lease, v1 migration, latest-state rollback and generation
+reclamation with a 256 MiB managed directory budget. It does not enable the
+incremental backend in the product. No live app directory is opened.
 --help prints this help; no files are created until arguments/fixture validate.
 ''';
 
@@ -55,6 +59,11 @@ Future<void> main(List<String> args) async {
     }
     var current = NotificationJournal(currentDir);
     await current.reset(epoch);
+    final leasedDirectory = await Directory('${root.path}/leased').create();
+    await NotificationJournal(leasedDirectory).reset(epoch);
+    var leased = await LeasedIncrementalJournal.acquire(leasedDirectory);
+    await leased.migrate();
+    await leased.close();
     for (final mode in ['first', 'reopen']) {
       current = NotificationJournal(currentDir);
       final batches = <List<NotificationJournalEntry>>[];
@@ -149,6 +158,53 @@ Future<void> main(List<String> args) async {
           'equivalent_after_replay_and_checkpoint': true,
         });
       }
+      watch.reset();
+      leased = await LeasedIncrementalJournal.acquire(leasedDirectory);
+      final leasedPriorOpen = watch.elapsedMicroseconds;
+      try {
+        watch.reset();
+        for (final batch in batches) {
+          await leased.append(epoch, batch);
+        }
+        final leasedAppend = watch.elapsedMicroseconds;
+        final stats = leased.writeStatistics;
+        final usage = await leased.collect();
+        await leased.close();
+        watch.reset();
+        leased = await LeasedIncrementalJournal.acquire(leasedDirectory);
+        final leasedReplay = watch.elapsedMicroseconds;
+        final state = (await leased.read())!;
+        if (jsonEncode(state.toJson()) != jsonEncode(expected.toJson())) {
+          throw StateError('Leased replay differs from v1');
+        }
+        watch.reset();
+        await leased.rollback();
+        final rollback = watch.elapsedMicroseconds;
+        final exported = (await NotificationJournal(leasedDirectory).read())!;
+        if (jsonEncode(exported.toJson()) != jsonEncode(expected.toJson())) {
+          throw StateError(
+            'Rollback export differs from latest incremental state',
+          );
+        }
+        watch.reset();
+        await leased.migrate();
+        final remigrate = watch.elapsedMicroseconds;
+        variants.add({
+          'variant': 'leased_segmented_24',
+          'prior_lease_and_open_us': leasedPriorOpen,
+          'append_including_periodic_checkpoint_us': leasedAppend,
+          'written_including_periodic_checkpoint_bytes': stats.bytes,
+          'flushes_including_periodic_checkpoint': stats.flushes,
+          'periodic_checkpoints': stats.checkpoints,
+          'lease_and_replay_us': leasedReplay,
+          'managed_bytes_after_reclamation': usage.bytes,
+          'rollback_latest_to_v1_us': rollback,
+          'remigrate_latest_v1_us': remigrate,
+          'equivalent_after_replay_rollback_and_remigration': true,
+        });
+      } finally {
+        await leased.close();
+      }
       reports.add({
         'mode': mode,
         'entries': rows.length,
@@ -162,8 +218,8 @@ Future<void> main(List<String> args) async {
     stdout.writeln(
       const JsonEncoder.withIndent('  ').convert({
         'scope':
-            'Dart JIT journal-only experiment v3; bounded files and frames; v1 then indexed then segmented; checkpoint costs included; no OS effects or product startup',
-        'protocol_version': 3,
+            'Dart JIT journal-only experiment v4; bounded files, leased migration/rollback and generation reclamation; v1 then indexed then segmented then leased; checkpoint costs included; no OS effects or product startup',
+        'protocol_version': 4,
         'experiment_limits': {
           'manifest_bytes': 4096,
           'checkpoint_bytes': 16 * 1024 * 1024,
@@ -171,6 +227,8 @@ Future<void> main(List<String> args) async {
           'frame_bytes': 4 * 1024 * 1024,
           'symlink_inputs_and_targets': 'rejected',
           'caller_exclusive_directory_required': true,
+          'leased_variant_directory_budget_bytes': 256 * 1024 * 1024,
+          'leased_variant_uses_database_ownership_lock': true,
         },
         'fixture_file_sha256': IncrementalJournalExperiment.digest(
           fixtureBytes,
