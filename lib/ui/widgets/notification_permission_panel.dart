@@ -355,6 +355,7 @@ class _NotificationPermissionPanelState
               if (!_busy && (_system?.retained?.isNotEmpty ?? false))
                 ExpansionTile(
                   key: const ValueKey('notification-system-retained'),
+                  internalAddSemanticForOnTap: true,
                   tilePadding: EdgeInsets.zero,
                   title: Text(l10n.get('notificationSystemRetainedTitles')),
                   children: [

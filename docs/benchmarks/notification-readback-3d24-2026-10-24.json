@@ -1,0 +1,94 @@
+{
+  "phase": "3D-24",
+  "date": "2026-10-24",
+  "scope": "isolated product OS readback and accessibility correction",
+  "previousHeadCI": {
+    "revision": "299123d6db29e0ea56b7e84e9144792fb20a0da5",
+    "runId": 40067734878,
+    "qualityAndFivePlatforms": "PASS"
+  },
+  "candidateSource": "465b4226e0fbcf354d5239f170e7e53093695810",
+  "sleepDelivery": {
+    "status": "PASS_OS_DELIVERY_AND_HISTORY_AFTER_WAKE",
+    "taskId": "qa-model-keep",
+    "nativeId": 877764987,
+    "sleepCoveredDue": true,
+    "wake": "2026-10-24T13:13:06.661829+08:00",
+    "delivered": "2026-10-24T13:13:07.062893+08:00",
+    "wakeToDeliverySeconds": 0.401064,
+    "visibleBannerObserved": false,
+    "presentation": "NotificationCenter logged displayInBlackshield suppression; no human-read claim",
+    "laterRetainedQuery": {
+      "at": "2026-10-24T16:15:00+08:00",
+      "pending": 0,
+      "retained": 0,
+      "meaning": "Current state does not prove historical non-delivery; scoped later logs did not establish why it was no longer retained"
+    },
+    "sourceLog": "build/native_acceptance/readback-stage24-materials/scoped-sleep-os-log.json",
+    "sourceLogSha256": "effada45514ce2b026e1aacb6a01be794401de23a214701c9fdfb4c424589eeb",
+    "selectedOSEvents": [
+      {
+        "timestamp": "2026-10-24 13:13:07.062893+0800",
+        "process": "usernoted",
+        "message": "Delivering <NotificationRecord app:\"com.example.dontForget.acceptance.models-r40054931085\" ident:\"AADC-7B6B\" req:\"877764987\" uuid:\"69933A7A\" source:\"242F6E7B\" dismissAfterDefaultAction:true> to [ .alert .lockScreen .notificationCenter ]: updatedExisting: false"
+      },
+      {
+        "timestamp": "2026-10-24 13:13:07.063417+0800",
+        "process": "NotificationCenter",
+        "message": "Will not show com.example.dontForget.acceptance.models-r40054931085:69933A7A:AADC-7B6B on locked-shield: canShow: false, shouldAlert: false, visibility: [history, alert, muted, lockscreen, allowsScreenWake], shouldAlertEvenIfShown: true, notShownBefore: true, moreRecentThanLockedDate: true, ignoreLockedDate: false."
+      },
+      {
+        "timestamp": "2026-10-24 13:13:07.470493+0800",
+        "process": "NotificationCenter",
+        "message": "[com.example.dontForget.acceptance.models-r40054931085:69933A7A:AADC-7B6B] added to history with groupingIdentifier <private>, readCount: 0"
+      },
+      {
+        "timestamp": "2026-10-24 13:13:07.574938+0800",
+        "process": "NotificationCenter",
+        "message": "[com.example.dontForget.acceptance.models-r40054931085:69933A7A:AADC-7B6B] added to history with groupingIdentifier <private>, readCount: 0"
+      }
+    ]
+  },
+  "awakeReadback": {
+    "taskId": "qa-system-readback-stage24",
+    "title": "QA AWAKE READBACK STAGE24",
+    "due": "2026-10-24T16:19:51+08:00",
+    "nativeId": 1222560778,
+    "sequence": [
+      {
+        "action": "before due native settings read",
+        "pending": 1,
+        "retained": 0
+      },
+      {
+        "action": "after due native refresh",
+        "pending": 0,
+        "retained": 1
+      },
+      {
+        "action": "normal exit and reopen PID 30073",
+        "pending": 0,
+        "retained": 1
+      }
+    ],
+    "titleExpansion": "BLOCKED_MISSING_BUTTON_SEMANTICS",
+    "completionCancellation": "NOT_YET_PERFORMED",
+    "oldSleepTaskUnchanged": true,
+    "privateConsistentBackup": "build/native_acceptance/readback-stage24-materials/private-before-awake.sqlite"
+  },
+  "fix": {
+    "reason": "Retained notification ExpansionTile header absent as an independent native AX button; coordinate fallback noWindowsAvailable",
+    "change": "Enable button semantics and test expand/collapse through SemanticsAction.tap",
+    "localFlutterPassed": 814,
+    "analyze": "PASS",
+    "newCandidate": "PENDING_BUILD"
+  },
+  "remaining": [
+    "Fixed candidate native title expansion and completion cancellation",
+    "Actual system reboot",
+    "True OS DST boundary",
+    "Relative wake hardware property remains unavailable",
+    "Native real-model input and cross-provider failure fallback",
+    "Native 10000-row upgrade/cold startup and other-platform business acceptance"
+  ]
+}

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show SemanticsAction;
 
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/models/notification_schedule_status.dart';
@@ -167,6 +168,42 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('System pending 0 · Retained 0'), findsOneWidget);
     expect(find.text('Obsolete'), findsNothing);
+  });
+
+  testWidgets('retained titles expand and collapse through accessibility', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      await show(
+        tester,
+        _Backend(),
+        onReadSystemNotifications: () async => SystemNotificationSnapshot(
+          supported: true,
+          pending: [],
+          retained: [const SystemNotificationEntry(id: 1, title: 'OS title')],
+        ),
+      );
+      final header = find.text('Retained notifications (up to 3)');
+      await tester.ensureVisible(header);
+      await tester.pumpAndSettle();
+      final collapsed = tester.getSemantics(header);
+      final data = collapsed.getSemanticsData();
+      expect(data.label, 'Retained notifications (up to 3)');
+      expect(data.flagsCollection.isButton, isTrue);
+      expect(data.hasAction(SemanticsAction.tap), isTrue);
+      collapsed.owner!.performAction(collapsed.id, SemanticsAction.tap);
+      await tester.pumpAndSettle();
+      expect(find.text('OS title'), findsOneWidget);
+      final expanded = tester.getSemantics(header);
+      expect(expanded.getSemanticsData().flagsCollection.isButton, isTrue);
+      expanded.owner!.performAction(expanded.id, SemanticsAction.tap);
+      await tester.pumpAndSettle();
+      expect(find.text('OS title'), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+    } finally {
+      semantics.dispose();
+    }
   });
 
   testWidgets(

@@ -41,10 +41,13 @@
     "relativeBehavior": "Continuous 121 second sleep without wake at former 60 second interval; not independent hardware-property proof"
   },
   "delivery": {
-    "status": "PENDING_OS_READBACK",
+    "status": "PASS_OS_DELIVERY_AND_HISTORY_AFTER_WAKE",
     "appDueBannerObserved": true,
     "journalBeforeSleep": "schedule/submitted exact revision and due; hash chain PASS",
-    "taskCompletedOrCancelled": false
+    "taskCompletedOrCancelled": false,
+    "followupEvidence": "notification-readback-3d24-2026-10-24.json",
+    "deliveredAt": "2026-10-24T13:13:07.062893+08:00",
+    "visibleBannerObserved": false
   },
   "implementation": {
     "systemReader": "Settings-only OS pending and retained reads; separate three-second bounds, partial failure preserved, unknown distinct from zero; no init, permission prompt, scheduling, cancellation or journal writes",
@@ -71,7 +74,6 @@
     "draftRelease": "SKIPPED_NON_TAG"
   },
   "remaining": [
-    "OS delivered-notification readback",
     "Actual system reboot",
     "True OS DST boundary",
     "Native real-model input and cross-provider outage fallback",
@@ -110,7 +112,7 @@
     },
     "frameworks_and_resources_unchanged": true,
     "codesign_verify": "PASS",
-    "nativeReadback": "BLOCKED_HOST_LOCKED",
+    "nativeReadback": "PASS_READBACK_QUERIES; old sleep occurrence not currently retained",
     "artifactEnvelopeSha256": "dccce58bbb0adb34d6081d686230a02ddb31bdc3c43e09c85aa040911a8785d8",
     "artifactEnvelopeBytes": 23920829
   }
