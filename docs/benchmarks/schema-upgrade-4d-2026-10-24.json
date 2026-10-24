@@ -1,0 +1,221 @@
+{
+  "phase": "4D",
+  "checkedAt": "2026-10-24T11:44:10.865158+08:00",
+  "runtimeProductRevision": "d404ccd382b51ffbd0bffedde438cb33e1867e69",
+  "benchmark": "benchmark/schema_upgrade_snapshot_test.dart",
+  "fixtureSha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+  "records": 10000,
+  "processes": 3,
+  "warmupsPerProcess": 2,
+  "measuredSamplesPerProcess": 5,
+  "upgradePerProcessP50Us": [
+    185521,
+    182863,
+    180319
+  ],
+  "medianOfUpgradeProcessMediansUs": 182863,
+  "maxMeasuredUpgradeUs": 198547,
+  "reopenPerProcessP50Us": [
+    2633,
+    1702,
+    1670
+  ],
+  "snapshotBytes": [
+    7344664
+  ],
+  "validation": "All 21 warmup/measured upgrades verify exact rows, snapshot digest, normal reopen and reconstruction into frozen v9 schema with integrity_check=ok.",
+  "scope": "Flutter test JIT, real product DatabaseHelper with SQLite FFI and filesystem; not native UI startup or standalone snapshot time",
+  "limitations": [
+    "JIT and warm same-host filesystem samples, not native cold startup",
+    "Full upgrade including mandatory snapshot, not separately isolated snapshot cost",
+    "RSS before/after is not peak memory",
+    "No real notification, AI, reboot, DST or power-cut proof"
+  ],
+  "rawRuns": [
+    {
+      "scope": "Flutter test JIT, real product DatabaseHelper with SQLite FFI and filesystem; not native UI startup or standalone snapshot time",
+      "fixture_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+      "records": 10000,
+      "warmups": 2,
+      "runtime": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "os": "Version 27.0.1 (Build 26A434)",
+      "samples": [
+        {
+          "upgrade_with_snapshot_us": 176954,
+          "already_upgraded_reopen_us": 12593,
+          "snapshot_bytes": 7344664,
+          "rss_before_bytes": 365592576,
+          "rss_after_open_bytes": 423821312,
+          "all_rows_snapshot_and_v9_rollback_exact": true
+        },
+        {
+          "upgrade_with_snapshot_us": 198420,
+          "already_upgraded_reopen_us": 1660,
+          "snapshot_bytes": 7344664,
+          "rss_before_bytes": 409812992,
+          "rss_after_open_bytes": 253378560,
+          "all_rows_snapshot_and_v9_rollback_exact": true
+        },
+        {
+          "upgrade_with_snapshot_us": 176944,
+          "already_upgraded_reopen_us": 1715,
+          "snapshot_bytes": 7344664,
+          "rss_before_bytes": 351059968,
+          "rss_after_open_bytes": 406339584,
+          "all_rows_snapshot_and_v9_rollback_exact": true
+        },
+        {
+          "upgrade_with_snapshot_us": 191408,
+          "already_upgraded_reopen_us": 2633,
+          "snapshot_bytes": 7344664,
+          "rss_before_bytes": 250118144,
+          "rss_after_open_bytes": 285966336,
+          "all_rows_snapshot_and_v9_rollback_exact": true
+        },
+        {
+          "upgrade_with_snapshot_us": 185521,
+          "already_upgraded_reopen_us": 12803,
+          "snapshot_bytes": 7344664,
+          "rss_before_bytes": 263831552,
+          "rss_after_open_bytes": 289701888,
+          "all_rows_snapshot_and_v9_rollback_exact": true
+        }
+      ],
+      "upgrade_with_snapshot": {
+        "p50_us": 185521,
+        "p95_us": 198420,
+        "max_us": 198420
+      },
+      "already_upgraded_reopen": {
+        "p50_us": 2633,
+        "p95_us": 12803,
+        "max_us": 12803
+      }
+    },
+    {
+      "scope": "Flutter test JIT, real product DatabaseHelper with SQLite FFI and filesystem; not native UI startup or standalone snapshot time",
+      "fixture_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+      "records": 10000,
+      "warmups": 2,
+      "runtime": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "os": "Version 27.0.1 (Build 26A434)",
+      "samples": [
+        {
+          "upgrade_with_snapshot_us": 175808,
+          "already_upgraded_reopen_us": 11736,
+          "snapshot_bytes": 7344664,
+          "rss_before_bytes": 365707264,
+          "rss_after_open_bytes": 423985152,
+          "all_rows_snapshot_and_v9_rollback_exact": true
+        },
+        {
+          "upgrade_with_snapshot_us": 198547,
+          "already_upgraded_reopen_us": 1702,
+          "snapshot_bytes": 7344664,
+          "rss_before_bytes": 409731072,
+          "rss_after_open_bytes": 260128768,
+          "all_rows_snapshot_and_v9_rollback_exact": true
+        },
+        {
+          "upgrade_with_snapshot_us": 173416,
+          "already_upgraded_reopen_us": 1916,
+          "snapshot_bytes": 7344664,
+          "rss_before_bytes": 352124928,
+          "rss_after_open_bytes": 406978560,
+          "all_rows_snapshot_and_v9_rollback_exact": true
+        },
+        {
+          "upgrade_with_snapshot_us": 182863,
+          "already_upgraded_reopen_us": 1699,
+          "snapshot_bytes": 7344664,
+          "rss_before_bytes": 255836160,
+          "rss_after_open_bytes": 283262976,
+          "all_rows_snapshot_and_v9_rollback_exact": true
+        },
+        {
+          "upgrade_with_snapshot_us": 188637,
+          "already_upgraded_reopen_us": 1601,
+          "snapshot_bytes": 7344664,
+          "rss_before_bytes": 359710720,
+          "rss_after_open_bytes": 288440320,
+          "all_rows_snapshot_and_v9_rollback_exact": true
+        }
+      ],
+      "upgrade_with_snapshot": {
+        "p50_us": 182863,
+        "p95_us": 198547,
+        "max_us": 198547
+      },
+      "already_upgraded_reopen": {
+        "p50_us": 1702,
+        "p95_us": 11736,
+        "max_us": 11736
+      }
+    },
+    {
+      "scope": "Flutter test JIT, real product DatabaseHelper with SQLite FFI and filesystem; not native UI startup or standalone snapshot time",
+      "fixture_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+      "records": 10000,
+      "warmups": 2,
+      "runtime": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "os": "Version 27.0.1 (Build 26A434)",
+      "samples": [
+        {
+          "upgrade_with_snapshot_us": 174909,
+          "already_upgraded_reopen_us": 1875,
+          "snapshot_bytes": 7344664,
+          "rss_before_bytes": 366575616,
+          "rss_after_open_bytes": 423936000,
+          "all_rows_snapshot_and_v9_rollback_exact": true
+        },
+        {
+          "upgrade_with_snapshot_us": 191414,
+          "already_upgraded_reopen_us": 1670,
+          "snapshot_bytes": 7344664,
+          "rss_before_bytes": 409681920,
+          "rss_after_open_bytes": 254296064,
+          "all_rows_snapshot_and_v9_rollback_exact": true
+        },
+        {
+          "upgrade_with_snapshot_us": 173495,
+          "already_upgraded_reopen_us": 1715,
+          "snapshot_bytes": 7344664,
+          "rss_before_bytes": 351895552,
+          "rss_after_open_bytes": 407388160,
+          "all_rows_snapshot_and_v9_rollback_exact": true
+        },
+        {
+          "upgrade_with_snapshot_us": 180319,
+          "already_upgraded_reopen_us": 1651,
+          "snapshot_bytes": 7344664,
+          "rss_before_bytes": 262193152,
+          "rss_after_open_bytes": 291504128,
+          "all_rows_snapshot_and_v9_rollback_exact": true
+        },
+        {
+          "upgrade_with_snapshot_us": 189845,
+          "already_upgraded_reopen_us": 1607,
+          "snapshot_bytes": 7344664,
+          "rss_before_bytes": 265502720,
+          "rss_after_open_bytes": 288243712,
+          "all_rows_snapshot_and_v9_rollback_exact": true
+        }
+      ],
+      "upgrade_with_snapshot": {
+        "p50_us": 180319,
+        "p95_us": 191414,
+        "max_us": 191414
+      },
+      "already_upgraded_reopen": {
+        "p50_us": 1670,
+        "p95_us": 1875,
+        "max_us": 1875
+      }
+    }
+  ],
+  "rawReportSha256": {
+    "upgrade-cost-run1.json": "1ba48268c88fb803d9e2fd5dccc8f39b7197639f53d3cc02982c52accd0b4657",
+    "upgrade-cost-run2.json": "75a8e6b1f7eec4cf3a569e86f75d223897f809aa0fe433b6e33375892e1402b0",
+    "upgrade-cost-run3.json": "329b7dd7f1715c9207815e753fc58995c796a5d9654aab23f9c8be7e1014350c"
+  }
+}

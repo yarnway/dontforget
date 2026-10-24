@@ -1,0 +1,17 @@
+{
+  "state": "COMPLETED",
+  "targets": [
+    "build/test_cache",
+    "build/unit_test_assets",
+    "build/native_assets",
+    ".dart_tool/hooks_runner",
+    ".dart_tool/flutter_build"
+  ],
+  "logicalBytes": 77631332,
+  "allocatedBytes": 78143488,
+  "regularFileCount": 47,
+  "oldPackagesDeleted": 0,
+  "preserve": "All original archives, native candidates, Library databases/journals and rollback/power material",
+  "completedAt": "2026-10-24T11:45:39.061672+08:00",
+  "retainedHashesVerified": 173
+}
