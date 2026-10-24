@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/reminder.dart';
@@ -18,6 +19,7 @@ import 'package:dont_forget/providers/home_controller.dart';
 import 'package:dont_forget/providers/providers.dart';
 import 'package:dont_forget/services/llm_service.dart';
 import 'package:dont_forget/services/recovery/runtime_gate.dart';
+import 'package:dont_forget/services/mac_menu_commands.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
@@ -25,10 +27,12 @@ import 'package:record/record.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class _Llm extends LLMService {
+  String? receivedText;
   final started = Completer<void>();
   final result = Completer<List<Reminder>>();
   @override
   Future<List<Reminder>> extractTasks(String text, AppSettings settings) {
+    receivedText = text;
     started.complete();
     return result.future;
   }
@@ -157,6 +161,67 @@ void main() {
     await database.close();
     await directory.delete(recursive: true);
   });
+
+  test(
+    'native confirmation uses the existing model pipeline and persists one task',
+    () async {
+      const channel = MethodChannel('dontforget/mac_commands');
+      const codec = StandardMethodCodec();
+      final llm = _Llm();
+      final home = await controller(llm: llm);
+      final idle = Completer<void>();
+      final listener = container!.listen(homeControllerProvider, (_, state) {
+        if (llm.started.isCompleted &&
+            state.pendingTasksCount == 0 &&
+            !idle.isCompleted) {
+          idle.complete();
+        }
+      });
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+            channel,
+            (call) async =>
+                call.method == 'showInput' ? '  明天下午三点检查报告  ' : null,
+          );
+      final commands = MacMenuCommands<RuntimeRecoveryToken>(
+        beginInput: () async => gate.capture(),
+        isCurrent: gate.isCurrent,
+        submitInput: home.processText,
+        openSettings: () => false,
+      )..start();
+      try {
+        await commands.configure({}, enabled: true);
+        final reply = Completer<ByteData?>();
+        ui.channelBuffers.push(
+          channel.name,
+          codec.encodeMethodCall(const MethodCall('quickInput')),
+          reply.complete,
+        );
+        expect(codec.decodeEnvelope((await reply.future)!), true);
+        await llm.started.future;
+        expect(llm.receivedText, '明天下午三点检查报告');
+        llm.result.complete([
+          Reminder(
+            id: 'native-model-result',
+            taskTitle: '检查报告',
+            quadrantLevel: 2,
+          ),
+        ]);
+        await idle.future.timeout(const Duration(seconds: 5));
+        final saved = await rows('Reminders');
+        expect(saved, hasLength(1));
+        expect(saved.single['id'], 'native-model-result');
+        expect(saved.single['task_title'], '检查报告');
+        expect(home.state.error, isNull);
+      } finally {
+        commands.dispose();
+        listener.close();
+        await Future<void>.delayed(Duration.zero);
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(channel, null);
+      }
+    },
+  );
 
   test(
     'pause does not await AI; late response and old controller input stay invalid after resume',

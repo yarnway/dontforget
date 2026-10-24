@@ -3,6 +3,7 @@ import FlutterMacOS
 import UserNotifications
 
 class MainFlutterWindow: NSWindow {
+  private var menuCommands: MacMenuCommands?
   override func awakeFromNib() {
     let flutterViewController = FlutterViewController()
     let windowFrame = self.frame
@@ -10,6 +11,9 @@ class MainFlutterWindow: NSWindow {
     self.setFrame(windowFrame, display: true)
 
     RegisterGeneratedPlugins(registry: flutterViewController)
+
+    menuCommands = MacMenuCommands(
+      window: self, messenger: flutterViewController.engine.binaryMessenger)
 
     let scheduling = FlutterMethodChannel(
       name: "dontforget/notification_schedule",

@@ -7,16 +7,22 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'providers/providers.dart';
+import 'providers/home_controller.dart';
 import 'providers/recovery_coordinator.dart';
 import 'data/database_helper.dart';
 import 'models/reminder.dart';
 import 'services/notification_route_service.dart';
 import 'services/notification_service.dart';
 import 'services/startup_trace.dart';
+import 'services/mac_menu_commands.dart';
+import 'services/recovery/runtime_gate.dart';
 import 'ui/screens/home_screen.dart';
 import 'ui/screens/recovery_outcome_screen.dart';
 import 'ui/screens/task_detail_screen.dart';
+import 'ui/screens/settings_screen.dart';
 import 'l10n/app_localizations.dart';
+
+typedef _MacInputToken = ({DataGeneration data, RuntimeRecoveryToken runtime});
 
 class MyApp extends ConsumerStatefulWidget {
   const MyApp({super.key});
@@ -39,6 +45,8 @@ class _MyAppState extends ConsumerState<MyApp>
   RecoveryPhase _lastRecoveryPhase = RecoveryPhase.idle;
   bool _routeDataReady = false;
   bool _routeFramePending = false;
+  MacMenuCommands<_MacInputToken>? _macMenu;
+  Route<void>? _nativeSettingsRoute;
 
   bool get _isDesktop =>
       Platform.isWindows || Platform.isLinux || Platform.isMacOS;
@@ -50,6 +58,15 @@ class _MyAppState extends ConsumerState<MyApp>
     _recovery = ref.read(recoveryCoordinatorProvider);
     _navigationEpoch = _recovery.navigationEpoch;
     _lastRecoveryPhase = _recovery.state.phase;
+    if (Platform.isMacOS) {
+      _macMenu = MacMenuCommands<_MacInputToken>(
+        beginInput: _beginNativeInput,
+        isCurrent: _isNativeInputCurrent,
+        submitInput: (text) =>
+            ref.read(homeControllerProvider.notifier).processText(text),
+        openSettings: _openNativeSettings,
+      )..start();
+    }
     _notificationRoutes = NotificationRouteService(
       readSnapshot: _notificationSnapshot,
       openReminder: _openNotificationReminder,
@@ -86,10 +103,12 @@ class _MyAppState extends ConsumerState<MyApp>
     final phase = _recovery.state.phase;
     final enteringRecovery =
         _lastRecoveryPhase == RecoveryPhase.idle && phase != RecoveryPhase.idle;
+    if (enteringRecovery) _macMenu?.invalidate();
     _lastRecoveryPhase = phase;
     _routeInitialization++;
     _routeDataReady = false;
     _routeDataGeneration = null;
+    _syncMacMenu();
     _routeReminders = null;
     _notificationRoutes.setReady(
       false,
@@ -127,6 +146,7 @@ class _MyAppState extends ConsumerState<MyApp>
       _routeDataGeneration = generation;
       _routeReminders = reminders;
       _routeDataReady = true;
+      _syncMacMenu();
       StartupTrace.mark('notifications_ready');
       _scheduleNotificationRoutes();
     } catch (error) {
@@ -135,6 +155,70 @@ class _MyAppState extends ConsumerState<MyApp>
       debugPrint('Notification routes unavailable: $error');
       StartupTrace.fail('notification_routes');
     }
+  }
+
+  bool get _nativeCommandsReady =>
+      mounted &&
+      _routeDataReady &&
+      _recovery.state.phase == RecoveryPhase.idle &&
+      !ref.read(runtimeRecoveryGateProvider).paused;
+
+  Future<_MacInputToken?> _beginNativeInput() async {
+    if (!_nativeCommandsReady) return null;
+    final token = (
+      data: ref.read(databaseHelperProvider).captureGeneration(),
+      runtime: ref.read(runtimeRecoveryGateProvider).capture(),
+    );
+    await Future.wait([
+      ref.read(settingsProvider.notifier).ready,
+      ref.read(remindersProvider.notifier).ready,
+      ref.read(mediaRecordsProvider.notifier).ready,
+    ]);
+    return _isNativeInputCurrent(token) ? token : null;
+  }
+
+  bool _isNativeInputCurrent(_MacInputToken token) =>
+      _nativeCommandsReady &&
+      ref.read(databaseHelperProvider).isCurrent(token.data) &&
+      ref.read(runtimeRecoveryGateProvider).isCurrent(token.runtime);
+
+  bool _openNativeSettings() {
+    final navigator = _navigatorKey.currentState;
+    if (!_nativeCommandsReady ||
+        navigator == null ||
+        _nativeSettingsRoute != null) {
+      return false;
+    }
+    final route = MaterialPageRoute<void>(
+      builder: (_) => const SettingsScreen(),
+    );
+    _nativeSettingsRoute = route;
+    unawaited(
+      navigator.push(route).whenComplete(() {
+        if (identical(_nativeSettingsRoute, route)) _nativeSettingsRoute = null;
+      }),
+    );
+    return true;
+  }
+
+  void _syncMacMenu() {
+    final menu = _macMenu;
+    if (menu == null || !mounted) return;
+    final l10n = AppLocalizations(Locale(ref.read(settingsProvider).language));
+    unawaited(
+      menu.configure({
+        for (final key in [
+          'quickEntry',
+          'quickEntryTitle',
+          'quickEntryHint',
+          'quickEntryContent',
+          'settings',
+          'send',
+          'cancel',
+        ])
+          key: l10n.get(key),
+      }, enabled: _nativeCommandsReady),
+    );
   }
 
   NotificationRouteSnapshot? _notificationSnapshot() {
@@ -234,6 +318,7 @@ class _MyAppState extends ConsumerState<MyApp>
 
   @override
   void dispose() {
+    _macMenu?.dispose();
     _routeInitialization++;
     _recovery.removeListener(_onRecoveryChanged);
     unawaited(_notificationSubscription?.cancel());
@@ -310,6 +395,7 @@ class _MyAppState extends ConsumerState<MyApp>
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
+    _syncMacMenu();
     final recovery = ref.watch(recoveryCoordinatorProvider);
     final recoveryState = recovery.state;
 

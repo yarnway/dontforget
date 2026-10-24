@@ -10,19 +10,30 @@ class AppLocalizations {
 
   static const Map<String, Map<String, String>> _localizedValues = {
     'en': {
+      'quickEntry': 'Quick Entry…',
+      'quickEntryTitle': 'Quick Entry',
+      'quickEntryHint':
+          'Describe your tasks and reminder times. Confirm to process with your saved settings.',
+      'quickEntryContent': 'Task content',
       'aiProfilesTitle': "Task extraction models",
       'aiProfilesEntry': "Models and priority",
       'aiProfilesEntryHint': "Manage extraction models, order and fallback",
-      'aiProfilesScope': "Enabled models are tried in order for text, image and file tasks. Transcription, reports and micro-habits use the first enabled configuration.",
+      'aiProfilesScope':
+          "Enabled models are tried in order for text, image and file tasks. Transcription, reports and micro-habits use the first enabled configuration.",
       'aiProfilesFallback': "Try the next model on failure",
-      'aiProfilesFallbackHint': "When enabled, the same task content may be sent to subsequent enabled services. When off, only the first enabled model is used.",
-      'aiProfilesIncomplete': "Complete the name, URL, model ID and key for enabled models, or disable them.",
-      'aiProfilesUnavailable': "Configuration unavailable. Close this page and try again.",
-      'aiProfilesSaveFailed': "Configuration was not saved. Check local storage and try again.",
+      'aiProfilesFallbackHint':
+          "When enabled, the same task content may be sent to subsequent enabled services. When off, only the first enabled model is used.",
+      'aiProfilesIncomplete':
+          "Complete the name, URL, model ID and key for enabled models, or disable them.",
+      'aiProfilesUnavailable':
+          "Configuration unavailable. Close this page and try again.",
+      'aiProfilesSaveFailed':
+          "Configuration was not saved. Check local storage and try again.",
       'aiProfilesSave': "Save model configuration",
       'aiProfilesSaving': "Saving…",
       'aiProfilesAdd': "Add model configuration",
-      'aiProfilesStorage': "Configuration and keys are stored locally and included in backups. This page does not probe or call services; availability is determined by actual requests.",
+      'aiProfilesStorage':
+          "Configuration and keys are stored locally and included in backups. This page does not probe or call services; availability is determined by actual requests.",
       'aiProfilesPriority': "Priority {n}",
       'aiProfilesNameDefault': "Model {n}",
       'aiProfilesUp': "Move up",
@@ -31,10 +42,12 @@ class AppLocalizations {
       'aiProfilesName': "Configuration name",
       'aiProfilesUrl': "Endpoint URL",
       'aiProfilesModel': "Model API ID",
-      'aiProfilesUrlHint': "Changing the endpoint clears its key. Enter the key again.",
+      'aiProfilesUrlHint':
+          "Changing the endpoint clears its key. Enter the key again.",
       'aiProfilesLast': "Last extraction: {name}",
       'aiProfilesUsedFallback': "Used a fallback model",
-      'aiProfilesAllFailed': "The last extraction failed. Review configuration or try again later.",
+      'aiProfilesAllFailed':
+          "The last extraction failed. Review configuration or try again later.",
       "notificationScheduleTitle": "Reminder schedules",
       "notificationScheduleChecking": "Reading saved schedules…",
       "notificationScheduleUnavailable":
@@ -114,7 +127,8 @@ class AppLocalizations {
           'Checking leaves your data unchanged. Recovery requires a separate confirmation.',
       'backupPreviewIntro':
           'Inspect a JSON snapshot or a standalone SQLite backup before deciding how to recover it.',
-      'backupPreviewSupport': 'Supports v7, v8, v9 and v10 backups up to 64 MB.',
+      'backupPreviewSupport':
+          'Supports v7, v8, v9 and v10 backups up to 64 MB.',
       'backupPreviewSelect': 'Choose backup',
       'backupPreviewChecking': 'Checking backup…',
       'backupPreviewCancel': 'Cancel check',
@@ -489,6 +503,10 @@ class AppLocalizations {
       'viewInGraph': 'View in Graph',
     },
     'zh': {
+      'quickEntry': '快速输入…',
+      'quickEntryTitle': '快速输入',
+      'quickEntryHint': '描述待办事项和提醒时间。确认后按已保存的设置处理。',
+      'quickEntryContent': '事项内容',
       'aiProfilesTitle': "任务提取模型",
       'aiProfilesEntry': "多个模型与优先级",
       'aiProfilesEntryHint': "管理任务提取模型、顺序与自动切换",
@@ -900,19 +918,26 @@ class AppLocalizations {
       'viewInGraph': '在图谱中定位',
     },
     'ja': {
+      'quickEntry': 'クイック入力…',
+      'quickEntryTitle': 'クイック入力',
+      'quickEntryHint': 'タスクと通知時刻を入力してください。確定後、保存済みの設定で処理します。',
+      'quickEntryContent': 'タスクの内容',
       'aiProfilesTitle': "タスク抽出モデル",
       'aiProfilesEntry': "モデルと優先順位",
       'aiProfilesEntryHint': "抽出モデル、順序、自動切替を管理",
-      'aiProfilesScope': "文字・画像・ファイルのタスク抽出は有効なモデルを順番に試します。文字起こし・レポート・習慣分解は最初の有効な設定を使用します。",
+      'aiProfilesScope':
+          "文字・画像・ファイルのタスク抽出は有効なモデルを順番に試します。文字起こし・レポート・習慣分解は最初の有効な設定を使用します。",
       'aiProfilesFallback': "失敗時に次のモデルを試す",
-      'aiProfilesFallbackHint': "有効にすると同じタスク内容が後続のサービスにも送信される場合があります。無効時は最初の有効なモデルのみ使用します。",
+      'aiProfilesFallbackHint':
+          "有効にすると同じタスク内容が後続のサービスにも送信される場合があります。無効時は最初の有効なモデルのみ使用します。",
       'aiProfilesIncomplete': "有効なモデルの名前・URL・モデルID・キーを入力するか、無効にしてください。",
       'aiProfilesUnavailable': "設定を読み込めません。画面を閉じて再試行してください。",
       'aiProfilesSaveFailed': "設定を保存できませんでした。ローカルストレージを確認して再試行してください。",
       'aiProfilesSave': "モデル設定を保存",
       'aiProfilesSaving': "保存中…",
       'aiProfilesAdd': "モデル設定を追加",
-      'aiProfilesStorage': "設定とキーは端末内に保存され、バックアップに含まれます。この画面からサービスへの接続確認は行いません。実際のリクエストで可用性を判断します。",
+      'aiProfilesStorage':
+          "設定とキーは端末内に保存され、バックアップに含まれます。この画面からサービスへの接続確認は行いません。実際のリクエストで可用性を判断します。",
       'aiProfilesPriority': "優先順位 {n}",
       'aiProfilesNameDefault': "モデル {n}",
       'aiProfilesUp': "上へ",
