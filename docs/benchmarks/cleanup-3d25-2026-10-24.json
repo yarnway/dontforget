@@ -1,0 +1,30 @@
+{
+  "state": "COMPLETED",
+  "preparedAt": "2026-10-24T17:22:54.159237+08:00",
+  "targets": [
+    "build/native_acceptance/readback-r40066521765/dont_forget.app"
+  ],
+  "sourceCleanup": "17C3AF2E actual _removeDelivered for request 1222560778 at 17:11:21.823909",
+  "replacementNative": "2c3e66c pending -> retained title expansion -> reopen -> complete -> zero -> reopen zero PASS",
+  "sourceArchiveSha256": "45ba9b1f63f85c75fe210a331fd5daa259079472692d8e4fbfef62913f3020fa",
+  "logicalBytes": 58711484,
+  "allocatedBytes": 58826752,
+  "regularFileCount": 46,
+  "unoccupied": true,
+  "completedAt": "2026-10-24T17:23:06.568944+08:00",
+  "retainedHashesVerified": 280,
+  "oldPackagesDeleted": 1,
+  "buildCacheFilesDeleted": 0,
+  "cacheRegularFilesObserved": 0,
+  "remainingAppDirectories": 10,
+  "preserved": [
+    "original ZIP and manifest",
+    "preparation records",
+    "original sleep rollback app",
+    "fixed candidate",
+    "Library data",
+    "private SQLite backups",
+    "power logs and fixtures"
+  ],
+  "scope": "One superseded derived app only; not a cumulative net disk-space claim"
+}

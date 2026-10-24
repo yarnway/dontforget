@@ -1,0 +1,273 @@
+{
+  "phase": "3D-25",
+  "date": "2026-10-24",
+  "scope": "Isolated macOS candidate, per-source cleanup and native notification disclosure/reopen/completion",
+  "status": "PASS_FOR_THIS_SCOPE",
+  "sourceAtStart": "a90c41e56d2fa0d2f2c0a6901c3855cc23728af3",
+  "candidate": {
+    "source_revision": "2c3e66c46cdf8048a6ed2d716a98acf20ce29fb8",
+    "source_archive_sha256": "a04da75dbbe617d154b3e4051c752a55436406a683395b97e2a60801d3440168",
+    "source_manifest_sha256": "e94afabdd38106776a8d05ff1d71b4a1ceab930eae2a7132ebb69ab736eb7f54",
+    "bundle_id": "com.example.dontForget.acceptance.models-r40054931085",
+    "app": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/readback-r40078001115/dont_forget.app",
+    "codesign_verify": "PASS",
+    "frameworks_and_resources_unchanged": true
+  },
+  "ci": {
+    "runId": 40079056830,
+    "head": "a90c41e56d2fa0d2f2c0a6901c3855cc23728af3",
+    "quality": "PASS",
+    "fivePlatformBuilds": "PASS",
+    "formalRelease": "SKIPPED_NON_TAG",
+    "runtimeSourceUnchangedSince": "2c3e66c46cdf8048a6ed2d716a98acf20ce29fb8",
+    "runtimeCandidateCI": 40078001115,
+    "localFullSuiteThisTurn": "NOT_RERUN_NO_RUNTIME_CHANGE",
+    "priorLocalFlutter": 814,
+    "priorLocalPython": 82
+  },
+  "perSourceCleanup": [
+    {
+      "revision": "d404ccd382b51ffbd0bffedde438cb33e1867e69",
+      "osSource": "242F6E7B-344E-43A1-A694-F08820B8C203",
+      "nativeId": 877764987,
+      "action": "Original candidate startup reconciled already-completed task",
+      "actualRemoval": {
+        "timestamp": "2026-10-24 17:10:18.558674+0800",
+        "eventMessage": "_removeDelivered: Removed [\"<NotificationRecord app:\\\"com.example.dontForget.acceptance.models-r40054931085\\\" ident:\\\"AADC-7B6B\\\" req:\\\"877764987\\\" uuid:\\\"69933A7A\\\" source:\\\"242F6E7B\\\" dismissAfterDefaultAction:true>\"] from com.example.dontForget.acceptance.models-r40054931085"
+      }
+    },
+    {
+      "revision": "465b4226e0fbcf354d5239f170e7e53093695810",
+      "osSource": "17C3AF2E-EF96-474C-99A3-F3AC37B4BC08",
+      "nativeId": 1222560778,
+      "action": "Original candidate native checkbox completed qa-system-readback-stage24",
+      "actualRemoval": {
+        "timestamp": "2026-10-24 17:11:21.823909+0800",
+        "eventMessage": "_removeDelivered: Removed [\"<NotificationRecord app:\\\"com.example.dontForget.acceptance.models-r40054931085\\\" ident:\\\"1D92-09C1\\\" req:\\\"1222560778\\\" uuid:\\\"8F88B476\\\" source:\\\"17C3AF2E\\\" dismissAfterDefaultAction:true>\"] from com.example.dontForget.acceptance.models-r40054931085"
+      },
+      "ownOSReadbackAfterCompletion": {
+        "pending": 0,
+        "retained": 0
+      }
+    }
+  ],
+  "fixedCandidateScenario": {
+    "osSource": "81E03C84-C124-4442-A901-9BEA4EC2ED62",
+    "fixture": {
+      "id": "qa-system-fixed-stage25",
+      "title": "QA FIXED READBACK STAGE25",
+      "nativeId": 476982592,
+      "dueLocal": "2026-10-24T17:14:12+08:00",
+      "createdOnlyAfterCandidateStoppedAndOwnerLeaseAcquired": true,
+      "privateConsistentBackupBeforeWrite": true
+    },
+    "nativeAssertions": [
+      {
+        "step": "before due",
+        "pending": 1,
+        "retained": 0
+      },
+      {
+        "step": "after due",
+        "pending": 0,
+        "retained": 1,
+        "exactTitleAfterAXTap": "QA FIXED READBACK STAGE25"
+      },
+      {
+        "step": "AX collapse",
+        "titleHidden": true
+      },
+      {
+        "step": "normal quit and same package reopen",
+        "pending": 0,
+        "retained": 1,
+        "exactTitleAfterAXTap": "QA FIXED READBACK STAGE25"
+      },
+      {
+        "step": "native completion",
+        "completedTasks": 3,
+        "pending": 0,
+        "retained": 0,
+        "disclosureAbsent": true
+      },
+      {
+        "step": "second normal quit and reopen",
+        "completedTasks": 3,
+        "pending": 0,
+        "retained": 0,
+        "disclosureAbsent": true
+      }
+    ],
+    "accessibilityBoundary": "Collapsed AX tap is functional but macOS merges the surrounding panel text into its button label. After expansion an independent disclosure button and exact title appear. This verifies activation/collapse, not concise VoiceOver wording.",
+    "osEvents": [
+      {
+        "timestamp": "2026-10-24 17:12:37.867385+0800",
+        "eventMessage": "Adding new request, remove notifications similar to: <NotificationRecord app:\"com.example.dontForget.acceptance.models-r40054931085\" ident:\"0591-81FB\" req:\"476982592\" uuid:\"C140B673\" source:\"81E03C84\" dismissAfterDefaultAction:true>"
+      },
+      {
+        "timestamp": "2026-10-24 17:14:12.120287+0800",
+        "eventMessage": "Delivering <NotificationRecord app:\"com.example.dontForget.acceptance.models-r40054931085\" ident:\"0591-81FB\" req:\"476982592\" uuid:\"E8517A29\" source:\"81E03C84\" dismissAfterDefaultAction:true> to [ .alert .lockScreen .notificationCenter ]: updatedExisting: false"
+      },
+      {
+        "timestamp": "2026-10-24 17:19:58.337373+0800",
+        "eventMessage": "_removeDelivered: Removed [\"<NotificationRecord app:\\\"com.example.dontForget.acceptance.models-r40054931085\\\" ident:\\\"0591-81FB\\\" req:\\\"476982592\\\" uuid:\\\"E8517A29\\\" source:\\\"81E03C84\\\" dismissAfterDefaultAction:true>\"] from com.example.dontForget.acceptance.models-r40054931085"
+      }
+    ],
+    "finalDatabaseAndJournal": {
+      "observedAt": "2026-10-24T17:22:24.932109+08:00",
+      "candidateStopped": true,
+      "schema": 10,
+      "integrity": "ok",
+      "settingsUnchanged": true,
+      "mediaRecordsUnchanged": true,
+      "originalTwoReminderRowsUnchanged": true,
+      "newTaskChangedFields": [
+        "is_completed",
+        "created_at",
+        "notice_revision"
+      ],
+      "createdAtNormalization": {
+        "before": "2026-10-24T09:12:32.517693+00:00",
+        "after": "2026-10-24T09:12:32.517693Z",
+        "sameInstant": true
+      },
+      "reminders": [
+        {
+          "id": "qa-model-keep",
+          "completed": true,
+          "revision": 6
+        },
+        {
+          "id": "qa-system-fixed-stage25",
+          "completed": true,
+          "revision": 1
+        },
+        {
+          "id": "qa-system-readback-stage24",
+          "completed": true,
+          "revision": 1
+        }
+      ],
+      "journal": {
+        "chainValid": true,
+        "records": 8,
+        "generation": "d77327f9-918b-4051-ad0d-62c2b473c1e7",
+        "entries": {
+          "qa-model-keep": {
+            "reminderId": "qa-model-keep",
+            "nativeId": 877764987,
+            "action": "cancel",
+            "status": "submitted",
+            "attempts": 23,
+            "triggerUtcMicros": null,
+            "noticeRevision": null,
+            "attemptedAt": "2026-10-24T09:20:21.094149Z"
+          },
+          "qa-system-readback-stage24": {
+            "reminderId": "qa-system-readback-stage24",
+            "nativeId": 1222560778,
+            "action": "cancel",
+            "status": "submitted",
+            "attempts": 7,
+            "triggerUtcMicros": null,
+            "noticeRevision": null,
+            "attemptedAt": "2026-10-24T09:20:21.094159Z"
+          },
+          "qa-system-fixed-stage25": {
+            "reminderId": "qa-system-fixed-stage25",
+            "nativeId": 476982592,
+            "action": "cancel",
+            "status": "submitted",
+            "attempts": 4,
+            "triggerUtcMicros": null,
+            "noticeRevision": null,
+            "attemptedAt": "2026-10-24T09:20:21.094163Z"
+          }
+        }
+      },
+      "privateBackup": {
+        "path": "build/native_acceptance/readback-stage25-materials/private-after-completed.sqlite",
+        "sha256": "620221f6d74253d047acff992d8a1493f12a1a96557d3f1ded0ac43ccf114a52",
+        "mode": "0o600"
+      },
+      "nativeAfterCompletion": {
+        "pending": 0,
+        "retained": 0,
+        "titleDisclosureAbsent": true
+      },
+      "nativeAfterSecondReopen": {
+        "pending": 0,
+        "retained": 0,
+        "completedTasks": 3,
+        "titleDisclosureAbsent": true
+      }
+    }
+  },
+  "power": {
+    "sleepDisabled": 1,
+    "bootUUID": "C5EA9BC6-4B3F-4A76-8AB5-B9751726418E",
+    "scheduledWakeOwnerFromThisExperimentPresent": false,
+    "newPowerChanges": false,
+    "actualSystemReboot": false,
+    "trueDST": false,
+    "relativeWakeHardwareReadback": "UNAVAILABLE; previous write-zero and 121-second behavioral evidence are not an independent hardware-value readback"
+  },
+  "isolation": {
+    "sameSandboxNotProofOfOSNotificationIdentity": true,
+    "candidatesRunSequentially": true,
+    "finalCandidateStopped": true,
+    "mainUserDatabaseTouched": false,
+    "credentials": "Authorized real credentials retained privately; Settings values and raw private backups not published"
+  },
+  "materials": [
+    {
+      "path": "build/native_acceptance/readback-stage25-materials/started.json",
+      "sha256": "b38949ece9d3fe31f02c3b6dc61042d8a851d0fa4f500b86448265dca774b56f"
+    },
+    {
+      "path": "build/native_acceptance/readback-stage25-materials/old-source-cancellation.json",
+      "sha256": "3513a640944f5fd51b65777addbc1adf80c25fa49b210b80e5931a71713aa31b"
+    },
+    {
+      "path": "build/native_acceptance/readback-stage25-materials/old-sources-removed.json",
+      "sha256": "2e656126e9b72849bea187e711bab2b6a037419de7868f2fb0323c4b34902d74"
+    },
+    {
+      "path": "build/native_acceptance/readback-stage25-materials/prepared-fixed.json",
+      "sha256": "4601bcb4568a0ac2018b906652041d1f0e2cb9bf6271cfd54bf170bf351a1cd3"
+    },
+    {
+      "path": "build/native_acceptance/readback-stage25-materials/fixed-pending.json",
+      "sha256": "f42410826ec4e68e3f1c8da08bd83d4d47545ed41811c106d58bedd5beaf85cf"
+    },
+    {
+      "path": "build/native_acceptance/readback-stage25-materials/fixed-reopened.json",
+      "sha256": "96dbf3d0843a009305e5e346591f869cc18397d83025483c148ebdd5ac8fa2c2"
+    },
+    {
+      "path": "build/native_acceptance/readback-stage25-materials/fixed-source-os-log.json",
+      "sha256": "ace8d18c1911ffa1fe336fe320d9184e8a587f7ea79b9e6c71a4f30234da6d2a"
+    },
+    {
+      "path": "build/native_acceptance/readback-stage25-materials/fixed-source-selected.json",
+      "sha256": "46d6cc228f39fa7276c00df712de5e00bb88a625fb3b44f2e5471bec6292bdff"
+    },
+    {
+      "path": "build/native_acceptance/readback-stage25-materials/fixed-completed.json",
+      "sha256": "4974f9150a75b7336658aeef898a736fcee1aa88ea219529695520003826e462"
+    },
+    {
+      "path": "build/native_acceptance/readback-stage25-materials/power-final.json",
+      "sha256": "df3454dd0a56545b5325bd37df1555321f5f95062345afc64990f76a5544e9ad"
+    }
+  ],
+  "remaining": [
+    "Actual system reboot with pre/post boot UUID and reminder state verification",
+    "True OS DST boundary in isolated system environment",
+    "Independent relative-wake hardware readback if platform exposes it",
+    "Native real-model input and real cross-provider fallback",
+    "Native 10000-row upgrade/cold-start and other-platform business acceptance",
+    "Formal signed/notarized cross-version notification persistence",
+    "Concise collapsed VoiceOver disclosure label"
+  ]
+}
