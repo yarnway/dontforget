@@ -1,0 +1,65 @@
+{
+  "headSha": "ad17fbc6ceb0fe87fc6677575cf848b5819751bd",
+  "status": "completed",
+  "conclusion": "success",
+  "url": "https://github.com/yarnway/dontforget/actions/runs/40109318837",
+  "jobs": [
+    {
+      "name": "Analyze and test",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-24T15:57:26Z",
+      "completedAt": "2026-10-24T16:00:50Z",
+      "url": "https://github.com/yarnway/dontforget/actions/runs/40109318837/job/120917528667"
+    },
+    {
+      "name": "Build linux candidate",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-24T16:00:52Z",
+      "completedAt": "2026-10-24T16:03:49Z",
+      "url": "https://github.com/yarnway/dontforget/actions/runs/40109318837/job/120918304520"
+    },
+    {
+      "name": "Build windows candidate",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-24T16:00:52Z",
+      "completedAt": "2026-10-24T16:06:21Z",
+      "url": "https://github.com/yarnway/dontforget/actions/runs/40109318837/job/120918304531"
+    },
+    {
+      "name": "Build macos candidate",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-24T16:00:53Z",
+      "completedAt": "2026-10-24T16:05:24Z",
+      "url": "https://github.com/yarnway/dontforget/actions/runs/40109318837/job/120918304534"
+    },
+    {
+      "name": "Build android candidate",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-24T16:00:52Z",
+      "completedAt": "2026-10-24T16:06:57Z",
+      "url": "https://github.com/yarnway/dontforget/actions/runs/40109318837/job/120918304573"
+    },
+    {
+      "name": "Build ios candidate",
+      "status": "completed",
+      "conclusion": "success",
+      "startedAt": "2026-10-24T16:00:53Z",
+      "completedAt": "2026-10-24T16:04:52Z",
+      "url": "https://github.com/yarnway/dontforget/actions/runs/40109318837/job/120918304584"
+    },
+    {
+      "name": "Prepare draft release after all packages pass",
+      "status": "completed",
+      "conclusion": "skipped",
+      "startedAt": "2026-10-24T16:06:57Z",
+      "completedAt": "2026-10-24T16:06:57Z",
+      "url": "https://github.com/yarnway/dontforget/actions/runs/40109318837/job/120919697471"
+    }
+  ],
+  "runtime_changes_since_validated_1e3b6df": "NONE: subsequent source revisions contain acceptance documents only"
+}
