@@ -1,0 +1,74 @@
+{
+  "phase": "3D-23",
+  "date": "2026-10-24",
+  "scope": "isolated real Mac sleep and system readback",
+  "sleep": {
+    "sourceRevision": "d404ccd382b51ffbd0bffedde438cb33e1867e69",
+    "bundleId": "com.example.dontForget.acceptance.models-r40054931085",
+    "taskId": "qa-model-keep",
+    "taskTitle": "QA SLEEP DUE STAGE23",
+    "noticeRevision": 5,
+    "nativeId": 877764987,
+    "due": "2026-10-24T13:11:36+08:00",
+    "bootUUID": "C5EA9BC6-4B3F-4A76-8AB5-B9751726418E",
+    "intervals": [
+      {
+        "sleepUs": 1792818604605750,
+        "wakeUs": 1792818633007466,
+        "coversDue": false,
+        "decision": "retry_dark_wake"
+      },
+      {
+        "sleepUs": 1792818665691387,
+        "wakeUs": 1792818786661829,
+        "coversDue": true,
+        "seconds": 120.970442
+      }
+    ],
+    "scriptExit": 0,
+    "independentKernelReadback": "PASS",
+    "systemReboot": false,
+    "pmsetEvidence": "First network DarkWake. Second interval logged Maintenance Sleep, owned wake at 13:13:06; wake rtc/HID Activity. Kernel interval proves coverage, not exclusive attribution to the second sleep command."
+  },
+  "restoration": {
+    "sleepDisabled": 1,
+    "independentReadback": "PASS",
+    "ownedAbsoluteWakeAbsent": true,
+    "cancelCommand": "Scheduling error; event absence independently verified after its wake time",
+    "unrelatedEventsCancelled": false,
+    "relativeZeroWrite": "0x0",
+    "relativeHardwarePropertyReadable": false,
+    "relativeBehavior": "Continuous 121 second sleep without wake at former 60 second interval; not independent hardware-property proof"
+  },
+  "delivery": {
+    "status": "PENDING_OS_READBACK",
+    "appDueBannerObserved": true,
+    "journalBeforeSleep": "schedule/submitted exact revision and due; hash chain PASS",
+    "taskCompletedOrCancelled": false
+  },
+  "implementation": {
+    "systemReader": "Settings-only OS pending and retained reads; separate three-second bounds, partial failure preserved, unknown distinct from zero; no init, permission prompt, scheduling, cancellation or journal writes",
+    "ui": "Collapsed retained titles, maximum three; no body/payload; English Chinese Japanese",
+    "candidateUpgrade": "Explicit --upgrade-from verifies old isolated identity and package before/after; new output, old package untouched, no sandbox access or launch"
+  },
+  "validation": {
+    "flutter": 813,
+    "python": 82,
+    "analyze": "PASS",
+    "initialRegression": "Save failure widget test left native-channel timeout timers; isolated that persistence test from native OS; final complete suite passed"
+  },
+  "ci": {
+    "priorHead": "ee6f822040f1fb915bd9a20128530acd5b08e477",
+    "priorRunId": 40063651385,
+    "priorQualityAndFivePlatforms": "PASS",
+    "newCandidate": "NOT_YET_BUILT"
+  },
+  "remaining": [
+    "OS delivered-notification readback",
+    "Actual system reboot",
+    "True OS DST boundary",
+    "Native real-model input and cross-provider outage fallback",
+    "Native 10000-row upgrade/cold startup",
+    "Other-platform business acceptance and signed release"
+  ]
+}

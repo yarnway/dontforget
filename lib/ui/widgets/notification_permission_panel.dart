@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/notification_schedule_status.dart';
 import '../../services/notification_permission_service.dart';
+import '../../services/system_notification_reader.dart';
 
 /// Permission checks never display an operating-system prompt. Requests are
 /// explicit buttons, and returning from system settings refreshes this panel.
@@ -14,10 +15,13 @@ class NotificationPermissionPanel extends StatefulWidget {
     this.service,
     this.onRetryReminders,
     this.onReadScheduleStatus,
+    this.onReadSystemNotifications,
   });
 
   final NotificationPermissionService? service;
   final Future<NotificationScheduleStatus> Function()? onReadScheduleStatus;
+  final Future<SystemNotificationSnapshot> Function()?
+  onReadSystemNotifications;
   final Future<({int attempted, int failed})> Function()? onRetryReminders;
 
   @override
@@ -37,6 +41,7 @@ class _NotificationPermissionPanelState
   bool _retryFailed = false;
   NotificationScheduleStatus? _schedule;
   bool _scheduleFailed = false;
+  SystemNotificationSnapshot? _system;
 
   @override
   void initState() {
@@ -49,13 +54,16 @@ class _NotificationPermissionPanelState
   @override
   void didUpdateWidget(NotificationPermissionPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.service != widget.service) {
+    if (oldWidget.service != widget.service ||
+        oldWidget.onReadSystemNotifications !=
+            widget.onReadSystemNotifications) {
       _generation++;
       _busy = false;
       _refreshQueued = false;
       _snapshot = null;
       _schedule = null;
       _scheduleFailed = false;
+      _system = null;
       _retryResult = null;
       _retryFailed = false;
       _service = widget.service ?? NotificationPermissionService();
@@ -94,7 +102,7 @@ class _NotificationPermissionPanelState
     });
     final result = await operation();
     if (!mounted || generation != _generation) return;
-    await _readSchedule(generation, supported: result.canRequestNotifications);
+    await _readObservations(generation, result.canRequestNotifications);
     if (!mounted || generation != _generation) return;
     setState(() {
       _snapshot = result;
@@ -123,9 +131,9 @@ class _NotificationPermissionPanelState
       failed = true;
     }
     if (!mounted || generation != _generation) return;
-    await _readSchedule(
+    await _readObservations(
       generation,
-      supported: _snapshot?.canRequestNotifications ?? false,
+      _snapshot?.canRequestNotifications ?? false,
     );
     if (!mounted || generation != _generation) return;
     setState(() {
@@ -152,6 +160,25 @@ class _NotificationPermissionPanelState
     if (!mounted || generation != _generation) return;
     _schedule = value;
     _scheduleFailed = failed;
+  }
+
+  Future<void> _readObservations(int generation, bool supported) =>
+      Future.wait([
+        _readSchedule(generation, supported: supported),
+        _readSystem(generation, supported: supported),
+      ]);
+
+  Future<void> _readSystem(int generation, {required bool supported}) async {
+    final read = widget.onReadSystemNotifications;
+    if (read == null || !supported) return;
+    SystemNotificationSnapshot value;
+    try {
+      value = await read();
+    } catch (_) {
+      value = SystemNotificationSnapshot(supported: true);
+    }
+    if (!mounted || generation != _generation) return;
+    _system = value;
   }
 
   String _statusKey(NotificationPermissionStatus status) => switch (status) {
@@ -297,6 +324,54 @@ class _NotificationPermissionPanelState
                 l10n.get('notificationScheduleHint'),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
+            ],
+            if (canRequest && widget.onReadSystemNotifications != null) ...[
+              const Divider(height: 24),
+              Text(
+                l10n.get('notificationSystemTitle'),
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _busy || _system == null
+                    ? l10n.get('notificationSystemChecking')
+                    : l10n
+                          .get('notificationSystemSummary')
+                          .replaceAll(
+                            '{pending}',
+                            '${_system!.pending?.length ?? '—'}',
+                          )
+                          .replaceAll(
+                            '{retained}',
+                            '${_system!.retained?.length ?? '—'}',
+                          ),
+                key: const ValueKey('notification-system-status'),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                l10n.get('notificationSystemHint'),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              if (!_busy && (_system?.retained?.isNotEmpty ?? false))
+                ExpansionTile(
+                  key: const ValueKey('notification-system-retained'),
+                  tilePadding: EdgeInsets.zero,
+                  title: Text(l10n.get('notificationSystemRetainedTitles')),
+                  children: [
+                    for (final entry in _system!.retained!.take(3))
+                      ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          entry.title?.trim().isNotEmpty == true
+                              ? entry.title!
+                              : l10n.get('notificationSystemUntitled'),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                  ],
+                ),
             ],
             if (snapshot?.requestFailed ?? false)
               Padding(

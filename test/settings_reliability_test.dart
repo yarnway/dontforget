@@ -10,6 +10,8 @@ import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/providers/providers.dart';
 import 'package:dont_forget/models/notification_schedule_status.dart';
 import 'package:dont_forget/ui/screens/settings_screen.dart';
+import 'package:dont_forget/services/notification_service.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 void main() {
   late Directory directory;
@@ -21,6 +23,14 @@ void main() {
     helper = DatabaseHelper.forTesting(directory.path, databaseFactoryFfi);
     container = ProviderContainer(
       overrides: [
+        // These tests exercise persistence, not a real OS channel. Dedicated
+        // reader tests cover native results, partial failure and timeouts.
+        notificationServiceProvider.overrideWithValue(
+          NotificationService.forTesting(
+            FlutterLocalNotificationsPlugin(),
+            usesNativeNotifications: false,
+          ),
+        ),
         notificationScheduleStatusReaderProvider.overrideWithValue(
           () async => const NotificationScheduleStatus(
             upcoming: 0,

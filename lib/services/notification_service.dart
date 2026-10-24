@@ -13,6 +13,7 @@ import 'context_trigger_service.dart';
 import 'notification_journal.dart';
 import 'macos_notification_scheduler.dart';
 import 'startup_trace.dart';
+import 'system_notification_reader.dart';
 
 class NotificationService {
   static final _instances = Expando<NotificationService>();
@@ -48,6 +49,14 @@ class NotificationService {
   // share durable writes without flooding the platform notification plugin.
   static const reconciliationBatchSize = 256;
   static const nativeConcurrency = 32;
+
+  // Explicit settings-page readback only: no startup polling, scheduling,
+  // journal writes, permission prompts or notification cancellation.
+  Future<SystemNotificationSnapshot> readSystemNotifications() =>
+      SystemNotificationReader(
+        flutterLocalNotificationsPlugin,
+        supported: usesNativeNotifications,
+      ).read();
   final _nativeWaiters = Queue<Completer<void>>();
   int _activeNative = 0;
 

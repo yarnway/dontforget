@@ -96,13 +96,77 @@ class MacAcceptanceTest(unittest.TestCase):
                 (app / self.extra_change).write_bytes(b'unexpected-change')
         return b''
 
-    def prepare(self):
+    def prepare(self, upgrade_from=None):
         # Unit fixtures live in TemporaryDirectory; no real app is signed or
         # launched. The actual location guard has separate negative tests.
         with patch.object(acceptance.sys, 'platform', 'darwin'), \
                 patch.object(acceptance, 'assert_non_temporary_output'), \
                 patch.object(acceptance, '_run', self.command):
-            return acceptance.prepare(self.manifest, self.output, 'recovery-test', self.revision)
+            return acceptance.prepare(self.manifest, self.output, 'recovery-test', self.revision, upgrade_from)
+
+    def prepare_upgrade(self):
+        previous = self.output
+        self.prepare()
+        self.output = self.root / 'upgraded'
+        return previous, previous / 'acceptance-preparation.json'
+
+    def test_explicit_upgrade_preserves_old_package_and_reuses_only_its_identity(self):
+        previous, record = self.prepare_upgrade()
+        before = acceptance.tree_identity(previous)
+        self.revision = 'b' * 40
+        self.write_manifest()
+        with patch.object(acceptance, 'assert_unused_identity', side_effect=AssertionError('fresh-only guard')):
+            result = self.prepare(record)
+        self.assertEqual(result['bundle_id'], acceptance.ACCEPTANCE_PREFIX + 'recovery-test')
+        self.assertEqual(result['upgrades_isolated_identity']['source_revision'], 'a' * 40)
+        self.assertEqual(result['upgrades_isolated_identity']['preparation_sha256'],
+                         hashlib.sha256(record.read_bytes()).hexdigest())
+        self.assertEqual(acceptance.tree_identity(previous), before)
+        self.assertEqual(result['source_revision'], 'b' * 40)
+        self.assertFalse(result['app_started'])
+        self.assertFalse(result['app_registered'])
+
+    def test_upgrade_rejects_different_or_production_identity_before_creating_output(self):
+        _, record = self.prepare_upgrade()
+        original = json.loads(record.read_text())
+        for identity in [acceptance.ORIGINAL_ID, acceptance.ACCEPTANCE_PREFIX + 'other']:
+            evidence = {**original, 'bundle_id': identity}
+            record.write_text(json.dumps(evidence))
+            with self.subTest(identity=identity), self.assertRaisesRegex(ValueError, '同一隔离身份'):
+                self.prepare(record)
+            self.assertFalse(self.output.exists())
+
+    def test_upgrade_rejects_changed_framework_or_native_code(self):
+        previous, record = self.prepare_upgrade()
+        for relative in ['Contents/Frameworks/App.framework/App', 'Contents/MacOS/dont_forget']:
+            target = previous / acceptance.APP_NAME / relative
+            original = target.read_bytes()
+            target.write_bytes(macho(code=b'tampered') if '/MacOS/' in relative else b'tampered')
+            with self.subTest(path=relative), self.assertRaisesRegex(ValueError, '受保护资源'):
+                self.prepare(record)
+            self.assertFalse(self.output.exists())
+            target.write_bytes(original)
+
+    def test_upgrade_rejects_symlinked_record(self):
+        _, record = self.prepare_upgrade()
+        link = self.root / 'record-link.json'
+        link.symlink_to(record)
+        with self.assertRaisesRegex(ValueError, '符号链接'):
+            self.prepare(link)
+        self.assertFalse(self.output.exists())
+
+    def test_upgrade_rejects_changed_sandbox_entitlements(self):
+        _, record = self.prepare_upgrade()
+        self.entitlements['com.apple.security.app-sandbox'] = False
+        with self.assertRaisesRegex(ValueError, '沙箱权限'):
+            self.prepare(record)
+        self.assertFalse(self.output.exists())
+
+    def test_upgrade_still_refuses_existing_output(self):
+        _, record = self.prepare_upgrade()
+        self.output.mkdir()
+        with self.assertRaisesRegex(ValueError, '输出目录已存在'):
+            self.prepare(record)
 
     def test_prepares_independent_identity_without_launching_or_mutating_source(self):
         old_zip = self.archive.read_bytes()

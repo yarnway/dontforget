@@ -47,6 +47,14 @@ class AppLocalizations {
           "Submitted does not confirm delivery. With permission allowed, the app periodically retries unfinished schedules while open in the foreground. Use Retry reminder scheduling to rebuild unverified schedules now.",
 
       'notificationPermissionTitle': 'System notifications',
+      'notificationSystemTitle': 'Notifications in the system',
+      'notificationSystemChecking': 'Reading system notifications…',
+      'notificationSystemSummary':
+          'System pending {pending} · Retained {retained}',
+      'notificationSystemHint':
+          'Current OS state; — means unavailable. Retained notifications do not mean they have been read.',
+      'notificationSystemRetainedTitles': 'Retained notifications (up to 3)',
+      'notificationSystemUntitled': 'Untitled notification',
       'notificationPermissionChecking': 'Checking permission…',
       'notificationPermissionGranted': 'Allowed',
       'notificationPermissionProvisional': 'Quiet notifications allowed',
@@ -516,6 +524,12 @@ class AppLocalizations {
           "已提交不代表通知已送达。权限允许时，应用在前台会定期重试未完成的安排；也可点击“重新安排提醒”立即重建待核实的安排。",
 
       'notificationPermissionTitle': '系统通知',
+      'notificationSystemTitle': '系统中的通知',
+      'notificationSystemChecking': '正在读取系统通知…',
+      'notificationSystemSummary': '系统待发送 {pending} · 系统保留 {retained}',
+      'notificationSystemHint': '来自系统的当前状态；— 表示暂不可读。保留数量不代表已阅读。',
+      'notificationSystemRetainedTitles': '系统保留的通知（最多显示 3 条）',
+      'notificationSystemUntitled': '无标题通知',
       'notificationPermissionChecking': '正在查询权限…',
       'notificationPermissionGranted': '已允许',
       'notificationPermissionProvisional': '已允许静默通知',
@@ -921,6 +935,12 @@ class AppLocalizations {
           "送信済みでも配信は未確認です。権限が許可され、アプリが前面にある間は未完了の予定を定期的に再試行します。「リマインダーを再設定」で未確認の予定を今すぐ再設定できます。",
 
       'notificationPermissionTitle': 'システム通知',
+      'notificationSystemTitle': 'システム内の通知',
+      'notificationSystemChecking': 'システム通知を読み取り中…',
+      'notificationSystemSummary': 'システム待機中 {pending} · 保持中 {retained}',
+      'notificationSystemHint': '現在のシステム状態です。— は取得不可を示します。保持中の通知は既読を意味しません。',
+      'notificationSystemRetainedTitles': '保持中の通知（最大 3 件）',
+      'notificationSystemUntitled': '無題の通知',
       'notificationPermissionChecking': '権限を確認中…',
       'notificationPermissionGranted': '許可済み',
       'notificationPermissionProvisional': '静かな通知を許可済み',

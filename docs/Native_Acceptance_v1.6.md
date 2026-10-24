@@ -46,7 +46,18 @@ python3 scripts/generate_recovery_acceptance_fixture.py \
   --start-at 2026-10-21T16:00:00+08:00 --due-minutes 12
 ```
 
-`run-id` 和输出均必须全新。fixture 工具使用冻结的 v8 schema，生成旧/新静音 Q3、已完成任务、文本记录和损坏 JSON，无密钥；不打开应用数据。它用于历史 v8 候选，不代表 v9 原生验收。记录产物摘要、独立身份、实际沙箱路径后，通过原生文件选择器导入。脚本和纯单元测试不等于上述原生验收。准备/fixture/原有打包脚本合计 34 项测试通过。
+默认 `run-id` 和输出均必须全新。需要跨候选保留同一隔离沙箱及 OS 通知身份时，可显式传入 `--upgrade-from /absolute/path/old/acceptance-preparation.json`，并使用旧包的 `--run-id`。此模式校验旧包身份、版本、deep/strict 签名、沙箱权限、可执行文件及受保护框架/资源；准备前后均复核旧包，不改动旧包、不访问数据库、不注册或启动应用。输出目录仍须全新，不能借此选择生产身份。启动升级包前先正常退出旧包，保留一致性数据库备份及旧候选；启动后核对进程的实际包路径和同一隔离容器，避免两个同身份进程并行。示例：
+
+```sh
+python3 scripts/prepare_macos_acceptance.py \
+  --manifest /absolute/path/new/macos-manifest.json \
+  --revision <新候选的完整40位SHA> \
+  --run-id unique-run-id \
+  --upgrade-from "$PWD/build/native_acceptance/unique-run-id/acceptance-preparation.json" \
+  --output "$PWD/build/native_acceptance/unique-run-id-upgrade"
+```
+
+fixture 工具使用冻结的 v8 schema，生成旧/新静音 Q3、已完成任务、文本记录和损坏 JSON，无密钥；不打开应用数据。它用于历史 v8 候选，不代表 v9 原生验收。记录产物摘要、独立身份、实际沙箱路径后，通过原生文件选择器导入。脚本和纯单元测试不等于上述原生验收。初版准备/fixture/原有打包脚本合计 34 项测试通过，后续增量结果记录在迭代台账。
 
 ## 后续阶段
 

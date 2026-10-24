@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/models/notification_schedule_status.dart';
 import 'package:dont_forget/services/notification_permission_service.dart';
+import 'package:dont_forget/services/system_notification_reader.dart';
 import 'package:dont_forget/ui/widgets/notification_permission_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -60,6 +61,8 @@ void main() {
     bool settle = true,
     Future<({int attempted, int failed})> Function()? onRetryReminders,
     Future<NotificationScheduleStatus> Function()? onReadScheduleStatus,
+    Future<SystemNotificationSnapshot> Function()? onReadSystemNotifications,
+    NotificationPermissionService? service,
   }) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -74,9 +77,11 @@ void main() {
         home: Scaffold(
           body: SingleChildScrollView(
             child: NotificationPermissionPanel(
-              service: NotificationPermissionService(backend: backend),
+              service:
+                  service ?? NotificationPermissionService(backend: backend),
               onRetryReminders: onRetryReminders,
               onReadScheduleStatus: onReadScheduleStatus,
+              onReadSystemNotifications: onReadSystemNotifications,
             ),
           ),
         ),
@@ -91,6 +96,78 @@ void main() {
 
   String? status(WidgetTester tester) =>
       tester.widget<Text>(find.byKey(statusKey)).data;
+
+  testWidgets(
+    'OS results show unavailable separately from zero and disclose only three titles',
+    (tester) async {
+      final backend = _Backend();
+      await show(
+        tester,
+        backend,
+        onReadSystemNotifications: () async => SystemNotificationSnapshot(
+          supported: true,
+          pending: [],
+          retained: [
+            for (var i = 0; i < 5; i++)
+              SystemNotificationEntry(id: i, title: 'Retained $i'),
+          ],
+        ),
+      );
+      expect(find.text('System pending 0 · Retained 5'), findsOneWidget);
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('notification-system-retained')),
+      );
+      await tester.tap(
+        find.byKey(const ValueKey('notification-system-retained')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Retained 2'), findsOneWidget);
+      expect(find.text('Retained 3'), findsNothing);
+      expect(backend.requests, 0);
+      await show(
+        tester,
+        backend,
+        onReadSystemNotifications: () async =>
+            SystemNotificationSnapshot(supported: true, pending: []),
+      );
+      expect(find.text('System pending 0 · Retained —'), findsOneWidget);
+    },
+  );
+
+  testWidgets('replaced OS reader cannot publish an old delayed observation', (
+    tester,
+  ) async {
+    final backend = _Backend();
+    final service = NotificationPermissionService(backend: backend);
+    final old = Completer<SystemNotificationSnapshot>();
+    await show(
+      tester,
+      backend,
+      service: service,
+      settle: false,
+      onReadSystemNotifications: () => old.future,
+    );
+    await show(
+      tester,
+      backend,
+      service: service,
+      onReadSystemNotifications: () async => SystemNotificationSnapshot(
+        supported: true,
+        pending: [],
+        retained: [],
+      ),
+    );
+    old.complete(
+      SystemNotificationSnapshot(
+        supported: true,
+        pending: [],
+        retained: [const SystemNotificationEntry(id: 1, title: 'Obsolete')],
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('System pending 0 · Retained 0'), findsOneWidget);
+    expect(find.text('Obsolete'), findsNothing);
+  });
 
   testWidgets(
     'initial query and refresh never request, button re-reads new state',

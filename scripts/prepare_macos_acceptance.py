@@ -222,7 +222,46 @@ def _run(arguments):
     return subprocess.run(arguments, check=True, capture_output=True).stdout
 
 
-def prepare(manifest_path, output, run_id, revision):
+def verified_upgrade_identity(path, bundle_id):
+    """Read only a previously prepared acceptance package, never its sandbox."""
+    path = Path(path).absolute()
+    if path.resolve() != path or not path.is_file():
+        raise ValueError('升级来源必须是未经过符号链接的验收准备记录')
+    raw = path.read_bytes()
+    evidence = json.loads(raw)
+    app = path.parent / APP_NAME
+    if (evidence.get('scope') != 'derived-isolated-acceptance-copy-not-original-signed-candidate' or
+            evidence.get('bundle_id') != bundle_id or
+            not bundle_id.startswith(ACCEPTANCE_PREFIX) or
+            evidence.get('app') != str(app) or app.resolve() != app or
+            evidence.get('codesign_verify') != 'PASS' or
+            evidence.get('frameworks_and_resources_unchanged') is not True):
+        raise ValueError('升级来源不是同一隔离身份的已核验包')
+    info = plistlib.loads((app / 'Contents/Info.plist').read_bytes())
+    source = evidence['source_manifest']
+    if (info.get('CFBundleIdentifier') != bundle_id or
+            info.get('CFBundleExecutable') != 'dont_forget' or
+            info.get('CFBundleShortVersionString') != source.get('version') or
+            info.get('CFBundleVersion') != source.get('build_number') or
+            source.get('revision') != evidence.get('source_revision')):
+        raise ValueError('升级来源身份或版本已改变')
+    _run(['codesign', '--verify', '--deep', '--strict', str(app)])
+    entitlements = plistlib.loads(_run(['codesign', '-d', '--entitlements', ':-', str(app)]))
+    if (entitlements != evidence.get('entitlements') or
+            entitlements.get('com.apple.security.app-sandbox') is not True):
+        raise ValueError('升级来源沙箱权限与记录不符')
+    protected = {key: value for key, value in tree_identity(app).items()
+                 if key.startswith(('Contents/Frameworks/', 'Contents/Resources/'))}
+    if (protected != evidence.get('protected_tree') or
+            sha256(json.dumps(protected, sort_keys=True).encode()) != evidence.get('protected_tree_sha256') or
+            macho_identity((app / 'Contents/MacOS/dont_forget').read_bytes()) !=
+            evidence.get('native_non_signature_identity')):
+        raise ValueError('升级来源可执行文件或受保护资源已改变')
+    return {'preparation_sha256': sha256(raw), 'app': str(app),
+            'source_revision': evidence['source_revision'], 'bundle_id': bundle_id}
+
+
+def prepare(manifest_path, output, run_id, revision, upgrade_from=None):
     if sys.platform != 'darwin':
         raise RuntimeError('此准备操作只能在 macOS 上执行')
     validate_run_id(run_id)
@@ -234,7 +273,11 @@ def prepare(manifest_path, output, run_id, revision):
     if not output.parent.is_dir() or output.parent.resolve() != output.parent:
         raise ValueError('输出父目录必须存在且使用真实路径（例如仓库的 build/native_acceptance）')
     bundle_id = ACCEPTANCE_PREFIX + run_id
-    assert_unused_identity(bundle_id)
+    previous = None
+    if upgrade_from is None:
+        assert_unused_identity(bundle_id)
+    else:
+        previous = verified_upgrade_identity(upgrade_from, bundle_id)
     manifest, archive, manifest_digest = _read_manifest(manifest_path, revision)
     original_archive_digest = sha256(archive.read_bytes())
     # mkdir is exclusive, so an existing output is never overwritten.
@@ -291,6 +334,8 @@ def prepare(manifest_path, output, run_id, revision):
     if (sha256(archive.read_bytes()) != original_archive_digest or
             sha256(manifest_path.read_bytes()) != manifest_digest):
         raise ValueError('原 ZIP 或 manifest 在准备过程中发生变化')
+    if previous is not None and verified_upgrade_identity(upgrade_from, bundle_id) != previous:
+        raise ValueError('旧验收包在升级准备过程中发生变化')
     protected = {key: value for key, value in original_tree.items()
                  if key.startswith(('Contents/Frameworks/', 'Contents/Resources/'))}
     evidence = {
@@ -298,6 +343,7 @@ def prepare(manifest_path, output, run_id, revision):
         'source_revision': revision, 'source_manifest_sha256': manifest_digest,
         'source_archive_sha256': original_archive_digest,
         'source_manifest': manifest, 'bundle_id': bundle_id, 'app': str(app),
+        'upgrades_isolated_identity': previous,
         'entitlements': entitlements, 'changed_bundle_paths': changed,
         'changed_info_keys': changed_info,
         'frameworks_and_resources_unchanged': True,
@@ -318,18 +364,21 @@ def prepare(manifest_path, output, run_id, revision):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, epilog=(
-        '只生成派生副本与证据，不启动应用、不访问用户库。必须保持全新 bundle ID；'
+        '只生成派生副本与证据，不启动应用、不访问用户库。默认要求全新 bundle ID；'
+        '仅 --upgrade-from 可复用记录核验通过的同一隔离身份，旧包不改动，输出仍须全新；'
         '输出不能位于系统临时目录，避免 macOS 拒绝通知身份；'
         '失败时保留输出供检查，不自动删除。示例：python3 scripts/prepare_macos_acceptance.py '
         '--manifest /private/tmp/candidate/macos-manifest.json --revision <40位SHA> '
         '--run-id recovery-20261021 --output build/native_acceptance/recovery-20261021'))
     parser.add_argument('--manifest', required=True, type=Path, help='已下载候选的 macos-manifest.json')
     parser.add_argument('--revision', required=True, help='预期的完整 40 位源码 SHA')
-    parser.add_argument('--run-id', required=True, help='唯一验收 ID；最终 bundle ID 固定为独立 acceptance 子域')
+    parser.add_argument('--run-id', required=True, help='验收 ID；升级时必须与旧包一致，默认必须全新')
+    parser.add_argument('--upgrade-from', type=Path,
+                        help='可选：旧隔离包的 acceptance-preparation.json；核验旧包后复用其身份，不读写沙箱')
     parser.add_argument('--output', required=True, type=Path,
                         help='尚不存在的非临时输出目录；建议 build/native_acceptance/<run-id>，父目录必须存在')
     args = parser.parse_args()
-    evidence = prepare(args.manifest, args.output, args.run_id, args.revision)
+    evidence = prepare(args.manifest, args.output, args.run_id, args.revision, args.upgrade_from)
     print(json.dumps({key: evidence[key] for key in ('scope', 'bundle_id', 'app', 'codesign_verify')}, ensure_ascii=False, indent=2))
 
 
