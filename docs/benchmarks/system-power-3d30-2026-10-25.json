@@ -1,0 +1,309 @@
+{
+  "phase": "3D-30",
+  "source_commit": "530b071ad385539d88ed4b582820861d2a56fa3c",
+  "ci": {
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/yarnway/dontforget/actions/runs/40110794439"
+  },
+  "ci_jobs": [
+    {
+      "name": "Analyze and test",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build windows candidate",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build android candidate",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build linux candidate",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build ios candidate",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build macos candidate",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Prepare draft release after all packages pass",
+      "status": "completed",
+      "conclusion": "skipped"
+    }
+  ],
+  "tests": {
+    "python_passed": 86,
+    "product_backup_inspector_passed": 3
+  },
+  "candidate": {
+    "source_revision": "ad17fbc6ceb0fe87fc6677575cf848b5819751bd",
+    "source_manifest_sha256": "724475bdfde2a441ee333420dd43639b077df6165176a07a5ea063a72514ea6f",
+    "source_archive_sha256": "4b24a84fd010b4304553829ec4a8e4110e6ad9667344745186759e533d851d80",
+    "bundle_id": "com.example.dontForget.acceptance.dst30-r40109318837",
+    "codesign_verify": "PASS",
+    "frameworks_and_resources_unchanged": true,
+    "native_non_signature_identity": [
+      {
+        "cpu": 16777223,
+        "subtype": 3,
+        "signature_offset": 1093632,
+        "non_signature_sha256": "8038d0b98517438a5813a322b6774b39291ecf26345f25f0585858f7614df440",
+        "alignment": 14
+      },
+      {
+        "cpu": 16777228,
+        "subtype": 0,
+        "signature_offset": 1063424,
+        "non_signature_sha256": "d3f0fa621137d052b61980bcabd58ec82574749efc9c84c2bbe71d362857f9dd",
+        "alignment": 14
+      }
+    ]
+  },
+  "fixtures": {
+    "purpose": "isolated macOS 2026 DST boundary acceptance inputs",
+    "schema_version": 9,
+    "cases": {
+      "spring": {
+        "time_zone": "America/Los_Angeles",
+        "start_at": "2026-03-08T09:50:00.000Z",
+        "boundary_utc": "2026-03-08T10:00:00.000Z",
+        "boundary_local_before": "2026-03-08T01:59:59-08:00",
+        "boundary_local_after": "2026-03-08T03:00:00-07:00",
+        "tasks": [
+          {
+            "id": "qa-dst-spring-before",
+            "trigger_utc": "2026-03-08T09:59:40.000Z",
+            "local_time": "2026-03-08T01:59:40-08:00",
+            "fold": 0,
+            "expected_deliveries": 1
+          },
+          {
+            "id": "qa-dst-spring-after",
+            "trigger_utc": "2026-03-08T10:00:20.000Z",
+            "local_time": "2026-03-08T03:00:20-07:00",
+            "fold": 0,
+            "expected_deliveries": 1
+          }
+        ],
+        "tables": {
+          "settings": {
+            "count": 1,
+            "sha256": "3510f0990e2f3bca22a1a1d22afb0deebf2eb26696a9689006f51a56183468eb"
+          },
+          "media_records": {
+            "count": 1,
+            "sha256": "6c54f4e70ee17e19ecb3e37828157a329ea20a46e0649899e6b9aeb3feb7db34"
+          },
+          "reminders": {
+            "count": 2,
+            "sha256": "b4c2b5dce55f75e5e1d1acd944cbffcd03eb49088f10fb5420111a5b1fda0e54"
+          }
+        }
+      },
+      "autumn": {
+        "time_zone": "America/Los_Angeles",
+        "start_at": "2026-11-01T08:50:00.000Z",
+        "boundary_utc": "2026-11-01T09:00:00.000Z",
+        "boundary_local_before": "2026-11-01T01:59:59-07:00",
+        "boundary_local_after": "2026-11-01T01:00:00-08:00",
+        "tasks": [
+          {
+            "id": "qa-dst-autumn-before",
+            "trigger_utc": "2026-11-01T08:59:40.000Z",
+            "local_time": "2026-11-01T01:59:40-07:00",
+            "fold": 0,
+            "expected_deliveries": 1
+          },
+          {
+            "id": "qa-dst-autumn-after",
+            "trigger_utc": "2026-11-01T09:00:20.000Z",
+            "local_time": "2026-11-01T01:00:20-08:00",
+            "fold": 1,
+            "expected_deliveries": 1
+          }
+        ],
+        "tables": {
+          "settings": {
+            "count": 1,
+            "sha256": "3510f0990e2f3bca22a1a1d22afb0deebf2eb26696a9689006f51a56183468eb"
+          },
+          "media_records": {
+            "count": 1,
+            "sha256": "1756aa500cd449d009264bafeb76b7fd58fc9d45fb76916f843504c135b5f327"
+          },
+          "reminders": {
+            "count": 2,
+            "sha256": "32f04996f8c74a44882427e6b037ff107ce28625e9f6c0f8d5a8ee52c8c6dd65"
+          }
+        }
+      }
+    },
+    "files": {
+      "spring-v9.json": {
+        "bytes": 2326,
+        "sha256": "63ce60e318d5efded57f152995fda4193575ae8aa5c18be5a4ff1828feced0a0"
+      },
+      "autumn-v9.json": {
+        "bytes": 2326,
+        "sha256": "376d0acf41c10ee90bfad1e8907a70dc23729e881f82381887f585609b9553ad"
+      },
+      "empty-v9.json": {
+        "bytes": 273,
+        "sha256": "944c2e003b172b999e189862cf1ac856bd706c4e2e2a0b6174ab37a9b8fcfee8"
+      }
+    },
+    "empty_tables": {
+      "settings": {
+        "count": 1,
+        "sha256": "3510f0990e2f3bca22a1a1d22afb0deebf2eb26696a9689006f51a56183468eb"
+      },
+      "media_records": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "reminders": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "requirements": [
+      "Use a new macOS guest with synthetic data and a verified isolated app identity.",
+      "Disable guest network time AND VM host time/timezone synchronization; never change the host clock.",
+      "Read back guest time zone, UTC time and both native pending IDs before starting observation.",
+      "Let time advance naturally across the boundary; retain host-monotonic and guest-wall-clock observations.",
+      "Independently read OS deliveries for each ID and verify exactly once, timing and local offset.",
+      "Restore the empty backup; verify pending=0 and retained=0, then restore guest clock/synchronization."
+    ],
+    "boundaries": {
+      "synthetic_only": true,
+      "contains_credentials": false,
+      "app_data_access": "NEVER",
+      "clock_changes": "NEVER",
+      "native_acceptance": "NOT_PERFORMED",
+      "recurring_gap_and_fold_acceptance": "NOT_COVERED",
+      "host_reboot_acceptance": "NOT_COVERED"
+    }
+  },
+  "cleanup": {
+    "bytes": 74217096,
+    "state": "COMPLETED",
+    "protected_files": 577,
+    "protected_hashes_before_after": "MATCH",
+    "paths": [
+      "build/unit_test_assets",
+      "build/test_cache",
+      ".dart_tool/flutter_build",
+      "build/native_acceptance/dst-stage30-materials/candidate-artifacts/artifact.zip"
+    ],
+    "app_bundles_deleted": 0,
+    "library_data_deleted": 0,
+    "net_disk_space_claim": "NONE: guest image download is separate"
+  },
+  "native_dst": "NOT_PERFORMED",
+  "host_restart": "NOT_PERFORMED",
+  "installation": {
+    "engine": "Apple Virtualization.framework",
+    "image": {
+      "bytes": 26637307067,
+      "sha256": "2f016638293c3e641b8b25391a76fbc16563b3711915a5551cf8aa0f5598a5c1",
+      "zip_crc": "PASS",
+      "zip_entries": 1630,
+      "duration_seconds": 27.677,
+      "verified_at": "2026-10-24T16:40:06.805388+00:00"
+    },
+    "compatibility": {
+      "buildVersion": "26A434",
+      "hardwareModelSupported": true,
+      "minimumCPUCount": 2,
+      "minimumMemoryBytes": 4294967296,
+      "supportedConfiguration": true,
+      "version": "27.0.1"
+    },
+    "installation_events": [
+      {
+        "build": "26A434",
+        "cpus": 4,
+        "event": "installation_started",
+        "host_time": "2026-10-24T16:51:25Z",
+        "memory_bytes": 6442450944
+      },
+      {
+        "event": "installation_completed",
+        "host_time": "2026-10-24T16:54:27Z"
+      },
+      {
+        "event": "guest_stopped",
+        "host_time": "2026-10-24T16:54:30Z"
+      },
+      {
+        "event": "guest_started",
+        "host_time": "2026-10-24T16:54:51Z"
+      }
+    ],
+    "configuration": {
+      "cpu_count": 4,
+      "memory_bytes": 6442450944,
+      "sparse_disk_bytes": 68719476736,
+      "network": "NAT",
+      "directory_sharing": "ONLY dst-stage30-share read-only",
+      "host_time_sync_agent": false
+    },
+    "host_user_data_copied": false,
+    "setup_completed": false,
+    "native_dst": "NOT_PERFORMED",
+    "harness_source_sha256": "b327c4748dcea2eb7ac1e7c663423f324ed16cdcf199ecccda907330c82371c4",
+    "harness_binary_sha256": "e2a467991ffd42f45f65837d99a1d44ed0fd376d4810301d43136cb78800cae6",
+    "parallels_placeholder": {
+      "uuid": "78666247-8f88-4024-9cc2-5d37917fbcef",
+      "state": "stopped",
+      "installed": false,
+      "command_line_block": "Pro or Business Edition required"
+    },
+    "system_permission_ui": "UserNotificationCenter tool rejected access; no permission changed; own verified image clone used instead",
+    "setup_status": "LANGUAGE_SELECTION_PENDING_HOST_UNLOCK",
+    "guest_state": "RUNNING_AT_SETUP_ASSISTANT",
+    "native_interaction": {
+      "welcome_enter": "advanced to language selection",
+      "coordinate_click": "noWindowsAvailable",
+      "last_input": "Mac locked; automatic unlock failed",
+      "new_account_created": false,
+      "new_credentials_entered": false,
+      "host_clock_changed": false
+    }
+  },
+  "host_final_checkpoint": {
+    "observed_at": "2026-10-24T17:00:25.631283+00:00",
+    "kernel_boot_uuid": "C5EA9BC6-4B3F-4A76-8AB5-B9751726418E",
+    "business_tables_exact_pre_reboot_baseline": true,
+    "counts": {
+      "Settings": 1,
+      "MediaRecords": 0,
+      "Reminders": 4
+    },
+    "active_tasks": 1,
+    "integrity": "ok",
+    "candidate_started": false,
+    "stable_notification_id_from_preboot_receipt": 1097435218,
+    "host_reboot": "NOT_PERFORMED",
+    "post_reboot_cold_start": "NOT_PERFORMED",
+    "native_continuation_block": "Mac locked; CUA automatic unlock failed"
+  },
+  "remaining": [
+    "Finish isolated guest setup after native operation becomes available",
+    "Validate natural spring and autumn DST boundaries, OS delivery per ID, and cleanup",
+    "Perform real host restart, compare boot identity and pre-launch notification state, then measure cold startup",
+    "Retire unused Parallels placeholder through supported UI; preserve current image and VM rollback materials"
+  ]
+}
