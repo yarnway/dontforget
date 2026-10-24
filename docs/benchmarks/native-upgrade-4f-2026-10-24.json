@@ -1,0 +1,299 @@
+{
+  "phase": "4F",
+  "date": "2026-10-24",
+  "status": "NATIVE_UPGRADE_AND_ROLLBACK_PASS_BACKGROUND_NEW_PROCESS_BASELINE",
+  "sourceRevision": "5eb353da220d45a0fc4d5026c240a5fd2d052d18",
+  "ciRun": 40085908096,
+  "ciJobs": {
+    "profile": "PASS",
+    "product_retry": "PASS",
+    "product_startup": "PASS"
+  },
+  "candidate": {
+    "source_revision": "5eb353da220d45a0fc4d5026c240a5fd2d052d18",
+    "source_archive_sha256": "15d6501630757b741fff03c8dce60064223cd2287bf2fc83ef5e6cf4b59ac4a9",
+    "source_manifest_sha256": "40b5ef6680a46e464cc97b2abbd5e27fef2c7a5ee5b01cf89c18c4a0de0b3d86",
+    "bundle_id": "com.example.dontForget.acceptance.upgrade26-r40085908096",
+    "app": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/upgrade26-r40085908096/dont_forget.app",
+    "frameworks_and_resources_unchanged": true,
+    "codesign_verify": "PASS"
+  },
+  "fixtureSha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+  "plan": {
+    "createdAt": "2026-10-24T18:33:01.184107+08:00",
+    "revision": "5eb353da220d45a0fc4d5026c240a5fd2d052d18",
+    "runId": 40085908096,
+    "fixtureSha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+    "fixtureSchema": 9,
+    "count": 10000,
+    "entrypoint": "lib/main.dart release with passive StartupTrace",
+    "plannedSamples": [
+      "native v9 to v10 upgrade with snapshot",
+      "same-package process reopen 1",
+      "same-package process reopen 2"
+    ],
+    "allAttemptsRetained": true,
+    "foregroundPolicy": "Only focused and visible with no blur/inactive event accepted as foreground; others retained and reported separately",
+    "processColdScope": "new process with OS caches retained; not a system restart or disk-cache flush",
+    "notificationPermission": "No granting 10000 future OS notifications solely for performance; real scheduling transport still runs and permission state is recorded separately",
+    "expectedSnapshotRows": "All frozen business rows exact; settings gain migration columns only"
+  },
+  "samples": [
+    {
+      "scope": "Actual product lib/main.dart release startup; real OS notification transport; passive instrumentation. First raster is the framework completion signal, not a GPU duration.",
+      "revision": "5eb353da220d45a0fc4d5026c240a5fd2d052d18",
+      "pid": 29948,
+      "build_mode": "release",
+      "dart_entry_utc": "2026-10-24T10:36:34.814655Z",
+      "outcome": "complete",
+      "elapsed_to_outcome_us": 333961,
+      "milestones_us": {
+        "binding_ready": 170,
+        "window_shown": 14101,
+        "storage_ready": 232997,
+        "settings_loaded": 240319,
+        "first_frame_rasterized": 251299,
+        "tasks_loaded": 302392,
+        "notifications_ready": 328336,
+        "routes_ready_frame": 333960
+      },
+      "window_events": [
+        {
+          "event": "initial:null",
+          "elapsed_us": 156
+        }
+      ],
+      "window_at_outcome": {
+        "focused": false,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": null
+      },
+      "dart": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "os": "Version 27.0.1 (Build 26A434)",
+      "process_start_epoch_us": 1792838194639976,
+      "process_to_dart_entry_us": 174679,
+      "process_to_milestones_us": {
+        "binding_ready": 174849,
+        "window_shown": 188780,
+        "storage_ready": 407676,
+        "settings_loaded": 414998,
+        "first_frame_rasterized": 425978,
+        "tasks_loaded": 477071,
+        "notifications_ready": 503015,
+        "routes_ready_frame": 508639
+      },
+      "process_to_outcome_us": 508640,
+      "cold_scope": "New product process; OS caches retained. Kernel birth timestamp plus Dart elapsed milestones; excludes automation tool latency."
+    },
+    {
+      "scope": "Actual product lib/main.dart release startup; real OS notification transport; passive instrumentation. First raster is the framework completion signal, not a GPU duration.",
+      "revision": "5eb353da220d45a0fc4d5026c240a5fd2d052d18",
+      "pid": 31021,
+      "build_mode": "release",
+      "dart_entry_utc": "2026-10-24T10:37:57.810948Z",
+      "outcome": "complete",
+      "elapsed_to_outcome_us": 171253,
+      "milestones_us": {
+        "binding_ready": 188,
+        "window_shown": 16480,
+        "storage_ready": 71957,
+        "settings_loaded": 82659,
+        "first_frame_rasterized": 90552,
+        "tasks_loaded": 143101,
+        "notifications_ready": 166395,
+        "routes_ready_frame": 171253
+      },
+      "window_events": [
+        {
+          "event": "initial:null",
+          "elapsed_us": 173
+        }
+      ],
+      "window_at_outcome": {
+        "focused": false,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": null
+      },
+      "dart": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "os": "Version 27.0.1 (Build 26A434)",
+      "process_start_epoch_us": 1792838277640529,
+      "process_to_dart_entry_us": 170419,
+      "process_to_milestones_us": {
+        "binding_ready": 170607,
+        "window_shown": 186899,
+        "storage_ready": 242376,
+        "settings_loaded": 253078,
+        "first_frame_rasterized": 260971,
+        "tasks_loaded": 313520,
+        "notifications_ready": 336814,
+        "routes_ready_frame": 341672
+      },
+      "process_to_outcome_us": 341672,
+      "cold_scope": "New product process; OS caches retained. Kernel birth timestamp plus Dart elapsed milestones; excludes automation tool latency.",
+      "businessRowsExactVsFirst": true
+    },
+    {
+      "scope": "Actual product lib/main.dart release startup; real OS notification transport; passive instrumentation. First raster is the framework completion signal, not a GPU duration.",
+      "revision": "5eb353da220d45a0fc4d5026c240a5fd2d052d18",
+      "pid": 31430,
+      "build_mode": "release",
+      "dart_entry_utc": "2026-10-24T10:38:30.548578Z",
+      "outcome": "complete",
+      "elapsed_to_outcome_us": 159583,
+      "milestones_us": {
+        "binding_ready": 177,
+        "window_shown": 15503,
+        "storage_ready": 68688,
+        "settings_loaded": 76552,
+        "first_frame_rasterized": 88585,
+        "tasks_loaded": 136517,
+        "notifications_ready": 157793,
+        "routes_ready_frame": 159582
+      },
+      "window_events": [
+        {
+          "event": "initial:null",
+          "elapsed_us": 163
+        }
+      ],
+      "window_at_outcome": {
+        "focused": false,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": null
+      },
+      "dart": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "os": "Version 27.0.1 (Build 26A434)",
+      "process_start_epoch_us": 1792838310360348,
+      "process_to_dart_entry_us": 188230,
+      "process_to_milestones_us": {
+        "binding_ready": 188407,
+        "window_shown": 203733,
+        "storage_ready": 256918,
+        "settings_loaded": 264782,
+        "first_frame_rasterized": 276815,
+        "tasks_loaded": 324747,
+        "notifications_ready": 346023,
+        "routes_ready_frame": 347812
+      },
+      "process_to_outcome_us": 347813,
+      "cold_scope": "New product process; OS caches retained. Kernel birth timestamp plus Dart elapsed milestones; excludes automation tool latency.",
+      "businessRowsExactVsFirst": true
+    }
+  ],
+  "nativeUI": [
+    "Four quadrants each showed 2500 active tasks after upgrade and both reopens",
+    "Settings: permission not enabled, future reminders 0, pending 0, retained 0",
+    "After offline owned baseline cleanup, native empty board and OS 0/0 verified; candidate normally quit"
+  ],
+  "firstReadback": {
+    "schema": 10,
+    "integrity": "ok",
+    "tables": {
+      "Settings": {
+        "count": 1,
+        "originalFieldsExact": true,
+        "addedColumns": [
+          "ai_fallback_enabled",
+          "ai_profiles_json"
+        ]
+      },
+      "MediaRecords": {
+        "count": 0,
+        "originalFieldsExact": true,
+        "addedColumns": []
+      },
+      "Reminders": {
+        "count": 10000,
+        "originalFieldsExact": true,
+        "addedColumns": []
+      }
+    },
+    "taskDueRange": {
+      "minimum": "2026-10-23T10:24:00.391143",
+      "maximum": "2026-10-23T10:24:00.391143"
+    },
+    "snapshot": {
+      "path": "/Users/james/Library/Containers/com.example.dontForget.acceptance.upgrade26-r40085908096/Data/Library/Application Support/com.example.dontForget.acceptance.upgrade26-r40085908096/databases/schema-upgrade-v9-to-v10-FZdJ9t",
+      "bytes": 7344664,
+      "sha256": "7b5ba2972b819710796ec59c1bcfbd3e80fca192f27fe9f65ecb7f37e01ae1a4",
+      "allFrozenRowsExact": true
+    },
+    "notificationBoundary": "Frozen fixture times are in the past. This run does not measure submitting 10000 future OS notifications."
+  },
+  "rollback": {
+    "source": "Actual native v9->v10 snapshot",
+    "allFrozenRowsExact": true,
+    "schema": 9,
+    "integrity": "ok",
+    "rebuiltDatabase": "build/native_acceptance/power-stage26-materials/native-snapshot-rebuilt-v9.sqlite",
+    "sha256": "4af8db2f112b2cb027426c686842e519f27fd8770449f2f1b15b6dbf8d097dfa",
+    "oldAppOpenedV10Database": false
+  },
+  "cleanup": {
+    "method": "Candidate stopped; owner lease; consistent post-upgrade SQLite backup; restore owned empty baseline using SQLite backup API",
+    "nativeRestoreClaim": false,
+    "postUpgradeBackupSha256": "b139e94741211ad64fff854827dbe0769fc364b61d95a68f0f139d4c5b87754c",
+    "privateMode": "0o600",
+    "restoredSchema": 10,
+    "restoredTasks": 0,
+    "osPendingBeforeCleanup": 0,
+    "osRetainedBeforeCleanup": 0,
+    "notificationPermission": "not enabled",
+    "fixtureTimes": "past; zero future notifications submitted",
+    "finalNativeEmptyBoard": true,
+    "finalOSPending": 0,
+    "finalOSRetained": 0,
+    "finallyStopped": true,
+    "allBusinessRowsEqualEmptyBaseline": true
+  },
+  "scopeLimits": [
+    "No foreground-qualified sample: all reports visible=true focused=false lifecycle=null; no sample discarded based on timing",
+    "New native process with OS caches retained; not a system restart, flushed disk cache or cross-machine result",
+    "First raster precedes task load; do not report it as complete 10000-task rendering",
+    "Frozen fixture times are past; startup reconciliation has no 10000 future OS submissions",
+    "Storage-ready milestone includes product bootstrap/validation and upgrade snapshot; not a standalone snapshot timer",
+    "Only one native upgrade sample and two already-upgraded reopen samples; no performance improvement claim",
+    "Rollback rebuilt from actual native snapshot with frozen schema and exact rows; old application was not launched against schema 10"
+  ],
+  "materials": [
+    {
+      "path": "build/native_acceptance/power-stage26-materials/native-upgrade-business-digests.json",
+      "sha256": "c5e5810f4486c51b7dde7f6a85676307226c2ae6cceb9bab2d4ed869a9d024ee"
+    },
+    {
+      "path": "build/native_acceptance/power-stage26-materials/native-upgrade-cleanup.json",
+      "sha256": "698b692cf34147abf6afb79d45e6fa7508445d3c830d2dc640047ee7c591ffd4"
+    },
+    {
+      "path": "build/native_acceptance/power-stage26-materials/native-upgrade-first-measurement.json",
+      "sha256": "59a40a8a7ab5720d86f4d321fb91d60fcbe511b6003db65bf9a14f02ec536734"
+    },
+    {
+      "path": "build/native_acceptance/power-stage26-materials/native-upgrade-first-readback.json",
+      "sha256": "c64b05435bfa030a050c3d0b06d98d64e2dc227699376954df9585ce0eb5ca53"
+    },
+    {
+      "path": "build/native_acceptance/power-stage26-materials/native-upgrade-plan.json",
+      "sha256": "ddcb9dad92fecec42bdff4bad4f4a53ebde454df631d39234782c5c0e113a6be"
+    },
+    {
+      "path": "build/native_acceptance/power-stage26-materials/native-upgrade-reopen1-measurement.json",
+      "sha256": "8b2d896b04cf6eb07f9b79728a1772862311700c63307f2d9b08fcaf30e1645e"
+    },
+    {
+      "path": "build/native_acceptance/power-stage26-materials/native-upgrade-reopen2-measurement.json",
+      "sha256": "6be67aac1167ceba6088d5610cc3eea5d0d6d975d5ba9a4903623652127aab1b"
+    },
+    {
+      "path": "build/native_acceptance/power-stage26-materials/native-upgrade-rollback-check.json",
+      "sha256": "db9c376b959b786293f08760f789fe258eeaa0452468ccab1540cb4d2903c743"
+    },
+    {
+      "path": "build/native_acceptance/power-stage26-materials/native-upgrade-seeded.json",
+      "sha256": "b36acda653635081bbba3b12ffac849b365abb1c742d31f782726153b4cc8a8c"
+    }
+  ]
+}

@@ -1,0 +1,117 @@
+{
+  "phase": "3D-26",
+  "date": "2026-10-24",
+  "status": "PRE_REBOOT_BASELINE_READY_REBOOT_AND_DST_NOT_PERFORMED",
+  "ci": {
+    "commit": "5eb353da220d45a0fc4d5026c240a5fd2d052d18",
+    "runId": 40081854615,
+    "quality": "PASS",
+    "fivePlatformBuilds": "PASS",
+    "release": "SKIPPED_NON_TAG"
+  },
+  "powerPreflight": {
+    "at": "2026-10-24T18:27:01.048812+08:00",
+    "relativePropertyMatches": [
+      {
+        "path": [
+          0,
+          "Supported Features",
+          "PowerRelativeToShutdown"
+        ],
+        "value": 33292295
+      },
+      {
+        "path": [
+          0,
+          "Supported Features",
+          "WakeRelativeToSleep"
+        ],
+        "value": 33226759
+      }
+    ],
+    "independentHardwareValueAvailable": false,
+    "newPowerMutations": false,
+    "bootUUID": "C5EA9BC6-4B3F-4A76-8AB5-B9751726418E",
+    "power": "System-wide power settings:\n SleepDisabled\t\t1\nCurrently in use:\n standby              1\n Sleep On Power Button 1\n hibernatefile        /var/vm/sleepimage\n powernap             1\n networkoversleep     0\n disksleep            10\n sleep                1 (sleep prevented by UURemote, ChatGPT, powerd)\n hibernatemode        3\n ttyskeepawake        1\n displaysleep         120\n tcpkeepalive         1\n powermode            2\n womp                 1\n",
+    "scheduled": "Scheduled power events:\n [0]  wake at 10/24/2026 13:19:54 by 'com.apple.alarm.user-invisible-com.apple.acmd.alarm'\n [1]  wake at 10/24/2026 18:20:10 by 'com.apple.alarm.user-invisible-com.apple.calaccessd.travelEngine.periodicRefreshTimer'\n",
+    "exactRootPropertyRead": {
+      "entryFound": true,
+      "WakeRelativeToSleepPropertyReadable": false
+    }
+  },
+  "nativeRebootEntry": {
+    "finder": "cgWindowNotFound",
+    "systemSettingsRead": "PASS",
+    "standardMenuShortcut": "ctrl+F2 and Raise + ctrl+F2 did not open system menu",
+    "sudoNoninteractive": "password required",
+    "terminalBoundary": "Previously explicit native tool refusal; no Terminal control attempted",
+    "actualReboot": "NOT_PERFORMED"
+  },
+  "dst": {
+    "automaticDateTime": true,
+    "automaticTimeZone": true,
+    "currentZone": "Asia/Shanghai",
+    "systemSettingsNotice": "New time zone definitions available; installed at next restart",
+    "parallelsCLI": "Unable to connect to Parallels Service; restart requested by service diagnostic",
+    "hostClockChanged": false,
+    "actualDSTBoundary": "NOT_PERFORMED"
+  },
+  "rebootCheckpoint": {
+    "createdAt": "2026-10-24T18:31:18.184024+08:00",
+    "bootUUID": "C5EA9BC6-4B3F-4A76-8AB5-B9751726418E",
+    "schema": 10,
+    "integrity": "ok",
+    "task": {
+      "reminderId": "qa-reboot-persist-stage26",
+      "nativeId": 1097435218,
+      "action": "schedule",
+      "status": "submitted",
+      "attempts": 2,
+      "triggerUtcMicros": 4071027600000000,
+      "noticeRevision": 0,
+      "attemptedAt": "2026-10-24T10:29:49.784599Z"
+    },
+    "businessTableDigests": {
+      "Settings": "ef7c479bc986837c92e52757c543249e892c3bcc8bd973e6611b383a43794d15",
+      "MediaRecords": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "Reminders": "415594d7d5cc16a7ff3974965d768f97883a14219f93603ddd6992d29cecd525"
+    },
+    "privateBackup": "build/native_acceptance/power-stage26-materials/private-pre-reboot.sqlite",
+    "privateBackupSha256": "c32302ec981da444a7722335a2c13c9577879766c2b5c29476fdda8d7033ad83",
+    "journalChainValid": true,
+    "journalFrames": 14,
+    "nativeBeforeQuit": {
+      "pending": 1,
+      "retained": 0,
+      "permission": "allowed",
+      "title": "QA REBOOT PERSIST STAGE26"
+    },
+    "candidateStopped": true,
+    "rebootStatus": "NOT_PERFORMED",
+    "next": "After actual host reboot, first verify boot UUID changed and private pre-reboot snapshot business rows match current DB before launching app. Read scoped usernoted logs before launch. Then start exact readback-r40078001115 package, verify one future reminder/native ID, OS pending and no duplicate, complete through native UI and verify OS zero. App startup reconciliation is separate from independent OS retention before launch."
+  },
+  "osRequestEvents": [
+    {
+      "timestamp": "2026-10-24 18:29:49.782651+0800",
+      "eventMessage": "Adding new request, remove notifications similar to: <NotificationRecord app:\"com.example.dontForget.acceptance.models-r40054931085\" ident:\"2DDA-1BD8\" req:\"1097435218\" uuid:\"C89293A2\" source:\"81E03C84\" dismissAfterDefaultAction:true>"
+    }
+  ],
+  "realModelFollowup": {
+    "nativeInput": "AX click and paste did not change actual input; coordinate fallback returned noWindowsAvailable",
+    "requestSubmitted": false,
+    "availableConfiguredProvider": "DeepSeek",
+    "localPorts": {
+      "11434": "UNAVAILABLE",
+      "8000": "UNAVAILABLE",
+      "8080": "UNAVAILABLE"
+    },
+    "secondProvider": "User asked for service and configuration location without exposing credentials; awaiting input"
+  },
+  "remaining": [
+    "Actual system reboot and changed boot UUID before product startup",
+    "Post-boot DB/epoch/journal and same stable ID reconciliation; then native task completion and OS cleanup",
+    "Restore isolated DST environment and cross a real DST boundary",
+    "Independent relative-wake value remains unavailable; Supported Features is not a scheduled timer value",
+    "Native real-model input and second authorized provider needed"
+  ]
+}

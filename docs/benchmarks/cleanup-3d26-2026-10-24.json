@@ -1,0 +1,16 @@
+{
+  "state": "COMPLETED",
+  "target": "build/ci_artifacts/upgrade26-r40085908096/artifact.zip",
+  "sha256": "5277fe20a81112edba9b2998b2414f457fa831b5b22d5989e204b04e91bb68b8",
+  "bytes": 23941141,
+  "allocatedBytes": 23945216,
+  "completedAt": "2026-10-24T18:40:57.805251+08:00",
+  "retainedHashesVerified": 352,
+  "oldPackagesDeleted": 0,
+  "buildCacheFilesDeleted": 0,
+  "cacheRegularFilesObserved": 0,
+  "originalCandidateArchiveAndManifestRetained": true,
+  "derivedCandidateRetainedForForegroundRerun": true,
+  "allLibraryDataRetained": true,
+  "scope": "Verified duplicate transport envelope only; not a cumulative net disk-space claim"
+}

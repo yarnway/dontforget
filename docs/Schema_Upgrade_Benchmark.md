@@ -21,3 +21,9 @@ flutter test --no-pub benchmark/schema_upgrade_snapshot_test.dart --reporter exp
 计时外逐字段核对升级后所有业务行、快照 SHA-256、全部旧行、重开数据，并从实际生成的快照重建独立 v9 数据库，再核对完整性和全部旧行。不会让旧程序打开 v10 主库。
 
 该结果是**完整数据库升级（包含必需快照）的成本**，不能拆写成“纯快照耗时”；也不能当作完整产品原生冷启动、首帧、跨机器性能或真实断电验收。报告不输出密钥或业务内容。
+
+## 原生测量补验
+
+2026-10-24 使用同一固定夹具完成了真实 `lib/main.dart` release 的 v9→v10 升级、自动快照及逐字段回退重建，并保留一次升级启动、两次已升级库新进程启动样本。[阶段 4F 原始证据](benchmarks/native-upgrade-4f-2026-10-24.json)。
+
+这些样本未取得窗口焦点，OS 缓存未清空，不能标记为全程前台或系统重启后的冷缓存测量。固定夹具到期时间在测量时已过去，系统未来提醒为 0；该轮不包含万条未来通知的 OS 提交成本。首帧早于任务加载，应分别报告进程出生到 storage_ready、tasks_loaded、notifications_ready、routes_ready_frame 和首帧的时间。
