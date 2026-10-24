@@ -1,0 +1,210 @@
+{
+  "phase": "4C",
+  "checkedAt": "2026-10-24T11:16:43.213676+08:00",
+  "sourceRevision": "d404ccd382b51ffbd0bffedde438cb33e1867e69",
+  "version": "1.6.0+5",
+  "schema": 10,
+  "ci": {
+    "conclusion": "success",
+    "headSha": "d404ccd382b51ffbd0bffedde438cb33e1867e69",
+    "jobs": [
+      {
+        "name": "Analyze and test",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/40054931085/job/120755773194"
+      },
+      {
+        "name": "Build macos candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/40054931085/job/120756286112"
+      },
+      {
+        "name": "Build windows candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/40054931085/job/120756286123"
+      },
+      {
+        "name": "Build linux candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/40054931085/job/120756286141"
+      },
+      {
+        "name": "Build ios candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/40054931085/job/120756286145"
+      },
+      {
+        "name": "Build android candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/40054931085/job/120756286169"
+      },
+      {
+        "name": "Prepare draft release after all packages pass",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/40054931085/job/120757391770"
+      }
+    ],
+    "status": "completed",
+    "url": "https://github.com/yarnway/dontforget/actions/runs/40054931085"
+  },
+  "candidate": {
+    "bundle": "com.example.dontForget.acceptance.models-r40054931085",
+    "path": "build/native_acceptance/models-r40054931085/dont_forget.app",
+    "sourceArchiveSha256": "b65feb332be48cd34c18e47004af320488d0ce838ce36b209a65ef55afe34b58",
+    "codesignDeepStrict": "PASS",
+    "frameworksAndResourcesUnchanged": true
+  },
+  "sameDatasetNativeUpgrade": {
+    "fixture": "models-stage17-materials/baseline-v9.sqlite",
+    "fixtureSha256": "4d745f3c4bed8e1348a7ae305005243f1d6ab051679f535c45e3df7cf24d7206",
+    "result": "PASS",
+    "schema": 10,
+    "integrity": "ok",
+    "allBusinessTablesExact": true,
+    "automaticPreUpgradeSnapshotExactV9Tables": true,
+    "snapshotSha256": "8c94e56067b9a4a7f248e8c17cad0b9d01056fbdf3f42c0fbf87949901e483fc"
+  },
+  "nativeModelEditing": {
+    "result": "PASS",
+    "operations": [
+      "Rename original profile to QA Primary",
+      "Add QA Secondary using synthetic key and .invalid endpoint",
+      "Enable second profile",
+      "Move second profile to first position",
+      "Enable ordered fallback",
+      "Save",
+      "Normal quit and reopen"
+    ],
+    "persistedOrder": [
+      "QA Secondary",
+      "QA Primary"
+    ],
+    "fallbackEnabled": true,
+    "compatibilityFieldsMatchFirstEnabled": true,
+    "taskAndMediaRowsUnchanged": true,
+    "normalReopenedPid": 90036,
+    "realProviderRequests": 0,
+    "inputToolLimitation": "AX setValue and command-select-all did not reliably update Flutter field content; actual coordinate selection and keyboard input, visible text and SQL readback were required."
+  },
+  "nativeRecovery": {
+    "result": "PASS",
+    "source": "models-stage17-materials/candidate-v10.json",
+    "sha256": "86b33d59e06cfa872e90e4478db37a73cb9a73d62462ad6bc5b01442aca74d6e",
+    "uiSupportedVersions": [
+      7,
+      8,
+      9,
+      10
+    ],
+    "preview": "structure passed; one task; one settings row; API key warning",
+    "confirmation": "replacement count, in-flight work invalidation, LAN stopped, independent rollback location, explicit checkbox",
+    "operationId": "d9b27bc1-d984-4408-b417-f06d64dbca82",
+    "completionState": "committed",
+    "allBusinessTablesExactToFixture": true,
+    "rollbackAndDisplacedDatabasesExactToEditedPreRestoreState": true,
+    "candidateDatabaseExactToRestoredState": true,
+    "visibleModels": [
+      "Primary",
+      "Secondary fixture",
+      "Disabled fixture"
+    ],
+    "thirdProfileEnabled": false,
+    "fallbackEnabledAfterRestore": false,
+    "sameProcessUiReload": "PASS",
+    "normalQuitReopen": "PASS",
+    "normalReopenedPid": 92203,
+    "integrity": "ok"
+  },
+  "notifications": {
+    "oldEpoch": "d0873bb9-d7ac-4735-8d92-33096e042a5e",
+    "newEpoch": "1110444b-28eb-45c9-aaaa-406059c8914b",
+    "stableNativeId": 877764987,
+    "restoreJournalSequence": [
+      "cancel/pending",
+      "cancel/submitted",
+      "schedule/pending",
+      "schedule/submitted"
+    ],
+    "journalHashChainVerified": true,
+    "afterReopenFinalEntry": {
+      "reminderId": "qa-model-keep",
+      "nativeId": 877764987,
+      "action": "schedule",
+      "status": "submitted",
+      "attempts": 4,
+      "triggerUtcMicros": 4071028500000000,
+      "noticeRevision": 0,
+      "attemptedAt": "2026-10-24T03:13:51.349355Z"
+    },
+    "permission": "not authorized for this new bundle",
+    "independentOSPendingAndDelivery": "NOT_OBSERVED",
+    "meaning": "Application journal and native call completion only; does not prove visible delivery or independent pending count."
+  },
+  "finalState": {
+    "candidateNormallyStopped": true,
+    "futureSyntheticTaskRetainedForNextSystemAcceptance": true,
+    "oldDerivedCandidateSyntheticTaskCompleted": true,
+    "oldCandidateCancellationJournal": "cancel/submitted",
+    "oldDerivedCandidateRemovedOnlyAfterExitAndArchiveVerification": true
+  },
+  "validation": {
+    "nativeAcceptanceThisPhase": "PASS_WITH_DECLARED_OS_DELIVERY_BOUNDARY",
+    "sourceChangesThisPhase": false,
+    "sourceCiRechecked": "SUCCESS_QUALITY_AND_FIVE_PLATFORMS",
+    "priorLocalFullFlutter": 807,
+    "priorLocalPython": 63,
+    "priorFinalCopyTargeted": 36,
+    "priorLocalCountsRerunThisPhase": false
+  },
+  "remaining": [
+    "Real system reboot",
+    "Notification becoming due during real sleep",
+    "True OS DST boundary and relative-wake residual verification",
+    "Explicit real provider acceptance",
+    "10000-row schema-upgrade snapshot cost",
+    "Other-platform business acceptance and signed release"
+  ],
+  "materialHashes": {
+    "build/native_acceptance/models-stage19-materials/post-recovery-reopened.sqlite": "186529b78dfb0ea4f5578bd0be51875ed92dfcf4c6d74e0605f44bfd1df9e27f",
+    "build/native_acceptance/models-stage19-materials/native-model-reopened-readback.json": "a8dcbe2210159ac72a29dba0be00957b1b7fba5b41b60b031a7a69c3cd3d4d14",
+    "build/native_acceptance/models-stage19-materials/old-candidate-reminder-cleanup.json": "d66cd0cb91987ee741bbbba18e5700e9359c1c020dc8ac6c89162abd913d1b84",
+    "build/native_acceptance/models-stage19-materials/fixture-preparation.json": "76262c444e4cd024a9bdf2df4d05b934307e30403ca8e343082f2fe9433fb478",
+    "build/native_acceptance/models-stage19-materials/notification-storage.json": "0c3ee40e8f734e0bee92c25bbde76a65cc2fc6f44946eb9c05a791d825552cae",
+    "build/native_acceptance/models-stage19-materials/before-native-recovery.sqlite": "d71d823acac45f33cf2ee862df13da9782e50f886327fc158ab0d0664892c4a8",
+    "build/native_acceptance/models-stage19-materials/native-restored-reopened-v10-readback.json": "e6b59acf69a142bf121b3ea72687dd01327ba7af6ca4537c9f2b8b731e6b7d35",
+    "build/native_acceptance/models-stage19-materials/native-restored-v10-readback.json": "e6b59acf69a142bf121b3ea72687dd01327ba7af6ca4537c9f2b8b731e6b7d35",
+    "build/native_acceptance/models-stage19-materials/upgraded-v10-readback.json": "e5644419b69fece17b4b7ef112035fdff1b6feeb2bb66e232af1ec829754fa4c",
+    "build/native_acceptance/models-stage19-materials/native-model-edited-readback.json": "a8dcbe2210159ac72a29dba0be00957b1b7fba5b41b60b031a7a69c3cd3d4d14",
+    "build/native_acceptance/models-stage19-materials/notification-epoch.json": "9178cc7eba9f72594b6e39b59eb49843ad395d5cbc864d6827630c74e156846e",
+    "build/native_acceptance/models-stage19-materials/final-ci-readback.json": "968c783a30fe3ec15ed4d05d39b23ae5eb60055f8be29c9ba9495b7ef04ca24d",
+    "build/native_acceptance/models-stage19-materials/recovery-d9b27bc1-d984-4408-b417-f06d64dbca82/displaced.db": "f3b622f2ba683f645a2b61d1a0d16b2af559c146925d507b24fb851c37bc685a",
+    "build/native_acceptance/models-stage19-materials/recovery-d9b27bc1-d984-4408-b417-f06d64dbca82/candidate.db": "4159f61da96039f862ea1410ecd7556eae157e85ff65443dc4f4f3f04fcdd4e6",
+    "build/native_acceptance/models-stage19-materials/recovery-d9b27bc1-d984-4408-b417-f06d64dbca82/completed.json": "dc32cb2042b800466ee2e56297f437d677345480e2397910b91b73477f245bf8",
+    "build/native_acceptance/models-stage19-materials/recovery-d9b27bc1-d984-4408-b417-f06d64dbca82/rollback.db": "f3b622f2ba683f645a2b61d1a0d16b2af559c146925d507b24fb851c37bc685a",
+    "build/native_acceptance/models-stage19-materials/recovery-d9b27bc1-d984-4408-b417-f06d64dbca82/source.backup": "86b33d59e06cfa872e90e4478db37a73cb9a73d62462ad6bc5b01442aca74d6e",
+    "build/native_acceptance/models-stage19-materials/notification-incremental-after-recovery/source-v1.json": "d909c565414d8f7821a355662e7df7a00284ec8dc38e386fa7959edbb9146aac",
+    "build/native_acceptance/models-stage19-materials/notification-incremental-after-recovery/retained.json": "b3deaa298127cc4b99c4b07595a10536d20eafd384599cb2c516d650d64bc614",
+    "build/native_acceptance/models-stage19-materials/notification-incremental-after-recovery/adfbcdb1-e904-480c-b110-c528e0e63bbe.log": "32ac7dc84272a82dd2889fe122c5aad8d1c5deb9daa5b74ccd3905956c1f901b",
+    "build/native_acceptance/models-stage19-materials/notification-incremental-after-recovery/23e78ed5-3463-434b-be3c-abb980e98a76.json": "6c9e2a0b8021d265f46da498310b0e4e9dbd957ba1992b5ba548f9fca2d1ac9d",
+    "build/native_acceptance/models-stage19-materials/notification-incremental-after-recovery/current.json": "5bc06bffdaa9ff165209bf93ee680ca9304a83a93c4cba2bffd07bed0cc8c877",
+    "build/native_acceptance/models-stage19-materials/notification-incremental-after-recovery/adfbcdb1-e904-480c-b110-c528e0e63bbe.json": "d909c565414d8f7821a355662e7df7a00284ec8dc38e386fa7959edbb9146aac",
+    "build/native_acceptance/models-stage19-materials/notification-incremental-after-recovery/23e78ed5-3463-434b-be3c-abb980e98a76.log": "e4c3517b2b893073828bca53f6f7b85c71a5714afbb41a20c6f334b5b3345300",
+    "build/native_acceptance/models-stage19-materials/schema-upgrade-v9-to-v10-zKrQaf/snapshot.json": "8c94e56067b9a4a7f248e8c17cad0b9d01056fbdf3f42c0fbf87949901e483fc",
+    "build/native_acceptance/models-stage19-materials/schema-upgrade-v9-to-v10-zKrQaf/manifest.json": "f31979f0284a1e8cf4e3c55cec1b79eb11d75255ac1542a6889e84cb69cbfee0",
+    "build/native_acceptance/models-stage19-materials/empty-initial-databases/notification-journal.json": "82e6b4b81f392079cde535afbe3352be2de478072a1cd98be0610382655b0714",
+    "build/native_acceptance/models-stage19-materials/empty-initial-databases/.dontforget.owner.lock": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build/native_acceptance/models-stage19-materials/empty-initial-databases/notification-epoch.json": "cb7516d1176a6f874fd7c96d0318192d86f2126ebc4b80bee857397ebb1c9a7e",
+    "build/native_acceptance/models-stage19-materials/empty-initial-databases/dont_forget_v3.db": "72284ce4b87bbaecbd71ef745f8c755a4fe8d25bd1cebb890aa3848c53571d9b",
+    "build/native_acceptance/models-stage19-materials/empty-initial-databases/notification-incremental/source-v1.json": "82e6b4b81f392079cde535afbe3352be2de478072a1cd98be0610382655b0714",
+    "build/native_acceptance/models-stage19-materials/empty-initial-databases/notification-incremental/07ac4c15-2a26-43d2-92bf-c3d1aaf98c9e.manifest.tmp": "89420628e4fcb9e9e9399441d33dae6345a7e161d6aa00465bff3f13fa3e9491",
+    "build/native_acceptance/models-stage19-materials/empty-initial-databases/notification-incremental/07ac4c15-2a26-43d2-92bf-c3d1aaf98c9e.json": "82e6b4b81f392079cde535afbe3352be2de478072a1cd98be0610382655b0714",
+    "build/native_acceptance/models-stage19-materials/empty-initial-databases/notification-incremental/07ac4c15-2a26-43d2-92bf-c3d1aaf98c9e.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

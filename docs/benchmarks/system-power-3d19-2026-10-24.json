@@ -1,6 +1,6 @@
 {
   "phase": "3D-19",
-  "checkedAt": "2026-10-24T10:49:37.166924+08:00",
+  "checkedAt": "2026-10-24T11:07:55.674350+08:00",
   "userAuthorizedTemporarySleepDisabledChangeAndRestore": true,
   "originalSleepDisabled": 1,
   "firstAttempt": {
@@ -24,24 +24,54 @@
   "secondAttempt": {
     "script": "build/native_acceptance/models-stage18-materials/sleep-observed.command",
     "sha256": "145f3cdb2c3cd0967001eade28c7443b82d2540e35d97194732e19dc44ee4845",
-    "userReported": "started",
-    "runLogPresent": false,
-    "acceptance": "NOT_CONFIRMED"
+    "userReported": "executed correct second script",
+    "runLogPresent": true,
+    "acceptance": "REAL_KERNEL_SLEEP_WAKE_PASS_SETTINGS_RESTORED",
+    "rawLogSha256": "2f8e3823c473f07b23757d585359859d60bf35bc6dfa7de74906850a55973be8",
+    "startedAt": "2026-10-24T11:02:53+08:00",
+    "observedAt": "2026-10-24T11:04:29+08:00",
+    "kernelSleepAt": "2026-10-24T11:03:25.638568+08:00",
+    "kernelWakeAt": "2026-10-24T11:04:25.778623+08:00",
+    "kernelSleepSeconds": 60.140055,
+    "pmsetSleepAt": "2026-10-24T11:03:23+08:00",
+    "pmsetWakeAt": "2026-10-24T11:04:26+08:00",
+    "wakeReason": "rtc/UserActivity Assertion",
+    "plannedOwnedWakeAt": "2026-10-24T11:05:53+08:00",
+    "wakeCauseAttribution": "UNCONFIRMED: wake preceded owned absolute wake; prior relative wake remains unconfirmed",
+    "scriptExit": 0,
+    "settingsRestoredToOne": true,
+    "ownedWakeRemoved": true,
+    "unrelatedAssertionsPreserved": true
   },
   "relativeWakeCleanup": "UNCONFIRMED; no new relative wake was set",
   "systemReboot": "NOT_PERFORMED",
   "realDSTBoundary": "NOT_PERFORMED",
   "bootUUID": "C5EA9BC6-4B3F-4A76-8AB5-B9751726418E",
-  "unrelatedPowerEvents": "No cancellation requested for Calendar/acmd. Their already expired Oct 23 15:52 and Oct 24 00:13 rows disappeared from the system list after the scheduling operation; cannot claim unchanged list contents.",
+  "unrelatedPowerEvents": "OS now lists acmd and Calendar events. Only the exact experiment-owned absolute wake was cancelled; no unrelated cancellation requested.",
   "assertions": "Preserved UURemote, ChatGPT and all other app assertions.",
   "nativeProduct": {
     "pid": 60290,
     "futureTaskCount": 1,
     "stableNativeId": 877764987,
-    "dueDuringExperiment": false
+    "dueDuringExperiment": false,
+    "samePidAfterWake": 60290,
+    "postWakeSchema": 10,
+    "postWakeIntegrity": "ok",
+    "allThreeBusinessTablesExactlyUnchanged": true,
+    "journalFinalStatus": "schedule/submitted",
+    "journalAttempts": 4,
+    "stableNativeIdAfterWake": 877764987,
+    "appSummaryAfterWake": {
+      "future": 1,
+      "submitted": 1,
+      "unverified": 0,
+      "cancelPending": 0
+    },
+    "independentOSPendingOrDelivery": "NOT_OBSERVED",
+    "normalQuitAfterPostWakeReadback": true
   },
   "toolBoundary": "Computer Use refused access to com.apple.Terminal for safety reasons. Standard local administrator authentication was handed to the user; no workaround was used.",
-  "currentPower": "System-wide power settings:\n SleepDisabled\t\t1\nCurrently in use:\n standby              1\n Sleep On Power Button 1\n hibernatefile        /var/vm/sleepimage\n powernap             1\n networkoversleep     0\n disksleep            10\n sleep                1 (sleep prevented by ChatGPT, UURemote, powerd)\n hibernatemode        3\n ttyskeepawake        1\n displaysleep         120\n tcpkeepalive         1\n powermode            2\n womp                 1\n",
-  "currentScheduledEvents": "",
-  "currentKernelTimes": "kern.sleeptime: { sec = 1792720118, usec = 570512 } Fri Oct 23 09:48:38 2026\nkern.waketime: { sec = 1792720618, usec = 721586 } Fri Oct 23 09:56:58 2026\n"
+  "currentPower": "System-wide power settings:\n SleepDisabled\t\t1\nCurrently in use:\n standby              1\n Sleep On Power Button 1\n hibernatefile        /var/vm/sleepimage\n powernap             1\n networkoversleep     0\n disksleep            10\n sleep                1 (sleep prevented by powerd, UURemote, ChatGPT)\n hibernatemode        3\n ttyskeepawake        1\n displaysleep         120\n tcpkeepalive         1\n powermode            2\n womp                 1\n",
+  "currentScheduledEvents": "Scheduled power events:\n [0]  wake at 10/24/2026 11:12:50 by 'com.apple.alarm.user-invisible-com.apple.acmd.alarm'\n [1]  wake at 10/24/2026 18:20:10 by 'com.apple.alarm.user-invisible-com.apple.calaccessd.travelEngine.periodicRefreshTimer'\n",
+  "currentKernelTimes": "kern.sleeptime: { sec = 1792811005, usec = 638568 } Sat Oct 24 11:03:25 2026\nkern.waketime: { sec = 1792811065, usec = 778623 } Sat Oct 24 11:04:25 2026\n"
 }
