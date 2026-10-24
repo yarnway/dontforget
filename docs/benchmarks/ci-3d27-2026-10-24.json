@@ -1,0 +1,42 @@
+{
+  "runId": 40088602383,
+  "sourceCommit": "fa5cf70378d9704064876a42c3408e8df150b407",
+  "url": "https://github.com/yarnway/dontforget/actions/runs/40088602383",
+  "conclusion": "success",
+  "jobs": [
+    {
+      "name": "Analyze and test",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build macos candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build windows candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build android candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build ios candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build linux candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Prepare draft release after all packages pass",
+      "conclusion": "skipped"
+    }
+  ],
+  "flutterTests": {
+    "passed": 818,
+    "platformSkipped": 1
+  },
+  "pythonTests": 82,
+  "localFlutterTests": 819
+}

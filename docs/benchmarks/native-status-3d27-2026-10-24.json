@@ -1,0 +1,48 @@
+{
+  "phase": "3D-27",
+  "date": "2026-10-24",
+  "sourceCommit": "fa5cf70378d9704064876a42c3408e8df150b407",
+  "ciRun": 40088602383,
+  "outerArtifactSha256": "c696f5039fe0726d63fdae05b37f29ab856e45e4cc365a5cc05b420ca015bf67",
+  "package": [
+    {
+      "file": "DontForget_macOS_unnotarized_v1.6.0.zip",
+      "bytes": 23999008,
+      "sha256": "b15ab80659b20720d20bcce972c17f9092b46d793982509f644ef04d61d58607"
+    }
+  ],
+  "isolatedBundle": "com.example.dontForget.acceptance.status27-r40088602383",
+  "preparationVerification": "PASS; source identity, package hashes, protected code/resources and derived codesign verified by prepare_macos_acceptance.py",
+  "native": {
+    "startupEmptyBoard": "PASS",
+    "inputAXValueChanged": true,
+    "inputRenderedTextChanged": false,
+    "nativeCoordinateError": "noWindowsAvailable",
+    "pasteAndSend": "No visible input or processing transition",
+    "settingsButton": "Did not navigate",
+    "realModelRequest": "NOT_OBSERVED; do not count AX value mutation as task submission",
+    "modelTaskGeneration": "NOT_PERFORMED",
+    "nativeTimeoutRecovery": "NOT_PERFORMED",
+    "nativeVoiceOverGrouping": "NOT_PERFORMED"
+  },
+  "isolatedConfiguration": {
+    "provider": "DeepSeek",
+    "profiles": 2,
+    "fallbackEnabled": false,
+    "source": "existing explicitly authorized isolated configuration copied offline under owner lease",
+    "keysPrintedOrCommitted": false
+  },
+  "cleanup": {
+    "candidateStopped": true,
+    "beforeRestoreRecords": {
+      "Reminders": 0,
+      "MediaRecords": 0
+    },
+    "ownEmptyBaselineRestoredViaSQLiteBackupUnderLease": true,
+    "allBusinessTablesMatch": true,
+    "integrity": "ok",
+    "temporaryCredentialCopiesRemainingInCandidateDatabase": false,
+    "journalEntries": 0,
+    "rebootFixtureNotLaunchedOrModified": true
+  }
+}

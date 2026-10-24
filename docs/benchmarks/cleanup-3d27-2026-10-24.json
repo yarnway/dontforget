@@ -1,0 +1,51 @@
+{
+  "phase": "3D-27",
+  "date": "2026-10-24",
+  "state": "COMPLETED",
+  "targets": [
+    {
+      "path": "build/test_cache",
+      "files": 1,
+      "bytes": 55408072,
+      "allocatedBytes": 55410688
+    },
+    {
+      "path": "build/unit_test_assets",
+      "files": 12,
+      "bytes": 2121711,
+      "allocatedBytes": 2150400
+    },
+    {
+      "path": "build/native_assets",
+      "files": 3,
+      "bytes": 1968039,
+      "allocatedBytes": 1978368
+    },
+    {
+      "path": ".dart_tool/hooks_runner",
+      "files": 30,
+      "bytes": 24752486,
+      "allocatedBytes": 25272320
+    },
+    {
+      "path": ".dart_tool/flutter_build",
+      "files": 1,
+      "bytes": 9025,
+      "allocatedBytes": 12288
+    },
+    {
+      "path": "build/ci_artifacts/status27-r40088602383/artifact.zip",
+      "files": 1,
+      "bytes": 23923045,
+      "allocatedBytes": 23924736,
+      "sha256": "c696f5039fe0726d63fdae05b37f29ab856e45e4cc365a5cc05b420ca015bf67"
+    }
+  ],
+  "deletedLogicalBytes": 108182378,
+  "deletedAllocatedBytes": 108748800,
+  "protectedFilesVerifiedUnchanged": 363,
+  "oldApplicationsDeleted": 0,
+  "userLibraryDataDeleted": false,
+  "rollbackAndPendingRebootMaterialsPreserved": true,
+  "protectedFilesVerifiedUnchangedAfterPackageCleanup": 420
+}

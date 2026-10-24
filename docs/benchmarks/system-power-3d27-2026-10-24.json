@@ -1,0 +1,43 @@
+{
+  "at": "2026-10-24T19:07:36.966136+08:00",
+  "bootUUID": "C5EA9BC6-4B3F-4A76-8AB5-B9751726418E",
+  "bootTime": "kern.boottime: { sec = 1791900480, usec = 596904 } Tue Oct 13 22:08:00 2026",
+  "power": "System-wide power settings:\n SleepDisabled\t\t1\nCurrently in use:\n standby              1\n Sleep On Power Button 1\n hibernatefile        /var/vm/sleepimage\n powernap             1\n networkoversleep     0\n disksleep            10\n sleep                1 (sleep prevented by UURemote, ChatGPT, powerd)\n hibernatemode        3\n ttyskeepawake        1\n displaysleep         120\n tcpkeepalive         1\n powermode            2\n womp                 1",
+  "scheduled": "Scheduled power events:\n [0]  wake at 10/24/2026 13:19:54 by 'com.apple.alarm.user-invisible-com.apple.acmd.alarm'\n [1]  wake at 10/24/2026 18:20:10 by 'com.apple.alarm.user-invisible-com.apple.calaccessd.travelEngine.periodicRefreshTimer'",
+  "preRebootBackupSha256": "c32302ec981da444a7722335a2c13c9577879766c2b5c29476fdda8d7033ad83",
+  "businessTablesMatchBeforeLaunch": true,
+  "database": {
+    "schema": 10,
+    "integrity": "ok"
+  },
+  "sourceCommit": "fa5cf70378d9704064876a42c3408e8df150b407",
+  "candidateProcesses": [],
+  "powerMutations": false,
+  "relativeWake": {
+    "entryFound": true,
+    "exactRootPropertyReadable": false,
+    "supportedFeaturesValue": 33226759
+  },
+  "nativeRebootEntry": {
+    "systemSettingsRead": "PASS",
+    "raiseAndControlF2": "Menu did not open; screenshot remained Date and Time settings",
+    "sudoNoninteractive": "password required",
+    "rebootPerformed": false,
+    "terminalControlAttempted": false
+  },
+  "dst": {
+    "parallelsExitCode": 253,
+    "diagnostic": "Unable to connect to Parallels Service; restart Mac requested by service",
+    "hostTimeOrZoneChanged": false,
+    "trueDSTAccepted": false
+  },
+  "phase": "3D-27",
+  "userPreference": "Agent handles native operations; DeepSeek only for current real-service acceptance",
+  "remaining": [
+    "Actual host reboot and changed boot UUID before candidate launch",
+    "Native DeepSeek input to task generation",
+    "True DST in isolated operating system",
+    "Independent relative-wake hardware value",
+    "New candidate native timeout recovery and VoiceOver label"
+  ]
+}
