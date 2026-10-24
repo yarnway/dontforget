@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dont_forget/services/notification_permission_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -54,16 +56,24 @@ class _Android extends AndroidFlutterLocalNotificationsPlugin {
   bool failNotification = false;
   int notificationRequests = 0;
   int exactRequests = 0;
+  int notificationReads = 0;
+  int exactReads = 0;
+  Completer<bool?>? notificationGate;
+  Completer<bool?>? exactGate;
 
   @override
   Future<bool?> areNotificationsEnabled() async {
+    notificationReads++;
     if (failNotification) throw StateError('query unavailable');
+    if (notificationGate != null) return notificationGate!.future;
     return notifications;
   }
 
   @override
   Future<bool?> canScheduleExactNotifications() async {
+    exactReads++;
     if (failExact) throw StateError('query unavailable');
+    if (exactGate != null) return exactGate!.future;
     return exact;
   }
 
@@ -106,6 +116,80 @@ NotificationPermissionService _service(TargetPlatform target, Object? native) =>
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  testWidgets('stalled reads start together and time out independently', (
+    tester,
+  ) async {
+    final notification = Completer<bool?>();
+    final exact = Completer<bool?>();
+    final native = _Android()
+      ..notificationGate = notification
+      ..exactGate = exact;
+    final service = _service(TargetPlatform.android, native);
+    final pending = service.refresh();
+    await tester.pump();
+    expect(native.notificationReads, 1);
+    expect(native.exactReads, 1);
+    exact.complete(true);
+    await tester.pump(const Duration(seconds: 3));
+    final first = await pending;
+    expect(first.authorization.status, NotificationPermissionStatus.unknown);
+    expect(first.exactAlarms, NotificationPermissionStatus.granted);
+    notification.complete(false);
+    native
+      ..notificationGate = null
+      ..exactGate = null
+      ..notifications = true
+      ..exact = false;
+    final recovered = await service.refresh();
+    expect(
+      recovered.authorization.status,
+      NotificationPermissionStatus.granted,
+    );
+    expect(recovered.exactAlarms, NotificationPermissionStatus.notEnabled);
+    expect(native.notificationRequests, 0);
+    expect(native.exactRequests, 0);
+  });
+
+  testWidgets('both unavailable queries finish within one read timeout', (
+    tester,
+  ) async {
+    final native = _Android()
+      ..notificationGate = Completer<bool?>()
+      ..exactGate = Completer<bool?>();
+    final pending = _service(TargetPlatform.android, native).refresh();
+    await tester.pump(const Duration(seconds: 3));
+    final state = await pending;
+    expect(state.authorization.status, NotificationPermissionStatus.unknown);
+    expect(state.exactAlarms, NotificationPermissionStatus.unknown);
+    native.notificationGate!.complete(true);
+    native.exactGate!.complete(true);
+  });
+
+  testWidgets('a permission dialog does not inherit the read timeout', (
+    tester,
+  ) async {
+    final answer = Completer<void>();
+    final native = _Darwin()
+      ..onRequest = (() => answer.future)
+      ..options = _options(enabled: true);
+    var completed = false;
+    final pending = _service(TargetPlatform.macOS, native)
+        .requestNotifications()
+        .then((value) {
+          completed = true;
+          return value;
+        });
+    await tester.pump(const Duration(seconds: 10));
+    expect(completed, isFalse);
+    expect(native.requests, 1);
+    answer.complete();
+    await tester.pump();
+    expect(
+      (await pending).authorization.status,
+      NotificationPermissionStatus.granted,
+    );
+  });
 
   test(
     'Darwin unasked or denied is notEnabled, never inferred denied',

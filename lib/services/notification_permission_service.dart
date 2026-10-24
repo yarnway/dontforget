@@ -173,29 +173,36 @@ class PluginNotificationPermissionBackend
 /// Queries are best effort and independent: a failure reading exact alarm
 /// access must not hide the observed notification authorization, or vice versa.
 class NotificationPermissionService {
-  NotificationPermissionService({NotificationPermissionBackend? backend})
-    : _backend = backend ?? PluginNotificationPermissionBackend();
+  NotificationPermissionService({
+    NotificationPermissionBackend? backend,
+    this.readTimeout = const Duration(seconds: 3),
+  }) : _backend = backend ?? PluginNotificationPermissionBackend();
 
   final NotificationPermissionBackend _backend;
+  final Duration readTimeout;
+
+  Future<T> _read<T>(Future<T> Function() query, T unavailable) async {
+    try {
+      return await query().timeout(readTimeout);
+    } catch (_) {
+      return unavailable;
+    }
+  }
 
   Future<NotificationPermissionSnapshot> refresh() async {
-    NotificationAuthorization authorization;
-    NotificationPermissionStatus exactAlarms;
-    try {
-      authorization = await _backend.readAuthorization();
-    } catch (_) {
-      authorization = const NotificationAuthorization(
-        NotificationPermissionStatus.unknown,
-      );
-    }
-    try {
-      exactAlarms = await _backend.readExactAlarms();
-    } catch (_) {
-      exactAlarms = NotificationPermissionStatus.unknown;
-    }
+    // Start independent reads together; a stalled platform query must neither
+    // hide the other answer nor leave the settings panel permanently busy.
+    final authorization = _read(
+      _backend.readAuthorization,
+      const NotificationAuthorization(NotificationPermissionStatus.unknown),
+    );
+    final exactAlarms = _read(
+      _backend.readExactAlarms,
+      NotificationPermissionStatus.unknown,
+    );
     return NotificationPermissionSnapshot(
-      authorization: authorization,
-      exactAlarms: exactAlarms,
+      authorization: await authorization,
+      exactAlarms: await exactAlarms,
       platform: _backend.platform,
     );
   }
@@ -213,6 +220,8 @@ class NotificationPermissionService {
   ) async {
     var failed = false;
     try {
+      // A system permission dialog waits for the person; only the subsequent
+      // readback is bounded, never the user's time to answer the prompt.
       await request();
     } catch (_) {
       failed = true;

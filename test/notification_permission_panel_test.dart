@@ -189,6 +189,12 @@ void main() {
       await tester.pumpAndSettle();
       final collapsed = tester.getSemantics(header);
       final data = collapsed.getSemanticsData();
+      // On macOS the surrounding Card previously acquired the disclosure's
+      // tap action, making all explanatory text part of the button label.
+      final panel = tester.getSemantics(
+        find.byKey(const ValueKey('notification-permission-panel')),
+      );
+      expect(panel.getSemanticsData().hasAction(SemanticsAction.tap), isFalse);
       expect(data.label, 'Retained notifications (up to 3)');
       expect(data.flagsCollection.isButton, isTrue);
       expect(data.hasAction(SemanticsAction.tap), isTrue);
@@ -204,6 +210,73 @@ void main() {
     } finally {
       semantics.dispose();
     }
+  });
+
+  testWidgets('stalled observations release refresh and ignore late results', (
+    tester,
+  ) async {
+    final schedule = Completer<NotificationScheduleStatus>();
+    final system = Completer<SystemNotificationSnapshot>();
+    var first = true;
+    await show(
+      tester,
+      _Backend(),
+      settle: false,
+      onReadScheduleStatus: () => first
+          ? schedule.future
+          : Future.value(
+              const NotificationScheduleStatus(
+                upcoming: 2,
+                submitted: 1,
+                needsAttention: 1,
+                cancellations: 0,
+                overdueUnconfirmed: 0,
+              ),
+            ),
+      onReadSystemNotifications: () => first
+          ? system.future
+          : Future.value(
+              SystemNotificationSnapshot(
+                supported: true,
+                pending: [],
+                retained: [],
+              ),
+            ),
+    );
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pump();
+    expect(find.text('System pending — · Retained —'), findsOneWidget);
+    expect(
+      find.text(l10n.get('notificationScheduleUnavailable')),
+      findsOneWidget,
+    );
+    final refresh = find.byKey(refreshKey);
+    expect(tester.widget<TextButton>(refresh).onPressed, isNotNull);
+    first = false;
+    await tester.ensureVisible(refresh);
+    await tester.tap(refresh);
+    await tester.pumpAndSettle();
+    expect(find.text('System pending 0 · Retained 0'), findsOneWidget);
+    expect(find.textContaining('Upcoming 2 · Submitted 1'), findsOneWidget);
+    schedule.complete(
+      const NotificationScheduleStatus(
+        upcoming: 99,
+        submitted: 99,
+        needsAttention: 0,
+        cancellations: 0,
+        overdueUnconfirmed: 0,
+      ),
+    );
+    system.complete(
+      SystemNotificationSnapshot(
+        supported: true,
+        retained: [const SystemNotificationEntry(id: 9, title: 'Late')],
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('System pending 0 · Retained 0'), findsOneWidget);
+    expect(find.textContaining('Upcoming 99'), findsNothing);
+    await tester.pumpWidget(const SizedBox());
   });
 
   testWidgets(

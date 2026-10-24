@@ -1,0 +1,278 @@
+{
+  "phase": "3D-27",
+  "date": "2026-10-24",
+  "comparison_base_commit": "c891c552ff9b49fb4c59321ba9022d250fea6a1f",
+  "fixture_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+  "processes": [
+    {
+      "scope": "Flutter test JIT; real SQLite FFI and product status reader; empty journal; no OS calls; not native UI or cold startup",
+      "fixture_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+      "records": 10000,
+      "warmup_pairs": 2,
+      "runtime": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "os": "Version 27.0.1 (Build 26A434)",
+      "counts": {
+        "upcoming": 0,
+        "submitted": 0,
+        "needsAttention": 0,
+        "cancellations": 0,
+        "overdueUnconfirmed": 0
+      },
+      "all_counts_equal_and_business_rows_unchanged": true,
+      "full_rows_json_bytes": 7344451,
+      "projected_rows_json_bytes": 1887781,
+      "samples": [
+        {
+          "order": [
+            "full_rows",
+            "projected_rows"
+          ],
+          "full_rows_us": 60495,
+          "projected_rows_us": 26213
+        },
+        {
+          "order": [
+            "projected_rows",
+            "full_rows"
+          ],
+          "projected_rows_us": 27683,
+          "full_rows_us": 52714
+        },
+        {
+          "order": [
+            "full_rows",
+            "projected_rows"
+          ],
+          "full_rows_us": 53221,
+          "projected_rows_us": 25895
+        },
+        {
+          "order": [
+            "projected_rows",
+            "full_rows"
+          ],
+          "projected_rows_us": 26722,
+          "full_rows_us": 64834
+        },
+        {
+          "order": [
+            "full_rows",
+            "projected_rows"
+          ],
+          "full_rows_us": 58687,
+          "projected_rows_us": 27703
+        },
+        {
+          "order": [
+            "projected_rows",
+            "full_rows"
+          ],
+          "projected_rows_us": 28019,
+          "full_rows_us": 69259
+        },
+        {
+          "order": [
+            "full_rows",
+            "projected_rows"
+          ],
+          "full_rows_us": 59549,
+          "projected_rows_us": 27843
+        }
+      ],
+      "full_rows": {
+        "p50_us": 59549,
+        "p95_us": 69259,
+        "max_us": 69259
+      },
+      "projected_rows": {
+        "p50_us": 27683,
+        "p95_us": 28019,
+        "max_us": 28019
+      }
+    },
+    {
+      "scope": "Flutter test JIT; real SQLite FFI and product status reader; empty journal; no OS calls; not native UI or cold startup",
+      "fixture_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+      "records": 10000,
+      "warmup_pairs": 2,
+      "runtime": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "os": "Version 27.0.1 (Build 26A434)",
+      "counts": {
+        "upcoming": 0,
+        "submitted": 0,
+        "needsAttention": 0,
+        "cancellations": 0,
+        "overdueUnconfirmed": 0
+      },
+      "all_counts_equal_and_business_rows_unchanged": true,
+      "full_rows_json_bytes": 7344451,
+      "projected_rows_json_bytes": 1887781,
+      "samples": [
+        {
+          "order": [
+            "full_rows",
+            "projected_rows"
+          ],
+          "full_rows_us": 67334,
+          "projected_rows_us": 29141
+        },
+        {
+          "order": [
+            "projected_rows",
+            "full_rows"
+          ],
+          "projected_rows_us": 29853,
+          "full_rows_us": 57264
+        },
+        {
+          "order": [
+            "full_rows",
+            "projected_rows"
+          ],
+          "full_rows_us": 60603,
+          "projected_rows_us": 29364
+        },
+        {
+          "order": [
+            "projected_rows",
+            "full_rows"
+          ],
+          "projected_rows_us": 30050,
+          "full_rows_us": 69709
+        },
+        {
+          "order": [
+            "full_rows",
+            "projected_rows"
+          ],
+          "full_rows_us": 59927,
+          "projected_rows_us": 26923
+        },
+        {
+          "order": [
+            "projected_rows",
+            "full_rows"
+          ],
+          "projected_rows_us": 26494,
+          "full_rows_us": 67298
+        },
+        {
+          "order": [
+            "full_rows",
+            "projected_rows"
+          ],
+          "full_rows_us": 57707,
+          "projected_rows_us": 26271
+        }
+      ],
+      "full_rows": {
+        "p50_us": 60603,
+        "p95_us": 69709,
+        "max_us": 69709
+      },
+      "projected_rows": {
+        "p50_us": 29141,
+        "p95_us": 30050,
+        "max_us": 30050
+      }
+    },
+    {
+      "scope": "Flutter test JIT; real SQLite FFI and product status reader; empty journal; no OS calls; not native UI or cold startup",
+      "fixture_sha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+      "records": 10000,
+      "warmup_pairs": 2,
+      "runtime": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "os": "Version 27.0.1 (Build 26A434)",
+      "counts": {
+        "upcoming": 0,
+        "submitted": 0,
+        "needsAttention": 0,
+        "cancellations": 0,
+        "overdueUnconfirmed": 0
+      },
+      "all_counts_equal_and_business_rows_unchanged": true,
+      "full_rows_json_bytes": 7344451,
+      "projected_rows_json_bytes": 1887781,
+      "samples": [
+        {
+          "order": [
+            "full_rows",
+            "projected_rows"
+          ],
+          "full_rows_us": 60045,
+          "projected_rows_us": 25590
+        },
+        {
+          "order": [
+            "projected_rows",
+            "full_rows"
+          ],
+          "projected_rows_us": 27400,
+          "full_rows_us": 52680
+        },
+        {
+          "order": [
+            "full_rows",
+            "projected_rows"
+          ],
+          "full_rows_us": 53381,
+          "projected_rows_us": 25266
+        },
+        {
+          "order": [
+            "projected_rows",
+            "full_rows"
+          ],
+          "projected_rows_us": 25940,
+          "full_rows_us": 61779
+        },
+        {
+          "order": [
+            "full_rows",
+            "projected_rows"
+          ],
+          "full_rows_us": 54414,
+          "projected_rows_us": 25606
+        },
+        {
+          "order": [
+            "projected_rows",
+            "full_rows"
+          ],
+          "projected_rows_us": 25294,
+          "full_rows_us": 62885
+        },
+        {
+          "order": [
+            "full_rows",
+            "projected_rows"
+          ],
+          "full_rows_us": 54903,
+          "projected_rows_us": 25374
+        }
+      ],
+      "full_rows": {
+        "p50_us": 54903,
+        "p95_us": 62885,
+        "max_us": 62885
+      },
+      "projected_rows": {
+        "p50_us": 25590,
+        "p95_us": 27400,
+        "max_us": 27400
+      }
+    }
+  ],
+  "p50_reduction_percent_by_process": [
+    53.51,
+    51.91,
+    53.39
+  ],
+  "representation_size_reduction_percent": 74.3,
+  "limitations": [
+    "JIT local status reads only, not native UI or OS cold startup",
+    "Past reminders and empty journal; no OS notification calls",
+    "Seven measured alternating pairs after two warmup pairs per process; all samples kept",
+    "JSON size is a volume proxy, not measured allocation or actual SQLite transport bytes"
+  ]
+}

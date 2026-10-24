@@ -1,5 +1,6 @@
 import 'package:dont_forget/ui/widgets/inline_feedback.dart';
 import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,10 +15,24 @@ import 'package:dont_forget/services/notification_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  const notificationChannel = MethodChannel(
+    'dexterous.com/flutter/local_notifications',
+  );
   late Directory directory;
   late DatabaseHelper helper;
   late ProviderContainer container;
   setUp(() async {
+    // Persistence/layout tests have no native permission channel. The focused
+    // permission tests exercise supported platforms and stalled native reads.
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(notificationChannel, (call) async {
+          return switch (call.method) {
+            'areNotificationsEnabled' ||
+            'canScheduleExactNotifications' => true,
+            _ => null,
+          };
+        });
     sqfliteFfiInit();
     directory = await Directory.systemTemp.createTemp('dontforget-settings-');
     helper = DatabaseHelper.forTesting(directory.path, databaseFactoryFfi);
@@ -50,6 +65,8 @@ void main() {
     );
   });
   tearDown(() async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(notificationChannel, null);
     container.dispose();
     await helper.close();
     await directory.delete(recursive: true);

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/notification_payload.dart';
 import 'package:dont_forget/models/reminder.dart';
+import 'package:dont_forget/models/notification_schedule_status.dart';
 import 'package:dont_forget/providers/providers.dart';
 import 'package:dont_forget/services/notification_journal.dart';
 import 'package:dont_forget/services/notification_epoch_store.dart';
@@ -679,6 +680,94 @@ void main() {
       expect(result.submitted, 1);
       expect(result.needsAttention, 1);
       expect(await file.readAsString(), before);
+      expect(native.calls, isEmpty);
+    },
+  );
+
+  test(
+    'projected status matches full rows including stale and orphaned work',
+    () async {
+      for (final id in ['ok', 'done', 'ack', 'no-time', 'orphan', 'stale']) {
+        await notifier.addReminder(
+          task(id).copyWith(
+            taskSummary: 'Long summary ' * 100,
+            linkedTaskIds: ['related-1', 'related-2'],
+            subTasks: '[{"title":"Unrelated checklist"}]',
+          ),
+        );
+      }
+      native.failSchedule = true;
+      await notifier.addReminder(task('failed'));
+      await helper.writeTransaction(helper.captureGeneration(), (db) async {
+        await db.update(
+          'Reminders',
+          {'is_completed': 1},
+          where: 'id = ?',
+          whereArgs: ['done'],
+        );
+        await db.update(
+          'Reminders',
+          {'notice_acknowledged_at': DateTime.now().toIso8601String()},
+          where: 'id = ?',
+          whereArgs: ['ack'],
+        );
+        await db.update(
+          'Reminders',
+          {'trigger_time': null},
+          where: 'id = ?',
+          whereArgs: ['no-time'],
+        );
+        await db.update(
+          'Reminders',
+          {
+            'trigger_time': DateTime.now()
+                .subtract(const Duration(days: 1))
+                .toIso8601String(),
+          },
+          where: 'id = ?',
+          whereArgs: ['stale'],
+        );
+        await db.delete('Reminders', where: 'id = ?', whereArgs: ['orphan']);
+      });
+      final rows = await helper.read(
+        helper.captureGeneration(),
+        (db) => db.query('Reminders'),
+      );
+      final journal = await snapshot();
+      final expected = NotificationScheduleStatus.fromSaved(
+        rows.map(Reminder.fromJson),
+        journal.entries,
+        DateTime.now(),
+      );
+      native.calls.clear();
+      final actual = await NotificationScheduleReader(helper).read();
+      expect(actual.upcoming, 2);
+      expect(actual.submitted, 1);
+      expect(actual.needsAttention, 1);
+      expect(actual.cancellations, 5);
+      expect(
+        (
+          actual.upcoming,
+          actual.submitted,
+          actual.needsAttention,
+          actual.cancellations,
+          actual.overdueUnconfirmed,
+        ),
+        (
+          expected.upcoming,
+          expected.submitted,
+          expected.needsAttention,
+          expected.cancellations,
+          expected.overdueUnconfirmed,
+        ),
+      );
+      expect(
+        await helper.read(
+          helper.captureGeneration(),
+          (db) => db.query('Reminders'),
+        ),
+        rows,
+      );
       expect(native.calls, isEmpty);
     },
   );

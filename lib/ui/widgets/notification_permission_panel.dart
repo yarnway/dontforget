@@ -32,6 +32,7 @@ class NotificationPermissionPanel extends StatefulWidget {
 class _NotificationPermissionPanelState
     extends State<NotificationPermissionPanel>
     with WidgetsBindingObserver {
+  static const _observationTimeout = Duration(seconds: 3);
   late NotificationPermissionService _service;
   NotificationPermissionSnapshot? _snapshot;
   bool _busy = false;
@@ -153,7 +154,7 @@ class _NotificationPermissionPanelState
     NotificationScheduleStatus? value;
     var failed = false;
     try {
-      value = await read();
+      value = await read().timeout(_observationTimeout);
     } catch (_) {
       failed = true;
     }
@@ -173,7 +174,7 @@ class _NotificationPermissionPanelState
     if (read == null || !supported) return;
     SystemNotificationSnapshot value;
     try {
-      value = await read();
+      value = await read().timeout(_observationTimeout);
     } catch (_) {
       value = SystemNotificationSnapshot(supported: true);
     }
@@ -353,25 +354,29 @@ class _NotificationPermissionPanelState
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               if (!_busy && (_system?.retained?.isNotEmpty ?? false))
-                ExpansionTile(
-                  key: const ValueKey('notification-system-retained'),
-                  internalAddSemanticForOnTap: true,
-                  tilePadding: EdgeInsets.zero,
-                  title: Text(l10n.get('notificationSystemRetainedTitles')),
-                  children: [
-                    for (final entry in _system!.retained!.take(3))
-                      ListTile(
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                        title: Text(
-                          entry.title?.trim().isNotEmpty == true
-                              ? entry.title!
-                              : l10n.get('notificationSystemUntitled'),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                Semantics(
+                  container: true,
+                  explicitChildNodes: true,
+                  child: ExpansionTile(
+                    key: const ValueKey('notification-system-retained'),
+                    internalAddSemanticForOnTap: true,
+                    tilePadding: EdgeInsets.zero,
+                    title: Text(l10n.get('notificationSystemRetainedTitles')),
+                    children: [
+                      for (final entry in _system!.retained!.take(3))
+                        ListTile(
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            entry.title?.trim().isNotEmpty == true
+                                ? entry.title!
+                                : l10n.get('notificationSystemUntitled'),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
                 ),
             ],
             if (snapshot?.requestFailed ?? false)
