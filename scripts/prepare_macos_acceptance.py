@@ -344,6 +344,11 @@ def prepare(manifest_path, output, run_id, revision, upgrade_from=None):
         'source_archive_sha256': original_archive_digest,
         'source_manifest': manifest, 'bundle_id': bundle_id, 'app': str(app),
         'upgrades_isolated_identity': previous,
+        'identity_scope': 'bundle-identifier-and-data-container-only',
+        'os_notification_identity': 'NOT_VERIFIED: ad-hoc candidates can have distinct OS notification '
+                                    'sources despite sharing a bundle identifier. Read and clean each '
+                                    'source with its original candidate; do not infer cross-version '
+                                    'notification persistence from the shared sandbox.',
         'entitlements': entitlements, 'changed_bundle_paths': changed,
         'changed_info_keys': changed_info,
         'frameworks_and_resources_unchanged': True,
@@ -365,7 +370,8 @@ def prepare(manifest_path, output, run_id, revision, upgrade_from=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, epilog=(
         '只生成派生副本与证据，不启动应用、不访问用户库。默认要求全新 bundle ID；'
-        '仅 --upgrade-from 可复用记录核验通过的同一隔离身份，旧包不改动，输出仍须全新；'
+        '仅 --upgrade-from 可复用记录核验通过的隔离 bundle ID 和沙箱，旧包不改动，输出仍须全新；'
+        '临时签名的新旧包可能对应不同 OS 通知来源，不能据此保证通知身份或跨版本持久化；'
         '输出不能位于系统临时目录，避免 macOS 拒绝通知身份；'
         '失败时保留输出供检查，不自动删除。示例：python3 scripts/prepare_macos_acceptance.py '
         '--manifest /private/tmp/candidate/macos-manifest.json --revision <40位SHA> '
@@ -374,7 +380,7 @@ def main():
     parser.add_argument('--revision', required=True, help='预期的完整 40 位源码 SHA')
     parser.add_argument('--run-id', required=True, help='验收 ID；升级时必须与旧包一致，默认必须全新')
     parser.add_argument('--upgrade-from', type=Path,
-                        help='可选：旧隔离包的 acceptance-preparation.json；核验旧包后复用其身份，不读写沙箱')
+                        help='可选：旧隔离包的 acceptance-preparation.json；复用 bundle ID，不读写沙箱，OS 通知来源另行核验')
     parser.add_argument('--output', required=True, type=Path,
                         help='尚不存在的非临时输出目录；建议 build/native_acceptance/<run-id>，父目录必须存在')
     args = parser.parse_args()

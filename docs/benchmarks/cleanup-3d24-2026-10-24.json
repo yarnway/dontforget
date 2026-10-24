@@ -1,0 +1,25 @@
+{
+  "state": "COMPLETED",
+  "targets": [
+    "build/test_cache",
+    "build/unit_test_assets",
+    "build/native_assets",
+    ".dart_tool/hooks_runner",
+    ".dart_tool/flutter_build",
+    "scripts/__pycache__",
+    "scripts/tests/__pycache__"
+  ],
+  "completedAt": "2026-10-24T16:29:21.744225+08:00",
+  "retainedHashesVerified": 216,
+  "oldPackagesDeleted": 0,
+  "regularFileCount": 47,
+  "logicalBytes": 90974831,
+  "allocatedBytes": 91541504,
+  "downloadEnvelopeCleanup": {
+    "bytes": 23921651,
+    "sha256": "98b8bb16e448e6b0ed3bb47507d2e2bb36713b729ea9a8e4b603c631b350f78e",
+    "candidateArchiveAndManifestRetained": true,
+    "temporarySegmentsRemovedOnlyAfterCompleteDigestPassed": true
+  },
+  "oldPackageRetentionReason": "Each ad-hoc notification source still requires cleanup with its original candidate; all rollback packages and private snapshots retained"
+}

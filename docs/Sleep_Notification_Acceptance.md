@@ -23,7 +23,7 @@
 
 观察结束后读取内核时间、电源日志、专属事件和数据库。系统通知需通过独立 OS 可见结果确认；应用内到期横幅或 schedule/submitted 不等于系统送达。清理合成任务后，再核对 cancel/submitted、数据库完整性和正常退出。完成系统重启还必须核对新的启动 UUID，正常应用重开不足以代替。
 
-支持系统读回的候选可在设置页刷新“系统中的通知”，展开系统保留的标题并核对本轮唯一合成标题。Mac 的读回来自 `UNUserNotificationCenter.getPendingNotificationRequests` 和 `getDeliveredNotifications`，两项分别查询、并非原子快照；未知不能当作零，保留也不代表用户已读。若需要升级候选才能读回，先保留一致性回退库，通过准备工具的 `--upgrade-from` 复用同一隔离身份；读取送达证据之前不要完成、确认、删除或取消该合成任务。正常退出后的进程核验使用只读进程信息，避免再次请求原生窗口意外重新启动应用。
+支持系统读回的候选可在设置页刷新“系统中的通知”，展开系统保留的标题并核对本轮唯一合成标题。Mac 的读回来自 `UNUserNotificationCenter.getPendingNotificationRequests` 和 `getDeliveredNotifications`，两项分别查询、并非原子快照；未知不能当作零，保留也不代表用户已读。优先在同一候选中完成睡眠前后读回；`--upgrade-from` 只复用 bundle ID 和数据沙箱，ad-hoc 新旧包可能对应不同 OS 通知来源。不能用新包读回为空否定旧来源历史送达，也不能由此确认旧来源已清除。必要时以限定 bundle、请求 ID 和时间区间的 `usernoted` / NotificationCenter 日志补充独立送达与历史记录证据，视觉呈现和用户已读仍分别记录。取得证据后，分别通过原候选清理其合成通知。正常退出后的进程核验使用只读进程信息，避免再次请求原生窗口意外重新启动应用。
 
 策略回归不会改变任何系统电源设置：
 

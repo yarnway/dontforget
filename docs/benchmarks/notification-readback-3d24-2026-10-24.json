@@ -22,7 +22,7 @@
       "at": "2026-10-24T16:15:00+08:00",
       "pending": 0,
       "retained": 0,
-      "meaning": "Current state does not prove historical non-delivery; scoped later logs did not establish why it was no longer retained"
+      "meaning": "Current readback was from a candidate with a different OS source ID; cannot establish old-source deletion or historical non-delivery."
     },
     "sourceLog": "build/native_acceptance/readback-stage24-materials/scoped-sleep-os-log.json",
     "sourceLogSha256": "effada45514ce2b026e1aacb6a01be794401de23a214701c9fdfb4c424589eeb",
@@ -73,22 +73,75 @@
     ],
     "titleExpansion": "BLOCKED_MISSING_BUTTON_SEMANTICS",
     "completionCancellation": "NOT_YET_PERFORMED",
-    "oldSleepTaskUnchanged": true,
-    "privateConsistentBackup": "build/native_acceptance/readback-stage24-materials/private-before-awake.sqlite"
+    "privateConsistentBackup": "build/native_acceptance/readback-stage24-materials/private-before-awake.sqlite",
+    "oldSleepTaskUnchangedDuringPreparation": true,
+    "oldSleepTaskCompletionAfterEvidence": {
+      "completed": true,
+      "revision": 6,
+      "retainedAfterCompletingOtherTask": 1,
+      "nativeCandidateSource": "465b422",
+      "cancellationInOriginalD404Source": "NOT_YET_VERIFIED"
+    }
   },
   "fix": {
     "reason": "Retained notification ExpansionTile header absent as an independent native AX button; coordinate fallback noWindowsAvailable",
     "change": "Enable button semantics and test expand/collapse through SemanticsAction.tap",
     "localFlutterPassed": 814,
     "analyze": "PASS",
-    "newCandidate": "PENDING_BUILD"
+    "newCandidate": "PREPARED_NOT_STARTED_HOST_LOCKED",
+    "localPythonPassed": 82,
+    "ci": {
+      "revision": "2c3e66c46cdf8048a6ed2d716a98acf20ce29fb8",
+      "runId": 40078001115,
+      "qualityAndFivePlatforms": "PASS",
+      "flutter": 813,
+      "macOnlySkipped": 1,
+      "python": 82
+    }
   },
   "remaining": [
+    "Unlock host, clean each old source using its original candidate, then validate disclosure and cancellation with a new fixture entirely in the fixed candidate",
     "Fixed candidate native title expansion and completion cancellation",
     "Actual system reboot",
     "True OS DST boundary",
     "Relative wake hardware property remains unavailable",
     "Native real-model input and cross-provider failure fallback",
     "Native 10000-row upgrade/cold startup and other-platform business acceptance"
-  ]
+  ],
+  "fixedCandidate": {
+    "source_revision": "2c3e66c46cdf8048a6ed2d716a98acf20ce29fb8",
+    "source_archive_sha256": "a04da75dbbe617d154b3e4051c752a55436406a683395b97e2a60801d3440168",
+    "source_manifest_sha256": "e94afabdd38106776a8d05ff1d71b4a1ceab930eae2a7132ebb69ab736eb7f54",
+    "bundle_id": "com.example.dontForget.acceptance.models-r40054931085",
+    "app": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/readback-r40078001115/dont_forget.app",
+    "identity_scope": "bundle-identifier-and-data-container-only",
+    "os_notification_identity": "NOT_VERIFIED: ad-hoc candidates can have distinct OS notification sources despite sharing a bundle identifier. Read and clean each source with its original candidate; do not infer cross-version notification persistence from the shared sandbox.",
+    "codesign_verify": "PASS",
+    "frameworks_and_resources_unchanged": true
+  },
+  "notificationSourceBoundary": {
+    "observedSleepSourcePrefix": "242F6E7B",
+    "observedAwakeSourcePrefix": "17C3AF2E",
+    "sameBundleId": true,
+    "sameSandbox": true,
+    "designatedRequirements": {
+      "d404ccd": [
+        "47c3243838e1a8d39baaa018cf53cd5481507afa",
+        "bdd3f19b8eeb7321924d38574c2314ef194e6ea0"
+      ],
+      "465b422": [
+        "abe3fd847c489fb3d132fb8c38a771ace758d8c1",
+        "efef4b9b167fd2ec4a2b4afc72c97f6f49a67234"
+      ],
+      "2c3e66c": [
+        "7fc465358e244b0ac82c513a4c3753932277421d",
+        "48b8f7c446ff9d737700ecdfffc209ec42aa420b"
+      ]
+    },
+    "observation": "OS source identifiers differ across these ad-hoc candidates; bundle equality does not establish notification identity continuity. Exact OS source assignment mechanism is not proven.",
+    "awakeSourceLog": "build/native_acceptance/readback-stage24-materials/scoped-awake-os-log.json",
+    "awakeSourceLogSha256": "b5096814d5b14b430361674e123fd8942a680ef5df4eedf4f79ba05206066c6f",
+    "cleanup": "NOT_YET_VERIFIED_PER_SOURCE; host locked before original candidate could start; preserve all old packages",
+    "signedUpgradeNotificationPersistence": "NOT_PERFORMED"
+  }
 }
