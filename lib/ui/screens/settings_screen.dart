@@ -177,8 +177,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _openModelProfiles() async {
-    final saved = await Navigator.of(context).push<bool>(MaterialPageRoute(
-        builder: (_) => AiProfilesScreen(initialDraft: _modelDraft(ref.read(settingsProvider)))));
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => AiProfilesScreen(
+          initialDraft: _modelDraft(ref.read(settingsProvider)),
+        ),
+      ),
+    );
     if (!mounted || saved != true) return;
     final current = ref.read(settingsProvider);
     setState(() {
@@ -210,7 +215,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   AppSettings _modelDraft(AppSettings settings) {
     final profiles = settings.effectiveProfiles.toList();
-    final changed = _apiKeyController.text.trim() != settings.apiKey ||
+    final changed =
+        _apiKeyController.text.trim() != settings.apiKey ||
         _baseUrlController.text.trim() != settings.baseUrl ||
         _modelNameController.text.trim() != settings.modelName;
     var primary = profiles.indexWhere((p) => p.enabled);
@@ -222,7 +228,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           apiKey: _apiKeyController.text.trim(),
           baseUrl: _baseUrlController.text.trim(),
           modelName: _modelNameController.text.trim(),
-        ));
+        ),
+      );
     }
     return settings.copyWith(
       aiProfiles: profiles,
@@ -609,6 +616,35 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                   ),
 
+                  const SizedBox(height: 14),
+
+                  Card.outlined(
+                    margin: EdgeInsets.zero,
+                    child: ListTile(
+                      key: const ValueKey('settings-model-profiles'),
+                      leading: const Icon(Icons.swap_vert),
+                      title: Text(l10n.get('aiProfilesEntry')),
+                      subtitle: Text(l10n.get('aiProfilesEntryHint')),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: _isSaving ? null : _openModelProfiles,
+                    ),
+                  ),
+                  ValueListenableBuilder<AiExtractionStatus?>(
+                    valueListenable: ref
+                        .watch(llmServiceProvider)
+                        .lastExtraction,
+                    builder: (context, status, _) => status == null
+                        ? const SizedBox.shrink()
+                        : Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Text(
+                              status.label == null
+                                  ? l10n.get('aiProfilesAllFailed')
+                                  : '${l10n.get('aiProfilesLast').replaceAll('{name}', status.label!)}${status.usedFallback ? ' · ${l10n.get('aiProfilesUsedFallback')}' : ''}',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ),
+                  ),
                   const SizedBox(height: 14),
 
                   Card.outlined(
@@ -1061,26 +1097,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                   const SizedBox(height: 14),
 
-                  Material(color: Colors.transparent, child: ListTile(
-                    key: const ValueKey('settings-model-profiles'),
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.swap_vert),
-                    title: Text(l10n.get('aiProfilesEntry')),
-                    subtitle: Text(l10n.get('aiProfilesEntryHint')),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: _isSaving ? null : _openModelProfiles,
-                  )),
-                  ValueListenableBuilder<AiExtractionStatus?>(
-                    valueListenable: ref.watch(llmServiceProvider).lastExtraction,
-                    builder: (context, status, _) => status == null
-                        ? const SizedBox.shrink()
-                        : Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: Text(status.label == null
-                                ? l10n.get('aiProfilesAllFailed')
-                                : '${l10n.get('aiProfilesLast').replaceAll('{name}', status.label!)}${status.usedFallback ? ' · ${l10n.get('aiProfilesUsedFallback')}' : ''}',
-                              style: Theme.of(context).textTheme.bodySmall)),
-                  ),
                   // AI Configuration (Wireframe style)
                   Container(
                     padding: const EdgeInsets.all(16),
