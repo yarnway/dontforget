@@ -1,0 +1,80 @@
+{
+  "phase": "3D-29",
+  "runtimeRevision": "1e3b6df02e06df422f91a0cdd0d3357c640b9547",
+  "bundle": "com.example.dontForget.acceptance.input28-r40091645533",
+  "sameSignedCandidateReused": true,
+  "modelStatus": {
+    "beforeReopenRowsExact": {
+      "Settings": 1,
+      "MediaRecords": 0,
+      "Reminders": 1
+    },
+    "lastExtractionUi": "上次提取：DeepSeek Flash",
+    "pending": 1,
+    "delivered": 0,
+    "source": "A3BCCD8D-4DA6-4E67-916E-82E233EEE2E4",
+    "modelRequestReplayed": false
+  },
+  "reopen": {
+    "reopenBusinessTablesExact": true,
+    "journalHashChain": "pass",
+    "sequence": 12,
+    "reminder": {
+      "reminderId": "bae6d2d3-5429-4f8c-a42f-bae07a209dbf",
+      "nativeId": 447876976,
+      "action": "schedule",
+      "status": "submitted",
+      "attempts": 6,
+      "triggerUtcMicros": 1792911600000000,
+      "noticeRevision": 0,
+      "attemptedAt": "2026-10-24T15:38:41.489349Z"
+    }
+  },
+  "cleanup": {
+    "changes": {
+      "is_completed": {
+        "before": 0,
+        "after": 1
+      },
+      "notice_revision": {
+        "before": 0,
+        "after": 1
+      }
+    },
+    "otherBusinessRowsUnchanged": true,
+    "journalHashChain": "pass",
+    "journalSequence": 14,
+    "notice": {
+      "reminderId": "bae6d2d3-5429-4f8c-a42f-bae07a209dbf",
+      "nativeId": 447876976,
+      "action": "cancel",
+      "status": "submitted",
+      "attempts": 7,
+      "triggerUtcMicros": null,
+      "noticeRevision": null,
+      "attemptedAt": "2026-10-24T15:39:19.164693Z"
+    },
+    "snapshotSha256": "af5f88e2c8d7ced2db26ba74ea2f710573ee19b5220d790a87c8c3f328cf3573",
+    "baselineRestored": true,
+    "emptyTablesExact": true,
+    "integrity": "ok",
+    "osReadbackBeforeQuit": {
+      "pending": 0,
+      "retained": 0
+    },
+    "journalPreserved": true
+  },
+  "nativeObservations": [
+    "上次提取：DeepSeek Flash before quit",
+    "same unique task after normal quit/reopen, no repeated model submission",
+    "same source system pending 1 / retained 0 after reopen",
+    "completion checkbox removed task from active board",
+    "system pending 0 / retained 0 after completion",
+    "empty board and system 0/0 after baseline restore and reopen",
+    "normal final quit"
+  ],
+  "osLogScope": "Same source A3BCCD8D during reopen; cancellation call observed. Pending removal is established by native system count readbacks, not by removeDelivered log alone.",
+  "privateBackup": "0600 in 0700 materials directory; contains settings and stays outside Git",
+  "sourceChanges": false,
+  "allStage28InputClosureItemsComplete": true
+}

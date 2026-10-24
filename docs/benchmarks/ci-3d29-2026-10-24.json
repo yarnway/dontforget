@@ -1,0 +1,44 @@
+{
+  "databaseId": 40093951026,
+  "headSha": "6656a8287b7c47eb6af0cd4f4ef8ce71dfd9689a",
+  "status": "completed",
+  "conclusion": "success",
+  "url": "https://github.com/yarnway/dontforget/actions/runs/40093951026",
+  "jobs": [
+    {
+      "name": "Analyze and test",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build linux candidate",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build windows candidate",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build macos candidate",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build android candidate",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build ios candidate",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Prepare draft release after all packages pass",
+      "status": "completed",
+      "conclusion": "skipped"
+    }
+  ]
+}

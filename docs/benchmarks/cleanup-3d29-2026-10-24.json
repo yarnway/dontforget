@@ -1,0 +1,22 @@
+{
+  "state": "COMPLETED",
+  "target": "build/native_acceptance/status27-r40088602383/dont_forget.app",
+  "files": 46,
+  "links": 15,
+  "bytes": 58728000,
+  "allocatedBytes": 58847232,
+  "reason": "Superseded by native-accepted 1e3b6df; old sandbox exactly empty, no journal entries; original ZIP/manifest verified and retained",
+  "archive": [
+    {
+      "file": "DontForget_macOS_unnotarized_v1.6.0.zip",
+      "bytes": 23999008,
+      "sha256": "b15ab80659b20720d20bcce972c17f9092b46d793982509f644ef04d61d58607"
+    }
+  ],
+  "libraryDataDeleted": false,
+  "projectCachesDeletedBytes": 0,
+  "protectedFilesVerified": 515,
+  "retiredDerivedFiles": 46,
+  "date": "2026-10-24",
+  "scope": "Only old derived app deleted; official macOS DST image download is separate and not counted as reclaimed storage"
+}
