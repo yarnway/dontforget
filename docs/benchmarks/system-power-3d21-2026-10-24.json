@@ -1,0 +1,68 @@
+{
+  "phase": "3D-21",
+  "checkedAt": "2026-10-24T12:23:48.873303+08:00",
+  "bootUUID": "C5EA9BC6-4B3F-4A76-8AB5-B9751726418E",
+  "sleep": {
+    "start": "2026-10-24T12:11:41.753875+08:00",
+    "end": "2026-10-24T12:12:06.508718+08:00",
+    "seconds": 24.754843,
+    "due": "2026-10-24T12:14:30+08:00",
+    "dueInsideSleep": false,
+    "scriptExit": 4,
+    "wakeEvidence": [
+      "2026-10-24 12:12:06 +0800 DarkWake            \tDarkWake from Deep Idle [CDNP] : due to smc.sysState.Wake(0x70070000) wifibt SMC.OutboxNotEmpty nub-spmi-a0.0x3F centauri-alpha E_RX_IP_PACKET ARPT/ Using AC (Charge:100%) 127 secs  ",
+      "2026-10-24 12:12:06 +0800 WakeDetails         \tDriverReason:smc.sysState.Wake(0x70070000) - DriverDetails:                "
+    ]
+  },
+  "relativeWake": {
+    "zeroWriteResult": "0x0",
+    "propertyReadableBefore": false,
+    "propertyReadableAfter": false,
+    "independentHardwareState": "UNCONFIRMED"
+  },
+  "restoration": {
+    "sleepDisabled": 1,
+    "ownAbsoluteWakeRemoved": true,
+    "powerReadback": "System-wide power settings:\n SleepDisabled\t\t1\nCurrently in use:\n standby              1\n Sleep On Power Button 1\n hibernatefile        /var/vm/sleepimage\n powernap             1\n networkoversleep     0\n disksleep            10\n sleep                1 (sleep prevented by UURemote, ChatGPT, powerd)\n hibernatemode        3\n ttyskeepawake        1\n displaysleep         120\n tcpkeepalive         1\n powermode            2\n womp                 1\n",
+    "scheduleReadback": "Scheduled power events:\n [0]  wake at 10/24/2026 12:21:31 by 'com.apple.alarm.user-invisible-com.apple.acmd.alarm'\n [1]  wake at 10/24/2026 18:20:10 by 'com.apple.alarm.user-invisible-com.apple.calaccessd.travelEngine.periodicRefreshTimer'\n",
+    "otherEventsCancellationRequested": false,
+    "networkSettingsChanged": false
+  },
+  "notification": {
+    "bundle": "com.example.dontForget.acceptance.models-r40054931085",
+    "taskId": "qa-model-keep",
+    "nativeId": 877764987,
+    "noticeRevision": 1,
+    "journalStatus": "schedule/submitted",
+    "journalHashChainVerified": true,
+    "independentOSDelivery": "NOT_OBSERVED; after unlock, Notification Center and Control Center reads timed out",
+    "nativeDueBannerObserved": true,
+    "nativeTaskMarkedCompleted": true,
+    "cancelSubmitted": true,
+    "nativeSettingsCounts": "future 0 / submitted 0 / uncertain 0 / pending cancel 0"
+  },
+  "candidate": {
+    "schema": 10,
+    "integrity": "ok",
+    "running": false,
+    "credentialsConfiguredInCandidate": true
+  },
+  "nextScript": {
+    "path": "build/native_acceptance/power-stage20-materials/sleep-due-observed.command",
+    "boundedSleepRequests": 6,
+    "keepsNetworkSettings": true,
+    "syntax": "PASS",
+    "intervalCasesPassed": 6,
+    "started": false,
+    "requiresLocalAdministratorAuthentication": true
+  },
+  "systemReboot": "NOT_PERFORMED",
+  "realDST": "NOT_PERFORMED",
+  "hashes": {
+    "sleep-due-result.log": "b09521fd739ad4af2d1ace5377edd22f89ea15281c961e00c215e9aa9da4bf92",
+    "sleep-due-observed.py": "49be51eb49ab94efc678f6e29c4cde3361448ad40620344965a1e0d161fa84c4",
+    "sleep-due-observed.command": "4acf5716b88725e1cdda2e7eec2807be937c65ea08c11d8ac9d3fff8ce3a29e8",
+    "pre-due-preparation.sqlite": "186529b78dfb0ea4f5578bd0be51875ed92dfcf4c6d74e0605f44bfd1df9e27f",
+    "pre-sleep-notification-journal.log": "ba3c20700707445e42c695245b8d384ab4aed6aaa700d93f0e4fc7db1c3587a8"
+  }
+}

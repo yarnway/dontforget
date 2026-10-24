@@ -1,0 +1,115 @@
+{
+  "phase": "4E",
+  "checkedAt": "2026-10-24T12:23:48.873303+08:00",
+  "productSourceRevision": "d404ccd382b51ffbd0bffedde438cb33e1867e69",
+  "availableModels": {
+    "method": "GET",
+    "endpoint": "https://api.deepseek.com/models",
+    "userAuthorizedExistingCredential": true,
+    "credentialsLogged": false,
+    "status": 200,
+    "models": [
+      "deepseek-flash",
+      "deepseek-v4-pro"
+    ],
+    "durationMs": 181
+  },
+  "extraction": {
+    "scope": "real HTTPS, product LLMService and priority router in Flutter test; no native UI or database writes",
+    "userAuthorizedExistingCredential": true,
+    "credentialsLogged": false,
+    "fallbackBoundary": "missing local first configuration, real Flash second; not a provider outage",
+    "requests": 3,
+    "transports": [
+      {
+        "model": "deepseek-flash",
+        "httpStatus": 200,
+        "responseModel": "deepseek-flash",
+        "totalTokens": 1647
+      },
+      {
+        "model": "deepseek-v4-pro",
+        "httpStatus": 200,
+        "responseModel": "deepseek-v4-pro",
+        "totalTokens": 1752
+      },
+      {
+        "model": "deepseek-flash",
+        "httpStatus": 200,
+        "responseModel": "deepseek-flash",
+        "totalTokens": 1602
+      }
+    ],
+    "outcomes": [
+      {
+        "variant": "deepseek-flash",
+        "pass": true,
+        "taskCount": 1,
+        "exactSyntheticDue": true,
+        "usedFallback": false,
+        "durationMs": 2825
+      },
+      {
+        "variant": "deepseek-v4-pro",
+        "pass": true,
+        "taskCount": 1,
+        "exactSyntheticDue": true,
+        "usedFallback": false,
+        "durationMs": 3920
+      },
+      {
+        "variant": "fallback-to-flash",
+        "pass": true,
+        "taskCount": 1,
+        "exactSyntheticDue": true,
+        "usedFallback": true,
+        "durationMs": 1984
+      }
+    ]
+  },
+  "nativeConfiguration": {
+    "preparedAt": "2026-10-24T12:20:29.589321+08:00",
+    "bundle": "com.example.dontForget.acceptance.models-r40054931085",
+    "method": "closed isolated database configuration; native reopen readback pending",
+    "profiles": [
+      {
+        "id": "deepseek-flash-live",
+        "label": "DeepSeek Flash",
+        "model": "deepseek-flash",
+        "enabled": true,
+        "keyMatchesUserAuthorizedPrimary": true
+      },
+      {
+        "id": "deepseek-pro-live",
+        "label": "DeepSeek Pro",
+        "model": "deepseek-v4-pro",
+        "enabled": true,
+        "keyMatchesUserAuthorizedPrimary": true
+      }
+    ],
+    "aiFallbackEnabled": false,
+    "oldSyntheticTaskCompleted": true,
+    "oldNotificationCancelledInJournal": true,
+    "beforeConfigurationSha256": "e001352ef3aa4d95c0b915f0b2daa290331b4c132634a771880a9a51d61de8fb",
+    "primaryDatabaseModified": false,
+    "credentialsLogged": false,
+    "nativeUiDisplayedProfiles": true,
+    "nativeUiSaveCompleted": true,
+    "normalQuitVerified": true,
+    "postSaveDatabaseExact": true,
+    "checkedAt": "2026-10-24T12:23:48.873303+08:00",
+    "nativeTaskInput": "NOT_SUBMITTED; AX input did not alter the real field, coordinate input returned noWindowsAvailable",
+    "nativeNormalReopenVerified": true,
+    "nativeReopenDisplayedFlashThenPro": true,
+    "nativeReopenFallbackOff": true,
+    "finallyNormallyStopped": true
+  },
+  "primaryDatabaseMutation": false,
+  "hashes": {
+    "real_model_acceptance_test.dart": "3fa110313383c3704349d4b31888d45d2652285cfb0f33b0f8c1732e834d106b",
+    "configuration-readback.json": "d41e24628d917d65c8669353807b5699c406714e5195a5ce65e94a4cfa80b614",
+    "before-real-configuration.sqlite": "e001352ef3aa4d95c0b915f0b2daa290331b4c132634a771880a9a51d61de8fb",
+    "extraction-result.json": "63164a725601c373c45fc218bd470b77518ca38f020e24bfcfa0cb5d2c2ac41c",
+    "models-availability.json": "6cc05735b14c1f0226949a0faf8dbfc314ebc1c622361964f9bd7431ecda36ca"
+  }
+}
