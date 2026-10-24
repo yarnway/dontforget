@@ -61,7 +61,14 @@
     "priorHead": "ee6f822040f1fb915bd9a20128530acd5b08e477",
     "priorRunId": 40063651385,
     "priorQualityAndFivePlatforms": "PASS",
-    "newCandidate": "NOT_YET_BUILT"
+    "newCandidate": "FIVE_PLATFORMS_PASS",
+    "productRevision": "465b4226e0fbcf354d5239f170e7e53093695810",
+    "runId": 40066521765,
+    "quality": "PASS",
+    "qualityFlutterPassed": 812,
+    "qualityMacOnlySkipped": 1,
+    "qualityPythonPassed": 82,
+    "draftRelease": "SKIPPED_NON_TAG"
   },
   "remaining": [
     "OS delivered-notification readback",
@@ -70,5 +77,41 @@
     "Native real-model input and cross-provider outage fallback",
     "Native 10000-row upgrade/cold startup",
     "Other-platform business acceptance and signed release"
-  ]
+  ],
+  "sourceEvidence": {
+    "log": "build/native_acceptance/power-stage22-materials/sleep-due-policy-result.log",
+    "sha256": "1a8debd7f25de317bacf8fc0dc6ca4806d109ddaa625586f9a50d2e19e042370"
+  },
+  "preUpgrade": {
+    "privateConsistentBackup": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/power-stage23-materials/private-pre-upgrade.sqlite",
+    "integrity": "ok",
+    "businessRowsUnchanged": {
+      "Settings": true,
+      "MediaRecords": true,
+      "Reminders": true
+    },
+    "credentialValuesExported": false
+  },
+  "dst": {
+    "status": "NOT_PERFORMED",
+    "isolatedVMProbe": "Parallels Service unavailable, CLI exit 253; no host date or time zone changes"
+  },
+  "candidate": {
+    "source_revision": "465b4226e0fbcf354d5239f170e7e53093695810",
+    "source_archive_sha256": "45ba9b1f63f85c75fe210a331fd5daa259079472692d8e4fbfef62913f3020fa",
+    "source_manifest_sha256": "ce6503b296478b34a071d31e2e26f36df3d4ca8e39056e3f0e6b340297c92fcf",
+    "bundle_id": "com.example.dontForget.acceptance.models-r40054931085",
+    "app": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/readback-r40066521765/dont_forget.app",
+    "upgrades_isolated_identity": {
+      "preparation_sha256": "61a34bc32a56ba85ce149ffb870006599019be80253e223c029209ac0c8d2752",
+      "app": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/models-r40054931085/dont_forget.app",
+      "source_revision": "d404ccd382b51ffbd0bffedde438cb33e1867e69",
+      "bundle_id": "com.example.dontForget.acceptance.models-r40054931085"
+    },
+    "frameworks_and_resources_unchanged": true,
+    "codesign_verify": "PASS",
+    "nativeReadback": "BLOCKED_HOST_LOCKED",
+    "artifactEnvelopeSha256": "dccce58bbb0adb34d6081d686230a02ddb31bdc3c43e09c85aa040911a8785d8",
+    "artifactEnvelopeBytes": 23920829
+  }
 }

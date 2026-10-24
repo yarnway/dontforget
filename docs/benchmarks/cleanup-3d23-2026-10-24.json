@@ -1,0 +1,24 @@
+{
+  "state": "COMPLETED",
+  "targets": [
+    "build/test_cache",
+    "build/unit_test_assets",
+    "build/native_assets",
+    ".dart_tool/hooks_runner",
+    ".dart_tool/flutter_build",
+    "scripts/__pycache__",
+    "scripts/tests/__pycache__"
+  ],
+  "oldPackagesDeleted": 0,
+  "completedAt": "2026-10-24T13:34:32.854840+08:00",
+  "retainedHashesVerified": 203,
+  "regularFileCount": 47,
+  "logicalBytes": 90976513,
+  "allocatedBytes": 91488256,
+  "downloadEnvelopeCleanup": {
+    "bytes": 23920829,
+    "sha256": "dccce58bbb0adb34d6081d686230a02ddb31bdc3c43e09c85aa040911a8785d8",
+    "innerCandidateArchiveAndManifestRetained": true,
+    "segmentedTemporaryFilesRemovedAfterWholeArtifactDigestPassed": true
+  }
+}
