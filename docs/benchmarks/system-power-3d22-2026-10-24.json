@@ -1,0 +1,77 @@
+{
+  "phase": "3D-22",
+  "checkedAt": "2026-10-24T12:42:21.656847+08:00",
+  "bootUUID": "C5EA9BC6-4B3F-4A76-8AB5-B9751726418E",
+  "sleep": {
+    "sleepUs": 1792816118484132,
+    "wakeUs": 1792816121163282,
+    "durationSeconds": 2.67915,
+    "dueEpoch": 1792816259,
+    "dueInsideSleep": false,
+    "wakeEvidence": "2026-10-24 12:28:41 +0800 Wake                \tWake from Deep Idle [CDNVA] : due to MTP.DOCK.CHANNELS.AP0.IRQ nub-spmi-a0.0x3F RTP.keyboard/UserActivity Assertion Using AC (Charge:100%)           ",
+    "newPolicyReplay": "user_activity"
+  },
+  "secondRequest": {
+    "returnCode": 71,
+    "ioReturn": "0xe00002e2",
+    "localSDKName": "kIOReturnNotPermitted",
+    "oldPrintedStatus": 4,
+    "oldExceptionExitPath": 2,
+    "requestSpecificSleepDisabledReadback": "NOT_CAPTURED; cause of rejection beyond kernel code remains unproven"
+  },
+  "restoration": {
+    "sleepDisabled": 1,
+    "ownedWakeRemoved": true,
+    "schedule": "Scheduled power events:\n [0]  wake at 10/24/2026 12:38:28 by 'com.apple.alarm.user-invisible-com.apple.acmd.alarm'\n [1]  wake at 10/24/2026 18:20:10 by 'com.apple.alarm.user-invisible-com.apple.calaccessd.travelEngine.periodicRefreshTimer'\n",
+    "relativeZeroWriteResult": "0x0",
+    "relativeHardwareReadback": "UNAVAILABLE",
+    "networkPolicyChanged": false
+  },
+  "candidate": {
+    "normallyStopped": true,
+    "schema": 10,
+    "integrity": "ok",
+    "task": {
+      "id": "qa-model-keep",
+      "is_completed": 1,
+      "notice_revision": 4
+    },
+    "lastJournalEntry": {
+      "reminderId": "qa-model-keep",
+      "nativeId": 877764987,
+      "action": "cancel",
+      "status": "submitted",
+      "attempts": 14,
+      "triggerUtcMicros": null,
+      "noticeRevision": null,
+      "attemptedAt": "2026-10-24T04:41:27.585883Z"
+    },
+    "hashChainVerified": true,
+    "realModelProfilesRetained": true
+  },
+  "nativeNotificationDelivery": "NOT_INDEPENDENTLY_OBSERVED; app due banner seen; fn unsupported by input tool and system menu read timed out",
+  "newPolicy": {
+    "file": "scripts/sleep_acceptance_policy.py",
+    "testsPassed": 13,
+    "allPythonTestsPassed": 76,
+    "retry": "known dark wake only, with settle delay and bounded time/attempts",
+    "stop": "user activity, normal/unknown wake, power-policy change, rejected sleep",
+    "microsecondPrecision": true,
+    "newRunner": "build/native_acceptance/power-stage22-materials/sleep-due-policy.command",
+    "newRunnerExecuted": false,
+    "loadsOnlyDigestVerifiedBytes": true
+  },
+  "systemReboot": "NOT_PERFORMED",
+  "realDST": "NOT_PERFORMED",
+  "hashes": {
+    "sleep-due-policy.py": "e6fd077e99af756d6761d6c50b286c84f3b4b4151a9b8a976d5427bca17a2acb",
+    "private-pre-second-sleep.sqlite": "2587db2311062369f87e053c32893510e56de36fd030296364fac471bddcb097",
+    "prepared-due.json": "2af0e05b414d307586b10a9b8219522750e240bee889a1c48bee131de8410e33",
+    "sleep_acceptance_policy.py": "ef0e527a0c78f3fc3d196223e098517bd91b1e78c49ae556bde2245b7415344d",
+    "pre-sleep-journal-check.json": "fce8774b9dfc031ddc4ad0690c2ee58e76ab140f020b04a6398cf6c36863793f",
+    "sleep-due-observed-result.log": "be6a9a346e0621a6d7d71f8c7e2a2b3a3a7eae623e77a61642765fb1a7846728",
+    "powerd-excerpt.log": "9e597015b80097a73e4bef83a363629fe7c19d9345f0c31794cce76c40f6557e",
+    "sleep-due-policy.command": "43866f93d38ae23bca6b36c7145e66debc72ed0bc5c574d1f20b2cf31decf6ce",
+    "pre-sleep-notification-journal.log": "aec5f7e3dda9f0753a99d668016772553b1b6e4faf33d0129495caaea4bd3c06"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "state": "COMPLETED",
+  "targets": [
+    "scripts/__pycache__",
+    "scripts/tests/__pycache__"
+  ],
+  "logicalBytes": 0,
+  "allocatedBytes": 0,
+  "regularFileCount": 0,
+  "oldPackagesDeleted": 0,
+  "completedAt": "2026-10-24T12:44:39.975197+08:00",
+  "retainedHashesVerified": 194
+}
