@@ -217,5 +217,19 @@
     "upgrade-cost-run1.json": "1ba48268c88fb803d9e2fd5dccc8f39b7197639f53d3cc02982c52accd0b4657",
     "upgrade-cost-run2.json": "75a8e6b1f7eec4cf3a569e86f75d223897f809aa0fe433b6e33375892e1402b0",
     "upgrade-cost-run3.json": "329b7dd7f1715c9207815e753fc58995c796a5d9654aab23f9c8be7e1014350c"
+  },
+  "ci": {
+    "checkedAt": "2026-10-24T11:51:38.290651+08:00",
+    "runId": 40059687977,
+    "headRevision": "dc64bb8c581d0deb74bcbf01f928bd5d407d8d6f",
+    "url": "https://github.com/yarnway/dontforget/actions/runs/40059687977",
+    "qualityGate": "PASS",
+    "analyze": "No issues found",
+    "flutterPassed": 806,
+    "flutterSkipped": 1,
+    "skipReason": "macOS system-temp alias test is skipped on the Linux quality runner",
+    "pythonPassed": 63,
+    "candidateBuilds": "IN_PROGRESS at this readback; no platform package completion claimed",
+    "optInMeasurement": "Not run in CI; the three local measured processes are recorded separately"
   }
 }
