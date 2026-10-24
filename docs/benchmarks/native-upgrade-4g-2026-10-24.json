@@ -1,0 +1,181 @@
+{
+  "revision": "1e3b6df02e06df422f91a0cdd0d3357c640b9547",
+  "datasetSha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+  "rows": 10000,
+  "sourceSchema": 9,
+  "targetSchema": 10,
+  "samples": [
+    {
+      "scope": "Actual product lib/main.dart release startup; real OS notification transport; passive instrumentation. First raster is the framework completion signal, not a GPU duration.",
+      "revision": "1e3b6df02e06df422f91a0cdd0d3357c640b9547",
+      "pid": 2977,
+      "build_mode": "release",
+      "dart_entry_utc": "2026-10-24T12:09:05.846144Z",
+      "outcome": "complete",
+      "elapsed_to_outcome_us": 338527,
+      "milestones_us": {
+        "binding_ready": 190,
+        "window_shown": 24354,
+        "storage_ready": 243602,
+        "settings_loaded": 251186,
+        "first_frame_rasterized": 263439,
+        "tasks_loaded": 309454,
+        "notifications_ready": 332425,
+        "routes_ready_frame": 338526
+      },
+      "window_events": [
+        {
+          "event": "initial:null",
+          "elapsed_us": 173
+        }
+      ],
+      "window_at_outcome": {
+        "focused": false,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": null
+      },
+      "dart": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "os": "Version 27.0.1 (Build 26A434)",
+      "process_start_epoch_us": 1792843745656611,
+      "process_to_dart_entry_us": 189533,
+      "process_to_milestones_us": {
+        "binding_ready": 189723,
+        "window_shown": 213887,
+        "storage_ready": 433135,
+        "settings_loaded": 440719,
+        "first_frame_rasterized": 452972,
+        "tasks_loaded": 498987,
+        "notifications_ready": 521958,
+        "routes_ready_frame": 528059
+      },
+      "process_to_outcome_us": 528060,
+      "cold_scope": "New product process; OS caches retained. Kernel birth timestamp plus Dart elapsed milestones; excludes automation tool latency."
+    },
+    {
+      "scope": "Actual product lib/main.dart release startup; real OS notification transport; passive instrumentation. First raster is the framework completion signal, not a GPU duration.",
+      "revision": "1e3b6df02e06df422f91a0cdd0d3357c640b9547",
+      "pid": 3924,
+      "build_mode": "release",
+      "dart_entry_utc": "2026-10-24T12:10:14.968906Z",
+      "outcome": "complete",
+      "elapsed_to_outcome_us": 185978,
+      "milestones_us": {
+        "binding_ready": 194,
+        "window_shown": 28971,
+        "storage_ready": 87177,
+        "settings_loaded": 96001,
+        "first_frame_rasterized": 107634,
+        "tasks_loaded": 160767,
+        "notifications_ready": 185707,
+        "routes_ready_frame": 185978
+      },
+      "window_events": [
+        {
+          "event": "initial:null",
+          "elapsed_us": 178
+        },
+        {
+          "event": "lifecycle:inactive",
+          "elapsed_us": 12227
+        }
+      ],
+      "window_at_outcome": {
+        "focused": false,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "inactive"
+      },
+      "dart": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "os": "Version 27.0.1 (Build 26A434)",
+      "process_start_epoch_us": 1792843814782605,
+      "process_to_dart_entry_us": 186301,
+      "process_to_milestones_us": {
+        "binding_ready": 186495,
+        "window_shown": 215272,
+        "storage_ready": 273478,
+        "settings_loaded": 282302,
+        "first_frame_rasterized": 293935,
+        "tasks_loaded": 347068,
+        "notifications_ready": 372008,
+        "routes_ready_frame": 372279
+      },
+      "process_to_outcome_us": 372279,
+      "cold_scope": "New product process; OS caches retained. Kernel birth timestamp plus Dart elapsed milestones; excludes automation tool latency."
+    },
+    {
+      "scope": "Actual product lib/main.dart release startup; real OS notification transport; passive instrumentation. First raster is the framework completion signal, not a GPU duration.",
+      "revision": "1e3b6df02e06df422f91a0cdd0d3357c640b9547",
+      "pid": 4327,
+      "build_mode": "release",
+      "dart_entry_utc": "2026-10-24T12:10:48.235054Z",
+      "outcome": "complete",
+      "elapsed_to_outcome_us": 192444,
+      "milestones_us": {
+        "binding_ready": 194,
+        "window_shown": 28898,
+        "storage_ready": 87057,
+        "settings_loaded": 96290,
+        "first_frame_rasterized": 107468,
+        "tasks_loaded": 158111,
+        "notifications_ready": 186301,
+        "routes_ready_frame": 192442
+      },
+      "window_events": [
+        {
+          "event": "initial:null",
+          "elapsed_us": 180
+        },
+        {
+          "event": "lifecycle:inactive",
+          "elapsed_us": 12357
+        }
+      ],
+      "window_at_outcome": {
+        "focused": false,
+        "visible": true,
+        "minimized": false,
+        "lifecycle": "inactive"
+      },
+      "dart": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+      "os": "Version 27.0.1 (Build 26A434)",
+      "process_start_epoch_us": 1792843848023922,
+      "process_to_dart_entry_us": 211132,
+      "process_to_milestones_us": {
+        "binding_ready": 211326,
+        "window_shown": 240030,
+        "storage_ready": 298189,
+        "settings_loaded": 307422,
+        "first_frame_rasterized": 318600,
+        "tasks_loaded": 369243,
+        "notifications_ready": 397433,
+        "routes_ready_frame": 403574
+      },
+      "process_to_outcome_us": 403576,
+      "cold_scope": "New product process; OS caches retained. Kernel birth timestamp plus Dart elapsed milestones; excludes automation tool latency."
+    }
+  ],
+  "validation": {
+    "rowsExact": {
+      "Settings": 1,
+      "MediaRecords": 0,
+      "Reminders": 10000
+    },
+    "schema": 10,
+    "integrity": "ok",
+    "backupSha256": "b139e94741211ad64fff854827dbe0769fc364b61d95a68f0f139d4c5b87754c",
+    "seedSha256": "4af8db2f112b2cb027426c686842e519f27fd8770449f2f1b15b6dbf8d097dfa",
+    "osPending": 0,
+    "osDelivered": 0,
+    "foreground": false
+  },
+  "rollback": {
+    "snapshotBytes": 7344664,
+    "snapshotSha256": "579c43e980f3e5aa6d9997fd43af148ffd739d6a7ce9909d34440942e5066104",
+    "snapshotRowsExact": true,
+    "rebuiltV9Sha256": "329cdd6dc4c26e9d80409e28faea1a9bb62759721b4301bb82b919fb4a494a49",
+    "emptyBaselineRestored": true
+  },
+  "scope": "New processes with retained OS caches; all background, no full foreground or system cold-cache claim; fixture dates already past, no 10000 future OS submissions",
+  "finalNativeReadback": "empty board after baseline restore; normal quit"
+}

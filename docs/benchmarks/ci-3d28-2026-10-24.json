@@ -1,0 +1,66 @@
+{
+  "ci-complete.json": {
+    "revision": "1e3b6df02e06df422f91a0cdd0d3357c640b9547",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "Analyze and test",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build linux candidate",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build macos candidate",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build windows candidate",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build android candidate",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build ios candidate",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Prepare draft release after all packages pass",
+        "status": "completed",
+        "conclusion": "skipped"
+      }
+    ]
+  },
+  "performance-ci.json": {
+    "revision": "1e3b6df02e06df422f91a0cdd0d3357c640b9547",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "profile",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "product_startup",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "product_retry",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
+  }
+}

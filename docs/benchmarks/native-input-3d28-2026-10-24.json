@@ -1,0 +1,84 @@
+{
+  "phase": "3D-28",
+  "revision": "1e3b6df02e06df422f91a0cdd0d3357c640b9547",
+  "ciRun": 40091645533,
+  "bundle": "com.example.dontForget.acceptance.input28-r40091645533",
+  "package": {
+    "scope": "derived-isolated-acceptance-copy-not-original-signed-candidate",
+    "bundle_id": "com.example.dontForget.acceptance.input28-r40091645533",
+    "app": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/input28-r40091645533/dont_forget.app",
+    "codesign_verify": "PASS"
+  },
+  "input": "明天下午三点提醒我检查隔离验收报告，标题写成 QA DEEPSEEK NATIVE STAGE28，只创建这一条。",
+  "completed": [
+    "native menu enabled",
+    "AppKit AX input visible in screenshot",
+    "cancel leaves Reminders/MediaRecords at zero",
+    "Command-N opens native input",
+    "explicit Send invokes real configured product pipeline",
+    "native board displays exact requested title and next-day 15:00",
+    "SQLite confirms exactly one structured task"
+  ],
+  "model": {
+    "provider": "https://api.deepseek.com",
+    "profile": "DeepSeek Flash",
+    "modelSetting": "deepseek-flash",
+    "requestModel": "deepseek-v4-flash",
+    "fallbackEnabled": false,
+    "configuration": "Copied only previously explicitly authorized Settings into fresh isolated sandbox under owner lease; credentials not exported",
+    "successEvidence": "Signed release product native submission, structured title/summary/time and SQLite persistence; configured route sends to DeepSeek. HomeController local fallback retains/truncates original input and cannot produce observed title/time. No injected model response.",
+    "httpResponseCapture": false,
+    "lastExtractionUiReadback": "blocked by Mac lock after generation"
+  },
+  "readback": {
+    "rows": [
+      {
+        "id": "bae6d2d3-5429-4f8c-a42f-bae07a209dbf",
+        "record_id": null,
+        "task_title": "QA DEEPSEEK NATIVE STAGE28",
+        "task_summary": "明天下午三点检查隔离验收报告。 (下午3点准时提醒检查隔离验收报告)",
+        "quadrant_level": 1,
+        "urgency_level": "General",
+        "importance_level": "Important",
+        "trigger_time": "2026-10-25T15:00:00.000",
+        "is_completed": 0,
+        "is_recurring": 0,
+        "recurrence_rule": "none",
+        "recurrence_description": null,
+        "is_emotion_filtered": 0,
+        "sub_tasks": null,
+        "created_at": "2026-10-24T20:16:25.832298",
+        "review_level": 0,
+        "next_review_at": null,
+        "original_quadrant_level": 2,
+        "is_dynamically_promoted": 1,
+        "linked_task_ids": "[]",
+        "context_trigger": null,
+        "notice_revision": 0,
+        "notice_acknowledged_at": null,
+        "upcoming_dismissed_at": null,
+        "snoozed_at": null,
+        "recurrence_anchor_time": null
+      }
+    ],
+    "media": []
+  },
+  "notification": {
+    "nativeId": 447876976,
+    "source": "A3BCCD8D-4DA6-4E67-916E-82E233EEE2E4",
+    "action": "schedule",
+    "status": "submitted",
+    "osAcceptedAt": [
+      "2026-10-24T20:16:25.845+08:00",
+      "2026-10-24T20:16:27.653+08:00"
+    ],
+    "note": "Same native ID replaced after dynamic priority update; acceptance is not delivery proof. Cleanup remains pending due locked Mac."
+  },
+  "remaining": [
+    "native model status readback",
+    "same-app quit/reopen persistence",
+    "complete synthetic task, verify OS cancellation 0/0, restore empty baseline",
+    "actual reboot, isolated true DST, full foreground cold startup"
+  ],
+  "finalState": "Candidate remains running with one synthetic future task; private consistent backup retained at 0600 in 0700 materials directory. No UI control through another technology; no user handoff requested."
+}

@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-24",
+  "phase": "3D-28",
+  "state": "COMPLETED",
+  "targets": [
+    {
+      "path": "build/test_cache",
+      "files": 1,
+      "bytes": 62048376,
+      "allocatedBytes": 62050304
+    },
+    {
+      "path": "build/unit_test_assets",
+      "files": 12,
+      "bytes": 2121711,
+      "allocatedBytes": 2150400
+    },
+    {
+      "path": "build/native_assets",
+      "files": 3,
+      "bytes": 1968039,
+      "allocatedBytes": 1978368
+    },
+    {
+      "path": ".dart_tool/hooks_runner",
+      "files": 30,
+      "bytes": 24753165,
+      "allocatedBytes": 25276416
+    },
+    {
+      "path": ".dart_tool/flutter_build",
+      "files": 1,
+      "bytes": 9025,
+      "allocatedBytes": 12288
+    },
+    {
+      "path": "build/ci_artifacts/input28-r40091645533/artifact.zip",
+      "files": 1,
+      "bytes": 23951097,
+      "allocatedBytes": 23953408
+    },
+    {
+      "path": "build/ci_artifacts/start28-r40091936197/artifact.zip",
+      "files": 1,
+      "bytes": 23967570,
+      "allocatedBytes": 23969792
+    }
+  ],
+  "bytesFreed": 138818983,
+  "protectedFilesVerified": 549,
+  "oldDerivedAppsDeleted": 0,
+  "retained": "All original ZIPs/manifests, old/current candidates, fixed dataset, private snapshots and pending reboot baseline; no Library data removed"
+}

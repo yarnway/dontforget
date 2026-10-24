@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-10-24T20:12:57.911689+08:00",
+  "boot": "kern.bootsessionuuid: C5EA9BC6-4B3F-4A76-8AB5-B9751726418E\nkern.boottime: { sec = 1791900480, usec = 596904 } Tue Oct 13 22:08:00 2026\n",
+  "schedule": "Scheduled power events:\n [0]  wake at 10/24/2026 13:19:54 by 'com.apple.alarm.user-invisible-com.apple.acmd.alarm'\n [1]  wake at 10/24/2026 18:20:10 by 'com.apple.alarm.user-invisible-com.apple.calaccessd.travelEngine.periodicRefreshTimer'\n",
+  "global": "System-wide power settings:\n SleepDisabled\t\t1\nCurrently in use:\n standby              1\n Sleep On Power Button 1\n hibernatefile        /var/vm/sleepimage\n powernap             1\n networkoversleep     0\n disksleep            10\n sleep                1 (sleep prevented by UURemote, ChatGPT, powerd)\n hibernatemode        3\n ttyskeepawake        1\n displaysleep         120\n tcpkeepalive         1\n powermode            2\n womp                 1\n",
+  "rebootPendingDatabaseMatchesPrivateBaseline": true,
+  "actualReboot": false,
+  "sudo": "password-required",
+  "parallels": "service unavailable, exit 253",
+  "timezone": "Asia/Shanghai automatic; no host clock changes",
+  "relativeWake": "capability is not timer value; actual property unavailable"
+}
