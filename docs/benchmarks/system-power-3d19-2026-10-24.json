@@ -1,0 +1,47 @@
+{
+  "phase": "3D-19",
+  "checkedAt": "2026-10-24T10:49:37.166924+08:00",
+  "userAuthorizedTemporarySleepDisabledChangeAndRestore": true,
+  "originalSleepDisabled": 1,
+  "firstAttempt": {
+    "userLaunch": "Direct .command initially lacked execute permission; fixed mode 0700 and added standard local sudo re-exec.",
+    "startedAt": "2026-10-24T10:41:22+08:00",
+    "finishedAt": "2026-10-24T10:41:37+08:00",
+    "temporarySleepDisabledZeroVerifiedByScript": true,
+    "sleepRequestExit": 0,
+    "scriptExit": 0,
+    "osDisplayOffObserved": true,
+    "newKernelSleepObserved": false,
+    "newKernelWakeObserved": false,
+    "lastKernelSleep": "2026-10-23T09:48:38+08:00",
+    "lastKernelWake": "2026-10-23T09:56:58+08:00",
+    "settingsRestoredToOne": true,
+    "ownedWakeRemoved": true,
+    "rootScriptSha256": "4a07b1617c3e965fb8b837a09877088b37434d335b198edfc80e1530c5499356",
+    "rawLogSha256": "ef77301e4aa788de25806e43cb8d871c9dfbb3dd3911b538f3b6aeff107058b2",
+    "observationLimit": "Fixed 15 seconds can end before a delayed transition; revised the next experiment to wait for a new kernel sleep/wake pair or a four-minute timeout."
+  },
+  "secondAttempt": {
+    "script": "build/native_acceptance/models-stage18-materials/sleep-observed.command",
+    "sha256": "145f3cdb2c3cd0967001eade28c7443b82d2540e35d97194732e19dc44ee4845",
+    "userReported": "started",
+    "runLogPresent": false,
+    "acceptance": "NOT_CONFIRMED"
+  },
+  "relativeWakeCleanup": "UNCONFIRMED; no new relative wake was set",
+  "systemReboot": "NOT_PERFORMED",
+  "realDSTBoundary": "NOT_PERFORMED",
+  "bootUUID": "C5EA9BC6-4B3F-4A76-8AB5-B9751726418E",
+  "unrelatedPowerEvents": "No cancellation requested for Calendar/acmd. Their already expired Oct 23 15:52 and Oct 24 00:13 rows disappeared from the system list after the scheduling operation; cannot claim unchanged list contents.",
+  "assertions": "Preserved UURemote, ChatGPT and all other app assertions.",
+  "nativeProduct": {
+    "pid": 60290,
+    "futureTaskCount": 1,
+    "stableNativeId": 877764987,
+    "dueDuringExperiment": false
+  },
+  "toolBoundary": "Computer Use refused access to com.apple.Terminal for safety reasons. Standard local administrator authentication was handed to the user; no workaround was used.",
+  "currentPower": "System-wide power settings:\n SleepDisabled\t\t1\nCurrently in use:\n standby              1\n Sleep On Power Button 1\n hibernatefile        /var/vm/sleepimage\n powernap             1\n networkoversleep     0\n disksleep            10\n sleep                1 (sleep prevented by ChatGPT, UURemote, powerd)\n hibernatemode        3\n ttyskeepawake        1\n displaysleep         120\n tcpkeepalive         1\n powermode            2\n womp                 1\n",
+  "currentScheduledEvents": "",
+  "currentKernelTimes": "kern.sleeptime: { sec = 1792720118, usec = 570512 } Fri Oct 23 09:48:38 2026\nkern.waketime: { sec = 1792720618, usec = 721586 } Fri Oct 23 09:56:58 2026\n"
+}

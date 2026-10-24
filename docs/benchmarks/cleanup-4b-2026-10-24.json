@@ -1,0 +1,63 @@
+{
+  "phase": "4B",
+  "state": "COMPLETED",
+  "targets": [
+    {
+      "path": "build/test_cache",
+      "files": 1,
+      "bytes": 60841464,
+      "allocatedBytes": 60841984
+    },
+    {
+      "path": "build/unit_test_assets",
+      "files": 12,
+      "bytes": 2121711,
+      "allocatedBytes": 2150400
+    },
+    {
+      "path": "build/native_assets",
+      "files": 3,
+      "bytes": 1968039,
+      "allocatedBytes": 1978368
+    },
+    {
+      "path": ".dart_tool/hooks_runner",
+      "files": 30,
+      "bytes": 24753150,
+      "allocatedBytes": 25219072
+    },
+    {
+      "path": ".dart_tool/flutter_build",
+      "files": 1,
+      "bytes": 9025,
+      "allocatedBytes": 12288
+    }
+  ],
+  "logicalBytes": 89693389,
+  "retainedNativePackages": [
+    "build/native_acceptance/timezone-r39952545684",
+    "build/native_acceptance/profile-final15-r39937296463",
+    "build/native_acceptance/product-final15-r39937296463",
+    "build/native_acceptance/profile-final-r39918373329",
+    "build/native_acceptance/upgrade-before-r39933362241",
+    "build/native_acceptance/upgrade-after-r39933362241",
+    "build/native_acceptance/models-r39978855156",
+    "build/native_acceptance/rollback-stage18-r39952545684"
+  ],
+  "boundaries": "Only the five listed generated cache directories. Preserve all native packages, Library data, original archives, rollback copies, power script, SDK and shared package caches.",
+  "completedAt": "2026-10-24T10:39:31.291472+08:00",
+  "postCleanupAuthorizedChanges": [
+    {
+      "path": "build/native_acceptance/models-stage18-materials/sleep-once.command",
+      "reason": "User invoked .command directly and received permission denied; allow direct execution and request local sudo authentication. No power commands executed by this change.",
+      "beforeSha256": "db34810939cc6d21b5c4cdc152f442516bb7a334cd8972aed38d064b45f7fafd",
+      "afterSha256": "4a07b1617c3e965fb8b837a09877088b37434d335b198edfc80e1530c5499356",
+      "mode": "0700",
+      "at": "2026-10-24T10:40:14.927274+08:00"
+    }
+  ],
+  "retainedHashesVerifiedAtCleanup": 188,
+  "oldNativePackagesDeleted": 0,
+  "totalRemovedFiles": 47,
+  "allocatedBytes": 90202112
+}

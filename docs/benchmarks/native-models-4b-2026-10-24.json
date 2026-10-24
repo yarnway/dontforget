@@ -1,0 +1,183 @@
+{
+  "phase": "4B",
+  "checkedAt": "2026-10-24T10:41:50.987646+08:00",
+  "version": "1.6.0+5",
+  "schema": 10,
+  "sourceRevision": "d404ccd382b51ffbd0bffedde438cb33e1867e69",
+  "nativeSourceRevision": "14fc6f8d4131f2db2239e4244988655d6716e160",
+  "priorExactCI": {
+    "runId": 39978855156,
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "Analyze and test",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build ios candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build macos candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build windows candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build linux candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build android candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Prepare draft release after all packages pass",
+        "conclusion": "skipped"
+      }
+    ]
+  },
+  "latestCI": {
+    "runId": 40054931085,
+    "status": "completed",
+    "conclusion": "success",
+    "sourceRevision": "d404ccd382b51ffbd0bffedde438cb33e1867e69",
+    "observedAt": "2026-10-24T10:48:04.310143+08:00",
+    "jobs": [
+      {
+        "name": "Analyze and test",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build macos candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build windows candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build linux candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build ios candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build android candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Prepare draft release after all packages pass",
+        "conclusion": "skipped"
+      }
+    ]
+  },
+  "nativePackage": {
+    "bundleId": "com.example.dontForget.acceptance.models-r39978855156",
+    "manifest": {
+      "version": "1.6.0",
+      "build_number": "5",
+      "revision": "14fc6f8d4131f2db2239e4244988655d6716e160",
+      "platform": "macos",
+      "signing": "not-notarized",
+      "runtime_acceptance": "STARTUP_SMOKE_ONLY",
+      "artifacts": [
+        {
+          "file": "DontForget_macOS_unnotarized_v1.6.0.zip",
+          "bytes": 23990617,
+          "sha256": "3b4d0687db0191bf7942eb2ba1836a9989c334b238dab9e21201352b8b0e0741"
+        }
+      ]
+    },
+    "derivedCodesign": "PASS",
+    "frameworksAndResourcesUnchanged": true
+  },
+  "nativeUpgrade": {
+    "result": "PASS",
+    "sourceSchema": 9,
+    "targetSchema": 10,
+    "syntheticTaskCount": 1,
+    "allThreeTablesMatchExpected": true,
+    "integrity": "ok",
+    "snapshotMatchesOriginalAllThreeTables": true,
+    "automaticSnapshotSha256": "542afb2cd33037b781f69228a5d835936cdbf24c6dd3277c71405af74f4a5654",
+    "reopenedTablesUnchanged": true,
+    "stableNativeId": 877764987,
+    "notificationPermission": "allowed",
+    "appSubmittedCount": 1,
+    "nativeOSPendingReadback": "NOT_AVAILABLE_IN_STANDARD_BUILD"
+  },
+  "nativeOldBinaryRollback": {
+    "result": "PASS",
+    "oldSource": "172c6bbf442e71d38d530abcd9ea9eebdf7fb1eb",
+    "oldBundleId": "com.example.dontForget.acceptance.rollback-stage18-r39952545684",
+    "method": "Reconstruct frozen v9 schema from the actual automatically retained upgrade snapshot in a separate empty sandbox, then launch the verified old binary. Never open the v10 database with the old binary.",
+    "allThreeTablesMatchOriginal": true,
+    "schemaAfterOldLaunch": 9,
+    "taskTitleVisible": "QA MODEL UPGRADE KEEP",
+    "timeVisible": "2099-01-02 17:15",
+    "cleanupTaskCompleted": true,
+    "cleanupPendingNativeIds": [],
+    "oldAppNormalExit": true
+  },
+  "nativeRestoreUI": {
+    "result": "INCOMPLETE",
+    "selection": "candidate-v10.json",
+    "fileChooser": "Selected file was visible; Open remained disabled; keyboard and item open did not finish. Picker dismissed and app inspection explicitly cancelled.",
+    "databaseUnchangedAfterAttempt": true
+  },
+  "nativeModelEditUI": "NOT_COMPLETED",
+  "fixes": [
+    {
+      "revision": "ca8c62763d58151be8a8693d4eadb6354bbb8425",
+      "change": "Move model priority entry above optional local-probe and LAN tools."
+    },
+    {
+      "revision": "d404ccd382b51ffbd0bffedde438cb33e1867e69",
+      "change": "Native backup page still advertised only v7/v8/v9; update support and unsupported-version guidance in zh/en/ja to include v10."
+    }
+  ],
+  "localValidation": {
+    "toolchain": "Flutter 3.44.9 / Dart 3.12.2",
+    "fullFlutterTestsAtCa8c627": 807,
+    "pythonTests": 63,
+    "finalCopyRelatedFlutterTestsAtD404ccd": 36,
+    "analyze": "PASS",
+    "diffCheck": "PASS"
+  },
+  "realProviderCalls": 0,
+  "materialsDirectory": "build/native_acceptance/models-stage18-materials",
+  "remaining": [
+    "Native acceptance of the verified d404ccd candidate; final CI and package integrity have passed.",
+    "Native model edit/order/save/reopen and full v10 recovery confirmation.",
+    "Actual sleep/wake, reboot, DST boundary and previous relative-wake cleanup confirmation.",
+    "Small acceptance against explicitly configured real providers.",
+    "10000-row upgrade snapshot cost and other-platform business acceptance."
+  ],
+  "latestNativeCandidate": {
+    "bundleId": "com.example.dontForget.acceptance.models-r40054931085",
+    "sourceRevision": "d404ccd382b51ffbd0bffedde438cb33e1867e69",
+    "manifest": {
+      "version": "1.6.0",
+      "build_number": "5",
+      "revision": "d404ccd382b51ffbd0bffedde438cb33e1867e69",
+      "platform": "macos",
+      "signing": "not-notarized",
+      "runtime_acceptance": "STARTUP_SMOKE_ONLY",
+      "artifacts": [
+        {
+          "file": "DontForget_macOS_unnotarized_v1.6.0.zip",
+          "bytes": 23990263,
+          "sha256": "b65feb332be48cd34c18e47004af320488d0ce838ce36b209a65ef55afe34b58"
+        }
+      ]
+    },
+    "derivedCodesign": "PASS",
+    "started": false
+  }
+}
