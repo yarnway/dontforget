@@ -177,12 +177,100 @@
       "zh",
       "ja"
     ],
-    "native_candidate": "pending CI"
+    "native_candidate": "passed bounded search workflow; see nativeAcceptance scope"
   },
   "evidenceHashes": {
     "ui-preview.log": "aa688bba14c6e7f870a323a367dac7cea5a3363e185efef7b3eafaeeb8aecd77",
     "full-tests.log": "5c930b0255df59d0d9c962a5e2d0899128b27c9ff89aa065971aac0ae366ca37",
     "python-tests.log": "aa8cedce66dead806567b1d269634aac9b4e0c7dcf055fcf0b9d17c825a93b4c",
     "calendar-tests.log": "8e8edb35c01d0ec0b2e96364a2cf8e5ea0c111703999b0a884cbb6f071661306"
+  },
+  "productRevision": "e3ae23e78f27e30657f9a3c80443bb7f8b405ff3",
+  "ci": {
+    "run": 40195905915,
+    "quality": "success",
+    "platformBuilds": {
+      "windows": "success",
+      "macos": "success",
+      "android": "success",
+      "linux": "success",
+      "ios": "success"
+    },
+    "release": "skipped non-tag run"
+  },
+  "cleanup": {
+    "verifiedAt": "2026-10-25T21:05:03.424849",
+    "previousLedger": "cleanup-stage35-final-plan.json",
+    "verifiedProtectedFiles": 474,
+    "removedCaches": [
+      {
+        "path": ".dart_tool",
+        "allocatedKiB": 49160
+      },
+      {
+        "path": "build/test_cache",
+        "allocatedKiB": 119632
+      },
+      {
+        "path": "build/native_assets",
+        "allocatedKiB": 1932
+      },
+      {
+        "path": "build/unit_test_assets",
+        "allocatedKiB": 2100
+      },
+      {
+        "path": "build/960c61744dee9fa2aaf66868f5493813",
+        "allocatedKiB": 12
+      }
+    ],
+    "beforeProjectKiB": 869948,
+    "afterProjectKiB": 697112,
+    "rollbackPreserved": true,
+    "guestAndImageRemainAbsent": true,
+    "temporaryDownloadsBytesRemoved": 62463667,
+    "finalProjectKiB": 778396,
+    "finalProtectedFiles": 550
+  },
+  "nativeAcceptance": {
+    "date": "2026-10-25",
+    "sourceRevision": "e3ae23e78f27e30657f9a3c80443bb7f8b405ff3",
+    "candidate": "1.7.0+6",
+    "bundleId": "com.example.dontForget.acceptance.search17-r40195905915",
+    "artifact": {
+      "artifactId": 12599614544,
+      "bytes": 23986366,
+      "githubDigest": "sha256:5df179dc88284a942aebfdc83a2850620187e7abef2bb13bbee359d6a1a255f1",
+      "actualDigest": "sha256:5df179dc88284a942aebfdc83a2850620187e7abef2bb13bbee359d6a1a255f1",
+      "zipCRC": "passed",
+      "method": "validated original download prefix plus three HTTP 206 ranges"
+    },
+    "codesign": "PASS",
+    "cases": {
+      "empty_query_browse": "PASS",
+      "filter_empty_state_reset": "PASS",
+      "native_quick_entry_two_synthetic_tasks": "PASS",
+      "pending_completion_refresh_2_to_1": "PASS",
+      "completed_filter_one_task": "PASS",
+      "newest_sort_beta_before_alpha": "PASS",
+      "multi_keyword_cross_title_summary_Alpha_checklist": "PASS",
+      "query_and_pending_intersection_empty": "PASS",
+      "clear_query_preserves_pending_and_sort": "PASS",
+      "reset_all_conditions": "PASS",
+      "append_title_save_and_search_Gamma_review": "PASS",
+      "normal_quit_reopen_persists_title_and_completion": "PASS",
+      "delete_result_2_to_1": "PASS",
+      "undo_result_1_to_2": "PASS",
+      "delete_both_and_empty_state": "PASS"
+    },
+    "inputEvidence": "AX setValue did not update Flutter search; coordinate clicks returned noWindowsAvailable. Raising the window, AX clicking the field and typeText succeeded. Cmd+A and AX text selection did not replace text: title test appends Gamma review; full replacement is not claimed.",
+    "cleanup": {
+      "normalAppExit": true,
+      "businessTablesMatchEmptyBaseline": true,
+      "integrity": "ok",
+      "journalEntries": 0,
+      "scheduledNotificationsInFixture": 0
+    },
+    "scope": "Two synthetic tasks without reminder times. This does not validate OS notification delivery, 10000-task native timing, mobile input, real DST or recording/playback."
   }
 }
