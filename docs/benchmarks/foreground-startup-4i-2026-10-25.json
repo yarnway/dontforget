@@ -1,0 +1,98 @@
+{
+  "phase": "4I",
+  "date": "2026-10-25",
+  "revision": "1e3b6df02e06df422f91a0cdd0d3357c640b9547",
+  "datasetSha256": "ffe48931fba0f93c79c3f0c60daaa0dc0e3dcfa26f1210d82c7ccd531203e669",
+  "seedSha256": "b139e94741211ad64fff854827dbe0769fc364b61d95a68f0f139d4c5b87754c",
+  "rows": 10000,
+  "schema": 10,
+  "sample": {
+    "scope": "Actual product lib/main.dart release startup; real OS notification transport; passive instrumentation. First raster is the framework completion signal, not a GPU duration.",
+    "revision": "1e3b6df02e06df422f91a0cdd0d3357c640b9547",
+    "pid": 9186,
+    "build_mode": "release",
+    "dart_entry_utc": "2026-10-25T08:22:10.385499Z",
+    "outcome": "complete",
+    "elapsed_to_outcome_us": 298647,
+    "milestones_us": {
+      "binding_ready": 4966,
+      "window_shown": 57843,
+      "storage_ready": 135823,
+      "settings_loaded": 177609,
+      "first_frame_rasterized": 202961,
+      "tasks_loaded": 256047,
+      "notifications_ready": 297242,
+      "routes_ready_frame": 298646
+    },
+    "window_events": [
+      {
+        "event": "initial:null",
+        "elapsed_us": 4932
+      },
+      {
+        "event": "lifecycle:hidden",
+        "elapsed_us": 15292
+      },
+      {
+        "event": "lifecycle:inactive",
+        "elapsed_us": 15386
+      },
+      {
+        "event": "lifecycle:resumed",
+        "elapsed_us": 15387
+      }
+    ],
+    "window_at_outcome": {
+      "focused": true,
+      "visible": true,
+      "minimized": false,
+      "lifecycle": "resumed"
+    },
+    "dart": "3.12.2 (stable) (Tue Jun 9 01:11:39 2026 -0700) on \"macos_arm64\"",
+    "os": "Version 27.0.1 (Build 26A434)",
+    "process_start_epoch_us": 1792916529919420,
+    "process_to_dart_entry_us": 466079,
+    "process_to_milestones_us": {
+      "binding_ready": 471045,
+      "window_shown": 523922,
+      "storage_ready": 601902,
+      "settings_loaded": 643688,
+      "first_frame_rasterized": 669040,
+      "tasks_loaded": 722126,
+      "notifications_ready": 763321,
+      "routes_ready_frame": 764725
+    },
+    "process_to_outcome_us": 764726,
+    "cold_scope": "New product process; OS caches retained. Kernel birth timestamp plus Dart elapsed milestones; excludes automation tool latency.",
+    "hostBootUUID": "FF981FC2-B426-4F29-8AC2-0E0BE38157D8",
+    "acceptanceScope": "First product launch after verified host restart; no cache flush; foreground validated from window_shown, not process birth."
+  },
+  "foregroundValidation": {
+    "resumedBeforeWindowShown": true,
+    "noBackgroundEventsAfterWindowShown": true,
+    "focusedVisibleNotMinimizedAtOutcome": true,
+    "initialHiddenInactivePreserved": true
+  },
+  "cleanup": {
+    "at": "2026-10-25T08:23:00.598287+00:00",
+    "all10000BusinessRowsExactAfterColdStartup": true,
+    "journalUnchanged": true,
+    "candidateStopped": true,
+    "emptyBaselineRestoredUsingSQLiteBackup": true,
+    "leaseInode": 297646397,
+    "integrity": "ok",
+    "nativeBeforeQuit": {
+      "futureReminders": 0,
+      "pending": 0,
+      "retained": 0
+    },
+    "nativeEmptyReopen": "PASS: four empty columns, future 0, pending 0, retained 0"
+  },
+  "limits": [
+    "First product process after independently verified system restart; no explicit cache flush",
+    "Read-only prelaunch data checks can warm SQLite pages; not physical disk cold-cache latency",
+    "Single sample; no speedup, regression or percentile claim",
+    "First raster precedes task loading and does not mean all 10000 cards rendered",
+    "All fixture tasks are past due, zero future OS notifications; not 10000 future notification scheduling"
+  ]
+}

@@ -1,0 +1,273 @@
+{
+  "phase": "3D-34",
+  "date": "2026-10-25",
+  "sourceRevision": "7b27db8b7b98346a4c6aeee40696a5cb977e37c2",
+  "baselineCI": {
+    "conclusion": "success",
+    "url": "https://github.com/yarnway/dontforget/actions/runs/40172330584",
+    "jobs": [
+      {
+        "name": "Analyze and test",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build windows candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build linux candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build ios candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build android candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build macos candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Prepare draft release after all packages pass",
+        "conclusion": "skipped"
+      }
+    ]
+  },
+  "hostRestart": {
+    "beforeUUID": "C5EA9BC6-4B3F-4A76-8AB5-B9751726418E",
+    "afterUUID": "FF981FC2-B426-4F29-8AC2-0E0BE38157D8",
+    "bootTimeLocal": "2026-10-25T16:09:22+08:00",
+    "verified": true,
+    "requestedVia": "System Settings > General > Startup Disk > Restart",
+    "selectedDiskChanged": false,
+    "lastPreInterruptionUI": "Local Touch ID or password authentication",
+    "finalAuthenticationAndConfirmationObserved": false,
+    "agentEnteredCredentials": false,
+    "agentForcedRestart": false
+  },
+  "nativeNavigation": {
+    "fullscreenRestoredGuestCoordinateInput": true,
+    "finderNoWindowRecoveredVia": "System Settings > Storage > Documents > task-owned official restore image > Show in Finder",
+    "foregroundLaunch": "Finder Open Finder Item on exact verified app path"
+  },
+  "prelaunchData": {
+    "reboot": {
+      "counts": {
+        "Settings": 1,
+        "MediaRecords": 0,
+        "Reminders": 4
+      },
+      "allBusinessRowsExact": true,
+      "integrity": "ok",
+      "leaseInode": 297315367,
+      "candidateStarted": false
+    },
+    "cold": {
+      "counts": {
+        "Settings": 1,
+        "MediaRecords": 0,
+        "Reminders": 10000
+      },
+      "allBusinessRowsExact": true,
+      "integrity": "ok",
+      "leaseInode": 297646397,
+      "candidateStarted": false,
+      "traceCount": 9
+    }
+  },
+  "guestLocksAfterRestart": [
+    {
+      "file": "auxiliary-storage.bin",
+      "type": 2,
+      "unlocked": true,
+      "ownerPID": 0,
+      "inode": 297693846
+    },
+    {
+      "file": "disk.img",
+      "type": 2,
+      "unlocked": true,
+      "ownerPID": 0,
+      "inode": 297693847
+    }
+  ],
+  "osRetentionBeforeProductLaunch": {
+    "at": "2026-10-25T08:21:26.307756+00:00",
+    "bootUUID": "FF981FC2-B426-4F29-8AC2-0E0BE38157D8",
+    "bundle": "com.example.dontForget.acceptance.models-r40054931085",
+    "storedIdentifier": "com.example.dontforget.acceptance.models-r40054931085",
+    "pendingRecordUUIDs": [
+      "c89293a2-89b3-4d60-906c-e426f5cc8bd6"
+    ],
+    "deliveredRecordUUIDs": [],
+    "records": [
+      {
+        "uuid": "c89293a2-89b3-4d60-906c-e426f5cc8bd6",
+        "source": "81e03c84-c124-4442-a901-9bea4ec2ed62",
+        "nativeId": "1097435218",
+        "title": "QA REBOOT PERSIST STAGE26",
+        "payload": {
+          "version": 1,
+          "kind": "reminder",
+          "datasetEpoch": "1110444b-28eb-45c9-aaaa-406059c8914b",
+          "reminderKey": "782c8d24bbf4968a44c96426b1a93723dca0a29a816d7492b54b99d2167b0faf",
+          "triggerUtcMicros": 4071027600000000,
+          "noticeRevision": 0
+        },
+        "utcComponents": {
+          "NS.year": 2099,
+          "NS.month": 1,
+          "NS.day": 2,
+          "NS.hour": 9,
+          "NS.minute": 0,
+          "NS.second": 0
+        },
+        "deliveredDate": null,
+        "recordSha256": "9f0ea423e61e4a17ccbf258ef5d7421af09cc16db006e4f86af86638ba6f6b0f"
+      }
+    ],
+    "candidateStarted": false,
+    "readOnlySnapshot": true,
+    "independentOfProductReconciliation": true
+  },
+  "rebootProductReconciliation": {
+    "at": "2026-10-25T08:24:02.656461+00:00",
+    "records": [
+      {
+        "uuid": "0f464020-f471-4cd6-b986-5c5208960a72",
+        "nativeId": "1097435218",
+        "title": "QA REBOOT PERSIST STAGE26"
+      }
+    ],
+    "nativeReadback": {
+      "future": 1,
+      "submitted": 1,
+      "unverified": 0,
+      "pendingCancel": 0,
+      "pending": 1,
+      "retained": 0,
+      "permission": "allowed"
+    },
+    "duplicateRecords": false
+  },
+  "rebootNotificationCleanup": {
+    "at": "2026-10-25T08:25:05.371929+00:00",
+    "osScopedCounts": {
+      "requests": 0,
+      "delivered": 0,
+      "records": 0
+    },
+    "nativePending": 0,
+    "nativeRetained": 0,
+    "nativeFuture": 0,
+    "nativeCompletedTasks": 4,
+    "task": {
+      "id": "qa-reboot-persist-stage26",
+      "is_completed": 1
+    },
+    "integrity": "ok",
+    "candidateStopped": true
+  },
+  "guest": {
+    "at": "2026-10-25T08:29:52.796302+00:00",
+    "guestBooted": true,
+    "setupReached": "Create a Mac Account",
+    "credentialsEntered": false,
+    "realDSTExecuted": false,
+    "normalGuestShutdownConfirmedInUI": true,
+    "frameworkForcedStopUsed": false,
+    "controllerQuitNativeMenu": true,
+    "remainingOwnedProcesses": [],
+    "locks": [
+      {
+        "file": "auxiliary-storage.bin",
+        "unlocked": true,
+        "lockType": 2,
+        "ownerPID": 0,
+        "inode": 297693846
+      },
+      {
+        "file": "disk.img",
+        "unlocked": true,
+        "lockType": 2,
+        "ownerPID": 0,
+        "inode": 297693847
+      }
+    ],
+    "events": [
+      {
+        "configured_host_time_agent": false,
+        "event": "ready",
+        "guest_network_time_verified": false,
+        "host_time": "2026-10-25T08:24:37Z",
+        "installed": true,
+        "share_read_only": true
+      },
+      {
+        "event": "guest_started",
+        "host_time": "2026-10-25T08:24:52Z"
+      },
+      {
+        "event": "shutdown_requested",
+        "host_time": "2026-10-25T08:28:21Z"
+      },
+      {
+        "event": "guest_stopped",
+        "host_time": "2026-10-25T08:28:57Z"
+      }
+    ]
+  },
+  "power": {
+    "SleepDisabledBeforeRestart": 1,
+    "SleepDisabledAfterRestart": 0,
+    "scheduledWakeListAfterRestart": [],
+    "agentChangedPowerSettings": false,
+    "relativeHardwareWakeValueIndependentlyRead": false,
+    "note": "UURemote is not running after restart; the cause of the changed power value was not independently established."
+  },
+  "verification": {
+    "localPythonTests": 91,
+    "result": "PASS",
+    "productSourceChanged": false,
+    "productRuntimeDiffFromMeasuredRevisionToCurrentHead": false,
+    "rollbackAppRebuiltByteForByte": true,
+    "rollbackCodesignStrict": "PASS"
+  },
+  "cleanup": {
+    "state": "COMPLETED",
+    "at": "2026-10-25T08:30:30.244000+00:00",
+    "targets": [
+      {
+        "path": "build/native_acceptance/readback-r40078001115/dont_forget.app",
+        "kind": "completed_old_candidate",
+        "bytes": 58711484,
+        "allocatedBytes": 58826752,
+        "reconstructionVerified": true
+      }
+    ],
+    "bytesRemoved": 58711484,
+    "allocatedBytesRemoved": 58826752,
+    "deltaBytesRetained": 627392,
+    "protectedCountBefore": 571,
+    "guestRetainedPendingDST": true,
+    "officialImageRetained": true,
+    "libraryDataDeleted": false,
+    "sharedToolchainsDeleted": false,
+    "protectedCountAfterRetiring": 525
+  },
+  "remaining": [
+    "Guest login credential creation requires user hand-off under the native tool policy; no workaround performed",
+    "Real spring and autumn DST crossings, per-ID delivery and cancellation",
+    "Remove guest and official restore image after DST acceptance; keep required rollback material",
+    "Independent relative hardware wake readback remains unavailable"
+  ],
+  "boundaries": [
+    "Actual host restart was independently verified; the final authentication and restart confirmation were outside observation",
+    "One post-restart startup sample does not establish a tail percentile or performance improvement",
+    "Guest boot and normal shutdown are not completed initialization or real DST acceptance",
+    "Private database snapshot contains model credentials and remains local, excluded from this report and Git"
+  ]
+}
