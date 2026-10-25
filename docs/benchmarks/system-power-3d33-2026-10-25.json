@@ -1,0 +1,149 @@
+{
+  "at": "2026-10-25T07:18:54.271526+00:00",
+  "baselineCI": {
+    "headSha": "5b5a5331c22f8b7f86bb736c4a9ce64e1666634d",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/yarnway/dontforget/actions/runs/40170974918"
+  },
+  "baselineJobs": [
+    {
+      "name": "Analyze and test",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build macos candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build windows candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build linux candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build ios candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build android candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Prepare draft release after all packages pass",
+      "conclusion": "skipped"
+    }
+  ],
+  "native": {
+    "at": "2026-10-25T07:16:25.908145+00:00",
+    "candidate": "DontForget DST Lab stage33.app",
+    "native_retries": 2,
+    "blocked_files": [
+      "auxiliary-storage.bin",
+      "disk.img"
+    ],
+    "owner_known": false,
+    "workers_unchanged_on_retry": true,
+    "guest_started": false,
+    "quit_native_menu": "PASS",
+    "controller_process_absent": true,
+    "source_hashes": {
+      "scripts/macos_dst_lab.swift": "6b9488ea0445065140ce664ef1883c016f5a080beee53e4c694f6d3574074086",
+      "scripts/macos_dst_storage.swift": "f90453b480fe80aa8d7b4c1e57256c0e42cc8485d374102377a9e3481f31a1bf"
+    },
+    "events": [
+      {
+        "event": "storage_preflight_blocked",
+        "files": [
+          {
+            "file": "auxiliary-storage.bin",
+            "owner_known": false
+          },
+          {
+            "file": "disk.img",
+            "owner_known": false
+          }
+        ],
+        "host_time": "2026-10-25T07:15:03Z"
+      },
+      {
+        "event": "storage_preflight_blocked",
+        "files": [
+          {
+            "file": "auxiliary-storage.bin",
+            "owner_known": false
+          },
+          {
+            "file": "disk.img",
+            "owner_known": false
+          }
+        ],
+        "host_time": "2026-10-25T07:15:38Z"
+      }
+    ]
+  },
+  "diagnosis": {
+    "storageLockAfterTaskOwnedWorkerSIGKILL": {
+      "at": "2026-10-25T07:12:42.797244+00:00",
+      "locks": [
+        {
+          "file": "auxiliary-storage.bin",
+          "start": 0,
+          "length": 0,
+          "pid": -1,
+          "lock_type": 3,
+          "inode": 297693846
+        },
+        {
+          "file": "disk.img",
+          "start": 0,
+          "length": 0,
+          "pid": -1,
+          "lock_type": 3,
+          "inode": 297693847
+        }
+      ]
+    },
+    "kernelWorkerStillExiting": true,
+    "lockOwnerDetermined": false,
+    "nativeAccessibilityMenus": "WORKING",
+    "nativeCoordinateClick": "noWindowsAvailable",
+    "menuKeyboardShortcut": "NO_MENU_CHANGE",
+    "temporaryDisplayWakeSeconds": 5,
+    "normalHostRestart": "NOT_PERFORMED"
+  },
+  "tests": {
+    "localPythonPassed": 91,
+    "darwinNativeLockScenarios": [
+      "unlocked",
+      "competing owner PID",
+      "unchanged storage bytes and held lock",
+      "lock release after owner exit",
+      "symlink",
+      "missing file",
+      "non-regular file"
+    ],
+    "controllerCompileAndSignature": "PASS",
+    "macOSCIRealLockTestAdded": true
+  },
+  "boundaries": {
+    "guestInitialized": false,
+    "realDSTNotificationDelivery": false,
+    "realDSTCancellation": false,
+    "hostReboot": false,
+    "postRebootColdStartup": false,
+    "guestCredentialsEntered": false,
+    "guestStorageReplacedOrUnlocked": false
+  },
+  "source": [
+    "https://developer.apple.com/forums/thread/850709"
+  ],
+  "remaining": [
+    "Guest storage release and initialization credential gate",
+    "Real spring/autumn DST and cancellation",
+    "Normal host restart and foreground cold-start measurement",
+    "Delete isolated environment after acceptance"
+  ]
+}

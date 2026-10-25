@@ -48,7 +48,8 @@ task_temp="$(mktemp -d "$task_parent/.dst-lab-build.XXXXXX")"
 trap 'rm -rf -- "$task_temp"' EXIT
 mkdir -p "$task_temp/Lab.app/Contents/MacOS"
 swiftc -swift-version 5 -parse-as-library -target arm64-apple-macos14.0 \
-  "$task_script_dir/macos_dst_lab.swift" -framework Cocoa -framework Virtualization \
+  "$task_script_dir/macos_dst_lab.swift" "$task_script_dir/macos_dst_storage.swift" \
+  -framework Cocoa -framework Virtualization \
   -o "$task_temp/Lab.app/Contents/MacOS/DSTLab"
 python3 - "$task_temp" "$task_acceptance_root" <<'PY'
 import pathlib, plistlib, sys

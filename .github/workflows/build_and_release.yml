@@ -107,6 +107,9 @@ jobs:
       - name: Build macOS unnotarized archive
         if: matrix.platform == 'macos'
         run: bash scripts/build_macos.sh
+      - name: macOS storage lock acceptance
+        if: matrix.platform == 'macos'
+        run: python -m unittest discover -s scripts/tests -p test_dst_storage_native.py -v
       - name: Build iOS unsigned archive
         if: matrix.platform == 'ios'
         run: bash scripts/build_ios.sh

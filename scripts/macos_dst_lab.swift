@@ -190,7 +190,21 @@ final class DSTLab: NSObject, NSApplicationDelegate, VZVirtualMachineDelegate, N
     guard !busy && installed else { return }
     do {
       releaseInactiveMachine()
-      if vm == nil { vm = VZVirtualMachine(configuration: try configuration()); vm!.delegate = self; display.virtualMachine = vm }
+      if vm == nil {
+        let locks = try DSTStorageProbe.inspect(["auxiliary-storage.bin", "disk.img"].map { root.appendingPathComponent($0) })
+        let blocked = locks.filter(\.blocked)
+        if !blocked.isEmpty {
+          status.stringValue = "Storage locked: \(blocked.map(\.fileName).joined(separator: ", ")); guest was not started"
+          note("storage_preflight_blocked", ["files": blocked.map { lock -> [String: Any] in
+            var row: [String: Any] = ["file": lock.fileName, "owner_known": lock.ownerPID != nil]
+            if let pid = lock.ownerPID { row["owner_pid"] = pid }
+            return row
+          }])
+          refreshButtons()
+          return
+        }
+        vm = VZVirtualMachine(configuration: try configuration()); vm!.delegate = self; display.virtualMachine = vm
+      }
       guard vm!.state == .stopped else { return }
       busy = true; status.stringValue = "Starting guest"; refreshButtons()
       vm!.start { result in

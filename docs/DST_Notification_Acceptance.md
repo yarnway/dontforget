@@ -36,9 +36,15 @@ python3 -m unittest discover -s scripts/tests -p test_dst_lab_build.py -v
 
 启动失败进入框架 `.error` 状态时，窗口释放这个非运行实例，使“Start guest”可重试、退出可用，并记录错误域、错误码与底层错误。运行中或状态切换中的实例不会被释放来规避存储锁。窗口没有配置宿主时间同步代理，但这不能证明客体网络时间已关闭；每轮测试仍须独立读回时间设置。
 
+创建虚拟机实例前，窗口通过只读文件描述符对辅助存储和磁盘执行 `F_GETLK` 检查，拒绝符号链接、缺失文件及非普通文件。发现写入冲突时直接列出被锁文件并返回，不创建新的虚拟机实例；已知持有者记录 PID，未知持有者只记录 `owner_known=false`。检查不获取租约、不解锁、不改写磁盘，检查通过与实际启动之间仍可能出现竞争，最终锁定结果继续以虚拟化框架为准。
+
+在 macOS 运行 `python3 -m unittest discover -s scripts/tests -p test_dst_storage_native.py -v` 可执行真实跨进程文件锁测试，覆盖空闲、竞争持有者、内容不变、持有者退出后恢复及无效路径。该测试已加入 macOS 候选 CI；Linux 质量作业明确跳过这个平台限定用例。
+
 先使用“Request guest shutdown”正常关机。30 秒后仍未停止且框架允许停止，才启用“Stop unresponsive guest…”，再次确认后通过框架停止本客体。该方式可能丢失客体未保存状态，记录为异常停止，后续必须验证启动和文件系统；不能当作正常关机通过。此强制停止分支目前仅完成编译检查，尚无运行中客体实测。
 
 若启动报告 `VZErrorDomain/2`、底层 `NSPOSIXErrorDomain/35`，应先记录锁和进程状态。`lsof` 无输出不足以证明磁盘可用；本机曾在工作进程处于退出状态、RSS=0 时，仍由 `F_GETLK` 读到全文件写锁且 owner PID=-1。只读查询不应获取或修改锁，未知 owner 不能据此指定归属。不得替换文件 inode、删除辅助存储或复制在线磁盘来绕过锁。磁盘、辅助存储、硬件模型及机器身份作为同一客体保留；[Apple 辅助存储说明](https://developer.apple.com/documentation/virtualization/vzmacauxiliarystorage)。
+
+原宿主应用异常退出后的系统资源清理没有公开时限保证，公开 API 也不提供由新进程接管原客体的句柄。[Apple DTS 说明](https://developer.apple.com/forums/thread/850709)。因此不能凭宿主应用退出就声明客体停止完成；持续锁冲突应保留证据和客体文件，继续排查正常宿主重启路径，不反复终止不明归属进程。
 
 ## 两轮独立验收
 
