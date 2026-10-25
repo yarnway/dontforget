@@ -65,8 +65,26 @@ python3 -m unittest discover -s scripts/tests -p test_dst_lab_build.py -v
 
 这两轮覆盖边界附近的一次性提醒。浮动本地时间的每日循环、重复小时中相同墙钟时刻的两次出现、宿主系统重启和其他平台仍需独立验收；不能从夹具或本流程推断通过。
 
+## 相对唤醒残留的只读核验
+
+使用独立的新输出路径采集，不需要管理员权限，也不修改电源设置：
+
+```sh
+python3 scripts/read_macos_wake_state.py --help
+python3 scripts/read_macos_wake_state.py --output /tmp/dontforget-wake-001.json
+python3 -m unittest discover -s scripts/tests -p test_macos_wake_state.py -v
+```
+
+脚本在同一个启动 UUID 内读取 `pmset -g sched` 和 `IOPMrootDomain`，仅保留相关属性。输出文件以 0600 权限独占创建，不覆盖旧证据或符号链接。退出码 0 表示采集完成，2 表示平台、命令、格式或跨重启一致性检查失败；**退出码 0 不表示相对唤醒已清除**。命令超时、非零退出和诊断输出不能被解释为空计划列表。
+
+`WakeRelativeToSleep` 未公开时，`propertyPublished=false`、`seconds=null`；即使软件属性为 0，`relativeWakeVerdict` 仍为 `UNCONFIRMED`，`hardwareReadbackAvailable=false`。旧写零返回成功、正常重启、空计划列表或缺少日志，均不能替代独立硬件读回。
+
+Apple 开源实现中，相对唤醒走直接设置 root-domain 属性的分支；内核的 `copyPMSetting` 面向内核扩展，不能当作用户态公开读取硬件闹钟的接口。[IOPMAutoWake.c](https://github.com/apple-oss-distributions/IOKitUser/blob/main/pwr_mgt.subproj/IOPMAutoWake.c)、[IOPMrootDomain.cpp](https://github.com/apple-oss-distributions/xnu/blob/main/iokit/Kernel/IOPMrootDomain.cpp)。开源实现用于解释证据边界，不代表当前系统固件状态已测得。
+
 ## 未使用空客体的清理
 
-仅清理本次创建、未安装、未启动的空客体。先保存精确 UUID、配置和磁盘描述，确认 stopped/uptime=0、没有文件占用，再通过受支持的管理界面或命令注销。注销后再次枚举，确认 UUID 已消失；磁盘目录归属与状态仍一致后才删除。不要直接删除仍在注册表中的客体目录，也不要修改其他客体或运行中磁盘。
+若验收因初始化权限或凭据交接长期受阻，且用户明确要求释放存储，可结束这次受阻尝试后清理没有业务数据的测试客体。必须先正常停机、退出控制器并独立核验存储锁和占用，再保存归属、镜像摘要、候选、夹具及重建说明。删除磁盘后标明需要重新安装，不把仅含身份和辅助存储的诊断归档称为可启动回退，也不把清理完成称为 DST 验收通过。初始化条件未具备时，不自动重建或重新下载大镜像。
+
+对于未使用空客体，只清理本次创建、未安装、未启动的实例。先保存精确 UUID、配置和磁盘描述，确认 stopped/uptime=0、没有文件占用，再通过受支持的管理界面或命令注销。注销后再次枚举，确认 UUID 已消失；磁盘目录归属与状态仍一致后才删除。不要直接删除仍在注册表中的客体目录，也不要修改其他客体或运行中磁盘。
 
 本机 Parallels 的 `prlctl unregister <UUID>` 可成功注销空客体，尽管此前 `set`/`start` 受版本限制。注销会清空配置中的 `ServerUuidAs`，这项预期变化应单独核对，其余字段应保持一致。实际释放量按已分配块记录；128 GiB 稀疏磁盘的逻辑容量不能记作释放了 128 GiB。

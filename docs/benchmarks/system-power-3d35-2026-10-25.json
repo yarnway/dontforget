@@ -1,0 +1,126 @@
+{
+  "phase": "3D-35",
+  "checkedAt": "2026-10-25T09:09:18.529793+00:00",
+  "baseRevision": "d20f75fba6ff78f8fcae739ba67974a5bd861ec5",
+  "baseCI": {
+    "id": 40177082003,
+    "conclusion": "success",
+    "qualityAndFivePlatformBuildsPassed": true
+  },
+  "productRuntimeChanged": false,
+  "tests": {
+    "pythonPassed": 100,
+    "wakeEvidenceTests": 9
+  },
+  "wake": {
+    "schema": 1,
+    "checkedAt": "2026-10-25T09:06:59.505557+00:00",
+    "readOnly": true,
+    "collectionStatus": "COLLECTED",
+    "relativeWakeVerdict": "UNCONFIRMED",
+    "hardwareReadbackAvailable": false,
+    "boundary": "An empty schedule or a software zero is not hardware readback.",
+    "bootUUID": "ff981fc2-b426-4f29-8ac2-0e0be38157d8",
+    "scheduledEvents": {
+      "emptyOutput": true,
+      "raw": ""
+    },
+    "sleepDisabled": false,
+    "relativeWakeSoftwareProperty": {
+      "propertyPublished": false,
+      "seconds": null
+    }
+  },
+  "native": {
+    "guestStartedAt": "2026-10-25T08:59:00Z",
+    "shutdownRequestedAt": "2026-10-25T09:00:02Z",
+    "guestStoppedAt": "2026-10-25T09:03:22Z",
+    "normalShutdown": true,
+    "forcedStopUsed": false,
+    "lastSetupScreen": "Country or region; setup incomplete",
+    "inputRecovery": "Raise window immediately before coordinate action; fullscreen alone was insufficient",
+    "newCredentialsEntered": false,
+    "accountCreationBlockedBy": "Native tool requires user handoff before entering new credentials",
+    "eulaAccepted": false,
+    "dstSpringDelivery": "NOT_PERFORMED",
+    "dstAutumnDelivery": "NOT_PERFORMED",
+    "dstCancellation": "NOT_PERFORMED",
+    "candidateInstalledInGuest": false,
+    "guestRecordsCreated": false
+  },
+  "storageAfterStop": {
+    "at": "2026-10-25T09:03:57.893767+00:00",
+    "normalShutdown": true,
+    "ownedProcesses": [],
+    "locks": [
+      {
+        "name": "auxiliary-storage.bin",
+        "inode": 297693846,
+        "lockType": 2,
+        "pid": 0
+      },
+      {
+        "name": "disk.img",
+        "inode": 297693847,
+        "lockType": 2,
+        "pid": 0
+      }
+    ]
+  },
+  "cleanup": {
+    "guestRemoved": true,
+    "imageRemoved": true,
+    "guestAllocatedBytesRemoved": 29778907136,
+    "imageBytesRemoved": 26637307067,
+    "imageAllocatedBytesRemoved": 26637307904,
+    "imageSHA256": "2f016638293c3e641b8b25391a76fbc16563b3711915a5551cf8aa0f5598a5c1",
+    "oldBundlesRemoved": [
+      "build/native_acceptance/input28-r40091645533/dont_forget.app",
+      "build/native_acceptance/rollback-stage18-r39952545684/dont_forget.app"
+    ],
+    "oldBundleAllocatedBytesRemoved": 117600256,
+    "oldBundleLogicalBytesRemoved": 117365574,
+    "retainedDeltaBytes": 1271208,
+    "oldBundlesRebuiltAndSignedBeforeRemoval": true,
+    "cacheAllocatedBytesRemoved": 65536,
+    "projectAllocatedBytesBefore": 30607814656,
+    "projectAllocatedBytesAfter": 712581120,
+    "guestDiagnosticArchiveBytes": 401697,
+    "guestDiagnosticArchiveSHA256": "3bfbdf97521adca29707496878e4155380f580d47e538ba930f974634a3dc123",
+    "guestDiskBackupRetained": false,
+    "guestMustBeReinstalled": true,
+    "rollbackSnapshotsAndSyntheticFixturesRetained": true,
+    "userLibraryDataTouched": false,
+    "sharedSDKOrGlobalCacheTouched": false
+  },
+  "sourceReview": {
+    "upstreamMayDifferFromInstalledKernel": true,
+    "sources": [
+      {
+        "url": "https://github.com/apple-oss-distributions/IOKitUser/blob/main/pwr_mgt.subproj/IOPMAutoWake.c"
+      },
+      {
+        "url": "https://github.com/apple-oss-distributions/xnu/blob/main/iokit/Kernel/IOPMrootDomain.cpp"
+      }
+    ],
+    "downloadedFiles": [
+      {
+        "file": "IOPMAutoWake.c",
+        "sha256": "82392c667f76161954fd7e67f53c26d0f670070c7fcce3c7afadb287ceb95f8e"
+      },
+      {
+        "file": "IOPMLibPrivate.c",
+        "sha256": "36d9dba7302b484a58364e853eb7c6d5093a7c4af6bd0bcab616367fc77dfed4"
+      },
+      {
+        "file": "IOPMrootDomain.cpp",
+        "sha256": "2cb46400fe102bea31c8561903b473edc711be019ef432c81a3d6ab488c923c3"
+      }
+    ]
+  },
+  "remaining": [
+    "Real spring/autumn DST delivery and cancellation require an initialized guest and remain unverified",
+    "No independent relative hardware alarm readback; do not infer zero from empty schedule, registry absence, reboot or prior successful zero write",
+    "Guest and restore image were deliberately removed to release storage; diagnostic archive is not a bootable rollback"
+  ]
+}
