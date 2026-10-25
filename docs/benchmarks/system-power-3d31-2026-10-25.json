@@ -1,0 +1,148 @@
+{
+  "stage": "3D-31",
+  "recorded_at": "2026-10-25T03:02:36.112845+00:00",
+  "ci_before": {
+    "conclusion": "success",
+    "headSha": "112c22ab05d24b85c8cfdc554105d2d8d038196d",
+    "jobs": [
+      {
+        "name": "Analyze and test",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/40114306403/job/120932318177"
+      },
+      {
+        "name": "Build macos candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/40114306403/job/120932904224"
+      },
+      {
+        "name": "Build android candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/40114306403/job/120932904239"
+      },
+      {
+        "name": "Build linux candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/40114306403/job/120932904242"
+      },
+      {
+        "name": "Build windows candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/40114306403/job/120932904259"
+      },
+      {
+        "name": "Build ios candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/40114306403/job/120932904284"
+      },
+      {
+        "name": "Prepare draft release after all packages pass",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/40114306403/job/120934332899"
+      }
+    ],
+    "url": "https://github.com/yarnway/dontforget/actions/runs/40114306403",
+    "observed_at": "2026-10-25T03:01:33.337948+00:00"
+  },
+  "product_source_changed": false,
+  "guest": {
+    "implementation": "Apple Virtualization.framework",
+    "image_build": "26A434",
+    "installed": true,
+    "setup_complete": false,
+    "native_input": "keyboard and coordinate interactions observed",
+    "completed_setup_steps": [
+      "English selected",
+      "region continued",
+      "data migration skipped"
+    ],
+    "current_page": "Create a Mac Account",
+    "new_credentials_entered": false,
+    "blocker": "Native tool requires user handoff for new login credential entry, confirmation and submission",
+    "candidate_installed_in_guest": false,
+    "host_private_data_transferred": false,
+    "dst_spring": "NOT_PERFORMED",
+    "dst_autumn": "NOT_PERFORMED",
+    "notification_cancellation": "NOT_PERFORMED"
+  },
+  "empty_guest_cleanup": {
+    "uuid": "78666247-8f88-4024-9cc2-5d37917fbcef",
+    "prior_state": "stopped",
+    "prior_uptime": "0",
+    "unregister": "success",
+    "unregister_config_change": "only ServerUuidAs cleared",
+    "registered_after": false,
+    "directory_exists_after": false,
+    "allocated_bytes_removed": 92618752,
+    "logical_bytes_removed": 137439013141,
+    "rollback_metadata_retained": true,
+    "protected_hashes_unchanged": 589,
+    "unrelated_ubuntu_config_unchanged": true
+  },
+  "cache_audit": {
+    "caches": [
+      {
+        "path": "build/unit_test_assets",
+        "exists": false,
+        "bytes": 0
+      },
+      {
+        "path": "build/test_cache",
+        "exists": false,
+        "bytes": 0
+      },
+      {
+        "path": ".dart_tool/flutter_build",
+        "exists": false,
+        "bytes": 0
+      }
+    ],
+    "deleted_this_turn": false
+  },
+  "host_checkpoint": {
+    "observed_at": "2026-10-25T03:00:55.401658+00:00",
+    "kernel_boot_uuid": "C5EA9BC6-4B3F-4A76-8AB5-B9751726418E",
+    "business_tables_exact_pre_reboot_baseline": true,
+    "counts": {
+      "Settings": 1,
+      "MediaRecords": 0,
+      "Reminders": 4
+    },
+    "active_tasks": 1,
+    "integrity": "ok",
+    "candidate_started": false,
+    "notification_journal_frames": 14,
+    "notification_journal_hash_chain_valid": true,
+    "stable_notification_id": 1097435218,
+    "host_reboot": "NOT_PERFORMED",
+    "post_reboot_cold_start": "NOT_PERFORMED"
+  },
+  "host_power": {
+    "SleepDisabled": 1,
+    "timezone_unchanged": true,
+    "settings_mutated": false
+  },
+  "validation": {
+    "evidence_files_parsed": true,
+    "cleanup_registration_and_path_readback": true,
+    "private_database_snapshot_consistency": true,
+    "notification_hash_chain": true,
+    "new_product_test_run": false,
+    "reason": "Product and test source unchanged; exact incoming-head CI is successful."
+  },
+  "remaining": [
+    "Guest account and remaining setup",
+    "Natural spring and autumn DST crossings with independent per-ID OS delivery evidence",
+    "Cancellation pending=0 and retained=0",
+    "Normal guest shutdown followed by actual host reboot",
+    "Read OS notification state before candidate launch",
+    "Post-reboot foreground cold startup on unchanged 10000-row fixture"
+  ]
+}
