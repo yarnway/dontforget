@@ -474,7 +474,7 @@ void main() {
       expect(search, findsOneWidget);
       await tester.enterText(search, 'search fixture');
       await tester.pump(const Duration(milliseconds: 160));
-      expect(find.text('搜索结果 (1)'), findsOneWidget);
+      expect(find.text('搜索结果 · 1'), findsOneWidget);
       await tester.enterText(search, 'pending debounce');
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pump(const Duration(milliseconds: 200));

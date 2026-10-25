@@ -97,4 +97,39 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     },
   );
+  testWidgets('search opens for browsing and clear works before debounce', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      UncontrolledProviderScope(container: container, child: const MyApp()),
+    );
+    await tester.pump();
+    Future<void> focusSearch() async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+    }
+
+    await focusSearch();
+    final field = find.byKey(const ValueKey('task-search-field'));
+    expect(field, findsOneWidget);
+    expect(find.byKey(const ValueKey('search-filter-today')), findsOneWidget);
+    await tester.enterText(field, 'cancel before debounce');
+    await tester.pump();
+    final clear = find.byTooltip('清除搜索');
+    expect(clear, findsOneWidget);
+    await tester.tap(clear);
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(tester.widget<TextField>(field).controller!.text, isEmpty);
+    await tester.tap(find.byKey(const ValueKey('search-filter-pending')));
+    await tester.pump();
+    await focusSearch();
+    expect(tester.widget<TextField>(field).focusNode!.hasFocus, isTrue);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pump();
+    expect(field, findsNothing);
+    await tester.pumpWidget(const SizedBox());
+    expect(tester.takeException(), isNull);
+  });
 }

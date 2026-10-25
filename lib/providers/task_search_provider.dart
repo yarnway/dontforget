@@ -3,9 +3,22 @@ import '../models/reminder.dart';
 import '../services/task_search_index.dart';
 import 'providers.dart';
 
-final taskSearchIndexProvider = Provider.autoDispose<TaskSearchIndex>((ref) {
-  return TaskSearchIndex(ref.watch(remindersProvider));
-});
+final taskSearchIndexProvider =
+    NotifierProvider.autoDispose<TaskSearchNotifier, TaskSearchIndex>(
+      TaskSearchNotifier.new,
+    );
+
+class TaskSearchNotifier extends AutoDisposeNotifier<TaskSearchIndex> {
+  TaskSearchIndex? _previous;
+
+  @override
+  TaskSearchIndex build() {
+    return _previous = TaskSearchIndex(
+      ref.watch(remindersProvider),
+      previous: _previous,
+    );
+  }
+}
 
 final taskSearchResultsProvider = Provider.autoDispose
     .family<List<Reminder>, String>((ref, query) {

@@ -1,0 +1,188 @@
+{
+  "date": "2026-10-25",
+  "candidate": "1.7.0+6",
+  "baseline_source": "641dba58c84f876e49a34a2f1a1e0b1cc7c39da9",
+  "toolchain": "Flutter 3.44.9 / Dart 3.12.2",
+  "scope": "Synthetic CPU measurements, not native first-frame or full-product startup. Sequential runs after tests completed. No user data.",
+  "method": "Each metric: 10 warmups, 100 samples. Rebuild baseline and incremental candidate use identical new multi-keyword semantics. This is not a comparison of cold product versions.",
+  "runs": [
+    {
+      "dataset": "search-v2; IDs 0..N-1; fixed createdAt 2026-10-25 UTC; edit middle title only",
+      "semantics": "All whitespace-separated keywords must occur across title, summary or subtasks",
+      "scope": "Synthetic single-process Dart search CPU time; 10 warmups, 100 samples; microseconds",
+      "results": [
+        {
+          "tasks": 100,
+          "fixture_sha256": "3b984e230e7d5e8a25ff106d7f9312354a7b1d05633031d6e295ce7f845571e9",
+          "index_build_us": 2104,
+          "uncached_keyword_search": {
+            "p50_us": 87,
+            "p95_us": 200
+          },
+          "indexed_search": {
+            "p50_us": 22,
+            "p95_us": 27
+          },
+          "full_rebuild_one_edit": {
+            "p50_us": 60,
+            "p95_us": 94
+          },
+          "incremental_rebuild_one_edit": {
+            "p50_us": 29,
+            "p95_us": 43
+          },
+          "matching_tasks": 19
+        },
+        {
+          "tasks": 1000,
+          "fixture_sha256": "f16996441f6e7c49f67adbce2ee065a858b57d378b76a523c92d086ff75db898",
+          "index_build_us": 536,
+          "uncached_keyword_search": {
+            "p50_us": 449,
+            "p95_us": 528
+          },
+          "indexed_search": {
+            "p50_us": 180,
+            "p95_us": 191
+          },
+          "full_rebuild_one_edit": {
+            "p50_us": 503,
+            "p95_us": 543
+          },
+          "incremental_rebuild_one_edit": {
+            "p50_us": 232,
+            "p95_us": 248
+          },
+          "matching_tasks": 271
+        },
+        {
+          "tasks": 10000,
+          "fixture_sha256": "5f39127e044f7a3dc0940147f8a64a7672d84721bc8011d8b63b449882f78527",
+          "index_build_us": 7768,
+          "uncached_keyword_search": {
+            "p50_us": 4615,
+            "p95_us": 4738
+          },
+          "indexed_search": {
+            "p50_us": 1801,
+            "p95_us": 1856
+          },
+          "full_rebuild_one_edit": {
+            "p50_us": 7800,
+            "p95_us": 10452
+          },
+          "incremental_rebuild_one_edit": {
+            "p50_us": 3792,
+            "p95_us": 4378
+          },
+          "matching_tasks": 3439
+        }
+      ]
+    },
+    {
+      "dataset": "search-v2; IDs 0..N-1; fixed createdAt 2026-10-25 UTC; edit middle title only",
+      "semantics": "All whitespace-separated keywords must occur across title, summary or subtasks",
+      "scope": "Synthetic single-process Dart search CPU time; 10 warmups, 100 samples; microseconds",
+      "results": [
+        {
+          "tasks": 100,
+          "fixture_sha256": "3b984e230e7d5e8a25ff106d7f9312354a7b1d05633031d6e295ce7f845571e9",
+          "index_build_us": 2028,
+          "uncached_keyword_search": {
+            "p50_us": 85,
+            "p95_us": 192
+          },
+          "indexed_search": {
+            "p50_us": 22,
+            "p95_us": 29
+          },
+          "full_rebuild_one_edit": {
+            "p50_us": 55,
+            "p95_us": 109
+          },
+          "incremental_rebuild_one_edit": {
+            "p50_us": 28,
+            "p95_us": 38
+          },
+          "matching_tasks": 19
+        },
+        {
+          "tasks": 1000,
+          "fixture_sha256": "f16996441f6e7c49f67adbce2ee065a858b57d378b76a523c92d086ff75db898",
+          "index_build_us": 554,
+          "uncached_keyword_search": {
+            "p50_us": 452,
+            "p95_us": 516
+          },
+          "indexed_search": {
+            "p50_us": 180,
+            "p95_us": 193
+          },
+          "full_rebuild_one_edit": {
+            "p50_us": 511,
+            "p95_us": 551
+          },
+          "incremental_rebuild_one_edit": {
+            "p50_us": 239,
+            "p95_us": 253
+          },
+          "matching_tasks": 271
+        },
+        {
+          "tasks": 10000,
+          "fixture_sha256": "5f39127e044f7a3dc0940147f8a64a7672d84721bc8011d8b63b449882f78527",
+          "index_build_us": 7904,
+          "uncached_keyword_search": {
+            "p50_us": 4671,
+            "p95_us": 4769
+          },
+          "indexed_search": {
+            "p50_us": 1793,
+            "p95_us": 1858
+          },
+          "full_rebuild_one_edit": {
+            "p50_us": 7960,
+            "p95_us": 10552
+          },
+          "incremental_rebuild_one_edit": {
+            "p50_us": 3780,
+            "p95_us": 4048
+          },
+          "matching_tasks": 3439
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "flutter_tests": 847,
+    "python_tests": 100,
+    "analyze": "passed",
+    "calendar_tests_America_Los_Angeles": 6,
+    "calendar_boundary_hours": [
+      23,
+      25
+    ],
+    "real_OS_DST": "not performed",
+    "widget_viewports": [
+      375,
+      768,
+      1440
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "text_scale_2_languages": [
+      "en",
+      "zh",
+      "ja"
+    ],
+    "native_candidate": "pending CI"
+  },
+  "evidenceHashes": {
+    "ui-preview.log": "aa688bba14c6e7f870a323a367dac7cea5a3363e185efef7b3eafaeeb8aecd77",
+    "full-tests.log": "5c930b0255df59d0d9c962a5e2d0899128b27c9ff89aa065971aac0ae366ca37",
+    "python-tests.log": "aa8cedce66dead806567b1d269634aac9b4e0c7dcf055fcf0b9d17c825a93b4c",
+    "calendar-tests.log": "8e8edb35c01d0ec0b2e96364a2cf8e5ea0c111703999b0a884cbb6f071661306"
+  }
+}

@@ -11,7 +11,6 @@ import 'package:audioplayers/audioplayers.dart';
 import '../../models/reminder.dart';
 import '../../providers/providers.dart';
 import '../../providers/home_controller.dart';
-import '../../providers/task_search_provider.dart';
 import '../../services/notification_service.dart';
 import '../../services/notification_permission_service.dart';
 import '../../services/notification_retry_coordinator.dart';
@@ -20,7 +19,7 @@ import '../../services/startup_trace.dart';
 import '../../services/recovery/runtime_gate.dart';
 import 'settings_screen.dart';
 import 'dashboard_screen.dart';
-import '../widgets/task_card.dart';
+import '../widgets/task_search_panel.dart';
 import '../widgets/input_bottom_bar.dart';
 import '../widgets/task_board.dart';
 import '../widgets/command_palette_dialog.dart';
@@ -96,6 +95,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   );
   bool _isSearchOpen = false;
   final _searchController = TextEditingController();
+  final _searchFocus = FocusNode(debugLabel: 'task-search');
   String _searchQuery = '';
   Timer? _searchDebounce;
   final _noticeClock = ValueNotifier(DateTime.now());
@@ -215,6 +215,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _runtime.unregister(this);
     WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
+    _searchFocus.dispose();
     _searchDebounce?.cancel();
     _noticeClock.dispose();
     _shortcutFocus.dispose();
@@ -1119,7 +1120,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         subtitle: l10n.get('searchHint'),
         icon: Icons.search_rounded,
         shortcut: '/',
-        onExecute: () => setState(() => _isSearchOpen = true),
+        onExecute: _openSearch,
       ),
       CommandPaletteAction(
         id: 'dashboard',
@@ -1179,7 +1180,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       return;
     }
     if (isCtrl && event.logicalKey == LogicalKeyboardKey.keyF) {
-      setState(() => _isSearchOpen = true);
+      _openSearch();
       return;
     }
 
@@ -1192,7 +1193,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (isTyping || isCtrl || HardwareKeyboard.instance.isAltPressed) return;
 
     if (event.logicalKey == LogicalKeyboardKey.slash) {
-      setState(() => _isSearchOpen = true);
+      _openSearch();
     } else if (event.logicalKey == LogicalKeyboardKey.keyG) {
       Navigator.push(
         context,
@@ -1207,6 +1208,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     } else if (event.logicalKey == LogicalKeyboardKey.keyE) {
       _exportCsvData();
     }
+  }
+
+  void _openSearch() {
+    if (!mounted || !_runtimeActive) return;
+    setState(() => _isSearchOpen = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _isSearchOpen && _runtimeActive) {
+        _searchFocus.requestFocus();
+      }
+    });
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    _updateSearch('');
+    _searchFocus.requestFocus();
   }
 
   void _closeSearch() {
@@ -1275,6 +1292,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     return KeyboardListener(
       focusNode: _shortcutFocus,
+      autofocus: true,
       onKeyEvent: _handleGlobalKeyEvent,
       child: Scaffold(
         extendBodyBehindAppBar: false,
@@ -1290,6 +1308,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           title: _isSearchOpen
               ? TextField(
                   controller: _searchController,
+                  focusNode: _searchFocus,
                   key: const ValueKey('task-search-field'),
                   autofocus: true,
                   style: const TextStyle(fontSize: 14),
@@ -1297,7 +1316,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     hintText: l10n.get('searchHint'),
                     hintStyle: TextStyle(
                       fontSize: 13,
-                      color: Colors.grey.shade500,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                     border: InputBorder.none,
                   ),
@@ -1331,22 +1350,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           backgroundColor: Colors.transparent,
           actions: _isSearchOpen
               ? [
-                  if (_searchQuery.isNotEmpty)
-                    IconButton(
-                      icon: const Icon(Icons.clear, size: 18),
-                      tooltip: l10n.get('clearSearch'),
-                      onPressed: () {
-                        _searchController.clear();
-                        _updateSearch('');
-                      },
-                    ),
+                  ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: _searchController,
+                    builder: (context, value, _) => value.text.isEmpty
+                        ? const SizedBox.shrink()
+                        : IconButton(
+                            icon: const Icon(Icons.clear, size: 18),
+                            tooltip: l10n.get('clearSearch'),
+                            onPressed: _clearSearch,
+                          ),
+                  ),
                   const SizedBox(width: 6),
                 ]
               : [
                   IconButton(
                     icon: const Icon(Icons.search_rounded),
                     tooltip: l10n.get('searchHint'),
-                    onPressed: () => setState(() => _isSearchOpen = true),
+                    onPressed: _openSearch,
                   ),
                   PopupMenuButton<ContextProfile>(
                     icon: Icon(
@@ -1514,88 +1534,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     ),
                   ),
                 Expanded(
-                  child: _isSearchOpen && _searchQuery.trim().isNotEmpty
-                      ? Builder(
-                          builder: (context) {
-                            final searchResults = ref.watch(
-                              taskSearchResultsProvider(_searchQuery),
-                            );
-                            final resultIndices = {
-                              for (var i = 0; i < searchResults.length; i++)
-                                searchResults[i].id: i,
-                            };
-
-                            if (searchResults.isEmpty) {
-                              return Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.search_off_rounded,
-                                      size: 48,
-                                      color: Colors.grey.shade400,
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      l10n.get('noSearchResult'),
-                                      style: TextStyle(
-                                        color: Colors.grey.shade600,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }
-
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 6,
-                                  ),
-                                  child: Text(
-                                    '${l10n.get('searchResults')} (${searchResults.length})',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.indigoAccent,
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: ListView.builder(
-                                    key: ValueKey(
-                                      'search-results-$_searchQuery',
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 4,
-                                    ),
-                                    itemCount: searchResults.length,
-                                    findChildIndexCallback: (key) =>
-                                        key is ValueKey<String>
-                                        ? resultIndices[key.value]
-                                        : null,
-                                    itemBuilder: (context, index) {
-                                      final task = searchResults[index];
-                                      return TaskCard(
-                                        key: ValueKey(task.id),
-                                        task: task,
-                                        onPlayMedia: () {
-                                          if (task.recordId != null) {
-                                            _playMedia(task.recordId!);
-                                          }
-                                        },
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
+                  child: _isSearchOpen
+                      ? TaskSearchPanel(
+                          query: _searchQuery,
+                          onClearQuery: _clearSearch,
+                          onPlayMedia: _playMedia,
                         )
                       : TaskBoard(
                           reminders: reminders,
