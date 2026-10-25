@@ -1,0 +1,143 @@
+{
+  "recordedAt": "2026-10-25T06:56:59.465099+00:00",
+  "baselineCI": {
+    "headSha": "b2e6fb010595c0b13e86ecc271bf927f61045433",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/yarnway/dontforget/actions/runs/40157788519"
+  },
+  "baselineJobs": [
+    {
+      "name": "Analyze and test",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build windows candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build android candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build macos candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build linux candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build ios candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Prepare draft release after all packages pass",
+      "conclusion": "skipped"
+    }
+  ],
+  "changes": [
+    "Track isolated Apple Virtualization controller and reproducible no-overwrite builder in source",
+    "Release stopped/error VM instances after failed start; preserve running/transitional instances",
+    "Log framework state and underlying error; retry and Quit available",
+    "Guard framework stop behind prior shutdown request, 30 second delay and explicit confirmation",
+    "Report guest time settings as unverified until independently read back"
+  ],
+  "tests": {
+    "python": {
+      "passed": 90,
+      "log": "build/native_acceptance/dst-stage32-materials/python-tests.log"
+    },
+    "bashSyntax": "PASS",
+    "finalSwiftCompileAndSignature": "PASS",
+    "nativeErrorPath": {
+      "observed_at": "2026-10-25T06:44:36.844253+00:00",
+      "old_failure_kept_start_disabled_and_blocked_quit": true,
+      "fixed_native_start_failure_attempts": 2,
+      "fixed_start_button_enabled_after_each_failure": true,
+      "fixed_error_state": 3,
+      "fixed_underlying_errno": 35,
+      "quit_from_failure_succeeded": true,
+      "cua_readback_relaunched_app_at": "2026-10-25T06:43:14Z",
+      "reopened_controller_pid": 37601,
+      "final_quit_process_absent": true,
+      "guest_started": false,
+      "guest_initialization": "BLOCKED_BY_STORAGE_LOCK",
+      "real_dst": "NOT_PERFORMED",
+      "forced_stop_path": "COMPILED_NOT_EXECUTED_NO_RUNNING_VM",
+      "bundle": "org.dontforget.acceptance.dstlab32",
+      "source_sha256": "8cf5d12a135587d9b2bda436aa1141e71e1768f89c0f80512175a81b75232be3"
+    },
+    "finalSourceSha256": "a2cf04c25378ebf5b3bf1add5d90c347449dc06c9c6b6c8003ec5b1aa3c90e65",
+    "nativeVsFinalDifference": "Only initial status wording and ready-event time-verification fields; final binary compiled/signed but not reopened after host locked",
+    "frameworkStopRunningGuest": "NOT_PERFORMED"
+  },
+  "storage": {
+    "observed_at": "2026-10-25T06:35:51.668061+00:00",
+    "results": [
+      {
+        "file": "auxiliary-storage.bin",
+        "query": "F_GETLK only; no lock acquired or changed",
+        "lock_type": 3,
+        "lock_owner_pid": -1,
+        "range_start": 0,
+        "range_length": 0,
+        "file_inode": 297693846
+      },
+      {
+        "file": "disk.img",
+        "query": "F_GETLK only; no lock acquired or changed",
+        "lock_type": 3,
+        "lock_owner_pid": -1,
+        "range_start": 0,
+        "range_length": 0,
+        "file_inode": 297693847
+      }
+    ]
+  },
+  "staleWorker": {
+    "pid": 17744,
+    "start": "2026-10-25 00:54:51 Asia/Shanghai",
+    "stateAfterTaskScopedSIGTERM": "?Es",
+    "rss": 0,
+    "locksCleared": false,
+    "lockOwnerIdentified": false,
+    "guestStorageReplaced": false
+  },
+  "host": {
+    "bootUUID": "C5EA9BC6-4B3F-4A76-8AB5-B9751726418E",
+    "boottimeSeconds": 1791900480,
+    "timeUI": "Automatic time and timezone enabled; CST Hangzhou",
+    "lastNativeToolResult": "Mac locked and automatic unlock failed",
+    "normalRestart": "NOT_PERFORMED",
+    "postRebootColdStart": "NOT_PERFORMED",
+    "terminalPrivilege": "sudo -n requires local authentication"
+  },
+  "guest": {
+    "lastSetupPage": "Create a Mac Account",
+    "startedThisPhase": false,
+    "setupComplete": false,
+    "credentialHandoffGate": "Native tool requires user entry/confirmation/submission of new credentials; not bypassed",
+    "realSpringDST": "NOT_PERFORMED",
+    "realAutumnDST": "NOT_PERFORMED",
+    "nativeNotificationCancellation": "NOT_PERFORMED"
+  },
+  "cleanup": {
+    "state": "COMPLETED",
+    "target": "build/native_acceptance/DST Lab build verification.app",
+    "bytes": 276187,
+    "allocated_bytes": 282624,
+    "protected_before": 532,
+    "protected_after": 532,
+    "regenerable_project_caches_present": false,
+    "library_data_deleted": false,
+    "test_environment_deleted": false
+  },
+  "remaining": [
+    "Release guest storage locks through supported lifecycle and verify startup consistency",
+    "Complete guest initialization within native credential policy",
+    "Real spring/autumn DST natural crossing, per-ID delivery and pending/retained cancellation",
+    "Actual host reboot; independent OS retention before launch; same 10000-row dataset cold startup",
+    "Delete acceptance guest and original install image after acceptance; preserve compact rollback and evidence"
+  ]
+}

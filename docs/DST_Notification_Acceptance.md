@@ -20,6 +20,26 @@ python3 -m unittest discover -s scripts/tests -p test_dst_acceptance_fixture.py 
 
 输出 `spring-v9.json`、`autumn-v9.json`、`empty-v9.json` 和 `manifest.json`。三份备份均为冻结 schema 9；现有产品恢复路径负责迁移到当前 schema，恢复导入不能作为启动升级验收。所有数据均为无密钥、无媒体、静音 Q3 合成任务。生成时用 SQLite 和系统时区库验证字段、引用完整性、时间和摘要。
 
+## Apple 虚拟化验收窗口
+
+Apple silicon / macOS 14+ 可构建项目自有的原生验收窗口。`--acceptance-root` 必须是已有专属目录，其中包含 `dst-stage30-materials` 和仅合成数据的 `dst-stage30-share`；客体固定保存在该目录的 `dst-stage30-apple-vm`。参数均使用绝对路径，输出必须是不存在的 `.app`。例如在仓库根目录：
+
+```sh
+bash scripts/build_macos_dst_lab.sh --help
+bash scripts/build_macos_dst_lab.sh \
+  --acceptance-root "$PWD/build/native_acceptance" \
+  --output "$PWD/build/native_acceptance/DontForget DST Lab new.app"
+python3 -m unittest discover -s scripts/tests -p test_dst_lab_build.py -v
+```
+
+构建仅编译、签名并验证窗口，不启动或修改客体；失败只清理本次临时构建目录，发布使用禁止覆盖的原子重命名。首次安装需要已核验的 `dst-stage30-image/restore.ipsw`（当前构建 26A434）。已安装客体启动无需镜像；只要客体目录存在就禁用安装，避免重装覆盖。
+
+启动失败进入框架 `.error` 状态时，窗口释放这个非运行实例，使“Start guest”可重试、退出可用，并记录错误域、错误码与底层错误。运行中或状态切换中的实例不会被释放来规避存储锁。窗口没有配置宿主时间同步代理，但这不能证明客体网络时间已关闭；每轮测试仍须独立读回时间设置。
+
+先使用“Request guest shutdown”正常关机。30 秒后仍未停止且框架允许停止，才启用“Stop unresponsive guest…”，再次确认后通过框架停止本客体。该方式可能丢失客体未保存状态，记录为异常停止，后续必须验证启动和文件系统；不能当作正常关机通过。此强制停止分支目前仅完成编译检查，尚无运行中客体实测。
+
+若启动报告 `VZErrorDomain/2`、底层 `NSPOSIXErrorDomain/35`，应先记录锁和进程状态。`lsof` 无输出不足以证明磁盘可用；本机曾在工作进程处于退出状态、RSS=0 时，仍由 `F_GETLK` 读到全文件写锁且 owner PID=-1。只读查询不应获取或修改锁，未知 owner 不能据此指定归属。不得替换文件 inode、删除辅助存储或复制在线磁盘来绕过锁。磁盘、辅助存储、硬件模型及机器身份作为同一客体保留；[Apple 辅助存储说明](https://developer.apple.com/documentation/virtualization/vzmacauxiliarystorage)。
+
 ## 两轮独立验收
 
 客体时区固定 `America/Los_Angeles`，每轮只恢复一份备份。时钟定位到边界前十分钟后，让系统自然走过边界；观察期间不可跳钟、暂停或恢复虚拟机。
