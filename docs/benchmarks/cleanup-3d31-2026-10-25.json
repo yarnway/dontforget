@@ -1,0 +1,287 @@
+{
+  "state": "COMPLETED",
+  "recorded_at": "2026-10-25T03:12:15.086132+00:00",
+  "targets": [
+    {
+      "path": "build/native_acceptance/models-r40054931085/dont_forget.app",
+      "kind": "superseded_expanded_app",
+      "bytes": 58678588,
+      "allocated_bytes": 58793984
+    },
+    {
+      "path": "build/native_acceptance/product-final15-r39937296463/dont_forget.app",
+      "kind": "superseded_expanded_app",
+      "bytes": 58578934,
+      "allocated_bytes": 58695680
+    },
+    {
+      "path": "build/native_acceptance/profile-final-r39918373329/dont_forget.app",
+      "kind": "superseded_expanded_app",
+      "bytes": 77112526,
+      "allocated_bytes": 77230080
+    },
+    {
+      "path": "build/native_acceptance/profile-final15-r39937296463/dont_forget.app",
+      "kind": "superseded_expanded_app",
+      "bytes": 77227730,
+      "allocated_bytes": 77344768
+    },
+    {
+      "path": "build/native_acceptance/timezone-r39952545684/dont_forget.app",
+      "kind": "superseded_expanded_app",
+      "bytes": 58595992,
+      "allocated_bytes": 58712064
+    },
+    {
+      "path": "build/native_acceptance/upgrade-after-r39933362241/dont_forget.app",
+      "kind": "superseded_expanded_app",
+      "bytes": 58578934,
+      "allocated_bytes": 58695680
+    },
+    {
+      "path": "build/native_acceptance/upgrade-before-r39933362241/dont_forget.app",
+      "kind": "superseded_expanded_app",
+      "bytes": 58447350,
+      "allocated_bytes": 58564608
+    },
+    {
+      "path": "build/native_acceptance/upgrade26-r40085908096/dont_forget.app",
+      "kind": "superseded_expanded_app",
+      "bytes": 58744386,
+      "allocated_bytes": 58863616
+    },
+    {
+      "path": ".dart_tool/hooks_runner",
+      "kind": "regenerable_build_cache",
+      "bytes": 24752676,
+      "allocated_bytes": 24825856
+    },
+    {
+      "path": "build/native_assets",
+      "kind": "regenerable_build_cache",
+      "bytes": 1968039,
+      "allocated_bytes": 1978368
+    },
+    {
+      "path": "build/native_acceptance/dst-stage30-image/restore.ipsw",
+      "kind": "unused_apfs_image_clone",
+      "bytes": 26637307067,
+      "allocated_bytes": null,
+      "physical_reclaim_claimed": false
+    }
+  ],
+  "old_apps_restored_and_verified": 8,
+  "delta_bytes_retained": 5010739,
+  "app_and_cache_bytes_removed": 532685155,
+  "app_and_cache_allocated_bytes_removed": 533704704,
+  "unused_clone_logical_bytes_removed": 26637307067,
+  "clone_physical_reclaim_claimed": false,
+  "library_data_deleted": false,
+  "current_flutter_toolchain_retained": true,
+  "current_guest_retained": true,
+  "original_image_retained": true,
+  "rollback": [
+    {
+      "target": "build/native_acceptance/models-r40054931085/dont_forget.app",
+      "original": "build/ci_artifacts/models-r40054931085/DontForget_macOS_unnotarized_v1.6.0.zip",
+      "original_sha256": "b65feb332be48cd34c18e47004af320488d0ce838ce36b209a65ef55afe34b58",
+      "delta": "build/native_acceptance/dst-stage31-materials/rollback-deltas/models-r40054931085.tar.gz",
+      "delta_sha256": "84347fd5cb0601ff6aec430895887156e54d8548331277357fe46cc7a1a8265d",
+      "overrides": [
+        "Contents/Info.plist",
+        "Contents/MacOS/dont_forget"
+      ],
+      "removed": [],
+      "restore_verified": true,
+      "codesign_verified": true,
+      "source_revision": "d404ccd382b51ffbd0bffedde438cb33e1867e69",
+      "bundle_id": "com.example.dontForget.acceptance.models-r40054931085"
+    },
+    {
+      "target": "build/native_acceptance/product-final15-r39937296463/dont_forget.app",
+      "original": "build/ci_artifacts/product-final15-r39937296463/DontForget_macOS_retry_measurement.zip",
+      "original_sha256": "3e07d4105bc821c13c3e190a643bbb58fd3f1351966f01c482523b73797ddbc1",
+      "delta": "build/native_acceptance/dst-stage31-materials/rollback-deltas/product-final15-r39937296463.tar.gz",
+      "delta_sha256": "2204c5d743cab4ebb10cb4f25465a00387f33b8a3de7581742a1878478abd776",
+      "overrides": [
+        "Contents/Info.plist",
+        "Contents/MacOS/dont_forget"
+      ],
+      "removed": [],
+      "restore_verified": true,
+      "codesign_verified": true,
+      "source_revision": "838e5087ce677ad2fcf69ba4e0cc6ffe42ba5bb4",
+      "bundle_id": "com.example.dontForget.acceptance.product-final15-r39937296463"
+    },
+    {
+      "target": "build/native_acceptance/profile-final-r39918373329/dont_forget.app",
+      "original": "build/ci_artifacts/final-profile-api-r39918373329/DontForget_macOS_profile_benchmark.zip",
+      "original_sha256": "5f364d9d31c00277ee9e9eb5f8269a5c0920df3b4c5ac6a5dbdd12975adbe1d4",
+      "delta": "build/native_acceptance/dst-stage31-materials/rollback-deltas/profile-final-r39918373329.tar.gz",
+      "delta_sha256": "31215b40a20e90836bd1dd51a49029026b22657cd732d44bcc7206c623c69c33",
+      "overrides": [
+        "Contents/Info.plist",
+        "Contents/MacOS/dont_forget"
+      ],
+      "removed": [],
+      "restore_verified": true,
+      "codesign_verified": true,
+      "source_revision": "9dca8cb0afdf73de5eb71ca41ce3c5fbe903e511",
+      "bundle_id": "com.example.dontForget.acceptance.profile-final-r39918373329"
+    },
+    {
+      "target": "build/native_acceptance/profile-final15-r39937296463/dont_forget.app",
+      "original": "build/ci_artifacts/profile-final15-r39937296463/DontForget_macOS_profile_benchmark.zip",
+      "original_sha256": "336d7a94621151d4b60e439c5047df78aed88722898a6831bd8d61bff1839d6a",
+      "delta": "build/native_acceptance/dst-stage31-materials/rollback-deltas/profile-final15-r39937296463.tar.gz",
+      "delta_sha256": "b998f3a2133fbc038a49ee3e07c261a34cb6b2809dd24885f9064bcd2c1dacf0",
+      "overrides": [
+        "Contents/Info.plist",
+        "Contents/MacOS/dont_forget"
+      ],
+      "removed": [],
+      "restore_verified": true,
+      "codesign_verified": true,
+      "source_revision": "838e5087ce677ad2fcf69ba4e0cc6ffe42ba5bb4",
+      "bundle_id": "com.example.dontForget.acceptance.profile-final15-r39937296463"
+    },
+    {
+      "target": "build/native_acceptance/timezone-r39952545684/dont_forget.app",
+      "original": "build/ci_artifacts/timezone-r39952545684/DontForget_macOS_retry_measurement.zip",
+      "original_sha256": "e65e31782a4de58bbf2b7f2b0ef7da02fa861623251a48d94afb480021510463",
+      "delta": "build/native_acceptance/dst-stage31-materials/rollback-deltas/timezone-r39952545684.tar.gz",
+      "delta_sha256": "bdcdee4e945946dd70c0d855059241bb22b5dc31bc2c281ad335a4e86862299d",
+      "overrides": [
+        "Contents/Info.plist",
+        "Contents/MacOS/dont_forget"
+      ],
+      "removed": [],
+      "restore_verified": true,
+      "codesign_verified": true,
+      "source_revision": "172c6bbf442e71d38d530abcd9ea9eebdf7fb1eb",
+      "bundle_id": "com.example.dontForget.acceptance.timezone-r39952545684"
+    },
+    {
+      "target": "build/native_acceptance/upgrade-after-r39933362241/dont_forget.app",
+      "original": "build/ci_artifacts/product-stage15-r39933362241/DontForget_macOS_retry_measurement.zip",
+      "original_sha256": "0cc62a4e104333f0fe4e8ef62a5152af4377814108b54f2c56027f3a94953063",
+      "delta": "build/native_acceptance/dst-stage31-materials/rollback-deltas/upgrade-after-r39933362241.tar.gz",
+      "delta_sha256": "416b30d830222237d17c5966591a0bda030807d6e75d9f8cff0db02fd35404d1",
+      "overrides": [
+        "Contents/Info.plist",
+        "Contents/MacOS/dont_forget"
+      ],
+      "removed": [],
+      "restore_verified": true,
+      "codesign_verified": true,
+      "source_revision": "21282b6eed05770a9d5e9e5e8c1946d756d823be",
+      "bundle_id": "com.example.dontForget.acceptance.upgrade-stage15-r39933362241"
+    },
+    {
+      "target": "build/native_acceptance/upgrade-before-r39933362241/dont_forget.app",
+      "original": "build/ci_artifacts/final-retry-api-r39918373329/DontForget_macOS_retry_measurement.zip",
+      "original_sha256": "e0feb440f57f5527d2a1193f9ca20898c9b37c31dcfb48e858da8b915e802a9a",
+      "delta": "build/native_acceptance/dst-stage31-materials/rollback-deltas/upgrade-before-r39933362241.tar.gz",
+      "delta_sha256": "c78312256424e37a3a4f4fcf168c1afa1257a36b57ff4ad1ec92bf1d2d57e330",
+      "overrides": [
+        "Contents/Info.plist",
+        "Contents/MacOS/dont_forget"
+      ],
+      "removed": [],
+      "restore_verified": true,
+      "codesign_verified": true,
+      "source_revision": "9dca8cb0afdf73de5eb71ca41ce3c5fbe903e511",
+      "bundle_id": "com.example.dontForget.acceptance.upgrade-stage15-r39933362241"
+    },
+    {
+      "target": "build/native_acceptance/upgrade26-r40085908096/dont_forget.app",
+      "original": "build/ci_artifacts/upgrade26-r40085908096/DontForget_macOS_startup_measurement.zip",
+      "original_sha256": "15d6501630757b741fff03c8dce60064223cd2287bf2fc83ef5e6cf4b59ac4a9",
+      "delta": "build/native_acceptance/dst-stage31-materials/rollback-deltas/upgrade26-r40085908096.tar.gz",
+      "delta_sha256": "9f51417663fa00e5f5fabe458478a9219cbe6391e9bf29e7998188a6ac3ec25d",
+      "overrides": [
+        "Contents/Info.plist",
+        "Contents/MacOS/dont_forget"
+      ],
+      "removed": [],
+      "restore_verified": true,
+      "codesign_verified": true,
+      "source_revision": "5eb353da220d45a0fc4d5026c240a5fd2d052d18",
+      "bundle_id": "com.example.dontForget.acceptance.upgrade26-r40085908096"
+    }
+  ],
+  "ci": {
+    "conclusion": "success",
+    "headSha": "7886936a665a2d9f48e6d90b99958f79ee71853e",
+    "jobs": [
+      {
+        "name": "Analyze and test",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/40156754579/job/121059661883"
+      },
+      {
+        "name": "Build windows candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/40156754579/job/121060319257"
+      },
+      {
+        "name": "Build ios candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/40156754579/job/121060319275"
+      },
+      {
+        "name": "Build macos candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/40156754579/job/121060319288"
+      },
+      {
+        "name": "Build linux candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/40156754579/job/121060319298"
+      },
+      {
+        "name": "Build android candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/40156754579/job/121060319300"
+      },
+      {
+        "name": "Prepare draft release after all packages pass",
+        "status": "completed",
+        "conclusion": "skipped",
+        "url": "https://github.com/yarnway/dontforget/actions/runs/40156754579/job/121061376755"
+      }
+    ],
+    "url": "https://github.com/yarnway/dontforget/actions/runs/40156754579",
+    "observed_at": "2026-10-25T03:17:03.358162+00:00"
+  },
+  "guest_stop": {
+    "recorded_at": "2026-10-25T03:16:35.803425+00:00",
+    "runner_pid": 14303,
+    "graceful_guest_shutdown": "REQUESTED_BUT_NOT_CONFIRMED",
+    "last_guest_page": "Setup Assistant shutdown confirmation; no account created",
+    "native_input": "click, keyboard, Raise and rebind did not dismiss confirmation",
+    "action": "SIGTERM to this task-owned runner only",
+    "guest_disk_retained": true,
+    "guest_filesystem_clean_shutdown_verified": false,
+    "next_boot_check_required": true,
+    "dst_acceptance": "NOT_PERFORMED",
+    "checked_at": "2026-10-25T03:17:31.781273+00:00",
+    "runner_exited": true,
+    "guest_disk_open_handles": 0,
+    "worker_readback": "17744 ?Es       0 (com.apple.Virtua)",
+    "worker_additional_signal_sent": false
+  },
+  "empty_guest_allocated_bytes_removed_separately": 92618752,
+  "prior_protected_hashes_intentionally_retired": 92,
+  "protected_files_verified_after": 529,
+  "host_reboot": "NOT_PERFORMED",
+  "host_native_menu": "Control-F2/Down did not open system menu",
+  "host_admin_authorization": "sudo -n -v: a password is required",
+  "guest_environment_deletion": "Deferred until acceptance finishes; current guest disk and original image retained"
+}
