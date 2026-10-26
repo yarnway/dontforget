@@ -36,7 +36,15 @@
       "pending": [
         "macos",
         "release"
-      ]
+      ],
+      "observedAt": "2026-10-26T16:53:15.801135+00:00",
+      "attempt1Macos": {
+        "conclusion": "cancelled",
+        "stepsExecuted": 0,
+        "runnerId": 0,
+        "diagnosis": "The job was not acquired by Runner of type hosted even after multiple attempts; macOS arm64 capacity constraints"
+      },
+      "macosOnlyRerunRequested": true
     }
   },
   "deviceUpgrade": {
@@ -133,5 +141,12 @@
       "21"
     ],
     "sharedToolchainsPreserved": true
+  },
+  "release": {
+    "rc21Published": false,
+    "reason": "macOS hosted-runner allocation failure; retry pending; dependent release not complete",
+    "previousPublicCandidate": "v1.7.0-rc.18",
+    "rc19": "unpublished diagnostic draft",
+    "rc20": "not published"
   }
 }
