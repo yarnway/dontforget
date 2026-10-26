@@ -1,0 +1,43 @@
+{
+  "stage": 6,
+  "previousCandidateNative": {
+    "result": "PASS",
+    "candidate": "1.7.0+11",
+    "nativeCmdK": [
+      "home",
+      "input focus",
+      "no duplicate",
+      "settings and review route guards"
+    ],
+    "review": [
+      "native enable",
+      "flip with exact two-line answer",
+      "remembered to level2",
+      "SQLite exact date readback",
+      "normal quit/reopen level2 visible"
+    ],
+    "focus": [
+      "on: OS pending1, journal Q1 scheduled/Q3 cancelled",
+      "quit/reopen: off and OS pending2",
+      "manual on/off: OS pending2 restored"
+    ],
+    "cleanup": {
+      "productNativeDeletion": 3,
+      "osPending": 0,
+      "osRetained": 0,
+      "journalCancelSubmitted": 7,
+      "unfinished": 0,
+      "baselineTablesEqual": true,
+      "integrity": "ok"
+    },
+    "deliveryClaim": false,
+    "finding": "Deliberate focus suppression shown as awaiting verification in settings; fix next.",
+    "previousCI": {
+      "runId": "40267046543",
+      "conclusion": "success",
+      "revision": "946ad8cf1ee2a31bccdd575bfc393156cdf8d8ba"
+    }
+  },
+  "newCandidate": "1.7.0+12",
+  "newCandidateNative": "PENDING"
+}

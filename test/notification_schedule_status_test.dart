@@ -25,6 +25,38 @@ void main() {
     noticeRevision: r.noticeRevision,
   );
 
+  test(
+    'policy pauses are separate from native failures and stale schedules',
+    () {
+      final rows = [
+        task('paused'),
+        task('failed'),
+        task('stillScheduled'),
+        task('q1').copyWith(quadrantLevel: 1),
+      ];
+      final entries = {
+        rows[0].id: entry(rows[0], action: 'cancel'),
+        rows[1].id: entry(rows[1], action: 'cancel', status: 'failed'),
+        rows[2].id: entry(rows[2]),
+        rows[3].id: entry(rows[3]),
+      };
+      final status = NotificationScheduleStatus.fromSaved(
+        rows,
+        entries,
+        now,
+        isSuppressed: (r) => r.quadrantLevel >= 3,
+      );
+      expect(status.upcoming, 4);
+      expect(status.policyPaused, 1);
+      expect(status.needsAttention, 2);
+      expect(status.submitted, 1);
+      final off = NotificationScheduleStatus.fromSaved(rows, entries, now);
+      expect(off.policyPaused, 0);
+      expect(off.needsAttention, 2);
+      expect(off.submitted, 2);
+    },
+  );
+
   test('only a matching future occurrence counts as submitted to plugin', () {
     final saved = [
       task('ok'),

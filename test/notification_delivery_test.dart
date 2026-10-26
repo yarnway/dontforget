@@ -92,13 +92,18 @@ void main() {
       native,
       usesNativeNotifications: false,
     )..isImmersiveModeActive = true;
+    ContextTriggerService().clearSuppressed();
     final emitted = <Reminder>[];
     final subscription = service.onReminderDue.listen(emitted.add);
     try {
       service.fireReminderNow(task('focus', 3));
       await Future<void>.delayed(Duration.zero);
       expect(emitted, isEmpty);
+      expect(ContextTriggerService().suppressedReminders.single.id, 'focus');
+      await service.fireReminderNow(task('focus', 3));
+      expect(ContextTriggerService().suppressedReminders, hasLength(1));
     } finally {
+      ContextTriggerService().clearSuppressed();
       await subscription.cancel();
     }
   });

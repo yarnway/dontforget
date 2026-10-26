@@ -4,7 +4,8 @@ import '../models/reminder.dart';
 
 /// A local snapshot without starting reminder timers or native reconciliation.
 class NotificationScheduleReader {
-  NotificationScheduleReader(this.database);
+  NotificationScheduleReader(this.database, {this.isSuppressed});
+  final bool Function(Reminder)? isSuppressed;
   final DatabaseHelper database;
 
   Future<NotificationScheduleStatus> read() async {
@@ -38,6 +39,7 @@ class NotificationScheduleReader {
         rows.map(Reminder.fromJson),
         journal != null && journal.epoch == epoch ? journal.entries : {},
         DateTime.now(),
+        isSuppressed: isSuppressed,
       );
     });
   }

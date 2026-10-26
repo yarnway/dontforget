@@ -28,7 +28,11 @@ final databaseHelperProvider = Provider<DatabaseHelper>((ref) {
 /// Reading settings must not instantiate the reminder scheduling controller.
 final notificationScheduleStatusReaderProvider =
     Provider<Future<NotificationScheduleStatus> Function()>((ref) {
-      return NotificationScheduleReader(ref.read(databaseHelperProvider)).read;
+      return NotificationScheduleReader(
+        ref.read(databaseHelperProvider),
+        isSuppressed: (task) =>
+            ref.read(notificationServiceProvider).isSuppressed(task),
+      ).read;
     });
 
 final runtimeRecoveryGateProvider = Provider<RuntimeRecoveryGate>((ref) {

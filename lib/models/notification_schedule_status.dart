@@ -4,6 +4,7 @@ import '../services/notification_journal.dart';
 /// Local bookkeeping, never an operating-system delivery receipt.
 class NotificationScheduleStatus {
   const NotificationScheduleStatus({
+    this.policyPaused = 0,
     required this.upcoming,
     required this.submitted,
     required this.needsAttention,
@@ -11,6 +12,7 @@ class NotificationScheduleStatus {
     required this.overdueUnconfirmed,
   });
 
+  final int policyPaused;
   final int upcoming;
   final int submitted;
   final int needsAttention;
@@ -20,8 +22,10 @@ class NotificationScheduleStatus {
   factory NotificationScheduleStatus.fromSaved(
     Iterable<Reminder> reminders,
     Map<String, NotificationJournalEntry> entries,
-    DateTime now,
-  ) {
+    DateTime now, {
+    bool Function(Reminder)? isSuppressed,
+  }) {
+    var policyPaused = 0;
     var upcoming = 0;
     var submitted = 0;
     var needsAttention = 0;
@@ -51,7 +55,13 @@ class NotificationScheduleStatus {
         continue;
       }
       upcoming++;
-      if (entry?.action == 'schedule' &&
+      if (isSuppressed?.call(reminder) == true) {
+        if (entry?.action == 'cancel' && entry?.status == 'submitted') {
+          policyPaused++;
+        } else {
+          needsAttention++;
+        }
+      } else if (entry?.action == 'schedule' &&
           entry?.status == 'submitted' &&
           entry?.noticeRevision == reminder.noticeRevision &&
           entry?.triggerUtcMicros ==
@@ -67,6 +77,7 @@ class NotificationScheduleStatus {
       }
     }
     return NotificationScheduleStatus(
+      policyPaused: policyPaused,
       upcoming: upcoming,
       submitted: submitted,
       needsAttention: needsAttention,

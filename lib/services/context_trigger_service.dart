@@ -86,9 +86,26 @@ class ContextTriggerService {
   final Set<String> _sessionTriggeredTaskIds = {};
 
   /// 专注情境下被拦截静音的次要任务队列（Q3 与 Q4）
-  final List<Reminder> _suppressedReminders = [];
+  final Map<String, Reminder> _suppressedReminders = {};
   List<Reminder> get suppressedReminders =>
-      List.unmodifiable(_suppressedReminders);
+      List.unmodifiable(_suppressedReminders.values);
+
+  List<Reminder> activeDigest(
+    List<Reminder> saved, {
+    List<Reminder> previous = const [],
+  }) {
+    if (previous.isEmpty && _suppressedReminders.isEmpty) return const [];
+    final members = {
+      for (final task in previous) task.id: task.occurrenceIdentity,
+      for (final task in _suppressedReminders.values)
+        task.id: task.occurrenceIdentity,
+    };
+    return [
+      for (final task in saved)
+        if (!task.isCompleted && members[task.id] == task.occurrenceIdentity)
+          task,
+    ];
+  }
 
   final StreamController<ContextProfile> _profileController =
       StreamController<ContextProfile>.broadcast();
@@ -126,7 +143,7 @@ class ContextTriggerService {
   void triggerCatchUpDigest() {
     if (_suppressedReminders.isEmpty) return;
 
-    final digestList = List<Reminder>.from(_suppressedReminders);
+    final digestList = List<Reminder>.from(_suppressedReminders.values);
     _suppressedReminders.clear();
     _suppressedUpdateController.add(const []);
     _catchUpDigestController.add(digestList);
@@ -146,16 +163,20 @@ class ContextTriggerService {
         _currentProfile == ContextProfile.office;
     if (isHighFocus &&
         (reminder.quadrantLevel == 3 || reminder.quadrantLevel == 4)) {
-      // 记录到拦截队列中待事后摘要
-      if (!_suppressedReminders.any((r) => r.id == reminder.id)) {
-        _suppressedReminders.add(reminder);
-        _suppressedUpdateController.add(
-          List.unmodifiable(_suppressedReminders),
-        );
-      }
+      recordSuppressed(reminder);
       return true;
     }
     return false;
+  }
+
+  /// Keep the latest suppressed occurrence for each task without replaying it.
+  void recordSuppressed(Reminder reminder) {
+    final previous = _suppressedReminders[reminder.id];
+    if (previous?.occurrenceIdentity == reminder.occurrenceIdentity) return;
+    _suppressedReminders[reminder.id] = reminder;
+    _suppressedUpdateController.add(
+      List.unmodifiable(_suppressedReminders.values),
+    );
   }
 
   /// 嗅探当前 Wi-Fi SSID (仅在 Windows 原生命令行执行 netsh，防卡顿超时处理)

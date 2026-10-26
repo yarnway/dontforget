@@ -26,6 +26,7 @@ import '../widgets/command_palette_dialog.dart';
 import '../widgets/spaced_repetition_sheet.dart';
 import '../widgets/focus_mode_sheet.dart';
 import '../widgets/context_digest_sheet.dart';
+import '../widgets/data_export_sheet.dart';
 import '../../services/context_trigger_service.dart';
 import '../../services/spaced_repetition_service.dart';
 import 'knowledge_graph_screen.dart';
@@ -130,7 +131,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       digestList,
     ) {
       if (!mounted || !_runtimeActive || digestList.isEmpty) return;
-      setState(() => _contextDigest = digestList);
+      setState(
+        () => _contextDigest = {
+          for (final r in _contextDigest) r.id: r,
+          for (final r in digestList) r.id: r,
+        }.values.toList(),
+      );
     });
 
     // 监听拦截队列更新以便即时刷新情境徽标
@@ -849,23 +855,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void _openContextDigest() {
     if (!mounted || !_runtimeActive) return;
     final active = ref.read(remindersProvider);
-    final ids = {
-      ..._contextDigest.map((r) => r.id),
-      ..._contextTriggers.suppressedReminders.map((r) => r.id),
-    };
-    final suppressed = active
-        .where((r) => ids.contains(r.id) && !r.isCompleted)
-        .toList();
-    if (suppressed.isEmpty) {
-      InlineFeedback.of(context).hideCurrentSnackBar();
-      InlineFeedback.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context).get('noSuppressedTasks')),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
+    final suppressed = _contextTriggers.activeDigest(
+      active,
+      previous: _contextDigest,
+    );
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => Scaffold(
@@ -895,38 +888,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   Future<void> _exportCsvData() async {
     if (!mounted || !_runtimeActive) return;
-    final l10n = AppLocalizations.of(context);
-    final reminders = ref.read(remindersProvider);
-    final exportService = ref.read(dataExportServiceProvider);
-    try {
-      final file = await exportService.exportToFile(reminders);
-      if (!mounted || !_runtimeActive) return;
-      InlineFeedback.of(context).hideCurrentSnackBar();
-      InlineFeedback.of(context).showSnackBar(
-        SnackBar(
-          duration: const Duration(seconds: 5),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          content: Text('${l10n.get('exportSuccess')}${file.path}'),
-          action: SnackBarAction(
-            label: l10n.get('openExportFolder'),
-            onPressed: () {
-              if (Platform.isWindows) {
-                Process.run('explorer.exe', ['/select,', file.path]);
-              }
-            },
-          ),
-        ),
-      );
-    } catch (e) {
-      if (!mounted || !_runtimeActive) return;
-      InlineFeedback.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${l10n.get('exportFailed')}: $e'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-    }
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => const DataExportSheet(),
+    );
   }
 
   void _showMultiAgentGoalDialog() {
@@ -1246,7 +1213,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final homeState = ref.watch(homeControllerProvider);
     final spacedService = ref.watch(spacedRepetitionServiceProvider);
     final currentProfile = ref.watch(contextProfileProvider);
-    final suppressedCount = _contextTriggers.suppressedReminders.length;
+    final digest = _contextTriggers.activeDigest(
+      reminders,
+      previous: _contextDigest,
+    );
+    final suppressedCount = digest.length;
 
     ref.listen<HomeState>(homeControllerProvider, (previous, next) {
       if (_runtimeActive && next.error != null) {
@@ -1525,10 +1496,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     );
                   },
                 ),
-                if (_contextDigest.any(
-                  (item) =>
-                      reminders.any((r) => r.id == item.id && !r.isCompleted),
-                ))
+                if (digest.isNotEmpty)
                   Align(
                     alignment: Alignment.centerLeft,
                     child: TextButton.icon(

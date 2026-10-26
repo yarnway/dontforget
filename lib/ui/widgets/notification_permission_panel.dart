@@ -308,6 +308,15 @@ class _NotificationPermissionPanelState
                   key: const ValueKey('notification-schedule-status'),
                 ),
               ),
+              if ((_schedule?.policyPaused ?? 0) > 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    l10n
+                        .get('notificationSchedulePaused')
+                        .replaceAll('{count}', '${_schedule!.policyPaused}'),
+                  ),
+                ),
               if ((_schedule?.overdueUnconfirmed ?? 0) > 0)
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
