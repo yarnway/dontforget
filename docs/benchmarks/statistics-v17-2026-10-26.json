@@ -1,0 +1,105 @@
+{
+  "date": "2026-10-26",
+  "toolchain": "Flutter 3.44.9 / Dart 3.12.2, macOS arm64",
+  "baseline_revision": "e3ae23e78f27e30657f9a3c80443bb7f8b405ff3",
+  "script_sha256": "50b1486d211686f7de57d80d2fceb303dca82b1f726424a36a87801a8c134c1f",
+  "limitations": [
+    "Synthetic Dart CPU timing only, not native frames or startup.",
+    "New aggregation includes bounded title samples; old dashboard scan does not.",
+    "100-task runs show sample and JIT overhead; provider reuse avoids rescanning on report-only UI state changes."
+  ],
+  "runs": [
+    {
+      "scope": "Single-process synthetic Dart aggregation CPU; 20 warmups and 200 samples per metric; microseconds. No native frame or startup claim.",
+      "dataset": "statistics-v1; fixed createdAt 2026-10-26 UTC, round-robin categories, every third task completed",
+      "results": [
+        {
+          "tasks": 100,
+          "fixture_sha256": "d8830bad966754883da2a3b863b9c58bf67e335d7b1360fe41322b70f4915c78",
+          "previous_five_scans": {
+            "p50_us": 2,
+            "p95_us": 32
+          },
+          "single_pass_with_bounded_title_samples": {
+            "p50_us": 16,
+            "p95_us": 44
+          },
+          "completion_percent": 34
+        },
+        {
+          "tasks": 1000,
+          "fixture_sha256": "f680367d2691fef12d69dab647cbc2728c6ff4ba3b6ed4f25641245caa4f480a",
+          "previous_five_scans": {
+            "p50_us": 17,
+            "p95_us": 19
+          },
+          "single_pass_with_bounded_title_samples": {
+            "p50_us": 6,
+            "p95_us": 11
+          },
+          "completion_percent": 33
+        },
+        {
+          "tasks": 10000,
+          "fixture_sha256": "039423197109c09011f6d733d858a2c2d518e7b2f867f0b969f672e408d2bcd3",
+          "previous_five_scans": {
+            "p50_us": 165,
+            "p95_us": 186
+          },
+          "single_pass_with_bounded_title_samples": {
+            "p50_us": 31,
+            "p95_us": 35
+          },
+          "completion_percent": 33
+        }
+      ],
+      "checksum_sink": 0
+    },
+    {
+      "scope": "Single-process synthetic Dart aggregation CPU; 20 warmups and 200 samples per metric; microseconds. No native frame or startup claim.",
+      "dataset": "statistics-v1; fixed createdAt 2026-10-26 UTC, round-robin categories, every third task completed",
+      "results": [
+        {
+          "tasks": 100,
+          "fixture_sha256": "d8830bad966754883da2a3b863b9c58bf67e335d7b1360fe41322b70f4915c78",
+          "previous_five_scans": {
+            "p50_us": 2,
+            "p95_us": 21
+          },
+          "single_pass_with_bounded_title_samples": {
+            "p50_us": 15,
+            "p95_us": 31
+          },
+          "completion_percent": 34
+        },
+        {
+          "tasks": 1000,
+          "fixture_sha256": "f680367d2691fef12d69dab647cbc2728c6ff4ba3b6ed4f25641245caa4f480a",
+          "previous_five_scans": {
+            "p50_us": 17,
+            "p95_us": 18
+          },
+          "single_pass_with_bounded_title_samples": {
+            "p50_us": 6,
+            "p95_us": 8
+          },
+          "completion_percent": 33
+        },
+        {
+          "tasks": 10000,
+          "fixture_sha256": "039423197109c09011f6d733d858a2c2d518e7b2f867f0b969f672e408d2bcd3",
+          "previous_five_scans": {
+            "p50_us": 163,
+            "p95_us": 175
+          },
+          "single_pass_with_bounded_title_samples": {
+            "p50_us": 32,
+            "p95_us": 33
+          },
+          "completion_percent": 33
+        }
+      ],
+      "checksum_sink": 0
+    }
+  ]
+}

@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:dont_forget/app.dart';
 import 'package:dont_forget/data/database_helper.dart';
-import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/models/media_record.dart';
 import 'package:dont_forget/models/reminder.dart';
+import 'package:dont_forget/models/review_report.dart';
 import 'package:dont_forget/models/settings.dart';
 import 'package:dont_forget/providers/home_controller.dart';
 import 'package:dont_forget/providers/providers.dart';
@@ -66,14 +66,16 @@ class _ReportService implements LLMService {
   String? requestedModel;
 
   @override
-  Future<String> generateReviewReport(
+  Future<ReviewReport> generateReview(
     List<Reminder> reminders,
     AppSettings settings, {
     String language = 'zh',
   }) {
     requestedTaskIds = reminders.map((reminder) => reminder.id).toList();
     requestedModel = settings.modelName;
-    return reply.future;
+    return reply.future.then(
+      (text) => ReviewReport(text, source: ReviewReportSource.model),
+    );
   }
 
   @override
@@ -526,9 +528,7 @@ void main() {
       );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
-      final generate = find.text(
-        AppLocalizations(const Locale('en')).get('generateAiReview'),
-      );
+      final generate = find.byKey(const ValueKey('review-generate'));
       await tester.ensureVisible(generate);
       await tester.pump(const Duration(milliseconds: 300));
       await tester.runAsync(() => tester.tap(generate));

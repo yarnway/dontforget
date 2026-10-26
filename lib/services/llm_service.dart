@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import '../models/settings.dart';
 import 'ai/priority_router.dart';
 import '../models/reminder.dart';
+import '../models/review_report.dart';
+import '../models/task_statistics.dart';
 import 'package:uuid/uuid.dart';
 
 class AudioTranscriptionUnsupportedException implements Exception {
@@ -593,37 +595,42 @@ Output strictly in valid JSON object matching this structure:
     }
   }
 
+  /// Compatibility entry point for callers that only need report text.
   Future<String> generateReviewReport(
+    List<Reminder> reminders,
+    AppSettings settings, {
+    String language = 'zh',
+  }) async => (await generateReview(reminders, settings, language: language)).content;
+
+  Future<ReviewReport> generateReview(
     List<Reminder> reminders,
     AppSettings settings, {
     String language = 'zh',
   }) async {
     _checkActive();
     settings = settings.primaryModelSettings;
+    var source = ReviewReportSource.local;
     if (reminders.isEmpty) {
       if (language == 'en') {
-        return 'No tasks recorded yet. Add some tasks and your AI Productivity Coach will give you a comprehensive analysis!';
+        return ReviewReport('No tasks recorded yet. Add some tasks and your AI Productivity Coach will give you a comprehensive analysis!', source: source);
       } else if (language == 'ja') {
-        return 'タスクがまだありません。タスクを追加するとAIコーチが生産性を分析します！';
+        return ReviewReport('タスクがまだありません。タスクを追加するとAIコーチが生産性を分析します！', source: source);
       } else {
-        return '当前暂无事项数据。快去记录几条任务，AI 效能教练将为您深度复盘精力投入！';
+        return ReviewReport('当前暂无事项数据。快去记录几条任务，AI 效能教练将为您深度复盘精力投入！', source: source);
       }
     }
 
-    final total = reminders.length;
-    final completed = reminders.where((r) => r.isCompleted).length;
-    final pending = total - completed;
-    final completionRate = (completed / total * 100).round();
+    final stats = TaskStatistics.from(reminders);
+    final total = stats.total;
+    final completed = stats.completed;
+    final pending = stats.pending;
+    final completionRate = stats.completionPercent;
+    final [q1Count, q2Count, q3Count, q4Count] = stats.categories;
+    final completedTitles = stats.completedTitles.join(', ');
+    final pendingTitles = stats.pendingTitles.join(', ');
 
-    final q1Count = reminders.where((r) => r.quadrantLevel == 1).length;
-    final q2Count = reminders.where((r) => r.quadrantLevel == 2).length;
-    final q3Count = reminders.where((r) => r.quadrantLevel == 3).length;
-    final q4Count = reminders.where((r) => r.quadrantLevel == 4).length;
-
-    final completedTitles = reminders.where((r) => r.isCompleted).take(6).map((r) => r.taskTitle).join(', ');
-    final pendingTitles = reminders.where((r) => !r.isCompleted).take(6).map((r) => r.taskTitle).join(', ');
-
-    if (settings.apiKey.isNotEmpty) {
+    if (settings.apiKey.trim().isNotEmpty) {
+      source = ReviewReportSource.localAfterFailure;
       final prompt = '''
 User asks for a personal productivity review & coaching report.
 Target Language: $language.
@@ -633,8 +640,8 @@ Data statistics:
 - Quadrant 2 (Key Focus / 重点跟进): $q2Count
 - Quadrant 3 (Routine Task / 常规待办): $q3Count
 - Quadrant 4 (Memo & Notes / 备忘便签): $q4Count
-- Recent Completed: ${completedTitles.isEmpty ? "None" : completedTitles}
-- Key Pending Tasks: ${pendingTitles.isEmpty ? "None" : pendingTitles}
+- Completed title sample (up to 6, truncated): ${completedTitles.isEmpty ? "None" : completedTitles}
+- Pending title sample (up to 6, truncated): ${pendingTitles.isEmpty ? "None" : pendingTitles}
 
 Role: Friendly, empowering, elite Personal Productivity Coach.
 Please provide a structured, encouraging, concise productivity coaching report in clean Markdown.
@@ -671,20 +678,18 @@ Include:
         );
 
         final message = response.data['choices'][0]['message'];
-        String content = (message['content'] as String? ?? '').trim();
-        if (content.isEmpty && message['reasoning_content'] != null) {
-          content = (message['reasoning_content'] as String? ?? '').trim();
-        }
+        final content = (message['content'] as String? ?? '').trim();
+        // Reasoning-only or empty replies are not a completed user report.
         if (content.isNotEmpty) {
-          return content;
+          return ReviewReport(content, source: ReviewReportSource.model);
         }
       } catch (_) {
         _checkActive();
-        // Fallback to local intelligent analysis if LLM fails
+        // Preserve a useful local report while exposing the failed model attempt.
       }
     }
 
-    return _generateFallbackReviewReport(
+    return ReviewReport(_generateFallbackReviewReport(
       total: total,
       completed: completed,
       pending: pending,
@@ -694,7 +699,7 @@ Include:
       q3: q3Count,
       q4: q4Count,
       language: language,
-    );
+    ), source: source);
   }
 
   String _generateFallbackReviewReport({
