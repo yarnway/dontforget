@@ -202,6 +202,75 @@ void main() {
     expect(composer().hitTestable(), findsOneWidget);
   }
 
+  for (final width in [375.0, 757.0, 1200.0]) {
+    testWidgets(
+      'native search preserves draft and excludes IME and dialogs $width',
+      (tester) async {
+        await mount(tester, width);
+        final command = container.read(workspaceToolsCommandProvider);
+        await tester.enterText(composer(), 'ni');
+        tester.testTextInput.updateEditingValue(
+          const TextEditingValue(
+            text: 'ni',
+            selection: TextSelection.collapsed(offset: 2),
+            composing: TextRange(start: 0, end: 2),
+          ),
+        );
+        await tester.pump();
+        expect(command.search!(), isFalse);
+        expect(command.open!(), isFalse);
+        expect(find.byType(CommandPaletteDialog), findsNothing);
+        tester.testTextInput.updateEditingValue(
+          const TextEditingValue(
+            text: '你 · 日本語 draft',
+            selection: TextSelection.collapsed(offset: 13),
+          ),
+        );
+        await tester.pump();
+        expect(command.search!(), isTrue);
+        await tester.pumpAndSettle();
+        final search = find.byKey(const ValueKey('task-search-field'));
+        expect(search.hitTestable(), findsOneWidget);
+        expect(composer().hitTestable(), findsOneWidget);
+        await tester.enterText(search, 'Synthetic');
+        await tester.pumpAndSettle();
+        expect(command.search!(), isTrue);
+        await tester.pumpAndSettle();
+        expect(search, findsOneWidget);
+        expect(tester.widget<TextField>(search).controller!.text, 'Synthetic');
+        expect(
+          tester.widget<TextField>(composer()).controller!.text,
+          '你 · 日本語 draft',
+        );
+        unawaited(
+          showDialog<void>(
+            context: tester.element(find.byType(HomeScreen)),
+            builder: (_) =>
+                const AlertDialog(content: Text('Editor remains in front')),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(command.search!(), isFalse);
+        expect(command.open!(), isFalse);
+        expect(find.text('Editor remains in front'), findsOneWidget);
+        Navigator.of(tester.element(find.byType(AlertDialog))).pop();
+        await tester.pumpAndSettle();
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pumpAndSettle();
+        expect(search, findsNothing);
+        expect(
+          tester.widget<TextField>(composer()).controller!.text,
+          '你 · 日本語 draft',
+        );
+        final oldSearch = command.search!;
+        await tester.pumpWidget(const SizedBox());
+        expect(command.search, isNull);
+        expect(oldSearch(), isFalse);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
   testWidgets(
     'report pending blocks tools Escape and back then failure allows retry',
     (tester) async {
@@ -215,6 +284,7 @@ void main() {
       await tester.tap(generate);
       await tester.pump();
       expect(container.read(workspaceToolsCommandProvider).open!(), isFalse);
+      expect(container.read(workspaceToolsCommandProvider).search!(), isFalse);
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.binding.handlePopRoute();
       await tester.pump();
@@ -395,6 +465,10 @@ void main() {
         await tester.tap(find.text(loc.get('exportChooseLocation')));
         await tester.pump();
         expect(container.read(workspaceToolsCommandProvider).open!(), isFalse);
+        expect(
+          container.read(workspaceToolsCommandProvider).search!(),
+          isFalse,
+        );
         final close = find.descendant(
           of: find.byType(DataExportSheet),
           matching: find.byType(IconButton),

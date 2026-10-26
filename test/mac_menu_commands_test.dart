@@ -17,6 +17,7 @@ void main() {
   var epoch = 0;
   var settingsOpens = 0;
   var toolsOpens = 0;
+  var searchOpens = 0;
   var editorSaves = 0;
   var edits = <String>[];
   bool Function()? editIsCurrent;
@@ -37,6 +38,7 @@ void main() {
     epoch = 0;
     settingsOpens = 0;
     toolsOpens = 0;
+    searchOpens = 0;
     editorSaves = 0;
     edits = [];
     editIsCurrent = null;
@@ -72,6 +74,11 @@ void main() {
         if (!workspaceVisible) return false;
         toolsOpens++;
         workspaceVisible = false;
+        return true;
+      },
+      openSearch: () {
+        if (!workspaceVisible) return false;
+        searchOpens++;
         return true;
       },
       openSettings: () {
@@ -250,6 +257,24 @@ void main() {
       await commands.configure({}, enabled: false);
       expect(await invoke('openTools'), false);
       expect(toolsOpens, 2);
+    },
+  );
+  test(
+    'native search is blocked by another route, input sheet and recovery',
+    () async {
+      expect(await invoke('openSearch'), true);
+      workspaceVisible = false;
+      expect(await invoke('openSearch'), false);
+      workspaceVisible = true;
+      final pending = invoke('quickInput');
+      await shown.future;
+      expect(await invoke('openSearch'), false);
+      sheet.complete(null);
+      await pending;
+      expect(await invoke('openSearch'), true);
+      await commands.configure({}, enabled: false);
+      expect(await invoke('openSearch'), false);
+      expect(searchOpens, 2);
     },
   );
 }

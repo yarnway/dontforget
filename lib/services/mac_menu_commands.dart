@@ -12,6 +12,7 @@ class MacMenuCommands<T extends Object> {
     required this.submitInput,
     required this.openSettings,
     this.openTools,
+    this.openSearch,
     this.saveEditor,
     this.editText,
     MethodChannel? channel,
@@ -22,6 +23,7 @@ class MacMenuCommands<T extends Object> {
   final Future<void> Function(String) submitInput;
   final bool Function() openSettings;
   final bool Function()? openTools;
+  final bool Function()? openSearch;
   final bool Function()? saveEditor;
   final Future<bool> Function(String, bool Function())? editText;
   final MethodChannel _channel;
@@ -58,6 +60,9 @@ class MacMenuCommands<T extends Object> {
     }
     if (call.method == 'openTools') {
       return !_inputOpen && (openTools?.call() ?? false);
+    }
+    if (call.method == 'openSearch') {
+      return !_inputOpen && (openSearch?.call() ?? false);
     }
     if (call.method == 'saveEditor') {
       return !_inputOpen && (saveEditor?.call() ?? false);

@@ -67,6 +67,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Future<void> _quiesce() async {
     final command = ref.read(workspaceToolsCommandProvider);
     if (identical(command.open, _nativeToolsHandler)) command.open = null;
+    if (identical(command.search, _nativeSearchHandler)) command.search = null;
     _heartbeatTimer?.cancel();
     _searchDebounce?.cancel();
     await Future.wait([
@@ -103,7 +104,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     skipTraversal: true,
   );
   WorkspaceToolsCommand? _toolsCommand;
-  late final bool Function() _nativeToolsHandler = _openCommandPalette;
+  late final bool Function() _nativeToolsHandler = _openNativeTools;
+  late final bool Function() _nativeSearchHandler = _openNativeSearch;
+  bool _openNativeTools() => !_hasComposingText && _openCommandPalette();
+  bool _openNativeSearch() => !_hasComposingText && _openSearch();
+
+  bool get _hasComposingText {
+    final context = FocusManager.instance.primaryFocus?.context;
+    final editable = context?.widget is EditableText
+        ? context!.widget as EditableText
+        : context?.findAncestorWidgetOfExactType<EditableText>();
+    final composing = editable?.controller.value.composing;
+    return composing != null && composing.isValid && !composing.isCollapsed;
+  }
+
   _WorkspaceTool? _activeTool;
   bool _exportBusy = false;
   bool _toolBusy = false;
@@ -130,6 +144,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (_birth == null) return;
     _toolsCommand = ref.read(workspaceToolsCommandProvider);
     _toolsCommand!.open = _nativeToolsHandler;
+    _toolsCommand!.search = _nativeSearchHandler;
     _runtime.register(this, _quiesce);
     WidgetsBinding.instance.addObserver(this);
 
@@ -241,6 +256,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void dispose() {
     if (identical(_toolsCommand?.open, _nativeToolsHandler)) {
       _toolsCommand?.open = null;
+    }
+    if (identical(_toolsCommand?.search, _nativeSearchHandler)) {
+      _toolsCommand?.search = null;
     }
     _runtime.unregister(this);
     WidgetsBinding.instance.removeObserver(this);
@@ -1134,22 +1152,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
   }
 
-  void _openSearch() {
+  bool _openSearch() {
     if (!mounted ||
         !_runtimeActive ||
         _toolBlocked ||
         ModalRoute.of(context)?.isCurrent != true) {
-      return;
+      return false;
     }
     setState(() {
       _activeTool = null;
       _isSearchOpen = true;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted && _isSearchOpen && _runtimeActive) {
+      if (mounted &&
+          _isSearchOpen &&
+          _runtimeActive &&
+          ModalRoute.of(context)?.isCurrent == true) {
         _searchFocus.requestFocus();
       }
     });
+    return true;
   }
 
   void _clearSearch() {

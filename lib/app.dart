@@ -70,6 +70,9 @@ class _MyAppState extends ConsumerState<MyApp>
         openTools: () =>
             _nativeCommandsReady &&
             (ref.read(workspaceToolsCommandProvider).open?.call() ?? false),
+        openSearch: () =>
+            _nativeCommandsReady &&
+            (ref.read(workspaceToolsCommandProvider).search?.call() ?? false),
         saveEditor: () =>
             _nativeCommandsReady && EditorKeyboardActions.saveFocusedEditor(),
         editText: (command, isCurrent) => FocusedTextCommands.run(

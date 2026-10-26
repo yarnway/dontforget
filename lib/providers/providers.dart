@@ -47,6 +47,7 @@ final workspaceToolsCommandProvider = Provider(
 
 class WorkspaceToolsCommand {
   bool Function()? open;
+  bool Function()? search;
 }
 
 final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>((

@@ -10,6 +10,8 @@ final class MacMenuCommands: NSObject, NSMenuItemValidation {
   private var settingsItem: NSMenuItem?
   private var toolsItem: NSMenuItem?
   private var saveItem: NSMenuItem?
+  private var searchItem: NSMenuItem?
+  private var nativeFindAction: Selector?
   private var textActions: [NSMenuItem: Selector] = [:]
   private var labels: [String: String] = [:]
   private var enabled = false
@@ -82,6 +84,17 @@ final class MacMenuCommands: NSObject, NSMenuItemValidation {
   private func installTextActions(in menu: NSMenu) {
     for item in menu.items {
       if let submenu = item.submenu { installTextActions(in: submenu) }
+      // AppKit owns Cmd+F even when its default Find item is disabled. Route
+      // this existing item to task search instead of relying on a Flutter key.
+      if searchItem == nil, item.keyEquivalent == "f",
+         item.keyEquivalentModifierMask == [.command],
+         let action = item.action,
+         NSStringFromSelector(action) == "performFindPanelAction:" {
+        searchItem = item
+        nativeFindAction = action
+        item.target = self
+        item.action = #selector(openSearch(_:))
+      }
       guard textActions[item] == nil, let action = item.action,
             ["selectAll:", "cut:", "copy:", "paste:"].contains(NSStringFromSelector(action)) else {
         continue
@@ -111,6 +124,9 @@ final class MacMenuCommands: NSObject, NSMenuItemValidation {
   }
 
   func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+    if menuItem === searchItem, usesNativeEditor, let action = nativeFindAction {
+      return NSApp.target(forAction: action, to: nil, from: menuItem) != nil
+    }
     if let action = textActions[menuItem], usesNativeEditor {
       return NSApp.target(forAction: action, to: nil, from: menuItem) != nil
     }
@@ -129,6 +145,17 @@ final class MacMenuCommands: NSObject, NSMenuItemValidation {
     window?.makeKeyAndOrderFront(nil)
     NSApp.activate(ignoringOtherApps: true)
     channel.invokeMethod("openTools", arguments: nil)
+  }
+
+  @objc private func openSearch(_ item: NSMenuItem) {
+    if usesNativeEditor, let action = nativeFindAction {
+      NSApp.sendAction(action, to: nil, from: item)
+      return
+    }
+    guard enabled, alert == nil else { return }
+    window?.makeKeyAndOrderFront(nil)
+    NSApp.activate(ignoringOtherApps: true)
+    channel.invokeMethod("openSearch", arguments: nil)
   }
 
   @objc private func saveEditor() {
