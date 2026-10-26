@@ -1,0 +1,265 @@
+{
+  "stage": 8,
+  "version": "1.7.0+15",
+  "schema": 10,
+  "productRevision": "18242f761f8d4df5e4e149addddb4f8e1b56840c",
+  "panelRevision": "3e50eeb73747c164e7ed8f2df1a5527cc7d33a16",
+  "tag": "v1.7.0-rc.15",
+  "source": {
+    "tools": [
+      "review",
+      "context digest",
+      "knowledge graph",
+      "dashboard",
+      "goal planner",
+      "focus",
+      "CSV export"
+    ],
+    "layout": "workspace side panel or compact workspace content; composer remains separate",
+    "input": "goal draft retention, explicit discard, busy guards, current-route and IME-aware shortcuts",
+    "regressionFound": "short viewport plus keyboard caused quadrant board overflow; available-height compact layout fixes it",
+    "nativeFollowup": "AppKit Cmd+S forwards to active editor; rejects modal, composition, input-sheet, recovery and disposed routes"
+  },
+  "validation": {
+    "flutter": "1044 passed",
+    "python": "101 passed",
+    "analyze": "PASS",
+    "newInteractionCases": 50,
+    "matrix": {
+      "widths": [
+        375,
+        768,
+        1440
+      ],
+      "languages": [
+        "zh",
+        "en",
+        "ja"
+      ],
+      "textScale": 1.5,
+      "keyboardInsets": [
+        300,
+        180
+      ],
+      "windowHeights": [
+        800,
+        460
+      ],
+      "toolCombinations": 45
+    },
+    "fontPreviews": 54,
+    "filledReviewPreviews": 9,
+    "mobile": "component simulation only; no iOS/Android device or emulator connected"
+  },
+  "ci": {
+    "initial": 40279958803,
+    "initialConclusion": "success",
+    "final": 40282727609,
+    "finalConclusion": "success",
+    "duplicateRunsCancelled": [
+      40279872419,
+      40282722081
+    ]
+  },
+  "native14": {
+    "result": "PASS",
+    "scope": "macOS wide-window tool layout, draft protection, detail button save and review persistence on 1.7.0+14; no Cmd+S or mobile pass claimed",
+    "sourceRevision": "3e50eeb73747c164e7ed8f2df1a5527cc7d33a16",
+    "bundleId": "com.example.dontForget.acceptance.dashboard17-r40254505297",
+    "tools": [
+      "review",
+      "context digest",
+      "knowledge graph",
+      "dashboard",
+      "goal planner"
+    ],
+    "mainInputDraftPreservedAcrossTools": true,
+    "goalDraftRetainedAcrossCloseAndSwitch": true,
+    "goalDiscardConfirmedAndEmptyReadBack": true,
+    "menuSelectAllThenDeleteThenTypeWholeTitle": "PASS",
+    "escapeUnsavedConfirmation": "PASS",
+    "saveAndLeaveButton": "PASS",
+    "titleAndReviewSqliteReadback": "PASS",
+    "normalAppReopen": "PASS",
+    "commandK": "PASS",
+    "commandS": "NOT_TRIGGERED; fixed in +15, recheck pending",
+    "commandAAX": "reported selection but editing appended; text context menu works",
+    "nativeNarrowResize": "two drags did not resize window; not verified",
+    "realMobileInput": "NO_DEVICE",
+    "fixtureState": "one synthetic no-reminder task retained for +15 upgrade acceptance"
+  },
+  "native15": {
+    "result": "PASS",
+    "scope": "macOS isolated same-identity upgrade, Cmd+S, reopen, review panel input and cleanup; mobile/native narrow resize excluded",
+    "version": "1.7.0+15",
+    "sourceRevision": "18242f761f8d4df5e4e149addddb4f8e1b56840c",
+    "bundleId": "com.example.dontForget.acceptance.dashboard17-r40254505297",
+    "upgradeFrom": "1.7.0+14",
+    "nativeCmdS": "saved edited title and returned to board; SQLite readback and app reopen match",
+    "savedTitle": "Native workspace saved v15",
+    "savedReviewLevel": 2,
+    "reviewQueueAfterReopen": "no due cards today",
+    "commandK": "PASS",
+    "reviewPanelMainInput": "v15 input draft entered and retained after Escape closed panel; not submitted",
+    "taskRemovedInProduct": true,
+    "osPending": 0,
+    "osRetained": 0,
+    "future": 0,
+    "needsAttention": 0,
+    "pendingCancellation": 0,
+    "notificationAuthorizationObserved": "not enabled; no permission changes made",
+    "baseline": {
+      "integrity": "ok",
+      "tableEquality": {
+        "Settings": true,
+        "Reminders": true,
+        "MediaRecords": true
+      },
+      "appExited": true,
+      "exclusiveLease": true,
+      "source": "closed-app SQLite backup API and independent table readback"
+    },
+    "journal": {
+      "backend": "incremental",
+      "entries": 12,
+      "allCancelSubmitted": true
+    },
+    "deliveryClaim": false,
+    "realMobileInput": "NO_DEVICE",
+    "nativeNarrowResize": "UNVERIFIED; component matrix passed",
+    "commandAAX": "selected proxy range and actual editing differ; explicit text context menu validated on +14",
+    "stableReleaseClaim": false
+  },
+  "release": {
+    "state": "PUBLISHED_PRERELEASE",
+    "tag": "v1.7.0-rc.15",
+    "url": "https://github.com/yarnway/dontforget/releases/tag/v1.7.0-rc.15",
+    "publishedAt": "2026-10-26T07:09:56Z",
+    "assetCount": 21,
+    "verifiedPackageDigests": 7,
+    "releaseNotesReadback": "PASS",
+    "sourceTagReadback": "PASS",
+    "stableRelease": false
+  },
+  "cleanup": {
+    "removed": [
+      {
+        "path": "build/native_acceptance/panel17-r40276629284/dont_forget.app",
+        "allocatedKiB": 57684
+      },
+      {
+        "path": "build/native_acceptance/workspace17-r40279958803/dont_forget.app",
+        "allocatedKiB": 57700
+      },
+      {
+        "path": ".dart_tool",
+        "allocatedKiB": 49164
+      },
+      {
+        "path": "build/test_cache",
+        "allocatedKiB": 121312
+      },
+      {
+        "path": "build/unit_test_assets",
+        "allocatedKiB": 2100
+      },
+      {
+        "path": "build/native_assets",
+        "allocatedKiB": 1932
+      },
+      {
+        "path": "build/native_acceptance/workspace-v17-materials/download-parts",
+        "allocatedKiB": 23488
+      },
+      {
+        "path": "build/native_acceptance/workspace-v17-materials/artifact-envelope.zip",
+        "allocatedKiB": 23484
+      },
+      {
+        "path": "build/native_acceptance/workspace-v17-materials/save-bridge/download-parts",
+        "allocatedKiB": 23488
+      },
+      {
+        "path": "build/native_acceptance/workspace-v17-materials/save-bridge/artifact-envelope.zip",
+        "allocatedKiB": 23484
+      }
+    ],
+    "freedAllocatedKiB": 383836,
+    "projectAllocatedKiB": 1074436,
+    "previousProtectedFiles": 993,
+    "retainedUnchangedFiles": 947,
+    "rollbackManifests": [
+      "build/native_acceptance/workspace-v17-materials/rollback-deltas/restore-manifest.json",
+      "build/native_acceptance/workspace-v17-materials/rollback-plus14/restore-manifest.json"
+    ],
+    "newProtectedFiles": 1157,
+    "vmOrImageCreated": false,
+    "newCandidateNativeResult": "PASS",
+    "archivedFileCount": 46
+  },
+  "stableRelease": "NOT_RELEASED; device, DST, second-provider and platform acceptance remain open",
+  "remaining": [
+    "Settings/model configuration unsaved navigation protection",
+    "macOS Cmd+A/AX selection consistency; explicit context-menu replacement works",
+    "Real iOS/Android soft keyboards, CJK input methods, installation and OS save pickers; other desktop device acceptance",
+    "Historical spring/autumn DST and second-provider acceptance; stable release only after all release gates pass"
+  ],
+  "releasePackageVerification": {
+    "releaseId": 423941338,
+    "url": "https://github.com/yarnway/dontforget/releases/tag/untagged-9c6367fa50df6d242173",
+    "tag": "v1.7.0-rc.15",
+    "prerelease": true,
+    "revision": "18242f761f8d4df5e4e149addddb4f8e1b56840c",
+    "packages": [
+      {
+        "file": "DontForget_Android_test-signed_v1.7.0.apk",
+        "bytes": 68429303,
+        "sha256": "95625e78551bc067138bee6163b062fc6f53fe71ac99f7b01bf364bb99ce0cba"
+      },
+      {
+        "file": "DontForget_Android_test-signed_v1.7.0.aab",
+        "bytes": 66233079,
+        "sha256": "4afae7b9732291453cca9193e3aedffbd21b69bb5e4f30161b86d49540055025"
+      },
+      {
+        "file": "DontForget_iOS_unsigned_v1.7.0.ipa",
+        "bytes": 9964310,
+        "sha256": "9dc354c3abccbb8922d435649782cdf1c62ffb4216f5c04daaac1969e0a2cbd5"
+      },
+      {
+        "file": "DontForget_Linux_x64_v1.7.0.tar.gz",
+        "bytes": 13176672,
+        "sha256": "bc2df03940876c271505e48f61364da184932365204e482bc99957487b1e20f6"
+      },
+      {
+        "file": "DontForget_macOS_unnotarized_v1.7.0.zip",
+        "bytes": 24122202,
+        "sha256": "390fc00b86e04ada81a887cbc5230b5110f668bb6ee158c866618e716106fb49"
+      },
+      {
+        "file": "DontForget_Setup_v1.7.0.exe",
+        "bytes": 13745549,
+        "sha256": "a900073ac3fef6c511faedc9f9a5f54c583da5150f4400a06321152cff0f0a83"
+      },
+      {
+        "file": "DontForget_Windows_Portable_v1.7.0.zip",
+        "bytes": 16528482,
+        "sha256": "9c989597cfd8dbfa854ae8645d587f65c41bb1b91e6eca5e06ae69972c9834ff"
+      }
+    ],
+    "assetCount": 21,
+    "method": "five GitHub manifests and checksum files verified by SHA-256; seven GitHub asset sizes and digests match manifest; CI verified package inventory",
+    "draftAtVerification": true,
+    "publication": {
+      "state": "PUBLISHED_PRERELEASE",
+      "tag": "v1.7.0-rc.15",
+      "url": "https://github.com/yarnway/dontforget/releases/tag/v1.7.0-rc.15",
+      "publishedAt": "2026-10-26T07:09:56Z",
+      "assetCount": 21,
+      "verifiedPackageDigests": 7,
+      "releaseNotesReadback": "PASS",
+      "sourceTagReadback": "PASS",
+      "stableRelease": false
+    }
+  }
+}
