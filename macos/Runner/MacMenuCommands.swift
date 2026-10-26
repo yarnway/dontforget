@@ -9,6 +9,7 @@ final class MacMenuCommands: NSObject, NSMenuItemValidation {
   private var quickItem: NSMenuItem?
   private var settingsItem: NSMenuItem?
   private var toolsItem: NSMenuItem?
+  private var saveItem: NSMenuItem?
   private var labels: [String: String] = [:]
   private var enabled = false
   private var alert: NSAlert?
@@ -59,12 +60,21 @@ final class MacMenuCommands: NSObject, NSMenuItemValidation {
       menu.insertItem(item, at: min(3, menu.items.count))
       toolsItem = item
     }
+    if saveItem == nil {
+      let item = NSMenuItem(title: "", action: #selector(saveEditor), keyEquivalent: "s")
+      item.target = self
+      item.keyEquivalentModifierMask = [.command]
+      menu.insertItem(item, at: min(4, menu.items.count))
+      saveItem = item
+    }
     quickItem?.title = labels["quickEntry"] ?? "Quick Entry…"
     settingsItem?.title = labels["settings"] ?? "Settings…"
     toolsItem?.title = labels["moreTools"] ?? "Tools…"
+    saveItem?.title = labels["saveChanges"] ?? "Save changes"
     quickItem?.isEnabled = enabled && alert == nil
     settingsItem?.isEnabled = enabled && alert == nil
     toolsItem?.isEnabled = enabled && alert == nil
+    saveItem?.isEnabled = enabled && alert == nil
   }
 
   @objc private func quickInput() {
@@ -88,6 +98,11 @@ final class MacMenuCommands: NSObject, NSMenuItemValidation {
     window?.makeKeyAndOrderFront(nil)
     NSApp.activate(ignoringOtherApps: true)
     channel.invokeMethod("openTools", arguments: nil)
+  }
+
+  @objc private func saveEditor() {
+    guard enabled, alert == nil else { return }
+    channel.invokeMethod("saveEditor", arguments: nil)
   }
 
   private func showInput(result: @escaping FlutterResult) {

@@ -1,4 +1,5 @@
 import 'ui/widgets/inline_feedback.dart';
+import 'ui/widgets/editor_keyboard_actions.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -68,6 +69,8 @@ class _MyAppState extends ConsumerState<MyApp>
         openTools: () =>
             _nativeCommandsReady &&
             (ref.read(workspaceToolsCommandProvider).open?.call() ?? false),
+        saveEditor: () =>
+            _nativeCommandsReady && EditorKeyboardActions.saveFocusedEditor(),
       )..start();
     }
     _notificationRoutes = NotificationRouteService(
@@ -219,6 +222,7 @@ class _MyAppState extends ConsumerState<MyApp>
           'settings',
           'send',
           'cancel',
+          'saveChanges',
         ])
           key: l10n.get(key),
       }, enabled: _nativeCommandsReady),

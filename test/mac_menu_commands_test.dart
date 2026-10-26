@@ -17,6 +17,7 @@ void main() {
   var epoch = 0;
   var settingsOpens = 0;
   var toolsOpens = 0;
+  var editorSaves = 0;
   var workspaceVisible = true;
   Future<int?> Function()? begin;
 
@@ -34,6 +35,7 @@ void main() {
     epoch = 0;
     settingsOpens = 0;
     toolsOpens = 0;
+    editorSaves = 0;
     workspaceVisible = true;
     begin = null;
     sheet = Completer<String?>();
@@ -53,6 +55,10 @@ void main() {
       beginInput: () => begin?.call() ?? Future.value(epoch),
       isCurrent: (token) => token == epoch,
       submitInput: (text) async => submitted.add(text),
+      saveEditor: () {
+        editorSaves++;
+        return true;
+      },
       openTools: () {
         if (!workspaceVisible) return false;
         toolsOpens++;
@@ -184,6 +190,21 @@ void main() {
       expect(shown.isCompleted, false);
     },
   );
+  test(
+    'native save is fenced while input sheet or recovery owns the session',
+    () async {
+      expect(await invoke('saveEditor'), true);
+      final pending = invoke('quickInput');
+      await shown.future;
+      expect(await invoke('saveEditor'), false);
+      sheet.complete(null);
+      await pending;
+      await commands.configure({}, enabled: false);
+      expect(await invoke('saveEditor'), false);
+      expect(editorSaves, 1);
+    },
+  );
+
   test(
     'native tools command respects visibility, input sheet and disabled state',
     () async {

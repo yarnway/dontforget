@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:dont_forget/ui/widgets/inline_feedback.dart';
+import 'package:dont_forget/ui/widgets/editor_keyboard_actions.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'dart:io';
 import 'package:dont_forget/data/database_helper.dart';
@@ -676,6 +677,51 @@ void main() {
       },
     );
   }
+  testWidgets(
+    'native menu save resolves current editor and rejects modal or composing focus',
+    (tester) async {
+      final task = Reminder(
+        id: 'native-menu-save',
+        taskTitle: 'Original menu title',
+        quadrantLevel: 2,
+      );
+      await tester.runAsync(() => notifier.addReminder(task));
+      await openDetail(tester, task);
+      final title = find.byKey(const ValueKey('detail-title'));
+      await tester.enterText(title, 'Native menu saved');
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(EditorKeyboardActions.saveFocusedEditor(), false);
+      await tester.tap(find.text('继续编辑'));
+      await tester.pumpAndSettle();
+      await tester.tap(title);
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: '组合',
+          selection: TextSelection.collapsed(offset: 2),
+          composing: TextRange(start: 0, end: 2),
+        ),
+      );
+      await tester.pump();
+      expect(EditorKeyboardActions.saveFocusedEditor(), false);
+      await tester.enterText(title, 'Native menu saved');
+      await tester.runAsync(() async {
+        expect(EditorKeyboardActions.saveFocusedEditor(), true);
+        await notifier.lastWrite;
+      });
+      await tester.pumpAndSettle();
+      expect(find.byType(TaskDetailScreen), findsNothing);
+      expect(
+        container
+            .read(remindersProvider)
+            .singleWhere((r) => r.id == task.id)
+            .taskTitle,
+        'Native menu saved',
+      );
+      expect(EditorKeyboardActions.saveFocusedEditor(), false);
+    },
+  );
+
   testWidgets(
     'detail Escape guards draft, modal owns Escape, command-S saves',
     (tester) async {
