@@ -1,0 +1,188 @@
+{
+  "date": "2026-10-26",
+  "phase": 15,
+  "version": "1.7.0+18",
+  "schema": 10,
+  "revision": "68bd38eb01e8c146265707906b6025e2463900fa",
+  "status": "PARTIAL",
+  "stableReleaseReady": false,
+  "ci": {
+    "run": 40307581624,
+    "status": "completed",
+    "conclusion": "success",
+    "successfulJobs": 7,
+    "newProductCodeChanges": false
+  },
+  "device": {
+    "model": "iPhone 15 Pro Max",
+    "productType": "iPhone16,2",
+    "osVersion": "27.0.1",
+    "developerMode": "enabled",
+    "transport": "wired",
+    "bundleID": "com.yarnway.dontforget.acceptance.iphone17",
+    "installedBuild": "18"
+  },
+  "baseline": {
+    "consistentSnapshot": true,
+    "zeroProcessGuardBeforeAndAfter": true,
+    "taskCount": 3,
+    "ownedSyntheticTaskCount": 1,
+    "otherTasks": 2,
+    "mediaCount": 2,
+    "newNonAgentRecordsPreserved": true,
+    "privateSnapshotPublished": false
+  },
+  "syntheticCleanup": {
+    "ownedTaskTitle": "Phone18Saved",
+    "nativeDelete": "PASS",
+    "nativeUndo": "PASS",
+    "undoRestoredTitleAndDueTime": true,
+    "nativeFinalDelete": "PASS",
+    "nativeReopenTaskAbsent": "PASS",
+    "independentDatabaseReadback": "PASS",
+    "remainingTaskCount": 2,
+    "otherTaskRowsUnchanged": true,
+    "mediaRowsUnchanged": true,
+    "settingsRowsUnchanged": true,
+    "unchangedNonJournalFiles": 3,
+    "integrity": "ok"
+  },
+  "notifications": {
+    "nativePending": 0,
+    "nativeRetained": 0,
+    "future": 0,
+    "submitted": 0,
+    "needsReview": 0,
+    "needsCancellation": 0,
+    "finalPermission": "allowed",
+    "nativeCleanup": "PASS",
+    "nativeOSDelivery": "UNCONFIRMED",
+    "hotClick": "NOT_RUN",
+    "coldClick": "NOT_RUN",
+    "permissionRecovery": {
+      "app": "com.yarnway.dontforget.acceptance.iphone17",
+      "initial": "allowed",
+      "systemPending": 0,
+      "systemRetained": 0,
+      "otherTasksHaveNoFutureReminders": true,
+      "status": "pass",
+      "systemPermissionOffObserved": true,
+      "applicationNotEnabledObserved": true,
+      "reRequestWhileDeniedDidNotClaimGranted": true,
+      "systemPermissionRestored": true,
+      "presentationSettingsRestored": {
+        "lockScreen": true,
+        "notificationCenter": true,
+        "banners": true,
+        "bannerStyle": "temporary",
+        "sounds": true,
+        "badges": true,
+        "showOnMac": true,
+        "announceNotifications": false,
+        "previews": "always(default)",
+        "grouping": "automatic"
+      },
+      "applicationAutomaticallyRefreshedOnResume": true,
+      "finalApplicationPermission": "allowed",
+      "finalSystemPending": 0,
+      "finalSystemRetained": 0,
+      "finalReminderScheduleCountersAllZero": true,
+      "realDeniedSchedulingFailureRetry": "not exercised (no scheduled reminders)"
+    }
+  },
+  "input": {
+    "method": "CUA iPhone Mirroring hardware keyboard",
+    "chinesePinyinComposition": "PASS",
+    "observedConversions": [
+      "ni + space -> 你",
+      "hao + space -> 好"
+    ],
+    "committedDraft": "你好",
+    "cmdKDuringCompositionDidNotNavigate": true,
+    "cmdKAfterCompositionOpenedToolPalette": true,
+    "draftRetainedByPanels": [
+      "focus",
+      "context digest",
+      "review",
+      "CSV export"
+    ],
+    "bottomComposerNotCovered": true,
+    "focusModeNotEnabled": true,
+    "noNewCSVExportOfUserData": true,
+    "unsubmittedDraftNeverCreatedTask": true,
+    "macInputSourceReadback": "com.apple.keylayout.ABC",
+    "softwareKeyboard": "NOT_RUN",
+    "japaneseIME": "NOT_RUN",
+    "landscape": "NOT_RUN"
+  },
+  "toolLimits": {
+    "coordinateInputRecoveredThenIntermittentlyNoWindowsAvailable": true,
+    "finalNativeBlocker": "MAC_LOCKED_AUTOMATIC_UNLOCK_FAILED",
+    "userAskedToOperate": false,
+    "notificationCenterFnKey": "unsupported by CUA key parser",
+    "temporaryNotificationCenterShortcut": {
+      "restored": true,
+      "enabled": false,
+      "binding": "none"
+    },
+    "microphoneCameraNotAvailableInMirroring": true,
+    "appleReference": "https://support.apple.com/en-au/120421"
+  },
+  "finalDeviceState": {
+    "isolatedAppProcessCount": 0,
+    "exactAppProcessIdentityVerifiedBeforeGracefulTermination": true,
+    "snapshotZeroProcessGuardBeforeAndAfter": true,
+    "businessTablesMatchPostCleanup": true,
+    "taskCount": 2,
+    "mediaCount": 2,
+    "unsubmittedDraftDiscardedByProcessExit": true,
+    "newFutureRemindersCreated": false
+  },
+  "cleanup": {
+    "freedKiB": 66480,
+    "afterCleanupProjectKiB": 1097240,
+    "priorProtectedFilesVerified": 1993,
+    "oldAppEntriesReconstructed": 236,
+    "fileModeSymlinkAndStrictSignatureVerification": "PASS",
+    "archives": [
+      {
+        "source": "build/native_acceptance/r39561632757/dont_forget.app",
+        "archive": "build/native_acceptance/iphone-phase15-materials/rollback/r39561632757-macos-rollback.zip",
+        "archiveBytes": 23764306,
+        "archiveSHA256": "07e835b51a11d1f3f891b7947e51b5cd24ec6f241f669bbf6ea3d43fd7bb8d62",
+        "manifest": "build/native_acceptance/iphone-phase15-materials/rollback/r39561632757-manifest.json",
+        "manifestSHA256": "05b5fe57af657c0daedd4966368d7f1f1c6838481c29d2a24a69e5a344f48d08",
+        "entriesVerified": 118,
+        "filesModesLinksRestored": true,
+        "strictSignatureOriginalAndRestored": true,
+        "sourceKiB": 56796,
+        "runningReferences": 0
+      },
+      {
+        "source": "build/native_acceptance/dst30-r40109318837/dont_forget.app",
+        "archive": "build/native_acceptance/iphone-phase15-materials/rollback/dst30-r40109318837-macos-rollback.zip",
+        "archiveBytes": 24082194,
+        "archiveSHA256": "def638259104441f4af003642d7ef30262c07cc4efbcdd40e5ffae19398db964",
+        "manifest": "build/native_acceptance/iphone-phase15-materials/rollback/dst30-r40109318837-manifest.json",
+        "manifestSHA256": "43424045d1e9427e9551daf07044f2799f5168823041f2e7c0ff6f8ec523ea29",
+        "entriesVerified": 118,
+        "filesModesLinksRestored": true,
+        "strictSignatureOriginalAndRestored": true,
+        "sourceKiB": 57508,
+        "runningReferences": 0
+      }
+    ],
+    "sharedSDKAndSigningRuntimePreserved": true,
+    "newGuestOrImageCreated": false
+  },
+  "remaining": [
+    "Native OS notification delivery, hot/cold clicks and late/deleted routes",
+    "Real denied scheduling failure and same-ID retry (permission-state round trip above uses an empty queue)",
+    "Phone software keyboard, Japanese IME and landscape",
+    "New-version device upgrade, microphone/camera/playback/media and other physical platforms",
+    "Real spring/autumn DST",
+    "Second provider deferred by user to DeepSeek only",
+    "Formal distribution signing",
+    "Independent relative hardware wake readback"
+  ]
+}

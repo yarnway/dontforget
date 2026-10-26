@@ -167,5 +167,7 @@
     "syntheticTaskCountLastConfirmed": 1,
     "newFutureReminderCreatedAfterDueTime": false,
     "warning": "no claim that OS pending/delivered notifications have been cleared"
-  }
+  },
+  "recordScope": "Historical phase 14 observations; see phase 15 follow-up for current cleanup, permission and input state",
+  "followUpEvidence": "iphone-phase15-v17-2026-10-26.json"
 }
