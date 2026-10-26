@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import '../widgets/unsaved_editor_scope.dart';
+import '../widgets/editable_text_menu.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../models/ai_profile.dart';
@@ -19,6 +22,15 @@ class AiProfilesScreen extends ConsumerStatefulWidget {
 class _AiProfilesScreenState extends ConsumerState<AiProfilesScreen> {
   List<AiProfile> profiles = [];
   bool fallback = false;
+  List<AiProfile> _savedProfiles = [];
+  bool _savedFallback = false;
+  bool get _dirty =>
+      fallback != _savedFallback ||
+      profiles.length != _savedProfiles.length ||
+      profiles.indexed.any(
+        (entry) =>
+            !mapEquals(entry.$2.toJson(), _savedProfiles[entry.$1].toJson()),
+      );
   bool ready = false;
   late final DataGeneration generation;
   late final RuntimeRecoveryToken birth;
@@ -49,8 +61,11 @@ class _AiProfilesScreenState extends ConsumerState<AiProfilesScreen> {
       await ref.read(settingsProvider.notifier).ready;
       if (!mounted) return;
       checkCurrent();
-      final AppSettings settings = widget.initialDraft ?? ref.read(settingsProvider);
+      final stored = ref.read(settingsProvider);
+      final AppSettings settings = widget.initialDraft ?? stored;
       setState(() {
+        _savedProfiles = stored.effectiveProfiles.toList();
+        _savedFallback = stored.aiFallbackEnabled;
         profiles = settings.effectiveProfiles.toList();
         fallback = settings.aiFallbackEnabled;
         ready = true;
@@ -88,11 +103,11 @@ class _AiProfilesScreenState extends ConsumerState<AiProfilesScreen> {
     profiles.insert(index + offset, item);
   });
 
-  Future<void> save() async {
-    if (saving || !ready) return;
+  Future<bool> save() async {
+    if (saving || !ready) return false;
     if (profiles.any((p) => p.enabled && !p.isConfigured)) {
       setState(() => error = t('aiProfilesIncomplete'));
-      return;
+      return false;
     }
     setState(() {
       saving = true;
@@ -107,7 +122,6 @@ class _AiProfilesScreenState extends ConsumerState<AiProfilesScreen> {
           .read(settingsProvider.notifier)
           .updateSettings(
             current.copyWith(
-              language: widget.initialDraft?.language ?? current.language,
               aiProfiles: profiles,
               aiFallbackEnabled: fallback,
               apiKey: primary?.apiKey ?? '',
@@ -117,8 +131,11 @@ class _AiProfilesScreenState extends ConsumerState<AiProfilesScreen> {
           );
       if (mounted) {
         checkCurrent();
-        Navigator.pop(context, true);
+        _savedProfiles = profiles.toList();
+        _savedFallback = fallback;
+        return true;
       }
+      return false;
     } catch (_) {
       if (mounted) {
         setState(() {
@@ -126,70 +143,87 @@ class _AiProfilesScreenState extends ConsumerState<AiProfilesScreen> {
           error = t('aiProfilesSaveFailed');
         });
       }
+      return false;
     }
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: Text(t('aiProfilesTitle'))),
-    bottomNavigationBar: SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: FilledButton(
-          onPressed: saving || !ready ? null : save,
-          child: Text(saving ? t('aiProfilesSaving') : t('aiProfilesSave')),
+  Widget build(BuildContext context) => UnsavedEditorScope(
+    dirty: ready && _dirty,
+    busy: saving || (!ready && error == null),
+    onSave: save,
+    savedResult: true,
+    builder: (context, onSave, exit) => Scaffold(
+      appBar: AppBar(
+        leading: BackButton(onPressed: exit),
+        title: Text(t('aiProfilesTitle')),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            16 + MediaQuery.viewInsetsOf(context).bottom,
+          ),
+          child: FilledButton(
+            onPressed: saving || !ready ? null : onSave,
+            child: Text(saving ? t('aiProfilesSaving') : t('aiProfilesSave')),
+          ),
         ),
       ),
-    ),
-    body: Align(
-      alignment: Alignment.topCenter,
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 760),
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            if (!ready && error == null) const LinearProgressIndicator(),
-            Text(t('aiProfilesScope')),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(t('aiProfilesFallback')),
-              subtitle: Text(t('aiProfilesFallbackHint')),
-              value: fallback,
-              onChanged: saving || !ready
-                  ? null
-                  : (value) => setState(() => fallback = value),
-            ),
-            if (error != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Text(
-                  error!,
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 760),
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              if (!ready && error == null) const LinearProgressIndicator(),
+              Text(t('aiProfilesScope')),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(t('aiProfilesFallback')),
+                subtitle: Text(t('aiProfilesFallbackHint')),
+                value: fallback,
+                onChanged: saving || !ready
+                    ? null
+                    : (value) => setState(() => fallback = value),
               ),
-            for (var index = 0; index < profiles.length; index++)
-              profileCard(index),
-            OutlinedButton.icon(
-              onPressed: saving || !ready || profiles.length >= 16
-                  ? null
-                  : () => setState(
-                      () => profiles.add(
-                        AiProfile(
-                          id: const Uuid().v4(),
-                          label: t(
-                            'aiProfilesNameDefault',
-                          ).replaceAll('{n}', '${profiles.length + 1}'),
-                          settings: AppSettings.defaults(),
-                          enabled: false,
+              if (error != null)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    error!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
+              for (var index = 0; index < profiles.length; index++)
+                profileCard(index),
+              OutlinedButton.icon(
+                onPressed: saving || !ready || profiles.length >= 16
+                    ? null
+                    : () => setState(
+                        () => profiles.add(
+                          AiProfile(
+                            id: const Uuid().v4(),
+                            label: t(
+                              'aiProfilesNameDefault',
+                            ).replaceAll('{n}', '${profiles.length + 1}'),
+                            settings: AppSettings.defaults(),
+                            enabled: false,
+                          ),
                         ),
                       ),
-                    ),
-              icon: const Icon(Icons.add),
-              label: Text(t('aiProfilesAdd')),
-            ),
-            const SizedBox(height: 12),
-            Text(t('aiProfilesStorage')),
-          ],
+                icon: const Icon(Icons.add),
+                label: Text(t('aiProfilesAdd')),
+              ),
+              const SizedBox(height: 12),
+              Text(t('aiProfilesStorage')),
+            ],
+          ),
         ),
       ),
     ),
@@ -302,6 +336,7 @@ class _AiProfilesScreenState extends ConsumerState<AiProfilesScreen> {
         secret ? '$id/$kind/${keyRevisions[id] ?? 0}' : '$id/$kind',
       ),
       initialValue: value,
+      contextMenuBuilder: buildEditableTextMenu,
       enabled: !saving,
       obscureText: secret,
       autocorrect: false,

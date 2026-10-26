@@ -1,5 +1,6 @@
 import 'ui/widgets/inline_feedback.dart';
 import 'ui/widgets/editor_keyboard_actions.dart';
+import 'ui/widgets/focused_text_commands.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -71,6 +72,10 @@ class _MyAppState extends ConsumerState<MyApp>
             (ref.read(workspaceToolsCommandProvider).open?.call() ?? false),
         saveEditor: () =>
             _nativeCommandsReady && EditorKeyboardActions.saveFocusedEditor(),
+        editText: (command, isCurrent) => FocusedTextCommands.run(
+          command,
+          isCurrent: () => isCurrent() && _nativeCommandsReady,
+        ),
       )..start();
     }
     _notificationRoutes = NotificationRouteService(

@@ -100,6 +100,7 @@ void main() {
     expect(find.byIcon(Icons.settings_outlined), findsOneWidget);
     await tester.tap(find.byIcon(Icons.settings_outlined));
     await tester.pump();
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
     await tester.pump(const Duration(milliseconds: 600));
     final language = find.byType(DropdownButtonFormField<String>);
     await tester.scrollUntilVisible(

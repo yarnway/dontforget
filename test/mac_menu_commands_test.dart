@@ -18,14 +18,16 @@ void main() {
   var settingsOpens = 0;
   var toolsOpens = 0;
   var editorSaves = 0;
+  var edits = <String>[];
+  bool Function()? editIsCurrent;
   var workspaceVisible = true;
   Future<int?> Function()? begin;
 
-  Future<Object?> invoke(String method) async {
+  Future<Object?> invoke(String method, [Object? arguments]) async {
     final answer = Completer<ByteData?>();
     ui.channelBuffers.push(
       channel.name,
-      codec.encodeMethodCall(MethodCall(method)),
+      codec.encodeMethodCall(MethodCall(method, arguments)),
       answer.complete,
     );
     return codec.decodeEnvelope((await answer.future)!);
@@ -36,6 +38,8 @@ void main() {
     settingsOpens = 0;
     toolsOpens = 0;
     editorSaves = 0;
+    edits = [];
+    editIsCurrent = null;
     workspaceVisible = true;
     begin = null;
     sheet = Completer<String?>();
@@ -59,6 +63,11 @@ void main() {
         editorSaves++;
         return true;
       },
+      editText: (command, isCurrent) async {
+        edits.add(command);
+        editIsCurrent = isCurrent;
+        return isCurrent();
+      },
       openTools: () {
         if (!workspaceVisible) return false;
         toolsOpens++;
@@ -79,6 +88,25 @@ void main() {
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(channel, null);
   });
+
+  test(
+    'native editing is scoped to enabled session and excluded from native input',
+    () async {
+      expect(await invoke('editText', 'selectAll'), true);
+      expect(edits, ['selectAll']);
+      final old = editIsCurrent!;
+      commands.invalidate();
+      expect(old(), false);
+      final pending = invoke('quickInput');
+      await shown.future;
+      expect(await invoke('editText', 'paste'), false);
+      sheet.complete(null);
+      await pending;
+      await commands.configure({}, enabled: false);
+      expect(await invoke('editText', 'cut'), false);
+      expect(edits, ['selectAll']);
+    },
+  );
 
   test(
     'confirmed text enters the product callback once; duplicates wait',

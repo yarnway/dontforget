@@ -10,6 +10,7 @@ final class MacMenuCommands: NSObject, NSMenuItemValidation {
   private var settingsItem: NSMenuItem?
   private var toolsItem: NSMenuItem?
   private var saveItem: NSMenuItem?
+  private var textActions: [NSMenuItem: Selector] = [:]
   private var labels: [String: String] = [:]
   private var enabled = false
   private var alert: NSAlert?
@@ -75,6 +76,33 @@ final class MacMenuCommands: NSObject, NSMenuItemValidation {
     settingsItem?.isEnabled = enabled && alert == nil
     toolsItem?.isEnabled = enabled && alert == nil
     saveItem?.isEnabled = enabled && alert == nil
+    if let root = NSApp.mainMenu { installTextActions(in: root) }
+  }
+
+  private func installTextActions(in menu: NSMenu) {
+    for item in menu.items {
+      if let submenu = item.submenu { installTextActions(in: submenu) }
+      guard textActions[item] == nil, let action = item.action,
+            ["selectAll:", "cut:", "copy:", "paste:"].contains(NSStringFromSelector(action)) else {
+        continue
+      }
+      textActions[item] = action
+      item.target = self
+      item.action = #selector(editText(_:))
+    }
+  }
+
+  private var usesNativeEditor: Bool {
+    return alert != nil || window?.attachedSheet != nil || NSApp.keyWindow !== window
+  }
+
+  @objc private func editText(_ item: NSMenuItem) {
+    guard let original = textActions[item] else { return }
+    if usesNativeEditor {
+      NSApp.sendAction(original, to: nil, from: item)
+    } else if enabled {
+      channel.invokeMethod("editText", arguments: String(NSStringFromSelector(original).dropLast()))
+    }
   }
 
   @objc private func quickInput() {
@@ -83,6 +111,9 @@ final class MacMenuCommands: NSObject, NSMenuItemValidation {
   }
 
   func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+    if let action = textActions[menuItem], usesNativeEditor {
+      return NSApp.target(forAction: action, to: nil, from: menuItem) != nil
+    }
     return enabled && alert == nil
   }
 

@@ -14,6 +14,7 @@ import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/providers/providers.dart';
 import 'package:dont_forget/services/llm_service.dart';
 import 'package:dont_forget/ui/screens/ai_profiles_screen.dart';
+import 'support/interaction_preview.dart';
 
 AiProfile profile(String id) => AiProfile(
   id: id,
@@ -26,6 +27,7 @@ AiProfile profile(String id) => AiProfile(
 );
 
 void main() {
+  setUpAll(loadInteractionPreviewFonts);
   late Directory directory;
   late DatabaseHelper helper;
   late ProviderContainer container;
@@ -416,6 +418,117 @@ void main() {
     );
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets(
+    'saving inherited model draft does not commit the parent language draft',
+    (tester) async {
+      final stored = AppSettings.defaults().copyWith(
+        language: 'zh',
+        aiProfiles: [profile('a')],
+      );
+      await tester.runAsync(
+        () => container.read(settingsProvider.notifier).updateSettings(stored),
+      );
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            localizationsDelegates: const [
+              AppLocalizationsDelegate(),
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            locale: const Locale('zh'),
+            supportedLocales: const [Locale('zh')],
+            home: AiProfilesScreen(
+              initialDraft: stored.copyWith(
+                language: 'ja',
+                aiFallbackEnabled: true,
+              ),
+            ),
+          ),
+        ),
+      );
+      for (var i = 0; i < 10; i++) {
+        await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+        await tester.pump();
+        if (find.byKey(const ValueKey('a/model')).evaluate().isNotEmpty) break;
+      }
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      expect(find.text('有未保存的修改'), findsOneWidget);
+      await tester.runAsync(() => tester.tap(find.text('保存并返回')));
+      for (var i = 0; i < 50; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 10)),
+        );
+        await tester.pump();
+        if (container.read(settingsProvider).aiFallbackEnabled) break;
+      }
+      expect(container.read(settingsProvider).language, 'zh');
+      expect(container.read(settingsProvider).aiFallbackEnabled, true);
+      final db = await tester.runAsync(() => helper.database);
+      final rows = await tester.runAsync(() => db!.query('Settings'));
+      expect(AppSettings.fromJson(rows!.single).language, 'zh');
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  for (final size in [const Size(375, 667), const Size(667, 375)]) {
+    testWidgets('model editor input and save survive keyboard at $size', (
+      tester,
+    ) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = size;
+      tester.view.viewInsets = FakeViewPadding(
+        bottom: size.height > 400 ? 300 : 150,
+      );
+      addTearDown(tester.view.reset);
+      await tester.runAsync(
+        () => container
+            .read(settingsProvider.notifier)
+            .updateSettings(
+              AppSettings.defaults().copyWith(aiProfiles: [profile('a')]),
+            ),
+      );
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            builder: (_, child) =>
+                RepaintBoundary(key: interactionPreviewKey, child: child!),
+            home: const AiProfilesScreen(),
+          ),
+        ),
+      );
+      await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+      await tester.pumpAndSettle();
+      final field = find.byKey(const ValueKey('a/model'));
+      await tester.scrollUntilVisible(
+        field,
+        120,
+        scrollable: find.byType(Scrollable).first,
+        maxScrolls: 50,
+      );
+      await tester.pumpAndSettle();
+      expect(field.hitTestable(), findsOneWidget);
+      await tester.enterText(field, 'new-model');
+      await tester.pumpAndSettle();
+      expect(find.text('保存模型配置').hitTestable(), findsOneWidget);
+      expect(
+        tester.getRect(find.text('保存模型配置')).bottom,
+        lessThan(size.height - tester.view.viewInsets.bottom),
+      );
+      expect(tester.takeException(), isNull);
+      await captureInteractionPreview(
+        tester,
+        'models-keyboard-${size.width.toInt()}',
+      );
+      await tester.pumpWidget(const SizedBox());
+    });
+  }
 
   testWidgets(
     'profile ordering saves the user order with fallback disabled by default',

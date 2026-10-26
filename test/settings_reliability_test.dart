@@ -13,8 +13,10 @@ import 'package:dont_forget/models/notification_schedule_status.dart';
 import 'package:dont_forget/ui/screens/settings_screen.dart';
 import 'package:dont_forget/services/notification_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'support/interaction_preview.dart';
 
 void main() {
+  setUpAll(loadInteractionPreviewFonts);
   TestWidgetsFlutterBinding.ensureInitialized();
   const notificationChannel = MethodChannel(
     'dexterous.com/flutter/local_notifications',
@@ -72,7 +74,7 @@ void main() {
     await directory.delete(recursive: true);
   });
 
-  Future<void> showSettings(WidgetTester tester) async {
+  Future<void> showSettings(WidgetTester tester, {bool routed = false}) async {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
@@ -85,12 +87,118 @@ void main() {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          builder: (context, child) => InlineFeedback(child: child!),
-          home: const SettingsScreen(),
+          builder: (context, child) => InlineFeedback(
+            child: RepaintBoundary(key: interactionPreviewKey, child: child!),
+          ),
+          home: routed
+              ? Builder(
+                  builder: (context) => Scaffold(
+                    body: TextButton(
+                      onPressed: () => Navigator.push<void>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SettingsScreen(),
+                        ),
+                      ),
+                      child: const Text('open'),
+                    ),
+                  ),
+                )
+              : const SettingsScreen(),
         ),
       ),
     );
     await tester.pump();
+    if (routed) {
+      await tester.tap(find.text('open'));
+      await tester.pump();
+    }
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets(
+    'settings draft back confirmation keeps or explicitly discards without writing',
+    (tester) async {
+      await showSettings(tester, routed: true);
+      final field = find.byKey(const ValueKey('settings-api-key'));
+      await tester.scrollUntilVisible(
+        field,
+        180,
+        scrollable: find.byType(Scrollable).first,
+        maxScrolls: 50,
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(field, 'uncommitted-key');
+      await tester.pump();
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      expect(find.text('有未保存的修改'), findsOneWidget);
+      await tester.tap(find.text('继续编辑'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TextField>(field).controller!.text,
+        'uncommitted-key',
+      );
+      expect(container.read(settingsProvider).apiKey, 'user-test-key');
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('放弃修改'));
+      await tester.pumpAndSettle();
+      expect(find.byType(SettingsScreen), findsNothing);
+      await showSettings(tester, routed: true);
+      await tester.scrollUntilVisible(
+        field,
+        180,
+        scrollable: find.byType(Scrollable).first,
+        maxScrolls: 50,
+      );
+      expect(tester.widget<TextField>(field).controller!.text, 'user-test-key');
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  for (final size in [const Size(375, 667), const Size(667, 375)]) {
+    testWidgets(
+      'settings controls and active field remain usable above keyboard at $size',
+      (tester) async {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = size;
+        tester.view.viewInsets = FakeViewPadding(
+          bottom: size.height > 400 ? 300 : 150,
+        );
+        addTearDown(tester.view.reset);
+        await showSettings(tester);
+        final field = find.byKey(const ValueKey('settings-api-key'));
+        await tester.scrollUntilVisible(
+          field,
+          180,
+          scrollable: find.byType(Scrollable).first,
+          maxScrolls: 50,
+        );
+        await tester.pumpAndSettle();
+        expect(field.hitTestable(), findsOneWidget);
+        await tester.enterText(field, '中文日本語keyboard');
+        await tester.pumpAndSettle();
+        expect(
+          tester.widget<TextField>(field).controller!.text,
+          '中文日本語keyboard',
+        );
+        for (final label in ['备份已保存的数据', '保存']) {
+          expect(find.text(label).hitTestable(), findsOneWidget);
+          expect(
+            tester.getRect(find.text(label)).bottom,
+            lessThan(size.height - tester.view.viewInsets.bottom),
+          );
+        }
+        expect(tester.takeException(), isNull);
+        await captureInteractionPreview(
+          tester,
+          'settings-keyboard-${size.width.toInt()}',
+        );
+        await tester.pumpWidget(const SizedBox());
+      },
+    );
   }
 
   testWidgets(

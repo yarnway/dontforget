@@ -185,6 +185,8 @@ void main() {
       );
       await tester.pump();
       await tester.tap(find.text('Open settings'));
+      await tester.pump();
+      await tester.runAsync(() => Future<void>.delayed(Duration.zero));
       await tester.pumpAndSettle();
       expect(notificationCalls, isNotEmpty);
       expect(
