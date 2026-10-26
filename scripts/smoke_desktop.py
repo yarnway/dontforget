@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Run a bounded native startup check on an isolated CI runner, not user data."""
 import argparse
+from contextlib import contextmanager
 import json
 import os
 from pathlib import Path
@@ -19,6 +20,32 @@ EXECUTABLES = {
 }
 
 
+@contextmanager
+def temporary_workspace(platform, result):
+    temporary = tempfile.TemporaryDirectory(prefix='dontforget-smoke-')
+    try:
+        yield temporary.name
+    finally:
+        # Windows can briefly retain a directory handle after process.wait().
+        # Retry only our temporary directory; never ignore a persistent lock or
+        # terminate an unrelated process to make cleanup appear successful.
+        delays = (0.25, 0.5, 1.0, 2.0)
+        for attempt in range(len(delays) + 1):
+            result['cleanup_attempts'] = attempt + 1
+            try:
+                temporary.cleanup()
+                result['cleanup_result'] = 'PASS'
+                break
+            except OSError as error:
+                result['cleanup_result'] = 'FAIL'
+                result['result'] = 'FAIL'
+                if (platform != 'windows' or
+                        getattr(error, 'winerror', None) not in (5, 32) or
+                        attempt == len(delays)):
+                    raise
+                time.sleep(delays[attempt])
+
+
 def smoke(platform):
     if os.environ.get('GITHUB_ACTIONS') != 'true':
         raise RuntimeError('Run this startup smoke check on an isolated GitHub Actions runner')
@@ -30,10 +57,11 @@ def smoke(platform):
     result = {'platform': platform, 'revision': manifest['revision'],
               'version': manifest['version'], 'host': host_platform.platform(),
               'scope': 'unpacked-native-process-startup-only', 'seconds': 10,
-              'result': 'FAIL', 'ui_acceptance': 'NOT_PERFORMED',
+              'result': 'FAIL', 'startup_result': 'FAIL',
+              'cleanup_result': 'NOT_RUN', 'ui_acceptance': 'NOT_PERFORMED',
               'notification_acceptance': 'NOT_PERFORMED'}
     try:
-        with tempfile.TemporaryDirectory(prefix='dontforget-smoke-') as work:
+        with temporary_workspace(platform, result) as work:
             data = Path(work)
             unpacked = data / 'unpacked'
             unpacked.mkdir()
@@ -65,7 +93,7 @@ def smoke(platform):
                         if process.poll() is not None:
                             raise RuntimeError(f'Application exited during startup: {process.returncode}')
                         time.sleep(0.25)
-                    result['result'] = 'PASS'
+                    result['startup_result'] = 'PASS'
                 finally:
                     # Only terminate the process this script owns.
                     if process.poll() is None:
@@ -77,7 +105,7 @@ def smoke(platform):
                             process.wait(timeout=5)
                     log.seek(0)
                     result['startup_log'] = log.read(65536).decode(errors='replace')
-                    if result['result'] != 'PASS':
+                    if result['startup_result'] != 'PASS':
                         print(result['startup_log'], flush=True)
                         if platform == 'windows':
                             events = subprocess.run(
@@ -90,6 +118,7 @@ def smoke(platform):
                                 capture_output=True, text=True, timeout=30)
                             result['windows_crash_events'] = events.stdout[-32768:]
                             print(result['windows_crash_events'], flush=True)
+        result['result'] = 'PASS'
     finally:
         output = ROOT / f'dist/{platform}-startup.json'
         output.write_text(json.dumps(result, indent=2) + '\n')
