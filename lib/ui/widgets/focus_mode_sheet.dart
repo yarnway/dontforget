@@ -4,15 +4,12 @@ import '../../l10n/app_localizations.dart';
 import '../../providers/providers.dart';
 import '../../services/context_trigger_service.dart';
 import '../../services/recovery/runtime_gate.dart';
+import 'workspace_tool_panel.dart';
 
 class FocusModeSheet extends ConsumerStatefulWidget {
-  const FocusModeSheet({super.key});
-  static Future<void> show(BuildContext context) => showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    builder: (_) => const FocusModeSheet(),
-  );
+  const FocusModeSheet({super.key, this.onClose, this.embedded = false});
+  final VoidCallback? onClose;
+  final bool embedded;
   @override
   ConsumerState<FocusModeSheet> createState() => _FocusModeSheetState();
 }
@@ -62,93 +59,86 @@ class _FocusModeSheetState extends ConsumerState<FocusModeSheet> {
     final contextQuiet =
         profile == ContextProfile.office || profile == ContextProfile.deepWork;
     final colors = Theme.of(context).colorScheme;
-    return SafeArea(
-      top: false,
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: 760,
-          maxHeight: MediaQuery.sizeOf(context).height * 0.85,
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.shield_outlined),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      loc.get('focusTitle'),
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: loc.get('close'),
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              SwitchListTile.adaptive(
-                contentPadding: EdgeInsets.zero,
-                title: Text(loc.get(enabled ? 'focusOn' : 'focusOff')),
-                subtitle: Text(loc.get('focusSession')),
-                value: enabled,
-                onChanged: _busy || !_gate.isCurrent(_birth) ? null : _apply,
-              ),
-              const SizedBox(height: 12),
-              Text(loc.get('focusScope')),
-              const SizedBox(height: 12),
-              Text(
-                loc.get('focusLimit'),
-                style: TextStyle(color: colors.onSurfaceVariant),
-              ),
-              if (contextQuiet) ...[
-                const SizedBox(height: 16),
-                Text(
-                  loc.get('focusContextQuiet'),
-                  style: TextStyle(color: colors.primary),
-                ),
-              ],
-              if (_busy) ...[
-                const SizedBox(height: 16),
-                const LinearProgressIndicator(),
-                const SizedBox(height: 8),
-                Text(loc.get('focusApplying')),
-              ],
-              if (_feedback != null) ...[
-                const SizedBox(height: 16),
-                Semantics(
-                  liveRegion: true,
-                  child: Text(
-                    loc.get(_feedback!),
-                    style: TextStyle(
-                      color: _feedback == 'focusPartialFailure'
-                          ? colors.error
-                          : colors.primary,
-                    ),
-                  ),
-                ),
-              ],
-              if (_feedback == 'focusPartialFailure')
-                Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: TextButton.icon(
-                    onPressed: _busy || !_gate.isCurrent(_birth)
-                        ? null
-                        : () => _apply(enabled),
-                    icon: const Icon(Icons.refresh),
-                    label: Text(loc.get('focusRetry')),
-                  ),
-                ),
-            ],
+    return WorkspaceToolFrame(
+      title: loc.get('focusTitle'),
+      icon: Icons.shield_outlined,
+      embedded: widget.embedded,
+      onClose: widget.onClose,
+      children: [
+        Material(
+          color: enabled
+              ? colors.primaryContainer.withValues(alpha: .35)
+              : colors.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(14),
+          clipBehavior: Clip.antiAlias,
+          child: SwitchListTile.adaptive(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 6,
+            ),
+            title: Text(loc.get(enabled ? 'focusOn' : 'focusOff')),
+
+            value: enabled,
+            onChanged: _busy || !_gate.isCurrent(_birth) ? null : _apply,
           ),
         ),
-      ),
+        const SizedBox(height: 16),
+        Text(loc.get('focusScope')),
+        const SizedBox(height: 12),
+        Text(
+          loc.get('focusSession'),
+          style: TextStyle(color: colors.onSurfaceVariant),
+        ),
+        const SizedBox(height: 8),
+        ExpansionTile(
+          tilePadding: EdgeInsets.zero,
+          title: Text(loc.get('focusDetails')),
+          children: [
+            Text(
+              loc.get('focusLimit'),
+              style: TextStyle(color: colors.onSurfaceVariant),
+            ),
+          ],
+        ),
+        if (contextQuiet) ...[
+          const SizedBox(height: 16),
+          Text(
+            loc.get('focusContextQuiet'),
+            style: TextStyle(color: colors.primary),
+          ),
+        ],
+        if (_busy) ...[
+          const SizedBox(height: 16),
+          const LinearProgressIndicator(),
+          const SizedBox(height: 8),
+          Text(loc.get('focusApplying')),
+        ],
+        if (_feedback != null) ...[
+          const SizedBox(height: 16),
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              loc.get(_feedback!),
+              style: TextStyle(
+                color: _feedback == 'focusPartialFailure'
+                    ? colors.error
+                    : colors.primary,
+              ),
+            ),
+          ),
+        ],
+        if (_feedback == 'focusPartialFailure')
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: TextButton.icon(
+              onPressed: _busy || !_gate.isCurrent(_birth)
+                  ? null
+                  : () => _apply(enabled),
+              icon: const Icon(Icons.refresh),
+              label: Text(loc.get('focusRetry')),
+            ),
+          ),
+      ],
     );
   }
 }

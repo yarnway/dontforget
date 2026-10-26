@@ -1,0 +1,100 @@
+{
+  "stage": 7,
+  "previousCandidateNative": {
+    "result": "PASS",
+    "candidate": "1.7.0+12",
+    "ciRun": "40270293933",
+    "nativeExport": "native-export.json",
+    "nativeDigest": "native-digest.json",
+    "nativePolicy": "native-policy-paused.json",
+    "cleanup": {
+      "nativeDeletedTasks": 2,
+      "osPending": 0,
+      "osRetained": 0,
+      "future": 0,
+      "needsAttention": 0,
+      "pendingCancellation": 0,
+      "tableEquality": {
+        "Settings": true,
+        "Reminders": true,
+        "MediaRecords": true
+      },
+      "integrity": "ok"
+    },
+    "deliveryClaim": false
+  },
+  "export": {
+    "result": "PASS",
+    "candidate": "1.7.0+12",
+    "emptyState": "0 tasks, save tasks first",
+    "savedState": "CSV 已保存，共 2 条任务。",
+    "cancelledState": "已取消导出，可重新选择位置。",
+    "cancelledFileExists": false,
+    "savedFileUnchangedAfterCancel": true,
+    "clipboardReadback": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/export-native-v17-materials/native-export-v12.csv",
+    "clipboardMethod": "Copy file location then Flutter input context-menu Paste; AX readback exact",
+    "inputObservation": "Raw path typing omitted underscore; native AXValue worked. Cmd+V and AppKit Paste did not change Flutter palette; its explicit Paste menu did."
+  },
+  "csvReadback": {
+    "result": "PASS",
+    "file": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/export-native-v17-materials/native-export-v12.csv",
+    "bytes": 837,
+    "sha256": "d7ac46fe59655b9566735a4581902277698b4905dd26bee1bf46e15c57bfd47b",
+    "rows": 2,
+    "columns": 16,
+    "utf8BOM": true,
+    "formulaPrefix": true,
+    "unicodeQuoteNewlineRoundtrip": true,
+    "localizedUrgencyColumn": true,
+    "scope": "native FilePicker save, independent Python CSV readback"
+  },
+  "digest": {
+    "result": "PASS",
+    "naturalDueAt": "2026-10-26T13:42:30.080411",
+    "focusSuppressed": true,
+    "homeBadgeBeforeCompletion": 1,
+    "digestBeforeDue": 0,
+    "digestAfterDue": 1,
+    "digestAfterCompletion": 0,
+    "completionFeedback": "事项已标为完成: Digest due synthetic v17",
+    "persistedCompleted": 1,
+    "persistedNoticeRevision": 2,
+    "snapshot": "after-digest.sqlite"
+  },
+  "policy": {
+    "result": "PASS",
+    "candidate": "1.7.0+12",
+    "focusState": "on",
+    "feedback": "提醒安排已处理，实际送达仍受系统权限和策略影响。",
+    "policyPaused": 1,
+    "future": 1,
+    "submitted": 0,
+    "needsAttention": 0,
+    "pendingCancellation": 0,
+    "osPending": 0,
+    "osRetained": 0,
+    "digestBeforeDue": 0,
+    "deliveryClaim": false
+  },
+  "newCandidate": "1.7.0+13",
+  "newCandidateNative": "PENDING",
+  "localValidation": {
+    "flutterTests": 994,
+    "pythonTests": 100,
+    "analyze": "PASS",
+    "homePanelTests": 20,
+    "realFontPreviews": 18,
+    "widths": [
+      375,
+      768,
+      1440
+    ],
+    "textScale": 1.5,
+    "heights": [
+      800,
+      460
+    ],
+    "draftPreserved": true,
+    "pendingOperationSurvivesBreakpointResize": true
+  }
+}

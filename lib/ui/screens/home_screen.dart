@@ -27,10 +27,13 @@ import '../widgets/spaced_repetition_sheet.dart';
 import '../widgets/focus_mode_sheet.dart';
 import '../widgets/context_digest_sheet.dart';
 import '../widgets/data_export_sheet.dart';
+import '../widgets/workspace_tool_panel.dart';
 import '../../services/context_trigger_service.dart';
 import '../../services/spaced_repetition_service.dart';
 import 'knowledge_graph_screen.dart';
 import '../../l10n/app_localizations.dart';
+
+enum _WorkspaceTool { focus, export }
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -100,6 +103,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   );
   WorkspaceToolsCommand? _toolsCommand;
   late final bool Function() _nativeToolsHandler = _openCommandPalette;
+  _WorkspaceTool? _activeTool;
+  bool _exportBusy = false;
   bool _isSearchOpen = false;
   final _searchController = TextEditingController();
   final _searchFocus = FocusNode(debugLabel: 'task-search');
@@ -844,7 +849,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   void _openFocusMode() {
     if (!mounted || !_runtimeActive) return;
-    FocusModeSheet.show(context);
+    setState(() => _activeTool = _WorkspaceTool.focus);
   }
 
   void _openSpacedRepetitionSheet() {
@@ -888,12 +893,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   Future<void> _exportCsvData() async {
     if (!mounted || !_runtimeActive) return;
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (_) => const DataExportSheet(),
-    );
+    setState(() => _activeTool = _WorkspaceTool.export);
+  }
+
+  void _closeWorkspaceTool() {
+    if (!mounted || _exportBusy) return;
+    setState(() => _activeTool = null);
+  }
+
+  void _setExportBusy(bool value) {
+    if (mounted) setState(() => _exportBusy = value);
   }
 
   void _showMultiAgentGoalDialog() {
@@ -986,7 +995,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   bool _openCommandPalette() {
-    if (!_runtimeActive || ModalRoute.of(context)?.isCurrent != true) {
+    if (!_runtimeActive ||
+        _exportBusy ||
+        ModalRoute.of(context)?.isCurrent != true) {
       return false;
     }
     final l10n = AppLocalizations.of(context);
@@ -1133,6 +1144,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         HardwareKeyboard.instance.isControlPressed ||
         HardwareKeyboard.instance.isMetaPressed;
 
+    if (event.logicalKey == LogicalKeyboardKey.escape &&
+        _activeTool != null &&
+        !isTyping &&
+        (ModalRoute.of(context)?.isCurrent ?? false)) {
+      _closeWorkspaceTool();
+      return;
+    }
+
     if (event.logicalKey == LogicalKeyboardKey.escape && _isSearchOpen) {
       _closeSearch();
       return;
@@ -1256,269 +1275,294 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       focusNode: _shortcutFocus,
       autofocus: true,
       onKeyEvent: _handleGlobalKeyEvent,
-      child: Scaffold(
-        extendBodyBehindAppBar: false,
-        appBar: AppBar(
-          centerTitle: false,
-          leading: _isSearchOpen
-              ? IconButton(
-                  icon: const Icon(Icons.arrow_back, size: 20),
-                  tooltip: l10n.get('close'),
-                  onPressed: _closeSearch,
-                )
-              : null,
-          title: _isSearchOpen
-              ? TextField(
-                  controller: _searchController,
-                  focusNode: _searchFocus,
-                  key: const ValueKey('task-search-field'),
-                  autofocus: true,
-                  style: const TextStyle(fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: l10n.get('searchHint'),
-                    hintStyle: TextStyle(
-                      fontSize: 13,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+      child: PopScope(
+        canPop: _activeTool == null,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _closeWorkspaceTool();
+        },
+        child: Scaffold(
+          extendBodyBehindAppBar: false,
+          appBar: AppBar(
+            centerTitle: false,
+            leading: _isSearchOpen
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back, size: 20),
+                    tooltip: l10n.get('close'),
+                    onPressed: _closeSearch,
+                  )
+                : null,
+            title: _isSearchOpen
+                ? TextField(
+                    controller: _searchController,
+                    focusNode: _searchFocus,
+                    key: const ValueKey('task-search-field'),
+                    autofocus: true,
+                    style: const TextStyle(fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: l10n.get('searchHint'),
+                      hintStyle: TextStyle(
+                        fontSize: 13,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      border: InputBorder.none,
                     ),
-                    border: InputBorder.none,
+                    onChanged: _updateSearch,
+                  )
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          l10n.get('appTitle'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 17,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Tooltip(
+                        message: isProcessing
+                            ? l10n.get('statusBusy')
+                            : l10n.get('statusReady'),
+                        child: Icon(Icons.circle, size: 7, color: statusColor),
+                      ),
+                    ],
                   ),
-                  onChanged: _updateSearch,
-                )
-              : Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        l10n.get('appTitle'),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 17,
-                          letterSpacing: 0.5,
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            actions: _isSearchOpen
+                ? [
+                    ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: _searchController,
+                      builder: (context, value, _) => value.text.isEmpty
+                          ? const SizedBox.shrink()
+                          : IconButton(
+                              icon: const Icon(Icons.clear, size: 18),
+                              tooltip: l10n.get('clearSearch'),
+                              onPressed: _clearSearch,
+                            ),
+                    ),
+                    const SizedBox(width: 6),
+                  ]
+                : [
+                    IconButton(
+                      icon: const Icon(Icons.search_rounded),
+                      tooltip: l10n.get('searchHint'),
+                      onPressed: _openSearch,
+                    ),
+                    PopupMenuButton<ContextProfile>(
+                      icon: Icon(
+                        _getContextProfileIcon(currentProfile),
+                        size: 20,
+                        color:
+                            (currentProfile == ContextProfile.deepWork ||
+                                currentProfile == ContextProfile.office)
+                            ? Colors.tealAccent
+                            : null,
+                      ),
+                      tooltip: l10n.get('contextProfileSwitch'),
+                      splashRadius: 18,
+                      onSelected: (profile) async {
+                        if (!mounted || !_runtimeActive) return;
+                        try {
+                          await ref
+                              .read(contextProfileProvider.notifier)
+                              .setProfile(profile);
+                        } catch (_) {
+                          if (!mounted || !_runtimeActive || !context.mounted) {
+                            return;
+                          }
+                          InlineFeedback.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(l10n.get('reminderUpdateFailed')),
+                            ),
+                          );
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: ContextProfile.general,
+                          child: Row(
+                            children: [
+                              const Icon(Icons.tune_rounded, size: 18),
+                              const SizedBox(width: 8),
+                              Text(l10n.get('profileGeneral')),
+                              if (currentProfile == ContextProfile.general) ...[
+                                const Spacer(),
+                                const Icon(
+                                  Icons.check,
+                                  size: 16,
+                                  color: Colors.teal,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: ContextProfile.office,
+                          child: Row(
+                            children: [
+                              const Icon(Icons.apartment_rounded, size: 18),
+                              const SizedBox(width: 8),
+                              Text(l10n.get('profileOffice')),
+                              if (currentProfile == ContextProfile.office) ...[
+                                const Spacer(),
+                                const Icon(
+                                  Icons.check,
+                                  size: 16,
+                                  color: Colors.teal,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: ContextProfile.deepWork,
+                          child: Row(
+                            children: [
+                              const Icon(Icons.psychology_rounded, size: 18),
+                              const SizedBox(width: 8),
+                              Text(l10n.get('profileDeepWork')),
+                              if (currentProfile ==
+                                  ContextProfile.deepWork) ...[
+                                const Spacer(),
+                                const Icon(
+                                  Icons.check,
+                                  size: 16,
+                                  color: Colors.teal,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: ContextProfile.home,
+                          child: Row(
+                            children: [
+                              const Icon(Icons.home_rounded, size: 18),
+                              const SizedBox(width: 8),
+                              Text(l10n.get('profileHome')),
+                              if (currentProfile == ContextProfile.home) ...[
+                                const Spacer(),
+                                const Icon(
+                                  Icons.check,
+                                  size: 16,
+                                  color: Colors.teal,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    ValueListenableBuilder<DateTime>(
+                      valueListenable: _noticeClock,
+                      builder: (context, _, child) {
+                        final count =
+                            _reviewQueue
+                                .read(
+                                  reminders,
+                                  spacedService,
+                                  now: _noticeClock.value,
+                                )
+                                .due
+                                .length +
+                            suppressedCount;
+                        return Badge(
+                          isLabelVisible: count > 0,
+                          label: Text('$count'),
+                          child: child,
+                        );
+                      },
+                      child: IconButton(
+                        icon: Icon(
+                          ref.watch(immersiveModeProvider)
+                              ? Icons.shield_rounded
+                              : Icons.more_horiz_rounded,
+                        ),
+                        tooltip: ref.watch(immersiveModeProvider)
+                            ? '${l10n.get('moreTools')} / ${l10n.get('focusOn')}'
+                            : l10n.get('moreTools'),
+                        onPressed: _openCommandPalette,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.settings_outlined),
+                      tooltip: l10n.get('settings'),
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SettingsScreen(),
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Tooltip(
-                      message: isProcessing
-                          ? l10n.get('statusBusy')
-                          : l10n.get('statusReady'),
-                      child: Icon(Icons.circle, size: 7, color: statusColor),
-                    ),
                   ],
-                ),
-          elevation: 0,
-          backgroundColor: Colors.transparent,
-          actions: _isSearchOpen
-              ? [
-                  ValueListenableBuilder<TextEditingValue>(
-                    valueListenable: _searchController,
-                    builder: (context, value, _) => value.text.isEmpty
-                        ? const SizedBox.shrink()
-                        : IconButton(
-                            icon: const Icon(Icons.clear, size: 18),
-                            tooltip: l10n.get('clearSearch'),
-                            onPressed: _clearSearch,
-                          ),
-                  ),
-                  const SizedBox(width: 6),
-                ]
-              : [
-                  IconButton(
-                    icon: const Icon(Icons.search_rounded),
-                    tooltip: l10n.get('searchHint'),
-                    onPressed: _openSearch,
-                  ),
-                  PopupMenuButton<ContextProfile>(
-                    icon: Icon(
-                      _getContextProfileIcon(currentProfile),
-                      size: 20,
-                      color:
-                          (currentProfile == ContextProfile.deepWork ||
-                              currentProfile == ContextProfile.office)
-                          ? Colors.tealAccent
-                          : null,
-                    ),
-                    tooltip: l10n.get('contextProfileSwitch'),
-                    splashRadius: 18,
-                    onSelected: (profile) async {
-                      if (!mounted || !_runtimeActive) return;
-                      try {
-                        await ref
-                            .read(contextProfileProvider.notifier)
-                            .setProfile(profile);
-                      } catch (_) {
-                        if (!mounted || !_runtimeActive || !context.mounted) {
-                          return;
-                        }
-                        InlineFeedback.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(l10n.get('reminderUpdateFailed')),
-                          ),
-                        );
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                        value: ContextProfile.general,
-                        child: Row(
-                          children: [
-                            const Icon(Icons.tune_rounded, size: 18),
-                            const SizedBox(width: 8),
-                            Text(l10n.get('profileGeneral')),
-                            if (currentProfile == ContextProfile.general) ...[
-                              const Spacer(),
-                              const Icon(
-                                Icons.check,
-                                size: 16,
-                                color: Colors.teal,
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: ContextProfile.office,
-                        child: Row(
-                          children: [
-                            const Icon(Icons.apartment_rounded, size: 18),
-                            const SizedBox(width: 8),
-                            Text(l10n.get('profileOffice')),
-                            if (currentProfile == ContextProfile.office) ...[
-                              const Spacer(),
-                              const Icon(
-                                Icons.check,
-                                size: 16,
-                                color: Colors.teal,
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: ContextProfile.deepWork,
-                        child: Row(
-                          children: [
-                            const Icon(Icons.psychology_rounded, size: 18),
-                            const SizedBox(width: 8),
-                            Text(l10n.get('profileDeepWork')),
-                            if (currentProfile == ContextProfile.deepWork) ...[
-                              const Spacer(),
-                              const Icon(
-                                Icons.check,
-                                size: 16,
-                                color: Colors.teal,
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      PopupMenuItem(
-                        value: ContextProfile.home,
-                        child: Row(
-                          children: [
-                            const Icon(Icons.home_rounded, size: 18),
-                            const SizedBox(width: 8),
-                            Text(l10n.get('profileHome')),
-                            if (currentProfile == ContextProfile.home) ...[
-                              const Spacer(),
-                              const Icon(
-                                Icons.check,
-                                size: 16,
-                                color: Colors.teal,
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+          ),
+          body: ColoredBox(
+            color: Theme.of(context).colorScheme.surface,
+            child: SafeArea(
+              bottom: false,
+              child: Column(
+                children: [
                   ValueListenableBuilder<DateTime>(
                     valueListenable: _noticeClock,
-                    builder: (context, _, child) {
-                      final count =
-                          _reviewQueue
-                              .read(
-                                reminders,
-                                spacedService,
-                                now: _noticeClock.value,
-                              )
-                              .due
-                              .length +
-                          suppressedCount;
-                      return Badge(
-                        isLabelVisible: count > 0,
-                        label: Text('$count'),
-                        child: child,
+                    builder: (context, _, _) {
+                      final now = DateTime.now();
+                      return ReminderNoticePanel(
+                        reminders: _visibleNotices(reminders, now),
+                        now: now,
+                        busyIds: _noticeOperations,
+                        onDismiss: _dismissNotice,
+                        onSnooze: (r) => _actOnNotice(r, snooze: true),
+                        onComplete: (r) => _actOnNotice(r, snooze: false),
                       );
                     },
-                    child: IconButton(
-                      icon: Icon(
-                        ref.watch(immersiveModeProvider)
-                            ? Icons.shield_rounded
-                            : Icons.more_horiz_rounded,
+                  ),
+                  if (digest.isNotEmpty)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: _openContextDigest,
+                        icon: const Icon(Icons.summarize_outlined, size: 18),
+                        label: Text(l10n.get('contextDigestTitle')),
                       ),
-                      tooltip: ref.watch(immersiveModeProvider)
-                          ? '${l10n.get('moreTools')} / ${l10n.get('focusOn')}'
-                          : l10n.get('moreTools'),
-                      onPressed: _openCommandPalette,
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.settings_outlined),
-                    tooltip: l10n.get('settings'),
-                    onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-        ),
-        body: ColoredBox(
-          color: Theme.of(context).colorScheme.surface,
-          child: SafeArea(
-            bottom: false,
-            child: Column(
-              children: [
-                ValueListenableBuilder<DateTime>(
-                  valueListenable: _noticeClock,
-                  builder: (context, _, _) {
-                    final now = DateTime.now();
-                    return ReminderNoticePanel(
-                      reminders: _visibleNotices(reminders, now),
-                      now: now,
-                      busyIds: _noticeOperations,
-                      onDismiss: _dismissNotice,
-                      onSnooze: (r) => _actOnNotice(r, snooze: true),
-                      onComplete: (r) => _actOnNotice(r, snooze: false),
-                    );
-                  },
-                ),
-                if (digest.isNotEmpty)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      onPressed: _openContextDigest,
-                      icon: const Icon(Icons.summarize_outlined, size: 18),
-                      label: Text(l10n.get('contextDigestTitle')),
-                    ),
-                  ),
-                Expanded(
-                  child: _isSearchOpen
-                      ? TaskSearchPanel(
-                          query: _searchQuery,
-                          onClearQuery: _clearSearch,
-                          onPlayMedia: _playMedia,
-                        )
-                      : TaskBoard(
-                          reminders: reminders,
-                          onPlayMedia: _playMedia,
+                  Expanded(
+                    child: WorkspaceToolArea(
+                      tool: switch (_activeTool) {
+                        _WorkspaceTool.focus => FocusModeSheet(
+                          key: const ValueKey('focus-tool'),
+                          embedded: true,
+                          onClose: _closeWorkspaceTool,
                         ),
-                ),
-                const InputBottomBar(),
-              ],
+                        _WorkspaceTool.export => DataExportSheet(
+                          key: const ValueKey('export-tool'),
+                          embedded: true,
+                          onClose: _closeWorkspaceTool,
+                          onBusyChanged: _setExportBusy,
+                        ),
+                        null => null,
+                      },
+                      child: _isSearchOpen
+                          ? TaskSearchPanel(
+                              query: _searchQuery,
+                              onClearQuery: _clearSearch,
+                              onPlayMedia: _playMedia,
+                            )
+                          : TaskBoard(
+                              reminders: reminders,
+                              onPlayMedia: _playMedia,
+                            ),
+                    ),
+                  ),
+                  const InputBottomBar(),
+                ],
+              ),
             ),
           ),
         ),

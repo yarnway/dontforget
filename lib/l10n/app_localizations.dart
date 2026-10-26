@@ -488,6 +488,7 @@ class AppLocalizations {
           'Notification suppressed by Immersive Preparation Mode',
       // Spaced Repetition Flashcards
       'focusTitle': 'Focus mode',
+      'focusDetails': 'Reminder behavior',
       'focusOn': 'Focus is on',
       'focusOff': 'Focus is off',
       'focusSession':
@@ -1012,6 +1013,7 @@ class AppLocalizations {
       'filterQ3Q4Notice': '已被沉浸备战模式拦截静音',
       // 艾宾浩斯间隔重复复习
       'focusTitle': '专注模式',
+      'focusDetails': '提醒处理方式',
       'focusOn': '专注已开启',
       'focusOff': '专注已关闭',
       'focusSession': '仅当前应用会话生效，退出重开后关闭。',
@@ -1539,6 +1541,7 @@ class AppLocalizations {
       'filterQ3Q4Notice': '没入集中モードにより通知が消音されました',
       // 間隔反復復習（エビングハウス）
       'focusTitle': '集中モード',
+      'focusDetails': '通知の扱い',
       'focusOn': '集中モード オン',
       'focusOff': '集中モード オフ',
       'focusSession': '現在のアプリセッションのみ有効です。再起動後はオフになります。',
