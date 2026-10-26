@@ -26,8 +26,208 @@
     "short_recording_rejected_without_task": true,
     "native_label_navigation_bug_reproduced": true
   },
-  "ci22": "NOT_YET_RUN",
-  "native22": "NOT_YET_RUN",
-  "publication": "NOT_YET_PUBLISHED",
-  "stable": "BLOCKED_BY_OPEN_ACCEPTANCE_GATES"
+  "ci22": {
+    "run": 40396529206,
+    "url": "https://github.com/yarnway/dontforget/actions/runs/40396529206",
+    "result": "PASS",
+    "jobs_passed": 7,
+    "flutter_passed": 1081,
+    "flutter_platform_skipped": 1,
+    "python_passed": 123,
+    "python_platform_skipped": 1,
+    "macos_runner": "macos-15-intel",
+    "desktop_startup_seconds": 10,
+    "desktop_startup_and_cleanup": "PASS",
+    "windows_installation": "PASS",
+    "windows_real_database_migration": "NOT_PERFORMED"
+  },
+  "native22": {
+    "build": "22",
+    "native_reopen": "PASS",
+    "same_2_tasks_visible": true,
+    "label_tap_starts_player_instead_of_details": true,
+    "permission": "allowed",
+    "system_pending": 0,
+    "system_retained": 0,
+    "application_queues": 0,
+    "business_rows_equal": true,
+    "media_bytes_equal": true,
+    "integrity": "ok",
+    "short_recording_guard_native": "passed on build21; unchanged implementation in22",
+    "audible_output": "NOT_OBSERVED",
+    "synthetic_link_task": "UNSUBMITTED_INPUT_ONLY; mirror locked during composition; owned process quiesced, database unchanged",
+    "hot_cold_click": "NOT_PERFORMED",
+    "final_processes": 0,
+    "snapshot_quiescent": true
+  },
+  "publication": {
+    "id": 424750238,
+    "tag": "v1.7.0-rc.22",
+    "url": "https://github.com/yarnway/dontforget/releases/tag/v1.7.0-rc.22",
+    "draft": false,
+    "prerelease": true,
+    "published_at": "2026-10-26T20:50:43Z",
+    "asset_count": 21,
+    "notes_readback": "PASS"
+  },
+  "stable": "BLOCKED_BY_OPEN_ACCEPTANCE_GATES",
+  "revision": "e36e497a0773fce5231908ed1b78acd3f1236cb9",
+  "upgrade22": {
+    "from_build": "21",
+    "to_build": "22",
+    "version": "1.7.0",
+    "schema": 10,
+    "integrity": "ok",
+    "all_business_rows_equal": true,
+    "tasks": 2,
+    "media_records": 2,
+    "media_files_sha_equal": 2,
+    "quiescent_before_and_after": true,
+    "container_relocated": true,
+    "native_reopen": "PASS"
+  },
+  "packages": {
+    "releaseId": 424750238,
+    "url": "https://github.com/yarnway/dontforget/releases/tag/v1.7.0-rc.22",
+    "tag": "v1.7.0-rc.22",
+    "draft": false,
+    "prerelease": true,
+    "revision": "e36e497a0773fce5231908ed1b78acd3f1236cb9",
+    "packages": [
+      {
+        "file": "DontForget_Android_test-signed_v1.7.0.apk",
+        "bytes": 68511223,
+        "sha256": "24c3a386e360ddd9ba9a31fd2ae1af0f83d9cb71cb1f59b2f88dd28b304751da"
+      },
+      {
+        "file": "DontForget_Android_test-signed_v1.7.0.aab",
+        "bytes": 66297924,
+        "sha256": "b7602d9b400d6c61c6a9187f63a630c5374448782f60ca53b001d5dcabbf0736"
+      },
+      {
+        "file": "DontForget_iOS_unsigned_v1.7.0.ipa",
+        "bytes": 9976925,
+        "sha256": "56f2e75541fecfe1df5a9b86f4159079bef3bd2db74661745cf3925e0f7a6b9c"
+      },
+      {
+        "file": "DontForget_Linux_x64_v1.7.0.tar.gz",
+        "bytes": 13186042,
+        "sha256": "4ddef6a0f8715c3a3dfaf39166a525484bcd189787b1327d0c9ae1d68b45d04f"
+      },
+      {
+        "file": "DontForget_macOS_unnotarized_v1.7.0.zip",
+        "bytes": 24157159,
+        "sha256": "4fbe374cee14a85a8edf038c718836429ee9b0bf1038ef20bd5c9fcec61303f5"
+      },
+      {
+        "file": "DontForget_Setup_v1.7.0.exe",
+        "bytes": 13752818,
+        "sha256": "087b02aaa6a8f5ebb5c347ea0faa71612618d098386d06a0381fc219144cac5e"
+      },
+      {
+        "file": "DontForget_Windows_Portable_v1.7.0.zip",
+        "bytes": 16541334,
+        "sha256": "fa60d41fac8f6c65921f2a5e6ad01f0e41f34c8bc957df56c12a0bbcc6622549"
+      }
+    ],
+    "assetCount": 21,
+    "method": "five GitHub manifests and checksum files verified by SHA-256; seven GitHub asset sizes and digests match manifest; CI verified package inventory"
+  },
+  "ios_public_package": {
+    "releaseId": 424750238,
+    "revision": "e36e497a0773fce5231908ed1b78acd3f1236cb9",
+    "version": "1.7.0",
+    "build": "22",
+    "bytes": 9976925,
+    "sha256": "56f2e75541fecfe1df5a9b86f4159079bef3bd2db74661745cf3925e0f7a6b9c",
+    "minimumOS": "15.0",
+    "bundleID": "com.example.dontForget",
+    "embeddedProfilePresent": false,
+    "zipCRC": "PASS",
+    "method": "eight verified HTTP 206 ranges, full digest, archive CRC and plist readback",
+    "installedOnPhone": false
+  },
+  "macos_public_package": {
+    "revision": "e36e497a0773fce5231908ed1b78acd3f1236cb9",
+    "version": "1.7.0",
+    "build": "22",
+    "bytes": 24157159,
+    "sha256": "4fbe374cee14a85a8edf038c718836429ee9b0bf1038ef20bd5c9fcec61303f5",
+    "zipCRC": "PASS",
+    "strictSignature": "PASS",
+    "universalBinaries": [
+      {
+        "file": "Contents/Frameworks/App.framework/Versions/A/App",
+        "architectures": [
+          "arm64",
+          "x86_64"
+        ]
+      },
+      {
+        "file": "Contents/Frameworks/FlutterMacOS.framework/Versions/A/FlutterMacOS",
+        "architectures": [
+          "arm64",
+          "x86_64"
+        ]
+      },
+      {
+        "file": "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/flutter_local_notifications",
+        "architectures": [
+          "arm64",
+          "x86_64"
+        ]
+      },
+      {
+        "file": "Contents/Frameworks/objective_c.framework/Versions/A/objective_c",
+        "architectures": [
+          "arm64",
+          "x86_64"
+        ]
+      },
+      {
+        "file": "Contents/Frameworks/sqlite3.framework/Versions/A/sqlite3",
+        "architectures": [
+          "arm64",
+          "x86_64"
+        ]
+      },
+      {
+        "file": "Contents/MacOS/dont_forget",
+        "architectures": [
+          "arm64",
+          "x86_64"
+        ]
+      }
+    ],
+    "notarized": false,
+    "nativeRuntime": "NOT_PERFORMED",
+    "method": "eight verified HTTP 206 ranges, full digest, archive CRC, plist, strict signature and every Mach-O inspected"
+  },
+  "cleanup": {
+    "date": "2026-10-26T20:53:52.851750+00:00",
+    "removed_directories_kib": {
+      "build/native_acceptance/iphone-phase18-materials/release-22/ios-candidate-22/parts": 9760,
+      "build/native_acceptance/iphone-phase18-materials/release-22/macos-candidate-22/parts": 23616,
+      "build/native_acceptance/iphone-phase18-materials/release-22/macos-candidate-22/expanded": 57840
+    },
+    "released_directory_kib": 91216,
+    "cumulative_this_phase_kib": 582304,
+    "project_kib_before": 1323036,
+    "project_kib_after": 1231820,
+    "prior_protected_verified": 2256,
+    "unrelated_user_files_unchanged": 27,
+    "shared_toolchains_preserved": true,
+    "current_public_archives_retained": true,
+    "private_archives_and_snapshots_preserved": true
+  },
+  "latest_native_operation_blocker": "Mac locked; automatic unlock failed. No user operation requested. Owned unsubmitted draft discarded by quiescing the isolated process; business rows unchanged.",
+  "remaining": [
+    "notification hot/cold/late/deleted click and real scheduling failure retry",
+    "linked-task delete and undo native verification",
+    "soft keyboard, Japanese composition and landscape",
+    "audible playback and actual camera/microphone capture; Mirroring does not support capture",
+    "real spring/autumn DST and independent relative-wake evidence",
+    "formal distribution signing and other-platform device checks",
+    "second-provider service deferred by user"
+  ]
 }
