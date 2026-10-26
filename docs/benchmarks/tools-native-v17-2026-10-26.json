@@ -51,7 +51,135 @@
     "keyboardInsets": 320,
     "snapshotScope": "component previews; no native frame speed claim"
   },
-  "candidateCI": "PENDING",
-  "candidateNative": "PENDING",
-  "cleanup": "PENDING"
+  "candidateCI": {
+    "run": 40264115726,
+    "url": "https://github.com/yarnway/dontforget/actions/runs/40264115726",
+    "qualityAndFiveBuilds": "PASS",
+    "release": "SKIPPED_NON_TAG"
+  },
+  "candidateNative": {
+    "version": "1.7.0+10",
+    "revision": "50cc38437860c8ffc123a2ddcf3f779b818389d2",
+    "result": "PASS",
+    "sameSandboxUpgrade": true,
+    "graphCenterAndNodeSelection": true,
+    "graphToListNavigation": true,
+    "searchNoMatchAndReset": true,
+    "keepEditingPreservesDraft": true,
+    "discardRestoresSavedTitle": true,
+    "saveAndLeaveUpdatesList": true,
+    "normalExitExactSqlReadback": true,
+    "reopenPersistedTitleAndMultilineSummary": true,
+    "nativeSyntheticTaskDeletion": true,
+    "graphEmptyStateAfterDeletion": true,
+    "finalNormalExit": true,
+    "modelCredentialRequired": false,
+    "tasksScheduledDuringAcceptance": 0,
+    "scope": "one synthetic task; native macOS interaction. Large graph bounds are separate component evidence; no native large-list timing claim."
+  },
+  "cleanup": {
+    "removed": [
+      {
+        "path": "build/native_acceptance/interaction17-r40260035219/dont_forget.app",
+        "allocatedKiB": 57572
+      },
+      {
+        "path": ".dart_tool",
+        "allocatedKiB": 24752
+      },
+      {
+        "path": "build/test_cache",
+        "allocatedKiB": 119636
+      },
+      {
+        "path": "build/unit_test_assets",
+        "allocatedKiB": 2100
+      },
+      {
+        "path": "build/native_assets",
+        "allocatedKiB": 1932
+      },
+      {
+        "path": "build/native_acceptance/tools-v17-materials/download-parts",
+        "allocatedKiB": 23456
+      },
+      {
+        "path": "build/native_acceptance/tools-v17-materials/artifact-envelope.zip",
+        "allocatedKiB": 23432
+      }
+    ],
+    "freedAllocatedKiB": 252880,
+    "projectAllocatedKiB": 937628,
+    "previousProtectedFiles": 723,
+    "retainedUnchangedFiles": 672,
+    "newProtectedFiles": 775,
+    "rollback": "verified original ZIP plus signature delta, bytes/modes/symlinks and strict codesign",
+    "rollbackDeltaBytes": 643798,
+    "vmOrImageCreated": false,
+    "archivedFiles": 51
+  },
+  "productRevision": "50cc38437860c8ffc123a2ddcf3f779b818389d2",
+  "precedingNativeEditing": {
+    "source": "1ad8728d862d476374d72205fa93139929fd4563",
+    "version": "1.7.0+9",
+    "contextMenuSelectAll": "PASS",
+    "wholeTitleReplacement": "PASS",
+    "multilineSummaryReplacement": "PASS",
+    "savedSqlReadback": [
+      [
+        "Native select-all replacement v17",
+        "Replacement line one\nReplacement line two",
+        null
+      ]
+    ],
+    "normalExit": "PASS",
+    "keyboardCmdA": "not claimed",
+    "pasteToolAlone": "did not update visible field; typeText used after actual menu selection"
+  },
+  "sandboxCleanup": {
+    "baselineTablesMatch": {
+      "Settings": true,
+      "Reminders": true,
+      "MediaRecords": true
+    },
+    "integrity": "ok",
+    "tasks": 0,
+    "mediaRecords": 0,
+    "testCredentialResidueFiles": 0,
+    "originalCredentialCheckpointUnchanged": true,
+    "method": "normal app exit, closed-app exclusive lease, read-only exact baseline verification after native deletion"
+  },
+  "activeNotificationJournal": {
+    "backend": "incremental",
+    "entries": 3,
+    "epoch": "7604a6e7-5044-4c99-8ca3-0de1e3d295d1",
+    "records": [
+      {
+        "nativeId": 1259727053,
+        "action": "cancel",
+        "status": "submitted",
+        "triggerUtcMicros": null
+      },
+      {
+        "nativeId": 1177565015,
+        "action": "cancel",
+        "status": "submitted",
+        "triggerUtcMicros": null
+      },
+      {
+        "nativeId": 1103421708,
+        "action": "cancel",
+        "status": "submitted",
+        "triggerUtcMicros": null
+      }
+    ]
+  },
+  "journalScope": "Three submitted cancellation records remain for stable IDs. No pending retry and no reminder time. This turn did not independently inspect the OS queue or schedule/deliver notifications.",
+  "remaining": [
+    "Spaced repetition: multilingual copy, narrow layout, keyboard navigation and due-card recomputation",
+    "Focus mode: visible current state and native toggle/reopen acceptance",
+    "Cmd+K native automation remains unestablished; button navigation and component shortcut evidence are separate",
+    "Large graph native timing, mobile and other desktop device acceptance",
+    "Historical real DST, relative hardware wake readback, second provider and recording/playback device acceptance per v1.6 ledger"
+  ]
 }
