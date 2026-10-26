@@ -334,6 +334,10 @@ class AppLocalizations {
       'binaryFileNotice':
           'This is a binary file and has been linked as an attachment.',
       'close': 'Close',
+      'commandSearchLabel': 'Find a tool',
+      'commandSearchHint': 'Search by name or command',
+      'commandNavigate': 'Navigate',
+      'commandExecute': 'Open',
       'openedVideo': 'Opened video with system player',
       // Input Bar
       'uploadMaterial': 'Upload Material to AI',
@@ -797,6 +801,10 @@ class AppLocalizations {
       'contentPreview': '内容预览',
       'binaryFileNotice': '该文件为二进制文件，已作为附件关联至本任务。',
       'close': '关闭',
+      'commandSearchLabel': '查找工具',
+      'commandSearchHint': '搜索名称或指令',
+      'commandNavigate': '选择',
+      'commandExecute': '打开',
       'openedVideo': '已调用系统播放器打开视频',
       // Input Bar
       'uploadMaterial': '上传素材给大模型',
@@ -1264,6 +1272,10 @@ class AppLocalizations {
       'contentPreview': '内容プレビュー',
       'binaryFileNotice': 'このファイルはバイナリ形式で、添付ファイルとして関連付けられています。',
       'close': '閉じる',
+      'commandSearchLabel': 'ツールを検索',
+      'commandSearchHint': '名前またはコマンドで検索',
+      'commandNavigate': '選択',
+      'commandExecute': '開く',
       'openedVideo': 'システムプレーヤーで動画を開きました',
       // Input Bar
       'uploadMaterial': 'AIに素材をアップロード',

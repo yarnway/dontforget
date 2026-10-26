@@ -1,4 +1,5 @@
 import '../widgets/inline_feedback.dart';
+import '../widgets/editable_text_menu.dart';
 import '../formatters/local_date_time.dart';
 import '../../data/database_helper.dart';
 import 'package:flutter/material.dart';
@@ -30,6 +31,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   late String _selectedRecurrenceRule;
   late bool _isCompleted;
   late List<String> _linkedTaskIds;
+  List<Reminder>? _linkedSource;
+  List<String>? _indexedLinkIds;
+  Map<String, Reminder> _linkedTaskIndex = {};
   DataGeneration? _editorGeneration;
   bool _isSaving = false;
   bool _isDeleting = false;
@@ -459,12 +463,14 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
               color: isSelected ? Colors.teal : Colors.grey,
             ),
             const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? Colors.teal : null,
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  color: isSelected ? Colors.teal : null,
+                ),
               ),
             ),
           ],
@@ -511,11 +517,11 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
   Widget _buildLinkedTaskChip(
     String linkedId,
-    List<Reminder> allReminders,
+    Map<String, Reminder> taskIndex,
     AppLocalizations l10n,
     bool isDark,
   ) {
-    final target = allReminders.where((r) => r.id == linkedId).firstOrNull;
+    final target = taskIndex[linkedId];
     final title = target?.taskTitle ?? linkedId;
     final qLevel = target?.quadrantLevel ?? 4;
     final qColor = _getCategoryColor(qLevel);
@@ -548,20 +554,27 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             ),
           ),
           const SizedBox(width: 6),
-          InkWell(
-            onTap: () {
-              if (target != null) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => TaskDetailScreen(task: target),
-                  ),
-                );
-              }
-            },
-            child: Text(
-              title.length > 12 ? '${title.substring(0, 12)}...' : title,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+          Flexible(
+            child: InkWell(
+              onTap: () {
+                if (target != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => TaskDetailScreen(task: target),
+                    ),
+                  );
+                }
+              },
+              child: Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 6),
@@ -637,6 +650,23 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     final primaryColor = Theme.of(context).colorScheme.primary;
     final catColor = _getCategoryColor(_selectedQuadrant);
     final allReminders = ref.watch(remindersProvider);
+    // Reuse the index across local form changes; task mutations publish a new
+    // list. Unlinked details never allocate an index for the whole database.
+    if (_linkedTaskIds.isEmpty) {
+      _linkedSource = null;
+      _indexedLinkIds = null;
+      _linkedTaskIndex = {};
+    } else if (!identical(_linkedSource, allReminders) ||
+        !identical(_indexedLinkIds, _linkedTaskIds)) {
+      _linkedSource = allReminders;
+      _indexedLinkIds = _linkedTaskIds;
+      final needed = _linkedTaskIds.toSet();
+      _linkedTaskIndex = {};
+      for (final task in allReminders) {
+        if (needed.remove(task.id)) _linkedTaskIndex[task.id] = task;
+        if (needed.isEmpty) break;
+      }
+    }
 
     final scaffold = Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -687,946 +717,989 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: SafeArea(
-        child: AbsorbPointer(
-          absorbing: _isMutating,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 12.0,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 1. Status & Category Banner Card
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: catColor.withValues(alpha: 0.35),
-                      width: 1,
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          child: Align(
+            heightFactor: 1,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1008),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  icon: _isSaving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.save_outlined, size: 18),
+                  label: Text(
+                    l10n.get('saveChanges'),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        _getCategoryIcon(_selectedQuadrant),
-                        color: catColor,
-                        size: 20,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(48),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: _isMutating ? null : _save,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      body: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1040),
+          child: SafeArea(
+            child: AbsorbPointer(
+              absorbing: _isMutating,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 12.0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // 1. Status & Category Banner Card
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _getCategoryName(l10n, _selectedQuadrant),
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: catColor,
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: catColor.withValues(alpha: 0.35),
+                          width: 1,
                         ),
                       ),
-                      const Spacer(),
+                      child: Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          Icon(
+                            _getCategoryIcon(_selectedQuadrant),
+                            color: catColor,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _getCategoryName(l10n, _selectedQuadrant),
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: catColor,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _isCompleted
+                                  ? Colors.green.withValues(alpha: 0.12)
+                                  : Colors.blue.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _isCompleted
+                                    ? Colors.green.withValues(alpha: 0.4)
+                                    : Colors.blue.withValues(alpha: 0.4),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: _isCompleted
+                                        ? Colors.green
+                                        : Colors.blue,
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  _isCompleted
+                                      ? l10n.get('statusCompleted')
+                                      : l10n.get('statusPending'),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: _isCompleted
+                                        ? Colors.green
+                                        : Colors.blue,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Dynamic Promotion Alert Banner
+                    if (!_isCompleted &&
+                        _selectedQuadrant == 1 &&
+                        _isDynamicallyPromoted) ...[
+                      const SizedBox(height: 10),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
+                          horizontal: 12,
+                          vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: _isCompleted
-                              ? Colors.green.withValues(alpha: 0.12)
-                              : Colors.blue.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.amber.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: _isCompleted
-                                ? Colors.green.withValues(alpha: 0.4)
-                                : Colors.blue.withValues(alpha: 0.4),
-                            width: 0.8,
+                            color: Colors.amber.withValues(alpha: 0.5),
                           ),
                         ),
                         child: Row(
-                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: _isCompleted
-                                    ? Colors.green
-                                    : Colors.blue,
+                            const Icon(
+                              Icons.bolt,
+                              color: Colors.amber,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    l10n.get('dynamicPromotedAlertTitle'),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.amber,
+                                    ),
+                                  ),
+                                  Text(
+                                    l10n.get('dynamicPromotedAlertDesc'),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: isDark
+                                          ? Colors.grey.shade400
+                                          : Colors.grey.shade700,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(width: 5),
-                            Text(
-                              _isCompleted
-                                  ? l10n.get('statusCompleted')
-                                  : l10n.get('statusPending'),
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: _isCompleted
-                                    ? Colors.green
-                                    : Colors.blue,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Dynamic Promotion Alert Banner
-                if (!_isCompleted &&
-                    _selectedQuadrant == 1 &&
-                    _isDynamicallyPromoted) ...[
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.amber.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Colors.amber.withValues(alpha: 0.5),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.bolt, color: Colors.amber, size: 20),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                l10n.get('dynamicPromotedAlertTitle'),
+                            TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  _selectedQuadrant = _originalQuadrant;
+                                  _isDynamicallyPromoted = false;
+                                });
+                              },
+                              child: Text(
+                                l10n.get('revertToQ2'),
                                 style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11,
                                   color: Colors.amber,
                                 ),
                               ),
-                              Text(
-                                l10n.get('dynamicPromotedAlertDesc'),
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: isDark
-                                      ? Colors.grey.shade400
-                                      : Colors.grey.shade700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            setState(() {
-                              _selectedQuadrant = _originalQuadrant;
-                              _isDynamicallyPromoted = false;
-                            });
-                          },
-                          child: Text(
-                            l10n.get('revertToQ2'),
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Colors.amber,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-
-                const SizedBox(height: 14),
-
-                // 2. Task Title Input
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                      width: 1,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.get('taskTitleLabel'),
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: _titleController,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: _isCompleted
-                              ? Colors.grey
-                              : Theme.of(context).textTheme.bodyLarge?.color,
-                          decoration: _isCompleted
-                              ? TextDecoration.lineThrough
-                              : null,
-                        ),
-                        decoration: InputDecoration(
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                          border: InputBorder.none,
-                          hintText: l10n.get('taskTitleLabel'),
-                        ),
-                        maxLines: 2,
-                        minLines: 1,
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                // 3. Supplemental Details / Notes (详情信息补充)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                      width: 1,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.notes_rounded,
-                            size: 16,
-                            color: primaryColor,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            l10n.get('taskDetailsSupplement'),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: _summaryController,
-                        style: const TextStyle(fontSize: 13, height: 1.45),
-                        decoration: InputDecoration(
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                          border: InputBorder.none,
-                          hintText: l10n.get('supplementHint'),
-                          hintStyle: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade400,
-                          ),
-                        ),
-                        maxLines: 6,
-                        minLines: 3,
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                // 4. Reminder Time Section (提示时间与快捷设定)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                      width: 1,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.access_time_rounded,
-                            size: 16,
-                            color: primaryColor,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            l10n.get('triggerTimeLabel'),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                          const Spacer(),
-                          if (_selectedTime != null) ...[
-                            if (!_isCompleted)
-                              Text(
-                                '${l10n.get('timeRemaining')}: ${_formatTimeRemaining(l10n)}',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: _selectedTime!.isBefore(DateTime.now())
-                                      ? Colors.red.shade400
-                                      : primaryColor,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            const SizedBox(width: 6),
-                            IconButton(
-                              icon: const Icon(Icons.clear, size: 16),
-                              tooltip: l10n.get('clearTime'),
-                              splashRadius: 14,
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
-                              onPressed: () =>
-                                  setState(() => _selectedTime = null),
                             ),
                           ],
-                        ],
+                        ),
                       ),
-                      const SizedBox(height: 10),
-                      InkWell(
-                        borderRadius: BorderRadius.circular(6),
-                        onTap: _pickDateTime,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.05)
-                                : Colors.grey.shade50,
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .outlineVariant
-                                  .withValues(alpha: 0.6),
+                    ],
+
+                    const SizedBox(height: 14),
+
+                    // 2. Task Title Input
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            l10n.get('taskTitleLabel'),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                             ),
                           ),
-                          child: Row(
+                          const SizedBox(height: 6),
+                          TextField(
+                            key: const ValueKey('detail-title'),
+                            contextMenuBuilder: buildEditableTextMenu,
+                            controller: _titleController,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: _isCompleted
+                                  ? Colors.grey
+                                  : Theme.of(
+                                      context,
+                                    ).textTheme.bodyLarge?.color,
+                              decoration: _isCompleted
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                            ),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                              border: InputBorder.none,
+                              labelText: l10n.get('taskTitleLabel'),
+                              floatingLabelBehavior:
+                                  FloatingLabelBehavior.never,
+                            ),
+                            maxLines: 2,
+                            minLines: 1,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // 3. Supplemental Details / Notes (详情信息补充)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 6,
+                            runSpacing: 6,
                             children: [
                               Icon(
-                                Icons.calendar_month_outlined,
-                                size: 18,
+                                Icons.notes_rounded,
+                                size: 16,
                                 color: primaryColor,
                               ),
-                              const SizedBox(width: 10),
+                              const SizedBox(width: 6),
                               Text(
-                                _selectedTime != null
-                                    ? formatLocalDateTime(_selectedTime!)
-                                    : l10n.get('notSet'),
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: _selectedTime != null
-                                      ? FontWeight.w600
-                                      : FontWeight.normal,
-                                  color: _selectedTime != null
-                                      ? Theme.of(
-                                          context,
-                                        ).textTheme.bodyMedium?.color
-                                      : Colors.grey,
-                                ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                l10n.get('tapToChange'),
+                                l10n.get('taskDetailsSupplement'),
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: primaryColor,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      // Quick Presets
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 6,
-                        children: [
-                          ActionChip(
-                            avatar: const Icon(Icons.flash_on, size: 13),
-                            label: Text(
-                              l10n.get('in15Min'),
-                              style: const TextStyle(fontSize: 11),
+                          const SizedBox(height: 8),
+                          TextField(
+                            key: const ValueKey('detail-summary'),
+                            contextMenuBuilder: buildEditableTextMenu,
+                            controller: _summaryController,
+                            style: const TextStyle(fontSize: 13, height: 1.45),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                              border: InputBorder.none,
+                              labelText: l10n.get('taskDetailsSupplement'),
+                              floatingLabelBehavior:
+                                  FloatingLabelBehavior.never,
+                              hintText: l10n.get('supplementHint'),
+                              hintStyle: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade400,
+                              ),
                             ),
-                            onPressed: () =>
-                                _applyQuickTime(const Duration(minutes: 15)),
-                          ),
-                          ActionChip(
-                            avatar: const Icon(
-                              Icons.hourglass_top_rounded,
-                              size: 13,
-                            ),
-                            label: Text(
-                              l10n.get('in1Hour'),
-                              style: const TextStyle(fontSize: 11),
-                            ),
-                            onPressed: () =>
-                                _applyQuickTime(const Duration(hours: 1)),
-                          ),
-                          ActionChip(
-                            avatar: const Icon(
-                              Icons.nightlight_round,
-                              size: 13,
-                            ),
-                            label: Text(
-                              l10n.get('tonight20'),
-                              style: const TextStyle(fontSize: 11),
-                            ),
-                            onPressed: () => _applyFixedHour(20),
-                          ),
-                          ActionChip(
-                            avatar: const Icon(
-                              Icons.wb_sunny_rounded,
-                              size: 13,
-                            ),
-                            label: Text(
-                              l10n.get('tomorrow9'),
-                              style: const TextStyle(fontSize: 11),
-                            ),
-                            onPressed: () => _applyFixedHour(9, tomorrow: true),
+                            maxLines: 6,
+                            minLines: 3,
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                // 5. Category Selection & Recurrence Setting Card
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                      width: 1,
                     ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.get('quadrantLabel'),
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey.shade600,
+
+                    const SizedBox(height: 14),
+
+                    // 4. Reminder Time Section (提示时间与快捷设定)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                          width: 1,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      // 4 Category Buttons
-                      Row(
-                        children: [1, 2, 3, 4].map((level) {
-                          final isSelected = _selectedQuadrant == level;
-                          final color = _getCategoryColor(level);
-                          final icon = _getCategoryIcon(level);
-                          final name = _getCategoryName(l10n, level);
-
-                          return Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 2.0,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              Icon(
+                                Icons.access_time_rounded,
+                                size: 16,
+                                color: primaryColor,
                               ),
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(6),
-                                onTap: () =>
-                                    setState(() => _selectedQuadrant = level),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? color.withValues(alpha: 0.15)
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(
-                                      color: isSelected
-                                          ? color
-                                          : Theme.of(
-                                              context,
-                                            ).colorScheme.outlineVariant,
-                                      width: isSelected ? 1.5 : 1.0,
+                              const SizedBox(width: 6),
+                              Text(
+                                l10n.get('triggerTimeLabel'),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              if (_selectedTime != null) ...[
+                                if (!_isCompleted)
+                                  Text(
+                                    '${l10n.get('timeRemaining')}: ${_formatTimeRemaining(l10n)}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color:
+                                          _selectedTime!.isBefore(
+                                            DateTime.now(),
+                                          )
+                                          ? Colors.red.shade400
+                                          : primaryColor,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        icon,
-                                        color: isSelected ? color : Colors.grey,
-                                        size: 18,
-                                      ),
-                                      const SizedBox(height: 3),
-                                      Text(
-                                        name,
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: isSelected
-                                              ? FontWeight.w700
-                                              : FontWeight.w500,
-                                          color: isSelected
-                                              ? color
-                                              : Colors.grey.shade600,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                  ),
+                                const SizedBox(width: 6),
+                                IconButton(
+                                  icon: const Icon(Icons.clear, size: 16),
+                                  tooltip: l10n.get('clearTime'),
+                                  splashRadius: 14,
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  onPressed: () =>
+                                      setState(() => _selectedTime = null),
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          InkWell(
+                            borderRadius: BorderRadius.circular(6),
+                            onTap: _pickDateTime,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.05)
+                                    : Colors.grey.shade50,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .outlineVariant
+                                      .withValues(alpha: 0.6),
                                 ),
                               ),
+                              child: Wrap(
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  Icon(
+                                    Icons.calendar_month_outlined,
+                                    size: 18,
+                                    color: primaryColor,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    _selectedTime != null
+                                        ? formatLocalDateTime(_selectedTime!)
+                                        : l10n.get('notSet'),
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: _selectedTime != null
+                                          ? FontWeight.w600
+                                          : FontWeight.normal,
+                                      color: _selectedTime != null
+                                          ? Theme.of(
+                                              context,
+                                            ).textTheme.bodyMedium?.color
+                                          : Colors.grey,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    l10n.get('tapToChange'),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: primaryColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          );
-                        }).toList(),
-                      ),
+                          ),
 
-                      const SizedBox(height: 14),
+                          const SizedBox(height: 10),
 
-                      // Recurrence Rule Dropdown
-                      Text(
-                        l10n.get('recurrenceLabel'),
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      DropdownButtonFormField<String>(
-                        initialValue: _selectedRecurrenceRule,
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                        ),
-                        items: [
-                          DropdownMenuItem(
-                            value: 'none',
-                            child: Text(
-                              l10n.get('repeatNone'),
-                              style: const TextStyle(fontSize: 13),
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: 'daily',
-                            child: Text(
-                              l10n.get('repeatDaily'),
-                              style: const TextStyle(fontSize: 13),
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: 'workday',
-                            child: Text(
-                              l10n.get('repeatWorkday'),
-                              style: const TextStyle(fontSize: 13),
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: 'weekly',
-                            child: Text(
-                              l10n.get('repeatWeekly'),
-                              style: const TextStyle(fontSize: 13),
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: 'monthly',
-                            child: Text(
-                              l10n.get('repeatMonthly'),
-                              style: const TextStyle(fontSize: 13),
-                            ),
+                          // Quick Presets
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            children: [
+                              ActionChip(
+                                avatar: const Icon(Icons.flash_on, size: 13),
+                                label: Text(
+                                  l10n.get('in15Min'),
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                                onPressed: () => _applyQuickTime(
+                                  const Duration(minutes: 15),
+                                ),
+                              ),
+                              ActionChip(
+                                avatar: const Icon(
+                                  Icons.hourglass_top_rounded,
+                                  size: 13,
+                                ),
+                                label: Text(
+                                  l10n.get('in1Hour'),
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                                onPressed: () =>
+                                    _applyQuickTime(const Duration(hours: 1)),
+                              ),
+                              ActionChip(
+                                avatar: const Icon(
+                                  Icons.nightlight_round,
+                                  size: 13,
+                                ),
+                                label: Text(
+                                  l10n.get('tonight20'),
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                                onPressed: () => _applyFixedHour(20),
+                              ),
+                              ActionChip(
+                                avatar: const Icon(
+                                  Icons.wb_sunny_rounded,
+                                  size: 13,
+                                ),
+                                label: Text(
+                                  l10n.get('tomorrow9'),
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                                onPressed: () =>
+                                    _applyFixedHour(9, tomorrow: true),
+                              ),
+                            ],
                           ),
                         ],
-                        onChanged: (val) {
-                          if (val != null) {
-                            setState(() => _selectedRecurrenceRule = val);
-                          }
-                        },
                       ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                // 6. Bi-directional Links (双向链接 / 关联备忘)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                      width: 1,
                     ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+
+                    const SizedBox(height: 14),
+
+                    // 5. Category Selection & Recurrence Setting Card
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
-                            Icons.link,
-                            size: 16,
-                            color: Colors.indigoAccent,
-                          ),
-                          const SizedBox(width: 6),
                           Text(
-                            l10n.get('bidirectionalLinks'),
+                            l10n.get('quadrantLabel'),
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: Colors.grey.shade600,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                             ),
                           ),
-                          const Spacer(),
-                          TextButton.icon(
-                            icon: const Icon(Icons.hub_outlined, size: 14),
-                            label: Text(
-                              l10n.get('viewInGraph'),
-                              style: const TextStyle(fontSize: 11),
-                            ),
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              minimumSize: Size.zero,
-                            ),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => KnowledgeGraphScreen(
-                                    initialFocusTaskId: widget.task.id,
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              for (final level in [1, 2, 3, 4])
+                                ChoiceChip(
+                                  avatar: Icon(
+                                    _getCategoryIcon(level),
+                                    size: 18,
+                                    color: _getCategoryColor(level),
                                   ),
+                                  label: Text(_getCategoryName(l10n, level)),
+                                  selected: _selectedQuadrant == level,
+                                  onSelected: (_) =>
+                                      setState(() => _selectedQuadrant = level),
                                 ),
-                              );
+                            ],
+                          ),
+
+                          const SizedBox(height: 14),
+
+                          // Recurrence Rule Dropdown
+                          Text(
+                            l10n.get('recurrenceLabel'),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          DropdownButtonFormField<String>(
+                            isExpanded: true,
+                            initialValue: _selectedRecurrenceRule,
+                            decoration: InputDecoration(
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                            ),
+                            items: [
+                              DropdownMenuItem(
+                                value: 'none',
+                                child: Text(
+                                  l10n.get('repeatNone'),
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'daily',
+                                child: Text(
+                                  l10n.get('repeatDaily'),
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'workday',
+                                child: Text(
+                                  l10n.get('repeatWorkday'),
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'weekly',
+                                child: Text(
+                                  l10n.get('repeatWeekly'),
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ),
+                              DropdownMenuItem(
+                                value: 'monthly',
+                                child: Text(
+                                  l10n.get('repeatMonthly'),
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ),
+                            ],
+                            onChanged: (val) {
+                              if (val != null) {
+                                setState(() => _selectedRecurrenceRule = val);
+                              }
                             },
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      if (_linkedTaskIds.isEmpty)
-                        Text(
-                          l10n.get('noLinksYet'),
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isDark
-                                ? Colors.grey.shade500
-                                : Colors.grey.shade400,
-                          ),
-                        )
-                      else
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 6,
-                          children: [
-                            for (final linkedId in _linkedTaskIds)
-                              _buildLinkedTaskChip(
-                                linkedId,
-                                allReminders,
-                                l10n,
-                                isDark,
-                              ),
-                          ],
-                        ),
-                      const SizedBox(height: 8),
-                      OutlinedButton.icon(
-                        icon: const Icon(Icons.add_link, size: 16),
-                        label: Text(
-                          l10n.get('addLinkedTask'),
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          minimumSize: Size.zero,
-                        ),
-                        onPressed: () => _showAddLinkDialog(allReminders, l10n),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                // 7. Context Trigger Section (情境感知触发器)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                      width: 1,
                     ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+
+                    const SizedBox(height: 14),
+
+                    // 6. Bi-directional Links (双向链接 / 关联备忘)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(
-                            Icons.near_me_outlined,
-                            size: 16,
-                            color: Colors.teal,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            l10n.get('contextTriggerTitle'),
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 6,
-                        children: [
-                          _buildTriggerTypeRadio(
-                            'none',
-                            l10n.get('triggerNone'),
-                          ),
-                          _buildTriggerTypeRadio(
-                            'wifi',
-                            l10n.get('triggerWifi'),
-                          ),
-                          _buildTriggerTypeRadio(
-                            'profile',
-                            l10n.get('triggerProfile'),
-                          ),
-                        ],
-                      ),
-                      if (_contextTriggerType == 'wifi') ...[
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: _wifiSsidController,
-                          style: const TextStyle(fontSize: 13),
-                          decoration: InputDecoration(
-                            labelText: l10n.get('wifiSsidLabel'),
-                            hintText: 'e.g. Office-WiFi, Home-Net',
-                            isDense: true,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 8,
-                            ),
-                          ),
-                        ),
-                      ] else if (_contextTriggerType == 'profile') ...[
-                        const SizedBox(height: 8),
-                        DropdownButtonFormField<String>(
-                          initialValue: _contextProfileValue,
-                          decoration: InputDecoration(
-                            labelText: l10n.get('profileSelectLabel'),
-                            isDense: true,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 8,
-                            ),
-                          ),
-                          items: [
-                            DropdownMenuItem(
-                              value: 'office',
-                              child: Text(
-                                l10n.get('profileOffice'),
-                                style: const TextStyle(fontSize: 13),
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              const Icon(
+                                Icons.link,
+                                size: 16,
+                                color: Colors.indigoAccent,
                               ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'deepWork',
-                              child: Text(
-                                l10n.get('profileDeepWork'),
-                                style: const TextStyle(fontSize: 13),
+                              const SizedBox(width: 6),
+                              Text(
+                                l10n.get('bidirectionalLinks'),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
                               ),
-                            ),
-                            DropdownMenuItem(
-                              value: 'home',
-                              child: Text(
-                                l10n.get('profileHome'),
-                                style: const TextStyle(fontSize: 13),
+                              const SizedBox(width: 6),
+                              TextButton.icon(
+                                icon: const Icon(Icons.hub_outlined, size: 14),
+                                label: Text(
+                                  l10n.get('viewInGraph'),
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  minimumSize: Size.zero,
+                                ),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => KnowledgeGraphScreen(
+                                        initialFocusTaskId: widget.task.id,
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
-                            ),
-                          ],
-                          onChanged: (val) {
-                            if (val != null) {
-                              setState(() => _contextProfileValue = val);
-                            }
-                          },
-                        ),
-                      ],
-                      if (_contextTriggerType != 'none') ...[
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: _contextPromptController,
-                          style: const TextStyle(fontSize: 13),
-                          decoration: InputDecoration(
-                            labelText: l10n.get('contextPromptLabel'),
-                            hintText: 'e.g. 提醒同步团队进度或更新站会看板',
-                            isDense: true,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 8,
-                            ),
+                            ],
                           ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-
-                // 8. Media Attachment if any
-                if (widget.task.recordId != null) ...[
-                  const SizedBox(height: 14),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Theme.of(context).colorScheme.outlineVariant,
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.attach_file_rounded,
-                          size: 18,
-                          color: primaryColor,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            l10n.get('linkedInputRecord'),
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade700,
+                          const SizedBox(height: 8),
+                          if (_linkedTaskIds.isEmpty)
+                            Text(
+                              l10n.get('noLinksYet'),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDark
+                                    ? Colors.grey.shade500
+                                    : Colors.grey.shade400,
+                              ),
+                            )
+                          else
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 6,
+                              children: [
+                                for (final linkedId in _linkedTaskIds)
+                                  _buildLinkedTaskChip(
+                                    linkedId,
+                                    _linkedTaskIndex,
+                                    l10n,
+                                    isDark,
+                                  ),
+                              ],
                             ),
-                          ),
-                        ),
-                        if (widget.onPlayMedia != null)
-                          FilledButton.tonalIcon(
-                            icon: const Icon(
-                              Icons.play_arrow_rounded,
-                              size: 16,
-                            ),
+                          const SizedBox(height: 8),
+                          OutlinedButton.icon(
+                            icon: const Icon(Icons.add_link, size: 16),
                             label: Text(
-                              l10n.get('playOrPreview'),
+                              l10n.get('addLinkedTask'),
                               style: const TextStyle(fontSize: 12),
                             ),
-                            onPressed: widget.onPlayMedia,
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              minimumSize: Size.zero,
+                            ),
+                            onPressed: () =>
+                                _showAddLinkDialog(allReminders, l10n),
                           ),
-                      ],
-                    ),
-                  ),
-                ],
-
-                const SizedBox(height: 24),
-
-                // 7. Save Changes Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 44,
-                  child: FilledButton.icon(
-                    icon: _isSaving
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.save_outlined, size: 18),
-                    label: Text(
-                      l10n.get('saveChanges'),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                        ],
                       ),
                     ),
-                    style: FilledButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+
+                    const SizedBox(height: 14),
+
+                    // 7. Context Trigger Section (情境感知触发器)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.outlineVariant,
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              const Icon(
+                                Icons.near_me_outlined,
+                                size: 16,
+                                color: Colors.teal,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                l10n.get('contextTriggerTitle'),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            children: [
+                              _buildTriggerTypeRadio(
+                                'none',
+                                l10n.get('triggerNone'),
+                              ),
+                              _buildTriggerTypeRadio(
+                                'wifi',
+                                l10n.get('triggerWifi'),
+                              ),
+                              _buildTriggerTypeRadio(
+                                'profile',
+                                l10n.get('triggerProfile'),
+                              ),
+                            ],
+                          ),
+                          if (_contextTriggerType == 'wifi') ...[
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: _wifiSsidController,
+                              style: const TextStyle(fontSize: 13),
+                              decoration: InputDecoration(
+                                labelText: l10n.get('wifiSsidLabel'),
+                                hintText: 'e.g. Office-WiFi, Home-Net',
+                                isDense: true,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 8,
+                                ),
+                              ),
+                            ),
+                          ] else if (_contextTriggerType == 'profile') ...[
+                            const SizedBox(height: 8),
+                            DropdownButtonFormField<String>(
+                              isExpanded: true,
+                              initialValue: _contextProfileValue,
+                              decoration: InputDecoration(
+                                labelText: l10n.get('profileSelectLabel'),
+                                isDense: true,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 8,
+                                ),
+                              ),
+                              items: [
+                                DropdownMenuItem(
+                                  value: 'office',
+                                  child: Text(
+                                    l10n.get('profileOffice'),
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'deepWork',
+                                  child: Text(
+                                    l10n.get('profileDeepWork'),
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'home',
+                                  child: Text(
+                                    l10n.get('profileHome'),
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
+                                ),
+                              ],
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setState(() => _contextProfileValue = val);
+                                }
+                              },
+                            ),
+                          ],
+                          if (_contextTriggerType != 'none') ...[
+                            const SizedBox(height: 8),
+                            TextField(
+                              controller: _contextPromptController,
+                              style: const TextStyle(fontSize: 13),
+                              decoration: InputDecoration(
+                                labelText: l10n.get('contextPromptLabel'),
+                                hintText: 'e.g. 提醒同步团队进度或更新站会看板',
+                                isDense: true,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 8,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                    onPressed: _isMutating ? null : _save,
-                  ),
+
+                    // 8. Media Attachment if any
+                    if (widget.task.recordId != null) ...[
+                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.attach_file_rounded,
+                              size: 18,
+                              color: primaryColor,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                l10n.get('linkedInputRecord'),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                            ),
+                            if (widget.onPlayMedia != null)
+                              FilledButton.tonalIcon(
+                                icon: const Icon(
+                                  Icons.play_arrow_rounded,
+                                  size: 16,
+                                ),
+                                label: Text(
+                                  l10n.get('playOrPreview'),
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                                onPressed: widget.onPlayMedia,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 24),
+
+                    const SizedBox(height: 16),
+                  ],
                 ),
-
-                const SizedBox(height: 16),
-              ],
+              ),
             ),
           ),
         ),
