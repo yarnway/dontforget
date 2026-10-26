@@ -1,0 +1,109 @@
+{
+  "date": "2026-10-26",
+  "productRevision": "1e7d579d61e8adeae712bf16f46b0586d77a7b9b",
+  "candidate": "1.7.0+8",
+  "ci": {
+    "run": 40255835264,
+    "url": "https://github.com/yarnway/dontforget/actions/runs/40255835264",
+    "qualityAndFivePlatformBuilds": "PASS",
+    "release": "SKIPPED_NON_TAG"
+  },
+  "precedingReportCandidate": {
+    "sourceRevision": "4b93027401b38e105b701b10832786af5f2893e1",
+    "candidate": "1.7.0+7",
+    "bundleId": "com.example.dontForget.acceptance.dashboard17-r40254505297",
+    "cases": {
+      "nativeQuickEntryTwoTasks": "PASS",
+      "completeOneTask": "PASS",
+      "statisticsTwoOneOneAnd50Percent": "PASS",
+      "categoryTwoTasksInFocus": "PASS",
+      "localReportExplicitSource": "PASS",
+      "localReportCountsAndRate": "PASS",
+      "nativeScrollToActions": "PASS",
+      "copySuccessFeedback": "PASS",
+      "clipboardPasteReadbackIncludesSourceAndFullReport": "PASS",
+      "cancelDraftWithoutSaving": "PASS",
+      "returnToBoard": "PASS",
+      "normalAppExit": "PASS",
+      "normalReopenPersistsTwoTasksAndCompletion": "PASS",
+      "reopenDashboardDiscardsTransientReport": "PASS",
+      "settledNativeDashboardLayout": "PASS"
+    },
+    "fixtureStatus": "Original tasks snapshot retained for rollback; live fixture cleared by +8 and compared with the empty baseline.",
+    "remaining": []
+  },
+  "artifact": {
+    "artifactId": 12622527428,
+    "bytes": 23969563,
+    "expectedDigest": "sha256:bda3e18d3313b9600f851c6af3383f4531290e8c91e8e8635418ba32703b388e",
+    "actualDigest": "sha256:bda3e18d3313b9600f851c6af3383f4531290e8c91e8e8635418ba32703b388e",
+    "zipCRC": "PASS",
+    "method": "eight verified HTTP 206 ranges"
+  },
+  "derivedCandidate": {
+    "bundleId": "com.example.dontForget.acceptance.dashboard17-r40254505297",
+    "sameSandboxAsPrevious": true,
+    "strictSignature": "PASS",
+    "frameworksAndResourcesUnchanged": true
+  },
+  "upgrade": {
+    "businessTablesMatchBeforeUpgrade": {
+      "Settings": true,
+      "MediaRecords": true,
+      "Reminders": true
+    },
+    "integrity": "ok",
+    "runtimeExecutableVerifiedAgainstPreparedPath": true
+  },
+  "nativeFollowup": {
+    "translatedPriorityCommand": "PASS",
+    "actualPromotedCountZero": "PASS",
+    "statisticsAfterUpgradeTwoOneOneAnd50Percent": "PASS",
+    "transientReportStillEmptyAfterUpgrade": "PASS",
+    "deletePendingSyntheticTask": "PASS",
+    "deleteCompletedSyntheticTask": "PASS",
+    "emptyBoard": "PASS",
+    "normalAppExit": "PASS"
+  },
+  "finalDataReadback": {
+    "counts": {
+      "Reminders": 0,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "baselineTablesMatch": {
+      "Reminders": true,
+      "MediaRecords": true,
+      "Settings": true
+    },
+    "integrity": "ok",
+    "journalEntries": 0
+  },
+  "cleanup": {
+    "protectedPreviousCount": 550,
+    "previousMaterialsUnchanged": true,
+    "oldExpandedApp": "build/native_acceptance/dashboard17-r40254505297/dont_forget.app",
+    "oldExpandedBytes": 58836078,
+    "oldAllocatedBytes": 58953728,
+    "retainedExactRollbackDeltaBytes": 643795,
+    "rollbackReconstructionAndCodesign": "PASS",
+    "removedDownloads": {
+      "artifact-envelope.zip": 23969563,
+      "download-parts": 23969563
+    },
+    "projectKiB": 885620
+  },
+  "automatedOnly": [
+    "model response failure/retry and safe fallback",
+    "clipboard failure",
+    "database failure and native synchronization warning for manual priority scans",
+    "other widths, languages and large-text layouts"
+  ],
+  "notClaimed": [
+    "real provider or cross-provider failover in this phase",
+    "OS notification delivery, DST or hardware relative wake readback",
+    "full native text replacement",
+    "mobile and other-platform device acceptance",
+    "native first-frame or cold-start speedup from CPU aggregation benchmark"
+  ]
+}
