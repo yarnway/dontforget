@@ -128,6 +128,10 @@ class AppLocalizations {
       'q4': 'Memo & Notes',
       'hint': 'What should I not forget?',
       'recording': 'Recording audio...',
+      'recordingTooShort':
+          'The recording is too short. No task was created. Check microphone access and record again.',
+      'microphonePermissionDenied':
+          'Microphone access is off. Enable it in system settings, then try again.',
       'save': 'Save',
       'apiKey': 'LLM API Key',
       'backupNow': 'Back up saved data',
@@ -711,6 +715,8 @@ class AppLocalizations {
       'q4': '备忘便签',
       'hint': '有什么事情别忘了？',
       'recording': '正在录音...',
+      'recordingTooShort': '录音过短，未创建任务。请确认麦克风可用后重新录制。',
+      'microphonePermissionDenied': '麦克风权限未开启，请在系统设置中允许后重试。',
       'save': '保存',
       'apiKey': '大模型 API Key',
       'backupNow': '备份已保存的数据',
@@ -1232,6 +1238,9 @@ class AppLocalizations {
       'q4': 'メモ・備忘録',
       'hint': '何を忘れないようにしますか？',
       'recording': '録音中...',
+      'recordingTooShort':
+          '録音が短すぎるため、タスクを作成しませんでした。マイクが使用できることを確認して再度録音してください。',
+      'microphonePermissionDenied': 'マイクへのアクセスが無効です。システム設定で許可してから再試行してください。',
       'save': '保存',
       'apiKey': 'APIキー',
       'backupNow': '保存済みデータをバックアップ',

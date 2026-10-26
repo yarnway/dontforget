@@ -15,6 +15,7 @@ import '../models/reminder.dart';
 import '../models/agent_models.dart';
 import '../services/llm_service.dart';
 import '../services/local_media_store.dart';
+import '../services/recording_duration_reader.dart';
 import '../services/recovery/runtime_gate.dart';
 import 'providers.dart';
 
@@ -373,7 +374,15 @@ class HomeController extends StateNotifier<HomeState> {
     try {
       final permitted = await _audioRecorder.hasPermission();
       _check(generation);
-      if (!permitted) return false;
+      if (!permitted) {
+        _reportError(
+          generation,
+          AppLocalizations(
+            Locale(_ref.read(settingsProvider).language),
+          ).get('microphonePermissionDenied'),
+        );
+        return false;
+      }
       final tempDir = await _temporaryDirectory();
       _check(generation);
       return await _serializeRecorder(() async {
@@ -446,6 +455,22 @@ class HomeController extends StateNotifier<HomeState> {
     _launch(
       generation,
       () async {
+        final duration = await const RecordingDurationReader().read(path);
+        _check(generation);
+        if (duration != null &&
+            duration < RecordingDurationReader.minimumCapture) {
+          // Only this just-finished, unimported capture is discarded. Existing
+          // attachments and unrecognized formats are never deleted here.
+          await File(path).delete();
+          _check(generation);
+          _reportError(
+            generation,
+            AppLocalizations(
+              Locale(_ref.read(settingsProvider).language),
+            ).get('recordingTooShort'),
+          );
+          return;
+        }
         final savedPath = await _saveFileToLocal(path, generation);
         _check(generation);
         final settings = _ref.read(settingsProvider);

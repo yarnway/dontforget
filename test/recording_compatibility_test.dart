@@ -9,6 +9,7 @@ import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/services/notification_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'support/m4a_metadata_fixture.dart';
 
 class _TestNotifications implements NotificationService {
   final List<Reminder> scheduled = [];
@@ -39,6 +40,7 @@ void main() {
   late _TestNotifications notifications;
   String? recordingPath;
   bool produceAudio = false;
+  int captureMillis = 2000;
 
   test(
     'background completion keeps feedback until it is explicitly cleared',
@@ -56,6 +58,7 @@ void main() {
     permitted = true;
     failStart = false;
     produceAudio = false;
+    captureMillis = 2000;
     recordingPath = null;
     // path_provider may return a bundle-specific macOS cache path that does
     // not exist yet. The native recorder does not create parent directories.
@@ -83,8 +86,9 @@ void main() {
           return null;
         case 'stop':
           if (produceAudio) {
-            // Protocol fixture only; this is not encoded microphone audio.
-            await File(recordingPath!).writeAsBytes([1, 5, 1, 2]);
+            await File(
+              recordingPath!,
+            ).writeAsBytes(m4aMetadata(ticks: captureMillis));
             return recordingPath;
           }
           return null; // No audio file or external AI request in this test.
@@ -149,6 +153,7 @@ void main() {
     );
     expect(container.read(homeControllerProvider).isRecording, isFalse);
     expect(calls.where((call) => call.method == 'start'), isEmpty);
+    expect(container.read(homeControllerProvider).error, contains('麦克风权限未开启'));
   });
 
   test(
@@ -198,11 +203,46 @@ void main() {
       expect(media.single['type'], 'audio');
       final saved = File(media.single['content_or_path'] as String);
       expect(saved.path, startsWith('${directory.path}/missing/documents/'));
-      expect(await saved.readAsBytes(), [1, 5, 1, 2]);
+      expect(await saved.readAsBytes(), m4aMetadata(ticks: captureMillis));
       expect(notifications.scheduled, isEmpty);
       expect(reminders.single['trigger_time'], isNull);
       expect(container.read(homeControllerProvider).isRecording, isFalse);
       expect(container.read(homeControllerProvider).error, isNull);
+    },
+  );
+
+  test(
+    'short capture is discarded without a task, media import or model work',
+    () async {
+      produceAudio = true;
+      captureMillis = 22;
+      final finished = Completer<void>();
+      final subscription = container.listen(homeControllerProvider, (
+        before,
+        after,
+      ) {
+        if ((before?.pendingTasksCount ?? 0) > 0 &&
+            after.pendingTasksCount == 0) {
+          if (!finished.isCompleted) finished.complete();
+        }
+      });
+      final controller = container.read(homeControllerProvider.notifier);
+      expect(await controller.startRecording(), isTrue);
+      await controller.stopRecordingAndProcess();
+      await finished.future.timeout(const Duration(seconds: 5));
+      subscription.close();
+      final db = await database.database;
+      expect(await db.query('MediaRecords'), isEmpty);
+      expect(await db.query('Reminders'), isEmpty);
+      expect(await File(recordingPath!).exists(), isFalse);
+      expect(notifications.scheduled, isEmpty);
+      expect(controller.state.isRecording, isFalse);
+      expect(controller.state.pendingTasksCount, 0);
+      expect(controller.state.error, contains('录音过短，未创建任务'));
+      expect(
+        Directory('${directory.path}/missing/documents/media').existsSync(),
+        isFalse,
+      );
     },
   );
 
