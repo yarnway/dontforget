@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-26",
+  "version": "1.7.0+17",
+  "schema": 10,
+  "sourceRevision": "3b63b7100d4ba404d3a2cb2507d8247345b06d17",
+  "ci": {
+    "runId": 40298965229,
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "Analyze and test",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build linux candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build macos candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build ios candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build windows candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build android candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Prepare draft release after all packages pass",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "localValidation": {
+    "flutterTests": 1065,
+    "pythonTests": 114,
+    "targetedTests": 84,
+    "analyze": "PASS",
+    "swiftParse": "PASS"
+  },
+  "release": {
+    "id": 424057283,
+    "tag_name": "v1.7.0-rc.17",
+    "name": "v1.7.0-rc.17 · 搜索快捷键与输入保护",
+    "draft": false,
+    "prerelease": true,
+    "html_url": "https://github.com/yarnway/dontforget/releases/tag/v1.7.0-rc.17",
+    "published_at": "2026-10-26T09:41:58Z",
+    "revision": "3b63b7100d4ba404d3a2cb2507d8247345b06d17",
+    "assetCount": 21,
+    "notesEqual": true,
+    "notesNormalizedEqual": true,
+    "notesChars": [
+      713,
+      713
+    ]
+  },
+  "macOSNative": {
+    "scope": "derived isolated candidate; synthetic drafts only",
+    "logicalWidths": [
+      1000,
+      757
+    ],
+    "cmdFFromComposer": "PASS",
+    "searchRepeatedQueryPreserved": "PASS",
+    "composerDraftPreserved": "PASS",
+    "cmdKPaletteGuard": "PASS",
+    "settingsRouteGuard": "PASS",
+    "unsavedDialogGuard": "PASS",
+    "appKitQuickInputGuard": "PASS",
+    "nativeAppKitInputCancelled": true,
+    "modelRequests": 0,
+    "newTasks": 0,
+    "systemPending": 0,
+    "systemRetained": 0,
+    "systemUnverified": 0,
+    "systemCancelPending": 0,
+    "postExitDatabase": {
+      "integrity": "ok",
+      "exclusiveLease": true,
+      "appExited": true,
+      "tasks": [],
+      "model": "deepseek-flash",
+      "language": "zh",
+      "tableEquality": {
+        "Settings": true,
+        "Reminders": true,
+        "MediaRecords": true
+      }
+    },
+    "screenshots": [
+      "search-wide.png",
+      "search-compact.png",
+      "search-unsaved-guard.png"
+    ],
+    "limitations": [
+      "AX field values occasionally lagged rendered content; verified actual screenshots",
+      "ScreenCaptureKit errors required refreshed observations",
+      "No real IME composition or phone soft keyboard acceptance inherited from desktop"
+    ]
+  },
+  "iPhonePreparation": {
+    "status": "BLOCKED_BEFORE_INSTALL",
+    "deviceModel": "iPhone 15 Pro Max",
+    "osVersion": "27.0.1",
+    "paired": true,
+    "developerModeLastObserved": "disabled",
+    "xcodeVersion": "27.1",
+    "sdkVersion": "27.1",
+    "validDevelopmentIdentities": 1,
+    "appleIntermediateChainRepaired": true,
+    "customTrustSettingsChanged": false,
+    "signedInstall": "NOT_PERFORMED",
+    "runtimeAcceptance": "NOT_PERFORMED",
+    "usbDeviceLastRead": "ABSENT",
+    "nativeToolLastRead": "MAC_LOCKED_AUTO_UNLOCK_FAILED",
+    "cocoaPods": "1.16.2_READY"
+  },
+  "cleanup": {
+    "state": "COMPLETE",
+    "scope": "completed macOS phase only; iOS build workspace and current SDKs retained",
+    "projectKiBBefore": 1336316,
+    "projectKiBAfter": 1140224,
+    "freedKiB": 196092,
+    "priorProtectedFilesVerified": 1245,
+    "priorProtectedFilesUnchanged": 1199,
+    "replacedByVerifiedRollback": 46
+  },
+  "stableRelease": "NOT_PUBLISHED_PENDING_REMAINING_GATES"
+}

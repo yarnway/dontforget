@@ -1,0 +1,120 @@
+{
+  "baseRevision": "3b63b7100d4ba404d3a2cb2507d8247345b06d17",
+  "sourcePatches": {
+    "ios/Podfile": "0af2e4c291181865eee24a7b30a9337b8481c7d00624591526f0e36c4515d1d2",
+    "pubspec.yaml": "99646e504cf1f447d92a7cf978906b7f5e9123c5c0cc41114b5edcecda9f62de"
+  },
+  "version": "1.7.0",
+  "build": "18",
+  "bundleID": "com.yarnway.dontforget.acceptance.iphone17",
+  "minimumOS": "15.0",
+  "sdk": "iphoneos27.1",
+  "xcode": "2710",
+  "podConfigurations": [
+    {
+      "target": "Flutter",
+      "configuration": "Debug",
+      "minimum": "15.0"
+    },
+    {
+      "target": "Flutter",
+      "configuration": "Profile",
+      "minimum": "15.0"
+    },
+    {
+      "target": "Flutter",
+      "configuration": "Release",
+      "minimum": "15.0"
+    },
+    {
+      "target": "flutter_local_notifications",
+      "configuration": "Debug",
+      "minimum": "15.0"
+    },
+    {
+      "target": "flutter_local_notifications",
+      "configuration": "Profile",
+      "minimum": "15.0"
+    },
+    {
+      "target": "flutter_local_notifications",
+      "configuration": "Release",
+      "minimum": "15.0"
+    },
+    {
+      "target": "flutter_local_notifications-flutter_local_notifications_privacy",
+      "configuration": "Debug",
+      "minimum": "15.0"
+    },
+    {
+      "target": "flutter_local_notifications-flutter_local_notifications_privacy",
+      "configuration": "Profile",
+      "minimum": "15.0"
+    },
+    {
+      "target": "flutter_local_notifications-flutter_local_notifications_privacy",
+      "configuration": "Release",
+      "minimum": "15.0"
+    },
+    {
+      "target": "Pods-Runner",
+      "configuration": "Debug",
+      "minimum": "15.0"
+    },
+    {
+      "target": "Pods-Runner",
+      "configuration": "Profile",
+      "minimum": "15.0"
+    },
+    {
+      "target": "Pods-Runner",
+      "configuration": "Release",
+      "minimum": "15.0"
+    },
+    {
+      "target": "Pods-RunnerTests",
+      "configuration": "Debug",
+      "minimum": "15.0"
+    },
+    {
+      "target": "Pods-RunnerTests",
+      "configuration": "Profile",
+      "minimum": "15.0"
+    },
+    {
+      "target": "Pods-RunnerTests",
+      "configuration": "Release",
+      "minimum": "15.0"
+    }
+  ],
+  "buildResult": "PASS",
+  "buildSecondsFromFlutter": 34.8,
+  "signing": "unsigned",
+  "embeddedProfilePresent": false,
+  "archive": "build/native_acceptance/iphone-v17-materials/ios-isolated-18-unsigned.zip",
+  "archiveSHA256": "3d75a1989cb1765333d705cde9b7bc7bd37ffd15329644b2ae70407fde99f48b",
+  "archiveBytes": 10062784,
+  "zipCRC": "PASS",
+  "installedOnPhone": false,
+  "date": "2026-10-26",
+  "schema": 10,
+  "localPythonTests": 114,
+  "rubySyntax": "PASS",
+  "cocoaPods": {
+    "version": "1.16.2",
+    "ruby": "2.6.10",
+    "bundler": "2.4.22",
+    "gemfileLockSHA256": "93d0f424ca28413790df642bba0279c54c0a46f0db526a4efd195379444e5f93",
+    "installedGems": 42,
+    "scope": "user-local task-owned tools; no shell profile or system Ruby changes"
+  },
+  "ci": "PENDING",
+  "release": "PENDING",
+  "phoneRuntime": "NOT_PERFORMED",
+  "blockers": [
+    "XCODE_CLI_NO_ACCOUNTS",
+    "MATCHING_DEVELOPMENT_PROFILE_UNAVAILABLE",
+    "USB_DEVICE_ABSENT",
+    "MAC_LOCKED_AUTO_UNLOCK_FAILED"
+  ]
+}
