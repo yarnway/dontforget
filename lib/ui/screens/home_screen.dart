@@ -1075,15 +1075,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         shortcut: 'U',
         onExecute: () async {
           if (!mounted || !_runtimeActive) return;
-          final count = await ref
-              .read(remindersProvider.notifier)
-              .scanAndApplyDynamicUrgency();
-          if (mounted && _runtimeActive) {
+          try {
+            final result = await ref
+                .read(remindersProvider.notifier)
+                .scanAndApplyDynamicUrgency();
+            if (!mounted || !_runtimeActive) return;
+            final message =
+                '${l10n.get('dynamicPromotedCount')}: ${result.changed}'
+                '${result.nativeSyncFailures > 0 ? '\n${l10n.get('reminderNativeSyncFailed')}' : ''}';
+            InlineFeedback.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(message)));
+          } catch (_) {
+            if (!mounted || !_runtimeActive) return;
             InlineFeedback.of(context).showSnackBar(
-              SnackBar(
-                content: Text('${l10n.get('dynamicPromotedCount')}: $count'),
-                behavior: SnackBarBehavior.floating,
-              ),
+              SnackBar(content: Text(l10n.get('dynamicScanFailed'))),
             );
           }
         },

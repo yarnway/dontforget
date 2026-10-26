@@ -10,6 +10,11 @@ class AppLocalizations {
 
   static const Map<String, Map<String, String>> _localizedValues = {
     'en': {
+      'scanDynamicUrgency': 'Check task priorities',
+      'scanDynamicUrgencyDesc':
+          'Review approaching reminders and promote eligible tasks.',
+      'dynamicPromotedCount': 'Tasks promoted',
+      'dynamicScanFailed': 'Could not check priorities. Please try again.',
       'quickEntry': 'Quick Entry…',
       'quickEntryTitle': 'Quick Entry',
       'quickEntryHint':
@@ -536,6 +541,10 @@ class AppLocalizations {
       'viewInGraph': 'View in Graph',
     },
     'zh': {
+      'scanDynamicUrgency': '检查任务优先级',
+      'scanDynamicUrgencyDesc': '检查临近到期的提醒，将符合条件的任务提升为紧急提醒。',
+      'dynamicPromotedCount': '已提升优先级的任务数',
+      'dynamicScanFailed': '优先级检查失败，请重试。',
       'quickEntry': '快速输入…',
       'quickEntryTitle': '快速输入',
       'quickEntryHint': '描述待办事项和提醒时间。确认后按已保存的设置处理。',
@@ -979,6 +988,10 @@ class AppLocalizations {
       'viewInGraph': '在图谱中定位',
     },
     'ja': {
+      'scanDynamicUrgency': 'タスクの優先度を確認',
+      'scanDynamicUrgencyDesc': '期限が近いリマインダーを確認し、該当するタスクの優先度を上げます。',
+      'dynamicPromotedCount': '優先度を上げたタスク数',
+      'dynamicScanFailed': '優先度を確認できませんでした。もう一度お試しください。',
       'quickEntry': 'クイック入力…',
       'quickEntryTitle': 'クイック入力',
       'quickEntryHint': 'タスクと通知時刻を入力してください。確定後、保存済みの設定で処理します。',

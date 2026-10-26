@@ -1,3 +1,4 @@
+import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/ui/widgets/reminder_notice_panel.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
@@ -442,6 +443,56 @@ void main() {
   });
 
   testWidgets(
+    'manual priority scan shows count, native warning and safe failure',
+    (tester) async {
+      await tester.pumpWidget(
+        UncontrolledProviderScope(container: container, child: const MyApp()),
+      );
+      await tester.pump();
+      addTearDown(() {
+        reminders.scanResult = null;
+        reminders.scanError = null;
+      });
+      for (final locale in ['en', 'zh', 'ja']) {
+        final l10n = AppLocalizations(Locale(locale));
+        for (final key in [
+          'scanDynamicUrgency',
+          'scanDynamicUrgencyDesc',
+          'dynamicPromotedCount',
+          'dynamicScanFailed',
+        ]) {
+          expect(l10n.get(key), isNot(key));
+        }
+      }
+      for (final nativeFailures in [0, 1]) {
+        reminders.scanResult = ReminderBatchResult(
+          changed: 3,
+          nativeSyncFailures: nativeFailures,
+        );
+        await tester.tap(find.byTooltip('更多功能'));
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.tap(find.text('检查任务优先级'));
+        await tester.pump(const Duration(milliseconds: 300));
+        expect(find.textContaining('已提升优先级的任务数: 3'), findsOneWidget);
+        expect(find.textContaining('Instance of'), findsNothing);
+        expect(
+          find.textContaining('已保存，但系统提醒未能更新'),
+          nativeFailures == 0 ? findsNothing : findsOneWidget,
+        );
+      }
+      reminders.scanError = StateError('SECRET error details');
+      await tester.tap(find.byTooltip('更多功能'));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('检查任务优先级'));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('优先级检查失败，请重试。'), findsOneWidget);
+      expect(find.textContaining('SECRET'), findsNothing);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets(
     'idle heartbeat preserves the board and search supports keyboard dismissal',
     (tester) async {
       await tester.runAsync(
@@ -489,6 +540,15 @@ void main() {
 // on a fixed delay or treating persistent reminder actions as synchronous.
 class _ObservedReminders extends RemindersNotifier {
   _ObservedReminders(super.database);
+
+  ReminderBatchResult? scanResult;
+  Object? scanError;
+  @override
+  Future<ReminderBatchResult> scanAndApplyDynamicUrgency() {
+    if (scanError != null) return Future.error(scanError!);
+    if (scanResult != null) return Future.value(scanResult!);
+    return super.scanAndApplyDynamicUrgency();
+  }
 
   Future<ReminderActionResult>? lastAction;
 
