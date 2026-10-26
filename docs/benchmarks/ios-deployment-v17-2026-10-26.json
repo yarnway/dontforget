@@ -95,7 +95,6 @@
   "archiveSHA256": "3d75a1989cb1765333d705cde9b7bc7bd37ffd15329644b2ae70407fde99f48b",
   "archiveBytes": 10062784,
   "zipCRC": "PASS",
-  "installedOnPhone": false,
   "date": "2026-10-26",
   "schema": 10,
   "localPythonTests": 114,
@@ -108,13 +107,113 @@
     "installedGems": 42,
     "scope": "user-local task-owned tools; no shell profile or system Ruby changes"
   },
-  "ci": "PENDING",
-  "release": "PENDING",
-  "phoneRuntime": "NOT_PERFORMED",
+  "ci": {
+    "runId": 40307581624,
+    "status": "success",
+    "jobs": 7,
+    "flutter": {
+      "passed": 1064,
+      "skipped": 1,
+      "reason": "macOS system temp alias test on Linux"
+    },
+    "python": {
+      "passed": 113,
+      "skipped": 1,
+      "reason": "Darwin native storage-lock test on Linux"
+    },
+    "macOSNativeStorageLock": "PASS"
+  },
+  "release": {
+    "id": 424120145,
+    "tag_name": "v1.7.0-rc.18",
+    "html_url": "https://github.com/yarnway/dontforget/releases/tag/v1.7.0-rc.18",
+    "draft": false,
+    "prerelease": true,
+    "published_at": "2026-10-26T12:16:03Z",
+    "assetCount": 21,
+    "notesMatch": true,
+    "tagRevision": "68bd38eb01e8c146265707906b6025e2463900fa"
+  },
+  "phoneRuntime": "PARTIAL",
   "blockers": [
+    "CUA_COORDINATE_NO_WINDOWS_AFTER_RECONNECT"
+  ],
+  "revision": "68bd38eb01e8c146265707906b6025e2463900fa",
+  "ciIOSPackage": {
+    "releaseId": 424120145,
+    "revision": "68bd38eb01e8c146265707906b6025e2463900fa",
+    "version": "1.7.0",
+    "build": "18",
+    "bytes": 9972040,
+    "sha256": "3e51938011d0694995aacefb31257c8a69a447f479da7a30c46c78b29c6b2e1a",
+    "minimumOS": "15.0",
+    "bundleID": "com.example.dontForget",
+    "embeddedProfilePresent": false,
+    "zipCRC": "PASS",
+    "method": "eight verified HTTP 206 ranges, full digest, archive CRC and plist readback",
+    "installedOnPhone": false
+  },
+  "signedDeviceBuild": {
+    "exitCode": 0,
+    "elapsedSeconds": 77.03,
+    "strictSignature": "PASS",
+    "profileMatchesDevice": true,
+    "profileMatchesAppAndTeam": true,
+    "rollback": {
+      "sha256": "6c54cf0aef9acdf86fd6ffe5da70b659be0039b7c21cf7cbf615838004551d74",
+      "bytes": 10119456,
+      "crc": "PASS",
+      "restoredFilesModesSymlinks": "PASS",
+      "entries": 106,
+      "strictSignature": "PASS",
+      "archive": "build/native_acceptance/iphone-v17-materials/release-18/ios-isolated-18-development.zip",
+      "privateProvisioningArchive": true
+    }
+  },
+  "installation": {
+    "revision": "68bd38eb01e8c146265707906b6025e2463900fa",
+    "installExitCode": 0,
+    "installOutcome": "success",
+    "appReadback": {
+      "bundleIdentifier": "com.yarnway.dontforget.acceptance.iphone17",
+      "name": "别忘了·隔离17",
+      "version": "1.7.0",
+      "bundleVersion": "18",
+      "builtByDeveloper": true,
+      "containerAccessible": true
+    },
+    "developerMode": "enabled",
+    "paired": true,
+    "transport": "wired",
+    "runtimeAcceptance": "PARTIAL"
+  },
+  "resolvedBlockers": [
     "XCODE_CLI_NO_ACCOUNTS",
     "MATCHING_DEVELOPMENT_PROFILE_UNAVAILABLE",
-    "USB_DEVICE_ABSENT",
-    "MAC_LOCKED_AUTO_UNLOCK_FAILED"
-  ]
+    "USB_DEVICE_ABSENT"
+  ],
+  "initialUnsignedBuildInstalledOnPhone": false,
+  "runtimeEvidence": "docs/benchmarks/iphone-runtime-v17-2026-10-26.json",
+  "cleanup": {
+    "date": "2026-10-26T13:10:08.569654+00:00",
+    "projectKiBBefore": 1855936,
+    "scope": "owned isolated iOS build workspace, verified duplicate download parts and replaced rc.17 unsigned IPA",
+    "priorProtectedFilesVerified": 1199,
+    "userFilesUnchanged": [
+      "docs/Architecture_Design.md",
+      "docs/Developer_Guide.md",
+      "scripts/render_diagrams.py"
+    ],
+    "signedArchiveRestoration": "PASS",
+    "signedArchiveSHA256": "6c54cf0aef9acdf86fd6ffe5da70b659be0039b7c21cf7cbf615838004551d74",
+    "privateConfigArchiveSHA256": "0a586555c5aa0de39e81eacfd27ae9c7b32fbe05fd24dc52a01d5147ef1d1034",
+    "targets": [
+      "build/ios_device_workspace_18",
+      "build/native_acceptance/iphone-v17-materials/release-18/ios-candidate-18/parts",
+      "build/native_acceptance/iphone-v17-materials/ios-candidate-17/DontForget_iOS_unsigned_v1.7.0.ipa"
+    ],
+    "projectKiBAfter": 1161636,
+    "freedKiB": 694300,
+    "sharedSDKAndSigningRuntimePreserved": true
+  }
 }

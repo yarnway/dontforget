@@ -1,0 +1,171 @@
+{
+  "date": "2026-10-26",
+  "revision": "68bd38eb01e8c146265707906b6025e2463900fa",
+  "version": "1.7.0+18",
+  "schema": 10,
+  "status": "PARTIAL",
+  "device": {
+    "model": "iPhone 15 Pro Max",
+    "productType": "iPhone16,2",
+    "osVersion": "27.0.1",
+    "osBuild": "24A446",
+    "developerModeReadback": "enabled",
+    "transport": "wired",
+    "paired": true
+  },
+  "package": {
+    "bundleID": "com.yarnway.dontforget.acceptance.iphone17",
+    "displayName": "别忘了·隔离17",
+    "buildReadback": "18",
+    "displayNameSuffixIsIsolationIdentityNotBuildNumber": true,
+    "origin": "git archive of exact candidate revision plus isolated bundle/display name and personal-team signing configuration",
+    "configuration": "Release",
+    "strictSignature": "PASS",
+    "matchingDevelopmentProfile": "PASS",
+    "install": "PASS",
+    "postInstallMetadataReadback": "PASS",
+    "publicIPAInstalled": false,
+    "privateArchive": "build/native_acceptance/iphone-v17-materials/release-18/ios-isolated-18-development.zip",
+    "archiveSHA256": "6c54cf0aef9acdf86fd6ffe5da70b659be0039b7c21cf7cbf615838004551d74",
+    "archiveReconstruction": "files, modes, symlinks and strict signature PASS",
+    "newPrivateKeysExported": false
+  },
+  "interaction": {
+    "method": "native iPhone Mirroring via CUA; hardware keyboard",
+    "passed": [
+      "ASCII main input, select all and replace",
+      "Cmd+K tool navigation",
+      "knowledge graph and goal panels retain main composer",
+      "goal draft close/reopen, continue editing and explicit discard",
+      "local synthetic task creation",
+      "detail title replace and Cmd+S save",
+      "native process termination, zero-process readback, native relaunch and saved title readback",
+      "iOS export save picker cancellation and retry",
+      "iOS local CSV save, Quick Look content and copied location paste readback"
+    ],
+    "notCovered": [
+      "software keyboard",
+      "Chinese and Japanese IME composition",
+      "touch keyboard rotation and landscape",
+      "new-version device upgrade",
+      "recording/playback/camera/media",
+      "notification hot/cold click and late/deleted route handling"
+    ],
+    "toolObservations": [
+      "mirroring UI snapshots can precede animation completion; focused input and readback required separate steps",
+      "bulk Unicode injection/paste did not establish IME acceptance",
+      "coordinate calls intermittently returned noWindowsAvailable while AX and keyboard remained available",
+      "iPhone-in-use disconnect was followed by successful picture reconnection; coordinate input still failed after window centering, resizing and one mirroring restart"
+    ],
+    "productRegressionEstablished": false,
+    "finalBlocker": "CUA_COORDINATE_NO_WINDOWS_AFTER_RECONNECT"
+  },
+  "persistence": {
+    "schema": 10,
+    "integrity": "ok",
+    "reminderCount": 1,
+    "expectedSavedTitleFound": true,
+    "summaryPreserved": true,
+    "scheduledReminderCount": 0,
+    "mediaCount": 0,
+    "runnerProcessesBeforeCopy": 0,
+    "runnerProcessesAfterCopy": 0,
+    "captureKind": "read-only isolated Documents copy after native app-switcher termination",
+    "capturedAt": "2026-10-26T12:48:46.086991+00:00",
+    "nativeReopenTitle": "Phone18Saved",
+    "runningProcessCountAfterNativeReopen": 1,
+    "newProcessObserved": true
+  },
+  "export": {
+    "version": "1.7.0+18",
+    "nativeCancel": "PASS",
+    "cancelFeedback": "已取消导出，可重新选择位置。",
+    "retryAfterCancel": "PASS",
+    "nativeSaveFeedback": "CSV 已保存，共 1 条任务。",
+    "destination": "On My iPhone/DontForget-Acceptance-18/DontForget_Export_1793019061687346.csv",
+    "copyLocationFeedback": "文件位置已复制。",
+    "pasteLocationSuffixReadback": "DontForget_Export_1793019061687346.csv",
+    "pathDraftClearedWithoutSubmit": true,
+    "fileContentReadback": {
+      "method": "iOS Files Quick Look",
+      "savedFileBytes": 593,
+      "taskTitle": "Phone18Saved",
+      "summary": "Phone18Draft",
+      "quadrant": "Q2",
+      "status": "进行中",
+      "localizationHeaders": "Chinese and English visible",
+      "result": "PASS"
+    },
+    "cleanup": {
+      "testDirectory": "DontForget-Acceptance-18",
+      "method": "iOS Files Delete",
+      "directoryAbsentFromOriginalLocation": true,
+      "recycleBinPurged": false,
+      "additionalSaveCancelled": true
+    },
+    "scope": "isolated local synthetic task; no upload"
+  },
+  "notifications": {
+    "permissionBefore": "not enabled",
+    "nativeAuthorizationPromptAccepted": true,
+    "permissionAfter": "allowed",
+    "baselineSystemPending": 0,
+    "baselineSystemRetained": 0,
+    "dueLocal": "2026-10-26T21:05:00+08:00",
+    "savedVia": "Cmd+S after coordinate operation failed",
+    "nativeInAppDueCardObserved": true,
+    "nativeOSDelivery": "UNCONFIRMED",
+    "nativeOSClick": "NOT_RUN",
+    "cleanup": "PENDING_NATIVE_INPUT_RECOVERY"
+  },
+  "isolation": {
+    "appData": "separate application container",
+    "taskTitle": "Phone18Saved",
+    "credentialsPresentInPreNotificationSnapshot": false,
+    "modelRequestsMade": false,
+    "userDataModified": false,
+    "syntheticTaskCleanup": "PENDING_NATIVE_INPUT_RECOVERY"
+  },
+  "cleanup": {
+    "date": "2026-10-26T13:10:08.569654+00:00",
+    "projectKiBBefore": 1855936,
+    "scope": "owned isolated iOS build workspace, verified duplicate download parts and replaced rc.17 unsigned IPA",
+    "priorProtectedFilesVerified": 1199,
+    "userFilesUnchanged": [
+      "docs/Architecture_Design.md",
+      "docs/Developer_Guide.md",
+      "scripts/render_diagrams.py"
+    ],
+    "signedArchiveRestoration": "PASS",
+    "signedArchiveSHA256": "6c54cf0aef9acdf86fd6ffe5da70b659be0039b7c21cf7cbf615838004551d74",
+    "privateConfigArchiveSHA256": "0a586555c5aa0de39e81eacfd27ae9c7b32fbe05fd24dc52a01d5147ef1d1034",
+    "targets": [
+      "build/ios_device_workspace_18",
+      "build/native_acceptance/iphone-v17-materials/release-18/ios-candidate-18/parts",
+      "build/native_acceptance/iphone-v17-materials/ios-candidate-17/DontForget_iOS_unsigned_v1.7.0.ipa"
+    ],
+    "projectKiBAfter": 1161636,
+    "freedKiB": 694300,
+    "sharedSDKAndSigningRuntimePreserved": true
+  },
+  "remaining": [
+    "clean synthetic reminder and verify native pending/delivered queues zero after native input recovers",
+    "soft keyboard and Chinese/Japanese IME",
+    "real device notification delivery, hot/cold click, cancellation and permission refusal/recovery",
+    "recording/playback/media and device upgrade",
+    "real spring/autumn DST",
+    "second provider, deferred by user to DeepSeek only",
+    "formal distribution signing and other physical platforms",
+    "independent relative hardware wake evidence"
+  ],
+  "stableReleaseReady": false,
+  "finalDeviceState": {
+    "isolatedAppProcessCount": 1,
+    "readOnlyProcessCheck": "PASS",
+    "mirrorPicture": "available",
+    "mirrorCoordinateInput": "noWindowsAvailable",
+    "syntheticTaskCountLastConfirmed": 1,
+    "newFutureReminderCreatedAfterDueTime": false,
+    "warning": "no claim that OS pending/delivered notifications have been cleared"
+  }
+}
