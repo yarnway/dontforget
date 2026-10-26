@@ -109,6 +109,21 @@ void main() {
     );
   }
 
+  testWidgets('save remains above the mobile software keyboard', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(375, 750);
+    tester.view.devicePixelRatio = 1;
+    tester.view.viewInsets = const FakeViewPadding(bottom: 320);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetViewInsets);
+    await open(tester);
+    final save = find.widgetWithIcon(FilledButton, Icons.save_outlined);
+    expect(tester.getRect(save).bottom, lessThanOrEqualTo(430));
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('desktop context menu selects all lines before replacement', (
     tester,
   ) async {

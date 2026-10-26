@@ -720,7 +720,12 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       bottomNavigationBar: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            8,
+            16,
+            12 + MediaQuery.viewInsetsOf(context).bottom,
+          ),
           child: Align(
             heightFactor: 1,
             child: ConstrainedBox(
