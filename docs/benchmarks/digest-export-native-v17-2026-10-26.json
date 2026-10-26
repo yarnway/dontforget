@@ -39,5 +39,235 @@
     }
   },
   "newCandidate": "1.7.0+12",
-  "newCandidateNative": "PENDING"
+  "newCandidateNative": {
+    "result": "BLOCKED_MAC_LOCKED",
+    "candidate": "1.7.0+12",
+    "sourceRevision": "0d9a0b4a918dc36ef2edba417b04366983f02df4",
+    "runId": "40270293933",
+    "nativeToolError": "The Mac is locked and automatic unlock could not unlock it.",
+    "processObserved": false,
+    "fixtureWritten": false,
+    "attempted": "cua.getApp with verified absolute candidate path",
+    "preservedBaseline": true,
+    "nativePending": [
+      "CSV native save and cancel",
+      "file readback",
+      "focus paused label",
+      "suppressed due task digest completion and cleanup"
+    ],
+    "package": {
+      "githubArtifactDigest": "PASS",
+      "zipCRC": "PASS",
+      "upgradeIdentity": "PASS",
+      "strictCodesign": "PASS",
+      "version": "1.7.0+12"
+    }
+  },
+  "sourceRevision": "0d9a0b4a918dc36ef2edba417b04366983f02df4",
+  "localValidation": {
+    "flutter": "3.44.9",
+    "dart": "3.12.2",
+    "flutterTests": 974,
+    "pythonTests": 100,
+    "analyze": "PASS",
+    "previewTests": 23,
+    "realFontImages": 18,
+    "locales": [
+      "zh",
+      "en",
+      "ja"
+    ],
+    "widths": [
+      375,
+      768,
+      1440
+    ],
+    "textScale": 2,
+    "windowHeights": [
+      650,
+      360
+    ]
+  },
+  "exportPerformance": {
+    "scope": "macOS Flutter test JIT, synthetic 10000 rows, one warmup per mode, six alternating pairs; excludes native picker, disk, startup and rendered frame latency",
+    "rows": [
+      {
+        "mode": "worker-with-recovery-guard",
+        "elapsedUs": 57231,
+        "maxEventLoopGapUs": 2649
+      },
+      {
+        "mode": "synchronous",
+        "elapsedUs": 56058,
+        "maxEventLoopGapUs": 56160
+      },
+      {
+        "mode": "synchronous",
+        "elapsedUs": 54276,
+        "maxEventLoopGapUs": 55681
+      },
+      {
+        "mode": "worker-with-recovery-guard",
+        "elapsedUs": 57571,
+        "maxEventLoopGapUs": 2609
+      },
+      {
+        "mode": "worker-with-recovery-guard",
+        "elapsedUs": 59243,
+        "maxEventLoopGapUs": 2312
+      },
+      {
+        "mode": "synchronous",
+        "elapsedUs": 55346,
+        "maxEventLoopGapUs": 55451
+      },
+      {
+        "mode": "synchronous",
+        "elapsedUs": 54567,
+        "maxEventLoopGapUs": 55981
+      },
+      {
+        "mode": "worker-with-recovery-guard",
+        "elapsedUs": 57321,
+        "maxEventLoopGapUs": 2679
+      },
+      {
+        "mode": "worker-with-recovery-guard",
+        "elapsedUs": 57849,
+        "maxEventLoopGapUs": 2607
+      },
+      {
+        "mode": "synchronous",
+        "elapsedUs": 54251,
+        "maxEventLoopGapUs": 54360
+      },
+      {
+        "mode": "synchronous",
+        "elapsedUs": 54003,
+        "maxEventLoopGapUs": 55340
+      },
+      {
+        "mode": "worker-with-recovery-guard",
+        "elapsedUs": 60491,
+        "maxEventLoopGapUs": 4525
+      }
+    ],
+    "summary": {
+      "synchronous": {
+        "elapsedUs": {
+          "medianMs": 54.422,
+          "maxMs": 56.058
+        },
+        "maxEventLoopGapUs": {
+          "medianMs": 55.566,
+          "maxMs": 56.16
+        }
+      },
+      "worker-with-recovery-guard": {
+        "elapsedUs": {
+          "medianMs": 57.71,
+          "maxMs": 60.491
+        },
+        "maxEventLoopGapUs": {
+          "medianMs": 2.629,
+          "maxMs": 4.525
+        }
+      }
+    }
+  },
+  "ci": {
+    "status": "completed",
+    "conclusion": "success",
+    "headSha": "0d9a0b4a918dc36ef2edba417b04366983f02df4",
+    "url": "https://github.com/yarnway/dontforget/actions/runs/40270293933",
+    "jobs": [
+      {
+        "name": "Analyze and test",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build ios candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build linux candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build macos candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build windows candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build android candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Prepare draft release after all packages pass",
+        "conclusion": "skipped"
+      }
+    ]
+  },
+  "finalDatabase": {
+    "tasks": 0,
+    "tableEquality": {
+      "Settings": true,
+      "Reminders": true,
+      "MediaRecords": true
+    },
+    "integrity": "ok",
+    "exclusiveLease": true
+  },
+  "cleanup": {
+    "removed": [
+      {
+        "path": "build/native_acceptance/tools17-r40264115726/dont_forget.app",
+        "allocatedKiB": 57588
+      },
+      {
+        "path": ".dart_tool",
+        "allocatedKiB": 49164
+      },
+      {
+        "path": "build/test_cache",
+        "allocatedKiB": 231368
+      },
+      {
+        "path": "build/unit_test_assets",
+        "allocatedKiB": 2100
+      },
+      {
+        "path": "build/native_assets",
+        "allocatedKiB": 1932
+      },
+      {
+        "path": "build/native_acceptance/digest-v17-materials/download-parts",
+        "allocatedKiB": 23488
+      },
+      {
+        "path": "build/native_acceptance/digest-v17-materials/artifact-envelope.zip",
+        "allocatedKiB": 23476
+      }
+    ],
+    "freedAllocatedKiB": 389116,
+    "projectAllocatedKiB": 1048036,
+    "previousProtectedFiles": 894,
+    "retainedUnchangedFiles": 848,
+    "rollbackManifests": [
+      "build/native_acceptance/review-v17-materials/rollback-deltas/restore-manifest.json"
+    ],
+    "newProtectedFiles": 958,
+    "vmOrImageCreated": false,
+    "newCandidateNativeResult": "BLOCKED_MAC_LOCKED",
+    "archivedFileCount": 46
+  },
+  "remaining": [
+    "1.7.0+12 native CSV save/cancel, exact file readback and path copy",
+    "1.7.0+12 focus policy label and due-suppressed digest completion/cleanup",
+    "Other platform save pickers and real devices",
+    "Historical real spring/autumn DST and second-provider acceptance"
+  ]
 }
