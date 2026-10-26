@@ -57,10 +57,7 @@ class SpacedRepetitionService {
 
   /// 取消间隔重复卡片
   Reminder disableCard(Reminder task) {
-    return task.copyWith(
-      spacedRepetitionLevel: 0,
-      nextReviewAt: null,
-    );
+    return task.copyWith(spacedRepetitionLevel: 0, nextReviewAt: null);
   }
 
   /// 执行一次复习判定
@@ -79,7 +76,9 @@ class SpacedRepetitionService {
     }
 
     // 熟练记住：阶梯递增，最高到 Level 5
-    final nextLevel = (currentLevel < 5) ? (currentLevel <= 0 ? 1 : currentLevel + 1) : 5;
+    final nextLevel = (currentLevel < 5)
+        ? (currentLevel <= 0 ? 1 : currentLevel + 1)
+        : 5;
     final intervalDays = levelIntervalDays[nextLevel] ?? 15;
     final nextDate = now.add(Duration(days: intervalDays));
 
@@ -105,5 +104,43 @@ class SpacedRepetitionService {
       default:
         return '未开启复习';
     }
+  }
+}
+
+/// Per-view cache: UI-only state changes do not rescan the task collection.
+/// Due eligibility is calendar-day based, so midnight/resume or a new list
+/// invalidates the result without a polling timer per card.
+class ReviewQueueCache {
+  List<Reminder>? _source;
+  SpacedRepetitionService? _service;
+  DateTime? _day;
+  ({List<Reminder> due, int total}) _result = (due: const [], total: 0);
+
+  void invalidate() => _day = null;
+
+  ({List<Reminder> due, int total}) read(
+    List<Reminder> tasks,
+    SpacedRepetitionService service, {
+    DateTime? now,
+  }) {
+    final instant = now ?? DateTime.now();
+    final day = DateTime(instant.year, instant.month, instant.day);
+    if (identical(tasks, _source) &&
+        identical(service, _service) &&
+        day == _day) {
+      return _result;
+    }
+    _source = tasks;
+    _service = service;
+    _day = day;
+    final due = <Reminder>[];
+    var total = 0;
+    for (final task in tasks) {
+      if (service.isReviewCard(task)) {
+        total++;
+        if (service.isDue(task, instant)) due.add(task);
+      }
+    }
+    return _result = (due: List.unmodifiable(due), total: total);
   }
 }

@@ -24,8 +24,10 @@ import '../widgets/input_bottom_bar.dart';
 import '../widgets/task_board.dart';
 import '../widgets/command_palette_dialog.dart';
 import '../widgets/spaced_repetition_sheet.dart';
+import '../widgets/focus_mode_sheet.dart';
 import '../widgets/context_digest_sheet.dart';
 import '../../services/context_trigger_service.dart';
+import '../../services/spaced_repetition_service.dart';
 import 'knowledge_graph_screen.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -58,6 +60,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Future<void> _quiesce() async {
+    final command = ref.read(workspaceToolsCommandProvider);
+    if (identical(command.open, _nativeToolsHandler)) command.open = null;
     _heartbeatTimer?.cancel();
     _searchDebounce?.cancel();
     await Future.wait([
@@ -93,12 +97,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     debugLabel: 'workspace-shortcuts',
     skipTraversal: true,
   );
+  WorkspaceToolsCommand? _toolsCommand;
+  late final bool Function() _nativeToolsHandler = _openCommandPalette;
   bool _isSearchOpen = false;
   final _searchController = TextEditingController();
   final _searchFocus = FocusNode(debugLabel: 'task-search');
   String _searchQuery = '';
   Timer? _searchDebounce;
   final _noticeClock = ValueNotifier(DateTime.now());
+  final _reviewQueue = ReviewQueueCache();
 
   @override
   void initState() {
@@ -108,6 +115,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _notifications = ref.read(notificationServiceProvider);
     _contextTriggers = ref.read(contextTriggerServiceProvider);
     if (_birth == null) return;
+    _toolsCommand = ref.read(workspaceToolsCommandProvider);
+    _toolsCommand!.open = _nativeToolsHandler;
     _runtime.register(this, _quiesce);
     WidgetsBinding.instance.addObserver(this);
 
@@ -212,6 +221,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   void dispose() {
+    if (identical(_toolsCommand?.open, _nativeToolsHandler)) {
+      _toolsCommand?.open = null;
+    }
     _runtime.unregister(this);
     WidgetsBinding.instance.removeObserver(this);
     _searchController.dispose();
@@ -824,38 +836,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
   }
 
-  void _toggleImmersiveMode() {
+  void _openFocusMode() {
     if (!mounted || !_runtimeActive) return;
-    final notifier = ref.read(immersiveModeProvider.notifier);
-    notifier.toggle();
-    final isActive = ref.read(immersiveModeProvider);
-    final l10n = AppLocalizations.of(context);
-    InlineFeedback.of(context).hideCurrentSnackBar();
-    InlineFeedback.of(context).showSnackBar(
-      SnackBar(
-        duration: const Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        content: Row(
-          children: [
-            Icon(
-              isActive ? Icons.shield : Icons.shield_outlined,
-              color: isActive ? Colors.amberAccent : Colors.white,
-              size: 20,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                isActive
-                    ? l10n.get('immersiveActive')
-                    : l10n.get('immersiveDisabled'),
-                style: const TextStyle(fontSize: 13),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    FocusModeSheet.show(context);
   }
 
   void _openSpacedRepetitionSheet() {
@@ -1035,7 +1018,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  void _openCommandPalette() {
+  bool _openCommandPalette() {
+    if (!_runtimeActive || ModalRoute.of(context)?.isCurrent != true) {
+      return false;
+    }
     final l10n = AppLocalizations.of(context);
     final isImmersive = ref.read(immersiveModeProvider);
 
@@ -1096,13 +1082,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       ),
       CommandPaletteAction(
         id: 'focus',
-        title: isImmersive
-            ? l10n.get('immersiveDisabled')
-            : l10n.get('immersiveActive'),
-        subtitle: l10n.get('immersiveModeDesc'),
+        title: l10n.get('focusTitle'),
+        subtitle: l10n.get(isImmersive ? 'focusOn' : 'focusOff'),
         icon: isImmersive ? Icons.shield : Icons.shield_outlined,
         shortcut: 'F',
-        onExecute: _toggleImmersiveMode,
+        onExecute: _openFocusMode,
       ),
       CommandPaletteAction(
         id: 'cards',
@@ -1165,6 +1149,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ),
       ),
     ]);
+    return true;
   }
 
   void _handleGlobalKeyEvent(KeyEvent event) {
@@ -1208,7 +1193,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     } else if (event.logicalKey == LogicalKeyboardKey.keyC) {
       _openContextDigest();
     } else if (event.logicalKey == LogicalKeyboardKey.keyF) {
-      _toggleImmersiveMode();
+      _openFocusMode();
     } else if (event.logicalKey == LogicalKeyboardKey.keyR) {
       _openSpacedRepetitionSheet();
     } else if (event.logicalKey == LogicalKeyboardKey.keyE) {
@@ -1482,7 +1467,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     valueListenable: _noticeClock,
                     builder: (context, _, child) {
                       final count =
-                          spacedService.getDueCards(reminders).length +
+                          _reviewQueue
+                              .read(
+                                reminders,
+                                spacedService,
+                                now: _noticeClock.value,
+                              )
+                              .due
+                              .length +
                           suppressedCount;
                       return Badge(
                         isLabelVisible: count > 0,
@@ -1491,8 +1483,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       );
                     },
                     child: IconButton(
-                      icon: const Icon(Icons.more_horiz_rounded),
-                      tooltip: l10n.get('moreTools'),
+                      icon: Icon(
+                        ref.watch(immersiveModeProvider)
+                            ? Icons.shield_rounded
+                            : Icons.more_horiz_rounded,
+                      ),
+                      tooltip: ref.watch(immersiveModeProvider)
+                          ? '${l10n.get('moreTools')} / ${l10n.get('focusOn')}'
+                          : l10n.get('moreTools'),
                       onPressed: _openCommandPalette,
                     ),
                   ),

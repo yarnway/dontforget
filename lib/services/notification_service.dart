@@ -347,11 +347,44 @@ class NotificationService {
   /// Timers remain active so suppressed due tasks can be recorded by the app.
   Future<void> reconcileNotificationPolicy() async {
     if (_maintenance) return;
-    await Future.wait(
-      List<Reminder>.of(_scheduledReminders.values)
+    await _reconcileFocusPolicy();
+  }
+
+  /// Session policy changes immediately. Native application is awaited and its
+  /// failures remain visible to the caller and the durable retry journal.
+  Future<({int attempted, int failed})> applyFocusMode(bool enabled) {
+    if (_maintenance) throw StateError('Notifications are paused.');
+    _isImmersiveModeActive = enabled;
+    return _reconcileFocusPolicy();
+  }
+
+  Future<({int attempted, int failed})> _reconcileFocusPolicy() async {
+    var attempted = 0, failed = 0;
+    await _track(() async {
+      final tasks = _scheduledReminders.values
           .where((r) => r.quadrantLevel >= 3 && r.triggerTime!.isAfter(_now()))
-          .map(scheduleReminder),
-    );
+          .toList();
+      for (
+        var offset = 0;
+        offset < tasks.length;
+        offset += reconciliationBatchSize
+      ) {
+        if (_maintenance) break;
+        await Future.wait(
+          tasks.skip(offset).take(reconciliationBatchSize).map((task) async {
+            // An edit/delete while an earlier batch waits must not resurrect it.
+            if (!identical(_scheduledReminders[task.id], task)) return;
+            attempted++;
+            try {
+              await _scheduleReminder(task, strict: true);
+            } catch (_) {
+              failed++;
+            }
+          }),
+        );
+      }
+    });
+    return (attempted: attempted, failed: failed);
   }
 
   Stream<Reminder> get onReminderDue => _reminderDueController.stream;

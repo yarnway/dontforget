@@ -11,6 +11,7 @@ class MacMenuCommands<T extends Object> {
     required this.isCurrent,
     required this.submitInput,
     required this.openSettings,
+    this.openTools,
     MethodChannel? channel,
   }) : _channel = channel ?? const MethodChannel('dontforget/mac_commands');
 
@@ -18,6 +19,7 @@ class MacMenuCommands<T extends Object> {
   final bool Function(T) isCurrent;
   final Future<void> Function(String) submitInput;
   final bool Function() openSettings;
+  final bool Function()? openTools;
   final MethodChannel _channel;
   Map<String, Object>? _configuration;
   bool _enabled = false;
@@ -49,6 +51,9 @@ class MacMenuCommands<T extends Object> {
     if (_disposed || !_enabled) return false;
     if (call.method == 'openSettings') {
       return !_inputOpen && openSettings();
+    }
+    if (call.method == 'openTools') {
+      return !_inputOpen && (openTools?.call() ?? false);
     }
     if (call.method != 'quickInput') throw MissingPluginException();
     if (_inputOpen) return false;

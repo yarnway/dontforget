@@ -10,6 +10,8 @@ import 'package:dont_forget/services/notification_service.dart';
 class NativeProbe implements FlutterLocalNotificationsPlugin {
   Completer<void>? initialization;
   Completer<void>? scheduling;
+  Completer<void>? cancellation;
+  bool failCancel = false;
   final List<NotificationDetails> schedules = [];
   final Map<int, String> pending = {};
 
@@ -28,8 +30,11 @@ class NativeProbe implements FlutterLocalNotificationsPlugin {
             ? Future<bool>.value(true)
             : initialization!.future.then((_) => true);
       case #cancel:
-        pending.remove(i.positionalArguments[0]);
-        return Future<void>.value();
+        return () async {
+          await cancellation?.future;
+          if (failCancel) throw StateError('synthetic OS cancellation failure');
+          pending.remove(i.positionalArguments[0]);
+        }();
       case #getNotificationAppLaunchDetails:
         return Future<NotificationAppLaunchDetails?>.value();
       case #zonedSchedule:
@@ -232,6 +237,61 @@ void main() {
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
             .setMockMethodCallHandler(SystemChannels.platform, null);
       }
+    },
+  );
+  test(
+    'focus application awaits OS outcome, reports failure and retries same policy',
+    () async {
+      final native = NativeProbe();
+      final service = NotificationService.forTesting(
+        native,
+        usesNativeNotifications: true,
+      );
+      await service.scheduleReminder(task('focus-failure', 3));
+      native.failCancel = true;
+      final failed = await service.applyFocusMode(true);
+      expect(failed, (attempted: 1, failed: 1));
+      expect(service.isImmersiveModeActive, true);
+      expect(native.pending, isNotEmpty);
+      native.failCancel = false;
+      final retried = await service.applyFocusMode(true);
+      expect(retried, (attempted: 1, failed: 0));
+      expect(native.pending, isEmpty);
+      final resumed = await service.applyFocusMode(false);
+      expect(resumed, (attempted: 1, failed: 0));
+      expect(native.pending.keys, [stableNotificationId('focus-failure')]);
+      await service.cancelReminder('focus-failure');
+    },
+  );
+
+  test(
+    'focus batches do not resurrect a task deleted behind an admitted batch',
+    () async {
+      final native = NativeProbe();
+      final service = NotificationService.forTesting(
+        native,
+        usesNativeNotifications: true,
+      );
+      final tasks = List.generate(300, (i) => task('focus-batch-$i', 3));
+      await Future.wait(tasks.map(service.scheduleReminder));
+      final gate = Completer<void>();
+      native.cancellation = gate;
+      final apply = service.applyFocusMode(true);
+      await Future<void>.delayed(Duration.zero);
+      final deletion = service.cancelReminder(tasks.last.id);
+      gate.complete();
+      final result = await apply;
+      await deletion;
+      expect(result, (attempted: 299, failed: 0));
+      expect(native.pending, isEmpty);
+      native.cancellation = null;
+      await service.applyFocusMode(false);
+      expect(native.pending, hasLength(299));
+      expect(
+        native.pending.containsKey(stableNotificationId(tasks.last.id)),
+        false,
+      );
+      await Future.wait(tasks.map((task) => service.cancelReminder(task.id)));
     },
   );
 }

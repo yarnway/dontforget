@@ -65,6 +65,9 @@ class _MyAppState extends ConsumerState<MyApp>
         submitInput: (text) =>
             ref.read(homeControllerProvider.notifier).processText(text),
         openSettings: _openNativeSettings,
+        openTools: () =>
+            _nativeCommandsReady &&
+            (ref.read(workspaceToolsCommandProvider).open?.call() ?? false),
       )..start();
     }
     _notificationRoutes = NotificationRouteService(
@@ -212,6 +215,7 @@ class _MyAppState extends ConsumerState<MyApp>
           'quickEntryTitle',
           'quickEntryHint',
           'quickEntryContent',
+          'moreTools',
           'settings',
           'send',
           'cancel',

@@ -55,6 +55,8 @@ class _ReadDatabase extends DatabaseHelper {
 class _ControlledReminders extends RemindersNotifier {
   _ControlledReminders(super.database) : super(runLoadEffects: false);
   final writes = <Completer<void>>[];
+  bool nativeFailure = false;
+  void replace(List<Reminder> tasks) => state = tasks;
 
   @override
   Future<ReminderActionResult> updateReminder(
@@ -68,6 +70,7 @@ class _ControlledReminders extends RemindersNotifier {
     return ReminderActionResult(
       ReminderActionDisposition.applied,
       reminder: task,
+      nativeSyncFailed: nativeFailure,
     );
   }
 }
@@ -142,11 +145,16 @@ void main() {
       expect(reminders.writes, hasLength(1));
       expect(reminders.state.single.spacedRepetitionLevel, 1);
       expect(find.text('Review fixture'), findsOneWidget);
-      expect(find.textContaining('已晋级到第'), findsNothing);
+      expect(find.textContaining(loc.get('reviewSaved')), findsNothing);
       reminders.writes.single.complete();
       await tester.pumpAndSettle();
       expect(reminders.state.single.spacedRepetitionLevel, 2);
-      expect(find.textContaining('已晋级到第 2'), findsOneWidget);
+      expect(
+        find.textContaining(
+          '${loc.get('reviewSaved')} ${loc.get('stageLevel')}2',
+        ),
+        findsOneWidget,
+      );
       expect(find.text('Review fixture'), findsNothing);
       expect(tester.takeException(), isNull);
     },
@@ -165,7 +173,7 @@ void main() {
       expect(reminders.state.single.spacedRepetitionLevel, 1);
       expect(find.text('Review fixture'), findsOneWidget);
       expect(find.text(loc.get('reminderUpdateFailed')), findsOneWidget);
-      expect(find.textContaining('已晋级到第'), findsNothing);
+      expect(find.textContaining(loc.get('reviewSaved')), findsNothing);
       expect(tester.widget<ElevatedButton>(remembered()).onPressed, isNotNull);
       expect(tester.takeException(), isNull);
       await tester.tap(remembered());
@@ -196,7 +204,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(reminders.writes, hasLength(1));
       expect(find.text(loc.get('reminderUpdateFailed')), findsNothing);
-      expect(find.textContaining('已晋级到第'), findsNothing);
+      expect(find.textContaining(loc.get('reviewSaved')), findsNothing);
       expect(reminders.state.single.spacedRepetitionLevel, 1);
       expect(tester.takeException(), isNull);
     },
@@ -215,6 +223,44 @@ void main() {
       await tester.pumpAndSettle();
       expect(reminders.state.single.spacedRepetitionLevel, 1);
       expect(tester.takeException(), isNull);
+    },
+  );
+  testWidgets('review native failure reports saved data separately', (
+    tester,
+  ) async {
+    reminders.nativeFailure = true;
+    await showSheet(tester);
+    await tester.tap(remembered());
+    await tester.pump();
+    reminders.writes.single.complete();
+    await tester.pumpAndSettle();
+    expect(find.textContaining(loc.get('reviewSaved')), findsOneWidget);
+    expect(
+      find.textContaining(loc.get('reminderNativeSyncFailed')),
+      findsOneWidget,
+    );
+    expect(reminders.state.single.spacedRepetitionLevel, 2);
+  });
+
+  testWidgets(
+    'removed or already reviewed card ignores stale grading callbacks',
+    (tester) async {
+      await showSheet(tester);
+      final callback = tester.widget<ElevatedButton>(remembered()).onPressed!;
+      reminders.replace([
+        _card.copyWith(
+          nextReviewAt: DateTime.now().add(const Duration(days: 5)),
+        ),
+      ]);
+      callback();
+      await tester.pumpAndSettle();
+      expect(reminders.writes, isEmpty);
+      expect(find.text(loc.get('noReviewsToday')), findsOneWidget);
+      reminders.replace([]);
+      callback();
+      await tester.pumpAndSettle();
+      expect(reminders.writes, isEmpty);
+      expect(find.text(loc.get('reviewNoCards')), findsOneWidget);
     },
   );
 }

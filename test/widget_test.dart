@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:dont_forget/ui/widgets/command_palette_dialog.dart';
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/ui/widgets/reminder_notice_panel.dart';
 import 'package:flutter/services.dart';
@@ -532,6 +534,45 @@ void main() {
       expect(search, findsNothing);
       expect(find.byType(TaskBoard), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
+    },
+  );
+  testWidgets(
+    'workspace tools command and Meta K open once and do not cover another route',
+    (tester) async {
+      await tester.pumpWidget(
+        UncontrolledProviderScope(container: container, child: const MyApp()),
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+      final command = container.read(workspaceToolsCommandProvider);
+      expect(command.open!(), true);
+      await tester.pumpAndSettle();
+      expect(find.byType(CommandPaletteDialog), findsOneWidget);
+      expect(command.open!(), false);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(TextField));
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyK);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+      await tester.pumpAndSettle();
+      expect(find.byType(CommandPaletteDialog), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      final navigator = tester.state<NavigatorState>(
+        find.byType(Navigator).first,
+      );
+      unawaited(
+        navigator.push(
+          MaterialPageRoute<void>(
+            builder: (_) => const Scaffold(body: Text('Editor stays open')),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(command.open!(), false);
+      expect(find.text('Editor stays open'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+      expect(command.open, isNull);
     },
   );
 }

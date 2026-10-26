@@ -8,6 +8,7 @@ final class MacMenuCommands: NSObject, NSMenuItemValidation {
   private let channel: FlutterMethodChannel
   private var quickItem: NSMenuItem?
   private var settingsItem: NSMenuItem?
+  private var toolsItem: NSMenuItem?
   private var labels: [String: String] = [:]
   private var enabled = false
   private var alert: NSAlert?
@@ -51,10 +52,19 @@ final class MacMenuCommands: NSObject, NSMenuItemValidation {
       settingsItem?.target = self
       settingsItem?.action = #selector(openSettings)
     }
+    if toolsItem == nil {
+      let item = NSMenuItem(title: "", action: #selector(openTools), keyEquivalent: "k")
+      item.target = self
+      item.keyEquivalentModifierMask = [.command]
+      menu.insertItem(item, at: min(3, menu.items.count))
+      toolsItem = item
+    }
     quickItem?.title = labels["quickEntry"] ?? "Quick Entry…"
     settingsItem?.title = labels["settings"] ?? "Settings…"
+    toolsItem?.title = labels["moreTools"] ?? "Tools…"
     quickItem?.isEnabled = enabled && alert == nil
     settingsItem?.isEnabled = enabled && alert == nil
+    toolsItem?.isEnabled = enabled && alert == nil
   }
 
   @objc private func quickInput() {
@@ -71,6 +81,13 @@ final class MacMenuCommands: NSObject, NSMenuItemValidation {
     window?.makeKeyAndOrderFront(nil)
     NSApp.activate(ignoringOtherApps: true)
     channel.invokeMethod("openSettings", arguments: nil)
+  }
+
+  @objc private func openTools() {
+    guard enabled, alert == nil else { return }
+    window?.makeKeyAndOrderFront(nil)
+    NSApp.activate(ignoringOtherApps: true)
+    channel.invokeMethod("openTools", arguments: nil)
   }
 
   private func showInput(result: @escaping FlutterResult) {

@@ -35,6 +35,16 @@ final runtimeRecoveryGateProvider = Provider<RuntimeRecoveryGate>((ref) {
   return RuntimeRecoveryGate();
 });
 
+/// Synchronous registration by the visible workspace; native menu calls do not
+/// navigate over an editor or replay into a new recovery session.
+final workspaceToolsCommandProvider = Provider(
+  (ref) => WorkspaceToolsCommand(),
+);
+
+class WorkspaceToolsCommand {
+  bool Function()? open;
+}
+
 final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>((
   ref,
 ) {
@@ -1301,6 +1311,12 @@ class ImmersiveModeNotifier extends StateNotifier<bool> {
   void setMode(bool enabled) {
     state = enabled;
     _notificationService.isImmersiveModeActive = enabled;
+  }
+
+  Future<({int attempted, int failed})> apply(bool enabled) {
+    final operation = _notificationService.applyFocusMode(enabled);
+    state = enabled;
+    return operation;
   }
 }
 

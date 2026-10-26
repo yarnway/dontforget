@@ -16,6 +16,8 @@ void main() {
   late List<MethodCall> outbound;
   var epoch = 0;
   var settingsOpens = 0;
+  var toolsOpens = 0;
+  var workspaceVisible = true;
   Future<int?> Function()? begin;
 
   Future<Object?> invoke(String method) async {
@@ -31,6 +33,8 @@ void main() {
   setUp(() async {
     epoch = 0;
     settingsOpens = 0;
+    toolsOpens = 0;
+    workspaceVisible = true;
     begin = null;
     sheet = Completer<String?>();
     shown = Completer<void>();
@@ -49,6 +53,12 @@ void main() {
       beginInput: () => begin?.call() ?? Future.value(epoch),
       isCurrent: (token) => token == epoch,
       submitInput: (text) async => submitted.add(text),
+      openTools: () {
+        if (!workspaceVisible) return false;
+        toolsOpens++;
+        workspaceVisible = false;
+        return true;
+      },
       openSettings: () {
         settingsOpens++;
         return true;
@@ -172,6 +182,25 @@ void main() {
       expect(await invoke('openSettings'), false);
       expect(settingsOpens, 0);
       expect(shown.isCompleted, false);
+    },
+  );
+  test(
+    'native tools command respects visibility, input sheet and disabled state',
+    () async {
+      expect(await invoke('openTools'), true);
+      expect(await invoke('openTools'), false);
+      expect(toolsOpens, 1);
+      workspaceVisible = true;
+      final pending = invoke('quickInput');
+      await shown.future;
+      expect(await invoke('openTools'), false);
+      sheet.complete(null);
+      await pending;
+      expect(await invoke('openTools'), true);
+      workspaceVisible = true;
+      await commands.configure({}, enabled: false);
+      expect(await invoke('openTools'), false);
+      expect(toolsOpens, 2);
     },
   );
 }
