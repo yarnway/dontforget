@@ -1,0 +1,137 @@
+{
+  "phase": 17,
+  "date": "2026-10-27",
+  "source": "abc89de797faf2faf1e26eea5ef6f29fee400501",
+  "version": "1.7.0+21",
+  "schema": 10,
+  "codeChange": "Windows smoke cleanup: owned-directory retry bounded to 3.75 seconds; separate startup and cleanup results; persistent locks still fail",
+  "previousCiFailure": {
+    "run": 40355157530,
+    "platform": "windows",
+    "startupSurvived10Seconds": true,
+    "failure": "Temporary-directory cleanup WinError 32",
+    "release": "NOT_PUBLISHED"
+  },
+  "validation": {
+    "localPython": "118 passed",
+    "localDart": "same product Dart source as +20; its 1079 passed and analyze no issues",
+    "deviceSnapshotPathResolver": "both attachments found and SHA256 matched",
+    "ci": {
+      "run": 40358057138,
+      "status": "queued",
+      "quality": {
+        "flutterPassed": 1078,
+        "flutterSkipped": 1,
+        "pythonPassed": 117,
+        "pythonSkipped": 1,
+        "analyze": "no issues"
+      },
+      "completed": [
+        "quality",
+        "android",
+        "ios",
+        "linux",
+        "windows"
+      ],
+      "pending": [
+        "macos",
+        "release"
+      ]
+    }
+  },
+  "deviceUpgrade": {
+    "fromBuild": "20",
+    "installedBuild": "21",
+    "version": "1.7.0",
+    "schema": 10,
+    "integrity": "ok",
+    "businessTablesPreserved": true,
+    "tasks": 2,
+    "media": 2,
+    "mediaFilesByteEqual": 2,
+    "zeroProcessBeforeAndAfterSnapshots": true,
+    "containerRelocatedAgain": true,
+    "storedPathsMatchCurrentContainer": false,
+    "nativeReopen": "BLOCKED_MAC_LOCKED_AUTO_UNLOCK_FAILED",
+    "pathResolverSnapshotTest": "PASS_BOTH_MEDIA_SHA256"
+  },
+  "privateDevelopmentBuild": {
+    "revision": "abc89de797faf2faf1e26eea5ef6f29fee400501",
+    "version": "1.7.0",
+    "build": "21",
+    "bundleID": "com.yarnway.dontforget.acceptance.iphone17",
+    "minimumOS": "15.0",
+    "strictSignature": "PASS",
+    "profileMatchesAppAndConnectedDevice": true,
+    "profileExpiry": "2026-11-02T12:18:10Z",
+    "privateDevelopmentBuild": true,
+    "formalDistribution": false
+  },
+  "privateRollback": {
+    "build": "21",
+    "developmentArchive": {
+      "file": "ios-isolated-21-development.zip",
+      "bytes": 10116430,
+      "sha256": "74c1af43786058182ff9308d67715d3eacae5296fcfa07fa61c91a1a57a004fa"
+    },
+    "configurationArchive": {
+      "file": "ios-private-config-21.zip",
+      "bytes": 16070,
+      "sha256": "75903752518af6de73ea5e8bd3abb30410b7e6f42e7546c6b9a375c8caa83ec3"
+    },
+    "restoredEntries": 106,
+    "contentModesLinksEqual": true,
+    "strictSignature": "PASS",
+    "formalDistribution": false,
+    "privateOnly": true
+  },
+  "nativeReopenPlaybackPermissions": "BLOCKED_MAC_LOCKED_AUTO_UNLOCK_FAILED",
+  "stableRelease": false,
+  "remainingLedger": "docs/Release_Acceptance_v1.7.md",
+  "windowsNativeStartup": {
+    "platform": "windows",
+    "revision": "abc89de797faf2faf1e26eea5ef6f29fee400501",
+    "version": "1.7.0",
+    "host": "Windows-2022Server-10.0.20348-SP0",
+    "scope": "unpacked-native-process-startup-only",
+    "seconds": 10,
+    "result": "PASS",
+    "startup_result": "PASS",
+    "cleanup_result": "PASS",
+    "ui_acceptance": "NOT_PERFORMED",
+    "notification_acceptance": "NOT_PERFORMED",
+    "startup_log": "",
+    "cleanup_attempts": 1
+  },
+  "windowsInstallation": {
+    "revision": "abc89de797faf2faf1e26eea5ef6f29fee400501",
+    "version": "1.7.0",
+    "scope": "installer-upgrade-uninstall-with-legacy-file-preservation",
+    "result": "PASS",
+    "real_database_migration": "NOT_PERFORMED"
+  },
+  "cleanup": {
+    "date": "2026-10-26T16:31:18.283852+00:00",
+    "removedDirectoriesKiB": {
+      "build/ios_device_workspace_21": 377740,
+      "build/native_acceptance/iphone-phase16-materials/release-21/restore-check": 23736,
+      "build/test_cache": 45860,
+      "build/unit_test_assets": 2100,
+      "build/native_assets": 1932,
+      ".dart_tool/hooks_runner": 24628,
+      ".dart_tool/flutter_build": 12
+    },
+    "projectKiBBeforeCleanup": 1661256,
+    "projectKiBAfterCleanup": 1185248,
+    "releasedKiB": 476008,
+    "cumulativePhase16And17ReleasedKiB": 1354188,
+    "priorProtectedFilesUnchanged": 1964,
+    "userFilesUnchanged": 27,
+    "privateDevelopmentRollbacksRetained": [
+      "18",
+      "20",
+      "21"
+    ],
+    "sharedToolchainsPreserved": true
+  }
+}

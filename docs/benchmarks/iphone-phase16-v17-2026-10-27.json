@@ -1,0 +1,235 @@
+{
+  "phase": 16,
+  "startedAtLocal": "2026-10-26",
+  "completedAtLocal": "2026-10-27",
+  "source": {
+    "build19": "44a7630f33092ddbe679b7c212c371f3e8c3fd0a",
+    "build20": "ec0a1dd7ee473053d7427bead5b502d710d17aff",
+    "version": "1.7.0+20",
+    "schema": 10
+  },
+  "device": {
+    "model": "iPhone 15 Pro Max",
+    "os": "iOS 27.0.1",
+    "isolatedIdentity": true,
+    "developmentSigned": true,
+    "formalDistribution": false
+  },
+  "nativeBuild18": {
+    "baseline": {
+      "consistentSnapshot": true,
+      "matchesPreviousFinalState": true,
+      "nativeMainDraftWasEmpty": true,
+      "schema": 10,
+      "integrity": "ok",
+      "taskCount": 2,
+      "mediaCount": 2,
+      "ownProcessZeroBeforeAndAfterCopy": true,
+      "version": "1.7.0",
+      "build": "18"
+    },
+    "notificationDelivery": {
+      "observedAt": "2026-10-26T22:53:41.346399+08:00",
+      "source": "iOS getActiveNotifications via installed product Settings; manually refreshed on foreground",
+      "systemPending": 0,
+      "systemRetained": 1,
+      "retainedTitle": "Phase16Delivery",
+      "nativeOSRetainedRecord": "PASS",
+      "bannerObserved": false,
+      "hotClick": "NOT_RUN",
+      "coldClick": "NOT_RUN",
+      "notificationCenterToolWindow": "calendar widget only",
+      "temporaryShortcut": {
+        "restored": true,
+        "enabled": false,
+        "binding": "none"
+      }
+    },
+    "snooze": {
+      "consistentSnapshot": true,
+      "zeroProcessBeforeAndAfter": true,
+      "newSyntheticTaskCount": 1,
+      "otherTasksUnchanged": true,
+      "mediaRowsUnchanged": true,
+      "settingsRowsUnchanged": true,
+      "schema": 10,
+      "integrity": "ok",
+      "systemPendingBeforeExit": 1,
+      "systemRetainedBeforeExit": 0
+    },
+    "reopen": {
+      "newProcessObserved": true,
+      "sameInstalledIdentity": true,
+      "nativeDueReadback": "2026-10-26 22:59",
+      "systemPending": 1,
+      "systemRetained": 0,
+      "future": 1,
+      "submitted": 1,
+      "needsReview": 0,
+      "needsCancellation": 0,
+      "duplicatePendingNotObserved": true
+    },
+    "cleanup": {
+      "businessTablesMatchBaseline": true,
+      "zeroProcessBeforeAndAfter": true,
+      "taskCount": 2,
+      "mediaCount": 2,
+      "integrity": "ok",
+      "nonJournalFilesUnchanged": 3,
+      "nativeFinalPending": 0,
+      "nativeFinalRetained": 0,
+      "nativeZeroReadAfterSnoozedDue": true,
+      "ownedNativeIdUnchangedAcrossScheduleAndCancel": true,
+      "ownedJournalFinalAction": "cancel",
+      "ownedJournalFinalStatus": "submitted"
+    },
+    "searchCmdF": "PASS_QUERY_PRESERVED_ON_REPEAT",
+    "searchEsc": "NO_VISIBLE_CLOSE_ON_MIRROR_NATIVE_BACK_WORKED"
+  },
+  "microphone": {
+    "authorization": "user explicitly allowed phone microphone and camera",
+    "mirrorSystemAlert": "iPhone microphone unavailable from Mac",
+    "nativeMicrophoneSuccess": false,
+    "failedCaptureValidDurationSeconds": 0.021769,
+    "failedCaptureMovieDurationMicroseconds": 69659,
+    "minimumCaptureMicroseconds": 250000,
+    "shortCaptureFixInBuild19": true,
+    "failedCaptureRejectedByReaderProbe": true,
+    "oneSecondGeneratedTonePositiveControl": true,
+    "positiveControlIsMicrophoneEvidence": false,
+    "build20NativeGuardRecheck": "BLOCKED_MAC_LOCKED"
+  },
+  "isolatedCleanupIncident": {
+    "status": "AUTHORITATIVE_DOCUMENTS_RESTORED",
+    "cause": "CoreDevice remove-existing-content affected isolated app container beyond requested child directory",
+    "sharedOrMainAppTouched": false,
+    "allAuthoritativeDocumentFilesByteEqual": true,
+    "filesVerified": 6,
+    "taskCount": 2,
+    "mediaCount": 2,
+    "schema": 10,
+    "integrity": "ok",
+    "libraryPreferencesNotBackedUpBeforeIncident": true,
+    "nativeRestartAndPermissionVerification": "pending",
+    "ownedFailedCaptureRemovedFromDevice": true,
+    "nativeOldVersionReopenTaskCount": 2,
+    "nativeOldVersionReopen": "PASS",
+    "mediaPathsStillMatchDataContainer": true,
+    "nativePermissionRecheck": "BLOCKED_MAC_LOCKED",
+    "recordingCandidateNativeRecheck": "pending",
+    "mediaPathComparisonScope": "restored +18 before upgrade; /private/var and /var aliases normalized"
+  },
+  "upgrade19": {
+    "installedBuild": "19",
+    "version": "1.7.0",
+    "businessTablesPreserved": true,
+    "mediaByteEqual": 2,
+    "integrity": "ok",
+    "oldPathMatchesRestored18Container": true,
+    "oldPathMatches19Container": false,
+    "containerRelocated": true,
+    "nativeReopen": "BLOCKED_MAC_LOCKED",
+    "status": "UPGRADE_PATH_BUG_FOUND_DO_NOT_PUBLISH"
+  },
+  "upgrade20": {
+    "fromBuild": "19",
+    "installedBuild": "20",
+    "version": "1.7.0",
+    "schema": 10,
+    "integrity": "ok",
+    "businessTablesPreserved": true,
+    "tasks": 2,
+    "media": 2,
+    "mediaFilesByteEqual": 2,
+    "zeroProcessBeforeAndAfterSnapshots": true,
+    "containerRelocatedAgain": true,
+    "storedPathsMatchCurrentContainer": false,
+    "nativeReopen": "BLOCKED_MAC_LOCKED_AUTO_UNLOCK_FAILED",
+    "pathResolverSnapshotTest": "PASS_BOTH_MEDIA_SHA256"
+  },
+  "verification": {
+    "localFlutter": "1079 passed",
+    "localPython": "114 passed",
+    "analyze": "no issues",
+    "targetedMediaAndRecovery": "104 passed before 2 additional playback tests; full run includes both",
+    "deviceSnapshotResolver": "2 media SHA256 matched on each of build19/build20 snapshots",
+    "nativePlayback": "NOT_RUN",
+    "ci19": {
+      "run": 40350067052,
+      "jobsPassed": 7,
+      "draftOnly": true,
+      "reason": "superseded after real upgrade exposed absolute media path defect"
+    },
+    "ci20": {
+      "run": 40355157530,
+      "status": "completed",
+      "conclusion": "failure",
+      "failedStep": "Windows native startup smoke check: temporary-directory cleanup WinError 32 after startup survived 10 s",
+      "release": "NOT_PUBLISHED",
+      "supersededByBuild21": true
+    }
+  },
+  "rollback": {
+    "build": "20",
+    "developmentArchive": {
+      "file": "ios-isolated-20-development.zip",
+      "bytes": 10116582,
+      "sha256": "f3c4985a6d93bbf32ec4c8e0681e3e5c47594bcf1f237289e91d31848d1387c7"
+    },
+    "configurationArchive": {
+      "file": "ios-private-config-20.zip",
+      "bytes": 16070,
+      "sha256": "0f2775b12c9ac8271b946f666baab97e4413fa07110270b6dea410429a2c6db5"
+    },
+    "restoredEntries": 106,
+    "contentModesLinksEqual": true,
+    "strictSignature": "PASS",
+    "formalDistribution": false,
+    "privateOnly": true
+  },
+  "cleanup": {
+    "date": "2026-10-26T16:09:00.546557+00:00",
+    "state": "OWNED_BUILDS_AND_TEST_CACHES_REMOVED",
+    "priorProtectedFilesVerified": 1964,
+    "priorProtectedUnchanged": true,
+    "removedDirectoriesKiB": {
+      "build/ios_device_workspace_19": 377712,
+      "build/ios_device_workspace_20": 377740,
+      "build/native_acceptance/iphone-phase16-materials/release-20/restore-check": 23736,
+      "build/test_cache": 45860,
+      "build/unit_test_assets": 2100,
+      "build/native_assets": 1932,
+      ".dart_tool/hooks_runner": 47192,
+      ".dart_tool/lib": 1896,
+      ".dart_tool/native_assets": 0,
+      ".dart_tool/flutter_build": 12
+    },
+    "projectKiBBeforeCleanup": 2032320,
+    "projectKiBAfterCleanup": 1154140,
+    "releasedKiB": 878180,
+    "sharedToolchainsPreserved": true,
+    "deviceDataSnapshotPreserved": true,
+    "currentDevelopmentRollback": "build/native_acceptance/iphone-phase16-materials/release-20/ios-isolated-20-development.zip",
+    "priorDevelopmentRollback": "build/native_acceptance/iphone-v17-materials/release-18/ios-isolated-18-development.zip",
+    "noVMOrIPSWCreated": true
+  },
+  "boundaries": {
+    "macNativeTool": "Mac locked; automatic unlock failed; no user handoff requested",
+    "deviceSnapshotContentsPrivate": true,
+    "signingProfilePrivate": true,
+    "noModelRequests": true,
+    "stableRelease": false
+  },
+  "remaining": [
+    "OS banner and hot/cold/late/deleted notification click routing",
+    "real OS scheduling failure and same-ID retry",
+    "build20 native reopen, playback and permission readback after container recovery",
+    "phone software keyboard, Japanese composition and landscape",
+    "microphone/camera outside unsupported iPhone Mirroring path",
+    "linked-task deletion/Undo presentation and mirrored Escape follow-up",
+    "real spring/autumn DST",
+    "user-deferred second model provider",
+    "formal distribution signing",
+    "other physical platforms and independently observable relative hardware wake"
+  ]
+}
