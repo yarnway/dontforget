@@ -8,7 +8,7 @@ import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from package_artifacts import package, version
-from verify_artifacts import verify
+from verify_artifacts import verify, verify_tag
 
 
 class PackagingTest(unittest.TestCase):
@@ -29,6 +29,13 @@ class PackagingTest(unittest.TestCase):
         self.write('build/app/outputs/flutter-apk/app-release.apk')
         self.write('build/app/outputs/bundle/release/app-release.aab')
         return package(self.root, 'android', self.revision)
+
+    def test_release_tags_match_version_and_candidate_build(self):
+        verify_tag('v1.7.0', '1.7.0', '14')
+        verify_tag('v1.7.0-rc.14', '1.7.0', '14')
+        for tag in ['v1.7.1', 'v1.7.0-rc.13', 'v1.7.0-rc.014', 'v1.7.0+14', 'v1.7.0-rc.14-extra']:
+            with self.subTest(tag=tag), self.assertRaises(ValueError):
+                verify_tag(tag, '1.7.0', '14')
 
     def test_version_requires_build_number(self):
         self.assertEqual(version(self.root), ('1.5.1', '2'))

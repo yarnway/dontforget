@@ -8,9 +8,17 @@ import '../../services/recovery/runtime_gate.dart';
 import '../formatters/local_date_time.dart';
 import '../screens/task_detail_screen.dart';
 import 'inline_feedback.dart';
+import 'workspace_tool_panel.dart';
 
 class ContextDigestSheet extends ConsumerStatefulWidget {
-  const ContextDigestSheet({super.key, required this.digestReminders});
+  const ContextDigestSheet({
+    super.key,
+    required this.digestReminders,
+    this.onClose,
+    this.embedded = false,
+  });
+  final VoidCallback? onClose;
+  final bool embedded;
   final List<Reminder> digestReminders;
   @override
   ConsumerState<ContextDigestSheet> createState() => _ContextDigestSheetState();
@@ -116,7 +124,7 @@ class _ContextDigestSheetState extends ConsumerState<ContextDigestSheet> {
     _refresh(ref.watch(remindersProvider));
     final loc = AppLocalizations.of(context);
     final colors = Theme.of(context).colorScheme;
-    return SafeArea(
+    final body = SafeArea(
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 900),
@@ -229,18 +237,18 @@ class _ContextDigestSheetState extends ConsumerState<ContextDigestSheet> {
                           },
                         ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(loc.get('close')),
-                  ),
-                ),
               ],
             ),
           ),
         ),
       ),
+    );
+    return WorkspaceToolFrame(
+      title: loc.get('contextDigestTitle'),
+      icon: Icons.summarize_outlined,
+      onClose: widget.onClose,
+      embedded: widget.embedded,
+      body: body,
     );
   }
 }

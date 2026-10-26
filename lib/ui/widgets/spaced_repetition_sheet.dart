@@ -8,16 +8,18 @@ import '../../services/spaced_repetition_service.dart';
 import '../../l10n/app_localizations.dart';
 import '../formatters/local_date_time.dart';
 import 'inline_feedback.dart';
+import 'workspace_tool_panel.dart';
 
 class SpacedRepetitionSheet extends ConsumerStatefulWidget {
-  const SpacedRepetitionSheet({super.key});
-  static Future<void> show(BuildContext context) => showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) => const SpacedRepetitionSheet(),
-  );
+  const SpacedRepetitionSheet({
+    super.key,
+    this.onClose,
+    this.embedded = false,
+    this.onBusyChanged,
+  });
+  final VoidCallback? onClose;
+  final bool embedded;
+  final ValueChanged<bool>? onBusyChanged;
   @override
   ConsumerState<SpacedRepetitionSheet> createState() =>
       _SpacedRepetitionSheetState();
@@ -90,281 +92,212 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet>
       ref.watch(spacedRepetitionServiceProvider),
     );
     final task = _due.firstOrNull;
-    return SafeArea(
-      top: false,
-      child: Center(
-        heightFactor: 1,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 760),
-          child: SizedBox(
-            height: MediaQuery.sizeOf(context).height * 0.85,
-            child: Material(
-              color: colors.surface,
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: LayoutBuilder(
-                builder: (context, constraints) => Column(
-                  children: [
-                    ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: constraints.maxHeight * 0.3,
-                      ),
-                      child: SingleChildScrollView(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
-                          child: Row(
+    return WorkspaceToolFrame(
+      title: loc.get('spacedRepetitionTitle'),
+      icon: Icons.school_outlined,
+      embedded: widget.embedded,
+      onClose: widget.onClose,
+      canClose: !_isSaving,
+      body: LayoutBuilder(
+        builder: (context, constraints) => Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: task == null
+                    ? Column(
+                        children: [
+                          const SizedBox(height: 16),
+                          Icon(
+                            Icons.school_outlined,
+                            size: 48,
+                            color: colors.primary,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            loc.get(
+                              _total == 0 ? 'reviewNoCards' : 'noReviewsToday',
+                            ),
+                            style: Theme.of(context).textTheme.titleMedium,
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            loc.get(
+                              _total == 0
+                                  ? 'reviewCreateHint'
+                                  : 'reviewReturnHint',
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      )
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 8,
                             children: [
-                              const Icon(Icons.school_outlined),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  loc.get('spacedRepetitionTitle'),
-                                  style: Theme.of(context).textTheme.titleLarge,
-                                ),
-                              ),
-                              IconButton(
-                                tooltip: loc.get('close'),
-                                onPressed: () => Navigator.of(context).pop(),
-                                icon: const Icon(Icons.close),
+                              Text('${loc.get('reviewToday')}: ${_due.length}'),
+                              Text('${loc.get('reviewCardCount')}: $_total'),
+                              Text(
+                                '${loc.get('stageLevel')}${task.spacedRepetitionLevel} / 5',
                               ),
                             ],
                           ),
-                        ),
-                      ),
-                    ),
-                    const Divider(height: 1),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(20),
-                        child: task == null
-                            ? Column(
+                          const SizedBox(height: 16),
+                          DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: colors.surfaceContainerLow,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: colors.outlineVariant),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  const SizedBox(height: 16),
-                                  Icon(
-                                    Icons.school_outlined,
-                                    size: 48,
-                                    color: colors.primary,
-                                  ),
-                                  const SizedBox(height: 16),
                                   Text(
-                                    loc.get(
-                                      _total == 0
-                                          ? 'reviewNoCards'
-                                          : 'noReviewsToday',
-                                    ),
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.titleMedium,
-                                    textAlign: TextAlign.center,
+                                    'Q${task.quadrantLevel}',
+                                    style: TextStyle(color: colors.primary),
                                   ),
                                   const SizedBox(height: 12),
                                   Text(
-                                    loc.get(
-                                      _total == 0
-                                          ? 'reviewCreateHint'
-                                          : 'reviewReturnHint',
-                                    ),
-                                    textAlign: TextAlign.center,
+                                    task.taskTitle,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleLarge,
                                   ),
-                                ],
-                              )
-                            : Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Wrap(
-                                    spacing: 12,
-                                    runSpacing: 8,
-                                    children: [
-                                      Text(
-                                        '${loc.get('reviewToday')}: ${_due.length}',
+                                  const SizedBox(height: 20),
+                                  TextButton.icon(
+                                    key: const ValueKey('review-flip'),
+                                    onPressed: _isSaving
+                                        ? null
+                                        : () => setState(
+                                            () => _isFlipped = !_isFlipped,
+                                          ),
+                                    icon: Icon(
+                                      _isFlipped
+                                          ? Icons.visibility_off_outlined
+                                          : Icons.visibility_outlined,
+                                    ),
+                                    label: Text(
+                                      loc.get(
+                                        _isFlipped
+                                            ? 'reviewHideAnswer'
+                                            : 'flipCard',
                                       ),
+                                    ),
+                                  ),
+                                  if (_isFlipped) ...[
+                                    const Divider(height: 24),
+                                    Text(
+                                      loc.get('reviewNotes'),
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.titleSmall,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      task.taskSummary?.trim().isNotEmpty ==
+                                              true
+                                          ? task.taskSummary!
+                                          : loc.get('reviewNoNotes'),
+                                    ),
+                                    if (task.subTasksView.isNotEmpty) ...[
+                                      const SizedBox(height: 16),
                                       Text(
-                                        '${loc.get('reviewCardCount')}: $_total',
+                                        loc.get('reviewSteps'),
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.titleSmall,
                                       ),
-                                      Text(
-                                        '${loc.get('stageLevel')}${task.spacedRepetitionLevel} / 5',
-                                      ),
+                                      for (final step in task.subTasksView)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 6,
+                                          ),
+                                          child: Text('• $step'),
+                                        ),
                                     ],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  DecoratedBox(
-                                    decoration: BoxDecoration(
-                                      color: colors.surfaceContainerLow,
-                                      borderRadius: BorderRadius.circular(16),
-                                      border: Border.all(
-                                        color: colors.outlineVariant,
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      '${loc.get('triggerTimeLabel')}: ${task.triggerTime == null ? loc.get('notSet') : formatLocalDateTime(task.triggerTime!)}',
+                                      style: TextStyle(
+                                        color: colors.onSurfaceVariant,
                                       ),
                                     ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(20),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.stretch,
-                                        children: [
-                                          Text(
-                                            'Q${task.quadrantLevel}',
-                                            style: TextStyle(
-                                              color: colors.primary,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 12),
-                                          Text(
-                                            task.taskTitle,
-                                            style: Theme.of(
-                                              context,
-                                            ).textTheme.titleLarge,
-                                          ),
-                                          const SizedBox(height: 20),
-                                          TextButton.icon(
-                                            key: const ValueKey('review-flip'),
-                                            onPressed: _isSaving
-                                                ? null
-                                                : () => setState(
-                                                    () => _isFlipped =
-                                                        !_isFlipped,
-                                                  ),
-                                            icon: Icon(
-                                              _isFlipped
-                                                  ? Icons
-                                                        .visibility_off_outlined
-                                                  : Icons.visibility_outlined,
-                                            ),
-                                            label: Text(
-                                              loc.get(
-                                                _isFlipped
-                                                    ? 'reviewHideAnswer'
-                                                    : 'flipCard',
-                                              ),
-                                            ),
-                                          ),
-                                          if (_isFlipped) ...[
-                                            const Divider(height: 24),
-                                            Text(
-                                              loc.get('reviewNotes'),
-                                              style: Theme.of(
-                                                context,
-                                              ).textTheme.titleSmall,
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              task.taskSummary
-                                                          ?.trim()
-                                                          .isNotEmpty ==
-                                                      true
-                                                  ? task.taskSummary!
-                                                  : loc.get('reviewNoNotes'),
-                                            ),
-                                            if (task
-                                                .subTasksView
-                                                .isNotEmpty) ...[
-                                              const SizedBox(height: 16),
-                                              Text(
-                                                loc.get('reviewSteps'),
-                                                style: Theme.of(
-                                                  context,
-                                                ).textTheme.titleSmall,
-                                              ),
-                                              for (final step
-                                                  in task.subTasksView)
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                        top: 6,
-                                                      ),
-                                                  child: Text('• $step'),
-                                                ),
-                                            ],
-                                            const SizedBox(height: 16),
-                                            Text(
-                                              '${loc.get('triggerTimeLabel')}: ${task.triggerTime == null ? loc.get('notSet') : formatLocalDateTime(task.triggerTime!)}',
-                                              style: TextStyle(
-                                                color: colors.onSurfaceVariant,
-                                              ),
-                                            ),
-                                          ],
-                                        ],
-                                      ),
-                                    ),
-                                  ),
+                                  ],
                                 ],
                               ),
-                      ),
-                    ),
-                    if (task != null)
-                      ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxHeight: constraints.maxHeight * 0.4,
-                        ),
-                        child: SingleChildScrollView(
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                if (_isSaving) ...[
-                                  const LinearProgressIndicator(),
-                                  const SizedBox(height: 8),
-                                  Text(loc.get('reviewSaving')),
-                                ],
-                                LayoutBuilder(
-                                  builder: (context, size) {
-                                    final buttons = [
-                                      OutlinedButton.icon(
-                                        onPressed: _isSaving || !_isCurrent
-                                            ? null
-                                            : () => _handleReviewResult(
-                                                task,
-                                                false,
-                                              ),
-                                        icon: const Icon(Icons.refresh),
-                                        label: Text(loc.get('markDifficult')),
-                                      ),
-                                      ElevatedButton.icon(
-                                        onPressed: _isSaving || !_isCurrent
-                                            ? null
-                                            : () => _handleReviewResult(
-                                                task,
-                                                true,
-                                              ),
-                                        icon: const Icon(Icons.check),
-                                        label: Text(loc.get('markRemembered')),
-                                      ),
-                                    ];
-                                    return size.maxWidth >= 580 &&
-                                            MediaQuery.textScalerOf(
-                                                  context,
-                                                ).scale(1) <=
-                                                1.3
-                                        ? Row(
-                                            children: [
-                                              Expanded(child: buttons[0]),
-                                              const SizedBox(width: 12),
-                                              Expanded(child: buttons[1]),
-                                            ],
-                                          )
-                                        : Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.stretch,
-                                            children: [
-                                              buttons[0],
-                                              const SizedBox(height: 8),
-                                              buttons[1],
-                                            ],
-                                          );
-                                  },
-                                ),
-                              ],
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                  ],
-                ),
               ),
             ),
-          ),
+            if (task != null)
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: constraints.maxHeight * 0.4,
+                ),
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (_isSaving) ...[
+                          const LinearProgressIndicator(),
+                          const SizedBox(height: 8),
+                          Text(loc.get('reviewSaving')),
+                        ],
+                        LayoutBuilder(
+                          builder: (context, size) {
+                            final buttons = [
+                              OutlinedButton.icon(
+                                onPressed: _isSaving || !_isCurrent
+                                    ? null
+                                    : () => _handleReviewResult(task, false),
+                                icon: const Icon(Icons.refresh),
+                                label: Text(loc.get('markDifficult')),
+                              ),
+                              ElevatedButton.icon(
+                                onPressed: _isSaving || !_isCurrent
+                                    ? null
+                                    : () => _handleReviewResult(task, true),
+                                icon: const Icon(Icons.check),
+                                label: Text(loc.get('markRemembered')),
+                              ),
+                            ];
+                            return size.maxWidth >= 580 &&
+                                    MediaQuery.textScalerOf(context).scale(1) <=
+                                        1.3
+                                ? Row(
+                                    children: [
+                                      Expanded(child: buttons[0]),
+                                      const SizedBox(width: 12),
+                                      Expanded(child: buttons[1]),
+                                    ],
+                                  )
+                                : Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      buttons[0],
+                                      const SizedBox(height: 8),
+                                      buttons[1],
+                                    ],
+                                  );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -380,6 +313,7 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet>
     final service = ref.read(spacedRepetitionServiceProvider);
     if (current == null || !service.isDue(current)) return;
     setState(() => _isSaving = true);
+    widget.onBusyChanged?.call(true);
     final loc = AppLocalizations.of(context);
     try {
       final update = service.reviewCard(current, remembered);
@@ -404,7 +338,10 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet>
         );
       }
     } finally {
-      if (mounted) setState(() => _isSaving = false);
+      if (mounted) {
+        setState(() => _isSaving = false);
+        widget.onBusyChanged?.call(false);
+      }
     }
   }
 }

@@ -19,13 +19,16 @@ class WorkspaceToolArea extends StatelessWidget {
         children: [
           Offstage(
             offstage: !wide && tool != null,
-            child: TickerMode(
-              enabled: wide || tool == null,
-              child: Padding(
-                padding: EdgeInsetsDirectional.only(
-                  end: wide && tool != null ? width : 0,
+            child: ExcludeFocus(
+              excluding: !wide && tool != null,
+              child: TickerMode(
+                enabled: wide || tool == null,
+                child: Padding(
+                  padding: EdgeInsetsDirectional.only(
+                    end: wide && tool != null ? width : 0,
+                  ),
+                  child: child,
                 ),
-                child: child,
               ),
             ),
           ),
@@ -66,7 +69,9 @@ class WorkspaceToolFrame extends StatelessWidget {
     super.key,
     required this.title,
     required this.icon,
-    required this.children,
+    this.children = const [],
+    this.body,
+    this.actions = const [],
     this.onClose,
     this.canClose = true,
     this.embedded = false,
@@ -74,6 +79,8 @@ class WorkspaceToolFrame extends StatelessWidget {
   final String title;
   final IconData icon;
   final List<Widget> children;
+  final Widget? body;
+  final List<Widget> actions;
   final VoidCallback? onClose;
   final bool canClose, embedded;
 
@@ -87,49 +94,60 @@ class WorkspaceToolFrame extends StatelessWidget {
             ? double.infinity
             : MediaQuery.sizeOf(context).height * .85,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 12, 16),
-            child: Row(
-              children: [
-                Icon(icon, size: 22, color: colors.primary),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Semantics(
-                    header: true,
-                    child: Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
+      child: LayoutBuilder(
+        builder: (context, constraints) => Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: constraints.maxHeight * .4,
+              ),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsetsDirectional.fromSTEB(20, 16, 12, 16),
+                  child: Row(
+                    children: [
+                      Icon(icon, size: 22, color: colors.primary),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Semantics(
+                          header: true,
+                          child: Text(
+                            title,
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                        ),
                       ),
-                    ),
+                      ...actions,
+                      IconButton(
+                        tooltip: AppLocalizations.of(context).get('close'),
+                        onPressed: canClose
+                            ? onClose ?? () => Navigator.pop(context)
+                            : null,
+                        icon: const Icon(Icons.close_rounded, size: 20),
+                      ),
+                    ],
                   ),
                 ),
-                IconButton(
-                  tooltip: AppLocalizations.of(context).get('close'),
-                  onPressed: canClose
-                      ? onClose ?? () => Navigator.pop(context)
-                      : null,
-                  icon: const Icon(Icons.close_rounded, size: 20),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          Flexible(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: children,
               ),
             ),
-          ),
-        ],
+            const Divider(height: 1),
+            Flexible(
+              child:
+                  body ??
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: children,
+                    ),
+                  ),
+            ),
+          ],
+        ),
       ),
     );
   }

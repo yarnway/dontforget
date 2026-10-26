@@ -383,16 +383,16 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byIcon(Icons.more_horiz_rounded));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('多智能体微型协作流水线'));
+      await tester.tap(find.text('目标规划'));
       await tester.pumpAndSettle();
       await tester.enterText(
-        find.descendant(
-          of: find.byType(AlertDialog),
-          matching: find.byType(TextField),
-        ),
+        find.byKey(const ValueKey('agent-goal-input')),
         '旧会话待处理项目',
       );
-      await tester.tap(find.text('启动三智能体协同'));
+      await tester.pump();
+      await tester.ensureVisible(find.text('规划目标'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('规划目标'));
       await tester.pump();
       expect(agent.started.isCompleted, isTrue);
       await tester.runAsync(() async {

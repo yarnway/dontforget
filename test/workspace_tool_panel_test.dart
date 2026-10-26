@@ -1,3 +1,6 @@
+import 'package:dont_forget/services/llm_service.dart';
+import 'package:dont_forget/models/settings.dart';
+import 'package:dont_forget/models/review_report.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:dont_forget/data/database_helper.dart';
@@ -11,6 +14,8 @@ import 'package:dont_forget/ui/screens/home_screen.dart';
 import 'package:dont_forget/ui/widgets/command_palette_dialog.dart';
 import 'package:dont_forget/ui/widgets/data_export_sheet.dart';
 import 'package:dont_forget/ui/widgets/focus_mode_sheet.dart';
+import 'package:dont_forget/ui/widgets/agent_goal_panel.dart';
+import 'package:dont_forget/ui/widgets/workspace_tool_panel.dart';
 import 'package:dont_forget/ui/widgets/input_bottom_bar.dart';
 import 'package:dont_forget/ui/widgets/inline_feedback.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +44,18 @@ class _Export extends DataExportService {
   }) async => pending?.future;
 }
 
+class _Reviews extends LLMService {
+  Completer<ReviewReport>? pending;
+  @override
+  Future<ReviewReport> generateReview(
+    List<Reminder> tasks,
+    AppSettings settings, {
+    String language = 'zh',
+  }) =>
+      pending?.future ??
+      super.generateReview(tasks, settings, language: language);
+}
+
 void main() {
   setUpAll(loadInteractionPreviewFonts);
   late Directory directory;
@@ -46,6 +63,7 @@ void main() {
   late ProviderContainer container;
   late NotificationService notifications;
   late _Export exporter;
+  late _Reviews reviews;
   final channels = <MethodChannel>[];
   setUp(() async {
     sqfliteFfiInit();
@@ -77,12 +95,14 @@ void main() {
       usesNativeNotifications: false,
     );
     exporter = _Export();
+    reviews = _Reviews();
     container = ProviderContainer(
       overrides: [
         databaseHelperProvider.overrideWithValue(db),
         notificationServiceProvider.overrideWithValue(notifications),
         contextTriggerServiceProvider.overrideWithValue(_Context()),
         dataExportServiceProvider.overrideWithValue(exporter),
+        llmServiceProvider.overrideWithValue(reviews),
       ],
     );
     await container.read(settingsProvider.notifier).ready;
@@ -101,6 +121,7 @@ void main() {
   });
   tearDown(() async {
     container.dispose();
+    reviews.dispose();
     await notifications.pauseForMaintenance();
     await db.close(createBackup: false);
     await directory.delete(recursive: true);
@@ -180,6 +201,166 @@ void main() {
     expect(find.byType(ModalBarrier).hitTestable(), findsNothing);
     expect(composer().hitTestable(), findsOneWidget);
   }
+
+  testWidgets(
+    'report pending blocks tools Escape and back then failure allows retry',
+    (tester) async {
+      await mount(tester, 375);
+      await openTool(tester, 'dashboardTitle');
+      reviews.pending = Completer<ReviewReport>();
+      final generate = find.byKey(const ValueKey('review-generate'));
+      await tester.ensureVisible(generate);
+      await tester.pumpAndSettle();
+      expect(generate.hitTestable(), findsOneWidget);
+      await tester.tap(generate);
+      await tester.pump();
+      expect(container.read(workspaceToolsCommandProvider).open!(), isFalse);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+      expect(find.byType(WorkspaceToolFrame), findsOneWidget);
+      expect(
+        tester
+            .widget<WorkspaceToolFrame>(find.byType(WorkspaceToolFrame))
+            .canClose,
+        isFalse,
+      );
+      reviews.pending!.completeError(StateError('synthetic failure'));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<WorkspaceToolFrame>(find.byType(WorkspaceToolFrame))
+            .canClose,
+        isTrue,
+      );
+      await tester.enterText(composer(), 'Draft survives failed report');
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.byType(WorkspaceToolFrame), findsNothing);
+      expect(
+        tester.widget<TextField>(composer()).controller!.text,
+        'Draft survives failed report',
+      );
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  const expandedTools = [
+    'spacedRepetitionTitle',
+    'contextDigestTitle',
+    'knowledgeGraphTitle',
+    'dashboardTitle',
+    'multiAgentTitle',
+  ];
+  for (final width in [375.0, 768.0, 1440.0]) {
+    for (final language in ['zh', 'en', 'ja']) {
+      for (final tool in expandedTools) {
+        testWidgets(
+          'workspace2 $width $language $tool keyboard insets large text',
+          (tester) async {
+            await mount(
+              tester,
+              width,
+              language: language,
+              brightness: Brightness.dark,
+              scale: 1.5,
+            );
+            await tester.enterText(composer(), '输入草稿 · Draft');
+            await openTool(tester, tool);
+            await tester.tap(composer());
+            await tester.enterText(composer(), '工具内仍可输入 · Editable');
+            await tester.pump();
+            await captureInteractionPreview(
+              tester,
+              'workspace2-${width.toInt()}-$language-$tool',
+            );
+            tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+            addTearDown(tester.view.resetViewInsets);
+            await tester.pump();
+            expect(tester.takeException(), isNull);
+            final input = tester.getRect(find.byType(InputBottomBar));
+            expect(input.bottom, lessThanOrEqualTo(500));
+            expect(
+              tester
+                  .getRect(find.byKey(const ValueKey('workspace-tool-panel')))
+                  .bottom,
+              lessThanOrEqualTo(input.top),
+            );
+            expect(composer().hitTestable(), findsOneWidget);
+            // A short landscape viewport with a keyboard must remain scrollable.
+            tester.view.physicalSize = Size(width, 460);
+            tester.view.viewInsets = const FakeViewPadding(bottom: 180);
+            await tester.pump();
+            expect(tester.takeException(), isNull);
+            await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+            await tester.pumpAndSettle();
+            expect(find.byType(WorkspaceToolFrame), findsNothing);
+            expect(
+              tester.widget<TextField>(composer()).controller!.text,
+              '工具内仍可输入 · Editable',
+            );
+            await tester.pumpWidget(const SizedBox());
+          },
+        );
+      }
+    }
+  }
+
+  testWidgets(
+    'agent draft survives switching closing and IME; discard needs confirmation',
+    (tester) async {
+      await mount(tester, 375);
+      await openTool(tester, 'multiAgentTitle');
+      final goal = find.byKey(const ValueKey('agent-goal-input'));
+      await tester.enterText(goal, '尚未提交的目标');
+      await openTool(tester, 'knowledgeGraphTitle');
+      await openTool(tester, 'multiAgentTitle');
+      expect(tester.widget<TextField>(goal).controller!.text, '尚未提交的目标');
+      await tester.tap(goal);
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: '拼音组合',
+          selection: TextSelection.collapsed(offset: 4),
+          composing: TextRange(start: 0, end: 4),
+        ),
+      );
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+      expect(find.byType(AgentGoalPanel), findsOneWidget);
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: '确认后的目标',
+          selection: TextSelection.collapsed(offset: 6),
+        ),
+      );
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.byType(AgentGoalPanel), findsNothing);
+      await openTool(tester, 'multiAgentTitle');
+      expect(tester.widget<TextField>(goal).controller!.text, '确认后的目标');
+      await tester.ensureVisible(find.text('放弃修改'));
+      await tester.tap(find.text('放弃修改'));
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(AgentGoalPanel), findsOneWidget);
+      expect(tester.widget<TextField>(goal).controller!.text, '确认后的目标');
+      await tester.tap(find.text('放弃修改'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('放弃修改'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.widget<TextField>(goal).controller!.text, isEmpty);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
 
   for (final width in [375.0, 1200.0]) {
     testWidgets(

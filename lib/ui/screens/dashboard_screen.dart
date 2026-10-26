@@ -1,3 +1,4 @@
+import '../widgets/workspace_tool_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,7 +13,15 @@ import '../../services/recovery/runtime_gate.dart';
 import '../widgets/inline_feedback.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
-  const DashboardScreen({super.key});
+  const DashboardScreen({
+    super.key,
+    this.embedded = false,
+    this.onClose,
+    this.onBusyChanged,
+  });
+  final bool embedded;
+  final VoidCallback? onClose;
+  final ValueChanged<bool>? onBusyChanged;
 
   @override
   ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
@@ -46,6 +55,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       _isLoadingReport = true;
       _reportFailed = false;
     });
+    widget.onBusyChanged?.call(true);
     try {
       final report = await ref
           .read(llmServiceProvider)
@@ -62,7 +72,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     } catch (_) {
       if (_isCurrent) setState(() => _reportFailed = true);
     } finally {
-      if (_isCurrent) setState(() => _isLoadingReport = false);
+      if (_isCurrent) {
+        setState(() => _isLoadingReport = false);
+        widget.onBusyChanged?.call(false);
+      }
     }
   }
 
@@ -97,158 +110,167 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         (!identical(_reportTasks, tasks) ||
             !identical(_reportSettings, settings));
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.get('dashboardTitle'))),
-      body: SafeArea(
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1120),
-            child: ListView(
-              key: const PageStorageKey('dashboard-scroll'),
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-              children: [
-                Text(
-                  l10n.get('dashboardOverview'),
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+    final body = SafeArea(
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1120),
+          child: ListView(
+            key: const PageStorageKey('dashboard-scroll'),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+            children: [
+              Text(
+                l10n.get('dashboardOverview'),
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  l10n.get('dashboardScope'),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                l10n.get('dashboardScope'),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
-                const SizedBox(height: 20),
-                if (stats.total == 0)
-                  _section(
-                    context,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.bar_chart_rounded,
-                            size: 40,
-                            color: theme.colorScheme.primary,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            l10n.get('noTasksYet'),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                else ...[
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final scale =
-                          MediaQuery.textScalerOf(context).scale(14) / 14;
-                      final columns =
-                          constraints.maxWidth >= 540 * scale.clamp(1, 2)
-                          ? 3
-                          : 1;
-                      final width =
-                          (constraints.maxWidth - 12 * (columns - 1)) / columns;
-                      return Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: [
-                          _stat(
-                            context,
-                            l10n.get('total'),
-                            stats.total,
-                            Icons.checklist_rounded,
-                            width,
-                          ),
-                          _stat(
-                            context,
-                            l10n.get('completed'),
-                            stats.completed,
-                            Icons.task_alt_rounded,
-                            width,
-                          ),
-                          _stat(
-                            context,
-                            l10n.get('pending'),
-                            stats.pending,
-                            Icons.schedule_rounded,
-                            width,
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _section(
-                    context,
+              ),
+              const SizedBox(height: 20),
+              if (stats.total == 0)
+                _section(
+                  context,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Wrap(
-                          spacing: 12,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Text(
-                              l10n.get('dashboardCompletion'),
-                              style: theme.textTheme.titleSmall,
-                            ),
-                            Text(
-                              '${stats.completionPercent}%',
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                color: theme.colorScheme.primary,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
+                        Icon(
+                          Icons.bar_chart_rounded,
+                          size: 40,
+                          color: theme.colorScheme.primary,
                         ),
-                        const SizedBox(height: 12),
-                        LinearProgressIndicator(
-                          value: stats.completionFraction,
-                          minHeight: 8,
-                          borderRadius: BorderRadius.circular(8),
-                          semanticsLabel: l10n.get('dashboardCompletion'),
-                          semanticsValue: '${stats.completionPercent}%',
+                        const SizedBox(height: 16),
+                        Text(
+                          l10n.get('noTasksYet'),
+                          textAlign: TextAlign.center,
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final categories = _categories(context, stats, l10n);
-                      final review = _review(context, l10n, settings, stale);
-                      final scale =
-                          MediaQuery.textScalerOf(context).scale(14) / 14;
-                      if (constraints.maxWidth >= 860 && scale <= 1.3) {
-                        return Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(flex: 5, child: categories),
-                            const SizedBox(width: 20),
-                            Expanded(flex: 7, child: review),
-                          ],
-                        );
-                      }
-                      return Column(
+                )
+              else ...[
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final scale =
+                        MediaQuery.textScalerOf(context).scale(14) / 14;
+                    final columns =
+                        constraints.maxWidth >= 540 * scale.clamp(1, 2) ? 3 : 1;
+                    final width =
+                        (constraints.maxWidth - 12 * (columns - 1)) / columns;
+                    return Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        _stat(
+                          context,
+                          l10n.get('total'),
+                          stats.total,
+                          Icons.checklist_rounded,
+                          width,
+                        ),
+                        _stat(
+                          context,
+                          l10n.get('completed'),
+                          stats.completed,
+                          Icons.task_alt_rounded,
+                          width,
+                        ),
+                        _stat(
+                          context,
+                          l10n.get('pending'),
+                          stats.pending,
+                          Icons.schedule_rounded,
+                          width,
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                _section(
+                  context,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
+                        spacing: 12,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          categories,
-                          const SizedBox(height: 20),
-                          review,
+                          Text(
+                            l10n.get('dashboardCompletion'),
+                            style: theme.textTheme.titleSmall,
+                          ),
+                          Text(
+                            '${stats.completionPercent}%',
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      LinearProgressIndicator(
+                        value: stats.completionFraction,
+                        minHeight: 8,
+                        borderRadius: BorderRadius.circular(8),
+                        semanticsLabel: l10n.get('dashboardCompletion'),
+                        semanticsValue: '${stats.completionPercent}%',
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final categories = _categories(context, stats, l10n);
+                    final review = _review(context, l10n, settings, stale);
+                    final scale =
+                        MediaQuery.textScalerOf(context).scale(14) / 14;
+                    if (constraints.maxWidth >= 860 && scale <= 1.3) {
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(flex: 5, child: categories),
+                          const SizedBox(width: 20),
+                          Expanded(flex: 7, child: review),
                         ],
                       );
-                    },
-                  ),
-                ],
+                    }
+                    return Column(
+                      children: [
+                        categories,
+                        const SizedBox(height: 20),
+                        review,
+                      ],
+                    );
+                  },
+                ),
               ],
-            ),
+            ],
           ),
         ),
       ),
+    );
+    if (widget.embedded) {
+      return WorkspaceToolFrame(
+        title: l10n.get('dashboardTitle'),
+        icon: Icons.bar_chart_rounded,
+        embedded: true,
+        onClose: widget.onClose,
+        canClose: !_isLoadingReport,
+        body: body,
+      );
+    }
+    return Scaffold(
+      appBar: AppBar(title: Text(l10n.get('dashboardTitle'))),
+      body: body,
     );
   }
 

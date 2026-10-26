@@ -28,12 +28,13 @@ import '../widgets/focus_mode_sheet.dart';
 import '../widgets/context_digest_sheet.dart';
 import '../widgets/data_export_sheet.dart';
 import '../widgets/workspace_tool_panel.dart';
+import '../widgets/agent_goal_panel.dart';
 import '../../services/context_trigger_service.dart';
 import '../../services/spaced_repetition_service.dart';
 import 'knowledge_graph_screen.dart';
 import '../../l10n/app_localizations.dart';
 
-enum _WorkspaceTool { focus, export }
+enum _WorkspaceTool { focus, export, review, digest, graph, dashboard, agent }
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -105,6 +106,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   late final bool Function() _nativeToolsHandler = _openCommandPalette;
   _WorkspaceTool? _activeTool;
   bool _exportBusy = false;
+  bool _toolBusy = false;
+  bool _agentBusy = false;
+  bool _discardDialogOpen = false;
+  final _agentGoal = TextEditingController();
+  bool get _toolBlocked => _exportBusy || _toolBusy;
+
   bool _isSearchOpen = false;
   final _searchController = TextEditingController();
   final _searchFocus = FocusNode(debugLabel: 'task-search');
@@ -237,6 +244,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
     _runtime.unregister(this);
     WidgetsBinding.instance.removeObserver(this);
+    _agentGoal.dispose();
     _searchController.dispose();
     _searchFocus.dispose();
     _searchDebounce?.cancel();
@@ -847,34 +855,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
   }
 
-  void _openFocusMode() {
-    if (!mounted || !_runtimeActive) return;
-    setState(() => _activeTool = _WorkspaceTool.focus);
+  void _selectTool(_WorkspaceTool tool) {
+    if (!mounted || !_runtimeActive || _toolBlocked) return;
+    setState(() => _activeTool = tool);
   }
 
-  void _openSpacedRepetitionSheet() {
-    if (!mounted || !_runtimeActive) return;
-    SpacedRepetitionSheet.show(context);
-  }
-
-  void _openContextDigest() {
-    if (!mounted || !_runtimeActive) return;
-    final active = ref.read(remindersProvider);
-    final suppressed = _contextTriggers.activeDigest(
-      active,
-      previous: _contextDigest,
-    );
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => Scaffold(
-          appBar: AppBar(
-            title: Text(AppLocalizations.of(context).get('contextDigestTitle')),
-          ),
-          body: ContextDigestSheet(digestReminders: suppressed),
-        ),
-      ),
-    );
-  }
+  void _openFocusMode() => _selectTool(_WorkspaceTool.focus);
+  void _openSpacedRepetitionSheet() => _selectTool(_WorkspaceTool.review);
+  void _openContextDigest() => _selectTool(_WorkspaceTool.digest);
 
   IconData _getContextProfileIcon(ContextProfile profile) {
     switch (profile) {
@@ -892,12 +880,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Future<void> _exportCsvData() async {
-    if (!mounted || !_runtimeActive) return;
-    setState(() => _activeTool = _WorkspaceTool.export);
+    _selectTool(_WorkspaceTool.export);
   }
 
   void _closeWorkspaceTool() {
-    if (!mounted || _exportBusy) return;
+    if (!mounted || _toolBlocked) return;
     setState(() => _activeTool = null);
   }
 
@@ -905,98 +892,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (mounted) setState(() => _exportBusy = value);
   }
 
-  void _showMultiAgentGoalDialog() {
-    if (!mounted || !_runtimeActive) return;
-    final l10n = AppLocalizations.of(context);
-    final textController = TextEditingController();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  void _showMultiAgentGoalDialog() => _selectTool(_WorkspaceTool.agent);
 
-    showDialog(
+  Future<void> _discardAgentDraft() async {
+    if (_agentBusy || _discardDialogOpen || !_runtimeActive) return;
+    _discardDialogOpen = true;
+    final loc = AppLocalizations.of(context);
+    final discard = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: isDark ? const Color(0xFF1E2028) : Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: Row(
-          children: [
-            const Icon(Icons.hub_outlined, color: Colors.indigoAccent),
-            const SizedBox(width: 8),
-            Text(
-              l10n.get('multiAgentTitle'),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              l10n.get('multiAgentDesc'),
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? Colors.white60 : Colors.black54,
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: textController,
-              autofocus: true,
-              maxLines: 3,
-              decoration: InputDecoration(
-                hintText: '输入您的复杂目标（例如：两周后备战高级技术面试，精通分布式与并发原理）...',
-                hintStyle: TextStyle(
-                  fontSize: 13,
-                  color: isDark ? Colors.white38 : Colors.black38,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-          ],
-        ),
+        title: Text(loc.get('unsavedChangesTitle')),
+        content: Text(loc.get('agentDiscardMessage')),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(l10n.get('cancel')),
+            autofocus: true,
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(loc.get('keepEditing')),
           ),
-          FilledButton.icon(
-            icon: const Icon(Icons.rocket_launch, size: 16),
-            label: const Text('启动三智能体协同'),
-            onPressed: () {
-              if (!mounted || !_runtimeActive) return;
-              final goal = textController.text.trim();
-              if (goal.isNotEmpty) {
-                Navigator.pop(ctx);
-                unawaited(
-                  ref
-                      .read(homeControllerProvider.notifier)
-                      .processWithMultiAgent(goal)
-                      .then<void>(
-                        (_) {},
-                        onError: (Object _, StackTrace __) {
-                          // Current-session failures are exposed by HomeState;
-                          // canceled old sessions must not become unhandled errors.
-                        },
-                      ),
-                );
-                InlineFeedback.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(l10n.get('agentProcessing')),
-                    duration: const Duration(seconds: 3),
-                  ),
-                );
-              }
-            },
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(loc.get('discardChanges')),
           ),
         ],
       ),
     );
+    _discardDialogOpen = false;
+    if (discard == true && _runtimeActive) _agentGoal.clear();
+  }
+
+  Future<void> _submitAgentGoal() async {
+    if (_agentBusy || !_runtimeActive || _agentGoal.text.trim().isEmpty) return;
+    final submitted = _agentGoal.text;
+    setState(() => _agentBusy = true);
+    try {
+      await ref
+          .read(homeControllerProvider.notifier)
+          .processWithMultiAgent(submitted.trim());
+      if (_runtimeActive && _agentGoal.text == submitted) _agentGoal.clear();
+    } catch (_) {
+      // HomeState exposes the current-session failure; preserve the retry draft.
+    } finally {
+      if (mounted) setState(() => _agentBusy = false);
+    }
   }
 
   bool _openCommandPalette() {
     if (!_runtimeActive ||
-        _exportBusy ||
+        _toolBlocked ||
         ModalRoute.of(context)?.isCurrent != true) {
       return false;
     }
@@ -1010,10 +952,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         subtitle: l10n.get('knowledgeGraphSubtitle'),
         icon: Icons.hub_outlined,
         shortcut: 'G',
-        onExecute: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const KnowledgeGraphScreen()),
-        ),
+        onExecute: () => _selectTool(_WorkspaceTool.graph),
       ),
       CommandPaletteAction(
         id: 'agent',
@@ -1096,10 +1035,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         subtitle: l10n.get('taskCompletion'),
         icon: Icons.bar_chart_rounded,
         shortcut: 'B',
-        onExecute: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const DashboardScreen()),
-        ),
+        onExecute: () => _selectTool(_WorkspaceTool.dashboard),
       ),
       CommandPaletteAction(
         id: 'clear_notices',
@@ -1131,7 +1067,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _handleGlobalKeyEvent(KeyEvent event) {
-    if (event is! KeyDownEvent) return;
+    if (event is! KeyDownEvent ||
+        !_runtimeActive ||
+        _toolBlocked ||
+        ModalRoute.of(context)?.isCurrent != true) {
+      return;
+    }
 
     final primaryFocus = FocusManager.instance.primaryFocus;
     final focusContext = primaryFocus?.context;
@@ -1140,13 +1081,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         (focusContext.widget is EditableText ||
             focusContext.findAncestorWidgetOfExactType<EditableText>() != null);
 
+    final editable = focusContext?.widget is EditableText
+        ? focusContext!.widget as EditableText
+        : focusContext?.findAncestorWidgetOfExactType<EditableText>();
+    final composing = editable?.controller.value.composing;
+    if (composing != null && composing.isValid && !composing.isCollapsed) {
+      return;
+    }
+
     final isCtrl =
         HardwareKeyboard.instance.isControlPressed ||
         HardwareKeyboard.instance.isMetaPressed;
 
     if (event.logicalKey == LogicalKeyboardKey.escape &&
         _activeTool != null &&
-        !isTyping &&
         (ModalRoute.of(context)?.isCurrent ?? false)) {
       _closeWorkspaceTool();
       return;
@@ -1172,24 +1120,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (event.logicalKey == LogicalKeyboardKey.slash) {
       _openSearch();
     } else if (event.logicalKey == LogicalKeyboardKey.keyG) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const KnowledgeGraphScreen()),
-      );
+      _selectTool(_WorkspaceTool.graph);
     } else if (event.logicalKey == LogicalKeyboardKey.keyC) {
       _openContextDigest();
     } else if (event.logicalKey == LogicalKeyboardKey.keyF) {
       _openFocusMode();
     } else if (event.logicalKey == LogicalKeyboardKey.keyR) {
       _openSpacedRepetitionSheet();
+    } else if (event.logicalKey == LogicalKeyboardKey.keyB) {
+      _selectTool(_WorkspaceTool.dashboard);
     } else if (event.logicalKey == LogicalKeyboardKey.keyE) {
       _exportCsvData();
     }
   }
 
   void _openSearch() {
-    if (!mounted || !_runtimeActive) return;
-    setState(() => _isSearchOpen = true);
+    if (!mounted ||
+        !_runtimeActive ||
+        _toolBlocked ||
+        ModalRoute.of(context)?.isCurrent != true) {
+      return;
+    }
+    setState(() {
+      _activeTool = null;
+      _isSearchOpen = true;
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && _isSearchOpen && _runtimeActive) {
         _searchFocus.requestFocus();
@@ -1545,6 +1500,39 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           embedded: true,
                           onClose: _closeWorkspaceTool,
                           onBusyChanged: _setExportBusy,
+                        ),
+                        _WorkspaceTool.review => SpacedRepetitionSheet(
+                          key: const ValueKey('review-tool'),
+                          embedded: true,
+                          onClose: _closeWorkspaceTool,
+                          onBusyChanged: (value) =>
+                              setState(() => _toolBusy = value),
+                        ),
+                        _WorkspaceTool.digest => ContextDigestSheet(
+                          key: const ValueKey('digest-tool'),
+                          embedded: true,
+                          onClose: _closeWorkspaceTool,
+                          digestReminders: digest,
+                        ),
+                        _WorkspaceTool.graph => KnowledgeGraphScreen(
+                          key: const ValueKey('graph-tool'),
+                          embedded: true,
+                          onClose: _closeWorkspaceTool,
+                        ),
+                        _WorkspaceTool.dashboard => DashboardScreen(
+                          key: const ValueKey('dashboard-tool'),
+                          embedded: true,
+                          onClose: _closeWorkspaceTool,
+                          onBusyChanged: (value) =>
+                              setState(() => _toolBusy = value),
+                        ),
+                        _WorkspaceTool.agent => AgentGoalPanel(
+                          key: const ValueKey('agent-tool'),
+                          controller: _agentGoal,
+                          busy: _agentBusy,
+                          onClose: _closeWorkspaceTool,
+                          onSubmit: _submitAgentGoal,
+                          onDiscard: _discardAgentDraft,
                         ),
                         null => null,
                       },

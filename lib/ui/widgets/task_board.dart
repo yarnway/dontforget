@@ -177,12 +177,12 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
       builder: (context, constraints) {
         // One clock reading gives every row the same boundary and avoids
         // thousands of DateTime allocations in a large wide-board frame.
+        final compact =
+            constraints.maxWidth < 640 || constraints.maxHeight < 320;
         final projectionTime = DateTime.now();
         final data = TaskBoardData.project(
           widget.reminders,
-          visibleCategory: constraints.maxWidth < 640
-              ? _selectedCategory
-              : null,
+          visibleCategory: compact ? _selectedCategory : null,
           isFolded: (task) =>
               urgency.isQ4StagnantFolded(task, now: projectionTime),
         );
@@ -201,7 +201,7 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
           bgColor: categoryColors[index],
           onPlayMedia: widget.onPlayMedia,
         );
-        if (constraints.maxWidth < 640) {
+        if (compact) {
           return Padding(
             padding: constraints.maxHeight < 320
                 ? const EdgeInsets.symmetric(horizontal: 12, vertical: 4)

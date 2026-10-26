@@ -10,6 +10,14 @@ class AppLocalizations {
 
   static const Map<String, Map<String, String>> _localizedValues = {
     'en': {
+      "agentGoalLabel": "Your goal",
+      "agentGoalHint": "Describe the outcome, constraints and deadline.",
+      "agentStart": "Plan this goal",
+      "agentDraftHint":
+          "Unsubmitted text stays in this workspace when you switch tools. It is cleared when the app exits or data is restored.",
+      "agentDiscardMessage":
+          "Discard this unsubmitted goal? This does not affect saved tasks.",
+
       'scanDynamicUrgency': 'Check task priorities',
       'scanDynamicUrgencyDesc':
           'Review approaching reminders and promote eligible tasks.',
@@ -470,14 +478,14 @@ class AppLocalizations {
       'allTasks': 'All Tasks',
       'noSearchResult': 'No matching tasks found',
       // Multi-Agent Architecture
-      'multiAgentTitle': 'Multi-Agent Collective Pipeline',
+      'multiAgentTitle': 'Goal planner',
       'multiAgentDesc':
-          '1 Manager Agent + 2 Execution Agents (Decomposer & Scheduler)',
+          'Turn a complex goal into actionable tasks, priorities and a schedule.',
       'managerRole': 'Manager Agent (Global Priority)',
       'decomposerRole': 'Decomposer Agent (Goal Breakdown)',
       'schedulerRole': 'Scheduler Agent (DP Timeline Fitting)',
-      'agentProcessing': 'Multi-Agent is collaborating on goal...',
-      'agentComplete': 'Multi-Agent successfully scheduled milestone pipeline',
+      'agentProcessing': 'Planning your goal…',
+      'agentComplete': 'Your plan is ready.',
       // Immersive Preparation Mode
       'immersiveMode': 'Immersive Preparation Mode',
       'immersiveModeDesc':
@@ -612,6 +620,12 @@ class AppLocalizations {
       'viewInGraph': 'View in Graph',
     },
     'zh': {
+      "agentGoalLabel": "目标描述",
+      "agentGoalHint": "描述期望结果、约束和截止时间。",
+      "agentStart": "规划目标",
+      "agentDraftHint": "切换或关闭工具会保留未提交的目标；退出应用或恢复数据后清除。",
+      "agentDiscardMessage": "放弃这段尚未提交的目标？已保存的任务不受影响。",
+
       'scanDynamicUrgency': '检查任务优先级',
       'scanDynamicUrgencyDesc': '检查临近到期的提醒，将符合条件的任务提升为紧急提醒。',
       'dynamicPromotedCount': '已提升优先级的任务数',
@@ -998,8 +1012,8 @@ class AppLocalizations {
       'allTasks': '全部事项',
       'noSearchResult': '未找到匹配的事项',
       // 多智能体微调度架构
-      'multiAgentTitle': '多智能体微型协作流水线',
-      'multiAgentDesc': '1 个管理总控智能体 + 2 个业务执行智能体 (拆解 & 排程)',
+      'multiAgentTitle': '目标规划',
+      'multiAgentDesc': '将复杂目标拆成可执行任务，并安排优先级和时间。',
       'managerRole': '👔 管理总控智能体 (全局优先级)',
       'decomposerRole': '🔨 目标拆解智能体 (里程碑分解)',
       'schedulerRole': '⏱️ 动态排程智能体 (DP时间槽填缝)',
@@ -1118,6 +1132,12 @@ class AppLocalizations {
       'viewInGraph': '在图谱中定位',
     },
     'ja': {
+      "agentGoalLabel": "目標",
+      "agentGoalHint": "結果、条件、期限を入力してください。",
+      "agentStart": "目標を計画",
+      "agentDraftHint": "ツールを切り替えても未送信の内容は保持されます。アプリの終了やデータ復元で消去されます。",
+      "agentDiscardMessage": "未送信の目標を破棄しますか？保存済みタスクには影響しません。",
+
       'scanDynamicUrgency': 'タスクの優先度を確認',
       'scanDynamicUrgencyDesc': '期限が近いリマインダーを確認し、該当するタスクの優先度を上げます。',
       'dynamicPromotedCount': '優先度を上げたタスク数',
@@ -1526,8 +1546,8 @@ class AppLocalizations {
       'allTasks': 'すべてのタスク',
       'noSearchResult': '一致するタスクが見つかりませんでした',
       // マルチエージェント協調
-      'multiAgentTitle': 'マルチエージェント協調パイプライン',
-      'multiAgentDesc': '管理エージェント1基 + 実行エージェント2基（分解・日程）',
+      'multiAgentTitle': '目標プラン',
+      'multiAgentDesc': '複雑な目標を実行可能なタスクに分け、優先順位と日程を整理します。',
       'managerRole': '👔 管理統括エージェント（全体優先度）',
       'decomposerRole': '🔨 目標分解エージェント（マイルストーン分解）',
       'schedulerRole': '⏱️ 動的日程エージェント（DPスロット割当）',

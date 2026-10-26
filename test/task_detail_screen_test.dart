@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'dart:async';
 import 'package:dont_forget/ui/widgets/inline_feedback.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -675,6 +676,56 @@ void main() {
       },
     );
   }
+  testWidgets(
+    'detail Escape guards draft, modal owns Escape, command-S saves',
+    (tester) async {
+      final task = Reminder(
+        id: 'keyboard-detail',
+        taskTitle: 'Original',
+        quadrantLevel: 2,
+      );
+      await tester.runAsync(() => notifier.addReminder(task));
+      await openDetail(tester, task);
+      final title = find.byKey(const ValueKey('detail-title'));
+      await tester.enterText(title, 'Keyboard saved');
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.text('继续编辑'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(TaskDetailScreen), findsOneWidget);
+      await tester.tap(title);
+      tester.testTextInput.updateEditingValue(
+        const TextEditingValue(
+          text: '组合',
+          selection: TextSelection.collapsed(offset: 2),
+          composing: TextRange(start: 0, end: 2),
+        ),
+      );
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+      expect(find.byType(AlertDialog), findsNothing);
+      await tester.enterText(title, 'Keyboard saved');
+      await tester.runAsync(() async {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyS);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+        await notifier.lastWrite;
+      });
+      await tester.pumpAndSettle();
+      expect(find.byType(TaskDetailScreen), findsNothing);
+      expect(
+        container
+            .read(remindersProvider)
+            .singleWhere((r) => r.id == task.id)
+            .taskTitle,
+        'Keyboard saved',
+      );
+    },
+  );
+
   testWidgets(
     'dirty back keeps edits, discard preserves database, reverted draft exits',
     (tester) async {

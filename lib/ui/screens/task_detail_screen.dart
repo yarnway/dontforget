@@ -1,4 +1,5 @@
 import '../widgets/inline_feedback.dart';
+import '../widgets/editor_keyboard_actions.dart';
 import '../widgets/editable_text_menu.dart';
 import '../formatters/local_date_time.dart';
 import '../../data/database_helper.dart';
@@ -1819,7 +1820,13 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) _requestExit();
       },
-      child: scaffold,
+      child: EditorKeyboardActions(
+        onSave: () {
+          if (!_exitDialogOpen) _save();
+        },
+        onExit: _requestExit,
+        child: scaffold,
+      ),
     );
   }
 }

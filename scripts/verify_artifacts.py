@@ -8,6 +8,12 @@ from package_artifacts import ROOT, digest, version
 PLATFORMS = {'windows', 'android', 'linux', 'macos', 'ios'}
 
 
+def verify_tag(tag, release_version, build):
+    # A numbered candidate cannot be mistaken for a final stable tag.
+    if tag not in {f'v{release_version}', f'v{release_version}-rc.{build}'}:
+        raise ValueError('Tag does not match pubspec version and build number')
+
+
 def verify(directory, expected_version, expected_build, revision, platform=None):
     directory = Path(directory)
     expected = {platform} if platform else PLATFORMS
@@ -42,10 +48,13 @@ if __name__ == '__main__':
     parser.add_argument('directory', type=Path)
     parser.add_argument('--platform', choices=sorted(PLATFORMS))
     parser.add_argument('--revision', required=True)
-    parser.add_argument('--tag')
+    parser.add_argument('--tag', help='vVERSION or vVERSION-rc.BUILD from pubspec.yaml')
     args = parser.parse_args()
     release_version, build = version(ROOT)
-    if args.tag and args.tag != f'v{release_version}':
-        parser.error('Tag does not match pubspec.yaml')
+    if args.tag:
+        try:
+            verify_tag(args.tag, release_version, build)
+        except ValueError as error:
+            parser.error(str(error))
     count = verify(args.directory, release_version, build, args.revision, args.platform)
     print(f'Verified {count} package files; runtime and signing acceptance are separate.')
