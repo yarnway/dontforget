@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:dont_forget/ui/widgets/inline_feedback.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'dart:io';
@@ -50,6 +51,8 @@ class _DetailNotifications implements NotificationService {
   final scheduled = <Reminder>[];
   final reconciled = <Reminder>[];
   bool failNative = false;
+  Completer<void>? nativeEntered;
+  Future<void>? nativePause;
   @override
   Future<void> cancelReminder(String id) async => canceled.add(id);
   @override
@@ -62,6 +65,8 @@ class _DetailNotifications implements NotificationService {
 
   @override
   Future<void> scheduleReminderStrict(Reminder task) async {
+    nativeEntered?.complete();
+    await nativePause;
     reconciled.add(task);
     await cancelReminder(task.id);
     if (failNative) throw StateError('isolated native update failure');
@@ -670,4 +675,192 @@ void main() {
       },
     );
   }
+  testWidgets(
+    'dirty back keeps edits, discard preserves database, reverted draft exits',
+    (tester) async {
+      final task = Reminder(
+        id: 'unsaved-discard',
+        taskTitle: 'Original title',
+        quadrantLevel: 2,
+      );
+      await tester.runAsync(() => notifier.addReminder(task));
+      await openDetail(tester, task);
+      await tester.enterText(
+        find.byKey(const ValueKey('detail-title')),
+        'Unsaved title',
+      );
+      await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
+      await tester.pumpAndSettle();
+      expect(find.text('继续编辑'), findsOneWidget);
+      await tester.tap(find.text('继续编辑'));
+      await tester.pumpAndSettle();
+      expect(find.text('Unsaved title'), findsOneWidget);
+      final navigator = tester.state<NavigatorState>(
+        find.byType(Navigator).first,
+      );
+      await navigator.maybePop();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('放弃修改'));
+      await tester.pumpAndSettle();
+      expect(find.byType(TaskDetailScreen), findsNothing);
+      expect(
+        container
+            .read(remindersProvider)
+            .singleWhere((r) => r.id == task.id)
+            .taskTitle,
+        'Original title',
+      );
+      await tester.tap(find.text('Open QA'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('detail-title')),
+        'Temporary',
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('detail-title')),
+        'Original title',
+      );
+      await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.text('Open QA'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'save and leave persists; invalid title keeps the draft visible',
+    (tester) async {
+      final task = Reminder(
+        id: 'unsaved-save',
+        taskTitle: 'Before save',
+        quadrantLevel: 2,
+      );
+      await tester.runAsync(() => notifier.addReminder(task));
+      await openDetail(tester, task);
+      await tester.enterText(find.byKey(const ValueKey('detail-title')), '');
+      await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('保存并返回'));
+      await tester.pumpAndSettle();
+      expect(find.byType(TaskDetailScreen), findsOneWidget);
+      expect(
+        container
+            .read(remindersProvider)
+            .singleWhere((r) => r.id == task.id)
+            .taskTitle,
+        'Before save',
+      );
+      await tester.enterText(
+        find.byKey(const ValueKey('detail-title')),
+        'Saved by exit',
+      );
+      await tester.runAsync(() async {
+        final back = tester.widget<IconButton>(
+          find.widgetWithIcon(IconButton, Icons.arrow_back_ios_new_rounded),
+        );
+        final exit = (back.onPressed! as Future<void> Function())();
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('保存并返回'));
+        await exit;
+      });
+      await tester.pumpAndSettle();
+      expect(
+        container
+            .read(remindersProvider)
+            .singleWhere((r) => r.id == task.id)
+            .taskTitle,
+        'Saved by exit',
+      );
+      expect(find.byType(TaskDetailScreen), findsNothing);
+    },
+  );
+
+  testWidgets('native sync failure after save leaves a clean draft', (
+    tester,
+  ) async {
+    final task = Reminder(
+      id: 'unsaved-native',
+      taskTitle: 'Before native failure',
+      quadrantLevel: 2,
+    );
+    await tester.runAsync(() => notifier.addReminder(task));
+    await openDetail(tester, task);
+    await tester.enterText(
+      find.byKey(const ValueKey('detail-title')),
+      'Persisted despite native failure',
+    );
+    notifications.failNative = true;
+    try {
+      await tester.ensureVisible(find.text('保存修改'));
+      await performWrite(tester, find.text('保存修改'));
+      expect(find.byType(TaskDetailScreen), findsOneWidget);
+      await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
+      await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(TaskDetailScreen), findsNothing);
+      expect(
+        container
+            .read(remindersProvider)
+            .singleWhere((r) => r.id == task.id)
+            .taskTitle,
+        'Persisted despite native failure',
+      );
+    } finally {
+      notifications.failNative = false;
+    }
+  });
+  testWidgets('typing while native save settles preserves the newer draft', (
+    tester,
+  ) async {
+    final task = Reminder(
+      id: 'unsaved-during-write',
+      triggerTime: DateTime.now().add(const Duration(hours: 2)),
+      taskTitle: 'Before write',
+      quadrantLevel: 2,
+    );
+    await tester.runAsync(() => notifier.addReminder(task));
+    await openDetail(tester, task);
+    await tester.enterText(
+      find.byKey(const ValueKey('detail-title')),
+      'Submitted',
+    );
+    Completer<void>? finish;
+    try {
+      final save = tester.widget<FilledButton>(
+        find.widgetWithIcon(FilledButton, Icons.save_outlined),
+      );
+      await tester.runAsync(() async {
+        notifications.nativeEntered = Completer<void>();
+        finish = Completer<void>();
+        notifications.nativePause = finish!.future;
+        final write = (save.onPressed! as Future<void> Function())();
+        await notifications.nativeEntered!.future;
+        await tester.enterText(
+          find.byKey(const ValueKey('detail-title')),
+          'Newer draft',
+        );
+        finish!.complete();
+        await write;
+      });
+      await tester.pumpAndSettle();
+      expect(find.byType(TaskDetailScreen), findsOneWidget);
+      expect(find.text('Newer draft'), findsOneWidget);
+      expect(
+        container
+            .read(remindersProvider)
+            .singleWhere((r) => r.id == task.id)
+            .taskTitle,
+        'Submitted',
+      );
+      await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
+      await tester.pumpAndSettle();
+      expect(find.text('继续编辑'), findsOneWidget);
+      await tester.tap(find.text('放弃修改'));
+      await tester.pumpAndSettle();
+    } finally {
+      if (finish != null && !finish!.isCompleted) finish!.complete();
+      notifications.nativeEntered = null;
+      notifications.nativePause = null;
+    }
+  });
 }

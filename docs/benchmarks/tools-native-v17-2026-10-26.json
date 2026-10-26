@@ -1,0 +1,57 @@
+{
+  "date": "2026-10-26",
+  "candidate": "1.7.0+10",
+  "schema": 10,
+  "precedingNativeAcceptance": {
+    "candidate": "1.7.0+9",
+    "source": "1ad8728d862d476374d72205fa93139929fd4563",
+    "reopenShowsExactSavedTitleAndTwoLines": "PASS",
+    "secondMultilineSelectAllReplacementSqlReadback": "PASS",
+    "toolSearchSlashFiltersResults": "PASS",
+    "keyboardWrapToLastScrollsSelectionIntoView": "PASS",
+    "keyboardUpThreeThenEnterOpensDashboard": "PASS",
+    "metaKViaAutomation": "not established; menu used",
+    "nativeDeepSeekNewReport": {
+      "sourceLabel": "AI 模型报告",
+      "allDatesScopeExplicit": true,
+      "counts": [
+        1,
+        0,
+        1
+      ],
+      "mentionsSyntheticTitle": true,
+      "noInventedWeekOrAchievement": true,
+      "limitsEffortQualityAndPendingProgressExplicit": true,
+      "optionalSuggestions": 2,
+      "result": "PASS"
+    },
+    "noRealUserTaskDataSent": true
+  },
+  "localValidation": {
+    "flutter": "3.44.9",
+    "dart": "3.12.2",
+    "analyze": "PASS",
+    "flutterTests": 916,
+    "pythonTests": 100,
+    "graphFixtureCount": 10000,
+    "graphPageMax": 120,
+    "graphListLazy": true,
+    "idleAnimationCallbacks": 0,
+    "layoutWidths": [
+      375,
+      768,
+      1440
+    ],
+    "languages": [
+      "zh",
+      "en",
+      "ja"
+    ],
+    "textScale": 2,
+    "keyboardInsets": 320,
+    "snapshotScope": "component previews; no native frame speed claim"
+  },
+  "candidateCI": "PENDING",
+  "candidateNative": "PENDING",
+  "cleanup": "PENDING"
+}

@@ -21,6 +21,21 @@ class TaskDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<TaskDetailScreen> createState() => _TaskDetailScreenState();
 }
 
+typedef _DetailDraft = ({
+  String title,
+  String summary,
+  int quadrant,
+  int originalQuadrant,
+  bool promoted,
+  DateTime? time,
+  String recurrence,
+  bool completed,
+  String contextType,
+  String wifi,
+  String prompt,
+  String profile,
+});
+
 class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   late TextEditingController _titleController;
   late TextEditingController _summaryController;
@@ -34,6 +49,10 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   List<Reminder>? _linkedSource;
   List<String>? _indexedLinkIds;
   Map<String, Reminder> _linkedTaskIndex = {};
+  late _DetailDraft _savedDraft;
+  bool _reportedDirty = false;
+  bool _allowPop = false;
+  bool _exitDialogOpen = false;
   DataGeneration? _editorGeneration;
   bool _isSaving = false;
   bool _isDeleting = false;
@@ -87,6 +106,15 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       _contextPromptController = TextEditingController();
     }
     _initialContextFormValue = _contextFormValue();
+    _savedDraft = _captureDraft();
+    for (final controller in [
+      _titleController,
+      _summaryController,
+      _wifiSsidController,
+      _contextPromptController,
+    ]) {
+      controller.addListener(_draftChanged);
+    }
   }
 
   @override
@@ -96,6 +124,75 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     _wifiSsidController.dispose();
     _contextPromptController.dispose();
     super.dispose();
+  }
+
+  _DetailDraft _captureDraft() => (
+    title: _titleController.text,
+    summary: _summaryController.text,
+    quadrant: _selectedQuadrant,
+    originalQuadrant: _originalQuadrant,
+    promoted: _isDynamicallyPromoted,
+    time: _selectedTime,
+    recurrence: _selectedRecurrenceRule,
+    completed: _isCompleted,
+    contextType: _contextTriggerType,
+    wifi: _wifiSsidController.text,
+    prompt: _contextPromptController.text,
+    profile: _contextProfileValue,
+  );
+
+  void _draftChanged() {
+    final dirty = _captureDraft() != _savedDraft;
+    // Selection/caret changes and subsequent keystrokes in a dirty form do not
+    // rebuild the whole detail page just to maintain the navigation guard.
+    if (mounted && dirty != _reportedDirty) {
+      setState(() => _reportedDirty = dirty);
+    }
+  }
+
+  void _finishPop() {
+    if (_allowPop) return;
+    setState(() => _allowPop = true);
+    // Let PopScope see the completed write/discard before popping the route.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) Navigator.of(context).pop();
+    });
+  }
+
+  Future<void> _requestExit() async {
+    if (_isMutating || _exitDialogOpen || _allowPop) return;
+    if (_captureDraft() == _savedDraft) {
+      _finishPop();
+      return;
+    }
+    _exitDialogOpen = true;
+    final l10n = AppLocalizations.of(context);
+    final choice = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.get('unsavedChangesTitle')),
+        content: Text(l10n.get('unsavedChangesMessage')),
+        actions: [
+          TextButton(
+            autofocus: true,
+            onPressed: () => Navigator.pop(context, 'keep'),
+            child: Text(l10n.get('keepEditing')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'discard'),
+            child: Text(l10n.get('discardChanges')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, 'save'),
+            child: Text(l10n.get('saveAndLeave')),
+          ),
+        ],
+      ),
+    );
+    _exitDialogOpen = false;
+    if (!mounted) return;
+    if (choice == 'discard') _finishPop();
+    if (choice == 'save') await _save();
   }
 
   String? _contextFormValue() {
@@ -120,6 +217,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
   Future<void> _save() async {
     if (_isMutating) return;
+    final submittedDraft = _captureDraft();
     final l10n = AppLocalizations.of(context);
     final title = _titleController.text.trim();
     if (title.isEmpty) {
@@ -231,6 +329,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       );
       database.checkGeneration(generation);
       if (!mounted) return;
+      _savedDraft = submittedDraft;
+      _reportedDirty = _captureDraft() != _savedDraft;
       if (result.nativeSyncFailed) {
         feedback.showSnackBar(
           SnackBar(content: Text(l10n.get('reminderNativeSyncFailed'))),
@@ -238,8 +338,11 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         return;
       }
       feedback.showSnackBar(SnackBar(content: Text(l10n.get('save'))));
+      // A focused text input can still receive keyboard/IME updates while the
+      // pointer is blocked during the write. Keep any newer draft on screen.
+      if (_reportedDirty) return;
       setState(() => _isSaving = false);
-      Navigator.of(context).pop();
+      _finishPop();
     } catch (_) {
       if (mounted) {
         feedback.showSnackBar(
@@ -315,7 +418,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       }
       if (mounted) {
         setState(() => _isDeleting = false);
-        Navigator.of(context).pop();
+        _finishPop();
       }
     } catch (_) {
       if (mounted) {
@@ -681,7 +784,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
           tooltip: l10n.get('cancel'),
-          onPressed: _isMutating ? null : () => Navigator.of(context).pop(),
+          onPressed: _isMutating ? null : _requestExit,
         ),
         actions: [
           // Toggle Complete
@@ -1710,6 +1813,13 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         ),
       ),
     );
-    return PopScope(canPop: !_isMutating, child: scaffold);
+    _reportedDirty = _captureDraft() != _savedDraft;
+    return PopScope(
+      canPop: _allowPop || (!_isMutating && !_reportedDirty),
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) _requestExit();
+      },
+      child: scaffold,
+    );
   }
 }

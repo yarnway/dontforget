@@ -1,451 +1,425 @@
+import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
 import '../../providers/providers.dart';
+import '../../services/bidirectional_link_service.dart';
 import '../../l10n/app_localizations.dart';
+import '../widgets/editable_text_menu.dart';
 import '../widgets/knowledge_graph_view.dart';
 import 'task_detail_screen.dart';
 
-/// 可视化知识图谱与双向网络界面 (Knowledge Graph Screen)
+/// A bounded graph page plus a virtualized list for the complete result set.
 class KnowledgeGraphScreen extends ConsumerStatefulWidget {
   final String? initialFocusTaskId;
-
-  const KnowledgeGraphScreen({
-    super.key,
-    this.initialFocusTaskId,
-  });
-
+  const KnowledgeGraphScreen({super.key, this.initialFocusTaskId});
   @override
-  ConsumerState<KnowledgeGraphScreen> createState() => _KnowledgeGraphScreenState();
+  ConsumerState<KnowledgeGraphScreen> createState() =>
+      _KnowledgeGraphScreenState();
 }
 
 class _KnowledgeGraphScreenState extends ConsumerState<KnowledgeGraphScreen> {
-  final TransformationController _transController = TransformationController();
-  String? _selectedNodeId;
-  int _quadrantFilter = 0; // 0: All, 1: Q1, 2: Q2, 3: Q3, 4: Q4
-  String _searchQuery = '';
-  late TextEditingController _searchController;
+  static const pageSize = 120;
+  static const canvasSize = 1400.0;
+  final _transform = TransformationController();
+  final _search = TextEditingController();
+  Timer? _debounce;
+  List<Reminder>? _source;
+  List<Reminder> _filtered = [];
+  Map<String, Reminder> _byId = {};
+  KnowledgeGraphData? _graph;
+  String? _selected;
+  String _query = '';
+  int _quadrant = 0;
+  int _page = 0;
+  bool _listMode = false;
+  bool _initialFocusApplied = false;
+  Size? _viewport;
+  bool _needsFit = true;
 
   @override
   void initState() {
     super.initState();
-    _searchController = TextEditingController();
-    _selectedNodeId = widget.initialFocusTaskId;
+    _selected = widget.initialFocusTaskId;
   }
 
   @override
   void dispose() {
-    _searchController.dispose();
-    _transController.dispose();
+    _debounce?.cancel();
+    _search.dispose();
+    _transform.dispose();
     super.dispose();
   }
 
-  void _resetZoom() {
-    _transController.value = Matrix4.identity();
+  void _filter() {
+    final terms = _query
+        .toLowerCase()
+        .split(RegExp(r'\s+'))
+        .where((q) => q.isNotEmpty)
+        .toList();
+    _filtered = [
+      for (final task in _source!)
+        if ((_quadrant == 0 || task.quadrantLevel == _quadrant) &&
+            (terms.isEmpty ||
+                terms.every(
+                  ('${task.taskTitle}\n${task.taskSummary ?? ''}')
+                      .toLowerCase()
+                      .contains,
+                )))
+          task,
+    ];
+    _page = math.min(_page, math.max(0, (_filtered.length - 1) ~/ pageSize));
+    if (!_initialFocusApplied) {
+      _initialFocusApplied = true;
+      final index = _filtered.indexWhere((task) => task.id == _selected);
+      if (index >= 0) _page = index ~/ pageSize;
+    }
+    _graph = null;
   }
+
+  void _setQuery(String query) {
+    _debounce?.cancel();
+    void apply() {
+      if (!mounted) return;
+      setState(() {
+        _query = query.trim();
+        _page = 0;
+        _filter();
+      });
+    }
+
+    if (query.trim().isEmpty) {
+      apply();
+    } else {
+      _debounce = Timer(const Duration(milliseconds: 180), apply);
+    }
+  }
+
+  void _reset() {
+    _debounce?.cancel();
+    _search.clear();
+    setState(() {
+      _query = '';
+      _quadrant = 0;
+      _page = 0;
+      _filter();
+    });
+  }
+
+  void _fit() {
+    final viewport = _viewport;
+    final nodes = _graph?.nodes;
+    if (viewport == null || nodes == null || nodes.isEmpty) return;
+    var extentX = 100.0, extentY = 100.0;
+    for (final node in nodes) {
+      extentX = math.max(extentX, node.x.abs() + 75);
+      extentY = math.max(extentY, node.y.abs() + 65);
+    }
+    final scale = math
+        .min(viewport.width / (extentX * 2), viewport.height / (extentY * 2))
+        .clamp(0.1, 1.5);
+    _transform.value = Matrix4.identity()
+      ..setEntry(0, 0, scale)
+      ..setEntry(1, 1, scale)
+      ..setEntry(0, 3, (viewport.width - canvasSize * scale) / 2)
+      ..setEntry(1, 3, (viewport.height - canvasSize * scale) / 2);
+  }
+
+  void _open(Reminder task) => Navigator.of(
+    context,
+  ).push(MaterialPageRoute(builder: (_) => TaskDetailScreen(task: task)));
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final reminders = ref.watch(remindersProvider);
-    final linkService = ref.watch(biDirectionalLinkServiceProvider);
-
-    // 过滤任务
-    final filteredReminders = reminders.where((r) {
-      if (_quadrantFilter != 0 && r.quadrantLevel != _quadrantFilter) {
-        return false;
+    final loc = AppLocalizations.of(context);
+    final colors = Theme.of(context).colorScheme;
+    final tasks = ref.watch(remindersProvider);
+    if (!identical(tasks, _source)) {
+      _source = tasks;
+      _byId = {for (final task in tasks) task.id: task};
+      _filter();
+    }
+    if (_graph == null) {
+      final page = _filtered.skip(_page * pageSize).take(pageSize).toList();
+      _graph = ref.read(biDirectionalLinkServiceProvider).buildGraphData(page);
+      final columns = math.max(1, math.sqrt(page.length).ceil());
+      final rows = (page.length / columns).ceil();
+      for (var i = 0; i < _graph!.nodes.length; i++) {
+        final node = _graph!.nodes[i];
+        node.x = (i % columns - (columns - 1) / 2) * 110;
+        node.y = (i ~/ columns - (rows - 1) / 2) * 110;
       }
-      if (_searchQuery.isNotEmpty) {
-        final q = _searchQuery.toLowerCase();
-        final matchTitle = r.taskTitle.toLowerCase().contains(q);
-        final matchSummary = (r.taskSummary ?? '').toLowerCase().contains(q);
-        if (!matchTitle && !matchSummary) return false;
-      }
-      return true;
-    }).toList();
-
-    final graphData = linkService.buildGraphData(filteredReminders);
-
-    final selectedReminder = _selectedNodeId != null
-        ? reminders.where((r) => r.id == _selectedNodeId).firstOrNull
-        : null;
-
+      if (!_graph!.nodes.any((node) => node.id == _selected)) _selected = null;
+      _needsFit = true;
+    }
+    final selected = _byId[_selected];
+    final pageCount = math.max(1, (_filtered.length / pageSize).ceil());
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF101216) : const Color(0xFFF6F8FA),
       appBar: AppBar(
-        title: Row(
-          children: [
-            const Icon(Icons.hub_outlined, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              l10n.get('knowledgeGraphTitle'),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(width: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '${graphData.nodes.length} ${l10n.get('graphNodes')} · ${graphData.edges.length} ${l10n.get('graphEdges')}',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-                ),
-              ),
-            ),
-          ],
+        title: Text(
+          loc.get('knowledgeGraphTitle'),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         actions: [
           IconButton(
+            tooltip: loc.get('resetGraphView'),
+            onPressed: _fit,
             icon: const Icon(Icons.center_focus_strong_outlined),
-            tooltip: l10n.get('resetGraphView'),
-            onPressed: _resetZoom,
           ),
-          const SizedBox(width: 8),
         ],
       ),
-      body: Stack(
-        children: [
-          // 1. 力导向拓扑画布 (支持 0.2x ~ 3.5x 缩放与平移)
-          InteractiveViewer(
-            transformationController: _transController,
-            minScale: 0.2,
-            maxScale: 3.5,
-            boundaryMargin: const EdgeInsets.all(1200),
-            child: SizedBox(
-              width: 2400,
-              height: 2400,
-              child: Center(
-                child: KnowledgeGraphView(
-                  graphData: graphData,
-                  selectedNodeId: _selectedNodeId,
-                  onNodeSelected: (node) {
-                    setState(() {
-                      _selectedNodeId = node?.id;
-                    });
-                  },
-                  onNodeDoubleTap: (node) {
-                    final target = reminders.where((r) => r.id == node.id).firstOrNull;
-                    if (target != null) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => TaskDetailScreen(task: target),
-                        ),
-                      );
-                    }
-                  },
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, bodyConstraints) => Column(
+            children: [
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: bodyConstraints.maxHeight * 0.45,
                 ),
-              ),
-            ),
-          ),
-
-          // 2. 顶部象限过滤与关键词搜索工具条
-          Positioned(
-            top: 12,
-            left: 16,
-            right: 16,
-            child: Row(
-              children: [
-                // 象限筛选胶囊
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: (isDark ? Colors.black87 : Colors.white).withValues(alpha: 0.88),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isDark ? Colors.white12 : Colors.black12,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildFilterChip(0, l10n.get('all')),
-                      _buildFilterChip(1, 'Q1', color: const Color(0xFFEF5350)),
-                      _buildFilterChip(2, 'Q2', color: const Color(0xFFFFA726)),
-                      _buildFilterChip(3, 'Q3', color: const Color(0xFF42A5F5)),
-                      _buildFilterChip(4, 'Q4', color: const Color(0xFF66BB6A)),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                // 搜索输入框
-                Expanded(
-                  child: Container(
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: (isDark ? Colors.black87 : Colors.white).withValues(alpha: 0.88),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: isDark ? Colors.white12 : Colors.black12,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        TextField(
+                          controller: _search,
+                          contextMenuBuilder: buildEditableTextMenu,
+                          decoration: InputDecoration(
+                            labelText: loc.get('searchGraphHint'),
+                            prefixIcon: const Icon(Icons.search),
+                            suffixIcon: IconButton(
+                              tooltip: loc.get('clearSearch'),
+                              onPressed: () {
+                                _search.clear();
+                                _setQuery('');
+                              },
+                              icon: const Icon(Icons.clear),
+                            ),
+                            border: const OutlineInputBorder(),
+                          ),
+                          onChanged: _setQuery,
                         ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            for (final q in [0, 1, 2, 3, 4])
+                              ChoiceChip(
+                                label: Text(q == 0 ? loc.get('all') : 'Q$q'),
+                                selected: _quadrant == q,
+                                onSelected: (_) => setState(() {
+                                  _quadrant = q;
+                                  _page = 0;
+                                  _filter();
+                                }),
+                              ),
+                            TextButton.icon(
+                              onPressed: () => setState(() {
+                                _listMode = !_listMode;
+                                _needsFit = true;
+                              }),
+                              icon: Icon(
+                                _listMode
+                                    ? Icons.hub_outlined
+                                    : Icons.view_list_outlined,
+                              ),
+                              label: Text(
+                                loc.get(
+                                  _listMode ? 'graphView' : 'graphListView',
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${loc.get('graphMatches')}: ${_filtered.length} · ${_graph!.nodes.length} ${loc.get('graphNodes')} · ${_graph!.edges.length} ${loc.get('graphEdges')}',
+                          style: TextStyle(color: colors.onSurfaceVariant),
+                        ),
+                        if (!_listMode && _filtered.length > pageSize)
+                          Text(
+                            loc.get('graphPageScope'),
+                            style: TextStyle(color: colors.onSurfaceVariant),
+                          ),
                       ],
                     ),
-                    child: TextField(
-                      controller: _searchController,
-                      style: const TextStyle(fontSize: 12),
-                      decoration: InputDecoration(
-                        hintText: l10n.get('searchGraphHint'),
-                        hintStyle: TextStyle(
-                          fontSize: 12,
-                          color: isDark ? Colors.grey.shade500 : Colors.grey.shade400,
-                        ),
-                        prefixIcon: const Icon(Icons.search, size: 16),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear, size: 14),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() => _searchQuery = '');
-                                },
-                              )
-                            : null,
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 9),
-                      ),
-                      onChanged: (val) {
-                        setState(() => _searchQuery = val.trim());
-                      },
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // 3. 悬浮微卡 (选中节点时弹出)
-          if (selectedReminder != null)
-            Positioned(
-              left: 20,
-              right: 20,
-              bottom: 20,
-              child: _buildInspectorCard(context, selectedReminder, reminders, l10n, isDark),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(int level, String label, {Color? color}) {
-    final isSelected = _quadrantFilter == level;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: () {
-        setState(() => _quadrantFilter = level);
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? (color ?? Theme.of(context).colorScheme.primary).withValues(alpha: 0.22)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (color != null) ...[
-              Container(
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-              ),
-              const SizedBox(width: 4),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected
-                    ? (color ?? Theme.of(context).colorScheme.primary)
-                    : (isDark ? Colors.grey.shade400 : Colors.grey.shade700),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInspectorCard(
-    BuildContext context,
-    Reminder task,
-    List<Reminder> allReminders,
-    AppLocalizations l10n,
-    bool isDark,
-  ) {
-    Color qColor;
-    switch (task.quadrantLevel) {
-      case 1:
-        qColor = const Color(0xFFEF5350);
-        break;
-      case 2:
-        qColor = const Color(0xFFFFA726);
-        break;
-      case 3:
-        qColor = const Color(0xFF42A5F5);
-        break;
-      case 4:
-      default:
-        qColor = const Color(0xFF66BB6A);
-        break;
-    }
-
-    // 查找已关联的任务对象
-    final linkedTasks = allReminders.where((r) => task.linkedTaskIds.contains(r.id)).toList();
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: (isDark ? const Color(0xFF1E222B) : Colors.white).withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: qColor.withValues(alpha: 0.4), width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.16),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: qColor.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: qColor.withValues(alpha: 0.4)),
-                ),
-                child: Text(
-                  'Q${task.quadrantLevel}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: qColor,
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
-              if (task.isDynamicallyPromoted)
-                Container(
-                  margin: const EdgeInsets.only(right: 6),
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                  decoration: BoxDecoration(
-                    color: Colors.amber.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: Colors.amber.withValues(alpha: 0.5)),
-                  ),
-                  child: const Text(
-                    '⚡ 跃迁',
-                    style: TextStyle(fontSize: 10, color: Colors.amber, fontWeight: FontWeight.bold),
-                  ),
-                ),
+              const Divider(height: 1),
               Expanded(
-                child: Text(
-                  task.taskTitle,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                child: _filtered.isEmpty
+                    ? Center(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.hub_outlined,
+                                size: 40,
+                                color: colors.onSurfaceVariant,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                loc.get(
+                                  tasks.isEmpty
+                                      ? 'graphEmpty'
+                                      : 'noSearchResult',
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              if (tasks.isNotEmpty)
+                                TextButton(
+                                  onPressed: _reset,
+                                  child: Text(loc.get('graphResetFilters')),
+                                ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : _listMode
+                    ? ListView.builder(
+                        itemCount: _filtered.length,
+                        itemBuilder: (context, index) {
+                          final task = _filtered[index];
+                          return ListTile(
+                            leading: Text('Q${task.quadrantLevel}'),
+                            title: Text(
+                              task.taskTitle,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            subtitle: task.taskSummary == null
+                                ? null
+                                : Text(
+                                    task.taskSummary!,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                            trailing: const Icon(Icons.chevron_right),
+                            onTap: () => _open(task),
+                          );
+                        },
+                      )
+                    : LayoutBuilder(
+                        builder: (context, constraints) {
+                          final size = constraints.biggest;
+                          if (_viewport != size || _needsFit) {
+                            _viewport = size;
+                            _needsFit = false;
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (mounted && _viewport == size && !_listMode) {
+                                _fit();
+                              }
+                            });
+                          }
+                          return InteractiveViewer(
+                            transformationController: _transform,
+                            constrained: false,
+                            minScale: 0.1,
+                            maxScale: 3.5,
+                            boundaryMargin: const EdgeInsets.all(1400),
+                            child: SizedBox(
+                              width: canvasSize,
+                              height: canvasSize,
+                              child: KnowledgeGraphView(
+                                graphData: _graph!,
+                                selectedNodeId: _selected,
+                                onNodeSelected: (node) =>
+                                    setState(() => _selected = node?.id),
+                                onNodeDoubleTap: (node) {
+                                  final task = _byId[node.id];
+                                  if (task != null) _open(task);
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                      ),
               ),
-              IconButton(
-                icon: const Icon(Icons.close, size: 18),
-                onPressed: () => setState(() => _selectedNodeId = null),
-                visualDensity: VisualDensity.compact,
-              ),
-            ],
-          ),
-          if (task.taskSummary != null && task.taskSummary!.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              task.taskSummary!,
-              style: TextStyle(
-                fontSize: 12,
-                color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-          if (linkedTasks.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              children: [
-                for (final lt in linkedTasks.take(4))
-                  InkWell(
-                    borderRadius: BorderRadius.circular(6),
-                    onTap: () => setState(() => _selectedNodeId = lt.id),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: isDark ? Colors.white12 : Colors.black12),
+              if (!_listMode && selected != null)
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: bodyConstraints.maxHeight * 0.25,
+                  ),
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
                       ),
                       child: Row(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.link, size: 12, color: Colors.indigoAccent),
-                          const SizedBox(width: 4),
-                          Text(
-                            lt.taskTitle.length > 8 ? '${lt.taskTitle.substring(0, 8)}...' : lt.taskTitle,
-                            style: const TextStyle(fontSize: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  selected.taskTitle,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.titleSmall,
+                                ),
+                                if (selected.taskSummary != null)
+                                  Text(
+                                    selected.taskSummary!,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                TextButton.icon(
+                                  onPressed: () => _open(selected),
+                                  icon: const Icon(Icons.open_in_new),
+                                  label: Text(loc.get('openTaskDetail')),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: loc.get('close'),
+                            onPressed: () => setState(() => _selected = null),
+                            icon: const Icon(Icons.close),
                           ),
                         ],
                       ),
                     ),
                   ),
-              ],
-            ),
-          ],
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              TextButton.icon(
-                icon: const Icon(Icons.open_in_new, size: 14),
-                label: Text(l10n.get('openTaskDetail'), style: const TextStyle(fontSize: 12)),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => TaskDetailScreen(task: task),
+                ),
+              if (!_listMode && pageCount > 1)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      tooltip: loc.get('graphPreviousPage'),
+                      onPressed: _page == 0
+                          ? null
+                          : () => setState(() {
+                              _page--;
+                              _graph = null;
+                            }),
+                      icon: const Icon(Icons.chevron_left),
                     ),
-                  );
-                },
-              ),
+                    Text('${_page + 1} / $pageCount'),
+                    IconButton(
+                      tooltip: loc.get('graphNextPage'),
+                      onPressed: _page + 1 == pageCount
+                          ? null
+                          : () => setState(() {
+                              _page++;
+                              _graph = null;
+                            }),
+                      icon: const Icon(Icons.chevron_right),
+                    ),
+                  ],
+                ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

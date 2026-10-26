@@ -1,8 +1,9 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import '../../services/bidirectional_link_service.dart';
 
-/// 知识图谱画布组件，支持节点力导向物理模拟、拖拽与高亮交互
+/// 知识图谱画布组件，使用稳定布局，支持节点拖拽与高亮交互
 class KnowledgeGraphView extends StatefulWidget {
   final KnowledgeGraphData graphData;
   final String? selectedNodeId;
@@ -21,109 +22,23 @@ class KnowledgeGraphView extends StatefulWidget {
   State<KnowledgeGraphView> createState() => _KnowledgeGraphViewState();
 }
 
-class _KnowledgeGraphViewState extends State<KnowledgeGraphView>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animController;
+class _KnowledgeGraphViewState extends State<KnowledgeGraphView> {
+  final _surface = GlobalKey();
   GraphNode? _draggedNode;
   Offset? _lastDragPos;
+  Size _canvasSize = Size.zero;
 
   @override
-  void initState() {
-    super.initState();
-    _animController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 1),
-    )..addListener(_stepPhysics);
-
-    _animController.repeat();
-  }
-
-  @override
-  void dispose() {
-    _animController.dispose();
-    super.dispose();
-  }
-
-  /// 力导向物理引擎单步迭代计算 (Force-Directed Simulation Step)
-  void _stepPhysics() {
-    final nodes = widget.graphData.nodes;
-    final edges = widget.graphData.edges;
-    if (nodes.isEmpty) return;
-
-    const double kRepulsion = 4500.0;
-    const double kSpring = 0.045;
-    const double restLength = 130.0;
-    const double damping = 0.88;
-    const double centerPull = 0.012;
-
-    // 1. 节点间库仑斥力 (Coulomb Repulsion)
-    for (int i = 0; i < nodes.length; i++) {
-      final a = nodes[i];
-      for (int j = i + 1; j < nodes.length; j++) {
-        final b = nodes[j];
-        final dx = b.x - a.x;
-        final dy = b.y - a.y;
-        final dist = sqrt(dx * dx + dy * dy).clamp(10.0, 600.0);
-        final force = kRepulsion / (dist * dist);
-        final fx = (dx / dist) * force;
-        final fy = (dy / dist) * force;
-
-        if (a != _draggedNode) {
-          a.vx -= fx;
-          a.vy -= fy;
-        }
-        if (b != _draggedNode) {
-          b.vx += fx;
-          b.vy += fy;
-        }
-      }
-    }
-
-    // 2. 关联边胡克引力 (Hooke Spring Attraction)
-    final nodeMap = {for (var n in nodes) n.id: n};
-    for (final edge in edges) {
-      final s = nodeMap[edge.sourceId];
-      final t = nodeMap[edge.targetId];
-      if (s == null || t == null) continue;
-
-      final dx = t.x - s.x;
-      final dy = t.y - s.y;
-      final dist = sqrt(dx * dx + dy * dy).clamp(5.0, 800.0);
-      final displacement = dist - restLength;
-      final force = kSpring * displacement * edge.weight;
-      final fx = (dx / dist) * force;
-      final fy = (dy / dist) * force;
-
-      if (s != _draggedNode) {
-        s.vx += fx;
-        s.vy += fy;
-      }
-      if (t != _draggedNode) {
-        t.vx -= fx;
-        t.vy -= fy;
-      }
-    }
-
-    // 3. 中心引力与速度阻尼应用 (Center gravity & damping)
-    for (final n in nodes) {
-      if (n == _draggedNode) continue;
-      // 轻微向坐标系原点归拢
-      n.vx -= n.x * centerPull;
-      n.vy -= n.y * centerPull;
-
-      n.vx *= damping;
-      n.vy *= damping;
-
-      n.x += n.vx;
-      n.y += n.vy;
-    }
-
-    if (mounted) {
-      setState(() {});
+  void didUpdateWidget(KnowledgeGraphView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.graphData, widget.graphData)) {
+      _draggedNode = null;
+      _lastDragPos = null;
     }
   }
 
   GraphNode? _findNodeAt(Offset pos) {
+    pos -= _canvasSize.center(Offset.zero);
     for (final n in widget.graphData.nodes.reversed) {
       final radius = 22.0 + min(n.degree * 3.0, 14.0);
       final dist = sqrt(pow(pos.dx - n.x, 2) + pow(pos.dy - n.y, 2));
@@ -138,50 +53,90 @@ class _KnowledgeGraphViewState extends State<KnowledgeGraphView>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return GestureDetector(
-      onTapUp: (details) {
-        final clicked = _findNodeAt(details.localPosition);
-        widget.onNodeSelected(clicked);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        _canvasSize = constraints.biggest;
+        return GestureDetector(
+          onTapUp: (details) {
+            final clicked = _findNodeAt(details.localPosition);
+            widget.onNodeSelected(clicked);
+          },
+          onDoubleTapDown: (details) {
+            final clicked = _findNodeAt(details.localPosition);
+            if (clicked != null && widget.onNodeDoubleTap != null) {
+              widget.onNodeDoubleTap!(clicked);
+            }
+          },
+          child: RawGestureDetector(
+            key: _surface,
+            gestures: {
+              _NodePanRecognizer:
+                  GestureRecognizerFactoryWithHandlers<_NodePanRecognizer>(
+                    () => _NodePanRecognizer(),
+                    (instance) => instance
+                      ..dragStartBehavior = DragStartBehavior.down
+                      ..accepts = (globalPosition) {
+                        final box =
+                            _surface.currentContext?.findRenderObject()
+                                as RenderBox?;
+                        return box != null &&
+                            _findNodeAt(box.globalToLocal(globalPosition)) !=
+                                null;
+                      }
+                      ..onStart = (details) {
+                        final node = _findNodeAt(details.localPosition);
+                        if (node != null) {
+                          _draggedNode = node;
+                          _lastDragPos = details.localPosition;
+                          widget.onNodeSelected(node);
+                        }
+                      }
+                      ..onUpdate = (details) {
+                        if (_draggedNode != null && _lastDragPos != null) {
+                          final delta = details.localPosition - _lastDragPos!;
+                          _draggedNode!.x += delta.dx;
+                          _draggedNode!.y += delta.dy;
+                          _draggedNode!.vx = 0;
+                          _draggedNode!.vy = 0;
+                          _lastDragPos = details.localPosition;
+                          setState(() {});
+                        }
+                      }
+                      ..onEnd = (_) {
+                        _draggedNode = null;
+                        _lastDragPos = null;
+                      }
+                      ..onCancel = () {
+                        _draggedNode = null;
+                        _lastDragPos = null;
+                      },
+                  ),
+            },
+            child: CustomPaint(
+              size: Size.infinite,
+              painter: _GraphPainter(
+                graphData: widget.graphData,
+                selectedNodeId: widget.selectedNodeId,
+                isDark: isDark,
+              ),
+            ),
+          ),
+        );
       },
-      onDoubleTapDown: (details) {
-        final clicked = _findNodeAt(details.localPosition);
-        if (clicked != null && widget.onNodeDoubleTap != null) {
-          widget.onNodeDoubleTap!(clicked);
-        }
-      },
-      onPanStart: (details) {
-        final node = _findNodeAt(details.localPosition);
-        if (node != null) {
-          _draggedNode = node;
-          _lastDragPos = details.localPosition;
-          widget.onNodeSelected(node);
-        }
-      },
-      onPanUpdate: (details) {
-        if (_draggedNode != null && _lastDragPos != null) {
-          final delta = details.localPosition - _lastDragPos!;
-          _draggedNode!.x += delta.dx;
-          _draggedNode!.y += delta.dy;
-          _draggedNode!.vx = 0;
-          _draggedNode!.vy = 0;
-          _lastDragPos = details.localPosition;
-          setState(() {});
-        }
-      },
-      onPanEnd: (_) {
-        _draggedNode = null;
-        _lastDragPos = null;
-      },
-      child: CustomPaint(
-        size: Size.infinite,
-        painter: _GraphPainter(
-          graphData: widget.graphData,
-          selectedNodeId: widget.selectedNodeId,
-          isDark: isDark,
-        ),
-      ),
     );
   }
+}
+
+/// Join the drag arena only over a node. Empty-canvas drags remain available
+/// to the enclosing InteractiveViewer, including touch and trackpad panning.
+class _NodePanRecognizer extends PanGestureRecognizer {
+  bool Function(Offset)? accepts;
+  @override
+  bool isPointerPanZoomAllowed(PointerPanZoomStartEvent event) => false;
+
+  @override
+  bool isPointerAllowed(PointerEvent event) =>
+      (accepts?.call(event.position) ?? false) && super.isPointerAllowed(event);
 }
 
 class _GraphPainter extends CustomPainter {
@@ -215,6 +170,8 @@ class _GraphPainter extends CustomPainter {
     final edges = graphData.edges;
     if (nodes.isEmpty) return;
 
+    canvas.save();
+    canvas.translate(size.width / 2, size.height / 2);
     final nodeMap = {for (var n in nodes) n.id: n};
 
     // 找出所有与当前选中节点相连的邻居节点 ID
@@ -233,11 +190,14 @@ class _GraphPainter extends CustomPainter {
       final t = nodeMap[edge.targetId];
       if (s == null || t == null) continue;
 
-      final isEdgeHighlighted = selectedNodeId == null ||
+      final isEdgeHighlighted =
+          selectedNodeId == null ||
           (edge.sourceId == selectedNodeId || edge.targetId == selectedNodeId);
 
       final strokeColor = isEdgeHighlighted
-          ? (isDark ? Colors.indigoAccent.withValues(alpha: 0.65) : Colors.indigo.withValues(alpha: 0.55))
+          ? (isDark
+                ? Colors.indigoAccent.withValues(alpha: 0.65)
+                : Colors.indigo.withValues(alpha: 0.55))
           : (isDark ? Colors.white10 : Colors.black12);
 
       final edgePaint = Paint()
@@ -264,8 +224,15 @@ class _GraphPainter extends CustomPainter {
       if (isSelected || isConnected) {
         final glowPaint = Paint()
           ..color = baseColor.withValues(alpha: isSelected ? 0.45 : 0.25)
-          ..maskFilter = MaskFilter.blur(BlurStyle.normal, isSelected ? 12.0 : 6.0);
-        canvas.drawCircle(Offset(node.x, node.y), radius + (isSelected ? 8.0 : 4.0), glowPaint);
+          ..maskFilter = MaskFilter.blur(
+            BlurStyle.normal,
+            isSelected ? 12.0 : 6.0,
+          );
+        canvas.drawCircle(
+          Offset(node.x, node.y),
+          radius + (isSelected ? 8.0 : 4.0),
+          glowPaint,
+        );
       }
 
       // 节点实体圆
@@ -287,7 +254,9 @@ class _GraphPainter extends CustomPainter {
       final textSpan = TextSpan(
         text: 'Q${node.quadrantLevel}',
         style: TextStyle(
-          color: isDark ? Colors.white.withValues(alpha: nodeAlpha) : Colors.black87.withValues(alpha: nodeAlpha),
+          color: isDark
+              ? Colors.white.withValues(alpha: nodeAlpha)
+              : Colors.black87.withValues(alpha: nodeAlpha),
           fontSize: 11,
           fontWeight: FontWeight.bold,
         ),
@@ -302,10 +271,7 @@ class _GraphPainter extends CustomPainter {
       );
 
       // 标题标签 (Label below node)
-      const maxLabelLength = 10;
-      final displayTitle = node.title.length > maxLabelLength
-          ? '${node.title.substring(0, maxLabelLength)}...'
-          : node.title;
+      final displayTitle = node.title;
 
       final labelSpan = TextSpan(
         text: displayTitle,
@@ -321,12 +287,16 @@ class _GraphPainter extends CustomPainter {
         text: labelSpan,
         textDirection: TextDirection.ltr,
         maxLines: 1,
-      )..layout();
+        ellipsis: '…',
+      )..layout(maxWidth: 100);
       labelPainter.paint(
         canvas,
         Offset(node.x - labelPainter.width / 2, node.y + radius + 4),
       );
+      textPainter.dispose();
+      labelPainter.dispose();
     }
+    canvas.restore();
   }
 
   @override
