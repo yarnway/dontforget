@@ -105,5 +105,6 @@
     "full native text replacement",
     "mobile and other-platform device acceptance",
     "native first-frame or cold-start speedup from CPU aggregation benchmark"
-  ]
+  ],
+  "notificationJournalReadbackScope": "The recorded zero entry count came from the preserved v1 migration-source file only. Selected incremental-backend readback and retained cancellation records are documented in interaction-native-v17-2026-10-26.json."
 }

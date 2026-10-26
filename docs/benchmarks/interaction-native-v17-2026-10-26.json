@@ -1,0 +1,137 @@
+{
+  "date": "2026-10-26",
+  "productRevision": "1ad8728d862d476374d72205fa93139929fd4563",
+  "candidate": "1.7.0+9",
+  "schema": 10,
+  "ci": {
+    "run": 40260035219,
+    "url": "https://github.com/yarnway/dontforget/actions/runs/40260035219",
+    "qualityAndFivePlatformBuilds": "PASS",
+    "release": "SKIPPED_NON_TAG",
+    "supersededRun": 40259630608,
+    "supersededReason": "cancelled by latest software-keyboard fix; not reported as passed"
+  },
+  "localValidation": {
+    "flutter": "3.44.9",
+    "dart": "3.12.2",
+    "analyze": "PASS",
+    "flutterTests": 900,
+    "pythonTests": 100,
+    "previewCases": 7,
+    "keyboardRegressionBefore": "FAIL: save covered by software keyboard",
+    "keyboardRegressionAfter": "PASS",
+    "largeListRegression": "10000 candidates; no additional list reads for a local completion-state change",
+    "scope": "component and source validation; no native startup speed claim"
+  },
+  "precedingNativeAcceptance": {
+    "sourceRevision": "1e7d579d61e8adeae712bf16f46b0586d77a7b9b",
+    "version": "1.7.0+8",
+    "scope": "one synthetic task, isolated sandbox, official DeepSeek endpoint",
+    "invalidModel": "dontforget-acceptance-invalid-model",
+    "failureReport": "localAfterFailure; visible native warning",
+    "independentInvalidModelProbeHttpStatus": 400,
+    "nativeHttpStatusCaptured": false,
+    "nativeSettingsCorrection": "deepseek-flash",
+    "settingsSqlReadback": true,
+    "oldReportPreservedAfterSettingsChange": true,
+    "staleSettingsNotice": true,
+    "oldReportPreservedWhileRetrying": true,
+    "retryResult": "AI model report with nonempty content referencing synthetic title",
+    "oldFailureAndStaleWarningsAbsentAfterSuccess": true,
+    "issueFound": "report invents week scope and effort from all-time task counts; follow-up fix required"
+  },
+  "wholeTitleReplacement": {
+    "sourceRevision": "1e7d579d61e8adeae712bf16f46b0586d77a7b9b",
+    "coordinateTripleClickSelectThenType": "PASS",
+    "exactSavedTitle": "Native replacement verified",
+    "summaryPreserved": true,
+    "keyboardCmdA": "DID_NOT_REPLACE",
+    "axOnlyFocus": "APPENDS",
+    "scope": "real single-paragraph task-title replacement; no unsupported claim of keyboard selection"
+  },
+  "artifact": {
+    "artifactId": 12624143335,
+    "bytes": 23979384,
+    "expectedDigest": "sha256:5523e8c14a3463c9955b6d5b820bde6f52201b94c8c6060453c955fe14de3c9a",
+    "actualDigest": "sha256:5523e8c14a3463c9955b6d5b820bde6f52201b94c8c6060453c955fe14de3c9a",
+    "zipCRC": "PASS",
+    "method": "eight verified HTTP 206 ranges"
+  },
+  "newCandidateNative": {
+    "newCandidate": "interaction17-r40260035219",
+    "version": "1.7.0+9",
+    "sourceRevision": "1ad8728d862d476374d72205fa93139929fd4563",
+    "preparation": "PASS: source hash, sandbox identity, frameworks, resources, strict codesign",
+    "launchAttempt": "BLOCKED",
+    "reason": "The Mac is locked and automatic unlock could not unlock it.",
+    "ownedCandidateProcessesAfterAttempt": 0,
+    "nativeNewCandidateAcceptance": "NOT_PERFORMED",
+    "pending": [
+      "native context menu full title and multiline summary replacement",
+      "save and reopen on new version",
+      "native tool search/keyboard execution",
+      "real DeepSeek response after prompt revision"
+    ],
+    "retainedFixture": "task-before-model.sqlite contains the one synthetic task with default non-secret settings",
+    "priorNativeReportFailureRecovery": "PASS on version +8, separate evidence"
+  },
+  "sandboxCleanup": {
+    "baselineTablesMatch": {
+      "Settings": true,
+      "Reminders": true,
+      "MediaRecords": true
+    },
+    "integrity": "ok",
+    "tasks": 0,
+    "mediaRecords": 0,
+    "testCredentialResidueFiles": 0,
+    "originalCredentialCheckpointUnchanged": true,
+    "method": "closed-app exclusive lease, exact synthetic fixture match, offline fixture cleanup and baseline settings transaction, VACUUM; not a native deletion acceptance"
+  },
+  "activeNotificationJournal": {
+    "backend": "incremental",
+    "entries": 3,
+    "epoch": "7604a6e7-5044-4c99-8ca3-0de1e3d295d1",
+    "records": [
+      {
+        "nativeId": 1259727053,
+        "action": "cancel",
+        "status": "submitted",
+        "triggerUtcMicros": null
+      },
+      {
+        "nativeId": 1177565015,
+        "action": "cancel",
+        "status": "submitted",
+        "triggerUtcMicros": null
+      },
+      {
+        "nativeId": 1103421708,
+        "action": "cancel",
+        "status": "submitted",
+        "triggerUtcMicros": null
+      }
+    ]
+  },
+  "journalEvidenceCorrection": "Earlier empty-journal checks read the preserved v1 migration-source JSON, not the selected incremental backend. The active backend now has three submitted cancellation records with null trigger times; these stable-ID records are retained, not counted as pending retries. No OS queue readback was performed this round.",
+  "storage": {
+    "freedAllocatedKiB": 423940,
+    "projectAllocatedKiBAfterCleanup": 911452,
+    "previousProtectedFiles": 662,
+    "retainedUnchangedFiles": 616,
+    "filesReplacedByExactVerifiedRollbackArchive": 46,
+    "newProtectedFiles": 723,
+    "oldExpandedBundleRemoved": true,
+    "originalZipAnd643793ByteSignatureDeltaRetained": true,
+    "restoreVerifiedByteModeSymlinkAndStrictCodesign": true,
+    "latestExpandedCandidateRetained": true,
+    "vmOrImageCreated": false
+  },
+  "remaining": [
+    "new candidate native context-menu replacement, save/reopen and tool navigation when native control is available",
+    "real DeepSeek report scope after prompt revision",
+    "other tool pages and unsaved-edit usability",
+    "real spring/fall DST and hardware relative-wake readback per v1.6 ledger",
+    "second real provider when available; mobile/other desktop device acceptance"
+  ]
+}
