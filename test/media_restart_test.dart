@@ -104,10 +104,10 @@ void main() {
     await gesture.up();
     await tester.pump();
     expect(played, 1);
-    expect(find.byTooltip('Play / preview attachment'), findsOneWidget);
+    expect(find.text('Play / preview attachment'), findsOneWidget);
     final button = find.ancestor(
       of: find.byIcon(Icons.mic_none),
-      matching: find.byType(IconButton),
+      matching: find.byType(TextButton),
     );
     expect(tester.getSize(button).width, greaterThanOrEqualTo(40));
     expect(tester.getSize(button).height, greaterThanOrEqualTo(40));

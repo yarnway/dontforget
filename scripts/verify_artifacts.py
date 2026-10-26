@@ -2,8 +2,8 @@
 """Validate package inventory, provenance and hashes; this is not runtime acceptance."""
 import argparse
 import json
-from pathlib import Path
-from package_artifacts import ROOT, digest, version
+from pathlib import Path, PurePosixPath
+from package_artifacts import ROOT, MACOS_ARCHITECTURES, digest, version
 
 PLATFORMS = {'windows', 'android', 'linux', 'macos', 'ios'}
 
@@ -23,6 +23,20 @@ def verify(directory, expected_version, expected_build, revision, platform=None)
         if (manifest.get('platform'), manifest.get('version'), manifest.get('build_number'),
                 manifest.get('revision')) != (name, expected_version, expected_build, revision):
             raise ValueError(f'Package identity mismatch: {name}')
+        if name == 'macos':
+            binaries = manifest.get('native_architectures', [])
+            binary_paths = set()
+            for binary in binaries:
+                filename = binary['file']
+                path = PurePosixPath(filename)
+                if (path.is_absolute() or '..' in path.parts or '\\' in filename or
+                        path.as_posix() != filename or filename in binary_paths or
+                        not filename.startswith('Contents/') or
+                        not MACOS_ARCHITECTURES <= set(binary['architectures'])):
+                    raise ValueError('Invalid macOS universal binary evidence')
+                binary_paths.add(filename)
+            if 'Contents/MacOS/dont_forget' not in binary_paths:
+                raise ValueError('Missing macOS universal binary evidence')
         entries = manifest.get('artifacts', [])
         if len(entries) != (2 if name in {'android', 'windows'} else 1):
             raise ValueError(f'Incomplete artifact set: {name}')

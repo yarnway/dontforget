@@ -13,6 +13,13 @@ import tempfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
+MACOS_ARCHITECTURES = {'arm64', 'x86_64'}
+MACHO_MAGICS = {
+    b'\xfe\xed\xfa\xce', b'\xce\xfa\xed\xfe',
+    b'\xfe\xed\xfa\xcf', b'\xcf\xfa\xed\xfe',
+    b'\xca\xfe\xba\xbe', b'\xbe\xba\xfe\xca',
+    b'\xca\xfe\xba\xbf', b'\xbf\xba\xfe\xca',
+}
 
 
 def version(root):
@@ -55,6 +62,28 @@ def zip_tree(directory, target, prefix=''):
                 archive.write(path, str(Path(prefix) / path.relative_to(directory)))
 
 
+def macos_architectures(app):
+    """Check real binaries, including plugins, independently of runner CPU type."""
+    entries = []
+    for path in sorted(app.rglob('*')):
+        # Framework aliases point to files already visited under Versions/.
+        if path.is_symlink() or not path.is_file():
+            continue
+        with path.open('rb') as stream:
+            magic = stream.read(4)
+        if magic not in MACHO_MAGICS:
+            continue
+        architectures = set(subprocess.check_output(
+            ['lipo', '-archs', str(path)], text=True).split())
+        relative = path.relative_to(app).as_posix()
+        if not MACOS_ARCHITECTURES <= architectures:
+            raise ValueError(f'macOS binary must support arm64 and x86_64: {relative}')
+        entries.append({'file': relative, 'architectures': sorted(architectures)})
+    if not any(entry['file'] == 'Contents/MacOS/dont_forget' for entry in entries):
+        raise ValueError('macOS executable is not a verified Mach-O binary')
+    return entries
+
+
 def package(root, platform, revision=None):
     root = Path(root).resolve()
     release_version, build_number = version(root)
@@ -64,6 +93,7 @@ def package(root, platform, revision=None):
         ['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
     names = []
     signing = 'not-applicable'
+    native_architectures = None
     with tempfile.TemporaryDirectory(prefix=f'{platform}-', dir=dist) as work:
         staging = Path(work)
         if platform == 'windows':
@@ -104,6 +134,7 @@ def package(root, platform, revision=None):
             app = require(root / 'build/macos/Build/Products/Release/dont_forget.app')
             require(app / 'Contents/MacOS/dont_forget')
             assert_clean(app)
+            native_architectures = macos_architectures(app)
             name = f'DontForget_macOS_unnotarized_v{release_version}.zip'
             subprocess.run(['ditto', '-c', '-k', '--sequesterRsrc', '--keepParent',
                             str(app), str(staging / name)], check=True)
@@ -138,6 +169,8 @@ def package(root, platform, revision=None):
         'revision': revision, 'platform': platform, 'signing': signing,
         'runtime_acceptance': 'NOT_PERFORMED', 'artifacts': entries,
     }
+    if native_architectures is not None:
+        manifest['native_architectures'] = native_architectures
     manifest_path = dist / f'{platform}-manifest.json'
     manifest_path.write_text(json.dumps(manifest, indent=2) + '\n')
     (dist / f'{platform}-SHA256SUMS.txt').write_text(''.join(

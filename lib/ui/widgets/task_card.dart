@@ -525,28 +525,30 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                     child: Wrap(spacing: 6, runSpacing: 6, children: metadata),
                   ),
                 if (mediaIcon != null)
-                  Row(
-                    children: [
-                      IconButton(
-                        tooltip: l10n.get('playOrPreview'),
-                        onPressed: widget.onPlayMedia,
-                        color: colors.primary,
-                        constraints: const BoxConstraints(
-                          minWidth: 48,
-                          minHeight: 48,
-                        ),
-                        icon: Icon(mediaIcon, size: 20),
+                  TextButton(
+                    key: ValueKey('media-${task.id}'),
+                    onPressed: _isBusy ? null : widget.onPlayMedia,
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                      foregroundColor: colors.primary,
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
                       ),
-                      Expanded(
-                        child: Text(
-                          l10n.get('playOrPreview'),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: colors.onSurfaceVariant,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(mediaIcon, size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            l10n.get('playOrPreview'),
+                            style: const TextStyle(fontSize: 12),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 if (subTasks.isNotEmpty) ...[
                   const SizedBox(height: 6),

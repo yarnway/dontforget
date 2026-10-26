@@ -1,13 +1,15 @@
 import json
 from pathlib import Path
 import sys
+import subprocess
 import tarfile
 import tempfile
 import unittest
+from unittest.mock import patch
 import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from package_artifacts import package, version
+from package_artifacts import macos_architectures, package, version
 from verify_artifacts import verify, verify_tag
 
 
@@ -113,6 +115,90 @@ class PackagingTest(unittest.TestCase):
         with zipfile.ZipFile(self.root / 'dist' / manifest['artifacts'][1]['file']) as archive:
             self.assertIn('dont_forget.exe', archive.namelist())
         self.assertEqual(verify(self.root / 'dist', '1.5.1', '2', self.revision, 'windows'), 2)
+
+    def macos_fixture(self):
+        app = 'build/macos/Build/Products/Release/dont_forget.app'
+        self.write(f'{app}/Contents/MacOS/dont_forget', b'\xca\xfe\xba\xbe')
+        self.write(f'{app}/Contents/Frameworks/Plugin.framework/Versions/A/Plugin',
+                   b'\xcf\xfa\xed\xfe')
+        self.write(f'{app}/Contents/Resources/asset', b'ordinary asset')
+        return self.root / app
+
+    @staticmethod
+    def fake_ditto(args, **kwargs):
+        # Archive contents are verified separately; these tests exercise the gate.
+        Path(args[-1]).write_bytes(b'archive fixture')
+
+    def test_macos_checks_main_and_framework_before_publishing(self):
+        app = self.macos_fixture()
+        with patch('package_artifacts.subprocess.check_output',
+                   return_value='x86_64 arm64\n') as lipo, \
+                patch('package_artifacts.subprocess.run', side_effect=self.fake_ditto):
+            manifest = package(self.root, 'macos', self.revision)
+        self.assertEqual(lipo.call_count, 2)
+        self.assertEqual({x['file'] for x in manifest['native_architectures']}, {
+            'Contents/MacOS/dont_forget',
+            'Contents/Frameworks/Plugin.framework/Versions/A/Plugin',
+        })
+        self.assertTrue(all(x['architectures'] == ['arm64', 'x86_64']
+                            for x in manifest['native_architectures']))
+        self.assertTrue(all(Path(call.args[0][-1]).is_relative_to(app.resolve())
+                            for call in lipo.call_args_list))
+        self.assertEqual(verify(self.root / 'dist', '1.5.1', '2', self.revision, 'macos'), 1)
+
+    def test_macos_thin_plugin_stops_before_archive(self):
+        self.macos_fixture()
+        def architectures(args, **kwargs):
+            return 'x86_64\n' if args[-1].endswith('/Plugin') else 'x86_64 arm64\n'
+        with patch('package_artifacts.subprocess.check_output', side_effect=architectures), \
+                patch('package_artifacts.subprocess.run') as ditto, \
+                self.assertRaisesRegex(ValueError, 'Plugin'):
+            package(self.root, 'macos', self.revision)
+        ditto.assert_not_called()
+        self.assertEqual(list((self.root / 'dist').iterdir()), [])
+
+    def test_macos_unreadable_binary_stops_before_archive(self):
+        self.macos_fixture()
+        with patch('package_artifacts.subprocess.check_output',
+                   side_effect=subprocess.CalledProcessError(1, ['lipo'])), \
+                patch('package_artifacts.subprocess.run') as ditto, \
+                self.assertRaises(subprocess.CalledProcessError):
+            package(self.root, 'macos', self.revision)
+        ditto.assert_not_called()
+        self.assertEqual(list((self.root / 'dist').iterdir()), [])
+
+    def test_macos_missing_macho_executable_rejects(self):
+        app = self.macos_fixture()
+        (app / 'Contents/MacOS/dont_forget').write_bytes(b'not a binary')
+        with patch('package_artifacts.subprocess.check_output', return_value='arm64 x86_64'), \
+                self.assertRaisesRegex(ValueError, 'executable'):
+            macos_architectures(app)
+
+    def test_macos_framework_alias_is_not_checked_twice(self):
+        app = self.macos_fixture()
+        alias = app / 'Contents/Frameworks/Plugin.framework/Plugin'
+        try:
+            alias.symlink_to('Versions/A/Plugin')
+        except OSError:
+            self.skipTest('Platform does not allow unprivileged symlinks')
+        with patch('package_artifacts.subprocess.check_output', return_value='arm64 x86_64') as lipo:
+            self.assertEqual(len(macos_architectures(app)), 2)
+        self.assertEqual(lipo.call_count, 2)
+
+    def test_macos_release_verification_rejects_incomplete_architecture_evidence(self):
+        self.macos_fixture()
+        with patch('package_artifacts.subprocess.check_output', return_value='arm64 x86_64'), \
+                patch('package_artifacts.subprocess.run', side_effect=self.fake_ditto):
+            manifest = package(self.root, 'macos', self.revision)
+        path = self.root / 'dist/macos-manifest.json'
+        valid = manifest['native_architectures']
+        for evidence in [[], [{'file': 'Contents/MacOS/dont_forget', 'architectures': ['x86_64']}],
+                         valid + [valid[0]],
+                         valid + [{'file': 'Contents/../outside', 'architectures': ['arm64', 'x86_64']}]]:
+            with self.subTest(evidence=evidence), self.assertRaises(ValueError):
+                manifest['native_architectures'] = evidence
+                path.write_text(json.dumps(manifest))
+                verify(self.root / 'dist', '1.5.1', '2', self.revision, 'macos')
 
 
 if __name__ == '__main__':

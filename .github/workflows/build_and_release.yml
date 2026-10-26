@@ -51,7 +51,9 @@ jobs:
           - platform: linux
             runner: ubuntu-24.04
           - platform: macos
-            runner: macos-15
+            # Keep the standard Intel pool separate from the iOS arm64 pool.
+            # Packaging checks every Mach-O for both arm64 and x86_64 slices.
+            runner: macos-15-intel
           - platform: ios
             runner: macos-15
     runs-on: ${{ matrix.runner }}

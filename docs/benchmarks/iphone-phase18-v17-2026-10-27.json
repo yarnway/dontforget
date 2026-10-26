@@ -1,0 +1,33 @@
+{
+  "date": "2026-10-27",
+  "candidate": "1.7.0+22",
+  "local": {
+    "analyze": "PASS",
+    "flutter_passed": 1082,
+    "python_passed": 124
+  },
+  "native21": {
+    "build": "21",
+    "new_process_after_reopen": true,
+    "settings_rows_equal": true,
+    "reminder_rows_equal": true,
+    "media_rows_equal": true,
+    "media_bytes_equal": true,
+    "integrity": "ok",
+    "task_count": 2,
+    "media_count": 2,
+    "ui_notification_permission": "allowed",
+    "ui_pending": 0,
+    "ui_retained": 0,
+    "ui_application_queue": 0,
+    "playback_start_feedback_observed": 2,
+    "audible_output_observed": false,
+    "mirror_microphone_os_rejection": true,
+    "short_recording_rejected_without_task": true,
+    "native_label_navigation_bug_reproduced": true
+  },
+  "ci22": "NOT_YET_RUN",
+  "native22": "NOT_YET_RUN",
+  "publication": "NOT_YET_PUBLISHED",
+  "stable": "BLOCKED_BY_OPEN_ACCEPTANCE_GATES"
+}
