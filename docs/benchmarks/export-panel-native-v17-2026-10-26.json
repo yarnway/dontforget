@@ -77,7 +77,56 @@
     "deliveryClaim": false
   },
   "newCandidate": "1.7.0+13",
-  "newCandidateNative": "PENDING",
+  "newCandidateNative": {
+    "result": "PASS",
+    "candidate": "1.7.0+13",
+    "sourceRevision": "efc550bd31582dbc2883d8edc4cfed6c2fd1c41f",
+    "ciRun": "40276629284",
+    "isolatedBundle": "com.example.dontForget.acceptance.dashboard17-r40254505297",
+    "nativePanel": {
+      "wideRightPane": true,
+      "composerVisibleAndHittable": true,
+      "clipboardPathExactReadback": true,
+      "editedWithFocusEnabled": true,
+      "draftPreservedAfterToolSwitch": true,
+      "draftPreservedAfterSaveCancel": true,
+      "draftPreservedAfterPanelClose": true,
+      "testDraftClearedWithoutSubmit": true,
+      "focusOnOffFeedback": true,
+      "save": "PASS",
+      "cancel": "PASS",
+      "cancelledFileExists": false,
+      "savedFileUnchangedAfterCancel": true,
+      "csvReadback": {
+        "result": "PASS",
+        "rows": 2,
+        "columns": 16,
+        "bom": true,
+        "formulaGuard": true,
+        "unicodeQuoteNewline": true,
+        "sha256": "a0574ff98f5fb979290d582b10dfe10a8c133b37410ff73e88d9c5250ef4e5c6",
+        "bytes": 837
+      }
+    },
+    "cleanup": {
+      "nativeDeletedTasks": 2,
+      "osPending": 0,
+      "osRetained": 0,
+      "future": 0,
+      "needsAttention": 0,
+      "pendingCancellation": 0,
+      "tableEquality": {
+        "Settings": true,
+        "Reminders": true,
+        "MediaRecords": true
+      },
+      "integrity": "ok",
+      "journalEntries": 11,
+      "journalAllCancelSubmitted": true
+    },
+    "deliveryClaim": false,
+    "scope": "Native macOS wide workspace; compact and large-text layouts covered by actual HomeScreen widget tests and real-font previews."
+  },
   "localValidation": {
     "flutterTests": 994,
     "pythonTests": 100,
@@ -96,5 +145,98 @@
     ],
     "draftPreserved": true,
     "pendingOperationSurvivesBreakpointResize": true
-  }
+  },
+  "ci": {
+    "status": "completed",
+    "conclusion": "success",
+    "headSha": "efc550bd31582dbc2883d8edc4cfed6c2fd1c41f",
+    "url": "https://github.com/yarnway/dontforget/actions/runs/40276629284",
+    "jobs": [
+      {
+        "name": "Analyze and test",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build macos candidate",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build ios candidate",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build windows candidate",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build android candidate",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build linux candidate",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Prepare draft release after all packages pass",
+        "status": "completed",
+        "conclusion": "skipped"
+      }
+    ]
+  },
+  "cleanup": {
+    "removed": [
+      {
+        "path": "build/native_acceptance/review17-r40267046543/dont_forget.app",
+        "allocatedKiB": 57636
+      },
+      {
+        "path": "build/native_acceptance/digest17-r40270293933/dont_forget.app",
+        "allocatedKiB": 57652
+      },
+      {
+        "path": ".dart_tool",
+        "allocatedKiB": 49216
+      },
+      {
+        "path": "build/test_cache",
+        "allocatedKiB": 121212
+      },
+      {
+        "path": "build/unit_test_assets",
+        "allocatedKiB": 2100
+      },
+      {
+        "path": "build/native_assets",
+        "allocatedKiB": 1932
+      },
+      {
+        "path": "build/native_acceptance/export-native-v17-materials/download-parts",
+        "allocatedKiB": 23488
+      },
+      {
+        "path": "build/native_acceptance/export-native-v17-materials/artifact-envelope.zip",
+        "allocatedKiB": 23476
+      }
+    ],
+    "freedAllocatedKiB": 336712,
+    "projectAllocatedKiB": 1017860,
+    "previousProtectedFiles": 958,
+    "retainedUnchangedFiles": 866,
+    "rollbackManifests": [
+      "build/native_acceptance/digest-v17-materials/rollback-deltas/restore-manifest.json",
+      "build/native_acceptance/export-native-v17-materials/rollback-deltas/restore-manifest.json"
+    ],
+    "newProtectedFiles": 993,
+    "vmOrImageCreated": false,
+    "newCandidateNativeResult": "PASS",
+    "archivedFiles": 92
+  },
+  "materials": "build/native_acceptance/export-native-v17-materials",
+  "nativeScreenshot": "build/native_acceptance/export-native-v17-materials/native-focus-panel-v13.png"
 }
