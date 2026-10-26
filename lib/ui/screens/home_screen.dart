@@ -16,6 +16,7 @@ import '../../services/notification_permission_service.dart';
 import '../../services/notification_retry_coordinator.dart';
 import '../../services/time_zone_change_coordinator.dart';
 import '../../services/startup_trace.dart';
+import '../../services/local_media_store.dart';
 import '../../services/recovery/runtime_gate.dart';
 import 'settings_screen.dart';
 import 'dashboard_screen.dart';
@@ -46,6 +47,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen>
     with WidgetsBindingObserver {
   final _audioPlayer = AudioPlayer();
+  final _mediaStore = LocalMediaStore();
   late final RuntimeRecoveryGate _runtime;
   late final RuntimeRecoveryToken? _birth;
   late final NotificationService _notifications;
@@ -836,12 +838,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       return;
     }
 
+    final mediaPath = await _mediaStore.resolvePath(media.contentOrPath);
+    if (!mounted || !_runtimeActive) return;
     if (media.type == 'audio') {
       try {
         await _serializePlayback(() async {
           if (!mounted || !_runtimeActive) return;
           _playbackStarted = true;
-          await _audioPlayer.play(DeviceFileSource(media.contentOrPath));
+          await _audioPlayer.play(DeviceFileSource(mediaPath));
         });
       } catch (_) {
         if (mounted && _runtimeActive) {
@@ -865,11 +869,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         );
       }
     } else if (media.type == 'image') {
-      _showImageDialog(media.contentOrPath);
+      _showImageDialog(mediaPath);
     } else if (media.type == 'file') {
-      _showFileDialog(media.contentOrPath);
+      _showFileDialog(mediaPath);
     } else if (media.type == 'video') {
-      _openVideo(media.contentOrPath);
+      _openVideo(mediaPath);
     }
   }
 

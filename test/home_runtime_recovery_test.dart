@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/reminder.dart';
+import 'package:dont_forget/models/media_record.dart';
 import 'package:dont_forget/models/agent_models.dart';
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/services/multi_agent_service.dart';
@@ -332,6 +333,130 @@ void main() {
       expect((await rows('Reminders')).single['task_title'], 'new session');
     },
   );
+
+  for (final recovering in [false, true]) {
+    testWidgets(
+      'relocated playback ${recovering ? 'stops at recovery boundary' : 'uses the current container'}',
+      (tester) async {
+        final messenger =
+            TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+        final channels = <MethodChannel>[
+          const MethodChannel('xyz.luan/audioplayers.global'),
+          const MethodChannel('xyz.luan/audioplayers.global/events'),
+          const MethodChannel('xyz.luan/audioplayers'),
+          const MethodChannel('plugins.flutter.io/path_provider'),
+        ];
+        final requested = Completer<void>();
+        final release = Completer<String>();
+        final sources = <String>[];
+        for (final channel in channels.take(2)) {
+          messenger.setMockMethodCallHandler(channel, (_) async => null);
+        }
+        messenger.setMockMethodCallHandler(channels[2], (call) async {
+          if (call.method == 'create') {
+            final events = MethodChannel(
+              'xyz.luan/audioplayers/events/${(call.arguments as Map)['playerId']}',
+            );
+            channels.add(events);
+            messenger.setMockMethodCallHandler(events, (_) async => null);
+          }
+          if (call.method == 'setSourceUrl') {
+            sources.add((call.arguments as Map)['url'] as String);
+            // Simulated native preparation; this is not audio output evidence.
+            await messenger.handlePlatformMessage(
+              'xyz.luan/audioplayers/events/${(call.arguments as Map)['playerId']}',
+              const StandardMethodCodec().encodeSuccessEnvelope({
+                'event': 'audio.onPrepared',
+                'value': true,
+              }),
+              (_) {},
+            );
+          }
+          return null;
+        });
+        messenger.setMockMethodCallHandler(channels[3], (call) async {
+          if (call.method == 'getApplicationDocumentsDirectory') {
+            if (!requested.isCompleted) requested.complete();
+            return release.future;
+          }
+          return directory.path;
+        });
+        addTearDown(() {
+          for (final channel in channels) {
+            messenger.setMockMethodCallHandler(channel, null);
+          }
+        });
+        final currentPath =
+            '${directory.path}/Documents/media/import-saved/audio.m4a';
+        await tester.runAsync(() async {
+          await File(currentPath).create(recursive: true);
+          final db = await database.database;
+          await db.insert(
+            'MediaRecords',
+            MediaRecord(
+              id: 'voice',
+              type: 'audio',
+              createdAt: DateTime.utc(2026, 10, 26),
+              contentOrPath:
+                  '/old-container/Documents/media/import-saved/audio.m4a',
+            ).toJson(),
+          );
+          await db.insert(
+            'Reminders',
+            Reminder(
+              id: 'voice-task',
+              recordId: 'voice',
+              taskTitle: 'Saved recording',
+              quadrantLevel: 2,
+            ).toJson(),
+          );
+          await controller();
+        });
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container!,
+            child: MaterialApp(
+              localizationsDelegates: const [AppLocalizationsDelegate()],
+              builder: (_, child) => InlineFeedback(child: child!),
+              home: const HomeScreen(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byIcon(Icons.mic_none));
+        for (var i = 0; i < 40 && !requested.isCompleted; i++) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 5)),
+          );
+          await tester.pump();
+        }
+        expect(requested.isCompleted, isTrue);
+        await tester.runAsync(() async {
+          if (recovering) {
+            final token = await gate.pause();
+            gate.resume(token);
+          }
+          release.complete('${directory.path}/Documents');
+        });
+        for (var i = 0; i < 40 && sources.isEmpty; i++) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 5)),
+          );
+          await tester.pump();
+        }
+        await tester.pump();
+        expect(sources, recovering ? isEmpty : [currentPath]);
+        expect(tester.takeException(), isNull);
+        final stored = await tester.runAsync(() => rows('MediaRecords'));
+        expect(
+          stored!.single['content_or_path'],
+          '/old-container/Documents/media/import-saved/audio.m4a',
+        );
+        await tester.pumpWidget(const SizedBox());
+      },
+    );
+  }
+
   testWidgets(
     'multi-agent launch consumes a late shutdown failure after recovery',
     (tester) async {

@@ -9,6 +9,7 @@ import 'package:path/path.dart' as paths;
 import 'package:sqflite/sqflite.dart' as sqflite;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../../models/stored_datetime.dart';
+import '../local_media_store.dart';
 
 enum BackupInspectionError {
   cancelled,
@@ -83,7 +84,9 @@ class BackupInspector {
     this.maxBytes = 64 * 1024 * 1024,
     this.maxRows = 100000,
     this.temporaryDirectory,
-  }) : assert(maxBytes > 0),
+    LocalMediaStore? mediaStore,
+  }) : _mediaStore = mediaStore ?? LocalMediaStore(),
+       assert(maxBytes > 0),
        assert(maxRows > 0);
 
   factory BackupInspector.platform() {
@@ -102,6 +105,7 @@ class BackupInspector {
 
   /// A parent directory for private copies; useful for isolated service tests.
   final Directory? temporaryDirectory;
+  final LocalMediaStore _mediaStore;
 
   Future<BackupPreview> inspect(
     File source, {
@@ -210,6 +214,15 @@ class BackupInspector {
             exists =
                 await FileSystemEntity.type(path, followLinks: false) ==
                 FileSystemEntityType.file;
+            if (!exists) {
+              final resolved = await _mediaStore.resolvePath(path);
+              token.throwIfCancelled();
+              if (resolved != path) {
+                exists =
+                    await FileSystemEntity.type(resolved, followLinks: false) ==
+                    FileSystemEntityType.file;
+              }
+            }
           } on FileSystemException {
             exists = false;
           }
@@ -396,7 +409,8 @@ Map<String, String> _columnsFor(String table, int version) => {
   ..._columns[table]!,
   if (table == 'reminders' && version >= 9) ..._reminderNoticeColumns,
   if (table == 'settings' && version >= 10) ...{
-    'ai_profiles_json': 's', 'ai_fallback_enabled': 'b',
+    'ai_profiles_json': 's',
+    'ai_fallback_enabled': 'b',
   },
 };
 
@@ -750,7 +764,9 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
   late AppSettings parsedSettings;
   try {
     // Validate the nested document too, including duplicate JSON keys.
-    if (data['version'] >= 10) _decodeJson(settings['ai_profiles_json'] as String);
+    if (data['version'] >= 10) {
+      _decodeJson(settings['ai_profiles_json'] as String);
+    }
     parsedSettings = AppSettings.fromJson(Map<String, dynamic>.from(settings));
   } catch (_) {
     _fail(BackupInspectionError.invalidData);
@@ -833,8 +849,10 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
     data['version'] as int,
     timestamp,
     counts,
-    parsedSettings.apiKey.isNotEmpty || parsedSettings.effectiveProfiles.any(
-      (p) => p.settings.apiKey.isNotEmpty),
+    parsedSettings.apiKey.isNotEmpty ||
+        parsedSettings.effectiveProfiles.any(
+          (p) => p.settings.apiKey.isNotEmpty,
+        ),
     mediaPaths,
     unresolved,
   );

@@ -6,6 +6,7 @@ import 'package:crypto/crypto.dart';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/models/settings.dart';
+import 'package:dont_forget/services/local_media_store.dart';
 import 'package:dont_forget/services/recovery/backup_inspector.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as paths;
@@ -161,7 +162,8 @@ void main() {
       'timestamp': '2026-10-21T10:00:00.000+08:00',
       'settings': [
         AppSettings.defaults().copyWith(apiKey: 'private-fixture-key').toJson()
-          ..remove('ai_profiles_json')..remove('ai_fallback_enabled'),
+          ..remove('ai_profiles_json')
+          ..remove('ai_fallback_enabled'),
       ],
       'media_records': [
         {
@@ -205,6 +207,69 @@ void main() {
     expect(await staging.list().toList(), isEmpty);
     await directory.delete(recursive: true);
   });
+
+  test(
+    'relocated owned media is available without rewriting a backup',
+    () async {
+      final documents = await Directory(
+        paths.join(directory.path, 'new', 'Documents'),
+      ).create(recursive: true);
+      final imported = await Directory(
+        paths.join(documents.path, 'media', 'import-saved'),
+      ).create(recursive: true);
+      final attachment = await File(
+        paths.join(imported.path, 'recording.m4a'),
+      ).writeAsString('preserved attachment bytes');
+      final old = paths.join(
+        directory.path,
+        'old',
+        'Documents',
+        'media',
+        'import-saved',
+        'recording.m4a',
+      );
+      fixture['media_records'][1]['content_or_path'] = old;
+      final source = await jsonFile();
+      final before = await digest(source);
+      final reader = BackupInspector(
+        databaseFactoryFfi,
+        temporaryDirectory: staging,
+        mediaStore: LocalMediaStore(documentsDirectory: () async => documents),
+      );
+      final result = await reader.inspect(source);
+      expect(result.missingMedia, 0);
+      expect(await digest(source), before);
+      expect(await attachment.readAsString(), 'preserved attachment bytes');
+      expect(await File(old).exists(), isFalse);
+    },
+  );
+
+  test(
+    'relocated media through a symlink remains unavailable',
+    () async {
+      final documents = await Directory(
+        paths.join(directory.path, 'new', 'Documents'),
+      ).create(recursive: true);
+      final media = await Directory(
+        paths.join(documents.path, 'media'),
+      ).create();
+      await Link(paths.join(media.path, 'import-saved')).create(directory.path);
+      fixture['media_records'][1]['content_or_path'] =
+          '/old-container/Documents/media/import-saved/present.png';
+      final source = await jsonFile();
+      final before = await digest(source);
+      final result = await BackupInspector(
+        databaseFactoryFfi,
+        temporaryDirectory: staging,
+        mediaStore: LocalMediaStore(documentsDirectory: () async => documents),
+      ).inspect(source);
+      expect(result.missingMedia, 1);
+      expect(await digest(source), before);
+    },
+    skip: Platform.isWindows
+        ? 'Creating symlinks requires Windows privileges'
+        : false,
+  );
 
   for (final version in [7, 8]) {
     for (final format in ['json', 'sqlite']) {
