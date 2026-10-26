@@ -1,0 +1,187 @@
+{
+  "stage": 9,
+  "version": "1.7.0+16",
+  "schema": 10,
+  "productRevision": "b28c2db205fc4d226276736bad40e2770e660c7e",
+  "tag": "v1.7.0-rc.16",
+  "validation": {
+    "analyze": "PASS",
+    "flutter": 1061,
+    "python": 101,
+    "newCases": 17,
+    "keyboardSizes": [
+      [
+        375,
+        667
+      ],
+      [
+        667,
+        375
+      ]
+    ],
+    "fontPreviews": 4,
+    "mobileEvidence": "component simulation only; no connected mobile device or simulator"
+  },
+  "ci": {
+    "run": 40287551996,
+    "duplicateCancelled": 40287547757,
+    "conclusion": "success",
+    "url": "https://github.com/yarnway/dontforget/actions/runs/40287551996"
+  },
+  "native": {
+    "result": "PASS",
+    "version": "1.7.0+16",
+    "sourceRevision": "b28c2db205fc4d226276736bad40e2770e660c7e",
+    "bundleId": "com.example.dontForget.acceptance.dashboard17-r40254505297",
+    "upgradeFrom": "1.7.0+15",
+    "nativeSelectAllReplacement": "PASS: Cmd+A then typing replaced the entire title, independently saved and reopened",
+    "nativeCutPaste": "PASS: Cmd+X cleared selected title; Cmd+V restored exactly",
+    "nativeSave": "PASS: independent second title edit saved using Cmd+S only; board, closed-app SQLite and reopen match",
+    "settingsDraft": "PASS: English draft retained on Keep editing; discarded explicitly; no implicit language write by nested model save",
+    "modelDraft": "PASS: name changed, Escape confirmation, Save and leave; SQLite and reopen match",
+    "modelSaveKeyboard": "PASS: Cmd+S restored Primary label and returned",
+    "settingsSave": "PASS: Save and leave persisted English, closed-app SQLite and reopen verified; Cmd+S restored Chinese",
+    "nativeInputSheet": "PASS: Cmd+N AppKit sheet, Cmd+A replacement, cancel without task submission",
+    "savedTitle": "Native CmdS persisted v16",
+    "deliveryClaim": false,
+    "osPending": 0,
+    "osRetained": 0,
+    "future": 0,
+    "needsAttention": 0,
+    "pendingCancellation": 0,
+    "baseline": {
+      "integrity": "ok",
+      "exclusiveLease": true,
+      "appExited": true,
+      "tasks": [],
+      "model": "deepseek-flash",
+      "language": "zh",
+      "tableEquality": {
+        "Settings": true,
+        "Reminders": true,
+        "MediaRecords": true
+      }
+    },
+    "journal": {
+      "backend": "incremental",
+      "entries": 13,
+      "allCancelSubmitted": true
+    },
+    "nativeNarrowResize": "UNVERIFIED: coordinate actions still return noWindowsAvailable; keyboard layouts covered by component tests",
+    "toolLimitations": [
+      "intermittent ScreenCaptureKit -3812 and user-changed state errors; refreshed state and accessible controls were used; no user handoff"
+    ],
+    "mobile": "NO_DEVICE",
+    "stableReleaseClaim": false
+  },
+  "release": {
+    "releaseId": 423973538,
+    "url": "https://github.com/yarnway/dontforget/releases/tag/v1.7.0-rc.16",
+    "tag": "v1.7.0-rc.16",
+    "draft": false,
+    "prerelease": true,
+    "revision": "b28c2db205fc4d226276736bad40e2770e660c7e",
+    "packages": [
+      {
+        "file": "DontForget_Android_test-signed_v1.7.0.apk",
+        "bytes": 68494839,
+        "sha256": "23108e9fea76009d52cae32ff4ef799b9e1218ac83ac301c6fce57c6d8e2cae3"
+      },
+      {
+        "file": "DontForget_Android_test-signed_v1.7.0.aab",
+        "bytes": 66267869,
+        "sha256": "b47dceb57c7353df1f313118ed168bd10f4d91a98535dc125c62d97d85e556e3"
+      },
+      {
+        "file": "DontForget_iOS_unsigned_v1.7.0.ipa",
+        "bytes": 9967591,
+        "sha256": "3c9a35924fd68ae9d1f798a32c32dacf9d0bd0cf83c23c12b1d413c03fa9c6cf"
+      },
+      {
+        "file": "DontForget_Linux_x64_v1.7.0.tar.gz",
+        "bytes": 13176752,
+        "sha256": "fc65d079006df8a0e4b7257f53f528a6b88a4e4275ccb575750e65ada757f51f"
+      },
+      {
+        "file": "DontForget_macOS_unnotarized_v1.7.0.zip",
+        "bytes": 24132313,
+        "sha256": "ad793d4897597041101cc07e77d3e028b28be437ffc975a0e61ef81077b8047f"
+      },
+      {
+        "file": "DontForget_Setup_v1.7.0.exe",
+        "bytes": 13747472,
+        "sha256": "0a31a93e377c85fa8b6e9255839a4fa6bfe524635b8c75c267b916f043589495"
+      },
+      {
+        "file": "DontForget_Windows_Portable_v1.7.0.zip",
+        "bytes": 16533973,
+        "sha256": "928c9180c99f581776563bc00eab202f0a16c0105f69f3262862d98cc997747b"
+      }
+    ],
+    "assetCount": 21,
+    "method": "five GitHub manifests and checksum files verified by SHA-256; seven GitHub asset sizes and digests match manifest; CI verified package inventory",
+    "stable": false,
+    "published": true
+  },
+  "preservation": {
+    "previousProtectedFiles": 1157,
+    "unrelatedChangesPreserved": true
+  },
+  "remaining": {
+    "mobile": "No connected mobile device or simulator",
+    "dst": "Guest initialization requires native credential handoff; previous guest and image deleted",
+    "secondProvider": "User deferred; DeepSeek only",
+    "signing": "No repository secrets or local valid signing identities",
+    "relativeHardwareWake": "UNCONFIRMED; software property absent; no owned scheduled wake entries"
+  },
+  "cleanup": {
+    "removed": [
+      {
+        "path": "build/native_acceptance/workspace17-r40282727609/dont_forget.app",
+        "allocatedKiB": 57700
+      },
+      {
+        "path": ".dart_tool",
+        "allocatedKiB": 24756
+      },
+      {
+        "path": "build/test_cache",
+        "allocatedKiB": 120292
+      },
+      {
+        "path": "build/unit_test_assets",
+        "allocatedKiB": 2100
+      },
+      {
+        "path": "build/native_assets",
+        "allocatedKiB": 1932
+      },
+      {
+        "path": "build/native_acceptance/editing-v17-materials/download-parts",
+        "allocatedKiB": 23520
+      },
+      {
+        "path": "build/native_acceptance/editing-v17-materials/artifact-envelope.zip",
+        "allocatedKiB": 23496
+      }
+    ],
+    "freedAllocatedKiB": 253796,
+    "projectAllocatedKiB": 1101868,
+    "previousProtectedFiles": 1157,
+    "retainedUnchangedFiles": 1111,
+    "rollbackManifests": [
+      "build/native_acceptance/editing-v17-materials/rollback-deltas/restore-manifest.json"
+    ],
+    "newProtectedFiles": 1245,
+    "vmOrImageCreated": false,
+    "newCandidateNativeResult": "PASS",
+    "archivedFileCount": 46
+  },
+  "powerReadback": {
+    "collection": "COLLECTED",
+    "sleepDisabled": false,
+    "ownedScheduledWakeEntries": 0,
+    "relativeHardwareWake": "UNCONFIRMED",
+    "systemEventsUnchanged": true
+  }
+}
