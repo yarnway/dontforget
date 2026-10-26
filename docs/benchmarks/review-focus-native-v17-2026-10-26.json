@@ -1,0 +1,148 @@
+{
+  "date": "2026-10-26",
+  "productRevision": "946ad8cf1ee2a31bccdd575bfc393156cdf8d8ba",
+  "version": "1.7.0+11",
+  "schema": 10,
+  "sourceAndTests": {
+    "analyze": "PASS",
+    "flutterTests": 943,
+    "pythonTests": 100,
+    "layoutLanguages": [
+      "zh",
+      "en",
+      "ja"
+    ],
+    "layoutWidths": [
+      375,
+      768,
+      1440
+    ],
+    "textScale": 2,
+    "shortWindowHeight": 360,
+    "realFontRenders": 18
+  },
+  "ci": {
+    "url": "https://github.com/yarnway/dontforget/actions/runs/40267046543",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "Analyze and test",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build android candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build ios candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build windows candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build macos candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build linux candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Prepare draft release after all packages pass",
+        "conclusion": "skipped"
+      }
+    ]
+  },
+  "native": {
+    "result": "BLOCKED_MAC_LOCKED",
+    "candidate": "1.7.0+11",
+    "sourceRevision": "946ad8cf1ee2a31bccdd575bfc393156cdf8d8ba",
+    "ciRun": 40267046543,
+    "packageSha256AndCRC": "PASS",
+    "manifestAndSameIdentityUpgradePreparation": "PASS",
+    "strictCodesign": "PASS",
+    "nativeLaunchAttempts": 2,
+    "newCandidateProcessObserved": false,
+    "blocker": "The Mac is locked and automatic unlock could not unlock it.",
+    "nativeCmdK": "NOT_RUN",
+    "nativeReviewAndFocus": "NOT_RUN",
+    "userHandoffRequested": false,
+    "oldCandidateBaseline": "3 synthetic tasks and 2 OS pending observed before normal quit; exact DB snapshot retained",
+    "cleanup": "offline empty baseline restored; exact-ID OS cancel requested by headless helper but product-scope queue confirmation pending; durable cancels retained",
+    "preserved": [
+      "previous working +10 candidate",
+      "new +11 candidate",
+      "original ZIPs",
+      "verified signature delta",
+      "three-task no-credential fixture",
+      "empty baseline"
+    ]
+  },
+  "cleanup": {
+    "removed": [
+      {
+        "path": "build/native_acceptance/review-v17-materials/notification-cleanup.app",
+        "allocatedKiB": 104
+      },
+      {
+        "path": ".dart_tool",
+        "allocatedKiB": 49216
+      },
+      {
+        "path": "build/test_cache",
+        "allocatedKiB": 119544
+      },
+      {
+        "path": "build/unit_test_assets",
+        "allocatedKiB": 2100
+      },
+      {
+        "path": "build/native_assets",
+        "allocatedKiB": 1932
+      },
+      {
+        "path": "build/native_acceptance/review-v17-materials/download-parts",
+        "allocatedKiB": 23456
+      },
+      {
+        "path": "build/native_acceptance/review-v17-materials/artifact-envelope.zip",
+        "allocatedKiB": 23456
+      }
+    ],
+    "freedAllocatedKiB": 219808,
+    "projectAllocatedKiB": 1021776,
+    "previousProtectedFiles": 775,
+    "retainedUnchangedFiles": 775,
+    "rollback": "verified original ZIP plus signature delta, bytes/modes/symlinks and strict codesign",
+    "rollbackDeltaBytes": 643791,
+    "newProtectedFiles": 894,
+    "vmOrImageCreated": false,
+    "previousWorkingCandidateRetained": true,
+    "nativeAcceptanceBlocked": true
+  },
+  "businessData": {
+    "baselineTablesMatch": {
+      "Reminders": true,
+      "Settings": true,
+      "MediaRecords": true
+    },
+    "integrity": "ok",
+    "tasks": 0,
+    "mediaRecords": 0,
+    "method": "closed-app exclusive lease; exact three-task fixture verified before offline baseline restoration",
+    "nativeDeletionAccepted": false,
+    "nativeCancellationConfirmed": false,
+    "cancelPending": 2,
+    "reason": "headless cleanup reads zero but product scope has not been re-read after lock-screen blockage"
+  },
+  "notificationJournal": {
+    "entries": 5,
+    "cancelSubmitted": 3,
+    "cancelPending": 2,
+    "stableIDsPreserved": true,
+    "nativeProductQueueRecheck": "PENDING"
+  },
+  "scope": "No new candidate interactive acceptance; headless OS cleanup observation is not proof of the prior product notification scope; previous working and new candidates retained."
+}

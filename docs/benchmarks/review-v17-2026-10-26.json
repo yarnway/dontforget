@@ -1,0 +1,109 @@
+{
+  "scope": "Single-process synthetic Dart CPU only; 20 warmups, 200 samples of 20 calls, microseconds per call. No native frame/startup claim.",
+  "dataset": "review-v1: fixed createdAt 2026-10-26 UTC; levels i%6; dates Oct25..27 local; now Oct26 noon.",
+  "rounds": [
+    [
+      {
+        "tasks": 100,
+        "fixture_sha256": "84f430bc9a0b56500c88a381acb3e9a26c77b3a972dc2972b4175c72bd2b607b",
+        "previous_two_scans": {
+          "p50_us": 1.7,
+          "p95_us": 6.55
+        },
+        "new_rebuild": {
+          "p50_us": 1.3,
+          "p95_us": 2.85
+        },
+        "cached_read": {
+          "p50_us": 0.3,
+          "p95_us": 0.5
+        }
+      },
+      {
+        "tasks": 1000,
+        "fixture_sha256": "bedb2cca62cf10986861d8a3adfb1df7edd71e31b1eddc8c04d703f96a3d844a",
+        "previous_two_scans": {
+          "p50_us": 14.3,
+          "p95_us": 15.25
+        },
+        "new_rebuild": {
+          "p50_us": 6.35,
+          "p95_us": 6.6
+        },
+        "cached_read": {
+          "p50_us": 0.25,
+          "p95_us": 0.3
+        }
+      },
+      {
+        "tasks": 10000,
+        "fixture_sha256": "dcb68129a2bd63059bee0b583c8ad3970cddc3aca1fff942f0c7e9cb4b3d5426",
+        "previous_two_scans": {
+          "p50_us": 163.05,
+          "p95_us": 168.1
+        },
+        "new_rebuild": {
+          "p50_us": 65.25,
+          "p95_us": 67.3
+        },
+        "cached_read": {
+          "p50_us": 0.2,
+          "p95_us": 0.3
+        }
+      }
+    ],
+    [
+      {
+        "tasks": 100,
+        "fixture_sha256": "84f430bc9a0b56500c88a381acb3e9a26c77b3a972dc2972b4175c72bd2b607b",
+        "previous_two_scans": {
+          "p50_us": 1.7,
+          "p95_us": 6.75
+        },
+        "new_rebuild": {
+          "p50_us": 1.3,
+          "p95_us": 3.1
+        },
+        "cached_read": {
+          "p50_us": 0.3,
+          "p95_us": 0.5
+        }
+      },
+      {
+        "tasks": 1000,
+        "fixture_sha256": "bedb2cca62cf10986861d8a3adfb1df7edd71e31b1eddc8c04d703f96a3d844a",
+        "previous_two_scans": {
+          "p50_us": 14.6,
+          "p95_us": 15.75
+        },
+        "new_rebuild": {
+          "p50_us": 5.9,
+          "p95_us": 6.5
+        },
+        "cached_read": {
+          "p50_us": 0.25,
+          "p95_us": 0.3
+        }
+      },
+      {
+        "tasks": 10000,
+        "fixture_sha256": "dcb68129a2bd63059bee0b583c8ad3970cddc3aca1fff942f0c7e9cb4b3d5426",
+        "previous_two_scans": {
+          "p50_us": 164.4,
+          "p95_us": 169.95
+        },
+        "new_rebuild": {
+          "p50_us": 67.05,
+          "p95_us": 69.8
+        },
+        "cached_read": {
+          "p50_us": 0.2,
+          "p95_us": 0.3
+        }
+      }
+    ]
+  ],
+  "fixtureHashesMatch": true,
+  "scriptSHA256": "de5f5c25ce6a17ad19e8f712fa1f0255e4775198d7b166f273ed255832331f8f",
+  "nativeStartupMeasured": false
+}
