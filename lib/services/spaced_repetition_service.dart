@@ -1,13 +1,13 @@
 import '../models/reminder.dart';
 
-/// 艾宾浩斯间隔重复 (Spaced Repetition / Ebbinghaus) 调度服务
+/// 间隔复习调度。默认阶梯是可解释的产品策略，不代表个人最优记忆曲线。
 ///
-/// 阶梯间隔设计（根据经典记忆遗忘曲线优化）：
+/// 阶梯间隔设计：
 /// - Level 1: 1 天后复习
 /// - Level 2: 2 天后复习
 /// - Level 3: 4 天后复习
 /// - Level 4: 7 天后复习
-/// - Level 5: 15 天后复习 (熟练掌握 Mastered)
+/// - Level 5: 15 天后继续巩固
 class SpacedRepetitionService {
   const SpacedRepetitionService();
 
@@ -21,12 +21,13 @@ class SpacedRepetitionService {
 
   /// 检查任务是否为已启用的复习卡片
   bool isReviewCard(Reminder task) {
-    return task.spacedRepetitionLevel > 0;
+    return task.spacedRepetitionLevel > 0 &&
+        !(task.reviewNotificationsEnabled && task.isCompleted);
   }
 
   /// 检查复习卡片是否今日到期需要复习
   bool isDue(Reminder task, [DateTime? referenceTime]) {
-    if (task.spacedRepetitionLevel <= 0) return false;
+    if (!isReviewCard(task)) return false;
     if (task.nextReviewAt == null) return true; // 开启了但无时间，立即可复习
     final now = referenceTime ?? DateTime.now();
     return task.nextReviewAt!.isBefore(now) ||
@@ -57,15 +58,44 @@ class SpacedRepetitionService {
 
   /// 取消间隔重复卡片
   Reminder disableCard(Reminder task) {
-    return task.copyWith(spacedRepetitionLevel: 0, nextReviewAt: null);
+    return task.copyWith(
+      spacedRepetitionLevel: 0,
+      nextReviewAt: null,
+      reviewNotificationsEnabled: false,
+      triggerTime: task.reviewNotificationsEnabled ? null : task.triggerTime,
+    );
   }
 
   /// 执行一次复习判定
   /// [remembered] 为 true 表示熟练记住，阶梯递增；
   /// 为 false 表示遗忘重置，重置回 Level 1并在 1 天后复习。
-  Reminder reviewCard(Reminder task, bool remembered) {
+  Reminder reviewCard(
+    Reminder task,
+    bool remembered, {
+    DateTime? referenceTime,
+  }) {
     final currentLevel = task.spacedRepetitionLevel;
-    final now = DateTime.now();
+    final now = referenceTime ?? DateTime.now();
+
+    if (task.reviewNotificationsEnabled) {
+      final interval = remembered
+          ? levelIntervalDays[currentLevel.clamp(1, 5)]!
+          : 1;
+      final anchor = (task.nextReviewAt ?? task.triggerTime ?? now).toLocal();
+      final local = now.toLocal();
+      final next = DateTime(
+        local.year,
+        local.month,
+        local.day + interval,
+        anchor.hour,
+        anchor.minute,
+      );
+      return task.copyWith(
+        spacedRepetitionLevel: remembered ? (currentLevel + 1).clamp(1, 5) : 1,
+        nextReviewAt: next,
+        triggerTime: next,
+      );
+    }
 
     if (!remembered) {
       // 遗忘：降级为 Level 1，1 天后再次复习
@@ -100,7 +130,7 @@ class SpacedRepetitionService {
       case 4:
         return '强化阶段 (7天间隔)';
       case 5:
-        return '永久记忆 (15天间隔)';
+        return '长期巩固 (15天间隔)';
       default:
         return '未开启复习';
     }

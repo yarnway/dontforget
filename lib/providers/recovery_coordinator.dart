@@ -107,6 +107,7 @@ class RecoveryCoordinator extends ChangeNotifier {
       // Invalidate transport now so old AI chains cannot keep sending.
       _ref.invalidate(multiAgentServiceProvider);
       _ref.invalidate(llmServiceProvider);
+      _ref.invalidate(studyPlanServiceProvider);
       final stopped = Future<void>.sync(lan.pauseForRecovery);
       // Observe every failure even if one fails first. No replacement can start
       // until all registered producers and LAN handlers have stopped.

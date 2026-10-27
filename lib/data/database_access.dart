@@ -147,7 +147,7 @@ class DatabaseMaintenanceLease {
     }
     final version = await database.rawQuery('PRAGMA user_version');
     final acceptedVersions = allowLegacy
-        ? {7, 8, 9, 10, 11, DatabaseHelper.schemaVersion}
+        ? {7, 8, 9, 10, 11, 12, DatabaseHelper.schemaVersion}
         : {DatabaseHelper.schemaVersion};
     if (version.length != 1 ||
         !acceptedVersions.contains(version.single.values.single)) {

@@ -30,12 +30,22 @@ import '../widgets/context_digest_sheet.dart';
 import '../widgets/data_export_sheet.dart';
 import '../widgets/workspace_tool_panel.dart';
 import '../widgets/agent_goal_panel.dart';
+import '../widgets/study_plan_panel.dart';
 import '../../services/context_trigger_service.dart';
 import '../../services/spaced_repetition_service.dart';
 import 'knowledge_graph_screen.dart';
 import '../../l10n/app_localizations.dart';
 
-enum _WorkspaceTool { focus, export, review, digest, graph, dashboard, agent }
+enum _WorkspaceTool {
+  focus,
+  export,
+  review,
+  digest,
+  graph,
+  dashboard,
+  agent,
+  study,
+}
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -72,6 +82,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (identical(command.search, _nativeSearchHandler)) command.search = null;
     _heartbeatTimer?.cancel();
     _searchDebounce?.cancel();
+    _studyDraft.request?.cancel('Workspace paused for recovery');
     await Future.wait([
       if (_timeZoneChanges != null) _timeZoneChanges!.stop(),
       if (_notificationRetries != null) _notificationRetries!.stop(),
@@ -126,6 +137,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   bool _agentBusy = false;
   bool _discardDialogOpen = false;
   final _agentGoal = TextEditingController();
+  final _studyDraft = StudyPlanDraft();
   bool get _toolBlocked => _exportBusy || _toolBusy;
 
   bool _isSearchOpen = false;
@@ -265,6 +277,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _runtime.unregister(this);
     WidgetsBinding.instance.removeObserver(this);
     _agentGoal.dispose();
+    _studyDraft.dispose();
     _searchController.dispose();
     _searchFocus.dispose();
     _searchDebounce?.cancel();
@@ -969,6 +982,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     CommandPaletteDialog.show(context, [
       CommandPaletteAction(
+        id: 'study',
+        title: l10n.get('studyTitle'),
+        subtitle: l10n.get('studyIntro'),
+        icon: Icons.auto_stories_outlined,
+        shortcut: '/study',
+        onExecute: () => _selectTool(_WorkspaceTool.study),
+      ),
+      CommandPaletteAction(
         id: 'graph',
         title: l10n.get('knowledgeGraphTitle'),
         subtitle: l10n.get('knowledgeGraphSubtitle'),
@@ -1531,6 +1552,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           key: const ValueKey('review-tool'),
                           embedded: true,
                           onClose: _closeWorkspaceTool,
+                          onCreateStudyPlan: () =>
+                              _selectTool(_WorkspaceTool.study),
                           onBusyChanged: (value) =>
                               setState(() => _toolBusy = value),
                         ),
@@ -1559,6 +1582,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           onClose: _closeWorkspaceTool,
                           onSubmit: _submitAgentGoal,
                           onDiscard: _discardAgentDraft,
+                        ),
+                        _WorkspaceTool.study => StudyPlanPanel(
+                          key: const ValueKey('study-tool'),
+                          draft: _studyDraft,
+                          onClose: _closeWorkspaceTool,
+                          onReview: _openSpacedRepetitionSheet,
+                          onBusyChanged: (value) =>
+                              setState(() => _toolBusy = value),
                         ),
                         null => null,
                       },

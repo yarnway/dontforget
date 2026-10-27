@@ -193,6 +193,7 @@ void main() {
           createdAt: DateTime.utc(2026),
         ).toJson()..removeWhere(
           (key, _) => const {
+            'review_notifications_enabled',
             'notice_revision',
             'notice_acknowledged_at',
             'upcoming_dismissed_at',

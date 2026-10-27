@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-27",
+  "version": "1.7.0+27",
+  "schema": 13,
+  "local": {
+    "flutterTests": 1219,
+    "pythonTests": 124,
+    "analyze": "PASS",
+    "panelFinal": "PASS",
+    "renderedViews": 4
+  },
+  "realModel": {
+    "status": "PASS",
+    "requests": 1,
+    "httpStatus": 200,
+    "responseModel": "deepseek-flash",
+    "totalTokens": 732,
+    "elapsedMs": 3533,
+    "days": 1,
+    "words": 5,
+    "suggestedMinute": 1230,
+    "sourceDatabaseUnchanged": true,
+    "tasksCreated": 0,
+    "osNotificationsScheduled": 0,
+    "acceptance": "real model service, synthetic preview; not native UI"
+  },
+  "phone": {
+    "installedBuildBeforeStage": 25,
+    "connection": "unavailable",
+    "mirroring": "timed out after reconnect and relaunch",
+    "acceptance": "NOT_COMPLETED"
+  },
+  "currentPublicCandidate": "v1.7.0-rc.25",
+  "stableRelease": "NOT_RELEASED"
+}

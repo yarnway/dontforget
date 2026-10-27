@@ -48,6 +48,7 @@ class Reminder {
   final DateTime? createdAt; // 创建时间戳，用于滞留感知与衰减计算
   final int spacedRepetitionLevel; // 0: 普通任务, 1..5: 艾宾浩斯复习阶梯
   final DateTime? nextReviewAt; // 下一次间隔复习时间
+  final bool reviewNotificationsEnabled;
   final List<String> linkedTaskIds; // 双向关联的任务 ID 列表
   final String? contextTrigger; // 情境感知触发规则 JSON
   final int noticeRevision;
@@ -76,6 +77,7 @@ class Reminder {
     DateTime? createdAt,
     this.spacedRepetitionLevel = 0,
     this.nextReviewAt,
+    this.reviewNotificationsEnabled = false,
     this.linkedTaskIds = const [],
     this.contextTrigger,
     this.noticeRevision = 0,
@@ -96,6 +98,16 @@ class Reminder {
     triggerTime?.toUtc().microsecondsSinceEpoch,
     noticeRevision,
   ]);
+
+  /// Keep vocabulary batches readable in an OS banner; full notes stay in-app.
+  String? get notificationSummary {
+    final summary = taskSummary;
+    if (!reviewNotificationsEnabled || summary == null) return summary;
+    final points = summary.runes.take(161).toList();
+    return points.length <= 160
+        ? summary
+        : '${String.fromCharCodes(points.take(160))}…';
+  }
 
   int get bitmask {
     int mask = 0;
@@ -183,6 +195,7 @@ class Reminder {
       createdAt: _storedDate(json['created_at']),
       spacedRepetitionLevel: (json['review_level'] as int?) ?? 0,
       nextReviewAt: _storedDate(json['next_review_at']),
+      reviewNotificationsEnabled: json['review_notifications_enabled'] == 1,
       linkedTaskIds: linkedIds,
       contextTrigger: json['context_trigger'] as String?,
       noticeRevision: revision,
@@ -213,6 +226,7 @@ class Reminder {
     'created_at': createdAt?.toIso8601String(),
     'review_level': spacedRepetitionLevel,
     'next_review_at': nextReviewAt?.toIso8601String(),
+    'review_notifications_enabled': reviewNotificationsEnabled ? 1 : 0,
     'linked_task_ids': jsonEncode(linkedTaskIds),
     'context_trigger': contextTrigger,
     'notice_revision': noticeRevision,
@@ -321,6 +335,7 @@ class Reminder {
     DateTime? createdAt,
     int? spacedRepetitionLevel,
     Object? nextReviewAt = _unchanged,
+    bool? reviewNotificationsEnabled,
     List<String>? linkedTaskIds,
     Object? contextTrigger = _unchanged,
     int? noticeRevision,
@@ -370,6 +385,8 @@ class Reminder {
       nextReviewAt: identical(nextReviewAt, _unchanged)
           ? this.nextReviewAt
           : nextReviewAt as DateTime?,
+      reviewNotificationsEnabled:
+          reviewNotificationsEnabled ?? this.reviewNotificationsEnabled,
       linkedTaskIds: linkedTaskIds ?? this.linkedTaskIds,
       contextTrigger: identical(contextTrigger, _unchanged)
           ? this.contextTrigger

@@ -627,7 +627,8 @@ class NotificationService {
               return mac.schedule(
                 nativeId: nativeId,
                 title: reminder.taskTitle,
-                body: reminder.taskSummary ?? 'You have a scheduled task',
+                body:
+                    reminder.notificationSummary ?? 'You have a scheduled task',
                 trigger: reminder.triggerTime!,
                 playSound: playSound,
                 payload: payload,
@@ -636,7 +637,7 @@ class NotificationService {
             return flutterLocalNotificationsPlugin.zonedSchedule(
               nativeId,
               reminder.taskTitle,
-              reminder.taskSummary ?? 'You have a scheduled task',
+              reminder.notificationSummary ?? 'You have a scheduled task',
               tz.TZDateTime.from(reminder.triggerTime!, tz.local),
               platformChannelSpecifics,
               androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -759,7 +760,7 @@ class NotificationService {
     if (Platform.isWindows) {
       final summary =
           reminder.taskSummary != null && reminder.taskSummary!.isNotEmpty
-          ? reminder.taskSummary!
+          ? reminder.notificationSummary!
           : '您设置的待办事项时间已到，请及时处理！';
 
       await showWindowsToast(

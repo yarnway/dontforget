@@ -42,7 +42,10 @@ void main() {
             if (sql.trim().isNotEmpty) await db.execute(sql);
           }
           await db.insert('Settings', legacySettings);
-          await db.insert('Reminders', task);
+          await db.insert(
+            'Reminders',
+            {...task}..remove('review_notifications_enabled'),
+          );
           if (broken) {
             await db.execute('ALTER TABLE Settings ADD COLUMN appearance TEXT');
           }
@@ -88,7 +91,9 @@ void main() {
       expect(preview.version, 10);
       final data = jsonDecode(await snapshot.readAsString());
       expect(data['settings'], [legacySettings]);
-      expect(data['reminders'], [task]);
+      expect(data['reminders'], [
+        {...task}..remove('review_notifications_enabled'),
+      ]);
       // Rebuild an independent v10 database with its frozen schema, not a downgrade.
       final rollback = await databaseFactoryFfi.openDatabase(
         '${root.path}/rollback-v10.db',
@@ -137,7 +142,10 @@ void main() {
         ...legacySettings,
         'appearance': null,
       });
-      expect((await db.query('Reminders')).single, task);
+      expect(
+        (await db.query('Reminders')).single,
+        {...task}..remove('review_notifications_enabled'),
+      );
       await db.close();
     },
   );
@@ -155,7 +163,9 @@ void main() {
                   'timestamp': '2026-10-27T00:00:00Z',
                   'settings': [legacySettings],
                   'media_records': [],
-                  'reminders': [task],
+                  'reminders': [
+                    {...task}..remove('review_notifications_enabled'),
+                  ],
                 }),
               );
         final before = await file.readAsBytes();

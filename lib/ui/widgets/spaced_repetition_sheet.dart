@@ -16,10 +16,12 @@ class SpacedRepetitionSheet extends ConsumerStatefulWidget {
     this.onClose,
     this.embedded = false,
     this.onBusyChanged,
+    this.onCreateStudyPlan,
   });
   final VoidCallback? onClose;
   final bool embedded;
   final ValueChanged<bool>? onBusyChanged;
+  final VoidCallback? onCreateStudyPlan;
   @override
   ConsumerState<SpacedRepetitionSheet> createState() =>
       _SpacedRepetitionSheetState();
@@ -121,6 +123,14 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet>
                             style: Theme.of(context).textTheme.titleMedium,
                             textAlign: TextAlign.center,
                           ),
+                          if (widget.onCreateStudyPlan != null) ...[
+                            const SizedBox(height: 16),
+                            OutlinedButton.icon(
+                              onPressed: widget.onCreateStudyPlan,
+                              icon: const Icon(Icons.auto_stories_outlined),
+                              label: Text(loc.get('studyTitle')),
+                            ),
+                          ],
                           const SizedBox(height: 12),
                           Text(
                             loc.get(
@@ -169,6 +179,15 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet>
                                       context,
                                     ).textTheme.titleLarge,
                                   ),
+                                  if (task.reviewNotificationsEnabled) ...[
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      loc.get('studyReviewPolicy'),
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
+                                    ),
+                                  ],
                                   const SizedBox(height: 20),
                                   TextButton.icon(
                                     key: const ValueKey('review-flip'),

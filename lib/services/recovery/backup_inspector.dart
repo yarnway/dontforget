@@ -414,6 +414,8 @@ Map<String, String> _columnsFor(String table, int version) => {
   },
   if (table == 'settings' && version >= 11) 'appearance': 's',
   if (table == 'settings' && version >= 12) 'input_send_mode': 's',
+  if (table == 'reminders' && version >= 13)
+    'review_notifications_enabled': 'b',
 };
 
 Future<void> _checkSchema(
@@ -519,6 +521,7 @@ Future<void> _checkSchema(
         'is_dynamically_promoted',
         'notice_revision',
         'ai_fallback_enabled',
+        'review_notifications_enabled',
       }.contains(name);
       final validDefault = defaultsToZero
           ? defaultValue == '0'
@@ -559,7 +562,7 @@ Future<void> _checkSchema(
 }
 
 void _checkVersion(Object? value) {
-  if (value is! int || !const {7, 8, 9, 10, 11, 12}.contains(value)) {
+  if (value is! int || !const {7, 8, 9, 10, 11, 12, 13}.contains(value)) {
     _fail(BackupInspectionError.unsupportedVersion);
   }
 }

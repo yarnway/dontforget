@@ -49,13 +49,15 @@ void main() {
     () async {
       await createLegacy();
       final db = await helper.database;
-      expect(await db.getVersion(), 12);
+      expect(await db.getVersion(), DatabaseHelper.schemaVersion);
       expect((await db.query('Settings')).single, {
         ...legacy,
         'input_send_mode': 'enter',
       });
       final snapshotDir = root.listSync().whereType<Directory>().singleWhere(
-        (d) => d.path.contains('schema-upgrade-v11-to-v12-'),
+        (d) => d.path.contains(
+          'schema-upgrade-v11-to-v${DatabaseHelper.schemaVersion}-',
+        ),
       );
       final snapshot = File('${snapshotDir.path}/snapshot.json');
       final bytes = await snapshot.readAsBytes();

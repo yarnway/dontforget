@@ -16,6 +16,7 @@ import '../services/lan_sync_service.dart';
 import '../services/dp_scheduler_service.dart';
 import '../services/multi_agent_service.dart';
 import '../services/spaced_repetition_service.dart';
+import '../services/study_plan_service.dart';
 import '../services/data_export_service.dart';
 import '../services/dynamic_urgency_service.dart';
 import '../services/bidirectional_link_service.dart';
@@ -23,6 +24,12 @@ import '../services/context_trigger_service.dart';
 
 final databaseHelperProvider = Provider<DatabaseHelper>((ref) {
   return DatabaseHelper.instance;
+});
+
+final studyPlanServiceProvider = Provider<StudyPlanService>((ref) {
+  final service = StudyPlanService();
+  ref.onDispose(service.dispose);
+  return service;
 });
 
 /// Reading settings must not instantiate the reminder scheduling controller.
@@ -377,6 +384,81 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     return addReminderForGeneration(reminder, generation);
   }
 
+  /// A confirmed plan commits all rows before scheduling. Stable preview IDs
+  /// make a retry after an uncertain result safe without duplicating tasks.
+  Future<ReminderBatchResult> addStudyPlan(
+    List<Reminder> reminders,
+    DataGeneration generation,
+  ) {
+    final planned = List<Reminder>.unmodifiable(reminders);
+    if (planned.isEmpty ||
+        planned.length > 7 ||
+        planned.map((r) => r.id).toSet().length != planned.length ||
+        planned.any(
+          (r) =>
+              !r.reviewNotificationsEnabled ||
+              r.spacedRepetitionLevel != 1 ||
+              r.isCompleted ||
+              r.isRecurring ||
+              r.recordId != null ||
+              r.linkedTaskIds.isNotEmpty ||
+              r.triggerTime == null ||
+              r.triggerTime != r.nextReviewAt,
+        )) {
+      throw ArgumentError('Invalid study batch');
+    }
+    return _enqueue(
+      (ticket) => _dbHelper.runOperation(ticket, () async {
+        if (!mounted) throw StateError('Study workspace closed');
+        final inserted = await _dbHelper.writeTransaction(ticket, (txn) async {
+          final existing = <Reminder>[];
+          for (final task in planned) {
+            final rows = await txn.query(
+              'Reminders',
+              where: 'id = ?',
+              whereArgs: [task.id],
+            );
+            if (rows.isNotEmpty) existing.add(Reminder.fromJson(rows.single));
+          }
+          if (existing.isNotEmpty) {
+            if (existing.length != planned.length ||
+                existing.any(
+                  (r) => !mapEquals(
+                    r.toJson(),
+                    planned.firstWhere((p) => p.id == r.id).toJson(),
+                  ),
+                )) {
+              throw StateError('Study plan already changed');
+            }
+            return false;
+          }
+          final now = DateTime.now();
+          if (planned.any((r) => !r.triggerTime!.isAfter(now))) {
+            throw StateError('Study plan time expired');
+          }
+          for (final task in planned) {
+            await txn.insert('Reminders', task.toJson());
+          }
+          return true;
+        });
+        _dbHelper.checkGeneration(ticket);
+        if (mounted) {
+          final ids = planned.map((r) => r.id).toSet();
+          state = [...state.where((r) => !ids.contains(r.id)), ...planned];
+        }
+        var failures = 0;
+        for (final task in planned) {
+          if (await _synchronizeReminder(task, ticket)) failures++;
+        }
+        return ReminderBatchResult(
+          changed: inserted ? planned.length : 0,
+          nativeSyncFailures: failures,
+        );
+      }),
+      generation: generation,
+    );
+  }
+
   /// Quiet foreground retries process durable unfinished work and failures
   /// observed before an intent could be persisted (for example plugin init).
   /// A manual rebuild remains immediate and reconciles all saved occurrences.
@@ -678,6 +760,17 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           if (rows.isEmpty) throw StateError('Task no longer exists.');
           final current = Reminder.fromJson(rows.single);
           var saved = Reminder.fromJson({...current.toJson(), ...changes});
+          // Editing a learning alarm also edits its review date. Clearing the
+          // alarm returns it to an app-only review card instead of resurrecting
+          // notifications on the next answer.
+          if (saved.reviewNotificationsEnabled &&
+              changes.containsKey('trigger_time') &&
+              !changes.containsKey('next_review_at')) {
+            saved = saved.copyWith(
+              nextReviewAt: saved.triggerTime ?? saved.nextReviewAt,
+              reviewNotificationsEnabled: saved.triggerTime != null,
+            );
+          }
           if (_scheduleChanged(current, saved)) {
             cancelOverdue = true;
             // A whole old Reminder can carry the pre-snooze time even when its

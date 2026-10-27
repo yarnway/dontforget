@@ -16,7 +16,7 @@ import '../services/storage_directory_lease.dart';
 part 'database_access.dart';
 
 class DatabaseHelper {
-  static const schemaVersion = 12;
+  static const schemaVersion = 13;
   static final DatabaseHelper instance = DatabaseHelper._init();
   Database? _database;
   Future<Database>? _opening;
@@ -566,6 +566,7 @@ CREATE TABLE Reminders (
   created_at TEXT,
   review_level INTEGER DEFAULT 0,
   next_review_at TEXT,
+  review_notifications_enabled INTEGER NOT NULL DEFAULT 0,
   original_quadrant_level INTEGER,
   is_dynamically_promoted INTEGER DEFAULT 0,
   linked_task_ids TEXT,
@@ -675,6 +676,11 @@ CREATE TABLE Reminders (
     if (oldVersion < 12) {
       await db.execute(
         "ALTER TABLE Settings ADD COLUMN input_send_mode TEXT NOT NULL DEFAULT 'enter'",
+      );
+    }
+    if (oldVersion < 13) {
+      await db.execute(
+        'ALTER TABLE Reminders ADD COLUMN review_notifications_enabled INTEGER NOT NULL DEFAULT 0',
       );
     }
 

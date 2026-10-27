@@ -325,6 +325,7 @@ void main() {
                 'upcoming_dismissed_at',
                 'snoozed_at',
                 'recurrence_anchor_time',
+                'review_notifications_enabled',
               }.contains(key),
         ),
     );

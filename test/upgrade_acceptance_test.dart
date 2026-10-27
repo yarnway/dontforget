@@ -25,6 +25,7 @@ void main() {
               'upcoming_dismissed_at': null,
               'snoozed_at': null,
               'recurrence_anchor_time': null,
+              'review_notifications_enabled': 0,
             },
           },
       ],
