@@ -1,0 +1,387 @@
+{
+  "recorded_at": "2026-10-27T22:49:36.192812+08:00",
+  "scope": "isolated physical macOS native acceptance, synthetic data only; partial P1 acceptance",
+  "native_artifact": {
+    "revision": "3506ecb4a6431776600bb8181ae7306ef0999290",
+    "version": "1.7.0+33",
+    "schema": 16,
+    "entrypoint": "lib/main.dart",
+    "mode": "release",
+    "bundle_id": "com.example.dontForget.acceptance.p1-window-20261027-2137-4fa9",
+    "app": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/p1-window-20261027-2137-4fa9/dont_forget.app",
+    "source_archive_sha256": "7e73ff0df65f3bd721efe5281eaa6c2aa263d710dcb363da12f621ead5ed3e88",
+    "frameworks_and_resources_unchanged": true,
+    "protected_tree_sha256": "609238250d7dbc521bd4a9ffe0eceb93fc408fb8bdc3c45bdd802aeebfd0714e",
+    "codesign_verify": "PASS",
+    "os_source_prefix": "716D2A41",
+    "os_identity_verified_by": "usernoted connection logs match exact bundle and exact app path",
+    "trace_compile_flags_requested": true,
+    "trace_observer_active": false,
+    "trace_limitation": "BENCHMARK_REVISION supplied as 3506ecb, but StartupTrace requires 40 hexadecimal characters. No runtime trace files were produced. Scheduling counts use real native API readback in Settings, not passive trace."
+  },
+  "fixture": {
+    "scope": "product models generated only synthetic rows; seeded transactionally into the new empty owned sandbox while its process was absent",
+    "rows": 182,
+    "management_owners": 2,
+    "future_alarms_initial": 180,
+    "ordinary": 7,
+    "medication_doses": 112,
+    "departure_dates": 61,
+    "contains_real_medical_data": false,
+    "contains_credentials": false,
+    "contains_media": false,
+    "weather_and_learning_enabled": false
+  },
+  "observations": [
+    {
+      "stage": "initial",
+      "future": 180,
+      "submitted": 50,
+      "deferred": 130,
+      "attention": 0,
+      "pending_cancel": 0,
+      "os_pending": 50,
+      "os_retained": 0,
+      "continuous_coverage_until": "2026-10-31T22:36:00+08:00"
+    },
+    {
+      "stage": "after_foreground_delivery",
+      "future": 179,
+      "submitted": 50,
+      "deferred": 129,
+      "os_pending": 50,
+      "os_retained": 1
+    },
+    {
+      "stage": "after_cold_click_and_subsequent_control",
+      "future": 175,
+      "submitted": 50,
+      "deferred": 125,
+      "os_pending": 50,
+      "os_retained": 5
+    },
+    {
+      "stage": "final_pre_cleanup_reopen",
+      "future": 170,
+      "submitted": 50,
+      "deferred": 120,
+      "attention": 0,
+      "pending_cancel": 0,
+      "os_pending": 50,
+      "os_retained": 10,
+      "continuous_coverage_until": "2026-11-01T22:36:00+08:00"
+    }
+  ],
+  "cases": {
+    "capacity": {
+      "status": "PASS",
+      "claim": "Observed final system queue 50 with durable deferred 130. Does not prove every intermediate peak or any platform hard limit."
+    },
+    "foreground_refill": {
+      "status": "PASS",
+      "claim": "A delivered slot refilled to 50, retaining the delivered notification."
+    },
+    "closed_process_delivery": {
+      "status": "PASS",
+      "business_id": "qa-p1-cold",
+      "native_id": 287264721,
+      "scheduled": "2026-10-27T21:49:20.627234+08:00",
+      "delivered": "2026-10-27T21:49:20.116+08:00",
+      "normal_quit": true,
+      "process_observations": [
+        {
+          "observed_at": "2026-10-27T21:48:01.078391+08:00",
+          "exact_executable": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/p1-window-20261027-2137-4fa9/dont_forget.app/Contents/MacOS/dont_forget",
+          "running_processes": [],
+          "application_absent": true,
+          "launch_not_requested": true
+        },
+        {
+          "observed_at": "2026-10-27T21:49:58.349595+08:00",
+          "application_absent": true,
+          "processes": [],
+          "expected_target_time": "2026-10-27T21:49:20.627234+08:00"
+        }
+      ],
+      "completion_or_acknowledgement_implied": false
+    },
+    "cold_click": {
+      "status": "PASS",
+      "business_id": "qa-p1-paused",
+      "native_id": 1376673866,
+      "clicked_notification_title": "QA P1 暂停取消",
+      "process_absent_observed_at": "2026-10-27T22:09:16.807782+08:00",
+      "native_response_at": "2026-10-27T22:09:17.320+08:00",
+      "launched_pid": 1868,
+      "input": "User-authorized AppleScript AXPress of the matching QA notification, then OS launch",
+      "route_observation": "CUA showed TaskDetail with matching title QA P1 暂停取消 and 22:04 reminder time after native response. Inline UI observation; no standalone screenshot retained.",
+      "command_line_launch_interposed": false,
+      "pause_behavior_tested": false
+    },
+    "background_delivery": {
+      "status": "PASS",
+      "business_id": "qa-p1-paused",
+      "native_id": 1376673866,
+      "pid": 1868,
+      "updated_title": "QA P1 后台与热点击",
+      "trigger_saved_through_product_ui": "2026-10-27T22:21:00+08:00",
+      "original_event_time_preserved": "2026-10-27T22:04:20.627234+08:00",
+      "before": {
+        "at": "2026-10-27T22:20:39.683855+08:00",
+        "minimized": true,
+        "frontmost": false
+      },
+      "delivered": "2026-10-27T22:21:00.316+08:00",
+      "banner_displayed": "2026-10-27T22:21:00.318+08:00",
+      "after": {
+        "at": "2026-10-27T22:22:22.235202+08:00",
+        "same_pid": true,
+        "minimized": true,
+        "frontmost": false
+      },
+      "sleep_wake_tested": false
+    },
+    "reopen_refill": {
+      "status": "PASS",
+      "final_os_pending": 50,
+      "final_os_retained": 10,
+      "final_deferred": 120,
+      "business_rows": 182,
+      "same_business_ids": true,
+      "completed": 0,
+      "acknowledged": 0
+    },
+    "formal_restore_cleanup": {
+      "status": "PASS",
+      "at": "2026-10-27T22:46:52.285261+08:00",
+      "schema": 16,
+      "integrity": "ok",
+      "counts": {
+        "Reminders": 0,
+        "MediaRecords": 0,
+        "Settings": 1
+      },
+      "exact_test_process_absent": true,
+      "system_readback": {
+        "pending": 0,
+        "retained": 0,
+        "source": "Product Settings SystemNotificationReader via native API, CUA AX observed after successful formal backup recovery"
+      },
+      "cleanup_method": "Product BackupPreview > recovery confirmation > formal restore of owned empty-before-seed SQLite baseline",
+      "baseline_epoch": {
+        "version": 1,
+        "epoch": "7c8ba603-e266-43a7-a30d-644d2291aa13"
+      },
+      "epoch_after_cleanup": {
+        "version": 1,
+        "epoch": "269c12f1-3114-449d-a651-6ab281a26617"
+      },
+      "snapshot_directory": "build/native_acceptance/p1-native-20261027-materials/after-cleanup",
+      "settings_equal_empty_baseline": true,
+      "epoch_rotated": true,
+      "temporary_notification_center_shortcut_restored": "Confirmed checkbox 0, shortcut unchanged Ctrl+Option+Command+N, Done pressed",
+      "other_acceptance_identity_modified": false
+    },
+    "hot_click": {
+      "status": "NOT_PASSED",
+      "reason": "No stable native response/route evidence from warm-click attempts; Notification Center AX/window selection and concurrent foreground changes prevented a reliable click. Background delivery does not count as hot-click routing."
+    },
+    "natural_cross_day": {
+      "status": "DEFERRED_BY_USER",
+      "user_choice": "先完成其余项目，保留跨日待验收",
+      "our_midnight_sample_canceled_with_cleanup": true,
+      "independent_midnight_run": "The exact identity without suffix and its existing 00:05 follow-up were preserved. It has separate source/evidence and is not a pass for this run."
+    },
+    "ios_simulator": {
+      "status": "NOT_PERFORMED",
+      "build": "Debug simulator build passed after dependency regeneration; current +34 source, not the fixed +33 Mac artifact",
+      "owned_udid": "B760FB84-B99F-47F0-915E-5F8B3F7216CB",
+      "reason": "Simulator UI application absent from this Xcode installation",
+      "installed_product": false,
+      "only_owned_device_shutdown": true
+    },
+    "physical_iphone": {
+      "status": "NOT_PERFORMED_THIS_RUN",
+      "claim": "No physical device install or data modification by this run; independent signing/release evidence remains separate."
+    }
+  },
+  "native_log_extracts": {
+    "closed_process_delivery": [
+      "2026-10-27 21:49:20.116 Df usernoted[762:6a181e] [com.apple.unc:application] Delivering <NotificationRecord app:\"com.example.dontForget.acceptance.p1-window-20261027-2137-4fa9\" ident:\"4F48-1578\" req:\"287264721\" uuid:\"EA7AA28A\" source:\"716D2A41\" dismissAfterDefaultAction:true> to [ .alert .lockScreen .notificationCenter ]: updatedExisting: false",
+      "2026-10-27 21:49:20.117 Df usernoted[762:6a181e] [com.apple.unc:application] Presenting <NotificationRecord app:\"com.example.dontForget.acceptance.p1-window-20261027-2137-4fa9\" ident:\"4F48-1578\" req:\"287264721\" uuid:\"EA7AA28A\" source:\"716D2A41\" dismissAfterDefaultAction:true> as banner ([\"badge\", \"sound\", \"alert\"])",
+      "2026-10-27 21:49:20.118 Df NotificationCenter[811:1f66] [com.apple.unc:application] [com.example.dontForget.acceptance.p1-window-20261027-2137-4fa9:EA7AA28A:4F48-1578][record: <NotificationRecord app:\"com.example.dontForget.acceptance.p1-window-20261027-2137-4fa9\" ident:\"4F48-1578\" req:\"287264721\" uuid:\"EA7AA28A\" source:\"716D2A41\" dismissAfterDefaultAction:true>] displaying as banner, body: <private>, summary: <private>"
+    ],
+    "cold_click": [
+      "2026-10-27 22:09:17.320 Df usernoted[762:6b3fad] [com.apple.unc:application] Received response <NotificationRecord app:\"com.example.dontForget.acceptance.p1-window-20261027-2137-4fa9\" ident:\"B8B7-29C3\" req:\"1376673866\" uuid:\"2B4D9CBC\" source:\"716D2A41\" dismissAfterDefaultAction:true <response action: contents actIdent:  foreground: true text: nil> >",
+      "2026-10-27 22:09:17.321 Df usernoted[762:6b3fad] [com.apple.unc:application] Search for url to launching com.example.dontForget.acceptance.p1-window-20261027-2137-4fa9 in background (false for response <NotificationRecord app:\"com.example.dontForget.acceptance.p1-window-20261027-2137-4fa9\" ident:\"B8B7-29C3\" req:\"1376673866\" uuid:\"2B4D9CBC\" source:\"716D2A41\" dismissAfterDefaultAction:true <response action: contents actIdent:  foreground: true text: nil> >"
+    ],
+    "background_delivery": [
+      "2026-10-27 22:21:00.316 Df usernoted[762:6c1032] [com.apple.unc:application] Delivering <NotificationRecord app:\"com.example.dontForget.acceptance.p1-window-20261027-2137-4fa9\" ident:\"B8B7-29C3\" req:\"1376673866\" uuid:\"4F54EFAB\" source:\"716D2A41\" dismissAfterDefaultAction:true> to [ .alert .lockScreen .notificationCenter ]: updatedExisting: false",
+      "2026-10-27 22:21:00.316 Df usernoted[762:6c1032] [com.apple.unc:application] Presenting <NotificationRecord app:\"com.example.dontForget.acceptance.p1-window-20261027-2137-4fa9\" ident:\"B8B7-29C3\" req:\"1376673866\" uuid:\"4F54EFAB\" source:\"716D2A41\" dismissAfterDefaultAction:true> as banner ([\"badge\", \"sound\", \"alert\"])",
+      "2026-10-27 22:21:00.318 Df NotificationCenter[811:1f66] [com.apple.unc:application] [com.example.dontForget.acceptance.p1-window-20261027-2137-4fa9:4F54EFAB:B8B7-29C3][record: <NotificationRecord app:\"com.example.dontForget.acceptance.p1-window-20261027-2137-4fa9\" ident:\"B8B7-29C3\" req:\"1376673866\" uuid:\"4F54EFAB\" source:\"716D2A41\" dismissAfterDefaultAction:true>] displaying as banner, body: <private>, summary: <private>"
+    ]
+  },
+  "regression": {
+    "revision": "66ec2ca4e1f37414870ebd01d19d0b7d85caf40c",
+    "toolchain": {
+      "flutter": "3.44.9",
+      "dart": "3.12.2",
+      "flutter_path": "/Users/james/.local/opt/flutter-3.44.9/bin/flutter"
+    },
+    "flutter": {
+      "command": "flutter test",
+      "passed": 1542,
+      "failed": 0,
+      "exit_code": 0
+    },
+    "python": {
+      "command": "python3 -m unittest discover -s scripts/tests",
+      "passed": 126,
+      "failed": 0,
+      "exit_code": 0
+    },
+    "analysis": {
+      "command": "flutter analyze",
+      "issues": 0,
+      "exit_code": 0
+    },
+    "source_fix": "Backup preview support/error copy in English, Chinese and Japanese now reflects v7-v16, matching the existing inspector. No new native package built for this copy fix.",
+    "logs": {
+      "/tmp/dontforget-p1-native-final-flutter.log": {
+        "bytes": 304231,
+        "sha256": "bf630d9d78e7e259c22b6ca07ce4a1b6efd713ca82d288cb5509c595bdc969fd"
+      },
+      "/tmp/dontforget-p1-native-final-analyze.log": {
+        "bytes": 2832,
+        "sha256": "f6e034da0f321876adc7130040aab595f5ebd13c20362e5a84f51993fc32d0cc"
+      },
+      "/tmp/dontforget-p1-native-final-python.log": {
+        "bytes": 478,
+        "sha256": "579b9a669b3f13a090f65c3ca64a2e6b197abdd69f91b8655650a728d83c9f4e"
+      }
+    }
+  },
+  "artifacts": {
+    "build/native_acceptance/p1-native-20261027-materials/macos-manifest.json": {
+      "bytes": 438,
+      "sha256": "5b23a3cb5f7c7b48a1936c4fef8ee15372af27f567787417e9ac910353e7c7e0"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/DontForget_macos_p1_source.zip": {
+      "bytes": 24866930,
+      "sha256": "7e73ff0df65f3bd721efe5281eaa6c2aa263d710dcb363da12f621ead5ed3e88"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/generate_fixture.dart": {
+      "bytes": 4069,
+      "sha256": "9e170c5bcddc7a6177fd098f8326b1dfc268f1fc677727d0294553376fa308fb"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/fixture-v16.json": {
+      "bytes": 385641,
+      "sha256": "58c57099ed48c9c32e333eb4831768969d3e17b38dda81b1461da5d82f06572b"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/fixture-manifest.json": {
+      "bytes": 8559,
+      "sha256": "8cdd8c577f64f60d43ed6e9ad4b54fd0f8fb397b904c680aab26fda2e306416e"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/seed-report.json": {
+      "bytes": 380,
+      "sha256": "1a19337302971d322968215a7244668f6e3550d115e0e1806f64810f9890a852"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/notification-identity.log": {
+      "bytes": 3117,
+      "sha256": "1aa46a3504d7a4b23c3f9db919b6eb53ea47c78eb2a8fe32ea4a87709151b936"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/capacity-50-database.json": {
+      "bytes": 45158,
+      "sha256": "0c8be0cb1ea3936d191c09c79f58bb69833c45d08ff66b16ad33b3ea57fcae59"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/before-cold-delivery-process.json": {
+      "bytes": 315,
+      "sha256": "a8a6f9051e2ee837928967f38fcd981ed2edd42d946eb9d52ddebb2488096699"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/after-cold-delivery-process.json": {
+      "bytes": 166,
+      "sha256": "28af9901b27f5d504f55573e07c79cf571d279456046a499fc15b92b5da0697d"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/cold-delivery-system.log": {
+      "bytes": 49765,
+      "sha256": "37543ee84fa57b61f7dac1a74be83a49f72f3fa6590efb5c2517741b51fdb710"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/before-native-cold-press-process.json": {
+      "bytes": 92,
+      "sha256": "caf412def86d38e149ff0cd1b3713d3bb2fa38641856b9e479b8c845fbd28b9b"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/cold-click-system.log": {
+      "bytes": 66436,
+      "sha256": "64e3ce8a94f599005b4ce4af6d42de88f24a7745b6da0bff44006a74caf7a02f"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/copied-journal-decoded.json": {
+      "bytes": 15929,
+      "sha256": "b41b23d894a095eb2f901f38c093404b0bb577f038523a5f5dd7b729e933eb48"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/background-hot-before.json": {
+      "bytes": 1937,
+      "sha256": "0d7a2ab4ad9f6bd0d747453e9ac13d57c2731146b7233d44e30d82e5efd13adb"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/background-system.log": {
+      "bytes": 3993,
+      "sha256": "5fd7b7ef03f589f3366c9b012bc7159a61110cf4aa9f196acd9bb3f6026edb6d"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/background-hot-after-delivery.json": {
+      "bytes": 238,
+      "sha256": "d27e1087b4b68e2a50f504d343e81ed5e830e103f77fc087706f05ceec78b6f3"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/hot-click-automation.log": {
+      "bytes": 48,
+      "sha256": "f503d163b13b5e7a29f1253f32b113626e901d197dc414e0faa3db6b7d1b44c0"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/hot-click-system.log": {
+      "bytes": 8579,
+      "sha256": "1b3197993680e3c374477a84c9872dce3c83d1dd284ea7044a29de9ca8cbf6af"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/final-before-cleanup-report.json": {
+      "bytes": 536,
+      "sha256": "9ca64d1cb332c3a39a7d5ad2a8db33c6bfd7f6d11bc36f58f5ec000fc9d74303"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/after-cleanup-report.json": {
+      "bytes": 818,
+      "sha256": "b81d64e979c37c605eddfdbf873e84dcf27d4226163e4abf2ab49836ec8032e2"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/simulator-identity.json": {
+      "bytes": 294,
+      "sha256": "30ff5df33d3eaa6388069a9e641653092f74f546c41bf11f987786adc3ae3a83"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/simulator-final.json": {
+      "bytes": 316,
+      "sha256": "60b6059b2202333ef3dd5290c035112559a68c8c5d27f19e9654ed68fa07859d"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/empty-before-seed/dont_forget_v3.db": {
+      "bytes": 24576,
+      "sha256": "b2a3bda8621d51b154c63f267478ffc3f3d6aa0c182a9041116107a599ca2aa5"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/before-cold-click-database/dont_forget_v3.db": {
+      "bytes": 217088,
+      "sha256": "e0fa11e068286f82d6cbe8b0e30242fb76f1d1608051df03c457e6ce1057053a"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/final-before-cleanup/dont_forget_v3.db": {
+      "bytes": 217088,
+      "sha256": "caf04b9d7b75d431f907dc2753f0385a60612d602df73b9a25d6d6a19c078969"
+    },
+    "build/native_acceptance/p1-native-20261027-materials/after-cleanup/dont_forget_v3.db": {
+      "bytes": 24576,
+      "sha256": "b2a3bda8621d51b154c63f267478ffc3f3d6aa0c182a9041116107a599ca2aa5"
+    },
+    "build/native_acceptance/p1-window-20261027-2137-4fa9/acceptance-preparation.json": {
+      "bytes": 18899,
+      "sha256": "19f5ce5029ea6c9fe38047c03fc5936d3f5dac02291a998a7e4370da370451e2"
+    }
+  },
+  "release_scope": "This run did not push, upload or publish. Concurrent rc.34 release evidence has its own ledger and is not attributed here.",
+  "remaining": [
+    "natural cross-day delivery and rolling date refill",
+    "hot-click routing",
+    "native pause/modify/expiry cancellation and recovery failures",
+    "physical iPhone/platform capacity and background matrix",
+    "sleep/wake and true timezone/DST",
+    "long absence/continuous medication and real weather/media acceptance"
+  ]
+}
