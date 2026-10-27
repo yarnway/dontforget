@@ -1,7 +1,7 @@
 {
   "recorded_at": "2026-10-27T22:38:11.385217+08:00",
   "source_base": "b60a17d7271901a0f5a332f0143bade076567362",
-  "source_scope": "file hashes below, no platform build in this stage",
+  "source_scope": "Feature source snapshot for full regression and local debug builds; later copy-only merge is recorded separately",
   "toolchain": {
     "flutter": "3.44.9",
     "dart": "3.12.2"
@@ -118,6 +118,14 @@
     "build/p1-saved-filters-frozen-signature.log": {
       "bytes": 2264,
       "sha256": "509876e2ad6d610092fcfdfb8dfb811e57f36a71aba6a1b4265d96b1bdb6e60f"
+    },
+    "build/p1-saved-filters-preview-screen-integration.log": {
+      "bytes": 758,
+      "sha256": "c30985ac25a77dd98e5466f02ff648fcfa69ad311b478fa2ef998bbc239fcd3d"
+    },
+    "build/p1-saved-filters-integration-analysis.log": {
+      "bytes": 96,
+      "sha256": "2fb49d6bba2a951135a38be3507987e137959004aeb83143f2bd6a64717ba7a9"
     }
   },
   "not_performed": [
@@ -184,5 +192,24 @@
       "installed_or_started": false
     }
   },
-  "builds_are_not_existing_rc34_candidate": true
+  "builds_are_not_existing_rc34_candidate": true,
+  "validation_updated_at": "2026-10-27T22:52:43.815573+08:00",
+  "integration_after_parallel_copy": {
+    "checkout": "8edcca3f092269a245767c596e17070ee5f1f203",
+    "upstream_commit": "66ec2ca4e1f37414870ebd01d19d0b7d85caf40c",
+    "scope": "Six backup-version UI strings and one documentation comment; no execution logic changes",
+    "preview_screen_tests_passed": 8,
+    "analyze": "0 issues",
+    "source_files": {
+      "lib/l10n/app_localizations.dart": {
+        "bytes": 140876,
+        "sha256": "49e725d97af8b04126c02a16bc02cba01ae129b6689b994a6bd79cded8ee5f53"
+      },
+      "lib/services/recovery/backup_inspector.dart": {
+        "bytes": 36200,
+        "sha256": "6fee39942aa0f1b7228a5983ed3e9374fd4ce741e2cd867c0e94cad4624be6c9"
+      }
+    },
+    "full_regression_and_builds_belong_to_original_feature_snapshot": true
+  }
 }
