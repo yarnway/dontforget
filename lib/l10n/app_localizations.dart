@@ -621,6 +621,8 @@ class AppLocalizations {
       'noLinksYet': 'No linked tasks yet',
       'addLinkedTask': 'Link Task',
       'noAvailableTasksToLink': 'No available tasks to link',
+      'linkedTaskUnavailable': 'Task deleted or unavailable',
+      'removeTaskLink': 'Remove link: {task}',
       'viewInGraph': 'View in Graph',
     },
     'zh': {
@@ -1135,6 +1137,8 @@ class AppLocalizations {
       'noLinksYet': '暂无关联事项',
       'addLinkedTask': '关联事项',
       'noAvailableTasksToLink': '暂无其他可选的备忘事项',
+      'linkedTaskUnavailable': '事项已删除或不可用',
+      'removeTaskLink': '解除关联：{task}',
       'viewInGraph': '在图谱中定位',
     },
     'ja': {
@@ -1674,6 +1678,8 @@ class AppLocalizations {
       'noLinksYet': '関連タスクはありません',
       'addLinkedTask': 'タスクを関連付け',
       'noAvailableTasksToLink': '関連付け可能なタスクがありません',
+      'linkedTaskUnavailable': '削除済み、または利用できないタスク',
+      'removeTaskLink': '関連を解除：{task}',
       'viewInGraph': 'グラフで表示',
     },
   };

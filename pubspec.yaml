@@ -1,7 +1,7 @@
 name: dont_forget
 description: "Local-first reminders, task scheduling and AI-assisted capture."
 publish_to: 'none'
-version: 1.7.0+22
+version: 1.7.0+23
 
 environment:
   sdk: '>=3.12.0 <4.0.0'

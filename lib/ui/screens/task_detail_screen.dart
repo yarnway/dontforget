@@ -1,6 +1,7 @@
 import '../widgets/inline_feedback.dart';
 import '../widgets/editor_keyboard_actions.dart';
 import '../widgets/editable_text_menu.dart';
+import '../widgets/linked_task_tile.dart';
 import '../formatters/local_date_time.dart';
 import '../../data/database_helper.dart';
 import 'package:flutter/material.dart';
@@ -622,72 +623,19 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   Widget _buildLinkedTaskChip(
     String linkedId,
     Map<String, Reminder> taskIndex,
-    AppLocalizations l10n,
-    bool isDark,
   ) {
     final target = taskIndex[linkedId];
-    final title = target?.taskTitle ?? linkedId;
-    final qLevel = target?.quadrantLevel ?? 4;
-    final qColor = _getCategoryColor(qLevel);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.06)
-            : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: qColor.withValues(alpha: 0.4)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-            decoration: BoxDecoration(
-              color: qColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(3),
+    return LinkedTaskTile(
+      key: ValueKey('linked-task-$linkedId'),
+      task: target,
+      categoryColor: _getCategoryColor(target?.quadrantLevel ?? 4),
+      onOpen: _isMutating || target == null
+          ? null
+          : () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => TaskDetailScreen(task: target)),
             ),
-            child: Text(
-              'Q$qLevel',
-              style: TextStyle(
-                fontSize: 9.5,
-                fontWeight: FontWeight.bold,
-                color: qColor,
-              ),
-            ),
-          ),
-          const SizedBox(width: 6),
-          Flexible(
-            child: InkWell(
-              onTap: () {
-                if (target != null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => TaskDetailScreen(task: target),
-                    ),
-                  );
-                }
-              },
-              child: Text(
-                title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 6),
-          InkWell(
-            onTap: () => _changeLink(linkedId, remove: true),
-            child: const Icon(Icons.close, size: 14, color: Colors.grey),
-          ),
-        ],
-      ),
+      onUnlink: _isMutating ? null : () => _changeLink(linkedId, remove: true),
     );
   }
 
@@ -1567,16 +1515,15 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                               ),
                             )
                           else
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 6,
+                            Column(
                               children: [
                                 for (final linkedId in _linkedTaskIds)
-                                  _buildLinkedTaskChip(
-                                    linkedId,
-                                    _linkedTaskIndex,
-                                    l10n,
-                                    isDark,
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 6),
+                                    child: _buildLinkedTaskChip(
+                                      linkedId,
+                                      _linkedTaskIndex,
+                                    ),
                                   ),
                               ],
                             ),

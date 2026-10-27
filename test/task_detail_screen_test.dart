@@ -46,6 +46,9 @@ class _ObservedRemindersNotifier extends RemindersNotifier {
   @override
   Future<ReminderActionResult> deleteReminder(String id) =>
       _observe(super.deleteReminder(id));
+  @override
+  Future<void> unlinkTwoTasks(String id1, String id2) =>
+      _observe(super.unlinkTwoTasks(id1, id2));
 }
 
 class _DetailNotifications implements NotificationService {
@@ -244,6 +247,87 @@ void main() {
       expect(find.text('保存修改'), findsOneWidget);
     },
   );
+  testWidgets(
+    'linked detail follows deletion and Undo, and can remove a missing link',
+    (tester) async {
+      final generation = testDatabase.captureGeneration();
+      final task = Reminder(
+        id: 'linked-owner-qa',
+        taskTitle: 'Linked owner QA',
+        quadrantLevel: 3,
+        linkedTaskIds: ['linked-target-private-id'],
+      );
+      final target = Reminder(
+        id: 'linked-target-private-id',
+        taskTitle: 'Linked target QA',
+        quadrantLevel: 2,
+        linkedTaskIds: [task.id],
+      );
+      await tester.runAsync(() async {
+        await notifier.restoreDeletedReminder(task, generation);
+        await notifier.restoreDeletedReminder(target, generation);
+      });
+      await openDetail(tester, task);
+      await tester.ensureVisible(find.text(target.taskTitle));
+      final deleted = await tester.runAsync(
+        () => notifier.deleteReminder(target.id),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text(target.taskTitle), findsNothing);
+      expect(find.text(target.id), findsNothing);
+      expect(find.text('事项已删除或不可用'), findsOneWidget);
+      await tester.tap(find.text('事项已删除或不可用'));
+      await tester.pumpAndSettle();
+      expect(find.byType(TaskDetailScreen), findsOneWidget);
+
+      await tester.runAsync(
+        () => notifier.restoreDeletedReminder(deleted!.reminder!, generation),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('事项已删除或不可用'), findsNothing);
+      expect(find.text(target.taskTitle), findsOneWidget);
+      expect(
+        container
+            .read(remindersProvider)
+            .firstWhere((r) => r.id == task.id)
+            .toJson(),
+        task.toJson(),
+      );
+      expect(
+        container
+            .read(remindersProvider)
+            .firstWhere((r) => r.id == target.id)
+            .toJson(),
+        target.toJson(),
+      );
+
+      await tester.runAsync(() => notifier.deleteReminder(target.id));
+      await tester.pumpAndSettle();
+      final remove = find.byTooltip('解除关联：事项已删除或不可用');
+      await tester.ensureVisible(remove);
+      await tester.runAsync(() async {
+        await tester.tap(remove);
+        await notifier.lastWrite;
+      });
+      await tester.pumpAndSettle();
+      expect(find.text('暂无关联事项'), findsOneWidget);
+      final db = await tester.runAsync(() => testDatabase.database);
+      final saved = await tester.runAsync(
+        () => db!.query('Reminders', where: 'id = ?', whereArgs: [task.id]),
+      );
+      expect(
+        Reminder.fromJson(saved!.single).toJson(),
+        task.copyWith(linkedTaskIds: []).toJson(),
+      );
+      expect(
+        container.read(remindersProvider).any((r) => r.id == target.id),
+        isFalse,
+      );
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
   testWidgets('promotion alert appears only for active promoted Q1 tasks', (
     tester,
   ) async {
