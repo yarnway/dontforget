@@ -247,7 +247,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         Icons.push_pin_outlined,
         l10n.get(widget.task.isPinned ? 'unpinToday' : 'pinToday'),
       ),
-    if (widget.task.isRecurring && !widget.task.isCompleted)
+    if (widget.task.canSkipOccurrence)
       _menuItem('skip', Icons.skip_next_outlined, l10n.get('skipOccurrence')),
     if (widget.task.sourceText != null)
       _menuItem('source', Icons.notes_outlined, l10n.get('sourceText')),

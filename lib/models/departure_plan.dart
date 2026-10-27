@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:uuid/uuid.dart';
 import 'reminder.dart';
 import 'task_details.dart';
+import '../services/departure_weather_service.dart';
 
 class DeparturePlan {
   DeparturePlan({
@@ -19,11 +20,17 @@ class DeparturePlan {
     this.city = '',
     this.rainThreshold = 40,
     this.retentionDays = 30,
+    this.returnMinutes = 180,
     this.records = const [],
     this.weather,
   }) : id = id ?? const Uuid().v4();
   final String id, title, place, city;
-  final int departureMinute, leadMinutes, rainThreshold, retentionDays;
+  final int departureMinute,
+      leadMinutes,
+      rainThreshold,
+      retentionDays,
+      returnMinutes;
+  static const rollingDays = 60;
   final List<int> weekdays;
   final List<ChecklistItem> items;
   final bool learningEnabled, weatherEnabled;
@@ -74,6 +81,7 @@ class DeparturePlan {
       city: TaskDetails.text(data['city'] ?? '', 160),
       rainThreshold: data['rain_threshold'] as int? ?? 40,
       retentionDays: data['retention_days'] as int? ?? 30,
+      returnMinutes: data['return_minutes'] as int? ?? 180,
       records: records.map(DepartureRecord.fromJson).toList(),
       weather: data['weather'] == null
           ? null
@@ -95,6 +103,7 @@ class DeparturePlan {
     'city': city,
     'rain_threshold': rainThreshold,
     'retention_days': retentionDays,
+    'return_minutes': returnMinutes,
     'records': records.map((r) => r.toJson()).toList(),
     'weather': weather,
   };
@@ -106,7 +115,9 @@ class DeparturePlan {
         rainThreshold < 1 ||
         rainThreshold > 100 ||
         retentionDays < 1 ||
-        retentionDays > 365) {
+        retentionDays > 365 ||
+        returnMinutes < 1 ||
+        returnMinutes > 1440) {
       throw const FormatException('Incomplete departure plan');
     }
     var date = DateTime(now.year, now.month, now.day);
@@ -158,6 +169,136 @@ class DeparturePlan {
       ).encode(),
     );
   }
+
+  /// A durable owner and independent calendar dates. Completing yesterday is
+  /// never a prerequisite for tomorrow, and a stable date ID prevents replay.
+  ({Reminder owner, List<Reminder> occurrences}) schedule(
+    DateTime now, {
+    String language = 'zh',
+  }) {
+    final first = build(
+      now,
+    ); // Validate the same confirmed form as the preview.
+    final owner = first.copyWith(
+      triggerTime: null,
+      eventTime: null,
+      isRecurring: false,
+      recurrenceRule: 'none',
+      detailsJson: first.details.patch({
+        'repeat': null,
+        'data': {
+          ...toJson(),
+          '_departure_rolling': rollingDays,
+          'notification_language': language,
+        },
+      }).encode(),
+    );
+    final occurrences = <Reminder>[];
+    for (var day = 0; day <= rollingDays; day++) {
+      final date = DateTime(now.year, now.month, now.day + day);
+      if (!weekdays.contains(date.weekday)) continue;
+      final event = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        departureMinute ~/ 60,
+        departureMinute % 60,
+      );
+      final alarm = event.subtract(Duration(minutes: leadMinutes));
+      if (!alarm.isAfter(now)) continue;
+      final dateKey =
+          '${date.year.toString().padLeft(4, '0')}-'
+          '${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      final checklist = items
+          .map((item) => item.once ? item : item.copyWith(done: false))
+          .toList();
+      occurrences.add(
+        Reminder(
+          id: '$id:departure:$dateKey',
+          taskTitle: title.trim(),
+          taskSummary: summaryFor(event, checklist, language: language),
+          quadrantLevel: 2,
+          triggerTime: alarm,
+          eventTime: event,
+          detailsJson: TaskDetails(
+            kind: 'departure',
+            planId: id,
+            checklist: checklist,
+            data: {
+              ...toJson(),
+              'records': [],
+              'weather': null,
+              'items': checklist.map((e) => e.toJson()).toList(),
+              'departure_occurrence': true,
+              'notification_language': language,
+            },
+          ).encode(),
+        ),
+      );
+    }
+    return (owner: owner, occurrences: occurrences);
+  }
+
+  bool? rainFor(DateTime event, {DateTime? delivery}) {
+    if (!weatherEnabled || weather == null) return null;
+    try {
+      final forecast = WeatherForecast.fromJson(weather!);
+      if (forecast.latitude != latitude || forecast.longitude != longitude) {
+        return null;
+      }
+      return forecast.rainDuring(
+        event,
+        event.add(Duration(minutes: returnMinutes)),
+        // A cached forecast must still be fresh when this dated notice fires.
+        now: delivery ?? event.subtract(Duration(minutes: leadMinutes)),
+        threshold: rainThreshold,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String summaryFor(
+    DateTime event,
+    List<ChecklistItem> checklist, {
+    String language = 'zh',
+    DateTime? delivery,
+  }) {
+    final rain = rainFor(event, delivery: delivery);
+    final words = language == 'ja'
+        ? ['天気を確認してください', '雨の可能性', 'この時間帯の降水確率は設定値未満です']
+        : language == 'en'
+        ? [
+            'Weather needs confirmation',
+            'Rain is possible',
+            'Rain probability is below your threshold for this window',
+          ]
+        : ['天气待确认', '出行时段可能有雨', '出行时段降水概率低于设定阈值'];
+    return [
+      if (place.isNotEmpty) place,
+      for (final item in checklist)
+        if (!item.done &&
+            (item.condition != 'rain' || !weatherEnabled || rain != false))
+          item.condition == 'rain' && (rain == null || !weatherEnabled)
+              ? '${item.label}（${words[0]}）'
+              : item.label,
+      if (weatherEnabled)
+        words[rain == null
+            ? 0
+            : rain
+            ? 1
+            : 2],
+    ].join('\n');
+  }
+
+  DeparturePlan retained(DateTime now) => patch({
+    'records': records
+        .where(
+          (r) => !r.at.isBefore(now.subtract(Duration(days: retentionDays))),
+        )
+        .map((r) => r.toJson())
+        .toList(),
+  });
 
   DeparturePlan record(
     DateTime at, {

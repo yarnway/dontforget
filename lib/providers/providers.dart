@@ -9,12 +9,15 @@ import '../data/database_helper.dart';
 import '../models/settings.dart';
 import '../models/reminder.dart';
 import '../models/task_details.dart';
+import '../models/departure_plan.dart';
+import '../services/departure_weather_service.dart';
 import '../models/notification_schedule_status.dart';
 import '../services/notification_schedule_reader.dart';
 import '../services/notification_permission_service.dart';
 import '../models/media_record.dart';
 import '../services/llm_service.dart';
 import '../services/notification_service.dart';
+import '../services/notification_window.dart';
 import '../services/notification_journal.dart';
 import '../services/startup_trace.dart';
 import '../services/lan_sync_service.dart';
@@ -30,6 +33,13 @@ import '../services/bidirectional_link_service.dart';
 import '../services/context_trigger_service.dart';
 
 part 'task_management.dart';
+part 'departure_routines.dart';
+
+final departureWeatherProvider = Provider<DepartureWeatherService>((ref) {
+  final service = DepartureWeatherService();
+  ref.onDispose(service.dispose);
+  return service;
+});
 
 final databaseHelperProvider = Provider<DatabaseHelper>((ref) {
   return DatabaseHelper.instance;
@@ -46,6 +56,7 @@ final notificationScheduleStatusReaderProvider =
     Provider<Future<NotificationScheduleStatus> Function()>((ref) {
       return NotificationScheduleReader(
         ref.read(databaseHelperProvider),
+        nativePendingLimit: NotificationWindow.platformLimit,
         isSuppressed: (task) =>
             ref.read(notificationServiceProvider).isSuppressed(task),
       ).read;
@@ -55,6 +66,7 @@ final reminderScheduleReaderProvider =
     Provider<Future<ReminderSchedulePhase> Function(Reminder)>((ref) {
       return NotificationScheduleReader(
         ref.read(databaseHelperProvider),
+        nativePendingLimit: NotificationWindow.platformLimit,
         isSuppressed: (task) =>
             ref.read(notificationServiceProvider).isSuppressed(task),
       ).readReminder;
@@ -63,6 +75,16 @@ final reminderScheduleReaderProvider =
 final notificationPermissionReaderProvider =
     Provider<Future<NotificationPermissionSnapshot> Function()>((ref) {
       return NotificationPermissionService().refresh;
+    });
+
+final routineScheduleStatusReaderProvider =
+    Provider<Future<NotificationScheduleStatus> Function(String)>((ref) {
+      final reader = NotificationScheduleReader(
+        ref.read(databaseHelperProvider),
+        nativePendingLimit: NotificationWindow.platformLimit,
+        isSuppressed: ref.read(notificationServiceProvider).isSuppressed,
+      );
+      return (planId) => reader.read(planId: planId);
     });
 
 final runtimeRecoveryGateProvider = Provider<RuntimeRecoveryGate>((ref) {
@@ -204,6 +226,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
   final Map<String, DateTime?> _pendingNotificationRetries = {};
   final Set<String> _pendingNotificationCancellations = {};
   String? _notificationRetryCursor;
+  final Map<String, DateTime> _departureWeatherAttempts = {};
 
   RemindersNotifier(
     this._dbHelper, {
@@ -272,6 +295,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           !_dbHelper.isCurrent(previousGeneration)) {
         _pendingNotificationRetries.clear();
         _pendingNotificationCancellations.clear();
+        _departureWeatherAttempts.clear();
       }
       _stateGeneration = generation;
       state = list;
@@ -279,6 +303,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       // Recovery already rebuilt notifications from the committed database.
       // Loading UI state must not reschedule or mutate it a second time.
       if (!runEffects) return;
+      await _reconcileDepartures(generation, DateTime.now());
       // Promote before scheduling so startup uses the final saved priority.
       await _applyDynamicUrgency(generation, synchronize: false);
       final journal = await _notificationEntries(generation);
@@ -851,14 +876,14 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
             );
             if (pinned.length >= 3) throw const PinLimitException();
           }
-          if (current.details.kind == 'medication' &&
+          if ((current.details.kind == 'medication' ||
+                  (current.details.kind == 'departure' &&
+                      current.details.planId != null)) &&
               (saved.isRecurring ||
                   saved.spacedRepetitionLevel > 0 ||
                   saved.eventTime != current.eventTime ||
                   saved.triggerTime != current.triggerTime)) {
-            throw StateError(
-              'Change medication timing through its course preview',
-            );
+            throw StateError('Change routine timing through its plan preview');
           }
           // Editing a learning alarm also edits its review date. Clearing the
           // alarm returns it to an app-only review card instead of resurrecting
@@ -1307,6 +1332,8 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       jsonEncode(a.details.repeat?.toJson()) !=
           jsonEncode(b.details.repeat?.toJson());
 
+  List<Reminder> get _managedReminders => state;
+
   void _publishManaged(Iterable<Reminder> saved) {
     if (!mounted) return;
     final updates = {for (final item in saved) item.id: item};
@@ -1413,7 +1440,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
                   current.details.paused ||
                   current.isCompleted ||
                   current.details.kind == 'medicationPlan') ||
-              (action == _ReminderAction.skip && !current.isRecurring) ||
+              (action == _ReminderAction.skip && !current.canSkipOccurrence) ||
               current.occurrenceIdentity != wanted.occurrenceIdentity ||
               (action == _ReminderAction.snooze &&
                   (!current.canNotify ||
@@ -1519,7 +1546,9 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
                           snooze
                               ? 'snoozed'
                               : action == _ReminderAction.skip
-                              ? 'skipped'
+                              ? current.details.kind == 'medication'
+                                    ? 'not_taken'
+                                    : 'skipped'
                               : current.details.kind == 'medication'
                               ? 'taken'
                               : 'completed',
@@ -1531,7 +1560,9 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
                               ? now.toIso8601String()
                               : null,
                           if (!snooze && current.details.kind == 'medication')
-                            'dose_outcome': 'taken',
+                            'dose_outcome': action == _ReminderAction.skip
+                                ? 'not_taken'
+                                : 'taken',
                           if (!snooze && nextTime != null)
                             'checklist': [
                               for (final item in current.details.checklist)

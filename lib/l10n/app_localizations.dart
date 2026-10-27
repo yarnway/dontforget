@@ -315,6 +315,8 @@ class AppLocalizations {
       'reminderStatusSubmitted':
           'Submitted to the system; delivery is not confirmed.',
       'reminderStatusPaused': 'Paused by the current focus or context policy.',
+      'reminderStatusDeferred':
+          'Saved in the refill queue. Earlier reminders use the shared notification capacity; reopen the app to refill.',
       'reminderStatusAttention':
           'System scheduling needs attention; check Settings.',
       'reminderStatusDraft':
@@ -765,6 +767,12 @@ class AppLocalizations {
       'digestSessionHint':
           'Tasks muted in this app session. Completed, deleted or rescheduled occurrences leave this list; closing it does not complete tasks.',
       'digestEmpty': 'No pending tasks in this digest.',
+      'notificationScheduleWindow':
+          'Scheduling through {through} · Deferred {deferred} · Shared capacity {capacity}. Reopen the app before this date to refill. Submission does not confirm delivery.',
+      'notificationScheduleWindowEmpty':
+          'No upcoming reminders to schedule · Shared capacity {capacity}.',
+      'notificationScheduleWindowUnconfirmed':
+          'Continuous coverage is not yet confirmed · Deferred {deferred} · Shared capacity {capacity}. Check reminder status and open the app to refill.',
       'notificationSchedulePaused':
           '{count} future reminders paused by focus or context policy.',
       'digestPending': 'Pending tasks: {count}',
@@ -1076,6 +1084,7 @@ class AppLocalizations {
       'reminderStatusElapsed': '提醒时间已过，无法据此确认是否送达。',
       'reminderStatusSubmitted': '已提交系统安排，不代表已经送达。',
       'reminderStatusPaused': '当前专注或情境策略已暂停该提醒。',
+      'reminderStatusDeferred': '已保存在补排队列。更早的提醒占用了共用通知容量，请打开应用继续补排。',
       'reminderStatusAttention': '系统提醒安排待核实，请检查设置。',
       'reminderStatusDraft': '提醒设置已修改，保存后更新提醒。',
       'reminderStatusPermission': '系统通知权限',
@@ -1456,6 +1465,11 @@ class AppLocalizations {
       // 大数据导出
       'digestSessionHint': '显示本次应用会话中被静音的任务。已完成、删除或重新安排的轮次会移出列表；关闭页面不会完成任务。',
       'digestEmpty': '本次摘要没有待处理任务。',
+      'notificationScheduleWindow':
+          '连续预排至 {through} · 待补排 {deferred} · 共用容量 {capacity}。请在此日期前打开应用补排；已提交不代表已送达。',
+      'notificationScheduleWindowEmpty': '暂无待预排的未来提醒 · 共用容量 {capacity}。',
+      'notificationScheduleWindowUnconfirmed':
+          '尚未确认连续预排覆盖 · 待补排 {deferred} · 共用容量 {capacity}。请检查提醒状态并打开应用补排。',
       'notificationSchedulePaused': '{count} 条未来提醒已由专注或情境策略暂停。',
       'digestPending': '待处理任务：{count}',
       'digestScope': '摘要包含哪些任务',
@@ -1777,6 +1791,8 @@ class AppLocalizations {
       'reminderStatusElapsed': '通知時刻を過ぎています。配信されたかは確認できません。',
       'reminderStatusSubmitted': 'システムに送信済みです。配信の確認ではありません。',
       'reminderStatusPaused': '現在の集中・状況ポリシーで一時停止中です。',
+      'reminderStatusDeferred':
+          '補充待ちとして保存済みです。先の通知が共通上限を使用しています。アプリを開いて補充してください。',
       'reminderStatusAttention': 'システム通知の予定を確認してください。',
       'reminderStatusDraft': '通知設定が変更されました。保存すると通知が更新されます。',
       'reminderStatusPermission': 'システム通知の権限',
@@ -2172,6 +2188,11 @@ class AppLocalizations {
       'digestSessionHint':
           'このセッションで消音されたタスクです。完了・削除・再予定された回は一覧から除外します。画面を閉じても完了にはなりません。',
       'digestEmpty': 'このダイジェストに未処理のタスクはありません。',
+      'notificationScheduleWindow':
+          '{through} まで連続設定済み · 補充待ち {deferred} · 共通上限 {capacity}。期限前にアプリを開いて補充してください。送信済みでも配信は未確認です。',
+      'notificationScheduleWindowEmpty': '設定する今後の通知はありません · 共通上限 {capacity}。',
+      'notificationScheduleWindowUnconfirmed':
+          '連続設定範囲は未確認です · 補充待ち {deferred} · 共通上限 {capacity}。通知の状態を確認し、アプリを開いて補充してください。',
       'notificationSchedulePaused': '集中・コンテキスト設定により今後の通知 {count} 件を停止しています。',
       'digestPending': '未処理タスク：{count} 件',
       'digestScope': '表示するタスクの範囲',

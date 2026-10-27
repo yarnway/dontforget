@@ -307,12 +307,16 @@ void main() {
         () => container.read(remindersProvider.notifier).updateReminder(due),
       );
       final savedDue = current(due.id);
-      await container
-          .read(notificationServiceProvider)
-          .fireReminderNow(savedDue);
-      await container
-          .read(notificationServiceProvider)
-          .fireReminderNow(savedDue);
+      await tester.runAsync(
+        () => container
+            .read(notificationServiceProvider)
+            .fireReminderNow(savedDue),
+      );
+      await tester.runAsync(
+        () => container
+            .read(notificationServiceProvider)
+            .fireReminderNow(savedDue),
+      );
       await tester.pump();
       expect(find.byType(ReminderNoticePanel), findsOneWidget);
       expect(
@@ -354,9 +358,11 @@ void main() {
       }
       await applyNoticeAction(tester, '我知道了');
       expect(current(due.id).noticeAcknowledgedAt, isNotNull);
-      await container
-          .read(notificationServiceProvider)
-          .fireReminderNow(savedDue);
+      await tester.runAsync(
+        () => container
+            .read(notificationServiceProvider)
+            .fireReminderNow(savedDue),
+      );
       await tester.pump();
       expect(find.byKey(const ValueKey('reminder-notice-panel')), findsNothing);
       final edited = current(due.id).copyWith(
@@ -365,9 +371,11 @@ void main() {
       await tester.runAsync(
         () => container.read(remindersProvider.notifier).updateReminder(edited),
       );
-      await container
-          .read(notificationServiceProvider)
-          .fireReminderNow(current(edited.id));
+      await tester.runAsync(
+        () => container
+            .read(notificationServiceProvider)
+            .fireReminderNow(current(edited.id)),
+      );
       await tester.pump();
       await applyNoticeAction(tester, '稍后 5 分钟提醒');
       final snoozed = container
@@ -390,9 +398,11 @@ void main() {
             container.read(remindersProvider.notifier).updateReminder(dueAgain),
       );
       final savedDueAgain = current(dueAgain.id);
-      await container
-          .read(notificationServiceProvider)
-          .fireReminderNow(savedDueAgain);
+      await tester.runAsync(
+        () => container
+            .read(notificationServiceProvider)
+            .fireReminderNow(savedDueAgain),
+      );
       await tester.pump();
       await applyNoticeAction(tester, '标为已完成');
       expect(
@@ -402,9 +412,11 @@ void main() {
             .isCompleted,
         isTrue,
       );
-      await container
-          .read(notificationServiceProvider)
-          .fireReminderNow(savedDueAgain);
+      await tester.runAsync(
+        () => container
+            .read(notificationServiceProvider)
+            .fireReminderNow(savedDueAgain),
+      );
       await tester.pump();
       expect(find.byKey(const ValueKey('reminder-notice-panel')), findsNothing);
       addTearDown(() => drainWorkspaceDrafts(tester, container));

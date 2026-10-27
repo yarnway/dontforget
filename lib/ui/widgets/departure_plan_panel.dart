@@ -17,15 +17,11 @@ import '../../services/recovery/runtime_gate.dart';
 import '../formatters/local_date_time.dart';
 import '../screens/notification_repair_screen.dart';
 import 'inline_feedback.dart';
-
-final departureWeatherProvider = Provider<DepartureWeatherService>((ref) {
-  final service = DepartureWeatherService();
-  ref.onDispose(service.dispose);
-  return service;
-});
+import 'routine_coverage_panel.dart';
 
 class DeparturePlanPanel extends ConsumerStatefulWidget {
-  const DeparturePlanPanel({super.key});
+  const DeparturePlanPanel({super.key, this.initialPlanId});
+  final String? initialPlanId;
   @override
   ConsumerState<DeparturePlanPanel> createState() => _DeparturePlanPanelState();
 }
@@ -78,6 +74,16 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
           _draft = candidate;
         }
       }
+      final initial = ref
+          .read(remindersProvider)
+          .where(
+            (r) =>
+                r.id == widget.initialPlanId &&
+                r.isVisible &&
+                r.details.planId == null,
+          )
+          .firstOrNull;
+      if (initial != null) _load(initial);
       setState(() => _loaded = true);
     } catch (_) {
       if (mounted && context.mounted && _current) {
@@ -125,8 +131,12 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
       key: ValueKey('${_draft['id']}:$key'),
       initialValue: _draft[key]?.toString() ?? '',
       enabled: !_busy,
-      maxLength:
-          key == 'lead' || key == 'retention_days' || key == 'rain_threshold'
+      maxLength: key == 'return_minutes'
+          ? 4
+          : key == 'lead' ||
+                key == 'retention_days' ||
+                key == 'rain_threshold' ||
+                key == 'return_minutes'
           ? 3
           : 160,
       decoration: InputDecoration(
@@ -136,13 +146,20 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
       onChanged: (v) => _change(() {
         if (key == 'lead' ||
             key == 'retention_days' ||
-            key == 'rain_threshold') {
+            key == 'rain_threshold' ||
+            key == 'return_minutes') {
           final n = int.tryParse(v);
           final valid =
               n != null &&
               (key == 'lead'
                   ? n >= 0 && n <= 180
-                  : n >= 1 && n <= (key == 'rain_threshold' ? 100 : 365));
+                  : n >= 1 &&
+                        n <=
+                            (key == 'rain_threshold'
+                                ? 100
+                                : key == 'return_minutes'
+                                ? 1440
+                                : 365));
           if (valid) {
             _invalid.remove(key);
             _draft[key] = n;
@@ -205,10 +222,19 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
     if (!mounted || !context.mounted || !_current || _busy || !_preview) return;
     setState(() => _busy = true);
     try {
-      final row = _plan.build(DateTime.now());
+      final schedule = _plan.schedule(
+        DateTime.now(),
+        language: AppLocalizations.of(context).locale.languageCode,
+      );
+      final row = schedule.owner;
       final result = await ref
           .read(remindersProvider.notifier)
-          .saveRoutine(row, [], _generation, baseline: _baseline);
+          .saveRoutine(
+            row,
+            schedule.occurrences,
+            _generation,
+            baseline: _baseline,
+          );
       if (!mounted || !context.mounted || !_current) return;
       _baseline = ref
           .read(remindersProvider)
@@ -257,20 +283,13 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
       final row = _baseline!;
       final result = await ref
           .read(remindersProvider.notifier)
-          .editTaskDetails(
+          .updateDepartureRecords(
             row,
-            row.details.patch({'data': plan.toJson()}),
+            plan,
             _generation,
-            action: 'departure_record',
+            departedAt: complete ? plan.records.last.at : null,
           );
-      if (!mounted || !context.mounted || !_current) return;
-      var failed = result.nativeSyncFailed;
-      if (complete && result.reminder != null) {
-        final done = await ref
-            .read(remindersProvider.notifier)
-            .completeOccurrence(result.reminder!);
-        failed = failed || done.nativeSyncFailed;
-      }
+      final failed = result.nativeSyncFailures > 0;
       if (!mounted || !context.mounted || !_current) return;
       final latest = ref
           .read(remindersProvider)
@@ -387,7 +406,7 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
               forecast.longitude == plan.longitude
           ? forecast.rainDuring(
               at,
-              at.add(const Duration(hours: 3)),
+              at.add(Duration(minutes: plan.returnMinutes)),
               now: at,
               threshold: plan.rainThreshold,
             )
@@ -459,11 +478,16 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
   Widget build(BuildContext context) {
     if (!_loaded) return const Center(child: CircularProgressIndicator());
     final all = ref.watch(remindersProvider);
-    if (_baseline != null) {
-      _baseline = all.where((r) => r.id == _baseline!.id).firstOrNull;
-    }
+    final currentOwner = all
+        .where((r) => r.id == _baseline?.id && r.isVisible)
+        .firstOrNull;
     final plans = all
-        .where((r) => r.isVisible && r.details.kind == 'departure')
+        .where(
+          (r) =>
+              r.isVisible &&
+              r.details.kind == 'departure' &&
+              r.details.planId == null,
+        )
         .toList();
     final plan = _plan;
     final suggestion = plan.learningEnabled ? plan.suggestion() : null;
@@ -480,8 +504,8 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
             weather.longitude == plan.longitude) {
           rain = weather.rainDuring(
             preview.eventTime!,
-            preview.eventTime!.add(const Duration(hours: 3)),
-            now: DateTime.now(),
+            preview.eventTime!.add(Duration(minutes: plan.returnMinutes)),
+            now: preview.triggerTime!,
             threshold: plan.rainThreshold,
           );
         }
@@ -489,6 +513,31 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
     } catch (_) {
       rain = null;
     }
+    final dates =
+        all
+            .where(
+              (r) =>
+                  currentOwner != null &&
+                  r.details.planId == currentOwner.id &&
+                  r.details.kind == 'departure' &&
+                  r.isVisible,
+            )
+            .toList()
+          ..sort((a, b) => a.eventTime!.compareTo(b.eventTime!));
+    final today = DateTime.now();
+    final focusDate =
+        dates
+            .where(
+              (r) =>
+                  !r.isCompleted &&
+                  r.eventTime!.year == today.year &&
+                  r.eventTime!.month == today.month &&
+                  r.eventTime!.day == today.day,
+            )
+            .firstOrNull ??
+        dates
+            .where((r) => !r.isCompleted && r.triggerTime!.isAfter(today))
+            .firstOrNull;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -581,6 +630,7 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
         if (plan.weatherEnabled) ...[
           Text(t('weatherConsent')),
           _field('rain_threshold', t('rainThreshold')),
+          _field('return_minutes', t('returnWindow')),
           TextField(
             controller: _city,
             enabled: !_busy,
@@ -740,12 +790,26 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
             child: Text(t('activate')),
           ),
         ],
-        if (_baseline != null) ...[
+        if (currentOwner != null) ...[
           const Divider(),
-          for (final item in _baseline!.details.checklist.where(
-            (e) =>
-                !(e.once && e.done) && (e.condition != 'rain' || rain != false),
-          ))
+          RoutineCoveragePanel(planId: currentOwner.id),
+          Text(t('independentDates')),
+          Text(
+            '${dates.length} · ${dates.isEmpty ? '' : formatLocalDateTime(dates.last.eventTime!)}',
+          ),
+          TextButton(
+            onPressed: _busy ? null : () => _load(currentOwner),
+            child: Text(t('reloadPlan')),
+          ),
+          if (focusDate != null)
+            Text(formatLocalDateTime(focusDate.eventTime!)),
+          for (final item
+              in (focusDate?.details.checklist ?? const <ChecklistItem>[])
+                  .where(
+                    (e) =>
+                        !(e.once && e.done) &&
+                        (e.condition != 'rain' || rain != false),
+                  ))
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
               value: item.done,
@@ -759,12 +823,17 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
                         final result = await ref
                             .read(remindersProvider.notifier)
                             .setChecklistItem(
-                              _baseline!,
+                              focusDate!,
                               item.id,
                               v ?? false,
                               _generation,
                             );
                         if (mounted && context.mounted && _current) {
+                          final owner = ref
+                              .read(remindersProvider)
+                              .where((r) => r.id == currentOwner.id)
+                              .firstOrNull;
+                          if (owner != null) _load(owner);
                           _feedback(
                             result.nativeSyncFailed
                                 ? AppLocalizations.of(
@@ -795,8 +864,8 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
                       final result = await ref
                           .read(remindersProvider.notifier)
                           .changeLifecycle(
-                            _baseline!,
-                            _baseline!.details.paused ? 'resume' : 'pause',
+                            currentOwner,
+                            currentOwner.details.paused ? 'resume' : 'pause',
                             _generation,
                           );
                       if (mounted && context.mounted && _current) {
@@ -819,7 +888,7 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
                       }
                     }
                   },
-            child: Text(t(_baseline!.details.paused ? 'resume' : 'pause')),
+            child: Text(t(currentOwner.details.paused ? 'resume' : 'pause')),
           ),
         ],
         if (_busy) const LinearProgressIndicator(),

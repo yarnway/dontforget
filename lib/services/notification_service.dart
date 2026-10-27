@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -14,6 +15,7 @@ import 'notification_journal.dart';
 import 'macos_notification_scheduler.dart';
 import 'startup_trace.dart';
 import 'system_notification_reader.dart';
+import 'notification_window.dart';
 
 class NotificationService {
   static final _instances = Expando<NotificationService>();
@@ -24,6 +26,7 @@ class NotificationService {
   NotificationService._internal(DatabaseHelper database)
     : flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin(),
       usesNativeNotifications = !Platform.isWindows && !Platform.isLinux,
+      nativePendingLimit = NotificationWindow.platformLimit,
       macScheduler = Platform.isMacOS
           ? const MacOSNotificationScheduler()
           : null,
@@ -38,6 +41,7 @@ class NotificationService {
     Future<String> Function()? readDatasetEpoch,
     DatabaseHelper? database,
     this.macScheduler,
+    this.nativePendingLimit,
   }) : _now = now ?? DateTime.now,
        _database = database,
        _readDatasetEpoch =
@@ -212,6 +216,11 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
   final MacOSNotificationScheduler? macScheduler;
   final bool usesNativeNotifications;
+  final int? nativePendingLimit;
+  final _nativeWindow = <String, ({DateTime? trigger, String? signature})>{};
+  String? _nativeWindowEpoch;
+  Future<void> _windowTail = Future.value();
+  int _windowMutation = 0, _windowReconciled = -1;
   DateTime Function() _now = DateTime.now;
   Future<void>? _initialization;
   bool _initialized = false;
@@ -260,6 +269,10 @@ class NotificationService {
   void _invalidateTimers() {
     _revisions.clear();
     _scheduledReminders.clear();
+    _nativeWindow.clear();
+    _nativeWindowEpoch = null;
+    _windowMutation++;
+    _windowReconciled = -1;
     for (final timer in _activeTimers.values) {
       timer.cancel();
     }
@@ -500,6 +513,9 @@ class NotificationService {
     Reminder reminder, {
     bool strict = false,
   }) async {
+    if (usesNativeNotifications && nativePendingLimit != null) {
+      return _scheduleWithinWindow(reminder, strict: strict);
+    }
     // Invalidate older schedules immediately, before cancellation or permission
     // requests yield. Native mutations for one task must also finish in order.
     final revision = ++_nextRevision;
@@ -549,107 +565,239 @@ class NotificationService {
     // Native mobile/Darwin scheduling if supported
     if (usesNativeNotifications && !isSuppressed(reminder)) {
       try {
-        String channelId;
-        String channelName;
-        String channelDescription;
-        Priority priority;
-        Importance importance;
-        bool enableVibration = false;
-        bool playSound = false;
-
-        if (reminder.quadrantLevel == 1) {
-          channelId = 'q1_channel';
-          channelName = 'Urgent & Important';
-          channelDescription = 'High priority alerts with sound and vibration';
-          priority = Priority.high;
-          importance = Importance.max;
-          enableVibration = true;
-          playSound = true;
-        } else if (reminder.quadrantLevel == 2) {
-          channelId = 'q2_channel';
-          channelName = 'Important';
-          channelDescription = 'Standard priority alerts';
-          priority = Priority.defaultPriority;
-          importance = Importance.defaultImportance;
-          enableVibration = true;
-          playSound = true;
-        } else {
-          channelId = 'q34_channel';
-          channelName = 'General Reminders';
-          channelDescription = 'Low priority silent alerts';
-          priority = Priority.low;
-          importance = Importance.low;
-          enableVibration = false;
-          playSound = false;
-        }
-
-        final androidPlatformChannelSpecifics = AndroidNotificationDetails(
-          channelId,
-          channelName,
-          channelDescription: channelDescription,
-          importance: importance,
-          priority: priority,
-          enableVibration: enableVibration,
-          playSound: playSound,
-          fullScreenIntent: reminder.quadrantLevel == 1,
-        );
-
-        final platformChannelSpecifics = NotificationDetails(
-          android: androidPlatformChannelSpecifics,
-          iOS: DarwinNotificationDetails(
-            presentSound: playSound,
-            presentAlert: true,
-            presentBadge: true,
-            interruptionLevel: reminder.quadrantLevel == 1
-                ? InterruptionLevel.timeSensitive
-                : InterruptionLevel.active,
-          ),
-          macOS: DarwinNotificationDetails(
-            presentSound: playSound,
-            presentAlert: true,
-            presentBadge: true,
-          ),
-        );
-
-        await _enqueueNative(reminder.id, () async {
-          if (_revisions[reminder.id] != revision || isSuppressed(reminder)) {
-            return;
-          }
-          await _journalNative(reminder.id, (nativeId) {
-            final payload = NotificationPayload.forReminder(
-              reminder,
-              datasetEpoch: epoch,
-            ).encode();
-            final mac = macScheduler;
-            if (mac != null) {
-              return mac.schedule(
-                nativeId: nativeId,
-                title: reminder.taskTitle,
-                body:
-                    reminder.notificationSummary ?? 'You have a scheduled task',
-                trigger: reminder.triggerTime!,
-                playSound: playSound,
-                payload: payload,
-              );
-            }
-            return flutterLocalNotificationsPlugin.zonedSchedule(
-              nativeId,
-              reminder.taskTitle,
-              reminder.notificationSummary ?? 'You have a scheduled task',
-              tz.TZDateTime.from(reminder.triggerTime!, tz.local),
-              platformChannelSpecifics,
-              androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-              uiLocalNotificationDateInterpretation:
-                  UILocalNotificationDateInterpretation.absoluteTime,
-              payload: payload,
-            );
-          }, schedule: reminder);
-        });
+        await _submitNativeReminder(reminder, revision, epoch);
       } catch (e) {
         if (strict || _strictFailures) rethrow;
         debugPrint('Mobile zonedSchedule error: $e');
       }
     }
+  }
+
+  Future<void> _submitNativeReminder(
+    Reminder reminder,
+    int revision,
+    String epoch,
+  ) async {
+    String channelId;
+    String channelName;
+    String channelDescription;
+    Priority priority;
+    Importance importance;
+    bool enableVibration = false;
+    bool playSound = false;
+
+    if (reminder.quadrantLevel == 1) {
+      channelId = 'q1_channel';
+      channelName = 'Urgent & Important';
+      channelDescription = 'High priority alerts with sound and vibration';
+      priority = Priority.high;
+      importance = Importance.max;
+      enableVibration = true;
+      playSound = true;
+    } else if (reminder.quadrantLevel == 2) {
+      channelId = 'q2_channel';
+      channelName = 'Important';
+      channelDescription = 'Standard priority alerts';
+      priority = Priority.defaultPriority;
+      importance = Importance.defaultImportance;
+      enableVibration = true;
+      playSound = true;
+    } else {
+      channelId = 'q34_channel';
+      channelName = 'General Reminders';
+      channelDescription = 'Low priority silent alerts';
+      priority = Priority.low;
+      importance = Importance.low;
+      enableVibration = false;
+      playSound = false;
+    }
+
+    final androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      channelId,
+      channelName,
+      channelDescription: channelDescription,
+      importance: importance,
+      priority: priority,
+      enableVibration: enableVibration,
+      playSound: playSound,
+      fullScreenIntent: reminder.quadrantLevel == 1,
+    );
+
+    final platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      iOS: DarwinNotificationDetails(
+        presentSound: playSound,
+        presentAlert: true,
+        presentBadge: true,
+        interruptionLevel: reminder.quadrantLevel == 1
+            ? InterruptionLevel.timeSensitive
+            : InterruptionLevel.active,
+      ),
+      macOS: DarwinNotificationDetails(
+        presentSound: playSound,
+        presentAlert: true,
+        presentBadge: true,
+      ),
+    );
+
+    await _enqueueNative(reminder.id, () async {
+      if (_revisions[reminder.id] != revision || isSuppressed(reminder)) {
+        return;
+      }
+      await _journalNative(reminder.id, (nativeId) {
+        final payload = NotificationPayload.forReminder(
+          reminder,
+          datasetEpoch: epoch,
+        ).encode();
+        final mac = macScheduler;
+        if (mac != null) {
+          return mac.schedule(
+            nativeId: nativeId,
+            title: reminder.taskTitle,
+            body: reminder.notificationSummary ?? 'You have a scheduled task',
+            trigger: reminder.triggerTime!,
+            playSound: playSound,
+            payload: payload,
+          );
+        }
+        return flutterLocalNotificationsPlugin.zonedSchedule(
+          nativeId,
+          reminder.taskTitle,
+          reminder.notificationSummary ?? 'You have a scheduled task',
+          tz.TZDateTime.from(reminder.triggerTime!, tz.local),
+          platformChannelSpecifics,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          uiLocalNotificationDateInterpretation:
+              UILocalNotificationDateInterpretation.absoluteTime,
+          payload: payload,
+        );
+      }, schedule: reminder);
+    });
+  }
+
+  Future<void> _scheduleWithinWindow(
+    Reminder reminder, {
+    required bool strict,
+  }) async {
+    _windowMutation++;
+    final revision = ++_nextRevision;
+    _revisions[reminder.id] = revision;
+    _activeTimers.remove(reminder.id)?.cancel();
+    _scheduledReminders.remove(reminder.id);
+    if (reminder.canNotify &&
+        reminder.noticeAcknowledgedAt == null &&
+        reminder.triggerTime!.isAfter(_now())) {
+      _scheduledReminders[reminder.id] = reminder;
+    }
+    await init();
+    if (!_initialized) {
+      throw StateError('Native notification initialization failed.');
+    }
+    if (_revisions[reminder.id] == revision &&
+        identical(_scheduledReminders[reminder.id], reminder) &&
+        !_maintenance) {
+      _armTimer(reminder, revision);
+    }
+    await _reconcileNativeWindow(strict: strict);
+  }
+
+  String _nativeSignature(Reminder task) => jsonEncode([
+    task.triggerTime!.toUtc().microsecondsSinceEpoch,
+    task.noticeRevision,
+    task.taskTitle,
+    task.notificationSummary,
+    task.quadrantLevel,
+  ]);
+
+  /// Serializes capacity changes across different task IDs. A failed cancel
+  /// keeps its slot reserved, so a replacement cannot overflow the window.
+  Future<void> _reconcileNativeWindow({required bool strict}) {
+    final operation = _windowTail.then((_) async {
+      try {
+        final epoch = await _readDatasetEpoch();
+        if (_nativeWindowEpoch == epoch &&
+            _windowMutation == _windowReconciled) {
+          return;
+        }
+        final version = _windowMutation;
+        if (_nativeWindowEpoch != epoch) {
+          _nativeWindow.clear();
+          final database = _database;
+          if (database != null) {
+            final snapshot = await database.withNotificationJournal(
+              (j) => j.read(),
+            );
+            if (snapshot?.epoch == epoch) {
+              for (final entry in snapshot!.entries.values) {
+                if (entry.needsCancellation) {
+                  _nativeWindow[entry.reminderId] = (
+                    trigger: entry.triggerUtcMicros == null
+                        ? null
+                        : DateTime.fromMicrosecondsSinceEpoch(
+                            entry.triggerUtcMicros!,
+                            isUtc: true,
+                          ),
+                    signature: null,
+                  );
+                }
+              }
+            }
+          }
+          _nativeWindowEpoch = epoch;
+        }
+        final now = _now();
+        final selected = NotificationWindow.select(
+          _scheduledReminders.values,
+          now,
+          limit: nativePendingLimit,
+          isSuppressed: isSuppressed,
+        );
+        final desired = {for (final task in selected) task.id: task};
+        for (final id in _nativeWindow.keys.toList()) {
+          final previous = _nativeWindow[id]!;
+          final task = desired[id];
+          // Past banners remain available unless the task was explicitly edited
+          // or cancelled; freeing a delivered slot must not erase that banner.
+          if (previous.trigger?.isAfter(now) == false && task == null) {
+            _nativeWindow.remove(id);
+            continue;
+          }
+          if (task == null || previous.signature != _nativeSignature(task)) {
+            await _cancelNative(id, strict: true);
+            _nativeWindow.remove(id);
+          }
+        }
+        for (final task in selected) {
+          if (_nativeWindow.containsKey(task.id) ||
+              !identical(_scheduledReminders[task.id], task) ||
+              isSuppressed(task)) {
+            continue;
+          }
+          final revision = _revisions[task.id];
+          if (revision == null) continue;
+          // Reserve before submitting: an uncertain native failure may have
+          // created a request, so the next pass must cancel it before retrying.
+          _nativeWindow[task.id] = (trigger: task.triggerTime, signature: null);
+          await _submitNativeReminder(task, revision, epoch);
+          if (identical(_scheduledReminders[task.id], task) &&
+              _revisions[task.id] == revision) {
+            _nativeWindow[task.id] = (
+              trigger: task.triggerTime,
+              signature: _nativeSignature(task),
+            );
+          }
+        }
+        _windowReconciled = version;
+      } catch (error) {
+        if (strict || _strictFailures) rethrow;
+        debugPrint('Notification window reconciliation failed: $error');
+      }
+    });
+    _windowTail = operation.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace __) {},
+    );
+    return operation;
   }
 
   void _armTimer(Reminder reminder, int revision) {
@@ -684,10 +832,22 @@ class NotificationService {
   }
 
   Future<void> _cancelReminder(String id, {bool strict = false}) async {
+    _windowMutation++;
     _revisions.remove(id);
     _scheduledReminders.remove(id);
     _activeTimers.remove(id)?.cancel();
-    await _cancelNative(id, strict: strict);
+    try {
+      // Ignoring an error at the compatibility API must not release capacity
+      // that an uncertain native cancellation may still occupy.
+      await _cancelNative(id, strict: strict || nativePendingLimit != null);
+    } catch (_) {
+      if (strict || _strictFailures) rethrow;
+      return;
+    }
+    _nativeWindow.remove(id);
+    if (usesNativeNotifications && nativePendingLimit != null) {
+      await _reconcileNativeWindow(strict: strict);
+    }
   }
 
   Future<void> _enqueueNative(String id, Future<void> Function() action) async {
@@ -736,6 +896,10 @@ class NotificationService {
     }
     _activeTimers.remove(reminder.id)?.cancel();
     _scheduledReminders.remove(reminder.id);
+    _windowMutation++;
+    if (usesNativeNotifications && nativePendingLimit != null) {
+      await _reconcileNativeWindow(strict: false);
+    }
 
     // 高压场景专注模式：拦截并静音所有“紧急不重要 (Q3)”和“不重要不紧急 (Q4)”的通知
     if (isImmersiveModeActive &&

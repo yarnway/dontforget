@@ -93,6 +93,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     await Future.wait([
       if (_timeZoneChanges != null) _timeZoneChanges!.stop(),
       if (_notificationRetries != null) _notificationRetries!.stop(),
+      if (_departureMaintenance != null) _departureMaintenance!.stop(),
       if (_dueSubscription != null) _dueSubscription!.cancel(),
       if (_catchUpDigestSubscription != null)
         _catchUpDigestSubscription!.cancel(),
@@ -111,6 +112,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   Timer? _heartbeatTimer;
   NotificationRetryCoordinator? _notificationRetries;
+  NotificationRetryCoordinator? _departureMaintenance;
   TimeZoneChangeCoordinator? _timeZoneChanges;
   StreamSubscription<Reminder>? _dueSubscription;
   StreamSubscription<List<Reminder>>? _catchUpDigestSubscription;
@@ -253,6 +255,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // 启动时触发 Wi-Fi 嗅探与情境感知
     _contextTriggers.detectCurrentWifiSsid();
 
+    _departureMaintenance = NotificationRetryCoordinator(
+      run: (isActive) async {
+        bool active() => _runtimeActive && isActive();
+        if (!active()) return;
+        final notifier = ref.read(remindersProvider.notifier);
+        await notifier.refreshDepartureSchedules();
+        if (!active()) return;
+        await notifier.refreshDepartureWeather(
+          ref.read(departureWeatherProvider),
+          isActive: active,
+        );
+      },
+    )..setForeground(true);
+
     _notificationRetries = NotificationRetryCoordinator(
       run: (isActive) async {
         if (!_runtimeActive || !isActive()) return;
@@ -351,6 +367,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _heartbeatTimer?.cancel();
     unawaited(_timeZoneChanges?.stop());
     unawaited(_notificationRetries?.stop());
+    unawaited(_departureMaintenance?.stop());
     _dueSubscription?.cancel();
     _catchUpDigestSubscription?.cancel();
     _suppressedSubscription?.cancel();
@@ -365,6 +382,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _notificationRetries?.setForeground(state == AppLifecycleState.resumed);
+    _departureMaintenance?.setForeground(state == AppLifecycleState.resumed);
     if (state == AppLifecycleState.resumed && _runtimeActive) {
       // Desktop/mobile timers can pause while hidden or asleep. Reconcile from
       // current task state instead of waiting for another timer/broadcast.
@@ -378,6 +396,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (!_runtimeActive) return;
     _checkDueReminders();
     unawaited(_notificationRetries?.tick());
+    unawaited(_departureMaintenance?.tick());
     _noticeClock.value = DateTime.now();
   }
 
@@ -394,7 +413,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final now = DateTime.now();
 
     for (final r in reminders) {
-      if (!r.isCompleted &&
+      if (r.canNotify &&
           r.triggerTime != null &&
           r.noticeAcknowledgedAt == null) {
         // If due and within the last 15 minutes and not yet prompted

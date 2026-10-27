@@ -324,6 +324,9 @@ extension TaskManagement on RemindersNotifier {
     if (!expected.details.checklist.any((e) => e.id == itemId)) {
       throw const FormatException('Checklist item missing');
     }
+    if (expected.details.kind == 'departure') {
+      return _setDepartureChecklist(expected, itemId, done, generation);
+    }
     return editTaskDetails(
       expected,
       expected.details.patch({
@@ -375,6 +378,22 @@ extension TaskManagement on RemindersNotifier {
           for (final row in all.where(
             (r) => r.id == target.id || r.details.planId == target.id,
           )) {
+            if (row.id != target.id) {
+              if (action == 'trash' && row.details.deletedAt != null) continue;
+              if (action == 'restore' &&
+                  (target.details.deletedAt == null ||
+                      row.details.deletedAt != target.details.deletedAt)) {
+                continue;
+              }
+              if (action == 'archive' && row.details.archivedAt != null) {
+                continue;
+              }
+              if (action == 'unarchive' &&
+                  (target.details.archivedAt == null ||
+                      row.details.archivedAt != target.details.archivedAt)) {
+                continue;
+              }
+            }
             if (row.id != target.id &&
                 row.isCompleted &&
                 (action == 'pause' || action == 'resume')) {

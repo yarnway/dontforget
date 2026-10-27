@@ -167,7 +167,7 @@ class ReminderNoticePanel extends StatelessWidget {
                       child: Text(l10n.get('snoozeMore')),
                     ),
                   ),
-                if (reminder.isRecurring && onSkip != null)
+                if (reminder.canSkipOccurrence && onSkip != null)
                   TextButton(
                     onPressed: busy ? null : () => onSkip!(reminder),
                     child: Text(l10n.get('skipOccurrence')),

@@ -16,6 +16,7 @@ import '../../services/recovery/runtime_gate.dart';
 import '../formatters/local_date_time.dart';
 import '../screens/notification_repair_screen.dart';
 import 'inline_feedback.dart';
+import 'routine_coverage_panel.dart';
 
 class MedicationPlanPanel extends ConsumerStatefulWidget {
   const MedicationPlanPanel({super.key, this.initialPlanId});
@@ -600,6 +601,7 @@ Use YYYY-MM-DD dates only when an exact date is stated. times contains only expl
           ),
         ],
         if (_baseline != null) ...[
+          RoutineCoveragePanel(planId: _baseline!.id),
           const Divider(),
           Wrap(
             spacing: 8,
