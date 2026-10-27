@@ -164,7 +164,8 @@ void main() {
         AppSettings.defaults().copyWith(apiKey: 'private-fixture-key').toJson()
           ..remove('ai_profiles_json')
           ..remove('ai_fallback_enabled')
-          ..remove('appearance'),
+          ..remove('appearance')
+          ..remove('input_send_mode'),
       ],
       'media_records': [
         {

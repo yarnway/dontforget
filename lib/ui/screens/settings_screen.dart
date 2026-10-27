@@ -2,6 +2,7 @@ import '../widgets/inline_feedback.dart';
 import '../widgets/unsaved_editor_scope.dart';
 import '../widgets/editable_text_menu.dart';
 import '../widgets/appearance_picker.dart';
+import '../widgets/input_send_mode_picker.dart';
 import '../../data/database_helper.dart';
 import '../../services/recovery/runtime_gate.dart';
 import '../widgets/notification_permission_panel.dart';
@@ -119,6 +120,7 @@ typedef _SettingsDraft = ({
   String model,
   String language,
   AppAppearance appearance,
+  InputSendMode inputSendMode,
 });
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
@@ -134,6 +136,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     model: _modelNameController.text,
     language: _selectedLang,
     appearance: _selectedAppearance,
+    inputSendMode: _selectedSendMode,
   );
 
   void _draftChanged() {
@@ -158,6 +161,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _modelNameController.text = current.modelName;
         _selectedLang = current.language;
         _selectedAppearance = current.appearance;
+        _selectedSendMode = current.inputSendMode;
         _selectedProvider = null;
         for (final provider in _providers) {
           if (provider.defaultBaseUrl == current.baseUrl &&
@@ -180,6 +184,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late TextEditingController _modelNameController;
   String _selectedLang = 'zh';
   AppAppearance _selectedAppearance = AppAppearance.system;
+  InputSendMode _selectedSendMode = InputSendMode.enter;
   ModelProvider? _selectedProvider;
 
   // Edge AI Probe State
@@ -205,6 +210,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _modelNameController = TextEditingController(text: settings.modelName);
     _selectedLang = settings.language;
     _selectedAppearance = settings.appearance;
+    _selectedSendMode = settings.inputSendMode;
     _savedDraft = _captureDraft();
     for (final controller in [
       _apiKeyController,
@@ -277,6 +283,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         model: current.modelName,
         language: current.language,
         appearance: current.appearance,
+        inputSendMode: current.inputSendMode,
       );
       _dirty = _captureDraft() != _savedDraft;
     });
@@ -326,6 +333,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       modelName: _modelNameController.text.trim(),
       language: _selectedLang,
       appearance: _selectedAppearance,
+      inputSendMode: _selectedSendMode,
     );
   }
 
@@ -680,6 +688,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           ? null
                           : (value) {
                               setState(() => _selectedAppearance = value);
+                              _draftChanged();
+                            },
+                    ),
+                    const SizedBox(height: 14),
+                    InputSendModePicker(
+                      value: _selectedSendMode,
+                      onChanged: !_ready || _isSaving
+                          ? null
+                          : (value) {
+                              setState(() => _selectedSendMode = value);
                               _draftChanged();
                             },
                     ),

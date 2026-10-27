@@ -164,6 +164,60 @@ void main() {
     );
   });
 
+  testWidgets('send mode is saved explicitly and survives settings reload', (
+    tester,
+  ) async {
+    await showSettings(tester);
+    final picker = find.byKey(const ValueKey('input-send-mode'));
+    await tester.ensureVisible(picker);
+    await tester.tap(picker);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('仅发送按钮').last);
+    await tester.pumpAndSettle();
+    expect(container.read(settingsProvider).inputSendMode, InputSendMode.enter);
+    await tester.runAsync(() async {
+      await tester.tap(find.widgetWithText(FilledButton, '保存'));
+      for (
+        var i = 0;
+        i < 100 &&
+            container.read(settingsProvider).inputSendMode !=
+                InputSendMode.button;
+        i++
+      ) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+    });
+    await tester.pumpAndSettle();
+    expect(
+      container.read(settingsProvider).inputSendMode,
+      InputSendMode.button,
+    );
+    await tester.runAsync(() async {
+      final reloaded = SettingsNotifier(helper);
+      await reloaded.ready;
+      expect(reloaded.state.inputSendMode, InputSendMode.button);
+      expect(reloaded.state.apiKey, 'user-test-key');
+      reloaded.dispose();
+    });
+  });
+
+  testWidgets('send mode participates in discard confirmation', (tester) async {
+    await showSettings(tester, routed: true);
+    final picker = find.byKey(const ValueKey('input-send-mode'));
+    await tester.ensureVisible(picker);
+    await tester.tap(picker);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('仅发送按钮').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.text('有未保存的修改'), findsOneWidget);
+    await tester.tap(find.text('放弃修改'));
+    await tester.pumpAndSettle();
+    expect(container.read(settingsProvider).inputSendMode, InputSendMode.enter);
+    expect(find.byType(SettingsScreen), findsNothing);
+  });
+
   testWidgets('discarding an appearance change keeps the saved mode', (
     tester,
   ) async {

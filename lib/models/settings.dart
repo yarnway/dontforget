@@ -3,6 +3,8 @@ import 'ai_profile.dart';
 
 enum AppAppearance { system, light, dark }
 
+enum InputSendMode { enter, button }
+
 class AppSettings {
   final String id;
   final String apiKey;
@@ -10,6 +12,7 @@ class AppSettings {
   final String modelName;
   final String language;
   final AppAppearance appearance;
+  final InputSendMode inputSendMode;
   final List<AiProfile>? _profiles;
   final bool aiFallbackEnabled;
   List<AiProfile> get aiProfiles => _profiles ?? const [];
@@ -36,6 +39,7 @@ class AppSettings {
       modelName: chosen?.modelName ?? modelName,
       language: language,
       appearance: appearance,
+      inputSendMode: inputSendMode,
     );
   }
 
@@ -71,6 +75,7 @@ class AppSettings {
     required this.modelName,
     required this.language,
     this.appearance = AppAppearance.system,
+    this.inputSendMode = InputSendMode.enter,
     List<AiProfile>? aiProfiles,
     this.aiFallbackEnabled = false,
   }) : _profiles = aiProfiles == null ? null : List.unmodifiable(aiProfiles);
@@ -115,6 +120,10 @@ class AppSettings {
     if (!AppAppearance.values.any((value) => value.name == appearance)) {
       throw const FormatException('Invalid appearance preference');
     }
+    final sendMode = json['input_send_mode'] ?? 'enter';
+    if (!InputSendMode.values.any((value) => value.name == sendMode)) {
+      throw const FormatException('Invalid input send preference');
+    }
     if (json.containsKey('ai_fallback_enabled') &&
         !const [0, 1].contains(json['ai_fallback_enabled'])) {
       throw const FormatException('Invalid fallback preference');
@@ -126,6 +135,7 @@ class AppSettings {
       modelName: json['model_name'] as String? ?? '',
       language: json['language'] as String? ?? 'zh',
       appearance: AppAppearance.values.byName(appearance as String),
+      inputSendMode: InputSendMode.values.byName(sendMode as String),
       aiProfiles: _readProfiles(json['ai_profiles_json']),
       aiFallbackEnabled: json['ai_fallback_enabled'] == 1,
     );
@@ -138,6 +148,7 @@ class AppSettings {
     'model_name': modelName,
     'language': language,
     'appearance': appearance.name,
+    'input_send_mode': inputSendMode.name,
     'ai_profiles_json': jsonEncode(
       effectiveProfiles.map((p) => p.toJson()).toList(),
     ),
@@ -150,6 +161,7 @@ class AppSettings {
     String? modelName,
     String? language,
     AppAppearance? appearance,
+    InputSendMode? inputSendMode,
     List<AiProfile>? aiProfiles,
     bool? aiFallbackEnabled,
   }) {
@@ -184,6 +196,7 @@ class AppSettings {
       modelName: modelName ?? this.modelName,
       language: language ?? this.language,
       appearance: appearance ?? this.appearance,
+      inputSendMode: inputSendMode ?? this.inputSendMode,
       aiProfiles: profiles,
       aiFallbackEnabled: aiFallbackEnabled ?? this.aiFallbackEnabled,
     );

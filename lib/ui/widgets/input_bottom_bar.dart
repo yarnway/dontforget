@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../providers/home_controller.dart';
+import '../../models/settings.dart';
 import '../../l10n/app_localizations.dart';
 import 'voice_capture_feedback.dart';
 
@@ -64,10 +65,24 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   }
 
   void _submitText() {
+    final composing = _textController.value.composing;
+    if (composing.isValid && !composing.isCollapsed) return;
     final text = _textController.text.trim();
     if (text.isEmpty) return;
     _textController.clear();
     ref.read(homeControllerProvider.notifier).processText(text);
+  }
+
+  void _insertLineBreak() {
+    final value = _textController.value;
+    if (value.composing.isValid && !value.composing.isCollapsed) return;
+    final selection = value.selection;
+    final start = selection.isValid ? selection.start : value.text.length;
+    final end = selection.isValid ? selection.end : value.text.length;
+    _textController.value = TextEditingValue(
+      text: value.text.replaceRange(start, end, '\n'),
+      selection: TextSelection.collapsed(offset: start + 1),
+    );
   }
 
   Future<void> _startLongPressRecording(LongPressStartDetails details) async {
@@ -283,6 +298,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final homeState = ref.watch(homeControllerProvider);
+    final enterSends = ref.watch(
+      settingsProvider.select((s) => s.inputSendMode == InputSendMode.enter),
+    );
     final isLocalMode = ref.watch(
       settingsProvider.select((s) => !s.hasConfiguredExtraction),
     );
@@ -425,34 +443,61 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                         // typing, selection and IME retain normal TextField behavior.
                         : IgnorePointer(
                             ignoring: idleVoiceTarget,
-                            child: TextField(
-                              controller: _textController,
-                              focusNode: _focusNode,
-                              style: const TextStyle(fontSize: 13),
-                              decoration: InputDecoration(
-                                hintText: l10n.get(
-                                  _focusNode.hasFocus
-                                      ? 'inputTypingHint'
-                                      : isLocalMode
-                                      ? 'localInputHint'
-                                      : 'inputHint',
+                            child: CallbackShortcuts(
+                              bindings: {
+                                const SingleActivator(LogicalKeyboardKey.enter):
+                                    enterSends ? _submitText : _insertLineBreak,
+                                const SingleActivator(
+                                  LogicalKeyboardKey.numpadEnter,
+                                ): enterSends
+                                    ? _submitText
+                                    : _insertLineBreak,
+                                const SingleActivator(
+                                  LogicalKeyboardKey.enter,
+                                  shift: true,
+                                ): _insertLineBreak,
+                                const SingleActivator(
+                                  LogicalKeyboardKey.numpadEnter,
+                                  shift: true,
+                                ): _insertLineBreak,
+                              },
+                              child: TextField(
+                                controller: _textController,
+                                focusNode: _focusNode,
+                                minLines: 1,
+                                maxLines: 4,
+                                keyboardType: TextInputType.multiline,
+                                textInputAction: enterSends
+                                    ? TextInputAction.send
+                                    : TextInputAction.newline,
+                                style: const TextStyle(fontSize: 13),
+                                decoration: InputDecoration(
+                                  hintText: l10n.get(
+                                    _focusNode.hasFocus
+                                        ? 'inputTypingHint'
+                                        : isLocalMode
+                                        ? 'localInputHint'
+                                        : 'inputHint',
+                                  ),
+                                  hintMaxLines: 2,
+                                  hintStyle: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  filled: false,
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                    vertical: 8,
+                                  ),
                                 ),
-                                hintMaxLines: 2,
-                                hintStyle: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade500,
-                                ),
-                                border: InputBorder.none,
-                                enabledBorder: InputBorder.none,
-                                focusedBorder: InputBorder.none,
-                                filled: false,
-                                isDense: true,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                  vertical: 8,
-                                ),
+                                onSubmitted: enterSends
+                                    ? (_) => _submitText()
+                                    : null,
                               ),
-                              onSubmitted: (_) => _submitText(),
                             ),
                           ),
                   ),

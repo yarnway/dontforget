@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/models/reminder.dart';
+import 'package:dont_forget/models/settings.dart';
 import 'package:dont_forget/providers/home_controller.dart';
 import 'package:dont_forget/providers/providers.dart';
 import 'package:dont_forget/services/notification_service.dart';
@@ -25,6 +26,9 @@ class _ControlledHomeController extends HomeController {
   int cancels = 0;
   int drafts = 0;
   Completer<String?>? pendingText;
+  final sent = <String>[];
+  @override
+  Future<void> processText(String text) async => sent.add(text);
 
   @override
   Future<bool> cancelRecording() async {
@@ -213,6 +217,80 @@ void main() {
     await tester.pump();
     expect(find.text('Keep this draft'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets(
+    'Enter send mode preserves IME composition and supports Shift Enter',
+    (tester) async {
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      final input = find.byType(TextField);
+      await tester.enterText(input, '確認');
+      await tester.pump();
+      final field = tester.widget<TextField>(input);
+      field.controller!.value = const TextEditingValue(
+        text: '確認',
+        selection: TextSelection.collapsed(offset: 2),
+        composing: TextRange(start: 0, end: 2),
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      expect(home.sent, isEmpty);
+      expect(field.controller!.text, '確認');
+      field.controller!.value = const TextEditingValue(
+        text: '確認',
+        selection: TextSelection.collapsed(offset: 2),
+      );
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      expect(field.controller!.text, '確認\n');
+      expect(home.sent, isEmpty);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      expect(home.sent, ['確認']);
+      expect(field.controller!.text, isEmpty);
+    },
+  );
+
+  testWidgets(
+    'button-only mode keeps Enter as a newline until Send is tapped',
+    (tester) async {
+      final settings = container.read(settingsProvider.notifier);
+      await tester.runAsync(
+        () => settings.updateSettings(
+          settings.state.copyWith(inputSendMode: InputSendMode.button),
+        ),
+      );
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      final input = find.byType(TextField);
+      await tester.enterText(input, '今晚读书');
+      await tester.pump();
+      final field = tester.widget<TextField>(input);
+      expect(field.textInputAction, TextInputAction.newline);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      expect(field.controller!.text, '今晚读书\n');
+      expect(home.sent, isEmpty);
+      await tester.enterText(input, '今晚读书\n明早复习');
+      await tester.pump();
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      expect(home.sent, isEmpty);
+      await tester.tap(find.byTooltip('发送'));
+      await tester.pump();
+      expect(home.sent, ['今晚读书\n明早复习']);
+    },
+  );
+
+  testWidgets('mobile keyboard Send follows the configured send mode', (
+    tester,
+  ) async {
+    await show(tester, const InputBottomBar(), reducedMotion: true);
+    await tester.enterText(find.byType(TextField), '明日9時に復習');
+    await tester.pump();
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).textInputAction,
+      TextInputAction.send,
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.send);
+    await tester.pump();
+    expect(home.sent, ['明日9時に復習']);
   });
 
   testWidgets(

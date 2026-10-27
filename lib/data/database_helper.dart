@@ -16,7 +16,7 @@ import '../services/storage_directory_lease.dart';
 part 'database_access.dart';
 
 class DatabaseHelper {
-  static const schemaVersion = 11;
+  static const schemaVersion = 12;
   static final DatabaseHelper instance = DatabaseHelper._init();
   Database? _database;
   Future<Database>? _opening;
@@ -531,7 +531,8 @@ CREATE TABLE Settings (
   language TEXT,
   ai_profiles_json TEXT NOT NULL DEFAULT '[]',
   ai_fallback_enabled INTEGER NOT NULL DEFAULT 0,
-  appearance TEXT NOT NULL DEFAULT 'system'
+  appearance TEXT NOT NULL DEFAULT 'system',
+  input_send_mode TEXT NOT NULL DEFAULT 'enter'
 )
 ''');
 
@@ -669,6 +670,11 @@ CREATE TABLE Reminders (
     if (oldVersion < 11) {
       await db.execute(
         "ALTER TABLE Settings ADD COLUMN appearance TEXT NOT NULL DEFAULT 'system'",
+      );
+    }
+    if (oldVersion < 12) {
+      await db.execute(
+        "ALTER TABLE Settings ADD COLUMN input_send_mode TEXT NOT NULL DEFAULT 'enter'",
       );
     }
 

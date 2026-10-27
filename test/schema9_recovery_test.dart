@@ -96,7 +96,8 @@ void main() {
         AppSettings.defaults().toJson()
           ..remove('ai_profiles_json')
           ..remove('ai_fallback_enabled')
-          ..remove('appearance'),
+          ..remove('appearance')
+          ..remove('input_send_mode'),
       ],
       'media_records': [
         if (date != null)

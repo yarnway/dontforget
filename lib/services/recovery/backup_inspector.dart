@@ -413,6 +413,7 @@ Map<String, String> _columnsFor(String table, int version) => {
     'ai_fallback_enabled': 'b',
   },
   if (table == 'settings' && version >= 11) 'appearance': 's',
+  if (table == 'settings' && version >= 12) 'input_send_mode': 's',
 };
 
 Future<void> _checkSchema(
@@ -525,6 +526,8 @@ Future<void> _checkSchema(
           ? defaultValue == "'[]'"
           : name == 'appearance'
           ? defaultValue == "'system'"
+          : name == 'input_send_mode'
+          ? defaultValue == "'enter'"
           : name == 'recurrence_rule'
           ? const ["'none'", '"none"'].contains(defaultValue)
           : defaultValue == null;
@@ -556,7 +559,7 @@ Future<void> _checkSchema(
 }
 
 void _checkVersion(Object? value) {
-  if (value is! int || !const {7, 8, 9, 10, 11}.contains(value)) {
+  if (value is! int || !const {7, 8, 9, 10, 11, 12}.contains(value)) {
     _fail(BackupInspectionError.unsupportedVersion);
   }
 }

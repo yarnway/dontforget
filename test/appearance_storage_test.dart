@@ -17,7 +17,8 @@ void main() {
       AppSettings.defaults()
           .copyWith(apiKey: 'synthetic-only', language: 'ja')
           .toJson()
-        ..remove('appearance');
+        ..remove('appearance')
+        ..remove('input_send_mode');
   final task = Reminder(
     id: 'kept',
     taskTitle: 'Synthetic reminder',
@@ -67,14 +68,17 @@ void main() {
     () async {
       await legacy();
       final db = await helper.database;
-      expect(await db.getVersion(), 11);
+      expect(await db.getVersion(), DatabaseHelper.schemaVersion);
       expect((await db.query('Settings')).single, {
         ...legacySettings,
         'appearance': 'system',
+        'input_send_mode': 'enter',
       });
       expect((await db.query('Reminders')).single, task);
       final snapshotDir = root.listSync().whereType<Directory>().singleWhere(
-        (d) => d.path.contains('schema-upgrade-v10-to-v11-'),
+        (d) => d.path.contains(
+          'schema-upgrade-v10-to-v${DatabaseHelper.schemaVersion}-',
+        ),
       );
       final snapshot = File('${snapshotDir.path}/snapshot.json');
       final preview = await BackupInspector(
@@ -178,6 +182,7 @@ void main() {
           expect((await db.query('Settings')).single, {
             ...legacySettings,
             'appearance': 'system',
+            'input_send_mode': 'enter',
           });
           expect((await db.query('Reminders')).single, task);
           expect(await file.readAsBytes(), before);
@@ -189,7 +194,10 @@ void main() {
 
     test('appearance survives close, $format backup and recovery', () async {
       final db = await helper.database;
-      await db.update('Settings', {'appearance': 'dark'});
+      await db.update('Settings', {
+        'appearance': 'dark',
+        'input_send_mode': 'button',
+      });
       await helper.close();
       expect(
         AppSettings.fromJson(
@@ -206,7 +214,7 @@ void main() {
         temporaryDirectory: root,
       );
       final preview = await inspector.inspect(backup);
-      expect(preview.version, 11);
+      expect(preview.version, DatabaseHelper.schemaVersion);
       final target = DatabaseHelper.forTesting(
         '${root.path}/restored',
         databaseFactoryFfi,
@@ -227,6 +235,12 @@ void main() {
           AppAppearance.dark,
         );
         expect(await backup.readAsBytes(), bytes);
+        expect(
+          AppSettings.fromJson(
+            (await (await target.database).query('Settings')).single,
+          ).inputSendMode,
+          InputSendMode.button,
+        );
       } finally {
         await target.close();
       }
