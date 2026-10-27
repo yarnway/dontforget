@@ -8,6 +8,7 @@ import 'package:dont_forget/providers/providers.dart';
 import 'package:dont_forget/services/notification_service.dart';
 import 'package:dont_forget/ui/widgets/inline_feedback.dart';
 import 'package:dont_forget/ui/widgets/input_bottom_bar.dart';
+import 'package:dont_forget/ui/widgets/voice_capture_feedback.dart';
 import 'package:dont_forget/ui/widgets/task_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -21,6 +22,23 @@ class _ControlledHomeController extends HomeController {
   Completer<bool>? pendingStart;
   int stops = 0;
   int starts = 0;
+  int cancels = 0;
+  int drafts = 0;
+  Completer<String?>? pendingText;
+
+  @override
+  Future<bool> cancelRecording() async {
+    cancels++;
+    setRecording(false);
+    return true;
+  }
+
+  @override
+  Future<String?> stopRecordingToText({bool Function()? canAcceptDraft}) async {
+    drafts++;
+    setRecording(false);
+    return pendingText == null ? '明日の予定を確認' : await pendingText!.future;
+  }
 
   void setRecording(bool value) => state = state.copyWith(isRecording: value);
 
@@ -226,7 +244,9 @@ void main() {
         isTrue,
       );
       await tester.enterText(find.byType(TextField), '日本語の予定を確認');
-      await tester.longPress(find.byType(TextField));
+      await tester.longPress(
+        find.byKey(const ValueKey('composer-input-surface')),
+      );
       await tester.pumpAndSettle();
       expect(home.starts, 0);
       expect(
@@ -263,14 +283,223 @@ void main() {
     (tester) async {
       home.pendingStart = Completer<bool>()..complete(false);
       await show(tester, const InputBottomBar(), reducedMotion: true);
-      await tester.longPress(find.byType(TextField));
+      await tester.longPress(
+        find.byKey(const ValueKey('composer-input-surface')),
+      );
       await tester.pumpAndSettle();
       expect(home.stops, 0);
       home.pendingStart = null;
-      await tester.longPress(find.byType(TextField));
+      await tester.longPress(
+        find.byKey(const ValueKey('composer-input-surface')),
+      );
       await tester.pumpAndSettle();
       expect(home.starts, 2);
       expect(home.stops, 1);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
+    'iOS upper-left release cancels without processing or drafting',
+    (tester) async {
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      final origin = tester.getCenter(
+        find.byKey(const ValueKey('composer-input-surface')),
+      );
+      final press = await tester.startGesture(origin);
+      await tester.pump(const Duration(milliseconds: 700));
+      await press.moveTo(origin + const Offset(-80, -100));
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<VoiceCaptureFeedback>(find.byType(VoiceCaptureFeedback))
+            .action,
+        VoiceReleaseAction.cancel,
+      );
+      expect(find.text('松手取消录音'), findsOneWidget);
+      await press.up();
+      await tester.pumpAndSettle();
+      expect(home.cancels, 1);
+      expect(home.stops, 0);
+      expect(home.drafts, 0);
+      expect(find.byType(VoiceCaptureFeedback), findsNothing);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
+    'iOS upper-right release fills an editable draft without sending',
+    (tester) async {
+      home.pendingText = Completer<String?>();
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      final origin = tester.getCenter(
+        find.byKey(const ValueKey('composer-input-surface')),
+      );
+      final press = await tester.startGesture(origin);
+      await tester.pump(const Duration(milliseconds: 700));
+      await press.moveTo(origin + const Offset(80, -100));
+      await tester.pumpAndSettle();
+      expect(find.text('松手转文字并编辑'), findsOneWidget);
+      await press.up();
+      await tester.pump();
+      expect(find.text('正在转为可编辑文字…'), findsOneWidget);
+      home.pendingText!.complete('明日の予定を確認');
+      await tester.pumpAndSettle();
+      expect(home.drafts, 1);
+      expect(home.stops, 0);
+      expect(home.cancels, 0);
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.controller!.text, '明日の予定を確認');
+      expect(field.focusNode!.hasFocus, isTrue);
+      await tester.enterText(find.byType(TextField), '明日9時に予定を確認');
+      expect(container.read(remindersProvider), isEmpty);
+      expect(tester.takeException(), isNull);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
+    'iOS dragging back from cancel returns to voice save',
+    (tester) async {
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      final origin = tester.getCenter(
+        find.byKey(const ValueKey('composer-input-surface')),
+      );
+      final press = await tester.startGesture(origin);
+      await tester.pump(const Duration(milliseconds: 700));
+      await press.moveTo(origin + const Offset(-80, -100));
+      await tester.pump();
+      await press.moveTo(origin);
+      await tester.pump();
+      expect(find.text('松手保存语音'), findsOneWidget);
+      await press.up();
+      await tester.pumpAndSettle();
+      expect(home.stops, 1);
+      expect(home.cancels, 0);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
+    'iOS focused empty input can record while its keyboard closes',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.viewInsets = const FakeViewPadding(bottom: 280);
+      addTearDown(tester.view.resetViewInsets);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      await show(
+        tester,
+        const InputBottomBar(),
+        reducedMotion: true,
+        textScale: 2,
+      );
+      final surface = find.byKey(const ValueKey('composer-input-surface'));
+      await tester.tap(surface);
+      await tester.pump();
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).focusNode!.hasFocus,
+        isTrue,
+      );
+      final origin = tester.getCenter(surface);
+      final press = await tester.startGesture(origin);
+      await tester.pump(const Duration(milliseconds: 700));
+      expect(home.starts, 1);
+      expect(find.byType(VoiceCaptureFeedback), findsNothing);
+      expect(tester.takeException(), isNull);
+      tester.view.viewInsets = const FakeViewPadding();
+      await show(
+        tester,
+        const InputBottomBar(),
+        reducedMotion: true,
+        textScale: 2,
+      );
+      expect(find.byType(VoiceCaptureFeedback), findsOneWidget);
+      await press.moveTo(origin + const Offset(70, -80));
+      await press.up();
+      await tester.pumpAndSettle();
+      expect(home.drafts, 1);
+      expect(find.text('明日の予定を確認'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
+    'voice targets fit narrow screens and large text in all languages',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(320, 568);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      for (final language in ['zh', 'en', 'ja']) {
+        for (final brightness in Brightness.values) {
+          await show(
+            tester,
+            const InputBottomBar(),
+            reducedMotion: true,
+            textScale: 2,
+            language: language,
+            brightness: brightness,
+          );
+          final surface = find.byKey(const ValueKey('composer-input-surface'));
+          final origin = tester.getCenter(surface);
+          final press = await tester.startGesture(origin);
+          await tester.pump(const Duration(milliseconds: 700));
+          await press.moveTo(origin + const Offset(-70, -80));
+          await tester.pumpAndSettle();
+          expect(find.byType(VoiceCaptureFeedback), findsOneWidget);
+          expect(tester.takeException(), isNull);
+          final targets = tester.getRect(find.byType(VoiceCaptureFeedback));
+          expect(targets.width, lessThanOrEqualTo(320));
+          await press.up();
+          await tester.pumpAndSettle();
+          expect(tester.takeException(), isNull);
+        }
+      }
+      expect(home.cancels, 6);
+      expect(home.stops, 0);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
+    'unmount during permission discards the late recording start',
+    (tester) async {
+      home.pendingStart = Completer<bool>();
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      final press = await tester.startGesture(
+        tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
+      );
+      await tester.pump(const Duration(milliseconds: 700));
+      await tester.pumpWidget(const SizedBox());
+      home.pendingStart!.complete(true);
+      await tester.pumpAndSettle();
+      await press.up();
+      expect(home.cancels, 1);
+      expect(home.stops, 0);
+      expect(home.state.isRecording, isFalse);
+      expect(tester.takeException(), isNull);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
+    'iOS pointer cancellation discards a delayed native start',
+    (tester) async {
+      home.pendingStart = Completer<bool>();
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      final press = await tester.startGesture(
+        tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
+      );
+      await tester.pump(const Duration(milliseconds: 700));
+      await press.cancel();
+      await tester.pump();
+      home.pendingStart!.complete(true);
+      await tester.pumpAndSettle();
+      expect(home.cancels, 1);
+      expect(home.stops, 0);
     },
     variant: TargetPlatformVariant.only(TargetPlatform.iOS),
   );

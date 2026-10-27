@@ -214,7 +214,7 @@ void main() {
       expect(find.byTooltip('更多功能'), findsOneWidget);
       expect(find.byTooltip('设置'), findsOneWidget);
       // Typing a shortcut letter must not switch focus mode.
-      await tester.tap(find.byType(TextField));
+      await tester.tap(find.byKey(const ValueKey('composer-input-surface')));
       await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
       await tester.pump();
       expect(container.read(immersiveModeProvider), isFalse);
@@ -315,7 +315,10 @@ void main() {
           find.widgetWithText(TextButton, '稍后 5 分钟提醒').hitTestable(),
           findsOneWidget,
         );
-        expect(find.byType(TextField).hitTestable(), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('composer-input-surface')).hitTestable(),
+          findsOneWidget,
+        );
         if (const bool.fromEnvironment('UI_PREVIEW')) {
           final boundary = tester.renderObject<RenderRepaintBoundary>(
             find.byKey(const ValueKey('quiet-preview')),
@@ -408,7 +411,7 @@ void main() {
       UncontrolledProviderScope(container: container, child: const MyApp()),
     );
     await tester.pump();
-    await tester.tap(find.byType(TextField));
+    await tester.tap(find.byKey(const ValueKey('composer-input-surface')));
     // A restored/edited task can reach the page without a broadcast; the database
     // remains authoritative even if a native timer/foreground callback was missed.
     final due = task.copyWith(
@@ -518,7 +521,7 @@ void main() {
       await tester.pump();
       expect(tester.widget<TaskBoard>(find.byType(TaskBoard)), same(board));
 
-      await tester.tap(find.byType(TextField));
+      await tester.tap(find.byKey(const ValueKey('composer-input-surface')));
       await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
       await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
@@ -550,7 +553,7 @@ void main() {
       expect(command.open!(), false);
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
-      await tester.tap(find.byType(TextField));
+      await tester.tap(find.byKey(const ValueKey('composer-input-surface')));
       await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
       await tester.sendKeyEvent(LogicalKeyboardKey.keyK);
       await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);

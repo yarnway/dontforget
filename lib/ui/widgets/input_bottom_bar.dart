@@ -1,3 +1,4 @@
+import 'dart:async';
 import '../../providers/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../providers/home_controller.dart';
 import '../../l10n/app_localizations.dart';
+import 'voice_capture_feedback.dart';
 
 class InputBottomBar extends ConsumerStatefulWidget {
   const InputBottomBar({super.key});
@@ -21,6 +23,10 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   bool _isFinishingLongPress = false;
   bool _wasEmpty = true;
   bool _wasFocused = false;
+  Offset _voiceOrigin = Offset.zero;
+  VoiceReleaseAction _voiceAction = VoiceReleaseAction.save;
+  bool _isTranscribing = false;
+  HomeController? _heldRecorder;
 
   @override
   void initState() {
@@ -40,6 +46,18 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
 
   @override
   void dispose() {
+    final pending = _pendingRecordingStart;
+    final controller = _heldRecorder;
+    if (pending != null && controller != null && !_isFinishingLongPress) {
+      // Discard this capture if permission finishes after the input is removed.
+      unawaited(
+        pending
+            .then((started) async {
+              if (started) await controller.cancelRecording();
+            })
+            .catchError((Object _) {}),
+      );
+    }
     _textController.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -52,17 +70,23 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     ref.read(homeControllerProvider.notifier).processText(text);
   }
 
-  Future<void> _startLongPressRecording() async {
-    if (_pendingRecordingStart != null ||
+  Future<void> _startLongPressRecording(LongPressStartDetails details) async {
+    if (_textController.text.isNotEmpty ||
+        _isTranscribing ||
+        _pendingRecordingStart != null ||
         ref.read(homeControllerProvider).isRecording) {
       return;
     }
     _focusNode.unfocus();
     HapticFeedback.heavyImpact();
-    setState(() => _isLongPressRecording = true);
-    final operation = ref
-        .read(homeControllerProvider.notifier)
-        .startRecording();
+    setState(() {
+      _voiceOrigin = details.globalPosition;
+      _voiceAction = VoiceReleaseAction.save;
+      _isLongPressRecording = true;
+    });
+    final controller = ref.read(homeControllerProvider.notifier);
+    _heldRecorder = controller;
+    final operation = controller.startRecording();
     _pendingRecordingStart = operation;
     final started = await operation;
     if (mounted && !started) setState(() => _isLongPressRecording = false);
@@ -70,20 +94,62 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
 
   Future<void> _finishLongPressRecording() async {
     final operation = _pendingRecordingStart;
-    if (operation == null || _isFinishingLongPress) return;
+    if (!mounted || operation == null || _isFinishingLongPress) return;
     _isFinishingLongPress = true;
     final controller = ref.read(homeControllerProvider.notifier);
+    final action = _voiceAction;
     HapticFeedback.mediumImpact();
-    setState(() => _isLongPressRecording = false);
+    setState(() {
+      _isLongPressRecording = false;
+      _isTranscribing = action == VoiceReleaseAction.text;
+    });
     // Permission or native startup may finish after the user releases their press.
     // Wait for that same start before stopping, so a late start cannot keep recording.
-    if (await operation) await controller.stopRecordingAndProcess();
-    if (mounted && identical(_pendingRecordingStart, operation)) {
-      setState(() {
-        _pendingRecordingStart = null;
-        _isFinishingLongPress = false;
-      });
+    try {
+      if (await operation) {
+        switch (action) {
+          case VoiceReleaseAction.cancel:
+            await controller.cancelRecording();
+          case VoiceReleaseAction.save:
+            await controller.stopRecordingAndProcess();
+          case VoiceReleaseAction.text:
+            final text = await controller.stopRecordingToText(
+              canAcceptDraft: () => mounted,
+            );
+            if (mounted && text != null) {
+              final current = _textController.text;
+              final draft = current.isEmpty ? text : '$current\n$text';
+              _textController.value = TextEditingValue(
+                text: draft,
+                selection: TextSelection.collapsed(offset: draft.length),
+              );
+              _focusNode.requestFocus();
+            }
+        }
+      }
+    } finally {
+      if (mounted && identical(_pendingRecordingStart, operation)) {
+        setState(() {
+          _pendingRecordingStart = null;
+          _isFinishingLongPress = false;
+          _isTranscribing = false;
+          _heldRecorder = null;
+        });
+      }
     }
+  }
+
+  void _moveLongPress(LongPressMoveUpdateDetails details) {
+    if (!_isLongPressRecording || _isFinishingLongPress) return;
+    final action = voiceReleaseAction(details.globalPosition - _voiceOrigin);
+    if (action == _voiceAction) return;
+    HapticFeedback.selectionClick();
+    setState(() => _voiceAction = action);
+  }
+
+  void _cancelLongPress() {
+    _voiceAction = VoiceReleaseAction.cancel;
+    _finishLongPressRecording();
   }
 
   void _showMediaOptionsSheet(BuildContext context) {
@@ -222,8 +288,12 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     );
     final isRecording = homeState.isRecording || _isLongPressRecording;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final idleVoiceTarget =
-        !_focusNode.hasFocus && _textController.text.isEmpty;
+    final idleVoiceTarget = _textController.text.isEmpty && !_isTranscribing;
+    // Scaffold removes the consumed inset from its body MediaQuery while the
+    // keyboard animates away, so also read the containing view's physical inset.
+    final keyboardVisible =
+        MediaQuery.viewInsetsOf(context).bottom > 0 ||
+        View.of(context).viewInsets.bottom > 0;
 
     return SafeArea(
       top: false,
@@ -242,190 +312,223 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
             width: 1.0,
           ),
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Left '+' Add button
-            IconButton(
-              icon: const Icon(Icons.add_circle_outline_rounded, size: 22),
-              color: Theme.of(context).colorScheme.primary,
-              tooltip: l10n.get('uploadMaterial'),
-              splashRadius: 18,
-              onPressed: () => _showMediaOptionsSheet(context),
-            ),
-
-            // Mic toggle button (for desktop click or single tap)
-            _RecordingPulse(
-              active: isRecording,
-              child: IconButton(
-                icon: Icon(
-                  isRecording
-                      ? Icons.stop_circle_rounded
-                      : Icons.mic_none_rounded,
-                  color: isRecording
-                      ? Colors.red
-                      : Theme.of(context).colorScheme.onSurfaceVariant,
-                  size: 22,
+            if (_isLongPressRecording && !keyboardVisible)
+              VoiceCaptureFeedback(action: _voiceAction),
+            Row(
+              children: [
+                // Left '+' Add button
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline_rounded, size: 22),
+                  color: Theme.of(context).colorScheme.primary,
+                  tooltip: l10n.get('uploadMaterial'),
+                  splashRadius: 18,
+                  onPressed: () => _showMediaOptionsSheet(context),
                 ),
-                tooltip: isRecording
-                    ? l10n.get('recordingClickStop')
-                    : l10n.get('recordingStart'),
-                onPressed: _pendingRecordingStart != null
-                    ? null
-                    : () => ref
-                          .read(homeControllerProvider.notifier)
-                          .toggleRecording(),
-              ),
-            ),
 
-            const SizedBox(width: 4),
+                // Mic toggle button (for desktop click or single tap)
+                _RecordingPulse(
+                  active: isRecording,
+                  child: IconButton(
+                    icon: Icon(
+                      isRecording
+                          ? Icons.stop_circle_rounded
+                          : Icons.mic_none_rounded,
+                      color: isRecording
+                          ? Colors.red
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                      size: 22,
+                    ),
+                    tooltip: isRecording
+                        ? l10n.get('recordingClickStop')
+                        : l10n.get('recordingStart'),
+                    onPressed: _pendingRecordingStart != null
+                        ? null
+                        : () => ref
+                              .read(homeControllerProvider.notifier)
+                              .toggleRecording(),
+                  ),
+                ),
 
-            // Center Input Area: Single tap to type, Long press to speak
-            Expanded(
-              child: GestureDetector(
-                key: const ValueKey('composer-input-surface'),
-                behavior: HitTestBehavior.translucent,
-                onTap: () {
-                  if (!isRecording && !_focusNode.hasFocus) {
-                    _focusNode.requestFocus();
-                  }
-                },
-                onLongPressStart: idleVoiceTarget
-                    ? (_) => _startLongPressRecording()
-                    : null,
-                onLongPressEnd: idleVoiceTarget
-                    ? (_) => _finishLongPressRecording()
-                    : null,
-                onLongPressCancel: idleVoiceTarget
-                    ? _finishLongPressRecording
-                    : null,
-                child: isRecording
-                    ? Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: const BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              _isLongPressRecording
-                                  ? l10n.get('releaseToSend')
-                                  : l10n.get('recordingClickStop'),
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.red.shade700,
+                const SizedBox(width: 4),
+
+                // Center Input Area: Single tap to type, Long press to speak
+                Expanded(
+                  child: GestureDetector(
+                    key: const ValueKey('composer-input-surface'),
+                    behavior: HitTestBehavior.translucent,
+                    onTap: () {
+                      if (!isRecording &&
+                          !_isTranscribing &&
+                          !_focusNode.hasFocus) {
+                        _focusNode.requestFocus();
+                      }
+                    },
+                    onLongPressStart: idleVoiceTarget
+                        ? _startLongPressRecording
+                        : null,
+                    onLongPressMoveUpdate: idleVoiceTarget
+                        ? _moveLongPress
+                        : null,
+                    onLongPressEnd: idleVoiceTarget
+                        ? (_) => _finishLongPressRecording()
+                        : null,
+                    onLongPressCancel: idleVoiceTarget
+                        ? _cancelLongPress
+                        : null,
+                    child: isRecording || _isTranscribing
+                        ? Row(
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  l10n.get(
+                                    _isTranscribing
+                                        ? 'voiceTranscribing'
+                                        : _isLongPressRecording
+                                        ? !homeState.isRecording
+                                              ? 'voicePreparing'
+                                              : switch (_voiceAction) {
+                                                  VoiceReleaseAction.save =>
+                                                    'voiceReleaseSave',
+                                                  VoiceReleaseAction.cancel =>
+                                                    'voiceReleaseCancel',
+                                                  VoiceReleaseAction.text =>
+                                                    'voiceReleaseText',
+                                                }
+                                        : 'recordingClickStop',
+                                  ),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.red.shade700,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          )
+                        // iOS TextField's selection recognizer otherwise wins the
+                        // gesture arena before our hold-to-record recognizer. Only
+                        // the empty surface delegates pointer gestures;
+                        // typing, selection and IME retain normal TextField behavior.
+                        : IgnorePointer(
+                            ignoring: idleVoiceTarget,
+                            child: TextField(
+                              controller: _textController,
+                              focusNode: _focusNode,
+                              style: const TextStyle(fontSize: 13),
+                              decoration: InputDecoration(
+                                hintText: l10n.get(
+                                  _focusNode.hasFocus
+                                      ? 'inputTypingHint'
+                                      : isLocalMode
+                                      ? 'localInputHint'
+                                      : 'inputHint',
+                                ),
+                                hintMaxLines: 2,
+                                hintStyle: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade500,
+                                ),
+                                border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                filled: false,
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 8,
+                                ),
+                              ),
+                              onSubmitted: (_) => _submitText(),
                             ),
                           ),
-                        ],
-                      )
-                    // iOS TextField's selection recognizer otherwise wins the
-                    // gesture arena before our hold-to-record recognizer. Only
-                    // the empty, unfocused surface delegates pointer gestures;
-                    // typing, selection and IME retain normal TextField behavior.
-                    : IgnorePointer(
-                        ignoring: idleVoiceTarget,
-                        child: TextField(
-                          controller: _textController,
-                          focusNode: _focusNode,
-                          style: const TextStyle(fontSize: 13),
-                          decoration: InputDecoration(
-                            hintText: l10n.get(
-                              _focusNode.hasFocus
-                                  ? 'inputTypingHint'
-                                  : isLocalMode
-                                  ? 'localInputHint'
-                                  : 'inputHint',
-                            ),
-                            hintMaxLines: 2,
-                            hintStyle: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey.shade500,
-                            ),
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            filled: false,
-                            isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 4,
-                              vertical: 8,
-                            ),
+                  ),
+                ),
+
+                // Background Processing capsule (Wireframe)
+                if (homeState.isProcessingInBackground && !_isTranscribing)
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.4),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 9,
+                          height: 9,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 1.5,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
-                          onSubmitted: (_) => _submitText(),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          homeState.pendingTasksCount > 1
+                              ? 'AI (${homeState.pendingTasksCount})'
+                              : 'AI...',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                // Right Send button (Wireframe)
+                Container(
+                  margin: const EdgeInsets.only(left: 4),
+                  child: ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: _textController,
+                    builder: (context, value, _) => IconButton(
+                      icon: const Icon(Icons.arrow_upward_rounded, size: 18),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor: Theme.of(
+                          context,
+                        ).colorScheme.onPrimary,
+                        padding: const EdgeInsets.all(5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
                         ),
                       ),
-              ),
-            ),
-
-            // Background Processing capsule (Wireframe)
-            if (homeState.isProcessingInBackground)
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.4),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 9,
-                      height: 9,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 1.5,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      homeState.pendingTasksCount > 1
-                          ? 'AI (${homeState.pendingTasksCount})'
-                          : 'AI...',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-            // Right Send button (Wireframe)
-            Container(
-              margin: const EdgeInsets.only(left: 4),
-              child: ValueListenableBuilder<TextEditingValue>(
-                valueListenable: _textController,
-                builder: (context, value, _) => IconButton(
-                  icon: const Icon(Icons.arrow_upward_rounded, size: 18),
-                  style: IconButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                    padding: const EdgeInsets.all(5),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
+                      tooltip: l10n.get('send'),
+                      onPressed:
+                          value.text.trim().isEmpty ||
+                              isRecording ||
+                              _isTranscribing
+                          ? null
+                          : _submitText,
                     ),
                   ),
-                  tooltip: l10n.get('send'),
-                  onPressed: value.text.trim().isEmpty || isRecording
-                      ? null
-                      : _submitText,
                 ),
-              ),
+              ],
             ),
           ],
         ),

@@ -6,6 +6,54 @@ void main() {
   Reminder task(String id, int level, {bool done = false}) =>
       Reminder(id: id, taskTitle: id, quadrantLevel: level, isCompleted: done);
   test(
+    'automatic category follows priority for every nonempty combination',
+    () {
+      for (var mask = 0; mask < 16; mask++) {
+        final levels = [
+          for (var i = 1; i <= 4; i++)
+            if ((mask & (1 << (i - 1))) != 0) i,
+        ];
+        var iterated = false;
+        Iterable<Reminder> once() sync* {
+          expect(iterated, isFalse);
+          iterated = true;
+          yield task('invalid', 9);
+          for (final level in levels.reversed) {
+            yield task('active-$level', level);
+            yield task('done-$level', level, done: true);
+          }
+        }
+
+        var foldChecks = 0;
+        final data = TaskBoardData.project(
+          once(),
+          selectFirstNonEmpty: true,
+          isFolded: (_) {
+            foldChecks++;
+            return true;
+          },
+        );
+        final selected = levels.isEmpty ? 0 : levels.first - 1;
+        expect(data.visibleCategory, selected);
+        for (var i = 0; i < 4; i++) {
+          expect(data.pending[i], levels.contains(i + 1) ? 1 : 0);
+          expect(data.sections[i].isEmpty, levels.isEmpty || i != selected);
+        }
+        expect(foldChecks, selected == 3 && levels.isNotEmpty ? 1 : 0);
+      }
+    },
+  );
+
+  test('completed rows still count as items for the default category', () {
+    final data = TaskBoardData.project(
+      [task('memo', 4), task('done', 2, done: true)],
+      selectFirstNonEmpty: true,
+      isFolded: (_) => false,
+    );
+    expect(data.visibleCategory, 1);
+    expect(data.sections[1].completed.single.id, 'done');
+  });
+  test(
     'exact-sized projection preserves category order, counts and hidden folds',
     () {
       var checks = 0;

@@ -31,6 +31,16 @@ void main() {
         contrast(c.onSurface, c.primaryContainer),
         greaterThanOrEqualTo(4.5),
       );
+      expect(
+        theme.appBarTheme.systemOverlayStyle?.statusBarBrightness,
+        theme.brightness,
+      );
+      expect(
+        theme.appBarTheme.systemOverlayStyle?.statusBarIconBrightness,
+        theme.brightness == Brightness.light
+            ? Brightness.dark
+            : Brightness.light,
+      );
     });
     for (final locale in ['zh', 'en', 'ja']) {
       for (final width in [320.0, 430.0, 840.0]) {

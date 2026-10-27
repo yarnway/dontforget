@@ -4,23 +4,24 @@ import '../../models/reminder.dart';
 /// boards only retain rows for the selected category; all four counts remain
 /// available. A section exposes list rows by offset without flattening copies.
 class TaskBoardData {
-  TaskBoardData._(this.sections, this.pending);
+  TaskBoardData._(this.sections, this.pending, this.visibleCategory);
 
   final List<TaskSectionData> sections;
   final List<int> pending;
+  final int? visibleCategory;
 
   factory TaskBoardData.project(
     Iterable<Reminder> reminders, {
     int? visibleCategory,
+    bool selectFirstNonEmpty = false,
     required bool Function(Reminder) isFolded,
   }) {
     final sections = List.generate(4, (_) => TaskSectionData());
     final pending = List.filled(4, 0);
-    for (final task in reminders) {
-      final index = task.quadrantLevel - 1;
-      if (index < 0 || index >= sections.length) continue;
-      if (!task.isCompleted) pending[index]++;
-      if (visibleCategory != null && visibleCategory != index) continue;
+    assert(!selectFirstNonEmpty || visibleCategory == null);
+    final candidates = selectFirstNonEmpty ? <Reminder>[] : null;
+    var first = 4;
+    void include(Reminder task, int index) {
       final section = sections[index];
       if (task.isCompleted) {
         section.completed.add(task);
@@ -30,7 +31,29 @@ class TaskBoardData {
         section.active.add(task);
       }
     }
-    return TaskBoardData._(sections, pending);
+
+    for (final task in reminders) {
+      final index = task.quadrantLevel - 1;
+      if (index < 0 || index >= sections.length) continue;
+      if (!task.isCompleted) pending[index]++;
+      if (candidates != null) {
+        if (index < first) {
+          first = index;
+          candidates.clear();
+        }
+        if (index == first) candidates.add(task);
+        continue;
+      }
+      if (visibleCategory != null && visibleCategory != index) continue;
+      include(task, index);
+    }
+    if (candidates != null) {
+      visibleCategory = first == 4 ? 0 : first;
+      for (final task in candidates) {
+        include(task, visibleCategory);
+      }
+    }
+    return TaskBoardData._(sections, pending, visibleCategory);
   }
 }
 

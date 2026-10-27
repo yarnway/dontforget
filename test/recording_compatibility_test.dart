@@ -8,6 +8,7 @@ import 'package:dont_forget/providers/providers.dart';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/services/notification_service.dart';
+import 'package:dont_forget/services/local_speech_service.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'support/m4a_metadata_fixture.dart';
 
@@ -21,6 +22,27 @@ class _TestNotifications implements NotificationService {
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _Speech extends LocalSpeechService {
+  _Speech() : super(isIOS: false);
+  bool enabled = false;
+  int calls = 0, cancels = 0;
+  Object? error;
+  Completer<String>? pending;
+  @override
+  bool get supported => enabled;
+  @override
+  Future<String> transcribe(String path, String language) async {
+    calls++;
+    if (error != null) throw error!;
+    return pending == null ? '明日9時に予定を確認' : await pending!.future;
+  }
+
+  @override
+  Future<void> cancel() async {
+    cancels++;
+  }
 }
 
 void main() {
@@ -41,6 +63,7 @@ void main() {
   String? recordingPath;
   bool produceAudio = false;
   int captureMillis = 2000;
+  late _Speech speech;
 
   test(
     'background completion keeps feedback until it is explicitly cleared',
@@ -60,6 +83,7 @@ void main() {
     produceAudio = false;
     captureMillis = 2000;
     recordingPath = null;
+    speech = _Speech();
     // path_provider may return a bundle-specific macOS cache path that does
     // not exist yet. The native recorder does not create parent directories.
     temporaryPath = '${directory.path}/missing/cache';
@@ -111,6 +135,7 @@ void main() {
       overrides: [
         databaseHelperProvider.overrideWithValue(database),
         notificationServiceProvider.overrideWithValue(notifications),
+        localSpeechServiceProvider.overrideWithValue(speech),
       ],
     );
     await container.read(settingsProvider.notifier).ready;
@@ -154,6 +179,119 @@ void main() {
     expect(container.read(homeControllerProvider).isRecording, isFalse);
     expect(calls.where((call) => call.method == 'start'), isEmpty);
     expect(container.read(homeControllerProvider).error, contains('麦克风权限未开启'));
+  });
+
+  test(
+    'cancel discards capture without stop, imports, transcription or tasks',
+    () async {
+      speech.enabled = true;
+      final controller = container.read(homeControllerProvider.notifier);
+      expect(await controller.startRecording(), isTrue);
+      expect(await controller.cancelRecording(), isTrue);
+      expect(calls.where((c) => c.method == 'cancel'), hasLength(1));
+      expect(calls.where((c) => c.method == 'stop'), isEmpty);
+      expect(speech.calls, 0);
+      expect(controller.state.isRecording, isFalse);
+      final db = await database.database;
+      expect(await db.query('Reminders'), isEmpty);
+      expect(await db.query('MediaRecords'), isEmpty);
+    },
+  );
+
+  test(
+    'text disposition returns editable text without importing or extracting tasks',
+    () async {
+      speech.enabled = true;
+      produceAudio = true;
+      final controller = container.read(homeControllerProvider.notifier);
+      await controller.startRecording();
+      expect(await controller.stopRecordingToText(), '明日9時に予定を確認');
+      expect(speech.calls, 1);
+      final db = await database.database;
+      expect(await db.query('Reminders'), isEmpty);
+      expect(await db.query('MediaRecords'), isEmpty);
+      expect(await File(recordingPath!).exists(), isFalse);
+      expect(controller.state.pendingTasksCount, 0);
+    },
+  );
+
+  test(
+    'closing the draft destination preserves the recording instead of losing it',
+    () async {
+      speech.enabled = true;
+      produceAudio = true;
+      final controller = container.read(homeControllerProvider.notifier);
+      await controller.startRecording();
+      expect(
+        await controller.stopRecordingToText(canAcceptDraft: () => false),
+        isNull,
+      );
+      final db = await database.database;
+      final media = (await db.query('MediaRecords')).single;
+      final task = (await db.query('Reminders')).single;
+      expect(task['record_id'], media['id']);
+      expect(task['trigger_time'], isNull);
+      expect(
+        await File(media['content_or_path'] as String).readAsBytes(),
+        m4aMetadata(ticks: captureMillis),
+      );
+      expect(await File(recordingPath!).exists(), isFalse);
+      expect(controller.state.pendingTasksCount, 0);
+    },
+  );
+
+  test(
+    'text permission failure preserves an accessible raw memo without cloud fallback',
+    () async {
+      speech.enabled = true;
+      speech.error = PlatformException(code: 'speech_permission_denied');
+      produceAudio = true;
+      final controller = container.read(homeControllerProvider.notifier);
+      await controller.startRecording();
+      expect(await controller.stopRecordingToText(), isNull);
+      final db = await database.database;
+      final media = (await db.query('MediaRecords')).single;
+      final task = (await db.query('Reminders')).single;
+      expect(task['record_id'], media['id']);
+      expect(
+        await File(media['content_or_path'] as String).readAsBytes(),
+        m4aMetadata(ticks: captureMillis),
+      );
+      expect(task['trigger_time'], isNull);
+      expect(controller.state.error, contains('语音识别权限未开启'));
+      expect(await File(recordingPath!).exists(), isFalse);
+    },
+  );
+
+  test('text disposition rejects short audio before recognition', () async {
+    speech.enabled = true;
+    produceAudio = true;
+    captureMillis = 22;
+    final controller = container.read(homeControllerProvider.notifier);
+    await controller.startRecording();
+    expect(await controller.stopRecordingToText(), isNull);
+    expect(speech.calls, 0);
+    expect(await File(recordingPath!).exists(), isFalse);
+    expect(await (await database.database).query('Reminders'), isEmpty);
+  });
+
+  test('recovery cancels speech and rejects a late editable result', () async {
+    speech.enabled = true;
+    speech.pending = Completer<String>();
+    produceAudio = true;
+    final controller = container.read(homeControllerProvider.notifier);
+    await controller.startRecording();
+    final result = controller.stopRecordingToText();
+    for (var i = 0; i < 100 && speech.calls == 0; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 5));
+    }
+    expect(speech.calls, 1);
+    await container.read(runtimeRecoveryGateProvider).pause();
+    speech.pending!.complete('Do not insert this stale text');
+    expect(await result, isNull);
+    expect(speech.cancels, 1);
+    expect(await File(recordingPath!).exists(), isFalse);
+    expect(await (await database.database).query('Reminders'), isEmpty);
   });
 
   test(

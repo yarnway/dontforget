@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/widgets.dart';
+import 'package:flutter/services.dart';
 import '../l10n/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -16,6 +17,7 @@ import '../models/agent_models.dart';
 import '../services/llm_service.dart';
 import '../services/local_media_store.dart';
 import '../services/recording_duration_reader.dart';
+import '../services/local_speech_service.dart';
 import '../services/recovery/runtime_gate.dart';
 import 'providers.dart';
 
@@ -132,6 +134,7 @@ class HomeController extends StateNotifier<HomeState> {
   Future<void> _quiesce() async {
     _pending.clear();
     if (mounted) state = HomeState();
+    await _ref.read(localSpeechServiceProvider).cancel();
     await _serializeRecorder(_discardRecording);
   }
 
@@ -411,9 +414,9 @@ class HomeController extends StateNotifier<HomeState> {
     }
   }
 
-  Future<void> stopRecordingAndProcess() async {
+  Future<({String path, DataGeneration generation})?> _stopCapture() async {
     final generation = _recordingGeneration;
-    if (generation == null) return;
+    if (generation == null) return null;
     _recordingGeneration = null;
     try {
       final path = await _serializeRecorder(() async {
@@ -435,11 +438,145 @@ class HomeController extends StateNotifier<HomeState> {
       });
       if (_isCurrent(generation)) {
         state = state.copyWith(isRecording: false);
-        if (path != null) _processAudio(path, generation);
+        if (path != null) return (path: path, generation: generation);
       }
     } catch (error) {
       if (_isCurrent(generation)) state = state.copyWith(isRecording: false);
       _reportError(generation, '录音停止异常: $error');
+    }
+    return null;
+  }
+
+  Future<void> stopRecordingAndProcess() async {
+    final capture = await _stopCapture();
+    if (capture != null) _processAudio(capture.path, capture.generation);
+  }
+
+  Future<bool> cancelRecording() async {
+    final generation = _recordingGeneration;
+    if (generation == null) return false;
+    try {
+      await _serializeRecorder(_discardRecording);
+      if (_isCurrent(generation)) state = state.copyWith(isRecording: false);
+      return true;
+    } catch (_) {
+      _reportError(
+        generation,
+        AppLocalizations(
+          Locale(_ref.read(settingsProvider).language),
+        ).get('voiceCancelFailed'),
+      );
+      return false;
+    }
+  }
+
+  Future<String> _transcribeCapture(String path) {
+    final settings = _ref.read(settingsProvider);
+    final local = _ref.read(localSpeechServiceProvider);
+    if (local.supported) return local.transcribe(path, settings.language);
+    return _ref.read(llmServiceProvider).transcribeAudio(path, settings);
+  }
+
+  Future<void> _saveVoiceMemo(
+    String path,
+    DataGeneration generation, {
+    String? recordId,
+  }) async {
+    final l10n = AppLocalizations(Locale(_ref.read(settingsProvider).language));
+    final id = recordId ?? await _saveMedia('audio', path, generation);
+    _check(generation);
+    await _ref
+        .read(remindersProvider.notifier)
+        .addReminderForGeneration(
+          Reminder(
+            id: const Uuid().v4(),
+            recordId: id,
+            taskTitle: l10n.get('voiceMemoTitle'),
+            taskSummary: l10n.get('voiceMemoSummary'),
+            quadrantLevel: 2,
+            urgencyLevel: 'General',
+            importanceLevel: 'Important',
+          ),
+          generation,
+        );
+  }
+
+  /// This path returns a draft only. It never extracts or submits tasks from
+  /// recognized text. On a genuine recognition failure, preserve an audio memo.
+  Future<String?> stopRecordingToText({bool Function()? canAcceptDraft}) async {
+    final capture = await _stopCapture();
+    if (capture == null) return null;
+    final (path: path, generation: generation) = capture;
+    if (!_isCurrent(generation)) {
+      try {
+        await File(path).delete();
+      } catch (_) {}
+      return null;
+    }
+    final operation = _startPending(generation);
+    var removeTemporary = false;
+    try {
+      final duration = await const RecordingDurationReader().read(path);
+      _check(generation);
+      if (duration != null &&
+          duration < RecordingDurationReader.minimumCapture) {
+        removeTemporary = true;
+        _reportError(
+          generation,
+          AppLocalizations(
+            Locale(_ref.read(settingsProvider).language),
+          ).get('recordingTooShort'),
+        );
+        return null;
+      }
+      final text = await _transcribeCapture(path);
+      _check(generation);
+      if (text.trim().isEmpty) {
+        throw const FormatException('No recognized speech');
+      }
+      if (canAcceptDraft != null && !canAcceptDraft()) {
+        // Preserve the capture if its destination closes during recognition.
+        throw StateError('The voice draft input is no longer available.');
+      }
+      removeTemporary = true;
+      return text.trim();
+    } catch (error) {
+      if (!_isCurrent(generation)) {
+        removeTemporary = true;
+        return null;
+      }
+      try {
+        final saved = await _saveFileToLocal(path, generation);
+        _check(generation);
+        await _saveVoiceMemo(saved, generation);
+        removeTemporary = true;
+        _reportError(
+          generation,
+          AppLocalizations(Locale(_ref.read(settingsProvider).language)).get(
+            error is PlatformException &&
+                    error.code == 'speech_permission_denied'
+                ? 'voiceSpeechPermissionSaved'
+                : 'voiceTextUnavailableSaved',
+          ),
+        );
+      } catch (_) {
+        _reportError(
+          generation,
+          AppLocalizations(
+            Locale(_ref.read(settingsProvider).language),
+          ).get('voiceMemoSaveFailed'),
+        );
+      }
+      return null;
+    } finally {
+      if (removeTemporary) {
+        try {
+          await File(path).delete();
+        } catch (_) {
+          /* Only our new capture; cache cleanup may retry. */
+        }
+      }
+      _finishPending(operation);
     }
   }
 
@@ -478,34 +615,33 @@ class HomeController extends StateNotifier<HomeState> {
         final id = await _saveMedia('audio', savedPath, generation);
         _check(generation);
         try {
-          final text = await service.transcribeAudio(savedPath, settings);
+          final text = await _transcribeCapture(savedPath);
           _check(generation);
           final tasks = await service.extractTasks(text, settings);
           _check(generation);
           await _saveTasks(tasks, generation, recordId: id);
-        } on AudioTranscriptionUnsupportedException catch (error) {
+        } on AudioTranscriptionUnsupportedException catch (_) {
           _check(generation);
-          final now = DateTime.now();
-          final nowStr =
-              '${now.month}月${now.day}日 ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-          await _ref
-              .read(remindersProvider.notifier)
-              .addReminderForGeneration(
-                Reminder(
-                  id: const Uuid().v4(),
-                  recordId: id,
-                  taskTitle: '语音待办 ($nowStr)',
-                  taskSummary: '原声录音已保存，点击左侧麦克风图标可随时回放',
-                  quadrantLevel: 2,
-                  urgencyLevel: 'General',
-                  importanceLevel: 'Important',
-                ),
-                generation,
-              );
-          _check(generation);
+          await _saveVoiceMemo(savedPath, generation, recordId: id);
           if (settings.apiKey.trim().isNotEmpty) {
-            _reportError(generation, '${error.message} (已创建原声任务，请手动设置提醒时间)');
+            _reportError(
+              generation,
+              AppLocalizations(
+                Locale(settings.language),
+              ).get('voiceTextUnavailableSaved'),
+            );
           }
+        } on PlatformException catch (error) {
+          _check(generation);
+          await _saveVoiceMemo(savedPath, generation, recordId: id);
+          _reportError(
+            generation,
+            AppLocalizations(Locale(settings.language)).get(
+              error.code == 'speech_permission_denied'
+                  ? 'voiceSpeechPermissionSaved'
+                  : 'voiceTextUnavailableSaved',
+            ),
+          );
         }
       },
       failureMessage: '语音解析提示',

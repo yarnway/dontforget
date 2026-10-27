@@ -89,6 +89,53 @@ void viewport(WidgetTester tester, double width) {
 }
 
 void main() {
+  testWidgets(
+    'default category handles late data and preserves manual choice',
+    (tester) async {
+      viewport(tester, 375);
+      Future<void> board(List<Reminder> tasks) async {
+        await tester.pumpWidget(
+          ProviderScope(
+            child: app(TaskBoard(reminders: tasks, onPlayMedia: (_) {})),
+          ),
+        );
+        await tester.pump();
+      }
+
+      await board([]);
+      expect(find.byKey(const ValueKey('quadrant-1')), findsOneWidget);
+      await board([task('memo', level: 4)]);
+      expect(find.byKey(const ValueKey('quadrant-4')), findsOneWidget);
+      await board([task('memo', level: 4), task('regular', level: 3)]);
+      expect(find.byKey(const ValueKey('quadrant-3')), findsOneWidget);
+      await board([task('regular', level: 3), task('focus', level: 2)]);
+      expect(find.byKey(const ValueKey('quadrant-2')), findsOneWidget);
+      await board([task('focus', level: 2), task('urgent')]);
+      expect(find.byKey(const ValueKey('quadrant-1')), findsOneWidget);
+      await board([]);
+      expect(find.byKey(const ValueKey('quadrant-1')), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('category-4')));
+      await board([task('new-urgent')]);
+      expect(find.byKey(const ValueKey('quadrant-4')), findsOneWidget);
+      tester
+          .widget<TextButton>(find.byKey(const ValueKey('category-4')))
+          .focusNode!
+          .requestFocus();
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.home);
+      await board([task('only-memo', level: 4)]);
+      expect(find.byKey(const ValueKey('quadrant-1')), findsOneWidget);
+      tester.view.physicalSize = const Size(840, 800);
+      await tester.pump();
+      expect(find.byType(QuadrantView), findsNWidgets(4));
+      tester.view.physicalSize = const Size(375, 800);
+      await tester.pump();
+      expect(find.byKey(const ValueKey('quadrant-1')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
   testWidgets('all wide-board memo rows use one projection time', (
     tester,
   ) async {

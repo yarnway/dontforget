@@ -35,7 +35,7 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
   List<FocusNode>? _categoryFocus;
   List<FocusNode> get _categoryNodes =>
       _categoryFocus ??= List.generate(4, (_) => FocusNode());
-  int _selectedCategory = 0;
+  int? _manualCategory;
   Timer? _refresh;
 
   @override
@@ -88,7 +88,7 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
       _ => null,
     };
     if (next == null) return KeyEventResult.ignored;
-    setState(() => _selectedCategory = next);
+    setState(() => _manualCategory = next);
     _categoryNodes[next].requestFocus();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -103,8 +103,13 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
     return KeyEventResult.handled;
   }
 
-  Widget _categoryButton(BuildContext context, int index, int pending) {
-    final selected = _selectedCategory == index;
+  Widget _categoryButton(
+    BuildContext context,
+    int index,
+    int pending,
+    int selection,
+  ) {
+    final selected = selection == index;
     final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).colorScheme;
     final foreground = selected ? colors.onPrimaryContainer : colors.onSurface;
@@ -115,7 +120,7 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
         child: TextButton(
           key: ValueKey('category-${index + 1}'),
           focusNode: _categoryNodes[index],
-          onPressed: () => setState(() => _selectedCategory = index),
+          onPressed: () => setState(() => _manualCategory = index),
           style: TextButton.styleFrom(
             minimumSize: const Size(0, 56),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
@@ -182,11 +187,13 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
         final projectionTime = DateTime.now();
         final data = TaskBoardData.project(
           widget.reminders,
-          visibleCategory: compact ? _selectedCategory : null,
+          visibleCategory: compact ? _manualCategory : null,
+          selectFirstNonEmpty: compact && _manualCategory == null,
           isFolded: (task) =>
               urgency.isQ4StagnantFolded(task, now: projectionTime),
         );
         final pending = data.pending;
+        final selection = data.visibleCategory ?? 0;
         Widget panel(int index, {bool showHeader = true}) => QuadrantView(
           key: ValueKey('quadrant-${index + 1}'),
           level: index + 1,
@@ -224,6 +231,7 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
                                     context,
                                     index,
                                     pending[index],
+                                    selection,
                                   ),
                                 ),
                               ],
@@ -241,6 +249,7 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
                                       context,
                                       row * 2,
                                       pending[row * 2],
+                                      selection,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
@@ -249,6 +258,7 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
                                       context,
                                       row * 2 + 1,
                                       pending[row * 2 + 1],
+                                      selection,
                                     ),
                                   ),
                                 ],
@@ -260,7 +270,7 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
                 SizedBox(height: constraints.maxHeight < 320 ? 6 : 12),
                 Expanded(
                   child: panel(
-                    _selectedCategory,
+                    selection,
                     showHeader: constraints.maxHeight >= 200,
                   ),
                 ),

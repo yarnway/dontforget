@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../models/settings.dart';
 
 /// Reuse immutable themes across settings and reminder rebuilds.
@@ -35,11 +36,16 @@ abstract final class AppTheme {
       useMaterial3: true,
       colorScheme: colors,
       scaffoldBackgroundColor: colors.surface,
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         elevation: 0,
         centerTitle: true,
         scrolledUnderElevation: 0,
         backgroundColor: Colors.transparent,
+        // A transparent app bar otherwise infers a dark background and leaves
+        // white iOS status icons against the app's independent light theme.
+        systemOverlayStyle: dark
+            ? SystemUiOverlayStyle.light
+            : SystemUiOverlayStyle.dark,
       ),
       cardTheme: CardThemeData(
         elevation: 0,

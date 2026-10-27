@@ -10,6 +10,24 @@ class AppLocalizations {
 
   static const Map<String, Map<String, String>> _localizedValues = {
     'en': {
+      'voiceSlideCancel': 'Slide up-left to cancel',
+      'voiceSlideText': 'Slide up-right for text',
+      'voiceReleaseSave': 'Release to save voice',
+      'voiceReleaseCancel': 'Release to cancel',
+      'voiceReleaseText': 'Release to edit text',
+      'voicePreparing': 'Preparing microphone…',
+      'voiceTranscribing': 'Converting to editable text…',
+      'voiceCancelFailed':
+          'Could not stop recording. Tap the stop button to try again.',
+      'voiceMemoTitle': 'Voice memo',
+      'voiceMemoSummary':
+          'Original audio saved. Use playback to listen and set a reminder in details.',
+      'voiceTextUnavailableSaved':
+          'Could not transcribe this recording. The original audio was saved as a voice memo.',
+      'voiceSpeechPermissionSaved':
+          'Speech recognition permission is off. Enable it in system settings. The original audio was saved.',
+      'voiceMemoSaveFailed':
+          'Could not save the voice memo. Check local storage and try again.',
       'inputTypingHint': 'Type a task, or tap the microphone to record…',
       'appearanceTitle': 'Appearance',
       'appearance_system': 'System',
@@ -633,6 +651,19 @@ class AppLocalizations {
       'viewInGraph': 'View in Graph',
     },
     'zh': {
+      'voiceSlideCancel': '左上滑取消',
+      'voiceSlideText': '右上滑转文字',
+      'voiceReleaseSave': '松手保存语音',
+      'voiceReleaseCancel': '松手取消录音',
+      'voiceReleaseText': '松手转文字并编辑',
+      'voicePreparing': '正在准备麦克风…',
+      'voiceTranscribing': '正在转为可编辑文字…',
+      'voiceCancelFailed': '未能停止录音，请点击停止按钮重试。',
+      'voiceMemoTitle': '语音备忘',
+      'voiceMemoSummary': '原声录音已保存，可点击播放，并在详情中设置提醒。',
+      'voiceTextUnavailableSaved': '暂未能转为文字，原声已保存为语音备忘。',
+      'voiceSpeechPermissionSaved': '语音识别权限未开启，可在系统设置中启用。原声已保存。',
+      'voiceMemoSaveFailed': '语音备忘未能保存，请检查本地存储后重试。',
       'inputTypingHint': '输入事项，或点击麦克风录音…',
       'appearanceTitle': '外观',
       'appearance_system': '跟随系统',
@@ -1155,6 +1186,20 @@ class AppLocalizations {
       'viewInGraph': '在图谱中定位',
     },
     'ja': {
+      'voiceSlideCancel': '左上へ動かして取消',
+      'voiceSlideText': '右上へ動かして文字に',
+      'voiceReleaseSave': '離すと音声を保存',
+      'voiceReleaseCancel': '離すと録音を取消',
+      'voiceReleaseText': '離すと文字にして編集',
+      'voicePreparing': 'マイクを準備中…',
+      'voiceTranscribing': '編集できる文字に変換中…',
+      'voiceCancelFailed': '録音を停止できませんでした。停止ボタンで再試行してください。',
+      'voiceMemoTitle': '音声メモ',
+      'voiceMemoSummary': '元の音声を保存しました。再生して確認し、詳細から通知を設定できます。',
+      'voiceTextUnavailableSaved': '文字に変換できませんでした。元の音声をメモとして保存しました。',
+      'voiceSpeechPermissionSaved':
+          '音声認識が許可されていません。システム設定で有効にできます。元の音声は保存済みです。',
+      'voiceMemoSaveFailed': '音声メモを保存できませんでした。空き容量を確認して再試行してください。',
       'inputTypingHint': 'タスクを入力、またはマイクで録音…',
       'appearanceTitle': '外観',
       'appearance_system': 'システム',
