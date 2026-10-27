@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import '../services/recovery/runtime_gate.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,6 +18,8 @@ import '../services/dp_scheduler_service.dart';
 import '../services/multi_agent_service.dart';
 import '../services/spaced_repetition_service.dart';
 import '../services/study_plan_service.dart';
+import '../services/learning_queue_service.dart';
+import '../models/vocabulary_entry.dart';
 import '../services/data_export_service.dart';
 import '../services/dynamic_urgency_service.dart';
 import '../services/bidirectional_link_service.dart';
@@ -98,13 +101,28 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     _dbHelper.checkGeneration(generation);
     _dbHelper.checkGeneration(_stateGeneration!);
     final saved = AppSettings.fromJson(newSettings.toJson());
+    String? drafts;
     await _dbHelper.writeTransaction(generation, (txn) async {
+      final current = await txn.query(
+        'Settings',
+        where: 'id = ?',
+        whereArgs: ['default'],
+      );
+      drafts = current.firstOrNull?['workspace_drafts_json'] as String?;
       await txn.delete('Settings', where: 'id = ?', whereArgs: ['default']);
-      await txn.insert('Settings', {...saved.toJson(), 'id': 'default'});
+      await txn.insert('Settings', {
+        ...saved.toJson(),
+        'id': 'default',
+        'workspace_drafts_json': drafts,
+      });
     });
     _dbHelper.checkGeneration(generation);
     if (mounted) {
-      state = AppSettings.fromJson({...saved.toJson(), 'id': 'default'});
+      state = AppSettings.fromJson({
+        ...saved.toJson(),
+        'id': 'default',
+        'workspace_drafts_json': drafts,
+      });
     }
   }
 }
@@ -145,7 +163,17 @@ class StaleReminderOccurrenceException implements Exception {
   const StaleReminderOccurrenceException();
 }
 
-enum _ReminderAction { acknowledgeUpcoming, acknowledgeDue, snooze, complete }
+class PinLimitException implements Exception {
+  const PinLimitException();
+}
+
+enum _ReminderAction {
+  acknowledgeUpcoming,
+  acknowledgeDue,
+  snooze,
+  complete,
+  skip,
+}
 
 class RemindersNotifier extends StateNotifier<List<Reminder>> {
   final DatabaseHelper _dbHelper;
@@ -760,6 +788,16 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           if (rows.isEmpty) throw StateError('Task no longer exists.');
           final current = Reminder.fromJson(rows.single);
           var saved = Reminder.fromJson({...current.toJson(), ...changes});
+          if (saved.isPinned &&
+              (!current.isPinned || current.isCompleted) &&
+              !saved.isCompleted) {
+            final pinned = await txn.query(
+              'Reminders',
+              columns: ['id'],
+              where: 'is_pinned = 1 AND is_completed = 0',
+            );
+            if (pinned.length >= 3) throw const PinLimitException();
+          }
           // Editing a learning alarm also edits its review date. Clearing the
           // alarm returns it to an app-only review card instead of resurrecting
           // notifications on the next answer.
@@ -784,7 +822,11 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
               upcomingDismissedAt: null,
               snoozedAt: null,
               recurrenceAnchorTime: null,
+              recurrenceEventAnchorTime: null,
             );
+          }
+          if (!_sameTime(current.eventTime, saved.eventTime)) {
+            saved = saved.copyWith(recurrenceEventAnchorTime: null);
           }
           needsNotificationSync =
               _nativeContentChanged(current, saved) ||
@@ -819,6 +861,255 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       generation: generation,
     );
   }
+
+  /// Model output is a durable proposal. Only explicit confirmation applies it.
+  Future<ReminderBatchResult> enrichCapture(
+    Reminder baseline,
+    List<Reminder> extracted,
+    DataGeneration generation,
+  ) => _enqueue(
+    (ticket) => _dbHelper.runOperation(ticket, () async {
+      final saved = await _dbHelper.writeTransaction(ticket, (txn) async {
+        final rows = await txn.query(
+          'Reminders',
+          where: 'id = ?',
+          whereArgs: [baseline.id],
+        );
+        if (rows.isEmpty) return null;
+        final current = Reminder.fromJson(rows.single);
+        if (!current.capturePending || current.isCompleted) return null;
+        final before = baseline.toJson();
+        final unchanged = current.toJson().entries.every(
+          (entry) =>
+              _noticeMetadata.contains(entry.key) ||
+              before[entry.key] == entry.value,
+        );
+        if (extracted.length > 32) {
+          throw const FormatException('Too many extracted tasks');
+        }
+        final saved = current.copyWith(
+          capturePending: false,
+          captureProposalJson: unchanged && extracted.isNotEmpty
+              ? jsonEncode(extracted.map((r) => r.toJson()).toList())
+              : null,
+        );
+        await txn.update(
+          'Reminders',
+          saved.toJson(),
+          where: 'id = ?',
+          whereArgs: [saved.id],
+        );
+        return saved;
+      });
+      _dbHelper.checkGeneration(ticket);
+      if (saved != null) _publish([saved]);
+      return ReminderBatchResult(changed: saved == null ? 0 : 1);
+    }),
+    generation: generation,
+  );
+
+  Future<ReminderBatchResult> applyCaptureProposal(
+    Reminder expected,
+    List<Reminder> edited, {
+    DataGeneration? generation,
+  }) => _enqueue(
+    (ticket) => _dbHelper.runOperation(ticket, () async {
+      if (edited.isEmpty ||
+          edited.length > 32 ||
+          edited.any(
+            (r) =>
+                r.taskTitle.trim().isEmpty ||
+                (r.triggerTime != null &&
+                    !r.triggerTime!.isAfter(DateTime.now())),
+          )) {
+        throw const FormatException(
+          'Review the extracted tasks and their reminder times',
+        );
+      }
+      final saved = await _dbHelper.writeTransaction(ticket, (txn) async {
+        final rows = await txn.query(
+          'Reminders',
+          where: 'id = ?',
+          whereArgs: [expected.id],
+        );
+        if (rows.isEmpty) throw const StaleReminderOccurrenceException();
+        final current = Reminder.fromJson(rows.single);
+        if (current.isCompleted ||
+            current.captureProposalJson == null ||
+            current.captureProposalJson != expected.captureProposalJson ||
+            current.noticeRevision != expected.noticeRevision ||
+            current.taskTitle != expected.taskTitle ||
+            current.taskSummary != expected.taskSummary) {
+          throw const StaleReminderOccurrenceException();
+        }
+        final result = <Reminder>[];
+        for (var i = 0; i < edited.length; i++) {
+          final item = Reminder.fromJson({
+            ...edited[i].toJson(),
+            'id': i == 0 ? current.id : '${current.id}:capture:$i',
+            'source_text': current.sourceText,
+            'record_id': current.recordId,
+            'created_at': current.createdAt?.toIso8601String(),
+            'capture_pending': 0,
+            'capture_proposal_json': null,
+            'is_pinned': i == 0 && current.isPinned ? 1 : 0,
+            'notice_revision': i == 0 ? current.noticeRevision + 1 : 0,
+            'notice_acknowledged_at': null,
+            'upcoming_dismissed_at': null,
+            'snoozed_at': null,
+            'recurrence_anchor_time': null,
+            'recurrence_event_anchor_time': null,
+          });
+          if (i == 0) {
+            await txn.update(
+              'Reminders',
+              item.toJson(),
+              where: 'id = ?',
+              whereArgs: [item.id],
+            );
+          } else {
+            await txn.insert('Reminders', item.toJson());
+          }
+          result.add(item);
+        }
+        return result;
+      });
+      _dbHelper.checkGeneration(ticket);
+      if (mounted) {
+        final byId = {for (final item in saved) item.id: item};
+        state = [
+          for (final item in state) byId.remove(item.id) ?? item,
+          ...byId.values,
+        ];
+      }
+      var failures = 0;
+      for (final item in saved) {
+        if (await _synchronizeReminder(item, ticket, cancelOverdue: true)) {
+          failures++;
+        }
+      }
+      return ReminderBatchResult(
+        changed: saved.length,
+        nativeSyncFailures: failures,
+      );
+    }),
+    generation: generation,
+  );
+
+  Future<ReminderBatchResult> gradeWord(
+    Reminder expected,
+    String key,
+    int grade, {
+    DateTime? now,
+    DataGeneration? generation,
+    int dailyLimit = 20,
+    int newLimit = 10,
+  }) => _enqueue(
+    (ticket) => _dbHelper.runOperation(ticket, () async {
+      final at = now ?? DateTime.now();
+      final saved = await _dbHelper.writeTransaction(ticket, (txn) async {
+        final tasks = (await txn.query(
+          'Reminders',
+        )).map(Reminder.fromJson).toList();
+        final target = tasks.where((t) => t.id == expected.id).firstOrNull;
+        if (target == null ||
+            target.isCompleted ||
+            target.taskSummary != expected.taskSummary ||
+            target.spacedRepetitionLevel <= 0) {
+          throw const StaleReminderOccurrenceException();
+        }
+        final queue = LearningQueueService.queue(
+          tasks,
+          now: at,
+          dailyLimit: dailyLimit,
+          newLimit: newLimit,
+        );
+        if (!queue.items.any(
+          (item) => item.key == key && item.task.id == expected.id,
+        )) {
+          throw const StaleReminderOccurrenceException();
+        }
+        final all = LearningQueueService.progress(tasks);
+        final progress = LearningQueueService.grade(
+          all[key],
+          grade,
+          at,
+          target.nextReviewAt ?? target.triggerTime ?? at,
+        );
+        all[key] = progress;
+        final changed = <Reminder>[];
+        for (final task in tasks.where(
+          (t) => !t.isCompleted && t.spacedRepetitionLevel > 0,
+        )) {
+          final words = VocabularyEntry.parseNotes(task.taskSummary ?? '');
+          if (!words.any(
+            (word) => LearningQueueService.wordKey(word.word) == key,
+          )) {
+            continue;
+          }
+          final local = LearningQueueService.decode(task.wordProgressJson)
+            ..removeWhere(
+              (storedKey, _) => !words.any(
+                (word) => LearningQueueService.wordKey(word.word) == storedKey,
+              ),
+            )
+            ..[key] = progress;
+          final dates = [
+            for (final word in words)
+              all[LearningQueueService.wordKey(word.word)]?.due ??
+                  task.nextReviewAt ??
+                  at,
+          ]..sort();
+          final due = dates.first;
+          final clock = (task.nextReviewAt ?? task.triggerTime ?? at).toLocal();
+          final day = at.toLocal();
+          final alarm = due.isAfter(at)
+              ? due
+              : DateTime(
+                  day.year,
+                  day.month,
+                  day.day + 1,
+                  clock.hour,
+                  clock.minute,
+                );
+          final next = task.copyWith(
+            wordProgressJson: jsonEncode({
+              for (final entry in local.entries)
+                entry.key: entry.value.toJson(),
+            }),
+            nextReviewAt: due,
+            triggerTime: task.reviewNotificationsEnabled
+                ? alarm
+                : task.triggerTime,
+            noticeRevision: task.noticeRevision + 1,
+            noticeAcknowledgedAt: null,
+            upcomingDismissedAt: null,
+          );
+          await txn.update(
+            'Reminders',
+            next.toJson(),
+            where: 'id = ?',
+            whereArgs: [next.id],
+          );
+          changed.add(next);
+        }
+        return changed;
+      });
+      _dbHelper.checkGeneration(ticket);
+      _publish(saved);
+      var failures = 0;
+      for (final task in saved) {
+        if (await _synchronizeReminder(task, ticket, cancelOverdue: true)) {
+          failures++;
+        }
+      }
+      return ReminderBatchResult(
+        changed: saved.length,
+        nativeSyncFailures: failures,
+      );
+    }),
+    generation: generation,
+  );
 
   static bool _nativeContentChanged(Reminder a, Reminder b) =>
       _scheduleChanged(a, b) ||
@@ -895,6 +1186,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     'upcoming_dismissed_at',
     'snoozed_at',
     'recurrence_anchor_time',
+    'recurrence_event_anchor_time',
   };
 
   static bool _sameTime(DateTime? a, DateTime? b) =>
@@ -965,6 +1257,15 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     now ?? DateTime.now(),
   ).then((results) => results.single);
 
+  Future<ReminderActionResult> skipOccurrence(
+    Reminder expected, {
+    DateTime? now,
+  }) => _actOnOccurrences(
+    [expected],
+    [_ReminderAction.skip],
+    now ?? DateTime.now(),
+  ).then((results) => results.single);
+
   Future<List<ReminderActionResult>> _actOnOccurrences(
     List<Reminder> expected,
     List<_ReminderAction> actions,
@@ -991,6 +1292,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           final current = rows.isEmpty ? null : Reminder.fromJson(rows.single);
           if (current == null ||
               current.isCompleted ||
+              (action == _ReminderAction.skip && !current.isRecurring) ||
               current.occurrenceIdentity != wanted.occurrenceIdentity ||
               (action == _ReminderAction.snooze &&
                   current.noticeAcknowledgedAt != null) ||
@@ -1035,13 +1337,34 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
                 : current.getNextOccurrence(after: cutoff);
             next = current.copyWith(
               triggerTime: nextTime ?? current.triggerTime,
+              eventTime:
+                  !snooze && nextTime != null && current.eventTime != null
+                  ? current
+                        .copyWith(
+                          triggerTime:
+                              current.recurrenceEventAnchorTime ??
+                              current.eventTime,
+                          recurrenceAnchorTime:
+                              current.recurrenceEventAnchorTime ??
+                              current.eventTime,
+                        )
+                        .getNextOccurrence(
+                          after: current.eventTime!.isAfter(now)
+                              ? current.eventTime
+                              : now,
+                        )
+                  : current.eventTime,
               isCompleted: nextTime == null,
+              isPinned: snooze ? current.isPinned : false,
               noticeRevision: current.noticeRevision + 1,
               noticeAcknowledgedAt: null,
               upcomingDismissedAt: null,
               snoozedAt: snooze ? now : null,
               recurrenceAnchorTime: snooze || nextTime != null
                   ? current.recurrenceAnchorTime ?? current.triggerTime
+                  : null,
+              recurrenceEventAnchorTime: snooze || nextTime != null
+                  ? current.recurrenceEventAnchorTime ?? current.eventTime
                   : null,
             );
           }

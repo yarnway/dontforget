@@ -18,6 +18,7 @@ void main() {
           .copyWith(apiKey: 'synthetic-only', language: 'ja')
           .toJson()
         ..remove('appearance')
+        ..remove('workspace_drafts_json')
         ..remove('input_send_mode');
   final task = Reminder(
     id: 'kept',
@@ -44,7 +45,17 @@ void main() {
           await db.insert('Settings', legacySettings);
           await db.insert(
             'Reminders',
-            {...task}..remove('review_notifications_enabled'),
+            {...task}..removeWhere(
+              (key, _) => const {
+                'review_notifications_enabled',
+                'event_time',
+                'recurrence_event_anchor_time',
+                'suggested_trigger_time',
+                'source_text', 'capture_proposal_json', 'word_progress_json',
+                'capture_pending',
+                'is_pinned',
+              }.contains(key),
+            ),
           );
           if (broken) {
             await db.execute('ALTER TABLE Settings ADD COLUMN appearance TEXT');
@@ -76,6 +87,7 @@ void main() {
         ...legacySettings,
         'appearance': 'system',
         'input_send_mode': 'enter',
+        'workspace_drafts_json': null,
       });
       expect((await db.query('Reminders')).single, task);
       final snapshotDir = root.listSync().whereType<Directory>().singleWhere(
@@ -92,7 +104,17 @@ void main() {
       final data = jsonDecode(await snapshot.readAsString());
       expect(data['settings'], [legacySettings]);
       expect(data['reminders'], [
-        {...task}..remove('review_notifications_enabled'),
+        {...task}..removeWhere(
+          (key, _) => const {
+            'review_notifications_enabled',
+            'event_time',
+            'recurrence_event_anchor_time',
+            'suggested_trigger_time',
+            'source_text', 'capture_proposal_json', 'word_progress_json',
+            'capture_pending',
+            'is_pinned',
+          }.contains(key),
+        ),
       ]);
       // Rebuild an independent v10 database with its frozen schema, not a downgrade.
       final rollback = await databaseFactoryFfi.openDatabase(
@@ -144,7 +166,17 @@ void main() {
       });
       expect(
         (await db.query('Reminders')).single,
-        {...task}..remove('review_notifications_enabled'),
+        {...task}..removeWhere(
+          (key, _) => const {
+            'review_notifications_enabled',
+            'event_time',
+            'recurrence_event_anchor_time',
+            'suggested_trigger_time',
+            'source_text', 'capture_proposal_json', 'word_progress_json',
+            'capture_pending',
+            'is_pinned',
+          }.contains(key),
+        ),
       );
       await db.close();
     },
@@ -164,7 +196,17 @@ void main() {
                   'settings': [legacySettings],
                   'media_records': [],
                   'reminders': [
-                    {...task}..remove('review_notifications_enabled'),
+                    {...task}..removeWhere(
+                      (key, _) => const {
+                        'review_notifications_enabled',
+                        'event_time',
+                        'recurrence_event_anchor_time',
+                        'suggested_trigger_time',
+                        'source_text', 'capture_proposal_json', 'word_progress_json',
+                        'capture_pending',
+                        'is_pinned',
+                      }.contains(key),
+                    ),
                   ],
                 }),
               );
@@ -193,6 +235,7 @@ void main() {
             ...legacySettings,
             'appearance': 'system',
             'input_send_mode': 'enter',
+            'workspace_drafts_json': null,
           });
           expect((await db.query('Reminders')).single, task);
           expect(await file.readAsBytes(), before);

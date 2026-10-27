@@ -22,11 +22,14 @@ import 'settings_screen.dart';
 import 'dashboard_screen.dart';
 import '../widgets/task_search_panel.dart';
 import '../widgets/input_bottom_bar.dart';
-import '../widgets/task_board.dart';
 import '../widgets/command_palette_dialog.dart';
 import '../widgets/spaced_repetition_sheet.dart';
 import '../widgets/focus_mode_sheet.dart';
 import '../widgets/context_digest_sheet.dart';
+import '../widgets/task_workspace_overview.dart';
+import '../widgets/learning_queue_panel.dart';
+import 'notification_repair_screen.dart';
+import '../../providers/workspace_drafts_provider.dart';
 import '../widgets/data_export_sheet.dart';
 import '../widgets/workspace_tool_panel.dart';
 import '../widgets/agent_goal_panel.dart';
@@ -45,6 +48,7 @@ enum _WorkspaceTool {
   dashboard,
   agent,
   study,
+  learning,
 }
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -138,6 +142,60 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   bool _discardDialogOpen = false;
   final _agentGoal = TextEditingController();
   final _studyDraft = StudyPlanDraft();
+  bool _restoringTools = false, _toolsEdited = false;
+
+  Future<void> _restoreWorkspaceDrafts() async {
+    try {
+      final store = ref.read(workspaceDraftsProvider.notifier);
+      if (!store.loaded) await store.ready;
+      if (!_runtimeActive || _toolsEdited) return;
+      _restoringTools = true;
+      final drafts = ref.read(workspaceDraftsProvider);
+      if (drafts['goal'] is String) _agentGoal.text = drafts['goal'] as String;
+      if (drafts['study'] is Map) {
+        _studyDraft.restore(
+          drafts['study'] as Map,
+          ref.read(databaseHelperProvider).captureGeneration(),
+        );
+      }
+    } catch (_) {
+      if (mounted && _runtimeActive) {
+        InlineFeedback.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).get('draftSaveFailed')),
+          ),
+        );
+      }
+    } finally {
+      _restoringTools = false;
+    }
+  }
+
+  void _persistWorkspaceDrafts() {
+    if (_restoringTools || !_runtimeActive) return;
+    _toolsEdited = true;
+    final store = ref.read(workspaceDraftsProvider.notifier);
+    unawaited(
+      Future.wait([
+        store.put('goal', _agentGoal.text.isEmpty ? null : _agentGoal.text),
+        store.put('study', _studyDraft.toJson()),
+      ]).then<void>(
+        (_) {},
+        onError: (Object _) {
+          if (mounted && _runtimeActive) {
+            InlineFeedback.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  AppLocalizations.of(context).get('draftSaveFailed'),
+                ),
+              ),
+            );
+          }
+        },
+      ),
+    );
+  }
+
   bool get _toolBlocked => _exportBusy || _toolBusy;
 
   bool _isSearchOpen = false;
@@ -157,6 +215,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _notifications = ref.read(notificationServiceProvider);
     _contextTriggers = ref.read(contextTriggerServiceProvider);
     if (_birth == null) return;
+    _agentGoal.addListener(_persistWorkspaceDrafts);
+    _studyDraft.addListener(_persistWorkspaceDrafts);
+    unawaited(_restoreWorkspaceDrafts());
     _toolsCommand = ref.read(workspaceToolsCommandProvider);
     _toolsCommand!.open = _nativeToolsHandler;
     _toolsCommand!.search = _nativeSearchHandler;
@@ -488,15 +549,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       } else if (snooze != null) {
         final saved = result.reminder;
         message = snooze
-            ? l10n.get('snoozeSuccess')
+            ? '${l10n.get('reminderDelayedTo')} ${saved?.triggerTime == null ? '' : formatLocalDateTime(saved!.triggerTime!)}'
             : saved != null && !saved.isCompleted && saved.triggerTime != null
             ? '${l10n.get('periodicNext')}${formatLocalDateTime(saved.triggerTime!)}'
             : l10n.get('taskCompleted');
       }
       if (message != null) {
-        InlineFeedback.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(message)));
+        InlineFeedback.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            action: result.nativeSyncFailed
+                ? notificationRepairAction(context)
+                : null,
+          ),
+        );
       }
     } catch (_) {
       if (mounted && _runtimeActive) {
@@ -1027,6 +1093,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         onExecute: _showMultiAgentGoalDialog,
       ),
       CommandPaletteAction(
+        id: 'learning-queue',
+        title: l10n.get('learningQueueTitle'),
+        subtitle: l10n.get('learningBudgetHint'),
+        icon: Icons.auto_stories_outlined,
+        shortcut: '',
+        onExecute: () => _selectTool(_WorkspaceTool.learning),
+      ),
+      CommandPaletteAction(
         id: 'digest',
         title: l10n.get('contextDigestTitle'),
         subtitle: l10n.get('contextDigestDesc'),
@@ -1271,6 +1345,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
+            action: next.error == l10n.get('reminderNativeSyncFailed')
+                ? notificationRepairAction(context)
+                : null,
             content: Row(
               children: [
                 const Icon(Icons.info_outline, color: Colors.white, size: 18),
@@ -1542,6 +1619,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         busyIds: _noticeOperations,
                         onDismiss: _dismissNotice,
                         onSnooze: (r) => _actOnNotice(r, snooze: true),
+                        onSnoozeUntil: (r, until) {
+                          final at = DateTime.now();
+                          if (!until.isAfter(at)) return;
+                          _performNoticeAction(
+                            r,
+                            () => ref
+                                .read(remindersProvider.notifier)
+                                .snoozeOccurrence(
+                                  r,
+                                  now: at,
+                                  duration: until.difference(at),
+                                ),
+                            snooze: true,
+                          );
+                        },
+                        onSkip: (r) => _performNoticeAction(
+                          r,
+                          () => ref
+                              .read(remindersProvider.notifier)
+                              .skipOccurrence(r),
+                          snooze: false,
+                        ),
                         onComplete: (r) => _actOnNotice(r, snooze: false),
                         onReview: _toolBlocked ? null : _openNoticeReview,
                       );
@@ -1614,6 +1713,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           onBusyChanged: (value) =>
                               setState(() => _toolBusy = value),
                         ),
+                        _WorkspaceTool.learning => LearningQueuePanel(
+                          onClose: _closeWorkspaceTool,
+                        ),
                         null => null,
                       },
                       child: _isSearchOpen
@@ -1622,9 +1724,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                               onClearQuery: _clearSearch,
                               onPlayMedia: _playMedia,
                             )
-                          : TaskBoard(
+                          : TaskWorkspaceOverview(
                               reminders: reminders,
                               onPlayMedia: _playMedia,
+                              onOpenLearning: () =>
+                                  _selectTool(_WorkspaceTool.learning),
                             ),
                     ),
                   ),

@@ -8,6 +8,7 @@ import '../services/recovery/backup_inspector.dart';
 import '../services/recovery/database_recovery.dart';
 import '../services/recovery/runtime_gate.dart';
 import 'home_controller.dart';
+import 'workspace_drafts_provider.dart';
 import 'providers.dart';
 
 enum RecoveryPhase {
@@ -177,6 +178,7 @@ class RecoveryCoordinator extends ChangeNotifier {
   }
 
   Future<void> _reloadProviders() async {
+    _ref.invalidate(workspaceDraftsProvider);
     _ref.invalidate(settingsProvider);
     await _ref.read(settingsProvider.notifier).ready;
     _ref.invalidate(mediaRecordsProvider);

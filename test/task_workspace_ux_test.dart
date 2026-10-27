@@ -1,3 +1,5 @@
+import 'support/workspace_drafts.dart';
+import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:dont_forget/data/database_helper.dart';
@@ -29,7 +31,15 @@ class _ControlledHomeController extends HomeController {
   Completer<String?>? pendingText;
   final sent = <String>[];
   @override
-  Future<void> processText(String text) async => sent.add(text);
+  Future<bool> processText(
+    String text, {
+    DateTime? reminderTime,
+    bool memoOnly = false,
+    String? captureId,
+  }) async {
+    sent.add(text);
+    return true;
+  }
 
   @override
   Future<bool> cancelRecording() async {
@@ -127,6 +137,7 @@ void main() {
       ],
     );
     await container.read(settingsProvider.notifier).ready;
+    await container.read(workspaceDraftsProvider.notifier).ready;
     await container.read(remindersProvider.notifier).ready;
     container.read(homeControllerProvider);
   });
@@ -149,6 +160,7 @@ void main() {
     String language = 'zh',
     Brightness brightness = Brightness.light,
   }) async {
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
@@ -210,6 +222,7 @@ void main() {
       await show(tester, const InputBottomBar());
       await tester.pumpAndSettle();
       expect(tester.binding.transientCallbackCount, 0);
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
     },
     variant: TargetPlatformVariant.only(TargetPlatform.macOS),
@@ -239,6 +252,7 @@ void main() {
     home.setRecording(false);
     await tester.pump();
     expect(find.text('Keep this draft'), findsOneWidget);
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -769,6 +783,7 @@ void main() {
         tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
       );
       await tester.pump(const Duration(milliseconds: 700));
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
       home.pendingStart!.complete(true);
       await tester.pumpAndSettle();
@@ -819,6 +834,7 @@ void main() {
       expect(home.stops, 1);
       expect(container.read(homeControllerProvider).isRecording, isFalse);
       expect(find.byType(TextField), findsOneWidget);
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
     },
   );
@@ -868,6 +884,7 @@ void main() {
           );
         }
       }
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
     },
   );
@@ -910,6 +927,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('删除事项'), findsOneWidget);
     semantics.dispose();
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -950,6 +968,7 @@ void main() {
       expect(notifications.canceled, isEmpty);
       expect(find.text('提醒更新失败，请重试。'), findsOneWidget);
       expect(tester.takeException(), isNull);
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
     },
   );
@@ -992,6 +1011,7 @@ void main() {
         expect(find.text(message), findsOneWidget);
         expect(find.text('提醒更新失败，请重试。'), findsNothing);
         expect(tester.takeException(), isNull);
+        addTearDown(() => drainWorkspaceDrafts(tester, container));
         await tester.pumpWidget(const SizedBox());
       },
     );
@@ -1033,6 +1053,7 @@ void main() {
     expect(find.text('删除失败，请重试。'), findsOneWidget);
     expect(notifications.canceled, isEmpty);
     expect(tester.takeException(), isNull);
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(const SizedBox());
   });
   testWidgets(
@@ -1073,6 +1094,7 @@ void main() {
       expect(find.byType(TaskCard), findsOneWidget);
       expect(container.read(remindersProvider).single.id, task.id);
       expect(tester.takeException(), isNull);
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
     },
   );
@@ -1097,6 +1119,7 @@ void main() {
       expect(button.onPressed, isNotNull);
       expect(button.style!.backgroundColor!.resolve({}), colors.primary);
       expect(button.style!.foregroundColor!.resolve({}), colors.onPrimary);
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
     },
   );

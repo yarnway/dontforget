@@ -165,6 +165,7 @@ void main() {
           ..remove('ai_profiles_json')
           ..remove('ai_fallback_enabled')
           ..remove('appearance')
+          ..remove('workspace_drafts_json')
           ..remove('input_send_mode'),
       ],
       'media_records': [
@@ -194,6 +195,12 @@ void main() {
         ).toJson()..removeWhere(
           (key, _) => const {
             'review_notifications_enabled',
+            'event_time',
+            'recurrence_event_anchor_time',
+            'suggested_trigger_time',
+            'source_text', 'capture_proposal_json', 'word_progress_json',
+            'capture_pending',
+            'is_pinned',
             'notice_revision',
             'notice_acknowledged_at',
             'upcoming_dismissed_at',

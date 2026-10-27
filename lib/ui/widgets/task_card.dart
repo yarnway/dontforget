@@ -1,4 +1,5 @@
 import 'inline_feedback.dart';
+import 'capture_preview_dialog.dart';
 import '../formatters/local_date_time.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -6,8 +7,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
 import '../../providers/providers.dart';
+import '../../providers/home_controller.dart';
 import '../../l10n/app_localizations.dart';
 import '../screens/task_detail_screen.dart';
+import '../screens/notification_repair_screen.dart';
 
 class TaskCard extends ConsumerStatefulWidget {
   final Reminder task;
@@ -29,7 +32,16 @@ class _TaskCardState extends ConsumerState<TaskCard> {
 
   void _showMessage(String message) {
     if (!mounted) return;
-    InlineFeedback.of(context).showSnackBar(SnackBar(content: Text(message)));
+    InlineFeedback.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        action:
+            message ==
+                AppLocalizations.of(context).get('reminderNativeSyncFailed')
+            ? notificationRepairAction(context)
+            : null,
+      ),
+    );
   }
 
   Future<void> _decomposeToMicroHabits() async {
@@ -76,6 +88,22 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     setState(() => _isUpdating = true);
     final l10n = AppLocalizations.of(context);
     final task = widget.task;
+    final databaseForFeedback = ref.read(databaseHelperProvider);
+    final generationForFeedback = databaseForFeedback.captureGeneration();
+    final host = InlineFeedback.of(context);
+    final repair = notificationRepairAction(context);
+    void showNativeFailure() {
+      if (host.mounted &&
+          databaseForFeedback.isCurrent(generationForFeedback)) {
+        host.showSnackBar(
+          SnackBar(
+            content: Text(l10n.get('reminderNativeSyncFailed')),
+            action: repair,
+          ),
+        );
+      }
+    }
+
     try {
       if (completed) {
         final result = await ref
@@ -84,7 +112,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         if (result.disposition == ReminderActionDisposition.stale) {
           _showMessage(l10n.get('reminderOccurrenceChanged'));
         } else if (result.nativeSyncFailed) {
-          _showMessage(l10n.get('reminderNativeSyncFailed'));
+          showNativeFailure();
         } else if (result.reminder?.isCompleted == false &&
             result.reminder?.triggerTime != null) {
           _showMessage(
@@ -104,7 +132,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
               ),
         );
         if (result.nativeSyncFailed) {
-          _showMessage(l10n.get('reminderNativeSyncFailed'));
+          showNativeFailure();
         }
         database.checkGeneration(generation);
       }
@@ -212,6 +240,16 @@ class _TaskCardState extends ConsumerState<TaskCard> {
 
   List<PopupMenuEntry<String>> _menuItems(AppLocalizations l10n) => [
     _menuItem('edit', Icons.edit_outlined, l10n.get('editTask')),
+    if (!widget.task.isCompleted)
+      _menuItem(
+        'pin',
+        Icons.push_pin_outlined,
+        l10n.get(widget.task.isPinned ? 'unpinToday' : 'pinToday'),
+      ),
+    if (widget.task.isRecurring && !widget.task.isCompleted)
+      _menuItem('skip', Icons.skip_next_outlined, l10n.get('skipOccurrence')),
+    if (widget.task.sourceText != null)
+      _menuItem('source', Icons.notes_outlined, l10n.get('sourceText')),
     _menuItem(
       'toggle',
       widget.task.isCompleted
@@ -261,6 +299,50 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     if (_isBusy) return;
     if (action == 'edit') {
       _openDetails();
+    } else if (action == 'source') {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(AppLocalizations.of(context).get('sourceText')),
+          content: SingleChildScrollView(
+            child: SelectableText(widget.task.sourceText ?? ''),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(AppLocalizations.of(context).get('close')),
+            ),
+          ],
+        ),
+      );
+    } else if (action == 'pin' || action == 'adopt' || action == 'skip') {
+      setState(() => _isUpdating = true);
+      final loc = AppLocalizations.of(context);
+      try {
+        final notifier = ref.read(remindersProvider.notifier);
+        final result = action == 'skip'
+            ? await notifier.skipOccurrence(widget.task)
+            : await notifier.updateReminder(
+                action == 'pin'
+                    ? widget.task.copyWith(isPinned: !widget.task.isPinned)
+                    : widget.task.copyWith(
+                        triggerTime: widget.task.suggestedTriggerTime,
+                        suggestedTriggerTime: null,
+                      ),
+                baseline: widget.task,
+              );
+        if (result.nativeSyncFailed) {
+          _showMessage(loc.get('reminderNativeSyncFailed'));
+        } else if (!result.accepted) {
+          _showMessage(loc.get('reminderOccurrenceChanged'));
+        }
+      } on PinLimitException {
+        _showMessage(loc.get('pinLimit'));
+      } catch (_) {
+        _showMessage(loc.get('reminderUpdateFailed'));
+      } finally {
+        if (mounted) setState(() => _isUpdating = false);
+      }
     } else if (action == 'toggle') {
       HapticFeedback.selectionClick();
       await _setCompleted(!widget.task.isCompleted);
@@ -342,6 +424,18 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       };
     }
     final metadata = <Widget>[
+      if (task.isPinned && !task.isCompleted)
+        _badge(
+          l10n.get('todayPinned'),
+          Icons.push_pin_outlined,
+          colors.primary,
+        ),
+      if (task.eventTime != null)
+        _badge(
+          '${l10n.get('eventTimeShort')}: ${formatLocalDateTime(task.eventTime!)}',
+          Icons.event_outlined,
+          colors.onSurfaceVariant,
+        ),
       if (task.isEmotionFiltered)
         _badge(
           l10n.get('emotionFilteredBadge'),
@@ -358,7 +452,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         ),
       if (task.triggerTime != null)
         _badge(
-          formatLocalDateTime(task.triggerTime!),
+          '${l10n.get('reminderTimeShort')}: ${formatLocalDateTime(task.triggerTime!)}',
           Icons.access_time,
           colors.onSurfaceVariant,
         ),
@@ -523,6 +617,67 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Wrap(spacing: 6, runSpacing: 6, children: metadata),
+                  ),
+                if (task.suggestedTriggerTime != null && !task.isCompleted)
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 6,
+                    children: [
+                      Text(
+                        '${l10n.get('suggestedReminder')}: ${formatLocalDateTime(task.suggestedTriggerTime!)}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      TextButton(
+                        key: ValueKey('adopt-time-${task.id}'),
+                        onPressed:
+                            _isBusy ||
+                                !task.suggestedTriggerTime!.isAfter(
+                                  DateTime.now(),
+                                )
+                            ? null
+                            : () => _onAction('adopt'),
+                        child: Text(l10n.get('adoptSuggestion')),
+                      ),
+                    ],
+                  ),
+                if (task.capturePending && !task.isCompleted)
+                  Consumer(
+                    builder: (context, ref, _) {
+                      ref.watch(homeControllerProvider);
+                      final controller = ref.read(
+                        homeControllerProvider.notifier,
+                      );
+                      final running =
+                          controller.isCaptureRunning(task.id) ||
+                          (task.recordId != null &&
+                              ref
+                                  .read(homeControllerProvider)
+                                  .isProcessingInBackground);
+                      return TextButton.icon(
+                        key: ValueKey('retry-capture-${task.id}'),
+                        onPressed: running
+                            ? null
+                            : () => controller.retryCapture(task),
+                        icon: const Icon(Icons.auto_awesome_outlined, size: 16),
+                        label: Text(
+                          l10n.get(
+                            running ? 'captureOrganizing' : 'captureContinue',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                if (task.captureProposalJson != null && !task.isCompleted)
+                  TextButton.icon(
+                    key: ValueKey('preview-capture-${task.id}'),
+                    onPressed: _isBusy
+                        ? null
+                        : () => showDialog<void>(
+                            context: context,
+                            builder: (_) => CapturePreviewDialog(task: task),
+                          ),
+                    icon: const Icon(Icons.preview_outlined, size: 16),
+                    label: Text(l10n.get('capturePreview')),
                   ),
                 if (mediaIcon != null)
                   TextButton(

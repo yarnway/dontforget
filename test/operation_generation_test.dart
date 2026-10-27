@@ -556,33 +556,56 @@ void main() {
     },
   );
 
-  test('all configured models failing saves the original once without a reminder time', () async {
-    final dio = Dio();
-    final calls = <String>[];
-    dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
-      calls.add(options.uri.host);
-      handler.reject(DioException(requestOptions: options,
-        response: Response(requestOptions: options, statusCode: 401)));
-    }));
-    final service = LLMService(client: dio);
-    addTearDown(service.dispose);
-    final home = await controller(llm: service);
-    await container!.read(settingsProvider.notifier).updateSettings(
-      AppSettings.defaults().copyWith(aiProfiles: [
-        for (final id in ['a', 'b']) AiProfile(id: id, label: id,
-          settings: AppSettings.defaults().copyWith(
-            baseUrl: 'https://$id.invalid/v1', apiKey: 'fixture-$id')),
-      ], aiFallbackEnabled: true));
-    await home.processText('Synthetic original text');
-    await idle(home);
-    final saved = await rows('Reminders');
-    expect(calls, ['a.invalid', 'b.invalid']);
-    expect(saved, hasLength(1));
-    expect(saved.single['task_summary'], 'Synthetic original text');
-    expect(saved.single['trigger_time'], isNull);
-    expect(home.state.error, isNot(contains('fixture-')));
-    expect(home.state.error, contains('已保存为本地事项'));
-  });
+  test(
+    'all configured models failing saves the original once without a reminder time',
+    () async {
+      final dio = Dio();
+      final calls = <String>[];
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (options, handler) {
+            calls.add(options.uri.host);
+            handler.reject(
+              DioException(
+                requestOptions: options,
+                response: Response(requestOptions: options, statusCode: 401),
+              ),
+            );
+          },
+        ),
+      );
+      final service = LLMService(client: dio);
+      addTearDown(service.dispose);
+      final home = await controller(llm: service);
+      await container!
+          .read(settingsProvider.notifier)
+          .updateSettings(
+            AppSettings.defaults().copyWith(
+              aiProfiles: [
+                for (final id in ['a', 'b'])
+                  AiProfile(
+                    id: id,
+                    label: id,
+                    settings: AppSettings.defaults().copyWith(
+                      baseUrl: 'https://$id.invalid/v1',
+                      apiKey: 'fixture-$id',
+                    ),
+                  ),
+              ],
+              aiFallbackEnabled: true,
+            ),
+          );
+      await home.processText('Synthetic original text');
+      await idle(home);
+      final saved = await rows('Reminders');
+      expect(calls, ['a.invalid', 'b.invalid']);
+      expect(saved, hasLength(1));
+      expect(saved.single['task_summary'], 'Synthetic original text');
+      expect(saved.single['trigger_time'], isNull);
+      expect(home.state.error, isNot(contains('fixture-')));
+      expect(home.state.error, contains('原文已保存在本地'));
+    },
+  );
 
   for (final fail in [false, true]) {
     test(
@@ -600,7 +623,8 @@ void main() {
           llm.result.complete([task('late-result')]);
         }
         await idle(home);
-        expect(await rows('Reminders'), isEmpty);
+        expect((await rows('Reminders')).single['source_text'], 'Old input');
+        expect((await rows('Reminders')).single['task_title'], 'Old input');
         expect(notifications.scheduled, isEmpty);
         expect(home.state.error, isNull);
       },
@@ -697,11 +721,17 @@ void main() {
             await home.processVideo();
         }
         await llm.started.future;
+        final durable = await rows('Reminders');
+        expect(durable, hasLength(1));
         final maintenance = await database.beginMaintenance();
         await maintenance.resume();
         llm.result.complete([task('late-$kind')]);
         await idle(home);
-        expect(await rows('Reminders'), isEmpty);
+        expect(await rows('Reminders'), durable);
+        expect(
+          (await rows('Reminders')).single['capture_proposal_json'],
+          isNull,
+        );
         expect(notifications.scheduled, isEmpty);
         expect(home.state.error, isNull);
       },
@@ -709,21 +739,16 @@ void main() {
   }
 
   test(
-    'maintenance drains an admitted notification and blocks the next task',
+    'maintenance drains a local alarm before admitting AI enrichment',
     () async {
       final llm = _DelayedLlm();
       final home = await controller(llm: llm);
       final gate = notifications.gate = _Gate();
-      await home.processText('Two tasks');
-      await llm.started.future;
-      llm.result.complete([
-        task(
-          'first',
-        ).copyWith(triggerTime: DateTime.now().add(const Duration(hours: 1))),
-        task(
-          'second',
-        ).copyWith(triggerTime: DateTime.now().add(const Duration(hours: 2))),
-      ]);
+      final saving = home.processText(
+        'Two tasks',
+        captureId: 'raw-capture',
+        reminderTime: DateTime.now().add(const Duration(hours: 1)),
+      );
       await gate.started.future;
       var drained = false;
       final pendingMaintenance = database.beginMaintenance().then((lease) {
@@ -734,10 +759,11 @@ void main() {
       expect(drained, isFalse);
       gate.release.complete();
       final maintenance = await pendingMaintenance;
-      await idle(home);
+      await saving;
       await maintenance.resume();
-      expect(notifications.scheduled, ['first']);
-      expect((await rows('Reminders')).map((row) => row['id']), ['first']);
+      expect(notifications.scheduled, ['raw-capture']);
+      expect((await rows('Reminders')).single['source_text'], 'Two tasks');
+      expect(llm.started.isCompleted, isFalse);
     },
   );
 
@@ -761,7 +787,58 @@ void main() {
     container = null;
     llm.result.complete([task('disposed-result')]);
     await Future<void>.delayed(const Duration(milliseconds: 10));
-    expect(await rows('Reminders'), isEmpty);
+    expect(
+      (await rows('Reminders')).single['source_text'],
+      'Old disposed input',
+    );
     expect(notifications.scheduled, isEmpty);
   });
+  for (final kind in ['image', 'file', 'video']) {
+    test(
+      '$kind extraction remains a preview until explicit confirmation',
+      () async {
+        final fixture = await File(
+          '${directory.path}/preview.txt',
+        ).writeAsString('Original media content');
+        final llm = _DelayedLlm();
+        final home = await controller(
+          llm: llm,
+          pickImage: (_) async => XFile(fixture.path),
+          pickVideo: () async => XFile(fixture.path),
+          pickFile: () async => _PickedFile(fixture.path),
+          importFile: (path) async => path,
+        );
+        switch (kind) {
+          case 'image':
+            await home.processImage();
+          case 'file':
+            await home.processFile();
+          default:
+            await home.processVideo();
+        }
+        await llm.started.future;
+        final original = (await rows('Reminders')).single;
+        expect(original['record_id'], isNotNull);
+        final candidate = task(
+          'approved-$kind',
+        ).copyWith(triggerTime: DateTime.now().add(const Duration(hours: 1)));
+        llm.result.complete([candidate]);
+        await idle(home);
+        final raw = container!.read(remindersProvider).single;
+        expect(raw.id, original['id']);
+        expect(raw.captureProposalJson, isNotNull);
+        expect(raw.taskTitle, isNot(candidate.taskTitle));
+        expect(notifications.scheduled, isEmpty);
+        await container!.read(remindersProvider.notifier).applyCaptureProposal(
+          raw,
+          [candidate],
+        );
+        final approved = container!.read(remindersProvider).single;
+        expect(approved.id, raw.id);
+        expect(approved.taskTitle, candidate.taskTitle);
+        expect(approved.recordId, raw.recordId);
+        expect(notifications.scheduled, [raw.id]);
+      },
+    );
+  }
 }

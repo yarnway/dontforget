@@ -8,9 +8,11 @@ class VocabularyDeck extends StatefulWidget {
     super.key,
     required this.content,
     this.practice = false,
+    this.individualFeedback = false,
   });
   final String content;
   final bool practice;
+  final bool individualFeedback;
   @override
   State<VocabularyDeck> createState() => _VocabularyDeckState();
 }
@@ -229,7 +231,11 @@ class _VocabularyDeckState extends State<VocabularyDeck> {
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
-              loc.get('vocabBatchFeedback'),
+              loc.get(
+                widget.individualFeedback
+                    ? 'wordFeedbackHint'
+                    : 'vocabBatchFeedback',
+              ),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colors.onSurfaceVariant,
               ),

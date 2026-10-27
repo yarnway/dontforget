@@ -1,3 +1,5 @@
+import 'support/workspace_drafts.dart';
+import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
@@ -134,6 +136,10 @@ void main() {
       ],
     );
     await container!.read(settingsProvider.notifier).ready;
+    await container!.read(workspaceDraftsProvider.notifier).ready;
+    await container!
+        .read(workspaceDraftsProvider.notifier)
+        .put('homeView', 'board');
     if (llm != null) {
       await container!
           .read(settingsProvider.notifier)
@@ -211,8 +217,21 @@ void main() {
         await idle.future.timeout(const Duration(seconds: 5));
         final saved = await rows('Reminders');
         expect(saved, hasLength(1));
-        expect(saved.single['id'], 'native-model-result');
-        expect(saved.single['task_title'], '检查报告');
+        expect(saved.single['source_text'], '明天下午三点检查报告');
+        expect(saved.single['task_title'], '明天下午三点检查报告');
+        final raw = container!.read(remindersProvider).single;
+        expect(raw.captureProposalJson, isNotNull);
+        await container!.read(remindersProvider.notifier).applyCaptureProposal(
+          raw,
+          [
+            Reminder(
+              id: 'ignored-model-id',
+              taskTitle: '检查报告',
+              quadrantLevel: 2,
+            ),
+          ],
+        );
+        expect((await rows('Reminders')).single['task_title'], '检查报告');
         expect(home.state.error, isNull);
       } finally {
         commands.dispose();
@@ -239,7 +258,7 @@ void main() {
       ]);
       await home.processText('late old controller input');
       await Future<void>.delayed(Duration.zero);
-      expect(await rows('Reminders'), isEmpty);
+      expect((await rows('Reminders')).single['source_text'], 'old input');
       expect(home.state.error, isNull);
     },
   );
@@ -412,6 +431,7 @@ void main() {
           );
           await controller();
         });
+        addTearDown(() => drainWorkspaceDrafts(tester, container!));
         await tester.pumpWidget(
           UncontrolledProviderScope(
             container: container!,
@@ -452,6 +472,7 @@ void main() {
           stored!.single['content_or_path'],
           '/old-container/Documents/media/import-saved/audio.m4a',
         );
+        addTearDown(() => drainWorkspaceDrafts(tester, container!));
         await tester.pumpWidget(const SizedBox());
       },
     );
@@ -488,6 +509,7 @@ void main() {
       });
       final agent = _Agent();
       await tester.runAsync(() => controller(agent: agent));
+      addTearDown(() => drainWorkspaceDrafts(tester, container!));
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container!,
@@ -520,6 +542,7 @@ void main() {
       await tester.tap(find.text('规划目标'));
       await tester.pump();
       expect(agent.started.isCompleted, isTrue);
+      await drainWorkspaceDrafts(tester, container!);
       await tester.runAsync(() async {
         final token = await gate.pause();
         container!.invalidate(multiAgentServiceProvider);
@@ -531,6 +554,7 @@ void main() {
       await tester.pump();
       expect(tester.takeException(), isNull);
       expect(await tester.runAsync(() => rows('Reminders')), isEmpty);
+      addTearDown(() => drainWorkspaceDrafts(tester, container!));
       await tester.pumpWidget(const SizedBox());
     },
   );

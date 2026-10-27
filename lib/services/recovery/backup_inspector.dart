@@ -1,4 +1,6 @@
 import '../../models/settings.dart';
+import '../../models/reminder.dart';
+import '../learning_queue_service.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -416,6 +418,17 @@ Map<String, String> _columnsFor(String table, int version) => {
   if (table == 'settings' && version >= 12) 'input_send_mode': 's',
   if (table == 'reminders' && version >= 13)
     'review_notifications_enabled': 'b',
+  if (table == 'settings' && version >= 14) 'workspace_drafts_json': 's?',
+  if (table == 'reminders' && version >= 14) ...{
+    'event_time': 'd?',
+    'recurrence_event_anchor_time': 'd?',
+    'suggested_trigger_time': 'd?',
+    'source_text': 's?',
+    'capture_proposal_json': 's?',
+    'word_progress_json': 's?',
+    'capture_pending': 'b',
+    'is_pinned': 'b',
+  },
 };
 
 Future<void> _checkSchema(
@@ -522,6 +535,8 @@ Future<void> _checkSchema(
         'notice_revision',
         'ai_fallback_enabled',
         'review_notifications_enabled',
+        'capture_pending',
+        'is_pinned',
       }.contains(name);
       final validDefault = defaultsToZero
           ? defaultValue == '0'
@@ -562,7 +577,7 @@ Future<void> _checkSchema(
 }
 
 void _checkVersion(Object? value) {
-  if (value is! int || !const {7, 8, 9, 10, 11, 12, 13}.contains(value)) {
+  if (value is! int || !const {7, 8, 9, 10, 11, 12, 13, 14}.contains(value)) {
     _fail(BackupInspectionError.unsupportedVersion);
   }
 }
@@ -831,6 +846,29 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
           'yearly',
         ].contains(row['recurrence_rule'])) {
       _fail(BackupInspectionError.invalidData);
+    }
+    if (data['version'] >= 14) {
+      try {
+        LearningQueueService.decode(row['word_progress_json'] as String?);
+        final proposal = row['capture_proposal_json'];
+        if (proposal != null) {
+          final values = _decodeJson(proposal as String);
+          if (values is! List || values.isEmpty || values.length > 32) {
+            throw const FormatException();
+          }
+          for (final candidate in values) {
+            if (candidate is! Map ||
+                candidate.keys.any(
+                  (key) => !_columnsFor('reminders', 14).containsKey(key),
+                )) {
+              throw const FormatException();
+            }
+            Reminder.fromJson(Map<String, dynamic>.from(candidate));
+          }
+        }
+      } catch (_) {
+        _fail(BackupInspectionError.invalidData);
+      }
     }
     final context = row['context_trigger'] as String?;
     if (context != null && context.trim().isNotEmpty) {

@@ -22,6 +22,7 @@ class TaskSearchIndex {
           old != null &&
           old.task.taskTitle == task.taskTitle &&
           old.task.taskSummary == task.taskSummary &&
+          old.task.sourceText == task.sourceText &&
           old.task.subTasks == task.subTasks;
       final entry = (
         task: task,
@@ -31,6 +32,7 @@ class TaskSearchIndex {
             : [
                 task.taskTitle.toLowerCase(),
                 if (task.taskSummary != null) task.taskSummary!.toLowerCase(),
+                if (task.sourceText != null) task.sourceText!.toLowerCase(),
                 ...task.getSubTasksList().map((text) => text.toLowerCase()),
               ],
       );
@@ -62,7 +64,7 @@ class TaskSearchIndex {
     final matches = <_Entry>[];
     for (final entry in _entries) {
       final task = entry.task;
-      final due = task.triggerTime;
+      final due = task.eventTime ?? task.triggerTime;
       final accepted = switch (filter) {
         TaskSearchFilter.all => true,
         TaskSearchFilter.pending => !task.isCompleted,
@@ -86,8 +88,8 @@ class TaskSearchIndex {
       matches.sort((a, b) {
         final comparison = switch (sort) {
           TaskSearchSort.dueSoonest => _compareDates(
-            a.task.triggerTime,
-            b.task.triggerTime,
+            a.task.eventTime ?? a.task.triggerTime,
+            b.task.eventTime ?? b.task.triggerTime,
           ),
           TaskSearchSort.newest => _compareDates(
             a.task.createdAt,

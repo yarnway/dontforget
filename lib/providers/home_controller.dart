@@ -18,6 +18,7 @@ import '../services/llm_service.dart';
 import '../services/local_media_store.dart';
 import '../services/recording_duration_reader.dart';
 import '../services/local_speech_service.dart';
+import '../services/quick_reminder_parser.dart';
 import '../services/recovery/runtime_gate.dart';
 import 'providers.dart';
 
@@ -227,7 +228,48 @@ class HomeController extends StateNotifier<HomeState> {
     List<Reminder> tasks,
     DataGeneration generation, {
     String? recordId,
+    String? originalText,
+    bool preview = false,
   }) async {
+    if (recordId != null) {
+      final notifier = _ref.read(remindersProvider.notifier);
+      final raw = _ref
+          .read(remindersProvider)
+          .where((r) => r.id == 'capture:$recordId')
+          .firstOrNull;
+      if (raw != null) {
+        if (preview && !raw.capturePending) return;
+        final source = raw.copyWith(
+          sourceText: originalText ?? raw.sourceText,
+          taskSummary: raw.taskSummary == raw.sourceText
+              ? originalText ?? raw.taskSummary
+              : raw.taskSummary,
+        );
+        await notifier.updateReminderForGeneration(
+          source,
+          generation,
+          baseline: raw,
+        );
+        if (preview) {
+          await notifier.enrichCapture(source, tasks, generation);
+        } else if (tasks.isNotEmpty) {
+          final memo = Reminder.fromJson({
+            ...tasks.first.toJson(),
+            'id': raw.id,
+            'record_id': recordId,
+            'source_text': source.sourceText,
+            'capture_pending': 0,
+            'trigger_time': null,
+          });
+          await notifier.updateReminderForGeneration(
+            memo,
+            generation,
+            baseline: source,
+          );
+        }
+        return;
+      }
+    }
     for (final task in tasks) {
       _check(generation);
       final saved = recordId == null ? task : task.copyWith(recordId: recordId);
@@ -248,8 +290,9 @@ class HomeController extends StateNotifier<HomeState> {
   Future<String> _saveMedia(
     String type,
     String path,
-    DataGeneration generation,
-  ) async {
+    DataGeneration generation, {
+    bool durableCapture = false,
+  }) async {
     _check(generation);
     final id = const Uuid().v4();
     await _ref
@@ -264,6 +307,29 @@ class HomeController extends StateNotifier<HomeState> {
           generation,
         );
     _check(generation);
+    if (durableCapture) {
+      final language = _ref.read(settingsProvider).language;
+      final name = path.split(RegExp(r'[/\\]')).last;
+      await _ref
+          .read(remindersProvider.notifier)
+          .addReminderForGeneration(
+            Reminder(
+              id: 'capture:$id',
+              recordId: id,
+              taskTitle: AppLocalizations(
+                Locale(language),
+              ).get('capturedAttachment'),
+              taskSummary: name,
+              sourceText: name,
+              quadrantLevel: 2,
+              capturePending: _ref
+                  .read(settingsProvider)
+                  .hasConfiguredExtraction,
+            ),
+            generation,
+          );
+      _check(generation);
+    }
     return id;
   }
 
@@ -304,14 +370,19 @@ class HomeController extends StateNotifier<HomeState> {
     }
   }
 
-  Future<void> processText(String text) async {
+  Future<bool> processText(
+    String text, {
+    DateTime? reminderTime,
+    bool memoOnly = false,
+    String? captureId,
+  }) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty) {
-      return;
+      return false;
     }
     final generation = _beginInput();
     if (generation == null) {
-      return;
+      return false;
     }
     if (trimmed.startsWith('/agent ') || trimmed.startsWith('/goal ')) {
       final goal = trimmed.replaceFirst(RegExp(r'^/(agent|goal)\s+'), '');
@@ -320,55 +391,158 @@ class HomeController extends StateNotifier<HomeState> {
           await _processWithMultiAgent(goal, generation);
         } catch (_) {
           // The same generation owns both the command and its error state.
+          return false;
         }
-        return;
+        return true;
       }
     }
-    _launch(generation, () async {
-      final settings = _ref.read(settingsProvider);
-      if (!settings.hasConfiguredExtraction) {
-        await _saveLocalText(trimmed, generation);
-        return;
-      }
-      final service = _ref.read(llmServiceProvider);
-      List<Reminder> tasks;
-      try {
-        tasks = await service.extractTasks(trimmed, settings);
-      } catch (error) {
-        // A failed old request must not create a fallback in a restored DB.
-        _check(generation);
-        await _saveLocalText(trimmed, generation);
-        _reportError(
-          generation,
-          '${service.formatErrorMessage(error)}\n已保存为本地事项，请在详情中设置提醒时间。',
-        );
-        return;
-      }
+    final settings = _ref.read(settingsProvider);
+    final parsed = QuickReminderParser.parse(trimmed);
+    final time = memoOnly ? null : reminderTime ?? parsed;
+    if (time != null && !time.isAfter(DateTime.now())) {
+      _reportError(
+        generation,
+        AppLocalizations(Locale(settings.language)).get('chooseFutureTime'),
+      );
+      return false;
+    }
+    final existing = _ref
+        .read(remindersProvider)
+        .where((r) => r.id == captureId)
+        .firstOrNull;
+    if (existing != null) return existing.sourceText == trimmed;
+    final local = Reminder(
+      id: captureId ?? const Uuid().v4(),
+      taskTitle: String.fromCharCodes(trimmed.runes.take(80)),
+      taskSummary: trimmed,
+      sourceText: trimmed,
+      quadrantLevel: 2,
+      triggerTime: time,
+      eventTime: parsed,
+      capturePending: settings.hasConfiguredExtraction && !memoOnly,
+    );
+    final saving = _startPending(generation);
+    var nativeFailed = false;
+    try {
+      final result = await _ref
+          .read(remindersProvider.notifier)
+          .addReminderForGeneration(local, generation);
       _check(generation);
-      if (tasks.isEmpty) {
-        await _saveLocalText(trimmed, generation);
-      } else {
-        await _saveTasks(tasks, generation);
-      }
-    }, failureMessage: '事项未能完整保存，请检查本地存储后重试。');
+      nativeFailed = result.nativeSyncFailed;
+    } catch (_) {
+      _reportError(generation, '事项未能完整保存，输入内容已保留，请检查本地存储后重试。');
+      _finishPending(saving);
+      return false;
+    }
+    if (local.capturePending) retryCapture(local);
+    _finishPending(saving);
+    if (nativeFailed) {
+      _reportError(
+        generation,
+        AppLocalizations(
+          Locale(settings.language),
+        ).get('reminderNativeSyncFailed'),
+      );
+    }
+    return true;
   }
 
-  Future<void> _saveLocalText(String text, DataGeneration generation) async {
-    _check(generation);
-    await _ref
-        .read(remindersProvider.notifier)
-        .addReminderForGeneration(
-          Reminder(
-            id: const Uuid().v4(),
-            taskTitle: text.length > 25 ? '${text.substring(0, 25)}...' : text,
-            taskSummary: text,
-            quadrantLevel: 2,
-            urgencyLevel: 'General',
-            importanceLevel: 'Important',
-          ),
-          generation,
-        );
-    _check(generation);
+  final Set<String> _activeCaptures = {};
+  bool isCaptureRunning(String id) => _activeCaptures.contains(id);
+
+  void retryCapture(Reminder task) {
+    final generation = _beginInput();
+    if (generation == null) return;
+    final current = _ref
+        .read(remindersProvider)
+        .where((r) => r.id == task.id)
+        .firstOrNull;
+    if (current?.capturePending != true ||
+        !task.capturePending ||
+        task.sourceText == null ||
+        !_activeCaptures.add(task.id)) {
+      return;
+    }
+    _launch(
+      generation,
+      () async {
+        try {
+          final service = _ref.read(llmServiceProvider);
+          await _ref.read(mediaRecordsProvider.notifier).ready;
+          _check(generation);
+          final record = _ref
+              .read(mediaRecordsProvider)
+              .where((r) => r.id == task.recordId)
+              .firstOrNull;
+          if (record != null) {
+            final path = await LocalMediaStore().resolvePath(
+              record.contentOrPath,
+            );
+            _check(generation);
+            final settings = _ref.read(settingsProvider);
+            final name = path.split(RegExp(r'[/\\]')).last;
+            String source = task.sourceText!;
+            late List<Reminder> tasks;
+            switch (record.type) {
+              case 'audio':
+                source = await _transcribeCapture(path);
+                tasks = await service.extractTasks(source, settings);
+              case 'image':
+                tasks = await service.extractTasksFromImage(
+                  base64Encode(await File(path).readAsBytes()),
+                  settings,
+                );
+              case 'file':
+                try {
+                  if (await File(path).length() < 500 * 1024) {
+                    source = await File(path).readAsString();
+                  }
+                } catch (_) {
+                  source = name;
+                }
+                tasks = await service.extractTasksFromFile(
+                  name,
+                  source,
+                  settings,
+                );
+              case 'video':
+                tasks = await service.extractTasksFromVideo(name, settings);
+              default:
+                tasks = await service.extractTasks(source, settings);
+            }
+            _check(generation);
+            await _saveTasks(
+              tasks,
+              generation,
+              recordId: record.id,
+              originalText: source,
+              preview: true,
+            );
+            return;
+          }
+          final tasks = await service.extractTasks(
+            task.sourceText!,
+            _ref.read(settingsProvider),
+          );
+          _check(generation);
+          final result = await _ref
+              .read(remindersProvider.notifier)
+              .enrichCapture(task, tasks, generation);
+          if (result.nativeSyncFailures > 0) {
+            _reportError(
+              generation,
+              AppLocalizations(
+                Locale(_ref.read(settingsProvider).language),
+              ).get('reminderNativeSyncFailed'),
+            );
+          }
+        } finally {
+          _activeCaptures.remove(task.id);
+        }
+      },
+      failureMessage: '原文已保存在本地，可稍后继续 AI 整理。',
+      explainModelError: true,
+    );
   }
 
   Future<bool> startRecording() async {
@@ -485,6 +659,24 @@ class HomeController extends StateNotifier<HomeState> {
     final l10n = AppLocalizations(Locale(_ref.read(settingsProvider).language));
     final id = recordId ?? await _saveMedia('audio', path, generation);
     _check(generation);
+    final raw = _ref
+        .read(remindersProvider)
+        .where((r) => r.id == 'capture:$id')
+        .firstOrNull;
+    if (raw != null) {
+      await _ref
+          .read(remindersProvider.notifier)
+          .updateReminderForGeneration(
+            raw.copyWith(
+              taskTitle: l10n.get('voiceMemoTitle'),
+              taskSummary: l10n.get('voiceMemoSummary'),
+              capturePending: false,
+            ),
+            generation,
+            baseline: raw,
+          );
+      return;
+    }
     await _ref
         .read(remindersProvider.notifier)
         .addReminderForGeneration(
@@ -612,14 +804,25 @@ class HomeController extends StateNotifier<HomeState> {
         _check(generation);
         final settings = _ref.read(settingsProvider);
         final service = _ref.read(llmServiceProvider);
-        final id = await _saveMedia('audio', savedPath, generation);
+        final id = await _saveMedia(
+          'audio',
+          savedPath,
+          generation,
+          durableCapture: true,
+        );
         _check(generation);
         try {
           final text = await _transcribeCapture(savedPath);
           _check(generation);
           final tasks = await service.extractTasks(text, settings);
           _check(generation);
-          await _saveTasks(tasks, generation, recordId: id);
+          await _saveTasks(
+            tasks,
+            generation,
+            recordId: id,
+            originalText: text,
+            preview: settings.hasConfiguredExtraction,
+          );
         } on AudioTranscriptionUnsupportedException catch (_) {
           _check(generation);
           await _saveVoiceMemo(savedPath, generation, recordId: id);
@@ -667,7 +870,12 @@ class HomeController extends StateNotifier<HomeState> {
           _check(generation);
           final bytes = await File(savedPath).readAsBytes();
           _check(generation);
-          final id = await _saveMedia('image', savedPath, generation);
+          final id = await _saveMedia(
+            'image',
+            savedPath,
+            generation,
+            durableCapture: true,
+          );
           _check(generation);
           final settings = _ref.read(settingsProvider);
           final service = _ref.read(llmServiceProvider);
@@ -676,7 +884,13 @@ class HomeController extends StateNotifier<HomeState> {
             settings,
           );
           _check(generation);
-          await _saveTasks(tasks, generation, recordId: id);
+          await _saveTasks(
+            tasks,
+            generation,
+            recordId: id,
+            originalText: selected.name,
+            preview: settings.hasConfiguredExtraction,
+          );
         },
         failureMessage: '图片识别提示',
         explainModelError: true,
@@ -704,7 +918,12 @@ class HomeController extends StateNotifier<HomeState> {
         () async {
           final savedPath = await _saveFileToLocal(file.path!, generation);
           _check(generation);
-          final id = await _saveMedia('file', savedPath, generation);
+          final id = await _saveMedia(
+            'file',
+            savedPath,
+            generation,
+            durableCapture: true,
+          );
           String content;
           try {
             final saved = File(savedPath);
@@ -723,7 +942,13 @@ class HomeController extends StateNotifier<HomeState> {
               .read(llmServiceProvider)
               .extractTasksFromFile(file.name, content, settings);
           _check(generation);
-          await _saveTasks(tasks, generation, recordId: id);
+          await _saveTasks(
+            tasks,
+            generation,
+            recordId: id,
+            originalText: content,
+            preview: settings.hasConfiguredExtraction,
+          );
         },
         failureMessage: '文档解析提示',
         explainModelError: true,
@@ -749,14 +974,25 @@ class HomeController extends StateNotifier<HomeState> {
         () async {
           final savedPath = await _saveFileToLocal(selected.path, generation);
           _check(generation);
-          final id = await _saveMedia('video', savedPath, generation);
+          final id = await _saveMedia(
+            'video',
+            savedPath,
+            generation,
+            durableCapture: true,
+          );
           _check(generation);
           final settings = _ref.read(settingsProvider);
           final tasks = await _ref
               .read(llmServiceProvider)
               .extractTasksFromVideo(selected.name, settings);
           _check(generation);
-          await _saveTasks(tasks, generation, recordId: id);
+          await _saveTasks(
+            tasks,
+            generation,
+            recordId: id,
+            originalText: selected.name,
+            preview: settings.hasConfiguredExtraction,
+          );
         },
         failureMessage: '视频处理提示',
         explainModelError: true,

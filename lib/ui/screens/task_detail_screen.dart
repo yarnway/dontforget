@@ -13,6 +13,7 @@ import '../../providers/providers.dart';
 import '../../services/context_trigger_service.dart';
 import '../../l10n/app_localizations.dart';
 import 'knowledge_graph_screen.dart';
+import 'notification_repair_screen.dart';
 
 /// Dedicated Full-Page Task Detail & Editing Screen
 class TaskDetailScreen extends ConsumerStatefulWidget {
@@ -32,6 +33,7 @@ typedef _DetailDraft = ({
   int originalQuadrant,
   bool promoted,
   DateTime? time,
+  DateTime? eventTime,
   String recurrence,
   bool completed,
   String contextType,
@@ -47,6 +49,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   late int _originalQuadrant;
   late bool _isDynamicallyPromoted;
   late DateTime? _selectedTime;
+  late DateTime? _eventTime;
   late String _selectedRecurrenceRule;
   late bool _isCompleted;
   late List<String> _linkedTaskIds;
@@ -97,6 +100,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     _originalQuadrant = widget.task.originalQuadrantLevel;
     _isDynamicallyPromoted = widget.task.isDynamicallyPromoted;
     _selectedTime = widget.task.triggerTime;
+    _eventTime = widget.task.eventTime;
     _selectedRecurrenceRule =
         widget.task.isRecurring && widget.task.recurrenceRule != null
         ? widget.task.recurrenceRule!
@@ -149,6 +153,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     originalQuadrant: _originalQuadrant,
     promoted: _isDynamicallyPromoted,
     time: _selectedTime,
+    eventTime: _eventTime,
     recurrence: _selectedRecurrenceRule,
     completed: _isCompleted,
     contextType: _contextTriggerType,
@@ -314,6 +319,12 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       triggerTime: _selectedTime != baseline.triggerTime
           ? _selectedTime
           : current.triggerTime,
+      eventTime: _eventTime != baseline.eventTime
+          ? _eventTime
+          : current.eventTime,
+      suggestedTriggerTime: _selectedTime != baseline.triggerTime
+          ? null
+          : current.suggestedTriggerTime,
       isCompleted: _isCompleted != baseline.isCompleted
           ? _isCompleted
           : current.isCompleted,
@@ -349,7 +360,10 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       _reportedDirty = _captureDraft() != _savedDraft;
       if (result.nativeSyncFailed) {
         feedback.showSnackBar(
-          SnackBar(content: Text(l10n.get('reminderNativeSyncFailed'))),
+          SnackBar(
+            content: Text(l10n.get('reminderNativeSyncFailed')),
+            action: notificationRepairAction(context),
+          ),
           tone: FeedbackTone.warning,
         );
         return;
@@ -453,8 +467,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     }
   }
 
-  Future<void> _pickDateTime() async {
-    final initialDate = _selectedTime?.toLocal() ?? DateTime.now();
+  Future<void> _pickDateTime({bool event = false}) async {
+    final initialDate =
+        (event ? _eventTime : _selectedTime)?.toLocal() ?? DateTime.now();
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: initialDate,
@@ -470,13 +485,18 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
       if (pickedTime != null && mounted) {
         setState(() {
-          _selectedTime = DateTime(
+          final selected = DateTime(
             pickedDate.year,
             pickedDate.month,
             pickedDate.day,
             pickedTime.hour,
             pickedTime.minute,
           );
+          if (event) {
+            _eventTime = selected;
+          } else {
+            _selectedTime = selected;
+          }
         });
       }
     }
@@ -1179,6 +1199,54 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
                     const SizedBox(height: 14),
 
+                    if (widget.task.sourceText != null)
+                      ExpansionTile(
+                        title: Text(l10n.get('sourceText')),
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: SelectableText(widget.task.sourceText!),
+                          ),
+                        ],
+                      ),
+                    ListTile(
+                      key: const ValueKey('event-time-editor'),
+                      leading: const Icon(Icons.event_outlined),
+                      title: Text(l10n.get('eventTimeShort')),
+                      subtitle: Text(
+                        _eventTime == null
+                            ? l10n.get('notSet')
+                            : formatLocalDateTime(_eventTime!),
+                      ),
+                      onTap: _isMutating
+                          ? null
+                          : () => _pickDateTime(event: true),
+                      trailing: _eventTime == null
+                          ? null
+                          : IconButton(
+                              tooltip: l10n.get('clear'),
+                              icon: const Icon(Icons.clear),
+                              onPressed: _isMutating
+                                  ? null
+                                  : () => setState(() => _eventTime = null),
+                            ),
+                    ),
+                    if (widget.task.suggestedTriggerTime != null)
+                      TextButton(
+                        onPressed:
+                            _isMutating ||
+                                !widget.task.suggestedTriggerTime!.isAfter(
+                                  DateTime.now(),
+                                )
+                            ? null
+                            : () => setState(
+                                () => _selectedTime =
+                                    widget.task.suggestedTriggerTime,
+                              ),
+                        child: Text(
+                          '${l10n.get('adoptSuggestion')}: ${formatLocalDateTime(widget.task.suggestedTriggerTime!)}',
+                        ),
+                      ),
                     // 4. Reminder Time Section (提示时间与快捷设定)
                     Container(
                       padding: const EdgeInsets.symmetric(

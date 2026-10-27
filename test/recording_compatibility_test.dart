@@ -1,5 +1,8 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:convert';
+import 'package:dont_forget/models/settings.dart';
+import 'package:dont_forget/services/llm_service.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,7 +24,23 @@ class _TestNotifications implements NotificationService {
   }
 
   @override
+  Future<void> scheduleReminderStrict(Reminder reminder) =>
+      scheduleReminder(reminder);
+  @override
+  Future<void> cancelReminderStrict(String id) async {}
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _PreviewModel extends LLMService {
+  @override
+  Future<List<Reminder>> extractTasks(
+    String text,
+    AppSettings settings,
+  ) async => [
+    Reminder(id: 'model-audio', taskTitle: 'Audio proposal', quadrantLevel: 2),
+  ];
 }
 
 class _Speech extends LocalSpeechService {
@@ -401,13 +420,13 @@ void main() {
           finished.complete();
         }
       });
-      await controller.processText('提醒我下午一点半开会');
+      await controller.processText('买牛奶');
       await finished.future.timeout(const Duration(seconds: 5));
       subscription.close();
       final db = await database.database;
       final rows = await db.query('Reminders');
       expect(rows, hasLength(1));
-      expect(rows.single['task_summary'], '提醒我下午一点半开会');
+      expect(rows.single['task_summary'], '买牛奶');
       expect(rows.single['trigger_time'], isNull);
       expect(errors, isEmpty);
       expect(notifications.scheduled, isEmpty);
@@ -456,6 +475,67 @@ void main() {
         container.read(homeControllerProvider).error,
         contains('device_unavailable'),
       );
+    },
+  );
+  test(
+    'audio keeps its original file and waits for extraction confirmation',
+    () async {
+      container.dispose();
+      await disposed.future;
+      disposed = Completer<void>();
+      final model = _PreviewModel();
+      container = ProviderContainer(
+        overrides: [
+          databaseHelperProvider.overrideWithValue(database),
+          notificationServiceProvider.overrideWithValue(notifications),
+          localSpeechServiceProvider.overrideWithValue(speech),
+          llmServiceProvider.overrideWithValue(model),
+        ],
+      );
+      await container.read(settingsProvider.notifier).ready;
+      await container
+          .read(settingsProvider.notifier)
+          .updateSettings(
+            container.read(settingsProvider).copyWith(apiKey: 'synthetic-only'),
+          );
+      await container.read(remindersProvider.notifier).ready;
+      await container.read(mediaRecordsProvider.notifier).ready;
+      speech.enabled = true;
+      produceAudio = true;
+      final home = container.read(homeControllerProvider.notifier);
+      final done = Completer<void>();
+      var sawPending = false;
+      final stop = home.addListener((state) {
+        if (state.pendingTasksCount > 0) sawPending = true;
+        if (sawPending && state.pendingTasksCount == 0 && !done.isCompleted) {
+          done.complete();
+        }
+      }, fireImmediately: false);
+      expect(await home.startRecording(), isTrue);
+      await home.stopRecordingAndProcess();
+      await done.future.timeout(const Duration(seconds: 5));
+      stop();
+      final raw = container.read(remindersProvider).single;
+      expect(raw.captureProposalJson, isNotNull);
+      expect(raw.recordId, isNotNull);
+      expect(raw.sourceText, '明日9時に予定を確認');
+      expect(raw.taskTitle, isNot('Audio proposal'));
+      final record = container.read(mediaRecordsProvider).single;
+      expect(await File(record.contentOrPath).exists(), isTrue);
+      final proposal = (jsonDecode(raw.captureProposalJson!) as List)
+          .map(
+            (row) => Reminder.fromJson(Map<String, dynamic>.from(row as Map)),
+          )
+          .toList();
+      await container
+          .read(remindersProvider.notifier)
+          .applyCaptureProposal(raw, proposal);
+      expect(
+        container.read(remindersProvider).single.taskTitle,
+        'Audio proposal',
+      );
+      expect(container.read(remindersProvider).single.recordId, record.id);
+      model.dispose();
     },
   );
 }

@@ -79,7 +79,17 @@ void main() {
 
   Future<File> source(int version, String format, {String? date}) async {
     final row = task(legacy: version < 9);
-    row.remove('review_notifications_enabled');
+    row.removeWhere(
+      (key, _) => const {
+        'review_notifications_enabled',
+        'event_time',
+        'recurrence_event_anchor_time',
+        'suggested_trigger_time',
+        'source_text', 'capture_proposal_json', 'word_progress_json',
+        'capture_pending',
+        'is_pinned',
+      }.contains(key),
+    );
     if (date != null) {
       for (final field in [
         'trigger_time',
@@ -98,6 +108,7 @@ void main() {
           ..remove('ai_profiles_json')
           ..remove('ai_fallback_enabled')
           ..remove('appearance')
+          ..remove('workspace_drafts_json')
           ..remove('input_send_mode'),
       ],
       'media_records': [
