@@ -1,0 +1,93 @@
+{
+  "date": "2026-10-27",
+  "device": "iPhone 15 Pro Max",
+  "os": "27.2",
+  "version": "1.7.0+33",
+  "sourceCommit": "dbebd361ccbaa4a19ebe3914d5be41fc6c0fb68c",
+  "schema": 14,
+  "mainCiChecked": {
+    "run": 40505491787,
+    "head": "1e22f398b82c97c89edf403708a7d1a6d57bd7f6",
+    "successfulJobs": 6,
+    "releaseJob": "skipped on main"
+  },
+  "liveActivityColdTap": {
+    "passed": true,
+    "terminatedPids": [
+      3503
+    ],
+    "newProcessId": 3505,
+    "applicationVersion": "33",
+    "systemTapOnlySinceTermination": true,
+    "taskTitle": "QA35 Cold Activity",
+    "openedCorrectTask": true,
+    "directProcessLaunchBetweenTerminationAndTap": false
+  },
+  "cleanup": {
+    "deletedThroughProductUi": true,
+    "systemNotifications": {
+      "pending": 0,
+      "retained": 2,
+      "pendingCancellation": 0,
+      "retainedAreOriginalTasks": true
+    },
+    "liveActivityAbsentOnHome": true,
+    "appStoppedAfterSnapshot": true,
+    "temporaryNotificationCenterShortcutRestoredDisabled": true,
+    "finalData": {
+      "quiescent": true,
+      "integrity": "ok",
+      "schema": 14,
+      "tables": {
+        "Reminders": {
+          "before": 3,
+          "after": 3,
+          "sameIds": true,
+          "rowsEqual": true,
+          "changedFields": []
+        },
+        "MediaRecords": {
+          "before": 5,
+          "after": 5,
+          "sameIds": true,
+          "rowsEqual": true,
+          "changedFields": []
+        },
+        "Settings": {
+          "before": 1,
+          "after": 1,
+          "sameIds": true,
+          "rowsEqual": true,
+          "changedFields": []
+        }
+      },
+      "media": {
+        "before": 5,
+        "after": 5,
+        "sameBytes": true
+      },
+      "syntheticCancellation": {
+        "reminderId": "b49f7e04-eba6-4a8f-a2b0-bbc31c63ab29",
+        "nativeId": 1744885422,
+        "action": "cancel",
+        "status": "submitted",
+        "attempts": 9,
+        "triggerUtcMicros": null,
+        "noticeRevision": null,
+        "attemptedAt": "2026-10-27T13:36:17.938238Z"
+      }
+    }
+  },
+  "remaining": [
+    "ordinary OS notification warm/cold taps",
+    "soft-keyboard Japanese composition",
+    "actual microphone capture and continuous recording gesture"
+  ],
+  "limitations": [
+    "Notification Center capture timed out; iPhone edge scroll intermittently returned noWindowsAvailable.",
+    "A brief iPhone-in-use disconnection recovered; no user handoff requested.",
+    "Input focused in Mirroring without the iPhone software keyboard; hardware text entry is not soft-IME acceptance.",
+    "iPhone Mirroring does not expose the iPhone microphone; no claim of real capture or recording gesture completion."
+  ],
+  "privateEvidenceDirectory": "build/native_acceptance/study-stage35-materials"
+}

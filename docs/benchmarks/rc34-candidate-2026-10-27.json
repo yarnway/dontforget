@@ -1,0 +1,150 @@
+{
+  "version": "1.7.0+34",
+  "schema": 16,
+  "sourceCommit": "23d4a106077d9d59e7e52a1fffd4364564b15bb4",
+  "ci": {
+    "run": 40515246957,
+    "successfulJobs": 7,
+    "flutterPassed": 1514,
+    "flutterPlatformSkipped": 1,
+    "pythonPassed": 125,
+    "pythonPlatformSkipped": 1,
+    "duplicateMainRun": 40515248710,
+    "duplicateMainStatus": "cancelled"
+  },
+  "assets": {
+    "releaseId": 425534248,
+    "inventory": 21,
+    "downloadedMetadataHashesVerified": 14,
+    "platformManifestsVerified": 5,
+    "packageDigestsAndSizesMatchedToGithubAssets": 7,
+    "startupInstallationReportsVerified": 4,
+    "fullDownloadedPackagesVerified": [
+      "ios"
+    ]
+  },
+  "localTests": {
+    "flutter": 1515,
+    "python": 126,
+    "targetedSubset": 29,
+    "analysis": "pass"
+  },
+  "iphone": {
+    "version": "1.7.0+34",
+    "install": {
+      "installation": "same identity +33 to +34",
+      "documentsFilesIdentical": 15,
+      "schemaBeforeFirstLaunch": 14,
+      "appVersion": 34
+    },
+    "upgrade": {
+      "fromSchema": 14,
+      "toSchema": 16,
+      "integrity": "ok",
+      "tables": {
+        "Reminders": {
+          "rows": 3,
+          "oldFieldsEqual": true,
+          "sameIds": true
+        },
+        "MediaRecords": {
+          "rows": 5,
+          "oldFieldsEqual": true,
+          "sameIds": true
+        },
+        "Settings": {
+          "rows": 1,
+          "oldFieldsEqual": true,
+          "sameIds": true
+        }
+      },
+      "mediaFilesUnchanged": 5,
+      "rollbackDirectory": "schema-upgrade-v14-to-v16-uCgdQW",
+      "rollbackSnapshotHashVerified": true,
+      "rollbackSnapshotTablesEqualBefore": true
+    },
+    "draftCountdown": {
+      "passed": true,
+      "temporaryTime": "2026-10-27T22:19:00+08:00",
+      "before": "less than one minute",
+      "after": "reminder time passed",
+      "interactionDuringTransition": false,
+      "neverSaved": true,
+      "discardPromptShown": true,
+      "originalTimeReadBack": true
+    },
+    "final": {
+      "quiescent": true,
+      "schema": 16,
+      "integrity": "ok",
+      "tables": {
+        "Reminders": {
+          "rows": 3,
+          "allFieldsEqualToPostUpgrade": true
+        },
+        "Settings": {
+          "rows": 1,
+          "allFieldsEqualToPostUpgrade": true
+        },
+        "MediaRecords": {
+          "rows": 5,
+          "allFieldsEqualToPostUpgrade": true
+        }
+      },
+      "mediaFilesUnchanged": 5
+    },
+    "notificationsAfterUpgrade": "Independent OS readback not completed after upgrade; no task/time change was saved."
+  },
+  "remaining": [
+    "ordinary OS notification warm/cold clicks",
+    "soft Japanese keyboard composition",
+    "real recording and continuous arc gesture",
+    "macOS rc.34 native upgrade and regression",
+    "remaining stable release gates; not a stable release"
+  ],
+  "release": {
+    "url": "https://github.com/yarnway/dontforget/releases/tag/v1.7.0-rc.34",
+    "id": 425534248,
+    "draft": false,
+    "prerelease": true,
+    "bodyReadBack": true,
+    "assetsUnchangedAfterPublication": 21
+  },
+  "date": "2026-10-27",
+  "device": "iPhone 15 Pro Max, iOS 27.2",
+  "sourceFixes": [
+    "foreground-only local countdown refresh",
+    "due boundary and app resume refresh",
+    "localized duration units for en/zh/ja",
+    "time-aware Live Activity eligibility"
+  ],
+  "cleanup": {
+    "combinedNetReclaimedKiB": 2907792,
+    "rootAllocatedKiBAfter": 2996752,
+    "protectedInitialFilesUnchanged": 27,
+    "retainedPrivateApp": {
+      "path": "build/native_acceptance/study-stage35-materials/ios34-isolated-development.zip",
+      "sha256": "f6720b8931b694116550ddcdbe2f3e2fe19ca3bf503b8da53ec1ee3910e059b0",
+      "verifiedFiles": 78,
+      "permissionsVerified": true
+    },
+    "snapshotArchives": 6,
+    "supersededCiPackagesRemoved": 28,
+    "preserved": [
+      "current candidate and previous rollback packages",
+      "private signing material and quiescent snapshots",
+      "fixed P1 app, midnight samples and runtime material",
+      "unrelated local edits"
+    ]
+  },
+  "macOS": {
+    "currentNativeCandidate": 33,
+    "version34NativeAcceptance": "pending",
+    "ciStartupSmoke": "pass; not a native UI acceptance"
+  },
+  "evidenceBoundary": [
+    "rc.33 system Live Activity cold tap belongs to dbebd36/schema14",
+    "rc.34 unsaved draft due transition does not schedule a notification",
+    "No stable release published"
+  ]
+}
