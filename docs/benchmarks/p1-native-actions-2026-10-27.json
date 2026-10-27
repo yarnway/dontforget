@@ -1,0 +1,398 @@
+{
+  "recorded_at": "2026-10-27T23:16:49.069314+08:00",
+  "timezone": "Asia/Shanghai",
+  "status": "PARTIAL_NATIVE_ACCEPTANCE_PHONE_SHARED_UI_BLOCKED",
+  "scope": "Physical Mac native notification actions, existing isolated physical iPhone preflight; cross-day deferred by user",
+  "source": {
+    "mac_native_revision": "3506ecb4a6431776600bb8181ae7306ef0999290",
+    "mac_version": "1.7.0+33",
+    "schema": 16,
+    "mac_bundle": "com.example.dontForget.acceptance.p1-window-20261027-2137-4fa9",
+    "mac_source_archive_sha256": "7e73ff0df65f3bd721efe5281eaa6c2aa263d710dcb363da12f621ead5ed3e88",
+    "uses_existing_frozen_product_entrypoint": true,
+    "mac_trace_active": false,
+    "trace_boundary": "This fixed build has no passive trace output; all counts are real native API readbacks in product Settings, delivery/response use exact-identity OS logs, business state uses readonly SQL and copied-store decoding.",
+    "regression_commit": "0611331a99a918f3aeb3f1f87ae7743ba52c35fb",
+    "test_fix_only_no_native_rebuild": true
+  },
+  "initial": {
+    "empty_owned_container": true,
+    "business_rows_before": 0,
+    "seed_rows": 6,
+    "seed_scope": "Product models, synthetic-only rows, transactionally inserted while exact owned process absent; actions thereafter use formal product UI",
+    "native_pending": 6,
+    "native_retained": 0
+  },
+  "native_ids": {
+    "qa-p2-hot": 1891243100,
+    "qa-p2-modify": 1647892959,
+    "qa-p2-pause": 1260943624,
+    "qa-p2-positive": 1464504467,
+    "qa-p2-final": 546375062,
+    "qa-p2-tail": 486210846
+  },
+  "cases": {
+    "hot_click": {
+      "status": "PASS",
+      "business_id": "qa-p2-hot",
+      "scheduled": "2026-10-27T23:00:00+08:00",
+      "delivered": "2026-10-27T23:00:00.161+08:00",
+      "native_response": "2026-10-27T23:00:04.005+08:00",
+      "pid_before": 45973,
+      "pid_after": 45973,
+      "route_before": "Settings",
+      "route_after": "TaskDetail QA P2 热点击, 23:00",
+      "input": "User-authorized AppleScript AXPress of exact QA notification title",
+      "command_line_launch_between_click_and_route": false,
+      "screenshot": "mac-hot-target.png",
+      "completed_by_click": false
+    },
+    "pause_cancel": {
+      "status": "PASS_BOUNDED_NATIVE_WINDOW",
+      "business_id": "qa-p2-pause",
+      "original_trigger": "2026-10-27T23:04:00+08:00",
+      "action": "Management > Pause",
+      "saved_paused": true,
+      "notice_revision": 1,
+      "journal_action": "cancel",
+      "journal_status": "submitted",
+      "native_pending_after_action": 5,
+      "original_time_deliveries": 0,
+      "positive_control": "qa-p2-positive delivered at 23:04:00.134",
+      "audit": "2026-10-27T23:14:33.253320+08:00",
+      "completion_implied": false
+    },
+    "modify_replace": {
+      "status": "PASS",
+      "business_id": "qa-p2-modify",
+      "old_trigger": "2026-10-27T23:04:00+08:00",
+      "new_trigger": "2026-10-27T23:08:00+08:00",
+      "action": "Management > Edit > choose time > confirm",
+      "notice_revision": 1,
+      "old_trigger_deliveries": 0,
+      "new_trigger_deliveries": 1,
+      "delivered": "2026-10-27T23:08:00.123+08:00",
+      "same_native_id": 1647892959,
+      "event_time_also_moved_by_management_editor": true,
+      "positive_control": "qa-p2-positive delivered at old time"
+    },
+    "finite_range_last_occurrence": {
+      "status": "PASS_LAST_OCCURRENCE_NO_REQUEUE",
+      "business_id": "qa-p2-final",
+      "daily_repeat_end_inclusive": "2026-10-27T23:59:59+08:00",
+      "journal_after_last_occurrence": {
+        "action": "cancel",
+        "status": "submitted"
+      },
+      "last_occurrence": "2026-10-27T23:06:00+08:00",
+      "delivered": "2026-10-27T23:06:00.113+08:00",
+      "action_after_delivery": "Home checkbox mark complete",
+      "saved_completed": true,
+      "notice_revision": 1,
+      "business_trigger_preserved": "2026-10-27T23:06:00",
+      "next_day_request_created": false,
+      "native_readback_after_action": {
+        "pending": 2,
+        "retained": 1
+      },
+      "native_readback_after_modified_delivery_and_restart": {
+        "pending": 1,
+        "retained": 2
+      },
+      "boundary": "The next daily date exceeds the configured end. Does not claim natural wall-clock expiry or cross-midnight delivery; both remain deferred."
+    },
+    "cleanup": {
+      "status": "PASS",
+      "at": "2026-10-27T23:11:56.742604+08:00",
+      "process_absent": true,
+      "schema": 16,
+      "integrity": "ok",
+      "counts": {
+        "Reminders": 0,
+        "MediaRecords": 0,
+        "Settings": 1
+      },
+      "settings_all_fields_equal_baseline": true,
+      "notification_epoch_rotated": true,
+      "system_pending": 0,
+      "system_retained": 0,
+      "method": "formal product backup inspection and acknowledged restore",
+      "tail_trigger": "2026-10-27T23:13:00+08:00",
+      "tail_deliveries_after_cleanup": 0,
+      "audit_after_tail": "2026-10-27T23:14:33.253320+08:00",
+      "temporary_notification_center_shortcut_restored": true,
+      "original_shortcut_enabled": false,
+      "final_shortcut_enabled": false,
+      "shortcut_keys_unchanged": "Ctrl+Option+Command+N"
+    },
+    "phone_preflight": {
+      "status": "PASS_PREFLIGHT_ONLY",
+      "device": "iPhone 15 Pro Max",
+      "udid": "00008130-000A70361821401C",
+      "bundle": "com.yarnway.dontforget.acceptance.iphone17",
+      "installed_version": "1.7.0+34",
+      "container_accessible": true,
+      "schema": 16,
+      "integrity": "ok",
+      "counts": {
+        "Reminders": 3,
+        "MediaRecords": 5,
+        "Settings": 1
+      },
+      "baseline_snapshot": "phone-before/Documents and Library; read only device copies",
+      "original_main_process_absent_at_snapshot": true,
+      "process_started_for_preflight": 3608,
+      "permission": "allowed",
+      "native_pending": 0,
+      "native_retained": 2,
+      "notification_panel_evidence": "phone-os-before.png",
+      "existing_retained_notifications_cleared": false,
+      "no_device_install_or_database_restore": true,
+      "no_phone_task_created_or_changed_by_this_run": true,
+      "matrix_status": "NOT_PERFORMED_SHARED_UI_ACTIVE",
+      "blocker": "Another active task uses the same iPhone Mirroring session and same acceptance.iphone17 app for ordinary notification/Live Activity tests. Observed concurrent Spotlight, text editing and task creation. No shared app termination, mutation or cleanup was attempted.",
+      "coordination": "User authorization requested to send a cross-task coordination message; pending. No message sent without authorization.",
+      "remaining": [
+        "ordinary notification hot and cold click",
+        "foreground/background/closed process delivery",
+        "pause/modify/expiry cancellation",
+        "capacity and refill",
+        "device cleanup/readback after coordinated tests"
+      ]
+    },
+    "natural_cross_day": {
+      "status": "DEFERRED_BY_USER",
+      "clock_or_timezone_changed": false,
+      "other_fixed_identity_and_automation_modified": false
+    }
+  },
+  "native_log_extracts": {
+    "deliveries": [
+      "2026-10-27 23:00:00.161 Df usernoted[762:6e7d70] [com.apple.unc:application] Delivering <NotificationRecord app:\"com.example.dontForget.acceptance.p1-window-20261027-2137-4fa9\" ident:\"D2A5-AE18\" req:\"1891243100\" uuid:\"2BF1D731\" source:\"716D2A41\" dismissAfterDefaultAction:true> to [ .alert .lockScreen .notificationCenter ]: updatedExisting: false",
+      "2026-10-27 23:04:00.134 Df usernoted[762:6e9e8f] [com.apple.unc:application] Delivering <NotificationRecord app:\"com.example.dontForget.acceptance.p1-window-20261027-2137-4fa9\" ident:\"7E81-E267\" req:\"1464504467\" uuid:\"3769D03F\" source:\"716D2A41\" dismissAfterDefaultAction:true> to [ .alert .lockScreen .notificationCenter ]: updatedExisting: false",
+      "2026-10-27 23:06:00.113 Df usernoted[762:6eceb7] [com.apple.unc:application] Delivering <NotificationRecord app:\"com.example.dontForget.acceptance.p1-window-20261027-2137-4fa9\" ident:\"81CB-53E4\" req:\"546375062\" uuid:\"9C80EEB6\" source:\"716D2A41\" dismissAfterDefaultAction:true> to [ .alert .lockScreen .notificationCenter ]: updatedExisting: false",
+      "2026-10-27 23:08:00.123 Df usernoted[762:6ef6f6] [com.apple.unc:application] Delivering <NotificationRecord app:\"com.example.dontForget.acceptance.p1-window-20261027-2137-4fa9\" ident:\"2CDF-E52E\" req:\"1647892959\" uuid:\"301DC9A3\" source:\"716D2A41\" dismissAfterDefaultAction:true> to [ .alert .lockScreen .notificationCenter ]: updatedExisting: false"
+    ],
+    "warm_response": [
+      "2026-10-27 23:00:04.005 Df usernoted[762:6e7da9] [com.apple.unc:application] Received response <NotificationRecord app:\"com.example.dontForget.acceptance.p1-window-20261027-2137-4fa9\" ident:\"D2A5-AE18\" req:\"1891243100\" uuid:\"2BF1D731\" source:\"716D2A41\" dismissAfterDefaultAction:true <response action: contents actIdent:  foreground: true text: nil> >"
+    ]
+  },
+  "regression": {
+    "initial_full": {
+      "passed": 1541,
+      "failed": 1
+    },
+    "targeted_reproduced": true,
+    "root_cause": "After 23:00, DateTime.now()+1 hour belongs to tomorrow. The Today workspace correctly hides the fixture, so Checkbox.first had no element. It is not a product notification repair failure.",
+    "fix": "Give the task a current eventTime while keeping its future reminder; assert that the intended card and checkbox are present before completing it. Cancellation fault injection and actionable repair assertions remain.",
+    "targeted_after_fix": {
+      "passed": 1,
+      "failed": 0
+    },
+    "final_flutter": {
+      "passed": 1542,
+      "failed": 0,
+      "exit_code": 0
+    },
+    "python": {
+      "passed": 126,
+      "failed": 0,
+      "exit_code": 0
+    },
+    "analysis": {
+      "issues": 0,
+      "exit_code": 0
+    },
+    "toolchain": {
+      "flutter": "3.44.9",
+      "dart": "3.12.2"
+    },
+    "logs": {
+      "initial_flutter_failure": {
+        "path": "/tmp/dontforget-p1-actions-full-flutter.log",
+        "sha256": "adbcb42aeb6f61961371be6330cc863402196a632e72713e14f56b57cc772bb2",
+        "bytes": 305786
+      },
+      "targeted_reproduction": {
+        "path": "/tmp/dontforget-p1-actions-repro.log",
+        "sha256": "443a9265262b4d2aa8665822dbf4dfac2f4d5f0877bd7a076024358c8fc36a2e",
+        "bytes": 2465
+      },
+      "targeted_after_fix": {
+        "path": "/tmp/dontforget-p1-actions-fixed-target.log",
+        "sha256": "a94bbb6f1f7b15610b7dd0b5e1d3cf8d2553277a5c291a04b0b9587749ba14c8",
+        "bytes": 223
+      },
+      "final_flutter": {
+        "path": "/tmp/dontforget-p1-actions-final-flutter.log",
+        "sha256": "980cad3475d956a1d42d19f65b37d0a4b711b2f25de5a366a8e9dd4697d4d61d",
+        "bytes": 300294
+      },
+      "final_analysis": {
+        "path": "/tmp/dontforget-p1-actions-final-analyze.log",
+        "sha256": "f04442ae753aac611a44e754ab1ae3af20c759f57dd130224d19701f1578254a",
+        "bytes": 96
+      },
+      "python": {
+        "path": "/tmp/dontforget-p1-actions-full-python.log",
+        "sha256": "fef90bf9dbc2fcf46ff1ec8cdc373bbebc160561ea456681dbede14353f003e9",
+        "bytes": 478
+      }
+    }
+  },
+  "preservation": {
+    "unrelated_dirty_hashes_unchanged": {
+      "docs/Architecture_Design.md": "d484c9824a433ea1dba22036092e72e9f3983ec60575efca270a89b252ff4e55",
+      "docs/Developer_Guide.md": "d0a3023151ba3bd328c52c4cbdf8ab7687150bc6868922c73607388f59a7f9e3"
+    },
+    "other_native_apps_and_midnight_materials_preserved": true,
+    "cross_task_message_sent": false,
+    "no_push_upload_or_release_by_this_run": true
+  },
+  "artifacts": {
+    "build/native_acceptance/p1-actions-20261027-materials/actions-fixture.json": {
+      "bytes": 9348,
+      "sha256": "04db78f9b10b6968d1e3eab7ca728d9344db7e19626e9d3769161fd286e3b189"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/baseline.json": {
+      "bytes": 579,
+      "sha256": "add2111f76f992c0fa29cb66739dbeb6cf5c7e1ce9bcd45e4b60d08d9a9a747c"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/decode_actions.dart": {
+      "bytes": 942,
+      "sha256": "00b8b15a931a9a11d42872ccb6a002dbcb2fbd9b72c4a3a2736ab5587b2ac32f"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/decode_final.dart": {
+      "bytes": 938,
+      "sha256": "c8ac31282bc1e0811696d53311b56f4d90486bc1c9cbe74d7f70d8ac03219b34"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/generate_actions.dart": {
+      "bytes": 1698,
+      "sha256": "dfade535182d6bc65915e2f735a305bc0ee064f97bda2fec99eefdfc868dd0c5"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/hot-after-process.json": {
+      "bytes": 224,
+      "sha256": "c2d6b901e907615448bd8b08646ac74b88999b537aec9719991bc30e2551bf6a"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/hot-click-automation.log": {
+      "bytes": 37,
+      "sha256": "bd2ee47091076de9570f4f7a00afff6fb50430baa588b2a59c703083d77ff8c2"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/hot-click-system.log": {
+      "bytes": 23315,
+      "sha256": "e93cc5ea2aa463acee2dcf1f576b22c8028c5f8ca078665c018989de0454b930"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/hot-click.applescript": {
+      "bytes": 874,
+      "sha256": "d0108865b92f1e7a0dd66b35c4561c1b8cc8fa3e947f78e97cc3575968335f09"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/mac-actions-before-due.json": {
+      "bytes": 3720,
+      "sha256": "bb15cc70437ad7cbc913a926dfe19a63a568f4a3ace7b7d8241a8e0e3756cff8"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/mac-after-reopen.ax.txt": {
+      "bytes": 2225,
+      "sha256": "4ddc710a28791320f37b64b618ac053f3618ff3da1927c0bc4fb0ea814725fdf"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/mac-all-system.log": {
+      "bytes": 96519,
+      "sha256": "788d480abbd678eba148879da2777bb11b2fd74254b151b0a5b79ce27b09a9a2"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/mac-before-cleanup.json": {
+      "bytes": 9720,
+      "sha256": "66218df217616dcf361ca0bbdcf01f1b0d20d42f877bcb20ba247fc2b5c04ef3"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/mac-cancel-window-system.log": {
+      "bytes": 42751,
+      "sha256": "a2ee488273de8f541189d9ffb4726793a792d28571dd6c1f3c8b84ca5487a208"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/mac-cleanup.ax.txt": {
+      "bytes": 2139,
+      "sha256": "a34d5f2f5333ed298a349d6cc9790c6ea6e024de8c66e209333794a0396cdb53"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/mac-cleanup.json": {
+      "bytes": 394,
+      "sha256": "f5fec2ea8efea1bd72742978251c07e4f92054c174ea144e2a2ef950f16a7030"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/mac-delivery-audit.json": {
+      "bytes": 445,
+      "sha256": "93629c85676449650ee63f93bb2fe04c7a98a3d02f423633fae75079df58ee94"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/mac-final-completed.json": {
+      "bytes": 1962,
+      "sha256": "f913ab375b68a19013699e7543170809b3ad527de602d203d02aeea665958a75"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/mac-final-dose-system.log": {
+      "bytes": 13253,
+      "sha256": "f301e832337a8179864c19208be931f6f3209bbd8c8183b9439caf4f7b90990f"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/mac-hot-target.png": {
+      "bytes": 228603,
+      "sha256": "c6acf7d550da301f5b470c8fbe691b295785623819044bc76a3a7f12380a4b01"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/mac-journal-after-cancel.json": {
+      "bytes": 1744,
+      "sha256": "84b7075f513113732b1ca7888bb3ee96f7119b0b3e557cd73e6220be40278ab4"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/mac-journal-after-final.json": {
+      "bytes": 1733,
+      "sha256": "6b596985d7ba4f405b73d901d9418a78db2eb8e78a1cc03de81dac599e35c0f5"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/mac-modified-delivery-system.log": {
+      "bytes": 12857,
+      "sha256": "593e90d09c6e7dd140603b2cdec416690ce3458d8caec5f3d6634a42177af8e8"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/phone-before.json": {
+      "bytes": 6043,
+      "sha256": "14d4b01143fa67d33cb65ba1c2a4d49652b5b57dd6240c05988859b6ce9c476f"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/phone-os-before.png": {
+      "bytes": 119530,
+      "sha256": "106338e84c884c701da85e141e6ceacae6c0cd4242a89ed3796074ab07796e08"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/seed.json": {
+      "bytes": 127,
+      "sha256": "b46fe13db7d535b2690e5f7caa19e8f3721a1e1bd2e3c9a38dc2e91c04679bc4"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/mac-empty-before/dont_forget_v3.db": {
+      "bytes": 24576,
+      "sha256": "b2a3bda8621d51b154c63f267478ffc3f3d6aa0c182a9041116107a599ca2aa5"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/mac-after-cancel-copy/dont_forget_v3.db": {
+      "bytes": 24576,
+      "sha256": "ad5666b22feac76515853511e300ab47e025544cae4b1a6eff6b3b0cf6945542"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/mac-before-cleanup/dont_forget_v3.db": {
+      "bytes": 24576,
+      "sha256": "09167580b98a125b1d21f20eb43a53a8d03a73f913980ef70fb0513d07144054"
+    },
+    "build/native_acceptance/p1-actions-20261027-materials/mac-after-cleanup/dont_forget_v3.db": {
+      "bytes": 24576,
+      "sha256": "b2a3bda8621d51b154c63f267478ffc3f3d6aa0c182a9041116107a599ca2aa5"
+    }
+  },
+  "remaining_stages": {
+    "P1_native": [
+      "coordinated physical phone matrix",
+      "natural cross-day and automatic date expiry",
+      "multi-day medication, failure repair, sleep/wake and true timezone/DST",
+      "current-source artifact reacceptance"
+    ],
+    "P1_scenarios": [
+      "multi-source medication review and meal linkage",
+      "actual historical dose time",
+      "ordinary rolling recurrence and calendar exceptions",
+      "weather background/location authorization strategy"
+    ],
+    "P1_data": [
+      "secure storage and optional encryption",
+      "large attachments and cross-device restore",
+      "named filter native UI, weekly review and template/batch tools"
+    ],
+    "P2_learning_and_devices": [
+      "cross-plan controls and long-term adaptive burden",
+      "learning archive lifecycle, pronunciation/dictation, word identity migration",
+      "global capture/focus/week view and LAN edit/delete/media/conflict acceptance"
+    ]
+  }
+}
