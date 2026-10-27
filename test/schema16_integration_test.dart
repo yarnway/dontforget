@@ -542,7 +542,7 @@ void main() {
       try {
         await service.fireReminderNow(original);
         for (final value in [
-          TaskDetails(paused: true),
+          const TaskDetails(paused: true),
           TaskDetails(deletedAt: DateTime.now()),
           TaskDetails(archivedAt: DateTime.now()),
         ]) {

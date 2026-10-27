@@ -731,8 +731,9 @@ class NotificationService {
     if (!reminder.isVisible ||
         reminder.details.paused ||
         reminder.isCompleted ||
-        reminder.noticeAcknowledgedAt != null)
+        reminder.noticeAcknowledgedAt != null) {
       return;
+    }
     _activeTimers.remove(reminder.id)?.cancel();
     _scheduledReminders.remove(reminder.id);
 
