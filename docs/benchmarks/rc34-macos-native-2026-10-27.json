@@ -1,0 +1,191 @@
+{
+  "recordedAt": "2026-10-27",
+  "phase": 30,
+  "version": "1.7.0+34",
+  "schema": 16,
+  "sourceCommit": "23d4a106077d9d59e7e52a1fffd4364564b15bb4",
+  "ci": {
+    "candidateRun": 40515246957,
+    "candidateSuccessfulJobs": 7,
+    "duplicateMainRun": 40515248710,
+    "duplicateMainStatus": "cancelled",
+    "latestSuccessfulMainRun": 40505491787,
+    "latestSuccessfulMainSource": "1e22f398b82c97c89edf403708a7d1a6d57bd7f6",
+    "remoteMainAtRecheck": "b60a17d7271901a0f5a332f0143bade076567362"
+  },
+  "macOS": {
+    "package": {
+      "artifactId": 12739842139,
+      "artifactSha256": "e20380ea1141b8bce8f409b4829ed7c24a1eabb5f413b06016e7459902b0fe16",
+      "productZipSha256": "9d56c493615bd1288b9a58e9673d8951e5aba29206a51cf1451b1925aa5d8fea",
+      "crc": "pass",
+      "universalMachOCount": 6,
+      "strictSignature": "pass",
+      "nativeNonSignatureCodeAndProtectedResourcesUnchanged": true,
+      "oldAcceptanceIdentityIndependentlyMatchedToRc33": true
+    },
+    "upgrade": {
+      "fromSchema": 14,
+      "toSchema": 16,
+      "integrity": "ok",
+      "quiescent": true,
+      "tables": {
+        "Reminders": {
+          "rows": 4,
+          "sameIds": true,
+          "oldFieldChanges": []
+        },
+        "Settings": {
+          "rows": 1,
+          "sameIds": true,
+          "oldFieldChanges": []
+        },
+        "MediaRecords": {
+          "rows": 0,
+          "sameIds": true,
+          "oldFieldChanges": []
+        }
+      },
+      "rollbackDirectory": "schema-upgrade-v14-to-v16-Bp9jdI",
+      "rollbackSnapshotHashVerified": true,
+      "rollbackTablesEqualBefore": true,
+      "nativeUi": {
+        "mainWindow": true,
+        "commandK": true,
+        "focusSidePanel": true,
+        "notificationPermissionOffOnReadback": true,
+        "permissionRestoredOff": true,
+        "osPending": 3,
+        "osRetained": 0
+      }
+    },
+    "permissionSequence": [
+      "original off",
+      "temporary on",
+      "app readback granted; pending 3 retained 0",
+      "system setting restored off"
+    ],
+    "normalQuit": true,
+    "isColdStartPerformanceMeasurement": false
+  },
+  "iphone": {
+    "appVersion": 34,
+    "nativePreviewEditSave": true,
+    "newSyntheticTasks": 1,
+    "syntheticNotificationRevision": 1,
+    "dataCheck": {
+      "Reminders": {
+        "originalRows": 3,
+        "originalRowsPresent": true,
+        "originalFieldChanges": {},
+        "addedRows": 1
+      },
+      "Settings": {
+        "originalRows": 1,
+        "originalRowsPresent": true,
+        "originalFieldChanges": {},
+        "addedRows": 0
+      },
+      "MediaRecords": {
+        "originalRows": 5,
+        "originalRowsPresent": true,
+        "originalFieldChanges": {},
+        "addedRows": 0
+      },
+      "mediaFiles": {
+        "before": 5,
+        "after": 5,
+        "allBytesEqual": true
+      },
+      "integrity": "ok"
+    },
+    "liveActivityAppReadback": "active status returned",
+    "systemLiveActivityDisplayAndUpdate": "unverified - no visible expansion in mirror",
+    "ordinaryNotificationWarmColdClick": "unverified",
+    "dueDelivery": "unverified - native reads timed out near due",
+    "handoff": {
+      "at": "2026-10-27T23:40:00+08:00",
+      "acceptedByPhoneMatrixTask": true,
+      "observedPid": 3650,
+      "noUnsavedEdits": true,
+      "pendingNativeCleanup": [
+        "QA36 synthetic reminder and OS notification",
+        "AssistiveTouch temporary on; restore original off"
+      ],
+      "deviceOriginalRowsProtected": {
+        "Reminders": 3,
+        "MediaRecords": 5,
+        "Settings": 1
+      },
+      "exclusivePhoneOperationsStopped": true
+    }
+  },
+  "cleanup": {
+    "removed": [
+      {
+        "path": "build/native_acceptance/study33-local",
+        "allocatedKiB": 58676,
+        "reason": "verified current upgrade plus recoverable prior app archive"
+      },
+      {
+        "path": "build/native_acceptance/study-stage36-materials/mac33-reference",
+        "allocatedKiB": 58696,
+        "reason": "rebuildable expansion of retained verified original rc.33 archive"
+      },
+      {
+        "path": "build/native_acceptance/study-stage36-materials/release-34/artifact.zip",
+        "allocatedKiB": 24352,
+        "reason": "all wrapper entries independently equal retained verified package and metadata"
+      }
+    ],
+    "archives": [
+      {
+        "path": "build/native_acceptance/study-stage36-materials/study33-local-rollback.zip",
+        "sha256": "ff11a321a74dd4250e14238a044c01f850b5b431b3b8d1ef2ddcff8d32010689",
+        "allocatedKiB": 25020,
+        "verifiedEntries": 119,
+        "strictSignature": "PASS",
+        "contentModesSymlinksVerified": true
+      }
+    ],
+    "retained": [
+      "study34-local current candidate",
+      "study33-local rollback archive",
+      "original rc.33 and rc.34 macOS packages",
+      "iOS private development package and signing profiles",
+      "phone handoff snapshots remain expanded",
+      "P1 fixed app and midnight material untouched"
+    ],
+    "rootBeforeKiB": 3270940,
+    "deletedAllocatedKiB": 141724,
+    "retainedArchivesAllocatedKiB": 25020,
+    "netReclaimedKiB": 116704,
+    "rootAfterKiB": 3154236,
+    "protectedOriginalFilesUnchanged": 27
+  },
+  "validationScope": {
+    "productSourceChangesThisPhase": false,
+    "packageUpgradeDatabaseAndRollback": "pass",
+    "documentationChecks": "pass: whitespace, JSON, relative links, source and evidence boundaries, credential pattern check",
+    "priorCandidateTests": {
+      "flutter": 1515,
+      "python": 126,
+      "analysis": "pass"
+    },
+    "newNativeEvidenceIsNotNewFullProductAcceptance": true
+  },
+  "remaining": [
+    "phone handoff cleanup readback",
+    "ordinary notification warm/cold/late/deleted-target clicks",
+    "rc34 system Live Activity editing pause deletion sync and clicks",
+    "soft Japanese IME composition and landscape",
+    "real microphone capture and continuous recording arc gesture",
+    "stable release gates - not yet released"
+  ],
+  "privateEvidenceRoot": "build/native_acceptance/study-stage36-materials",
+  "release": {
+    "tag": "v1.7.0-rc.34",
+    "prerelease": true,
+    "stablePublished": false
+  }
+}
