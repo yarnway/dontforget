@@ -23,8 +23,8 @@ class VoiceCaptureGesture {
   }
 }
 
-/// The overlay never accepts pointers: the original input surface keeps the
-/// entire hold/slide/release gesture even as the selected arc changes.
+/// The original input surface keeps its existing hold/slide/release sequence.
+/// The containing overlay absorbs new touches while an arc is being selected.
 class VoiceCaptureFeedback extends StatelessWidget {
   const VoiceCaptureFeedback({
     super.key,

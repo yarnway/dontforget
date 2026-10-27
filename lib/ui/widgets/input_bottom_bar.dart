@@ -990,7 +990,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
       controller: _capturePortal,
       overlayChildBuilder: (_) => Positioned.fill(
         child: BlockSemantics(
-          child: IgnorePointer(
+          child: AbsorbPointer(
             child: VoiceCaptureFeedback(
               action: _voiceAction,
               fullScreen: true,

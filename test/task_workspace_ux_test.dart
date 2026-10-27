@@ -1207,6 +1207,50 @@ void main() {
       expect(find.byType(VoiceCaptureFeedback), findsNothing);
       expect(tester.getRect(input), before);
     },
-    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+    variant: const TargetPlatformVariant({
+      TargetPlatform.iOS,
+      TargetPlatform.android,
+    }),
+  );
+  testWidgets(
+    'a second touch cannot operate controls beneath the recording overlay',
+    (tester) async {
+      var taps = 0;
+      await show(
+        tester,
+        Column(
+          children: [
+            TextButton(
+              onPressed: () => taps++,
+              child: const Text('Underlying action'),
+            ),
+            const InputBottomBar(),
+          ],
+        ),
+        reducedMotion: true,
+      );
+      final press = await tester.startGesture(
+        tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
+        pointer: 1,
+      );
+      await tester.pump(const Duration(milliseconds: 700));
+      await tester.pumpAndSettle();
+      final other = await tester.startGesture(
+        tester.getCenter(find.text('Underlying action')),
+        pointer: 2,
+      );
+      await other.up();
+      await tester.pump();
+      expect(taps, 0);
+      await press.moveBy(const Offset(-80, -100));
+      await press.up();
+      await tester.pumpAndSettle();
+      expect(home.cancels, 1);
+      expect(home.stops, 0);
+    },
+    variant: const TargetPlatformVariant({
+      TargetPlatform.iOS,
+      TargetPlatform.android,
+    }),
   );
 }
