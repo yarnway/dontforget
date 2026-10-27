@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "recorded_at": "2026-10-28T00:35:43.919364+08:00",
+  "recorded_at": "2026-10-28T07:04:03.858899+08:00",
   "timezone": "Asia/Shanghai",
-  "status": "PARTIAL_UI_AUTH_REQUIRED",
+  "status": "HANDED_BACK_CLEANUP_REQUIRED",
   "stage": "P1_native_phone_notifications",
   "cross_day": "DEFERRED_BY_USER_FOR_THIS_PHONE_RUN",
   "coordination": {
@@ -10,11 +10,13 @@
     "thread_title": "优化项目架构与产品体验",
     "thread_id": "01a15c7c-8a67-7562-9db6-e540460d05c1",
     "handoff_at": "2026-10-27T23:40:00+08:00",
-    "exclusive": true,
+    "exclusive": false,
     "previous_expected_return_at": "2026-10-28T00:40:00+08:00",
-    "return_at": null,
+    "return_at": "2026-10-28T07:04:03.858899+08:00",
     "explicit_return_required": true,
-    "lock_blocker_message_sent_at": "2026-10-28T00:30:00+08:00"
+    "lock_blocker_message_sent_at": "2026-10-28T00:30:00+08:00",
+    "returned_to_thread_title": "优化项目架构与产品体验",
+    "returned_to_thread_id": "01a15c7c-8a67-7562-9db6-e540460d05c1"
   },
   "native_artifact": {
     "device_model": "iPhone 15 Pro Max",
@@ -139,7 +141,8 @@
     "automatic_unlock_failed": true,
     "user_question_pending": true,
     "ui_operations_after_failure": false,
-    "authentication_bypassed": false
+    "authentication_bypassed": false,
+    "current_state_not_rechecked_on_handoff": true
   },
   "outstanding_cleanup": {
     "required": true,
@@ -150,7 +153,8 @@
     "must_use_product_native_pause_or_soft_delete": true,
     "must_preserve_original_retained_notifications": 2,
     "direct_database_restore_allowed": false,
-    "phone_returned": false
+    "phone_returned": true,
+    "responsible_thread_id": "01a15c7c-8a67-7562-9db6-e540460d05c1"
   },
   "source_fix": {
     "commit": "c2ebdca9cea7cbb260dc380f45c5ebfe39764a27",
@@ -323,5 +327,16 @@
       "share global capture focus weekly view",
       "LAN edits deletion attachments conflict durability and real-device sync"
     ]
+  },
+  "original_acceptance_recorded_at": "2026-10-28T00:35:43.919364+08:00",
+  "handoff": {
+    "state": "EXCLUSIVE_RELEASED_TO_RECEIVER",
+    "cleanup_not_repeated": true,
+    "new_native_acceptance_started": false,
+    "device_process_or_lock_state_rechecked": false,
+    "last_ui_attempt_at": "2026-10-28T00:16:31+08:00",
+    "last_read_only_mac_lock_check_at": "2026-10-28T00:38:04+08:00",
+    "native_data_is_historical_frozen_34_evidence": true,
+    "receipt": "build/native_acceptance/p1-phone-20261027-materials/phone-handoff-return.json"
   }
 }
