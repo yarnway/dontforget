@@ -153,13 +153,13 @@ class ReminderAcceptanceFixtureTest(unittest.TestCase):
                          for key in TABLES.values()}
         self.assertEqual(table_evidence(reversed_data), manifest['candidate']['tables'])
 
-    def test_frozen_v10_schema_matches_candidate_creation_sql(self):
+    def test_frozen_v11_schema_matches_candidate_creation_sql(self):
         source = (ROOT / 'lib/data/database_helper.dart').read_text(encoding='utf-8')
         creation = re.findall(r"await db.execute\('''\n(CREATE TABLE .*?)\n'''\)", source, re.S)
-        schema = (ROOT / 'test/fixtures/schema_v10.sql').read_text(encoding='utf-8')
+        schema = (ROOT / 'test/fixtures/schema_v11.sql').read_text(encoding='utf-8')
         schema = '\n'.join(line for line in schema.splitlines() if not line.lstrip().startswith('--'))
         sql = [item.strip() for item in schema.split(';') if item.strip()]
-        self.assertIn('schemaVersion = 10;', source)
+        self.assertIn('schemaVersion = 11;', source)
         self.assertEqual(len(creation), 3)
         self.assertEqual(len(sql), 3)
         for fixture, statement in zip(sql, creation):

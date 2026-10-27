@@ -19,6 +19,24 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   bool _isLongPressRecording = false;
   Future<bool>? _pendingRecordingStart;
   bool _isFinishingLongPress = false;
+  bool _wasEmpty = true;
+  bool _wasFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(_inputChanged);
+    _textController.addListener(_inputChanged);
+  }
+
+  void _inputChanged() {
+    final empty = _textController.text.isEmpty;
+    final focused = _focusNode.hasFocus;
+    if (empty == _wasEmpty && focused == _wasFocused) return;
+    _wasEmpty = empty;
+    _wasFocused = focused;
+    setState(() {});
+  }
 
   @override
   void dispose() {
@@ -204,6 +222,8 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     );
     final isRecording = homeState.isRecording || _isLongPressRecording;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final idleVoiceTarget =
+        !_focusNode.hasFocus && _textController.text.isEmpty;
 
     return SafeArea(
       top: false,
@@ -262,15 +282,22 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
             // Center Input Area: Single tap to type, Long press to speak
             Expanded(
               child: GestureDetector(
+                key: const ValueKey('composer-input-surface'),
                 behavior: HitTestBehavior.translucent,
                 onTap: () {
-                  if (!_focusNode.hasFocus) {
+                  if (!isRecording && !_focusNode.hasFocus) {
                     _focusNode.requestFocus();
                   }
                 },
-                onLongPressStart: (_) => _startLongPressRecording(),
-                onLongPressEnd: (_) => _finishLongPressRecording(),
-                onLongPressCancel: _finishLongPressRecording,
+                onLongPressStart: idleVoiceTarget
+                    ? (_) => _startLongPressRecording()
+                    : null,
+                onLongPressEnd: idleVoiceTarget
+                    ? (_) => _finishLongPressRecording()
+                    : null,
+                onLongPressCancel: idleVoiceTarget
+                    ? _finishLongPressRecording
+                    : null,
                 child: isRecording
                     ? Row(
                         children: [
@@ -299,27 +326,41 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                           ),
                         ],
                       )
-                    : TextField(
-                        controller: _textController,
-                        focusNode: _focusNode,
-                        style: const TextStyle(fontSize: 13),
-                        decoration: InputDecoration(
-                          hintText: l10n.get(
-                            isLocalMode ? 'localInputHint' : 'inputHint',
+                    // iOS TextField's selection recognizer otherwise wins the
+                    // gesture arena before our hold-to-record recognizer. Only
+                    // the empty, unfocused surface delegates pointer gestures;
+                    // typing, selection and IME retain normal TextField behavior.
+                    : IgnorePointer(
+                        ignoring: idleVoiceTarget,
+                        child: TextField(
+                          controller: _textController,
+                          focusNode: _focusNode,
+                          style: const TextStyle(fontSize: 13),
+                          decoration: InputDecoration(
+                            hintText: l10n.get(
+                              _focusNode.hasFocus
+                                  ? 'inputTypingHint'
+                                  : isLocalMode
+                                  ? 'localInputHint'
+                                  : 'inputHint',
+                            ),
+                            hintMaxLines: 2,
+                            hintStyle: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade500,
+                            ),
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            filled: false,
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 8,
+                            ),
                           ),
-                          hintMaxLines: 2,
-                          hintStyle: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade500,
-                          ),
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 8,
-                          ),
+                          onSubmitted: (_) => _submitText(),
                         ),
-                        onSubmitted: (_) => _submitText(),
                       ),
               ),
             ),

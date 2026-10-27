@@ -199,7 +199,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(CommandPaletteDialog), findsNothing);
     expect(find.byType(ModalBarrier).hitTestable(), findsNothing);
-    expect(composer().hitTestable(), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('composer-input-surface')).hitTestable(),
+      findsOneWidget,
+    );
   }
 
   for (final width in [375.0, 757.0, 1200.0]) {
@@ -231,7 +234,10 @@ void main() {
         await tester.pumpAndSettle();
         final search = find.byKey(const ValueKey('task-search-field'));
         expect(search.hitTestable(), findsOneWidget);
-        expect(composer().hitTestable(), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('composer-input-surface')).hitTestable(),
+          findsOneWidget,
+        );
         await tester.enterText(search, 'Synthetic');
         await tester.pumpAndSettle();
         expect(command.search!(), isTrue);
@@ -356,7 +362,12 @@ void main() {
                   .bottom,
               lessThanOrEqualTo(input.top),
             );
-            expect(composer().hitTestable(), findsOneWidget);
+            expect(
+              find
+                  .byKey(const ValueKey('composer-input-surface'))
+                  .hitTestable(),
+              findsOneWidget,
+            );
             // A short landscape viewport with a keyboard must remain scrollable.
             tester.view.physicalSize = Size(width, 460);
             tester.view.viewInsets = const FakeViewPadding(bottom: 180);
@@ -539,7 +550,12 @@ void main() {
                 ),
                 input = tester.getRect(find.byType(InputBottomBar));
             expect(panel.bottom, lessThanOrEqualTo(input.top));
-            expect(composer().hitTestable(), findsOneWidget);
+            expect(
+              find
+                  .byKey(const ValueKey('composer-input-surface'))
+                  .hitTestable(),
+              findsOneWidget,
+            );
             await tester.pumpWidget(const SizedBox());
           },
         );

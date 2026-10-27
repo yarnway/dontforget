@@ -16,7 +16,7 @@ import '../services/storage_directory_lease.dart';
 part 'database_access.dart';
 
 class DatabaseHelper {
-  static const schemaVersion = 10;
+  static const schemaVersion = 11;
   static final DatabaseHelper instance = DatabaseHelper._init();
   Database? _database;
   Future<Database>? _opening;
@@ -422,9 +422,11 @@ class DatabaseHelper {
         readOnly: !migrate,
         onCreate: migrate ? _createDB : null,
         onUpgrade: migrate ? _upgradeDB : null,
-        onDowngrade: migrate ? (db, oldVersion, newVersion) async {
-          throw StateError('Database belongs to a newer app version.');
-        } : null,
+        onDowngrade: migrate
+            ? (db, oldVersion, newVersion) async {
+                throw StateError('Database belongs to a newer app version.');
+              }
+            : null,
       ),
     );
   }
@@ -528,7 +530,8 @@ CREATE TABLE Settings (
   model_name TEXT,
   language TEXT,
   ai_profiles_json TEXT NOT NULL DEFAULT '[]',
-  ai_fallback_enabled INTEGER NOT NULL DEFAULT 0
+  ai_fallback_enabled INTEGER NOT NULL DEFAULT 0,
+  appearance TEXT NOT NULL DEFAULT 'system'
 )
 ''');
 
@@ -588,20 +591,25 @@ CREATE TABLE Reminders (
       'reminders': await db.query('Reminders'),
     };
     final bytes = utf8.encode(jsonEncode(rows));
-    final directory = await Directory(dirname(db.path)).createTemp(
-        'schema-upgrade-v$oldVersion-to-v$schemaVersion-');
+    final directory = await Directory(
+      dirname(db.path),
+    ).createTemp('schema-upgrade-v$oldVersion-to-v$schemaVersion-');
     final file = File(join(directory.path, 'snapshot.json'));
     await file.writeAsBytes(bytes, flush: true);
     if (sha256.convert(await file.readAsBytes()) != sha256.convert(bytes)) {
       throw StateError('Upgrade rollback snapshot verification failed.');
     }
-    await File(join(directory.path, 'manifest.json')).writeAsString(jsonEncode({
-      'sourceSchema': oldVersion,
-      'targetSchema': schemaVersion,
-      'snapshotSha256': sha256.convert(bytes).toString(),
-      'containsCredentials': (rows['settings'] as List).any(
-          (row) => (row['api_key'] as String? ?? '').isNotEmpty),
-    }), flush: true);
+    await File(join(directory.path, 'manifest.json')).writeAsString(
+      jsonEncode({
+        'sourceSchema': oldVersion,
+        'targetSchema': schemaVersion,
+        'snapshotSha256': sha256.convert(bytes).toString(),
+        'containsCredentials': (rows['settings'] as List).any(
+          (row) => (row['api_key'] as String? ?? '').isNotEmpty,
+        ),
+      }),
+      flush: true,
+    );
   }
 
   Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
@@ -636,16 +644,32 @@ CREATE TABLE Reminders (
     }
 
     if (oldVersion < 10) {
-      await db.execute("ALTER TABLE Settings ADD COLUMN ai_profiles_json TEXT NOT NULL DEFAULT '[]'");
-      await db.execute('ALTER TABLE Settings ADD COLUMN ai_fallback_enabled INTEGER NOT NULL DEFAULT 0');
+      await db.execute(
+        "ALTER TABLE Settings ADD COLUMN ai_profiles_json TEXT NOT NULL DEFAULT '[]'",
+      );
+      await db.execute(
+        'ALTER TABLE Settings ADD COLUMN ai_fallback_enabled INTEGER NOT NULL DEFAULT 0',
+      );
       for (final row in await db.query('Settings')) {
-        final legacy = Map<String, dynamic>.from(row)..remove('ai_profiles_json');
+        final legacy = Map<String, dynamic>.from(row)
+          ..remove('ai_profiles_json');
         final migrated = AppSettings.fromJson(legacy).toJson();
-        await db.update('Settings', {
-          'ai_profiles_json': migrated['ai_profiles_json'],
-          'ai_fallback_enabled': 0,
-        }, where: 'id = ?', whereArgs: [row['id']]);
+        await db.update(
+          'Settings',
+          {
+            'ai_profiles_json': migrated['ai_profiles_json'],
+            'ai_fallback_enabled': 0,
+          },
+          where: 'id = ?',
+          whereArgs: [row['id']],
+        );
       }
+    }
+
+    if (oldVersion < 11) {
+      await db.execute(
+        "ALTER TABLE Settings ADD COLUMN appearance TEXT NOT NULL DEFAULT 'system'",
+      );
     }
 
     if (oldVersion < 4) {

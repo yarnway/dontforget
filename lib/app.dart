@@ -1,4 +1,5 @@
 import 'ui/widgets/inline_feedback.dart';
+import 'ui/theme/app_theme.dart';
 import 'ui/widgets/editor_keyboard_actions.dart';
 import 'ui/widgets/focused_text_commands.dart';
 import 'dart:async';
@@ -415,9 +416,6 @@ class _MyAppState extends ConsumerState<MyApp>
     final recovery = ref.watch(recoveryCoordinatorProvider);
     final recoveryState = recovery.state;
 
-    // Morandi-inspired minimal palette
-    const primaryColor = Color(0xFF7A8B8B); // A muted, grayish cyan/teal
-
     return MaterialApp(
       // Discard old editors, pending Undo, draft settings and navigation state
       // only after the data decision and provider reload have completed.
@@ -437,49 +435,9 @@ class _MyAppState extends ConsumerState<MyApp>
         Locale('zh', ''),
         Locale('ja', ''),
       ],
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: primaryColor,
-          brightness: Brightness.light,
-          surface: Colors.white,
-        ),
-        appBarTheme: const AppBarTheme(
-          elevation: 0,
-          centerTitle: true,
-          scrolledUnderElevation: 0,
-          backgroundColor: Colors.transparent,
-        ),
-        cardTheme: CardThemeData(
-          elevation: 2,
-          shadowColor: Colors.black.withValues(alpha: 0.05),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: primaryColor,
-          brightness: Brightness.dark,
-          surface: const Color(0xFF2C2C2C),
-        ),
-        appBarTheme: const AppBarTheme(
-          elevation: 0,
-          centerTitle: true,
-          scrolledUnderElevation: 0,
-          backgroundColor: Colors.transparent,
-        ),
-        cardTheme: CardThemeData(
-          elevation: 4,
-          shadowColor: Colors.black.withValues(alpha: 0.2),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-      ),
-      themeMode: ThemeMode.system,
+      theme: AppTheme.light,
+      darkTheme: AppTheme.dark,
+      themeMode: AppTheme.mode(settings.appearance),
       builder: (context, child) {
         // MaterialApp can finish replacing its Navigator a frame after the
         // provider future becomes ready. Retry from this subtree's build so a

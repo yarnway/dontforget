@@ -92,8 +92,12 @@ void main() {
       row['record_id'] = 'dated-media';
     }
     final tables = <String, List<Map<String, Object?>>>{
-      'settings': [AppSettings.defaults().toJson()
-        ..remove('ai_profiles_json')..remove('ai_fallback_enabled')],
+      'settings': [
+        AppSettings.defaults().toJson()
+          ..remove('ai_profiles_json')
+          ..remove('ai_fallback_enabled')
+          ..remove('appearance'),
+      ],
       'media_records': [
         if (date != null)
           {
@@ -198,7 +202,10 @@ void main() {
           await live.createMirrorBackup();
           for (final name in ['ha_snapshot.json', 'dont_forget_v3.mirror.db']) {
             final backup = File(p.join(directory.path, 'live', name));
-            expect((await inspector.inspect(backup)).version, DatabaseHelper.schemaVersion);
+            expect(
+              (await inspector.inspect(backup)).version,
+              DatabaseHelper.schemaVersion,
+            );
           }
         },
       );
@@ -482,7 +489,10 @@ void main() {
       expect(tracking.opens.last!.readOnly, isFalse);
       expect(tracking.opens.last!.version, DatabaseHelper.schemaVersion);
       await lease.resume();
-      expect(await (await live.database).getVersion(), DatabaseHelper.schemaVersion);
+      expect(
+        await (await live.database).getVersion(),
+        DatabaseHelper.schemaVersion,
+      );
     },
   );
 

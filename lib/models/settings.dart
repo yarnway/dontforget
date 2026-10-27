@@ -1,12 +1,15 @@
 import 'dart:convert';
 import 'ai_profile.dart';
 
+enum AppAppearance { system, light, dark }
+
 class AppSettings {
   final String id;
   final String apiKey;
   final String baseUrl;
   final String modelName;
   final String language;
+  final AppAppearance appearance;
   final List<AiProfile>? _profiles;
   final bool aiFallbackEnabled;
   List<AiProfile> get aiProfiles => _profiles ?? const [];
@@ -32,6 +35,7 @@ class AppSettings {
       baseUrl: chosen?.baseUrl ?? baseUrl,
       modelName: chosen?.modelName ?? modelName,
       language: language,
+      appearance: appearance,
     );
   }
 
@@ -66,6 +70,7 @@ class AppSettings {
     required this.baseUrl,
     required this.modelName,
     required this.language,
+    this.appearance = AppAppearance.system,
     List<AiProfile>? aiProfiles,
     this.aiFallbackEnabled = false,
   }) : _profiles = aiProfiles == null ? null : List.unmodifiable(aiProfiles);
@@ -106,6 +111,10 @@ class AppSettings {
   );
 
   factory AppSettings.fromJson(Map<String, dynamic> json) {
+    final appearance = json['appearance'] ?? 'system';
+    if (!AppAppearance.values.any((value) => value.name == appearance)) {
+      throw const FormatException('Invalid appearance preference');
+    }
     if (json.containsKey('ai_fallback_enabled') &&
         !const [0, 1].contains(json['ai_fallback_enabled'])) {
       throw const FormatException('Invalid fallback preference');
@@ -116,6 +125,7 @@ class AppSettings {
       baseUrl: json['base_url'] as String? ?? '',
       modelName: json['model_name'] as String? ?? '',
       language: json['language'] as String? ?? 'zh',
+      appearance: AppAppearance.values.byName(appearance as String),
       aiProfiles: _readProfiles(json['ai_profiles_json']),
       aiFallbackEnabled: json['ai_fallback_enabled'] == 1,
     );
@@ -127,6 +137,7 @@ class AppSettings {
     'base_url': baseUrl,
     'model_name': modelName,
     'language': language,
+    'appearance': appearance.name,
     'ai_profiles_json': jsonEncode(
       effectiveProfiles.map((p) => p.toJson()).toList(),
     ),
@@ -138,6 +149,7 @@ class AppSettings {
     String? baseUrl,
     String? modelName,
     String? language,
+    AppAppearance? appearance,
     List<AiProfile>? aiProfiles,
     bool? aiFallbackEnabled,
   }) {
@@ -171,6 +183,7 @@ class AppSettings {
       baseUrl: baseUrl ?? this.baseUrl,
       modelName: modelName ?? this.modelName,
       language: language ?? this.language,
+      appearance: appearance ?? this.appearance,
       aiProfiles: profiles,
       aiFallbackEnabled: aiFallbackEnabled ?? this.aiFallbackEnabled,
     );

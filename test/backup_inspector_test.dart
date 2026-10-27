@@ -163,7 +163,8 @@ void main() {
       'settings': [
         AppSettings.defaults().copyWith(apiKey: 'private-fixture-key').toJson()
           ..remove('ai_profiles_json')
-          ..remove('ai_fallback_enabled'),
+          ..remove('ai_fallback_enabled')
+          ..remove('appearance'),
       ],
       'media_records': [
         {
@@ -357,7 +358,7 @@ void main() {
     },
   );
 
-  for (final version in [6, 11, 99]) {
+  for (final version in [6, DatabaseHelper.schemaVersion + 1, 99]) {
     for (final format in ['json', 'sqlite']) {
       test(
         'rejects unsupported v$version $format without changing it',

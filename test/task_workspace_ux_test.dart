@@ -20,11 +20,13 @@ class _ControlledHomeController extends HomeController {
   _ControlledHomeController(super.ref);
   Completer<bool>? pendingStart;
   int stops = 0;
+  int starts = 0;
 
   void setRecording(bool value) => state = state.copyWith(isRecording: value);
 
   @override
   Future<bool> startRecording() async {
+    starts++;
     final started = await (pendingStart?.future ?? Future.value(true));
     setRecording(started);
     return started;
@@ -194,6 +196,84 @@ void main() {
     expect(find.text('Keep this draft'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets(
+    'iOS pointer hold on an idle input records once and release stops it',
+    (tester) async {
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      final press = await tester.startGesture(
+        tester.getCenter(find.byType(TextField)),
+      );
+      await tester.pump(const Duration(milliseconds: 700));
+      expect(home.starts, 1);
+      expect(home.state.isRecording, isTrue);
+      await press.up();
+      await tester.pumpAndSettle();
+      expect(home.stops, 1);
+      expect(home.state.isRecording, isFalse);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
+    'iOS focused text keeps selection and draft without starting audio',
+    (tester) async {
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      await tester.tapAt(tester.getCenter(find.byType(TextField)));
+      await tester.pump();
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).focusNode!.hasFocus,
+        isTrue,
+      );
+      await tester.enterText(find.byType(TextField), '日本語の予定を確認');
+      await tester.longPress(find.byType(TextField));
+      await tester.pumpAndSettle();
+      expect(home.starts, 0);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        '日本語の予定を確認',
+      );
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
+    'iOS real pointer release during permission delay stops the late start',
+    (tester) async {
+      home.pendingStart = Completer<bool>();
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      final press = await tester.startGesture(
+        tester.getCenter(find.byType(TextField)),
+      );
+      await tester.pump(const Duration(milliseconds: 700));
+      expect(home.starts, 1);
+      await press.up();
+      await tester.pump();
+      home.pendingStart!.complete(true);
+      await tester.pumpAndSettle();
+      expect(home.stops, 1);
+      expect(home.state.isRecording, isFalse);
+      expect(find.byType(TextField), findsOneWidget);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
+    'denied iOS hold can be retried with a new pointer gesture',
+    (tester) async {
+      home.pendingStart = Completer<bool>()..complete(false);
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      await tester.longPress(find.byType(TextField));
+      await tester.pumpAndSettle();
+      expect(home.stops, 0);
+      home.pendingStart = null;
+      await tester.longPress(find.byType(TextField));
+      await tester.pumpAndSettle();
+      expect(home.starts, 2);
+      expect(home.stops, 1);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
 
   testWidgets(
     'release during native recorder startup still stops that recording',

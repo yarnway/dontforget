@@ -188,11 +188,22 @@ void main() {
       await tester.pump();
       await tester.runAsync(() => Future<void>.delayed(Duration.zero));
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('notification-permission-panel')),
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
       expect(notificationCalls, isNotEmpty);
       expect(
         notificationCalls.where((call) => call.startsWith('request')),
         isEmpty,
       );
+      tester
+          .state<ScrollableState>(find.byType(Scrollable).first)
+          .position
+          .jumpTo(0);
+      await tester.pumpAndSettle();
     }
 
     Future<void> tapAction(WidgetTester tester, String text) async {

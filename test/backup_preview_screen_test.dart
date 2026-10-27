@@ -154,13 +154,24 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(
+      find.byKey(const ValueKey('notification-permission-panel')),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     expect(notificationCalls, isNotEmpty);
     expect(
       notificationCalls.where((call) => call.startsWith('request')),
       isEmpty,
     );
     final entry = find.byKey(const ValueKey('settings-backup-preview'));
-    await tester.ensureVisible(entry);
+    await tester.scrollUntilVisible(
+      entry,
+      -200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(entry);
     await tester.pumpAndSettle();
     expect(find.byType(BackupPreviewScreen), findsOneWidget);

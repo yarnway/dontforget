@@ -9,6 +9,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/providers/providers.dart';
+import 'package:dont_forget/models/settings.dart';
 import 'package:dont_forget/models/notification_schedule_status.dart';
 import 'package:dont_forget/ui/screens/settings_screen.dart';
 import 'package:dont_forget/services/notification_service.dart';
@@ -116,6 +117,67 @@ void main() {
     await tester.runAsync(() => Future<void>.delayed(Duration.zero));
     await tester.pumpAndSettle();
   }
+
+  testWidgets('appearance remains a draft until save and survives reopening', (
+    tester,
+  ) async {
+    await showSettings(tester);
+    await tester.tap(find.byKey(const ValueKey('appearance-dark')));
+    await tester.pump();
+    expect(container.read(settingsProvider).appearance, AppAppearance.system);
+    await tester.runAsync(() async {
+      await tester.tap(find.widgetWithText(FilledButton, '保存'));
+      for (
+        var i = 0;
+        i < 100 &&
+            container.read(settingsProvider).appearance != AppAppearance.dark;
+        i++
+      ) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+    });
+    await tester.pumpAndSettle();
+    expect(container.read(settingsProvider).appearance, AppAppearance.dark);
+    late SettingsNotifier reloaded;
+    await tester.runAsync(() async {
+      reloaded = SettingsNotifier(helper);
+      await reloaded.ready;
+    });
+    expect(reloaded.state.appearance, AppAppearance.dark);
+    expect(reloaded.state.apiKey, 'user-test-key');
+    reloaded.dispose();
+    await tester.pumpWidget(const SizedBox());
+    await showSettings(tester);
+    expect(
+      tester
+          .widget<Semantics>(
+            find
+                .ancestor(
+                  of: find.byKey(const ValueKey('appearance-dark')),
+                  matching: find.byType(Semantics),
+                )
+                .first,
+          )
+          .properties
+          .selected,
+      isTrue,
+    );
+  });
+
+  testWidgets('discarding an appearance change keeps the saved mode', (
+    tester,
+  ) async {
+    await showSettings(tester, routed: true);
+    await tester.tap(find.byKey(const ValueKey('appearance-light')));
+    await tester.pump();
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.text('有未保存的修改'), findsOneWidget);
+    await tester.tap(find.text('放弃修改'));
+    await tester.pumpAndSettle();
+    expect(container.read(settingsProvider).appearance, AppAppearance.system);
+    expect(find.byType(SettingsScreen), findsNothing);
+  });
 
   testWidgets(
     'settings draft back confirmation keeps or explicitly discards without writing',

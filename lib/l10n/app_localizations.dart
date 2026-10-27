@@ -10,6 +10,13 @@ class AppLocalizations {
 
   static const Map<String, Map<String, String>> _localizedValues = {
     'en': {
+      'inputTypingHint': 'Type a task, or tap the microphone to record…',
+      'appearanceTitle': 'Appearance',
+      'appearance_system': 'System',
+      'appearance_light': 'Light',
+      'appearance_dark': 'Dark',
+      'appearanceSaveHint':
+          'Save to apply throughout the app. Your choice is kept when you reopen it.',
       "agentGoalLabel": "Your goal",
       "agentGoalHint": "Describe the outcome, constraints and deadline.",
       "agentStart": "Plan this goal",
@@ -626,6 +633,12 @@ class AppLocalizations {
       'viewInGraph': 'View in Graph',
     },
     'zh': {
+      'inputTypingHint': '输入事项，或点击麦克风录音…',
+      'appearanceTitle': '外观',
+      'appearance_system': '跟随系统',
+      'appearance_light': '明亮',
+      'appearance_dark': '暗黑',
+      'appearanceSaveHint': '保存后应用到整个应用，退出重开后仍保留。',
       "agentGoalLabel": "目标描述",
       "agentGoalHint": "描述期望结果、约束和截止时间。",
       "agentStart": "规划目标",
@@ -1142,6 +1155,12 @@ class AppLocalizations {
       'viewInGraph': '在图谱中定位',
     },
     'ja': {
+      'inputTypingHint': 'タスクを入力、またはマイクで録音…',
+      'appearanceTitle': '外観',
+      'appearance_system': 'システム',
+      'appearance_light': 'ライト',
+      'appearance_dark': 'ダーク',
+      'appearanceSaveHint': '保存するとアプリ全体に適用され、再起動後も保持されます。',
       "agentGoalLabel": "目標",
       "agentGoalHint": "結果、条件、期限を入力してください。",
       "agentStart": "目標を計画",

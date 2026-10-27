@@ -1,6 +1,7 @@
 import '../widgets/inline_feedback.dart';
 import '../widgets/unsaved_editor_scope.dart';
 import '../widgets/editable_text_menu.dart';
+import '../widgets/appearance_picker.dart';
 import '../../data/database_helper.dart';
 import '../../services/recovery/runtime_gate.dart';
 import '../widgets/notification_permission_panel.dart';
@@ -117,6 +118,7 @@ typedef _SettingsDraft = ({
   String url,
   String model,
   String language,
+  AppAppearance appearance,
 });
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
@@ -131,6 +133,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     url: _baseUrlController.text,
     model: _modelNameController.text,
     language: _selectedLang,
+    appearance: _selectedAppearance,
   );
 
   void _draftChanged() {
@@ -154,6 +157,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         _baseUrlController.text = current.baseUrl;
         _modelNameController.text = current.modelName;
         _selectedLang = current.language;
+        _selectedAppearance = current.appearance;
         _selectedProvider = null;
         for (final provider in _providers) {
           if (provider.defaultBaseUrl == current.baseUrl &&
@@ -175,6 +179,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late TextEditingController _baseUrlController;
   late TextEditingController _modelNameController;
   String _selectedLang = 'zh';
+  AppAppearance _selectedAppearance = AppAppearance.system;
   ModelProvider? _selectedProvider;
 
   // Edge AI Probe State
@@ -199,6 +204,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _baseUrlController = TextEditingController(text: settings.baseUrl);
     _modelNameController = TextEditingController(text: settings.modelName);
     _selectedLang = settings.language;
+    _selectedAppearance = settings.appearance;
     _savedDraft = _captureDraft();
     for (final controller in [
       _apiKeyController,
@@ -264,12 +270,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       _baseUrlController.text = current.baseUrl;
       _modelNameController.text = current.modelName;
       _selectedProvider = null;
-      // The nested editor saved models only; language remains this page's draft.
+      // The nested editor saved models only; other preferences remain drafts.
       _savedDraft = (
         key: current.apiKey,
         url: current.baseUrl,
         model: current.modelName,
         language: current.language,
+        appearance: current.appearance,
       );
       _dirty = _captureDraft() != _savedDraft;
     });
@@ -318,6 +325,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       baseUrl: _baseUrlController.text.trim(),
       modelName: _modelNameController.text.trim(),
       language: _selectedLang,
+      appearance: _selectedAppearance,
     );
   }
 
@@ -666,6 +674,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           color: Theme.of(context).colorScheme.error,
                         ),
                       ),
+                    AppearancePicker(
+                      value: _selectedAppearance,
+                      onChanged: !_ready || _isSaving
+                          ? null
+                          : (value) {
+                              setState(() => _selectedAppearance = value);
+                              _draftChanged();
+                            },
+                    ),
+                    const SizedBox(height: 14),
                     // Privacy Shield Guarantee
                     Container(
                       padding: const EdgeInsets.all(12),

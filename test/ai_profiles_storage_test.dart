@@ -79,7 +79,7 @@ void main() {
       );
       try {
         final db = await helper.database;
-        expect(await db.getVersion(), 10);
+        expect(await db.getVersion(), DatabaseHelper.schemaVersion);
         final row = (await db.query('Settings')).single;
         for (final field in legacy.entries) {
           expect(row[field.key], field.value);
@@ -110,7 +110,11 @@ void main() {
       final snapshots = file.parent
           .listSync()
           .whereType<Directory>()
-          .where((d) => d.path.contains('schema-upgrade-v9-to-v10-'))
+          .where(
+            (d) => d.path.contains(
+              'schema-upgrade-v9-to-v${DatabaseHelper.schemaVersion}-',
+            ),
+          )
           .toList();
       expect(snapshots, hasLength(1));
       final snapshot = File('${snapshots.single.path}/snapshot.json');
@@ -125,7 +129,7 @@ void main() {
         9,
       );
       final futureDb = await databaseFactoryFfi.openDatabase(file.path);
-      await futureDb.setVersion(11);
+      await futureDb.setVersion(DatabaseHelper.schemaVersion + 1);
       await futureDb.close();
       final migrated = await file.readAsBytes();
       await expectLater(helper.database, throwsA(isA<StateError>()));
@@ -201,7 +205,7 @@ void main() {
 
   for (final format in ['sqlite', 'json']) {
     test(
-      'v10 $format restores ordered disabled keys and reports sensitivity',
+      'current $format restores ordered disabled keys and reports sensitivity',
       () async {
         final source = DatabaseHelper.forTesting(
           '${root.path}/source',
@@ -243,7 +247,7 @@ void main() {
           temporaryDirectory: root,
         );
         final preview = await inspector.inspect(file);
-        expect(preview.version, 10);
+        expect(preview.version, DatabaseHelper.schemaVersion);
         expect(preview.containsCredentials, isTrue);
         final live = DatabaseHelper.forTesting(
           '${root.path}/live',
