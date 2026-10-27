@@ -42,6 +42,12 @@ class Reminder {
   final String? importanceLevel; // 'important', 'general', 'not_important'
   final DateTime? triggerTime;
   final ReminderTimeOrigin timeOrigin;
+  final DateTime? eventTime;
+  final DateTime? suggestedTriggerTime;
+  final String? sourceText;
+  final bool capturePending;
+  final bool isPinned;
+  final DateTime? recurrenceEventAnchorTime;
   final bool isCompleted;
   final bool isRecurring;
   final String?
@@ -73,6 +79,12 @@ class Reminder {
     this.importanceLevel,
     this.triggerTime,
     this.timeOrigin = ReminderTimeOrigin.unknown,
+    this.eventTime,
+    this.suggestedTriggerTime,
+    this.sourceText,
+    this.capturePending = false,
+    this.isPinned = false,
+    this.recurrenceEventAnchorTime,
     this.isCompleted = false,
     this.isRecurring = false,
     this.recurrenceRule = 'none',
@@ -189,6 +201,15 @@ class Reminder {
         (value) => value.name == json['trigger_time_origin'],
         orElse: () => ReminderTimeOrigin.unknown,
       ),
+      eventTime: _storedDate(json['event_time']),
+      suggestedTriggerTime: _storedDate(json['suggested_trigger_time']),
+      sourceText: json['source_text'] as String?,
+      capturePending:
+          json['capture_pending'] == 1 || json['capture_pending'] == true,
+      isPinned: json['is_pinned'] == 1 || json['is_pinned'] == true,
+      recurrenceEventAnchorTime: _storedDate(
+        json['recurrence_event_anchor_time'],
+      ),
       isCompleted: json['is_completed'] == 1 || json['is_completed'] == true,
       isRecurring: (json['is_recurring'] is int)
           ? (json['is_recurring'] as int) == 1
@@ -227,6 +248,13 @@ class Reminder {
     'importance_level': importanceLevel,
     'trigger_time': triggerTime?.toIso8601String(),
     'trigger_time_origin': timeOrigin.name,
+    'event_time': eventTime?.toIso8601String(),
+    'suggested_trigger_time': suggestedTriggerTime?.toIso8601String(),
+    'source_text': sourceText,
+    'capture_pending': capturePending ? 1 : 0,
+    'is_pinned': isPinned ? 1 : 0,
+    'recurrence_event_anchor_time': recurrenceEventAnchorTime
+        ?.toIso8601String(),
     'is_completed': isCompleted ? 1 : 0,
     'is_recurring': isRecurring ? 1 : 0,
     'recurrence_rule': recurrenceRule ?? 'none',
@@ -337,6 +365,12 @@ class Reminder {
     Object? importanceLevel = _unchanged,
     Object? triggerTime = _unchanged,
     ReminderTimeOrigin? timeOrigin,
+    Object? eventTime = _unchanged,
+    Object? suggestedTriggerTime = _unchanged,
+    Object? sourceText = _unchanged,
+    bool? capturePending,
+    bool? isPinned,
+    Object? recurrenceEventAnchorTime = _unchanged,
     bool? isCompleted,
     bool? isRecurring,
     Object? recurrenceRule = _unchanged,
@@ -385,6 +419,21 @@ class Reminder {
           (identical(triggerTime, _unchanged) || triggerTime == this.triggerTime
               ? this.timeOrigin
               : ReminderTimeOrigin.unknown),
+      eventTime: identical(eventTime, _unchanged)
+          ? this.eventTime
+          : eventTime as DateTime?,
+      suggestedTriggerTime: identical(suggestedTriggerTime, _unchanged)
+          ? this.suggestedTriggerTime
+          : suggestedTriggerTime as DateTime?,
+      sourceText: identical(sourceText, _unchanged)
+          ? this.sourceText
+          : sourceText as String?,
+      capturePending: capturePending ?? this.capturePending,
+      isPinned: isPinned ?? this.isPinned,
+      recurrenceEventAnchorTime:
+          identical(recurrenceEventAnchorTime, _unchanged)
+          ? this.recurrenceEventAnchorTime
+          : recurrenceEventAnchorTime as DateTime?,
       isCompleted: isCompleted ?? this.isCompleted,
       isRecurring: isRecurring ?? this.isRecurring,
       recurrenceRule: identical(recurrenceRule, _unchanged)

@@ -45,6 +45,17 @@ void main() {
         'capture_pending': 1,
         'is_pinned': 1,
       });
+    } else {
+      for (final field in const [
+        'event_time',
+        'recurrence_event_anchor_time',
+        'suggested_trigger_time',
+        'source_text',
+        'capture_pending',
+        'is_pinned',
+      ]) {
+        row.remove(field);
+      }
     }
     return row;
   }
