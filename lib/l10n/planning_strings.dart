@@ -258,9 +258,9 @@ const _strings = <String, List<String>>{
     '都市の天気を有効化（Open-Meteo）',
   ],
   'weatherConsent': [
-    '查询会向 Open-Meteo 发送所选城市坐标；不发送出门记录。',
-    'Queries send the selected city coordinates to Open-Meteo, without departure records.',
-    '選んだ都市の座標を Open-Meteo に送信します。外出履歴は送信しません。',
+    '开启并保存后，应用在前台会为 6 小时内的出门提醒预刷新天气（每计划至少间隔 30 分钟）。查询向 Open-Meteo 发送所选城市坐标；不发送出门记录。',
+    'Once enabled and saved, foreground refreshes prepare reminders due within 6 hours, at most once per plan every 30 minutes. Queries send city coordinates to Open-Meteo without departure records.',
+    '有効にして保存すると、前面起動中に6時間以内の外出通知用の天気を30分以上の間隔で更新します。都市の座標を Open-Meteo に送信しますが、外出履歴は送信しません。',
   ],
   'city': ['搜索天气城市', 'Search weather city', '天気の都市を検索'],
   'search': ['搜索', 'Search', '検索'],

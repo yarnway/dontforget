@@ -59,6 +59,21 @@ class DeparturePlan {
         records.length > 366) {
       throw const FormatException('Invalid departure data');
     }
+    final rain = data['rain_threshold'] ?? 40,
+        retention = data['retention_days'] ?? 30,
+        returning = data['return_minutes'] ?? 180;
+    if (rain is! int ||
+        rain < 1 ||
+        rain > 100 ||
+        retention is! int ||
+        retention < 1 ||
+        retention > 365 ||
+        returning is! int ||
+        returning < 1 ||
+        returning > 1440 ||
+        days.toSet().length != days.length) {
+      throw const FormatException('Invalid departure bounds');
+    }
     final lat = data['latitude'], lon = data['longitude'];
     if (lat != null &&
             (lat is! num || !lat.isFinite || lat < -90 || lat > 90) ||
@@ -79,9 +94,9 @@ class DeparturePlan {
       latitude: (lat as num?)?.toDouble(),
       longitude: (lon as num?)?.toDouble(),
       city: TaskDetails.text(data['city'] ?? '', 160),
-      rainThreshold: data['rain_threshold'] as int? ?? 40,
-      retentionDays: data['retention_days'] as int? ?? 30,
-      returnMinutes: data['return_minutes'] as int? ?? 180,
+      rainThreshold: rain,
+      retentionDays: retention,
+      returnMinutes: returning,
       records: records.map(DepartureRecord.fromJson).toList(),
       weather: data['weather'] == null
           ? null
@@ -288,7 +303,33 @@ class DeparturePlan {
             : rain
             ? 1
             : 2],
+      if (weatherEnabled && weather != null)
+        '${WeatherForecast.source} · $city · ${weather!['fetched']}',
     ].join('\n');
+  }
+
+  Map<String, dynamic>? weatherContext(DateTime at) {
+    if (!weatherEnabled || weather == null) return null;
+    try {
+      final forecast = WeatherForecast.fromJson(weather!);
+      if (forecast.latitude != latitude || forecast.longitude != longitude) {
+        return null;
+      }
+      return {
+        'source': WeatherForecast.source,
+        'fetched': forecast.fetchedAt.toIso8601String(),
+        'city': city,
+        'rain': forecast.rainDuring(
+          at,
+          at.add(Duration(minutes: returnMinutes)),
+          now: at,
+          threshold: rainThreshold,
+        ),
+        'threshold': rainThreshold,
+      };
+    } catch (_) {
+      return null;
+    }
   }
 
   DeparturePlan retained(DateTime now) => patch({

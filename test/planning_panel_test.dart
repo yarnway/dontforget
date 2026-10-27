@@ -76,6 +76,7 @@ void main() {
     double width = 375,
     String locale = 'zh',
     double scale = 1,
+    String? initialDepartureId,
   }) async {
     tester.view.physicalSize = Size(width, 1000);
     tester.view.devicePixelRatio = 1;
@@ -99,7 +100,12 @@ void main() {
             ).copyWith(textScaler: TextScaler.linear(scale)),
             child: InlineFeedback(child: child!),
           ),
-          home: Scaffold(body: PlanningPanel(onClose: () {})),
+          home: Scaffold(
+            body: PlanningPanel(
+              onClose: () {},
+              initialDepartureId: initialDepartureId,
+            ),
+          ),
         ),
       ),
     );
@@ -276,4 +282,25 @@ void main() {
     expect(tester.takeException(), isNull);
     await finish(tester);
   });
+  testWidgets(
+    'a mismatched departure link falls back without loading another task kind',
+    (tester) async {
+      await tester.runAsync(
+        () => container
+            .read(remindersProvider.notifier)
+            .addReminderForGeneration(
+              Reminder(
+                id: 'unrelated-task',
+                taskTitle: 'Unrelated',
+                quadrantLevel: 2,
+              ),
+              database.captureGeneration(),
+            ),
+      );
+      await pump(tester, initialDepartureId: 'unrelated-task');
+      expect(tester.takeException(), isNull);
+      expect(find.byKey(const ValueKey('unrelated-task:title')), findsNothing);
+      await finish(tester);
+    },
+  );
 }

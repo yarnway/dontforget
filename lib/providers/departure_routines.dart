@@ -33,6 +33,9 @@ extension DepartureRoutines on RemindersNotifier {
                 '${event.month.toString().padLeft(2, '0')}-'
                 '${event.day.toString().padLeft(2, '0')}';
             final id = '${owner.id}:departure:$dateKey';
+            if (byId.containsKey(id) && byId[id]!.details.planId != owner.id) {
+              throw StateError('Departure date ID collision');
+            }
             if (!byId.containsKey(id)) {
               final occurrence =
                   Reminder.fromJson({...owner.toJson(), 'id': id}).copyWith(
@@ -274,15 +277,39 @@ extension DepartureRoutines on RemindersNotifier {
             owner.details.paused) {
           throw const StaleReminderOccurrenceException();
         }
-        if (departedAt != null && !plan.learningEnabled) {
+        final confirmed = _departurePlan(owner);
+        if (departedAt != null &&
+            (!confirmed.learningEnabled || !plan.learningEnabled)) {
           throw StateError('Recording disabled');
         }
         final now = DateTime.now();
+        final recorded = {
+          for (final record in confirmed.records)
+            record.id: jsonEncode(record.toJson()),
+        };
+        if (departedAt == null &&
+            plan.records.any(
+              (proposed) =>
+                  recorded[proposed.id] != jsonEncode(proposed.toJson()),
+            )) {
+          throw StateError('New observations require a confirmed departure');
+        }
+        final records = departedAt == null
+            ? plan.records
+            : confirmed
+                  .record(
+                    departedAt,
+                    weather: confirmed.weatherContext(departedAt),
+                  )
+                  .records;
         final changed = [
           owner.copyWith(
             detailsJson: owner.details
                 .patch({
-                  'data': {...owner.details.data, ...plan.toJson()},
+                  'data': {
+                    ...owner.details.data,
+                    'records': records.map((r) => r.toJson()).toList(),
+                  },
                 })
                 .record('departure_record', now)
                 .encode(),

@@ -1586,6 +1586,29 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
                   : null,
             );
           }
+          if (action == _ReminderAction.snooze &&
+              current.details.kind == 'departure' &&
+              current.details.planId != null &&
+              current.eventTime != null) {
+            final owners = await txn.query(
+              'Reminders',
+              where: 'id = ?',
+              whereArgs: [current.details.planId],
+            );
+            if (owners.isEmpty) throw const StaleReminderOccurrenceException();
+            final owner = Reminder.fromJson(owners.single);
+            final plan = _departurePlan(owner);
+            next = next.copyWith(
+              taskSummary: plan.summaryFor(
+                current.eventTime!,
+                current.details.checklist,
+                delivery: next.triggerTime,
+                language:
+                    current.details.data['notification_language'] as String? ??
+                    'zh',
+              ),
+            );
+          }
           await txn.update(
             'Reminders',
             next.toJson()..remove('id'),

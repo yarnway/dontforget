@@ -183,6 +183,21 @@ void main() {
     },
   );
 
+  test('transport rejects invalid weather bounds and duplicate weekdays', () {
+    for (final changes in <Map<String, dynamic>>[
+      {'rain_threshold': '40'},
+      {'rain_threshold': 101},
+      {'retention_days': 0},
+      {'return_minutes': 0},
+      {'return_minutes': 1441},
+      {
+        'weekdays': [1, 1],
+      },
+    ]) {
+      expect(() => plan().patch(changes), throwsFormatException);
+    }
+  });
+
   group('durable independent dates', () {
     late Directory directory;
     late DatabaseHelper database;
@@ -481,6 +496,174 @@ void main() {
           database.captureGeneration(),
         );
         expect((await reader.read()).upcoming, 0);
+      },
+    );
+
+    test(
+      'snoozing beyond forecast freshness restores the unknown-weather fallback',
+      () async {
+        final p = plan(
+          weather: true,
+        ).patch({'weather': forecast(start).toJson()});
+        await save(value: p);
+        expect(dates().first.taskSummary, contains('出行时段可能有雨'));
+        await notifier.snoozeOccurrence(
+          dates().first,
+          now: start.add(const Duration(hours: 7)),
+          duration: const Duration(minutes: 5),
+        );
+        expect(dates().first.taskSummary, contains('天气待确认'));
+        expect(dates().first.taskSummary, contains('Umbrella'));
+      },
+    );
+    test(
+      'record updates preserve confirmed schedule, city and consent fields',
+      () async {
+        await save(value: plan(learning: true));
+        final current = owner();
+        final proposed = DeparturePlan.fromJson(current.details.data)
+            .patch({
+              'minute': 600,
+              'place': 'Unsaved place',
+              'weather_enabled': true,
+            })
+            .record(start.add(const Duration(hours: 2)));
+        await notifier.updateDepartureRecords(
+          current,
+          proposed,
+          database.captureGeneration(),
+          departedAt: start.add(const Duration(hours: 2)),
+        );
+        final after = DeparturePlan.fromJson(owner().details.data);
+        expect(after.departureMinute, 480);
+        expect(after.place, 'Home');
+        expect(after.weatherEnabled, isFalse);
+        expect(after.records.single.place, 'Home');
+        expect(dates()[1].eventTime!.hour, 8);
+      },
+    );
+    test(
+      'recording cannot enable learning before an explicit plan activation',
+      () async {
+        await save();
+        final current = owner();
+        final proposed = DeparturePlan.fromJson(
+          current.details.data,
+        ).patch({'learning': true}).record(start.add(const Duration(hours: 2)));
+        await expectLater(
+          notifier.updateDepartureRecords(
+            current,
+            proposed,
+            database.captureGeneration(),
+            departedAt: start.add(const Duration(hours: 2)),
+          ),
+          throwsStateError,
+        );
+        expect(owner().details.data['learning'], isFalse);
+        expect(dates().first.isCompleted, isFalse);
+      },
+    );
+    test(
+      'legacy date ID collision leaves the original owner alarm untouched',
+      () async {
+        final original = plan().build(start);
+        await notifier.addReminderForGeneration(
+          original,
+          database.captureGeneration(),
+        );
+        final collision = Reminder(
+          id: 'commute:departure:2030-01-07',
+          taskTitle: 'Foreign row',
+          quadrantLevel: 2,
+        );
+        await notifier.addReminderForGeneration(
+          collision,
+          database.captureGeneration(),
+        );
+        await expectLater(
+          notifier.refreshDepartureSchedules(now: start),
+          throwsStateError,
+        );
+        expect(owner().triggerTime, original.triggerTime);
+        final stored = await database.read(
+          database.captureGeneration(),
+          (db) =>
+              db.query('Reminders', where: 'id = ?', whereArgs: [original.id]),
+        );
+        expect(
+          Reminder.fromJson(stored.single).triggerTime,
+          original.triggerTime,
+        );
+      },
+    );
+    test(
+      'individual departure dates cannot bypass plan timing preview',
+      () async {
+        await save();
+        final current = dates().first;
+        await expectLater(
+          notifier.updateReminder(
+            current.copyWith(isRecurring: true, recurrenceRule: 'daily'),
+            baseline: current,
+          ),
+          throwsStateError,
+        );
+        expect(dates().first.isRecurring, isFalse);
+      },
+    );
+
+    test(
+      'record-only actions can delete copied weather records without changing consent',
+      () async {
+        var p = plan(weather: true, learning: true).patch({
+          'weather': forecast(start).toJson(),
+          'city': 'Confirmed city',
+        });
+        p = p.record(start, weather: p.weatherContext(start));
+        p = p.record(
+          start.subtract(const Duration(days: 1)),
+          weather: {'rain': null, 'city': 'Confirmed city'},
+        );
+        await save(value: p);
+        final current = owner();
+        final copied = DeparturePlan.fromJson(current.details.data);
+        final kept = copied.records.first.toJson();
+        await notifier.updateDepartureRecords(
+          current,
+          copied.patch({
+            'records': [kept],
+          }),
+          database.captureGeneration(),
+        );
+        expect(
+          DeparturePlan.fromJson(owner().details.data).records.single.toJson(),
+          kept,
+        );
+        expect(owner().details.data['weather_enabled'], isTrue);
+      },
+    );
+    test(
+      'a departure observation uses only the saved city and weather snapshot',
+      () async {
+        final p = plan(weather: true, learning: true).patch({
+          'weather': forecast(start).toJson(),
+          'city': 'Confirmed city',
+        });
+        await save(value: p);
+        final at = start.add(const Duration(hours: 2));
+        final proposed = DeparturePlan.fromJson(owner().details.data)
+            .patch({'city': 'Unsaved city'})
+            .record(at, weather: {'rain': false, 'city': 'Unsaved city'});
+        await notifier.updateDepartureRecords(
+          owner(),
+          proposed,
+          database.captureGeneration(),
+          departedAt: at,
+        );
+        final after = DeparturePlan.fromJson(owner().details.data);
+        expect(after.city, 'Confirmed city');
+        expect(after.records.single.weather!['city'], 'Confirmed city');
+        expect(after.records.single.weather!['rain'], isTrue);
       },
     );
   });

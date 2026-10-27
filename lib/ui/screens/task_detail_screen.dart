@@ -1018,7 +1018,11 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                         }.contains(widget.task.details.kind) &&
                         widget.task.details.planId != null)
                       OutlinedButton.icon(
-                        icon: const Icon(Icons.medication_outlined),
+                        icon: Icon(
+                          widget.task.details.kind == 'departure'
+                              ? Icons.directions_walk
+                              : Icons.medication_outlined,
+                        ),
                         label: Text(
                           planningText(
                             context,

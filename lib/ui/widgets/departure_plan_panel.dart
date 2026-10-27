@@ -79,6 +79,7 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
           .where(
             (r) =>
                 r.id == widget.initialPlanId &&
+                r.details.kind == 'departure' &&
                 r.isVisible &&
                 r.details.planId == null,
           )
