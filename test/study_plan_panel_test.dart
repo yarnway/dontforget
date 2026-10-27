@@ -23,6 +23,7 @@ class _Model extends StudyPlanService {
     StudyRequest request,
     AppSettings settings, {
     required CancelToken cancelToken,
+    void Function(int completedDays)? onProgress,
   }) async {
     if (fail) throw StateError('Synthetic model failure');
     if (pending != null) return pending!.future;

@@ -23,7 +23,7 @@ class StudyPlanDraft extends ChangeNotifier {
   DataGeneration? generation;
   CancelToken? request;
   bool busy = false, saving = false, saved = false;
-  int syncFailures = 0;
+  int syncFailures = 0, completedDays = 0;
   String? feedback;
   bool _disposed = false;
   void changed() {
@@ -38,6 +38,7 @@ class StudyPlanDraft extends ChangeNotifier {
     feedback = null;
     saved = false;
     syncFailures = 0;
+    completedDays = 0;
     changed();
   }
 
@@ -85,6 +86,7 @@ class _StudyPlanPanelState extends ConsumerState<StudyPlanPanel> {
     final token = CancelToken();
     d.request = token;
     d.busy = true;
+    d.completedDays = 0;
     d.feedback = null;
     d.changed();
     widget.onBusyChanged(true);
@@ -102,6 +104,12 @@ class _StudyPlanPanelState extends ConsumerState<StudyPlanPanel> {
         ),
         settings,
         cancelToken: token,
+        onProgress: (completed) {
+          if (_current && !token.isCancelled) {
+            d.completedDays = completed;
+            d.changed();
+          }
+        },
       );
       if (!_current || token.isCancelled) return;
       database.checkGeneration(generation);
@@ -519,9 +527,17 @@ class _StudyPlanPanelState extends ConsumerState<StudyPlanPanel> {
             ],
             if (locked) ...[
               const SizedBox(height: 16),
-              const LinearProgressIndicator(),
+              LinearProgressIndicator(
+                value: d.busy && d.completedDays > 0
+                    ? d.completedDays / d.days
+                    : null,
+              ),
               const SizedBox(height: 8),
-              Text(loc.get(d.saving ? 'reviewSaving' : 'studyGenerating')),
+              Text(
+                d.saving
+                    ? loc.get('reviewSaving')
+                    : '${loc.get('studyGenerating')} ${d.completedDays}/${d.days}',
+              ),
               if (d.busy)
                 TextButton(
                   onPressed: () {

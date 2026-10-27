@@ -10,10 +10,14 @@ import 'package:dont_forget/services/spaced_repetition_service.dart';
 import 'package:dont_forget/services/study_plan_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-Map<String, Object> vocabulary({int days = 1, int words = 5}) => {
+Map<String, Object> vocabulary({
+  int days = 1,
+  int words = 5,
+  int dayOffset = 0,
+}) => {
   'daily_time': '20:30',
   'days': [
-    for (var d = 0; d < days; d++)
+    for (var d = dayOffset; d < dayOffset + days; d++)
       {
         'title': 'Day ${d + 1}',
         'words': [
@@ -269,6 +273,182 @@ void main() {
       }
     },
   );
+  test(
+    'seven-day rich plans stay within one-day responses and retain cross-day uniqueness',
+    () async {
+      final dio = Dio();
+      var calls = 0;
+      final progress = <int>[];
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (o, h) {
+            final payload = o.data as Map;
+            final user =
+                jsonDecode(payload['messages'][1]['content'] as String) as Map;
+            expect(user['already_used_words'], hasLength(calls * 20));
+            expect(payload['max_tokens'], 8000);
+            final data = vocabulary(words: 20, dayOffset: calls++);
+            h.resolve(
+              Response(
+                requestOptions: o,
+                data: {
+                  'choices': [
+                    {
+                      'message': {'content': jsonEncode(data)},
+                      'finish_reason': 'stop',
+                    },
+                  ],
+                },
+              ),
+            );
+          },
+        ),
+      );
+      final model = StudyPlanService(client: dio);
+      final plan = await model.generate(
+        const StudyRequest(days: 7, wordsPerDay: 20),
+        settings,
+        cancelToken: CancelToken(),
+        onProgress: progress.add,
+      );
+      expect(calls, 7);
+      expect(plan.batches, hasLength(7));
+      expect(plan.batches.last.title, 'Day 7');
+      expect(progress, [0, 1, 2, 3, 4, 5, 6, 7]);
+      model.dispose();
+    },
+  );
+
+  test('a duplicate in a later day never exposes a partial plan', () async {
+    final dio = Dio();
+    var calls = 0;
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (o, h) {
+          calls++;
+          h.resolve(
+            Response(
+              requestOptions: o,
+              data: {
+                'choices': [
+                  {
+                    'message': {'content': jsonEncode(vocabulary())},
+                  },
+                ],
+              },
+            ),
+          );
+        },
+      ),
+    );
+    final model = StudyPlanService(client: dio);
+    await expectLater(
+      model.generate(
+        const StudyRequest(days: 3, wordsPerDay: 5),
+        settings,
+        cancelToken: CancelToken(),
+      ),
+      throwsA(isA<AiRouteFailure>()),
+    );
+    expect(calls, 2);
+    model.dispose();
+  });
+
+  test('cancel after a validated day stops before the next request', () async {
+    final dio = Dio();
+    final token = CancelToken();
+    var calls = 0;
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (o, h) {
+          calls++;
+          h.resolve(
+            Response(
+              requestOptions: o,
+              data: {
+                'choices': [
+                  {
+                    'message': {'content': jsonEncode(vocabulary())},
+                  },
+                ],
+              },
+            ),
+          );
+        },
+      ),
+    );
+    final model = StudyPlanService(client: dio);
+    await expectLater(
+      model.generate(
+        const StudyRequest(days: 3, wordsPerDay: 5),
+        settings,
+        cancelToken: token,
+        onProgress: (done) {
+          if (done == 1) token.cancel();
+        },
+      ),
+      throwsA(isA<DioException>()),
+    );
+    expect(calls, 1);
+    model.dispose();
+  });
+
+  test(
+    'fallback restarts the whole plan without mixing partial provider output',
+    () async {
+      final dio = Dio();
+      final counts = <String, int>{};
+      final progress = <int>[];
+      dio.interceptors.add(
+        InterceptorsWrapper(
+          onRequest: (o, h) {
+            final host = o.uri.host;
+            final count = counts.update(host, (v) => v + 1, ifAbsent: () => 1);
+            final invalid = host == 'first.invalid' && count == 2;
+            final data = vocabulary(
+              dayOffset: count - 1 + (host == 'second.invalid' ? 10 : 0),
+            );
+            h.resolve(
+              Response(
+                requestOptions: o,
+                data: {
+                  'choices': [
+                    {
+                      'message': {'content': invalid ? '{}' : jsonEncode(data)},
+                    },
+                  ],
+                },
+              ),
+            );
+          },
+        ),
+      );
+      final configured = settings.copyWith(
+        aiFallbackEnabled: true,
+        aiProfiles: [
+          for (final host in ['first', 'second'])
+            AiProfile(
+              id: host,
+              label: host,
+              settings: settings.copyWith(baseUrl: 'https://$host.invalid/v1'),
+            ),
+        ],
+      );
+      final model = StudyPlanService(client: dio);
+      final plan = await model.generate(
+        const StudyRequest(days: 3, wordsPerDay: 5),
+        configured,
+        cancelToken: CancelToken(),
+        onProgress: progress.add,
+      );
+      expect(counts, {'first.invalid': 2, 'second.invalid': 3});
+      expect(plan.usedFallback, isTrue);
+      expect(plan.batches.map((b) => b.title), ['Day 11', 'Day 12', 'Day 13']);
+      expect(progress, [0, 1, 0, 1, 2, 3]);
+      model.dispose();
+    },
+  );
+
   test('cancelled generation never exposes a late preview', () async {
     final dio = Dio();
     final started = Completer<void>();

@@ -3,7 +3,7 @@
   "version": "1.7.0+28",
   "schema": 13,
   "local": {
-    "flutterTests": 1235,
+    "flutterTests": 1239,
     "pythonTests": 124,
     "analyze": "PASS",
     "clipboardPlatforms": [
@@ -15,13 +15,13 @@
   },
   "realModel": {
     "status": "PASS",
-    "requests": 1,
+    "requests": 3,
     "httpStatus": 200,
     "responseModel": "deepseek-flash",
-    "totalTokens": 2304,
-    "elapsedMs": 11402,
-    "days": 1,
-    "words": 5,
+    "totalTokens": 5470,
+    "elapsedMs": 25289,
+    "days": 3,
+    "words": 15,
     "ipaPosUsageTranslation": true,
     "suggestedMinute": 1230,
     "sourceDatabaseUnchanged": true,
@@ -44,5 +44,12 @@
     "postMigrationSnapshot": "PENDING",
     "connection": "CoreDevice tunnel unavailable; mirror reconnection timeout"
   },
-  "stableRelease": "NOT_RELEASED"
+  "stableRelease": "NOT_RELEASED",
+  "generation": {
+    "daysPerRequest": 1,
+    "maxRequestsPerProvider": 7,
+    "completePlanRequired": true,
+    "multiDayAttemptSeconds": 180,
+    "multiDayTotalSeconds": 270
+  }
 }

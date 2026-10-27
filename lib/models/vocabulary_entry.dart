@@ -26,8 +26,12 @@ class VocabularyEntry {
     if (!RegExp(r'^/[^/]+/$').hasMatch(ipa)) {
       throw const FormatException('Expected IPA between slashes');
     }
+    final word = field('word', 80);
+    if (word.contains(' — ')) {
+      throw const FormatException('Invalid word delimiter');
+    }
     return VocabularyEntry(
-      word: field('word', 80),
+      word: word,
       meaning: field('meaning', 180),
       example: field('example', 240),
       ipa: ipa,
