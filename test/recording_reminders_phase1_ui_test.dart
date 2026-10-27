@@ -746,6 +746,7 @@ void main() {
   testWidgets(
     'native failure remains actionable after today removes the completed card',
     (tester) async {
+      final now = DateTime.now();
       await tester.runAsync(
         () => container
             .read(remindersProvider.notifier)
@@ -754,12 +755,16 @@ void main() {
                 id: 'finish',
                 taskTitle: 'Finish this task',
                 quadrantLevel: 1,
-                triggerTime: DateTime.now().add(const Duration(hours: 1)),
+                // The reminder can cross midnight; the task still belongs today.
+                eventTime: now,
+                triggerTime: now.add(const Duration(hours: 1)),
               ),
             ),
       );
       await show(tester, width: 768);
       notifications.failCancel = true;
+      expect(find.text('Finish this task'), findsOneWidget);
+      expect(find.byType(Checkbox), findsOneWidget);
       await tester.tap(find.byType(Checkbox).first);
       for (var i = 0; i < 100 && find.text('修复提醒').evaluate().isEmpty; i++) {
         await tester.runAsync(
