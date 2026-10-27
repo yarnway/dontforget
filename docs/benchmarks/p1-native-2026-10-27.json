@@ -259,5 +259,7 @@
   "frozen_artifact_not_rebuilt_after_concurrent_updates": true,
   "evidence_does_not_accept_later_main_or_build_34": true,
   "protected_unrelated_files": 27,
-  "protected_unrelated_manifest_sha256": "10ce9aa3e2d3d70c15d88666e8db92804e9b84b80405d4e39fb37eb036907941"
+  "protected_unrelated_manifest_sha256": "10ce9aa3e2d3d70c15d88666e8db92804e9b84b80405d4e39fb37eb036907941",
+  "protected_unrelated_files_at_integration": 31,
+  "shared_iteration_release_draft_preserved": true
 }
