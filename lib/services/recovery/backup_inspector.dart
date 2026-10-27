@@ -416,6 +416,7 @@ Map<String, String> _columnsFor(String table, int version) => {
   if (table == 'settings' && version >= 12) 'input_send_mode': 's',
   if (table == 'reminders' && version >= 13)
     'review_notifications_enabled': 'b',
+  if (table == 'reminders' && version >= 14) 'trigger_time_origin': 's',
 };
 
 Future<void> _checkSchema(
@@ -531,6 +532,8 @@ Future<void> _checkSchema(
           ? defaultValue == "'system'"
           : name == 'input_send_mode'
           ? defaultValue == "'enter'"
+          : name == 'trigger_time_origin'
+          ? defaultValue == "'unknown'"
           : name == 'recurrence_rule'
           ? const ["'none'", '"none"'].contains(defaultValue)
           : defaultValue == null;
@@ -562,7 +565,7 @@ Future<void> _checkSchema(
 }
 
 void _checkVersion(Object? value) {
-  if (value is! int || !const {7, 8, 9, 10, 11, 12, 13}.contains(value)) {
+  if (value is! int || !const {7, 8, 9, 10, 11, 12, 13, 14}.contains(value)) {
     _fail(BackupInspectionError.unsupportedVersion);
   }
 }
@@ -797,6 +800,14 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
   }
   var unresolved = 0;
   for (final row in data['reminders']) {
+    if (data['version'] >= 14 &&
+        !const [
+          'unknown',
+          'manual',
+          'aiSuggested',
+        ].contains(row['trigger_time_origin'])) {
+      _fail(BackupInspectionError.invalidData);
+    }
     if (row['record_id'] != null &&
         !ids['media_records']!.contains(row['record_id'])) {
       unresolved++;

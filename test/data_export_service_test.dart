@@ -84,10 +84,10 @@ void main() {
       expect(
         rows[1][5],
         locale == 'en'
-            ? 'Overdue'
+            ? 'Reminder time passed'
             : locale == 'ja'
-            ? '期限切れ'
-            : '已逾期',
+            ? '通知時刻を経過'
+            : '提醒时间已过',
       );
       final mask = int.parse(rows[1][15].substring(2), radix: 16);
       expect(mask & TaskBitmask.overdue, isNonZero);

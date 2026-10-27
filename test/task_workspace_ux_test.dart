@@ -261,7 +261,7 @@ void main() {
       expect(field.controller!.text, '確認\n');
       expect(home.sent, isEmpty);
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-      expect(home.sent, ['確認']);
+      expect(home.sent, ['確認\n']);
       expect(field.controller!.text, isEmpty);
     },
   );

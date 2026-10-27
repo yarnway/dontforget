@@ -217,27 +217,28 @@ void main() {
     );
   }
 
-  testWidgets(
-    'notice categorization compares UTC and local instants correctly',
-    (tester) async {
-      final due = task.triggerTime!.toLocal();
-      for (final now in [due.subtract(const Duration(minutes: 1)), due]) {
-        await show(
-          tester,
-          ReminderNoticePanel(
-            reminders: [task],
-            now: now,
-            onDismiss: (_) {},
-            onSnooze: (_) {},
-            onComplete: (_) {},
-          ),
-        );
-        expect(
-          find.text('${now.isBefore(due) ? 'Due soon' : 'Reminder Due'} · 1'),
-          findsOneWidget,
-        );
-        await tester.pumpWidget(const SizedBox());
-      }
-    },
-  );
+  testWidgets('notice categorization compares UTC and local instants correctly', (
+    tester,
+  ) async {
+    final due = task.triggerTime!.toLocal();
+    for (final now in [due.subtract(const Duration(minutes: 1)), due]) {
+      await show(
+        tester,
+        ReminderNoticePanel(
+          reminders: [task],
+          now: now,
+          onDismiss: (_) {},
+          onSnooze: (_) {},
+          onComplete: (_) {},
+        ),
+      );
+      expect(
+        find.text(
+          '${now.isBefore(due) ? 'Reminder soon' : 'Reminder time reached'} · 1',
+        ),
+        findsOneWidget,
+      );
+      await tester.pumpWidget(const SizedBox());
+    }
+  });
 }

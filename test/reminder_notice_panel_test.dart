@@ -53,16 +53,16 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(find.text('待办提醒到期 · 1'), findsOneWidget);
-    expect(find.text('待办提醒到期 · 3'), findsNothing);
+    expect(find.text('提醒时间已到 · 1'), findsOneWidget);
+    expect(find.text('提醒时间已到 · 3'), findsNothing);
     expect(find.text('Due task'), findsOneWidget);
     expect(find.text('稍后 5 分钟提醒'), findsOneWidget);
 
     await tester.tap(find.widgetWithText(TextButton, '我知道了'));
     await tester.pumpAndSettle();
-    expect(find.text('即将到期 · 2'), findsOneWidget);
+    expect(find.text('即将提醒 · 2'), findsOneWidget);
     expect(find.text('Upcoming task 0'), findsOneWidget);
-    expect(find.text('5 分钟内到期 · 应用打开时在此提前提示'), findsOneWidget);
+    expect(find.text('5 分钟内到提醒时间 · 应用打开时在此提前提示'), findsOneWidget);
     expect(find.text('稍后 5 分钟提醒'), findsNothing);
     expect(remaining.value, hasLength(2));
     expect(tester.takeException(), isNull);

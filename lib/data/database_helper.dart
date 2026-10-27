@@ -16,7 +16,7 @@ import '../services/storage_directory_lease.dart';
 part 'database_access.dart';
 
 class DatabaseHelper {
-  static const schemaVersion = 13;
+  static const schemaVersion = 14;
   static final DatabaseHelper instance = DatabaseHelper._init();
   Database? _database;
   Future<Database>? _opening;
@@ -557,6 +557,7 @@ CREATE TABLE Reminders (
   urgency_level TEXT,
   importance_level TEXT,
   trigger_time TEXT,
+  trigger_time_origin TEXT NOT NULL DEFAULT 'unknown',
   is_completed $boolType,
   is_recurring INTEGER DEFAULT 0,
   recurrence_rule TEXT DEFAULT 'none',
@@ -681,6 +682,12 @@ CREATE TABLE Reminders (
     if (oldVersion < 13) {
       await db.execute(
         'ALTER TABLE Reminders ADD COLUMN review_notifications_enabled INTEGER NOT NULL DEFAULT 0',
+      );
+    }
+    if (oldVersion < 14) {
+      // Historical times cannot be reliably classified from their text.
+      await db.execute(
+        "ALTER TABLE Reminders ADD COLUMN trigger_time_origin TEXT NOT NULL DEFAULT 'unknown'",
       );
     }
 

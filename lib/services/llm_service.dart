@@ -430,6 +430,7 @@ Output strictly in valid JSON object matching this structure:
           urgencyLevel: json['urgency'] ?? 'General',
           importanceLevel: json['importance'] ?? 'General',
           triggerTime: parsedTriggerTime,
+          timeOrigin: ReminderTimeOrigin.aiSuggested,
           isRecurring: isRecur,
           recurrenceRule: rule,
           recurrenceDescription: desc,

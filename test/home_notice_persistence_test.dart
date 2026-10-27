@@ -174,14 +174,14 @@ void main() {
       container.read(remindersProvider).single.noticeAcknowledgedAt,
       isNotNull,
     );
-    expect(find.text('待办提醒到期 · 1'), findsNothing);
+    expect(find.text('提醒时间已到 · 1'), findsNothing);
     await tester.pumpWidget(const SizedBox());
     await tester.runAsync(() async {
       await unload();
       await load();
     });
     await showHome(tester);
-    expect(find.text('待办提醒到期 · 1'), findsNothing);
+    expect(find.text('提醒时间已到 · 1'), findsNothing);
     expect(find.text('Persisted due task'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
@@ -199,7 +199,7 @@ void main() {
     });
     await showHome(tester);
     await dismissNotice(tester);
-    expect(find.text('待办提醒到期 · 1'), findsOneWidget);
+    expect(find.text('提醒时间已到 · 1'), findsOneWidget);
     expect(
       container.read(remindersProvider).single.noticeAcknowledgedAt,
       isNull,
@@ -210,7 +210,7 @@ void main() {
       await db.execute('DROP TRIGGER reject_ack');
     });
     await dismissNotice(tester);
-    expect(find.text('待办提醒到期 · 1'), findsNothing);
+    expect(find.text('提醒时间已到 · 1'), findsNothing);
     expect(
       container.read(remindersProvider).single.noticeAcknowledgedAt,
       isNotNull,

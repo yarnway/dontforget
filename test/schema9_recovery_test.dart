@@ -80,6 +80,7 @@ void main() {
   Future<File> source(int version, String format, {String? date}) async {
     final row = task(legacy: version < 9);
     row.remove('review_notifications_enabled');
+    row.remove('trigger_time_origin');
     if (date != null) {
       for (final field in [
         'trigger_time',

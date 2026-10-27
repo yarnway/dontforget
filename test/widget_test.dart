@@ -287,7 +287,7 @@ void main() {
         ),
       );
       await tester.pump(const Duration(milliseconds: 300));
-      expect(find.text('即将到期 · 1'), findsOneWidget);
+      expect(find.text('即将提醒 · 1'), findsOneWidget);
       await tester.tap(find.byKey(const ValueKey('composer-input-surface')));
       final editable = tester.widget<EditableText>(find.byType(EditableText));
       final due = upcoming.copyWith(

@@ -362,6 +362,15 @@ class _TaskCardState extends ConsumerState<TaskCard> {
           Icons.access_time,
           colors.onSurfaceVariant,
         ),
+      if (task.triggerTime != null &&
+          task.timeOrigin == ReminderTimeOrigin.aiSuggested)
+        _badge(
+          l10n.get('reminderSourceAi'),
+          Icons.auto_awesome_outlined,
+          colors.primary,
+        ),
+      if (!task.isCompleted && task.isOverdue)
+        _badge(l10n.get('overdue'), Icons.schedule_rounded, colors.error),
       if (task.isRecurring)
         _badge(
           task.recurrenceDescription ?? l10n.get('recurrencePeriodic'),

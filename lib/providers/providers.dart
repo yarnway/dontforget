@@ -7,6 +7,7 @@ import '../models/settings.dart';
 import '../models/reminder.dart';
 import '../models/notification_schedule_status.dart';
 import '../services/notification_schedule_reader.dart';
+import '../services/notification_permission_service.dart';
 import '../models/media_record.dart';
 import '../services/llm_service.dart';
 import '../services/notification_service.dart';
@@ -40,6 +41,20 @@ final notificationScheduleStatusReaderProvider =
         isSuppressed: (task) =>
             ref.read(notificationServiceProvider).isSuppressed(task),
       ).read;
+    });
+
+final reminderScheduleReaderProvider =
+    Provider<Future<ReminderSchedulePhase> Function(Reminder)>((ref) {
+      return NotificationScheduleReader(
+        ref.read(databaseHelperProvider),
+        isSuppressed: (task) =>
+            ref.read(notificationServiceProvider).isSuppressed(task),
+      ).readReminder;
+    });
+
+final notificationPermissionReaderProvider =
+    Provider<Future<NotificationPermissionSnapshot> Function()>((ref) {
+      return NotificationPermissionService().refresh;
     });
 
 final runtimeRecoveryGateProvider = Provider<RuntimeRecoveryGate>((ref) {

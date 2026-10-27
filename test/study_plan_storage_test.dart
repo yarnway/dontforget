@@ -47,7 +47,9 @@ void main() {
     spacedRepetitionLevel: 2,
     nextReviewAt: DateTime(2030, 1, 1),
   );
-  final legacy = original.toJson()..remove('review_notifications_enabled');
+  final legacy = original.toJson()
+    ..remove('review_notifications_enabled')
+    ..remove('trigger_time_origin');
   Future<File> createLegacy({bool broken = false}) async {
     final file = File('${root.path}/dont_forget_v3.db');
     final db = await databaseFactoryFfi.openDatabase(file.path);
@@ -87,13 +89,16 @@ void main() {
     () async {
       await createLegacy();
       final db = await helper.database;
-      expect(await db.getVersion(), 13);
+      expect(await db.getVersion(), DatabaseHelper.schemaVersion);
       expect((await db.query('Reminders')).single, {
         ...legacy,
         'review_notifications_enabled': 0,
+        'trigger_time_origin': 'unknown',
       });
       final directory = root.listSync().whereType<Directory>().singleWhere(
-        (d) => d.path.contains('schema-upgrade-v12-to-v13-'),
+        (d) => d.path.contains(
+          'schema-upgrade-v12-to-v${DatabaseHelper.schemaVersion}-',
+        ),
       );
       final snapshot = File('${directory.path}/snapshot.json');
       final bytes = await snapshot.readAsBytes();
@@ -158,6 +163,7 @@ void main() {
           expect((await (await target.database).query('Reminders')).single, {
             ...legacy,
             'review_notifications_enabled': 0,
+            'trigger_time_origin': 'unknown',
           });
           expect(await source.readAsBytes(), bytes);
         } finally {
@@ -307,7 +313,7 @@ void main() {
           temporaryDirectory: root,
         );
         final preview = await inspector.inspect(source);
-        expect(preview.version, 13);
+        expect(preview.version, DatabaseHelper.schemaVersion);
         final target = DatabaseHelper.forTesting(
           '${root.path}/restored-current',
           databaseFactoryFfi,

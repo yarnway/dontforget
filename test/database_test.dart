@@ -326,6 +326,7 @@ void main() {
                 'snoozed_at',
                 'recurrence_anchor_time',
                 'review_notifications_enabled',
+                'trigger_time_origin',
               }.contains(key),
         ),
     );

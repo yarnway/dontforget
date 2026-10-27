@@ -44,7 +44,9 @@ void main() {
           await db.insert('Settings', legacySettings);
           await db.insert(
             'Reminders',
-            {...task}..remove('review_notifications_enabled'),
+            {...task}
+              ..remove('review_notifications_enabled')
+              ..remove('trigger_time_origin'),
           );
           if (broken) {
             await db.execute('ALTER TABLE Settings ADD COLUMN appearance TEXT');
@@ -92,7 +94,9 @@ void main() {
       final data = jsonDecode(await snapshot.readAsString());
       expect(data['settings'], [legacySettings]);
       expect(data['reminders'], [
-        {...task}..remove('review_notifications_enabled'),
+        {...task}
+          ..remove('review_notifications_enabled')
+          ..remove('trigger_time_origin'),
       ]);
       // Rebuild an independent v10 database with its frozen schema, not a downgrade.
       final rollback = await databaseFactoryFfi.openDatabase(
@@ -144,7 +148,9 @@ void main() {
       });
       expect(
         (await db.query('Reminders')).single,
-        {...task}..remove('review_notifications_enabled'),
+        {...task}
+          ..remove('review_notifications_enabled')
+          ..remove('trigger_time_origin'),
       );
       await db.close();
     },
@@ -164,7 +170,9 @@ void main() {
                   'settings': [legacySettings],
                   'media_records': [],
                   'reminders': [
-                    {...task}..remove('review_notifications_enabled'),
+                    {...task}
+                      ..remove('review_notifications_enabled')
+                      ..remove('trigger_time_origin'),
                   ],
                 }),
               );

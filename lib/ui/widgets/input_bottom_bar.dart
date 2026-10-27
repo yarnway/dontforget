@@ -68,10 +68,32 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   void _submitText() {
     final composing = _textController.value.composing;
     if (composing.isValid && !composing.isCollapsed) return;
-    final text = _textController.text.trim();
-    if (text.isEmpty) return;
+    final text = _textController.text;
+    if (text.trim().isEmpty) return;
     _textController.clear();
     ref.read(homeControllerProvider.notifier).processText(text);
+  }
+
+  void _restoreFailedText(FailedTextDraft draft) {
+    final composing = _textController.value.composing;
+    if (composing.isValid && !composing.isCollapsed) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(context).get('failedInputComposing'),
+          ),
+        ),
+      );
+      return;
+    }
+    final current = _textController.text;
+    final text = current.isEmpty ? draft.text : '$current\n${draft.text}';
+    _textController.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+    ref.read(homeControllerProvider.notifier).dismissFailedText(draft.id);
+    _focusNode.requestFocus();
   }
 
   void _insertLineBreak() {
@@ -353,6 +375,89 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (homeState.failedTextDrafts.isNotEmpty)
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 180),
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+                    child: Column(
+                      key: const ValueKey('failed-text-drafts'),
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${l10n.get('failedInputTitle')} (${homeState.failedTextDrafts.length})',
+                          style: Theme.of(context).textTheme.labelLarge,
+                        ),
+                        Text(l10n.get('failedInputHint')),
+                        Text(
+                          homeState.failedTextDrafts.first.text,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Wrap(
+                          spacing: 4,
+                          children: [
+                            TextButton(
+                              key: const ValueKey('restore-failed-input'),
+                              onPressed: isRecording || _isTranscribing
+                                  ? null
+                                  : () => _restoreFailedText(
+                                      homeState.failedTextDrafts.first,
+                                    ),
+                              child: Text(l10n.get('failedInputRestore')),
+                            ),
+                            TextButton(
+                              key: const ValueKey('copy-failed-input'),
+                              onPressed: () async {
+                                final draft = homeState.failedTextDrafts.first;
+                                try {
+                                  await Clipboard.setData(
+                                    ClipboardData(text: draft.text),
+                                  );
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.maybeOf(
+                                      context,
+                                    )?.showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          l10n.get('failedInputCopied'),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                } catch (_) {
+                                  if (context.mounted) {
+                                    ScaffoldMessenger.maybeOf(
+                                      context,
+                                    )?.showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          l10n.get('failedInputCopyFailed'),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                              child: Text(l10n.get('failedInputCopy')),
+                            ),
+                            TextButton(
+                              key: const ValueKey('discard-failed-input'),
+                              onPressed: () => ref
+                                  .read(homeControllerProvider.notifier)
+                                  .dismissFailedText(
+                                    homeState.failedTextDrafts.first.id,
+                                  ),
+                              child: Text(l10n.get('failedInputDiscard')),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             if (_isLongPressRecording && !keyboardVisible)
               VoiceCaptureFeedback(action: _voiceAction),
             Row(

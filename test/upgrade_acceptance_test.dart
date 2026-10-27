@@ -26,6 +26,7 @@ void main() {
               'snoozed_at': null,
               'recurrence_anchor_time': null,
               'review_notifications_enabled': 0,
+              'trigger_time_origin': 'unknown',
             },
           },
       ],

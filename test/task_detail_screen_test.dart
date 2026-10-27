@@ -274,7 +274,7 @@ void main() {
       // Verify Quick Presets exist
       expect(find.text('+15分钟'), findsOneWidget);
       expect(find.text('+1小时'), findsOneWidget);
-      expect(find.text('今晚 20:00'), findsOneWidget);
+      expect(find.text('下一个 20:00'), findsOneWidget);
       expect(find.text('明天 09:00'), findsOneWidget);
 
       // Verify Save button
@@ -388,7 +388,7 @@ void main() {
       expect(find.text('任务距离触发已不足 24 小时，底层自动跃迁为紧急且重要，触发系统强提醒。'), expected);
       expect(find.text('撤回至 Q2'), expected);
       expect(
-        find.text('距离提醒: 已到期'),
+        find.text('距离提醒: 提醒时间已过'),
         scenario.completed ? findsNothing : findsOneWidget,
       );
       expect(tester.takeException(), isNull);
@@ -557,6 +557,10 @@ void main() {
               .firstWhere((item) => item.id == task.id);
           expect(saved.taskTitle, 'Saved despite native failure');
           expect(saved.noticeRevision, task.noticeRevision + 1);
+          expect(
+            saved.timeOrigin,
+            dialog ? ReminderTimeOrigin.unknown : ReminderTimeOrigin.manual,
+          );
           final rows = await tester.runAsync(
             () => testDatabase.read(
               testDatabase.captureGeneration(),

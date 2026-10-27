@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dont_forget/models/settings.dart';
+import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/services/llm_service.dart';
 
 void main() {
@@ -152,6 +153,7 @@ void main() {
         client: dio,
       ).extractTasks('fixture', configured);
       expect(tasks.single.taskTitle, 'Fixture');
+      expect(tasks.single.timeOrigin, ReminderTimeOrigin.aiSuggested);
       expect(calls, 1);
       expect(configured.modelName, 'deepseek-v4.1-flash');
       dio.close();

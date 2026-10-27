@@ -162,7 +162,10 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('search-sort')));
     await tester.pumpAndSettle();
     await tester.tap(
-      find.widgetWithText(CheckedPopupMenuItem<TaskSearchSort>, 'Due soonest'),
+      find.widgetWithText(
+        CheckedPopupMenuItem<TaskSearchSort>,
+        'Reminder time',
+      ),
     );
     await tester.pumpAndSettle();
     expect(visible(tester), ['overdue', 'planning', 'done']);

@@ -194,6 +194,7 @@ void main() {
         ).toJson()..removeWhere(
           (key, _) => const {
             'review_notifications_enabled',
+            'trigger_time_origin',
             'notice_revision',
             'notice_acknowledged_at',
             'upcoming_dismissed_at',

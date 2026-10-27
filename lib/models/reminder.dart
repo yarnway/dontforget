@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'stored_datetime.dart';
 
+/// Origin of the currently saved reminder time, not proof of delivery.
+enum ReminderTimeOrigin { unknown, manual, aiSuggested }
+
 class TaskBitmask {
   static const int quadrant1 = 1 << 0;
   static const int quadrant2 = 1 << 1;
@@ -38,6 +41,7 @@ class Reminder {
   final String? urgencyLevel; // 'urgent', 'general', 'not_urgent'
   final String? importanceLevel; // 'important', 'general', 'not_important'
   final DateTime? triggerTime;
+  final ReminderTimeOrigin timeOrigin;
   final bool isCompleted;
   final bool isRecurring;
   final String?
@@ -68,6 +72,7 @@ class Reminder {
     this.urgencyLevel,
     this.importanceLevel,
     this.triggerTime,
+    this.timeOrigin = ReminderTimeOrigin.unknown,
     this.isCompleted = false,
     this.isRecurring = false,
     this.recurrenceRule = 'none',
@@ -180,6 +185,10 @@ class Reminder {
       urgencyLevel: json['urgency_level'] as String?,
       importanceLevel: json['importance_level'] as String?,
       triggerTime: _storedDate(json['trigger_time']),
+      timeOrigin: ReminderTimeOrigin.values.firstWhere(
+        (value) => value.name == json['trigger_time_origin'],
+        orElse: () => ReminderTimeOrigin.unknown,
+      ),
       isCompleted: json['is_completed'] == 1 || json['is_completed'] == true,
       isRecurring: (json['is_recurring'] is int)
           ? (json['is_recurring'] as int) == 1
@@ -217,6 +226,7 @@ class Reminder {
     'urgency_level': urgencyLevel,
     'importance_level': importanceLevel,
     'trigger_time': triggerTime?.toIso8601String(),
+    'trigger_time_origin': timeOrigin.name,
     'is_completed': isCompleted ? 1 : 0,
     'is_recurring': isRecurring ? 1 : 0,
     'recurrence_rule': recurrenceRule ?? 'none',
@@ -326,6 +336,7 @@ class Reminder {
     Object? urgencyLevel = _unchanged,
     Object? importanceLevel = _unchanged,
     Object? triggerTime = _unchanged,
+    ReminderTimeOrigin? timeOrigin,
     bool? isCompleted,
     bool? isRecurring,
     Object? recurrenceRule = _unchanged,
@@ -367,6 +378,13 @@ class Reminder {
       triggerTime: identical(triggerTime, _unchanged)
           ? this.triggerTime
           : triggerTime as DateTime?,
+      // A changed time invalidates the old provenance unless the caller knows
+      // who chose it. This covers snooze, recurrence and restored old records.
+      timeOrigin:
+          timeOrigin ??
+          (identical(triggerTime, _unchanged) || triggerTime == this.triggerTime
+              ? this.timeOrigin
+              : ReminderTimeOrigin.unknown),
       isCompleted: isCompleted ?? this.isCompleted,
       isRecurring: isRecurring ?? this.isRecurring,
       recurrenceRule: identical(recurrenceRule, _unchanged)

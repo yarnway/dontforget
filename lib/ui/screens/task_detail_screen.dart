@@ -11,8 +11,11 @@ import '../../models/reminder.dart';
 import '../../models/vocabulary_entry.dart';
 import '../../providers/providers.dart';
 import '../../services/context_trigger_service.dart';
+import '../../services/notification_permission_service.dart';
+import '../../services/notification_schedule_reader.dart';
 import '../../l10n/app_localizations.dart';
 import 'knowledge_graph_screen.dart';
+import 'settings_screen.dart';
 
 /// Dedicated Full-Page Task Detail & Editing Screen
 class TaskDetailScreen extends ConsumerStatefulWidget {
@@ -41,6 +44,11 @@ typedef _DetailDraft = ({
 });
 
 class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
+  late Reminder _statusReference;
+  Future<
+    ({ReminderSchedulePhase phase, NotificationPermissionStatus permission})
+  >?
+  _statusRead;
   late TextEditingController _titleController;
   late TextEditingController _summaryController;
   late int _selectedQuadrant;
@@ -97,6 +105,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     _originalQuadrant = widget.task.originalQuadrantLevel;
     _isDynamicallyPromoted = widget.task.isDynamicallyPromoted;
     _selectedTime = widget.task.triggerTime;
+    _statusReference = widget.task;
     _selectedRecurrenceRule =
         widget.task.isRecurring && widget.task.recurrenceRule != null
         ? widget.task.recurrenceRule!
@@ -131,6 +140,108 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     ]) {
       controller.addListener(_draftChanged);
     }
+  }
+
+  Future<
+    ({ReminderSchedulePhase phase, NotificationPermissionStatus permission})
+  >
+  _readReminderStatus(Reminder task) async {
+    final phase = Future<ReminderSchedulePhase>.sync(
+      () => ref.read(reminderScheduleReaderProvider)(task),
+    ).catchError((Object _) => ReminderSchedulePhase.unknown);
+    final permission = Future<NotificationPermissionStatus>.sync(
+      () async => (await ref.read(
+        notificationPermissionReaderProvider,
+      )()).authorization.status,
+    ).catchError((Object _) => NotificationPermissionStatus.unknown);
+    return (phase: await phase, permission: await permission);
+  }
+
+  void _refreshReminderStatus() {
+    final pending = _readReminderStatus(_statusReference);
+    setState(() {
+      _statusRead = pending;
+    });
+  }
+
+  Future<void> _openNotificationSettings() async {
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen()));
+    if (mounted) _refreshReminderStatus();
+  }
+
+  Widget _reminderStatus(AppLocalizations l10n) {
+    final draftChanged =
+        _selectedTime != _statusReference.triggerTime ||
+        _isCompleted != _statusReference.isCompleted ||
+        _selectedQuadrant != _statusReference.quadrantLevel ||
+        _selectedRecurrenceRule !=
+            (_statusReference.isRecurring
+                ? _statusReference.recurrenceRule ?? 'none'
+                : 'none');
+    if (draftChanged) return Text(l10n.get('reminderStatusDraft'));
+    return FutureBuilder<
+      ({ReminderSchedulePhase phase, NotificationPermissionStatus permission})
+    >(
+      future: _statusRead,
+      builder: (context, snapshot) {
+        final data = snapshot.data;
+        final statusKey = data == null
+            ? (_statusRead == null
+                  ? 'reminderStatusNotChecked'
+                  : 'reminderStatusChecking')
+            : switch (data.phase) {
+                ReminderSchedulePhase.unknown => 'reminderStatusUnknown',
+                ReminderSchedulePhase.noReminder => 'reminderStatusNone',
+                ReminderSchedulePhase.inactive => 'reminderStatusInactive',
+                ReminderSchedulePhase.elapsed => 'reminderStatusElapsed',
+                ReminderSchedulePhase.submitted => 'reminderStatusSubmitted',
+                ReminderSchedulePhase.policyPaused => 'reminderStatusPaused',
+                ReminderSchedulePhase.needsAttention =>
+                  'reminderStatusAttention',
+              };
+        final permissionKey = switch (data?.permission) {
+          NotificationPermissionStatus.granted =>
+            'notificationPermissionGranted',
+          NotificationPermissionStatus.provisional =>
+            'notificationPermissionProvisional',
+          NotificationPermissionStatus.notEnabled =>
+            'notificationPermissionNotEnabled',
+          NotificationPermissionStatus.unsupported =>
+            'notificationPermissionUnsupported',
+          _ => 'notificationPermissionUnknown',
+        };
+        return Column(
+          key: const ValueKey('task-reminder-status'),
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (data != null)
+              Text(
+                l10n.get('reminderStatusSnapshot'),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            Semantics(liveRegion: true, child: Text(l10n.get(statusKey))),
+            if (data != null)
+              Text(
+                '${l10n.get('reminderStatusPermission')}: ${l10n.get(permissionKey)}',
+              ),
+            Wrap(
+              children: [
+                TextButton(
+                  onPressed: _refreshReminderStatus,
+                  child: Text(l10n.get('reminderStatusRefresh')),
+                ),
+                TextButton(
+                  onPressed: _openNotificationSettings,
+                  child: Text(l10n.get('reminderStatusSettings')),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -314,6 +425,11 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       triggerTime: _selectedTime != baseline.triggerTime
           ? _selectedTime
           : current.triggerTime,
+      timeOrigin: _selectedTime != baseline.triggerTime
+          ? (_selectedTime == null
+                ? ReminderTimeOrigin.unknown
+                : ReminderTimeOrigin.manual)
+          : current.timeOrigin,
       isCompleted: _isCompleted != baseline.isCompleted
           ? _isCompleted
           : current.isCompleted,
@@ -345,6 +461,10 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       );
       database.checkGeneration(generation);
       if (!mounted) return;
+      if (result.reminder case final saved?) {
+        _statusReference = saved;
+        _statusRead = null;
+      }
       _savedDraft = submittedDraft;
       _reportedDirty = _captureDraft() != _savedDraft;
       if (result.nativeSyncFailed) {
@@ -490,10 +610,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
   void _applyFixedHour(int hour, {bool tomorrow = false}) {
     final now = DateTime.now();
-    DateTime target = DateTime(now.year, now.month, now.day, hour, 0);
-    if (tomorrow || target.isBefore(now)) {
-      target = target.add(const Duration(days: 1));
-    }
+    final target = nextReminderClockTime(now, hour, tomorrow: tomorrow);
     setState(() {
       _selectedTime = target;
     });
@@ -1310,6 +1427,28 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                           ),
 
                           const SizedBox(height: 10),
+
+                          if (_selectedTime != null) ...[
+                            Text(
+                              l10n.get(
+                                _selectedTime != _statusReference.triggerTime
+                                    ? 'reminderSourceManual'
+                                    : switch (_statusReference.timeOrigin) {
+                                        ReminderTimeOrigin.aiSuggested =>
+                                          'reminderSourceAi',
+                                        ReminderTimeOrigin.manual =>
+                                          'reminderSourceManual',
+                                        ReminderTimeOrigin.unknown =>
+                                          'reminderSourceUnknown',
+                                      },
+                              ),
+                              key: const ValueKey('reminder-time-origin'),
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                          _reminderStatus(l10n),
+                          const SizedBox(height: 8),
 
                           // Quick Presets
                           Wrap(

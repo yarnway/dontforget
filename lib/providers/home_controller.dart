@@ -21,18 +21,26 @@ import '../services/local_speech_service.dart';
 import '../services/recovery/runtime_gate.dart';
 import 'providers.dart';
 
+class FailedTextDraft {
+  const FailedTextDraft(this.id, this.text);
+  final String id;
+  final String text;
+}
+
 class HomeState {
   static const _unchanged = Object();
   final bool isLoading;
   final bool isRecording;
   final int pendingTasksCount;
   final String? error;
+  final List<FailedTextDraft> failedTextDrafts;
 
   HomeState({
     this.isLoading = false,
     this.isRecording = false,
     this.pendingTasksCount = 0,
     this.error,
+    this.failedTextDrafts = const [],
   });
 
   bool get isProcessingInBackground => pendingTasksCount > 0;
@@ -42,12 +50,14 @@ class HomeState {
     bool? isRecording,
     int? pendingTasksCount,
     Object? error = _unchanged,
+    List<FailedTextDraft>? failedTextDrafts,
   }) {
     return HomeState(
       isLoading: isLoading ?? this.isLoading,
       isRecording: isRecording ?? this.isRecording,
       pendingTasksCount: pendingTasksCount ?? this.pendingTasksCount,
       error: identical(error, _unchanged) ? this.error : error as String?,
+      failedTextDrafts: failedTextDrafts ?? this.failedTextDrafts,
     );
   }
 }
@@ -191,11 +201,30 @@ class HomeController extends StateNotifier<HomeState> {
     }
   }
 
+  void _rememberFailedText(String text) {
+    if (!mounted) return;
+    state = state.copyWith(
+      failedTextDrafts: List.unmodifiable([
+        ...state.failedTextDrafts,
+        FailedTextDraft(const Uuid().v4(), text),
+      ]),
+    );
+  }
+
+  void dismissFailedText(String id) {
+    state = state.copyWith(
+      failedTextDrafts: List.unmodifiable(
+        state.failedTextDrafts.where((draft) => draft.id != id),
+      ),
+    );
+  }
+
   void _launch(
     DataGeneration generation,
     Future<void> Function() action, {
     required String failureMessage,
     bool explainModelError = false,
+    void Function()? onFailure,
   }) {
     final operation = _startPending(generation);
     unawaited(
@@ -209,6 +238,7 @@ class HomeController extends StateNotifier<HomeState> {
                 ? '$failureMessage: ${_ref.read(llmServiceProvider).formatErrorMessage(error)}'
                 : failureMessage;
             _reportError(generation, message);
+            onFailure?.call();
           }
         } finally {
           _finishPending(operation);
@@ -311,6 +341,7 @@ class HomeController extends StateNotifier<HomeState> {
     }
     final generation = _beginInput();
     if (generation == null) {
+      if (mounted && _runtime.isCurrent(_birth)) _rememberFailedText(text);
       return;
     }
     if (trimmed.startsWith('/agent ') || trimmed.startsWith('/goal ')) {
@@ -320,37 +351,43 @@ class HomeController extends StateNotifier<HomeState> {
           await _processWithMultiAgent(goal, generation);
         } catch (_) {
           // The same generation owns both the command and its error state.
+          if (_isCurrent(generation)) _rememberFailedText(text);
         }
         return;
       }
     }
-    _launch(generation, () async {
-      final settings = _ref.read(settingsProvider);
-      if (!settings.hasConfiguredExtraction) {
-        await _saveLocalText(trimmed, generation);
-        return;
-      }
-      final service = _ref.read(llmServiceProvider);
-      List<Reminder> tasks;
-      try {
-        tasks = await service.extractTasks(trimmed, settings);
-      } catch (error) {
-        // A failed old request must not create a fallback in a restored DB.
+    _launch(
+      generation,
+      () async {
+        final settings = _ref.read(settingsProvider);
+        if (!settings.hasConfiguredExtraction) {
+          await _saveLocalText(trimmed, generation);
+          return;
+        }
+        final service = _ref.read(llmServiceProvider);
+        List<Reminder> tasks;
+        try {
+          tasks = await service.extractTasks(trimmed, settings);
+        } catch (error) {
+          // A failed old request must not create a fallback in a restored DB.
+          _check(generation);
+          await _saveLocalText(trimmed, generation);
+          _reportError(
+            generation,
+            '${service.formatErrorMessage(error)}\n已保存为本地事项，请在详情中设置提醒时间。',
+          );
+          return;
+        }
         _check(generation);
-        await _saveLocalText(trimmed, generation);
-        _reportError(
-          generation,
-          '${service.formatErrorMessage(error)}\n已保存为本地事项，请在详情中设置提醒时间。',
-        );
-        return;
-      }
-      _check(generation);
-      if (tasks.isEmpty) {
-        await _saveLocalText(trimmed, generation);
-      } else {
-        await _saveTasks(tasks, generation);
-      }
-    }, failureMessage: '事项未能完整保存，请检查本地存储后重试。');
+        if (tasks.isEmpty) {
+          await _saveLocalText(trimmed, generation);
+        } else {
+          await _saveTasks(tasks, generation);
+        }
+      },
+      failureMessage: '事项未能完整保存，请检查本地存储后重试。',
+      onFailure: () => _rememberFailedText(text),
+    );
   }
 
   Future<void> _saveLocalText(String text, DataGeneration generation) async {
