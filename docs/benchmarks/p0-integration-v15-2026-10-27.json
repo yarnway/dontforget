@@ -65,5 +65,12 @@
     "push",
     "CI",
     "release"
-  ]
+  ],
+  "main_integration": {
+    "status": "not_executed_due_to_overlapping_uncommitted_changes",
+    "observed_head": "c7805cd4bda8dfcc5de0a3fef9bbef3674671ae7",
+    "reason": "concurrent medication/departure code reuses schema 15 with details_json; stabilize and reconcile version, fields, migration and backup rules before merge",
+    "tested_scope": "codex/p0-record-reminder only; excludes concurrent primary-workspace changes",
+    "main_files_mutated": false
+  }
 }
