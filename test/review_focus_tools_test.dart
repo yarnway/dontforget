@@ -225,6 +225,30 @@ void main() {
       expect(find.textContaining('办公或深度专注'), findsOneWidget);
     },
   );
+  testWidgets(
+    'notice target opens before other due cards and falls back if no longer due',
+    (tester) async {
+      tasks.replace([card(0), card(1), card(2)]);
+      await open(
+        tester,
+        const SpacedRepetitionSheet(initialReminderId: 'review-2'),
+      );
+      expect(find.text('Review card 2'), findsOneWidget);
+      expect(find.text('Review card 0'), findsNothing);
+      expect(find.textContaining('下次复习:'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('review-flip')));
+      await tester.pumpAndSettle();
+      tasks.replace([
+        card(0),
+        card(1),
+        card(2, next: DateTime.now().add(const Duration(days: 3))),
+      ]);
+      await tester.pumpAndSettle();
+      expect(find.text('Review card 0'), findsOneWidget);
+      expect(find.text('Answer line one\nAnswer line two'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
   for (final width in [375.0, 768.0, 1440.0]) {
     for (final language in ['zh', 'en', 'ja']) {
       for (final focus in [false, true]) {

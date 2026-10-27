@@ -26,8 +26,10 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   bool _wasEmpty = true;
   bool _wasFocused = false;
   Offset _voiceOrigin = Offset.zero;
+  final _voiceGesture = VoiceCaptureGesture();
   VoiceReleaseAction _voiceAction = VoiceReleaseAction.save;
   bool _isTranscribing = false;
+  bool _voiceMode = false;
   HomeController? _heldRecorder;
 
   @override
@@ -103,7 +105,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   }
 
   Future<void> _startLongPressRecording(LongPressStartDetails details) async {
-    if (_textController.text.isNotEmpty ||
+    if ((!_voiceMode && _textController.text.isNotEmpty) ||
         _isTranscribing ||
         _pendingRecordingStart != null ||
         ref.read(homeControllerProvider).isRecording) {
@@ -113,6 +115,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     HapticFeedback.heavyImpact();
     setState(() {
       _voiceOrigin = details.globalPosition;
+      _voiceGesture.reset();
       _voiceAction = VoiceReleaseAction.save;
       _isLongPressRecording = true;
     });
@@ -149,13 +152,14 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
               canAcceptDraft: () => mounted,
             );
             if (mounted && text != null) {
+              setState(() => _voiceMode = false);
               final current = _textController.text;
               final draft = current.isEmpty ? text : '$current\n$text';
               _textController.value = TextEditingValue(
                 text: draft,
                 selection: TextSelection.collapsed(offset: draft.length),
               );
-              _focusNode.requestFocus();
+              _focusTextAfterBuild();
             }
         }
       }
@@ -173,7 +177,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
 
   void _moveLongPress(LongPressMoveUpdateDetails details) {
     if (!_isLongPressRecording || _isFinishingLongPress) return;
-    final action = voiceReleaseAction(details.globalPosition - _voiceOrigin);
+    final action = _voiceGesture.update(details.globalPosition - _voiceOrigin);
     if (action == _voiceAction) return;
     HapticFeedback.selectionClick();
     setState(() => _voiceAction = action);
@@ -182,6 +186,18 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   void _cancelLongPress() {
     _voiceAction = VoiceReleaseAction.cancel;
     _finishLongPressRecording();
+  }
+
+  void _focusTextAfterBuild() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !_voiceMode) _focusNode.requestFocus();
+    });
+  }
+
+  void _toggleInputMode() {
+    _focusNode.unfocus();
+    setState(() => _voiceMode = !_voiceMode);
+    if (!_voiceMode) _focusTextAfterBuild();
   }
 
   void _showMediaOptionsSheet(BuildContext context) {
@@ -323,10 +339,15 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     );
     final isRecording = homeState.isRecording || _isLongPressRecording;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final platform = Theme.of(context).platform;
+    final isMobile =
+        platform == TargetPlatform.iOS || platform == TargetPlatform.android;
+    final voiceMode = isMobile && _voiceMode;
     final idleVoiceTarget =
-        _textController.text.isEmpty &&
-        !_focusNode.hasFocus &&
+        (voiceMode || (_textController.text.isEmpty && !_focusNode.hasFocus)) &&
         !_isTranscribing;
+    final captureBusy =
+        isRecording || _isTranscribing || _pendingRecordingStart != null;
     // Scaffold removes the consumed inset from its body MediaQuery while the
     // keyboard animates away, so also read the containing view's physical inset.
     final keyboardVisible =
@@ -342,7 +363,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
           color: isDark
               ? Colors.black.withValues(alpha: 0.35)
               : Colors.white.withValues(alpha: 0.85),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(isMobile ? 18 : 8),
           border: Border.all(
             color: isRecording
                 ? Colors.red.withValues(alpha: 0.6)
@@ -355,40 +376,82 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
           children: [
             if (_isLongPressRecording && !keyboardVisible)
               VoiceCaptureFeedback(action: _voiceAction),
+            if (isMobile &&
+                homeState.isProcessingInBackground &&
+                !_isTranscribing)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 2, 12, 4),
+                child: LinearProgressIndicator(
+                  minHeight: 2,
+                  semanticsLabel: l10n.get('aiProcessing'),
+                ),
+              ),
             Row(
               children: [
-                // Left '+' Add button
-                IconButton(
-                  icon: const Icon(Icons.add_circle_outline_rounded, size: 22),
-                  color: Theme.of(context).colorScheme.primary,
-                  tooltip: l10n.get('uploadMaterial'),
-                  splashRadius: 18,
-                  onPressed: () => _showMediaOptionsSheet(context),
-                ),
-
-                // Mic toggle button (for desktop click or single tap)
-                _RecordingPulse(
-                  active: isRecording,
-                  child: IconButton(
+                if (isMobile)
+                  IconButton(
+                    key: const ValueKey('composer-mode-toggle'),
                     icon: Icon(
-                      isRecording
+                      homeState.isRecording && _pendingRecordingStart == null
                           ? Icons.stop_circle_rounded
+                          : voiceMode
+                          ? Icons.keyboard_outlined
                           : Icons.mic_none_rounded,
-                      color: isRecording
-                          ? Colors.red
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                    tooltip:
+                        homeState.isRecording && _pendingRecordingStart == null
+                        ? l10n.get('recordingClickStop')
+                        : l10n.get(
+                            voiceMode ? 'switchToText' : 'switchToVoice',
+                          ),
+                    onPressed:
+                        homeState.isRecording && _pendingRecordingStart == null
+                        ? () => ref
+                              .read(homeControllerProvider.notifier)
+                              .toggleRecording()
+                        : captureBusy
+                        ? null
+                        : _toggleInputMode,
+                  ),
+                if (!isMobile) ...[
+                  IconButton(
+                    key: const ValueKey('composer-attachment'),
+                    icon: const Icon(
+                      Icons.add_circle_outline_rounded,
                       size: 22,
                     ),
-                    tooltip: isRecording
-                        ? l10n.get('recordingClickStop')
-                        : l10n.get('recordingStart'),
-                    onPressed: _pendingRecordingStart != null
+                    color: Theme.of(context).colorScheme.primary,
+                    tooltip: l10n.get('uploadMaterial'),
+                    splashRadius: 18,
+                    onPressed: captureBusy
                         ? null
-                        : () => ref
-                              .read(homeControllerProvider.notifier)
-                              .toggleRecording(),
+                        : () => _showMediaOptionsSheet(context),
                   ),
-                ),
+
+                  // Mic toggle button (for desktop click or single tap)
+                  _RecordingPulse(
+                    active: isRecording,
+                    child: IconButton(
+                      icon: Icon(
+                        isRecording
+                            ? Icons.stop_circle_rounded
+                            : Icons.mic_none_rounded,
+                        color: isRecording
+                            ? Colors.red
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                        size: 22,
+                      ),
+                      tooltip: isRecording
+                          ? l10n.get('recordingClickStop')
+                          : l10n.get('recordingStart'),
+                      onPressed: _pendingRecordingStart != null
+                          ? null
+                          : () => ref
+                                .read(homeControllerProvider.notifier)
+                                .toggleRecording(),
+                    ),
+                  ),
+                ],
 
                 const SizedBox(width: 4),
 
@@ -398,7 +461,8 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                     key: const ValueKey('composer-input-surface'),
                     behavior: HitTestBehavior.translucent,
                     onTap: () {
-                      if (!isRecording &&
+                      if (!voiceMode &&
+                          !isRecording &&
                           !_isTranscribing &&
                           !_focusNode.hasFocus) {
                         _focusNode.requestFocus();
@@ -416,7 +480,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                     onLongPressCancel: idleVoiceTarget
                         ? _cancelLongPress
                         : null,
-                    onSecondaryTapDown: idleVoiceTarget
+                    onSecondaryTapDown: idleVoiceTarget && !voiceMode
                         ? (_) => _openEmptyEditMenu()
                         : null,
                     child: isRecording || _isTranscribing
@@ -464,6 +528,38 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                         // gesture arena before our hold-to-record recognizer. Only
                         // the empty, unfocused surface delegates pointer gestures;
                         // typing, selection and IME retain normal TextField behavior.
+                        : voiceMode
+                        ? Semantics(
+                            button: true,
+                            label: l10n.get('holdToTalk'),
+                            child: Container(
+                              key: const ValueKey('composer-voice-pad'),
+                              alignment: Alignment.center,
+                              constraints: const BoxConstraints(minHeight: 48),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerLow,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.outlineVariant,
+                                ),
+                              ),
+                              child: Text(
+                                l10n.get('holdToTalk'),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          )
                         : IgnorePointer(
                             ignoring: idleVoiceTarget,
                             child: CallbackShortcuts(
@@ -494,7 +590,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                                 textInputAction: enterSends
                                     ? TextInputAction.send
                                     : TextInputAction.newline,
-                                style: const TextStyle(fontSize: 13),
+                                style: TextStyle(fontSize: isMobile ? 16 : 13),
                                 decoration: InputDecoration(
                                   hintText: l10n.get(
                                     _focusNode.hasFocus
@@ -508,14 +604,42 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                                     fontSize: 12,
                                     color: Colors.grey.shade500,
                                   ),
-                                  border: InputBorder.none,
-                                  enabledBorder: InputBorder.none,
-                                  focusedBorder: InputBorder.none,
-                                  filled: false,
+                                  border: isMobile
+                                      ? OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          borderSide: BorderSide.none,
+                                        )
+                                      : InputBorder.none,
+                                  enabledBorder: isMobile
+                                      ? OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          borderSide: BorderSide.none,
+                                        )
+                                      : InputBorder.none,
+                                  focusedBorder: isMobile
+                                      ? OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          borderSide: BorderSide(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
+                                          ),
+                                        )
+                                      : InputBorder.none,
+                                  filled: isMobile,
+                                  fillColor: Theme.of(
+                                    context,
+                                  ).colorScheme.surfaceContainerLow,
                                   isDense: true,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 4,
-                                    vertical: 8,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: isMobile ? 12 : 4,
+                                    vertical: isMobile ? 12 : 8,
                                   ),
                                 ),
                                 onSubmitted: enterSends
@@ -528,7 +652,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                 ),
 
                 // Background Processing capsule (Wireframe)
-                if (homeState.isProcessingInBackground && !_isTranscribing)
+                if (!isMobile &&
+                    homeState.isProcessingInBackground &&
+                    !_isTranscribing)
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 4),
                     padding: const EdgeInsets.symmetric(
@@ -570,33 +696,46 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                     ),
                   ),
 
-                // Right Send button (Wireframe)
-                Container(
-                  margin: const EdgeInsets.only(left: 4),
-                  child: ValueListenableBuilder<TextEditingValue>(
-                    valueListenable: _textController,
-                    builder: (context, value, _) => IconButton(
-                      icon: const Icon(Icons.arrow_upward_rounded, size: 18),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Theme.of(
-                          context,
-                        ).colorScheme.onPrimary,
-                        padding: const EdgeInsets.all(5),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
+                if (isMobile)
+                  IconButton(
+                    key: const ValueKey('composer-attachment'),
+                    icon: const Icon(Icons.add_circle_outline_rounded),
+                    tooltip: l10n.get('uploadMaterial'),
+                    onPressed: captureBusy
+                        ? null
+                        : () => _showMediaOptionsSheet(context),
+                  ),
+                if (!isMobile || !enterSends)
+                  Container(
+                    key: const ValueKey('composer-send'),
+                    margin: const EdgeInsets.only(left: 4),
+                    child: ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: _textController,
+                      builder: (context, value, _) => IconButton(
+                        icon: const Icon(Icons.arrow_upward_rounded, size: 18),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
+                          foregroundColor: Theme.of(
+                            context,
+                          ).colorScheme.onPrimary,
+                          padding: const EdgeInsets.all(5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
+                          ),
                         ),
+                        tooltip: l10n.get('send'),
+                        onPressed:
+                            value.text.trim().isEmpty ||
+                                isRecording ||
+                                _isTranscribing ||
+                                voiceMode
+                            ? null
+                            : _submitText,
                       ),
-                      tooltip: l10n.get('send'),
-                      onPressed:
-                          value.text.trim().isEmpty ||
-                              isRecording ||
-                              _isTranscribing
-                          ? null
-                          : _submitText,
                     ),
                   ),
-                ),
               ],
             ),
           ],

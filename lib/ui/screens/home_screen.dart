@@ -147,6 +147,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Timer? _searchDebounce;
   final _noticeClock = ValueNotifier(DateTime.now());
   final _reviewQueue = ReviewQueueCache();
+  String? _preferredReviewId;
 
   @override
   void initState() {
@@ -896,7 +897,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _openFocusMode() => _selectTool(_WorkspaceTool.focus);
-  void _openSpacedRepetitionSheet() => _selectTool(_WorkspaceTool.review);
+  void _openSpacedRepetitionSheet() {
+    if (_toolBlocked) return;
+    _preferredReviewId = null;
+    _selectTool(_WorkspaceTool.review);
+  }
+
+  void _openNoticeReview(Reminder reminder) {
+    if (!mounted || !_runtimeActive || _toolBlocked) return;
+    final current = ref
+        .read(remindersProvider)
+        .where((item) => item.id == reminder.id)
+        .firstOrNull;
+    if (current == null ||
+        !current.reviewNotificationsEnabled ||
+        !ref.read(spacedRepetitionServiceProvider).isDue(current)) {
+      return;
+    }
+    _preferredReviewId = current.id;
+    _selectTool(_WorkspaceTool.review);
+  }
+
   void _openContextDigest() => _selectTool(_WorkspaceTool.digest);
 
   IconData _getContextProfileIcon(ContextProfile profile) {
@@ -1522,6 +1543,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         onDismiss: _dismissNotice,
                         onSnooze: (r) => _actOnNotice(r, snooze: true),
                         onComplete: (r) => _actOnNotice(r, snooze: false),
+                        onReview: _toolBlocked ? null : _openNoticeReview,
                       );
                     },
                   ),
@@ -1551,6 +1573,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         _WorkspaceTool.review => SpacedRepetitionSheet(
                           key: const ValueKey('review-tool'),
                           embedded: true,
+                          initialReminderId: _preferredReviewId,
                           onClose: _closeWorkspaceTool,
                           onCreateStudyPlan: () =>
                               _selectTool(_WorkspaceTool.study),

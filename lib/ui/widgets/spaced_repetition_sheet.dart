@@ -19,11 +19,13 @@ class SpacedRepetitionSheet extends ConsumerStatefulWidget {
     this.embedded = false,
     this.onBusyChanged,
     this.onCreateStudyPlan,
+    this.initialReminderId,
   });
   final VoidCallback? onClose;
   final bool embedded;
   final ValueChanged<bool>? onBusyChanged;
   final VoidCallback? onCreateStudyPlan;
+  final String? initialReminderId;
   @override
   ConsumerState<SpacedRepetitionSheet> createState() =>
       _SpacedRepetitionSheetState();
@@ -36,6 +38,8 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet>
   late final RuntimeRecoveryToken? _birth;
   final _queue = ReviewQueueCache();
   List<Reminder> _due = [];
+  List<Reminder>? _orderedSource;
+  String? _orderedTarget;
   int _total = 0;
   String? _shownId;
   String? _deckSource;
@@ -83,7 +87,21 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet>
   void _refresh(List<Reminder> tasks, SpacedRepetitionService service) {
     final snapshot = _queue.read(tasks, service);
     _total = snapshot.total;
-    _due = snapshot.due;
+    if (!identical(_orderedSource, snapshot.due) ||
+        _orderedTarget != widget.initialReminderId) {
+      _orderedSource = snapshot.due;
+      _orderedTarget = widget.initialReminderId;
+      final index = _orderedTarget == null
+          ? -1
+          : snapshot.due.indexWhere((task) => task.id == _orderedTarget);
+      _due = index <= 0
+          ? snapshot.due
+          : [
+              snapshot.due[index],
+              ...snapshot.due.take(index),
+              ...snapshot.due.skip(index + 1),
+            ];
+    }
     final id = _due.firstOrNull?.id;
     if (_shownId != id) _isFlipped = false;
     _shownId = id;
@@ -290,6 +308,8 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        _reviewTiming(task),
+                        const SizedBox(height: 8),
                         if (_isSaving) ...[
                           const LinearProgressIndicator(),
                           const SizedBox(height: 8),
@@ -342,6 +362,25 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet>
           ],
         ),
       ),
+    );
+  }
+
+  Widget _reviewTiming(Reminder task) {
+    final loc = AppLocalizations.of(context);
+    final service = ref.read(spacedRepetitionServiceProvider);
+    final now = DateTime.now();
+    final again = service
+        .reviewCard(task, false, referenceTime: now)
+        .nextReviewAt!;
+    final remembered = service
+        .reviewCard(task, true, referenceTime: now)
+        .nextReviewAt!;
+    return Text(
+      again == remembered
+          ? '${loc.get('reviewNext')}: ${formatLocalDateTime(again)}'
+          : '${loc.get('markDifficult')} · ${loc.get('reviewNext')}: ${formatLocalDateTime(again)}\n'
+                '${loc.get('markRemembered')} · ${loc.get('reviewNext')}: ${formatLocalDateTime(remembered)}',
+      style: Theme.of(context).textTheme.bodySmall,
     );
   }
 

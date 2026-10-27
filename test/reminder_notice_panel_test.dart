@@ -6,6 +6,69 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('learning notice opens its card without completing or snoozing', (
+    tester,
+  ) async {
+    final now = DateTime(2026, 10, 27, 14);
+    final learning = Reminder(
+      id: 'learning',
+      taskTitle: 'Learning batch',
+      quadrantLevel: 2,
+      triggerTime: now,
+      nextReviewAt: now,
+      spacedRepetitionLevel: 2,
+      reviewNotificationsEnabled: true,
+    );
+    Reminder? opened;
+    var mutations = 0;
+    Future<void> show(Reminder task, {bool busy = false}) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('en'),
+          supportedLocales: const [Locale('en')],
+          localizationsDelegates: const [
+            AppLocalizationsDelegate(),
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          home: Scaffold(
+            body: ReminderNoticePanel(
+              reminders: [task],
+              now: now,
+              busyIds: busy ? {task.id} : {},
+              onDismiss: (_) => mutations++,
+              onComplete: (_) => mutations++,
+              onSnooze: (_) => mutations++,
+              onReview: (task) => opened = task,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    await show(learning);
+    await tester.tap(find.byKey(const ValueKey('notice-start-review')));
+    expect(opened, same(learning));
+    expect(mutations, 0);
+    await show(learning, busy: true);
+    expect(
+      tester
+          .widget<FilledButton>(
+            find.byKey(const ValueKey('notice-start-review')),
+          )
+          .onPressed,
+      isNull,
+    );
+    await show(
+      learning.copyWith(triggerTime: now.add(const Duration(minutes: 2))),
+    );
+    expect(find.byKey(const ValueKey('notice-start-review')), findsNothing);
+    await show(learning.copyWith(reviewNotificationsEnabled: false));
+    expect(find.byKey(const ValueKey('notice-start-review')), findsNothing);
+  });
+
   testWidgets('mixed notices count only the category shown in the title', (
     tester,
   ) async {

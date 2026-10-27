@@ -212,11 +212,18 @@ void main() {
       expect(tester.binding.transientCallbackCount, 0);
       await tester.pumpWidget(const SizedBox());
     },
+    variant: TargetPlatformVariant.only(TargetPlatform.macOS),
   );
 
   testWidgets('send reflects draft content and recording state', (
     tester,
   ) async {
+    final settings = container.read(settingsProvider.notifier);
+    await tester.runAsync(
+      () => settings.updateSettings(
+        settings.state.copyWith(inputSendMode: InputSendMode.button),
+      ),
+    );
     await show(tester, const InputBottomBar());
     final send = find.widgetWithIcon(IconButton, Icons.arrow_upward_rounded);
     expect(tester.widget<IconButton>(send).onPressed, isNull);
@@ -234,6 +241,105 @@ void main() {
     expect(find.text('Keep this draft'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets(
+    'mobile composer switches modes, preserves draft and places attachments on right',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(320, 640);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      await show(
+        tester,
+        const InputBottomBar(),
+        reducedMotion: true,
+        textScale: 2,
+      );
+      await tester.pumpAndSettle();
+      final toggle = find.byKey(const ValueKey('composer-mode-toggle'));
+      final attachment = find.byKey(const ValueKey('composer-attachment'));
+      final surface = find.byKey(const ValueKey('composer-input-surface'));
+      expect(find.byKey(const ValueKey('composer-send')), findsNothing);
+      expect(
+        tester.getCenter(toggle).dx,
+        lessThan(tester.getRect(surface).left),
+      );
+      expect(
+        tester.getCenter(attachment).dx,
+        greaterThan(tester.getRect(surface).right),
+      );
+      await tester.enterText(find.byType(TextField), '日本語の下書き');
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('composer-voice-pad')), findsOneWidget);
+      expect(find.byType(TextField), findsNothing);
+      expect(home.starts, 0);
+      final origin = tester.getCenter(surface);
+      final press = await tester.startGesture(origin);
+      await tester.pump(const Duration(milliseconds: 700));
+      expect(home.starts, 1);
+      expect(tester.widget<IconButton>(attachment).onPressed, isNull);
+      expect(tester.widget<IconButton>(toggle).onPressed, isNull);
+      await press.moveTo(origin + const Offset(-70, -80));
+      await press.up();
+      await tester.pumpAndSettle();
+      expect(home.cancels, 1);
+      expect(home.sent, isEmpty);
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.controller!.text, '日本語の下書き');
+      expect(field.focusNode!.hasFocus, isTrue);
+      final settings = container.read(settingsProvider.notifier);
+      await tester.runAsync(
+        () => settings.updateSettings(
+          settings.state.copyWith(inputSendMode: InputSendMode.button),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('composer-send')), findsOneWidget);
+      expect(
+        tester.getCenter(find.byKey(const ValueKey('composer-send'))).dx,
+        greaterThan(tester.getCenter(attachment).dx),
+      );
+      expect(tester.takeException(), isNull);
+    },
+    variant: const TargetPlatformVariant({
+      TargetPlatform.iOS,
+      TargetPlatform.android,
+    }),
+  );
+
+  testWidgets(
+    'mobile voice pad converts to editable text and appends to preserved draft',
+    (tester) async {
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      await tester.enterText(find.byType(TextField), 'Existing draft');
+      await tester.tap(find.byKey(const ValueKey('composer-mode-toggle')));
+      await tester.pumpAndSettle();
+      final origin = tester.getCenter(
+        find.byKey(const ValueKey('composer-input-surface')),
+      );
+      final press = await tester.startGesture(origin);
+      await tester.pump(const Duration(milliseconds: 700));
+      await press.moveTo(origin + const Offset(0, -100));
+      await tester.pump();
+      await press.moveTo(origin + const Offset(80, -100));
+      await press.up();
+      await tester.pumpAndSettle();
+      expect(home.drafts, 1);
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.controller!.text, 'Existing draft\n明日の予定を確認');
+      expect(field.focusNode!.hasFocus, isTrue);
+      expect(home.sent, isEmpty);
+      expect(home.stops, 0);
+      expect(tester.takeException(), isNull);
+    },
+    variant: const TargetPlatformVariant({
+      TargetPlatform.iOS,
+      TargetPlatform.android,
+    }),
+  );
 
   testWidgets(
     'Enter send mode preserves IME composition and supports Shift Enter',
@@ -394,7 +500,7 @@ void main() {
   );
 
   testWidgets(
-    'iOS upper-left release cancels without processing or drafting',
+    'iOS slide up then left cancels without processing or drafting',
     (tester) async {
       await show(tester, const InputBottomBar(), reducedMotion: true);
       final origin = tester.getCenter(
@@ -402,6 +508,8 @@ void main() {
       );
       final press = await tester.startGesture(origin);
       await tester.pump(const Duration(milliseconds: 700));
+      await press.moveTo(origin + const Offset(0, -100));
+      await tester.pump();
       await press.moveTo(origin + const Offset(-80, -100));
       await tester.pumpAndSettle();
       expect(
@@ -422,7 +530,7 @@ void main() {
   );
 
   testWidgets(
-    'iOS upper-right release fills an editable draft without sending',
+    'iOS slide up then right fills an editable draft without sending',
     (tester) async {
       home.pendingText = Completer<String?>();
       await show(tester, const InputBottomBar(), reducedMotion: true);
@@ -431,6 +539,8 @@ void main() {
       );
       final press = await tester.startGesture(origin);
       await tester.pump(const Duration(milliseconds: 700));
+      await press.moveTo(origin + const Offset(0, -100));
+      await tester.pump();
       await press.moveTo(origin + const Offset(80, -100));
       await tester.pumpAndSettle();
       expect(find.text('松手转文字并编辑'), findsOneWidget);
@@ -461,6 +571,8 @@ void main() {
       );
       final press = await tester.startGesture(origin);
       await tester.pump(const Duration(milliseconds: 700));
+      await press.moveTo(origin + const Offset(0, -100));
+      await tester.pump();
       await press.moveTo(origin + const Offset(-80, -100));
       await tester.pump();
       await press.moveTo(origin);
@@ -967,6 +1079,12 @@ void main() {
   testWidgets(
     'dark input send action uses the foreground paired with its primary fill',
     (tester) async {
+      final settings = container.read(settingsProvider.notifier);
+      await tester.runAsync(
+        () => settings.updateSettings(
+          settings.state.copyWith(inputSendMode: InputSendMode.button),
+        ),
+      );
       await show(tester, const InputBottomBar(), brightness: Brightness.dark);
       await tester.enterText(find.byType(TextField), 'Ready to send');
       await tester.pump();

@@ -107,8 +107,9 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
     BuildContext context,
     int index,
     int pending,
-    int selection,
-  ) {
+    int selection, {
+    bool singleLine = false,
+  }) {
     final selected = selection == index;
     final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).colorScheme;
@@ -145,6 +146,8 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
               Expanded(
                 child: Text(
                   l10n.get('cat${index + 1}'),
+                  maxLines: singleLine ? 1 : null,
+                  overflow: singleLine ? TextOverflow.ellipsis : null,
                   style: TextStyle(
                     color: foreground,
                     fontSize: 12,
@@ -232,6 +235,7 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
                                     index,
                                     pending[index],
                                     selection,
+                                    singleLine: true,
                                   ),
                                 ),
                               ],

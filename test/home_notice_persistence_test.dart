@@ -9,6 +9,7 @@ import 'package:dont_forget/services/notification_service.dart';
 import 'package:dont_forget/ui/screens/home_screen.dart';
 import 'package:dont_forget/ui/widgets/inline_feedback.dart';
 import 'package:dont_forget/ui/widgets/reminder_notice_panel.dart';
+import 'package:dont_forget/ui/widgets/spaced_repetition_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -183,6 +184,58 @@ void main() {
     await showHome(tester);
     expect(find.text('待办提醒到期 · 1'), findsNothing);
     expect(find.text('Persisted due task'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('due learning notice opens its review without acknowledging it', (
+    tester,
+  ) async {
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await showHome(tester);
+    await dismissNotice(tester);
+    final now = DateTime.now();
+    await tester.runAsync(() async {
+      await reminders.addReminder(
+        Reminder(
+          id: 'other-review',
+          taskTitle: 'Older review in queue',
+          quadrantLevel: 2,
+          spacedRepetitionLevel: 1,
+          nextReviewAt: now.subtract(const Duration(days: 1)),
+        ),
+      );
+      await reminders.addReminder(
+        Reminder(
+          id: 'notice-review',
+          taskTitle: 'Review from due notice',
+          quadrantLevel: 2,
+          spacedRepetitionLevel: 1,
+          reviewNotificationsEnabled: true,
+          nextReviewAt: now.subtract(const Duration(minutes: 1)),
+          triggerTime: now.subtract(const Duration(minutes: 1)),
+        ),
+      );
+    });
+    await tester.pump();
+    final before = container.read(remindersProvider);
+    await tester.tap(find.byKey(const ValueKey('notice-start-review')));
+    await tester.pump();
+    final review = find.byType(SpacedRepetitionSheet);
+    expect(review, findsOneWidget);
+    expect(
+      find.descendant(
+        of: review,
+        matching: find.text('Review from due notice'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: review, matching: find.text('Older review in queue')),
+      findsNothing,
+    );
+    expect(container.read(remindersProvider), same(before));
+    expect(before.last.noticeAcknowledgedAt, isNull);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });
