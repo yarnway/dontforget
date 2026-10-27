@@ -8,6 +8,7 @@ import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as paths;
 import 'package:sqflite/sqflite.dart' as sqflite;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import '../../data/schema_14_compatibility.dart';
 import '../../models/stored_datetime.dart';
 import '../local_media_store.dart';
 
@@ -405,7 +406,11 @@ const _reminderNoticeColumns = {
   'recurrence_anchor_time': 'd?',
 };
 
-Map<String, String> _columnsFor(String table, int version) => {
+Map<String, String> _columnsFor(
+  String table,
+  int version, {
+  Schema14Shape? version14Shape,
+}) => {
   ..._columns[table]!,
   if (table == 'reminders' && version >= 9) ..._reminderNoticeColumns,
   if (table == 'settings' && version >= 10) ...{
@@ -416,7 +421,24 @@ Map<String, String> _columnsFor(String table, int version) => {
   if (table == 'settings' && version >= 12) 'input_send_mode': 's',
   if (table == 'reminders' && version >= 13)
     'review_notifications_enabled': 'b',
-  if (table == 'reminders' && version >= 14) 'trigger_time_origin': 's',
+  if (table == 'reminders' &&
+      (version >= 15 ||
+          (version == 14 && version14Shape == Schema14Shape.reminderOrigin)))
+    'trigger_time_origin': 's',
+  if (table == 'settings' &&
+      (version >= 15 ||
+          (version == 14 && version14Shape == Schema14Shape.captureFlow)))
+    'workspace_drafts_json': 's?',
+  if (table == 'reminders' &&
+      (version >= 15 ||
+          (version == 14 && version14Shape == Schema14Shape.captureFlow))) ...{
+    'event_time': 'd?',
+    'recurrence_event_anchor_time': 'd?',
+    'suggested_trigger_time': 'd?',
+    'source_text': 's?',
+    'capture_pending': 'b',
+    'is_pinned': 'b',
+  },
 };
 
 Future<void> _checkSchema(
@@ -424,6 +446,26 @@ Future<void> _checkSchema(
   BackupInspectionCancellation token,
   int version,
 ) async {
+  Schema14Shape? version14Shape;
+  if (version == 14) {
+    Future<Set<String>> names(String table) async {
+      var fields = await database.rawQuery('PRAGMA table_xinfo($table)');
+      if (fields.isEmpty) {
+        fields = await database.rawQuery('PRAGMA table_info($table)');
+      }
+      token.throwIfCancelled();
+      if (fields.any((field) => (field['hidden'] ?? 0) != 0)) {
+        _fail(BackupInspectionError.invalidSchema);
+      }
+      return fields.map((field) => field['name'] as String).toSet();
+    }
+
+    version14Shape = identifySchema14(
+      settingsColumns: await names('Settings'),
+      reminderColumns: await names('Reminders'),
+    );
+    if (version14Shape == null) _fail(BackupInspectionError.invalidSchema);
+  }
   final objects = await database.rawQuery(
     'SELECT name,type,tbl_name,sql FROM sqlite_master LIMIT 16',
   );
@@ -495,7 +537,11 @@ Future<void> _checkSchema(
       fields = await database.rawQuery('PRAGMA table_info(${table.key})');
     }
     token.throwIfCancelled();
-    final expected = _columnsFor(table.value, version);
+    final expected = _columnsFor(
+      table.value,
+      version,
+      version14Shape: version14Shape,
+    );
     if (fields.length != expected.length ||
         !fields
             .map((field) => field['name'])
@@ -523,6 +569,8 @@ Future<void> _checkSchema(
         'notice_revision',
         'ai_fallback_enabled',
         'review_notifications_enabled',
+        'capture_pending',
+        'is_pinned',
       }.contains(name);
       final validDefault = defaultsToZero
           ? defaultValue == '0'
@@ -565,7 +613,8 @@ Future<void> _checkSchema(
 }
 
 void _checkVersion(Object? value) {
-  if (value is! int || !const {7, 8, 9, 10, 11, 12, 13, 14}.contains(value)) {
+  if (value is! int ||
+      !const {7, 8, 9, 10, 11, 12, 13, 14, 15}.contains(value)) {
     _fail(BackupInspectionError.unsupportedVersion);
   }
 }
@@ -726,6 +775,19 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
   if (data['timestamp'] != null && timestamp == null) {
     _fail(BackupInspectionError.invalidData);
   }
+  Schema14Shape? version14Shape;
+  if (data['version'] == 14) {
+    final settings = data['settings'];
+    if (settings is! List || settings.length != 1 || settings.single is! Map) {
+      _fail(BackupInspectionError.invalidSchema);
+    }
+    final keys = (settings.single as Map).keys;
+    if (keys.any((key) => key is! String)) {
+      _fail(BackupInspectionError.invalidSchema);
+    }
+    version14Shape = identifySchema14FromSettings(keys.cast<String>().toSet());
+    if (version14Shape == null) _fail(BackupInspectionError.invalidSchema);
+  }
   final ids = <String, Set<String>>{};
   final counts = <String, int>{};
   for (final table in _tables.values) {
@@ -738,7 +800,11 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
     }
     counts[table] = rows.length;
     ids[table] = {};
-    final fields = _columnsFor(table, data['version'] as int);
+    final fields = _columnsFor(
+      table,
+      data['version'] as int,
+      version14Shape: version14Shape,
+    );
     for (final row in rows) {
       if (row is! Map ||
           row.length != fields.length ||
@@ -779,6 +845,13 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
     if (data['version'] >= 10) {
       _decodeJson(settings['ai_profiles_json'] as String);
     }
+    final drafts = settings['workspace_drafts_json'];
+    if (drafts != null &&
+        (drafts is! String ||
+            drafts.length > 300000 ||
+            _decodeJson(drafts) is! Map<String, dynamic>)) {
+      _fail(BackupInspectionError.invalidData);
+    }
     parsedSettings = AppSettings.fromJson(Map<String, dynamic>.from(settings));
   } catch (_) {
     _fail(BackupInspectionError.invalidData);
@@ -800,7 +873,9 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
   }
   var unresolved = 0;
   for (final row in data['reminders']) {
-    if (data['version'] >= 14 &&
+    if ((data['version'] >= 15 ||
+            (data['version'] == 14 &&
+                version14Shape == Schema14Shape.reminderOrigin)) &&
         !const [
           'unknown',
           'manual',

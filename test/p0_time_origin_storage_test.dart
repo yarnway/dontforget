@@ -15,12 +15,31 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late Directory root;
   late DatabaseHelper helper;
-  final oldTask = Reminder(
-    id: 'legacy',
-    taskTitle: 'Legacy',
-    quadrantLevel: 2,
-    triggerTime: DateTime.utc(2030, 1, 1, 9),
-  ).toJson()..remove('trigger_time_origin');
+  final oldTask =
+      Reminder(
+          id: 'legacy',
+          taskTitle: 'Legacy',
+          quadrantLevel: 2,
+          triggerTime: DateTime.utc(2030, 1, 1, 9),
+        ).toJson()
+        ..remove('trigger_time_origin')
+        ..remove('event_time')
+        ..remove('recurrence_event_anchor_time')
+        ..remove('suggested_trigger_time')
+        ..remove('source_text')
+        ..remove('capture_pending')
+        ..remove('is_pinned');
+
+  final upgradedTask = {
+    ...oldTask,
+    'trigger_time_origin': 'unknown',
+    'event_time': null,
+    'recurrence_event_anchor_time': null,
+    'suggested_trigger_time': null,
+    'source_text': null,
+    'capture_pending': 0,
+    'is_pinned': 0,
+  };
 
   setUp(() async {
     sqfliteFfiInit();
@@ -54,13 +73,10 @@ void main() {
     () async {
       await createVersion13();
       final db = await helper.database;
-      expect(await db.getVersion(), 14);
-      expect((await db.query('Reminders')).single, {
-        ...oldTask,
-        'trigger_time_origin': 'unknown',
-      });
+      expect(await db.getVersion(), 15);
+      expect((await db.query('Reminders')).single, upgradedTask);
       final snapshot = root.listSync().whereType<Directory>().singleWhere(
-        (item) => item.path.contains('schema-upgrade-v13-to-v14-'),
+        (item) => item.path.contains('schema-upgrade-v13-to-v15-'),
       );
       final inspector = BackupInspector(
         databaseFactoryFfi,
@@ -77,7 +93,7 @@ void main() {
         (await inspector.inspect(
           File('${root.path}/dont_forget_v3.mirror.db'),
         )).version,
-        14,
+        15,
       );
     },
   );
@@ -118,7 +134,7 @@ void main() {
             ),
           ).restore(source, expectedDigest: preview.digest);
           final row = (await (await target.database).query('Reminders')).single;
-          expect(row, {...oldTask, 'trigger_time_origin': 'unknown'});
+          expect(row, upgradedTask);
           expect(await source.readAsBytes(), bytes);
         } finally {
           await target.close(createBackup: false);
@@ -162,7 +178,7 @@ void main() {
     expect(Reminder.fromJson(oldTask).timeOrigin, ReminderTimeOrigin.unknown);
   });
 
-  test('v14 backup rejects an unrecognized origin', () async {
+  test('v15 backup rejects an unrecognized origin', () async {
     final db = await helper.database;
     final task = Reminder(
       id: 'bad-origin',
@@ -172,12 +188,15 @@ void main() {
     );
     await db.insert('Reminders', task.toJson());
     final data = {
-      'version': 14,
+      'version': 15,
       'timestamp': '2026-10-27T00:00:00Z',
       'settings': await db.query('Settings'),
       'media_records': await db.query('MediaRecords'),
       'reminders': [
-        {...task.toJson(), 'trigger_time_origin': 'untrusted'},
+        {
+          ...(await db.query('Reminders')).single,
+          'trigger_time_origin': 'untrusted',
+        },
       ],
     };
     final source = await File(

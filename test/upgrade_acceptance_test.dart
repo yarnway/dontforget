@@ -19,6 +19,7 @@ void main() {
           {
             ...row,
             if (table.key == 'Settings') ...AppSettings.fromJson(row).toJson(),
+            if (table.key == 'Settings') 'workspace_drafts_json': null,
             if (table.key == 'Reminders') ...{
               'notice_revision': 0,
               'notice_acknowledged_at': null,
@@ -27,6 +28,12 @@ void main() {
               'recurrence_anchor_time': null,
               'review_notifications_enabled': 0,
               'trigger_time_origin': 'unknown',
+              'event_time': null,
+              'recurrence_event_anchor_time': null,
+              'suggested_trigger_time': null,
+              'source_text': null,
+              'capture_pending': 0,
+              'is_pinned': 0,
             },
           },
       ],

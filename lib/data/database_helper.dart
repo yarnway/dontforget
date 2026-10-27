@@ -12,11 +12,12 @@ import '../models/legacy_credentials.dart';
 import '../services/notification_epoch_store.dart';
 import '../services/notification_journal.dart';
 import '../services/storage_directory_lease.dart';
+import 'schema_14_compatibility.dart';
 
 part 'database_access.dart';
 
 class DatabaseHelper {
-  static const schemaVersion = 14;
+  static const schemaVersion = 15;
   static final DatabaseHelper instance = DatabaseHelper._init();
   Database? _database;
   Future<Database>? _opening;
@@ -532,7 +533,8 @@ CREATE TABLE Settings (
   ai_profiles_json TEXT NOT NULL DEFAULT '[]',
   ai_fallback_enabled INTEGER NOT NULL DEFAULT 0,
   appearance TEXT NOT NULL DEFAULT 'system',
-  input_send_mode TEXT NOT NULL DEFAULT 'enter'
+  input_send_mode TEXT NOT NULL DEFAULT 'enter',
+  workspace_drafts_json TEXT
 )
 ''');
 
@@ -558,6 +560,12 @@ CREATE TABLE Reminders (
   importance_level TEXT,
   trigger_time TEXT,
   trigger_time_origin TEXT NOT NULL DEFAULT 'unknown',
+  event_time TEXT,
+  recurrence_event_anchor_time TEXT,
+  suggested_trigger_time TEXT,
+  source_text TEXT,
+  capture_pending INTEGER NOT NULL DEFAULT 0,
+  is_pinned INTEGER NOT NULL DEFAULT 0,
   is_completed $boolType,
   is_recurring INTEGER DEFAULT 0,
   recurrence_rule TEXT DEFAULT 'none',
@@ -690,6 +698,16 @@ CREATE TABLE Reminders (
         "ALTER TABLE Reminders ADD COLUMN trigger_time_origin TEXT NOT NULL DEFAULT 'unknown'",
       );
     }
+    if (oldVersion < 15) {
+      // Version 14 was produced by two independent branches. Never infer its
+      // shape from the number alone, or silently upgrade a partial hybrid.
+      final shape = oldVersion < 14
+          ? Schema14Shape.reminderOrigin
+          : await _identifySchema14(db);
+      for (final statement in schema14UpgradeStatements(shape)) {
+        await db.execute(statement);
+      }
+    }
 
     if (oldVersion < 4) {
       try {
@@ -760,6 +778,71 @@ CREATE TABLE Reminders (
         );
       } catch (_) {}
     }
+  }
+
+  Future<Schema14Shape> _identifySchema14(Database db) async {
+    Future<List<Map<String, Object?>>> fields(String table) async {
+      var result = await db.rawQuery('PRAGMA table_xinfo($table)');
+      if (result.isEmpty)
+        result = await db.rawQuery('PRAGMA table_info($table)');
+      if (result.any((row) => (row['hidden'] ?? 0) != 0)) {
+        throw StateError('Unsupported version 14 database structure.');
+      }
+      return result;
+    }
+
+    final settings = await fields('Settings');
+    final reminders = await fields('Reminders');
+    final shape = identifySchema14(
+      settingsColumns: settings.map((row) => row['name'] as String).toSet(),
+      reminderColumns: reminders.map((row) => row['name'] as String).toSet(),
+    );
+    if (shape == null) {
+      throw StateError('Unsupported version 14 database structure.');
+    }
+    bool matches(
+      List<Map<String, Object?>> rows,
+      String name,
+      String type,
+      int notNull,
+      Object? defaultValue,
+    ) {
+      final field = rows.singleWhere((row) => row['name'] == name);
+      return (field['type'] as String).toUpperCase() == type &&
+          field['notnull'] == notNull &&
+          field['dflt_value'] == defaultValue &&
+          field['pk'] == 0;
+    }
+
+    if (shape == Schema14Shape.reminderOrigin) {
+      if (!matches(reminders, 'trigger_time_origin', 'TEXT', 1, "'unknown'")) {
+        throw StateError('Unsupported version 14 database structure.');
+      }
+      final invalid = await db.rawQuery(
+        "SELECT id FROM Reminders WHERE trigger_time_origin NOT IN ('unknown', 'manual', 'aiSuggested') LIMIT 1",
+      );
+      if (invalid.isNotEmpty) throw StateError('Invalid reminder time origin.');
+    } else {
+      if (!matches(settings, 'workspace_drafts_json', 'TEXT', 0, null)) {
+        throw StateError('Unsupported version 14 database structure.');
+      }
+      for (final name in const [
+        'event_time',
+        'recurrence_event_anchor_time',
+        'suggested_trigger_time',
+        'source_text',
+      ]) {
+        if (!matches(reminders, name, 'TEXT', 0, null)) {
+          throw StateError('Unsupported version 14 database structure.');
+        }
+      }
+      for (final name in const ['capture_pending', 'is_pinned']) {
+        if (!matches(reminders, name, 'INTEGER', 1, '0')) {
+          throw StateError('Unsupported version 14 database structure.');
+        }
+      }
+    }
+    return shape;
   }
 
   /// Normal shutdown creates the existing mirror backup unless explicitly
