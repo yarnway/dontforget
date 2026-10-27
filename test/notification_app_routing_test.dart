@@ -1,3 +1,5 @@
+import 'support/workspace_drafts.dart';
+import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -6,7 +8,6 @@ import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/notification_payload.dart';
 import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/providers/providers.dart';
-import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'package:dont_forget/providers/recovery_coordinator.dart';
 import 'package:dont_forget/services/context_trigger_service.dart';
 import 'package:dont_forget/services/notification_service.dart';
@@ -157,6 +158,7 @@ void main() {
       ],
     );
     await container.read(settingsProvider.notifier).ready;
+    await container.read(workspaceDraftsProvider.notifier).ready;
     await container.read(mediaRecordsProvider.notifier).ready;
     await container.read(remindersProvider.notifier).ready;
     await container.read(workspaceDraftsProvider.notifier).ready;
@@ -178,6 +180,7 @@ void main() {
   });
 
   Future<void> mount(WidgetTester tester) async {
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(
       UncontrolledProviderScope(container: container, child: const MyApp()),
     );
@@ -220,6 +223,7 @@ void main() {
     );
     expect(rows!.single['notice_acknowledged_at'], isNull);
     expect(rows.single['notice_revision'], 3);
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
@@ -233,6 +237,7 @@ void main() {
     notifications.clicks.add(payload());
     await tester.pump();
     expect(details(), findsOneWidget);
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
@@ -270,6 +275,7 @@ void main() {
       notifications.initialization!.complete();
       await ready(tester);
       expect(details(), findsNothing);
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox.shrink());
     });
   }
@@ -309,6 +315,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
       expect(details(), findsOneWidget);
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );
@@ -324,6 +331,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 350));
       expect(details(), findsOneWidget);
       expect(tester.takeException(), isNull);
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );
@@ -354,6 +362,7 @@ void main() {
         container.read(remindersProvider).single.noticeAcknowledgedAt,
         isNull,
       );
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );
@@ -374,6 +383,7 @@ void main() {
     await ready(tester);
     expect(details(), findsNothing);
     expect(tester.takeException(), isNull);
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
@@ -383,6 +393,7 @@ void main() {
       notifications.initialization = Completer<void>();
       notifications.pending.add(payload());
       await mount(tester);
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox.shrink());
       notifications.initialization!.complete();
       await tester.runAsync(

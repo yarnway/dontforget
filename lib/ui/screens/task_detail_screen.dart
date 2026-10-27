@@ -16,6 +16,7 @@ import '../../services/notification_schedule_reader.dart';
 import '../../l10n/app_localizations.dart';
 import 'knowledge_graph_screen.dart';
 import 'settings_screen.dart';
+import 'notification_repair_screen.dart';
 
 /// Dedicated Full-Page Task Detail & Editing Screen
 class TaskDetailScreen extends ConsumerStatefulWidget {
@@ -485,7 +486,10 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       _reportedDirty = _captureDraft() != _savedDraft;
       if (result.nativeSyncFailed) {
         feedback.showSnackBar(
-          SnackBar(content: Text(l10n.get('reminderNativeSyncFailed'))),
+          SnackBar(
+            content: Text(l10n.get('reminderNativeSyncFailed')),
+            action: notificationRepairAction(context),
+          ),
           tone: FeedbackTone.warning,
         );
         return;

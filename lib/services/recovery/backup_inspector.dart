@@ -1,4 +1,6 @@
 import '../../models/settings.dart';
+import '../../models/reminder.dart';
+import '../learning_queue_service.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -867,7 +869,7 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
     final drafts = settings['workspace_drafts_json'];
     if (drafts != null &&
         (drafts is! String ||
-            drafts.length > 300000 ||
+            drafts.length > 1048576 ||
             _decodeJson(drafts) is! Map<String, dynamic>)) {
       _fail(BackupInspectionError.invalidData);
     }
@@ -974,6 +976,29 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
           'yearly',
         ].contains(row['recurrence_rule'])) {
       _fail(BackupInspectionError.invalidData);
+    }
+    if (data['version'] >= 14) {
+      try {
+        LearningQueueService.decode(row['word_progress_json'] as String?);
+        final proposal = row['capture_proposal_json'];
+        if (proposal != null) {
+          final values = _decodeJson(proposal as String);
+          if (values is! List || values.isEmpty || values.length > 32) {
+            throw const FormatException();
+          }
+          for (final candidate in values) {
+            if (candidate is! Map ||
+                candidate.keys.any(
+                  (key) => !_columnsFor('reminders', 15).containsKey(key),
+                )) {
+              throw const FormatException();
+            }
+            Reminder.fromJson(Map<String, dynamic>.from(candidate));
+          }
+        }
+      } catch (_) {
+        _fail(BackupInspectionError.invalidData);
+      }
     }
     final context = row['context_trigger'] as String?;
     if (context != null && context.trim().isNotEmpty) {

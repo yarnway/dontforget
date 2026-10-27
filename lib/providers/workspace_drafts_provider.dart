@@ -38,7 +38,7 @@ class WorkspaceDrafts extends StateNotifier<Map<String, dynamic>> {
         loaded = true;
         return;
       }
-      if (raw is! String || raw.length > 300000) {
+      if (raw is! String || raw.length > 1048576) {
         throw const FormatException('Invalid drafts');
       }
       final decoded = jsonDecode(raw);
@@ -73,7 +73,7 @@ class WorkspaceDrafts extends StateNotifier<Map<String, dynamic>> {
           next[key] = frozen;
         }
         final raw = jsonEncode(next);
-        if (raw.length > 300000) {
+        if (raw.length > 1048576) {
           throw const FormatException('Drafts too large');
         }
         await database.writeTransaction(generation, (db) async {

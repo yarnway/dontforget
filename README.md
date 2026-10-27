@@ -7,9 +7,11 @@
 
 [使用指南](docs/User_Guide.md) · [开发指南](docs/Developer_Guide.md) · [架构](docs/Architecture_Design.md) · [变更日志](docs/Changelog.md)
 
+当前工作区的“记录与提醒”优化及后续阶段见[分阶段功能清单](docs/Recording_Reminders_Phases.md)，其中开发中功能与公开候选分别记录。
+
 ## v1.7：任务浏览与清晰复盘
 
-公开候选、稳定版状态及设备验收范围以 [发布验收总表](docs/Release_Acceptance_v1.7.md) 为准；完成与待办记录在 [v1.7 迭代清单](docs/Iteration_v1.7.md)。
+公开候选与平台验收范围见[发布验收总表](docs/Release_Acceptance_v1.7.md)，稳定版尚未发布。当前工作区还包含[分阶段清单](docs/Recording_Reminders_Phases.md)中的未发布优化；既有版本记录见 [v1.7 迭代清单](docs/Iteration_v1.7.md)。
 
 - **按状态找任务**：搜索页直接浏览全部、待办、今日提醒、提醒时间已过或已完成事项，无需先输入文字；提醒时间不是事件截止时间。
 - **组合关键词**：同时搜索标题、摘要和子任务；空格分隔的关键词可以出现在不同字段中。

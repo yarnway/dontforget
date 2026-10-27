@@ -14,9 +14,11 @@ class TaskWorkspaceOverview extends ConsumerStatefulWidget {
     super.key,
     required this.reminders,
     required this.onPlayMedia,
+    this.onOpenLearning,
   });
   final List<Reminder> reminders;
   final ValueChanged<String> onPlayMedia;
+  final VoidCallback? onOpenLearning;
   @override
   ConsumerState<TaskWorkspaceOverview> createState() =>
       _TaskWorkspaceOverviewState();
@@ -97,6 +99,13 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
         : const <Reminder>[];
     final tasks = widget.reminders.where((r) => !r.isCompleted).toList()
       ..sort((a, b) {
+        final learning = (a.spacedRepetitionLevel > 0 ? 1 : 0).compareTo(
+          b.spacedRepetitionLevel > 0 ? 1 : 0,
+        );
+        if (learning != 0) return learning;
+        if ((a.quadrantLevel == 1) != (b.quadrantLevel == 1)) {
+          return a.quadrantLevel == 1 ? -1 : 1;
+        }
         final at = a.eventTime ?? a.triggerTime ?? a.nextReviewAt;
         final bt = b.eventTime ?? b.triggerTime ?? b.nextReviewAt;
         if (at == null) return bt == null ? a.id.compareTo(b.id) : 1;
@@ -105,22 +114,37 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
       });
     if (view == 'today') {
       final groups = <String, List<Reminder>>{
+        'todayUrgent': [],
         'todayPinned': [],
         'todayOverdue': [],
         'todayTasks': [],
+        'captureInbox': [],
         'todayReview': [],
       };
       for (final task in tasks) {
         final deadline = task.eventTime;
         final reminder = task.triggerTime;
+        final time = deadline ?? reminder;
         final review =
             task.spacedRepetitionLevel > 0 &&
             (task.nextReviewAt == null ||
                 task.nextReviewAt!.isBefore(tomorrow));
-        final group = task.isPinned
+        final group = task.spacedRepetitionLevel > 0
+            ? (review ? 'todayReview' : null)
+            : (task.capturePending ||
+                  task.captureProposalJson != null ||
+                  (task.triggerTime == null &&
+                      task.sourceText != null &&
+                      task.createdAt?.isBefore(
+                            DateTime(now.year, now.month, now.day),
+                          ) ==
+                          false))
+            ? 'captureInbox'
+            : task.quadrantLevel == 1 &&
+                  (task.isPinned || (time?.isBefore(tomorrow) ?? false))
+            ? 'todayUrgent'
+            : task.isPinned
             ? 'todayPinned'
-            : review
-            ? 'todayReview'
             : deadline != null && deadline.isBefore(now)
             ? 'todayOverdue'
             : (deadline != null && deadline.isBefore(tomorrow)) ||
@@ -213,6 +237,18 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                                       ) {
                                         final row = rows[index];
                                         if (row is String) {
+                                          if (row == 'todayReview' &&
+                                              widget.onOpenLearning != null) {
+                                            return TextButton.icon(
+                                              onPressed: widget.onOpenLearning,
+                                              icon: const Icon(
+                                                Icons.auto_stories_outlined,
+                                              ),
+                                              label: Text(
+                                                loc.get('learningQueueTitle'),
+                                              ),
+                                            );
+                                          }
                                           return Padding(
                                             padding: const EdgeInsets.only(
                                               top: 10,

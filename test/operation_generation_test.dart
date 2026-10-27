@@ -767,11 +767,17 @@ void main() {
             await home.processVideo();
         }
         await llm.started.future;
+        final durable = await rows('Reminders');
+        expect(durable, hasLength(1));
         final maintenance = await database.beginMaintenance();
         await maintenance.resume();
         llm.result.complete([task('late-$kind')]);
         await idle(home);
-        expect(await rows('Reminders'), isEmpty);
+        expect(await rows('Reminders'), durable);
+        expect(
+          (await rows('Reminders')).single['capture_proposal_json'],
+          isNull,
+        );
         expect(notifications.scheduled, isEmpty);
         expect(home.state.error, isNull);
       },
@@ -833,4 +839,52 @@ void main() {
     );
     expect(notifications.scheduled, isEmpty);
   });
+  for (final kind in ['image', 'file', 'video']) {
+    test(
+      '$kind extraction remains a preview until explicit confirmation',
+      () async {
+        final fixture = await File(
+          '${directory.path}/preview.txt',
+        ).writeAsString('Original media content');
+        final llm = _DelayedLlm();
+        final home = await controller(
+          llm: llm,
+          pickImage: (_) async => XFile(fixture.path),
+          pickVideo: () async => XFile(fixture.path),
+          pickFile: () async => _PickedFile(fixture.path),
+          importFile: (path) async => path,
+        );
+        switch (kind) {
+          case 'image':
+            await home.processImage();
+          case 'file':
+            await home.processFile();
+          default:
+            await home.processVideo();
+        }
+        await llm.started.future;
+        final original = (await rows('Reminders')).single;
+        expect(original['record_id'], isNotNull);
+        final candidate = task(
+          'approved-$kind',
+        ).copyWith(triggerTime: DateTime.now().add(const Duration(hours: 1)));
+        llm.result.complete([candidate]);
+        await idle(home);
+        final raw = container!.read(remindersProvider).single;
+        expect(raw.id, original['id']);
+        expect(raw.captureProposalJson, isNotNull);
+        expect(raw.taskTitle, isNot(candidate.taskTitle));
+        expect(notifications.scheduled, isEmpty);
+        await container!.read(remindersProvider.notifier).applyCaptureProposal(
+          raw,
+          [candidate],
+        );
+        final approved = container!.read(remindersProvider).single;
+        expect(approved.id, raw.id);
+        expect(approved.taskTitle, candidate.taskTitle);
+        expect(approved.recordId, raw.recordId);
+        expect(notifications.scheduled, [raw.id]);
+      },
+    );
+  }
 }

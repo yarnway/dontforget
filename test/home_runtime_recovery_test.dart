@@ -223,6 +223,19 @@ void main() {
         final proposal =
             jsonDecode(saved.single['capture_proposal_json'] as String) as List;
         expect(proposal.single['task_title'], '检查报告');
+        final raw = container!.read(remindersProvider).single;
+        expect(raw.captureProposalJson, isNotNull);
+        await container!.read(remindersProvider.notifier).applyCaptureProposal(
+          raw,
+          [
+            Reminder(
+              id: 'ignored-model-id',
+              taskTitle: '检查报告',
+              quadrantLevel: 2,
+            ),
+          ],
+        );
+        expect((await rows('Reminders')).single['task_title'], '检查报告');
         expect(home.state.error, isNull);
       } finally {
         commands.dispose();

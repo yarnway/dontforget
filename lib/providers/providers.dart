@@ -19,6 +19,8 @@ import '../services/dp_scheduler_service.dart';
 import '../services/multi_agent_service.dart';
 import '../services/spaced_repetition_service.dart';
 import '../services/study_plan_service.dart';
+import '../services/learning_queue_service.dart';
+import '../models/vocabulary_entry.dart';
 import '../services/data_export_service.dart';
 import '../services/dynamic_urgency_service.dart';
 import '../services/bidirectional_link_service.dart';
@@ -801,7 +803,9 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           if (rows.isEmpty) throw StateError('Task no longer exists.');
           final current = Reminder.fromJson(rows.single);
           var saved = Reminder.fromJson({...current.toJson(), ...changes});
-          if (saved.isPinned && !current.isPinned && !saved.isCompleted) {
+          if (saved.isPinned &&
+              (!current.isPinned || current.isCompleted) &&
+              !saved.isCompleted) {
             final pinned = await txn.query(
               'Reminders',
               columns: ['id'],
@@ -916,8 +920,9 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
 
   Future<ReminderBatchResult> applyCaptureProposal(
     Reminder expected,
-    List<Reminder> edited,
-  ) => _enqueue(
+    List<Reminder> edited, {
+    DataGeneration? generation,
+  }) => _enqueue(
     (ticket) => _dbHelper.runOperation(ticket, () async {
       if (edited.isEmpty ||
           edited.length > 32 ||
@@ -1003,6 +1008,122 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         nativeSyncFailures: failures,
       );
     }),
+    generation: generation,
+  );
+
+  Future<ReminderBatchResult> gradeWord(
+    Reminder expected,
+    String key,
+    int grade, {
+    DateTime? now,
+    DataGeneration? generation,
+    int dailyLimit = 20,
+    int newLimit = 10,
+  }) => _enqueue(
+    (ticket) => _dbHelper.runOperation(ticket, () async {
+      final at = now ?? DateTime.now();
+      final saved = await _dbHelper.writeTransaction(ticket, (txn) async {
+        final tasks = (await txn.query(
+          'Reminders',
+        )).map(Reminder.fromJson).toList();
+        final target = tasks.where((t) => t.id == expected.id).firstOrNull;
+        if (target == null ||
+            target.isCompleted ||
+            target.taskSummary != expected.taskSummary ||
+            target.spacedRepetitionLevel <= 0) {
+          throw const StaleReminderOccurrenceException();
+        }
+        final queue = LearningQueueService.queue(
+          tasks,
+          now: at,
+          dailyLimit: dailyLimit,
+          newLimit: newLimit,
+        );
+        if (!queue.items.any(
+          (item) => item.key == key && item.task.id == expected.id,
+        )) {
+          throw const StaleReminderOccurrenceException();
+        }
+        final all = LearningQueueService.progress(tasks);
+        final progress = LearningQueueService.grade(
+          all[key],
+          grade,
+          at,
+          target.nextReviewAt ?? target.triggerTime ?? at,
+        );
+        all[key] = progress;
+        final changed = <Reminder>[];
+        for (final task in tasks.where(
+          (t) => !t.isCompleted && t.spacedRepetitionLevel > 0,
+        )) {
+          final words = VocabularyEntry.parseNotes(task.taskSummary ?? '');
+          if (!words.any(
+            (word) => LearningQueueService.wordKey(word.word) == key,
+          )) {
+            continue;
+          }
+          final local = LearningQueueService.decode(task.wordProgressJson)
+            ..removeWhere(
+              (storedKey, _) => !words.any(
+                (word) => LearningQueueService.wordKey(word.word) == storedKey,
+              ),
+            )
+            ..[key] = progress;
+          final dates = [
+            for (final word in words)
+              all[LearningQueueService.wordKey(word.word)]?.due ??
+                  task.nextReviewAt ??
+                  at,
+          ]..sort();
+          final due = dates.first;
+          final clock = (task.nextReviewAt ?? task.triggerTime ?? at).toLocal();
+          final day = at.toLocal();
+          final alarm = due.isAfter(at)
+              ? due
+              : DateTime(
+                  day.year,
+                  day.month,
+                  day.day + 1,
+                  clock.hour,
+                  clock.minute,
+                );
+          final next = task.copyWith(
+            wordProgressJson: jsonEncode({
+              for (final entry in local.entries)
+                entry.key: entry.value.toJson(),
+            }),
+            nextReviewAt: due,
+            triggerTime: task.reviewNotificationsEnabled
+                ? alarm
+                : task.triggerTime,
+            noticeRevision: task.noticeRevision + 1,
+            noticeAcknowledgedAt: null,
+            upcomingDismissedAt: null,
+          );
+          await txn.update(
+            'Reminders',
+            next.toJson(),
+            where: 'id = ?',
+            whereArgs: [next.id],
+          );
+          changed.add(next);
+        }
+        return changed;
+      });
+      _dbHelper.checkGeneration(ticket);
+      _publish(saved);
+      var failures = 0;
+      for (final task in saved) {
+        if (await _synchronizeReminder(task, ticket, cancelOverdue: true)) {
+          failures++;
+        }
+      }
+      return ReminderBatchResult(
+        changed: saved.length,
+        nativeSyncFailures: failures,
+      );
+    }),
+    generation: generation,
   );
 
   static bool _nativeContentChanged(Reminder a, Reminder b) =>

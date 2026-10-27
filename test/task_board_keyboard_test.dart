@@ -1,3 +1,5 @@
+import 'support/workspace_drafts.dart';
+import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,7 +10,6 @@ import 'package:dont_forget/app.dart';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/providers/providers.dart';
-import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -56,6 +57,7 @@ void main() {
       overrides: [databaseHelperProvider.overrideWithValue(database)],
     );
     await container.read(settingsProvider.notifier).ready;
+    await container.read(workspaceDraftsProvider.notifier).ready;
     await container.read(remindersProvider.notifier).ready;
     await container.read(workspaceDraftsProvider.notifier).ready;
     // Complete real filesystem identity I/O outside the widget fake-async zone.
@@ -92,16 +94,19 @@ void main() {
               ),
             ),
       );
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(
         UncontrolledProviderScope(container: container, child: const MyApp()),
       );
       await tester.pump();
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
     },
   );
   testWidgets('search opens for browsing and clear works before debounce', (
     tester,
   ) async {
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(
       UncontrolledProviderScope(container: container, child: const MyApp()),
     );
@@ -131,6 +136,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pump();
     expect(field, findsNothing);
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(const SizedBox());
     expect(tester.takeException(), isNull);
   });

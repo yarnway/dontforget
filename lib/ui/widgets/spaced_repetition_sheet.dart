@@ -11,6 +11,7 @@ import '../formatters/local_date_time.dart';
 import 'inline_feedback.dart';
 import 'workspace_tool_panel.dart';
 import 'vocabulary_deck.dart';
+import 'learning_queue_panel.dart';
 
 class SpacedRepetitionSheet extends ConsumerStatefulWidget {
   const SpacedRepetitionSheet({
@@ -121,6 +122,12 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet>
       ref.watch(spacedRepetitionServiceProvider),
     );
     final task = _due.firstOrNull;
+    if (_hasDeck) {
+      return LearningQueuePanel(
+        onClose: widget.onClose,
+        embedded: widget.embedded,
+      );
+    }
     return WorkspaceToolFrame(
       title: loc.get('spacedRepetitionTitle'),
       icon: Icons.school_outlined,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../services/recovery/runtime_gate.dart';
 import 'package:uuid/uuid.dart';
 import '../../providers/workspace_drafts_provider.dart';
 import '../../services/quick_reminder_parser.dart';
@@ -40,11 +41,18 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   int _draftRevision = 0;
   String _captureId = const Uuid().v4();
   String _lastText = '';
+  late final WorkspaceDrafts _draftStore;
+  late final RuntimeRecoveryGate _inputRuntime;
+  late final RuntimeRecoveryToken? _inputBirth;
+  bool get _current => mounted && _inputRuntime.isCurrent(_inputBirth);
   bool _lastFocused = false;
 
   @override
   void initState() {
     super.initState();
+    _inputRuntime = ref.read(runtimeRecoveryGateProvider);
+    _inputBirth = _inputRuntime.paused ? null : _inputRuntime.capture();
+    _draftStore = ref.read(workspaceDraftsProvider.notifier);
     _focusNode.addListener(_inputChanged);
     _textController.addListener(_inputChanged);
     unawaited(_restoreDraft());
@@ -52,9 +60,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
 
   Future<void> _restoreDraft() async {
     try {
-      final store = ref.read(workspaceDraftsProvider.notifier);
+      final store = _draftStore;
       if (!store.loaded) await store.ready;
-      if (!mounted || _draftTouched) return;
+      if (!_current || _draftTouched) return;
       final draft = ref.read(workspaceDraftsProvider)['capture'];
       if (draft is! Map || draft['text'] is! String) return;
       _restoring = true;
@@ -70,7 +78,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   }
 
   void _persistDraft() {
-    if (_restoring) return;
+    if (_restoring || !_current) return;
     _draftTouched = true;
     final text = _textController.text;
     final value = text.isEmpty && _quickTime == null && !_memoOnly
@@ -82,8 +90,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
             'id': _captureId,
           };
     unawaited(
-      ref
-          .read(workspaceDraftsProvider.notifier)
+      _draftStore
           .put('capture', value)
           .then(
             (_) {
@@ -133,7 +140,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   }
 
   Future<void> _submitText() async {
-    if (_submitting || _resolvingPending) return;
+    if (_submitting || _resolvingPending || !_current) return;
     final composing = _textController.value.composing;
     if (composing.isValid && !composing.isCollapsed) return;
     final text = _textController.text;
@@ -153,14 +160,14 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         'time': time?.toIso8601String(),
         'memo': memo,
       });
-      if (!mounted) return;
+      if (!_current) return;
       saved = await ref
           .read(homeControllerProvider.notifier)
           .processText(text, reminderTime: time, memoOnly: memo, captureId: id);
     } catch (_) {
       if (mounted) setState(() => _draftSaveFailed = true);
     }
-    if (!mounted) return;
+    if (!_current) return;
     if (saved && _draftRevision == revision && _captureId == id) {
       _restoring = true;
       _textController.clear();
@@ -172,9 +179,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     }
     if (saved) {
       try {
-        final store = ref.read(workspaceDraftsProvider.notifier);
+        final store = _draftStore;
         await store.flushed;
-        if (store.failed) throw StateError('Draft save failed');
+        if (!_current || store.failed) throw StateError('Draft save failed');
         await _updatePending(id, null);
       } catch (_) {
         if (mounted) setState(() => _draftSaveFailed = true);
@@ -188,10 +195,11 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   }
 
   Future<void> _updatePending(String id, Map<String, Object?>? value) async {
-    final store = ref.read(workspaceDraftsProvider.notifier);
+    if (!_current) throw StateError('Capture is no longer current');
+    final store = _draftStore;
     await store.ready;
     await store.flushed;
-    if (store.failed) throw StateError('Draft save failed');
+    if (!_current || store.failed) throw StateError('Draft save failed');
     final raw = ref.read(workspaceDraftsProvider)['pendingCaptures'];
     if (raw != null && raw is! Map) {
       throw const FormatException('Invalid drafts');
@@ -212,7 +220,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     Map draft, {
     required bool restore,
   }) async {
-    if (_resolvingPending || _submitting) return;
+    if (_resolvingPending || _submitting || !_current) return;
     final composing = _textController.value.composing;
     if (restore && composing.isValid && !composing.isCollapsed) {
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
@@ -245,12 +253,12 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         _restoring = false;
         _draftRevision++;
         _persistDraft();
-        final store = ref.read(workspaceDraftsProvider.notifier);
+        final store = _draftStore;
         await store.flushed;
-        if (store.failed) throw StateError('Draft save failed');
+        if (!_current || store.failed) throw StateError('Draft save failed');
       }
       await _updatePending(id, null);
-      if (mounted && restore) _focusNode.requestFocus();
+      if (_current && restore) _focusNode.requestFocus();
     } catch (_) {
       if (mounted) setState(() => _draftSaveFailed = true);
     } finally {
@@ -259,6 +267,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   }
 
   Future<void> _showPending(String id, Map draft) async {
+    if (!_current) return;
     final l10n = AppLocalizations.of(context);
     final action = await showDialog<String>(
       context: context,
@@ -291,7 +300,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         ],
       ),
     );
-    if (!mounted || action == null) return;
+    if (!_current || action == null) return;
     if (action == 'copy') {
       try {
         await Clipboard.setData(ClipboardData(text: draft['text'] as String));
@@ -313,6 +322,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   }
 
   Future<void> _pickQuickTime() async {
+    if (!_current) return;
     final now = DateTime.now();
     final initial = _quickTime?.isAfter(now) == true ? _quickTime! : now;
     final date = await showDatePicker(
@@ -321,12 +331,12 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
       firstDate: DateTime(now.year, now.month, now.day),
       lastDate: DateTime(now.year + 10),
     );
-    if (!mounted || date == null) return;
+    if (!mounted || !_current || date == null) return;
     final time = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(initial),
     );
-    if (!mounted || time == null) return;
+    if (!_current || time == null) return;
     final selected = DateTime(
       date.year,
       date.month,
@@ -339,6 +349,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   }
 
   void _selectTime(DateTime? time, {bool memo = false}) {
+    if (!_current) return;
     setState(() {
       _draftRevision++;
       _captureId = const Uuid().v4();
@@ -377,6 +388,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   }
 
   Future<void> _startLongPressRecording(LongPressStartDetails details) async {
+    if (!_current) return;
     if ((!_voiceMode && _textController.text.isNotEmpty) ||
         _isTranscribing ||
         _pendingRecordingStart != null ||
@@ -400,6 +412,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   }
 
   Future<void> _finishLongPressRecording() async {
+    if (!_current) return;
     final operation = _pendingRecordingStart;
     if (!mounted || operation == null || _isFinishingLongPress) return;
     _isFinishingLongPress = true;

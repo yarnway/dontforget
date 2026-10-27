@@ -4,7 +4,9 @@ import 'dart:io';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/models/settings.dart';
+import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'package:dont_forget/services/notification_service.dart';
+import 'package:dont_forget/services/learning_queue_service.dart';
 import 'package:dont_forget/services/recovery/backup_inspector.dart';
 import 'package:dont_forget/services/recovery/database_recovery.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -26,6 +28,16 @@ void main() {
     if (capture)
       'workspace_drafts_json': jsonEncode({'composer': 'keep draft'}),
   };
+  Map<String, Object?> progress() => {
+    'hello': WordProgress(
+      level: 1,
+      due: DateTime.utc(2030, 5, 2, 20),
+      reviewed: DateTime.utc(2030, 5, 1, 20),
+      firstReviewed: DateTime.utc(2030, 5, 1, 20),
+      reviews: 1,
+      grade: 2,
+    ).toJson(),
+  };
   Map<String, Object?> reminder(bool capture, {bool full = false}) {
     final row = Reminder(
       id: 'original',
@@ -41,7 +53,7 @@ void main() {
         row['capture_proposal_json'] = jsonEncode([
           {'id': 'proposal', 'task_title': 'Proposed', 'quadrant_level': 2},
         ]);
-        row['word_progress_json'] = jsonEncode({'hello': 1});
+        row['word_progress_json'] = jsonEncode(progress());
       } else {
         row.remove('capture_proposal_json');
         row.remove('word_progress_json');
@@ -251,7 +263,7 @@ void main() {
           ? jsonEncode([
               {'id': 'proposal', 'task_title': 'Proposed', 'quadrant_level': 2},
             ])
-          : jsonEncode({'word': 1});
+          : jsonEncode(progress());
       await db.update('Reminders', {field: value});
       final snapshot = {
         'version': 14,
@@ -343,6 +355,84 @@ void main() {
       expect(await source.readAsBytes(), original);
     },
   );
+
+  for (final format in ['json', 'sqlite']) {
+    test(
+      'v15 $format round trip retains large drafts and AI and word state',
+      () async {
+        final live = DatabaseHelper.forTesting(
+          '${root.path}/live',
+          databaseFactoryFfi,
+        );
+        final target = DatabaseHelper.forTesting(
+          '${root.path}/restored',
+          databaseFactoryFfi,
+        );
+        final drafts = WorkspaceDrafts(live);
+        final inspector = BackupInspector(
+          databaseFactoryFfi,
+          temporaryDirectory: root,
+        );
+        final text = List.filled(350001, 'x').join();
+        final proposal = Reminder(
+          id: 'model',
+          taskTitle: 'Suggested',
+          quadrantLevel: 2,
+          triggerTime: DateTime.utc(2030, 5, 1, 8, 45),
+          timeOrigin: ReminderTimeOrigin.aiSuggested,
+          eventTime: DateTime.utc(2030, 5, 1, 9),
+        );
+        final original = Reminder.fromJson({
+          ...proposal
+              .copyWith(
+                taskTitle: 'Original',
+                sourceText: 'Preserve original',
+                timeOrigin: ReminderTimeOrigin.manual,
+                captureProposalJson: jsonEncode([proposal.toJson()]),
+                wordProgressJson: jsonEncode(progress()),
+              )
+              .toJson(),
+          'id': 'original',
+        });
+        try {
+          await drafts.ready;
+          await drafts.put('capture', {'id': 'unsent', 'text': text});
+          await live.writeTransaction(
+            live.captureGeneration(),
+            (db) => db.insert('Reminders', original.toJson()),
+          );
+          await live.createMirrorBackup();
+          final source = File(
+            '${root.path}/live/${format == 'json' ? 'ha_snapshot.json' : 'dont_forget_v3.mirror.db'}',
+          );
+          final before = await source.readAsBytes();
+          final preview = await inspector.inspect(source);
+          expect(preview.version, 15);
+          await DatabaseRecovery(
+            target,
+            inspector: inspector,
+            notifications: NotificationService.forTesting(
+              FlutterLocalNotificationsPlugin(),
+              usesNativeNotifications: false,
+            ),
+          ).restore(source, expectedDigest: preview.digest);
+          final db = await target.database;
+          expect(await db.getVersion(), 15);
+          expect((await db.query('Reminders')).single, original.toJson());
+          final restored = jsonDecode(
+            (await db.query('Settings')).single['workspace_drafts_json']
+                as String,
+          );
+          expect(restored['capture'], {'id': 'unsent', 'text': text});
+          expect(await source.readAsBytes(), before);
+        } finally {
+          drafts.dispose();
+          await live.close(createBackup: false);
+          await target.close(createBackup: false);
+        }
+      },
+    );
+  }
 
   test('malformed persisted drafts cannot pass backup inspection', () async {
     final source = await File('${root.path}/invalid-draft.json').writeAsString(

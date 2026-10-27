@@ -10,6 +10,7 @@ import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'package:dont_forget/services/llm_service.dart';
 import 'package:dont_forget/services/notification_service.dart';
 import 'package:dont_forget/services/quick_reminder_parser.dart';
+import 'package:dont_forget/services/learning_queue_service.dart';
 import 'package:dont_forget/services/recovery/backup_inspector.dart';
 import 'package:dont_forget/models/settings.dart';
 import 'package:dont_forget/models/study_plan.dart';
@@ -217,6 +218,12 @@ void main() {
       expect(accepted.taskTitle, '开会');
       expect(accepted.triggerTime, event.subtract(const Duration(minutes: 15)));
       expect(accepted.captureProposalJson, isNull);
+      await expectLater(
+        container
+            .read(remindersProvider.notifier)
+            .applyCaptureProposal(saved, proposals),
+        throwsA(isA<StaleReminderOccurrenceException>()),
+      );
     },
   );
 
@@ -619,6 +626,223 @@ void main() {
       expect(database.isCurrent(restored.generation!), isTrue);
       draft.dispose();
       restored.dispose();
+    },
+  );
+  Reminder vocabulary(String id, List<String> words) => Reminder(
+    id: id,
+    taskTitle: id,
+    quadrantLevel: 2,
+    spacedRepetitionLevel: 1,
+    nextReviewAt: DateTime(2026, 1, 1, 20),
+    taskSummary: words
+        .map((word) => '$word — Meaning of $word\nAn example with $word.')
+        .join('\n\n'),
+  );
+
+  test(
+    'learning queue prioritizes reviews, deduplicates and caps new words',
+    () {
+      final now = DateTime(2026, 10, 27, 10);
+      final progress = WordProgress(
+        level: 0,
+        due: now.subtract(const Duration(days: 1)),
+        reviewed: now.subtract(const Duration(days: 2)),
+        firstReviewed: now.subtract(const Duration(days: 2)),
+        reviews: 1,
+        grade: 0,
+      );
+      final tasks = [
+        vocabulary('one', [
+          'weak',
+          'new-a',
+          'new-b',
+          'new-c',
+          'new-d',
+        ]).copyWith(wordProgressJson: jsonEncode({'weak': progress.toJson()})),
+        vocabulary('two', ['weak', 'new-a']),
+      ];
+      final queue = LearningQueueService.queue(
+        tasks,
+        dailyLimit: 3,
+        newLimit: 1,
+        now: now,
+      );
+      expect(queue.items.map((item) => item.key), ['weak', 'new-a']);
+      expect(queue.dueCount, 5);
+      expect(queue.deferred, 3);
+    },
+  );
+
+  test(
+    'word grading is independent, durable and protects daily allowance',
+    () async {
+      final notifier = container.read(remindersProvider.notifier);
+      final batch = vocabulary('words', ['alpha', 'beta', 'gamma']);
+      await notifier.addReminder(batch);
+      final now = DateTime(2026, 10, 27, 10);
+      await notifier.gradeWord(
+        batch,
+        'alpha',
+        2,
+        now: now,
+        dailyLimit: 1,
+        newLimit: 1,
+      );
+      final saved = container.read(remindersProvider).single;
+      final progress = LearningQueueService.decode(saved.wordProgressJson);
+      expect(progress.keys, ['alpha']);
+      expect(progress['alpha']!.level, 1);
+      expect(progress['alpha']!.due, DateTime(2026, 10, 28, 20));
+      expect(saved.isCompleted, isFalse);
+      final queue = LearningQueueService.queue(
+        [saved],
+        dailyLimit: 1,
+        newLimit: 1,
+        now: now,
+      );
+      expect(queue.completedToday, 1);
+      expect(queue.items, isEmpty);
+      expect(queue.deferred, 2);
+      await expectLater(
+        notifier.gradeWord(
+          saved,
+          'beta',
+          2,
+          now: now,
+          dailyLimit: 1,
+          newLimit: 1,
+        ),
+        throwsA(isA<StaleReminderOccurrenceException>()),
+      );
+      await unload();
+      await load();
+      expect(
+        LearningQueueService.decode(
+          container.read(remindersProvider).single.wordProgressJson,
+        )['alpha']!.level,
+        1,
+      );
+    },
+  );
+
+  test(
+    'duplicate vocabulary shares mastery and fuzzy feedback keeps other words',
+    () async {
+      final notifier = container.read(remindersProvider.notifier);
+      await notifier.addReminder(vocabulary('first', ['alpha', 'beta']));
+      await notifier.addReminder(vocabulary('second', ['alpha', 'delta']));
+      final now = DateTime(2026, 10, 27, 10);
+      await notifier.gradeWord(
+        container.read(remindersProvider).first,
+        'alpha',
+        0,
+        now: now,
+      );
+      for (final task in container.read(remindersProvider)) {
+        expect(
+          LearningQueueService.decode(task.wordProgressJson)['alpha']!.grade,
+          0,
+        );
+      }
+      expect(
+        LearningQueueService.queue(
+          container.read(remindersProvider),
+          now: now,
+        ).completedToday,
+        1,
+      );
+      await expectLater(
+        notifier.gradeWord(
+          container.read(remindersProvider).first,
+          'alpha',
+          2,
+          now: now,
+        ),
+        throwsA(isA<StaleReminderOccurrenceException>()),
+      );
+      await notifier.gradeWord(
+        container.read(remindersProvider).first,
+        'alpha',
+        1,
+        now: now.add(const Duration(days: 1)),
+      );
+      final progress = LearningQueueService.decode(
+        container.read(remindersProvider).first.wordProgressJson,
+      );
+      expect(progress['alpha']!.reviews, 2);
+      expect(progress['alpha']!.level, 0);
+      expect(progress.containsKey('beta'), isFalse);
+      await database.createMirrorBackup();
+      expect(
+        (await BackupInspector(
+          databaseFactoryFfi,
+        ).inspect(File('${directory.path}/ha_snapshot.json'))).version,
+        15,
+      );
+    },
+  );
+  test(
+    'disposed capture retry cannot read a rebuilt provider or send another request',
+    () async {
+      final home = container.read(homeControllerProvider.notifier);
+      final old = Reminder(
+        id: 'old',
+        taskTitle: 'Old source',
+        sourceText: 'Old source',
+        quadrantLevel: 2,
+        capturePending: true,
+      );
+      await unload();
+      await load();
+      expect(() => home.retryCapture(old), returnsNormally);
+      expect(model.requests, isEmpty);
+      expect(container.read(remindersProvider), isEmpty);
+    },
+  );
+
+  test(
+    'AI preview and word grading reject an editor ticket from before maintenance',
+    () async {
+      final notifier = container.read(remindersProvider.notifier);
+      final candidate = Reminder(
+        id: 'model',
+        taskTitle: 'Proposed',
+        quadrantLevel: 2,
+      );
+      final raw = Reminder(
+        id: 'raw',
+        taskTitle: 'Original',
+        sourceText: 'Original',
+        quadrantLevel: 2,
+        captureProposalJson: jsonEncode([candidate.toJson()]),
+      );
+      final words = vocabulary('words', ['alpha']);
+      await notifier.addReminder(raw);
+      await notifier.addReminder(words);
+      final oldTicket = database.captureGeneration();
+      final before = await database.read(
+        oldTicket,
+        (db) => db.query('Reminders', orderBy: 'id'),
+      );
+      final lease = await database.beginMaintenance();
+      await lease.validateAndOpen();
+      await lease.resume();
+      await expectLater(
+        notifier.applyCaptureProposal(raw, [candidate], generation: oldTicket),
+        throwsA(isA<DatabaseAccessException>()),
+      );
+      await expectLater(
+        notifier.gradeWord(words, 'alpha', 2, generation: oldTicket),
+        throwsA(isA<DatabaseAccessException>()),
+      );
+      expect(
+        await database.read(
+          database.captureGeneration(),
+          (db) => db.query('Reminders', orderBy: 'id'),
+        ),
+        before,
+      );
+      expect(notifications.scheduled, isEmpty);
     },
   );
 }

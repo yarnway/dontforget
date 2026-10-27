@@ -27,6 +27,8 @@ import '../widgets/spaced_repetition_sheet.dart';
 import '../widgets/focus_mode_sheet.dart';
 import '../widgets/context_digest_sheet.dart';
 import '../widgets/task_workspace_overview.dart';
+import '../widgets/learning_queue_panel.dart';
+import 'notification_repair_screen.dart';
 import '../../providers/workspace_drafts_provider.dart';
 import '../widgets/data_export_sheet.dart';
 import '../widgets/workspace_tool_panel.dart';
@@ -46,6 +48,7 @@ enum _WorkspaceTool {
   dashboard,
   agent,
   study,
+  learning,
 }
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -552,9 +555,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             : l10n.get('taskCompleted');
       }
       if (message != null) {
-        InlineFeedback.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(message)));
+        InlineFeedback.of(context).showSnackBar(
+          SnackBar(
+            content: Text(message),
+            action: result.nativeSyncFailed
+                ? notificationRepairAction(context)
+                : null,
+          ),
+        );
       }
     } catch (_) {
       if (mounted && _runtimeActive) {
@@ -1085,6 +1093,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         onExecute: _showMultiAgentGoalDialog,
       ),
       CommandPaletteAction(
+        id: 'learning-queue',
+        title: l10n.get('learningQueueTitle'),
+        subtitle: l10n.get('learningBudgetHint'),
+        icon: Icons.auto_stories_outlined,
+        shortcut: '',
+        onExecute: () => _selectTool(_WorkspaceTool.learning),
+      ),
+      CommandPaletteAction(
         id: 'digest',
         title: l10n.get('contextDigestTitle'),
         subtitle: l10n.get('contextDigestDesc'),
@@ -1329,6 +1345,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
+            action: next.error == l10n.get('reminderNativeSyncFailed')
+                ? notificationRepairAction(context)
+                : null,
             content: Row(
               children: [
                 const Icon(Icons.info_outline, color: Colors.white, size: 18),
@@ -1694,6 +1713,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           onBusyChanged: (value) =>
                               setState(() => _toolBusy = value),
                         ),
+                        _WorkspaceTool.learning => LearningQueuePanel(
+                          onClose: _closeWorkspaceTool,
+                        ),
                         null => null,
                       },
                       child: _isSearchOpen
@@ -1705,6 +1727,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           : TaskWorkspaceOverview(
                               reminders: reminders,
                               onPlayMedia: _playMedia,
+                              onOpenLearning: () =>
+                                  _selectTool(_WorkspaceTool.learning),
                             ),
                     ),
                   ),

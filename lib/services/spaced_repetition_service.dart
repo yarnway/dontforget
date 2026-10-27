@@ -52,6 +52,7 @@ class SpacedRepetitionService {
     final now = DateTime.now();
     return task.copyWith(
       spacedRepetitionLevel: 1,
+      isPinned: false,
       nextReviewAt: now, // 立即进入首轮复习
     );
   }
