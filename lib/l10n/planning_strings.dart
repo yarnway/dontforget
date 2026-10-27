@@ -14,6 +14,38 @@ String planningText(BuildContext context, String key) {
 }
 
 const _strings = <String, List<String>>{
+  'savedFilters': ['常用筛选', 'Saved filters', '保存した絞り込み'],
+  'saveCurrentFilter': ['保存当前筛选', 'Save current filter', '現在の絞り込みを保存'],
+  'savedFilterName': ['筛选名称', 'Filter name', '絞り込み名'],
+  'renameSavedFilter': ['重命名', 'Rename', '名前を変更'],
+  'deleteSavedFilter': ['删除筛选', 'Delete filter', '絞り込みを削除'],
+  'filterOptions': ['筛选选项', 'Filter options', '絞り込みの操作'],
+  'filterNameInvalid': [
+    '请输入 1–64 个字符的名称',
+    'Enter a name with 1–64 characters',
+    '1〜64文字の名前を入力してください',
+  ],
+  'filterDuplicateName': [
+    '已有同名筛选，请换一个名称',
+    'This name is already used',
+    '同じ名前が既に使われています',
+  ],
+  'filterLimit': [
+    '最多保存 12 个常用筛选',
+    'You can save up to 12 filters',
+    '保存できる絞り込みは12件までです',
+  ],
+  'filterChanged': [
+    '筛选已变化，请重新打开后操作',
+    'This filter changed. Open it again to continue.',
+    '絞り込みが変更されました。開き直してください。',
+  ],
+  'filtersUnreadable': [
+    '常用筛选暂时无法读取，仍可手动筛选',
+    'Saved filters are unavailable. You can still filter manually.',
+    '保存した絞り込みを読み込めません。手動で絞り込めます。',
+  ],
+  'filterDeleted': ['已删除常用筛选', 'Saved filter deleted', '保存した絞り込みを削除しました'],
   'independentDates': [
     '已生成独立日期，未完成上一天也会保留下一天提醒（滚动 60 天）',
     'Independent dates for a rolling 60 days; an unfinished date does not block the next one.',

@@ -3,6 +3,7 @@ import '../../models/medication_plan.dart';
 import '../../models/departure_plan.dart';
 import '../../models/settings.dart';
 import '../../models/reminder.dart';
+import '../../models/saved_task_filter.dart';
 import '../learning_queue_service.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -886,11 +887,15 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
       _decodeJson(settings['ai_profiles_json'] as String);
     }
     final drafts = settings['workspace_drafts_json'];
-    if (drafts != null &&
-        (drafts is! String ||
-            drafts.length > 1048576 ||
-            _decodeJson(drafts) is! Map<String, dynamic>)) {
-      _fail(BackupInspectionError.invalidData);
+    if (drafts != null) {
+      if (drafts is! String || drafts.length > 1048576) {
+        _fail(BackupInspectionError.invalidData);
+      }
+      final decoded = _decodeJson(drafts);
+      if (decoded is! Map<String, dynamic>) {
+        _fail(BackupInspectionError.invalidData);
+      }
+      SavedTaskFilter.decode(decoded[SavedTaskFilter.storageKey]);
     }
     parsedSettings = AppSettings.fromJson(Map<String, dynamic>.from(settings));
   } catch (_) {

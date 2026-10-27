@@ -47,6 +47,7 @@
 
 ## 自动化证据
 
+- [常用筛选](P1_Saved_Task_Filters.md)：当前分类与关键词的命名保存／应用、重命名、删除撤销、原工作区字段持久化及备份恢复；新增代码专项 126 项通过，三语三种宽度及小屏键盘覆盖。全量及原生界面验证仍待后续执行。
 - [departure_rolling_test.dart](../test/departure_rolling_test.dart)、[departure_refill_recovery_test.dart](../test/departure_refill_recovery_test.dart)：独立日期、跨午夜、补排去重、重启保留、长时间缺席、单独删除、整组恢复、独立跳过和天气有效期。
 - [notification_window_test.dart](../test/notification_window_test.dart)、[notification_capacity_recovery_test.dart](../test/notification_capacity_recovery_test.dart)、[notification_capacity_status_test.dart](../test/notification_capacity_status_test.dart)：跨计划容量、取消／提交故障、冷启动和维护恢复、相同时刻覆盖边界、单条待补排状态。
 - [notification_coverage_ui_test.dart](../test/notification_coverage_ui_test.dart)：三语、三种宽度和 2 倍文字、空／未确认状态，以及手动和前台刷新。

@@ -1,0 +1,104 @@
+{
+  "recorded_at": "2026-10-27T22:38:11.385217+08:00",
+  "source_base": "b60a17d7271901a0f5a332f0143bade076567362",
+  "source_scope": "file hashes below, no platform build in this stage",
+  "toolchain": {
+    "flutter": "3.44.9",
+    "dart": "3.12.2"
+  },
+  "schema": 16,
+  "new_database_migration": false,
+  "persistence": "Settings.workspace_drafts_json / savedTaskFilters version 1",
+  "tests": {
+    "flutter_targeted": {
+      "passed": 126,
+      "failed": 0,
+      "model_and_store": 12,
+      "new_ui": 15,
+      "existing_planning_ui": 13,
+      "backup_inspector_regression": 86,
+      "command": "flutter test --no-pub --concurrency=1 test/saved_task_filters_test.dart test/saved_task_filters_widget_test.dart test/planning_panel_test.dart test/backup_inspector_test.dart --reporter expanded"
+    },
+    "flutter_analyze": "0 issues",
+    "sqlite_and_json_actual_recovery": "PASS - isolated DB and notification substitute",
+    "layout": {
+      "locales": [
+        "zh",
+        "en",
+        "ja"
+      ],
+      "widths": [
+        375,
+        768,
+        1440
+      ],
+      "text_scale": 2,
+      "small_screen_keyboard": {
+        "width": 375,
+        "height": 667,
+        "bottom_inset": 280
+      }
+    },
+    "all_business_data_in_temporary_directories": true
+  },
+  "source_files": {
+    "lib/models/saved_task_filter.dart": {
+      "bytes": 2829,
+      "sha256": "182f1b15a86488940aec76b817afd5e0a4e709d4d1f29134f08e1c8737042eaf"
+    },
+    "lib/providers/saved_task_filters_provider.dart": {
+      "bytes": 4077,
+      "sha256": "bdea3501b83d7b495aea0d4fa53c83c32644f030fe81c1ae4cabee389b96ef01"
+    },
+    "lib/ui/widgets/saved_task_filters_bar.dart": {
+      "bytes": 11712,
+      "sha256": "db22459cad9b5fe97dc64f03f0fc993f478a73dc2b8b057f0602a85bd4427cbc"
+    },
+    "lib/ui/widgets/planning_panel.dart": {
+      "bytes": 30865,
+      "sha256": "3dfd067a6fc29e06ee164e2be2471fc43142cda97869af1376d14915a71e8697"
+    },
+    "lib/l10n/planning_strings.dart": {
+      "bytes": 18796,
+      "sha256": "05156fdb15569f148328ecca3b66c75c1b4056d1a412bed2eea844c500827083"
+    },
+    "lib/services/recovery/backup_inspector.dart": {
+      "bytes": 36204,
+      "sha256": "4970e2987600205fbc5d27ce97786514d70ac44c28e51eb9913ed962355a13a4"
+    },
+    "test/saved_task_filters_test.dart": {
+      "bytes": 12339,
+      "sha256": "a48b9136c3e5b850924beafb54d54fd37397601364cf6843a6a4ad47bf9c9fe3"
+    },
+    "test/saved_task_filters_widget_test.dart": {
+      "bytes": 11492,
+      "sha256": "eb65af01adab87901b4e5f0d870e14d01818150f9ca79809b4c800bb44339f25"
+    }
+  },
+  "private_logs": {
+    "build/p1-saved-filters-final-tests.log": {
+      "bytes": 20907,
+      "sha256": "78c02e338c926854939513962985242bf2ace0f20a4adc589cc6f3a1341d3fbb"
+    },
+    "build/p1-saved-filters-final-analysis.log": {
+      "bytes": 96,
+      "sha256": "270846f1192dfb0cd0810282804d3dd508bdab219dfe547e44759e36c44de481"
+    }
+  },
+  "not_performed": [
+    "Flutter full regression for new source",
+    "new platform builds",
+    "native UI acceptance for saved filters"
+  ],
+  "frozen_midnight_artifact": {
+    "source": "e336f0579eee2238ff0b61dc2ba2d1ceec6ab81d",
+    "not_rebuilt_or_launched_during_saved_filters_work": true,
+    "cross_day": "PENDING_REAL_CLOCK - 23:59 and 00:02 Asia/Shanghai"
+  },
+  "pushed_or_released": false,
+  "documentation_only_base_update": {
+    "previous": "f3ef3c89dde89236cbcb337cffd480c4f4842f1f",
+    "to": "b60a17d7271901a0f5a332f0143bade076567362",
+    "source_and_test_bytes_unchanged": true
+  }
+}

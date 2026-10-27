@@ -17,6 +17,7 @@ import 'portable_backup_panel.dart';
 import 'learning_management_panel.dart';
 import 'inline_feedback.dart';
 import 'workspace_tool_panel.dart';
+import 'saved_task_filters_bar.dart';
 
 class PlanningPanel extends StatefulWidget {
   const PlanningPanel({
@@ -99,6 +100,7 @@ class TaskManagementPanel extends ConsumerStatefulWidget {
 
 class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
   final _modelCancellation = CancelToken();
+  final _queryController = TextEditingController();
   String _view = 'manage', _query = '';
   bool _busy = false;
   late final DatabaseHelper _database;
@@ -111,6 +113,7 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
   @override
   void dispose() {
     _modelCancellation.cancel('Task manager closed');
+    _queryController.dispose();
     super.dispose();
   }
 
@@ -199,6 +202,18 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
   @override
   Widget build(BuildContext context) {
     final all = ref.watch(remindersProvider);
+    final configured = ref.watch(settingsProvider).hasConfiguredExtraction;
+    return LayoutBuilder(
+      builder: (_, constraints) => _content(all, constraints, configured),
+    );
+  }
+
+  Widget _content(
+    List<Reminder> all,
+    BoxConstraints constraints,
+    bool configured,
+  ) {
+    final query = _query.trim().toLowerCase();
     final rows =
         all.where((r) {
           final accepted = switch (_view) {
@@ -213,7 +228,7 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
               r.details.planId == null &&
               '${r.taskTitle} ${r.details.project} ${r.details.tags.join(' ')}'
                   .toLowerCase()
-                  .contains(_query.toLowerCase());
+                  .contains(query);
         }).toList()..sort(
           (a, b) => (b.createdAt ?? DateTime(2000)).compareTo(
             a.createdAt ?? DateTime(2000),
@@ -221,54 +236,71 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
         );
     final events = [
       for (final row in all)
-        for (final event in row.details.history) (row: row, event: event),
+        if ('${row.taskTitle} ${row.details.project} ${row.details.tags.join(' ')}'
+            .toLowerCase()
+            .contains(query))
+          for (final event in row.details.history) (row: row, event: event),
     ]..sort((a, b) => b.event.at.compareTo(a.event.at));
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            children: [
-              Wrap(
-                spacing: 5,
-                runSpacing: 5,
+        ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: constraints.maxHeight * .65),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
                 children: [
-                  for (final view in [
-                    'manage',
-                    'pause',
-                    'trash',
-                    'archive',
-                    'history',
-                  ])
-                    ChoiceChip(
-                      label: Text(t(view)),
-                      selected: _view == view,
-                      onSelected: (_) => setState(() => _view = view),
+                  Wrap(
+                    spacing: 5,
+                    runSpacing: 5,
+                    children: [
+                      for (final view in [
+                        'manage',
+                        'pause',
+                        'trash',
+                        'archive',
+                        'history',
+                      ])
+                        ChoiceChip(
+                          label: Text(t(view)),
+                          selected: _view == view,
+                          onSelected: (_) => setState(() => _view = view),
+                        ),
+                    ],
+                  ),
+                  TextField(
+                    controller: _queryController,
+                    decoration: InputDecoration(
+                      labelText: t('filter'),
+                      prefixIcon: const Icon(Icons.search),
                     ),
+                    onChanged: (v) => setState(() => _query = v),
+                  ),
+                  SavedTaskFiltersBar(
+                    view: _view,
+                    query: _query,
+                    onSelected: (filter) {
+                      if (!_current) return;
+                      setState(() {
+                        _view = filter.view;
+                        _query = filter.query;
+                        _queryController.text = filter.query;
+                      });
+                    },
+                  ),
+                  TextButton.icon(
+                    onPressed: _busy || !configured ? null : _testAi,
+                    icon: const Icon(Icons.network_check),
+                    label: Text(t('testAi')),
+                  ),
+                  TextButton.icon(
+                    onPressed: _busy ? null : () => _editor(null),
+                    icon: const Icon(Icons.add),
+                    label: Text(t('newChecklist')),
+                  ),
                 ],
               ),
-              TextField(
-                decoration: InputDecoration(
-                  labelText: t('filter'),
-                  prefixIcon: const Icon(Icons.search),
-                ),
-                onChanged: (v) => setState(() => _query = v),
-              ),
-              TextButton.icon(
-                onPressed:
-                    _busy ||
-                        !ref.watch(settingsProvider).hasConfiguredExtraction
-                    ? null
-                    : _testAi,
-                icon: const Icon(Icons.network_check),
-                label: Text(t('testAi')),
-              ),
-              TextButton.icon(
-                onPressed: _busy ? null : () => _editor(null),
-                icon: const Icon(Icons.add),
-                label: Text(t('newChecklist')),
-              ),
-            ],
+            ),
           ),
         ),
         Expanded(
