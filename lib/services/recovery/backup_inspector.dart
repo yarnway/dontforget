@@ -79,7 +79,7 @@ class BackupPreview {
   final DateTime? timestamp;
 }
 
-/// Inspects a bounded private copy of one standalone v7/v8/v9/v10 export.
+/// Inspects a bounded private copy of one standalone v7–v16 export.
 ///
 /// Never opens the source through SQLite, imports data, opens the app database,
 /// or reads attachment contents. Symlinks (including parent directories) and
