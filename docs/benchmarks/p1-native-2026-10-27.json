@@ -126,9 +126,36 @@
         "expected_rows_after_refill": 210,
         "expected_future_after_refill": 204,
         "expected_native_pending_after_refill": 50,
-        "expected_deferred_after_refill": 154
+        "expected_deferred_after_refill": 154,
+        "pre_midnight_recheck": {
+          "at": "2026-10-27T22:06:51.204727+08:00",
+          "business_rows": 209,
+          "unique_ids": 209,
+          "integrity": "ok",
+          "schema": 16,
+          "exact_test_process_absent": true,
+          "samples_not_completed_or_acknowledged": true,
+          "new_date_present": false,
+          "result": "PENDING_REAL_CLOCK",
+          "exact_bundle_and_request_boundaries_required": true,
+          "other_suffix_identity_excluded": "com.example.dontForget.acceptance.p1-window-20261027-2137-4fa9",
+          "parser_unit_tests_passed": 5,
+          "process_sampling": {
+            "interval_seconds": 10,
+            "until": "2026-10-28T00:05:30+08:00",
+            "snapshot": "process-presence-snapshot-223038.jsonl",
+            "first_at": "2026-10-27T22:08:20.411183+08:00",
+            "last_at": "2026-10-27T22:30:28.973498+08:00",
+            "samples": 133,
+            "all_sampled_exact_process_absent": true,
+            "failures": 0,
+            "continuous_absence_not_proven": true
+          }
+        }
       }
-    }
+    },
+    "trace_runtime_files_observed": false,
+    "empty_trace_map_is_not_process_absence_evidence": true
   },
   "iphone": {
     "model": "iPhone 15 Pro Max",
@@ -149,7 +176,12 @@
     "readback_at": "2026-10-28T00:05:00+08:00",
     "user_confirmed_power_and_awake": true,
     "temporary_awake_assertion_expires_at": "2026-10-28T00:08:00+08:00",
-    "permanent_power_preferences_changed": false
+    "permanent_power_preferences_changed": false,
+    "power_still_battery_at_2228": {
+      "percent": 46,
+      "estimated_minutes": 34,
+      "earlier_connection_requested": true
+    }
   },
   "evidence_directory": "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/p1-window-20261027",
   "private_evidence": {
@@ -236,6 +268,46 @@
     "ios-sign-build-private.log": {
       "bytes": 112048,
       "sha256": "cc501b2767bf6fb36e6d80e12934f2069be5a15b9b3c58a2c93c838cc0373f3b"
+    },
+    "process-presence-snapshot-223038.jsonl": {
+      "bytes": 15162,
+      "sha256": "2c9eb8f74c0d4e4087994cce24d499a1b9f4897d446ca9c5a07a621a962606d0"
+    },
+    "pre-midnight-recheck-220651.json": {
+      "bytes": 1719,
+      "sha256": "de421eb704534a3f01aa7a38185a95dcf9e902f573a1bf86f873b92a29e7fd31"
+    },
+    "pre-midnight-exact-delivery-check.json": {
+      "bytes": 1020,
+      "sha256": "eeb2fd2612e4de9f7c02fb432480177f6b2bf84213e9e3c5dcf5fdef6051c5a3"
+    },
+    "pre-midnight-system-recheck.log": {
+      "bytes": 63702,
+      "sha256": "14d8df1197ee5314e78eaf35b198af516858940955afcf8bcb4bc7eee3deaf9f"
+    },
+    "pre-midnight-process-system.log": {
+      "bytes": 224447,
+      "sha256": "f132600014af9df5addabf181a2e158e5a2de03bbd83c2d429b305478fd3b06e"
+    },
+    "process-monitor.json": {
+      "bytes": 623,
+      "sha256": "1fac7c3c616c228669b6413beb98a3a975fab158d17472cd29b8fedb9d0b7994"
+    },
+    "monitor_process_presence.py": {
+      "bytes": 2229,
+      "sha256": "a944af1e080b2f73128349169e48e4587b074c841734d82ea7317f1104115d7e"
+    },
+    "check_midnight_delivery.py": {
+      "bytes": 2915,
+      "sha256": "fe75cceaea90a30b9d67ddd2b993202b7d70875813565c23335a6a8b5719504e"
+    },
+    "test_midnight_delivery_parser.py": {
+      "bytes": 2254,
+      "sha256": "0f6e1ae5932f4c59e6613b1bf3ab1f1dfd0e578c45ccd83d745fe1925bddaa5e"
+    },
+    "midnight-parser-tests.log": {
+      "bytes": 673,
+      "sha256": "41d3dadd47232e1dbaa011919ece285897a5fdd3aa61b26913a7738bf94177ba"
     }
   },
   "boundaries": {
