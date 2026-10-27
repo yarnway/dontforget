@@ -1,0 +1,115 @@
+{
+  "date": "2026-10-27",
+  "recorded_at": "2026-10-27T21:24:59.122646+08:00",
+  "source_commit": "9ec94b918884c5fa130e73dcea664ba3d2ee4e2a",
+  "previous_p1_source": "e336f0579eee2238ff0b61dc2ba2d1ceec6ab81d",
+  "schema": 16,
+  "source_files": {
+    "lib/l10n/planning_strings.dart": "8cc6d3b026915700ec20db93c7bafce643f498009b82c41ce40818de73b533d9",
+    "lib/models/departure_plan.dart": "943455589d91f124c12e980091f1bb22983e3f5b6e67eccfe97938ec0272aa52",
+    "lib/providers/departure_routines.dart": "c16ead0e6c148304fe0754d4ed3318f2b159983a1621f9ba66d1bef5f5948ad0",
+    "lib/providers/providers.dart": "7ba5fc27cb5333947763b20661ede3badec7d4cf4f36f0db3df55fc3b3e463a1",
+    "lib/ui/screens/task_detail_screen.dart": "130032589b1a1606a0c9f7c41dc8a623efea976b3a1d62ab07afc7c80d0d7d8f",
+    "lib/ui/widgets/departure_plan_panel.dart": "9eb1caa8c95073e6eaeb1ec9c21dee63358ff7284842ffe0fb127be86884f06f",
+    "test/departure_rolling_test.dart": "0d8c6a2f30c82d939484a83b74aa676cbc5d842dcce8a9d30ec4dd4080aea5d6",
+    "test/planning_panel_test.dart": "074d2b76dea3d008d5c6f4b029aa970d93eebb8550816e54b7c9adac5c7335ae"
+  },
+  "source_trees": {
+    "lib": "d36628c7cc3a4695fd8897dbbd5281cef9b08ad3",
+    "test": "df274cf3781d5b58114bb8e147397fee3146009d",
+    "scripts": "1a2328b32069629a1a63a4ef134bcee63318d275",
+    "ios": "d7e8db792a14dd575669e5fbf98f18d8a2960587",
+    "macos": "0098fc24dd718af6ef748cca02d5a977d7cd4bd2",
+    "pubspec.lock": "ceca1d3893bc96a16f4f5762e5dbb7266f29ea87"
+  },
+  "toolchain": {
+    "flutter": "3.44.9",
+    "dart": "3.12.2",
+    "flutter_root": "/Users/james/.local/opt/flutter-3.44.9"
+  },
+  "checks": [
+    {
+      "name": "flutter_full",
+      "command": "flutter test --no-pub --reporter expanded --timeout 45s",
+      "result": "passed",
+      "exit_code": 0,
+      "passed": 1508,
+      "log": "/tmp/dontforget-p1-weather-accepted-flutter.log",
+      "log_sha256": "a8b258e0330b6e785c429dd33890d2fa834bc13c26f0a75bebca968975d6f7db",
+      "last_lines": [
+        "00:46 +1507: /Users/james/gitresources/opensources/dontforget/test/appearance_picker_test.dart: appearance options support Tab and activation without text input",
+        "00:46 +1508: /Users/james/gitresources/opensources/dontforget/test/appearance_picker_test.dart: (tearDownAll)",
+        "00:46 +1508: All tests passed!"
+      ]
+    },
+    {
+      "name": "python_full",
+      "command": "python3 -m unittest discover -s scripts/tests -v",
+      "result": "passed",
+      "exit_code": 0,
+      "passed": 126,
+      "log": "/tmp/dontforget-resumed-full-python.log",
+      "log_sha256": "f20bc5a537a9d2b40e978b0aabfd42b769efb574933501bdd67c7bcf079bb2c7",
+      "last_lines": [
+        "Ran 126 tests in 2.251s",
+        "",
+        "OK"
+      ]
+    },
+    {
+      "name": "analyze",
+      "command": "flutter analyze --no-pub",
+      "result": "passed",
+      "exit_code": 0,
+      "passed": null,
+      "log": "/tmp/dontforget-p1-weather-accepted-analyze.log",
+      "log_sha256": "3c97d4ffdc0fd50e75c8346d6caae3d90727c1395920acb63f17ee6edddfba7b",
+      "last_lines": [
+        "Analyzing dontforget...                                         ",
+        "No issues found! (ran in 2.6s)"
+      ]
+    },
+    {
+      "name": "los_angeles",
+      "command": "env TZ=America/Los_Angeles flutter test --no-pub test/departure_refill_recovery_test.dart test/departure_rolling_test.dart test/notification_window_test.dart test/notification_capacity_recovery_test.dart test/notification_capacity_status_test.dart --reporter expanded --timeout 45s",
+      "result": "passed",
+      "exit_code": 0,
+      "passed": 51,
+      "log": "/tmp/dontforget-p1-weather-accepted-dst.log",
+      "log_sha256": "a77374ca9b667c8e8e8e288a0eac233d75e307984ebf2484ef9bc203f885cd8a",
+      "last_lines": [
+        "00:02 +49: /Users/james/gitresources/opensources/dontforget/test/departure_rolling_test.dart: durable independent dates record-only actions can delete copied weather records without changing consent",
+        "00:02 +50: /Users/james/gitresources/opensources/dontforget/test/departure_rolling_test.dart: durable independent dates a departure observation uses only the saved city and weather snapshot",
+        "00:02 +51: All tests passed!"
+      ]
+    }
+  ],
+  "new_tests": 9,
+  "unrelated_existing_docs_unchanged": {
+    "docs/Architecture_Design.md": true,
+    "docs/Developer_Guide.md": true
+  },
+  "scope": {
+    "rolling_departure_days": 60,
+    "darwin_application_budget": 50,
+    "android_application_budget": 400,
+    "weather_prefetch": "opt-in foreground only",
+    "weather_body_valid_at_delivery": true,
+    "record_edits_preserve_saved_settings": true,
+    "clinical_dosage_inference": false
+  },
+  "boundaries": {
+    "new_platform_build": false,
+    "installed": false,
+    "pushed": false,
+    "ci": false,
+    "published": false,
+    "real_weather_request": false,
+    "real_notification_delivery": false,
+    "real_user_database_touched": false
+  },
+  "execution_notes": [
+    "One concurrent Flutter run failed before tests because shared build/native_assets/macos/libsqlite3.dylib was temporarily absent. Final full run executed sequentially and passed.",
+    "Widget SQLite writes run in tester.runAsync; test source and production source are both covered by the final full run."
+  ]
+}
