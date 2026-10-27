@@ -7,6 +7,57 @@ import 'support/interaction_preview.dart';
 
 void main() {
   setUpAll(loadInteractionPreviewFonts);
+  testWidgets(
+    'long actionable feedback keeps Undo and close visible at large text',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      for (final height in [480.0, 900.0]) {
+        tester.view.physicalSize = Size(320, height);
+        late BuildContext page;
+        var undone = false;
+        await tester.pumpWidget(
+          MaterialApp(
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: const TextScaler.linear(2)),
+              child: InlineFeedback(child: child!),
+            ),
+            home: Builder(
+              builder: (context) {
+                page = context;
+                return const Scaffold(body: TextField());
+              },
+            ),
+          ),
+        );
+        await tester.tap(find.byType(TextField));
+        InlineFeedback.of(page).showSnackBar(
+          SnackBar(
+            content: Text('长标题与完整结果说明。' * 40),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () => undone = true,
+            ),
+          ),
+        );
+        await tester.pump();
+        expect(find.text('Undo').hitTestable(), findsOneWidget);
+        expect(find.byIcon(Icons.close_rounded).hitTestable(), findsOneWidget);
+        await tester.sendKeyEvent(LogicalKeyboardKey.f6);
+        await tester.pump();
+        expect(find.text('Undo').hitTestable(), findsOneWidget);
+        await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+        await tester.pump();
+        expect(undone, isTrue);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+      }
+    },
+  );
+
   testWidgets('Undo remains accessible above the Navigator route', (
     tester,
   ) async {

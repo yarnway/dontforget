@@ -128,7 +128,7 @@ class InlineFeedbackState extends State<InlineFeedback> {
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
                           maxHeight: math.max(
-                            48,
+                            message.action == null ? 60 : 96,
                             math.min(
                               240,
                               size.maxHeight -
@@ -138,68 +138,70 @@ class InlineFeedbackState extends State<InlineFeedback> {
                             ),
                           ),
                         ),
-                        child: SingleChildScrollView(
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(14, 6, 4, 6),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 12),
-                                  child: Icon(icon, color: accent, size: 22),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                      top: 12,
-                                      bottom: 12,
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        DefaultTextStyle(
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium!
-                                              .copyWith(
-                                                color: colors.onSurface,
-                                                height: 1.4,
-                                              ),
-                                          child: message.content,
-                                        ),
-                                        if (message.action case final action?)
-                                          TextButton(
-                                            focusNode: _actionFocus,
-                                            onPressed: () {
-                                              hideCurrentSnackBar();
-                                              action.onPressed();
-                                            },
-                                            child: Text(action.label),
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(14, 6, 4, 6),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(top: 12),
+                                child: Icon(icon, color: accent, size: 22),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(
+                                    top: 12,
+                                    bottom: 12,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Flexible(
+                                        child: SingleChildScrollView(
+                                          child: DefaultTextStyle(
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium!
+                                                .copyWith(
+                                                  color: colors.onSurface,
+                                                  height: 1.4,
+                                                ),
+                                            child: message.content,
                                           ),
-                                      ],
-                                    ),
+                                        ),
+                                      ),
+                                      if (message.action case final action?)
+                                        TextButton(
+                                          focusNode: _actionFocus,
+                                          onPressed: () {
+                                            hideCurrentSnackBar();
+                                            action.onPressed();
+                                          },
+                                          child: Text(action.label),
+                                        ),
+                                    ],
                                   ),
                                 ),
-                                Semantics(
-                                  label: MaterialLocalizations.of(
-                                    context,
-                                  ).closeButtonTooltip,
-                                  button: true,
-                                  child: IconButton(
-                                    focusNode: _closeFocus,
-                                    color: colors.onSurfaceVariant,
-                                    onPressed: hideCurrentSnackBar,
-                                    icon: const Icon(
-                                      Icons.close_rounded,
-                                      size: 18,
-                                    ),
+                              ),
+                              Semantics(
+                                label: MaterialLocalizations.of(
+                                  context,
+                                ).closeButtonTooltip,
+                                button: true,
+                                child: IconButton(
+                                  focusNode: _closeFocus,
+                                  color: colors.onSurfaceVariant,
+                                  onPressed: hideCurrentSnackBar,
+                                  icon: const Icon(
+                                    Icons.close_rounded,
+                                    size: 18,
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
