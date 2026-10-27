@@ -13,7 +13,7 @@
 
 ## 测试结果
 
-Flutter 3.44.9、Dart 3.12.2。业务数据全部位于临时目录，通知使用替身。
+Flutter 3.44.9、Dart 3.12.2、Xcode 27.1。用户已确认接电，22:40 系统也独立读回正在充电，随后完成全量与构建。业务数据全部位于临时目录，通知使用替身。
 
 | 验证 | 结果 |
 | --- | --- |
@@ -23,20 +23,33 @@ Flutter 3.44.9、Dart 3.12.2。业务数据全部位于临时目录，通知使�
 | 原规划面板 | 13 项通过，含窄屏英文大字原回归、真实表单加载和有限用药确认 |
 | 备份预检回归 | 86 项通过 |
 | 专项合计 | **126 通过，0 失败**；各项不与此前全量测试相加 |
+| Flutter 全量回归 | **1542 通过，0 失败**，含上述专项；新增源码提交 `6d31e57` |
+| Python 全量脚本 | **126 通过，0 失败** |
 | 静态分析 | **0 issues** |
+| macOS Debug | 构建及严格签名检查通过 |
+| iOS 模拟器 Debug | 主应用与 ReminderActivity 扩展构建通过，平台和 +34 版本一致 |
 
 复现命令：
 
 ```sh
 flutter test --no-pub --concurrency=1 test/saved_task_filters_test.dart test/saved_task_filters_widget_test.dart test/planning_panel_test.dart test/backup_inspector_test.dart --reporter expanded
 flutter analyze --no-pub
+flutter test --no-pub --concurrency=2 --reporter expanded
+python3 -m unittest discover -s scripts/tests -p 'test_*.py'
+flutter build macos --debug --no-pub
+codesign --verify --deep --strict --verbose=2 build/macos/Build/Products/Debug/dont_forget.app
+flutter build ios --simulator --debug --no-pub
 ```
 
-原始本机日志与源码文件摘要见[机器证据](benchmarks/p1-saved-filters-2026-10-27.json)。本阶段尚未重新运行 Flutter 全量、平台构建或原生界面验收；接电后再执行剩余验证，现有 +33 原生跨日结果不覆盖这些新增代码。
+原始本机日志、源码及二进制摘要见[机器证据](benchmarks/p1-saved-filters-2026-10-27.json)。构建复用已有 CocoaPods 包装入口，沿用 1.7.0+34，为本轮源码的本地调试产物；不是已有 rc.34 候选的再次原生验收。未安装或启动这些新构建，常用筛选的原生界面仍待验收。
+
+本页结果对应 `6d31e57` 的源码，验证时工作树 HEAD 为 `a6233e0`，差异仅为验收文档；源码逐文件摘要已保存。主工作区后续并行的未提交源码与文档保持原样，不纳入本页结果。
+
+构建结束后，使用验收脚本的只读校验重新核对冻结 +33：bundle、权限、严格签名、完整框架／资源及原生非签名字节均与最初准备记录一致，源码仍为 `e336f05`。该副本继续关闭，其跨日结果不覆盖新增筛选代码。
 
 ## 后续任务
 
 1. 核对当晚 23:59 与次日 00:02 的真实送达，重开补齐日期并验证去重，再清理本轮隔离队列。
-2. 接电后执行新增代码的全量回归；在后续构建上验收真实筛选界面。
+2. 在隔离身份的后续构建上验收真实筛选界面；源码全量回归与双平台调试构建已完成。
 3. 在新 iPhone 身份签名就绪后重复原生通知矩阵；继续多日、修改／暂停／期满、点击、休眠与真实时区验证。
 4. 常用模板管理、批量操作及基于执行记录的周复盘；多来源校对、实际服用时刻补录及数据保护任务仍按[阶段台账](Recording_Reminders_Phases.md)推进。

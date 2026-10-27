@@ -181,7 +181,9 @@
       "percent": 46,
       "estimated_minutes": 34,
       "earlier_connection_requested": true
-    }
+    },
+    "ac_power_independently_observed_at": "2026-10-27T22:41:24.248457+08:00",
+    "charging_observed": true
   },
   "evidence_directory": "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/p1-window-20261027",
   "private_evidence": {
@@ -308,6 +310,14 @@
     "midnight-parser-tests.log": {
       "bytes": 673,
       "sha256": "41d3dadd47232e1dbaa011919ece285897a5fdd3aa61b26913a7738bf94177ba"
+    },
+    "power-connected-2240.json": {
+      "bytes": 1086,
+      "sha256": "bdb46c6ec2f4dcfba768546bb074e891b63a9367bb0a48d1a520a945f889d397"
+    },
+    "frozen-verification-after-development.json": {
+      "bytes": 473,
+      "sha256": "9ee98b33a5ec6ab727f5518a390e8e33533c84427074d6b7ef8d9efcae4e0e5a"
     }
   },
   "boundaries": {
@@ -333,5 +343,6 @@
   "protected_unrelated_files": 27,
   "protected_unrelated_manifest_sha256": "10ce9aa3e2d3d70c15d88666e8db92804e9b84b80405d4e39fb37eb036907941",
   "protected_unrelated_files_at_integration": 31,
-  "shared_iteration_release_draft_preserved": true
+  "shared_iteration_release_draft_preserved": true,
+  "frozen_artifact_verified_against_original_preparation_after_feature_builds": true
 }

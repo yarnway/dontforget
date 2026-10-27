@@ -47,7 +47,7 @@
 
 ## 自动化证据
 
-- [常用筛选](P1_Saved_Task_Filters.md)：当前分类与关键词的命名保存／应用、重命名、删除撤销、原工作区字段持久化及备份恢复；新增代码专项 126 项通过，三语三种宽度及小屏键盘覆盖。全量及原生界面验证仍待后续执行。
+- [常用筛选](P1_Saved_Task_Filters.md)：当前分类与关键词的命名保存／应用、重命名、删除撤销、原工作区字段持久化及备份恢复；专项 126 项包含三语三种宽度及小屏键盘。新增源码全量 **1542 Flutter、126 Python 通过，静态分析 0 issues，macOS／iOS 模拟器调试构建通过**；未安装或启动新构建，原生筛选界面待验。
 - [departure_rolling_test.dart](../test/departure_rolling_test.dart)、[departure_refill_recovery_test.dart](../test/departure_refill_recovery_test.dart)：独立日期、跨午夜、补排去重、重启保留、长时间缺席、单独删除、整组恢复、独立跳过和天气有效期。
 - [notification_window_test.dart](../test/notification_window_test.dart)、[notification_capacity_recovery_test.dart](../test/notification_capacity_recovery_test.dart)、[notification_capacity_status_test.dart](../test/notification_capacity_status_test.dart)：跨计划容量、取消／提交故障、冷启动和维护恢复、相同时刻覆盖边界、单条待补排状态。
 - [notification_coverage_ui_test.dart](../test/notification_coverage_ui_test.dart)：三语、三种宽度和 2 倍文字、空／未确认状态，以及手动和前台刷新。
@@ -55,7 +55,7 @@
 - [planning_panel_test.dart](../test/planning_panel_test.dart)：375／768／1440、中英日及大字体，实际加载后的五个面板；用药确认真实写入临时库，非法出门输入和损坏草稿处理。
 - [portable_backup_test.dart](../test/portable_backup_test.dart)：附件字节、密钥排除、原件不变、独立恢复路径、摘要变化与损坏拒绝、文件名路径穿越防护、缺失清单及旧会话拒绝。
 - [planning_transport_test.dart](../test/planning_transport_test.dart)：已配置网关及 JSON 提案、非法响应拒绝、天气 API、无模型凭证的城市查询、UTC 时段及异常预报字段。
-- 既有数据库恢复、通知、原文记录、三语布局、输入手势和脚本测试随全量回归执行；最新一轮 **1499 Flutter、126 Python 通过，静态分析 0 issues**，详情见 [P1 机器证据](benchmarks/p1-rolling-window-2026-10-27.json)。
+- 既有数据库恢复、通知、原文记录、三语布局、输入手势和脚本测试随全量回归执行；`e336f05` 的 **1499 Flutter、126 Python 通过，静态分析 0 issues** 见 [P1 机器证据](benchmarks/p1-rolling-window-2026-10-27.json)，新增筛选源码的当前全量结果见上条独立记录。
 
 前一轮 d04a3b0 的合并专项 151 项、洛杉矶时区专项 64 项及双平台构建保留在[原集成证据](benchmarks/p0-p1-integration-2026-10-27.json)。本轮 e336f05 的洛杉矶专项 43 项、macOS arm64 Debug／严格签名检查与 iOS 模拟器主应用／WidgetKit 构建均通过；没有安装或启动新构建，各轮专项不与全量相加。
 

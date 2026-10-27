@@ -39,7 +39,18 @@
         "bottom_inset": 280
       }
     },
-    "all_business_data_in_temporary_directories": true
+    "all_business_data_in_temporary_directories": true,
+    "flutter_full": {
+      "passed": 1542,
+      "failed": 0,
+      "concurrency": 2,
+      "seconds": 142
+    },
+    "python_full": {
+      "passed": 126,
+      "failed": 0,
+      "command": "python3 -m unittest discover -s scripts/tests -p 'test_*.py'"
+    }
   },
   "source_files": {
     "lib/models/saved_task_filter.dart": {
@@ -83,22 +94,95 @@
     "build/p1-saved-filters-final-analysis.log": {
       "bytes": 96,
       "sha256": "270846f1192dfb0cd0810282804d3dd508bdab219dfe547e44759e36c44de481"
+    },
+    "build/p1-saved-filters-full-flutter.log": {
+      "bytes": 301168,
+      "sha256": "8a60668501a72c9177c9c12c834482053de8a77658829b3c15726cddd52d27b3"
+    },
+    "build/p1-saved-filters-full-python.log": {
+      "bytes": 478,
+      "sha256": "f635642066fb5dc87258cc29e5bedc597376e52d61912ae0aa8662bfd7859f05"
+    },
+    "build/p1-saved-filters-macos-build.log": {
+      "bytes": 365,
+      "sha256": "e6131b4ae001d24dd121321bf8d9ada17ea8ca63fe71ebae7b49f94653eca8f5"
+    },
+    "build/p1-saved-filters-macos-signature.log": {
+      "bytes": 2598,
+      "sha256": "1a86443f3c6df7b36c99d2ad24f278074bc4b9d2d3ca262c505a7e95e43b915d"
+    },
+    "build/p1-saved-filters-ios-simulator-build.log": {
+      "bytes": 472,
+      "sha256": "64da4bc18aa2c83e9bf9af452492f683809e775b2fa1a16f263ec67136b56a13"
+    },
+    "build/p1-saved-filters-frozen-signature.log": {
+      "bytes": 2264,
+      "sha256": "509876e2ad6d610092fcfdfb8dfb811e57f36a71aba6a1b4265d96b1bdb6e60f"
     }
   },
   "not_performed": [
-    "Flutter full regression for new source",
-    "new platform builds",
-    "native UI acceptance for saved filters"
+    "native UI acceptance for saved filters",
+    "new physical iPhone acceptance",
+    "CI or release for new source"
   ],
   "frozen_midnight_artifact": {
     "source": "e336f0579eee2238ff0b61dc2ba2d1ceec6ab81d",
     "not_rebuilt_or_launched_during_saved_filters_work": true,
-    "cross_day": "PENDING_REAL_CLOCK - 23:59 and 00:02 Asia/Shanghai"
+    "cross_day": "PENDING_REAL_CLOCK - 23:59 and 00:02 Asia/Shanghai",
+    "verified_against_original_preparation_after_builds": true
   },
   "pushed_or_released": false,
   "documentation_only_base_update": {
     "previous": "f3ef3c89dde89236cbcb337cffd480c4f4842f1f",
     "to": "b60a17d7271901a0f5a332f0143bade076567362",
     "source_and_test_bytes_unchanged": true
-  }
+  },
+  "source_commit": "6d31e57",
+  "validated_checkout": "a6233e08ae63cbfbc56a1343034bdccd6b539ccd",
+  "builds": {
+    "macos_debug": {
+      "result": "PASS",
+      "path": "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/macos/Build/Products/Debug/dont_forget.app",
+      "bundle_id": "com.example.dontForget",
+      "version": "1.7.0",
+      "build": "34",
+      "platform": "MACOS",
+      "native_binary": {
+        "bytes": 41200,
+        "sha256": "bb0ea3c4fb5025948ecc4c16a85a1f8e115bc4967a2dcc0da51119cbbd94df41"
+      },
+      "vtool": "build/macos/Build/Products/Debug/dont_forget.app/Contents/MacOS/dont_forget:\nLoad command 11\n      cmd LC_BUILD_VERSION\n  cmdsize 32\n platform MACOS\n    minos 12.0\n      sdk 27.0\n   ntools 1\n     tool LD\n  version 27037.1\n",
+      "installed_or_started": false,
+      "strict_signature": "PASS"
+    },
+    "ios_simulator_debug": {
+      "result": "PASS",
+      "path": "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/ios/iphonesimulator/Runner.app",
+      "bundle_id": "com.example.dontForget",
+      "version": "1.7.0",
+      "build": "34",
+      "platform": "IOSSIMULATOR",
+      "native_binary": {
+        "bytes": 89296,
+        "sha256": "5b894b706d7d213de941858a4f54e333d6420c227ccc833e0a0fc6867ef87355"
+      },
+      "vtool": "build/ios/iphonesimulator/Runner.app/Runner (architecture x86_64):\nLoad command 11\n      cmd LC_BUILD_VERSION\n  cmdsize 32\n platform IOSSIMULATOR\n    minos 15.0\n      sdk 27.1\n   ntools 1\n     tool LD\n  version 27037.1\nbuild/ios/iphonesimulator/Runner.app/Runner (architecture arm64):\nLoad command 11\n      cmd LC_BUILD_VERSION\n  cmdsize 32\n platform IOSSIMULATOR\n    minos 15.0\n      sdk 27.1\n   ntools 1\n     tool LD\n  version 27037.1\n",
+      "installed_or_started": false
+    },
+    "ios_simulator_extension": {
+      "result": "PASS",
+      "path": "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/ios/iphonesimulator/Runner.app/PlugIns/ReminderActivity.appex",
+      "bundle_id": "com.example.dontForget.ReminderActivity",
+      "version": "1.7.0",
+      "build": "34",
+      "platform": "IOSSIMULATOR",
+      "native_binary": {
+        "bytes": 399968,
+        "sha256": "dccc5ed2bcf2700cc10da800a2f115a0b68e9bc9a69eba31cade72b4e49bcb09"
+      },
+      "vtool": "build/ios/iphonesimulator/Runner.app/PlugIns/ReminderActivity.appex/ReminderActivity (architecture x86_64):\nLoad command 11\n      cmd LC_BUILD_VERSION\n  cmdsize 32\n platform IOSSIMULATOR\n    minos 16.2\n      sdk 27.1\n   ntools 1\n     tool LD\n  version 27037.1\nbuild/ios/iphonesimulator/Runner.app/PlugIns/ReminderActivity.appex/ReminderActivity (architecture arm64):\nLoad command 11\n      cmd LC_BUILD_VERSION\n  cmdsize 32\n platform IOSSIMULATOR\n    minos 16.2\n      sdk 27.1\n   ntools 1\n     tool LD\n  version 27037.1\n",
+      "installed_or_started": false
+    }
+  },
+  "builds_are_not_existing_rc34_candidate": true
 }
