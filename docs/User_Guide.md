@@ -1,6 +1,6 @@
 # DontForget (别忘了) - 完整用户使用指南
 
-欢迎使用 **别忘了 (DontForget)**！这是一款以本地任务管理、录音回放和可选大模型解析为核心的个人备忘录。当前公开候选为 [v1.7.0-rc.27](https://github.com/yarnway/dontforget/releases/tag/v1.7.0-rc.27)，尚未发布稳定版；平台支持与实测范围见 [v1.7 验收总表](Release_Acceptance_v1.7.md)。
+欢迎使用 **别忘了 (DontForget)**！这是一款以本地任务管理、录音回放和可选大模型解析为核心的个人备忘录。当前公开候选为 [v1.7.0-rc.29](https://github.com/yarnway/dontforget/releases/tag/v1.7.0-rc.29)，尚未发布稳定版；平台支持与实测范围见 [v1.7 验收总表](Release_Acceptance_v1.7.md)。
 
 ---
 

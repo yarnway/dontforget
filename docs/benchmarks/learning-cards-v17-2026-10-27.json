@@ -30,19 +30,49 @@
     "acceptance": "real model service, synthetic preview; not native UI"
   },
   "phone": {
-    "installedBuild": 27,
-    "sameIdentityUpgradeFrom": 25,
-    "preLaunchDocumentsFilesUnchanged": 10,
-    "nativeObserved": [
-      "launch",
-      "existing tasks",
-      "light status bar",
-      "study form",
-      "5 words and 1 day options"
+    "installedBuild": 29,
+    "upgradeFrom": [
+      25,
+      27
     ],
-    "newPlanCreatedByAgent": false,
-    "postMigrationSnapshot": "PENDING",
-    "connection": "CoreDevice tunnel unavailable; mirror reconnection timeout"
+    "schema": 13,
+    "preLaunchDocumentsFilesUnchanged": 12,
+    "build": 29,
+    "syntheticTaskId": "36102e5a-8042-456f-a6ae-d7ece82d113f-0",
+    "title": "RC29 Native Vocabulary",
+    "words": 5,
+    "professionalFieldsPersisted": true,
+    "reviewNotificationsEnabled": true,
+    "reminderTime": "2026-10-27T20:30:00.000",
+    "originalThreeTasksUnchanged": true,
+    "snapshotQuiescent": true,
+    "nativeOperations": [
+      "real model preview",
+      "word pagination",
+      "title editing",
+      "confirmed creation"
+    ],
+    "nativeDueDelivery": "PENDING",
+    "cleanup": "PASS",
+    "finalTablesEqualPrelaunch": {
+      "Reminders": 3,
+      "MediaRecords": 4,
+      "Settings": 1
+    },
+    "mediaFilesUnchanged": 4,
+    "reopenedAfterProcessExit": true,
+    "reviewCardReopened": true,
+    "deleteUndoDelete": "PASS",
+    "osPendingAfterCleanup": 2,
+    "osDeliveredAfterCleanup": 0,
+    "appFutureReminders": 2,
+    "appSubmitted": 2,
+    "appUnverified": 0,
+    "appPendingCancel": 0,
+    "clipboardKeyboardSelectAllCutCopyPaste": "PASS",
+    "inputDraftCleared": true,
+    "nativeSoftKeyboardJapanese": "PENDING",
+    "newTaskCountAfterCleanup": 0
   },
   "stableRelease": "NOT_RELEASED",
   "generation": {
@@ -58,5 +88,104 @@
     "conclusion": "cancelled",
     "publicRelease": false,
     "reason": "late keyboard acceptance found long-message Undo outside the visible area; fixed in build 29"
+  },
+  "revision": "67ab63ee79032eeb69c8f0478109b3c1c2cec095",
+  "ci": {
+    "runId": 40454958938,
+    "conclusion": "success",
+    "jobsPassed": 7,
+    "flutterPassed": 1239,
+    "flutterPlatformSkipped": 1,
+    "pythonRan": 124,
+    "pythonPlatformSkipped": 1,
+    "analyze": "PASS"
+  },
+  "release": {
+    "tag": "v1.7.0-rc.29",
+    "published": true,
+    "prerelease": true,
+    "assets": 21,
+    "bodyReadback": "PASS",
+    "sevenPackagesMatchManifests": true,
+    "iosMacFullArchiveChecks": "PASS"
+  },
+  "mac": {
+    "build": 29,
+    "quiescent": true,
+    "schema": 13,
+    "integrity": "ok",
+    "nativeObserved": [
+      "legacy vocabulary card",
+      "word pagination",
+      "edit view",
+      "save",
+      "reopen detail",
+      "compact save feedback"
+    ],
+    "changedColumns": {
+      "Reminders": [],
+      "MediaRecords": [],
+      "Settings": []
+    },
+    "sha256": "61bd8c648bd26e7acb19bf357ff9875dedc94cc573a952c07add61b0d78685e2",
+    "allBusinessTablesUnchanged": true
+  },
+  "realProviderFallback": {
+    "status": "PASS",
+    "revision": "67ab63ee79032eeb69c8f0478109b3c1c2cec095",
+    "events": [
+      {
+        "host": "api.deepseek.com",
+        "httpStatus": 400,
+        "type": "badResponse"
+      },
+      {
+        "host": "generativelanguage.googleapis.com",
+        "httpStatus": 200,
+        "model": "gemini-3.6-flash",
+        "totalTokens": 1806
+      }
+    ],
+    "requests": 2,
+    "elapsedMs": 15738,
+    "words": 5,
+    "usedFallback": true,
+    "modelLabel": "Gemini",
+    "fault": "deliberately invalid primary model sent to real DeepSeek endpoint",
+    "taskDataSent": "synthetic preferences only",
+    "tasksCreated": 0,
+    "deviceSettingsChanged": false,
+    "credentialsPersisted": false
+  },
+  "priorGeminiAttempt": {
+    "status": "FAILED",
+    "events": [
+      {
+        "host": "api.deepseek.com",
+        "httpStatus": 400,
+        "type": "badResponse"
+      },
+      {
+        "host": "generativelanguage.googleapis.com",
+        "httpStatus": 503,
+        "type": "badResponse"
+      }
+    ],
+    "requests": 2,
+    "errorType": "AiRouteFailure",
+    "elapsedMs": 2651
+  },
+  "cleanup": {
+    "removedKiBThisPass": 282608,
+    "projectKiB": 2211312,
+    "priorProtectedFilesUnchanged": 2738,
+    "unrelatedUserFilesUnchanged": 27,
+    "sharedSDKsRemoved": false,
+    "protectedLedgerFiles": 3040,
+    "currentPrivateBuildsRetained": [
+      27,
+      29
+    ],
+    "newVMOrImageCreated": false
   }
 }
