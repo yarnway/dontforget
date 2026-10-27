@@ -807,3 +807,12 @@ CI 与原生验收：
 - 真实 DST、相对硬件唤醒及分发签名限制继续保留各自证据。按用户要求，仅以 macOS/iOS 设备验收作为稳定版设备门槛；通过后再发布稳定版，本次仍为候选。
 
 机器证据：`study-stage31-materials/` 下的 `ci32-final.json`、`release-32/published-readback.json`、`mac32-upgrade-verification.json`、`iphone31-cleanup-verification.json` 和 `cleanup32-removal.json`；完整私有路径均位于 `build/native_acceptance/`。公开说明不含本地业务正文或签名凭据。
+
+
+## P0 后续集成：schema 16 与 macOS 构建（2026-10-27）
+
+- 源码 `25b6d5c` 纳入正式主线的录音与实时活动改动；统一两类独立 v15 到 schema 16，保留 `trigger_time_origin`、`details_json` 及历史记录字段。未知混合结构拒绝升级；JSON／SQLite 恢复与源文件保持已有独立证据。
+- 恢复后的暂停、归档和回收站状态不重新排程或开启实时活动；AI 确认保留用户清单和项目。语音失败副本恢复后继续要求点击发送，回车只换行。
+- 修复 macOS 锁定通知插件没有 CocoaPods 接入的问题，补齐 Podfile、锁文件、工程与 xcconfig。arm64 Debug 构建及 ad-hoc 严格签名检查通过，没有安装或启动。
+- Flutter 全量 **1387 通过、0 失败**；Python **126 通过**；静态分析 **0 issues**；洛杉矶时区下 schema 16／P0 专项 **32 通过**，转写失败恢复 iOS／Android **2 通过**，专项不累加计数。[本轮证据](benchmarks/p0-integration-v16-2026-10-27.json)。
+- 主工作区仍有并行的场景、管理与附件备份代码未提交，未被本轮覆盖；待稳定后合入主线再回归。真实设备的 schema 16 升级、强制退出、采集、通知送达与点击、iOS 新包、CI 和发布均待独立验收。

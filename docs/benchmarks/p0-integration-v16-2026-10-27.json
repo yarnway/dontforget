@@ -1,0 +1,139 @@
+{
+  "date": "2026-10-27",
+  "source_commit": "25b6d5c57af7ff995a786788510979616b6538c9",
+  "scope": "local-integration-branch-and-isolated-tests",
+  "schema": 16,
+  "source_trees": {
+    "lib": "ff439fec2878a7aa42c96f4d360778f0a6f52c0f",
+    "test": "5e6551acacabbc50d0381c9ec59dc4dd6a6ac4bb",
+    "scripts": "1a2328b32069629a1a63a4ef134bcee63318d275",
+    "macos": "0098fc24dd718af6ef748cca02d5a977d7cd4bd2",
+    "ios": "cde239bffb38983eca74f347ec8ba2331263ee0e"
+  },
+  "toolchain": {
+    "flutter": "3.44.9",
+    "dart": "3.12.2",
+    "xcode": "27.1",
+    "xcode_build": "27A9275",
+    "cocoapods": "1.16.2"
+  },
+  "checks": [
+    {
+      "name": "flutter_full",
+      "command": "flutter test --no-pub --reporter expanded --timeout 45s",
+      "exit_code": 0,
+      "passed": 1387,
+      "failed": 0,
+      "log_sha256": "f9cbce41008fd8ca8fa9788c0a2f832bee1b8f4a86f82b3df9f1b97d7022813b"
+    },
+    {
+      "name": "python_full",
+      "command": "python3 -m unittest discover -s scripts/tests -v",
+      "exit_code": 0,
+      "passed": 126,
+      "failed": 0,
+      "log_sha256": "93f4b917f96e843c5523d0dfd5b8d96dc7ab136d02ec2f5489b6f720b4b7b4c6"
+    },
+    {
+      "name": "analysis",
+      "command": "flutter analyze --no-pub",
+      "exit_code": 0,
+      "log_sha256": "53bd6b84b04f592713cade76c3f8780826a21033596ff1c0252f8700450b2e43"
+    },
+    {
+      "name": "timezone_focused",
+      "command": "TZ=America/Los_Angeles flutter test --no-pub --reporter expanded --timeout 45s test/schema16_integration_test.dart test/p0_record_reminder_test.dart",
+      "exit_code": 0,
+      "passed": 32,
+      "failed": 0,
+      "log_sha256": "38d47576ec1e3c820ab7409686850b4d195786d9540a401da0a75d723bc223cf"
+    },
+    {
+      "name": "voice_failure_recovery",
+      "command": "flutter test --no-pub --reporter expanded --timeout 45s test/task_workspace_ux_test.dart --plain-name \"recovering failed voice text still requires an explicit send\"",
+      "exit_code": 0,
+      "passed": 2,
+      "failed": 0,
+      "log_sha256": "c4435219a8b1700b55950fd88c3a76d693c692aa1d53cc753fa88886a51d34c9"
+    },
+    {
+      "name": "macos_debug_build",
+      "command": "flutter build macos --debug --no-pub",
+      "exit_code": 0,
+      "log_sha256": "e6131b4ae001d24dd121321bf8d9ada17ea8ca63fe71ebae7b49f94653eca8f5"
+    },
+    {
+      "name": "macos_signature",
+      "command": "codesign --verify --deep --strict build/macos/Build/Products/Debug/dont_forget.app",
+      "exit_code": 0,
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "counting": "focused checks repeat tests included in the full count; do not add counts",
+  "build": {
+    "kind": "macos-debug-build-only",
+    "path": "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/macos/Build/Products/Debug/dont_forget.app",
+    "bundle_id": "com.example.dontForget",
+    "version": "1.7.0",
+    "build": "32",
+    "architecture": "arm64",
+    "signing": "adhoc",
+    "strict_signature_check": "pass",
+    "installed": false,
+    "launched": false,
+    "file_and_link_count": 66,
+    "file_bytes": 150180492,
+    "tree_identity_sha256": "5cd4fcdeae2d9c4babf8ea5100988f509161306609f94e7f51f99ff4701a0304"
+  },
+  "initial_build_failure": {
+    "reason": "notification plugin has no Swift Package Manager support and macOS had no CocoaPods integration",
+    "resolved_by": "project Podfile, lockfile, xcconfigs, Xcode project and workspace integration"
+  },
+  "main_integration": {
+    "status": "not_executed_due_to_overlapping_uncommitted_changes",
+    "observed_head": "c9b793cd0f1336824e0843ee0fcfde056829e17e",
+    "overlapping_paths": [
+      "lib/data/database_helper.dart",
+      "lib/models/notification_schedule_status.dart",
+      "lib/models/reminder.dart",
+      "lib/models/task_details.dart",
+      "lib/providers/home_controller.dart",
+      "lib/providers/providers.dart",
+      "lib/providers/task_statistics_provider.dart",
+      "lib/services/context_trigger_service.dart",
+      "lib/services/dynamic_urgency_service.dart",
+      "lib/services/learning_queue_service.dart",
+      "lib/services/llm_service.dart",
+      "lib/services/notification_service.dart",
+      "lib/services/recovery/backup_inspector.dart",
+      "lib/services/spaced_repetition_service.dart",
+      "lib/services/task_search_index.dart",
+      "lib/ui/screens/home_screen.dart",
+      "lib/ui/screens/task_detail_screen.dart",
+      "lib/ui/widgets/task_board_data.dart",
+      "lib/ui/widgets/task_card.dart",
+      "lib/ui/widgets/task_workspace_overview.dart",
+      "test/appearance_storage_test.dart",
+      "test/backup_inspector_test.dart",
+      "test/database_test.dart",
+      "test/fixtures/schema_v15.sql",
+      "test/recording_reminders_phase1_test.dart",
+      "test/schema9_recovery_test.dart",
+      "test/study_plan_storage_test.dart",
+      "test/task_detail_screen_test.dart",
+      "test/task_workspace_ux_test.dart",
+      "test/upgrade_acceptance_test.dart"
+    ],
+    "primary_files_mutated": false
+  },
+  "not_executed": [
+    "new-app-runtime",
+    "user-database-migration",
+    "native-notification-delivery",
+    "real-process-forced-exit",
+    "new-iOS-build-or-installation",
+    "push",
+    "CI",
+    "release"
+  ]
+}
