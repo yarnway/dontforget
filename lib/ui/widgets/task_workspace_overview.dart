@@ -96,11 +96,13 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
     final rows = <Object>[];
     final completed = view == 'all' && _showCompleted
         ? widget.reminders
-              .where((task) => task.isVisible && task.isCompleted)
+              .where((task) => task.isWorkspaceItem && task.isCompleted)
               .toList()
         : const <Reminder>[];
     final tasks =
-        widget.reminders.where((r) => r.isVisible && !r.isCompleted).toList()
+        widget.reminders
+            .where((r) => r.isWorkspaceItem && !r.isCompleted)
+            .toList()
           ..sort((a, b) {
             final learning = (a.spacedRepetitionLevel > 0 ? 1 : 0).compareTo(
               b.spacedRepetitionLevel > 0 ? 1 : 0,

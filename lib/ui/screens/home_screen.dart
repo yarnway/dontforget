@@ -28,6 +28,8 @@ import '../widgets/focus_mode_sheet.dart';
 import '../widgets/context_digest_sheet.dart';
 import '../widgets/task_workspace_overview.dart';
 import '../widgets/learning_queue_panel.dart';
+import '../widgets/planning_panel.dart';
+import '../../l10n/planning_strings.dart';
 import 'notification_repair_screen.dart';
 import '../../providers/workspace_drafts_provider.dart';
 import '../widgets/data_export_sheet.dart';
@@ -49,6 +51,7 @@ enum _WorkspaceTool {
   agent,
   study,
   learning,
+  planning,
 }
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -481,7 +484,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   List<Reminder> _visibleNotices(List<Reminder> reminders, DateTime now) {
     return reminders.where((r) {
-      if (r.isCompleted ||
+      if (!r.canNotify ||
           r.triggerTime == null ||
           _notifications.isSuppressed(r)) {
         return false;
@@ -1200,6 +1203,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           MaterialPageRoute(builder: (_) => const SettingsScreen()),
         ),
       ),
+      CommandPaletteAction(
+        id: 'planning',
+        title: planningText(context, 'planning'),
+        subtitle: planningText(context, 'planningHint'),
+        icon: Icons.event_repeat,
+        shortcut: '/plans',
+        onExecute: () => _selectTool(_WorkspaceTool.planning),
+      ),
     ]);
     return true;
   }
@@ -1326,7 +1337,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Widget build(BuildContext context) {
     final reminders = ref
         .watch(remindersProvider)
-        .where((r) => r.isVisible)
+        .where((r) => r.isWorkspaceItem)
         .toList();
     final l10n = AppLocalizations.of(context);
     final homeState = ref.watch(homeControllerProvider);
@@ -1717,6 +1728,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                               setState(() => _toolBusy = value),
                         ),
                         _WorkspaceTool.learning => LearningQueuePanel(
+                          onClose: _closeWorkspaceTool,
+                        ),
+                        _WorkspaceTool.planning => PlanningPanel(
                           onClose: _closeWorkspaceTool,
                         ),
                         null => null,

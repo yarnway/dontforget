@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:uuid/uuid.dart';
 import 'reminder.dart';
+import 'task_details.dart';
 import 'vocabulary_entry.dart';
 
 enum StudyExam { cet4, cet6, postgraduate, ielts, toefl }
@@ -199,6 +200,10 @@ class StudyPlan {
           return Reminder(
             id: '$id-$i',
             taskTitle: edited[i].title.trim(),
+            detailsJson: TaskDetails(
+              kind: 'study',
+              data: {'study_plan_id': id, 'batch': i},
+            ).encode(),
             taskSummary: edited[i].content.trim(),
             quadrantLevel: 2,
             triggerTime: date,

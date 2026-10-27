@@ -283,16 +283,24 @@ void main() {
       await show(tester, TaskDetailsDialog(task: task));
       await tester.runAsync(command(tester, 'Delete Task'));
       await tester.pumpAndSettle();
-      expect(container.read(remindersProvider), isEmpty);
+      expect(
+        container.read(remindersProvider).where((r) => r.isVisible),
+        isEmpty,
+      );
+      final trashed = container.read(remindersProvider).single.toJson();
       expect(find.text('Undo'), findsOneWidget);
       await tester.runAsync(advanceGeneration);
       await tester.tap(find.text('Undo'));
       await tester.pumpAndSettle();
-      expect(container.read(remindersProvider), isEmpty);
+      expect(
+        container.read(remindersProvider).where((r) => r.isVisible),
+        isEmpty,
+      );
       expect(
         find.text('Could not update this reminder. Please try again.'),
         findsOneWidget,
       );
+      expect(container.read(remindersProvider).single.toJson(), trashed);
       expect(notifications.scheduled, isEmpty);
       await tester.pumpWidget(const SizedBox());
     },

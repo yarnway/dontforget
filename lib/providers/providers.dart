@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:crypto/crypto.dart';
+import 'package:sqflite/sqflite.dart' show DatabaseExecutor;
 import '../services/recovery/runtime_gate.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/database_helper.dart';
 import '../models/settings.dart';
 import '../models/reminder.dart';
+import '../models/task_details.dart';
 import '../models/notification_schedule_status.dart';
 import '../services/notification_schedule_reader.dart';
 import '../services/notification_permission_service.dart';
@@ -25,6 +28,8 @@ import '../services/data_export_service.dart';
 import '../services/dynamic_urgency_service.dart';
 import '../services/bidirectional_link_service.dart';
 import '../services/context_trigger_service.dart';
+
+part 'task_management.dart';
 
 final databaseHelperProvider = Provider<DatabaseHelper>((ref) {
   return DatabaseHelper.instance;
@@ -802,7 +807,40 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           );
           if (rows.isEmpty) throw StateError('Task no longer exists.');
           final current = Reminder.fromJson(rows.single);
+          if (changes.containsKey('details_json') &&
+              before != null &&
+              current.detailsJson != before.detailsJson) {
+            throw const StaleReminderOccurrenceException();
+          }
           var saved = Reminder.fromJson({...current.toJson(), ...changes});
+          if (changes.isNotEmpty) {
+            final at = DateTime.now();
+            final statusChanged = saved.isCompleted != current.isCompleted;
+            final medication = current.details.kind == 'medication';
+            saved = saved.copyWith(
+              detailsJson: saved.details
+                  .record(
+                    statusChanged
+                        ? saved.isCompleted
+                              ? medication
+                                    ? 'taken'
+                                    : 'completed'
+                              : 'reopened'
+                        : 'edited',
+                    at,
+                    scheduled: current.eventTime ?? current.triggerTime,
+                  )
+                  .patch({
+                    if (statusChanged)
+                      'completed_at': saved.isCompleted
+                          ? at.toIso8601String()
+                          : null,
+                    if (statusChanged && medication)
+                      'dose_outcome': saved.isCompleted ? 'taken' : null,
+                  })
+                  .encode(),
+            );
+          }
           if (saved.isPinned &&
               (!current.isPinned || current.isCompleted) &&
               !saved.isCompleted) {
@@ -812,6 +850,15 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
               where: 'is_pinned = 1 AND is_completed = 0',
             );
             if (pinned.length >= 3) throw const PinLimitException();
+          }
+          if (current.details.kind == 'medication' &&
+              (saved.isRecurring ||
+                  saved.spacedRepetitionLevel > 0 ||
+                  saved.eventTime != current.eventTime ||
+                  saved.triggerTime != current.triggerTime)) {
+            throw StateError(
+              'Change medication timing through its course preview',
+            );
           }
           // Editing a learning alarm also edits its review date. Clearing the
           // alarm returns it to an app-only review card instead of resurrecting
@@ -1020,6 +1067,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     DataGeneration? generation,
     int dailyLimit = 20,
     int newLimit = 10,
+    List<int> intervals = const [1, 2, 4, 7, 15],
   }) => _enqueue(
     (ticket) => _dbHelper.runOperation(ticket, () async {
       final at = now ?? DateTime.now();
@@ -1051,6 +1099,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           grade,
           at,
           target.nextReviewAt ?? target.triggerTime ?? at,
+          intervals: intervals,
         );
         all[key] = progress;
         final changed = <Reminder>[];
@@ -1089,6 +1138,14 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
                   clock.minute,
                 );
           final next = task.copyWith(
+            detailsJson: task.details
+                .record(
+                  'word_review',
+                  at,
+                  scheduled: task.nextReviewAt,
+                  note: '$key:$grade',
+                )
+                .encode(),
             wordProgressJson: jsonEncode({
               for (final entry in local.entries)
                 entry.key: entry.value.toJson(),
@@ -1196,6 +1253,37 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     return failed;
   }
 
+  static DateTime _eventForTrigger(Reminder current, DateTime trigger) {
+    final event = current.recurrenceEventAnchorTime ?? current.eventTime!;
+    final alarm = current.recurrenceAnchorTime ?? current.triggerTime!;
+    final dayOffset = DateTime.utc(
+      event.year,
+      event.month,
+      event.day,
+    ).difference(DateTime.utc(alarm.year, alarm.month, alarm.day)).inDays;
+    return event.isUtc
+        ? DateTime.utc(
+            trigger.year,
+            trigger.month,
+            trigger.day + dayOffset,
+            event.hour,
+            event.minute,
+            event.second,
+            event.millisecond,
+            event.microsecond,
+          )
+        : DateTime(
+            trigger.year,
+            trigger.month,
+            trigger.day + dayOffset,
+            event.hour,
+            event.minute,
+            event.second,
+            event.millisecond,
+            event.microsecond,
+          );
+  }
+
   static const _noticeMetadata = {
     'notice_revision',
     'notice_acknowledged_at',
@@ -1218,6 +1306,15 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       a.isVisible != b.isVisible ||
       jsonEncode(a.details.repeat?.toJson()) !=
           jsonEncode(b.details.repeat?.toJson());
+
+  void _publishManaged(Iterable<Reminder> saved) {
+    if (!mounted) return;
+    final updates = {for (final item in saved) item.id: item};
+    state = [
+      for (final item in state) updates.remove(item.id) ?? item,
+      ...updates.values,
+    ];
+  }
 
   void _publish(Iterable<Reminder> saved) {
     if (!mounted) return;
@@ -1312,13 +1409,15 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           );
           final current = rows.isEmpty ? null : Reminder.fromJson(rows.single);
           if (current == null ||
-              !current.isVisible ||
-              current.details.paused ||
-              current.isCompleted ||
+              (!current.isVisible ||
+                  current.details.paused ||
+                  current.isCompleted ||
+                  current.details.kind == 'medicationPlan') ||
               (action == _ReminderAction.skip && !current.isRecurring) ||
               current.occurrenceIdentity != wanted.occurrenceIdentity ||
               (action == _ReminderAction.snooze &&
-                  current.noticeAcknowledgedAt != null) ||
+                  (!current.canNotify ||
+                      current.noticeAcknowledgedAt != null)) ||
               (action != _ReminderAction.complete &&
                   current.triggerTime == null) ||
               ((action == _ReminderAction.snooze ||
@@ -1364,7 +1463,22 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
                   ? ReminderTimeOrigin.manual
                   : ReminderTimeOrigin.unknown,
               eventTime:
-                  !snooze && nextTime != null && current.eventTime != null
+                  !snooze &&
+                      nextTime != null &&
+                      current.details.kind == 'departure'
+                  ? nextTime.add(
+                      Duration(minutes: current.details.data['lead'] as int),
+                    )
+                  : !snooze &&
+                        nextTime != null &&
+                        current.eventTime != null &&
+                        current.details.repeat != null &&
+                        !const {
+                          'monthly',
+                          'yearly',
+                        }.contains(current.recurrenceRule)
+                  ? _eventForTrigger(current, nextTime)
+                  : !snooze && nextTime != null && current.eventTime != null
                   ? current
                         .copyWith(
                           triggerTime:
@@ -1380,6 +1494,53 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
                               : now,
                         )
                   : current.eventTime,
+              detailsJson:
+                  current.detailsJson == null &&
+                      current.details.kind == 'task' &&
+                      current.details.history.isEmpty
+                  ? const TaskDetails()
+                        .record(
+                          snooze
+                              ? 'snoozed'
+                              : action == _ReminderAction.skip
+                              ? 'skipped'
+                              : 'completed',
+                          now,
+                          scheduled: current.eventTime ?? current.triggerTime,
+                        )
+                        .patch({
+                          'completed_at': nextTime == null
+                              ? now.toIso8601String()
+                              : null,
+                        })
+                        .encode()
+                  : current.details
+                        .record(
+                          snooze
+                              ? 'snoozed'
+                              : action == _ReminderAction.skip
+                              ? 'skipped'
+                              : current.details.kind == 'medication'
+                              ? 'taken'
+                              : 'completed',
+                          now,
+                          scheduled: current.eventTime ?? current.triggerTime,
+                        )
+                        .patch({
+                          'completed_at': nextTime == null
+                              ? now.toIso8601String()
+                              : null,
+                          if (!snooze && current.details.kind == 'medication')
+                            'dose_outcome': 'taken',
+                          if (!snooze && nextTime != null)
+                            'checklist': [
+                              for (final item in current.details.checklist)
+                                item
+                                    .copyWith(done: item.once && item.done)
+                                    .toJson(),
+                            ],
+                        })
+                        .encode(),
               isCompleted: nextTime == null,
               isPinned: snooze ? current.isPinned : false,
               noticeRevision: current.noticeRevision + 1,
@@ -1564,6 +1725,15 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     });
   }
 
+  Future<ReminderActionResult> trashTask(
+    Reminder expected,
+    DataGeneration generation,
+  ) => _lifecycleResult(expected, 'trash', generation);
+  Future<ReminderActionResult> restoreTrashedTask(
+    Reminder expected,
+    DataGeneration generation,
+  ) => _lifecycleResult(expected, 'restore', generation);
+
   Future<ReminderActionResult> deleteReminder(String id) =>
       _enqueue((generation) => _deleteReminder(id, generation));
 
@@ -1586,13 +1756,14 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         where: 'id = ?',
         whereArgs: [id],
       );
+      if (rows.isNotEmpty) {
+        await _archiveLearning(txn, Reminder.fromJson(rows.single));
+      }
       await txn.delete('Reminders', where: 'id = ?', whereArgs: [id]);
       return rows.isEmpty ? null : Reminder.fromJson(rows.single);
     });
     _dbHelper.checkGeneration(generation);
-    if (mounted) {
-      state = state.where((r) => r.id != id).toList();
-    }
+    await _loadReminders(generation, runEffects: false);
     return ReminderActionResult(
       deleted == null
           ? ReminderActionDisposition.alreadyApplied
@@ -1613,18 +1784,18 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         throw StateError('Reminder state is no longer active.');
       }
       final ids = await _dbHelper.writeTransaction(generation, (txn) async {
-        final rows = await txn.query(
-          'Reminders',
-          columns: ['id'],
-          where: 'is_completed = 1',
-        );
-        await txn.delete('Reminders', where: 'is_completed = 1');
-        return rows.map((row) => row['id'] as String).toList();
+        final rows = (await txn.query('Reminders', where: 'is_completed = 1'))
+            .map(Reminder.fromJson)
+            .where((row) => row.details.data['learning_archive'] != true)
+            .toList();
+        for (final row in rows) {
+          await _archiveLearning(txn, row);
+          await txn.delete('Reminders', where: 'id = ?', whereArgs: [row.id]);
+        }
+        return rows.map((row) => row.id).toList();
       });
       _dbHelper.checkGeneration(generation);
-      if (mounted) {
-        state = state.where((r) => !r.isCompleted).toList();
-      }
+      await _loadReminders(generation, runEffects: false);
       var failures = 0;
       for (final id in ids) {
         if (await _synchronizeNotification(

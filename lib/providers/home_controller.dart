@@ -239,16 +239,19 @@ class HomeController extends StateNotifier<HomeState> {
           .firstOrNull;
       if (raw != null) {
         if (preview && !raw.capturePending) return;
-        final source = raw.copyWith(
+        var source = raw.copyWith(
           sourceText: originalText ?? raw.sourceText,
           taskSummary: raw.taskSummary == raw.sourceText
               ? originalText ?? raw.taskSummary
               : raw.taskSummary,
         );
-        await notifier.updateReminderForGeneration(
+        final updatedSource = await notifier.updateReminderForGeneration(
           source,
           generation,
           baseline: raw,
+        );
+        source = source.copyWith(
+          detailsJson: updatedSource.reminder?.detailsJson,
         );
         if (preview) {
           await notifier.enrichCapture(source, tasks, generation);

@@ -52,8 +52,17 @@ class Reminder {
   final String? detailsJson;
   late final TaskDetails details = TaskDetails.decode(detailsJson);
   bool get isVisible => !details.hidden;
+  bool get isWorkspaceItem => isVisible && details.kind != 'medicationPlan';
   bool get canNotify =>
-      isVisible && !isCompleted && !details.paused && triggerTime != null;
+      isVisible &&
+      !isCompleted &&
+      !details.paused &&
+      triggerTime != null &&
+      (details.repeat?.end == null ||
+          !(snoozedAt == null
+                  ? triggerTime!
+                  : recurrenceAnchorTime ?? eventTime ?? triggerTime!)
+              .isAfter(details.repeat!.end!));
   final bool isPinned;
   final DateTime? recurrenceEventAnchorTime;
   final bool isCompleted;

@@ -148,7 +148,7 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
       if (task == null) throw StateError('Task no longer exists');
       final result = await database.runOperation(
         generation,
-        () => notifier.deleteReminder(task.id),
+        () => notifier.trashTask(task, generation),
       );
       final deleted = result.reminder ?? task;
       database.checkGeneration(generation);
@@ -166,7 +166,7 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
               try {
                 final restored = await database.runOperation(
                   generation,
-                  () => notifier.restoreDeletedReminder(deleted, generation),
+                  () => notifier.restoreTrashedTask(deleted, generation),
                 );
                 if (restored.nativeSyncFailed && feedback.mounted) {
                   feedback.showSnackBar(

@@ -14,7 +14,7 @@ class TaskSearchNotifier extends AutoDisposeNotifier<TaskSearchIndex> {
   @override
   TaskSearchIndex build() {
     return _previous = TaskSearchIndex(
-      ref.watch(remindersProvider),
+      ref.watch(remindersProvider).where((r) => r.isWorkspaceItem).toList(),
       previous: _previous,
     );
   }

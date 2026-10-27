@@ -15,6 +15,8 @@ import '../../services/context_trigger_service.dart';
 import '../../services/notification_permission_service.dart';
 import '../../services/notification_schedule_reader.dart';
 import '../../l10n/app_localizations.dart';
+import '../../l10n/planning_strings.dart';
+import '../widgets/planning_panel.dart';
 import 'knowledge_graph_screen.dart';
 import 'settings_screen.dart';
 import 'notification_repair_screen.dart';
@@ -539,7 +541,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       if (generation == null) throw StateError('Editor unavailable');
       final result = await database.runOperation(
         generation,
-        () => notifier.deleteReminder(task.id),
+        () => notifier.trashTask(task, generation),
       );
       final deleted = result.reminder ?? task;
       database.checkGeneration(generation);
@@ -557,7 +559,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 try {
                   final restored = await database.runOperation(
                     generation,
-                    () => notifier.restoreDeletedReminder(deleted, generation),
+                    () => notifier.restoreTrashedTask(deleted, generation),
                   );
                   if (restored.nativeSyncFailed && feedback.mounted) {
                     feedback.showSnackBar(
@@ -870,6 +872,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Form controls without text listeners also change the draft. Compute this
+    // before building either the Live Activity action or the navigation guard.
+    _reportedDirty = _captureDraft() != _savedDraft;
     final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).colorScheme.primary;
@@ -920,6 +925,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             ),
             tooltip: _isCompleted
                 ? l10n.get('markUndone')
+                : widget.task.details.kind == 'medication'
+                ? planningText(context, 'taken')
                 : l10n.get('markDone'),
             onPressed: _isMutating
                 ? null
@@ -1004,6 +1011,36 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if (widget.task.details.kind == 'medication' &&
+                        widget.task.details.planId != null)
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.medication_outlined),
+                        label: Text(
+                          planningText(context, 'editMedicationPlan'),
+                        ),
+                        onPressed: _isMutating
+                            ? null
+                            : () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (routeContext) => Scaffold(
+                                    appBar: AppBar(
+                                      title: Text(
+                                        planningText(
+                                          routeContext,
+                                          'medication',
+                                        ),
+                                      ),
+                                    ),
+                                    body: PlanningPanel(
+                                      initialMedicationId:
+                                          widget.task.details.planId,
+                                      onClose: () =>
+                                          Navigator.pop(routeContext),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                      ),
                     // 1. Status & Category Banner Card
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -2052,7 +2089,6 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         ),
       ),
     );
-    _reportedDirty = _captureDraft() != _savedDraft;
     return PopScope(
       canPop: _allowPop || (!_isMutating && !_reportedDirty),
       onPopInvokedWithResult: (didPop, result) {

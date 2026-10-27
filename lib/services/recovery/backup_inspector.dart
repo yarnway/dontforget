@@ -1,3 +1,6 @@
+import '../../models/task_details.dart';
+import '../../models/medication_plan.dart';
+import '../../models/departure_plan.dart';
 import '../../models/settings.dart';
 import '../../models/reminder.dart';
 import '../learning_queue_service.dart';
@@ -12,7 +15,6 @@ import 'package:sqflite/sqflite.dart' as sqflite;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../../data/schema_14_compatibility.dart';
 import '../../data/schema_15_compatibility.dart';
-import '../../models/task_details.dart';
 import '../../models/stored_datetime.dart';
 import '../../models/stored_json.dart';
 import '../local_media_store.dart';
@@ -995,6 +997,18 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
           'yearly',
         ].contains(row['recurrence_rule'])) {
       _fail(BackupInspectionError.invalidData);
+    }
+    if (data['version'] >= 15) {
+      try {
+        final details = TaskDetails.decode(row['details_json'] as String?);
+        if (details.kind == 'medicationPlan') {
+          MedicationPlan.fromJson(details.data);
+        }
+        if (details.kind == 'medication') Medicine.fromJson(details.data);
+        if (details.kind == 'departure') DeparturePlan.fromJson(details.data);
+      } catch (_) {
+        _fail(BackupInspectionError.invalidData);
+      }
     }
     if (data['version'] >= 14) {
       try {

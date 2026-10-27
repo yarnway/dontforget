@@ -33,7 +33,7 @@ class TaskBoardData {
     }
 
     for (final task in reminders) {
-      if (!task.isVisible) continue;
+      if (!task.isWorkspaceItem) continue;
       final index = task.quadrantLevel - 1;
       if (index < 0 || index >= sections.length) continue;
       if (!task.isCompleted) pending[index]++;

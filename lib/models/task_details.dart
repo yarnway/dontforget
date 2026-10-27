@@ -14,6 +14,7 @@ class TaskDetails {
     this.deletedAt,
     this.archivedAt,
     this.completedAt,
+    this.doseOutcome,
     this.kind = 'task',
     this.planId,
     this.data = const {},
@@ -26,6 +27,13 @@ class TaskDetails {
   final bool paused;
   final DateTime? deletedAt, archivedAt, completedAt;
   final String kind;
+  final String? doseOutcome;
+  String? get effectiveDoseOutcome =>
+      doseOutcome ??
+      history
+          .where((e) => e.action == 'taken' || e.action == 'not_taken')
+          .lastOrNull
+          ?.action;
   final String? planId;
   final Map<String, dynamic> data;
   bool get hidden => deletedAt != null || archivedAt != null;
@@ -50,6 +58,7 @@ class TaskDetails {
       'deleted_at',
       'archived_at',
       'completed_at',
+      'dose_outcome',
       'kind',
       'plan_id',
       'data',
@@ -77,6 +86,10 @@ class TaskDetails {
     }.contains(kind)) {
       throw const FormatException('Invalid task kind');
     }
+    final outcome = json['dose_outcome'];
+    if (outcome != null && !const {'taken', 'not_taken'}.contains(outcome)) {
+      throw const FormatException('Invalid dose outcome');
+    }
     final data = json['data'] ?? <String, dynamic>{};
     if (data is! Map<String, dynamic> || jsonEncode(data).length > 65536) {
       throw const FormatException('Invalid task data');
@@ -97,9 +110,12 @@ class TaskDetails {
       deletedAt: date(json['deleted_at']),
       archivedAt: date(json['archived_at']),
       completedAt: date(json['completed_at']),
+      doseOutcome: outcome as String?,
       kind: kind,
       planId: json['plan_id'] == null ? null : text(json['plan_id'], 160),
-      data: Map.unmodifiable(data),
+      data: Map<String, dynamic>.unmodifiable(
+        data.map((key, value) => MapEntry(key, _freeze(value))),
+      ),
     );
   }
 
@@ -137,6 +153,7 @@ class TaskDetails {
     'deleted_at': deletedAt?.toIso8601String(),
     'archived_at': archivedAt?.toIso8601String(),
     'completed_at': completedAt?.toIso8601String(),
+    'dose_outcome': doseOutcome,
     'kind': kind,
     'plan_id': planId,
     'data': data,
@@ -337,16 +354,34 @@ class RepeatWindow {
         continue;
       }
       final week = (offset + base.weekday - 1) ~/ 7;
+      var businessDays = offset ~/ 7 * 5;
+      for (var day = 1; day <= offset % 7; day++) {
+        if (DateTime.utc(base.year, base.month, base.day + day).weekday <= 5) {
+          businessDays++;
+        }
+      }
       final matches = rule == 'weekly'
           ? week % interval == 0 &&
                 (weekdays.isEmpty
                     ? candidate.weekday == base.weekday
                     : weekdays.contains(candidate.weekday))
-          : offset % interval == 0 &&
+          : (rule == 'workday'
+                    ? businessDays % interval == 0
+                    : offset % interval == 0) &&
                 (rule != 'workday' || candidate.weekday <= 5) &&
                 (weekdays.isEmpty || weekdays.contains(candidate.weekday));
       if (matches) return candidate;
     }
     return null;
   }
+}
+
+Object? _freeze(Object? value) {
+  if (value is Map<String, dynamic>) {
+    return Map<String, dynamic>.unmodifiable(
+      value.map((key, entry) => MapEntry(key, _freeze(entry))),
+    );
+  }
+  if (value is List) return List.unmodifiable(value.map(_freeze));
+  return value;
 }

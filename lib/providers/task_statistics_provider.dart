@@ -4,6 +4,6 @@ import 'providers.dart';
 
 final taskStatisticsProvider = Provider.autoDispose<TaskStatistics>((ref) {
   return TaskStatistics.from(
-    ref.watch(remindersProvider).where((r) => r.isVisible),
+    ref.watch(remindersProvider).where((r) => r.isWorkspaceItem).toList(),
   );
 });

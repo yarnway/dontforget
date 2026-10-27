@@ -7,7 +7,7 @@
 
 [使用指南](docs/User_Guide.md) · [开发指南](docs/Developer_Guide.md) · [架构](docs/Architecture_Design.md) · [变更日志](docs/Changelog.md)
 
-当前工作区的“记录与提醒”优化及后续阶段见[分阶段功能清单](docs/Recording_Reminders_Phases.md)，其中开发中功能与公开候选分别记录。
+当前工作区的“记录与提醒”优化及后续阶段见[分阶段功能清单](docs/Recording_Reminders_Phases.md)，其中开发中功能与公开候选分别记录。 本轮新增的用药计划、出门清单、附件备份和学习管理入口见[实现与验收索引](docs/Planning_Implementation.md)，尚未计入本轮安装包验收。
 
 ## v1.7：任务浏览与清晰复盘
 
