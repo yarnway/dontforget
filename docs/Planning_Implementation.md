@@ -1,6 +1,6 @@
 # 计划管理：实现与验收索引
 
-日期：2026-10-27。本轮基于 c9b793c 后的工作区改动，未发布安装包。总状态见[阶段台账](Recording_Reminders_Phases.md)。
+日期：2026-10-27。本轮集成源码 `d04a3b0` 已合入本地 main，统一 schema 16；macOS 与 iOS 模拟器调试构建通过，未推送或发布。总状态见[阶段台账](Recording_Reminders_Phases.md)。
 
 ## 使用入口
 
@@ -27,13 +27,13 @@
 | 附件备份与恢复准备 | [portable_backup_service.dart](../lib/services/portable_backup_service.dart)、[portable_backup_panel.dart](../lib/ui/widgets/portable_backup_panel.dart) |
 | 学习管理与队列 | [learning_management_panel.dart](../lib/ui/widgets/learning_management_panel.dart)、[learning_queue_service.dart](../lib/services/learning_queue_service.dart) |
 | 三语控件文案 | [planning_strings.dart](../lib/l10n/planning_strings.dart) |
-| 冻结格式 | [schema_v15.sql](../test/fixtures/schema_v15.sql) |
+| 冻结格式 | [当前 v16](../test/fixtures/schema_v16.sql)、[历史 P0 v15](../test/fixtures/schema_v15.sql)、[历史任务管理 v15](../test/fixtures/schema_v15_task_management.sql) |
 
 天气接口按 Open-Meteo 的[小时预报](https://open-meteo.com/en/docs)和[城市查询](https://open-meteo.com/en/docs/geocoding-api)文档实现，使用 UTC 时间戳对齐预报时段。当前只在用户主动操作时请求城市及预报，不采集 GPS、不发送出门记录给天气服务。AI 时间建议仅发送样本数量、所选星期和时刻中位数摘要，地点标签、坐标和轨迹不进入该请求。
 
 ## 存储与生命周期
 
-schema 15 仅增加 Reminders.details_json，保留原三表及旧字段。扩展结构有版本、大小、枚举、日期、重复 ID 和数组限制，嵌套数据不可变。普通、用药、出门和学习记录共享现有数据库准入与提醒串行队列。
+当前 schema 16 保留原三表及旧字段，统一提醒时间来源与 Reminders.details_json；识别历史两类 v14／v15，兼容方案见 [P0/P1 集成验收](UX_P0_Record_Reminder.md)。扩展结构有版本、大小、枚举、日期、重复 ID 和数组限制，嵌套数据不可变。普通、用药、出门和学习记录共享现有数据库准入与提醒串行队列。
 
 用药计划由一个管理记录和有限的独立剂次组成；管理记录不进入普通事项列表，每剂保留原定事项时刻。重复点击、过期预览、不同代次、旧轮次及不完整保存均不能生成额外剂次。编辑不重写已处理或历史剂次；暂停、回收站和替换未来安排独立执行通知取消，失败进入现有修复流程。已保存、提交系统、实际送达和用户反馈始终分别记录。服药结局单独保存；归档、回收站恢复及历史滚动不会把“未服用”改判为“已服用”。
 
@@ -43,10 +43,12 @@ schema 15 仅增加 Reminders.details_json，保留原三表及旧字段。扩�
 
 ## 自动化证据
 
-- [planning_routines_test.dart](../test/planning_routines_test.dart)：有限疗程、四药独立剂次、原子保存和重复确认、暂停／恢复、记录未服用、回收站、清单重置、工作日间隔、短月与跨周事项时间、旧代次、逐词档案与自定义间隔、v14 升级与 v15 预检。
+- [planning_routines_test.dart](../test/planning_routines_test.dart)：有限疗程、四药独立剂次、原子保存和重复确认、暂停／恢复、记录未服用、回收站、清单重置、工作日间隔、短月与跨周事项时间、旧代次、逐词档案与自定义间隔、历史 v14 升级与当前 v16 预检。
 - [planning_panel_test.dart](../test/planning_panel_test.dart)：375／768／1440、中英日及大字体，实际加载后的五个面板；用药确认真实写入临时库，非法出门输入和损坏草稿处理。
 - [portable_backup_test.dart](../test/portable_backup_test.dart)：附件字节、密钥排除、原件不变、独立恢复路径、摘要变化与损坏拒绝、文件名路径穿越防护、缺失清单及旧会话拒绝。
 - [planning_transport_test.dart](../test/planning_transport_test.dart)：已配置网关及 JSON 提案、非法响应拒绝、天气 API、无模型凭证的城市查询、UTC 时段及异常预报字段。
-- 既有数据库恢复、通知、原文记录、三语布局、输入手势和脚本测试随全量回归执行；本轮分别为 **1371 Flutter、126 Python 通过，静态分析 0 issues**。
+- 既有数据库恢复、通知、原文记录、三语布局、输入手势和脚本测试随全量回归执行；本轮分别为 **1443 Flutter、126 Python 通过，静态分析 0 issues**。
+
+合并专项 151 项与洛杉矶时区专项 64 项均通过，已包含在全量中。macOS arm64 Debug 与严格签名检查、iOS 模拟器主应用和 WidgetKit 扩展构建通过，均未安装或启动新构建；[机器证据](benchmarks/p0-p1-integration-2026-10-27.json)单独记录。
 
 所有业务数据库均为临时目录，模型、天气和通知使用替身。这里不是处方正确性、真实服药、外部服务、通知必达、原生后台能力或跨设备恢复的证明。真实采集、平台容量、送达／取消／点击、连续日期与时区验收仍按阶段台账执行。

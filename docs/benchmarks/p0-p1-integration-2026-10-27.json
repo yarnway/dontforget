@@ -1,0 +1,128 @@
+{
+  "date": "2026-10-27",
+  "source_commit": "d04a3b07e2666b586560e593b2801dd0d1fb38a2",
+  "integrated_main_baseline": "c841797f41eb6d89e9aa669b09face43365bfb21",
+  "schema": 16,
+  "source_trees": {
+    "lib": "af09164840613d1b8e1c903b19fae28135bc0bf9",
+    "test": "46cb599f721bd504df2cc3147fd34985b7553460",
+    "scripts": "1a2328b32069629a1a63a4ef134bcee63318d275",
+    "macos": "0098fc24dd718af6ef748cca02d5a977d7cd4bd2",
+    "ios": "d7e8db792a14dd575669e5fbf98f18d8a2960587"
+  },
+  "toolchain": {
+    "flutter": "3.44.9",
+    "dart": "3.12.2",
+    "xcode": "27.1",
+    "cocoapods": "1.16.2"
+  },
+  "checks": [
+    {
+      "name": "flutter_full",
+      "command": "flutter test --no-pub --reporter expanded --timeout 45s",
+      "exit_code": 0,
+      "passed": 1443,
+      "failed": 0,
+      "log_sha256": "ce07c6e044c6b9922569a2984b2a392b057ff54b1205791dd26471d57dac224a"
+    },
+    {
+      "name": "focused",
+      "command": "flutter test --no-pub --reporter expanded --timeout 45s test/planning_routines_test.dart test/planning_transport_test.dart test/planning_panel_test.dart test/portable_backup_test.dart test/schema16_integration_test.dart test/schema15_integration_test.dart test/recording_reminders_phase1_test.dart test/recording_reminders_phase1_ui_test.dart test/task_detail_live_reminder_test.dart",
+      "exit_code": 0,
+      "passed": 151,
+      "failed": 0,
+      "log_sha256": "c3ebad86eea53290a31a2bf7aae0357524a7678ffd9f85b1673e95a7d7b583ac"
+    },
+    {
+      "name": "python_full",
+      "command": "python3 -m unittest discover -s scripts/tests -v",
+      "exit_code": 0,
+      "passed": 126,
+      "failed": 0,
+      "log_sha256": "1cea2de296fd6b116f9438b888a8f154eb5eaa1072dbe6ee1ece0a0923bef7f0"
+    },
+    {
+      "name": "analysis",
+      "command": "flutter analyze --no-pub",
+      "exit_code": 0,
+      "log_sha256": "6c7590be245ffb77370ad7aa9883e019c6235363e1e26eaf6be40377f0f7d179"
+    },
+    {
+      "name": "timezone",
+      "command": "TZ=America/Los_Angeles flutter test --no-pub --reporter expanded --timeout 45s test/planning_routines_test.dart test/schema16_integration_test.dart test/p0_record_reminder_test.dart",
+      "exit_code": 0,
+      "passed": 64,
+      "failed": 0,
+      "log_sha256": "57e5d9b7f88d988f68c7eeb7b1604eb4f8ee66839cc8400b72daf6d783f43ee0"
+    },
+    {
+      "name": "macos_build",
+      "command": "flutter build macos --debug --no-pub",
+      "exit_code": 0,
+      "log_sha256": "e6131b4ae001d24dd121321bf8d9ada17ea8ca63fe71ebae7b49f94653eca8f5"
+    },
+    {
+      "name": "ios_simulator_build",
+      "command": "flutter build ios --simulator --debug --no-pub",
+      "exit_code": 0,
+      "log_sha256": "5e09a34f2c0b21a95d735979f9b93828e45b54f136cc2f08d591f8c34514c762"
+    }
+  ],
+  "builds": [
+    {
+      "path": "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/macos/Build/Products/Debug/dont_forget.app",
+      "bundle_id": "com.example.dontForget",
+      "version": "1.7.0",
+      "build": "33",
+      "installed": false,
+      "launched": false,
+      "tree_sha256": "39537b0063868fe1407543d4fe040585b329a857ff33f463bdbbaa96a9c68aea",
+      "files_and_links": 66,
+      "file_bytes": 150626620,
+      "platform": "macos",
+      "architecture": "arm64",
+      "mode": "debug",
+      "signing": "adhoc",
+      "strict_signature_check": "pass"
+    },
+    {
+      "path": "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/ios/iphonesimulator/Runner.app",
+      "bundle_id": "com.example.dontForget",
+      "version": "1.7.0",
+      "build": "33",
+      "installed": false,
+      "launched": false,
+      "tree_sha256": "7d33b02501ba632573e056942c2fe6a513eadae4ccbd851a61b7f3dce1831594",
+      "files_and_links": 97,
+      "file_bytes": 190910708,
+      "platform": "ios-simulator",
+      "mode": "debug",
+      "extensions": [
+        {
+          "bundle_id": "com.example.dontForget.ReminderActivity",
+          "build": "33",
+          "platform": "IOSSIMULATOR"
+        }
+      ]
+    }
+  ],
+  "counting": "Focused and timezone checks repeat tests included in the full run; counts must not be added.",
+  "main_integration": {
+    "status": "fast_forward_completed",
+    "source_head": "d04a3b07e2666b586560e593b2801dd0d1fb38a2",
+    "protected_file_count": 28,
+    "protected_file_bytes_and_modes": "matched",
+    "preservation_record_sha256": "8bc18be6013480e024de0ee2deb854859db9f6da0c25a641b99faec3d4682ec1",
+    "pushed": false
+  },
+  "not_executed": [
+    "new-app-runtime",
+    "physical-device-upgrade",
+    "real-model-or-weather-requests",
+    "native-notification-delivery-or-capacity",
+    "installation",
+    "push",
+    "CI",
+    "release"
+  ]
+}
