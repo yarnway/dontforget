@@ -168,6 +168,20 @@ void main() {
           .put('medicationDraft', plan.toJson()),
     );
     await pump(tester);
+    final times = find.byKey(const ValueKey('ui-med:times'));
+    await tester.scrollUntilVisible(
+      times,
+      400,
+      scrollable: find
+          .descendant(
+            of: find.byType(ListView).first,
+            matching: find.byType(Scrollable),
+          )
+          .first,
+    );
+    await tester.enterText(times, '07：30、19:30');
+    await tester.pump();
+    expect(container.read(remindersProvider), isEmpty);
     final preview = find.text('预览');
     await tester.scrollUntilVisible(
       preview,
@@ -227,6 +241,24 @@ void main() {
     );
     expect(
       container.read(remindersProvider).every((r) => !r.isCompleted),
+      isTrue,
+    );
+    final doses = container
+        .read(remindersProvider)
+        .where((r) => r.details.kind == 'medication')
+        .toList();
+    expect(
+      doses.map((r) => r.eventTime),
+      unorderedEquals([
+        for (var offset = 0; offset < 2; offset++)
+          for (final hour in [7, 19])
+            DateTime(day.year, day.month, day.day + offset, hour, 30),
+      ]),
+    );
+    expect(
+      doses.every(
+        (r) => (r.details.data['times'] as List).join(',') == '07:30,19:30',
+      ),
       isTrue,
     );
     expect(tester.takeException(), isNull);
