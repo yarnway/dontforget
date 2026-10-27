@@ -1,0 +1,395 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-28T01:21:25.179812+08:00",
+  "phase": 31,
+  "version": "1.7.0+36",
+  "databaseSchema": 16,
+  "sourceCommit": "feb31795ac918dc39019d0d152419704c93ffddb",
+  "tag": "v1.7.0-rc.36",
+  "sourceChanges": {
+    "manualFullWidthColonFix": "c2ebdca9cea7cbb260dc380f45c5ebfe39764a27",
+    "savedFiltersAndBackupCopyIncluded": true,
+    "testSynchronizationFix": "feb31795ac918dc39019d0d152419704c93ffddb",
+    "productionSaveBehaviorChangedByTestFix": false,
+    "controlledSlowWriteRegression": true
+  },
+  "localValidation": {
+    "flutterPassed": 1542,
+    "pythonPassed": 126,
+    "analyzeIssues": 0,
+    "targetedIncludedInFullCount": 40
+  },
+  "toolchain": {
+    "flutter": "3.44.9",
+    "dart": "3.12.2"
+  },
+  "validatedSourceTrees": {
+    "lib": "119c09828752f80f6b799056a2d9fdb3df5a9da3",
+    "test": "3703f57f8020b607b044f16d080e6589b3c755a3",
+    "scripts": "1a2328b32069629a1a63a4ef134bcee63318d275",
+    "ios": "d7e8db792a14dd575669e5fbf98f18d8a2960587",
+    "macos": "0098fc24dd718af6ef748cca02d5a977d7cd4bd2",
+    "android": "875326bb2b46b3196b0a569db0f5d03e3f17ef6c",
+    "linux": "ea8b15a2d12003669442b319d68e8e96b7188cbe",
+    "windows": "27a094bf8cbf7535461b87f42fc54a2dad2ab3af"
+  },
+  "testLogs": {
+    "localFlutter": {
+      "path": "build/native_acceptance/study-stage37-materials/rc36-flutter-full.log",
+      "sha256": "e46b895fb9cedd551cd80d804a5db35a2bc215004cc5611e30e426d55c13497d",
+      "bytes": 299856
+    },
+    "localPython": {
+      "path": "build/native_acceptance/study-stage37-materials/rc36-python-full.log",
+      "sha256": "cdf9b536c7a24c85b01e479cb5dbc5423df3f0118cee21cac75a30e001e9a105",
+      "bytes": 478
+    },
+    "localAnalyze": {
+      "path": "build/native_acceptance/study-stage37-materials/rc36-analyze.log",
+      "sha256": "2fb49d6bba2a951135a38be3507987e137959004aeb83143f2bd6a64717ba7a9",
+      "bytes": 96
+    },
+    "targeted": {
+      "path": "build/native_acceptance/study-stage37-materials/rc36-targeted-fixed.log",
+      "sha256": "978699cc5cb4d01da1e826097e0788f3122fe8e49c025f39b369e2e5e0f51d65",
+      "bytes": 7160
+    },
+    "cloudQuality": {
+      "path": "build/native_acceptance/study-stage37-materials/rc36-cloud-quality.log",
+      "sha256": "0e6542b2a257bad31cb3c489213731c997533202a1c63c5121647e0c4823953b",
+      "bytes": 369940
+    }
+  },
+  "ci": {
+    "candidateRun": 40546671512,
+    "conclusion": "success",
+    "successfulJobs": 7,
+    "jobs": [
+      {
+        "name": "Analyze and test",
+        "id": 122339004062,
+        "conclusion": "success"
+      },
+      {
+        "name": "Build windows candidate",
+        "id": 122341745025,
+        "conclusion": "success"
+      },
+      {
+        "name": "Build linux candidate",
+        "id": 122341745095,
+        "conclusion": "success"
+      },
+      {
+        "name": "Build macos candidate",
+        "id": 122341745205,
+        "conclusion": "success"
+      },
+      {
+        "name": "Build ios candidate",
+        "id": 122341745216,
+        "conclusion": "success"
+      },
+      {
+        "name": "Build android candidate",
+        "id": 122341745343,
+        "conclusion": "success"
+      },
+      {
+        "name": "Prepare draft release after all packages pass",
+        "id": 122347180933,
+        "conclusion": "success"
+      }
+    ],
+    "quality": {
+      "flutterPassed": 1541,
+      "flutterSkipped": 1,
+      "pythonPassed": 125,
+      "pythonSkipped": 1,
+      "analyzeIssues": 0
+    },
+    "macNativeStorageLockTest": "pass",
+    "duplicateMainRun": 40546671475,
+    "duplicateMainStatus": "cancelled",
+    "rc35": {
+      "run": 40543777563,
+      "source": "5a6b6c4c0a89c0e2650762b9660f6ee5b8120028",
+      "conclusion": "failure",
+      "failure": "saved filter name test read before asynchronous SQLite persistence completed",
+      "published": false,
+      "tagPreserved": true,
+      "duplicateMainRun": 40543777774,
+      "duplicateMainStatus": "cancelled"
+    }
+  },
+  "release": {
+    "releaseId": 425764858,
+    "tag": "v1.7.0-rc.36",
+    "url": "https://github.com/yarnway/dontforget/releases/tag/v1.7.0-rc.36",
+    "publishedAt": "2026-10-27T17:18:58Z",
+    "checkedAt": "2026-10-28T01:19:32.168256+08:00",
+    "draft": false,
+    "prerelease": true,
+    "bodyMatchesNotes": true,
+    "bodySha256": "72cbc2a82dac11137f27c0a1908f8176ae500e2f7aa0c945de1a1ef602874859",
+    "assetCount": 21,
+    "assetIdsNamesSizesDigestsUnchanged": true
+  },
+  "deviceAcceptance": {
+    "installedMacVersion": "1.7.0+34",
+    "installedPhoneVersion": "1.7.0+34",
+    "rc36Installed": false,
+    "rc36NativeAcceptance": false,
+    "phoneStillHeldByNotificationMatrixTask": true,
+    "explicitReturnRequired": true,
+    "handoffQa36": {
+      "softDeleted": true,
+      "notificationCancellation": "receiver native API readback retained 2 originals; saved 00:12 screenshot reviewed here",
+      "assistiveTouchRestoredOff": true
+    },
+    "otherTaskCleanup": {
+      "pending": true,
+      "futureSyntheticDoses": 56,
+      "firstDue": "2026-10-28T08:00:00+08:00",
+      "warmSampleStillPending": true,
+      "evidence": "p1-phone-notifications-2026-10-28.json"
+    },
+    "hostLockReadback": {
+      "observedAt": "2026-10-28T01:15:13.665452+08:00",
+      "method": "read-only IOConsoleUsers metadata",
+      "sessions": [
+        {
+          "kCGSSessionOnConsoleKey": true,
+          "CGSSessionScreenIsLocked": true
+        }
+      ],
+      "uiInputPerformed": false,
+      "phoneOperationsPerformed": false
+    }
+  },
+  "cleanup": {
+    "removed": [
+      {
+        "scope": "root_acceptance_materials",
+        "path": "build/native_acceptance/study-stage28-materials/release-29/ios-candidate-29/DontForget_iOS_unsigned_v1.7.0.ipa",
+        "kind": "old_release_package",
+        "allocatedKiB": 9808,
+        "sha256": "c29139d06d1761b627df268e4a86fed5669f70648595e369f66258ce3cd117c0",
+        "bytes": 10040586,
+        "version": 29,
+        "crc": "PASS"
+      },
+      {
+        "scope": "root_acceptance_materials",
+        "path": "build/native_acceptance/study-stage28-materials/release-29/macos-candidate-29/DontForget_macOS_unnotarized_v1.7.0.zip",
+        "kind": "old_release_package",
+        "allocatedKiB": 23772,
+        "sha256": "67c1103ebcead0bf6813a5f08e3dda2200f9c3d3615830684f5166108460cd2f",
+        "bytes": 24341720,
+        "version": 29,
+        "crc": "PASS"
+      },
+      {
+        "scope": "root_acceptance_materials",
+        "path": "build/native_acceptance/study-stage30-materials/release-30/ios-candidate-30/DontForget_iOS_unsigned_v1.7.0.ipa",
+        "kind": "old_release_package",
+        "allocatedKiB": 9812,
+        "sha256": "48024286eac883f98b941f0704096f4940ceb725575cd39c6bd0ba5ef24bd207",
+        "bytes": 10045835,
+        "version": 30,
+        "crc": "PASS"
+      },
+      {
+        "scope": "root_acceptance_materials",
+        "path": "build/native_acceptance/study-stage30-materials/release-30/macos-candidate-30/DontForget_macOS_unnotarized_v1.7.0.zip",
+        "kind": "old_release_package",
+        "allocatedKiB": 23788,
+        "sha256": "bcdcd4d51d5f709fba6ceb78b460c5b03b6a9ad494791c4566ee17bc24580eaf",
+        "bytes": 24357639,
+        "version": 30,
+        "crc": "PASS"
+      },
+      {
+        "scope": "root_acceptance_materials",
+        "path": "build/native_acceptance/study-stage31-materials/release-32/ios-ci/DontForget_iOS_unsigned_v1.7.0.ipa",
+        "kind": "old_release_package",
+        "allocatedKiB": 9944,
+        "sha256": "7d966aca4b8d65cc3cd096ea43b499e2f2896fc61eb526cc2b53edd343c8b5d8",
+        "bytes": 10181256,
+        "version": 32,
+        "crc": "PASS"
+      },
+      {
+        "scope": "root_acceptance_materials",
+        "path": "build/native_acceptance/study-stage31-materials/release-32/macos-candidate-32/DontForget_macOS_unnotarized_v1.7.0.zip",
+        "kind": "old_release_package",
+        "allocatedKiB": 23948,
+        "sha256": "19af151a641027fef968b7064c2f524fc9e591b46a70803711ede79b0002ad18",
+        "bytes": 24521876,
+        "version": 32,
+        "crc": "PASS"
+      },
+      {
+        "scope": "root_acceptance_materials",
+        "path": "build/native_acceptance/study-stage33-materials/ios32-isolated-development.zip",
+        "kind": "old_private_package",
+        "allocatedKiB": 10032,
+        "sha256": "63ec34ffd17747de9aade6c088cd1e6e2e0caa6cec946843a6fcb44a610ed74e",
+        "bytes": 10269410,
+        "version": 32,
+        "crc": "PASS"
+      },
+      {
+        "scope": "owned_worktree",
+        "path": ".dart_tool",
+        "kind": "owned_test_cache",
+        "allocatedKiB": 24700
+      },
+      {
+        "scope": "owned_worktree",
+        "path": "build",
+        "kind": "owned_test_cache",
+        "allocatedKiB": 66224
+      }
+    ],
+    "releasedAllocatedKiB": 202028,
+    "postCleanupObservationKiB": {
+      "rootProject": 3045056,
+      "ownedWorktree": 22496
+    },
+    "protectedUnrelatedFilesUnchanged": 27,
+    "retained": [
+      "rc.33 and rc.34 private development packages",
+      "verified prior Mac rollback archive",
+      "current rc.34 Mac app",
+      "signing materials and before-after snapshots",
+      "phone matrix and P1 acceptance materials"
+    ],
+    "sharedRootCachesOrSdkRemoved": false,
+    "phoneDataModifiedByThisPhase": false
+  },
+  "privateEvidence": [
+    {
+      "path": "build/native_acceptance/study-stage37-materials/ci35-current.json",
+      "sha256": "e04582a81013a604a23c0b3c91ce28d9ca9da9ce7348b2ccc0484b29d812fe59",
+      "bytes": 2996
+    },
+    {
+      "path": "build/native_acceptance/study-stage37-materials/ci35-quality-failed.log",
+      "sha256": "beae1fa00ca50df44763ef80dcfd89cac2496f7ed2272e51151107816875dfdb",
+      "bytes": 348434
+    },
+    {
+      "path": "build/native_acceptance/study-stage37-materials/ci-race-reproduced.log",
+      "sha256": "4f85f836cba3bc36b4e0e3927d560503463da81a20a22e50469c880471c11d87",
+      "bytes": 2808
+    },
+    {
+      "path": "build/native_acceptance/study-stage37-materials/rc36-cloud-macos.log",
+      "sha256": "9bd1df7f861237950a186ddba9fa90cce76ee5d0016c4f350e4411fd46181f0c",
+      "bytes": 48652
+    },
+    {
+      "path": "build/native_acceptance/study-stage37-materials/release36-metadata-verification.json",
+      "sha256": "29932988b682439c4b5f30819a655ca806bd3acd24d35c94091f2ad8b70b4882",
+      "bytes": 2324
+    },
+    {
+      "path": "build/native_acceptance/study-stage37-materials/release36-publication-readback.json",
+      "sha256": "4a76bceb4552170a16bb6997c41847c52cf54e9f8e36149db4d8dc3dbe4c0b31",
+      "bytes": 440
+    },
+    {
+      "path": "build/native_acceptance/study-stage37-materials/cleanup-result.json",
+      "sha256": "61b12700a649666a2637cfe358f2262d12919e6ada80496e38e5848b43511fa2",
+      "bytes": 10109
+    },
+    {
+      "path": "build/native_acceptance/study-stage37-materials/host-lock-readback.json",
+      "sha256": "b073930444d80fd24ddac4e92f295a70e2b5f9958a23d669ada0beb46f095a95",
+      "bytes": 281
+    }
+  ],
+  "remaining": [
+    "receive explicit phone return after current QA native cancellation and original-data verification",
+    "install and validate rc.36 on macOS and iOS",
+    "ordinary notification warm cold late and deleted-target clicks",
+    "Japanese soft keyboard composition and landscape",
+    "real microphone capture and continuous arc gestures",
+    "Live Activity edit pause deletion synchronization",
+    "remaining macOS and iOS stable-release gates"
+  ],
+  "stableReleasePublished": false,
+  "artifactVerificationBeforePublication": {
+    "tag": "v1.7.0-rc.36",
+    "source": "feb31795ac918dc39019d0d152419704c93ffddb",
+    "releaseId": 425764858,
+    "draft": true,
+    "prerelease": true,
+    "assetCount": 21,
+    "downloadedMetadataVerified": 14,
+    "platformManifestsVerified": 5,
+    "packagesMatchedToGithubAssetDigestAndSize": [
+      {
+        "file": "DontForget_Android_test-signed_v1.7.0.apk",
+        "bytes": 71561031,
+        "sha256": "586683db091afdc63a06d075fcde6f399e0936f648580d565bbea16621967d1f"
+      },
+      {
+        "file": "DontForget_Android_test-signed_v1.7.0.aab",
+        "bytes": 68950692,
+        "sha256": "bf842467ac3534a19ff7a55a93cc48d4c1579847fb57b7befc05868a7aeeede9"
+      },
+      {
+        "file": "DontForget_iOS_unsigned_v1.7.0.ipa",
+        "bytes": 10495457,
+        "sha256": "926bd3b4073b7a9b99565cad7f0beb2c319ecdabbc974120481dbf90413499d2"
+      },
+      {
+        "file": "DontForget_Linux_x64_v1.7.0.tar.gz",
+        "bytes": 13625700,
+        "sha256": "2181c41759501c0c36a8abc3e9d4dad0a2a10bc802e06c23dabb0747957894e8"
+      },
+      {
+        "file": "DontForget_macOS_unnotarized_v1.7.0.zip",
+        "bytes": 25056544,
+        "sha256": "7514245a58dbdb516413d5c8e2ca52a7ffbcf12acfda709cdd4a4e98b5974fc7"
+      },
+      {
+        "file": "DontForget_Setup_v1.7.0.exe",
+        "bytes": 14069311,
+        "sha256": "155b11278f5be1b8d9001f5391fe135ecf89b5ba0e26a763c7ca4355b6c101c2"
+      },
+      {
+        "file": "DontForget_Windows_Portable_v1.7.0.zip",
+        "bytes": 16982997,
+        "sha256": "2cc46f072da607dadc988a4fc009cd00a6c631fdfaa668afca2ed90fc280adfa"
+      }
+    ],
+    "nativeReportsVerified": [
+      {
+        "file": "linux-startup.json",
+        "result": "PASS",
+        "scope": "unpacked-native-process-startup-only"
+      },
+      {
+        "file": "macos-startup.json",
+        "result": "PASS",
+        "scope": "unpacked-native-process-startup-only"
+      },
+      {
+        "file": "windows-installation.json",
+        "result": "PASS",
+        "scope": "installer-upgrade-uninstall-with-legacy-file-preservation"
+      },
+      {
+        "file": "windows-startup.json",
+        "result": "PASS",
+        "scope": "unpacked-native-process-startup-only"
+      }
+    ],
+    "integrityBoundary": "CI checked full package bytes; local verification downloaded metadata only and matched all package digests and sizes to GitHub assets.",
+    "deviceInstallPerformed": false,
+    "deviceAcceptancePerformed": false
+  }
+}
