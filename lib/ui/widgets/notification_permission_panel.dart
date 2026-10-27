@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../formatters/local_date_time.dart';
 import '../../models/notification_schedule_status.dart';
 import '../../services/notification_permission_service.dart';
 import '../../services/system_notification_reader.dart';
@@ -308,6 +309,25 @@ class _NotificationPermissionPanelState
                   key: const ValueKey('notification-schedule-status'),
                 ),
               ),
+              if (_schedule?.capacity != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    l10n
+                        .get('notificationScheduleWindow')
+                        .replaceAll(
+                          '{through}',
+                          _schedule!.scheduledThrough == null
+                              ? '—'
+                              : formatLocalDateTime(
+                                  _schedule!.scheduledThrough!,
+                                ),
+                        )
+                        .replaceAll('{deferred}', '${_schedule!.deferred}')
+                        .replaceAll('{capacity}', '${_schedule!.capacity}'),
+                    key: const ValueKey('notification-schedule-window'),
+                  ),
+                ),
               if ((_schedule?.policyPaused ?? 0) > 0)
                 Padding(
                   padding: const EdgeInsets.only(top: 6),

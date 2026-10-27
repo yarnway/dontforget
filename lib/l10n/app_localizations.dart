@@ -765,6 +765,8 @@ class AppLocalizations {
       'digestSessionHint':
           'Tasks muted in this app session. Completed, deleted or rescheduled occurrences leave this list; closing it does not complete tasks.',
       'digestEmpty': 'No pending tasks in this digest.',
+      'notificationScheduleWindow':
+          'Scheduling through {through} · Deferred {deferred} · Shared capacity {capacity}. Reopen the app before this date to refill. Submission does not confirm delivery.',
       'notificationSchedulePaused':
           '{count} future reminders paused by focus or context policy.',
       'digestPending': 'Pending tasks: {count}',
@@ -1456,6 +1458,8 @@ class AppLocalizations {
       // 大数据导出
       'digestSessionHint': '显示本次应用会话中被静音的任务。已完成、删除或重新安排的轮次会移出列表；关闭页面不会完成任务。',
       'digestEmpty': '本次摘要没有待处理任务。',
+      'notificationScheduleWindow':
+          '连续预排至 {through} · 待补排 {deferred} · 共用容量 {capacity}。请在此日期前打开应用补排；已提交不代表已送达。',
       'notificationSchedulePaused': '{count} 条未来提醒已由专注或情境策略暂停。',
       'digestPending': '待处理任务：{count}',
       'digestScope': '摘要包含哪些任务',
@@ -2172,6 +2176,8 @@ class AppLocalizations {
       'digestSessionHint':
           'このセッションで消音されたタスクです。完了・削除・再予定された回は一覧から除外します。画面を閉じても完了にはなりません。',
       'digestEmpty': 'このダイジェストに未処理のタスクはありません。',
+      'notificationScheduleWindow':
+          '{through} まで連続設定済み · 補充待ち {deferred} · 共通上限 {capacity}。期限前にアプリを開いて補充してください。送信済みでも配信は未確認です。',
       'notificationSchedulePaused': '集中・コンテキスト設定により今後の通知 {count} 件を停止しています。',
       'digestPending': '未処理タスク：{count} 件',
       'digestScope': '表示するタスクの範囲',

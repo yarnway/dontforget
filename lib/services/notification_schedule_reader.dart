@@ -14,7 +14,12 @@ enum ReminderSchedulePhase {
 
 /// A local snapshot without starting reminder timers or native reconciliation.
 class NotificationScheduleReader {
-  NotificationScheduleReader(this.database, {this.isSuppressed});
+  NotificationScheduleReader(
+    this.database, {
+    this.isSuppressed,
+    this.nativePendingLimit,
+  });
+  final int? nativePendingLimit;
   final bool Function(Reminder)? isSuppressed;
   final DatabaseHelper database;
 
@@ -37,6 +42,10 @@ class NotificationScheduleReader {
               'details_json',
               'notice_revision',
               'notice_acknowledged_at',
+              'details_json',
+              'event_time',
+              'snoozed_at',
+              'recurrence_anchor_time',
             ],
             where: 'id = ?',
             whereArgs: [expected.id],
@@ -94,14 +103,13 @@ class NotificationScheduleReader {
     });
   }
 
-  Future<NotificationScheduleStatus> read() async {
+  Future<NotificationScheduleStatus> read({String? planId}) async {
     final generation = database.captureGeneration();
     return database.runOperation(generation, () async {
       final rows = await database.read(
         generation,
-        // Keep the Reminder decoder's required identity fields and the four
-        // scheduling fields. Summaries, links and attachment data are unused
-        // by this read-only status view, even for large task collections.
+        // Lifecycle and repeat details determine eligibility. Large source
+        // summaries, links and media are still unnecessary for this local view.
         (db) => db.query(
           'Reminders',
           columns: const [
@@ -112,6 +120,10 @@ class NotificationScheduleReader {
             'is_completed',
             'notice_revision',
             'notice_acknowledged_at',
+            'details_json',
+            'event_time',
+            'snoozed_at',
+            'recurrence_anchor_time',
           ],
         ),
       );
@@ -126,6 +138,8 @@ class NotificationScheduleReader {
         journal != null && journal.epoch == epoch ? journal.entries : {},
         DateTime.now(),
         isSuppressed: isSuppressed,
+        nativePendingLimit: nativePendingLimit,
+        planId: planId,
       );
     });
   }

@@ -1011,12 +1011,20 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (widget.task.details.kind == 'medication' &&
+                    if (const {
+                          'medication',
+                          'departure',
+                        }.contains(widget.task.details.kind) &&
                         widget.task.details.planId != null)
                       OutlinedButton.icon(
                         icon: const Icon(Icons.medication_outlined),
                         label: Text(
-                          planningText(context, 'editMedicationPlan'),
+                          planningText(
+                            context,
+                            widget.task.details.kind == 'departure'
+                                ? 'editDeparturePlan'
+                                : 'editMedicationPlan',
+                          ),
                         ),
                         onPressed: _isMutating
                             ? null
@@ -1027,13 +1035,24 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                                       title: Text(
                                         planningText(
                                           routeContext,
-                                          'medication',
+                                          widget.task.details.kind ==
+                                                  'departure'
+                                              ? 'departure'
+                                              : 'medication',
                                         ),
                                       ),
                                     ),
                                     body: PlanningPanel(
                                       initialMedicationId:
-                                          widget.task.details.planId,
+                                          widget.task.details.kind ==
+                                              'medication'
+                                          ? widget.task.details.planId
+                                          : null,
+                                      initialDepartureId:
+                                          widget.task.details.kind ==
+                                              'departure'
+                                          ? widget.task.details.planId
+                                          : null,
                                       onClose: () =>
                                           Navigator.pop(routeContext),
                                     ),

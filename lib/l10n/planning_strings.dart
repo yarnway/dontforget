@@ -14,6 +14,33 @@ String planningText(BuildContext context, String key) {
 }
 
 const _strings = <String, List<String>>{
+  'independentDates': [
+    '已生成独立日期，未完成上一天也会保留下一天提醒（滚动 60 天）',
+    'Independent dates for a rolling 60 days; an unfinished date does not block the next one.',
+    '60日分の独立した日程です。未完了でも翌日の通知は残ります。',
+  ],
+  'returnWindow': [
+    '出行天气覆盖时长（分钟，1–1440）',
+    'Weather window after departure (minutes, 1–1440)',
+    '外出後の天気確認時間（分、1–1440）',
+  ],
+  'reloadPlan': ['重新载入已保存计划', 'Reload saved plan', '保存済みプランを再読込'],
+  'editDeparturePlan': [
+    '查看或调整出门计划',
+    'View or edit departure plan',
+    '外出プランを確認・編集',
+  ],
+  'checkCoverage': [
+    '查看提醒覆盖与修复',
+    'Check reminder coverage and repair',
+    '通知の範囲と修復を確認',
+  ],
+  'inAppOnly': [
+    '当前平台需保持应用运行；本页不代表关闭应用后仍会提醒。',
+    'Keep the app running on this platform; this page does not confirm reminders after closing it.',
+    'この環境ではアプリを起動したままにしてください。終了後の通知は未確認です。',
+  ],
+
   'created': ['已创建', 'Created', '作成'],
   'edited': ['已修改', 'Edited', '変更'],
   'completed': ['已完成', 'Completed', '完了'],

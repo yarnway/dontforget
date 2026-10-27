@@ -52,7 +52,12 @@ class Reminder {
   final String? detailsJson;
   late final TaskDetails details = TaskDetails.decode(detailsJson);
   bool get isVisible => !details.hidden;
-  bool get isWorkspaceItem => isVisible && details.kind != 'medicationPlan';
+  bool get isWorkspaceItem =>
+      isVisible &&
+      details.kind != 'medicationPlan' &&
+      !(details.kind == 'departure' &&
+          details.planId == null &&
+          details.data['_departure_rolling'] != null);
   bool get canNotify =>
       isVisible &&
       !isCompleted &&

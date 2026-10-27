@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/models/departure_plan.dart';
+import 'package:dont_forget/models/notification_schedule_status.dart';
 import 'package:dont_forget/models/medication_plan.dart';
 import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/providers/providers.dart';
@@ -40,6 +41,16 @@ void main() {
     container = ProviderContainer(
       overrides: [
         databaseHelperProvider.overrideWithValue(database),
+        routineScheduleStatusReaderProvider.overrideWith(
+          (ref) =>
+              (planId) async => NotificationScheduleStatus.fromSaved(
+                ref.read(remindersProvider),
+                {},
+                DateTime.now(),
+                nativePendingLimit: 50,
+                planId: planId,
+              ),
+        ),
         notificationServiceProvider.overrideWithValue(notifications),
         remindersProvider.overrideWith(
           (_) => RemindersNotifier(

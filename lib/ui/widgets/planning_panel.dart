@@ -19,15 +19,26 @@ import 'inline_feedback.dart';
 import 'workspace_tool_panel.dart';
 
 class PlanningPanel extends StatefulWidget {
-  const PlanningPanel({super.key, this.onClose, this.initialMedicationId});
-  final String? initialMedicationId;
+  const PlanningPanel({
+    super.key,
+    this.onClose,
+    this.initialMedicationId,
+    this.initialDepartureId,
+  });
+  final String? initialMedicationId, initialDepartureId;
   final VoidCallback? onClose;
   @override
   State<PlanningPanel> createState() => _PlanningPanelState();
 }
 
 class _PlanningPanelState extends State<PlanningPanel> {
-  int _tab = 0;
+  late int _tab;
+  @override
+  void initState() {
+    super.initState();
+    _tab = widget.initialDepartureId == null ? 0 : 1;
+  }
+
   @override
   Widget build(BuildContext context) => WorkspaceToolFrame(
     title: planningText(context, 'planning'),
@@ -67,7 +78,7 @@ class _PlanningPanelState extends State<PlanningPanel> {
             index: _tab,
             children: [
               MedicationPlanPanel(initialPlanId: widget.initialMedicationId),
-              const DeparturePlanPanel(),
+              DeparturePlanPanel(initialPlanId: widget.initialDepartureId),
               const TaskManagementPanel(),
               const PortableBackupPanel(),
               const LearningManagementPanel(),
