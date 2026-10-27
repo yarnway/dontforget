@@ -2,6 +2,7 @@
   "date": "2026-10-27",
   "version": "1.7.0+27",
   "schema": 13,
+  "productRevision": "b43ebd5ea6ee7e74721b41b1d70d356ea0574bb2",
   "local": {
     "flutterTests": 1219,
     "pythonTests": 124,
@@ -30,6 +31,56 @@
     "mirroring": "timed out after reconnect and relaunch",
     "acceptance": "NOT_COMPLETED"
   },
-  "currentPublicCandidate": "v1.7.0-rc.25",
+  "localMac": {
+    "isolatedBuild": "PASS",
+    "privateDeploymentOverride": "macOS 12.0 for local Xcode 27; not part of public package",
+    "productDartMatchesRevision": true,
+    "strictSignature": "PASS",
+    "nativeAcceptance": "BLOCKED: Mac locked and automatic unlock failed",
+    "tasksCreated": 0,
+    "osNotificationsScheduled": 0
+  },
+  "ci": {
+    "runId": 40447822268,
+    "conclusion": "success",
+    "jobsPassed": 7,
+    "flutterPassed": 1218,
+    "flutterPlatformSkipped": 1,
+    "pythonPassed": 123,
+    "pythonPlatformSkipped": 1,
+    "priorBuild26Run": 40445604179,
+    "priorBuild26QualityAndFivePlatforms": "PASS",
+    "duplicateMainRun": 40447817530,
+    "duplicateMainConclusion": "cancelled"
+  },
+  "release": {
+    "id": 425028919,
+    "url": "https://github.com/yarnway/dontforget/releases/tag/v1.7.0-rc.27",
+    "draft": false,
+    "prerelease": true,
+    "bodyExactReadback": true,
+    "assets": 21,
+    "platformManifests": 5,
+    "packageSizesAndDigestsVerified": 7,
+    "startupAndInstallationProofs": 4,
+    "iosFullDownloadSha256": "8d57a943c1785d37a66d37b6a8b61dda4bd9ddc0cc3a5b312a54813fa4cdd4ee",
+    "iosZipCRC": "PASS",
+    "iosInstalledOnPhone": false,
+    "macosFullDownloadSha256": "1effa4201fd0f0937cdf1870297fe2d12e0e4f35a3d4f68834ae08fb31b504f2",
+    "macosZipCRC": "PASS",
+    "macosStrictSignature": "PASS",
+    "macosUniversalMachOFiles": 6
+  },
+  "cleanup": {
+    "removedKiB": 4645432,
+    "projectKiBAtReadback": 1642040,
+    "oldProtectedFilesUnchanged": 2372,
+    "unrelatedUserFilesUnchanged": 27,
+    "privateDevelopmentBuildsRetained": [23, 24, 25],
+    "deviceAndUpgradeSnapshotsRetained": true,
+    "sharedSdkRemoved": false,
+    "guestOrImageCreated": false
+  },
+  "currentPublicCandidate": "v1.7.0-rc.27",
   "stableRelease": "NOT_RELEASED"
 }
