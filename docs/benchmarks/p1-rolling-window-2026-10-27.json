@@ -1,0 +1,223 @@
+{
+  "date": "2026-10-27",
+  "recorded_at": "2026-10-27T20:56:50.975934+08:00",
+  "source_commit": "e336f0579eee2238ff0b61dc2ba2d1ceec6ab81d",
+  "same_tested_source_commit": "c60a8c2",
+  "source_tree_preserved_after_checkpoint_merge": true,
+  "source_trees": {
+    "lib": "cffd5c6a692a510713ee7e67a7beebef219df999",
+    "test": "fcc62d382854edaa4aaa660d87699aeeacb95bae",
+    "scripts": "1a2328b32069629a1a63a4ef134bcee63318d275",
+    "macos": "0098fc24dd718af6ef748cca02d5a977d7cd4bd2",
+    "ios": "d7e8db792a14dd575669e5fbf98f18d8a2960587",
+    "pubspec.lock": "ceca1d3893bc96a16f4f5762e5dbb7266f29ea87"
+  },
+  "schema": 16,
+  "business_tables_added": false,
+  "scope": {
+    "departure_rolling_calendar_days": 60,
+    "darwin_application_budget": 50,
+    "android_application_budget": 400,
+    "platform_hard_limit_claim": false,
+    "closed_process_refill": false
+  },
+  "toolchain": {
+    "flutter": "3.44.9",
+    "flutter_root": "/Users/james/.local/opt/flutter-3.44.9",
+    "dart": "3.12.2",
+    "xcode": "27.1",
+    "xcode_build": "27A9275",
+    "cocoapods": "1.16.2",
+    "pod_wrapper": "/Users/james/.local/opt/dontforget-cocoapods/bin/pod"
+  },
+  "checks": [
+    {
+      "name": "flutter_full",
+      "result": "passed",
+      "exit_code": 0,
+      "passed": 1499,
+      "command": "flutter test --no-pub --reporter expanded --timeout 45s",
+      "log": "/tmp/dontforget-p1-rolling-full.log",
+      "log_sha256": "66dfdd900071ecbcd48150cf7728dd6fadbfaccd5eb5d57ec57765dd78c04f70",
+      "last_lines": [
+        "00:39 +1497: /Users/james/.codex/worktrees/p0-record-reminder/dontforget/test/notification_startup_batch_test.dart: incremental recovery batches drain failures before cleanup and can rebuild again",
+        "00:40 +1498: /Users/james/.codex/worktrees/p0-record-reminder/dontforget/test/notification_startup_batch_test.dart: incremental recovery batches drain failures before cleanup and can rebuild again",
+        "00:40 +1499: All tests passed!"
+      ]
+    },
+    {
+      "name": "python_full",
+      "result": "passed",
+      "exit_code": 0,
+      "passed": 126,
+      "command": "python3 -m unittest discover -s scripts/tests -v",
+      "log": "/tmp/dontforget-p1-rolling-python.log",
+      "log_sha256": "37b6efd3d4341000d000066f8d5cbd288be46e0fe4a67684681006398e87b8bc",
+      "last_lines": [
+        "Ran 126 tests in 2.126s",
+        "",
+        "OK"
+      ]
+    },
+    {
+      "name": "analyze",
+      "result": "passed",
+      "exit_code": 0,
+      "passed": null,
+      "command": "flutter analyze --no-pub",
+      "log": "/tmp/dontforget-p1-rolling-analyze.log",
+      "log_sha256": "a0901eac35f53ca92dde4b70f005b2a405a271e3c4fad4e8ba4072195999c716",
+      "last_lines": [
+        "Analyzing dontforget...                                         ",
+        "No issues found! (ran in 3.4s)"
+      ]
+    },
+    {
+      "name": "calendar_capacity",
+      "result": "passed",
+      "exit_code": 0,
+      "passed": 43,
+      "command": "env TZ=America/Los_Angeles flutter test --no-pub test/departure_refill_recovery_test.dart test/departure_rolling_test.dart test/notification_window_test.dart test/notification_capacity_recovery_test.dart test/notification_capacity_status_test.dart --reporter expanded",
+      "log": "/tmp/dontforget-p1-rolling-calendar.log",
+      "log_sha256": "7e6fb34bc9898954e286968c491312c992f3c9596d6a3ebd725b030c2ae1032f",
+      "last_lines": [
+        "00:01 +41: /Users/james/.codex/worktrees/p0-record-reminder/dontforget/test/departure_rolling_test.dart: durable independent dates offline and inactive refresh keep base items without making a rain claim",
+        "00:01 +42: /Users/james/.codex/worktrees/p0-record-reminder/dontforget/test/departure_rolling_test.dart: durable independent dates read-only schedule status respects plan pause and counts dates outside capacity separately",
+        "00:01 +43: All tests passed!"
+      ]
+    },
+    {
+      "name": "macos_debug",
+      "result": "passed",
+      "exit_code": 0,
+      "passed": null,
+      "command": "flutter build macos --debug --no-pub",
+      "log": "/tmp/dontforget-p1-rolling-macos-build.log",
+      "log_sha256": "e6131b4ae001d24dd121321bf8d9ada17ea8ca63fe71ebae7b49f94653eca8f5",
+      "last_lines": [
+        "This will become an error in a future version of Flutter. Please contact the plugin maintainers to request Swift Package Manager adoption.",
+        "Building macOS application...                                   ",
+        "✓ Built build/macos/Build/Products/Debug/dont_forget.app"
+      ]
+    },
+    {
+      "name": "macos_signature",
+      "result": "passed",
+      "exit_code": 0,
+      "passed": null,
+      "command": "codesign --verify --deep --strict --verbose=2 build/macos/Build/Products/Debug/dont_forget.app",
+      "log": "/tmp/dontforget-p1-rolling-macos-signature.log",
+      "log_sha256": "3a10657b5f7993fd4b93482380cab0b6a86dae417ac4f2b37b636646639b1bcd",
+      "last_lines": [
+        "--validated:/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/macos/Build/Products/Debug/dont_forget.app/Contents/Frameworks/App.framework/Versions/Current/.",
+        "build/macos/Build/Products/Debug/dont_forget.app: valid on disk",
+        "build/macos/Build/Products/Debug/dont_forget.app: satisfies its Designated Requirement"
+      ]
+    },
+    {
+      "name": "ios_simulator_debug",
+      "result": "passed",
+      "exit_code": 0,
+      "passed": null,
+      "command": "flutter build ios --simulator --debug --no-pub",
+      "log": "/tmp/dontforget-p1-rolling-ios-build.log",
+      "log_sha256": "5a27e07800fe8a1eaf15bfcafccf0387c530de0b7cbe3026377ac41773ddbb3a",
+      "last_lines": [
+        "Running Xcode build...                                          ",
+        "Xcode build done.                                           10.3s",
+        "✓ Built build/ios/iphonesimulator/Runner.app"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/macos/Build/Products/Debug/dont_forget.app",
+      "bundle_id": "com.example.dontForget",
+      "version": "1.7.0",
+      "build": "33",
+      "platform": "MACOS",
+      "vtool": "build/macos/Build/Products/Debug/dont_forget.app/Contents/MacOS/dont_forget:\nLoad command 11\n      cmd LC_BUILD_VERSION\n  cmdsize 32\n platform MACOS\n    minos 12.0\n      sdk 27.0\n   ntools 1\n     tool LD\n  version 27037.1\n",
+      "manifest_sha256": "12ce11cf53e08eac0d878eacfa99fbdea55f1abdf58692b0b6545164c892e343",
+      "entries": 66,
+      "bytes": 150737756,
+      "algorithm": "Sorted relative-path entries; regular file size, permission mode and SHA256; symbolic links record target. Canonical compact JSON, sorted keys; SHA256 over manifest."
+    },
+    {
+      "path": "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/ios/iphonesimulator/Runner.app",
+      "bundle_id": "com.example.dontForget",
+      "version": "1.7.0",
+      "build": "33",
+      "platform": "IOSSIMULATOR",
+      "vtool": "build/ios/iphonesimulator/Runner.app/Runner (architecture x86_64):\nLoad command 11\n      cmd LC_BUILD_VERSION\n  cmdsize 32\n platform IOSSIMULATOR\n    minos 15.0\n      sdk 27.1\n   ntools 1\n     tool LD\n  version 27037.1\nbuild/ios/iphonesimulator/Runner.app/Runner (architecture arm64):\nLoad command 11\n      cmd LC_BUILD_VERSION\n  cmdsize 32\n platform IOSSIMULATOR\n    minos 15.0\n      sdk 27.1\n   ntools 1\n     tool LD\n  version 27037.1\n",
+      "manifest_sha256": "e1c8f343c3d434f3425bd585fe6b6575dc6037968091738422f89b16c86e2811",
+      "entries": 97,
+      "bytes": 191019052,
+      "algorithm": "Sorted relative-path entries; regular file size, permission mode and SHA256; symbolic links record target. Canonical compact JSON, sorted keys; SHA256 over manifest."
+    },
+    {
+      "path": "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/ios/iphonesimulator/Runner.app/PlugIns/ReminderActivity.appex",
+      "bundle_id": "com.example.dontForget.ReminderActivity",
+      "version": "1.7.0",
+      "build": "33",
+      "platform": "IOSSIMULATOR",
+      "vtool": "build/ios/iphonesimulator/Runner.app/PlugIns/ReminderActivity.appex/ReminderActivity (architecture x86_64):\nLoad command 11\n      cmd LC_BUILD_VERSION\n  cmdsize 32\n platform IOSSIMULATOR\n    minos 16.2\n      sdk 27.1\n   ntools 1\n     tool LD\n  version 27037.1\nbuild/ios/iphonesimulator/Runner.app/PlugIns/ReminderActivity.appex/ReminderActivity (architecture arm64):\nLoad command 11\n      cmd LC_BUILD_VERSION\n  cmdsize 32\n platform IOSSIMULATOR\n    minos 16.2\n      sdk 27.1\n   ntools 1\n     tool LD\n  version 27037.1\n",
+      "manifest_sha256": "d3b4beb2fd8249a643c2e006d42a3f8fa09c46b65a502c1d84770303a092d3aa",
+      "entries": 3,
+      "bytes": 402579,
+      "algorithm": "Sorted relative-path entries; regular file size, permission mode and SHA256; symbolic links record target. Canonical compact JSON, sorted keys; SHA256 over manifest."
+    }
+  ],
+  "targeted_checks_are_subsets_of_full_suite": true,
+  "ui_coverage_checks": {
+    "passed": 13,
+    "widths": [
+      375,
+      768,
+      1440
+    ],
+    "locales": [
+      "zh",
+      "en",
+      "ja"
+    ],
+    "text_scale": 2,
+    "device_acceptance": false
+  },
+  "new_flutter_tests": 56,
+  "regression_evidence": {
+    "compatibility_cancel_failure_before": {
+      "log": "/tmp/dontforget-p1-capacity-before.log",
+      "sha256": "c1811b8e72d1092b2ddd8c43ddd7d8bbdfdc20cbffd56fff0d4d54b848fcd438",
+      "capacity": 3,
+      "observed_high_water": 4
+    },
+    "fixed_full_regression": "flutter_full",
+    "initial_full_run_interrupted": "Widget fake-async zone was awaiting notification refill filesystem work. Calls now wait in tester.runAsync; empty departure maintenance is a no-op."
+  },
+  "local_main_integration": {
+    "source_head": "e336f0579eee2238ff0b61dc2ba2d1ceec6ab81d",
+    "protected_files": 27,
+    "content_and_mode_unchanged": true,
+    "merge": "ff-only --no-overwrite-ignore",
+    "pushed": false
+  },
+  "protected_unrelated_files_manifest_sha256": "10ce9aa3e2d3d70c15d88666e8db92804e9b84b80405d4e39fb37eb036907941",
+  "native_install_or_launch": false,
+  "real_user_data_or_notifications_modified": false,
+  "external_weather_or_models_called": false,
+  "ci_run": false,
+  "pushed": false,
+  "published": false,
+  "remaining": [
+    "isolated native queue capacity and cross-day delivery acceptance",
+    "process exit/resume, timezone/DST, hot and cold notification taps",
+    "generic recurring independent dates and date exceptions",
+    "background weather strategy and independent location consent",
+    "system secure storage, optional backup encryption, large attachments",
+    "learning group operations and LAN conflict management"
+  ],
+  "primary_references": [
+    "https://pub.dev/packages/flutter_local_notifications/versions/17.2.4#-caveats-and-limitations",
+    "https://developer.apple.com/documentation/usernotifications/unusernotificationcenter/getpendingnotificationrequests(completionhandler:)"
+  ]
+}

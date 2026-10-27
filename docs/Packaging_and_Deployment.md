@@ -71,4 +71,10 @@ Linux 的编译开发库不等于媒体运行时插件。使用 `--no-install-re
 
 优先运行生成的 Inno 安装器。`scripts/Install.ps1` 会校验清单与当前源码提交后打开该安装器，不再递归删除安装目录内数据库。`scripts/Uninstall.ps1` 仅委托该目录的 `unins000.exe`；没有受管卸载程序的旧安装会停止，需先备份并迁移。Inno 只移除自己安装的文件，保留未知文件与历史数据库；不额外递归删除整个安装目录。
 
-升级前在独立测试账号备份原始数据库与附件。保留旧版安装件和数据副本。当前 v1.7 候选使用 DB schema 10（源码见 `lib/data/database_helper.dart`），不能承诺直接用旧程序降级读取，回退应恢复完整的升级前副本。macOS 候选默认迁移增量通知日志，安装旧程序前须先[退出并导出最新 v1 日志](Notification_Storage_Upgrade.md)；旧程序不一定认识存储选择器门禁。不要在唯一一份真实用户数据上执行故障注入或卸载演练。
+升级前在独立测试账号备份原始数据库与附件。保留旧版安装件和数据副本。公开 v1.7.0-rc.33 使用 DB schema 14，本地主线当前使用 schema 16（源码见 `lib/data/database_helper.dart`），不能承诺直接用旧程序降级读取，回退应恢复完整的升级前副本。macOS 候选默认迁移增量通知日志，安装旧程序前须先[退出并导出最新 v1 日志](Notification_Storage_Upgrade.md)；旧程序不一定认识存储选择器门禁。不要在唯一一份真实用户数据上执行故障注入或卸载演练。
+
+## P1 持续日期源码的本地构建（2026-10-27）
+
+源码 `e336f05` 的 macOS arm64 Debug 已构建并通过严格签名检查；iOS 模拟器 Debug 的主应用与 ReminderActivity 扩展均为 IOSSIMULATOR／1.7.0+33。版本号沿用 +33，不表示与公开 rc.33 的源码相同。产物位于当前受管工作树的 build 目录，没有安装、启动、上传或发布。
+
+构建固定使用 Flutter 3.44.9／Dart 3.12.2、Xcode 27.1，以及已有 CocoaPods 1.16.2 包装入口；将包装目录加入单次命令 PATH，不修改用户全局工具设置。该构建复用现有 Pods 兼容配置；Flutter 仍提示通知插件尚未支持 SPM，该提示不是构建失败。测试、产物身份和摘要见 [P1 机器证据](benchmarks/p1-rolling-window-2026-10-27.json)，本轮功能与后续原生门槛见 [P1 分阶段记录](P1_Rolling_Notification_Window.md)。
