@@ -1,4 +1,8 @@
 import 'dart:async';
+import 'package:uuid/uuid.dart';
+import '../../providers/workspace_drafts_provider.dart';
+import '../../services/quick_reminder_parser.dart';
+import '../formatters/local_date_time.dart';
 import '../../providers/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -23,28 +27,82 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   bool _isLongPressRecording = false;
   Future<bool>? _pendingRecordingStart;
   bool _isFinishingLongPress = false;
-  bool _wasEmpty = true;
-  bool _wasFocused = false;
   Offset _voiceOrigin = Offset.zero;
   final _voiceGesture = VoiceCaptureGesture();
   VoiceReleaseAction _voiceAction = VoiceReleaseAction.save;
   bool _isTranscribing = false;
   bool _voiceMode = false;
   HomeController? _heldRecorder;
+  DateTime? _quickTime;
+  bool _memoOnly = false, _submitting = false, _restoring = false;
+  bool _draftTouched = false, _draftSaveFailed = false;
+  String _captureId = const Uuid().v4();
+  String _lastText = '';
+  bool _lastFocused = false;
 
   @override
   void initState() {
     super.initState();
     _focusNode.addListener(_inputChanged);
     _textController.addListener(_inputChanged);
+    unawaited(_restoreDraft());
+  }
+
+  Future<void> _restoreDraft() async {
+    try {
+      final store = ref.read(workspaceDraftsProvider.notifier);
+      if (!store.loaded) await store.ready;
+      if (!mounted || _draftTouched) return;
+      final draft = ref.read(workspaceDraftsProvider)['capture'];
+      if (draft is! Map || draft['text'] is! String) return;
+      _restoring = true;
+      _quickTime = DateTime.tryParse(draft['time']?.toString() ?? '');
+      _memoOnly = draft['memo'] == true;
+      _captureId = draft['id'] is String ? draft['id'] as String : _captureId;
+      _textController.text = draft['text'] as String;
+      _restoring = false;
+      if (mounted) setState(() {});
+    } catch (_) {
+      if (mounted) setState(() => _draftSaveFailed = true);
+    }
+  }
+
+  void _persistDraft() {
+    if (_restoring) return;
+    _draftTouched = true;
+    final text = _textController.text;
+    final value = text.isEmpty && _quickTime == null && !_memoOnly
+        ? null
+        : {
+            'text': text,
+            'time': _quickTime?.toIso8601String(),
+            'memo': _memoOnly,
+            'id': _captureId,
+          };
+    unawaited(
+      ref
+          .read(workspaceDraftsProvider.notifier)
+          .put('capture', value)
+          .then(
+            (_) {
+              if (mounted && _draftSaveFailed) {
+                setState(() => _draftSaveFailed = false);
+              }
+            },
+            onError: (Object _) {
+              if (mounted) setState(() => _draftSaveFailed = true);
+            },
+          ),
+    );
   }
 
   void _inputChanged() {
-    final empty = _textController.text.isEmpty;
+    final text = _textController.text;
     final focused = _focusNode.hasFocus;
-    if (empty == _wasEmpty && focused == _wasFocused) return;
-    _wasEmpty = empty;
-    _wasFocused = focused;
+    if (text == _lastText && focused == _lastFocused) return;
+    if (!_restoring && text != _lastText) _persistDraft();
+    _lastText = text;
+    _lastFocused = focused;
     setState(() {});
   }
 
@@ -67,13 +125,71 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     super.dispose();
   }
 
-  void _submitText() {
+  Future<void> _submitText() async {
+    if (_submitting) return;
     final composing = _textController.value.composing;
     if (composing.isValid && !composing.isCollapsed) return;
     final text = _textController.text.trim();
     if (text.isEmpty) return;
-    _textController.clear();
-    ref.read(homeControllerProvider.notifier).processText(text);
+    setState(() => _submitting = true);
+    bool saved = false;
+    try {
+      saved = await ref
+          .read(homeControllerProvider.notifier)
+          .processText(
+            text,
+            reminderTime: _quickTime,
+            memoOnly: _memoOnly,
+            captureId: _captureId,
+          );
+    } catch (_) {
+      if (mounted) setState(() => _draftSaveFailed = true);
+    }
+    if (!mounted) return;
+    if (saved && _textController.text.trim() == text) {
+      _restoring = true;
+      _textController.clear();
+      _quickTime = null;
+      _memoOnly = false;
+      _captureId = const Uuid().v4();
+      _restoring = false;
+      _persistDraft();
+    }
+    setState(() => _submitting = false);
+  }
+
+  Future<void> _pickQuickTime() async {
+    final now = DateTime.now();
+    final initial = _quickTime?.isAfter(now) == true ? _quickTime! : now;
+    final date = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(now.year, now.month, now.day),
+      lastDate: DateTime(now.year + 10),
+    );
+    if (!mounted || date == null) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initial),
+    );
+    if (!mounted || time == null) return;
+    final selected = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    );
+    if (!selected.isAfter(DateTime.now())) return;
+    _selectTime(selected);
+  }
+
+  void _selectTime(DateTime? time, {bool memo = false}) {
+    setState(() {
+      _quickTime = time;
+      _memoOnly = memo;
+    });
+    _persistDraft();
   }
 
   void _insertLineBreak() {
@@ -343,11 +459,16 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     final isMobile =
         platform == TargetPlatform.iOS || platform == TargetPlatform.android;
     final voiceMode = isMobile && _voiceMode;
+    final displayedTime =
+        _quickTime ?? QuickReminderParser.parse(_textController.text);
     final idleVoiceTarget =
         (voiceMode || (_textController.text.isEmpty && !_focusNode.hasFocus)) &&
         !_isTranscribing;
     final captureBusy =
-        isRecording || _isTranscribing || _pendingRecordingStart != null;
+        isRecording ||
+        _isTranscribing ||
+        _pendingRecordingStart != null ||
+        _submitting;
     // Scaffold removes the consumed inset from its body MediaQuery while the
     // keyboard animates away, so also read the containing view's physical inset.
     final keyboardVisible =
@@ -374,6 +495,32 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (!isRecording &&
+                !voiceMode &&
+                !keyboardVisible &&
+                MediaQuery.sizeOf(context).height >= 600 &&
+                _textController.text.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 2,
+                ),
+                child: Text(
+                  _memoOnly
+                      ? l10n.get('memoNoAlarm')
+                      : displayedTime != null
+                      ? '${l10n.get('reminderTimeShort')}: ${formatLocalDateTime(displayedTime)}'
+                      : l10n.get('noTimeMemo'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            if (_draftSaveFailed)
+              Text(
+                l10n.get('draftSaveFailed'),
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
             if (_isLongPressRecording && !keyboardVisible)
               VoiceCaptureFeedback(action: _voiceAction),
             if (isMobile &&
@@ -388,6 +535,65 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
               ),
             Row(
               children: [
+                if (!isRecording &&
+                    !voiceMode &&
+                    (_textController.text.isNotEmpty ||
+                        _quickTime != null ||
+                        _memoOnly))
+                  PopupMenuButton<String>(
+                    key: const ValueKey('capture-time-options'),
+                    tooltip: l10n.get('quickChoose'),
+                    enabled: !captureBusy,
+                    icon: Icon(
+                      _memoOnly
+                          ? Icons.notes_outlined
+                          : Icons.schedule_outlined,
+                      color: displayedTime != null || _memoOnly
+                          ? Theme.of(context).colorScheme.primary
+                          : null,
+                    ),
+                    onSelected: (value) {
+                      switch (value) {
+                        case 'evening':
+                          _selectTime(
+                            QuickReminderParser.tonight(DateTime.now()),
+                          );
+                        case 'morning':
+                          _selectTime(
+                            QuickReminderParser.tomorrowMorning(DateTime.now()),
+                          );
+                        case 'custom':
+                          _pickQuickTime();
+                        case 'memo':
+                          _selectTime(null, memo: true);
+                        case 'reset':
+                          _selectTime(null);
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      PopupMenuItem<String>(
+                        enabled: false,
+                        child: Text(
+                          _memoOnly
+                              ? l10n.get('memoNoAlarm')
+                              : displayedTime == null
+                              ? l10n.get('noTimeMemo')
+                              : formatLocalDateTime(displayedTime),
+                        ),
+                      ),
+                      for (final entry in const {
+                        'evening': 'quickEvening',
+                        'morning': 'quickMorning',
+                        'custom': 'quickChoose',
+                        'memo': 'memoOnly',
+                        'reset': 'quickReset',
+                      }.entries)
+                        PopupMenuItem(
+                          value: entry.key,
+                          child: Text(l10n.get(entry.value)),
+                        ),
+                    ],
+                  ),
                 if (isMobile)
                   IconButton(
                     key: const ValueKey('composer-mode-toggle'),

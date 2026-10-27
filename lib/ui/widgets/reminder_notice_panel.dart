@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/reminder.dart';
+import '../../services/quick_reminder_parser.dart';
 
 String reminderOccurrenceKey(Reminder reminder) => reminder.occurrenceIdentity;
 
@@ -14,6 +15,8 @@ class ReminderNoticePanel extends StatelessWidget {
     required this.onSnooze,
     required this.onComplete,
     this.onReview,
+    this.onSnoozeUntil,
+    this.onSkip,
     this.busyIds = const {},
   });
   final List<Reminder> reminders;
@@ -23,6 +26,41 @@ class ReminderNoticePanel extends StatelessWidget {
   final ValueChanged<Reminder> onSnooze;
   final ValueChanged<Reminder> onComplete;
   final ValueChanged<Reminder>? onReview;
+  final void Function(Reminder, DateTime)? onSnoozeUntil;
+  final ValueChanged<Reminder>? onSkip;
+
+  Future<void> _chooseSnooze(
+    BuildContext context,
+    String choice,
+    Reminder task,
+  ) async {
+    final current = DateTime.now();
+    DateTime? until = switch (choice) {
+      '15' => current.add(const Duration(minutes: 15)),
+      '60' => current.add(const Duration(hours: 1)),
+      'evening' => QuickReminderParser.tonight(current),
+      'morning' => QuickReminderParser.tomorrowMorning(current),
+      _ => null,
+    };
+    if (choice == 'custom') {
+      final date = await showDatePicker(
+        context: context,
+        initialDate: current,
+        firstDate: DateTime(current.year, current.month, current.day),
+        lastDate: DateTime(current.year + 10),
+      );
+      if (!context.mounted || date == null) return;
+      final time = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(current),
+      );
+      if (!context.mounted || time == null) return;
+      until = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    }
+    if (context.mounted && until != null && until.isAfter(DateTime.now())) {
+      onSnoozeUntil?.call(task, until);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +106,7 @@ class ReminderNoticePanel extends StatelessWidget {
                 ),
               ),
               IconButton(
-                tooltip: l10n.get('iKnow'),
+                tooltip: l10n.get('dismissReminderHint'),
                 onPressed: busy ? null : () => onDismiss(reminder),
                 icon: const Icon(Icons.close, size: 18),
                 visualDensity: VisualDensity.compact,
@@ -104,6 +142,36 @@ class ReminderNoticePanel extends StatelessWidget {
                   onPressed: busy ? null : () => onSnooze(reminder),
                   child: Text(l10n.get('snooze5Min')),
                 ),
+                if (onSnoozeUntil != null)
+                  PopupMenuButton<String>(
+                    key: const ValueKey('snooze-options'),
+                    tooltip: l10n.get('snoozeMore'),
+                    enabled: !busy,
+                    onSelected: (choice) =>
+                        _chooseSnooze(context, choice, reminder),
+                    itemBuilder: (_) => [
+                      for (final entry in const {
+                        '15': 'snooze15',
+                        '60': 'snooze60',
+                        'evening': 'quickEvening',
+                        'morning': 'quickMorning',
+                        'custom': 'quickChoose',
+                      }.entries)
+                        PopupMenuItem(
+                          value: entry.key,
+                          child: Text(l10n.get(entry.value)),
+                        ),
+                    ],
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Text(l10n.get('snoozeMore')),
+                    ),
+                  ),
+                if (reminder.isRecurring && onSkip != null)
+                  TextButton(
+                    onPressed: busy ? null : () => onSkip!(reminder),
+                    child: Text(l10n.get('skipOccurrence')),
+                  ),
                 TextButton(
                   onPressed: busy ? null : () => onComplete(reminder),
                   child: Text(l10n.get('markDone')),

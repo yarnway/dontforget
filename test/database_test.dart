@@ -326,6 +326,12 @@ void main() {
                 'snoozed_at',
                 'recurrence_anchor_time',
                 'review_notifications_enabled',
+                'event_time',
+                'recurrence_event_anchor_time',
+                'suggested_trigger_time',
+                'source_text', 'capture_proposal_json', 'word_progress_json',
+                'capture_pending',
+                'is_pinned',
               }.contains(key),
         ),
     );

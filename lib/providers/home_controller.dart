@@ -18,6 +18,7 @@ import '../services/llm_service.dart';
 import '../services/local_media_store.dart';
 import '../services/recording_duration_reader.dart';
 import '../services/local_speech_service.dart';
+import '../services/quick_reminder_parser.dart';
 import '../services/recovery/runtime_gate.dart';
 import 'providers.dart';
 
@@ -304,14 +305,19 @@ class HomeController extends StateNotifier<HomeState> {
     }
   }
 
-  Future<void> processText(String text) async {
+  Future<bool> processText(
+    String text, {
+    DateTime? reminderTime,
+    bool memoOnly = false,
+    String? captureId,
+  }) async {
     final trimmed = text.trim();
     if (trimmed.isEmpty) {
-      return;
+      return false;
     }
     final generation = _beginInput();
     if (generation == null) {
-      return;
+      return false;
     }
     if (trimmed.startsWith('/agent ') || trimmed.startsWith('/goal ')) {
       final goal = trimmed.replaceFirst(RegExp(r'^/(agent|goal)\s+'), '');
@@ -320,55 +326,101 @@ class HomeController extends StateNotifier<HomeState> {
           await _processWithMultiAgent(goal, generation);
         } catch (_) {
           // The same generation owns both the command and its error state.
+          return false;
         }
-        return;
+        return true;
       }
     }
-    _launch(generation, () async {
-      final settings = _ref.read(settingsProvider);
-      if (!settings.hasConfiguredExtraction) {
-        await _saveLocalText(trimmed, generation);
-        return;
-      }
-      final service = _ref.read(llmServiceProvider);
-      List<Reminder> tasks;
-      try {
-        tasks = await service.extractTasks(trimmed, settings);
-      } catch (error) {
-        // A failed old request must not create a fallback in a restored DB.
-        _check(generation);
-        await _saveLocalText(trimmed, generation);
-        _reportError(
-          generation,
-          '${service.formatErrorMessage(error)}\n已保存为本地事项，请在详情中设置提醒时间。',
-        );
-        return;
-      }
+    final settings = _ref.read(settingsProvider);
+    final parsed = QuickReminderParser.parse(trimmed);
+    final time = memoOnly ? null : reminderTime ?? parsed;
+    if (time != null && !time.isAfter(DateTime.now())) {
+      _reportError(
+        generation,
+        AppLocalizations(Locale(settings.language)).get('chooseFutureTime'),
+      );
+      return false;
+    }
+    final existing = _ref
+        .read(remindersProvider)
+        .where((r) => r.id == captureId)
+        .firstOrNull;
+    if (existing != null) return existing.sourceText == trimmed;
+    final local = Reminder(
+      id: captureId ?? const Uuid().v4(),
+      taskTitle: String.fromCharCodes(trimmed.runes.take(80)),
+      taskSummary: trimmed,
+      sourceText: trimmed,
+      quadrantLevel: 2,
+      triggerTime: time,
+      eventTime: parsed,
+      capturePending: settings.hasConfiguredExtraction && !memoOnly,
+    );
+    final saving = _startPending(generation);
+    var nativeFailed = false;
+    try {
+      final result = await _ref
+          .read(remindersProvider.notifier)
+          .addReminderForGeneration(local, generation);
       _check(generation);
-      if (tasks.isEmpty) {
-        await _saveLocalText(trimmed, generation);
-      } else {
-        await _saveTasks(tasks, generation);
-      }
-    }, failureMessage: '事项未能完整保存，请检查本地存储后重试。');
+      nativeFailed = result.nativeSyncFailed;
+    } catch (_) {
+      _reportError(generation, '事项未能完整保存，输入内容已保留，请检查本地存储后重试。');
+      _finishPending(saving);
+      return false;
+    }
+    if (local.capturePending) retryCapture(local);
+    _finishPending(saving);
+    if (nativeFailed) {
+      _reportError(
+        generation,
+        AppLocalizations(
+          Locale(settings.language),
+        ).get('reminderNativeSyncFailed'),
+      );
+    }
+    return true;
   }
 
-  Future<void> _saveLocalText(String text, DataGeneration generation) async {
-    _check(generation);
-    await _ref
-        .read(remindersProvider.notifier)
-        .addReminderForGeneration(
-          Reminder(
-            id: const Uuid().v4(),
-            taskTitle: text.length > 25 ? '${text.substring(0, 25)}...' : text,
-            taskSummary: text,
-            quadrantLevel: 2,
-            urgencyLevel: 'General',
-            importanceLevel: 'Important',
-          ),
-          generation,
-        );
-    _check(generation);
+  final Set<String> _activeCaptures = {};
+  bool isCaptureRunning(String id) => _activeCaptures.contains(id);
+
+  void retryCapture(Reminder task) {
+    final generation = _beginInput();
+    if (generation == null ||
+        !task.capturePending ||
+        task.sourceText == null ||
+        !_activeCaptures.add(task.id)) {
+      return;
+    }
+    _launch(
+      generation,
+      () async {
+        try {
+          final service = _ref.read(llmServiceProvider);
+          final tasks = await service.extractTasks(
+            task.sourceText!,
+            _ref.read(settingsProvider),
+          );
+          _check(generation);
+          final result = await _ref
+              .read(remindersProvider.notifier)
+              .enrichCapture(task, tasks, generation);
+          if (result.nativeSyncFailures > 0) {
+            _reportError(
+              generation,
+              AppLocalizations(
+                Locale(_ref.read(settingsProvider).language),
+              ).get('reminderNativeSyncFailed'),
+            );
+          }
+        } finally {
+          _activeCaptures.remove(task.id);
+        }
+      },
+      failureMessage: '原文已保存在本地，可稍后继续 AI 整理。',
+      explainModelError: true,
+    );
   }
 
   Future<bool> startRecording() async {

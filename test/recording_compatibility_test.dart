@@ -401,13 +401,13 @@ void main() {
           finished.complete();
         }
       });
-      await controller.processText('提醒我下午一点半开会');
+      await controller.processText('买牛奶');
       await finished.future.timeout(const Duration(seconds: 5));
       subscription.close();
       final db = await database.database;
       final rows = await db.query('Reminders');
       expect(rows, hasLength(1));
-      expect(rows.single['task_summary'], '提醒我下午一点半开会');
+      expect(rows.single['task_summary'], '买牛奶');
       expect(rows.single['trigger_time'], isNull);
       expect(errors, isEmpty);
       expect(notifications.scheduled, isEmpty);

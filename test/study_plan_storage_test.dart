@@ -47,7 +47,18 @@ void main() {
     spacedRepetitionLevel: 2,
     nextReviewAt: DateTime(2030, 1, 1),
   );
-  final legacy = original.toJson()..remove('review_notifications_enabled');
+  final legacy = original.toJson()
+    ..removeWhere(
+      (key, _) => const {
+        'review_notifications_enabled',
+        'event_time',
+        'recurrence_event_anchor_time',
+        'suggested_trigger_time',
+        'source_text', 'capture_proposal_json', 'word_progress_json',
+        'capture_pending',
+        'is_pinned',
+      }.contains(key),
+    );
   Future<File> createLegacy({bool broken = false}) async {
     final file = File('${root.path}/dont_forget_v3.db');
     final db = await databaseFactoryFfi.openDatabase(file.path);
@@ -57,7 +68,10 @@ void main() {
     for (final statement in sql.split(';')) {
       if (statement.trim().isNotEmpty) await db.execute(statement);
     }
-    await db.insert('Settings', AppSettings.defaults().toJson());
+    await db.insert(
+      'Settings',
+      (AppSettings.defaults().toJson()..remove('workspace_drafts_json')),
+    );
     await db.insert('Reminders', legacy);
     if (broken) {
       await db.execute(
@@ -87,13 +101,21 @@ void main() {
     () async {
       await createLegacy();
       final db = await helper.database;
-      expect(await db.getVersion(), 13);
+      expect(await db.getVersion(), DatabaseHelper.schemaVersion);
       expect((await db.query('Reminders')).single, {
         ...legacy,
         'review_notifications_enabled': 0,
+        'event_time': null,
+        'recurrence_event_anchor_time': null,
+        'suggested_trigger_time': null,
+        'source_text': null, 'capture_proposal_json': null, 'word_progress_json': null,
+        'capture_pending': 0,
+        'is_pinned': 0,
       });
       final directory = root.listSync().whereType<Directory>().singleWhere(
-        (d) => d.path.contains('schema-upgrade-v12-to-v13-'),
+        (d) => d.path.contains(
+          'schema-upgrade-v12-to-v${DatabaseHelper.schemaVersion}-',
+        ),
       );
       final snapshot = File('${directory.path}/snapshot.json');
       final bytes = await snapshot.readAsBytes();
@@ -134,7 +156,10 @@ void main() {
                 jsonEncode({
                   'version': 12,
                   'timestamp': DateTime.now().toIso8601String(),
-                  'settings': [AppSettings.defaults().toJson()],
+                  'settings': [
+                    (AppSettings.defaults().toJson()
+                      ..remove('workspace_drafts_json')),
+                  ],
                   'media_records': [],
                   'reminders': [legacy],
                 }),
@@ -158,6 +183,12 @@ void main() {
           expect((await (await target.database).query('Reminders')).single, {
             ...legacy,
             'review_notifications_enabled': 0,
+            'event_time': null,
+            'recurrence_event_anchor_time': null,
+            'suggested_trigger_time': null,
+            'source_text': null, 'capture_proposal_json': null, 'word_progress_json': null,
+            'capture_pending': 0,
+            'is_pinned': 0,
           });
           expect(await source.readAsBytes(), bytes);
         } finally {
@@ -307,7 +338,7 @@ void main() {
           temporaryDirectory: root,
         );
         final preview = await inspector.inspect(source);
-        expect(preview.version, 13);
+        expect(preview.version, DatabaseHelper.schemaVersion);
         final target = DatabaseHelper.forTesting(
           '${root.path}/restored-current',
           databaseFactoryFfi,

@@ -16,7 +16,7 @@ import '../services/storage_directory_lease.dart';
 part 'database_access.dart';
 
 class DatabaseHelper {
-  static const schemaVersion = 13;
+  static const schemaVersion = 14;
   static final DatabaseHelper instance = DatabaseHelper._init();
   Database? _database;
   Future<Database>? _opening;
@@ -532,7 +532,8 @@ CREATE TABLE Settings (
   ai_profiles_json TEXT NOT NULL DEFAULT '[]',
   ai_fallback_enabled INTEGER NOT NULL DEFAULT 0,
   appearance TEXT NOT NULL DEFAULT 'system',
-  input_send_mode TEXT NOT NULL DEFAULT 'enter'
+  input_send_mode TEXT NOT NULL DEFAULT 'enter',
+  workspace_drafts_json TEXT
 )
 ''');
 
@@ -557,6 +558,14 @@ CREATE TABLE Reminders (
   urgency_level TEXT,
   importance_level TEXT,
   trigger_time TEXT,
+  event_time TEXT,
+  recurrence_event_anchor_time TEXT,
+  suggested_trigger_time TEXT,
+  source_text TEXT,
+  capture_proposal_json TEXT,
+  word_progress_json TEXT,
+  capture_pending INTEGER NOT NULL DEFAULT 0,
+  is_pinned INTEGER NOT NULL DEFAULT 0,
   is_completed $boolType,
   is_recurring INTEGER DEFAULT 0,
   recurrence_rule TEXT DEFAULT 'none',
@@ -681,6 +690,26 @@ CREATE TABLE Reminders (
     if (oldVersion < 13) {
       await db.execute(
         'ALTER TABLE Reminders ADD COLUMN review_notifications_enabled INTEGER NOT NULL DEFAULT 0',
+      );
+    }
+    if (oldVersion < 14) {
+      for (final column in [
+        'event_time',
+        'suggested_trigger_time',
+        'source_text',
+        'capture_proposal_json',
+        'word_progress_json',
+        'recurrence_event_anchor_time',
+      ]) {
+        await db.execute('ALTER TABLE Reminders ADD COLUMN $column TEXT');
+      }
+      for (final column in ['capture_pending', 'is_pinned']) {
+        await db.execute(
+          'ALTER TABLE Reminders ADD COLUMN $column INTEGER NOT NULL DEFAULT 0',
+        );
+      }
+      await db.execute(
+        'ALTER TABLE Settings ADD COLUMN workspace_drafts_json TEXT',
       );
     }
 

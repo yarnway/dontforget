@@ -1,3 +1,5 @@
+import 'support/workspace_drafts.dart';
+import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'package:dont_forget/services/llm_service.dart';
 import 'package:dont_forget/models/settings.dart';
 import 'package:dont_forget/models/review_report.dart';
@@ -106,6 +108,10 @@ void main() {
       ],
     );
     await container.read(settingsProvider.notifier).ready;
+    await container.read(workspaceDraftsProvider.notifier).ready;
+    await container
+        .read(workspaceDraftsProvider.notifier)
+        .put('homeView', 'board');
     await container.read(mediaRecordsProvider.notifier).ready;
     await container.read(remindersProvider.notifier).ready;
     await container
@@ -146,6 +152,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
@@ -269,6 +276,7 @@ void main() {
           '你 · 日本語 draft',
         );
         final oldSearch = command.search!;
+        addTearDown(() => drainWorkspaceDrafts(tester, container));
         await tester.pumpWidget(const SizedBox());
         expect(command.search, isNull);
         expect(oldSearch(), isFalse);
@@ -317,6 +325,7 @@ void main() {
         tester.widget<TextField>(composer()).controller!.text,
         'Draft survives failed report',
       );
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
     },
   );
@@ -380,6 +389,7 @@ void main() {
               tester.widget<TextField>(composer()).controller!.text,
               '工具内仍可输入 · Editable',
             );
+            addTearDown(() => drainWorkspaceDrafts(tester, container));
             await tester.pumpWidget(const SizedBox());
           },
         );
@@ -439,6 +449,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(tester.widget<TextField>(goal).controller!.text, isEmpty);
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
     },
   );
@@ -518,6 +529,7 @@ void main() {
           tester.widget<TextField>(composer()).controller!.text,
           'Draft during export',
         );
+        addTearDown(() => drainWorkspaceDrafts(tester, container));
         await tester.pumpWidget(const SizedBox());
       },
     );
@@ -556,6 +568,7 @@ void main() {
                   .hitTestable(),
               findsOneWidget,
             );
+            addTearDown(() => drainWorkspaceDrafts(tester, container));
             await tester.pumpWidget(const SizedBox());
           },
         );

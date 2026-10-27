@@ -1,3 +1,5 @@
+import 'support/workspace_drafts.dart';
+import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'dart:async';
 import 'package:dont_forget/ui/widgets/command_palette_dialog.dart';
 import 'package:dont_forget/l10n/app_localizations.dart';
@@ -108,6 +110,10 @@ void main() {
       ],
     );
     await container.read(settingsProvider.notifier).ready;
+    await container.read(workspaceDraftsProvider.notifier).ready;
+    await container
+        .read(workspaceDraftsProvider.notifier)
+        .put('homeView', 'board');
     await container.read(remindersProvider.notifier).ready;
     // Finish identity file I/O before entering a widget fake-async zone.
     await container.read(notificationServiceProvider).init();
@@ -133,6 +139,7 @@ void main() {
   testWidgets('App starts and + button displays media options sheet', (
     WidgetTester tester,
   ) async {
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(
       UncontrolledProviderScope(container: container, child: const MyApp()),
     );
@@ -201,6 +208,7 @@ void main() {
     });
     for (final width in [375.0, 768.0, 1440.0]) {
       tester.view.physicalSize = Size(width, 900);
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
@@ -259,6 +267,7 @@ void main() {
         tester.binding.platformDispatcher.clearPlatformBrightnessTestValue();
         await tester.pump();
       }
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
     }
   });
@@ -277,6 +286,7 @@ void main() {
       await tester.runAsync(
         () => container.read(remindersProvider.notifier).addReminder(upcoming),
       );
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container,
@@ -397,6 +407,7 @@ void main() {
           .fireReminderNow(savedDueAgain);
       await tester.pump();
       expect(find.byKey(const ValueKey('reminder-notice-panel')), findsNothing);
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
     },
   );
@@ -412,6 +423,7 @@ void main() {
     await tester.runAsync(
       () => container.read(remindersProvider.notifier).addReminder(task),
     );
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(
       UncontrolledProviderScope(container: container, child: const MyApp()),
     );
@@ -449,12 +461,14 @@ void main() {
     await tester.runAsync(
       () => container.read(remindersProvider.notifier).deleteReminder(task.id),
     );
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(const SizedBox());
   });
 
   testWidgets(
     'manual priority scan shows count, native warning and safe failure',
     (tester) async {
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(
         UncontrolledProviderScope(container: container, child: const MyApp()),
       );
@@ -498,6 +512,7 @@ void main() {
       expect(find.text('优先级检查失败，请重试。'), findsOneWidget);
       expect(find.textContaining('SECRET'), findsNothing);
       expect(tester.takeException(), isNull);
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
     },
   );
@@ -517,6 +532,7 @@ void main() {
               ),
             ),
       );
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(
         UncontrolledProviderScope(container: container, child: const MyApp()),
       );
@@ -541,12 +557,14 @@ void main() {
       await tester.pump(const Duration(milliseconds: 200));
       expect(search, findsNothing);
       expect(find.byType(TaskBoard), findsOneWidget);
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
     },
   );
   testWidgets(
     'workspace tools command and Meta K open once and do not cover another route',
     (tester) async {
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(
         UncontrolledProviderScope(container: container, child: const MyApp()),
       );
@@ -579,6 +597,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(command.open!(), false);
       expect(find.text('Editor stays open'), findsOneWidget);
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
       expect(command.open, isNull);
     },

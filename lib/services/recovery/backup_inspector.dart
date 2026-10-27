@@ -416,6 +416,17 @@ Map<String, String> _columnsFor(String table, int version) => {
   if (table == 'settings' && version >= 12) 'input_send_mode': 's',
   if (table == 'reminders' && version >= 13)
     'review_notifications_enabled': 'b',
+  if (table == 'settings' && version >= 14) 'workspace_drafts_json': 's?',
+  if (table == 'reminders' && version >= 14) ...{
+    'event_time': 'd?',
+    'recurrence_event_anchor_time': 'd?',
+    'suggested_trigger_time': 'd?',
+    'source_text': 's?',
+    'capture_proposal_json': 's?',
+    'word_progress_json': 's?',
+    'capture_pending': 'b',
+    'is_pinned': 'b',
+  },
 };
 
 Future<void> _checkSchema(
@@ -522,6 +533,8 @@ Future<void> _checkSchema(
         'notice_revision',
         'ai_fallback_enabled',
         'review_notifications_enabled',
+        'capture_pending',
+        'is_pinned',
       }.contains(name);
       final validDefault = defaultsToZero
           ? defaultValue == '0'
@@ -562,7 +575,7 @@ Future<void> _checkSchema(
 }
 
 void _checkVersion(Object? value) {
-  if (value is! int || !const {7, 8, 9, 10, 11, 12, 13}.contains(value)) {
+  if (value is! int || !const {7, 8, 9, 10, 11, 12, 13, 14}.contains(value)) {
     _fail(BackupInspectionError.unsupportedVersion);
   }
 }
