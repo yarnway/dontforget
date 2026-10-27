@@ -1,0 +1,263 @@
+{
+  "date": "2026-10-27",
+  "recorded_at": "2026-10-27T21:48:25.643055+08:00",
+  "source_commit": "e336f0579eee2238ff0b61dc2ba2d1ceec6ab81d",
+  "schema": 16,
+  "product_source_changed": false,
+  "source_trees": {
+    "lib": "cffd5c6a692a510713ee7e67a7beebef219df999",
+    "macos": "0098fc24dd718af6ef748cca02d5a977d7cd4bd2",
+    "ios": "d7e8db792a14dd575669e5fbf98f18d8a2960587",
+    "pubspec.lock": "ceca1d3893bc96a16f4f5762e5dbb7266f29ea87"
+  },
+  "mac": {
+    "hardware": "physical Mac",
+    "architecture": "arm64",
+    "os": "27.0.1",
+    "bundle_id": "com.example.dontForget.acceptance.p1-window-20261027",
+    "build_mode": "release",
+    "version": "1.7.0+33",
+    "same_as_public_rc33": false,
+    "passive_trace_defines": [
+      "DONTFORGET_STARTUP_TRACE=true",
+      "DONTFORGET_RETRY_TRACE=true"
+    ],
+    "original_archive_sha256": "5ec2eac7e32bbef0040827ab771990b4495badb0a4e52bf8470ec0f3f1b0014d",
+    "derived_frameworks_and_resources_unchanged": true,
+    "codesign_verify": "PASS",
+    "new_isolated_sandbox": true,
+    "empty_baseline": {
+      "integrity": "ok",
+      "schema": 16,
+      "Reminders": 0,
+      "MediaRecords": 0,
+      "Settings": 1,
+      "native_pending": 0,
+      "native_retained": 0
+    },
+    "stages": {
+      "capacity": {
+        "result": "PASS",
+        "at": "2026-10-27T21:26:42.264937+08:00",
+        "business_rows": 208,
+        "future_reminders": 206,
+        "native_pending_independent": 50,
+        "native_retained_independent": 0,
+        "submitted": 50,
+        "deferred": 156,
+        "needs_attention": 0,
+        "cancellations": 0,
+        "exact_earliest_50_match": true,
+        "transient_high_water_not_independently_measured": true
+      },
+      "process_exit": {
+        "result": "PASS",
+        "force_exit_at": "2026-10-27T21:26:42.393718+08:00",
+        "process_absent_before_and_after_due": true,
+        "application_not_reopened_until_after_both_events": true,
+        "controls": [
+          {
+            "id": "p1-closed-control-1",
+            "native_id": 1435409610,
+            "expected": "2026-10-27T21:29:15.144745",
+            "os_delivery_at": "2026-10-27T21:29:15.129000",
+            "system_banner": true,
+            "delivery_events": 1
+          },
+          {
+            "id": "p1-closed-control-2",
+            "native_id": 845158379,
+            "expected": "2026-10-27T21:31:15.144745",
+            "os_delivery_at": "2026-10-27T21:31:15.121000",
+            "system_banner": true,
+            "delivery_events": 1
+          }
+        ],
+        "tasks_not_automatically_completed": true,
+        "audible_sound_not_verified": true
+      },
+      "reopen": {
+        "result": "PASS",
+        "at": "2026-10-27T21:34:19.699644+08:00",
+        "business_rows": 208,
+        "future_reminders": 204,
+        "native_pending_independent": 50,
+        "native_retained_independent": 2,
+        "retained_titles": [
+          "P1 Closed Process QA 1",
+          "P1 Closed Process QA 2"
+        ],
+        "deferred": 154,
+        "needs_attention": 0,
+        "cancellations": 0,
+        "newly_admitted_previously_deferred_ids": [
+          "p1-capacity-033",
+          "p1-capacity-034"
+        ],
+        "journal_future_ids_match_expected_50": true,
+        "expired_control_entries_unchanged": true
+      },
+      "cross_day": {
+        "result": "PENDING_REAL_CLOCK",
+        "prepared_at": "2026-10-27T21:42:34.722346+08:00",
+        "process_absent": true,
+        "business_rows": 209,
+        "future_reminders": 205,
+        "native_pending_independent": 50,
+        "native_retained_independent": 0,
+        "deferred": 155,
+        "requests": [
+          {
+            "id": "12551451-e175-4e2c-a5bc-17a1f90b2873",
+            "title": "P1 Before Midnight QA",
+            "trigger": "2026-10-27T23:59:00.000",
+            "native_id": 1340902619
+          },
+          {
+            "id": "p1-window-departure:departure:2026-10-28",
+            "title": "P1 Midnight Departure QA",
+            "trigger": "2026-10-28T00:02:00.000",
+            "native_id": 1185294448
+          }
+        ],
+        "submitted_not_delivery": true,
+        "next_readback_at": "2026-10-28T00:05:00+08:00",
+        "expected_new_date_id": "p1-window-departure:departure:2026-12-27",
+        "expected_rows_after_refill": 210,
+        "expected_future_after_refill": 204,
+        "expected_native_pending_after_refill": 50,
+        "expected_deferred_after_refill": 154
+      }
+    }
+  },
+  "iphone": {
+    "model": "iPhone 15 Pro Max",
+    "physical_connected_at_preflight": true,
+    "new_bundle_id": "com.yarnway.dontforget.acceptance.p1window27",
+    "iphoneos_release_compile": "PASS",
+    "host_and_reminder_extension_built": true,
+    "new_identity_signing": "BLOCKED",
+    "reason": "Xcode No Accounts; no matching development profiles for new host and ReminderActivity IDs",
+    "installed": false,
+    "runtime_acceptance": "NOT_PERFORMED",
+    "existing_identity_not_overwritten": true
+  },
+  "continued_acceptance": {
+    "automation_id": "p1",
+    "kind": "thread heartbeat",
+    "one_time": true,
+    "readback_at": "2026-10-28T00:05:00+08:00",
+    "user_confirmed_power_and_awake": true,
+    "temporary_awake_assertion_expires_at": "2026-10-28T00:08:00+08:00",
+    "permanent_power_preferences_changed": false
+  },
+  "evidence_directory": "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/p1-window-20261027",
+  "private_evidence": {
+    "run.json": {
+      "bytes": 403,
+      "sha256": "1004c6675690e336efa70037a617559e79563a54224fa9d9ebfc713040ac1ff5"
+    },
+    "macos-manifest.json": {
+      "bytes": 429,
+      "sha256": "f5830d17f1aa6ab04c3b785b2bc09f7b02056f1043b2b8c4080e41f6313b787e"
+    },
+    "macos-derived/acceptance-preparation.json": {
+      "bytes": 18899,
+      "sha256": "8c40bf64e0826259ae1ab5b6bbd2cd71dce60aa0af6cd50556a76f030243bc7c"
+    },
+    "macos-empty-baseline.json": {
+      "bytes": 680,
+      "sha256": "5e297a53a91f6d103b74adde9966edf020efe9f050711b3fe69f96aab9debb1b"
+    },
+    "capacity-fixture.json": {
+      "bytes": 380420,
+      "sha256": "26022c8df96f1c3836fc6c0db01963ab293b87dc1bcc624f066a1daf06407073"
+    },
+    "macos-capacity-seed.json": {
+      "bytes": 482,
+      "sha256": "b64029643146a3793922628dd04f67b6d21a33487e7083da28202776cd5428d5"
+    },
+    "macos-capacity-result.json": {
+      "bytes": 696,
+      "sha256": "66ea9380ac27258761cafaf274429589800820af58213022274f55efe9ab668d"
+    },
+    "macos-closed-before-due.json": {
+      "bytes": 358,
+      "sha256": "2f88bbd2b36985dfa65e22782de5f5898fd044fe17b18deb50910d6f805c5727"
+    },
+    "journal-before-delivery.json": {
+      "bytes": 11290,
+      "sha256": "0918dd316e82b2b7e3fd69318f50005784973e17528bc22d91b4873a74e85d19"
+    },
+    "macos-closed-delivery-system.log": {
+      "bytes": 62217,
+      "sha256": "343aeab713963a3ddb51415f7a2d9034b7c2d50ee382e431bbdd2998576e669c"
+    },
+    "macos-process-exit-result.json": {
+      "bytes": 920,
+      "sha256": "a08e48714158f156216dc2995f78dc1ddbb821d6bba7a871f8e3769da0bd8094"
+    },
+    "macos-reopen-result.json": {
+      "bytes": 2471,
+      "sha256": "741c27ebd6bc5f24aec00dba474fa437e5a8d69d87c218b0265e1305b59b9ec9"
+    },
+    "journal-after-reopen.json": {
+      "bytes": 11708,
+      "sha256": "0d871fd364c07730acfa638e349856f34c7dd5e7cc3a0884f287c623bf62783f"
+    },
+    "midnight-manifest.json": {
+      "bytes": 5586,
+      "sha256": "1d117bf1a940203531b8325f1cc5f5e2227a9bf2f0d358928cdae6ecea1166ab"
+    },
+    "journal-midnight-baseline.json": {
+      "bytes": 11904,
+      "sha256": "b1f701384a1c155be2e0bbd596280308ed1b15f50bddbd4b3961f3c815bf585d"
+    },
+    "power-assertion.json": {
+      "bytes": 349,
+      "sha256": "73f6f2e20f0ac8aaca673ff2222b21997b1a5be774943b2c1aa903f7729221e6"
+    },
+    "fixture_generator_test.dart": {
+      "bytes": 3703,
+      "sha256": "8d58f7b6cefe2986d5eade160f42d728a8d8f8161e74bdcf4d1f3c44595c688f"
+    },
+    "read_journal.dart": {
+      "bytes": 477,
+      "sha256": "311244f55779dae518f569e8b03f6b467f1995ca750d603d3f928eb7c9cef499"
+    },
+    "macos-build.log": {
+      "bytes": 7511,
+      "sha256": "4ed1db79a5a32cd43a10c14b08eb3ea0ea34641069e407aa57dfc3976fe7e5fb"
+    },
+    "ios-build.log": {
+      "bytes": 3429,
+      "sha256": "b512b9e4a0bb0015dec2929646fb9be69d3db6c6d1d59f255c45c30ad0c7b495"
+    },
+    "ios-sign-build-private.log": {
+      "bytes": 112048,
+      "sha256": "cc501b2767bf6fb36e6d80e12934f2069be5a15b9b3c58a2c93c838cc0373f3b"
+    }
+  },
+  "boundaries": {
+    "original_user_data_modified": false,
+    "original_apps_terminated": false,
+    "clock_or_timezone_changed": false,
+    "external_models_or_weather_called": false,
+    "new_ci_or_release": false,
+    "pushed": false,
+    "mac_is_not_iphone_or_android_acceptance": true,
+    "sleep_wake_and_dst_not_accepted": true
+  },
+  "remaining": [
+    "actual midnight delivery, next-date refill, idempotency and isolated queue cleanup",
+    "valid new iPhone host and extension development signing then native matrix",
+    "multi-day medication, edit/pause/end cancellations, hot/cold taps",
+    "sleep/wake and real timezone/DST",
+    "remaining P1 scenario and data-protection tasks"
+  ],
+  "concurrent_main_when_recorded": "23d4a106077d9d59e7e52a1fffd4364564b15bb4",
+  "frozen_artifact_not_rebuilt_after_concurrent_updates": true,
+  "evidence_does_not_accept_later_main_or_build_34": true,
+  "protected_unrelated_files": 27,
+  "protected_unrelated_manifest_sha256": "10ce9aa3e2d3d70c15d88666e8db92804e9b84b80405d4e39fb37eb036907941"
+}
