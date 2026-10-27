@@ -356,7 +356,7 @@ class AppLocalizations {
       'backupPreviewIntro':
           'Inspect a JSON snapshot or a standalone SQLite backup before deciding how to recover it.',
       'backupPreviewSupport':
-          'Supports v7, v8, v9 and v10 backups up to 64 MB.',
+          'Supports v7–v16 backups up to 64 MB.',
       'backupPreviewSelect': 'Choose backup',
       'backupPreviewChecking': 'Checking backup…',
       'backupPreviewCancel': 'Cancel check',
@@ -385,7 +385,7 @@ class AppLocalizations {
       'backupPreviewInvalid':
           'This backup is damaged or has an unsupported structure. Choose another backup.',
       'backupPreviewUnsupported':
-          'This backup version is not supported. Choose a v7, v8, v9 or v10 backup.',
+          'This backup version is not supported. Choose a v7–v16 backup.',
       'backupPreviewTooLarge':
           'This backup exceeds the inspection limit. Choose a smaller backup.',
       'backupPreviewNotStandalone':
@@ -1118,7 +1118,7 @@ class AppLocalizations {
       'backupPreviewTitle': '检查备份',
       'backupPreviewReadOnly': '检查不改变现有数据，恢复需另行确认。',
       'backupPreviewIntro': '检查 JSON 快照或独立 SQLite 镜像，先了解备份内容，再决定如何恢复。',
-      'backupPreviewSupport': '支持 v7、v8、v9、v10 备份，文件上限 64 MB。',
+      'backupPreviewSupport': '支持 v7–v16 备份，文件上限 64 MB。',
       'backupPreviewSelect': '选择备份',
       'backupPreviewChecking': '正在检查备份…',
       'backupPreviewCancel': '取消检查',
@@ -1141,7 +1141,7 @@ class AppLocalizations {
       'backupPreviewDigest': '文件校验摘要',
       'backupPreviewFailed': '未能检查此备份。请选择有效的 JSON 快照或独立 SQLite 镜像，并检查文件访问权限。',
       'backupPreviewInvalid': '备份已损坏或结构不受支持，请选择其他备份。',
-      'backupPreviewUnsupported': '不支持此备份版本，请选择 v7、v8、v9 或 v10 备份。',
+      'backupPreviewUnsupported': '不支持此备份版本，请选择 v7–v16 备份。',
       'backupPreviewTooLarge': '备份超过检查上限，请选择较小的备份。',
       'backupPreviewNotStandalone': '请选择已完成的独立备份，不要选择正在使用的数据库。',
       'backupPreviewSourceChanged': '检查时备份发生变化，请选择已完成的备份后重试。',
@@ -1832,7 +1832,7 @@ class AppLocalizations {
       'backupPreviewTitle': 'バックアップを確認',
       'backupPreviewReadOnly': '確認ではデータを変更しません。復元には別途確認が必要です。',
       'backupPreviewIntro': 'JSONスナップショットまたは独立したSQLiteバックアップの内容を確認します。',
-      'backupPreviewSupport': 'v7・v8・v9・v10に対応。ファイル上限は64 MBです。',
+      'backupPreviewSupport': 'v7〜v16に対応。ファイル上限は64 MBです。',
       'backupPreviewSelect': 'バックアップを選択',
       'backupPreviewChecking': 'バックアップを確認中…',
       'backupPreviewCancel': '確認をキャンセル',
@@ -1856,7 +1856,7 @@ class AppLocalizations {
       'backupPreviewFailed':
           '確認できませんでした。有効なJSONまたは独立したSQLiteバックアップを選択し、アクセス権を確認してください。',
       'backupPreviewInvalid': 'バックアップが破損しているか、構造が未対応です。別のバックアップを選択してください。',
-      'backupPreviewUnsupported': '未対応のバージョンです。v7、v8、v9、v10のバックアップを選択してください。',
+      'backupPreviewUnsupported': '未対応のバージョンです。v7〜v16のバックアップを選択してください。',
       'backupPreviewTooLarge': '確認できる上限を超えています。小さいバックアップを選択してください。',
       'backupPreviewNotStandalone': '使用中のデータベースではなく、完了済みの独立したバックアップを選択してください。',
       'backupPreviewSourceChanged': '確認中にバックアップが変更されました。完了済みのバックアップを選び直してください。',
