@@ -430,6 +430,67 @@ void main() {
   );
 
   testWidgets(
+    'recovering failed voice text still requires an explicit send',
+    (tester) async {
+      await tester.runAsync(
+        () => container.read(workspaceDraftsProvider.notifier).put('capture', {
+          'text': 'Recovered voice transcript',
+          'id': 'voice-draft',
+          'voiceText': true,
+        }),
+      );
+      home.pendingSend = Completer<bool>();
+      await show(tester, const InputBottomBar());
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('发送'));
+      for (var i = 0; i < 100 && home.sent.isEmpty; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 2)),
+        );
+        await tester.pump();
+      }
+      final pending =
+          container.read(workspaceDraftsProvider)['pendingCaptures'] as Map;
+      expect(pending.values.single['voiceText'], isTrue);
+      home.pendingSend!.complete(false);
+      home.pendingSend = null;
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), '');
+      await drainWorkspaceDrafts(tester, container);
+      await tester.tap(find.byKey(const ValueKey('pending-captures')));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.text(
+          AppLocalizations(const Locale('zh')).get('failedInputRestore'),
+        ),
+      );
+      await drainWorkspaceDrafts(tester, container);
+      await tester.pumpAndSettle();
+      expect(
+        container.read(workspaceDraftsProvider)['capture']['voiceText'],
+        isTrue,
+      );
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'Recovered voice transcript',
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(home.sent, ['Recovered voice transcript']);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        endsWith('\n'),
+      );
+      expect(find.byKey(const ValueKey('composer-send')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+    variant: const TargetPlatformVariant({
+      TargetPlatform.iOS,
+      TargetPlatform.android,
+    }),
+  );
+
+  testWidgets(
     'mobile voice pad converts to editable text and appends to preserved draft',
     (tester) async {
       await show(tester, const InputBottomBar(), reducedMotion: true);

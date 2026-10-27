@@ -156,6 +156,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     final revision = _draftRevision;
     final time = _quickTime;
     final memo = _memoOnly;
+    final voiceText = _voiceTextDraft;
     setState(() {
       _submitting = true;
     });
@@ -166,6 +167,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         'id': id,
         'time': time?.toIso8601String(),
         'memo': memo,
+        if (voiceText) 'voiceText': true,
       });
       if (!_current) return;
       saved = await ref
@@ -248,8 +250,10 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         if (current.isEmpty) {
           _quickTime = DateTime.tryParse(draft['time']?.toString() ?? '');
           _memoOnly = draft['memo'] == true;
+          _voiceTextDraft = draft['voiceText'] == true;
           _captureId = id;
         } else {
+          _voiceTextDraft = _voiceTextDraft || draft['voiceText'] == true;
           _captureId = const Uuid().v4();
         }
         _restoring = true;

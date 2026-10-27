@@ -18,6 +18,8 @@
 
 iOS 的 `Podfile` 与 Runner 均要求最低 iOS 15。部分插件仍通过 CocoaPods 集成；安装后将较低的 pod/隐私资源包目标提升至 15，保留依赖自身更高的要求，避免新 Xcode 拒绝编译旧的 iOS 9/13 目标。不要删除 Podfile 后依赖 Flutter 自动生成的默认部署版本。
 
+macOS 同时保留 Swift Package Manager 与 CocoaPods 集成。锁定的通知插件需要 `macos/Podfile`、对应锁文件和 Runner 的 Pods 配置；构建时应确保 CocoaPods 在 `PATH` 中可用。项目最低目标为 macOS 12，安装时将较低的 pod 目标提升至 12，并保留依赖自身更高的要求。调试构建与签名检查通过后，真实通知、应用升级和分发仍按各自验收记录执行。
+
 脚本使用锁定依赖，任一步失败即停止。Windows 在编译安装器前检查目录；归档发现数据库、WAL/SHM、日志、JSON 备份或 `.dart_tool` 会报错，保留原文件供检查。不会为打包删除用户数据。Windows 从已安装 Visual Studio 工具链提取配套 x64 VC CRT，不再打包仓库内的旧 UCRT/API shim；Windows 10/11 使用系统 UCRT。实际运行仍需在目标设备验证。
 
 ## 校验
