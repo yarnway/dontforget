@@ -109,15 +109,33 @@
       "observedPid": 3650,
       "noUnsavedEdits": true,
       "pendingNativeCleanup": [
-        "QA36 synthetic reminder and OS notification",
-        "AssistiveTouch temporary on; restore original off"
+        "QA36 OS notification cancellation independent readback"
       ],
       "deviceOriginalRowsProtected": {
         "Reminders": 3,
         "MediaRecords": 5,
         "Settings": 1
       },
-      "exclusivePhoneOperationsStopped": true
+      "exclusivePhoneOperationsStopped": true,
+      "cleanup": {
+        "checkedAt": "2026-10-28T00:09:38.063467+08:00",
+        "evidenceOwner": "coordinated phone matrix task",
+        "nativeSoftDeleteReported": true,
+        "softDeleteReadBack": {
+          "id": "5dac35ce-4c85-4daa-b361-ba02e621d6d9",
+          "deletedAt": "2026-10-27T23:58:23.869568",
+          "trashHistoryPresent": true,
+          "snapshotIntegrity": "ok",
+          "sourceSnapshotSha256": "049890d851b2534340be01d9a423174b153f314b0f31f21a3dfced367cd21b10"
+        },
+        "assistiveTouchRestoredOff": true,
+        "assistiveTouchImageIndependentlyViewed": true,
+        "assistiveTouchScreenshotSha256": "43519d258cb609ca30c8d9a7c1f2d352371a58a42d2ae1aa23111340efa62afc",
+        "osNotificationCancellationIndependentReadback": "pending",
+        "phoneStillExclusivelyOwnedByMatrixTask": true
+      },
+      "expectedLatestReturnAt": "2026-10-28T00:40:00+08:00",
+      "requiresExplicitReturnBeforeFurtherPhoneOperations": true
     }
   },
   "cleanup": {
@@ -175,7 +193,7 @@
     "newNativeEvidenceIsNotNewFullProductAcceptance": true
   },
   "remaining": [
-    "phone handoff cleanup readback",
+    "QA36 independent OS cancellation readback; soft deletion and AssistiveTouch restoration verified",
     "ordinary notification warm/cold/late/deleted-target clicks",
     "rc34 system Live Activity editing pause deletion sync and clicks",
     "soft Japanese IME composition and landscape",
@@ -186,6 +204,41 @@
   "release": {
     "tag": "v1.7.0-rc.34",
     "prerelease": true,
-    "stablePublished": false
+    "stablePublished": false,
+    "notesUpdateReadBack": {
+      "releaseId": 425534248,
+      "tag": "v1.7.0-rc.34",
+      "url": "https://github.com/yarnway/dontforget/releases/tag/v1.7.0-rc.34",
+      "bodyReadBack": true,
+      "prerelease": true,
+      "assetsUnchanged": 21,
+      "newProductVersionCreated": false,
+      "stablePublished": false
+    }
+  },
+  "closeoutAt": "2026-10-28T00:10:23+08:00",
+  "newMainCI": {
+    "run": 40534975842,
+    "source": "b0c61911fb701988988835840018816e124389bf",
+    "conclusion": "success",
+    "successfulJobs": [
+      "Analyze and test",
+      "Build macos candidate",
+      "Build ios candidate",
+      "Build android candidate",
+      "Build linux candidate",
+      "Build windows candidate"
+    ],
+    "skippedJobs": [
+      "Prepare draft release after all packages pass"
+    ],
+    "flutterPassed": 1541,
+    "flutterPlatformSkipped": 1,
+    "pythonPassed": 125,
+    "pythonPlatformSkipped": 1,
+    "analysis": "pass",
+    "qualityLogSha256": "d8f1813e56b4db8638ec678b52b99f43023fd463ceec4f81f1cbd2834b02e35a",
+    "candidateRc34SourceUnchanged": "23d4a106077d9d59e7e52a1fffd4364564b15bb4",
+    "checkedAt": "2026-10-28T00:10:23.233487+08:00"
   }
 }
