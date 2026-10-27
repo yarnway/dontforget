@@ -1,0 +1,223 @@
+{
+  "date": "2026-10-27",
+  "sourceCommit": "dbebd361ccbaa4a19ebe3914d5be41fc6c0fb68c",
+  "version": "1.7.0+33",
+  "schema": 14,
+  "release": {
+    "url": "https://github.com/yarnway/dontforget/releases/tag/v1.7.0-rc.33",
+    "id": 425309703,
+    "draft": false,
+    "prerelease": true,
+    "assetsVerified": 21,
+    "metadataDownloadedAndVerified": 14,
+    "packageManifestDigestsVerified": 7,
+    "fullPackagesDownloadedAndVerified": [
+      "iOS",
+      "macOS"
+    ]
+  },
+  "ci": {
+    "run": 40487462571,
+    "successfulJobs": 7,
+    "flutter": {
+      "passed": 1316,
+      "platformSkipped": 1
+    },
+    "python": {
+      "passed": 125,
+      "platformSkipped": 1
+    },
+    "analysis": "pass"
+  },
+  "iphone": {
+    "model": "iPhone 15 Pro Max",
+    "os": "27.2",
+    "installationDocumentsIdentical": 15,
+    "signedOriginalMachOSectionsAndUUIDsPreserved": 7,
+    "otherSignedResourcesPreserved": 60,
+    "nativePassed": [
+      "DeepSeek synthetic proposal preview, title select-all replacement, save",
+      "unsaved trigger edit immediately disables Live Activity start",
+      "discard prompt preserves saved reminder time",
+      "Live Activity start and compact countdown",
+      "expanded Live Activity displays correct title and due time",
+      "expanded Live Activity warm tap opens the corresponding task",
+      "countdown continues while app process is terminated",
+      "due time switches the system activity to due status",
+      "OS retained notifications independently include synthetic title",
+      "delete synthetic task and OS retained count falls from 3 to 2",
+      "relaunch reconciles expired Live Activity; Home icon absent after cleanup"
+    ],
+    "finalData": {
+      "integrity": "ok",
+      "schema": 14,
+      "tables": {
+        "Reminders": {
+          "before": 3,
+          "after": 3,
+          "sameIds": true,
+          "rowsEqual": true,
+          "changedFields": []
+        },
+        "MediaRecords": {
+          "before": 5,
+          "after": 5,
+          "sameIds": true,
+          "rowsEqual": true,
+          "changedFields": []
+        },
+        "Settings": {
+          "before": 1,
+          "after": 1,
+          "sameIds": true,
+          "rowsEqual": false,
+          "changedFields": [
+            {
+              "id": "default",
+              "fields": [
+                "workspace_drafts_json"
+              ]
+            }
+          ]
+        }
+      },
+      "media": {
+        "before": 5,
+        "after": 5,
+        "sameBytes": true
+      },
+      "journalType": "dict",
+      "settingsDifference": {
+        "workspace_drafts_json": {
+          "before": null,
+          "after": "{}"
+        },
+        "meaning": "empty draft normalization; other columns identical"
+      },
+      "syntheticCancellation": {
+        "reminderId": "8cf16452-d287-455e-8cf7-55ba346b8cce",
+        "nativeId": 2114217650,
+        "action": "cancel",
+        "status": "submitted"
+      }
+    },
+    "systemNotificationsAfterCleanup": {
+      "pending": 0,
+      "retained": 2,
+      "pendingCancellation": 0
+    }
+  },
+  "mac": {
+    "nativePassed": [
+      "all-view opens and lists four tasks",
+      "Cmd+K tool palette and Escape dismissal",
+      "normal application quit"
+    ],
+    "finalData": {
+      "quiescent": true,
+      "integrity": "ok",
+      "tables": {
+        "Reminders": {
+          "before": 4,
+          "after": 4,
+          "sameIds": true,
+          "changed": [
+            {
+              "id": "c0cd9671-57cf-4fe9-b462-d154f9faba45-1",
+              "fields": [
+                "quadrant_level",
+                "is_dynamically_promoted"
+              ]
+            }
+          ]
+        },
+        "MediaRecords": {
+          "before": 0,
+          "after": 0,
+          "sameIds": true,
+          "changed": []
+        },
+        "Settings": {
+          "before": 1,
+          "after": 1,
+          "sameIds": true,
+          "changed": []
+        }
+      }
+    },
+    "expectedAutomaticChange": "One existing learning task crossed the urgency threshold; only quadrant_level and is_dynamically_promoted changed."
+  },
+  "cleanup": {
+    "retainedArchives": [
+      {
+        "name": "ios33-isolated-development.zip",
+        "sha256": "5c9cd8404bba0c2f25dc3baa17797fb5840cacddcd6bf6ef9a7331655b588fd4",
+        "bytes": 10269360,
+        "verifiedFilesAndLinks": 78
+      },
+      {
+        "name": "mac32-isolated-rollback.zip",
+        "sha256": "ffb81d847678cbe12ba6f39e76b9566e168850cc1866aa28b274f4427006ff02",
+        "bytes": 24559393,
+        "verifiedFilesAndLinks": 61
+      },
+      {
+        "name": "iphone33-installed.zip",
+        "sha256": "81a996cad2588f73641c4b24e3ad02439052ddc5669c5cad095554920b258c26",
+        "bytes": 887884,
+        "verifiedFilesAndLinks": 36
+      },
+      {
+        "name": "iphone33-live-before-cold.zip",
+        "sha256": "36777cc9c556566871964601d9ae65edfc264db40038a717101fff5bda74e3e8",
+        "bytes": 908141,
+        "verifiedFilesAndLinks": 36
+      },
+      {
+        "name": "release-33/DontForget_macOS_unnotarized_v1.7.0.zip",
+        "sha256": "9bb5096efda655242dae78a810b2d8eabe502ca3f08f2fc60ac2d16000b0af53",
+        "bytes": 24521952,
+        "verifiedFilesAndLinks": 61
+      }
+    ],
+    "removed": [
+      {
+        "path": "build/native_acceptance/study-stage34-materials/ios33-derived",
+        "allocatedKiB": 23920
+      },
+      {
+        "path": "build/native_acceptance/study-stage34-materials/macos33-source",
+        "allocatedKiB": 58696
+      },
+      {
+        "path": "build/native_acceptance/study-stage34-materials/iphone33-installed",
+        "allocatedKiB": 25192
+      },
+      {
+        "path": "build/native_acceptance/study-stage34-materials/iphone33-live-before-cold",
+        "allocatedKiB": 25192
+      },
+      {
+        "path": "build/native_acceptance/study32-local",
+        "allocatedKiB": 58656
+      }
+    ],
+    "removedAllocatedKiB": 191656,
+    "newArchiveAllocatedKiB": 25740,
+    "netReclaimedKiB": 165916
+  },
+  "protectedInitialFiles": 27,
+  "protectedInitialFileHashesUnchanged": true,
+  "remaining": [
+    "Live Activity cold system tap",
+    "ordinary system notification warm/cold/late/deleted-target taps",
+    "soft-keyboard Japanese composition and actual recording gestures/capture",
+    "remaining stable-release gates tracked separately; no stable release"
+  ],
+  "limitations": [
+    "Intermittent noWindowsAvailable prevented reliable system cold-tap verification.",
+    "Direct devicectl relaunch was used for expiry reconciliation; it is not notification cold-tap evidence.",
+    "One pre-existing orphan recording remains preserved.",
+    "Current main has later schema 16 integration not included in the fixed rc.33 tag."
+  ]
+}
