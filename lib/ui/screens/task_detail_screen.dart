@@ -739,6 +739,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Form controls without text listeners also change the draft. Compute this
+    // before building either the Live Activity action or the navigation guard.
+    _reportedDirty = _captureDraft() != _savedDraft;
     final l10n = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).colorScheme.primary;
@@ -1893,7 +1896,6 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         ),
       ),
     );
-    _reportedDirty = _captureDraft() != _savedDraft;
     return PopScope(
       canPop: _allowPop || (!_isMutating && !_reportedDirty),
       onPopInvokedWithResult: (didPop, result) {
