@@ -1,4 +1,5 @@
 import json
+import plistlib
 from pathlib import Path
 import sys
 import subprocess
@@ -9,7 +10,7 @@ from unittest.mock import patch
 import zipfile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from package_artifacts import macos_architectures, package, version
+from package_artifacts import ios_extensions, macos_architectures, package, version
 from verify_artifacts import verify, verify_tag
 
 
@@ -31,6 +32,38 @@ class PackagingTest(unittest.TestCase):
         self.write('build/app/outputs/flutter-apk/app-release.apk')
         self.write('build/app/outputs/bundle/release/app-release.aab')
         return package(self.root, 'android', self.revision)
+
+    def test_ios_widget_versions_and_bundle_must_match_host(self):
+        app = self.root / 'Runner.app'
+        host = {'CFBundleIdentifier': 'com.example.app',
+                'CFBundleShortVersionString': '1.7.0', 'CFBundleVersion': '31'}
+        info = {**host, 'CFBundleIdentifier': 'com.example.app.ReminderActivity',
+                'CFBundleExecutable': 'ReminderActivity',
+                'NSExtension': {'NSExtensionPointIdentifier': 'com.apple.widgetkit-extension'}}
+        self.write('Runner.app/Info.plist', plistlib.dumps(host))
+        target = 'Runner.app/PlugIns/ReminderActivity.appex/'
+        self.write(target + 'ReminderActivity')
+        for mutation in ['valid', 'missing-version', 'old-version', 'wrong-bundle', 'wrong-type', 'unsafe-executable']:
+            current = dict(info)
+            if mutation == 'missing-version': current.pop('CFBundleVersion')
+            if mutation == 'old-version': current['CFBundleVersion'] = '30'
+            if mutation == 'wrong-bundle': current['CFBundleIdentifier'] = 'other.Widget'
+            if mutation == 'wrong-type': current['NSExtension'] = {}
+            if mutation == 'unsafe-executable': current['CFBundleExecutable'] = '../Outside'
+            self.write(target + 'Info.plist', plistlib.dumps(current))
+            with self.subTest(mutation=mutation):
+                if mutation == 'valid':
+                    self.assertEqual(ios_extensions(app, '1.7.0', '31')[0]['build_number'], '31')
+                else:
+                    with self.assertRaises(ValueError): ios_extensions(app, '1.7.0', '31')
+
+    def test_ios_missing_widget_or_host_version_fails_before_packaging(self):
+        app = self.root / 'Runner.app'
+        self.write('Runner.app/Info.plist', plistlib.dumps({
+            'CFBundleIdentifier': 'com.example.app',
+            'CFBundleShortVersionString': '1.7.0', 'CFBundleVersion': '31'}))
+        with self.assertRaises(FileNotFoundError): ios_extensions(app, '1.7.0', '31')
+        with self.assertRaises(ValueError): ios_extensions(app, '1.7.0', '32')
 
     def test_release_tags_match_version_and_candidate_build(self):
         verify_tag('v1.7.0', '1.7.0', '14')

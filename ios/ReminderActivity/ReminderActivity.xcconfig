@@ -1,0 +1,3 @@
+// Share only Flutter's generated version values; extensions must not inherit
+// the host application's CocoaPods linker settings.
+#include "../Flutter/Generated.xcconfig"
