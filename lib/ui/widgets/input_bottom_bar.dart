@@ -1,4 +1,8 @@
 import 'dart:async';
+import 'package:uuid/uuid.dart';
+import '../../providers/workspace_drafts_provider.dart';
+import '../../services/quick_reminder_parser.dart';
+import '../formatters/local_date_time.dart';
 import '../../providers/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -23,28 +27,89 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   bool _isLongPressRecording = false;
   Future<bool>? _pendingRecordingStart;
   bool _isFinishingLongPress = false;
-  bool _wasEmpty = true;
-  bool _wasFocused = false;
   Offset _voiceOrigin = Offset.zero;
   final _voiceGesture = VoiceCaptureGesture();
   VoiceReleaseAction _voiceAction = VoiceReleaseAction.save;
   bool _isTranscribing = false;
   bool _voiceMode = false;
   HomeController? _heldRecorder;
+  DateTime? _quickTime;
+  bool _memoOnly = false, _submitting = false, _restoring = false;
+  bool _draftTouched = false, _draftSaveFailed = false;
+  bool _resolvingPending = false;
+  int _draftRevision = 0;
+  String _captureId = const Uuid().v4();
+  String _lastText = '';
+  bool _lastFocused = false;
 
   @override
   void initState() {
     super.initState();
     _focusNode.addListener(_inputChanged);
     _textController.addListener(_inputChanged);
+    unawaited(_restoreDraft());
+  }
+
+  Future<void> _restoreDraft() async {
+    try {
+      final store = ref.read(workspaceDraftsProvider.notifier);
+      if (!store.loaded) await store.ready;
+      if (!mounted || _draftTouched) return;
+      final draft = ref.read(workspaceDraftsProvider)['capture'];
+      if (draft is! Map || draft['text'] is! String) return;
+      _restoring = true;
+      _quickTime = DateTime.tryParse(draft['time']?.toString() ?? '');
+      _memoOnly = draft['memo'] == true;
+      _captureId = draft['id'] is String ? draft['id'] as String : _captureId;
+      _textController.text = draft['text'] as String;
+      _restoring = false;
+      if (mounted) setState(() {});
+    } catch (_) {
+      if (mounted) setState(() => _draftSaveFailed = true);
+    }
+  }
+
+  void _persistDraft() {
+    if (_restoring) return;
+    _draftTouched = true;
+    final text = _textController.text;
+    final value = text.isEmpty && _quickTime == null && !_memoOnly
+        ? null
+        : {
+            'text': text,
+            'time': _quickTime?.toIso8601String(),
+            'memo': _memoOnly,
+            'id': _captureId,
+          };
+    unawaited(
+      ref
+          .read(workspaceDraftsProvider.notifier)
+          .put('capture', value)
+          .then(
+            (_) {
+              if (mounted && _draftSaveFailed) {
+                setState(() => _draftSaveFailed = false);
+              }
+            },
+            onError: (Object _) {
+              if (mounted) setState(() => _draftSaveFailed = true);
+            },
+          ),
+    );
   }
 
   void _inputChanged() {
-    final empty = _textController.text.isEmpty;
+    final text = _textController.text;
     final focused = _focusNode.hasFocus;
-    if (empty == _wasEmpty && focused == _wasFocused) return;
-    _wasEmpty = empty;
-    _wasFocused = focused;
+    if (text == _lastText && focused == _lastFocused) return;
+    if (!_restoring && text != _lastText) {
+      _draftRevision++;
+      // An edited draft must not reuse an ID that may already have committed.
+      _captureId = const Uuid().v4();
+      _persistDraft();
+    }
+    _lastText = text;
+    _lastFocused = focused;
     setState(() {});
   }
 
@@ -67,18 +132,89 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     super.dispose();
   }
 
-  void _submitText() {
+  Future<void> _submitText() async {
+    if (_submitting || _resolvingPending) return;
     final composing = _textController.value.composing;
     if (composing.isValid && !composing.isCollapsed) return;
     final text = _textController.text;
     if (text.trim().isEmpty) return;
-    _textController.clear();
-    ref.read(homeControllerProvider.notifier).processText(text);
+    final id = _captureId;
+    final revision = _draftRevision;
+    final time = _quickTime;
+    final memo = _memoOnly;
+    setState(() {
+      _submitting = true;
+    });
+    bool saved = false;
+    try {
+      await _updatePending(id, {
+        'text': text,
+        'id': id,
+        'time': time?.toIso8601String(),
+        'memo': memo,
+      });
+      if (!mounted) return;
+      saved = await ref
+          .read(homeControllerProvider.notifier)
+          .processText(text, reminderTime: time, memoOnly: memo, captureId: id);
+    } catch (_) {
+      if (mounted) setState(() => _draftSaveFailed = true);
+    }
+    if (!mounted) return;
+    if (saved && _draftRevision == revision && _captureId == id) {
+      _restoring = true;
+      _textController.clear();
+      _quickTime = null;
+      _memoOnly = false;
+      _captureId = const Uuid().v4();
+      _restoring = false;
+      _persistDraft();
+    }
+    if (saved) {
+      try {
+        final store = ref.read(workspaceDraftsProvider.notifier);
+        await store.flushed;
+        if (store.failed) throw StateError('Draft save failed');
+        await _updatePending(id, null);
+      } catch (_) {
+        if (mounted) setState(() => _draftSaveFailed = true);
+      }
+    }
+    if (mounted) {
+      setState(() {
+        _submitting = false;
+      });
+    }
   }
 
-  void _restoreFailedText(FailedTextDraft draft) {
+  Future<void> _updatePending(String id, Map<String, Object?>? value) async {
+    final store = ref.read(workspaceDraftsProvider.notifier);
+    await store.ready;
+    await store.flushed;
+    if (store.failed) throw StateError('Draft save failed');
+    final raw = ref.read(workspaceDraftsProvider)['pendingCaptures'];
+    if (raw != null && raw is! Map) {
+      throw const FormatException('Invalid drafts');
+    }
+    final pending = raw == null
+        ? <String, dynamic>{}
+        : Map<String, dynamic>.from(raw as Map);
+    if (value == null) {
+      pending.remove(id);
+    } else {
+      pending[id] = value;
+    }
+    await store.put('pendingCaptures', pending.isEmpty ? null : pending);
+  }
+
+  Future<void> _resolvePending(
+    String id,
+    Map draft, {
+    required bool restore,
+  }) async {
+    if (_resolvingPending || _submitting) return;
     final composing = _textController.value.composing;
-    if (composing.isValid && !composing.isCollapsed) {
+    if (restore && composing.isValid && !composing.isCollapsed) {
       ScaffoldMessenger.maybeOf(context)?.showSnackBar(
         SnackBar(
           content: Text(
@@ -88,14 +224,128 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
       );
       return;
     }
-    final current = _textController.text;
-    final text = current.isEmpty ? draft.text : '$current\n${draft.text}';
-    _textController.value = TextEditingValue(
-      text: text,
-      selection: TextSelection.collapsed(offset: text.length),
+    setState(() => _resolvingPending = true);
+    try {
+      if (restore) {
+        final text = draft['text'] as String;
+        final current = _textController.text;
+        final combined = current.isEmpty ? text : '$current\n$text';
+        if (current.isEmpty) {
+          _quickTime = DateTime.tryParse(draft['time']?.toString() ?? '');
+          _memoOnly = draft['memo'] == true;
+          _captureId = id;
+        } else {
+          _captureId = const Uuid().v4();
+        }
+        _restoring = true;
+        _textController.value = TextEditingValue(
+          text: combined,
+          selection: TextSelection.collapsed(offset: combined.length),
+        );
+        _restoring = false;
+        _draftRevision++;
+        _persistDraft();
+        final store = ref.read(workspaceDraftsProvider.notifier);
+        await store.flushed;
+        if (store.failed) throw StateError('Draft save failed');
+      }
+      await _updatePending(id, null);
+      if (mounted && restore) _focusNode.requestFocus();
+    } catch (_) {
+      if (mounted) setState(() => _draftSaveFailed = true);
+    } finally {
+      if (mounted) setState(() => _resolvingPending = false);
+    }
+  }
+
+  Future<void> _showPending(String id, Map draft) async {
+    final l10n = AppLocalizations.of(context);
+    final action = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.get('failedInputTitle')),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(l10n.get('failedInputHint')),
+              const SizedBox(height: 12),
+              SelectableText(draft['text'] as String),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, 'discard'),
+            child: Text(l10n.get('failedInputDiscard')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, 'copy'),
+            child: Text(l10n.get('failedInputCopy')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, 'restore'),
+            child: Text(l10n.get('failedInputRestore')),
+          ),
+        ],
+      ),
     );
-    ref.read(homeControllerProvider.notifier).dismissFailedText(draft.id);
-    _focusNode.requestFocus();
+    if (!mounted || action == null) return;
+    if (action == 'copy') {
+      try {
+        await Clipboard.setData(ClipboardData(text: draft['text'] as String));
+        if (mounted) {
+          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+            SnackBar(content: Text(l10n.get('failedInputCopied'))),
+          );
+        }
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+            SnackBar(content: Text(l10n.get('failedInputCopyFailed'))),
+          );
+        }
+      }
+    } else {
+      await _resolvePending(id, draft, restore: action == 'restore');
+    }
+  }
+
+  Future<void> _pickQuickTime() async {
+    final now = DateTime.now();
+    final initial = _quickTime?.isAfter(now) == true ? _quickTime! : now;
+    final date = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: DateTime(now.year, now.month, now.day),
+      lastDate: DateTime(now.year + 10),
+    );
+    if (!mounted || date == null) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initial),
+    );
+    if (!mounted || time == null) return;
+    final selected = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    );
+    if (!selected.isAfter(DateTime.now())) return;
+    _selectTime(selected);
+  }
+
+  void _selectTime(DateTime? time, {bool memo = false}) {
+    setState(() {
+      _draftRevision++;
+      _captureId = const Uuid().v4();
+      _quickTime = time;
+      _memoOnly = memo;
+    });
+    _persistDraft();
   }
 
   void _insertLineBreak() {
@@ -353,6 +603,19 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final homeState = ref.watch(homeControllerProvider);
+    final rawPending = ref.watch(workspaceDraftsProvider)['pendingCaptures'];
+    final pending = rawPending is Map
+        ? rawPending.entries
+              .where(
+                (entry) =>
+                    entry.key is String &&
+                    entry.value is Map &&
+                    (entry.value as Map)['text'] is String &&
+                    !(entry.key == _captureId &&
+                        (entry.value as Map)['text'] == _textController.text),
+              )
+              .toList()
+        : <MapEntry<dynamic, dynamic>>[];
     final enterSends = ref.watch(
       settingsProvider.select((s) => s.inputSendMode == InputSendMode.enter),
     );
@@ -365,11 +628,17 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     final isMobile =
         platform == TargetPlatform.iOS || platform == TargetPlatform.android;
     final voiceMode = isMobile && _voiceMode;
+    final displayedTime =
+        _quickTime ?? QuickReminderParser.parse(_textController.text);
     final idleVoiceTarget =
         (voiceMode || (_textController.text.isEmpty && !_focusNode.hasFocus)) &&
         !_isTranscribing;
     final captureBusy =
-        isRecording || _isTranscribing || _pendingRecordingStart != null;
+        isRecording ||
+        _isTranscribing ||
+        _pendingRecordingStart != null ||
+        _submitting ||
+        _resolvingPending;
     // Scaffold removes the consumed inset from its body MediaQuery while the
     // keyboard animates away, so also read the containing view's physical inset.
     final keyboardVisible =
@@ -396,88 +665,45 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (homeState.failedTextDrafts.isNotEmpty)
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 180),
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
-                    child: Column(
-                      key: const ValueKey('failed-text-drafts'),
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${l10n.get('failedInputTitle')} (${homeState.failedTextDrafts.length})',
-                          style: Theme.of(context).textTheme.labelLarge,
-                        ),
-                        Text(l10n.get('failedInputHint')),
-                        Text(
-                          homeState.failedTextDrafts.first.text,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Wrap(
-                          spacing: 4,
-                          children: [
-                            TextButton(
-                              key: const ValueKey('restore-failed-input'),
-                              onPressed: isRecording || _isTranscribing
-                                  ? null
-                                  : () => _restoreFailedText(
-                                      homeState.failedTextDrafts.first,
-                                    ),
-                              child: Text(l10n.get('failedInputRestore')),
-                            ),
-                            TextButton(
-                              key: const ValueKey('copy-failed-input'),
-                              onPressed: () async {
-                                final draft = homeState.failedTextDrafts.first;
-                                try {
-                                  await Clipboard.setData(
-                                    ClipboardData(text: draft.text),
-                                  );
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.maybeOf(
-                                      context,
-                                    )?.showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          l10n.get('failedInputCopied'),
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                } catch (_) {
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.maybeOf(
-                                      context,
-                                    )?.showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          l10n.get('failedInputCopyFailed'),
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                }
-                              },
-                              child: Text(l10n.get('failedInputCopy')),
-                            ),
-                            TextButton(
-                              key: const ValueKey('discard-failed-input'),
-                              onPressed: () => ref
-                                  .read(homeControllerProvider.notifier)
-                                  .dismissFailedText(
-                                    homeState.failedTextDrafts.first.id,
-                                  ),
-                              child: Text(l10n.get('failedInputDiscard')),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+            if (pending.isNotEmpty && !_submitting)
+              TextButton.icon(
+                key: const ValueKey('pending-captures'),
+                onPressed: _resolvingPending
+                    ? null
+                    : () => _showPending(
+                        pending.first.key as String,
+                        pending.first.value as Map,
+                      ),
+                icon: const Icon(Icons.restore, size: 16),
+                label: Text(
+                  '${l10n.get('failedInputTitle')} (${pending.length})',
                 ),
+              ),
+            if (!isRecording &&
+                !voiceMode &&
+                !keyboardVisible &&
+                MediaQuery.sizeOf(context).height >= 600 &&
+                _textController.text.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 2,
+                ),
+                child: Text(
+                  _memoOnly
+                      ? l10n.get('memoNoAlarm')
+                      : displayedTime != null
+                      ? '${l10n.get('reminderTimeShort')}: ${formatLocalDateTime(displayedTime)}'
+                      : l10n.get('noTimeMemo'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            if (_draftSaveFailed)
+              Text(
+                l10n.get('draftSaveFailed'),
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             if (_isLongPressRecording && !keyboardVisible)
               VoiceCaptureFeedback(action: _voiceAction),
@@ -493,6 +719,65 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
               ),
             Row(
               children: [
+                if (!isRecording &&
+                    !voiceMode &&
+                    (_textController.text.isNotEmpty ||
+                        _quickTime != null ||
+                        _memoOnly))
+                  PopupMenuButton<String>(
+                    key: const ValueKey('capture-time-options'),
+                    tooltip: l10n.get('quickChoose'),
+                    enabled: !captureBusy,
+                    icon: Icon(
+                      _memoOnly
+                          ? Icons.notes_outlined
+                          : Icons.schedule_outlined,
+                      color: displayedTime != null || _memoOnly
+                          ? Theme.of(context).colorScheme.primary
+                          : null,
+                    ),
+                    onSelected: (value) {
+                      switch (value) {
+                        case 'evening':
+                          _selectTime(
+                            QuickReminderParser.tonight(DateTime.now()),
+                          );
+                        case 'morning':
+                          _selectTime(
+                            QuickReminderParser.tomorrowMorning(DateTime.now()),
+                          );
+                        case 'custom':
+                          _pickQuickTime();
+                        case 'memo':
+                          _selectTime(null, memo: true);
+                        case 'reset':
+                          _selectTime(null);
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      PopupMenuItem<String>(
+                        enabled: false,
+                        child: Text(
+                          _memoOnly
+                              ? l10n.get('memoNoAlarm')
+                              : displayedTime == null
+                              ? l10n.get('noTimeMemo')
+                              : formatLocalDateTime(displayedTime),
+                        ),
+                      ),
+                      for (final entry in const {
+                        'evening': 'quickEvening',
+                        'morning': 'quickMorning',
+                        'custom': 'quickChoose',
+                        'memo': 'memoOnly',
+                        'reset': 'quickReset',
+                      }.entries)
+                        PopupMenuItem(
+                          value: entry.key,
+                          child: Text(l10n.get(entry.value)),
+                        ),
+                    ],
+                  ),
                 if (isMobile)
                   IconButton(
                     key: const ValueKey('composer-mode-toggle'),

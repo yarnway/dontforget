@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:io';
 
 import 'package:dont_forget/data/database_helper.dart';
@@ -14,7 +13,6 @@ import 'package:dont_forget/services/notification_service.dart';
 import 'package:dont_forget/ui/formatters/local_date_time.dart';
 import 'package:dont_forget/ui/screens/task_detail_screen.dart';
 import 'package:dont_forget/ui/widgets/inline_feedback.dart';
-import 'package:dont_forget/ui/widgets/input_bottom_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -80,242 +78,23 @@ void main() {
     await directory.delete(recursive: true);
   });
 
-  Future<void> submitAndWaitForFailure(String text) async {
-    final completed = Completer<void>();
-    final subscription = container.listen(homeControllerProvider, (_, state) {
-      if (state.failedTextDrafts.isNotEmpty &&
-          state.pendingTasksCount == 0 &&
-          !completed.isCompleted) {
-        completed.complete();
-      }
-    });
-    try {
-      await container.read(homeControllerProvider.notifier).processText(text);
-      await completed.future.timeout(const Duration(seconds: 5));
-    } finally {
-      subscription.close();
-    }
-  }
-
-  test('failed local insertion retains the exact submitted text', () async {
-    final db = await database.database;
-    await db.execute(
-      "CREATE TRIGGER reject_capture BEFORE INSERT ON Reminders "
-      "BEGIN SELECT RAISE(ABORT, 'synthetic failure'); END",
-    );
-    const input = '  first line\nsecond line  ';
-    await submitAndWaitForFailure(input);
-    expect(
-      container.read(homeControllerProvider).failedTextDrafts.single.text,
-      input,
-    );
-    expect(await db.query('Reminders'), isEmpty);
-  });
-
-  test('concurrent failures retain each input independently', () async {
-    final db = await database.database;
-    await db.execute(
-      "CREATE TRIGGER reject_capture BEFORE INSERT ON Reminders "
-      "BEGIN SELECT RAISE(ABORT, 'synthetic'); END",
-    );
-    final completed = Completer<void>();
-    final subscription = container.listen(homeControllerProvider, (_, state) {
-      if (state.failedTextDrafts.length == 2 &&
-          state.pendingTasksCount == 0 &&
-          !completed.isCompleted) {
-        completed.complete();
-      }
-    });
-    try {
-      final home = container.read(homeControllerProvider.notifier);
-      await home.processText('first');
-      await home.processText('second');
-      await completed.future.timeout(const Duration(seconds: 5));
+  test(
+    'failed local insertion returns failure without creating a task',
+    () async {
+      final db = await database.database;
+      await db.execute(
+        "CREATE TRIGGER reject_capture BEFORE INSERT ON Reminders "
+        "BEGIN SELECT RAISE(ABORT, 'synthetic failure'); END",
+      );
       expect(
-        container
-            .read(homeControllerProvider)
-            .failedTextDrafts
-            .map((d) => d.text)
-            .toSet(),
-        {'first', 'second'},
+        await container
+            .read(homeControllerProvider.notifier)
+            .processText('  first line\nsecond line  '),
+        isFalse,
       );
       expect(await db.query('Reminders'), isEmpty);
-    } finally {
-      subscription.close();
-    }
-  });
-
-  test(
-    'partial AI save retains input without retrying already saved tasks',
-    () async {
-      await container
-          .read(settingsProvider.notifier)
-          .updateSettings(
-            container.read(settingsProvider).copyWith(apiKey: 'synthetic-only'),
-          );
-      final db = await database.database;
-      await db.execute(
-        "CREATE TRIGGER reject_second BEFORE INSERT ON Reminders "
-        "WHEN NEW.id = 'fails-second' BEGIN SELECT RAISE(ABORT, 'synthetic'); END",
-      );
-      await submitAndWaitForFailure('synthetic request');
-      expect((await db.query('Reminders')).map((row) => row['id']), [
-        'saved-first',
-      ]);
-      expect(
-        container.read(homeControllerProvider).failedTextDrafts.single.text,
-        'synthetic request',
-      );
     },
   );
-
-  testWidgets('restoring a failed submission preserves newer input', (
-    tester,
-  ) async {
-    final db = await tester.runAsync(() async {
-      final db = await database.database;
-      await db.execute(
-        "CREATE TRIGGER reject_capture BEFORE INSERT ON Reminders "
-        "BEGIN SELECT RAISE(ABORT, 'synthetic'); END",
-      );
-      await submitAndWaitForFailure('failed original');
-      return db;
-    });
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const MaterialApp(
-          locale: Locale('zh'),
-          localizationsDelegates: [
-            AppLocalizationsDelegate(),
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          home: InlineFeedback(child: Scaffold(body: InputBottomBar())),
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.enterText(find.byType(TextField), 'newer draft');
-    await tester.ensureVisible(
-      find.byKey(const ValueKey('restore-failed-input')),
-    );
-    await tester.tap(find.byKey(const ValueKey('restore-failed-input')));
-    await tester.pump();
-    expect(
-      tester.widget<TextField>(find.byType(TextField)).controller!.text,
-      'newer draft\nfailed original',
-    );
-    expect(container.read(homeControllerProvider).failedTextDrafts, isEmpty);
-    expect(await tester.runAsync(() => db!.query('Reminders')), isEmpty);
-  });
-
-  testWidgets('restoring waits until input method composition is complete', (
-    tester,
-  ) async {
-    await tester.runAsync(() async {
-      final db = await database.database;
-      await db.execute(
-        "CREATE TRIGGER reject_capture BEFORE INSERT ON Reminders "
-        "BEGIN SELECT RAISE(ABORT, 'synthetic'); END",
-      );
-      await submitAndWaitForFailure('failed original');
-    });
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const MaterialApp(
-          locale: Locale('zh'),
-          supportedLocales: [Locale('zh'), Locale('en'), Locale('ja')],
-          localizationsDelegates: [
-            AppLocalizationsDelegate(),
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          home: InlineFeedback(child: Scaffold(body: InputBottomBar())),
-        ),
-      ),
-    );
-    await tester.pump();
-    final editor = tester.widget<TextField>(find.byType(TextField)).controller!;
-    editor.value = const TextEditingValue(
-      text: '选词',
-      selection: TextSelection.collapsed(offset: 2),
-      composing: TextRange(start: 0, end: 2),
-    );
-    // Invoke the action without changing focus, which would commit composition.
-    tester
-        .widget<TextButton>(find.byKey(const ValueKey('restore-failed-input')))
-        .onPressed!();
-    await tester.pump();
-    expect(editor.text, '选词');
-    expect(editor.value.composing, const TextRange(start: 0, end: 2));
-    expect(
-      container.read(homeControllerProvider).failedTextDrafts,
-      hasLength(1),
-    );
-    expect(find.text('请先完成输入法选词，再恢复内容。'), findsOneWidget);
-
-    editor.value = editor.value.copyWith(composing: TextRange.empty);
-    tester
-        .widget<TextButton>(find.byKey(const ValueKey('restore-failed-input')))
-        .onPressed!();
-    await tester.pump();
-    expect(editor.text, '选词\nfailed original');
-    expect(container.read(homeControllerProvider).failedTextDrafts, isEmpty);
-  });
-
-  testWidgets('failed input stays reachable in a narrow, large-text window', (
-    tester,
-  ) async {
-    tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(375, 667);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    addTearDown(tester.view.resetPhysicalSize);
-    await tester.runAsync(() async {
-      final db = await database.database;
-      await db.execute(
-        "CREATE TRIGGER reject_capture BEFORE INSERT ON Reminders "
-        "BEGIN SELECT RAISE(ABORT, 'synthetic'); END",
-      );
-      await submitAndWaitForFailure('待恢复的记录');
-    });
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: MaterialApp(
-          locale: const Locale('zh'),
-          supportedLocales: const [Locale('zh'), Locale('en'), Locale('ja')],
-          localizationsDelegates: const [
-            AppLocalizationsDelegate(),
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(
-              context,
-            ).copyWith(textScaler: const TextScaler.linear(2)),
-            child: InlineFeedback(child: child!),
-          ),
-          home: const Scaffold(body: InputBottomBar()),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(
-      find.byKey(const ValueKey('restore-failed-input')),
-    );
-    await tester.tap(find.byKey(const ValueKey('restore-failed-input')));
-    await tester.pump();
-    expect(
-      tester.widget<TextField>(find.byType(TextField)).controller!.text,
-      '待恢复的记录',
-    );
-    expect(tester.takeException(), isNull);
-  });
 
   test(
     'single reminder status uses the matching saved occurrence and journal',
@@ -394,6 +173,7 @@ void main() {
         taskTitle: 'Synthetic',
         quadrantLevel: 2,
         triggerTime: DateTime.now().add(const Duration(hours: 2)),
+        suggestedTriggerTime: DateTime.now().add(const Duration(hours: 3)),
         timeOrigin: ReminderTimeOrigin.aiSuggested,
       );
       final uiContainer = ProviderContainer(
@@ -437,6 +217,12 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('已提交系统安排，不代表已经送达。'), findsOneWidget);
       expect(find.textContaining('未开启'), findsOneWidget);
+      expect(find.text('AI 建议时间 · 可修改'), findsOneWidget);
+
+      final adopt = find.textContaining('采用此时间:');
+      await tester.ensureVisible(adopt);
+      await tester.tap(adopt);
+      await tester.pump();
       expect(find.text('AI 建议时间 · 可修改'), findsOneWidget);
 
       // Changing the category may change focus-policy suppression, so the

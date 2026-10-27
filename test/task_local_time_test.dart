@@ -141,7 +141,10 @@ void main() {
     tester,
   ) async {
     await show(tester, TaskCard(task: task, onPlayMedia: () {}));
-    expect(find.text(_label(task.triggerTime!.toLocal())), findsOneWidget);
+    expect(
+      find.textContaining(_label(task.triggerTime!.toLocal())),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });
@@ -158,7 +161,7 @@ void main() {
               ? TaskDetailScreen(task: task)
               : TaskDetailsDialog(task: task),
         );
-        final label = find.text(_label(local));
+        final label = find.textContaining(_label(local));
         expect(label, findsOneWidget);
         if (fullPage) {
           await tester.ensureVisible(label);

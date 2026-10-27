@@ -46,14 +46,59 @@ class StudyPlan {
     this.modelLabel,
     this.usedFallback = false,
     this.suggestedMinute = 20 * 60,
-  }) : id = const Uuid().v4(),
-       createdAt = DateTime.now();
+    String? id,
+    DateTime? createdAt,
+  }) : id = id ?? const Uuid().v4(),
+       createdAt = createdAt ?? DateTime.now();
   final String id;
   final DateTime createdAt;
   final List<StudyBatch> batches;
   final String? modelLabel;
   final bool usedFallback;
   final int suggestedMinute;
+
+  Map<String, dynamic> toDraftJson() => {
+    'id': id,
+    'created': createdAt.toIso8601String(),
+    'model': modelLabel,
+    'fallback': usedFallback,
+    'minute': suggestedMinute,
+    'batches': [
+      for (final b in batches) {'title': b.title, 'content': b.content},
+    ],
+  };
+
+  factory StudyPlan.fromDraftJson(Map data) {
+    final batches = data['batches'];
+    if (data['id'] is! String ||
+        (data['id'] as String).isEmpty ||
+        batches is! List ||
+        batches.isEmpty ||
+        batches.length > 7 ||
+        data['minute'] is! int ||
+        (data['minute'] as int) < 0 ||
+        (data['minute'] as int) >= 1440) {
+      throw const FormatException('Invalid study draft');
+    }
+    final parsed = [
+      for (final b in batches)
+        StudyBatch(
+          title: b['title'] as String,
+          content: b['content'] as String,
+        ),
+    ];
+    if (parsed.any((b) => !b.isValid)) {
+      throw const FormatException('Invalid study batch');
+    }
+    return StudyPlan(
+      id: data['id'] as String,
+      createdAt: DateTime.parse(data['created'] as String),
+      modelLabel: data['model'] as String?,
+      usedFallback: data['fallback'] == true,
+      suggestedMinute: data['minute'] as int,
+      batches: parsed,
+    );
+  }
 
   static int parseSuggestedMinute(String source) {
     if (source.length > 120000) {

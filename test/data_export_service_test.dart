@@ -49,10 +49,12 @@ void main() {
     urgencyLevel: 'General',
   );
   for (final locale in ['en', 'zh', 'ja']) {
-    test('CSV $locale round trips text, 16 columns and localized status', () {
+    test('CSV $locale round trips text, deadline and localized status', () {
       final data = service.generateCsvContent(
         [
-          task('Unicode 日本語 中文 😀'),
+          task(
+            'Unicode 日本語 中文 😀',
+          ).copyWith(eventTime: DateTime(2030, 4, 5, 9)),
           task('done').copyWith(isCompleted: true, triggerTime: null),
         ],
         locale: locale,
@@ -61,7 +63,9 @@ void main() {
       expect(data.startsWith('\uFEFF'), isTrue);
       final rows = readCsv(data);
       expect(rows.length, 3);
-      expect(rows.every((r) => r.length == 16), isTrue);
+      expect(rows.every((r) => r.length == 17), isTrue);
+      expect(rows[1][16], '2030-04-05 09:00:00');
+      expect(rows[2][16], isEmpty);
       expect(rows[1][1], 'Unicode 日本語 中文 😀');
       expect(rows[1][2], 'line one\r\n"quoted",two');
       expect(

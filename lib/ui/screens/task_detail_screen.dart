@@ -35,6 +35,8 @@ typedef _DetailDraft = ({
   int originalQuadrant,
   bool promoted,
   DateTime? time,
+  DateTime? eventTime,
+  bool acceptedSuggestion,
   String recurrence,
   bool completed,
   String contextType,
@@ -55,6 +57,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   late int _originalQuadrant;
   late bool _isDynamicallyPromoted;
   late DateTime? _selectedTime;
+  bool _acceptedSuggestion = false;
+  late DateTime? _eventTime;
   late String _selectedRecurrenceRule;
   late bool _isCompleted;
   late List<String> _linkedTaskIds;
@@ -106,6 +110,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     _isDynamicallyPromoted = widget.task.isDynamicallyPromoted;
     _selectedTime = widget.task.triggerTime;
     _statusReference = widget.task;
+    _eventTime = widget.task.eventTime;
     _selectedRecurrenceRule =
         widget.task.isRecurring && widget.task.recurrenceRule != null
         ? widget.task.recurrenceRule!
@@ -260,6 +265,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     originalQuadrant: _originalQuadrant,
     promoted: _isDynamicallyPromoted,
     time: _selectedTime,
+    eventTime: _eventTime,
+    acceptedSuggestion: _acceptedSuggestion,
     recurrence: _selectedRecurrenceRule,
     completed: _isCompleted,
     contextType: _contextTriggerType,
@@ -425,11 +432,20 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       triggerTime: _selectedTime != baseline.triggerTime
           ? _selectedTime
           : current.triggerTime,
-      timeOrigin: _selectedTime != baseline.triggerTime
+      timeOrigin: _selectedTime != baseline.triggerTime || _acceptedSuggestion
           ? (_selectedTime == null
                 ? ReminderTimeOrigin.unknown
+                : _acceptedSuggestion
+                ? ReminderTimeOrigin.aiSuggested
                 : ReminderTimeOrigin.manual)
           : current.timeOrigin,
+      eventTime: _eventTime != baseline.eventTime
+          ? _eventTime
+          : current.eventTime,
+      suggestedTriggerTime:
+          _selectedTime != baseline.triggerTime || _acceptedSuggestion
+          ? null
+          : current.suggestedTriggerTime,
       isCompleted: _isCompleted != baseline.isCompleted
           ? _isCompleted
           : current.isCompleted,
@@ -573,13 +589,19 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     }
   }
 
-  Future<void> _pickDateTime() async {
-    final initialDate = _selectedTime?.toLocal() ?? DateTime.now();
+  Future<void> _pickDateTime({bool event = false}) async {
+    final initialDate =
+        (event ? _eventTime : _selectedTime)?.toLocal() ?? DateTime.now();
+    final now = DateTime.now();
     final pickedDate = await showDatePicker(
       context: context,
       initialDate: initialDate,
-      firstDate: DateTime.now().subtract(const Duration(days: 365)),
-      lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+      firstDate: DateTime(
+        initialDate.year < now.year - 1 ? initialDate.year : now.year - 1,
+      ),
+      lastDate: DateTime(
+        initialDate.year > now.year + 5 ? initialDate.year + 1 : now.year + 6,
+      ),
     );
 
     if (pickedDate != null && mounted) {
@@ -590,13 +612,19 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
       if (pickedTime != null && mounted) {
         setState(() {
-          _selectedTime = DateTime(
+          final selected = DateTime(
             pickedDate.year,
             pickedDate.month,
             pickedDate.day,
             pickedTime.hour,
             pickedTime.minute,
           );
+          if (event) {
+            _eventTime = selected;
+          } else {
+            _selectedTime = selected;
+            _acceptedSuggestion = false;
+          }
         });
       }
     }
@@ -605,6 +633,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   void _applyQuickTime(Duration offset) {
     setState(() {
       _selectedTime = DateTime.now().add(offset);
+      _acceptedSuggestion = false;
     });
   }
 
@@ -613,6 +642,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     final target = nextReminderClockTime(now, hour, tomorrow: tomorrow);
     setState(() {
       _selectedTime = target;
+      _acceptedSuggestion = false;
     });
   }
 
@@ -1296,6 +1326,55 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
                     const SizedBox(height: 14),
 
+                    if (widget.task.sourceText != null)
+                      ExpansionTile(
+                        title: Text(l10n.get('sourceText')),
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: SelectableText(widget.task.sourceText!),
+                          ),
+                        ],
+                      ),
+                    ListTile(
+                      key: const ValueKey('event-time-editor'),
+                      leading: const Icon(Icons.event_outlined),
+                      title: Text(l10n.get('eventTimeShort')),
+                      subtitle: Text(
+                        _eventTime == null
+                            ? l10n.get('notSet')
+                            : formatLocalDateTime(_eventTime!),
+                      ),
+                      onTap: _isMutating
+                          ? null
+                          : () => _pickDateTime(event: true),
+                      trailing: _eventTime == null
+                          ? null
+                          : IconButton(
+                              tooltip: l10n.get('clear'),
+                              icon: const Icon(Icons.clear),
+                              onPressed: _isMutating
+                                  ? null
+                                  : () => setState(() => _eventTime = null),
+                            ),
+                    ),
+                    if (widget.task.suggestedTriggerTime != null)
+                      TextButton(
+                        onPressed:
+                            _isMutating ||
+                                !widget.task.suggestedTriggerTime!.isAfter(
+                                  DateTime.now(),
+                                )
+                            ? null
+                            : () => setState(() {
+                                _selectedTime =
+                                    widget.task.suggestedTriggerTime;
+                                _acceptedSuggestion = true;
+                              }),
+                        child: Text(
+                          '${l10n.get('adoptSuggestion')}: ${formatLocalDateTime(widget.task.suggestedTriggerTime!)}',
+                        ),
+                      ),
                     // 4. Reminder Time Section (提示时间与快捷设定)
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -1359,8 +1438,10 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                                   splashRadius: 14,
                                   padding: EdgeInsets.zero,
                                   constraints: const BoxConstraints(),
-                                  onPressed: () =>
-                                      setState(() => _selectedTime = null),
+                                  onPressed: () => setState(() {
+                                    _selectedTime = null;
+                                    _acceptedSuggestion = false;
+                                  }),
                                 ),
                               ],
                             ],
@@ -1431,7 +1512,10 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                           if (_selectedTime != null) ...[
                             Text(
                               l10n.get(
-                                _selectedTime != _statusReference.triggerTime
+                                _acceptedSuggestion
+                                    ? 'reminderSourceAi'
+                                    : _selectedTime !=
+                                          _statusReference.triggerTime
                                     ? 'reminderSourceManual'
                                     : switch (_statusReference.timeOrigin) {
                                         ReminderTimeOrigin.aiSuggested =>

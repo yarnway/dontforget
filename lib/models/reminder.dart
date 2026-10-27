@@ -46,6 +46,8 @@ class Reminder {
   final DateTime? suggestedTriggerTime;
   final String? sourceText;
   final bool capturePending;
+  final String? captureProposalJson;
+  final String? wordProgressJson;
   final bool isPinned;
   final DateTime? recurrenceEventAnchorTime;
   final bool isCompleted;
@@ -83,6 +85,8 @@ class Reminder {
     this.suggestedTriggerTime,
     this.sourceText,
     this.capturePending = false,
+    this.captureProposalJson,
+    this.wordProgressJson,
     this.isPinned = false,
     this.recurrenceEventAnchorTime,
     this.isCompleted = false,
@@ -206,6 +210,8 @@ class Reminder {
       sourceText: json['source_text'] as String?,
       capturePending:
           json['capture_pending'] == 1 || json['capture_pending'] == true,
+      captureProposalJson: json['capture_proposal_json'] as String?,
+      wordProgressJson: json['word_progress_json'] as String?,
       isPinned: json['is_pinned'] == 1 || json['is_pinned'] == true,
       recurrenceEventAnchorTime: _storedDate(
         json['recurrence_event_anchor_time'],
@@ -252,6 +258,8 @@ class Reminder {
     'suggested_trigger_time': suggestedTriggerTime?.toIso8601String(),
     'source_text': sourceText,
     'capture_pending': capturePending ? 1 : 0,
+    'capture_proposal_json': captureProposalJson,
+    'word_progress_json': wordProgressJson,
     'is_pinned': isPinned ? 1 : 0,
     'recurrence_event_anchor_time': recurrenceEventAnchorTime
         ?.toIso8601String(),
@@ -369,6 +377,8 @@ class Reminder {
     Object? suggestedTriggerTime = _unchanged,
     Object? sourceText = _unchanged,
     bool? capturePending,
+    Object? captureProposalJson = _unchanged,
+    Object? wordProgressJson = _unchanged,
     bool? isPinned,
     Object? recurrenceEventAnchorTime = _unchanged,
     bool? isCompleted,
@@ -429,6 +439,12 @@ class Reminder {
           ? this.sourceText
           : sourceText as String?,
       capturePending: capturePending ?? this.capturePending,
+      captureProposalJson: identical(captureProposalJson, _unchanged)
+          ? this.captureProposalJson
+          : captureProposalJson as String?,
+      wordProgressJson: identical(wordProgressJson, _unchanged)
+          ? this.wordProgressJson
+          : wordProgressJson as String?,
       isPinned: isPinned ?? this.isPinned,
       recurrenceEventAnchorTime:
           identical(recurrenceEventAnchorTime, _unchanged)

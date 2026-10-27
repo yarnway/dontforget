@@ -22,11 +22,11 @@ void main() {
   tearDown(() async => root.delete(recursive: true));
 
   Map<String, Object?> settings(bool capture) => {
-    ...AppSettings.defaults().toJson(),
+    ...(AppSettings.defaults().toJson()..remove('workspace_drafts_json')),
     if (capture)
       'workspace_drafts_json': jsonEncode({'composer': 'keep draft'}),
   };
-  Map<String, Object?> reminder(bool capture) {
+  Map<String, Object?> reminder(bool capture, {bool full = false}) {
     final row = Reminder(
       id: 'original',
       taskTitle: 'Keep original',
@@ -37,6 +37,15 @@ void main() {
     ).toJson();
     if (capture) {
       row.remove('trigger_time_origin');
+      if (full) {
+        row['capture_proposal_json'] = jsonEncode([
+          {'id': 'proposal', 'task_title': 'Proposed', 'quadrant_level': 2},
+        ]);
+        row['word_progress_json'] = jsonEncode({'hello': 1});
+      } else {
+        row.remove('capture_proposal_json');
+        row.remove('word_progress_json');
+      }
       row.addAll({
         'event_time': '2030-05-01T09:00:00.000Z',
         'recurrence_event_anchor_time': '2030-05-01T09:00:00.000Z',
@@ -51,6 +60,8 @@ void main() {
         'recurrence_event_anchor_time',
         'suggested_trigger_time',
         'source_text',
+        'capture_proposal_json',
+        'word_progress_json',
         'capture_pending',
         'is_pinned',
       ]) {
@@ -60,10 +71,19 @@ void main() {
     return row;
   }
 
-  Future<File> create14(String path, bool capture, {bool empty = false}) async {
+  Future<File> create14(
+    String path,
+    bool capture, {
+    bool empty = false,
+    bool full = false,
+  }) async {
     final file = File(path);
     final db = await databaseFactoryFfi.openDatabase(file.path);
-    final fixture = capture ? 'schema_v14_capture.sql' : 'schema_v14.sql';
+    final fixture = !capture
+        ? 'schema_v14.sql'
+        : full
+        ? 'schema_v14_capture_full.sql'
+        : 'schema_v14_capture.sql';
     final sql = (await File('test/fixtures/$fixture').readAsString())
         .split('\n')
         .where((line) => !line.startsWith('--'))
@@ -72,7 +92,7 @@ void main() {
       if (statement.trim().isNotEmpty) await db.execute(statement);
     }
     await db.insert('Settings', settings(capture));
-    if (!empty) await db.insert('Reminders', reminder(capture));
+    if (!empty) await db.insert('Reminders', reminder(capture, full: full));
     await db.setVersion(14);
     await db.close();
     return file;
@@ -81,13 +101,14 @@ void main() {
   void expectPreserved(
     Map<String, Object?> actualSettings,
     Map<String, Object?> actualReminder,
-    bool capture,
-  ) {
+    bool capture, {
+    bool full = false,
+  }) {
     expect(
       actualSettings['workspace_drafts_json'],
       capture ? settings(true)['workspace_drafts_json'] : null,
     );
-    final expected = reminder(capture);
+    final expected = reminder(capture, full: full);
     for (final entry in expected.entries) {
       expect(actualReminder[entry.key], entry.value, reason: entry.key);
     }
@@ -103,10 +124,11 @@ void main() {
     expect(actualReminder['is_pinned'], capture ? 1 : 0);
   }
 
-  for (final capture in [false, true]) {
-    final variant = capture ? 'capture' : 'origin';
+  for (final variant in ['origin', 'capture', 'capture-full']) {
+    final capture = variant != 'origin';
+    final full = variant == 'capture-full';
     test('v14 $variant database upgrades without losing fields', () async {
-      await create14('${root.path}/dont_forget_v3.db', capture);
+      await create14('${root.path}/dont_forget_v3.db', capture, full: full);
       final helper = DatabaseHelper.forTesting(root.path, databaseFactoryFfi);
       try {
         final db = await helper.database;
@@ -115,6 +137,7 @@ void main() {
           (await db.query('Settings')).single,
           (await db.query('Reminders')).single,
           capture,
+          full: full,
         );
         final snapshot = root.listSync().whereType<Directory>().singleWhere(
           (dir) => dir.path.contains('schema-upgrade-v14-to-v15-'),
@@ -143,7 +166,11 @@ void main() {
 
     for (final format in ['json', 'sqlite']) {
       test('v14 $variant $format restore preserves source and data', () async {
-        final original = await create14('${root.path}/source.db', capture);
+        final original = await create14(
+          '${root.path}/source.db',
+          capture,
+          full: full,
+        );
         final source = format == 'sqlite'
             ? original
             : await File('${root.path}/source.json').writeAsString(
@@ -152,7 +179,7 @@ void main() {
                   'timestamp': '2026-10-27T00:00:00Z',
                   'settings': [settings(capture)],
                   'media_records': [],
-                  'reminders': [reminder(capture)],
+                  'reminders': [reminder(capture, full: full)],
                 }),
               );
         final bytes = await source.readAsBytes();
@@ -181,6 +208,7 @@ void main() {
             (await db.query('Settings')).single,
             (await db.query('Reminders')).single,
             capture,
+            full: full,
           );
           expect(await source.readAsBytes(), bytes);
         } finally {
@@ -194,6 +222,7 @@ void main() {
         '${root.path}/empty.db',
         capture,
         empty: true,
+        full: full,
       );
       final jsonFile = await File('${root.path}/empty.json').writeAsString(
         jsonEncode({
@@ -210,6 +239,47 @@ void main() {
       );
       expect((await inspector.inspect(dbFile)).version, 14);
       expect((await inspector.inspect(jsonFile)).version, 14);
+    });
+  }
+
+  for (final field in ['capture_proposal_json', 'word_progress_json']) {
+    test('v14 capture with only $field upgrades and inspects', () async {
+      final file = await create14('${root.path}/dont_forget_v3.db', true);
+      final db = await databaseFactoryFfi.openDatabase(file.path);
+      await db.execute('ALTER TABLE Reminders ADD COLUMN $field TEXT');
+      final value = field == 'capture_proposal_json'
+          ? jsonEncode([
+              {'id': 'proposal', 'task_title': 'Proposed', 'quadrant_level': 2},
+            ])
+          : jsonEncode({'word': 1});
+      await db.update('Reminders', {field: value});
+      final snapshot = {
+        'version': 14,
+        'timestamp': null,
+        'settings': await db.query('Settings'),
+        'media_records': await db.query('MediaRecords'),
+        'reminders': await db.query('Reminders'),
+      };
+      await db.close();
+      final jsonFile = await File(
+        '${root.path}/partial.json',
+      ).writeAsString(jsonEncode(snapshot));
+      final inspector = BackupInspector(
+        databaseFactoryFfi,
+        temporaryDirectory: root,
+      );
+      expect((await inspector.inspect(file)).version, 14);
+      expect((await inspector.inspect(jsonFile)).version, 14);
+      final helper = DatabaseHelper.forTesting(root.path, databaseFactoryFfi);
+      try {
+        final migrated = (await (await helper.database).query(
+          'Reminders',
+        )).single;
+        expect(migrated[field], value);
+        expect(migrated['trigger_time_origin'], 'unknown');
+      } finally {
+        await helper.close(createBackup: false);
+      }
     });
   }
 

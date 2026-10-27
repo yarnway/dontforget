@@ -13,6 +13,7 @@ class AppSettings {
   final String language;
   final AppAppearance appearance;
   final InputSendMode inputSendMode;
+  final String? workspaceDraftsJson;
   final List<AiProfile>? _profiles;
   final bool aiFallbackEnabled;
   List<AiProfile> get aiProfiles => _profiles ?? const [];
@@ -76,6 +77,7 @@ class AppSettings {
     required this.language,
     this.appearance = AppAppearance.system,
     this.inputSendMode = InputSendMode.enter,
+    this.workspaceDraftsJson,
     List<AiProfile>? aiProfiles,
     this.aiFallbackEnabled = false,
   }) : _profiles = aiProfiles == null ? null : List.unmodifiable(aiProfiles);
@@ -138,6 +140,7 @@ class AppSettings {
       inputSendMode: InputSendMode.values.byName(sendMode as String),
       aiProfiles: _readProfiles(json['ai_profiles_json']),
       aiFallbackEnabled: json['ai_fallback_enabled'] == 1,
+      workspaceDraftsJson: json['workspace_drafts_json'] as String?,
     );
   }
 
@@ -149,6 +152,7 @@ class AppSettings {
     'language': language,
     'appearance': appearance.name,
     'input_send_mode': inputSendMode.name,
+    'workspace_drafts_json': workspaceDraftsJson,
     'ai_profiles_json': jsonEncode(
       effectiveProfiles.map((p) => p.toJson()).toList(),
     ),
@@ -197,6 +201,7 @@ class AppSettings {
       language: language ?? this.language,
       appearance: appearance ?? this.appearance,
       inputSendMode: inputSendMode ?? this.inputSendMode,
+      workspaceDraftsJson: workspaceDraftsJson,
       aiProfiles: profiles,
       aiFallbackEnabled: aiFallbackEnabled ?? this.aiFallbackEnabled,
     );

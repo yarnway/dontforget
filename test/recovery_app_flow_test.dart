@@ -1,3 +1,5 @@
+import 'support/workspace_drafts.dart';
+import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -227,6 +229,7 @@ void main() {
       ],
     );
     await container.read(settingsProvider.notifier).ready;
+    await container.read(workspaceDraftsProvider.notifier).ready;
     await container.read(mediaRecordsProvider.notifier).ready;
     await container.read(remindersProvider.notifier).ready;
   });
@@ -281,6 +284,9 @@ void main() {
     });
     await until(tester, () => drained);
     await tester.runAsync(() => pausing);
+    addTearDown(() async {
+      if (!containerDisposed) await drainWorkspaceDrafts(tester, container);
+    });
     await tester.pumpWidget(const SizedBox());
     await tester.runAsync(() => lan.stopServer());
     container.dispose();
@@ -319,6 +325,9 @@ void main() {
     bool mountApp = true,
   }) async {
     if (mountApp) {
+      addTearDown(() async {
+        if (!containerDisposed) await drainWorkspaceDrafts(tester, container);
+      });
       await tester.pumpWidget(
         UncontrolledProviderScope(container: container, child: const MyApp()),
       );
@@ -464,6 +473,8 @@ void main() {
         expect(find.byType(HomeScreen), findsOneWidget);
         // Phone layouts show one category at a time; the recovered fixture is
         // in Q2 while a fresh workspace deliberately starts on Q1.
+        await tap(tester, 'workspace-view-board');
+        await tester.pump();
         await tap(tester, 'category-2');
         await tester.pump();
         expect(find.text('Recovered task'), findsOneWidget);
@@ -515,6 +526,9 @@ void main() {
   testWidgets(
     'recovery disposes a pending dashboard report and rejects its late result',
     (tester) async {
+      addTearDown(() async {
+        if (!containerDisposed) await drainWorkspaceDrafts(tester, container);
+      });
       await tester.pumpWidget(
         UncontrolledProviderScope(container: container, child: const MyApp()),
       );

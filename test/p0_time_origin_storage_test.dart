@@ -27,6 +27,8 @@ void main() {
         ..remove('recurrence_event_anchor_time')
         ..remove('suggested_trigger_time')
         ..remove('source_text')
+        ..remove('capture_proposal_json')
+        ..remove('word_progress_json')
         ..remove('capture_pending')
         ..remove('is_pinned');
 
@@ -37,6 +39,8 @@ void main() {
     'recurrence_event_anchor_time': null,
     'suggested_trigger_time': null,
     'source_text': null,
+    'capture_proposal_json': null,
+    'word_progress_json': null,
     'capture_pending': 0,
     'is_pinned': 0,
   };
@@ -61,7 +65,10 @@ void main() {
     for (final statement in sql.split(';')) {
       if (statement.trim().isNotEmpty) await db.execute(statement);
     }
-    await db.insert('Settings', AppSettings.defaults().toJson());
+    await db.insert(
+      'Settings',
+      AppSettings.defaults().toJson()..remove('workspace_drafts_json'),
+    );
     await db.insert('Reminders', oldTask);
     await db.setVersion(13);
     await db.close();
@@ -109,7 +116,10 @@ void main() {
                 jsonEncode({
                   'version': 13,
                   'timestamp': '2026-10-27T00:00:00Z',
-                  'settings': [AppSettings.defaults().toJson()],
+                  'settings': [
+                    AppSettings.defaults().toJson()
+                      ..remove('workspace_drafts_json'),
+                  ],
                   'media_records': [],
                   'reminders': [oldTask],
                 }),

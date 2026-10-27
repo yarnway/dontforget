@@ -32,6 +32,8 @@ void main() {
               'recurrence_event_anchor_time': null,
               'suggested_trigger_time': null,
               'source_text': null,
+              'capture_proposal_json': null,
+              'word_progress_json': null,
               'capture_pending': 0,
               'is_pinned': 0,
             },

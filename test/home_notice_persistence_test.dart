@@ -1,3 +1,5 @@
+import 'support/workspace_drafts.dart';
+import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'dart:io';
 
 import 'package:dont_forget/data/database_helper.dart';
@@ -74,6 +76,7 @@ void main() {
       ],
     );
     await container.read(settingsProvider.notifier).ready;
+    await container.read(workspaceDraftsProvider.notifier).ready;
     await container.read(mediaRecordsProvider.notifier).ready;
     await container.read(remindersProvider.notifier).ready;
   }
@@ -132,6 +135,7 @@ void main() {
 
   Future<void> showHome(WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(1440, 1000));
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
@@ -176,6 +180,7 @@ void main() {
       isNotNull,
     );
     expect(find.text('提醒时间已到 · 1'), findsNothing);
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(const SizedBox());
     await tester.runAsync(() async {
       await unload();
@@ -185,6 +190,7 @@ void main() {
     expect(find.text('提醒时间已到 · 1'), findsNothing);
     expect(find.text('Persisted due task'), findsOneWidget);
     expect(tester.takeException(), isNull);
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -237,6 +243,7 @@ void main() {
     expect(container.read(remindersProvider), same(before));
     expect(before.last.noticeAcknowledgedAt, isNull);
     expect(tester.takeException(), isNull);
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -269,6 +276,7 @@ void main() {
       isNotNull,
     );
     expect(tester.takeException(), isNull);
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(const SizedBox());
   });
 }

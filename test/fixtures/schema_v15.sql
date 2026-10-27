@@ -34,6 +34,8 @@ CREATE TABLE Reminders (
   recurrence_event_anchor_time TEXT,
   suggested_trigger_time TEXT,
   source_text TEXT,
+  capture_proposal_json TEXT,
+  word_progress_json TEXT,
   capture_pending INTEGER NOT NULL DEFAULT 0,
   is_pinned INTEGER NOT NULL DEFAULT 0,
   is_completed BOOLEAN NOT NULL,

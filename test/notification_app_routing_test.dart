@@ -6,6 +6,7 @@ import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/notification_payload.dart';
 import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/providers/providers.dart';
+import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'package:dont_forget/providers/recovery_coordinator.dart';
 import 'package:dont_forget/services/context_trigger_service.dart';
 import 'package:dont_forget/services/notification_service.dart';
@@ -158,6 +159,7 @@ void main() {
     await container.read(settingsProvider.notifier).ready;
     await container.read(mediaRecordsProvider.notifier).ready;
     await container.read(remindersProvider.notifier).ready;
+    await container.read(workspaceDraftsProvider.notifier).ready;
   });
 
   tearDown(() async {

@@ -1,3 +1,5 @@
+import 'support/workspace_drafts.dart';
+import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:dont_forget/data/database_helper.dart';
@@ -28,8 +30,19 @@ class _ControlledHomeController extends HomeController {
   int drafts = 0;
   Completer<String?>? pendingText;
   final sent = <String>[];
+  final captureIds = <String?>[];
+  Completer<bool>? pendingSend;
   @override
-  Future<void> processText(String text) async => sent.add(text);
+  Future<bool> processText(
+    String text, {
+    DateTime? reminderTime,
+    bool memoOnly = false,
+    String? captureId,
+  }) async {
+    sent.add(text);
+    captureIds.add(captureId);
+    return pendingSend == null ? true : await pendingSend!.future;
+  }
 
   @override
   Future<bool> cancelRecording() async {
@@ -127,6 +140,7 @@ void main() {
       ],
     );
     await container.read(settingsProvider.notifier).ready;
+    await container.read(workspaceDraftsProvider.notifier).ready;
     await container.read(remindersProvider.notifier).ready;
     container.read(homeControllerProvider);
   });
@@ -149,6 +163,7 @@ void main() {
     String language = 'zh',
     Brightness brightness = Brightness.light,
   }) async {
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
@@ -193,6 +208,17 @@ void main() {
     },
   );
 
+  Future<void> waitForSent(WidgetTester tester, int count) async {
+    for (var i = 0; i < 100 && home.sent.length < count; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 2)),
+      );
+      await tester.pump();
+    }
+    expect(home.sent.length, count);
+    await drainWorkspaceDrafts(tester, container);
+  }
+
   testWidgets(
     'input has no idle ticks and reduced motion stops recording animation',
     (tester) async {
@@ -210,6 +236,7 @@ void main() {
       await show(tester, const InputBottomBar());
       await tester.pumpAndSettle();
       expect(tester.binding.transientCallbackCount, 0);
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
     },
     variant: TargetPlatformVariant.only(TargetPlatform.macOS),
@@ -239,8 +266,100 @@ void main() {
     home.setRecording(false);
     await tester.pump();
     expect(find.text('Keep this draft'), findsOneWidget);
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(const SizedBox());
   });
+
+  for (final succeeds in [false, true]) {
+    testWidgets(
+      'typing during a ${succeeds ? 'successful' : 'failed'} save preserves both inputs',
+      (tester) async {
+        home.pendingSend = Completer<bool>();
+        await tester.runAsync(
+          () => container
+              .read(settingsProvider.notifier)
+              .updateSettings(
+                container
+                    .read(settingsProvider)
+                    .copyWith(inputSendMode: InputSendMode.button),
+              ),
+        );
+        await show(tester, const InputBottomBar());
+        await tester.enterText(find.byType(TextField), 'first input');
+        await drainWorkspaceDrafts(tester, container);
+        await tester.tap(find.byTooltip('发送'));
+        for (var i = 0; i < 100 && home.sent.isEmpty; i++) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 2)),
+          );
+          await tester.pump();
+        }
+        expect(home.sent, ['first input']);
+        final submittedId = home.captureIds.single;
+        await tester.enterText(find.byType(TextField), 'newer input');
+        await drainWorkspaceDrafts(tester, container);
+        expect(
+          container.read(workspaceDraftsProvider)['capture']['id'],
+          isNot(submittedId),
+        );
+        expect(
+          container.read(
+            workspaceDraftsProvider,
+          )['pendingCaptures'][submittedId]['text'],
+          'first input',
+        );
+        home.pendingSend!.complete(succeeds);
+        home.pendingSend = null;
+        for (var i = 0; i < 100; i++) {
+          await tester.runAsync(
+            () => Future<void>.delayed(const Duration(milliseconds: 2)),
+          );
+          await tester.pump();
+          if (succeeds
+              ? container.read(workspaceDraftsProvider)['pendingCaptures'] ==
+                    null
+              : find
+                    .byKey(const ValueKey('pending-captures'))
+                    .evaluate()
+                    .isNotEmpty) {
+            break;
+          }
+        }
+        expect(
+          tester.widget<TextField>(find.byType(TextField)).controller!.text,
+          'newer input',
+        );
+        if (succeeds) {
+          expect(
+            container.read(workspaceDraftsProvider)['pendingCaptures'],
+            isNull,
+          );
+          await tester.tap(find.byTooltip('发送'));
+          for (var i = 0; i < 100 && home.sent.length < 2; i++) {
+            await tester.runAsync(
+              () => Future<void>.delayed(const Duration(milliseconds: 2)),
+            );
+            await tester.pump();
+          }
+          expect(home.sent, ['first input', 'newer input']);
+          expect(home.captureIds.last, isNot(submittedId));
+        } else {
+          await tester.tap(find.byKey(const ValueKey('pending-captures')));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('恢复到输入框'));
+          await drainWorkspaceDrafts(tester, container);
+          expect(
+            tester.widget<TextField>(find.byType(TextField)).controller!.text,
+            'newer input\nfirst input',
+          );
+          expect(
+            container.read(workspaceDraftsProvider)['pendingCaptures'],
+            isNull,
+          );
+        }
+      },
+    );
+  }
 
   testWidgets(
     'mobile composer switches modes, preserves draft and places attachments on right',
@@ -367,6 +486,7 @@ void main() {
       expect(field.controller!.text, '確認\n');
       expect(home.sent, isEmpty);
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await waitForSent(tester, 1);
       expect(home.sent, ['確認\n']);
       expect(field.controller!.text, isEmpty);
     },
@@ -395,7 +515,7 @@ void main() {
       await tester.testTextInput.receiveAction(TextInputAction.done);
       expect(home.sent, isEmpty);
       await tester.tap(find.byTooltip('发送'));
-      await tester.pump();
+      await waitForSent(tester, 1);
       expect(home.sent, ['今晚读书\n明早复习']);
     },
   );
@@ -411,7 +531,7 @@ void main() {
       TextInputAction.send,
     );
     await tester.testTextInput.receiveAction(TextInputAction.send);
-    await tester.pump();
+    await waitForSent(tester, 1);
     expect(home.sent, ['明日9時に復習']);
   });
 
@@ -769,6 +889,7 @@ void main() {
         tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
       );
       await tester.pump(const Duration(milliseconds: 700));
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
       home.pendingStart!.complete(true);
       await tester.pumpAndSettle();
@@ -819,6 +940,7 @@ void main() {
       expect(home.stops, 1);
       expect(container.read(homeControllerProvider).isRecording, isFalse);
       expect(find.byType(TextField), findsOneWidget);
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
     },
   );
@@ -868,6 +990,7 @@ void main() {
           );
         }
       }
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
     },
   );
@@ -910,6 +1033,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('删除事项'), findsOneWidget);
     semantics.dispose();
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -950,6 +1074,7 @@ void main() {
       expect(notifications.canceled, isEmpty);
       expect(find.text('提醒更新失败，请重试。'), findsOneWidget);
       expect(tester.takeException(), isNull);
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
     },
   );
@@ -992,6 +1117,7 @@ void main() {
         expect(find.text(message), findsOneWidget);
         expect(find.text('提醒更新失败，请重试。'), findsNothing);
         expect(tester.takeException(), isNull);
+        addTearDown(() => drainWorkspaceDrafts(tester, container));
         await tester.pumpWidget(const SizedBox());
       },
     );
@@ -1033,6 +1159,7 @@ void main() {
     expect(find.text('删除失败，请重试。'), findsOneWidget);
     expect(notifications.canceled, isEmpty);
     expect(tester.takeException(), isNull);
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(const SizedBox());
   });
   testWidgets(
@@ -1073,6 +1200,7 @@ void main() {
       expect(find.byType(TaskCard), findsOneWidget);
       expect(container.read(remindersProvider).single.id, task.id);
       expect(tester.takeException(), isNull);
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
     },
   );
@@ -1097,6 +1225,7 @@ void main() {
       expect(button.onPressed, isNotNull);
       expect(button.style!.backgroundColor!.resolve({}), colors.primary);
       expect(button.style!.foregroundColor!.resolve({}), colors.onPrimary);
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
     },
   );

@@ -426,12 +426,11 @@ Map<String, String> _columnsFor(
           (version == 14 && version14Shape == Schema14Shape.reminderOrigin)))
     'trigger_time_origin': 's',
   if (table == 'settings' &&
-      (version >= 15 ||
-          (version == 14 && version14Shape == Schema14Shape.captureFlow)))
+      (version >= 15 || (version == 14 && version14Shape?.isCapture == true)))
     'workspace_drafts_json': 's?',
   if (table == 'reminders' &&
       (version >= 15 ||
-          (version == 14 && version14Shape == Schema14Shape.captureFlow))) ...{
+          (version == 14 && version14Shape?.isCapture == true))) ...{
     'event_time': 'd?',
     'recurrence_event_anchor_time': 'd?',
     'suggested_trigger_time': 'd?',
@@ -439,6 +438,13 @@ Map<String, String> _columnsFor(
     'capture_pending': 'b',
     'is_pinned': 'b',
   },
+  if (table == 'reminders' &&
+      (version >= 15 || (version == 14 && version14Shape?.hasProposal == true)))
+    'capture_proposal_json': 's?',
+  if (table == 'reminders' &&
+      (version >= 15 ||
+          (version == 14 && version14Shape?.hasWordProgress == true)))
+    'word_progress_json': 's?',
 };
 
 Future<void> _checkSchema(
@@ -787,6 +793,19 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
     }
     version14Shape = identifySchema14FromSettings(keys.cast<String>().toSet());
     if (version14Shape == null) _fail(BackupInspectionError.invalidSchema);
+    final reminders = data['reminders'];
+    if (reminders is List && reminders.isNotEmpty) {
+      if (reminders.first is! Map) _fail(BackupInspectionError.invalidSchema);
+      final reminderKeys = (reminders.first as Map).keys;
+      if (reminderKeys.any((key) => key is! String)) {
+        _fail(BackupInspectionError.invalidSchema);
+      }
+      version14Shape = identifySchema14(
+        settingsColumns: keys.cast<String>().toSet(),
+        reminderColumns: reminderKeys.cast<String>().toSet(),
+      );
+      if (version14Shape == null) _fail(BackupInspectionError.invalidSchema);
+    }
   }
   final ids = <String, Set<String>>{};
   final counts = <String, int>{};
@@ -882,6 +901,44 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
           'aiSuggested',
         ].contains(row['trigger_time_origin'])) {
       _fail(BackupInspectionError.invalidData);
+    }
+    for (final field in ['capture_proposal_json', 'word_progress_json']) {
+      final encoded = row[field];
+      if (encoded == null) continue;
+      if (encoded is! String || encoded.length > 300000) {
+        _fail(BackupInspectionError.invalidData);
+      }
+      Object? decoded;
+      try {
+        decoded = _decodeJson(encoded);
+      } catch (_) {
+        _fail(BackupInspectionError.invalidData);
+      }
+      if (field == 'capture_proposal_json') {
+        if (decoded is! List ||
+            decoded.isEmpty ||
+            decoded.length > 32 ||
+            decoded.any(
+              (proposal) =>
+                  proposal is! Map ||
+                  proposal['id'] is! String ||
+                  proposal['task_title'] is! String ||
+                  (proposal['task_title'] as String).trim().isEmpty ||
+                  proposal['quadrant_level'] is! int ||
+                  (proposal['quadrant_level'] as int) < 1 ||
+                  (proposal['quadrant_level'] as int) > 4 ||
+                  proposal['capture_proposal_json'] != null ||
+                  (proposal['trigger_time'] != null &&
+                      tryParseStoredDateTime(proposal['trigger_time']) ==
+                          null) ||
+                  (proposal['event_time'] != null &&
+                      tryParseStoredDateTime(proposal['event_time']) == null),
+            )) {
+          _fail(BackupInspectionError.invalidData);
+        }
+      } else if (decoded is! Map && decoded is! List) {
+        _fail(BackupInspectionError.invalidData);
+      }
     }
     if (row['record_id'] != null &&
         !ids['media_records']!.contains(row['record_id'])) {

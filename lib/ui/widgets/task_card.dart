@@ -1,4 +1,5 @@
 import 'inline_feedback.dart';
+import 'capture_proposal_dialog.dart';
 import '../formatters/local_date_time.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
 import '../../providers/providers.dart';
+import '../../providers/home_controller.dart';
 import '../../l10n/app_localizations.dart';
 import '../screens/task_detail_screen.dart';
 
@@ -30,6 +32,53 @@ class _TaskCardState extends ConsumerState<TaskCard> {
   void _showMessage(String message) {
     if (!mounted) return;
     InlineFeedback.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _reviewCaptureProposal() async {
+    if (_isBusy) return;
+    final original = widget.task;
+    final l10n = AppLocalizations.of(context);
+    late final List<Reminder> suggestions;
+    try {
+      final decoded = jsonDecode(original.captureProposalJson!);
+      if (decoded is! List || decoded.isEmpty || decoded.length > 32) {
+        throw const FormatException('Invalid proposal');
+      }
+      suggestions = decoded
+          .map(
+            (entry) =>
+                Reminder.fromJson(Map<String, dynamic>.from(entry as Map)),
+          )
+          .toList();
+    } catch (_) {
+      _showMessage(l10n.get('captureProposalUnreadable'));
+      return;
+    }
+    final accepted = await showDialog<List<Reminder>>(
+      context: context,
+      builder: (_) =>
+          CaptureProposalDialog(original: original, proposals: suggestions),
+    );
+    if (!mounted || accepted == null) return;
+    setState(() => _isUpdating = true);
+    try {
+      final result = await ref
+          .read(remindersProvider.notifier)
+          .applyCaptureProposal(original, accepted);
+      _showMessage(
+        l10n.get(
+          result.nativeSyncFailures > 0
+              ? 'reminderNativeSyncFailed'
+              : 'changesSaved',
+        ),
+      );
+    } on StaleReminderOccurrenceException {
+      _showMessage(l10n.get('reminderOccurrenceChanged'));
+    } catch (_) {
+      _showMessage(l10n.get('reminderUpdateFailed'));
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
   }
 
   Future<void> _decomposeToMicroHabits() async {
@@ -212,6 +261,16 @@ class _TaskCardState extends ConsumerState<TaskCard> {
 
   List<PopupMenuEntry<String>> _menuItems(AppLocalizations l10n) => [
     _menuItem('edit', Icons.edit_outlined, l10n.get('editTask')),
+    if (!widget.task.isCompleted)
+      _menuItem(
+        'pin',
+        Icons.push_pin_outlined,
+        l10n.get(widget.task.isPinned ? 'unpinToday' : 'pinToday'),
+      ),
+    if (widget.task.isRecurring && !widget.task.isCompleted)
+      _menuItem('skip', Icons.skip_next_outlined, l10n.get('skipOccurrence')),
+    if (widget.task.sourceText != null)
+      _menuItem('source', Icons.notes_outlined, l10n.get('sourceText')),
     _menuItem(
       'toggle',
       widget.task.isCompleted
@@ -261,6 +320,51 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     if (_isBusy) return;
     if (action == 'edit') {
       _openDetails();
+    } else if (action == 'source') {
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(AppLocalizations.of(context).get('sourceText')),
+          content: SingleChildScrollView(
+            child: SelectableText(widget.task.sourceText ?? ''),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(AppLocalizations.of(context).get('close')),
+            ),
+          ],
+        ),
+      );
+    } else if (action == 'pin' || action == 'adopt' || action == 'skip') {
+      setState(() => _isUpdating = true);
+      final loc = AppLocalizations.of(context);
+      try {
+        final notifier = ref.read(remindersProvider.notifier);
+        final result = action == 'skip'
+            ? await notifier.skipOccurrence(widget.task)
+            : await notifier.updateReminder(
+                action == 'pin'
+                    ? widget.task.copyWith(isPinned: !widget.task.isPinned)
+                    : widget.task.copyWith(
+                        triggerTime: widget.task.suggestedTriggerTime,
+                        timeOrigin: ReminderTimeOrigin.aiSuggested,
+                        suggestedTriggerTime: null,
+                      ),
+                baseline: widget.task,
+              );
+        if (result.nativeSyncFailed) {
+          _showMessage(loc.get('reminderNativeSyncFailed'));
+        } else if (!result.accepted) {
+          _showMessage(loc.get('reminderOccurrenceChanged'));
+        }
+      } on PinLimitException {
+        _showMessage(loc.get('pinLimit'));
+      } catch (_) {
+        _showMessage(loc.get('reminderUpdateFailed'));
+      } finally {
+        if (mounted) setState(() => _isUpdating = false);
+      }
     } else if (action == 'toggle') {
       HapticFeedback.selectionClick();
       await _setCompleted(!widget.task.isCompleted);
@@ -342,6 +446,18 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       };
     }
     final metadata = <Widget>[
+      if (task.isPinned && !task.isCompleted)
+        _badge(
+          l10n.get('todayPinned'),
+          Icons.push_pin_outlined,
+          colors.primary,
+        ),
+      if (task.eventTime != null)
+        _badge(
+          '${l10n.get('eventTimeShort')}: ${formatLocalDateTime(task.eventTime!)}',
+          Icons.event_outlined,
+          colors.onSurfaceVariant,
+        ),
       if (task.isEmotionFiltered)
         _badge(
           l10n.get('emotionFilteredBadge'),
@@ -358,7 +474,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         ),
       if (task.triggerTime != null)
         _badge(
-          formatLocalDateTime(task.triggerTime!),
+          '${l10n.get('reminderTimeShort')}: ${formatLocalDateTime(task.triggerTime!)}',
           Icons.access_time,
           colors.onSurfaceVariant,
         ),
@@ -371,6 +487,14 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         ),
       if (!task.isCompleted && task.isOverdue)
         _badge(l10n.get('overdue'), Icons.schedule_rounded, colors.error),
+      if (!task.isCompleted &&
+          task.eventTime != null &&
+          task.eventTime!.isBefore(DateTime.now()))
+        _badge(
+          l10n.get('deadlinePassed'),
+          Icons.event_busy_outlined,
+          colors.error,
+        ),
       if (task.isRecurring)
         _badge(
           task.recurrenceDescription ?? l10n.get('recurrencePeriodic'),
@@ -532,6 +656,57 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Wrap(spacing: 6, runSpacing: 6, children: metadata),
+                  ),
+                if (task.captureProposalJson != null && !task.isCompleted)
+                  TextButton.icon(
+                    key: ValueKey('review-capture-${task.id}'),
+                    onPressed: _isBusy ? null : _reviewCaptureProposal,
+                    icon: const Icon(Icons.auto_awesome_outlined, size: 16),
+                    label: Text(l10n.get('captureProposalReview')),
+                  ),
+                if (task.suggestedTriggerTime != null && !task.isCompleted)
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 6,
+                    children: [
+                      Text(
+                        '${l10n.get('suggestedReminder')}: ${formatLocalDateTime(task.suggestedTriggerTime!)}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      TextButton(
+                        key: ValueKey('adopt-time-${task.id}'),
+                        onPressed:
+                            _isBusy ||
+                                !task.suggestedTriggerTime!.isAfter(
+                                  DateTime.now(),
+                                )
+                            ? null
+                            : () => _onAction('adopt'),
+                        child: Text(l10n.get('adoptSuggestion')),
+                      ),
+                    ],
+                  ),
+                if (task.capturePending && !task.isCompleted)
+                  Consumer(
+                    builder: (context, ref, _) {
+                      ref.watch(homeControllerProvider);
+                      final controller = ref.read(
+                        homeControllerProvider.notifier,
+                      );
+                      final running = controller.isCaptureRunning(task.id);
+                      return TextButton.icon(
+                        key: ValueKey('retry-capture-${task.id}'),
+                        onPressed: running
+                            ? null
+                            : () => controller.retryCapture(task),
+                        icon: const Icon(Icons.auto_awesome_outlined, size: 16),
+                        label: Text(
+                          l10n.get(
+                            running ? 'captureOrganizing' : 'captureContinue',
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 if (mediaIcon != null)
                   TextButton(

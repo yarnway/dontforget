@@ -22,6 +22,7 @@ class TaskSearchIndex {
           old != null &&
           old.task.taskTitle == task.taskTitle &&
           old.task.taskSummary == task.taskSummary &&
+          old.task.sourceText == task.sourceText &&
           old.task.subTasks == task.subTasks;
       final entry = (
         task: task,
@@ -31,6 +32,7 @@ class TaskSearchIndex {
             : [
                 task.taskTitle.toLowerCase(),
                 if (task.taskSummary != null) task.taskSummary!.toLowerCase(),
+                if (task.sourceText != null) task.sourceText!.toLowerCase(),
                 ...task.getSubTasksList().map((text) => text.toLowerCase()),
               ],
       );

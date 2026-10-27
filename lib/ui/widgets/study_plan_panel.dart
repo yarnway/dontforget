@@ -26,6 +26,62 @@ class StudyPlanDraft extends ChangeNotifier {
   int syncFailures = 0, completedDays = 0;
   String? feedback;
   bool _disposed = false;
+  Map<String, dynamic> toJson() => {
+    'exam': exam.name,
+    'days': days,
+    'words': words,
+    'notes': notes,
+    'plan': plan?.toDraftJson(),
+    'saved': saved,
+    'edited': [
+      for (final b in edited) {'title': b.title, 'content': b.content},
+    ],
+    'first': firstReminder?.toIso8601String(),
+  };
+
+  void restore(Map data, DataGeneration current) {
+    final restoredExam = StudyExam.values.firstWhere(
+      (value) => value.name == data['exam'],
+    );
+    StudyRequest(
+      exam: restoredExam,
+      days: data['days'] as int,
+      wordsPerDay: data['words'] as int,
+      notes: data['notes'] as String,
+    ).validate();
+    final restoredPlan = data['plan'] is Map
+        ? StudyPlan.fromDraftJson(data['plan'] as Map)
+        : null;
+    final batches = data['edited'] as List;
+    if (batches.length > 7) throw const FormatException('Invalid study draft');
+    final restored = [
+      for (final b in batches)
+        StudyBatch(
+          title: b['title'] as String,
+          content: b['content'] as String,
+        ),
+    ];
+    if (restoredPlan != null &&
+        (restored.length != restoredPlan.batches.length ||
+            restored.any(
+              (b) => b.title.length > 120 || b.content.length > 24000,
+            ))) {
+      throw const FormatException('Invalid study draft');
+    }
+    exam = restoredExam;
+    days = data['days'] as int;
+    words = data['words'] as int;
+    notes = data['notes'] as String;
+    plan = restoredPlan;
+    edited = restored;
+    firstReminder = DateTime.tryParse(data['first']?.toString() ?? '');
+    saved = data['saved'] == true;
+    generation = current;
+    busy = false;
+    saving = false;
+    changed();
+  }
+
   void changed() {
     if (!_disposed) notifyListeners();
   }

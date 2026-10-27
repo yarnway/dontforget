@@ -48,8 +48,20 @@ void main() {
     nextReviewAt: DateTime(2030, 1, 1),
   );
   final legacy = original.toJson()
-    ..remove('review_notifications_enabled')
-    ..remove('trigger_time_origin');
+    ..removeWhere(
+      (key, _) => const {
+        'review_notifications_enabled',
+        'trigger_time_origin',
+        'event_time',
+        'recurrence_event_anchor_time',
+        'suggested_trigger_time',
+        'source_text',
+        'capture_proposal_json',
+        'word_progress_json',
+        'capture_pending',
+        'is_pinned',
+      }.contains(key),
+    );
   Future<File> createLegacy({bool broken = false}) async {
     final file = File('${root.path}/dont_forget_v3.db');
     final db = await databaseFactoryFfi.openDatabase(file.path);
@@ -59,7 +71,10 @@ void main() {
     for (final statement in sql.split(';')) {
       if (statement.trim().isNotEmpty) await db.execute(statement);
     }
-    await db.insert('Settings', AppSettings.defaults().toJson());
+    await db.insert(
+      'Settings',
+      (AppSettings.defaults().toJson()..remove('workspace_drafts_json')),
+    );
     await db.insert('Reminders', legacy);
     if (broken) {
       await db.execute(
@@ -94,6 +109,14 @@ void main() {
         ...legacy,
         'review_notifications_enabled': 0,
         'trigger_time_origin': 'unknown',
+        'event_time': null,
+        'recurrence_event_anchor_time': null,
+        'suggested_trigger_time': null,
+        'source_text': null,
+        'capture_proposal_json': null,
+        'word_progress_json': null,
+        'capture_pending': 0,
+        'is_pinned': 0,
       });
       final directory = root.listSync().whereType<Directory>().singleWhere(
         (d) => d.path.contains(
@@ -139,7 +162,10 @@ void main() {
                 jsonEncode({
                   'version': 12,
                   'timestamp': DateTime.now().toIso8601String(),
-                  'settings': [AppSettings.defaults().toJson()],
+                  'settings': [
+                    (AppSettings.defaults().toJson()
+                      ..remove('workspace_drafts_json')),
+                  ],
                   'media_records': [],
                   'reminders': [legacy],
                 }),
@@ -164,6 +190,14 @@ void main() {
             ...legacy,
             'review_notifications_enabled': 0,
             'trigger_time_origin': 'unknown',
+            'event_time': null,
+            'recurrence_event_anchor_time': null,
+            'suggested_trigger_time': null,
+            'source_text': null,
+            'capture_proposal_json': null,
+            'word_progress_json': null,
+            'capture_pending': 0,
+            'is_pinned': 0,
           });
           expect(await source.readAsBytes(), bytes);
         } finally {

@@ -14,6 +14,7 @@ void main() {
   late DatabaseHelper helper;
   final legacy =
       AppSettings.defaults().copyWith(appearance: AppAppearance.dark).toJson()
+        ..remove('workspace_drafts_json')
         ..remove('input_send_mode');
   Future<File> createLegacy({bool broken = false}) async {
     final file = File('${root.path}/dont_forget_v3.db');
@@ -53,6 +54,7 @@ void main() {
       expect((await db.query('Settings')).single, {
         ...legacy,
         'input_send_mode': 'enter',
+        'workspace_drafts_json': null,
       });
       final snapshotDir = root.listSync().whereType<Directory>().singleWhere(
         (d) => d.path.contains(
@@ -161,6 +163,7 @@ void main() {
           expect((await (await target.database).query('Settings')).single, {
             ...legacy,
             'input_send_mode': 'enter',
+            'workspace_drafts_json': null,
           });
           expect(await source.readAsBytes(), bytes);
         } finally {

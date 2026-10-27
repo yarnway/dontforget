@@ -8,6 +8,7 @@ import 'package:dont_forget/app.dart';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/providers/providers.dart';
+import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -56,6 +57,7 @@ void main() {
     );
     await container.read(settingsProvider.notifier).ready;
     await container.read(remindersProvider.notifier).ready;
+    await container.read(workspaceDraftsProvider.notifier).ready;
     // Complete real filesystem identity I/O outside the widget fake-async zone.
     await container.read(notificationServiceProvider).init();
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger

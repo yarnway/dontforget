@@ -139,7 +139,7 @@ void main() {
                     {
                       'message': {
                         'content':
-                            '{"tasks":[{"title":"Fixture","quadrant":2,"time":"2050-01-01 09:00"}]}',
+                            '{"tasks":[{"title":"Fixture","quadrant":2,"event_time":"2050-01-01 10:00","time":"2050-01-01 09:00"}]}',
                       },
                     },
                   ],

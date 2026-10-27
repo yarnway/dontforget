@@ -28,6 +28,7 @@ class DataExportService {
     '本地下次复习时间 (Next Review At)',
     '长期停滞预警 (Stagnation Warning)',
     '32位状态位掩码 (Bitmask Hex)',
+    '本地事项截止时间 (Deadline DateTime)',
   ];
   static const _headers = {
     'zh': csvHeaders,
@@ -48,6 +49,7 @@ class DataExportService {
       'Next Review At (local)',
       'Stagnation Warning',
       'Bitmask Hex',
+      'Deadline DateTime (local)',
     ],
     'ja': [
       'タスクID',
@@ -66,6 +68,7 @@ class DataExportService {
       '次の復習（ローカル時刻）',
       '長期停滞',
       'ビットマスク（16進数）',
+      'タスク期限（ローカル）',
     ],
   };
   static const _labels = {
@@ -169,7 +172,7 @@ class DataExportService {
           ? 0
           : overdue
           ? 1
-          : 2], due == null ? '' : date.format(due), due == null ? '' : '${due.year}', due == null ? '' : '${due.year}-${due.month.toString().padLeft(2, '0')}', due == null ? '' : days[due.weekday - 1], _known(task.urgencyLevel, language), task.recurrenceDescription ?? _known(task.recurrenceRule, language), '${task.spacedRepetitionLevel}', task.nextReviewAt == null ? '' : date.format(task.nextReviewAt!.toLocal()), labels[stagnant ? 3 : 4], '0x${mask.toRadixString(16).padLeft(8, '0').toUpperCase()}'])}\r\n';
+          : 2], due == null ? '' : date.format(due), due == null ? '' : '${due.year}', due == null ? '' : '${due.year}-${due.month.toString().padLeft(2, '0')}', due == null ? '' : days[due.weekday - 1], _known(task.urgencyLevel, language), task.recurrenceDescription ?? _known(task.recurrenceRule, language), '${task.spacedRepetitionLevel}', task.nextReviewAt == null ? '' : date.format(task.nextReviewAt!.toLocal()), labels[stagnant ? 3 : 4], '0x${mask.toRadixString(16).padLeft(8, '0').toUpperCase()}', task.eventTime == null ? '' : date.format(task.eventTime!.toLocal())])}\r\n';
     }
   }
 

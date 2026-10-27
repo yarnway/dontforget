@@ -564,6 +564,8 @@ CREATE TABLE Reminders (
   recurrence_event_anchor_time TEXT,
   suggested_trigger_time TEXT,
   source_text TEXT,
+  capture_proposal_json TEXT,
+  word_progress_json TEXT,
   capture_pending INTEGER NOT NULL DEFAULT 0,
   is_pinned INTEGER NOT NULL DEFAULT 0,
   is_completed $boolType,
@@ -783,8 +785,9 @@ CREATE TABLE Reminders (
   Future<Schema14Shape> _identifySchema14(Database db) async {
     Future<List<Map<String, Object?>>> fields(String table) async {
       var result = await db.rawQuery('PRAGMA table_xinfo($table)');
-      if (result.isEmpty)
+      if (result.isEmpty) {
         result = await db.rawQuery('PRAGMA table_info($table)');
+      }
       if (result.any((row) => (row['hidden'] ?? 0) != 0)) {
         throw StateError('Unsupported version 14 database structure.');
       }
@@ -831,6 +834,14 @@ CREATE TABLE Reminders (
         'recurrence_event_anchor_time',
         'suggested_trigger_time',
         'source_text',
+      ]) {
+        if (!matches(reminders, name, 'TEXT', 0, null)) {
+          throw StateError('Unsupported version 14 database structure.');
+        }
+      }
+      for (final name in [
+        if (shape.hasProposal) 'capture_proposal_json',
+        if (shape.hasWordProgress) 'word_progress_json',
       ]) {
         if (!matches(reminders, name, 'TEXT', 0, null)) {
           throw StateError('Unsupported version 14 database structure.');

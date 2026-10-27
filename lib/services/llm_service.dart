@@ -247,10 +247,7 @@ Guidelines:
    - If "event_time" is present: "time" MUST BE (event_time minus lead_time_minutes).
      * Example: Event is 15:00 meeting, lead_time_minutes is 15 -> reminder "time" is 14:45.
      * Example: Train is 09:00, lead_time_minutes is 90 -> reminder "time" is 07:30.
-   - If no explicit event time is mentioned: NEVER return null! Automatically assign a sensible future time:
-     * Urgent/Important (Q1): within 1-2 hours or today's working hours.
-     * Important/Not Urgent (Q2): tonight 20:00 or tomorrow morning 09:30.
-     * Routine/General (Q3/Q4): today 18:30 or 20:00. If already late night (>21:00), schedule tomorrow 09:00.
+   - If no explicit event time is mentioned: return null. A memo does not need an alarm. Never invent a deadline or schedule.
 7. "is_recurring": boolean. true if user mentions or implies periodic/recurring behavior (e.g. "每天", "每周五", "工作日", "每个月", "按时吃药", "每日复盘"), otherwise false.
 8. "recurrence_rule": "none" | "daily" | "workday" | "weekly" | "monthly" | "yearly".
 9. "recurrence_desc": Short Chinese description if recurring (e.g. "每天", "每个工作日", "每周五", "每月1号"), or null if none.
@@ -392,8 +389,8 @@ Output strictly in valid JSON object matching this structure:
         
         int quad = json['quadrant'] is int ? json['quadrant'] : 4;
 
-        // If the model didn't return a time, automatically assign a smart default reminder time
-        parsedTriggerTime ??= _deduceDefaultTriggerTime(DateTime.now(), quad);
+        // A missing event time remains a memo. Model guesses are never an alarm.
+        if (parsedEventTime == null) parsedTriggerTime = null;
 
         bool isRecur = false;
         if (json['is_recurring'] is bool) {
@@ -430,7 +427,10 @@ Output strictly in valid JSON object matching this structure:
           urgencyLevel: json['urgency'] ?? 'General',
           importanceLevel: json['importance'] ?? 'General',
           triggerTime: parsedTriggerTime,
-          timeOrigin: ReminderTimeOrigin.aiSuggested,
+          timeOrigin: parsedTriggerTime == null
+              ? ReminderTimeOrigin.unknown
+              : ReminderTimeOrigin.aiSuggested,
+          eventTime: parsedEventTime,
           isRecurring: isRecur,
           recurrenceRule: rule,
           recurrenceDescription: desc,
@@ -443,27 +443,7 @@ Output strictly in valid JSON object matching this structure:
     }
   }
 
-  DateTime _deduceDefaultTriggerTime(DateTime now, int quadrant) {
-    switch (quadrant) {
-      case 1:
-        return now.add(const Duration(hours: 1));
-      case 2:
-        if (now.hour >= 20) {
-          return DateTime(now.year, now.month, now.day + 1, 9, 30);
-        } else {
-          return DateTime(now.year, now.month, now.day, 20, 0);
-        }
-      case 3:
-        return now.add(const Duration(hours: 2));
-      case 4:
-      default:
-        if (now.hour >= 21) {
-          return DateTime(now.year, now.month, now.day + 1, 10, 0);
-        } else {
-          return DateTime(now.year, now.month, now.day, 21, 0);
-        }
-    }
-  }
+
 
   Map<String, dynamic> _tryRegexExtract(String raw) {
     final titleMatch = RegExp(r'"(?:title|task|event)"\s*:\s*"([^"]+)"').firstMatch(raw);

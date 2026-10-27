@@ -1,6 +1,18 @@
 /// The two independently developed v14 schemas cannot be identified by their
 /// version number alone. Only these complete shapes are safe to upgrade.
-enum Schema14Shape { reminderOrigin, captureFlow }
+enum Schema14Shape {
+  reminderOrigin,
+  captureFlow,
+  captureProposal,
+  captureWordProgress,
+  captureProposalAndWordProgress;
+
+  bool get hasProposal =>
+      this == captureProposal || this == captureProposalAndWordProgress;
+  bool get hasWordProgress =>
+      this == captureWordProgress || this == captureProposalAndWordProgress;
+  bool get isCapture => this != reminderOrigin;
+}
 
 const schema13SettingsColumns = <String>{
   'id',
@@ -84,21 +96,31 @@ Schema14Shape? identifySchema14({
     return Schema14Shape.reminderOrigin;
   }
   if (_sameColumns(settingsColumns, {
-        ...schema13SettingsColumns,
-        ...schema14CaptureSettingsColumns,
-      }) &&
-      _sameColumns(reminderColumns, {
+    ...schema13SettingsColumns,
+    ...schema14CaptureSettingsColumns,
+  })) {
+    for (final shape in const [
+      Schema14Shape.captureFlow,
+      Schema14Shape.captureProposal,
+      Schema14Shape.captureWordProgress,
+      Schema14Shape.captureProposalAndWordProgress,
+    ]) {
+      if (_sameColumns(reminderColumns, {
         ...schema13ReminderColumns,
         ...schema14CaptureReminderColumns,
+        if (shape.hasProposal) 'capture_proposal_json',
+        if (shape.hasWordProgress) 'word_progress_json',
       })) {
-    return Schema14Shape.captureFlow;
+        return shape;
+      }
+    }
   }
   return null;
 }
 
 /// Returns static SQL only after the source shape has been identified.
-List<String> schema14UpgradeStatements(Schema14Shape shape) => switch (shape) {
-  Schema14Shape.reminderOrigin => [
+List<String> schema14UpgradeStatements(Schema14Shape shape) => [
+  if (shape == Schema14Shape.reminderOrigin) ...[
     'ALTER TABLE Settings ADD COLUMN workspace_drafts_json TEXT',
     'ALTER TABLE Reminders ADD COLUMN event_time TEXT',
     'ALTER TABLE Reminders ADD COLUMN recurrence_event_anchor_time TEXT',
@@ -107,7 +129,10 @@ List<String> schema14UpgradeStatements(Schema14Shape shape) => switch (shape) {
     'ALTER TABLE Reminders ADD COLUMN capture_pending INTEGER NOT NULL DEFAULT 0',
     'ALTER TABLE Reminders ADD COLUMN is_pinned INTEGER NOT NULL DEFAULT 0',
   ],
-  Schema14Shape.captureFlow => [
+  if (shape.isCapture)
     "ALTER TABLE Reminders ADD COLUMN trigger_time_origin TEXT NOT NULL DEFAULT 'unknown'",
-  ],
-};
+  if (!shape.hasProposal)
+    'ALTER TABLE Reminders ADD COLUMN capture_proposal_json TEXT',
+  if (!shape.hasWordProgress)
+    'ALTER TABLE Reminders ADD COLUMN word_progress_json TEXT',
+];
