@@ -749,3 +749,12 @@ CI 与原生验收：
 | P2 | 词汇批量导入、发音与来源标记 | 用户可带自己的词表，保留原文与发音来源，降低模型生成错误的校对成本 | 待实现 |
 
 本轮机器证据保存在 `build/native_acceptance/study-stage30-materials/`：`learning-reminder-acceptance.json`、`iphone30-upgrade-verification.json`、`iphone30-preferences-verification.json`、`iphone30-final-verification.json`、`release-30/published-readback.json`、`cleanup30-final.json`。业务数据/媒体比较未输出凭据或私人正文；后续工作区的其他未提交修改没有混入 rc.30。
+
+
+## P0 集成与全量回归（2026-10-27）
+
+- 将正式主分支 `3a6e527` 与 P0 分支整合为源码提交 `49801d7`，保留 `c7805cd` 场景文档。统一目标为 schema 15，以实际结构识别两类历史 v14 及提案／逐词字段变体；拒绝部分混合结构并保留升级前快照。
+- 持久化输入和待核对副本在设置保存、重开与恢复后保持；事项截止时间和提醒时间独立。多模态原件先保存，AI 提案确认时原子应用，重复确认及旧代次拒绝。保留学习队列和通知修复入口。
+- 补齐较大草稿和完整提案／逐词状态的 JSON、SQLite 恢复往返；统一草稿上限，保留时间来源，修复英文大字号确认弹窗溢出。
+- Flutter 3.44.9／Dart 3.12.2：全量 **1335 通过、0 失败**，其中集成专项 **144 通过**；Python **124 通过**；静态分析无问题；America/Los_Angeles 日历边界 **1 通过**。具体兼容表、命令与后续任务见 [P0 集成记录](UX_P0_Record_Reminder.md)。
+- 本轮只验证本地源码及独立临时数据；新包、CI、签名、真实采集、进程强制退出和系统通知送达仍需单独验收，公开 rc.30 及其设备证据保持原有归属。

@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-27",
+  "scope": "local-source-and-isolated-automated-tests",
+  "schema": 15,
+  "source_commit": "49801d7450b5a5ffe1f29b4ca4f3454356e0d57a",
+  "source_trees": {
+    "lib": "f4df624dabac4baf7539171244352724408e930b",
+    "test": "3f9b51031681fbc92c122629c5c8560b1a760996",
+    "scripts": "933e06a7842d3eb3aca6750d4e41eec29823033f"
+  },
+  "toolchain": {
+    "flutter": "3.44.9",
+    "dart": "3.12.2",
+    "flutter_revision": "6b182d2c7585eba26d4edce0f97630effd256c33",
+    "platform": "macOS"
+  },
+  "checks": [
+    {
+      "name": "flutter_full",
+      "command": "flutter test --no-pub --reporter expanded --timeout 45s",
+      "exit_code": 0,
+      "passed": 1335,
+      "failed": 0,
+      "log_sha256": "658db024cd6c6c7f781b089b8d72a1590ffb69460c0538b681cf24f130110225"
+    },
+    {
+      "name": "flutter_focused",
+      "command": "flutter test --no-pub --reporter expanded --timeout 45s test/schema15_integration_test.dart test/p0_time_origin_storage_test.dart test/recording_reminders_phase1_test.dart test/recording_reminders_phase1_ui_test.dart test/task_workspace_ux_test.dart test/operation_generation_test.dart test/home_runtime_recovery_test.dart",
+      "exit_code": 0,
+      "passed": 144,
+      "failed": 0,
+      "log_sha256": "9af8a9c2b8221c3c42c933495adab4f036924840dafefb53587564ecfb662e7c"
+    },
+    {
+      "name": "python_full",
+      "command": "python3 -m unittest discover -s scripts/tests -v",
+      "exit_code": 0,
+      "passed": 124,
+      "failed": 0,
+      "log_sha256": "7e9ac19f0804981fe3961e97eb0174f962336a306b77537b2fc8109e528d6a41"
+    },
+    {
+      "name": "analysis",
+      "command": "flutter analyze --no-pub",
+      "exit_code": 0,
+      "issues": 0,
+      "log_sha256": "39c284976d743ae3c6d9fdf2131b2020a8aa3a2a89ca5e3282abe7e6cd7a4472"
+    },
+    {
+      "name": "calendar",
+      "command": "TZ=America/Los_Angeles flutter test --no-pub --reporter expanded --timeout 45s test/p0_record_reminder_test.dart --plain-name \"next 20:00 uses local calendar days at the boundary\"",
+      "exit_code": 0,
+      "passed": 1,
+      "failed": 0,
+      "log_sha256": "ccac78285b8b2867bb9e119995d2e7231ee0fcab01f5bc79993666509bda56ee"
+    }
+  ],
+  "counting": "focused tests are included in full count; timezone test is a separate repeat",
+  "not_executed": [
+    "user-database-mutation",
+    "native-device-notification-delivery",
+    "real-process-forced-exit",
+    "new-platform-builds",
+    "signing",
+    "push",
+    "CI",
+    "release"
+  ]
+}
