@@ -1,0 +1,327 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-10-28T00:35:43.919364+08:00",
+  "timezone": "Asia/Shanghai",
+  "status": "PARTIAL_UI_AUTH_REQUIRED",
+  "stage": "P1_native_phone_notifications",
+  "cross_day": "DEFERRED_BY_USER_FOR_THIS_PHONE_RUN",
+  "coordination": {
+    "user_explicitly_authorized": true,
+    "thread_title": "优化项目架构与产品体验",
+    "thread_id": "01a15c7c-8a67-7562-9db6-e540460d05c1",
+    "handoff_at": "2026-10-27T23:40:00+08:00",
+    "exclusive": true,
+    "previous_expected_return_at": "2026-10-28T00:40:00+08:00",
+    "return_at": null,
+    "explicit_return_required": true,
+    "lock_blocker_message_sent_at": "2026-10-28T00:30:00+08:00"
+  },
+  "native_artifact": {
+    "device_model": "iPhone 15 Pro Max",
+    "bundle_id": "com.yarnway.dontforget.acceptance.iphone17",
+    "version": "1.7.0+34",
+    "schema": 16,
+    "source_attribution_from_prior_candidate": "23d4a106077d9d59e7e52a1fffd4364564b15bb4",
+    "package_bytes_reaudited_this_run": false,
+    "reinstalled_this_run": false,
+    "handoff_main_pid": 3650,
+    "last_observed_main_pid": 3760,
+    "source_fix_installed": false
+  },
+  "baseline": {
+    "integrity": "ok",
+    "quiescent_documents": true,
+    "complete_documents_copy": true,
+    "complete_library_copy": false,
+    "complete_preferences_copy": true,
+    "row_counts": {
+      "Reminders": 4,
+      "MediaRecords": 5,
+      "Settings": 1
+    },
+    "protected_original_reminders": 3,
+    "handoff_qa_reminders": 1,
+    "original_retained_notifications": 2
+  },
+  "native_results": {
+    "handoff_qa_cleanup": {
+      "status": "PASS",
+      "id": "5dac35ce-4c85-4daa-b361-ba02e621d6d9",
+      "soft_deleted_at": "2026-10-27T23:58:23.869568+08:00",
+      "native_id": 345699761,
+      "journal_action": "cancel",
+      "journal_status": "submitted",
+      "subsequent_os_retained": 2
+    },
+    "assistive_touch_restore": {
+      "status": "PASS",
+      "original": false,
+      "last_observed": false
+    },
+    "finite_medication_capacity": {
+      "status": "PASS_COUNTS_ONLY",
+      "owner_id": "e7febb5c-dcbf-44a9-9707-b7bd6693ebe8",
+      "title": "QA P3 Capacity",
+      "start_date": "2026-10-28",
+      "end_date_inclusive": "2026-11-24",
+      "times": [
+        "08:00",
+        "20:00"
+      ],
+      "doses": 56,
+      "submitted": 50,
+      "deferred": 6,
+      "needs_attention": 0,
+      "pending_cancel": 0,
+      "coverage_through": "2026-11-21T20:00:00+08:00",
+      "os_pending": 50,
+      "os_retained": 2,
+      "permission": "allowed",
+      "counts_observed_before_warm_creation": true,
+      "universal_os_limit_claimed": false
+    },
+    "warm_sample": {
+      "id": "47933055-0468-4c90-8e97-0884b069332a",
+      "title": "QA P3 Warm",
+      "native_id": 987518884,
+      "due": "2026-10-28T00:18:00+08:00",
+      "journal_action": "schedule",
+      "journal_status": "submitted",
+      "revision": 0,
+      "main_pid_before_and_after_due": 3760,
+      "forwarded_ios_event_on_mac_at": "2026-10-28T00:18:00.562+08:00",
+      "mac_notification_history_storage_at": "2026-10-28T00:18:03.689+08:00",
+      "mac_locked_shield_shown": false,
+      "physical_phone_delivery_readback": "PENDING",
+      "warm_click": "PENDING"
+    },
+    "phone_matrix": {
+      "hot_click": "PENDING_UI_AUTH",
+      "cold_click": "PENDING_UI_AUTH",
+      "foreground_background_quit_delivery": "PENDING",
+      "pause_cancel_positive_control": "PENDING",
+      "modify_old_new_times": "PENDING",
+      "finite_last_occurrence_cancel": "PENDING",
+      "expired_slot_refill": "PENDING",
+      "cleanup": "REQUIRED",
+      "cross_day": "DEFERRED_BY_USER",
+      "natural_date_expiry": "PENDING"
+    }
+  },
+  "protected_originals_before_warm": {
+    "Reminders": {
+      "protected_rows": 3,
+      "missing_ids": [],
+      "changed_fields": {}
+    },
+    "MediaRecords": {
+      "protected_rows": 5,
+      "missing_ids": [],
+      "changed_fields": {}
+    },
+    "Settings": {
+      "protected_rows": 1,
+      "missing_ids": [],
+      "changed_fields": {}
+    },
+    "protected_media_files": {
+      "count": 5,
+      "all_present": true,
+      "all_same_sha256": true
+    },
+    "snapshot_scope": "live copied Documents before warm reminder; not final cleanup verification"
+  },
+  "blocker": {
+    "type": "MANUAL_MAC_UNLOCK_REQUIRED",
+    "first_observed_at": "2026-10-28T00:16:31+08:00",
+    "read_only_lock_check_at": "2026-10-28T00:32:36+08:00",
+    "still_locked": true,
+    "automatic_unlock_failed": true,
+    "user_question_pending": true,
+    "ui_operations_after_failure": false,
+    "authentication_bypassed": false
+  },
+  "outstanding_cleanup": {
+    "required": true,
+    "capacity_owner_id": "e7febb5c-dcbf-44a9-9707-b7bd6693ebe8",
+    "future_qa_doses": 56,
+    "first_future_due": "2026-10-28T08:00:00+08:00",
+    "warm_id": "47933055-0468-4c90-8e97-0884b069332a",
+    "must_use_product_native_pause_or_soft_delete": true,
+    "must_preserve_original_retained_notifications": 2,
+    "direct_database_restore_allowed": false,
+    "phone_returned": false
+  },
+  "source_fix": {
+    "commit": "c2ebdca9cea7cbb260dc380f45c5ebfe39764a27",
+    "manual_input_normalizes_full_width_colon": true,
+    "model_and_ai_validation_remains_strict": true,
+    "files": [
+      "lib/ui/widgets/medication_plan_panel.dart",
+      "test/planning_panel_test.dart"
+    ],
+    "tested_trees": {
+      "lib": {
+        "tested_tree": "119c09828752f80f6b799056a2d9fdb3df5a9da3",
+        "current_tree": "119c09828752f80f6b799056a2d9fdb3df5a9da3",
+        "equal": true
+      },
+      "test": {
+        "tested_tree": "b65e2a5ac82ff4290aef41edd94472a1b497ae57",
+        "current_tree": "b65e2a5ac82ff4290aef41edd94472a1b497ae57",
+        "equal": true
+      },
+      "scripts": {
+        "tested_tree": "1a2328b32069629a1a63a4ef134bcee63318d275",
+        "current_tree": "1a2328b32069629a1a63a4ef134bcee63318d275",
+        "equal": true
+      }
+    }
+  },
+  "validation": {
+    "flutter_version": "3.44.9",
+    "dart_version": "3.12.2",
+    "targeted": {
+      "passed": 1,
+      "failed": 0,
+      "exit_code": 0
+    },
+    "flutter_full": {
+      "passed": 1542,
+      "failed": 0,
+      "exit_code": 0
+    },
+    "python_full": {
+      "passed": 126,
+      "failed": 0,
+      "exit_code": 0
+    },
+    "analyze": {
+      "issues": 0,
+      "exit_code": 0
+    },
+    "format": {
+      "changed": 0,
+      "exit_code": 0
+    },
+    "test_logs": {
+      "target": {
+        "path": "build/native_acceptance/p1-phone-20261027-materials/test-target.log",
+        "sha256": "7c3bb8ec5db195ee4e21f00749f09da98476a3148ff33b2728123db7b9cdc2a3",
+        "bytes": 190
+      },
+      "flutter": {
+        "path": "build/native_acceptance/p1-phone-20261027-materials/test-flutter.log",
+        "sha256": "697ac86a1c169cc40a9f295be3248ae7ab9d756adaabf0a5318ef568da3e9868",
+        "bytes": 302594
+      },
+      "analyze": {
+        "path": "build/native_acceptance/p1-phone-20261027-materials/test-analyze.log",
+        "sha256": "f38c6faba8ca15fb19c114ae9c77072e1f14582ea639395b860239d4c2d3669c",
+        "bytes": 96
+      },
+      "python": {
+        "path": "build/native_acceptance/p1-phone-20261027-materials/test-python.log",
+        "sha256": "713aa4fcb64908ca519a9d828fd252ab9163ed10484dc5f5b8332405f220eca4",
+        "bytes": 478
+      }
+    }
+  },
+  "artifacts": [
+    {
+      "path": "build/native_acceptance/p1-phone-20261027-materials/run-baseline.json",
+      "sha256": "836f7d5198f48c532b4688c338accdecd6beb0b155f3edf6553db892a88a30ae",
+      "bytes": 760
+    },
+    {
+      "path": "build/native_acceptance/p1-phone-20261027-materials/phone-handoff-before.json",
+      "sha256": "e73c3fc22d8cb45d65765fe59a5619027040be3ea4e78d80f7ad8d36af04b465",
+      "bytes": 732
+    },
+    {
+      "path": "build/native_acceptance/p1-phone-20261027-materials/protected-originals-at-handoff.json",
+      "sha256": "cb600bbc088042be40559e48ce1379dcd387931c2a0d74b37d45e22ff6e53481",
+      "bytes": 290
+    },
+    {
+      "path": "build/native_acceptance/p1-phone-20261027-materials/protected-originals-before-warm.json",
+      "sha256": "5d6526adeaa3af2e07740648598fdfa65314591d4107841a5bc287996968c575",
+      "bytes": 491
+    },
+    {
+      "path": "build/native_acceptance/p1-phone-20261027-materials/assistive-touch-restored-off.png",
+      "sha256": "43519d258cb609ca30c8d9a7c1f2d352371a58a42d2ae1aa23111340efa62afc",
+      "bytes": 113093
+    },
+    {
+      "path": "build/native_acceptance/p1-phone-20261027-materials/phone-capacity-plan.png",
+      "sha256": "3cb4c5b03f306a7817b893fe20ab04499ee47701f212d96c37d0ba4f02cb42bc",
+      "bytes": 134192
+    },
+    {
+      "path": "build/native_acceptance/p1-phone-20261027-materials/phone-capacity-os-50.png",
+      "sha256": "32167039e78791d51da1f05ed32b20963a7e8e4ad7a595ef28f897e87c833431",
+      "bytes": 162006
+    },
+    {
+      "path": "build/native_acceptance/p1-phone-20261027-materials/before-warm.json",
+      "sha256": "bd65b8c20e0764414ac6259e20988053d73978c5aeafa22dd714683e84c4c941",
+      "bytes": 473
+    },
+    {
+      "path": "build/native_acceptance/p1-phone-20261027-materials/before-warm-journal.json",
+      "sha256": "a1a4f3981bfc70c8c889aa38cebda78378117c5823209ac2811fd8df256588e4",
+      "bytes": 23117
+    },
+    {
+      "path": "build/native_acceptance/p1-phone-20261027-materials/locked-progress.json",
+      "sha256": "c06eda19da6b94fe8e4e5f5d57a19f9c7624674e853cde7632667b4030c5d6f7",
+      "bytes": 522
+    },
+    {
+      "path": "build/native_acceptance/p1-phone-20261027-materials/locked-warm-mac-mirror-system.log",
+      "sha256": "c49ec29b6336d033269b0cb259e1ea1800c4dd848ad52992e978429de88cb2af",
+      "bytes": 4476
+    },
+    {
+      "path": "build/native_acceptance/p1-phone-20261027-materials/pasteboard-cleanup.json",
+      "sha256": "a11f0c416387b2316aba8a2b7057af6d003a41e092591d0d7af586cb9afe2194",
+      "bytes": 105
+    }
+  ],
+  "privacy": {
+    "raw_databases_committed": false,
+    "raw_media_committed": false,
+    "process_inventory_committed": false,
+    "clipboard_original_empty": true,
+    "synthetic_clipboard_cleared": true
+  },
+  "push_build_install_release_by_this_run": false,
+  "remaining_stages": {
+    "P1_native": [
+      "manual unlock and future QA cancellation",
+      "phone click delivery cancellation refill and cleanup matrix",
+      "explicit phone return",
+      "current-source artifact revalidation",
+      "multiday courses and workdays",
+      "failure recovery and long inactivity",
+      "sleep wake and real timezone DST"
+    ],
+    "P1_scenarios_and_protection": [
+      "multisource medication review and provenance",
+      "meal offsets and actual historical dose times",
+      "independent ordinary recurring dates and holidays",
+      "weather background policy and location authorization",
+      "secure storage encrypted large attachments and cross-device restore",
+      "native saved-filter UI weekly review templates and bulk management"
+    ],
+    "P2_learning_and_devices": [
+      "whole-plan and cross-plan management",
+      "long-term load and personalization",
+      "learning archive controls and identity migration",
+      "pronunciation dictation",
+      "share global capture focus weekly view",
+      "LAN edits deletion attachments conflict durability and real-device sync"
+    ]
+  }
+}
