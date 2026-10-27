@@ -514,7 +514,7 @@ Use YYYY-MM-DD dates only when an exact date is stated. times contains only expl
                     onChanged: (v) => _change(
                       () => medicines[i]['times'] = v
                           .split(RegExp('[,，、]'))
-                          .map((e) => e.trim())
+                          .map((e) => e.trim().replaceAll('：', ':'))
                           .where((e) => e.isNotEmpty)
                           .toList(),
                     ),
