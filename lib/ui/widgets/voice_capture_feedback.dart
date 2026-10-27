@@ -3,11 +3,24 @@ import '../../l10n/app_localizations.dart';
 
 enum VoiceReleaseAction { save, cancel, text }
 
-VoiceReleaseAction voiceReleaseAction(Offset movement) {
-  if (movement.dy > -48 || movement.dx.abs() < 24) {
-    return VoiceReleaseAction.save;
+class VoiceCaptureGesture {
+  bool _selectionOpen = false;
+
+  void reset() => _selectionOpen = false;
+
+  VoiceReleaseAction update(Offset movement) {
+    // Slide up to choose, then move horizontally. A small vertical drift while
+    // choosing must not unexpectedly save the recording. Returning to the input
+    // closes the selection area and restores the normal release-to-save action.
+    if (movement.dy <= -48) _selectionOpen = true;
+    if (movement.dy >= -16) _selectionOpen = false;
+    if (!_selectionOpen || movement.dx.abs() < 24) {
+      return VoiceReleaseAction.save;
+    }
+    return movement.dx < 0
+        ? VoiceReleaseAction.cancel
+        : VoiceReleaseAction.text;
   }
-  return movement.dx < 0 ? VoiceReleaseAction.cancel : VoiceReleaseAction.text;
 }
 
 class VoiceCaptureFeedback extends StatelessWidget {

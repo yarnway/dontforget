@@ -13,6 +13,7 @@ class ReminderNoticePanel extends StatelessWidget {
     required this.onDismiss,
     required this.onSnooze,
     required this.onComplete,
+    this.onReview,
     this.busyIds = const {},
   });
   final List<Reminder> reminders;
@@ -21,6 +22,7 @@ class ReminderNoticePanel extends StatelessWidget {
   final ValueChanged<Reminder> onDismiss;
   final ValueChanged<Reminder> onSnooze;
   final ValueChanged<Reminder> onComplete;
+  final ValueChanged<Reminder>? onReview;
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +32,11 @@ class ReminderNoticePanel extends StatelessWidget {
     final reminder = reminders.first;
     final busy = busyIds.contains(reminder.id);
     final upcoming = reminder.triggerTime?.isAfter(now) ?? false;
+    final canReview =
+        reminder.reviewNotificationsEnabled &&
+        reminder.spacedRepetitionLevel > 0 &&
+        !reminder.isCompleted &&
+        onReview != null;
     final categoryCount = reminders
         .where((item) => (item.triggerTime?.isAfter(now) ?? false) == upcoming)
         .length;
@@ -86,6 +93,13 @@ class ReminderNoticePanel extends StatelessWidget {
             Wrap(
               spacing: 4,
               children: [
+                if (canReview)
+                  FilledButton.tonalIcon(
+                    key: const ValueKey('notice-start-review'),
+                    onPressed: busy ? null : () => onReview!(reminder),
+                    icon: const Icon(Icons.school_outlined, size: 18),
+                    label: Text(l10n.get('startReview')),
+                  ),
                 TextButton(
                   onPressed: busy ? null : () => onSnooze(reminder),
                   child: Text(l10n.get('snooze5Min')),
