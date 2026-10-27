@@ -306,7 +306,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         if (!mounted) {
           return;
         }
-        if (reminder.isCompleted ||
+        if (!reminder.canNotify ||
             reminder.noticeAcknowledgedAt != null ||
             reminder.triggerTime == null ||
             _requiresPastCancellation(reminder, journal[reminder.id], now)) {
@@ -318,7 +318,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
               cancelOverdue: true,
             );
           });
-        } else if (!reminder.isCompleted &&
+        } else if (reminder.canNotify &&
             reminder.triggerTime != null &&
             reminder.triggerTime!.isAfter(now)) {
           // Restart must not bypass the persisted quiet-retry cooldown for
@@ -567,7 +567,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         final reminder = rows.isEmpty ? null : Reminder.fromJson(rows.single);
         final cancel =
             reminder == null ||
-            reminder.isCompleted ||
+            !reminder.canNotify ||
             reminder.noticeAcknowledgedAt != null ||
             reminder.triggerTime == null ||
             _requiresPastCancellation(reminder, entries[id], instant);
@@ -625,7 +625,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         final reminder = Reminder.fromJson(row);
         existingIds.add(reminder.id);
         final cancel =
-            reminder.isCompleted ||
+            !reminder.canNotify ||
             reminder.noticeAcknowledgedAt != null ||
             reminder.triggerTime == null ||
             _requiresPastCancellation(
@@ -967,6 +967,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
             'created_at': current.createdAt?.toIso8601String(),
             'capture_pending': 0,
             'capture_proposal_json': null,
+            'details_json': i == 0 ? current.detailsJson : null,
             'is_pinned': i == 0 && current.isPinned ? 1 : 0,
             'notice_revision': i == 0 ? current.noticeRevision + 1 : 0,
             'notice_acknowledged_at': null,
@@ -1142,7 +1143,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     _dbHelper.checkGeneration(generation);
     if (!mounted) throw StateError('Reminder state is no longer active.');
     final cancel =
-        reminder.isCompleted ||
+        !reminder.canNotify ||
         reminder.noticeAcknowledgedAt != null ||
         reminder.triggerTime == null;
     if (!cancel && !reminder.triggerTime!.isAfter(DateTime.now())) {
@@ -1211,7 +1212,12 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       !_sameTime(a.triggerTime, b.triggerTime) ||
       a.isCompleted != b.isCompleted ||
       a.isRecurring != b.isRecurring ||
-      a.recurrenceRule != b.recurrenceRule;
+      a.recurrenceRule != b.recurrenceRule ||
+      a.canNotify != b.canNotify ||
+      a.details.paused != b.details.paused ||
+      a.isVisible != b.isVisible ||
+      jsonEncode(a.details.repeat?.toJson()) !=
+          jsonEncode(b.details.repeat?.toJson());
 
   void _publish(Iterable<Reminder> saved) {
     if (!mounted) return;
@@ -1306,6 +1312,8 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           );
           final current = rows.isEmpty ? null : Reminder.fromJson(rows.single);
           if (current == null ||
+              !current.isVisible ||
+              current.details.paused ||
               current.isCompleted ||
               (action == _ReminderAction.skip && !current.isRecurring) ||
               current.occurrenceIdentity != wanted.occurrenceIdentity ||

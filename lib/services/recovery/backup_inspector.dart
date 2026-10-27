@@ -11,7 +11,10 @@ import 'package:path/path.dart' as paths;
 import 'package:sqflite/sqflite.dart' as sqflite;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../../data/schema_14_compatibility.dart';
+import '../../data/schema_15_compatibility.dart';
+import '../../models/task_details.dart';
 import '../../models/stored_datetime.dart';
+import '../../models/stored_json.dart';
 import '../local_media_store.dart';
 
 enum BackupInspectionError {
@@ -412,6 +415,7 @@ Map<String, String> _columnsFor(
   String table,
   int version, {
   Schema14Shape? version14Shape,
+  Schema15Shape? version15Shape,
 }) => {
   ..._columns[table]!,
   if (table == 'reminders' && version >= 9) ..._reminderNoticeColumns,
@@ -424,7 +428,8 @@ Map<String, String> _columnsFor(
   if (table == 'reminders' && version >= 13)
     'review_notifications_enabled': 'b',
   if (table == 'reminders' &&
-      (version >= 15 ||
+      (version >= 16 ||
+          (version == 15 && version15Shape == Schema15Shape.recordReminder) ||
           (version == 14 && version14Shape == Schema14Shape.reminderOrigin)))
     'trigger_time_origin': 's',
   if (table == 'settings' &&
@@ -447,6 +452,10 @@ Map<String, String> _columnsFor(
       (version >= 15 ||
           (version == 14 && version14Shape?.hasWordProgress == true)))
     'word_progress_json': 's?',
+  if (table == 'reminders' &&
+      (version >= 16 ||
+          (version == 15 && version15Shape == Schema15Shape.taskManagement)))
+    'details_json': 's?',
 };
 
 Future<void> _checkSchema(
@@ -455,7 +464,8 @@ Future<void> _checkSchema(
   int version,
 ) async {
   Schema14Shape? version14Shape;
-  if (version == 14) {
+  Schema15Shape? version15Shape;
+  if (version == 14 || version == 15) {
     Future<Set<String>> names(String table) async {
       var fields = await database.rawQuery('PRAGMA table_xinfo($table)');
       if (fields.isEmpty) {
@@ -468,11 +478,21 @@ Future<void> _checkSchema(
       return fields.map((field) => field['name'] as String).toSet();
     }
 
-    version14Shape = identifySchema14(
-      settingsColumns: await names('Settings'),
-      reminderColumns: await names('Reminders'),
-    );
-    if (version14Shape == null) _fail(BackupInspectionError.invalidSchema);
+    final settingsColumns = await names('Settings');
+    final reminderColumns = await names('Reminders');
+    if (version == 14) {
+      version14Shape = identifySchema14(
+        settingsColumns: settingsColumns,
+        reminderColumns: reminderColumns,
+      );
+      if (version14Shape == null) _fail(BackupInspectionError.invalidSchema);
+    } else {
+      version15Shape = identifySchema15(
+        settingsColumns: settingsColumns,
+        reminderColumns: reminderColumns,
+      );
+      if (version15Shape == null) _fail(BackupInspectionError.invalidSchema);
+    }
   }
   final objects = await database.rawQuery(
     'SELECT name,type,tbl_name,sql FROM sqlite_master LIMIT 16',
@@ -549,6 +569,7 @@ Future<void> _checkSchema(
       table.value,
       version,
       version14Shape: version14Shape,
+      version15Shape: version15Shape,
     );
     if (fields.length != expected.length ||
         !fields
@@ -622,7 +643,7 @@ Future<void> _checkSchema(
 
 void _checkVersion(Object? value) {
   if (value is! int ||
-      !const {7, 8, 9, 10, 11, 12, 13, 14, 15}.contains(value)) {
+      !const {7, 8, 9, 10, 11, 12, 13, 14, 15, 16}.contains(value)) {
     _fail(BackupInspectionError.unsupportedVersion);
   }
 }
@@ -722,49 +743,12 @@ void _validationWorker((SendPort, Map<String, Object?>?, String, int) request) {
   }
 }
 
-/// Limits nesting before decoding and rejects duplicate keys rather than
-/// silently letting the JSON decoder overwrite a previous value.
 Object? _decodeJson(String text) {
-  final containers = <Set<String>?>[];
-  for (var index = 0; index < text.length; index++) {
-    final character = text.codeUnitAt(index);
-    if (character == 34) {
-      final start = index++;
-      while (index < text.length && text.codeUnitAt(index) != 34) {
-        if (text.codeUnitAt(index) == 92) {
-          index++;
-        }
-        index++;
-      }
-      if (index == text.length) {
-        _fail(BackupInspectionError.invalidFormat);
-      }
-      var next = index + 1;
-      while (next < text.length && ' \r\n\t'.contains(text[next])) {
-        next++;
-      }
-      if (next < text.length && text[next] == ':') {
-        if (containers.isEmpty || containers.last == null) {
-          _fail(BackupInspectionError.invalidFormat);
-        }
-        final key = jsonDecode(text.substring(start, index + 1)) as String;
-        if (!containers.last!.add(key)) {
-          _fail(BackupInspectionError.invalidFormat);
-        }
-      }
-    } else if (character == 123 || character == 91) {
-      containers.add(character == 123 ? <String>{} : null);
-      if (containers.length > 64) {
-        _fail(BackupInspectionError.invalidFormat);
-      }
-    } else if (character == 125 || character == 93) {
-      if (containers.isEmpty) {
-        _fail(BackupInspectionError.invalidFormat);
-      }
-      containers.removeLast();
-    }
+  try {
+    return decodeStoredJson(text);
+  } catch (_) {
+    _fail(BackupInspectionError.invalidFormat);
   }
-  return jsonDecode(text);
 }
 
 _Validated _validate(Map<String, dynamic> data, int maxRows) {
@@ -809,6 +793,38 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
       if (version14Shape == null) _fail(BackupInspectionError.invalidSchema);
     }
   }
+  Schema15Shape? version15Shape;
+  if (data['version'] == 15) {
+    final settings = data['settings'];
+    final reminders = data['reminders'];
+    if (settings is! List ||
+        settings.length != 1 ||
+        settings.single is! Map ||
+        reminders is! List) {
+      _fail(BackupInspectionError.invalidSchema);
+    }
+    final settingsKeys = (settings.single as Map).keys;
+    if (settingsKeys.any((key) => key is! String) ||
+        settingsKeys.length != schema15SettingsColumns.length ||
+        !settingsKeys.toSet().containsAll(schema15SettingsColumns)) {
+      _fail(BackupInspectionError.invalidSchema);
+    }
+    // Both v15 variants have identical settings. With no reminders there is
+    // no extension data to preserve; either variant imports to the same v16.
+    version15Shape = Schema15Shape.recordReminder;
+    if (reminders.isNotEmpty) {
+      if (reminders.first is! Map) _fail(BackupInspectionError.invalidSchema);
+      final reminderKeys = (reminders.first as Map).keys;
+      if (reminderKeys.any((key) => key is! String)) {
+        _fail(BackupInspectionError.invalidSchema);
+      }
+      version15Shape = identifySchema15(
+        settingsColumns: settingsKeys.cast<String>().toSet(),
+        reminderColumns: reminderKeys.cast<String>().toSet(),
+      );
+      if (version15Shape == null) _fail(BackupInspectionError.invalidSchema);
+    }
+  }
   final ids = <String, Set<String>>{};
   final counts = <String, int>{};
   for (final table in _tables.values) {
@@ -825,6 +841,7 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
       table,
       data['version'] as int,
       version14Shape: version14Shape,
+      version15Shape: version15Shape,
     );
     for (final row in rows) {
       if (row is! Map ||
@@ -894,7 +911,9 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
   }
   var unresolved = 0;
   for (final row in data['reminders']) {
-    if ((data['version'] >= 15 ||
+    if ((data['version'] >= 16 ||
+            (data['version'] == 15 &&
+                version15Shape == Schema15Shape.recordReminder) ||
             (data['version'] == 14 &&
                 version14Shape == Schema14Shape.reminderOrigin)) &&
         !const [
@@ -980,6 +999,9 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
     if (data['version'] >= 14) {
       try {
         LearningQueueService.decode(row['word_progress_json'] as String?);
+        final details = row['details_json'] as String?;
+        if (details != null) _decodeJson(details);
+        TaskDetails.decode(details);
         final proposal = row['capture_proposal_json'];
         if (proposal != null) {
           final values = _decodeJson(proposal as String);
@@ -989,11 +1011,15 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
           for (final candidate in values) {
             if (candidate is! Map ||
                 candidate.keys.any(
-                  (key) => !_columnsFor('reminders', 15).containsKey(key),
+                  (key) => !_columnsFor('reminders', 16).containsKey(key),
                 )) {
               throw const FormatException();
             }
-            Reminder.fromJson(Map<String, dynamic>.from(candidate));
+            final parsed = Reminder.fromJson(
+              Map<String, dynamic>.from(candidate),
+            );
+            if (parsed.detailsJson != null) _decodeJson(parsed.detailsJson!);
+            TaskDetails.decode(parsed.detailsJson);
           }
         }
       } catch (_) {

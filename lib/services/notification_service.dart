@@ -279,7 +279,7 @@ class NotificationService {
       final startedAt = _now();
       final batch = <Future<void>>[];
       for (final reminder in reminders) {
-        if (!reminder.isCompleted &&
+        if (reminder.canNotify &&
             reminder.noticeAcknowledgedAt == null &&
             (reminder.triggerTime?.isAfter(startedAt) ?? false)) {
           batch.add(_scheduleReminder(reminder));
@@ -505,9 +505,7 @@ class NotificationService {
     final revision = ++_nextRevision;
     _revisions[reminder.id] = revision;
     _scheduledReminders.remove(reminder.id);
-    if (reminder.triggerTime != null &&
-        !reminder.isCompleted &&
-        reminder.noticeAcknowledgedAt == null) {
+    if (reminder.canNotify && reminder.noticeAcknowledgedAt == null) {
       _scheduledReminders[reminder.id] = reminder;
     }
     _activeTimers.remove(reminder.id)?.cancel();
@@ -515,7 +513,7 @@ class NotificationService {
 
     if (_revisions[reminder.id] != revision ||
         reminder.triggerTime == null ||
-        reminder.isCompleted ||
+        !reminder.canNotify ||
         reminder.noticeAcknowledgedAt != null) {
       return;
     }
@@ -730,7 +728,11 @@ class NotificationService {
   }
 
   Future<void> _fireReminderNow(Reminder reminder) async {
-    if (reminder.isCompleted || reminder.noticeAcknowledgedAt != null) return;
+    if (!reminder.isVisible ||
+        reminder.details.paused ||
+        reminder.isCompleted ||
+        reminder.noticeAcknowledgedAt != null)
+      return;
     _activeTimers.remove(reminder.id)?.cancel();
     _scheduledReminders.remove(reminder.id);
 

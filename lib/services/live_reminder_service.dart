@@ -80,7 +80,7 @@ class LiveReminderService extends ChangeNotifier {
   static bool eligible(Reminder reminder, DateTime now) {
     final time = reminder.triggerTime;
     return time != null &&
-        !reminder.isCompleted &&
+        reminder.canNotify &&
         reminder.noticeAcknowledgedAt == null &&
         time.isAfter(now) &&
         time.difference(now) <= const Duration(hours: 8);

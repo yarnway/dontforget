@@ -58,6 +58,7 @@ void main() {
         'source_text',
         'capture_proposal_json',
         'word_progress_json',
+        'details_json',
         'capture_pending',
         'is_pinned',
       }.contains(key),
@@ -115,6 +116,7 @@ void main() {
         'source_text': null,
         'capture_proposal_json': null,
         'word_progress_json': null,
+        'details_json': null,
         'capture_pending': 0,
         'is_pinned': 0,
       });
@@ -196,6 +198,7 @@ void main() {
             'source_text': null,
             'capture_proposal_json': null,
             'word_progress_json': null,
+            'details_json': null,
             'capture_pending': 0,
             'is_pinned': 0,
           });

@@ -47,6 +47,7 @@ void main() {
       triggerTime: DateTime.utc(2030, 5, 1, 8),
       timeOrigin: ReminderTimeOrigin.aiSuggested,
     ).toJson();
+    row.remove('details_json');
     if (capture) {
       row.remove('trigger_time_origin');
       if (full) {
@@ -144,7 +145,7 @@ void main() {
       final helper = DatabaseHelper.forTesting(root.path, databaseFactoryFfi);
       try {
         final db = await helper.database;
-        expect(await db.getVersion(), 15);
+        expect(await db.getVersion(), DatabaseHelper.schemaVersion);
         expectPreserved(
           (await db.query('Settings')).single,
           (await db.query('Reminders')).single,
@@ -152,7 +153,9 @@ void main() {
           full: full,
         );
         final snapshot = root.listSync().whereType<Directory>().singleWhere(
-          (dir) => dir.path.contains('schema-upgrade-v14-to-v15-'),
+          (dir) => dir.path.contains(
+            'schema-upgrade-v14-to-v${DatabaseHelper.schemaVersion}-',
+          ),
         );
         final inspector = BackupInspector(
           databaseFactoryFfi,
@@ -169,7 +172,7 @@ void main() {
           (await inspector.inspect(
             File('${root.path}/dont_forget_v3.mirror.db'),
           )).version,
-          15,
+          DatabaseHelper.schemaVersion,
         );
       } finally {
         await helper.close(createBackup: false);
@@ -215,7 +218,7 @@ void main() {
             ),
           ).restore(source, expectedDigest: preview.digest);
           final db = await target.database;
-          expect(await db.getVersion(), 15);
+          expect(await db.getVersion(), DatabaseHelper.schemaVersion);
           expectPreserved(
             (await db.query('Settings')).single,
             (await db.query('Reminders')).single,
@@ -358,7 +361,7 @@ void main() {
 
   for (final format in ['json', 'sqlite']) {
     test(
-      'v15 $format round trip retains large drafts and AI and word state',
+      'current $format round trip retains large drafts and AI and word state',
       () async {
         final live = DatabaseHelper.forTesting(
           '${root.path}/live',
@@ -407,7 +410,7 @@ void main() {
           );
           final before = await source.readAsBytes();
           final preview = await inspector.inspect(source);
-          expect(preview.version, 15);
+          expect(preview.version, DatabaseHelper.schemaVersion);
           await DatabaseRecovery(
             target,
             inspector: inspector,
@@ -417,7 +420,7 @@ void main() {
             ),
           ).restore(source, expectedDigest: preview.digest);
           final db = await target.database;
-          expect(await db.getVersion(), 15);
+          expect(await db.getVersion(), DatabaseHelper.schemaVersion);
           expect((await db.query('Reminders')).single, original.toJson());
           final restored = jsonDecode(
             (await db.query('Settings')).single['workspace_drafts_json']

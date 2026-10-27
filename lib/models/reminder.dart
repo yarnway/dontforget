@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'stored_datetime.dart';
+import 'task_details.dart';
 
 /// Origin of the currently saved reminder time, not proof of delivery.
 enum ReminderTimeOrigin { unknown, manual, aiSuggested }
@@ -48,6 +49,11 @@ class Reminder {
   final bool capturePending;
   final String? captureProposalJson;
   final String? wordProgressJson;
+  final String? detailsJson;
+  late final TaskDetails details = TaskDetails.decode(detailsJson);
+  bool get isVisible => !details.hidden;
+  bool get canNotify =>
+      isVisible && !isCompleted && !details.paused && triggerTime != null;
   final bool isPinned;
   final DateTime? recurrenceEventAnchorTime;
   final bool isCompleted;
@@ -87,6 +93,7 @@ class Reminder {
     this.capturePending = false,
     this.captureProposalJson,
     this.wordProgressJson,
+    this.detailsJson,
     this.isPinned = false,
     this.recurrenceEventAnchorTime,
     this.isCompleted = false,
@@ -188,7 +195,7 @@ class Reminder {
       throw const FormatException('Invalid notice revision');
     }
 
-    return Reminder(
+    final reminder = Reminder(
       id: json['id'] as String,
       recordId: json['record_id'] as String?,
       taskTitle: json['task_title'] as String,
@@ -212,6 +219,7 @@ class Reminder {
           json['capture_pending'] == 1 || json['capture_pending'] == true,
       captureProposalJson: json['capture_proposal_json'] as String?,
       wordProgressJson: json['word_progress_json'] as String?,
+      detailsJson: json['details_json'] as String?,
       isPinned: json['is_pinned'] == 1 || json['is_pinned'] == true,
       recurrenceEventAnchorTime: _storedDate(
         json['recurrence_event_anchor_time'],
@@ -240,6 +248,8 @@ class Reminder {
       snoozedAt: _storedDate(json['snoozed_at']),
       recurrenceAnchorTime: _storedDate(json['recurrence_anchor_time']),
     );
+    if (reminder.detailsJson != null) reminder.details;
+    return reminder;
   }
 
   Map<String, dynamic> toJson() => {
@@ -260,6 +270,7 @@ class Reminder {
     'capture_pending': capturePending ? 1 : 0,
     'capture_proposal_json': captureProposalJson,
     'word_progress_json': wordProgressJson,
+    'details_json': detailsJson,
     'is_pinned': isPinned ? 1 : 0,
     'recurrence_event_anchor_time': recurrenceEventAnchorTime
         ?.toIso8601String(),
@@ -298,6 +309,10 @@ class Reminder {
     }
     final cutoff = after ?? DateTime.now();
     final base = recurrenceAnchorTime ?? triggerTime ?? cutoff;
+    if (details.paused || details.hidden) return null;
+    if (details.repeat != null) {
+      return details.repeat!.next(base, cutoff, recurrenceRule!);
+    }
     final localCutoff = base.isUtc ? cutoff.toUtc() : cutoff.toLocal();
     DateTime calendar(int year, int month, int day) => base.isUtc
         ? DateTime.utc(
@@ -379,6 +394,7 @@ class Reminder {
     bool? capturePending,
     Object? captureProposalJson = _unchanged,
     Object? wordProgressJson = _unchanged,
+    Object? detailsJson = _unchanged,
     bool? isPinned,
     Object? recurrenceEventAnchorTime = _unchanged,
     bool? isCompleted,
@@ -445,6 +461,9 @@ class Reminder {
       wordProgressJson: identical(wordProgressJson, _unchanged)
           ? this.wordProgressJson
           : wordProgressJson as String?,
+      detailsJson: identical(detailsJson, _unchanged)
+          ? this.detailsJson
+          : detailsJson as String?,
       isPinned: isPinned ?? this.isPinned,
       recurrenceEventAnchorTime:
           identical(recurrenceEventAnchorTime, _unchanged)

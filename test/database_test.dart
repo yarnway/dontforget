@@ -333,6 +333,7 @@ void main() {
                 'source_text',
                 'capture_proposal_json',
                 'word_progress_json',
+                'details_json',
                 'capture_pending',
                 'is_pinned',
               }.contains(key),

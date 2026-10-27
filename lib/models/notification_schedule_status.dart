@@ -33,7 +33,7 @@ class NotificationScheduleStatus {
     var overdueUnconfirmed = 0;
     final activeIds = <String>{};
     for (final reminder in reminders) {
-      if (reminder.isCompleted ||
+      if (!reminder.canNotify ||
           reminder.noticeAcknowledgedAt != null ||
           reminder.triggerTime == null) {
         continue;

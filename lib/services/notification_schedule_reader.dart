@@ -34,6 +34,7 @@ class NotificationScheduleReader {
               'quadrant_level',
               'trigger_time',
               'is_completed',
+              'details_json',
               'notice_revision',
               'notice_acknowledged_at',
             ],
@@ -52,6 +53,7 @@ class NotificationScheduleReader {
           sameTime(a.triggerTime, b.triggerTime) &&
           a.noticeRevision == b.noticeRevision &&
           a.isCompleted == b.isCompleted &&
+          a.detailsJson == b.detailsJson &&
           a.quadrantLevel == b.quadrantLevel &&
           sameTime(a.noticeAcknowledgedAt, b.noticeAcknowledgedAt);
 
@@ -61,7 +63,7 @@ class NotificationScheduleReader {
       }
       final current = saved!;
       if (current.triggerTime == null) return ReminderSchedulePhase.noReminder;
-      if (current.isCompleted || current.noticeAcknowledgedAt != null) {
+      if (!current.canNotify || current.noticeAcknowledgedAt != null) {
         return ReminderSchedulePhase.inactive;
       }
       if (!current.triggerTime!.isAfter(DateTime.now())) {

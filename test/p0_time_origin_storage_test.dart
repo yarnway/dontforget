@@ -29,6 +29,7 @@ void main() {
         ..remove('source_text')
         ..remove('capture_proposal_json')
         ..remove('word_progress_json')
+        ..remove('details_json')
         ..remove('capture_pending')
         ..remove('is_pinned');
 
@@ -41,6 +42,7 @@ void main() {
     'source_text': null,
     'capture_proposal_json': null,
     'word_progress_json': null,
+    'details_json': null,
     'capture_pending': 0,
     'is_pinned': 0,
   };
@@ -80,10 +82,12 @@ void main() {
     () async {
       await createVersion13();
       final db = await helper.database;
-      expect(await db.getVersion(), 15);
+      expect(await db.getVersion(), DatabaseHelper.schemaVersion);
       expect((await db.query('Reminders')).single, upgradedTask);
       final snapshot = root.listSync().whereType<Directory>().singleWhere(
-        (item) => item.path.contains('schema-upgrade-v13-to-v15-'),
+        (item) => item.path.contains(
+          'schema-upgrade-v13-to-v${DatabaseHelper.schemaVersion}-',
+        ),
       );
       final inspector = BackupInspector(
         databaseFactoryFfi,
@@ -100,7 +104,7 @@ void main() {
         (await inspector.inspect(
           File('${root.path}/dont_forget_v3.mirror.db'),
         )).version,
-        15,
+        DatabaseHelper.schemaVersion,
       );
     },
   );
@@ -188,7 +192,7 @@ void main() {
     expect(Reminder.fromJson(oldTask).timeOrigin, ReminderTimeOrigin.unknown);
   });
 
-  test('v15 backup rejects an unrecognized origin', () async {
+  test('current backup rejects an unrecognized origin', () async {
     final db = await helper.database;
     final task = Reminder(
       id: 'bad-origin',
@@ -198,7 +202,7 @@ void main() {
     );
     await db.insert('Reminders', task.toJson());
     final data = {
-      'version': 15,
+      'version': DatabaseHelper.schemaVersion,
       'timestamp': '2026-10-27T00:00:00Z',
       'settings': await db.query('Settings'),
       'media_records': await db.query('MediaRecords'),

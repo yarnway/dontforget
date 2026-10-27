@@ -45,7 +45,7 @@ final class NotificationPayload {
     if (!isValidDatasetEpoch(datasetEpoch) ||
         reminder.id.trim().isEmpty ||
         reminder.triggerTime == null ||
-        reminder.isCompleted ||
+        !reminder.canNotify ||
         reminder.noticeAcknowledgedAt != null) {
       throw ArgumentError('A notification requires an active occurrence.');
     }
@@ -112,7 +112,7 @@ final class NotificationPayload {
       triggerUtcMicros ==
           reminder.triggerTime?.toUtc().microsecondsSinceEpoch &&
       noticeRevision == reminder.noticeRevision &&
-      !reminder.isCompleted &&
+      reminder.canNotify &&
       reminder.noticeAcknowledgedAt == null;
 
   String encode() => jsonEncode({

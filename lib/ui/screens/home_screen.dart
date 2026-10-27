@@ -1324,7 +1324,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final reminders = ref.watch(remindersProvider);
+    final reminders = ref
+        .watch(remindersProvider)
+        .where((r) => r.isVisible)
+        .toList();
     final l10n = AppLocalizations.of(context);
     final homeState = ref.watch(homeControllerProvider);
     final spacedService = ref.watch(spacedRepetitionServiceProvider);

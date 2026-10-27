@@ -9,15 +9,17 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite/sqflite.dart' as sqflite;
 import '../models/settings.dart';
 import '../models/legacy_credentials.dart';
+import '../models/task_details.dart';
 import '../services/notification_epoch_store.dart';
 import '../services/notification_journal.dart';
 import '../services/storage_directory_lease.dart';
 import 'schema_14_compatibility.dart';
+import 'schema_15_compatibility.dart';
 
 part 'database_access.dart';
 
 class DatabaseHelper {
-  static const schemaVersion = 15;
+  static const schemaVersion = 16;
   static final DatabaseHelper instance = DatabaseHelper._init();
   Database? _database;
   Future<Database>? _opening;
@@ -566,6 +568,7 @@ CREATE TABLE Reminders (
   source_text TEXT,
   capture_proposal_json TEXT,
   word_progress_json TEXT,
+  details_json TEXT,
   capture_pending INTEGER NOT NULL DEFAULT 0,
   is_pinned INTEGER NOT NULL DEFAULT 0,
   is_completed $boolType,
@@ -710,6 +713,14 @@ CREATE TABLE Reminders (
         await db.execute(statement);
       }
     }
+    if (oldVersion < 16) {
+      final shape = oldVersion < 15
+          ? Schema15Shape.recordReminder
+          : await _identifySchema15(db);
+      for (final statement in schema15UpgradeStatements(shape)) {
+        await db.execute(statement);
+      }
+    }
 
     if (oldVersion < 4) {
       try {
@@ -780,6 +791,90 @@ CREATE TABLE Reminders (
         );
       } catch (_) {}
     }
+  }
+
+  Future<Schema15Shape> _identifySchema15(Database db) async {
+    Future<List<Map<String, Object?>>> fields(String table) async {
+      var result = await db.rawQuery('PRAGMA table_xinfo($table)');
+      if (result.isEmpty) {
+        result = await db.rawQuery('PRAGMA table_info($table)');
+      }
+      if (result.any((row) => (row['hidden'] ?? 0) != 0)) {
+        throw StateError('Unsupported version 15 database structure.');
+      }
+      return result;
+    }
+
+    final settings = await fields('Settings');
+    final reminders = await fields('Reminders');
+    final shape = identifySchema15(
+      settingsColumns: settings.map((r) => r['name'] as String).toSet(),
+      reminderColumns: reminders.map((r) => r['name'] as String).toSet(),
+    );
+    if (shape == null) {
+      throw StateError('Unsupported version 15 database structure.');
+    }
+    bool matches(
+      List<Map<String, Object?>> rows,
+      String name,
+      String type,
+      int notNull,
+      Object? defaultValue,
+    ) {
+      final field = rows.singleWhere((row) => row['name'] == name);
+      return (field['type'] as String).toUpperCase() == type &&
+          field['notnull'] == notNull &&
+          field['dflt_value'] == defaultValue &&
+          field['pk'] == 0;
+    }
+
+    if (!matches(settings, 'workspace_drafts_json', 'TEXT', 0, null)) {
+      throw StateError('Unsupported version 15 database structure.');
+    }
+    for (final name in const [
+      'event_time',
+      'recurrence_event_anchor_time',
+      'suggested_trigger_time',
+      'source_text',
+      'capture_proposal_json',
+      'word_progress_json',
+    ]) {
+      if (!matches(reminders, name, 'TEXT', 0, null)) {
+        throw StateError('Unsupported version 15 database structure.');
+      }
+    }
+    for (final name in const ['capture_pending', 'is_pinned']) {
+      if (!matches(reminders, name, 'INTEGER', 1, '0')) {
+        throw StateError('Unsupported version 15 database structure.');
+      }
+    }
+    final column = reminders.singleWhere(
+      (r) =>
+          r['name'] ==
+          (shape == Schema15Shape.recordReminder
+              ? 'trigger_time_origin'
+              : 'details_json'),
+    );
+    if ((column['type'] as String).toUpperCase() != 'TEXT' ||
+        column['pk'] != 0 ||
+        column['notnull'] != (shape == Schema15Shape.recordReminder ? 1 : 0) ||
+        column['dflt_value'] !=
+            (shape == Schema15Shape.recordReminder ? "'unknown'" : null)) {
+      throw StateError('Unsupported version 15 database structure.');
+    }
+    if (shape == Schema15Shape.recordReminder) {
+      final invalid = await db.rawQuery(
+        "SELECT id FROM Reminders WHERE trigger_time_origin NOT IN ('unknown', 'manual', 'aiSuggested') LIMIT 1",
+      );
+      if (invalid.isNotEmpty) throw StateError('Invalid reminder time origin.');
+    } else {
+      for (final row in await db.rawQuery(
+        'SELECT details_json FROM Reminders WHERE details_json IS NOT NULL',
+      )) {
+        TaskDetails.decode(row['details_json'] as String);
+      }
+    }
+    return shape;
   }
 
   Future<Schema14Shape> _identifySchema14(Database db) async {

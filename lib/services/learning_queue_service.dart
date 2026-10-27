@@ -136,7 +136,11 @@ class LearningQueueService {
         .length;
     final due = <String, LearningItem>{};
     for (final task in tasks.where(
-      (t) => !t.isCompleted && t.spacedRepetitionLevel > 0,
+      (t) =>
+          t.isVisible &&
+          !t.details.paused &&
+          !t.isCompleted &&
+          t.spacedRepetitionLevel > 0,
     )) {
       for (final word in VocabularyEntry.parseNotes(task.taskSummary ?? '')) {
         final key = wordKey(word.word), p = all[wordKey(word.word)];

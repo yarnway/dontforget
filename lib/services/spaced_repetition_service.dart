@@ -21,7 +21,9 @@ class SpacedRepetitionService {
 
   /// 检查任务是否为已启用的复习卡片
   bool isReviewCard(Reminder task) {
-    return task.spacedRepetitionLevel > 0 &&
+    return task.isVisible &&
+        !task.details.paused &&
+        task.spacedRepetitionLevel > 0 &&
         !(task.reviewNotificationsEnabled && task.isCompleted);
   }
 

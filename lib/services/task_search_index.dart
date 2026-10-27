@@ -12,6 +12,7 @@ class TaskSearchIndex {
   TaskSearchIndex(List<Reminder> reminders, {TaskSearchIndex? previous}) {
     for (var i = 0; i < reminders.length; i++) {
       final task = reminders[i];
+      if (!task.isVisible) continue;
       final old = previous?._byId[task.id];
       if (old != null && identical(old.task, task) && old.position == i) {
         _entries.add(old);

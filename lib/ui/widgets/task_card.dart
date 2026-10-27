@@ -400,6 +400,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).colorScheme;
     final task = widget.task;
+    if (!task.isVisible) return const SizedBox.shrink();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final subTasks = task.subTasksView;
     final priorityColor = switch (task.quadrantLevel) {
