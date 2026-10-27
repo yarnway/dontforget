@@ -1,3 +1,6 @@
+import '../../models/task_details.dart';
+import '../../models/medication_plan.dart';
+import '../../models/departure_plan.dart';
 import '../../models/settings.dart';
 import '../../models/reminder.dart';
 import '../learning_queue_service.dart';
@@ -418,6 +421,7 @@ Map<String, String> _columnsFor(String table, int version) => {
   if (table == 'settings' && version >= 12) 'input_send_mode': 's',
   if (table == 'reminders' && version >= 13)
     'review_notifications_enabled': 'b',
+  if (table == 'reminders' && version >= 15) 'details_json': 's?',
   if (table == 'settings' && version >= 14) 'workspace_drafts_json': 's?',
   if (table == 'reminders' && version >= 14) ...{
     'event_time': 'd?',
@@ -577,7 +581,8 @@ Future<void> _checkSchema(
 }
 
 void _checkVersion(Object? value) {
-  if (value is! int || !const {7, 8, 9, 10, 11, 12, 13, 14}.contains(value)) {
+  if (value is! int ||
+      !const {7, 8, 9, 10, 11, 12, 13, 14, 15}.contains(value)) {
     _fail(BackupInspectionError.unsupportedVersion);
   }
 }
@@ -847,6 +852,18 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
         ].contains(row['recurrence_rule'])) {
       _fail(BackupInspectionError.invalidData);
     }
+    if (data['version'] >= 15) {
+      try {
+        final details = TaskDetails.decode(row['details_json'] as String?);
+        if (details.kind == 'medicationPlan') {
+          MedicationPlan.fromJson(details.data);
+        }
+        if (details.kind == 'medication') Medicine.fromJson(details.data);
+        if (details.kind == 'departure') DeparturePlan.fromJson(details.data);
+      } catch (_) {
+        _fail(BackupInspectionError.invalidData);
+      }
+    }
     if (data['version'] >= 14) {
       try {
         LearningQueueService.decode(row['word_progress_json'] as String?);
@@ -859,7 +876,10 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
           for (final candidate in values) {
             if (candidate is! Map ||
                 candidate.keys.any(
-                  (key) => !_columnsFor('reminders', 14).containsKey(key),
+                  (key) => !_columnsFor(
+                    'reminders',
+                    data['version'] as int,
+                  ).containsKey(key),
                 )) {
               throw const FormatException();
             }

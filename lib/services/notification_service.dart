@@ -506,7 +506,7 @@ class NotificationService {
     _revisions[reminder.id] = revision;
     _scheduledReminders.remove(reminder.id);
     if (reminder.triggerTime != null &&
-        !reminder.isCompleted &&
+        reminder.canNotify &&
         reminder.noticeAcknowledgedAt == null) {
       _scheduledReminders[reminder.id] = reminder;
     }
@@ -515,7 +515,7 @@ class NotificationService {
 
     if (_revisions[reminder.id] != revision ||
         reminder.triggerTime == null ||
-        reminder.isCompleted ||
+        !reminder.canNotify ||
         reminder.noticeAcknowledgedAt != null) {
       return;
     }

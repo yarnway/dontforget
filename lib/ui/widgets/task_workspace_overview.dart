@@ -95,23 +95,28 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
     final tomorrow = DateTime(now.year, now.month, now.day + 1);
     final rows = <Object>[];
     final completed = view == 'all' && _showCompleted
-        ? widget.reminders.where((task) => task.isCompleted).toList()
+        ? widget.reminders
+              .where((task) => task.isWorkspaceItem && task.isCompleted)
+              .toList()
         : const <Reminder>[];
-    final tasks = widget.reminders.where((r) => !r.isCompleted).toList()
-      ..sort((a, b) {
-        final learning = (a.spacedRepetitionLevel > 0 ? 1 : 0).compareTo(
-          b.spacedRepetitionLevel > 0 ? 1 : 0,
-        );
-        if (learning != 0) return learning;
-        if ((a.quadrantLevel == 1) != (b.quadrantLevel == 1)) {
-          return a.quadrantLevel == 1 ? -1 : 1;
-        }
-        final at = a.eventTime ?? a.triggerTime ?? a.nextReviewAt;
-        final bt = b.eventTime ?? b.triggerTime ?? b.nextReviewAt;
-        if (at == null) return bt == null ? a.id.compareTo(b.id) : 1;
-        if (bt == null) return -1;
-        return at.compareTo(bt);
-      });
+    final tasks =
+        widget.reminders
+            .where((r) => r.isWorkspaceItem && !r.isCompleted)
+            .toList()
+          ..sort((a, b) {
+            final learning = (a.spacedRepetitionLevel > 0 ? 1 : 0).compareTo(
+              b.spacedRepetitionLevel > 0 ? 1 : 0,
+            );
+            if (learning != 0) return learning;
+            if ((a.quadrantLevel == 1) != (b.quadrantLevel == 1)) {
+              return a.quadrantLevel == 1 ? -1 : 1;
+            }
+            final at = a.eventTime ?? a.triggerTime ?? a.nextReviewAt;
+            final bt = b.eventTime ?? b.triggerTime ?? b.nextReviewAt;
+            if (at == null) return bt == null ? a.id.compareTo(b.id) : 1;
+            if (bt == null) return -1;
+            return at.compareTo(bt);
+          });
     if (view == 'today') {
       final groups = <String, List<Reminder>>{
         'todayUrgent': [],

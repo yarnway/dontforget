@@ -12,6 +12,7 @@ class TaskSearchIndex {
   TaskSearchIndex(List<Reminder> reminders, {TaskSearchIndex? previous}) {
     for (var i = 0; i < reminders.length; i++) {
       final task = reminders[i];
+      if (!task.isWorkspaceItem) continue;
       final old = previous?._byId[task.id];
       if (old != null && identical(old.task, task) && old.position == i) {
         _entries.add(old);
@@ -23,7 +24,8 @@ class TaskSearchIndex {
           old.task.taskTitle == task.taskTitle &&
           old.task.taskSummary == task.taskSummary &&
           old.task.sourceText == task.sourceText &&
-          old.task.subTasks == task.subTasks;
+          old.task.subTasks == task.subTasks &&
+          old.task.detailsJson == task.detailsJson;
       final entry = (
         task: task,
         position: i,
@@ -31,6 +33,11 @@ class TaskSearchIndex {
             ? old.fields
             : [
                 task.taskTitle.toLowerCase(),
+                task.details.project.toLowerCase(),
+                ...task.details.tags.map((tag) => tag.toLowerCase()),
+                ...task.details.checklist.map(
+                  (item) => item.label.toLowerCase(),
+                ),
                 if (task.taskSummary != null) task.taskSummary!.toLowerCase(),
                 if (task.sourceText != null) task.sourceText!.toLowerCase(),
                 ...task.getSubTasksList().map((text) => text.toLowerCase()),

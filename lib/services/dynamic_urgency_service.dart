@@ -16,7 +16,9 @@ class DynamicUrgencyService {
     bool changed = false;
 
     final result = reminders.map((reminder) {
-      if (reminder.isCompleted ||
+      if (!reminder.isVisible ||
+          reminder.details.paused ||
+          reminder.isCompleted ||
           reminder.noticeAcknowledgedAt != null ||
           reminder.triggerTime == null) {
         return reminder;

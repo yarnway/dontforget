@@ -197,7 +197,7 @@ void main() {
     builder: (context, ref, _) {
       final task = ref
           .watch(remindersProvider)
-          .where((r) => r.id == id)
+          .where((r) => r.id == id && r.isWorkspaceItem)
           .firstOrNull;
       return task == null
           ? const SizedBox()
@@ -1060,7 +1060,7 @@ void main() {
     final db = await tester.runAsync(() => database.database);
     await tester.runAsync(
       () => db!.execute(
-        "CREATE TRIGGER reject_delete BEFORE DELETE ON Reminders BEGIN SELECT RAISE(ABORT, 'test failure'); END",
+        "CREATE TRIGGER reject_delete BEFORE UPDATE OF details_json ON Reminders BEGIN SELECT RAISE(ABORT, 'test failure'); END",
       ),
     );
     await show(tester, card(task.id));
@@ -1110,7 +1110,11 @@ void main() {
       await tester.tap(find.text('撤销'));
       for (
         var i = 0;
-        i < 50 && container.read(remindersProvider).isEmpty;
+        i < 50 &&
+            container
+                .read(remindersProvider)
+                .where((r) => r.isWorkspaceItem)
+                .isEmpty;
         i++
       ) {
         await tester.runAsync(

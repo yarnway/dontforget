@@ -9,6 +9,7 @@ import '../../models/reminder.dart';
 import '../../providers/providers.dart';
 import '../../providers/home_controller.dart';
 import '../../l10n/app_localizations.dart';
+import '../../l10n/planning_strings.dart';
 import '../screens/task_detail_screen.dart';
 import '../screens/notification_repair_screen.dart';
 
@@ -155,7 +156,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       final generation = database.captureGeneration();
       final result = await database.runOperation(
         generation,
-        () => notifier.deleteReminder(task.id),
+        () => notifier.trashTask(task, generation),
       );
       final deleted = result.reminder ?? task;
       database.checkGeneration(generation);
@@ -173,7 +174,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
               try {
                 final restored = await database.runOperation(
                   generation,
-                  () => notifier.restoreDeletedReminder(deleted, generation),
+                  () => notifier.restoreTrashedTask(deleted, generation),
                 );
                 if (restored.nativeSyncFailed && feedback.mounted) {
                   feedback.showSnackBar(
@@ -255,7 +256,9 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       widget.task.isCompleted
           ? Icons.radio_button_unchecked
           : Icons.check_circle_outline,
-      l10n.get(widget.task.isCompleted ? 'markUndone' : 'markDone'),
+      widget.task.details.kind == 'medication' && !widget.task.isCompleted
+          ? planningText(context, 'taken')
+          : l10n.get(widget.task.isCompleted ? 'markUndone' : 'markDone'),
     ),
     _menuItem(
       'decompose',

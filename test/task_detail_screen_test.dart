@@ -47,6 +47,16 @@ class _ObservedRemindersNotifier extends RemindersNotifier {
   Future<ReminderActionResult> deleteReminder(String id) =>
       _observe(super.deleteReminder(id));
   @override
+  Future<ReminderActionResult> trashTask(
+    Reminder task,
+    DataGeneration generation,
+  ) => _observe(super.trashTask(task, generation));
+  @override
+  Future<ReminderActionResult> restoreTrashedTask(
+    Reminder task,
+    DataGeneration generation,
+  ) => _observe(super.restoreTrashedTask(task, generation));
+  @override
   Future<void> unlinkTwoTasks(String id1, String id2) =>
       _observe(super.unlinkTwoTasks(id1, id2));
 }
@@ -410,14 +420,18 @@ void main() {
     await performWrite(tester, find.byIcon(Icons.delete_outline_rounded));
     expect(tester.takeException(), isNull);
     expect(
-      container.read(remindersProvider).any((r) => r.id == task.id),
+      container
+          .read(remindersProvider)
+          .any((r) => r.id == task.id && r.isVisible),
       isFalse,
     );
     await tester.pump(const Duration(seconds: 20));
     expect(find.text('撤销'), findsOneWidget);
     await performWrite(tester, find.text('撤销'));
     expect(
-      container.read(remindersProvider).any((r) => r.id == task.id),
+      container
+          .read(remindersProvider)
+          .any((r) => r.id == task.id && r.isVisible),
       isTrue,
     );
     await tester.pumpWidget(const SizedBox());
@@ -435,7 +449,7 @@ void main() {
     final db = await tester.runAsync(() => testDatabase.database);
     await tester.runAsync(
       () => db!.execute(
-        "CREATE TRIGGER reject_detail_delete BEFORE DELETE ON Reminders WHEN OLD.id = 'failed-detail-delete' BEGIN SELECT RAISE(ABORT, 'test failure'); END",
+        "CREATE TRIGGER reject_detail_delete BEFORE UPDATE OF details_json ON Reminders WHEN OLD.id = 'failed-detail-delete' BEGIN SELECT RAISE(ABORT, 'test failure'); END",
       ),
     );
     try {
@@ -443,7 +457,9 @@ void main() {
       await performWrite(tester, find.byIcon(Icons.delete_outline_rounded));
       expect(find.byType(TaskDetailScreen), findsOneWidget);
       expect(
-        container.read(remindersProvider).any((r) => r.id == task.id),
+        container
+            .read(remindersProvider)
+            .any((r) => r.id == task.id && r.isVisible),
         isTrue,
       );
       expect(find.text('删除失败，请重试。'), findsOneWidget);
@@ -772,7 +788,9 @@ void main() {
           await tester.ensureVisible(button);
           await performWrite(tester, button);
           expect(
-            container.read(remindersProvider).where((r) => r.id == task.id),
+            container
+                .read(remindersProvider)
+                .where((r) => r.id == task.id && r.isVisible),
             isEmpty,
           );
           expect(
@@ -786,8 +804,17 @@ void main() {
           final restored = container
               .read(remindersProvider)
               .singleWhere((r) => r.id == task.id);
-          expect(restored.toJson(), saved.toJson());
-          expect(notifications.scheduled.last.toJson(), saved.toJson());
+          final before = saved.toJson()
+            ..remove('notice_revision')
+            ..remove('details_json');
+          final after = restored.toJson()
+            ..remove('notice_revision')
+            ..remove('details_json');
+          expect(after, before);
+          expect(restored.noticeRevision, greaterThan(saved.noticeRevision));
+          expect(restored.details.deletedAt, isNull);
+          expect(restored.details.history.last.action, 'restore');
+          expect(notifications.scheduled.last.toJson(), restored.toJson());
           await tester.pumpWidget(const SizedBox());
         } finally {
           notifications.failNative = false;

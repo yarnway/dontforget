@@ -136,7 +136,11 @@ class LearningQueueService {
         .length;
     final due = <String, LearningItem>{};
     for (final task in tasks.where(
-      (t) => !t.isCompleted && t.spacedRepetitionLevel > 0,
+      (t) =>
+          t.isVisible &&
+          !t.details.paused &&
+          !t.isCompleted &&
+          t.spacedRepetitionLevel > 0,
     )) {
       for (final word in VocabularyEntry.parseNotes(task.taskSummary ?? '')) {
         final key = wordKey(word.word), p = all[wordKey(word.word)];
@@ -177,15 +181,19 @@ class LearningQueueService {
     WordProgress? previous,
     int grade,
     DateTime now,
-    DateTime anchor,
-  ) {
+    DateTime anchor, {
+    List<int> intervals = const [1, 2, 4, 7, 15],
+  }) {
+    if (intervals.length != 5 || intervals.any((d) => d < 1 || d > 365)) {
+      throw const FormatException('Invalid learning intervals');
+    }
     if (grade < 0 || grade > 2) throw const FormatException('Invalid grade');
     final level = grade == 2
         ? ((previous?.level ?? 0) + 1).clamp(1, 5)
         : grade == 1
         ? (previous?.level ?? 0).clamp(0, 5)
         : 0;
-    final days = grade < 2 ? 1 : const [1, 1, 2, 4, 7, 15][level];
+    final days = grade < 2 ? 1 : intervals[level - 1];
     final local = now.toLocal(), clock = anchor.toLocal();
     return WordProgress(
       level: level,

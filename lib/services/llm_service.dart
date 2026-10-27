@@ -60,6 +60,62 @@ class LLMService {
     return response;
   }
 
+  /// Domain extraction is a proposal only. Callers validate and confirm it.
+  Future<Map<String, dynamic>> structuredProposal(
+    String instructions,
+    Object content,
+    AppSettings settings, {
+    CancelToken? cancelToken,
+  }) async {
+    _checkActive();
+    final token = cancelToken ?? CancelToken();
+    _activeRoutes.add(token);
+    try {
+      final result = await _router.execute<Map<String, dynamic>>(
+        profiles: settings.effectiveProfiles,
+        allowFallback: settings.aiFallbackEnabled,
+        cancelToken: token,
+        request: (profile, attempt) async {
+          final config = profile.settings;
+          final response = await _post(
+            '${config.baseUrl}/chat/completions',
+            cancelToken: attempt,
+            options: Options(
+              headers: {
+                'Authorization': 'Bearer ${config.apiKey}',
+                'Content-Type': 'application/json',
+              },
+            ),
+            data: {
+              'model': config.requestModelName,
+              'messages': [
+                {'role': 'system', 'content': instructions},
+                {'role': 'user', 'content': content},
+              ],
+              'temperature': 0,
+              'max_tokens': 6000,
+              'response_format': {'type': 'json_object'},
+            },
+          );
+          final raw = response.data?['choices']?[0]?['message']?['content'];
+          if (raw is! String || raw.length > 65536) {
+            throw const FormatException('Invalid structured response');
+          }
+          final value = jsonDecode(raw);
+          if (value is! Map<String, dynamic>) {
+            throw const FormatException('Invalid structured response');
+          }
+          return value;
+        },
+      );
+      _checkActive();
+      return result.value;
+    } finally {
+      _activeRoutes.remove(token);
+      if (cancelToken == null) token.cancel('Proposal finished');
+    }
+  }
+
   Future<List<Reminder>> extractTasks(
       String text, AppSettings settings) async {
     _checkActive();
@@ -248,7 +304,8 @@ Guidelines:
      * Example: Event is 15:00 meeting, lead_time_minutes is 15 -> reminder "time" is 14:45.
      * Example: Train is 09:00, lead_time_minutes is 90 -> reminder "time" is 07:30.
    - If no explicit event time is mentioned: return null. A memo does not need an alarm. Never invent a deadline or schedule.
-7. "is_recurring": boolean. true if user mentions or implies periodic/recurring behavior (e.g. "每天", "每周五", "工作日", "每个月", "按时吃药", "每日复盘"), otherwise false.
+7. "is_recurring": boolean. true if user mentions or implies periodic/recurring behavior (e.g. "每天", "每周五", "工作日", "每个月", "每日复盘"), otherwise false.
+   For medication, only extract explicitly stated timing and frequency. Never infer a drug, dose, meal interval or course duration from a diagnosis. Preserve missing facts for user confirmation.
 8. "recurrence_rule": "none" | "daily" | "workday" | "weekly" | "monthly" | "yearly".
 9. "recurrence_desc": Short Chinese description if recurring (e.g. "每天", "每个工作日", "每周五", "每月1号"), or null if none.
 10. "quadrant": Categorize into Eisenhower Matrix (1 = 紧急且重要, 2 = 重要不紧急, 3 = 紧急不重要, 4 = 不重要不紧急).

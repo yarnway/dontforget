@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:sqflite/sqflite.dart';
 import '../data/database_helper.dart';
 import '../models/reminder.dart';
+import '../models/medication_plan.dart';
+import '../models/departure_plan.dart';
 
 class LanSyncServerInfo {
   final bool isRunning;
@@ -412,9 +414,16 @@ class LanSyncService {
 
   static List<Reminder> _reminders(Map<String, dynamic> data) {
     try {
-      return (data['reminders'] as List? ?? [])
-          .map((row) => Reminder.fromJson(row as Map<String, dynamic>))
-          .toList();
+      return (data['reminders'] as List? ?? []).map((row) {
+        final reminder = Reminder.fromJson(row as Map<String, dynamic>);
+        final details = reminder.details;
+        if (details.kind == 'medicationPlan') {
+          MedicationPlan.fromJson(details.data);
+        }
+        if (details.kind == 'medication') Medicine.fromJson(details.data);
+        if (details.kind == 'departure') DeparturePlan.fromJson(details.data);
+        return reminder;
+      }).toList();
     } catch (_) {
       throw const FormatException('Invalid sync reminders');
     }

@@ -16,7 +16,7 @@ import '../services/storage_directory_lease.dart';
 part 'database_access.dart';
 
 class DatabaseHelper {
-  static const schemaVersion = 14;
+  static const schemaVersion = 15;
   static final DatabaseHelper instance = DatabaseHelper._init();
   Database? _database;
   Future<Database>? _opening;
@@ -564,6 +564,7 @@ CREATE TABLE Reminders (
   source_text TEXT,
   capture_proposal_json TEXT,
   word_progress_json TEXT,
+  details_json TEXT,
   capture_pending INTEGER NOT NULL DEFAULT 0,
   is_pinned INTEGER NOT NULL DEFAULT 0,
   is_completed $boolType,
@@ -691,6 +692,9 @@ CREATE TABLE Reminders (
       await db.execute(
         'ALTER TABLE Reminders ADD COLUMN review_notifications_enabled INTEGER NOT NULL DEFAULT 0',
       );
+    }
+    if (oldVersion < 15) {
+      await db.execute('ALTER TABLE Reminders ADD COLUMN details_json TEXT');
     }
     if (oldVersion < 14) {
       for (final column in [

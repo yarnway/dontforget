@@ -228,7 +228,11 @@ class ContextTriggerService {
     final matched = <Reminder>[];
 
     for (final reminder in reminders) {
-      if (reminder.isCompleted) continue;
+      if (!reminder.isVisible ||
+          reminder.details.paused ||
+          reminder.isCompleted) {
+        continue;
+      }
       if (_sessionTriggeredTaskIds.contains(reminder.id)) continue;
 
       final rule = ContextTriggerRule.tryParse(reminder.contextTrigger);

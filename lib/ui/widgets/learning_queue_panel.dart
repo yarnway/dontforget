@@ -107,6 +107,11 @@ class _LearningQueuePanelState extends ConsumerState<LearningQueuePanel>
             grade,
             dailyLimit: daily,
             newLimit: fresh,
+            intervals:
+                (ref.read(workspaceDraftsProvider)['learningIntervals']
+                        as List?)
+                    ?.cast<int>() ??
+                const [1, 2, 4, 7, 15],
             generation: _generation,
           );
       if (mounted && result.nativeSyncFailures > 0) {

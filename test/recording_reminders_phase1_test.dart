@@ -364,7 +364,7 @@ void main() {
       final preview = await BackupInspector(
         databaseFactoryFfi,
       ).inspect(File('${directory.path}/ha_snapshot.json'));
-      expect(preview.version, 14);
+      expect(preview.version, DatabaseHelper.schemaVersion);
     },
   );
 
@@ -476,7 +476,7 @@ void main() {
       );
       try {
         final upgraded = await helper.database;
-        expect(await upgraded.getVersion(), 14);
+        expect(await upgraded.getVersion(), DatabaseHelper.schemaVersion);
         final after = (await upgraded.query('Reminders')).single;
         for (final entry in before.entries) {
           expect(after[entry.key], entry.value, reason: entry.key);
@@ -486,7 +486,11 @@ void main() {
         final snapshots = legacyDirectory
             .listSync()
             .whereType<Directory>()
-            .where((d) => d.path.contains('schema-upgrade-v13-to-v14-'));
+            .where(
+              (d) => d.path.contains(
+                'schema-upgrade-v13-to-v${DatabaseHelper.schemaVersion}-',
+              ),
+            );
         final snapshot = File('${snapshots.single.path}/snapshot.json');
         final inspector = BackupInspector(databaseFactoryFfi);
         expect((await inspector.inspect(snapshot)).version, 13);
@@ -495,7 +499,7 @@ void main() {
           (await inspector.inspect(
             File('${legacyDirectory.path}/ha_snapshot.json'),
           )).version,
-          14,
+          DatabaseHelper.schemaVersion,
         );
       } finally {
         await helper.close(createBackup: false);
@@ -686,7 +690,7 @@ void main() {
         (await BackupInspector(
           databaseFactoryFfi,
         ).inspect(File('${directory.path}/ha_snapshot.json'))).version,
-        14,
+        DatabaseHelper.schemaVersion,
       );
     },
   );

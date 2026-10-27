@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'stored_datetime.dart';
+import 'task_details.dart';
 
 class TaskBitmask {
   static const int quadrant1 = 1 << 0;
@@ -44,6 +45,20 @@ class Reminder {
   final bool capturePending;
   final String? captureProposalJson;
   final String? wordProgressJson;
+  final String? detailsJson;
+  late final TaskDetails details = TaskDetails.decode(detailsJson);
+  bool get isVisible => !details.hidden;
+  bool get isWorkspaceItem => isVisible && details.kind != 'medicationPlan';
+  bool get canNotify =>
+      isVisible &&
+      !isCompleted &&
+      !details.paused &&
+      triggerTime != null &&
+      (details.repeat?.end == null ||
+          !(snoozedAt == null
+                  ? triggerTime!
+                  : recurrenceAnchorTime ?? eventTime ?? triggerTime!)
+              .isAfter(details.repeat!.end!));
   final bool isPinned;
   final bool isCompleted;
   final bool isRecurring;
@@ -82,6 +97,7 @@ class Reminder {
     this.capturePending = false,
     this.captureProposalJson,
     this.wordProgressJson,
+    this.detailsJson,
     this.isPinned = false,
     this.isCompleted = false,
     this.isRecurring = false,
@@ -183,7 +199,7 @@ class Reminder {
       throw const FormatException('Invalid notice revision');
     }
 
-    return Reminder(
+    final reminder = Reminder(
       id: json['id'] as String,
       recordId: json['record_id'] as String?,
       taskTitle: json['task_title'] as String,
@@ -202,6 +218,7 @@ class Reminder {
       capturePending: json['capture_pending'] == 1,
       captureProposalJson: json['capture_proposal_json'] as String?,
       wordProgressJson: json['word_progress_json'] as String?,
+      detailsJson: json['details_json'] as String?,
       isPinned: json['is_pinned'] == 1,
       isCompleted: json['is_completed'] == 1 || json['is_completed'] == true,
       isRecurring: (json['is_recurring'] is int)
@@ -230,6 +247,8 @@ class Reminder {
         json['recurrence_event_anchor_time'],
       ),
     );
+    if (reminder.detailsJson != null) reminder.details;
+    return reminder;
   }
 
   Map<String, dynamic> toJson() => {
@@ -249,6 +268,7 @@ class Reminder {
     'capture_pending': capturePending ? 1 : 0,
     'capture_proposal_json': captureProposalJson,
     'word_progress_json': wordProgressJson,
+    'details_json': detailsJson,
     'is_pinned': isPinned ? 1 : 0,
     'is_completed': isCompleted ? 1 : 0,
     'is_recurring': isRecurring ? 1 : 0,
@@ -287,6 +307,10 @@ class Reminder {
     }
     final cutoff = after ?? DateTime.now();
     final base = recurrenceAnchorTime ?? triggerTime ?? cutoff;
+    if (details.paused || details.hidden) return null;
+    if (details.repeat != null) {
+      return details.repeat!.next(base, cutoff, recurrenceRule!);
+    }
     final localCutoff = base.isUtc ? cutoff.toUtc() : cutoff.toLocal();
     DateTime calendar(int year, int month, int day) => base.isUtc
         ? DateTime.utc(
@@ -367,6 +391,7 @@ class Reminder {
     bool? capturePending,
     Object? captureProposalJson = _unchanged,
     Object? wordProgressJson = _unchanged,
+    Object? detailsJson = _unchanged,
     bool? isPinned,
     bool? isCompleted,
     bool? isRecurring,
@@ -426,6 +451,9 @@ class Reminder {
       wordProgressJson: identical(wordProgressJson, _unchanged)
           ? this.wordProgressJson
           : wordProgressJson as String?,
+      detailsJson: identical(detailsJson, _unchanged)
+          ? this.detailsJson
+          : detailsJson as String?,
       isPinned: isPinned ?? this.isPinned,
       isCompleted: isCompleted ?? this.isCompleted,
       isRecurring: isRecurring ?? this.isRecurring,

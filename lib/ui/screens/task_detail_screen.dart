@@ -13,6 +13,8 @@ import '../../models/vocabulary_entry.dart';
 import '../../providers/providers.dart';
 import '../../services/context_trigger_service.dart';
 import '../../l10n/app_localizations.dart';
+import '../../l10n/planning_strings.dart';
+import '../widgets/planning_panel.dart';
 import 'knowledge_graph_screen.dart';
 import 'notification_repair_screen.dart';
 
@@ -413,7 +415,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       if (generation == null) throw StateError('Editor unavailable');
       final result = await database.runOperation(
         generation,
-        () => notifier.deleteReminder(task.id),
+        () => notifier.trashTask(task, generation),
       );
       final deleted = result.reminder ?? task;
       database.checkGeneration(generation);
@@ -431,7 +433,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 try {
                   final restored = await database.runOperation(
                     generation,
-                    () => notifier.restoreDeletedReminder(deleted, generation),
+                    () => notifier.restoreTrashedTask(deleted, generation),
                   );
                   if (restored.nativeSyncFailed && feedback.mounted) {
                     feedback.showSnackBar(
@@ -792,6 +794,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             ),
             tooltip: _isCompleted
                 ? l10n.get('markUndone')
+                : widget.task.details.kind == 'medication'
+                ? planningText(context, 'taken')
                 : l10n.get('markDone'),
             onPressed: _isMutating
                 ? null
@@ -876,6 +880,36 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if (widget.task.details.kind == 'medication' &&
+                        widget.task.details.planId != null)
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.medication_outlined),
+                        label: Text(
+                          planningText(context, 'editMedicationPlan'),
+                        ),
+                        onPressed: _isMutating
+                            ? null
+                            : () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (routeContext) => Scaffold(
+                                    appBar: AppBar(
+                                      title: Text(
+                                        planningText(
+                                          routeContext,
+                                          'medication',
+                                        ),
+                                      ),
+                                    ),
+                                    body: PlanningPanel(
+                                      initialMedicationId:
+                                          widget.task.details.planId,
+                                      onClose: () =>
+                                          Navigator.pop(routeContext),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                      ),
                     // 1. Status & Category Banner Card
                     Container(
                       padding: const EdgeInsets.symmetric(
