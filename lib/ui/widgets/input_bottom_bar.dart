@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../providers/home_controller.dart';
 import '../../models/settings.dart';
 import '../../l10n/app_localizations.dart';
+import 'editable_text_menu.dart';
 import 'voice_capture_feedback.dart';
 
 class InputBottomBar extends ConsumerStatefulWidget {
@@ -83,6 +84,22 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
       text: value.text.replaceRange(start, end, '\n'),
       selection: TextSelection.collapsed(offset: start + 1),
     );
+  }
+
+  void _openEmptyEditMenu() {
+    _focusNode.requestFocus();
+    // The empty, unfocused surface owns the hold-to-record gesture. A secondary
+    // click instead enters text editing before asking the editor for its menu.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted || !_focusNode.hasFocus) return;
+      final editor = _focusNode.context
+          ?.findAncestorStateOfType<EditableTextState>();
+      if (editor == null) return;
+      await editor.clipboardStatus.update();
+      if (mounted && editor.mounted && _focusNode.hasFocus) {
+        editor.showToolbar();
+      }
+    });
   }
 
   Future<void> _startLongPressRecording(LongPressStartDetails details) async {
@@ -306,7 +323,10 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     );
     final isRecording = homeState.isRecording || _isLongPressRecording;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final idleVoiceTarget = _textController.text.isEmpty && !_isTranscribing;
+    final idleVoiceTarget =
+        _textController.text.isEmpty &&
+        !_focusNode.hasFocus &&
+        !_isTranscribing;
     // Scaffold removes the consumed inset from its body MediaQuery while the
     // keyboard animates away, so also read the containing view's physical inset.
     final keyboardVisible =
@@ -396,6 +416,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                     onLongPressCancel: idleVoiceTarget
                         ? _cancelLongPress
                         : null,
+                    onSecondaryTapDown: idleVoiceTarget
+                        ? (_) => _openEmptyEditMenu()
+                        : null,
                     child: isRecording || _isTranscribing
                         ? Row(
                             children: [
@@ -439,7 +462,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                           )
                         // iOS TextField's selection recognizer otherwise wins the
                         // gesture arena before our hold-to-record recognizer. Only
-                        // the empty surface delegates pointer gestures;
+                        // the empty, unfocused surface delegates pointer gestures;
                         // typing, selection and IME retain normal TextField behavior.
                         : IgnorePointer(
                             ignoring: idleVoiceTarget,
@@ -464,6 +487,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                               child: TextField(
                                 controller: _textController,
                                 focusNode: _focusNode,
+                                contextMenuBuilder: buildEditableTextMenu,
                                 minLines: 1,
                                 maxLines: 4,
                                 keyboardType: TextInputType.multiline,

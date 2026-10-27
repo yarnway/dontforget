@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-27",
+  "version": "1.7.0+28",
+  "schema": 13,
+  "local": {
+    "flutterTests": 1235,
+    "pythonTests": 124,
+    "analyze": "PASS",
+    "clipboardPlatforms": [
+      "macOS",
+      "iOS"
+    ],
+    "narrowCardWidth": 320,
+    "largeTextScale": 2
+  },
+  "realModel": {
+    "status": "PASS",
+    "requests": 1,
+    "httpStatus": 200,
+    "responseModel": "deepseek-flash",
+    "totalTokens": 2304,
+    "elapsedMs": 11402,
+    "days": 1,
+    "words": 5,
+    "ipaPosUsageTranslation": true,
+    "suggestedMinute": 1230,
+    "sourceDatabaseUnchanged": true,
+    "tasksCreated": 0,
+    "osNotificationsScheduled": 0,
+    "acceptance": "real model service, synthetic preview; not native UI"
+  },
+  "phone": {
+    "installedBuild": 27,
+    "sameIdentityUpgradeFrom": 25,
+    "preLaunchDocumentsFilesUnchanged": 10,
+    "nativeObserved": [
+      "launch",
+      "existing tasks",
+      "light status bar",
+      "study form",
+      "5 words and 1 day options"
+    ],
+    "newPlanCreatedByAgent": false,
+    "postMigrationSnapshot": "PENDING",
+    "connection": "CoreDevice tunnel unavailable; mirror reconnection timeout"
+  },
+  "stableRelease": "NOT_RELEASED"
+}

@@ -15,6 +15,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:dont_forget/app.dart';
 import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/ui/widgets/task_board.dart';
+import 'package:dont_forget/ui/widgets/inline_feedback.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -219,6 +220,11 @@ void main() {
       await tester.pump();
       expect(container.read(immersiveModeProvider), isFalse);
       if (const bool.fromEnvironment('UI_PREVIEW')) {
+        InlineFeedback.of(tester.element(find.byType(TaskBoard))).showSnackBar(
+          const SnackBar(content: Text('修改已保存')),
+          tone: FeedbackTone.success,
+        );
+        await tester.pump();
         final boundary = tester.renderObject<RenderRepaintBoundary>(
           find.byKey(const ValueKey('workspace-preview')),
         );
@@ -228,7 +234,7 @@ void main() {
           final directory = Directory('dist/ui-preview');
           await directory.create(recursive: true);
           await File(
-            '${directory.path}/workspace-${width.toInt()}.png',
+            '${directory.path}/workspace-feedback-${width.toInt()}.png',
           ).writeAsBytes(bytes!.buffer.asUint8List());
           image.dispose();
         });
@@ -246,7 +252,7 @@ void main() {
           final image = await boundary.toImage();
           final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
           await File(
-            'dist/ui-preview/workspace-dark-${width.toInt()}.png',
+            'dist/ui-preview/workspace-feedback-dark-${width.toInt()}.png',
           ).writeAsBytes(bytes!.buffer.asUint8List());
           image.dispose();
         });
@@ -282,8 +288,7 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 300));
       expect(find.text('即将到期 · 1'), findsOneWidget);
-      final input = find.byType(TextField);
-      await tester.tap(input);
+      await tester.tap(find.byKey(const ValueKey('composer-input-surface')));
       final editable = tester.widget<EditableText>(find.byType(EditableText));
       final due = upcoming.copyWith(
         triggerTime: DateTime.now().subtract(const Duration(seconds: 1)),
@@ -331,7 +336,7 @@ void main() {
             final directory = Directory('dist/ui-preview/quiet');
             await directory.create(recursive: true);
             await File(
-              '${directory.path}/workspace-${width.toInt()}.png',
+              '${directory.path}/workspace-feedback-${width.toInt()}.png',
             ).writeAsBytes(bytes!.buffer.asUint8List());
             image.dispose();
           });

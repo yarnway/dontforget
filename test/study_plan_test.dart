@@ -21,6 +21,10 @@ Map<String, Object> vocabulary({int days = 1, int words = 5}) => {
             {
               'word': 'word-$d-$i',
               'meaning': 'Synthetic meaning',
+              'ipa': '/wɜːd/',
+              'part_of_speech': 'noun',
+              'usage': 'use a word',
+              'translation': '合成例句译文。',
               'example': 'Synthetic original example.',
             },
         ],

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
+import '../../models/vocabulary_entry.dart';
 import '../../providers/providers.dart';
 import '../../services/recovery/runtime_gate.dart';
 import '../../services/spaced_repetition_service.dart';
@@ -9,6 +10,7 @@ import '../../l10n/app_localizations.dart';
 import '../formatters/local_date_time.dart';
 import 'inline_feedback.dart';
 import 'workspace_tool_panel.dart';
+import 'vocabulary_deck.dart';
 
 class SpacedRepetitionSheet extends ConsumerStatefulWidget {
   const SpacedRepetitionSheet({
@@ -36,6 +38,8 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet>
   List<Reminder> _due = [];
   int _total = 0;
   String? _shownId;
+  String? _deckSource;
+  bool _hasDeck = false;
   Timer? _dayTimer;
 
   @override
@@ -83,6 +87,11 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet>
     final id = _due.firstOrNull?.id;
     if (_shownId != id) _isFlipped = false;
     _shownId = id;
+    final source = _due.firstOrNull?.taskSummary;
+    if (_deckSource != source) {
+      _deckSource = source;
+      _hasDeck = VocabularyEntry.parseNotes(source ?? '').isNotEmpty;
+    }
   }
 
   @override
@@ -188,65 +197,79 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet>
                                       ).textTheme.bodySmall,
                                     ),
                                   ],
-                                  const SizedBox(height: 20),
-                                  TextButton.icon(
-                                    key: const ValueKey('review-flip'),
-                                    onPressed: _isSaving
-                                        ? null
-                                        : () => setState(
-                                            () => _isFlipped = !_isFlipped,
-                                          ),
-                                    icon: Icon(
-                                      _isFlipped
-                                          ? Icons.visibility_off_outlined
-                                          : Icons.visibility_outlined,
+                                  if (task.reviewNotificationsEnabled ||
+                                      _hasDeck) ...[
+                                    const SizedBox(height: 20),
+                                    VocabularyDeck(
+                                      key: ValueKey(
+                                        'review-vocabulary-${task.id}',
+                                      ),
+                                      content:
+                                          task.taskSummary ??
+                                          loc.get('reviewNoNotes'),
+                                      practice: true,
                                     ),
-                                    label: Text(
-                                      loc.get(
+                                  ] else ...[
+                                    const SizedBox(height: 20),
+                                    TextButton.icon(
+                                      key: const ValueKey('review-flip'),
+                                      onPressed: _isSaving
+                                          ? null
+                                          : () => setState(
+                                              () => _isFlipped = !_isFlipped,
+                                            ),
+                                      icon: Icon(
                                         _isFlipped
-                                            ? 'reviewHideAnswer'
-                                            : 'flipCard',
+                                            ? Icons.visibility_off_outlined
+                                            : Icons.visibility_outlined,
+                                      ),
+                                      label: Text(
+                                        loc.get(
+                                          _isFlipped
+                                              ? 'reviewHideAnswer'
+                                              : 'flipCard',
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  if (_isFlipped) ...[
-                                    const Divider(height: 24),
-                                    Text(
-                                      loc.get('reviewNotes'),
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.titleSmall,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      task.taskSummary?.trim().isNotEmpty ==
-                                              true
-                                          ? task.taskSummary!
-                                          : loc.get('reviewNoNotes'),
-                                    ),
-                                    if (task.subTasksView.isNotEmpty) ...[
-                                      const SizedBox(height: 16),
+                                    if (_isFlipped) ...[
+                                      const Divider(height: 24),
                                       Text(
-                                        loc.get('reviewSteps'),
+                                        loc.get('reviewNotes'),
                                         style: Theme.of(
                                           context,
                                         ).textTheme.titleSmall,
                                       ),
-                                      for (final step in task.subTasksView)
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            top: 6,
-                                          ),
-                                          child: Text('• $step'),
-                                        ),
-                                    ],
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      '${loc.get('triggerTimeLabel')}: ${task.triggerTime == null ? loc.get('notSet') : formatLocalDateTime(task.triggerTime!)}',
-                                      style: TextStyle(
-                                        color: colors.onSurfaceVariant,
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        task.taskSummary?.trim().isNotEmpty ==
+                                                true
+                                            ? task.taskSummary!
+                                            : loc.get('reviewNoNotes'),
                                       ),
-                                    ),
+                                      if (task.subTasksView.isNotEmpty) ...[
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          loc.get('reviewSteps'),
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.titleSmall,
+                                        ),
+                                        for (final step in task.subTasksView)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              top: 6,
+                                            ),
+                                            child: Text('• $step'),
+                                          ),
+                                      ],
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        '${loc.get('triggerTimeLabel')}: ${task.triggerTime == null ? loc.get('notSet') : formatLocalDateTime(task.triggerTime!)}',
+                                        style: TextStyle(
+                                          color: colors.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
                                   ],
                                 ],
                               ),
@@ -349,11 +372,15 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet>
             '${result.nativeSyncFailed ? '\n${loc.get('reminderNativeSyncFailed')}' : ''}',
           ),
         ),
+        tone: result.nativeSyncFailed
+            ? FeedbackTone.warning
+            : FeedbackTone.success,
       );
     } catch (_) {
       if (mounted && _isCurrent) {
         InlineFeedback.of(context).showSnackBar(
           SnackBar(content: Text(loc.get('reminderUpdateFailed'))),
+          tone: FeedbackTone.error,
         );
       }
     } finally {

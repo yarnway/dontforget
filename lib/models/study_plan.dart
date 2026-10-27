@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:uuid/uuid.dart';
 import 'reminder.dart';
+import 'vocabulary_entry.dart';
 
 enum StudyExam { cet4, cet6, postgraduate, ielts, toefl }
 
@@ -36,7 +37,7 @@ class StudyBatch {
       title.trim().isNotEmpty &&
       title.length <= 120 &&
       content.trim().isNotEmpty &&
-      content.length <= 12000;
+      content.length <= 24000;
 }
 
 class StudyPlan {
@@ -101,13 +102,12 @@ class StudyPlan {
           final lines = <String>[];
           for (final word in day['words']) {
             if (word is! Map) throw const FormatException('Invalid vocabulary');
-            final term = field(word['word'], 80);
+            final entry = VocabularyEntry.fromModel(word);
+            final term = entry.word;
             if (!seen.add(term.toLowerCase())) {
               throw const FormatException('Duplicate vocabulary');
             }
-            lines.add(
-              '$term — ${field(word['meaning'], 180)}\n${field(word['example'], 240)}',
-            );
+            lines.add(entry.toNotes());
           }
           final batch = StudyBatch(title: title, content: lines.join('\n\n'));
           if (!batch.isValid) {

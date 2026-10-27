@@ -155,10 +155,21 @@ void main() {
         find.byKey(const ValueKey('study-title-0')),
         'Edited title',
       );
+      await tester.ensureVisible(find.byKey(const ValueKey('study-edit-0')));
+      await tester.tap(find.byKey(const ValueKey('study-edit-0')));
+      await tester.pump();
+      await tester.enterText(
+        find.byKey(const ValueKey('study-content-0')),
+        'recall — 回想\nRecall an example.',
+      );
+      await tester.tap(find.byKey(const ValueKey('study-edit-0')));
+      await tester.pump();
+      expect(find.text('recall'), findsOneWidget);
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pumpWidget(app());
       await tester.pumpAndSettle();
       expect(draft.edited.single.title, 'Edited title');
+      expect(draft.edited.single.content, 'recall — 回想\nRecall an example.');
       final loc = AppLocalizations(const Locale('en'));
       await tester.ensureVisible(find.text(loc.get('studyStartOver')));
       await tester.tap(find.text(loc.get('studyStartOver')));

@@ -10,6 +10,21 @@ class AppLocalizations {
 
   static const Map<String, Map<String, String>> _localizedValues = {
     'en': {
+      'changesSaved': 'Changes saved',
+      'vocabCards': 'Learning cards',
+      'vocabMeaning': 'MEANING',
+      'vocabUsage': 'USAGE & COLLOCATIONS',
+      'vocabExample': 'EXAMPLE',
+      'vocabRecall':
+          'Recall the meaning and try using this word before revealing the answer.',
+      'vocabPrevious': 'Previous word',
+      'vocabNext': 'Next word',
+      'vocabEdit': 'Edit vocabulary',
+      'vocabPreview': 'Show cards',
+      'vocabBatchFeedback':
+          'Browse every word before grading. Remembered / Needs review applies to this whole batch.',
+      'vocabEditHint':
+          'Keep the IPA, POS, Usage, Example and Translation lines to retain cards. Custom notes are always kept.',
       'studyTitle': 'Vocabulary study plan',
       'studyAbout': 'Review schedule and drafts',
       'studyIntro':
@@ -703,6 +718,19 @@ class AppLocalizations {
       'viewInGraph': 'View in Graph',
     },
     'zh': {
+      'changesSaved': '修改已保存',
+      'vocabCards': '词汇学习卡片',
+      'vocabMeaning': '释义',
+      'vocabUsage': '用法与搭配',
+      'vocabExample': '双语例句',
+      'vocabRecall': '先回想释义，尝试用这个词造句，再查看答案。',
+      'vocabPrevious': '上一个词',
+      'vocabNext': '下一个词',
+      'vocabEdit': '编辑词汇',
+      'vocabPreview': '查看卡片',
+      'vocabBatchFeedback': '建议看完本组所有单词再评价。「已记住 / 需复习」会调整整组词汇的提醒时间。',
+      'vocabEditHint':
+          '保留 IPA、POS、Usage、Example、Translation 各行可继续展示卡片；自由补充的笔记始终保留。',
       'studyTitle': '词汇学习计划',
       'studyAbout': '复习安排与草稿',
       'studyIntro': '选择考试与每日学习量，AI 准备词汇批次和建议时间，确认后创建学习提醒。',
@@ -1273,6 +1301,19 @@ class AppLocalizations {
       'viewInGraph': '在图谱中定位',
     },
     'ja': {
+      'changesSaved': '変更を保存しました',
+      'vocabCards': '単語学習カード',
+      'vocabMeaning': '意味',
+      'vocabUsage': '使い方・コロケーション',
+      'vocabExample': '例文と訳',
+      'vocabRecall': '意味を思い出して例文を作り、その後で答えを確認しましょう。',
+      'vocabPrevious': '前の単語',
+      'vocabNext': '次の単語',
+      'vocabEdit': '単語を編集',
+      'vocabPreview': 'カード表示',
+      'vocabBatchFeedback': 'すべての単語を確認してから評価してください。評価はこのバッチ全体の復習日時に反映されます。',
+      'vocabEditHint':
+          'IPA・POS・Usage・Example・Translation の各行を残すとカード表示を維持できます。自由なメモも保持されます。',
       'studyTitle': '英単語の学習プラン',
       'studyAbout': '復習の間隔と下書き',
       'studyIntro': '試験と毎日の学習量を選ぶと、AI が単語と学習時刻を提案します。確認後にリマインダーを作成します。',

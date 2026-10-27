@@ -1,4 +1,5 @@
 import '../widgets/inline_feedback.dart';
+import '../widgets/vocabulary_deck.dart';
 import '../widgets/editor_keyboard_actions.dart';
 import '../widgets/editable_text_menu.dart';
 import '../widgets/linked_task_tile.dart';
@@ -7,6 +8,7 @@ import '../../data/database_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
+import '../../models/vocabulary_entry.dart';
 import '../../providers/providers.dart';
 import '../../services/context_trigger_service.dart';
 import '../../l10n/app_localizations.dart';
@@ -57,6 +59,18 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   bool _exitDialogOpen = false;
   DataGeneration? _editorGeneration;
   bool _isSaving = false;
+  bool _editingVocabulary = false;
+  String? _parsedVocabularySource;
+  bool _hasVocabulary = false;
+  bool get _vocabularyNotes {
+    final source = _summaryController.text;
+    if (_parsedVocabularySource != source) {
+      _parsedVocabularySource = source;
+      _hasVocabulary = VocabularyEntry.parseNotes(source).isNotEmpty;
+    }
+    return widget.task.reviewNotificationsEnabled || _hasVocabulary;
+  }
+
   bool _isDeleting = false;
   bool get _isMutating => _isSaving || _isDeleting;
 
@@ -336,10 +350,14 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       if (result.nativeSyncFailed) {
         feedback.showSnackBar(
           SnackBar(content: Text(l10n.get('reminderNativeSyncFailed'))),
+          tone: FeedbackTone.warning,
         );
         return;
       }
-      feedback.showSnackBar(SnackBar(content: Text(l10n.get('save'))));
+      feedback.showSnackBar(
+        SnackBar(content: Text(l10n.get('changesSaved'))),
+        tone: FeedbackTone.success,
+      );
       // A focused text input can still receive keyboard/IME updates while the
       // pointer is blocked during the write. Keep any newer draft on screen.
       if (_reportedDirty) return;
@@ -349,6 +367,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       if (mounted) {
         feedback.showSnackBar(
           SnackBar(content: Text(l10n.get('reminderUpdateFailed'))),
+          tone: FeedbackTone.error,
         );
       }
     } finally {
@@ -410,6 +429,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                   if (feedback.mounted) {
                     feedback.showSnackBar(
                       SnackBar(content: Text(l10n.get('reminderUpdateFailed'))),
+                      tone: FeedbackTone.error,
                     );
                   }
                 }
@@ -613,6 +633,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       if (mounted) {
         InlineFeedback.of(context).showSnackBar(
           SnackBar(content: Text(l10n.get('reminderUpdateFailed'))),
+          tone: FeedbackTone.error,
         );
       }
     } finally {
@@ -1094,27 +1115,64 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          TextField(
-                            key: const ValueKey('detail-summary'),
-                            contextMenuBuilder: buildEditableTextMenu,
-                            controller: _summaryController,
-                            style: const TextStyle(fontSize: 13, height: 1.45),
-                            decoration: InputDecoration(
-                              isDense: true,
-                              contentPadding: EdgeInsets.zero,
-                              border: InputBorder.none,
-                              labelText: l10n.get('taskDetailsSupplement'),
-                              floatingLabelBehavior:
-                                  FloatingLabelBehavior.never,
-                              hintText: l10n.get('supplementHint'),
-                              hintStyle: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade400,
+                          if (_vocabularyNotes && !_editingVocabulary)
+                            VocabularyDeck(content: _summaryController.text)
+                          else
+                            TextField(
+                              key: const ValueKey('detail-summary'),
+                              contextMenuBuilder: buildEditableTextMenu,
+                              controller: _summaryController,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                height: 1.45,
+                              ),
+                              decoration: InputDecoration(
+                                isDense: true,
+                                contentPadding: EdgeInsets.zero,
+                                border: InputBorder.none,
+                                labelText: l10n.get('taskDetailsSupplement'),
+                                floatingLabelBehavior:
+                                    FloatingLabelBehavior.never,
+                                hintText: l10n.get('supplementHint'),
+                                hintStyle: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade400,
+                                ),
+                              ),
+                              maxLines: 6,
+                              minLines: 3,
+                            ),
+                          if (_vocabularyNotes) ...[
+                            if (_editingVocabulary)
+                              Text(
+                                l10n.get('vocabEditHint'),
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: TextButton.icon(
+                                key: const ValueKey('detail-edit-vocabulary'),
+                                onPressed: _isMutating
+                                    ? null
+                                    : () => setState(
+                                        () => _editingVocabulary =
+                                            !_editingVocabulary,
+                                      ),
+                                icon: Icon(
+                                  _editingVocabulary
+                                      ? Icons.style_outlined
+                                      : Icons.edit_outlined,
+                                ),
+                                label: Text(
+                                  l10n.get(
+                                    _editingVocabulary
+                                        ? 'vocabPreview'
+                                        : 'vocabEdit',
+                                  ),
+                                ),
                               ),
                             ),
-                            maxLines: 6,
-                            minLines: 3,
-                          ),
+                          ],
                         ],
                       ),
                     ),

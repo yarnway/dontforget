@@ -196,6 +196,40 @@ void main() {
   }
 
   testWidgets(
+    'legacy vocabulary opens as cards and edits preserve custom notes',
+    (tester) async {
+      final task = Reminder(
+        id: 'card-detail-28',
+        taskTitle: 'Vocabulary',
+        taskSummary: 'recall — 回想\nTry to recall the word.',
+        quadrantLevel: 2,
+      );
+      await tester.runAsync(() => notifier.addReminder(task));
+      await openDetail(tester, task);
+      expect(find.text('recall'), findsOneWidget);
+      expect(find.byKey(const ValueKey('detail-summary')), findsNothing);
+      final toggle = find.byKey(const ValueKey('detail-edit-vocabulary'));
+      await tester.ensureVisible(toggle);
+      await tester.tap(toggle);
+      await tester.pump();
+      const changed = 'recall — 回想\nTry to recall the word.\n\nMy custom note';
+      await tester.enterText(
+        find.byKey(const ValueKey('detail-summary')),
+        changed,
+      );
+      await tester.ensureVisible(find.text('保存修改'));
+      await performWrite(tester, find.text('保存修改'));
+      final saved = container
+          .read(remindersProvider)
+          .singleWhere((r) => r.id == task.id);
+      expect(saved.taskSummary, changed);
+      await openDetail(tester, saved);
+      expect(find.text(changed), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets(
     'TaskDetailScreen renders task title, summary, reminder time, and professional categories',
     (WidgetTester tester) async {
       final task = Reminder(

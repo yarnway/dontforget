@@ -12,6 +12,7 @@ import 'package:dont_forget/ui/widgets/input_bottom_bar.dart';
 import 'package:dont_forget/ui/widgets/voice_capture_feedback.dart';
 import 'package:dont_forget/ui/widgets/task_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -92,9 +93,22 @@ void main() {
   late ProviderContainer container;
   late _ControlledHomeController home;
   late _Notifications notifications;
+  String? clipboard;
   const recorderChannel = MethodChannel('com.llfbandit.record/messages');
 
   setUp(() async {
+    clipboard = null;
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+          if (call.method == 'Clipboard.setData') {
+            clipboard = (call.arguments as Map)['text'] as String?;
+          }
+          if (call.method == 'Clipboard.getData') return {'text': clipboard};
+          if (call.method == 'Clipboard.hasStrings') {
+            return {'value': clipboard?.isNotEmpty ?? false};
+          }
+          return null;
+        });
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(recorderChannel, (_) async => null);
     sqfliteFfiInit();
@@ -123,6 +137,8 @@ void main() {
     await directory.delete(recursive: true);
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(recorderChannel, null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, null);
   });
 
   Future<void> show(
@@ -459,7 +475,7 @@ void main() {
   );
 
   testWidgets(
-    'iOS focused empty input can record while its keyboard closes',
+    'iOS unfocused empty input can record while its prior keyboard closes',
     (tester) async {
       tester.view.devicePixelRatio = 1;
       tester.view.physicalSize = const Size(320, 568);
@@ -480,6 +496,8 @@ void main() {
         tester.widget<TextField>(find.byType(TextField)).focusNode!.hasFocus,
         isTrue,
       );
+      tester.widget<TextField>(find.byType(TextField)).focusNode!.unfocus();
+      await tester.pump();
       final origin = tester.getCenter(surface);
       final press = await tester.startGesture(origin);
       await tester.pump(const Duration(milliseconds: 700));
@@ -502,6 +520,94 @@ void main() {
       expect(tester.takeException(), isNull);
     },
     variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
+    'iOS focused empty composer offers Paste instead of starting recording',
+    (tester) async {
+      clipboard = '明日 study\n日本語の復習';
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      final input = find.byType(TextField);
+      await tester.tap(find.byKey(const ValueKey('composer-input-surface')));
+      await tester.pump();
+      await tester.longPress(input);
+      await tester.pumpAndSettle();
+      expect(home.starts, 0);
+      expect(find.text('粘贴'), findsOneWidget);
+      await tester.tap(find.text('粘贴'));
+      await tester.pumpAndSettle();
+      expect(tester.widget<TextField>(input).controller!.text, clipboard);
+      expect(home.sent, isEmpty);
+      expect(tester.takeException(), isNull);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
+    'secondary click on idle empty composer can paste without recording',
+    (tester) async {
+      clipboard = 'Paste this draft';
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      final input = find.byType(TextField);
+      expect(tester.widget<TextField>(input).focusNode!.hasFocus, isFalse);
+      await tester.tap(
+        find.byKey(const ValueKey('composer-input-surface')),
+        kind: PointerDeviceKind.mouse,
+        buttons: kSecondaryMouseButton,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('粘贴'), findsOneWidget);
+      await tester.tap(find.text('粘贴'));
+      await tester.pumpAndSettle();
+      expect(tester.widget<TextField>(input).controller!.text, clipboard);
+      expect(home.starts, 0);
+      expect(home.sent, isEmpty);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.macOS),
+  );
+
+  testWidgets(
+    'composer menu selects all, copies, cuts and pastes a multiline draft',
+    (tester) async {
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      final input = find.byType(TextField);
+      const text = '明日 study\n日本語の復習';
+      await tester.enterText(input, text);
+      await tester.pump();
+      final field = tester.widget<TextField>(input);
+      final editor = tester.state<EditableTextState>(find.byType(EditableText));
+      editor.showToolbar();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('全选'));
+      await tester.pumpAndSettle();
+      expect(
+        field.controller!.selection,
+        const TextSelection(baseOffset: 0, extentOffset: text.length),
+      );
+      editor.showToolbar();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('复制'));
+      await tester.pumpAndSettle();
+      expect(clipboard, text);
+      expect(field.controller!.text, text);
+      editor.showToolbar();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('剪切'));
+      await tester.pumpAndSettle();
+      expect(field.controller!.text, isEmpty);
+      expect(field.focusNode!.hasFocus, isTrue);
+      editor.showToolbar();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('粘贴'));
+      await tester.pumpAndSettle();
+      expect(field.controller!.text, text);
+      expect(home.starts, 0);
+      expect(home.sent, isEmpty);
+    },
+    variant: const TargetPlatformVariant({
+      TargetPlatform.macOS,
+      TargetPlatform.iOS,
+    }),
   );
 
   testWidgets(

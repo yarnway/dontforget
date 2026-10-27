@@ -10,6 +10,7 @@ import '../../services/recovery/runtime_gate.dart';
 import '../formatters/local_date_time.dart';
 import 'editable_text_menu.dart';
 import 'workspace_tool_panel.dart';
+import 'vocabulary_deck.dart';
 
 /// Owned by the workspace, so closing/switching a panel retains its draft.
 class StudyPlanDraft extends ChangeNotifier {
@@ -66,6 +67,7 @@ class StudyPlanPanel extends ConsumerStatefulWidget {
 class _StudyPlanPanelState extends ConsumerState<StudyPlanPanel> {
   late final RuntimeRecoveryGate _runtime;
   late final RuntimeRecoveryToken? _birth;
+  final _editingBatches = <int>{};
   StudyPlanDraft get d => widget.draft;
   bool get _current => mounted && _runtime.isCurrent(_birth);
   @override
@@ -120,6 +122,7 @@ class _StudyPlanPanelState extends ConsumerState<StudyPlanPanel> {
           first.minute,
         );
       }
+      _editingBatches.clear();
       d.plan = plan;
       d.edited = plan.batches.toList();
       d.firstReminder = first;
@@ -426,20 +429,55 @@ class _StudyPlanPanelState extends ConsumerState<StudyPlanPanel> {
                             d.edited[i] = d.edited[i].copyWith(title: v);
                           },
                         ),
-                        TextFormField(
-                          key: ValueKey('study-content-$i'),
-                          initialValue: d.edited[i].content,
-                          minLines: 3,
-                          maxLines: 8,
-                          maxLength: 12000,
-                          readOnly: locked,
-                          contextMenuBuilder: buildEditableTextMenu,
-                          decoration: InputDecoration(
-                            labelText: loc.get('studyWords'),
+                        if (_editingBatches.contains(i)) ...[
+                          TextFormField(
+                            key: ValueKey('study-content-$i'),
+                            initialValue: d.edited[i].content,
+                            minLines: 3,
+                            maxLines: 8,
+                            maxLength: 24000,
+                            readOnly: locked,
+                            contextMenuBuilder: buildEditableTextMenu,
+                            decoration: InputDecoration(
+                              labelText: loc.get('studyWords'),
+                            ),
+                            onChanged: (v) {
+                              d.edited[i] = d.edited[i].copyWith(content: v);
+                            },
                           ),
-                          onChanged: (v) {
-                            d.edited[i] = d.edited[i].copyWith(content: v);
-                          },
+                          Text(
+                            loc.get('vocabEditHint'),
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ] else
+                          VocabularyDeck(
+                            key: ValueKey('study-deck-${d.plan!.id}-$i'),
+                            content: d.edited[i].content,
+                          ),
+                        Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: TextButton.icon(
+                            key: ValueKey('study-edit-$i'),
+                            onPressed: locked
+                                ? null
+                                : () => setState(() {
+                                    if (!_editingBatches.remove(i)) {
+                                      _editingBatches.add(i);
+                                    }
+                                  }),
+                            icon: Icon(
+                              _editingBatches.contains(i)
+                                  ? Icons.style_outlined
+                                  : Icons.edit_outlined,
+                            ),
+                            label: Text(
+                              loc.get(
+                                _editingBatches.contains(i)
+                                    ? 'vocabPreview'
+                                    : 'vocabEdit',
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),

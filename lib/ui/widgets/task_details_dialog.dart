@@ -51,6 +51,9 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
     if (!mounted) return;
     InlineFeedback.of(context).showSnackBar(
       SnackBar(content: Text(AppLocalizations.of(context).get(key))),
+      tone: key == 'reminderNativeSyncFailed'
+          ? FeedbackTone.warning
+          : FeedbackTone.error,
     );
   }
 
@@ -115,9 +118,10 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
         _showFailure('reminderNativeSyncFailed');
         return;
       }
-      InlineFeedback.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.get('save'))));
+      InlineFeedback.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.get('changesSaved'))),
+        tone: FeedbackTone.success,
+      );
       setState(() => _isBusy = false);
       Navigator.of(context).pop();
     } catch (_) {

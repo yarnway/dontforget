@@ -4,6 +4,7 @@ import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/models/settings.dart';
 import 'package:dont_forget/models/study_plan.dart';
+import 'package:dont_forget/models/vocabulary_entry.dart';
 import 'package:dont_forget/providers/providers.dart';
 import 'package:dont_forget/services/notification_service.dart';
 import 'package:dont_forget/services/recovery/backup_inspector.dart';
@@ -178,7 +179,18 @@ void main() {
       final plan = StudyPlan(
         batches: List.generate(
           3,
-          (i) => StudyBatch(title: 'Batch $i', content: 'word$i: synthetic'),
+          (i) => StudyBatch(
+            title: 'Batch $i',
+            content: const VocabularyEntry(
+              word: 'recall',
+              ipa: '/rɪˈkɔːl/',
+              partOfSpeech: 'verb',
+              meaning: '回想；记起',
+              usage: 'recall a word',
+              example: 'Try to recall the word.',
+              translation: '尝试回想这个单词。',
+            ).toNotes(),
+          ),
         ),
       );
       final rows = plan.reminders(
@@ -228,6 +240,14 @@ void main() {
         'Reminders',
       )).map(Reminder.fromJson).toList();
       expect(reopened.where((r) => r.reviewNotificationsEnabled), hasLength(2));
+      expect(
+        reopened.every((r) => r.taskSummary == plan.batches.first.content),
+        isTrue,
+      );
+      expect(
+        VocabularyEntry.parseNotes(reopened.first.taskSummary!).single.ipa,
+        '/rɪˈkɔːl/',
+      );
       await expectLater(
         current.addStudyPlan(rows, generation),
         throwsA(isA<DatabaseAccessException>()),

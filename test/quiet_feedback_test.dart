@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dont_forget/ui/widgets/inline_feedback.dart';
+import 'package:dont_forget/ui/theme/app_theme.dart';
+import 'support/interaction_preview.dart';
 
 void main() {
+  setUpAll(loadInteractionPreviewFonts);
   testWidgets('Undo remains accessible above the Navigator route', (
     tester,
   ) async {
@@ -53,6 +56,7 @@ void main() {
         ),
       );
       await tester.tap(find.byType(TextField));
+      final inputRect = tester.getRect(find.byType(TextField));
       final barriersBefore = find.byType(ModalBarrier).evaluate().length;
       final feedback = InlineFeedback.of(pageContext);
       feedback.showSnackBar(const SnackBar(content: Text('First result')));
@@ -60,9 +64,10 @@ void main() {
       expect(focus.hasFocus, isTrue);
       expect(find.byType(SnackBar), findsNothing);
       expect(find.byType(ModalBarrier).evaluate().length, barriersBefore);
+      expect(tester.getRect(find.byType(TextField)), inputRect);
       expect(
-        tester.getTopLeft(find.text('First result')).dy,
-        lessThan(tester.getTopLeft(find.byType(TextField)).dy),
+        tester.getSize(find.byKey(const ValueKey('inline-feedback'))).width,
+        lessThanOrEqualTo(440),
       );
       feedback.showSnackBar(
         SnackBar(
@@ -122,4 +127,73 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     }
   });
+
+  testWidgets(
+    'feedback fits themes, keyboard and safe area without moving input',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      for (final width in [375.0, 1440.0]) {
+        for (final dark in [false, true]) {
+          tester.view.physicalSize = Size(width, 700);
+          late BuildContext pageContext;
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: dark ? AppTheme.dark : AppTheme.light,
+              builder: (context, child) => RepaintBoundary(
+                key: interactionPreviewKey,
+                child: MediaQuery(
+                  data: MediaQuery.of(context).copyWith(
+                    padding: const EdgeInsets.only(top: 24),
+                    viewInsets: const EdgeInsets.only(bottom: 260),
+                  ),
+                  child: InlineFeedback(child: child!),
+                ),
+              ),
+              home: Builder(
+                builder: (context) {
+                  pageContext = context;
+                  return Scaffold(
+                    appBar: AppBar(title: const Text('别忘了')),
+                    body: const Center(child: Text('工作台')),
+                    bottomNavigationBar: const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: TextField(
+                        decoration: InputDecoration(hintText: '记录下一件事…'),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+          final before = tester.getRect(find.byType(TextField));
+          InlineFeedback.of(pageContext).showSnackBar(
+            const SnackBar(content: Text('修改已保存')),
+            tone: FeedbackTone.success,
+          );
+          await tester.pumpAndSettle();
+          final toast = tester.getRect(
+            find.byKey(const ValueKey('inline-feedback')),
+          );
+          expect(toast.width, lessThanOrEqualTo(440));
+          expect(toast.top, greaterThanOrEqualTo(24 + kToolbarHeight));
+          expect(toast.overlaps(before), isFalse);
+          expect(tester.getRect(find.byType(TextField)), before);
+          await tester.tap(find.byType(TextField));
+          await tester.enterText(find.byType(TextField), '继续输入');
+          expect(find.text('继续输入'), findsOneWidget);
+          await tester.pump();
+          await captureInteractionPreview(
+            tester,
+            'feedback-${dark ? 'dark' : 'light'}-${width.toInt()}',
+          );
+          expect(tester.takeException(), isNull);
+          await tester.pumpWidget(const SizedBox());
+        }
+      }
+    },
+  );
 }
