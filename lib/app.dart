@@ -5,6 +5,7 @@ import 'ui/widgets/focused_text_commands.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:window_manager/window_manager.dart';
@@ -15,6 +16,8 @@ import 'providers/recovery_coordinator.dart';
 import 'data/database_helper.dart';
 import 'models/reminder.dart';
 import 'services/notification_route_service.dart';
+import 'services/live_reminder_service.dart';
+import 'models/notification_payload.dart';
 import 'services/notification_service.dart';
 import 'services/startup_trace.dart';
 import 'services/mac_menu_commands.dart';
@@ -50,6 +53,12 @@ class _MyAppState extends ConsumerState<MyApp>
   bool _routeFramePending = false;
   MacMenuCommands<_MacInputToken>? _macMenu;
   Route<void>? _nativeSettingsRoute;
+  String? _pendingLivePayload;
+  String? _openLiveIdentity;
+  bool _liveFramePending = false;
+
+  bool get _supportsLiveActivities =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
 
   bool get _isDesktop =>
       Platform.isWindows || Platform.isLinux || Platform.isMacOS;
@@ -89,6 +98,21 @@ class _MyAppState extends ConsumerState<MyApp>
     _notificationSubscription = _notifications.onNotificationPayload.listen(
       _receiveNotificationPayload,
     );
+    if (_supportsLiveActivities) {
+      ChannelLiveReminderBackend.channel.setMethodCallHandler((call) async {
+        if (call.method == 'openReminder' && call.arguments is String) {
+          _receiveLivePayload(call.arguments as String);
+        }
+      });
+      unawaited(
+        ChannelLiveReminderBackend.channel
+            .invokeMethod<String>('initialize')
+            .then((payload) {
+              if (payload != null && mounted) _receiveLivePayload(payload);
+            })
+            .catchError((Object _) {}),
+      );
+    }
     for (final payload in _notifications.takePendingNotificationPayloads()) {
       _receiveNotificationPayload(payload);
     }
@@ -119,6 +143,13 @@ class _MyAppState extends ConsumerState<MyApp>
     final enteringRecovery =
         _lastRecoveryPhase == RecoveryPhase.idle && phase != RecoveryPhase.idle;
     if (enteringRecovery) _macMenu?.invalidate();
+    if (enteringRecovery && _supportsLiveActivities) {
+      _pendingLivePayload = null;
+      _openLiveIdentity = null;
+      unawaited(
+        ref.read(liveReminderServiceProvider).stop().catchError((Object _) {}),
+      );
+    }
     _lastRecoveryPhase = phase;
     _routeInitialization++;
     _routeDataReady = false;
@@ -161,6 +192,7 @@ class _MyAppState extends ConsumerState<MyApp>
       _routeDataGeneration = generation;
       _routeReminders = reminders;
       _routeDataReady = true;
+      _syncLiveReminder();
       _syncMacMenu();
       StartupTrace.mark('notifications_ready');
       _scheduleNotificationRoutes();
@@ -177,6 +209,82 @@ class _MyAppState extends ConsumerState<MyApp>
       _routeDataReady &&
       _recovery.state.phase == RecoveryPhase.idle &&
       !ref.read(runtimeRecoveryGateProvider).paused;
+
+  void _receiveLivePayload(String encoded) {
+    final payload = NotificationPayload.tryParse(encoded);
+    if (!mounted || payload == null || payload.identity == _openLiveIdentity) {
+      return;
+    }
+    _pendingLivePayload = encoded;
+    _scheduleLiveRoute();
+  }
+
+  void _scheduleLiveRoute() {
+    if (!_supportsLiveActivities ||
+        _liveFramePending ||
+        _pendingLivePayload == null ||
+        !_routeDataReady) {
+      return;
+    }
+    _liveFramePending = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _liveFramePending = false;
+      if (!mounted) return;
+      final snapshot = _notificationSnapshot();
+      final navigator = _navigatorKey.currentState;
+      if (snapshot == null || navigator == null) return;
+      final payload = NotificationPayload.tryParse(_pendingLivePayload);
+      _pendingLivePayload = null;
+      if (payload == null || _openLiveIdentity != null) return;
+      final target = snapshot.reminders
+          .where(
+            (task) => payload.matches(
+              task,
+              currentDatasetEpoch: snapshot.datasetEpoch,
+            ),
+          )
+          .firstOrNull;
+      if (target == null) return;
+      _openLiveIdentity = payload.identity;
+      unawaited(
+        navigator
+            .push<void>(
+              MaterialPageRoute<void>(
+                settings: RouteSettings(name: '/live-reminder/${target.id}'),
+                builder: (_) => TaskDetailScreen(task: target),
+              ),
+            )
+            .whenComplete(() {
+              if (_openLiveIdentity == payload.identity) {
+                _openLiveIdentity = null;
+              }
+            }),
+      );
+    });
+    WidgetsBinding.instance.scheduleFrame();
+  }
+
+  void _syncLiveReminder() {
+    if (!_supportsLiveActivities || !_nativeCommandsReady) return;
+    final epoch = _notifications.datasetEpoch;
+    if (epoch == null) return;
+    unawaited(
+      ref
+          .read(liveReminderServiceProvider)
+          .synchronize(
+            ref.read(remindersProvider),
+            epoch,
+            ref.read(settingsProvider).language,
+          )
+          .catchError((Object _) {}),
+    );
+    _scheduleLiveRoute();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _syncLiveReminder();
+  }
 
   Future<_MacInputToken?> _beginNativeInput() async {
     if (!_nativeCommandsReady) return null;
@@ -336,6 +444,9 @@ class _MyAppState extends ConsumerState<MyApp>
   @override
   void dispose() {
     _macMenu?.dispose();
+    if (_supportsLiveActivities) {
+      ChannelLiveReminderBackend.channel.setMethodCallHandler(null);
+    }
     _routeInitialization++;
     _recovery.removeListener(_onRecoveryChanged);
     unawaited(_notificationSubscription?.cancel());
@@ -412,6 +523,13 @@ class _MyAppState extends ConsumerState<MyApp>
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
+    if (_supportsLiveActivities) {
+      ref.listen(remindersProvider, (_, _) => _syncLiveReminder());
+      ref.listen(
+        settingsProvider.select((settings) => settings.language),
+        (_, _) => _syncLiveReminder(),
+      );
+    }
     _syncMacMenu();
     final recovery = ref.watch(recoveryCoordinatorProvider);
     final recoveryState = recovery.state;
@@ -443,6 +561,7 @@ class _MyAppState extends ConsumerState<MyApp>
         // provider future becomes ready. Retry from this subtree's build so a
         // queued click is not stranded by an earlier null currentState check.
         _scheduleNotificationRoutes();
+        _scheduleLiveRoute();
         return InlineFeedback(
           child: Stack(
             fit: StackFit.expand,

@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import json
 import os
+import plistlib
 from pathlib import Path
 import re
 import shutil
@@ -84,6 +85,34 @@ def macos_architectures(app):
     return entries
 
 
+
+def ios_extensions(app, release_version, build_number):
+    """Fail packaging if the embedded widget is missing or cannot share a version."""
+    host = plistlib.loads(require(app / 'Info.plist').read_bytes())
+    for key, expected in [('CFBundleShortVersionString', release_version),
+                          ('CFBundleVersion', build_number)]:
+        if host.get(key) != expected:
+            raise ValueError(f'iOS host version mismatch: {key}')
+    extension = require(app / 'PlugIns/ReminderActivity.appex')
+    info = plistlib.loads(require(extension / 'Info.plist').read_bytes())
+    for key in ['CFBundleShortVersionString', 'CFBundleVersion']:
+        if info.get(key) != host.get(key):
+            raise ValueError(f'iOS widget version mismatch or missing: {key}')
+    expected_id = host.get('CFBundleIdentifier', '') + '.ReminderActivity'
+    if info.get('CFBundleIdentifier') != expected_id:
+        raise ValueError('iOS widget must belong to the host bundle')
+    point = info.get('NSExtension', {}).get('NSExtensionPointIdentifier')
+    if point != 'com.apple.widgetkit-extension':
+        raise ValueError('iOS Live Activity requires a WidgetKit extension')
+    executable = info.get('CFBundleExecutable')
+    if not isinstance(executable, str) or Path(executable).name != executable:
+        raise ValueError('iOS widget executable name is invalid')
+    require(extension / executable)
+    return [{'bundle': 'PlugIns/ReminderActivity.appex',
+             'version': release_version, 'build_number': build_number,
+             'extension_point': point}]
+
+
 def package(root, platform, revision=None):
     root = Path(root).resolve()
     release_version, build_number = version(root)
@@ -94,6 +123,7 @@ def package(root, platform, revision=None):
     names = []
     signing = 'not-applicable'
     native_architectures = None
+    native_extensions = None
     with tempfile.TemporaryDirectory(prefix=f'{platform}-', dir=dist) as work:
         staging = Path(work)
         if platform == 'windows':
@@ -143,6 +173,7 @@ def package(root, platform, revision=None):
         elif platform == 'ios':
             app = require(root / 'build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app')
             require(app / 'Runner')
+            native_extensions = ios_extensions(app, release_version, build_number)
             assert_clean(app)
             payload = staging / 'Payload'
             payload.mkdir()
@@ -169,6 +200,8 @@ def package(root, platform, revision=None):
         'revision': revision, 'platform': platform, 'signing': signing,
         'runtime_acceptance': 'NOT_PERFORMED', 'artifacts': entries,
     }
+    if native_extensions is not None:
+        manifest['native_extensions'] = native_extensions
     if native_architectures is not None:
         manifest['native_architectures'] = native_architectures
     manifest_path = dist / f'{platform}-manifest.json'

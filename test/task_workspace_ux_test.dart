@@ -450,7 +450,17 @@ void main() {
       final field = tester.widget<TextField>(find.byType(TextField));
       expect(field.controller!.text, 'Existing draft\n明日の予定を確認');
       expect(field.focusNode!.hasFocus, isTrue);
+      expect(find.byKey(const ValueKey('composer-send')), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
       expect(home.sent, isEmpty);
+      expect(field.controller!.text, endsWith('\n'));
+      await tester.enterText(find.byType(TextField), 'Edited transcript');
+      await tester.tap(find.byTooltip('发送'));
+      await drainWorkspaceDrafts(tester, container);
+      await tester.pumpAndSettle();
+      expect(home.sent, ['Edited transcript']);
+      expect(find.byKey(const ValueKey('composer-send')), findsNothing);
       expect(home.stops, 0);
       expect(tester.takeException(), isNull);
     },
@@ -638,7 +648,13 @@ void main() {
             .action,
         VoiceReleaseAction.cancel,
       );
-      expect(find.text('松手取消录音'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(VoiceCaptureFeedback),
+          matching: find.text('松手取消录音'),
+        ),
+        findsOneWidget,
+      );
       await press.up();
       await tester.pumpAndSettle();
       expect(home.cancels, 1);
@@ -663,7 +679,13 @@ void main() {
       await tester.pump();
       await press.moveTo(origin + const Offset(80, -100));
       await tester.pumpAndSettle();
-      expect(find.text('松手转文字并编辑'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(VoiceCaptureFeedback),
+          matching: find.text('松手转文字并编辑'),
+        ),
+        findsOneWidget,
+      );
       await press.up();
       await tester.pump();
       expect(find.text('正在转为可编辑文字…'), findsOneWidget);
@@ -697,7 +719,13 @@ void main() {
       await tester.pump();
       await press.moveTo(origin);
       await tester.pump();
-      expect(find.text('松手保存语音'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(VoiceCaptureFeedback),
+          matching: find.text('松手发送语音'),
+        ),
+        findsOneWidget,
+      );
       await press.up();
       await tester.pumpAndSettle();
       expect(home.stops, 1);
@@ -1228,5 +1256,108 @@ void main() {
       addTearDown(() => drainWorkspaceDrafts(tester, container));
       await tester.pumpWidget(const SizedBox());
     },
+  );
+  testWidgets(
+    'restored voice transcript still requires explicit Send',
+    (tester) async {
+      final drafts = container.read(workspaceDraftsProvider.notifier);
+      await tester.runAsync(
+        () => drafts.put('capture', {
+          'text': '明日の単語を復習',
+          'voiceText': true,
+          'id': 'voice-reopen',
+        }),
+      );
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      await tester.pumpAndSettle();
+      var field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.controller!.text, '明日の単語を復習');
+      final send = find.widgetWithIcon(IconButton, Icons.arrow_upward_rounded);
+      expect(send, findsOneWidget);
+      field.focusNode!.requestFocus();
+      await tester.pump();
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(home.sent, isEmpty);
+      expect(field.controller!.text, contains('\n'));
+      await tester.enterText(find.byType(TextField), '明日9時に単語を復習');
+      await tester.tap(send);
+      await drainWorkspaceDrafts(tester, container);
+      expect(home.sent, ['明日9時に単語を復習']);
+      expect(container.read(workspaceDraftsProvider)['capture'], isNull);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
+    'arc overlay keeps the held input in place',
+    (tester) async {
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      final input = find.byKey(const ValueKey('composer-input-surface'));
+      final before = tester.getRect(input);
+      final press = await tester.startGesture(before.center);
+      await tester.pump(const Duration(milliseconds: 700));
+      await tester.pumpAndSettle();
+      expect(tester.getRect(input), before);
+      expect(
+        tester
+            .widget<VoiceCaptureFeedback>(find.byType(VoiceCaptureFeedback))
+            .fullScreen,
+        isTrue,
+      );
+      await press.moveTo(before.center + const Offset(0, -80));
+      await tester.pump();
+      await press.moveTo(before.center + const Offset(-80, -80));
+      await press.up();
+      await tester.pumpAndSettle();
+      expect(home.cancels, 1);
+      expect(find.byType(VoiceCaptureFeedback), findsNothing);
+      expect(tester.getRect(input), before);
+    },
+    variant: const TargetPlatformVariant({
+      TargetPlatform.iOS,
+      TargetPlatform.android,
+    }),
+  );
+  testWidgets(
+    'a second touch cannot operate controls beneath the recording overlay',
+    (tester) async {
+      var taps = 0;
+      await show(
+        tester,
+        Column(
+          children: [
+            TextButton(
+              onPressed: () => taps++,
+              child: const Text('Underlying action'),
+            ),
+            const InputBottomBar(),
+          ],
+        ),
+        reducedMotion: true,
+      );
+      final press = await tester.startGesture(
+        tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
+        pointer: 1,
+      );
+      await tester.pump(const Duration(milliseconds: 700));
+      await tester.pumpAndSettle();
+      final other = await tester.startGesture(
+        tester.getCenter(find.text('Underlying action')),
+        pointer: 2,
+      );
+      await other.up();
+      await tester.pump();
+      expect(taps, 0);
+      await press.moveBy(const Offset(-80, -100));
+      await press.up();
+      await tester.pumpAndSettle();
+      expect(home.cancels, 1);
+      expect(home.stops, 0);
+    },
+    variant: const TargetPlatformVariant({
+      TargetPlatform.iOS,
+      TargetPlatform.android,
+    }),
   );
 }

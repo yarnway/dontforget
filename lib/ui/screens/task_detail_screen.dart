@@ -1,4 +1,5 @@
 import '../widgets/inline_feedback.dart';
+import '../widgets/live_reminder_button.dart';
 import '../widgets/vocabulary_deck.dart';
 import '../widgets/editor_keyboard_actions.dart';
 import '../widgets/editable_text_menu.dart';
@@ -1087,6 +1088,11 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                           ),
                         ],
                       ),
+                    ),
+
+                    LiveReminderButton(
+                      taskId: widget.task.id,
+                      hasUnsavedChanges: _reportedDirty,
                     ),
 
                     // Dynamic Promotion Alert Banner

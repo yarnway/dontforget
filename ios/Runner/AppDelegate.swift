@@ -21,5 +21,8 @@ import UserNotifications
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "LocalSpeechPlugin") {
       LocalSpeechPlugin.register(with: registrar)
     }
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "LiveReminderPlugin") {
+      LiveReminderPlugin.register(with: registrar)
+    }
   }
 }

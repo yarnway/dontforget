@@ -33,6 +33,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   VoiceReleaseAction _voiceAction = VoiceReleaseAction.save;
   bool _isTranscribing = false;
   bool _voiceMode = false;
+  bool _voiceTextDraft = false;
+  final _capturePortal = OverlayPortalController();
+  bool _captureOverlayWanted = false;
   HomeController? _heldRecorder;
   DateTime? _quickTime;
   bool _memoOnly = false, _submitting = false, _restoring = false;
@@ -68,6 +71,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
       _restoring = true;
       _quickTime = DateTime.tryParse(draft['time']?.toString() ?? '');
       _memoOnly = draft['memo'] == true;
+      _voiceTextDraft = draft['voiceText'] == true;
       _captureId = draft['id'] is String ? draft['id'] as String : _captureId;
       _textController.text = draft['text'] as String;
       _restoring = false;
@@ -87,6 +91,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
             'text': text,
             'time': _quickTime?.toIso8601String(),
             'memo': _memoOnly,
+            if (_voiceTextDraft) 'voiceText': true,
             'id': _captureId,
           };
     unawaited(
@@ -109,12 +114,14 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     final text = _textController.text;
     final focused = _focusNode.hasFocus;
     if (text == _lastText && focused == _lastFocused) return;
+    if (text.isEmpty) _voiceTextDraft = false;
     if (!_restoring && text != _lastText) {
       _draftRevision++;
       // An edited draft must not reuse an ID that may already have committed.
       _captureId = const Uuid().v4();
       _persistDraft();
     }
+
     _lastText = text;
     _lastFocused = focused;
     setState(() {});
@@ -437,7 +444,10 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
               canAcceptDraft: () => mounted,
             );
             if (mounted && text != null) {
-              setState(() => _voiceMode = false);
+              setState(() {
+                _voiceMode = false;
+                _voiceTextDraft = true;
+              });
               final current = _textController.text;
               final draft = current.isEmpty ? text : '$current\n$text';
               _textController.value = TextEditingValue(
@@ -629,9 +639,10 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
               )
               .toList()
         : <MapEntry<dynamic, dynamic>>[];
-    final enterSends = ref.watch(
+    final enterPreference = ref.watch(
       settingsProvider.select((s) => s.inputSendMode == InputSendMode.enter),
     );
+    final enterSends = enterPreference && !_voiceTextDraft;
     final isLocalMode = ref.watch(
       settingsProvider.select((s) => !s.hasConfiguredExtraction),
     );
@@ -658,7 +669,19 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         MediaQuery.viewInsetsOf(context).bottom > 0 ||
         View.of(context).viewInsets.bottom > 0;
 
-    return SafeArea(
+    _captureOverlayWanted =
+        isMobile && _isLongPressRecording && !keyboardVisible;
+    if (_captureOverlayWanted != _capturePortal.isShowing) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (_captureOverlayWanted && _isLongPressRecording) {
+          _capturePortal.show();
+        } else {
+          _capturePortal.hide();
+        }
+      });
+    }
+    final composer = SafeArea(
       top: false,
       child: Container(
         margin: const EdgeInsets.fromLTRB(10, 0, 10, 8),
@@ -718,7 +741,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                 l10n.get('draftSaveFailed'),
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
-            if (_isLongPressRecording && !keyboardVisible)
+            if (_isLongPressRecording && !keyboardVisible && !isMobile)
               VoiceCaptureFeedback(action: _voiceAction),
             if (isMobile &&
                 homeState.isProcessingInBackground &&
@@ -887,45 +910,50 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                         ? (_) => _openEmptyEditMenu()
                         : null,
                     child: isRecording || _isTranscribing
-                        ? Row(
-                            children: [
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  l10n.get(
-                                    _isTranscribing
-                                        ? 'voiceTranscribing'
-                                        : _isLongPressRecording
-                                        ? !homeState.isRecording
-                                              ? 'voicePreparing'
-                                              : switch (_voiceAction) {
-                                                  VoiceReleaseAction.save =>
-                                                    'voiceReleaseSave',
-                                                  VoiceReleaseAction.cancel =>
-                                                    'voiceReleaseCancel',
-                                                  VoiceReleaseAction.text =>
-                                                    'voiceReleaseText',
-                                                }
-                                        : 'recordingClickStop',
+                        ? ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minHeight: isMobile ? 48 : 0,
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
                                   ),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.red.shade700,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    l10n.get(
+                                      _isTranscribing
+                                          ? 'voiceTranscribing'
+                                          : _isLongPressRecording
+                                          ? !homeState.isRecording
+                                                ? 'voicePreparing'
+                                                : switch (_voiceAction) {
+                                                    VoiceReleaseAction.save =>
+                                                      'voiceReleaseSave',
+                                                    VoiceReleaseAction.cancel =>
+                                                      'voiceReleaseCancel',
+                                                    VoiceReleaseAction.text =>
+                                                      'voiceReleaseText',
+                                                  }
+                                          : 'recordingClickStop',
+                                    ),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.red.shade700,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
                           )
                         // iOS TextField's selection recognizer otherwise wins the
                         // gesture arena before our hold-to-record recognizer. Only
@@ -1144,6 +1172,21 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
           ],
         ),
       ),
+    );
+    return OverlayPortal(
+      controller: _capturePortal,
+      overlayChildBuilder: (_) => Positioned.fill(
+        child: BlockSemantics(
+          child: AbsorbPointer(
+            child: VoiceCaptureFeedback(
+              action: _voiceAction,
+              fullScreen: true,
+              preparing: !homeState.isRecording,
+            ),
+          ),
+        ),
+      ),
+      child: composer,
     );
   }
 }
