@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/notification_payload.dart';
+import 'foreground_time_builder.dart';
 import '../../providers/providers.dart';
 import '../../services/live_reminder_service.dart';
 
@@ -94,90 +95,95 @@ class _LiveReminderButtonState extends ConsumerState<LiveReminderButton> {
     final epoch = ref.read(notificationServiceProvider).datasetEpoch;
     final language = Localizations.localeOf(context).languageCode;
     String copy(String key) => LiveReminderCopy.text(language, key);
-    final payload = NotificationPayload.tryParse(service.status.payload);
-    final active =
-        task != null &&
-        epoch != null &&
-        payload?.matches(task, currentDatasetEpoch: epoch) == true;
-    final eligible =
-        task != null &&
-        epoch != null &&
-        LiveReminderService.eligible(task, DateTime.now());
-    if (!eligible && !active) return const SizedBox.shrink();
-    final availability = service.status.availability;
-    final message = _failed
-        ? copy('failed')
-        : widget.hasUnsavedChanges
-        ? copy('save')
-        : switch (availability) {
-            LiveReminderAvailability.available => copy(
-              active ? 'active' : 'hint',
-            ),
-            LiveReminderAvailability.disabled => copy('disabled'),
-            LiveReminderAvailability.unsupported => copy('unsupported'),
-            LiveReminderAvailability.unavailable => copy('unavailable'),
-          };
-    Future<void> act(Future<void> Function() operation) async {
-      setState(() {
-        _busy = true;
-        _failed = false;
-      });
-      try {
-        await operation();
-      } catch (_) {
-        if (mounted) setState(() => _failed = true);
-      } finally {
-        if (mounted) setState(() => _busy = false);
-      }
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 12),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.outlineVariant,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(message, style: Theme.of(context).textTheme.bodySmall),
-              const SizedBox(height: 8),
-              if (availability == LiveReminderAvailability.available)
-                OutlinedButton.icon(
-                  onPressed: _busy || (widget.hasUnsavedChanges && !active)
-                      ? null
-                      : () => act(
-                          () => active
-                              ? service.stop()
-                              : service.start(task, epoch, language),
-                        ),
-                  icon: _busy
-                      ? const SizedBox.square(
-                          dimension: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Icon(
-                          active
-                              ? Icons.stop_circle_outlined
-                              : Icons.notifications_active_outlined,
-                        ),
-                  label: Text(copy(active ? 'stop' : 'start')),
-                )
-              else
-                TextButton(
-                  onPressed: _busy ? null : () => act(service.refresh),
-                  child: Text(copy('retry')),
+    return ForegroundTimeBuilder(
+      boundary: task?.triggerTime,
+      builder: (context, now) {
+        final payload = NotificationPayload.tryParse(service.status.payload);
+        final active =
+            task != null &&
+            epoch != null &&
+            payload?.matches(task, currentDatasetEpoch: epoch) == true;
+        final eligible =
+            task != null &&
+            epoch != null &&
+            LiveReminderService.eligible(task, now);
+        if (!eligible && !active) return const SizedBox.shrink();
+        final availability = service.status.availability;
+        final message = _failed
+            ? copy('failed')
+            : widget.hasUnsavedChanges
+            ? copy('save')
+            : switch (availability) {
+                LiveReminderAvailability.available => copy(
+                  active ? 'active' : 'hint',
                 ),
-            ],
+                LiveReminderAvailability.disabled => copy('disabled'),
+                LiveReminderAvailability.unsupported => copy('unsupported'),
+                LiveReminderAvailability.unavailable => copy('unavailable'),
+              };
+        Future<void> act(Future<void> Function() operation) async {
+          setState(() {
+            _busy = true;
+            _failed = false;
+          });
+          try {
+            await operation();
+          } catch (_) {
+            if (mounted) setState(() => _failed = true);
+          } finally {
+            if (mounted) setState(() => _busy = false);
+          }
+        }
+
+        return Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(message, style: Theme.of(context).textTheme.bodySmall),
+                  const SizedBox(height: 8),
+                  if (availability == LiveReminderAvailability.available)
+                    OutlinedButton.icon(
+                      onPressed: _busy || (widget.hasUnsavedChanges && !active)
+                          ? null
+                          : () => act(
+                              () => active
+                                  ? service.stop()
+                                  : service.start(task, epoch, language),
+                            ),
+                      icon: _busy
+                          ? const SizedBox.square(
+                              dimension: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Icon(
+                              active
+                                  ? Icons.stop_circle_outlined
+                                  : Icons.notifications_active_outlined,
+                            ),
+                      label: Text(copy(active ? 'stop' : 'start')),
+                    )
+                  else
+                    TextButton(
+                      onPressed: _busy ? null : () => act(service.refresh),
+                      child: Text(copy('retry')),
+                    ),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

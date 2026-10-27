@@ -1,5 +1,6 @@
 import '../widgets/inline_feedback.dart';
 import '../widgets/live_reminder_button.dart';
+import '../widgets/foreground_time_builder.dart';
 import '../widgets/vocabulary_deck.dart';
 import '../widgets/editor_keyboard_actions.dart';
 import '../widgets/editable_text_menu.dart';
@@ -652,24 +653,6 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       _selectedTime = target;
       _acceptedSuggestion = false;
     });
-  }
-
-  String _formatTimeRemaining(AppLocalizations l10n) {
-    if (_selectedTime == null) return l10n.get('notSet');
-    final now = DateTime.now();
-    final diff = _selectedTime!.difference(now);
-
-    if (diff.isNegative) {
-      return l10n.get('overdue');
-    }
-
-    if (diff.inDays > 0) {
-      return '${diff.inDays}天 ${diff.inHours % 24}小时';
-    } else if (diff.inHours > 0) {
-      return '${diff.inHours}小时 ${diff.inMinutes % 60}分钟';
-    } else {
-      return '${diff.inMinutes}分钟';
-    }
   }
 
   Color _getCategoryColor(int level) {
@@ -1489,17 +1472,17 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                               const SizedBox(width: 6),
                               if (_selectedTime != null) ...[
                                 if (!_isCompleted)
-                                  Text(
-                                    '${l10n.get('timeRemaining')}: ${_formatTimeRemaining(l10n)}',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color:
-                                          _selectedTime!.isBefore(
-                                            DateTime.now(),
-                                          )
-                                          ? Colors.red.shade400
-                                          : primaryColor,
-                                      fontWeight: FontWeight.w600,
+                                  ForegroundTimeBuilder(
+                                    boundary: _selectedTime,
+                                    builder: (context, now) => Text(
+                                      '${l10n.get('timeRemaining')}: ${formatReminderTimeRemaining(l10n, _selectedTime!, now)}',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: !_selectedTime!.isAfter(now)
+                                            ? Colors.red.shade400
+                                            : primaryColor,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
                                   ),
                                 const SizedBox(width: 6),

@@ -629,6 +629,10 @@ class AppLocalizations {
       'statusCompleted': 'Completed',
       'statusPending': 'In Progress',
       'timeRemaining': 'Time Remaining',
+      'remainingDaysHours': '{days}d {hours}h',
+      'remainingHoursMinutes': '{hours}h {minutes}m',
+      'remainingMinutes': '{minutes}m',
+      'remainingLessThanMinute': 'Less than a minute',
       'overdue': 'Reminder time passed',
       // Privacy & Onboarding
       'privacyShieldTitle': 'Local storage · You choose the AI provider',
@@ -1346,6 +1350,10 @@ class AppLocalizations {
       'statusCompleted': '已完成',
       'statusPending': '进行中',
       'timeRemaining': '距离提醒',
+      'remainingDaysHours': '{days}天 {hours}小时',
+      'remainingHoursMinutes': '{hours}小时 {minutes}分钟',
+      'remainingMinutes': '{minutes}分钟',
+      'remainingLessThanMinute': '不足1分钟',
       'overdue': '提醒时间已过',
       // 隐私与配置引导
       'privacyShieldTitle': '本地存储 · 自主选择 AI 服务商',
@@ -2066,6 +2074,10 @@ class AppLocalizations {
       'statusCompleted': '完了',
       'statusPending': '進行中',
       'timeRemaining': '残り時間',
+      'remainingDaysHours': '{days}日 {hours}時間',
+      'remainingHoursMinutes': '{hours}時間 {minutes}分',
+      'remainingMinutes': '{minutes}分',
+      'remainingLessThanMinute': '1分未満',
       'overdue': '通知時刻を経過',
       // プライバシーとガイド
       'privacyShieldTitle': 'ローカル保存 · AIプロバイダーを選択',
