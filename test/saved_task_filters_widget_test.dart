@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/l10n/app_localizations.dart';
@@ -22,10 +23,28 @@ class _Notifications implements NotificationService {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+class _DelayedWriteDatabase extends DatabaseHelper {
+  _DelayedWriteDatabase(String directory)
+    : super.forTesting(directory, databaseFactoryFfi);
+
+  Future<void>? nextWriteGate;
+
+  @override
+  Future<T> writeTransaction<T>(
+    DataGeneration generation,
+    Future<T> Function(Transaction) operation,
+  ) async {
+    final gate = nextWriteGate;
+    nextWriteGate = null;
+    if (gate != null) await gate;
+    return super.writeTransaction(generation, operation);
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late Directory directory;
-  late DatabaseHelper database;
+  late _DelayedWriteDatabase database;
   late ProviderContainer container;
   late SavedTaskFilterStore store;
   final saveButton = find.byKey(const ValueKey('save-task-filter'));
@@ -35,7 +54,7 @@ void main() {
   setUp(() async {
     sqfliteFfiInit();
     directory = await Directory.systemTemp.createTemp('dontforget-filter-ui-');
-    database = DatabaseHelper.forTesting(directory.path, databaseFactoryFfi);
+    database = _DelayedWriteDatabase(directory.path);
     final db = await database.database;
     for (final title in ['Alpha task', 'Beta task']) {
       await db.insert(
@@ -81,6 +100,12 @@ void main() {
       );
       await tester.pump(const Duration(milliseconds: 20));
     }
+    await drainWorkspaceDrafts(tester, container);
+    await tester.pumpAndSettle(
+      const Duration(milliseconds: 100),
+      EnginePhase.sendSemanticsUpdate,
+      const Duration(seconds: 5),
+    );
   }
 
   Future<void> pump(
@@ -306,13 +331,32 @@ void main() {
       expect(tester.takeException(), isNull);
       await tester.ensureVisible(nameInput);
       await tester.enterText(nameInput, 'Keyboard filter');
+      final writeGate = Completer<void>();
+      database.nextWriteGate = writeGate.future;
       await tester.tap(confirmButton);
-      await settle(tester);
-      expect(tester.takeException(), isNull);
-      expect(
-        (await tester.runAsync(store.load))!.single.name,
-        'Keyboard filter',
-      );
+      await tester.pump();
+      expect(nameInput, findsOneWidget);
+      expect(tester.widget<FilledButton>(confirmButton).onPressed, isNull);
+      // SQLite progresses on real time, independently of widget animation time.
+      Timer? releaseWrite;
+      await tester.runAsync(() async {
+        releaseWrite = Timer(const Duration(milliseconds: 200), () {
+          if (!writeGate.isCompleted) writeGate.complete();
+        });
+      });
+      try {
+        await settle(tester);
+        expect(tester.takeException(), isNull);
+        expect(nameInput, findsNothing);
+        expect(
+          (await tester.runAsync(store.load))!.single.name,
+          'Keyboard filter',
+        );
+      } finally {
+        releaseWrite?.cancel();
+        if (!writeGate.isCompleted) writeGate.complete();
+        await drainWorkspaceDrafts(tester, container);
+      }
       await finish(tester);
     },
   );
