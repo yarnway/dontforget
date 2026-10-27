@@ -226,74 +226,80 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                           button: true,
                           child: Tooltip(
                             message: '${action.title}\n${action.subtitle}',
-                            child: InkWell(
-                              onTap: () => _execute(action),
-                              onHover: (hovering) {
-                                if (hovering && _selectedIndex != index) {
+                            child: MouseRegion(
+                              // Only pointer movement changes selection. A row
+                              // entering beneath a stationary pointer during
+                              // keyboard scrolling must not steal selection.
+                              onHover: (_) {
+                                if (_selectedIndex != index) {
                                   setState(() => _selectedIndex = index);
                                 }
                               },
-                              child: Ink(
-                                color: selected
-                                    ? colors.secondaryContainer
-                                    : null,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 10,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      action.icon,
-                                      size: 22,
-                                      color: colors.primary,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            action.title,
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              height: 1.25,
-                                              fontWeight: FontWeight.w600,
+                              child: InkWell(
+                                onTap: () => _execute(action),
+                                child: Ink(
+                                  color: selected
+                                      ? colors.secondaryContainer
+                                      : null,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 10,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        action.icon,
+                                        size: 22,
+                                        color: colors.primary,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              action.title,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                height: 1.25,
+                                                fontWeight: FontWeight.w600,
+                                              ),
                                             ),
+                                            Text(
+                                              action.subtitle,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                height: 1.3,
+                                                color: colors.onSurfaceVariant,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (action.shortcut != null &&
+                                          MediaQuery.sizeOf(context).width >=
+                                              600)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            left: 12,
                                           ),
-                                          Text(
-                                            action.subtitle,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
+                                          child: Text(
+                                            action.shortcut!,
                                             style: TextStyle(
-                                              fontSize: 12,
-                                              height: 1.3,
+                                              fontSize: 11,
                                               color: colors.onSurfaceVariant,
                                             ),
                                           ),
-                                        ],
-                                      ),
-                                    ),
-                                    if (action.shortcut != null &&
-                                        MediaQuery.sizeOf(context).width >= 600)
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                          left: 12,
                                         ),
-                                        child: Text(
-                                          action.shortcut!,
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: colors.onSurfaceVariant,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),

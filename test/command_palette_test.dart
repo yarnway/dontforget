@@ -2,6 +2,7 @@ import 'support/interaction_preview.dart';
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/ui/widgets/command_palette_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -78,6 +79,41 @@ void main() {
     await tester.pumpAndSettle();
     expect(executed, [29]);
     expect(find.byType(CommandPaletteDialog), findsNothing);
+  });
+
+  testWidgets(
+    'stationary pointer does not steal keyboard selection on scroll',
+    (tester) async {
+      await open(tester);
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      addTearDown(mouse.removePointer);
+      await mouse.moveTo(tester.getCenter(find.text('Tool 0')));
+      await tester.pump();
+      for (var i = 0; i < 20; i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+        // Scrolling moves new rows beneath the unmoved pointer.
+        await tester.pumpAndSettle();
+      }
+      expect(find.text('Tool 20').hitTestable(), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(executed, [20]);
+    },
+  );
+
+  testWidgets('moving the pointer still selects a command for Enter', (
+    tester,
+  ) async {
+    await open(tester);
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    addTearDown(mouse.removePointer);
+    await mouse.moveTo(tester.getCenter(find.text('Tool 2')));
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(executed, [2]);
   });
 
   testWidgets(
