@@ -1,5 +1,7 @@
 # 计划管理：实现与验收索引
 
+最新跨年／历史／采集联动功能 **fb476d5**（含限定元数据修正）：日历多年度合并、缺失覆盖提示及文件导入导出，按原定日期检索与单日处理历史，清晰采集自动生成独立周期；复杂提案确认后原子保存。修正后的558份固定输入通过 **2014 Flutter／126 Python、分析0、纽约专项121项**。新语义使用 TaskDetails version5，旧v1–v4可读；schema16不变，降级需写入新格式前的备份。入口、回归修正及剩余任务见[本轮验收](P1_Calendar_History_Capture_2026-10-28.md)。本任务收尾后按用户要求暂停。
+
 最新周期与上下文策略源码 **43baf08**／**+42**，最终基线 **7777956**（含 **972fbbd** 恢复竞态修复）：普通周期按日期独立、节假日／调休、主动一次约略定位与系统修复、可选进程内后台天气及持久退避。最终 **1950 Flutter／126 Python、分析0、纽约专项46项**，同一548份输入的 macOS／iOS模拟器无签名编译通过。入口、日历来源、格式兼容与原生边界见[本轮验收](P1_Recurring_Calendar_Context_2026-10-28.md)。手机验收仍由指定任务继续。
 
 前轮统一内容管理源码 **069a163**／**+41**：原件／恢复材料引用检查与中断恢复、统一归档、模板导入导出和普通事项项目／标签批量编辑已完成源码，**1879 Flutter／126 Python、静态分析 0 issues**。全量测试、分析及边界见[本轮验收](P1_Unified_Content_2026-10-28.md)；手机通知仍由指定任务继续。
@@ -15,6 +17,8 @@
 ## 使用入口
 
 采集入口现按清晰度自动整理：可核对来源和时间的普通事项直接应用，缺失／冲突及复杂解释保留提案。原文先保存，AI 提前提醒单独作为建议；普通清晰事项不再要求手动“确认 AI 解析结果”。
+
+清晰的每天／工作日／单星期采集可自动创建计划及未来60日独立日期，无AI的文字入口也支持上述单时刻规则。任务详情可进入“管理周期与日期”；计划管理的“日期与记录”支持历史检索、单日完成／跳过／重新打开／移除／恢复，用药在此只读。日历设置支持有界JSON文件或粘贴导入，预览追加新年度或确认完整重叠修订，可导出保留全部年度来源。
 
 手机 +34 的历史容量读回与 **07:04 归还**见[手机通知矩阵](P1_Phone_Notification_Matrix_2026-10-28.md)，后续清理、新版本与设备结果以[最新检查点](Task_Resume_Checkpoint.md)为准。本任务不重放原生样本，本任务手机跨日保留待验。`c2ebdca` 的 **1542 Flutter／126 Python**和旧冻结包分别保留归属。
 
@@ -49,6 +53,7 @@
 | 来源、餐时与日期例外 | [medication_evidence.dart](../lib/models/medication_evidence.dart)、[medication_review_service.dart](../lib/services/medication_review_service.dart)、[calendar_exceptions.dart](../lib/models/calendar_exceptions.dart) |
 | 通用扩展与周期 | [task_details.dart](../lib/models/task_details.dart)、[reminder.dart](../lib/models/reminder.dart) |
 | 原子变更、历史及组操作 | [providers.dart](../lib/providers/providers.dart)、[task_management.dart](../lib/providers/task_management.dart) |
+| 跨年日历、历史日期与采集周期 | [holiday_calendar.dart](../lib/models/holiday_calendar.dart)、[holiday_calendar_file_service.dart](../lib/services/holiday_calendar_file_service.dart)、[routine_dates_panel.dart](../lib/ui/widgets/routine_dates_panel.dart)、[routine_dates.dart](../lib/providers/routine_dates.dart)、[capture_routines.dart](../lib/providers/capture_routines.dart) |
 | 自动整理判定与明确日期 | [capture_automation_policy.dart](../lib/services/capture_automation_policy.dart)、[quick_reminder_parser.dart](../lib/services/quick_reminder_parser.dart) |
 | 模板库与周复盘 | [task_template_library.dart](../lib/ui/widgets/task_template_library.dart)、[task_templates_provider.dart](../lib/providers/task_templates_provider.dart)、[weekly_task_review.dart](../lib/models/weekly_task_review.dart) |
 | 天气接口与数据校验 | [departure_weather_service.dart](../lib/services/departure_weather_service.dart) |
@@ -74,6 +79,8 @@
 回收站保留原批次数据；永久删除词汇批次或清理已完成时，对仍能对应的逐词反馈建立独立档案，后续同词复用最新反馈，已完成清理保留这些档案。档案的统一管理／清除、内容身份更正后的迁移仍列为第三阶段剩余任务。
 
 ## 自动化证据
+
+- [跨年／历史／采集联动验收](P1_Calendar_History_Capture_2026-10-28.md)：修正后全量2014 Flutter／126 Python、分析0、纽约121项；覆盖多年度冲突、空档、JSON／SQLite实际恢复、单日操作、事务回滚、来源保留、日期建议与旧格式兼容，以及三语布局／键盘。专项不与全量相加。
 
 - [多来源／餐时／日期例外验收](P1_Medication_Calendar_2026-10-28.md)：本轮最终完整源码集成回归、静态分析、时区专项和 JSON／SQLite 实际恢复；[模型与事务测试](../test/medication_calendar_test.dart)、[真实控件测试](../test/medication_calendar_widgets_test.dart)。
 

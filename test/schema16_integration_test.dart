@@ -590,7 +590,17 @@ void main() {
         await notifier.applyCaptureProposal(original, [suggestion]);
         final saved = notifier.state.single;
         expect(saved.taskTitle, 'Suggested');
-        expect(saved.detailsJson, original.detailsJson);
+        expect(
+          saved.details.patch({
+            'history': original.details.toJson()['history'],
+          }).encode(),
+          original.detailsJson,
+        );
+        expect(
+          saved.details.history.length,
+          original.details.history.length + 1,
+        );
+        expect(saved.details.history.last.action, 'capture_applied');
         expect(saved.details.checklist.single.done, isTrue);
         expect(saved.details.project, '保留原有项目');
       } finally {

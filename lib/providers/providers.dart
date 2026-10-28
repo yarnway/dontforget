@@ -1017,7 +1017,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     }
     return original
         .patch({
-          'repeat': candidate.isRecurring ? details.repeat?.toJson() : null,
+          'repeat': details.repeat?.toJson() ?? original.repeat?.toJson(),
           'checklist': details.checklist.isEmpty
               ? original.checklist.map((e) => e.toJson()).toList()
               : details.checklist.map((e) => e.toJson()).toList(),

@@ -1,0 +1,249 @@
+{
+  "date": "2026-10-28",
+  "timezone": "Asia/Shanghai",
+  "feature_commit": "fb476d50cbe584405f7a4a0134705103ca47c431",
+  "source_status": "verified_base_plus_scoped_patch_final_main_commit_recorded_by_integrator",
+  "validated_candidate": {
+    "base_commit": "fb476d50cbe584405f7a4a0134705103ca47c431",
+    "patch": {
+      "path": "build/phase2-calendar-history-capture-20261028/candidate-r1.patch",
+      "bytes": 1615,
+      "sha256": "eec336508b533787f837e86d23e90e815ea6c10049a98433a65adbae2c5a31d4"
+    },
+    "overlay_paths": [
+      "lib/providers/providers.dart",
+      "test/schema16_integration_test.dart"
+    ]
+  },
+  "version": "1.7.0+44",
+  "version_bumped_by_this_task": false,
+  "schema": 16,
+  "task_details_versions_read": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "new_semantics_version": 5,
+  "calendar_bundle_version": 2,
+  "ordinary_series_version": 2,
+  "ordinary_occurrence_version": 2,
+  "toolchain": {
+    "flutter": "3.44.9",
+    "dart": "3.12.2"
+  },
+  "frozen_inputs": {
+    "files": 558,
+    "match_base_and_scoped_patch": true,
+    "test_only_directory": true,
+    "no_native_build_in_test_directory": true,
+    "manifest": {
+      "path": "build/phase2-calendar-history-capture-20261028/input-manifest-candidate-r1.json",
+      "bytes": 97134,
+      "sha256": "5062bbcd5aa97ee4e47c8d5e8f0afdd2afb09a2cedfbd1d4e4a6431deb448a08"
+    }
+  },
+  "tests": {
+    "flutter": {
+      "passed": 2014,
+      "failed": 0,
+      "skipped": 0,
+      "log": "flutter-full-candidate-r1.log"
+    },
+    "python": {
+      "passed": 126,
+      "failed": 0,
+      "skipped": 0,
+      "log": "python-full-fb476d5.log",
+      "primary_tracked_script_inputs_match_candidate": true
+    },
+    "analysis": {
+      "issues": 0,
+      "log": "analyze-candidate-r1.log"
+    },
+    "dst": {
+      "timezone": "America/New_York",
+      "passed": 121,
+      "failed": 0,
+      "log": "dst-candidate-r1-final.log"
+    },
+    "preflight": {
+      "passed": 138,
+      "failed": 0,
+      "log": "regression-final-preflight.log"
+    },
+    "widget_widths": [
+      375,
+      768,
+      1440
+    ],
+    "widget_languages": [
+      "zh",
+      "en",
+      "ja"
+    ],
+    "large_text_and_keyboard": true,
+    "actual_temporary_recovery_formats": [
+      "json",
+      "sqlite"
+    ]
+  },
+  "calendar": {
+    "max_total_bytes": 49152,
+    "max_snapshots": 4,
+    "merge_same_region": true,
+    "overlap_replacement_requires_confirmation": true,
+    "partial_coverage_replacement_rejected": true,
+    "unknown_coverage_held": true,
+    "source_urls_not_automatically_fetched_or_authenticated": true,
+    "builtin_years": [
+      2026
+    ],
+    "future_year_test_data": "synthetic_not_official",
+    "automatic_official_updates": "remaining"
+  },
+  "history": {
+    "filter_basis": "original_scheduled_date",
+    "actions": [
+      "complete",
+      "skip",
+      "reopen",
+      "trash",
+      "restore"
+    ],
+    "single_date_only": true,
+    "past_alarm_times_not_replayed": true,
+    "medication_history_read_only": true,
+    "no_inferred_missed_or_completed_records": true
+  },
+  "capture": {
+    "clear_local_rules": [
+      "daily",
+      "workday",
+      "one_weekday"
+    ],
+    "logical_count_not_date_count": true,
+    "atomic_plan_and_dates": true,
+    "source_and_user_metadata_preserved": true,
+    "ai_suggestion_dated_anchor": true,
+    "legacy_unanchored_hints_preserved_but_not_offered": true,
+    "ambiguous_or_complex_input_requires_review": true
+  },
+  "regressions": {
+    "first_full_failure": {
+      "passed": 2013,
+      "failed": 1,
+      "test": "schema16_integration_test confirming AI title edits preserves user checklist and project metadata",
+      "fix": "retain original repeat metadata when candidate has no new repeat; verify existing fields/history plus capture_applied",
+      "log": "flutter-full-fb476d5.log"
+    },
+    "initial_dst_command": {
+      "kind": "nonexistent_test_file_in_command",
+      "passed": 103,
+      "load_errors": 1,
+      "corrected_final_passed": 121,
+      "log": "dst-candidate-r1.log"
+    },
+    "dated_suggestion_anchor": "fixed",
+    "departure_calendar_preserves_snoozed_removed_and_paused": "fixed"
+  },
+  "acceptance": {
+    "native_builds": "not_run_this_slice_no_native_or_dependency_change",
+    "installed_or_launched": false,
+    "phone_operated": false,
+    "phone_cross_day": "pending",
+    "phone_notification_acceptance_responsible_thread_id": "01a15c7c-8a67-7562-9db6-e540460d05c1",
+    "physical_phone_access_claimed": false,
+    "real_ai_location_weather_calls": false,
+    "push_by_this_task": false,
+    "published_by_this_task": false,
+    "required_native_release_platforms": [
+      "macos",
+      "ios"
+    ],
+    "ci_platforms": [
+      "macos",
+      "ios",
+      "android",
+      "windows",
+      "linux"
+    ]
+  },
+  "remaining": {
+    "phase2": [
+      "macos_ios_native_acceptance_phone_matrix_and_phone_cross_day",
+      "trusted_official_calendar_update_distribution_and_more_regions",
+      "complex_periodic_capture_and_real_multimodal_quality",
+      "background_geofencing_system_wake_and_real_permissions",
+      "storage_upgrade_locking_large_capacity_disk_failure_cross_device_restore",
+      "backup_retention_external_reference_registration_space_statistics"
+    ],
+    "phase3": [
+      "learning_plan_group_management_and_long_term_load",
+      "pronunciation_dictation_profile_management_and_migration",
+      "share_global_capture_focus_week_view",
+      "lan_edit_delete_attachments_persistent_conflicts_real_devices"
+    ]
+  },
+  "preserved_original_dirty_files": {
+    "docs/Architecture_Design.md": "d484c9824a433ea1dba22036092e72e9f3983ec60575efca270a89b252ff4e55",
+    "docs/Developer_Guide.md": "d0a3023151ba3bd328c52c4cbdf8ab7687150bc6868922c73607388f59a7f9e3"
+  },
+  "logs": {
+    "pub-get-candidate-r1.log": {
+      "path": "build/phase2-calendar-history-capture-20261028/pub-get-candidate-r1.log",
+      "bytes": 2842,
+      "sha256": "a7ce68aa7a838eb7178438083be9e59b0634a97212a58be44c60c490270b664b"
+    },
+    "flutter-full-candidate-r1.log": {
+      "path": "build/phase2-calendar-history-capture-20261028/flutter-full-candidate-r1.log",
+      "bytes": 519206,
+      "sha256": "0388acf4fbf8b669796808bdd16194d6f44b2672d8196a9abd4e082c5800a2a2"
+    },
+    "analyze-candidate-r1.log": {
+      "path": "build/phase2-calendar-history-capture-20261028/analyze-candidate-r1.log",
+      "bytes": 96,
+      "sha256": "faed72205233beee327064c1680a5d41d761df02fb29e60bdaa8b245fcb101e2"
+    },
+    "python-full-fb476d5.log": {
+      "path": "build/phase2-calendar-history-capture-20261028/python-full-fb476d5.log",
+      "bytes": 13567,
+      "sha256": "5017ae2b6e47bc25a1aaee8b831b42eeaedffc67caf468de52c18daacc98dcf6"
+    },
+    "dst-candidate-r1-final.log": {
+      "path": "build/phase2-calendar-history-capture-20261028/dst-candidate-r1-final.log",
+      "bytes": 27355,
+      "sha256": "5fad690ab90383eeca3de4a8d8b3ed7d4f29af64821e84bdfd97ea62f56c9a76"
+    },
+    "flutter-full-fb476d5.log": {
+      "path": "build/phase2-calendar-history-capture-20261028/flutter-full-fb476d5.log",
+      "bytes": 536139,
+      "sha256": "c4732ca62fe2bf4ed3e3e29d3e64614864742a79bc088ab8ab65ade2651c6a98"
+    },
+    "dst-candidate-r1.log": {
+      "path": "build/phase2-calendar-history-capture-20261028/dst-candidate-r1.log",
+      "bytes": 24559,
+      "sha256": "be9996477cf96089d616afafc61692ed77a6249068599aed2ac607bddc014a31"
+    },
+    "candidate-r1.patch": {
+      "path": "build/phase2-calendar-history-capture-20261028/candidate-r1.patch",
+      "bytes": 1615,
+      "sha256": "eec336508b533787f837e86d23e90e815ea6c10049a98433a65adbae2c5a31d4"
+    },
+    "input-manifest-candidate-r1.json": {
+      "path": "build/phase2-calendar-history-capture-20261028/input-manifest-candidate-r1.json",
+      "bytes": 97134,
+      "sha256": "5062bbcd5aa97ee4e47c8d5e8f0afdd2afb09a2cedfbd1d4e4a6431deb448a08"
+    }
+  },
+  "pause": {
+    "requested_by_user": true,
+    "when": "after_current_verified_main_commit_and_ledger",
+    "resume": "manual_only"
+  },
+  "cleanup": {
+    "status": "two_owned_test_snapshots_retained_for_coordinated_review",
+    "touch_user_data_or_other_tasks": false
+  }
+}
