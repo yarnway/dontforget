@@ -1,4 +1,4 @@
-name: Multi-Platform Build & Release
+name: Multi-Platform Build & Verify
 
 on:
   push:
@@ -149,14 +149,15 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-  release:
-    name: Prepare draft release after all packages pass
+  verify_packages:
+    name: Verify tag packages without publishing
     needs: [quality, build]
     runs-on: ubuntu-24.04
-    # Manual/branch runs build acceptance artifacts only. Publication is separate.
+    # Keep validation packages in Actions artifacts, including RC tags.
+    # Publish stable releases separately after macOS and iOS acceptance.
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
-      contents: write
+      contents: read
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -168,12 +169,3 @@ jobs:
           merge-multiple: true
       - name: Verify all platforms belong to this version and commit
         run: python scripts/verify_artifacts.py release-files --revision "$GITHUB_SHA" --tag "$GITHUB_REF_NAME"
-      - uses: softprops/action-gh-release@v2
-        with:
-          files: release-files/*
-          tag_name: ${{ github.ref_name }}
-          name: DontForget ${{ github.ref_name }} candidate
-          draft: true
-          prerelease: true
-          generate_release_notes: true
-          fail_on_unmatched_files: true

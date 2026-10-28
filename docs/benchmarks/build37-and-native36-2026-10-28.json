@@ -1,0 +1,301 @@
+{
+  "checkedAt": "2026-10-28T09:10:46.801583+08:00",
+  "version": "1.7.0+37",
+  "source": "dfb34f1f26b628f880fe802f9ffe4b84de78fc0d",
+  "schema": 16,
+  "candidate": {
+    "tag": "v1.7.0-rc.37",
+    "releaseId": 426110738,
+    "publication": "NOT_PUBLISHED_USER_POLICY",
+    "ciRun": 40602594298,
+    "ciJobsPassed": 7,
+    "duplicateMainRun": 40602594304,
+    "duplicateMainConclusion": "cancelled",
+    "priorDraftUnavailableOnPublish": true,
+    "newReleaseCreated": false
+  },
+  "localTests": {
+    "flutterPassed": 1544,
+    "pythonPassed": 126,
+    "analyzerIssues": 0,
+    "commandPaletteTestsIncluded": 18
+  },
+  "ciQuality": {
+    "flutterPassed": 1543,
+    "flutterSkipped": 1,
+    "pythonPassed": 125,
+    "pythonSkipped": 1,
+    "macosRealStorageLock": "PASS"
+  },
+  "releaseVerification": {
+    "tag": "v1.7.0-rc.37",
+    "source": "dfb34f1f26b628f880fe802f9ffe4b84de78fc0d",
+    "releaseId": 426110738,
+    "draft": true,
+    "prerelease": true,
+    "assetCount": 21,
+    "downloadedMetadataVerified": 14,
+    "platformManifestsVerified": 5,
+    "packagesMatchedToGithubAssetDigestAndSize": [
+      {
+        "file": "DontForget_Android_test-signed_v1.7.0.apk",
+        "bytes": 71561035,
+        "sha256": "75aecbdc3ff6d53a3949aa7d07b9751c594027698510cecbfd3dd517086b3cc8"
+      },
+      {
+        "file": "DontForget_Android_test-signed_v1.7.0.aab",
+        "bytes": 68950310,
+        "sha256": "2089411ee3c50a06564cc2bd92c156eb0578a1112d7c026c10fd3db4e89de526"
+      },
+      {
+        "file": "DontForget_iOS_unsigned_v1.7.0.ipa",
+        "bytes": 10495468,
+        "sha256": "e8d3a3a789f3a157d8661bebf32850982a988c69a57f4823e6f5c8ae81660a23"
+      },
+      {
+        "file": "DontForget_Linux_x64_v1.7.0.tar.gz",
+        "bytes": 13625738,
+        "sha256": "5e71072a719dc9a3a5025c053cc62751b2b21ba1936639d522aabaff00e07b08"
+      },
+      {
+        "file": "DontForget_macOS_unnotarized_v1.7.0.zip",
+        "bytes": 25057852,
+        "sha256": "36eaa3748731bedf6e45fd2e49b8543929d7b397460c40003a64e6833aaea9e0"
+      },
+      {
+        "file": "DontForget_Setup_v1.7.0.exe",
+        "bytes": 14069362,
+        "sha256": "22be4443b651c95026ab6173fa074ac96034981a08cb3c5fad696cff32a23a76"
+      },
+      {
+        "file": "DontForget_Windows_Portable_v1.7.0.zip",
+        "bytes": 16982348,
+        "sha256": "36c5cf62ffb5e42bfa01410888494db28e599be3a70130379a2bdafbbe2af28b"
+      }
+    ],
+    "nativeReportsVerified": [
+      {
+        "file": "linux-startup.json",
+        "result": "PASS",
+        "scope": "unpacked-native-process-startup-only"
+      },
+      {
+        "file": "macos-startup.json",
+        "result": "PASS",
+        "scope": "unpacked-native-process-startup-only"
+      },
+      {
+        "file": "windows-installation.json",
+        "result": "PASS",
+        "scope": "installer-upgrade-uninstall-with-legacy-file-preservation"
+      },
+      {
+        "file": "windows-startup.json",
+        "result": "PASS",
+        "scope": "unpacked-native-process-startup-only"
+      }
+    ],
+    "integrityBoundary": "CI checked full package bytes; local verification downloaded metadata only and matched all package digests and sizes to GitHub assets.",
+    "deviceInstallPerformed": false,
+    "deviceAcceptancePerformed": false
+  },
+  "nativeVersion": "1.7.0+36",
+  "macNative": {
+    "version": "1.7.0+36",
+    "bundleID": "com.example.dontForget.acceptance.study27-local",
+    "integrity": "ok",
+    "schema": 16,
+    "tables": {
+      "Reminders": {
+        "rows": 4,
+        "allFieldsUnchanged": true
+      },
+      "Settings": {
+        "rows": 1,
+        "allFieldsUnchanged": true
+      },
+      "MediaRecords": {
+        "rows": 0,
+        "allFieldsUnchanged": true
+      }
+    },
+    "nativeHomeAndSettings": true,
+    "cmdKAndEscape": true,
+    "notificationPermission": "notEnabledUnchanged",
+    "osPending": 3,
+    "osRetained": 0,
+    "exactProcessExited": true,
+    "timestamp": "2026-10-28T07:28:39.398954+08:00"
+  },
+  "phoneNative": {
+    "bundle": "com.yarnway.dontforget.acceptance.iphone17",
+    "upgradedFrom": 34,
+    "upgradedTo": 36,
+    "schema": 16,
+    "installPreservedDocumentsFiles": 17,
+    "allDocumentBytesUnchangedAtInstall": true,
+    "originalTasks": 3,
+    "originalMediaRows": 5,
+    "originalMediaFiles": 5,
+    "settingsRows": 1,
+    "allOriginalFieldsAndMediaBytesPreserved": true,
+    "priorCleanup": {
+      "capacityDoses": 56,
+      "owner": 1,
+      "warm": 1,
+      "allSoftDeleted": true,
+      "all56PlanLinksVerified": true,
+      "journalCancelSubmitted": 58
+    },
+    "newQa38": {
+      "aiProposalConfirmed": true,
+      "softDeleted": true,
+      "journalCancelSubmitted": true,
+      "osCancelReadback": true,
+      "actualDeliveryAndClick": "NOT_VERIFIED"
+    },
+    "finalOsPending": 0,
+    "finalOsRetainedOriginals": 2,
+    "finalPendingCancel": 0,
+    "finalReminderRowsIncludingTrash": 63,
+    "nativeInput": "hardware keyboard only",
+    "phoneHandoff": "independent P1 notification matrix; explicit return required"
+  },
+  "remaining": [
+    "rc.37 native install and command-palette verification",
+    "iPhone ordinary notification warm/cold/late/deleted clicks",
+    "Japanese software keyboard composition and orientation",
+    "real microphone capture and continuous arc gestures",
+    "Live Activity edit/pause/delete state synchronization",
+    "stable release only after macOS and iOS acceptance gates close"
+  ],
+  "cleanup": {
+    "at": "2026-10-28T09:18:25.570044+08:00",
+    "removed": [
+      {
+        "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/study34-local/dont_forget.app",
+        "kib": 59792
+      },
+      {
+        "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/study-stage38-materials/ios36-derived",
+        "kib": 24632
+      },
+      {
+        "path": "/Users/james/.codex/worktrees/ios-live-activity/dontforget/build",
+        "kib": 66232
+      },
+      {
+        "path": "/Users/james/.codex/worktrees/ios-live-activity/dontforget/.dart_tool",
+        "kib": 24700
+      },
+      {
+        "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/study-stage38-materials/release37-verified-artifacts/DontForget_Android_test-signed_v1.7.0.apk",
+        "kib": 69884
+      },
+      {
+        "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/study-stage38-materials/release37-verified-artifacts/DontForget_Android_test-signed_v1.7.0.aab",
+        "kib": 67336
+      },
+      {
+        "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/study-stage38-materials/release37-verified-artifacts/DontForget_Linux_x64_v1.7.0.tar.gz",
+        "kib": 13308
+      },
+      {
+        "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/study-stage38-materials/release37-verified-artifacts/DontForget_Setup_v1.7.0.exe",
+        "kib": 13740
+      },
+      {
+        "path": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/study-stage38-materials/release37-verified-artifacts/DontForget_Windows_Portable_v1.7.0.zip",
+        "kib": 16588
+      }
+    ],
+    "removedKiB": 356212,
+    "newRollbackArchiveKiB": 24684,
+    "netThisCleanupKiB": 331528,
+    "mac34Rollback": {
+      "file": "mac34-rollback.zip",
+      "sha256": "9dffa73e6bb596c38318da25679a6049335a4fc47fef92f7adfa8a5e64213318",
+      "treeEntriesVerified": 117,
+      "modesLinksBytesEqual": true,
+      "strictSignature": "PASS"
+    },
+    "preserved": [
+      "current Mac36 app",
+      "rc36 raw packages and iOS36 private signed rollback",
+      "Mac33 and Mac34 rollback archives",
+      "iOS34 rollback",
+      "rc37 Mac/iOS CI packages and all metadata",
+      "device snapshots, profiles and native evidence",
+      "other tasks build caches and dirty work"
+    ],
+    "observedRootProjectKiB": 3145920,
+    "rootObservationIncludesOtherTasks": true
+  },
+  "privateEvidence": {
+    "phone-cleanup-database-verification.json": {
+      "bytes": 984,
+      "sha256": "de34117a68e69e5bfb5096990aeeb302da75f61517e0cff7dae21ba6f674e574"
+    },
+    "ios36-upgrade-before-launch.json": {
+      "bytes": 126,
+      "sha256": "9ae1c5cb7c871cc67e452c3d4982dd91f5d5fb3741df6ee50f29d43cfe0c1f4d"
+    },
+    "ios36-signature.json": {
+      "bytes": 18184,
+      "sha256": "2e86c5647c3b03c2c5b2898865c61ec699db8c5f9094776eccce9d5ad8ff126d"
+    },
+    "mac36-native-upgrade.json": {
+      "bytes": 604,
+      "sha256": "336e13ff177d5a7aeb8ec369c892fc5931b3b4aed23ed3cd940d1e39bc731c41"
+    },
+    "mac36-native-architectures.json": {
+      "bytes": 862,
+      "sha256": "9b25b41b1cab45f4b6da23da552ff935808edb2d0adc68109f83c5e2ce6aeb3e"
+    },
+    "iphone38-final-verification.json": {
+      "bytes": 808,
+      "sha256": "e69aa4dc687ec04604b8cc0010a23117e2b343ae04043f506f43653829b88c5f"
+    },
+    "local-validation.json": {
+      "bytes": 1026,
+      "sha256": "7527764e9e119e28894e17ddc724e88ebe6f265b40b63c12d888fe544bd0ad59"
+    },
+    "ci37-final.json": {
+      "bytes": 26102,
+      "sha256": "dc7925437c6f7cce1d0fe6e83892a89e4d7722c2640c8623872ecfdac4833665"
+    },
+    "release37-metadata-verification.json": {
+      "bytes": 2324,
+      "sha256": "22d3866b4ce93194c4c64daa12c11d6ac5ca715cadabdd360acc7b6a5871607d"
+    },
+    "phone-handoff.json": {
+      "bytes": 1737,
+      "sha256": "51a9a828a015834f1f9f4b049873c042f24f8c32513b0fdf17ae7c9cf6584d87"
+    },
+    "qa38-final-os-originals.png": {
+      "bytes": 121027,
+      "sha256": "622eafb8afa829bad11b4e0d1d6b07bc7bcb5b3aa87fd3c3f3b098663bda84d1"
+    },
+    "cleanup.json": {
+      "bytes": 2316,
+      "sha256": "9e13478d817d42530c0a2b81346b07907a8224032fbda1e19dc90cbc0de066de"
+    },
+    "packaging-policy-tests.log": {
+      "bytes": 1724,
+      "sha256": "cd1931694a362dfabbec2a3adaf87b13991ffbe13d1c4dff0614b0fcb3ad226f"
+    }
+  },
+  "releasePolicy": {
+    "automaticReleaseCreation": false,
+    "automaticReleaseWritePermission": false,
+    "newRcReleases": false,
+    "stableRequiresMacAndIosAcceptance": true,
+    "workflowValidation": "YAML parse and 19 packaging tests passed; new main CI pending"
+  },
+  "fullCiArtifactRecovery": {
+    "artifactFilesVerified": 21,
+    "fullPackagesVerified": 7,
+    "matchEarlierVerifiedDraftDigests": true,
+    "uploaded": false
+  }
+}
