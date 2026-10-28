@@ -366,6 +366,34 @@ void main() {
       );
     });
     test(
+      'sparse long intervals and 366 excluded weekly dates retain a next date',
+      () {
+        final base = DateTime(2030, 1, 7, 8);
+        final first = DateTime(2030, 1, 7 + 365 * 7, 8);
+        final repeat = RepeatWindow(
+          interval: 365,
+          weekdays: const [1],
+          exceptions: CalendarExceptions(skip: [CalendarExceptions.key(first)]),
+        );
+        expect(
+          repeat.next(base, base, 'weekly'),
+          DateTime(2030, 1, 7 + 730 * 7, 8),
+        );
+        final p = departure(
+          exceptions: CalendarExceptions(
+            skip: [
+              for (var i = 0; i < 366; i++)
+                CalendarExceptions.key(DateTime(2030, 1, 8 + i * 7)),
+            ],
+          ),
+        );
+        expect(
+          p.build(DateTime(2030, 1, 7)).eventTime,
+          DateTime(2030, 1, 8 + 366 * 7, 0, 5),
+        );
+      },
+    );
+    test(
       'meal-linked times are explicit, immutable dose snapshots and round trip',
       () {
         final p = course(), built = p.build(now: DateTime(2030, 1, 6));

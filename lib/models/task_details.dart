@@ -373,7 +373,18 @@ class RepeatWindow {
   DateTime? next(DateTime base, DateTime after, String rule) {
     RepeatWindow.fromJson(toJson());
     base = anchor ?? base;
-    final ordinary = _nextRegular(base, after, rule);
+    var ordinary = _nextRegular(base, after, rule);
+    // Advance one regular interval per excluded date. A sparse long interval
+    // must not exhaust a day-scan budget merely because its first date is skipped.
+    for (
+      var i = 0;
+      ordinary != null &&
+          exceptions.excludes(ordinary) &&
+          i <= exceptions.skip.length;
+      i++
+    ) {
+      ordinary = _nextRegular(base, ordinary, rule);
+    }
     DateTime? extra;
     for (final key in exceptions.add) {
       final day = CalendarExceptions.day(key);
@@ -445,8 +456,7 @@ class RepeatWindow {
           base.day > last ? last : base.day,
         );
         if (candidate.isAfter(cutoff) &&
-            (beginning == null || !candidate.isBefore(beginning)) &&
-            !exceptions.excludes(candidate)) {
+            (beginning == null || !candidate.isBefore(beginning))) {
           return accept(candidate);
         }
       }
@@ -492,7 +502,7 @@ class RepeatWindow {
                     : offset % interval == 0) &&
                 (rule != 'workday' || candidate.weekday <= 5) &&
                 (weekdays.isEmpty || weekdays.contains(candidate.weekday));
-      if (matches && !exceptions.excludes(candidate)) return candidate;
+      if (matches) return candidate;
     }
     return null;
   }
