@@ -1,0 +1,307 @@
+{
+  "at": "2026-10-28T09:42:30.694059+08:00",
+  "run": "p1-current-20261028-090619",
+  "source": "dfb34f1f26b628f880fe802f9ffe4b84de78fc0d",
+  "version": "1.7.0+37",
+  "schema": 16,
+  "toolchain": {
+    "flutter": "3.44.9",
+    "dart": "3.12.2",
+    "xcode": "27.1",
+    "sdk": "27.1"
+  },
+  "phase_a": {
+    "status": "PASS",
+    "flutter_tests": {
+      "passed": 1544,
+      "failed": 0
+    },
+    "python_tests": {
+      "passed": 126,
+      "failed": 0
+    },
+    "static_analysis_issues": 0,
+    "macos_release": {
+      "result": "PASS",
+      "artifact": {
+        "file": "DontForget_macOS_unnotarized_v1.7.0.zip",
+        "bytes": 24892499,
+        "sha256": "701b8d37c41c62a794d29f19fe54ba14458ad714b083992937e3b220c396d344"
+      },
+      "native_architectures": [
+        {
+          "file": "Contents/Frameworks/App.framework/Versions/A/App",
+          "architectures": [
+            "arm64",
+            "x86_64"
+          ]
+        },
+        {
+          "file": "Contents/Frameworks/FlutterMacOS.framework/Versions/A/FlutterMacOS",
+          "architectures": [
+            "arm64",
+            "x86_64"
+          ]
+        },
+        {
+          "file": "Contents/Frameworks/flutter_local_notifications.framework/Versions/A/flutter_local_notifications",
+          "architectures": [
+            "arm64",
+            "x86_64"
+          ]
+        },
+        {
+          "file": "Contents/Frameworks/objective_c.framework/Versions/A/objective_c",
+          "architectures": [
+            "arm64",
+            "x86_64"
+          ]
+        },
+        {
+          "file": "Contents/Frameworks/sqlite3.framework/Versions/A/sqlite3",
+          "architectures": [
+            "arm64",
+            "x86_64"
+          ]
+        },
+        {
+          "file": "Contents/MacOS/dont_forget",
+          "architectures": [
+            "arm64",
+            "x86_64"
+          ]
+        }
+      ],
+      "notarized": false,
+      "derived_bundle": "com.example.dontForget.acceptance.p1-current-20261028-090619",
+      "derived_strict_signature": "PASS",
+      "framework_resources_and_non_signature_code_preserved": true
+    },
+    "ios_device_release": {
+      "result": "SIGNED_AND_VERIFIED",
+      "variant": "bundle-display-and-URL-scheme-isolation-only",
+      "artifacts": {
+        "host": {
+          "bundle": "com.yarnway.dontforget.acceptance.p1current28",
+          "version": "1.7.0",
+          "build": "37",
+          "codesign_deep_strict": "PASS",
+          "application_identifier": "23J2CXYK23.com.yarnway.dontforget.acceptance.p1current28",
+          "team": "23J2CXYK23",
+          "development": true,
+          "physical_device_included": true,
+          "profile_uuid": "98c9cafd-a885-4212-9ca6-bbc14f713611",
+          "profile_expires_utc": "2026-11-04T01:34:47Z",
+          "profile_sha256": "711efd3fd4a9c8f840e3eb2d8d93c07495cc162e3c1aee93c365f798f8f08b8e",
+          "binary_sha256": "2d932e6f5fc7af0d7faf91da6386bed236dba148e50ae0d941ee28fa7e560e0c",
+          "url_schemes": [
+            "dontforget-p1current28"
+          ],
+          "architectures": "arm64",
+          "platform": "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/p1-current-20261028-090619/ios-signed-derived/Build/Products/Release-iphoneos/Runner.app/Runner:\nLoad command 11\n      cmd LC_BUILD_VERSION\n  cmdsize 32\n platform IOS\n    minos 15.0\n      sdk 27.1\n   ntools 1\n     tool LD\n  version 27037.1\n"
+        },
+        "extension": {
+          "bundle": "com.yarnway.dontforget.acceptance.p1current28.ReminderActivity",
+          "version": "1.7.0",
+          "build": "37",
+          "codesign_deep_strict": "PASS",
+          "application_identifier": "23J2CXYK23.com.yarnway.dontforget.acceptance.p1current28.ReminderActivity",
+          "team": "23J2CXYK23",
+          "development": true,
+          "physical_device_included": true,
+          "profile_uuid": "249a8c7f-66e4-4121-8ffe-725521584b02",
+          "profile_expires_utc": "2026-11-04T01:34:45Z",
+          "profile_sha256": "575c91a77968df7983134a93bb33dd6d96bff9bef6800029f3370f627066bc0d",
+          "binary_sha256": "c7880876aa3b908f8887e6d9d4924561617b88564b6faa3c684200f0359c67bf",
+          "url_schemes": [],
+          "architectures": "arm64",
+          "platform": "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/p1-current-20261028-090619/ios-signed-derived/Build/Products/Release-iphoneos/Runner.app/PlugIns/ReminderActivity.appex/ReminderActivity:\nLoad command 11\n      cmd LC_BUILD_VERSION\n  cmdsize 32\n platform IOS\n    minos 16.2\n      sdk 27.1\n   ntools 1\n     tool LD\n  version 27037.1\n"
+        }
+      },
+      "original_source_lib_assets_equal": true,
+      "allowed_source_isolation_changes": {
+        "ios/Runner.xcodeproj/project.pbxproj": {
+          "before_sha256": "7f7df8d8c922f333c2eaff1fcb8949c493a81b3eced13037a7c7e5f2843c33cf",
+          "after_sha256": "d67bdfdff6c22d42503e47ee0d6059feabc4945e23d49afc6e34bab6a27a19eb",
+          "allowed_change": "nine bundle identifier prefixes only"
+        },
+        "ios/Runner/Info.plist": {
+          "before_sha256": "88444b075a8ab6e61d945b012060ab0d130e04b558e5369342e30ae442f0f940",
+          "after_sha256": "03586aded093034715b330b6a29b150fd882a1241c2681d4d3d9914133b7e22a",
+          "allowed_change": "CFBundleDisplayName and isolated CFBundleURLSchemes"
+        },
+        "ios/ReminderActivity/Info.plist": {
+          "before_sha256": "3bfe515f4659b2275c1d1744ee2bce54972b84f6180b5e289bd1f74b9a9d811b",
+          "after_sha256": "a674de87d5f8c1525ee3e72cd364f1b4404bda8d9e7143f3f492219e87683199",
+          "allowed_change": "CFBundleDisplayName only"
+        },
+        "ios/Runner/LiveReminderPlugin.swift": {
+          "before_sha256": "f4a99d30a798cefc3cc9df6fb777a112504b93f121632c35889b87a011437e32",
+          "after_sha256": "b58619f10e5db2566e21c7c7f388fb8f47928440e6ec657ad31f59fce8e5c075",
+          "allowed_change": "URL scheme namespace only; shared widget writer and host receiver remain consistent"
+        },
+        "ios/Shared/ReminderActivityAttributes.swift": {
+          "before_sha256": "2e6cbefb81a42c80af6ede070330228361c0da3f33c3e05f68945c26122bcf0e",
+          "after_sha256": "92c525c8f3b7a07847cc68cbacd403064473c74ddff966d286d353feed8970ec",
+          "allowed_change": "URL scheme namespace only; shared widget writer and host receiver remain consistent"
+        }
+      },
+      "authentication_initial_failures": 2,
+      "authentication_form_completion_resolved": true
+    },
+    "ios_simulator_debug": {
+      "result": "PASS",
+      "parts": {
+        "host": {
+          "bundle": "com.example.dontForget",
+          "version": "1.7.0",
+          "build": "37",
+          "architectures": "x86_64 arm64",
+          "platforms": "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/p1-current-20261028-090619/ios-simulator-source/build/ios/iphonesimulator/Runner.app/Runner (architecture x86_64):\nLoad command 11\n      cmd LC_BUILD_VERSION\n  cmdsize 32\n platform IOSSIMULATOR\n    minos 15.0\n      sdk 27.1\n   ntools 1\n     tool LD\n  version 27037.1\n/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/p1-current-20261028-090619/ios-simulator-source/build/ios/iphonesimulator/Runner.app/Runner (architecture arm64):\nLoad command 11\n      cmd LC_BUILD_VERSION\n  cmdsize 32\n platform IOSSIMULATOR\n    minos 15.0\n      sdk 27.1\n   ntools 1\n     tool LD\n  version 27037.1\n",
+          "binary_sha256": "735f66a920814884efae1f680e7a2ff509bb7ffa068c900644bca9ec9ada717e"
+        },
+        "extension": {
+          "bundle": "com.example.dontForget.ReminderActivity",
+          "version": "1.7.0",
+          "build": "37",
+          "architectures": "x86_64 arm64",
+          "platforms": "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/p1-current-20261028-090619/ios-simulator-source/build/ios/iphonesimulator/Runner.app/PlugIns/ReminderActivity.appex/ReminderActivity (architecture x86_64):\nLoad command 11\n      cmd LC_BUILD_VERSION\n  cmdsize 32\n platform IOSSIMULATOR\n    minos 16.2\n      sdk 27.1\n   ntools 1\n     tool LD\n  version 27037.1\n/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/p1-current-20261028-090619/ios-simulator-source/build/ios/iphonesimulator/Runner.app/PlugIns/ReminderActivity.appex/ReminderActivity (architecture arm64):\nLoad command 11\n      cmd LC_BUILD_VERSION\n  cmdsize 32\n platform IOSSIMULATOR\n    minos 16.2\n      sdk 27.1\n   ntools 1\n     tool LD\n  version 27037.1\n",
+          "binary_sha256": "f7ec88e9c2feffbe2cfaf7351f4cd76593fb74edba0e74c3b02028f8d19f09d4"
+        }
+      },
+      "original_tracked_source": true,
+      "installed_or_launched": false
+    }
+  },
+  "fixture_preparation": {
+    "status": "PASS_ON_FINAL_PREPARATION",
+    "final_log": "matrix-fixture-validation-v3.log",
+    "passed": 1,
+    "rows": 119,
+    "future": 117,
+    "application_budget": 50,
+    "expected_deferred": 67,
+    "native_calls": false,
+    "initial_preparation_errors": [
+      "Initial expectation omitted the still-future current calendar day; inclusive 60-day horizon yields 61 dates today",
+      "Corrected preview count key names to the inspector lower-case data keys"
+    ],
+    "product_changes_required": false
+  },
+  "protected_initial_files": {
+    "count": 27,
+    "all_hashes_modes_unchanged": true
+  },
+  "private_evidence": {
+    "flutter-full.log": {
+      "bytes": 303058,
+      "sha256": "b667b207d3346c92dc64f17dba375ab59d50d3ba9b3eda624a8302026bc2648d"
+    },
+    "python-full.log": {
+      "bytes": 478,
+      "sha256": "d18807a7ac6680f44e43dc17474937d145eb6b14d9fbc964df65742dae72856d"
+    },
+    "analyze.log": {
+      "bytes": 96,
+      "sha256": "05154d2d803f259bc56a13a5ae3a79d35bc63ca6e7c0e148c76b7715873e2033"
+    },
+    "macos-release-build.log": {
+      "bytes": 7690,
+      "sha256": "8c2c432bc51e630cd1206f65503d6f16fd0a3f8a2fbaece63fb3c74b2d2f2263"
+    },
+    "macos-package/dist/macos-manifest.json": {
+      "bytes": 1376,
+      "sha256": "4d9f0b4d3f608d5d6d5fee687bb7530be37866326f220655e7dce98286935d93"
+    },
+    "macos-isolation-preparation.log": {
+      "bytes": 341,
+      "sha256": "81baed41cc692e328faa938adddb91b00d6e84db4e69c903bd82cf0377d64d55"
+    },
+    "macos-derived/acceptance-preparation.json": {
+      "bytes": 19944,
+      "sha256": "401a176a4c7e06ab5645f906796b9a0d1a920e903bac3713dfff5b71ae6ff259"
+    },
+    "macos-package-reverification.json": {
+      "bytes": 509,
+      "sha256": "99f3771b5d5ff8678d8f17a1cb04e46083ba1da536bb6c3bf01324c968a0f04b"
+    },
+    "ios-url-isolated-release-build-final.log": {
+      "bytes": 621,
+      "sha256": "e42622fbe84ef3f5d8af8872f4c2c444ad30b49217eb30c3d4d21d8c61431d9a"
+    },
+    "ios-new-identity-signing.log": {
+      "bytes": 117351,
+      "sha256": "cc2bc26fd7491c10f8263bca120128a5ee5e40259879bbfa3b2e236e7e64490a"
+    },
+    "ios-new-identity-signing-after-login.log": {
+      "bytes": 117351,
+      "sha256": "7044899e2b0edcd4161f5f703a8f33700597ddf2b8985a11478014ae88bfac95"
+    },
+    "ios-new-identity-signing-after-form-complete.log": {
+      "bytes": 1274342,
+      "sha256": "7e4521465bd22d2081df8c544d1ab93b032c6cd7c0c0216ed592748c1bce1ba2"
+    },
+    "ios-signed-verification.json": {
+      "bytes": 2704,
+      "sha256": "86c4e8b822f3ad9691b3340a1402199054b898bffad3fbbffc3935c569d6363f"
+    },
+    "ios-simulator-debug-build.log": {
+      "bytes": 545,
+      "sha256": "f21c301c199a5d6857965a07b26caadc69b42b9fde5e5a40d12d7843557dcbb7"
+    },
+    "ios-simulator-verification.json": {
+      "bytes": 2319,
+      "sha256": "25dccae88fb351c8fcc5dbc4f6866c64665b52ef8d7cf04c37f7fbaa0e28a336"
+    },
+    "ios-isolation-source.json": {
+      "bytes": 2179,
+      "sha256": "db5e32b863e270afaeb5762070ab1c4c7b632ca7cf5a1bb0fbd33db5033e2356"
+    },
+    "matrix-fixture-validation.log": {
+      "bytes": 930,
+      "sha256": "be8628cc687ac9be3a14c194dd43fb2d134366a24d927f9ff7552d19b1b7c2c4"
+    },
+    "matrix-fixture-validation-v2.log": {
+      "bytes": 1067,
+      "sha256": "82b727301e43f69a7704e6baee983d9e4b72daef935db5da97a2e7dc732998f4"
+    },
+    "matrix-fixture-validation-v3.log": {
+      "bytes": 268,
+      "sha256": "99e8736e83d62e478917da9b3ba2d1865089d89c037a630b26d331b506f8258b"
+    },
+    "matrix-fixture-v3/synthetic-capacity-v16.json": {
+      "bytes": 246519,
+      "sha256": "a564f8de5d8cee7aa7397407663c28289e6601731a5247913441fe4c81b5bd67"
+    },
+    "matrix-fixture-v3/expectations.json": {
+      "bytes": 17754,
+      "sha256": "f55eaf969a1a07365c5131a82a26b90e50c3d2b95ed8575c85e33c218eaa673b"
+    },
+    "protected-files-readback.json": {
+      "bytes": 161,
+      "sha256": "9d5f3cf953a243a9d1ef2af5530bcbaf689c5c18cf151f2b9a8cf73ac56e4c91"
+    }
+  },
+  "release_or_push_performed": false,
+  "phase_b": {
+    "status": "PENDING_USER_DEVICE_CONNECTION_AND_MAC_NOTIFICATION_PERMISSION",
+    "phone_installed": false,
+    "phone_matrix": "NOT_STARTED",
+    "phone_connection": "paired; tunnel unavailable; normal mirror reconnect timed out",
+    "phone_old_identity_accessed": false,
+    "macos_empty_baseline": {
+      "schema": 16,
+      "integrity": "ok",
+      "reminders": 0,
+      "media_records": 0,
+      "settings": 1,
+      "os_pending": 0,
+      "os_retained": 0
+    },
+    "macos_fixture_loaded": false,
+    "macos_notification_permission": "REQUESTED_NOT_CONFIRMED",
+    "cua_permission_ui_denied": "Computer Use is not allowed to use the app com.apple.UserNotificationCenter for safety reasons",
+    "second_handoff_at": "2026-10-28T09:39:35+08:00",
+    "explicit_return_required": true
+  }
+}
