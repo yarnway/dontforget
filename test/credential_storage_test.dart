@@ -196,6 +196,70 @@ void main() {
     },
   );
   test(
+    'settings from a locked read cannot erase credentials after the vault recovers',
+    () async {
+      await settings.updateSettings(keyed('preserved-secret'));
+      final before = await row(), secrets = Map.of(vault.values);
+      vault.failRead = true;
+      await reload();
+      expect(settings.state.apiKey, isEmpty);
+      expect(settings.credentialStatus, CredentialStatus.unavailable);
+      vault.failRead = false;
+      await expectLater(
+        settings.updateSettings(settings.state.copyWith(language: 'ja')),
+        throwsA(isA<CredentialStorageException>()),
+      );
+      expect(await row(), before);
+      expect(vault.values, secrets);
+      await settings.reloadCredentials();
+      await settings.updateSettings(settings.state.copyWith(language: 'ja'));
+      expect(settings.state.apiKey, 'preserved-secret');
+      expect(settings.state.language, 'ja');
+      expect(vault.values, secrets);
+    },
+  );
+  test(
+    'settings from failed legacy migration cannot overwrite unhydrated keys',
+    () async {
+      final sql = await db.database;
+      await sql.update(
+        'Settings',
+        AppSettings.defaults().copyWith(apiKey: 'legacy-preserved').toJson(),
+      );
+      vault.failWrite = true;
+      await reload();
+      final before = await row();
+      expect(settings.credentialStatus, CredentialStatus.migrationPending);
+      vault.failWrite = false;
+      await expectLater(
+        settings.updateSettings(settings.state.copyWith(language: 'ja')),
+        throwsA(isA<CredentialStorageException>()),
+      );
+      expect(await row(), before);
+      expect(vault.values, isEmpty);
+      await settings.reloadCredentials();
+      expect(settings.state.apiKey, 'legacy-preserved');
+      expect(settings.credentialStatus, CredentialStatus.secured);
+    },
+  );
+  test(
+    'clearing the last stored credential requires explicit removal',
+    () async {
+      await settings.updateSettings(keyed('preserved-secret'));
+      final before = await row(), secrets = Map.of(vault.values);
+      final cleared = settings.state.copyWith(apiKey: '', aiProfiles: []);
+      await expectLater(
+        settings.updateSettings(cleared),
+        throwsA(isA<CredentialStorageException>()),
+      );
+      expect(await row(), before);
+      expect(vault.values, secrets);
+      await settings.updateSettings(cleared, clearCredentials: true);
+      expect((await row())['api_key'], isEmpty);
+      expect(vault.values, isEmpty);
+    },
+  );
+  test(
     'missing or inaccessible vault reference never becomes an API credential',
     () async {
       await settings.updateSettings(keyed('old'));

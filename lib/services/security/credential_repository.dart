@@ -223,9 +223,13 @@ class CredentialRepository {
     final oldReference = isReference(current['api_key'])
         ? current['api_key'] as String
         : null;
-    if (!_hasKeys(saved) && oldReference != null && !clear) {
-      final previous = await _readSecret(oldReference);
-      if (previous == null) throw const CredentialStorageException();
+    if (!_hasKeys(saved) &&
+        !clear &&
+        (oldReference != null || _hasKeys(AppSettings.fromJson(current)))) {
+      // Failed reads and migrations expose a redacted runtime state. A later
+      // preference save is not consent to remove the still-stored secrets,
+      // even if the vault has recovered since that state was loaded.
+      throw const CredentialStorageException();
     }
     final persisted = redact(saved);
     String? newReference;
