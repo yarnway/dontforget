@@ -159,3 +159,33 @@ macOS 后续目标仍为：真实四动作、前台/后台/退出后响应、独
 剩余Mac验收需要可选择真实通知卡的控制入口或人工原生动作配合；当前不再有需要清理的1130任务/通知。锁屏等待heartbeat已删除，因为其等待条件已解除、定时重试不能解决固定选窗限制；本任务没有被记为全部完成。第一轮的锁屏/未清理状态为历史。第二轮55项私有证据hash清单SHA-256：`bda358421b632790366688a7f7cc5f59a6a0cab28407997abcfa3a334b89dd77`。本轮没有修改产品源码或scripts；固定623c525的1740项全量Flutter、76项相关回归、analyze0与release构建证据继续有效，不扩张到主工作区并行未提交代码。
 
 iOS/Android仍待：iOS周期四动作及非周期三动作，Android周期完成/15分钟/跳过及非周期完成/15分钟/1小时；前台主isolate、后台FlutterEngine信号、终止态落盘及重启消费；事件/周期锚点、周期推进与跳过、迟到目标、重复和过期/数据恢复代次；三语真实菜单与未来重排、权限拒绝/注册和排程失败重试、id0连续替换及正文路由隔离；真实投递/点击、业务/journal读回及只清理本身份的native pending/retained。Mac注入结果不替代这些移动设备证据。
+
+
+### 第三轮：真实投递、来源未确认与配置保护（13:59–14:24）
+
+按架构13:58:43明确归还接收，实际**13:59:57**、原定截止**14:19:57**，实际**14:24:27明确归还**。下位曾有条件同意额外10分钟（仅首个OS菜单定位成功才继续）；条件未满足，未启用延期。原截止后的约4分30秒只做配置保全、可恢复清理和退出，没有新增验收场景。下一已确认方为架构5分钟，之后UX；phone未操作。
+
+- 仅写入两条精确`QA Trust R3`合成记录，固定623模型与已有owner/pending双锁，初始库hash仍为空基线b2a3…aa5。系统确认非周期397678319于14:01:55.139712、周期353804180于14:02:55.153555投递并呈现横幅，均zh类别；此前PID68660被动窗口读回focused/visible=true。
+- 用户报告找不到目标“选项”，Cua始终仅返回“月”widget。应用任务菜单曾被观察到；任务历史出现一次完成、随后重开，周期项确认通知。最初将其归为应用内操作的判断过强：调试日志只证明应用发起对应通知清理，**未建立或排除之前的OS回调**。所以仅记真实投递通过，真实按钮/菜单/回调来源保持未验证，不以业务历史代替原生动作证据。
+- 尝试将本身份样式由临时改为持续，计划主程序Quit后只呈现系统卡。但准备冷启动新增行时，严格guard发现非基线用户服务设置，**在SQL写入前拒绝**；没有新增cold记录或投递持续提醒。因此“持续提醒+独立系统弹窗入口”仍只是待验方案。本身份样式已恢复临时。
+- 配置已在0700目录/0600文件中私下保全，报告不导出设置值。放弃整库空基线恢复，只通过产品菜单将两条精确自建事项可恢复移入回收站；前后**Settings整行完全相同**。最终库2条软删除、可见0，系统pending/retained0/0，应用正常Quit且Cua读回false。复制sidecar由SQL-free既有LeasedIncrementalJournal独立解码：2个精确R3 ID均cancel/submitted、unfinished0、无native0；未读配置数据库，原sidecar hash不变。旧1110和日常/phone数据不改。
+
+本轮状态为 **PARTIAL_R3_NATIVE_ATTRIBUTION_UNVERIFIED_USER_CONFIG_PROTECTED_R4_PREPARED**；未完成真实按钮、三语菜单或退出后冷响应。R3有51项私有证据，hash清单SHA-256：`418d776a0e58af2c90b2891fb8899e07dbe6a9e9763fdbe169aea45626652a10`。含用户配置的本地副本不能作为可删构建缓存或公开附件。
+
+第三轮归还后的准备快照：为继续纯测试，另由准确623 ZIP派生当时尚未启动的新身份：`com.example.dontForget.acceptance.trust-actions-20261028-1430`，显示名`DontForget QA Native 1430`，唯一程序`dontforget_trust_actions_1430`。严格签名、主非签名字节和165项Frameworks/Resources逐项相同；新ZIP SHA-256：`53d15d9c5f101734bc7d8dce2a9ff5274fcfd864bbbf71131b042408f9b24fc1`。新容器在准备时不存在，未bootstrap、未投递或执行原生验收。独立严格1430的R4工具20项离线自测通过，不读1130配置，也不改旧helper/证据。
+
+离线系统plist确认两个不同入口：`/System/Library/CoreServices/NotificationCenter.app`（`com.apple.notificationcenterui`）和`/System/Library/CoreServices/UserNotificationCenter.app`（`com.apple.UserNotificationCenter`）。第三轮准备时，后者是否呈现持续通知动作尚未用Cua验证，不能称选窗问题已解决。当时的下一窗口计划仅在明确交接后，用新1430的持续系统通知、主程序退出及上述独立入口先做短探测；成功再协调完整20分钟，结束恢复样式、保全回退及只清本轮资产。1130从此保持用户配置，不再当空测试基线。自动跟进已更新此边界。
+
+iOS/Android余项不变：原生动作呈现与三语标题、前后台/终止链路、周期与延后语义、去重/过期/恢复代次、自检权限/失败/连续替换及正文路由隔离、实际投递点击和安全清理。R2注入通过与R3真实投递均不替代原生OS按钮结果。
+
+### 第四轮：新身份启动与明确的控制安全限制（14:56–14:57）
+
+UX于14:53:34明确归还Mac共享桌面，架构确认通知任务可接5分钟短探测。root实际Cua控制成功后登记**14:56:35接收、15:01:35预计释放**；因下面的安全拒绝，**14:57:33提前明确归还**架构候接。phone仍由UX保护，没有使用Mirroring或手机，也没有按预计时间自动接管。
+
+1430首次正常bootstrap，设置页初始读到系统pending/retained0/0、权限未开启、待修复0、当前日志无失败。点击本身份“允许通知”后，页面仍显示未开启/正在读取，未观察到授权结果；不能推断已允许。随后调用`cua.getApp('com.apple.UserNotificationCenter')`被工具明确拒绝：`Computer Use is not allowed to use the app 'com.apple.UserNotificationCenter' for safety reasons.` 没有改用CLI、AppleScript、私有API或其他入口绕过拒绝。先前NotificationCenter仅显示“月”widget的问题尚未解决；这属于控制工具边界，不是产品通知平台API不支持的证据。
+
+未写入R4合成任务，未提交测试或业务通知，未改变本身份通知样式，也未发生可验证的原生按钮/三语菜单/冷响应。本身份正常Quit后Cua读回`isRunning=false`；持既有owner/pending锁只读核对DB0/0/1、schema16、integrityok、DB仍精确为空基线SHA-256 `b2a3bda8621d51b154c63f267478ffc3f3d6aa0c182a9041116107a599ca2aa5`，pending文件不存在。初始native0/0是观察值，权限请求后刷新未完成，没有虚构新的最终native读回。没有新的任务或通知需要删除；日常身份、旧1110、含用户配置的1130及其他任务验收状态未改。
+
+本轮证据位于`build/native_acceptance/trust-actions-20261028-1430-materials/round4-probe/`，manifest SHA-256 `0c382b3144d4c1942b1d5ff55db8f3e60588b86886d9ad230ba966bceceb01f0`。当前结论为 **PARTIAL_R4_CLIENT_SAFETY_BLOCK_NATIVE_ACTIONS_UNVERIFIED_OWNED_APPS_EXITED**。自动跟进仅等待新的可执行条件，不自动重试被拒入口、不重复要求用户寻找已清理的R3旧卡。若后续有人能实际操作系统卡，需先重新交接、准备全新未来时刻的1430通知，再给出准确标题和最少点击；当前没有待用户点击的R4通知。
+
+本次仅更新验收文档，没有修改产品或scripts。固定623c525的源码/构建/自动化测试证据保持原范围；本轮`python3 -m json.tool docs/benchmarks/reminder-trust-macos-2026-10-28.json`、`git diff --check`均通过；R4纯工具20项自测通过，测试未访问真实数据库或系统通知。iOS/Android待验仍为上文的原生按钮数量和三语、前后台/终止队列、延后与周期语义、幂等/过期/代次、自检失败及连续替换、真实投递/点击和各自安全清理，均未用Mac证据替代。
