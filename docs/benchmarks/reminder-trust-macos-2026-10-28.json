@@ -1,14 +1,15 @@
 {
-  "recorded_at": "2026-10-28T11:57:47.508801+08:00",
+  "recorded_at": "2026-10-28T12:30:45.307945+08:00",
   "timezone": "Asia/Shanghai",
-  "status": "PARTIAL_NATIVE_BUILD_DIAGNOSTICS_TIMING_FIX_CLIENT_UI_BLOCKED",
+  "status": "PARTIAL_FIXED_NATIVE_DIAGNOSTICS_LANGUAGE_RECONCILE_MAC_LOCKED",
   "source": {
     "revision": "6f42ccda4dd6cfe2b0def0a33027a22cd97eb2f5",
     "version": "1.7.0+38",
     "schema": 16,
     "toolchain": "Flutter 3.44.9 / Dart 3.12.2 / Xcode 27.1 / CocoaPods 1.16.2",
     "entrypoint": "lib/main.dart",
-    "passive_startup_and_retry_trace": true
+    "passive_startup_and_retry_trace": true,
+    "scope": "HISTORICAL_INITIAL_6f42ccd"
   },
   "build": {
     "status": "PASS",
@@ -21,7 +22,8 @@
     "codesign_verify": "PASS",
     "native_transport": "real",
     "notarized": false,
-    "warnings": "Third-party Swift concurrency/deprecation and native asset framework-name warnings retained in private build log"
+    "warnings": "Third-party Swift concurrency/deprecation and native asset framework-name warnings retained in private build log",
+    "scope": "HISTORICAL_INITIAL_6f42ccd"
   },
   "identities": [
     {
@@ -44,12 +46,21 @@
     },
     {
       "bundle_id": "com.example.dontForget.acceptance.trust-actions-20261028-1130",
-      "status": "PREPARED_NOT_LAUNCHED_AWAITING_UI_OWNERSHIP",
+      "status": "LAUNCHED_SYNTHETIC_STATE_PRESERVED_MAC_LOCKED",
       "executable": "dontforget_trust_actions_1130",
       "identity_only_executable_rename": true,
       "native_non_signature_code_unchanged": true,
       "frameworks_resources_unchanged": true,
-      "codesign_verify": "PASS"
+      "codesign_verify": "PASS",
+      "source_uuid": "B807382F-153E-47BF-A178-0E18E4DF71B9",
+      "cleanup": "PENDING_NORMAL_UI_SOFT_DELETE_AND_NATIVE_READBACK",
+      "last_observed_counts": {
+        "Settings": 1,
+        "MediaRecords": 0,
+        "Reminders": 6
+      },
+      "counts_observed_at_utc": "2026-10-28T04:28:57.835675+00:00",
+      "counts_scope": "Read-only owned1130 database snapshot; not native pending/retained live readback"
     }
   ],
   "cases": {
@@ -127,10 +138,10 @@
     "external_ui_interference_observed": true,
     "unknown_ownership_rows_preserved": true,
     "cleanup_complete": false,
-    "cleanup_boundary": "No unknown rows or other sessions cleaned; old isolated test notification retention remains unclosed."
+    "cleanup_boundary": "Old1110 unknown records preserved. New1130 six owned synthetic rows and delivered notifications remain; Mac lock prevented normal UI cleanup. No cleanup success claimed."
   },
   "known_source_limitations": [
-    "Initial 6f42ccd artifact uses Dart response time after StorageBootstrap. This has been addressed in the verified source overlay; rebuilt release/native action regression remain pending.",
+    "Original6f42ccd time issue was fixed in623c525 and rebuilt; real native response/delegate timing regression remains pending because no notification action click was completed.",
     "New native time is callback observation, not original physical click time; cache is bounded and process-local, durable queue still starts in Dart after bootstrap.",
     "macOS plugin uses main isolate with cold launch response; Android/iOS background isolate acceptance remains separate."
   ],
@@ -154,25 +165,37 @@
   ],
   "coordination": {
     "requested_by_user": "与其他任务协作，空闲时占用验收",
-    "ui_owner_thread": "评估 DontForget 的 UX/UI 优化点",
-    "ui_owner_thread_id": "01a17c24-05d0-7273-ac6c-a2e578ad2c8b",
-    "current_lease": "EXCLUSIVE_RECEIVED; explicit_return_required=true; no return observed",
-    "message_delivery": "NOT_SENT: MCP tool call requires approval, but approval policy is never",
-    "idle_followup_automation": "NOT_CREATED: same tool approval policy",
+    "ui_owner_thread": null,
+    "ui_owner_thread_id": null,
+    "current_lease": "ROOT_EXPLICITLY_RETURNED_12:26:27; next UX requires explicit reception",
+    "message_delivery": "SENT_SUCCESSFULLY_ACKS_RECEIVED",
     "policy_boundary": "No substitute message channel or scheduler used; no lease expiry or temporary inactivity treated as explicit return",
     "human_desktop_return_received": true,
-    "root_desktop_returned_without_ui_control": true,
-    "client_target_app_access": "DENIED again after human said already allowed; no selector/CLI workaround used",
+    "client_target_app_access": "SUCCEEDED_EXACT_FIXED_CANDIDATE_THIS_ROUND",
     "rotation_requested_by_user": true,
     "rotation_protocol": "docs/Native_Acceptance_Rotation.md",
     "canonical_state": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/shared-desktop-rotation.json",
     "canonical_lock": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/shared-desktop-rotation.lock",
-    "rotation_state_revision": 3,
-    "reservation_confirmed": false,
-    "other_task_acknowledgements": [],
+    "rotation_state_revision": 10,
+    "reservation_confirmed": true,
+    "other_task_acknowledgements": [
+      "01a17c24-05d0-7273-ac6c-a2e578ad2c8b",
+      "01a15c7c-8a67-7562-9db6-e540460d05c1"
+    ],
     "default_window_minutes": 20,
     "deadline_transfers_ownership": false,
-    "root_current_ui_ownership": null
+    "root_current_ui_ownership": null,
+    "current_block": "Mac locked; manual unlock required. Quit was not confirmed; no queue write attempted.",
+    "historical_client_access_block": "Prior session access denied; resolved at fixed candidate launch 12:14:22",
+    "historical_root_desktop_returned_without_ui_control": true,
+    "historical_idle_followup_automation": "NOT_CREATED: same tool approval policy",
+    "idle_followup_automation": {
+      "status": "ACTIVE",
+      "id": "dontforget",
+      "interval_minutes": 15,
+      "quiet_when_unchanged": true,
+      "only_after_manual_unlock_and_explicit_ui_handoff": true
+    }
   },
   "timing_fix": {
     "scope": "Verified 6f42ccd source overlay integrated by exact per-file hashes; no other dirty paths overwritten",
@@ -185,7 +208,7 @@
     "related_dart_tests_passed": 76,
     "targeted_analyze": "0 issues",
     "native_swift_test": "PASS: FIFO, first time, input bounds, completion once; real frameworks, registrant stub, no UI or notifications",
-    "device_acceptance": "NOT_PERFORMED",
+    "device_acceptance": "PARTIAL_SELF_CHECK_LANGUAGE_RECONCILE_DELIVERY_ONLY",
     "native_time_boundary": "Earliest native delegate callback observation; Apple exposes no original physical click timestamp; absent or invalid cache falls back to Dart time",
     "commit": "623c52524c43ffc60d04b48e18464d7d7549439e",
     "release_build": {
@@ -200,11 +223,11 @@
         "native_non_signature_code_unchanged": true,
         "frameworks_resources_unchanged": true,
         "codesign_verify": "PASS",
-        "launched": false,
+        "launched": true,
         "archive_sha256": "21f15a13d5fb965f997cb8a2d9918a0757b300238174da68f20336a0d1bb4da1",
-        "native_device_acceptance": "NOT_PERFORMED_CLIENT_TARGET_ACCESS_DENIED"
+        "native_device_acceptance": "PARTIAL_NO_ACTION_RESPONSE_OR_QUEUE_CONSUMPTION_PROOF"
       },
-      "native_interaction": "NOT_PERFORMED_CLIENT_ACCESS_DENIED"
+      "native_interaction": "PASS_BOUNDED: denied/allowed self-check, id0 replacement/delivery, zh/en/ja registration and future same-ID rescheduling"
     },
     "full_flutter_tests": {
       "revision": "623c52524c43ffc60d04b48e18464d7d7549439e",
@@ -213,5 +236,125 @@
       "elapsed_seconds": 61
     },
     "full_source_analyze": "0 issues"
-  }
+  },
+  "current_fixed_candidate_round": {
+    "source_revision": "623c52524c43ffc60d04b48e18464d7d7549439e",
+    "bundle_id": "com.example.dontForget.acceptance.trust-actions-20261028-1130",
+    "source_uuid": "B807382F-153E-47BF-A178-0E18E4DF71B9",
+    "actual_acquired_at": "2026-10-28T12:14:32.273038+08:00",
+    "expected_release_at": "2026-10-28T12:34:32.273038+08:00",
+    "actual_returned_at": "2026-10-28T12:26:27.137105+08:00",
+    "rotation_state_revision": 9,
+    "baseline": {
+      "schema": 16,
+      "integrity": "ok",
+      "counts": {
+        "Reminders": 0,
+        "MediaRecords": 0,
+        "Settings": 1
+      },
+      "backup_sha256": "b2a3bda8621d51b154c63f267478ffc3f3d6aa0c182a9041116107a599ca2aa5"
+    },
+    "synthetic_seed": {
+      "rows": 6,
+      "source": "fixed Reminder/TaskDetails models",
+      "existing_storage_owner_lease_held": true,
+      "settings_epoch_journal_not_seeded": true
+    },
+    "startup_pids": [
+      18397,
+      20233
+    ],
+    "startup_revision_verified": true,
+    "self_check": {
+      "denied_submission": "PASS",
+      "allowed_readback": "PASS",
+      "rapid_id0_replacement": "PASS: 2.972973 seconds; pending stayed 1",
+      "test_native_id": 0,
+      "delivery_at": "2026-10-28T12:16:08.108734+08:00",
+      "banner_at": "2026-10-28T12:16:08.109540+08:00",
+      "ui_wording": "已提交系统",
+      "business_counts_before_seed": {
+        "Reminders": 0,
+        "MediaRecords": 0,
+        "Settings": 1
+      },
+      "default_test_click": "NOT_PERFORMED"
+    },
+    "languages": {
+      "ui_saved": [
+        "zh",
+        "en",
+        "ja"
+      ],
+      "native_registered": [
+        "zh",
+        "en",
+        "ja"
+      ],
+      "future_requests_rescheduled": "PASS_BOUNDED: same six IDs with en then ja categories while future",
+      "actual_action_menu_titles": "NOT_PERFORMED",
+      "english_native_registered_at": "2026-10-28T12:19:36.988831+08:00",
+      "japanese_native_registered_at": "2026-10-28T12:20:11.613201+08:00"
+    },
+    "actual_system_deliveries": [
+      {
+        "at": "2026-10-28 12:16:08.108734+0800",
+        "message": "Delivering <NotificationRecord app:\"com.example.dontForget.acceptance.trust-actions-20261028-1130\" ident:\"B658-9FC6\" req:\"0\" uuid:\"AAAB21CC\" source:\"B807382F\" dismissAfterDefaultAction:true> to [ .alert .lockScreen .notificationCenter ]: updatedExisting: false"
+      },
+      {
+        "at": "2026-10-28 12:20:45.104975+0800",
+        "message": "Delivering <NotificationRecord app:\"com.example.dontForget.acceptance.trust-actions-20261028-1130\" ident:\"2C54-45A7\" req:\"1413984401\" uuid:\"023A9E06\" source:\"B807382F\" category:\"dontforget_macos_once_ja\" dismissAfterDefaultAction:true> to [ .alert .lockScreen .notificationCenter ]: updatedExisting: false"
+      },
+      {
+        "at": "2026-10-28 12:21:45.106533+0800",
+        "message": "Delivering <NotificationRecord app:\"com.example.dontForget.acceptance.trust-actions-20261028-1130\" ident:\"B8BB-5123\" req:\"1728030724\" uuid:\"146AAF4C\" source:\"B807382F\" category:\"dontforget_macos_recurring_ja\" dismissAfterDefaultAction:true> to [ .alert .lockScreen .notificationCenter ]: updatedExisting: false"
+      },
+      {
+        "at": "2026-10-28 12:22:45.100916+0800",
+        "message": "Delivering <NotificationRecord app:\"com.example.dontForget.acceptance.trust-actions-20261028-1130\" ident:\"EDE1-5D70\" req:\"1541344988\" uuid:\"D85102D7\" source:\"B807382F\" category:\"dontforget_macos_recurring_ja\" dismissAfterDefaultAction:true> to [ .alert .lockScreen .notificationCenter ]: updatedExisting: false"
+      },
+      {
+        "at": "2026-10-28 12:23:45.104246+0800",
+        "message": "Delivering <NotificationRecord app:\"com.example.dontForget.acceptance.trust-actions-20261028-1130\" ident:\"3535-DFAF\" req:\"860724930\" uuid:\"5122E7AF\" source:\"B807382F\" category:\"dontforget_macos_recurring_ja\" dismissAfterDefaultAction:true> to [ .alert .lockScreen .notificationCenter ]: updatedExisting: false"
+      },
+      {
+        "at": "2026-10-28 12:24:45.100042+0800",
+        "message": "Delivering <NotificationRecord app:\"com.example.dontForget.acceptance.trust-actions-20261028-1130\" ident:\"8764-5C5B\" req:\"861949424\" uuid:\"95BD6B75\" source:\"B807382F\" category:\"dontforget_macos_recurring_ja\" dismissAfterDefaultAction:true> to [ .alert .lockScreen .notificationCenter ]: updatedExisting: false"
+      },
+      {
+        "at": "2026-10-28 12:25:45.101104+0800",
+        "message": "Delivering <NotificationRecord app:\"com.example.dontForget.acceptance.trust-actions-20261028-1130\" ident:\"FEAD-1DA1\" req:\"1659290389\" uuid:\"736E3597\" source:\"B807382F\" category:\"dontforget_macos_once_ja\" dismissAfterDefaultAction:true> to [ .alert .lockScreen .notificationCenter ]: updatedExisting: false"
+      }
+    ],
+    "action_acceptance": {
+      "complete_snooze_skip": "NOT_PERFORMED_NO_SYSTEM_CARD_CONTROL",
+      "foreground_background_actions": "NOT_PERFORMED",
+      "terminated_action": "NOT_PERFORMED_QUIT_BLOCKED_BY_MAC_LOCK",
+      "durable_pending_restart": "NOT_PERFORMED; 11-entry INJECTED_QUEUE draft only; no pending file written",
+      "duplicate_and_stale_native_consumption": "NOT_PERFORMED; automatic fake/temp coverage remains separate"
+    },
+    "last_storage_owner_observation": "ACTIVE_STORAGE_OWNER_LOCK_HELD 12:25:17; process absence not claimed",
+    "cleanup": "PENDING; six owned synthetic rows/revisions0 and own delivered notifications preserved; current pending/retained unreadable while locked",
+    "other_identity_protection": "Daily database not read/written; old1110 unknown rows and all other sessions preserved; phone never operated",
+    "private_evidence_root": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/trust-actions-native-time-623c525-materials",
+    "private_handback_receipt": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/trust-actions-native-time-623c525-materials/round1-ui-handback.json",
+    "offline_helper_tests": {
+      "count": 13,
+      "result": "PASS",
+      "scope": "materials helpers only; not product/native action proof"
+    },
+    "last_readonly_snapshot_at_utc": "2026-10-28T04:28:57.835675+00:00",
+    "last_observed_notice_revisions": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "private_round_evidence_manifest_sha256": "67f380e856f68c5bff27018abebcb0f0dc3faff891b7e45efad03a705e58c5c3",
+    "quiet_followup": "ACTIVE heartbeat dontforget every15min; no automatic ownership or unlock"
+  },
+  "record_layout": "Top-level source/build/cases are historical6f42ccd/1110 evidence; current candidate is timing_fix and current_fixed_candidate_round."
 }

@@ -1,20 +1,22 @@
 # 原生验收共享桌面限时轮换协议
 
-更新日期：2026-10-28（Asia/Shanghai）。本协议当前为待确认提案；写入状态文件不代表任何任务已经同意预约，也不授予桌面、设备或客户端访问权限。
+更新日期：2026-10-28（Asia/Shanghai）。协议已获得参与任务确认并执行首轮；实时归还状态见规范 JSON。写入状态文件本身不授予桌面、设备或客户端访问权限。
 
 ## 参与任务与当前状态
 
 | 任务 | Chat ID | 新轮换请求状态 |
 | --- | --- | --- |
-| 增加提醒通知快捷操作 | `01a18064-4ca8-7643-9100-2df4460110be` | `WAITING_CLIENT_PERMISSION` |
-| 评估 DontForget 的 UX/UI 优化点 | `01a17c24-05d0-7273-ac6c-a2e578ad2c8b` | `NEEDS_ACK` |
-| 优化项目架构与产品体验 | `01a15c7c-8a67-7562-9db6-e540460d05c1` | `NEEDS_ACK` |
+| 增加提醒通知快捷操作 | `01a18064-4ca8-7643-9100-2df4460110be` | `EXPLICITLY_RETURNED`（12:26:27） |
+| 评估 DontForget 的 UX/UI 优化点 | `01a17c24-05d0-7273-ac6c-a2e578ad2c8b` | `WAITING_MANUAL_UNLOCK`，未接收新时段 |
+| 优化项目架构与产品体验 | `01a15c7c-8a67-7562-9db6-e540460d05c1` | `EXPLICITLY_RETURNED`（12:05:50） |
 
-所有工作区统一使用同一个规范绝对路径：`/Users/james/gitresources/opensources/dontforget/build/native_acceptance/shared-desktop-rotation.json`。不得按各自 worktree 的相对路径创建第二份状态。实时交接状态保存在该文件；该文件位于本机验收目录，不作为成功验收结果。初始顺序“通知 → UX → 架构”仅为提案，未登记绝对开始时间或已确认的下一任务。每一轮仅由受影响的当前持有方与下一接收方确认；未确认的未来任务不阻止已获明确交接的当前轮次。
+所有工作区统一使用同一个规范绝对路径：`/Users/james/gitresources/opensources/dontforget/build/native_acceptance/shared-desktop-rotation.json`。不得按各自 worktree 的相对路径创建第二份状态。实时交接状态保存在该文件；该文件位于本机验收目录，不作为成功验收结果。初始提案当时使用“通知 → UX → 架构”，没有绝对开始时间或已确认的下一任务；本轮实际协调顺序与交接另见下方。每一轮仅由受影响的当前持有方与下一接收方确认；未确认的未来任务不阻止已获明确交接的当前轮次。
 
-本轮通知任务曾收到用户“共享桌面已明确归还”，但客户端仍拒绝访问目标隔离应用；该任务已于 **11:42:31 +08:00 明确退还桌面**，状态为 `EXPLICITLY_RETURNED_WITHOUT_UI_CONTROL`，没有取得或继续占用 UI。证据为 `build/native_acceptance/trust-actions-20261028-1130-materials/desktop-handoff.json`。当前桌面 owner 未确认，不应据此推断空闲或由通知任务持有。
+通知任务早期因客户端拒绝控制而于11:42:31归还，这是历史记录。12:05本轮跨任务消息已成功送达并取得ACK：架构先安全归还，UX再因等待人手锁定手机将Mac交给通知任务。通知任务实际取得12:14:32、预计释放12:34:32，控制准确623c525候选成功；因Mac随后锁屏，于**12:26:27提前明确归还**。归还时规范状态revision9，当前通知任务不占用UI，下一候接为UX，需要其明确接收，不能按截止时间自动转移。
 
-物理 iPhone 另有 UX 任务在 **10:33（分钟精度）** 接收的 `EXCLUSIVE_RECEIVED` 交接，要求明确归还。`study-stage39-materials/phone-handoff-extension.json` 另记载 11:01:39 延长至 11:45、`requiresExplicitHandback=true`；未见明确归还。当前验收 phone bundle 为 `com.yarnway.dontforget.acceptance.p1current28`，另一个 `com.yarnway.dontforget.acceptance.iphone17` 是需保护的其他身份。因此到达预计时间后仍保护 UX 的物理 phone ownership。不得将该交接混同为通知任务可以使用 phone，也不得将独立 phone owner 推断为当前共享桌面 owner。
+实际回执：`build/native_acceptance/trust-actions-native-time-623c525-materials/round1-ui-handback.json`。新1130应用最后为最小化/运行中，Quit被Mac锁屏阻止，六条本任务合成记录与已投递通知尚未清理，其他任务不得代为清空。旧1110含未知归属记录，继续保护。
+
+物理iPhone的旧UX租约已于11:44:44明确归还，回执为`/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/p1-ui-native-20261028-102820/native-handoff-return.json`，不再沿用“未归还”的旧推断。架构后续QA40清理与人手使用导致连接不可用；UX已承接p1current28保护和待清理项。通知任务本轮从未使用phone或Mirroring，也不将Mac的交接等同于phone使用权。`com.yarnway.dontforget.acceptance.iphone17`仍是独立受保护身份。
 
 ## 一把共享 UI lease，独立保护物理手机
 
@@ -53,11 +55,13 @@ Mac 共享桌面、键盘/指针、通知中心以及 iPhone Mirroring 使用同
 3. 在同目录写唯一临时文件，限制权限为 `0600`，flush/fsync 后以 rename 原子替换 JSON，并同步目录；更新 `revision`、`updated_at` 及简短 history。
 4. 读取校验新 JSON 后释放元数据写锁。释放写锁不会归还 UI；UI 的明确归还必须另行登记。
 
-本次初始状态已记录：跨任务发送轮换提案及创建 automation 均被工具以 `MCP tool call requires approval, but approval policy is never` 拒绝，未发送、未创建。该失败不等同于其他任务拒绝方案，更不等同于获得了他们的 ACK。工具恢复或用户提供明确交接证据前，保持上述 pending 状态。
+初始尝试跨任务消息和automation曾被工具拒绝，未发送/未创建；该历史失败已保留。12:05后消息工具成功，参与者ACK与实际交接均已写入规范状态。旧有截止提醒未创建，新增安静跟进另见末尾，不宣称自动接管已生效；本轮由实际时间和明确归还收尾。当前产品验收阻断为Mac锁屏，需要人手解锁，不再误报为新包客户端访问拒绝。
 
 ## 每轮最小交接记录
 
 每轮记录任务 ID/标题、实际开始与预计释放时间、精确 bundle/设备、验收目标、下一任务及其确认、实际归还时间、自己创建的通知/数据收尾结果、未保存编辑、需保护资产与证据路径。构建、系统提交、实际送达、动作回调、queue 消费及清理分别登记，不将轮换顺利或 UI 可操作当成产品验收通过。
 
 
-本任务下一轮仅使用修复后候选：`/Users/james/gitresources/opensources/dontforget/build/native_acceptance/trust-actions-20261028-1130-timing/dont_forget.app`，源码 `623c525`，主程序 `dontforget_trust_actions_1130`。它已构建并验证签名，但未启动；权限等待状态不授予 UI。
+本任务继续仅使用修复后候选：`/Users/james/gitresources/opensources/dontforget/build/native_acceptance/trust-actions-20261028-1130-timing/dont_forget.app`，源码`623c525`，主程序`dontforget_trust_actions_1130`。它已实际运行，自检和三语未来重排已有部分原生证据；动作点击、真正退出后响应、注入队列重启及清理仍开放。Mac解锁后也必须重新确认UI交接，不能根据已构建、曾授权或预计时间取得控制权。
+
+本聊天已建立每15分钟的安静跟进（automation `dontforget`，元数据revision10）。它仅核对新交接/可执行状态；无变化时不重复通知，不能代替手动解锁、明确归还/接收或形成自动占用。全部验收完成后停用。
