@@ -7,6 +7,22 @@ class MacOSNotificationScheduler {
   const MacOSNotificationScheduler();
   static const channel = MethodChannel('dontforget/notification_schedule');
 
+  /// The first native delegate observation, before Dart response processing.
+  /// This is not an OS-provided physical click timestamp. The native cache is
+  /// bounded and process-local, so old hosts or evicted responses return null.
+  Future<DateTime?> takeResponseOccurredAt({
+    required String payload,
+    required String actionId,
+  }) async {
+    final micros = await channel.invokeMethod<int>('takeResponseOccurredAt', {
+      'payload': payload,
+      'actionId': actionId,
+    });
+    return micros == null
+        ? null
+        : DateTime.fromMicrosecondsSinceEpoch(micros, isUtc: true);
+  }
+
   Future<void> schedule({
     required int nativeId,
     required String title,

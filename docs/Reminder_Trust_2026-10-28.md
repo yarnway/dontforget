@@ -105,3 +105,12 @@ iOS/Android 剩余：按钮实际呈现、前台/后台 FlutterEngine 与终止�
 
 
 协作补充：用户已要求“与其他任务协作，空闲时占用验收”。只读确认“评估 DontForget 的 UX/UI 优化点”仍有 `EXCLUSIVE_RECEIVED / explicit_return_required=true` 的交接，未见明确归还。向相关聊天发送交接请求及创建空闲跟进均被客户端拒绝：`MCP tool call requires approval, but approval policy is never`。消息未发送、跟进未创建；没有改用其他渠道或调度方式绕过，也没有按 45 分钟已过推断归还。下一步需要现持有任务明确交回共享桌面使用权，或客户端允许协调工具后发送请求。
+
+
+### 计时修复与轮换交接补充
+
+已在独立 6f42ccd 源码副本实现并按每文件 SHA-256 比对整合最小修复：`MainFlutterWindow.swift` 强持有 delegate proxy，保留原插件的响应/展示/设置转发，记录每个原始 payload/action 最早 native 回调时间；32 项 FIFO，重复取首次值，completion 防重。现有 `dontforget/notification_schedule` 通道增加时间读取，Dart 再写入原 pending 文件，不增加数据库或第二套通知系统。缺失、无效或晚于 Dart 回调的值保留兼容回退；时间仍是最早 native 观察时刻，非系统公开的原始物理点击时间。
+
+新增 11 项 Dart 回归与原有 65 项合跑 76/76，通过 targeted analyze（0 issues）。使用真实 FlutterMacOS/UserNotifications framework 编译运行 FIFO、首次时间、输入边界和 completion 纯 Swift 测试通过；registrant stub 未创建引擎/UI/系统通知。新版完整 release 构建另行取证。
+
+用户已明确交回共享桌面，但客户端在其再次允许后仍拒绝控制唯一验收应用（`Computer Use was not approved to use ...1130`），控制会话刷新也未成功。本任务已明确归还桌面，不继续占用。用户要求各任务限时轮换：每轮记录实际开始、预计释放、本轮目标、精确应用身份，明确归还后下一任务接手；时间到只提醒收尾，不自动抢占。共享记录为待各任务确认的提案；协调工具拒绝的消息不得记作已发送或已预约。

@@ -4,6 +4,9 @@ import UserNotifications
 
 class MainFlutterWindow: NSWindow {
   private var menuCommands: MacMenuCommands?
+  // UNUserNotificationCenter holds its delegate weakly. Retain the proxy and
+  // keep the plugin delegate behind it rather than replacing plugin routing.
+  private var notificationResponses: NotificationResponseDelegateProxy?
   override func awakeFromNib() {
     let flutterViewController = FlutterViewController()
     let windowFrame = self.frame
@@ -12,6 +15,13 @@ class MainFlutterWindow: NSWindow {
 
     RegisterGeneratedPlugins(registry: flutterViewController)
 
+    let notificationCenter = UNUserNotificationCenter.current()
+    let responseTimes = NativeNotificationResponseTimes()
+    let responseProxy = NotificationResponseDelegateProxy(
+      downstream: notificationCenter.delegate, responseTimes: responseTimes)
+    notificationResponses = responseProxy
+    notificationCenter.delegate = responseProxy
+
     menuCommands = MacMenuCommands(
       window: self, messenger: flutterViewController.engine.binaryMessenger)
 
@@ -19,6 +29,16 @@ class MainFlutterWindow: NSWindow {
       name: "dontforget/notification_schedule",
       binaryMessenger: flutterViewController.engine.binaryMessenger)
     scheduling.setMethodCallHandler { call, result in
+      if call.method == "takeResponseOccurredAt" {
+        guard let args = call.arguments as? [String: Any],
+              let payload = args["payload"] as? String,
+              let actionId = args["actionId"] as? String else {
+          result(FlutterError(code: "invalid_response", message: "Invalid notification response", details: nil))
+          return
+        }
+        result(responseTimes.firstObserved(payload: payload, actionId: actionId))
+        return
+      }
       guard call.method == "schedule" else {
         result(FlutterMethodNotImplemented)
         return
@@ -85,5 +105,111 @@ class MainFlutterWindow: NSWindow {
         }
       }
     }
+  }
+}
+
+/// Bounded native context, not a second pending-action queue. Keeping the first
+/// value after readback makes repeated plugin cold-launch responses retain the
+/// original observation time. The next process starts with an empty cache.
+final class NativeNotificationResponseTimes {
+  private struct Key: Hashable {
+    let payload: String
+    let actionId: String
+  }
+  private let lock = NSLock()
+  private var order: [Key] = []
+  private var values: [Key: Int64] = [:]
+  private static let actions: Set<String> = [
+    "complete", "snooze_15", "snooze_60", "skip_occurrence"
+  ]
+
+  func record(payload: String, actionId: String, occurredAt: Int64) {
+    guard !payload.isEmpty, payload.utf16.count <= 2048,
+          Self.actions.contains(actionId) else { return }
+    let key = Key(payload: payload, actionId: actionId)
+    lock.lock()
+    defer { lock.unlock() }
+    guard values[key] == nil else { return }
+    order.append(key)
+    values[key] = occurredAt
+    while order.count > 32 {
+      values.removeValue(forKey: order.removeFirst())
+    }
+  }
+
+  func firstObserved(payload: String, actionId: String) -> Int64? {
+    lock.lock()
+    defer { lock.unlock() }
+    return values[Key(payload: payload, actionId: actionId)]
+  }
+}
+
+/// Completion forwarding is guarded because the center must receive exactly
+/// one completion even if a downstream delegate accidentally invokes it twice.
+final class NotificationResponseCompletion<Value> {
+  private let lock = NSLock()
+  private var completed = false
+  private let completion: (Value) -> Void
+
+  init(_ completion: @escaping (Value) -> Void) {
+    self.completion = completion
+  }
+
+  func call(_ value: Value) {
+    lock.lock()
+    guard !completed else { lock.unlock(); return }
+    completed = true
+    lock.unlock()
+    completion(value)
+  }
+}
+
+/// Captures the earliest application-observable native response time before
+/// Dart response processing. Apple exposes no original user-click timestamp on
+/// UNNotificationResponse; this is the native callback observation time.
+final class NotificationResponseDelegateProxy: NSObject, UNUserNotificationCenterDelegate {
+  private let downstream: UNUserNotificationCenterDelegate?
+  private let responseTimes: NativeNotificationResponseTimes
+
+  init(downstream: UNUserNotificationCenterDelegate?, responseTimes: NativeNotificationResponseTimes) {
+    self.downstream = downstream
+    self.responseTimes = responseTimes
+    super.init()
+  }
+
+  func userNotificationCenter(
+    _ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse,
+    withCompletionHandler completionHandler: @escaping () -> Void
+  ) {
+    let observedAt = Int64((Date().timeIntervalSince1970 * 1_000_000).rounded(.down))
+    if let payload = response.notification.request.content.userInfo["payload"] as? String {
+      responseTimes.record(payload: payload, actionId: response.actionIdentifier, occurredAt: observedAt)
+    }
+    let completion = NotificationResponseCompletion<Void> { _ in completionHandler() }
+    if let downstream = downstream,
+       downstream.responds(to: #selector(UNUserNotificationCenterDelegate.userNotificationCenter(_:didReceive:withCompletionHandler:))) {
+      downstream.userNotificationCenter?(center, didReceive: response) { completion.call(()) }
+    } else {
+      completion.call(())
+    }
+  }
+
+  func userNotificationCenter(
+    _ center: UNUserNotificationCenter, willPresent notification: UNNotification,
+    withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+  ) {
+    let completion = NotificationResponseCompletion(completionHandler)
+    if let downstream = downstream,
+       downstream.responds(to: #selector(UNUserNotificationCenterDelegate.userNotificationCenter(_:willPresent:withCompletionHandler:))) {
+      downstream.userNotificationCenter?(center, willPresent: notification) { completion.call($0) }
+    } else {
+      completion.call([])
+    }
+  }
+
+  func userNotificationCenter(
+    _ center: UNUserNotificationCenter, openSettingsFor notification: UNNotification?
+  ) {
+    downstream?.userNotificationCenter?(center, openSettingsFor: notification)
   }
 }
