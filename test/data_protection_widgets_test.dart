@@ -297,6 +297,68 @@ void main() {
       await finish(tester);
     },
   );
+  for (final databasePaused in [false, true]) {
+    testWidgets(
+      'credential panel mounted during recovery stays inert until remounted (database paused: $databasePaused)',
+      (tester) async {
+        final gate = h.container.read(runtimeRecoveryGateProvider);
+        final token = await tester.runAsync(gate.pause);
+        final lease = databasePaused
+            ? await tester.runAsync(h.database.beginMaintenance)
+            : null;
+        var resumed = false;
+        var retries = 0;
+        try {
+          await host(
+            tester,
+            child: CredentialStatusPanel(onRetry: () async => retries++),
+          );
+          expect(tester.takeException(), isNull);
+          expect(
+            tester
+                .widget<TextButton>(
+                  find.byKey(const ValueKey('credential-retry')),
+                )
+                .onPressed,
+            isNull,
+          );
+          if (lease != null) await tester.runAsync(lease.resume);
+          gate.resume(token!);
+          resumed = true;
+          // A widget created during recovery must not adopt the new session.
+          await host(
+            tester,
+            child: CredentialStatusPanel(onRetry: () async => retries++),
+          );
+          expect(
+            tester
+                .widget<TextButton>(
+                  find.byKey(const ValueKey('credential-retry')),
+                )
+                .onPressed,
+            isNull,
+          );
+          expect(retries, 0);
+          await host(
+            tester,
+            child: CredentialStatusPanel(
+              key: const ValueKey('fresh-credential-session'),
+              onRetry: () async => retries++,
+            ),
+          );
+          await tap(tester, const ValueKey('credential-retry'));
+          expect(retries, 1);
+          expect(tester.takeException(), isNull);
+          await finish(tester);
+        } finally {
+          if (!resumed) {
+            if (lease != null) await tester.runAsync(lease.resume);
+            gate.resume(token!);
+          }
+        }
+      },
+    );
+  }
   testWidgets(
     'cache cleanup previews only generated files and cancellation preserves them',
     (tester) async {

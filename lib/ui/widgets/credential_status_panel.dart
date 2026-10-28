@@ -21,18 +21,23 @@ class CredentialStatusPanel extends ConsumerStatefulWidget {
 
 class _CredentialStatusPanelState extends ConsumerState<CredentialStatusPanel> {
   late final DatabaseHelper _database;
-  late final DataGeneration _generation;
+  late final DataGeneration? _generation;
   late final RuntimeRecoveryGate _runtime;
-  late final RuntimeRecoveryToken _birth;
+  late final RuntimeRecoveryToken? _birth;
   bool get _current =>
-      mounted && _database.isCurrent(_generation) && _runtime.isCurrent(_birth);
+      mounted &&
+      _runtime.isCurrent(_birth) &&
+      _generation != null &&
+      _database.isCurrent(_generation);
   @override
   void initState() {
     super.initState();
     _database = ref.read(databaseHelperProvider);
-    _generation = _database.captureGeneration();
     _runtime = ref.read(runtimeRecoveryGateProvider);
-    _birth = _runtime.capture();
+    // Settings uses lazy children, which can mount while recovery reloads the
+    // locale. Such a child must remain inert until the new navigator remounts it.
+    _birth = _runtime.paused ? null : _runtime.capture();
+    _generation = _birth == null ? null : _database.captureGeneration();
   }
 
   bool _busy = false;
@@ -46,11 +51,11 @@ class _CredentialStatusPanelState extends ConsumerState<CredentialStatusPanel> {
       } else {
         await ref.read(settingsProvider.notifier).reloadCredentials();
       }
-      if (mounted) setState(() => _error = null);
+      if (_current) setState(() => _error = null);
     } catch (_) {
-      if (mounted) setState(() => _error = 'failed');
+      if (_current) setState(() => _error = 'failed');
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (_current) setState(() => _busy = false);
     }
   }
 
@@ -99,11 +104,11 @@ class _CredentialStatusPanelState extends ConsumerState<CredentialStatusPanel> {
             ),
             clearCredentials: true,
           );
-      if (mounted) setState(() => _error = null);
+      if (_current) setState(() => _error = null);
     } catch (_) {
-      if (mounted) setState(() => _error = 'failed');
+      if (_current) setState(() => _error = 'failed');
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (_current) setState(() => _busy = false);
     }
   }
 
@@ -131,7 +136,7 @@ class _CredentialStatusPanelState extends ConsumerState<CredentialStatusPanel> {
               children: [
                 TextButton.icon(
                   key: const ValueKey('credential-retry'),
-                  onPressed: _busy ? null : _retry,
+                  onPressed: _busy || !_current ? null : _retry,
                   icon: const Icon(Icons.refresh),
                   label: Text(t('retry')),
                 ),
@@ -140,7 +145,7 @@ class _CredentialStatusPanelState extends ConsumerState<CredentialStatusPanel> {
                         settings.apiKey.isNotEmpty))
                   TextButton(
                     key: const ValueKey('credential-remove'),
-                    onPressed: _busy ? null : _remove,
+                    onPressed: _busy || !_current ? null : _remove,
                     child: Text(t('forget')),
                   ),
               ],
