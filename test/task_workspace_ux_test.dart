@@ -220,6 +220,52 @@ void main() {
   }
 
   testWidgets(
+    'composer and save hint stay centered across widths and text sizes',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      for (final width in [375.0, 1440.0]) {
+        tester.view.physicalSize = Size(width, 800);
+        for (final language in ['zh', 'en', 'ja']) {
+          await show(
+            tester,
+            const InputBottomBar(),
+            language: language,
+            textScale: 2,
+          );
+          final field = find.byType(TextField);
+          await tester.enterText(field, 'UI acceptance draft');
+          await tester.pumpAndSettle();
+          final frame = tester.getRect(
+            find.byKey(const ValueKey('composer-frame')),
+          );
+          final hint = tester.getRect(
+            find.byKey(const ValueKey('composer-save-hint')),
+          );
+          expect((frame.center.dx - width / 2).abs(), lessThan(.5));
+          expect(frame.width, lessThanOrEqualTo(1040));
+          expect((hint.center.dx - frame.center.dx).abs(), lessThan(.5));
+          expect(frame.contains(hint.topLeft), isTrue);
+          expect(frame.contains(hint.bottomRight), isTrue);
+          final input = tester.widget<TextField>(field);
+          expect(input.textAlign, TextAlign.center);
+          expect(input.textAlignVertical, TextAlignVertical.center);
+          expect(input.controller!.text, 'UI acceptance draft');
+          expect(home.sent, isEmpty);
+          expect(tester.takeException(), isNull);
+          await tester.pumpWidget(const SizedBox());
+          await drainWorkspaceDrafts(tester, container);
+        }
+      }
+    },
+    variant: const TargetPlatformVariant({
+      TargetPlatform.macOS,
+      TargetPlatform.iOS,
+    }),
+  );
+
+  testWidgets(
     'input has no idle ticks and reduced motion stops recording animation',
     (tester) async {
       await show(tester, const InputBottomBar());

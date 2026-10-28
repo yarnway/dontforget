@@ -651,7 +651,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
       settingsProvider.select((s) => !s.hasConfiguredExtraction),
     );
     final isRecording = homeState.isRecording || _isLongPressRecording;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = Theme.of(context).colorScheme;
     final platform = Theme.of(context).platform;
     final isMobile =
         platform == TargetPlatform.iOS || platform == TargetPlatform.android;
@@ -688,17 +688,18 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     final composer = SafeArea(
       top: false,
       child: Container(
+        key: const ValueKey('composer-frame'),
         margin: const EdgeInsets.fromLTRB(10, 0, 10, 8),
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
-          color: isDark
-              ? Colors.black.withValues(alpha: 0.35)
-              : Colors.white.withValues(alpha: 0.85),
-          borderRadius: BorderRadius.circular(isMobile ? 18 : 8),
+          color: colors.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isRecording
                 ? Colors.red.withValues(alpha: 0.6)
-                : Theme.of(context).colorScheme.outlineVariant,
+                : _focusNode.hasFocus
+                ? colors.primary.withValues(alpha: 0.6)
+                : colors.outlineVariant.withValues(alpha: 0.7),
             width: 1.0,
           ),
         ),
@@ -729,20 +730,36 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                   horizontal: 10,
                   vertical: 2,
                 ),
-                child: Text(
-                  _memoOnly
-                      ? l10n.get('memoNoAlarm')
-                      : displayedTime != null
-                      ? '${l10n.get('reminderTimeShort')}: ${formatLocalDateTime(displayedTime)}'
-                      : l10n.get('noTimeMemo'),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall,
+                child: Center(
+                  child: Container(
+                    key: const ValueKey('composer-save-hint'),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.07),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      _memoOnly
+                          ? l10n.get('memoNoAlarm')
+                          : displayedTime != null
+                          ? '${l10n.get('reminderTimeShort')}: ${formatLocalDateTime(displayedTime)}'
+                          : l10n.get('noTimeMemo'),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: colors.onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             if (_draftSaveFailed)
               Text(
                 l10n.get('draftSaveFailed'),
+                textAlign: TextAlign.center,
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
             if (_isLongPressRecording && !keyboardVisible && !isMobile)
@@ -1021,11 +1038,16 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                                 contextMenuBuilder: buildEditableTextMenu,
                                 minLines: 1,
                                 maxLines: 4,
+                                textAlign: TextAlign.center,
+                                textAlignVertical: TextAlignVertical.center,
                                 keyboardType: TextInputType.multiline,
                                 textInputAction: enterSends
                                     ? TextInputAction.send
                                     : TextInputAction.newline,
-                                style: TextStyle(fontSize: isMobile ? 16 : 13),
+                                style: TextStyle(
+                                  fontSize: isMobile ? 16 : 14,
+                                  height: 1.45,
+                                ),
                                 decoration: InputDecoration(
                                   hintText: l10n.get(
                                     _focusNode.hasFocus
@@ -1036,8 +1058,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                                   ),
                                   hintMaxLines: 2,
                                   hintStyle: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade500,
+                                    fontSize: 14,
+                                    height: 1.45,
+                                    color: colors.onSurfaceVariant,
                                   ),
                                   border: isMobile
                                       ? OutlineInputBorder(
@@ -1067,14 +1090,17 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                                           ),
                                         )
                                       : InputBorder.none,
-                                  filled: isMobile,
+                                  filled: true,
                                   fillColor: Theme.of(
                                     context,
                                   ).colorScheme.surfaceContainerLow,
                                   isDense: true,
+                                  constraints: const BoxConstraints(
+                                    minHeight: 48,
+                                  ),
                                   contentPadding: EdgeInsets.symmetric(
-                                    horizontal: isMobile ? 12 : 4,
-                                    vertical: isMobile ? 12 : 8,
+                                    horizontal: 12,
+                                    vertical: 12,
                                   ),
                                 ),
                                 onSubmitted: enterSends
@@ -1190,7 +1216,14 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
           ),
         ),
       ),
-      child: composer,
+      child: Align(
+        heightFactor: 1,
+        alignment: Alignment.bottomCenter,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1040),
+          child: composer,
+        ),
+      ),
     );
   }
 }
