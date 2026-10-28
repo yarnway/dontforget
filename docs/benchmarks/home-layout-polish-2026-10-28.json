@@ -1,0 +1,255 @@
+{
+  "phase": "HOME_LAYOUT_POLISH",
+  "status": "CODE_AND_NATIVE_HOME_PASS_PHYSICAL_MIC_PENDING",
+  "ui_source": "e0045a0fb50f2889422ef4e7e2151742fd3f934f",
+  "ui_source_version": "1.7.0+40",
+  "isolated_phone_build": "42",
+  "tests_ui_source": {
+    "flutter_full": 1827,
+    "static_issues": 0,
+    "responsive_focus_suite": 69,
+    "legacy_generation_and_consistency_retest": 19,
+    "final_notice_consistency_retest": 23,
+    "rendered_viewports": [
+      375,
+      768,
+      1440
+    ],
+    "rendered_brightness": [
+      "light",
+      "dark"
+    ]
+  },
+  "combined_validation": {
+    "at": "2026-10-28T15:16:02.947524",
+    "combination_source": "b257bdffe48bcecd15c133c4612016c28f19003a",
+    "main_source": "7777956",
+    "ui_source": "e0045a0",
+    "source_version": "1.7.0+42",
+    "compile_build_override": "43",
+    "flutter_full": 1953,
+    "python": 126,
+    "analysis_issues": 0,
+    "builds": {
+      "macos": {
+        "bundle": "com.example.dontForget",
+        "version": "1.7.0",
+        "build": "43",
+        "platform": "macosx",
+        "architectures": "arm64",
+        "binary_sha256": "b691a884a6e11e84893e472892ab30a5e81e1bb6001ca34fee0ef17d0a845120",
+        "installed_or_launched": false
+      },
+      "ios_simulator": {
+        "bundle": "com.example.dontForget",
+        "version": "1.7.0",
+        "build": "43",
+        "platform": "iphonesimulator",
+        "architectures": "x86_64 arm64",
+        "binary_sha256": "f64ae95ec206d67e0173a85d7e06693965329dc49bf3fb33be7ab645edaaaf0c",
+        "installed_or_launched": false
+      },
+      "ios_simulator_extension": {
+        "bundle": "com.example.dontForget.ReminderActivity",
+        "version": "1.7.0",
+        "build": "43",
+        "platform": "iphonesimulator",
+        "architectures": "x86_64 arm64",
+        "binary_sha256": "f78f0f6b12d2a8122cfd817016479ab82929092c4a7a68aff37305f90acc4300",
+        "installed_or_launched": false
+      }
+    },
+    "macos_deep_strict_signature": "PASS",
+    "primary_main_advanced": false,
+    "pushed": false,
+    "phone_evidence_applies_to": "e0045a0 independent42 only",
+    "physical_mic_result": "PENDING_HUMAN"
+  },
+  "iphone_build": {
+    "at": "2026-10-28T14:32:22.274678",
+    "source_revision": "e0045a0fb50f2889422ef4e7e2151742fd3f934f",
+    "schema": 16,
+    "ios": {
+      "host": {
+        "bundle": "com.yarnway.dontforget.acceptance.p1current28",
+        "version": "1.7.0",
+        "build": "42",
+        "strict_signature": "PASS",
+        "team": "23J2CXYK23",
+        "development": true,
+        "device_in_profile": true,
+        "profile_uuid": "98c9cafd-a885-4212-9ca6-bbc14f713611",
+        "architectures": "arm64",
+        "binary_sha256": "f3c62dd07f806a24153bee0df6927c176a5e50d4c7f36d65613aba71ec0641e2"
+      },
+      "extension": {
+        "bundle": "com.yarnway.dontforget.acceptance.p1current28.ReminderActivity",
+        "version": "1.7.0",
+        "build": "42",
+        "strict_signature": "PASS",
+        "team": "23J2CXYK23",
+        "development": true,
+        "device_in_profile": true,
+        "profile_uuid": "249a8c7f-66e4-4121-8ffe-725521584b02",
+        "architectures": "arm64",
+        "binary_sha256": "676ea6c2c01b885a5b8066d015489a23ff95d0422dbe7a0053691a116336ac17"
+      }
+    },
+    "installed_or_launched": false
+  },
+  "platform_builds": {
+    "at": "2026-10-28T14:57:52.885686",
+    "source_revision": "e0045a0fb50f2889422ef4e7e2151742fd3f934f",
+    "platforms": {
+      "macos": {
+        "bundle": "com.example.dontForget",
+        "version": "1.7.0",
+        "build": "42",
+        "platform": "macosx",
+        "architectures": "arm64",
+        "binary_sha256": "be809fc01f29a835a333255cfb755443576b308f08561f3b0e40a8947fe98874",
+        "installed_or_launched": false
+      },
+      "ios_simulator": {
+        "bundle": "com.yarnway.dontforget.acceptance.p1current28",
+        "version": "1.7.0",
+        "build": "42",
+        "platform": "iphonesimulator",
+        "architectures": "x86_64 arm64",
+        "binary_sha256": "411b7e2b96fa44efd37ceebd2705396b86b6a3f1992e95a3f86e82e62a8817e6",
+        "installed_or_launched": false
+      },
+      "ios_simulator_extension": {
+        "bundle": "com.yarnway.dontforget.acceptance.p1current28.ReminderActivity",
+        "version": "1.7.0",
+        "build": "42",
+        "platform": "iphonesimulator",
+        "architectures": "x86_64 arm64",
+        "binary_sha256": "a87805529f7226da31ffc873bf6b1ad30c358a83c5f3262281109cdb0c5ea39e",
+        "installed_or_launched": false
+      }
+    },
+    "macos_deep_strict_signature": "PASS",
+    "all_other_tracked_files_still_equal_after_build": true,
+    "iphone_installation": "Owned p1current28 only, documented separately",
+    "native_mac_or_simulator_launch": "NOT_PERFORMED"
+  },
+  "qa40_product_cleanup": {
+    "at": "2026-10-28T14:39:09.687086",
+    "bundle": "com.yarnway.dontforget.acceptance.p1current28",
+    "schema": 16,
+    "integrity": "ok",
+    "total_reminders": 8,
+    "active_reminders": 7,
+    "media_records": 2,
+    "qa40": {
+      "id": "b110c67f-e5bc-4fe7-85e2-9507a7d5a14d",
+      "details_json_deleted_at": "2026-10-28T14:36:28.943692",
+      "notice_revision": 1
+    },
+    "original7_field_equal": true,
+    "media_rows_equal": true,
+    "audio_hashes_equal": true,
+    "settings_field_equal": true,
+    "cleanup": "PASS_RECOVERABLE_PRODUCT_SOFT_DELETE",
+    "scope": "independent live Documents copy; static backup not claimed",
+    "schema_note": "deleted_at lives in details_json; nullable prior details decode as empty, first two scripts failed before result output",
+    "native_queue_cleanup": "NOT_YET_INDEPENDENTLY_READ"
+  },
+  "post_upgrade_data": {
+    "at": "2026-10-28T14:46:37.055229",
+    "source_revision": "e0045a0fb50f2889422ef4e7e2151742fd3f934f",
+    "installed_build": "42",
+    "bundle": "com.yarnway.dontforget.acceptance.p1current28",
+    "schema": 16,
+    "integrity": "ok",
+    "reminders_total": 8,
+    "reminders_all_field_equal": true,
+    "media_records_equal": true,
+    "audio_hashes_equal": true,
+    "settings_changed_field_names": {
+      "default": [
+        "api_key",
+        "ai_profiles_json"
+      ]
+    },
+    "qa40_still_trashed": true,
+    "scope": "read-only live post-startup copy; native credential status requires UI"
+  },
+  "native_notification_readback": {
+    "at": "2026-10-28T14:51:30.296461",
+    "source": "local post-startup journal plus14:48 system API UI",
+    "bundle": "com.yarnway.dontforget.acceptance.p1current28",
+    "journal_qa40_entries": [
+      {
+        "reminderId": "b110c67f-e5bc-4fe7-85e2-9507a7d5a14d",
+        "nativeId": 1260435943,
+        "action": "cancel",
+        "status": "submitted",
+        "attempts": 30,
+        "triggerUtcMicros": null,
+        "noticeRevision": null,
+        "attemptedAt": "2026-10-28T06:44:38.837233Z"
+      }
+    ],
+    "qa40_default_native_id": 1260435943,
+    "system_permission": "allowed",
+    "system_pending": 2,
+    "system_retained": 0,
+    "future": 2,
+    "submitted": 2,
+    "awaiting_verification": 0,
+    "pending_cancellation": 0,
+    "capacity_pending": 0,
+    "queue_evidence": "phone42-native-queue.png",
+    "scope": "Native counts are actual API readback; exact OS request IDs not exposed by this UI, journal is supplementary evidence",
+    "only_product_test_notification_cleanup": "QA40 recoverable deletion; original2 future requests retained",
+    "qa40_actual_native_id": 1260435943,
+    "qa40_journal_status": "submitted",
+    "exact_os_request_ids_exposed": false
+  },
+  "native_ui_observed": [
+    "Home compact cards and collapsed micro habits",
+    "Centered composer placeholder",
+    "Single centered command search with old title removed",
+    "Secure credential status after upgrade"
+  ],
+  "native_ui_not_claimed": [
+    "Physical microphone start/first-word accuracy",
+    "Physical voice arc gestures",
+    "Due banner action row under actual due sample",
+    "58/50/8 native capacity matrix",
+    "Cold/delivery/cross-day phone matrix"
+  ],
+  "data_protection": "Own p1current28 only; old iphone17 not read or modified; original2 future notifications retained; no new task/media by agent",
+  "phone_status": "HUMAN_MIC_ACCEPTANCE_PENDING; independent lease still UX-owned",
+  "main_integration": {
+    "merge_commit": "051dfac",
+    "runtime_combination": "b257bdffe48bcecd15c133c4612016c28f19003a",
+    "target_version": "1.7.0+43",
+    "protected_unrelated_files": 27,
+    "main_advanced": true,
+    "pushed": false,
+    "native_phone_version_remains": "e0045a0 independent +42",
+    "validation": "PASS",
+    "flutter_passed": 1953,
+    "python_passed": 126,
+    "analysis_issues": 0,
+    "source_files_verified": 548,
+    "private_evidence": "build/native_acceptance/study-stage41-materials/ui43-final-verification.json",
+    "cleanup": {
+      "removed": "build/ui-stage43-validation",
+      "kib": 118644,
+      "evidence_files_unchanged": 92
+    }
+  },
+  "pushed_or_published": false,
+  "raw_evidence_sha256": {
+    "full-release.log": "00c0bbd184b2809c682356e06fa10c8b2b2dc557dd1a2b5f3aedd3c6412e7843",
+    "analyze-release.log": "dbda1833eee6bff630e87a8d9a264db72a23c5a1a8f2a23d8bea5c40c48107d3",
+    "render-final.log": "729e01b98900cb19e346f3d6215e5d587714dd8b2998a7de72ad3e7460360f0d",
+    "combined-full-tests.log": "9e566b69b60455d4c511881ba284fcfd8cffcda11f465165e2462477287ab333",
+    "combined-analyze.log": "ddcd94853ea3f1a0c7f557b3f97ee7b5540656f5a4754676d42c5990f37809a1",
+    "combined-python-tests.log": "01559f1608b38ce03d64a6e3476bb31b545a32b8f8717a3e94f95a30b00f2ed6"
+  }
+}
