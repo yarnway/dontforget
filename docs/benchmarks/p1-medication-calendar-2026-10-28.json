@@ -1,0 +1,142 @@
+{
+  "date": "2026-10-28",
+  "timezone": "Asia/Shanghai",
+  "phase": "P1 / second phase offline scenarios",
+  "source_commit": "2531fb5f9f1bc56912e6e4eeac62542a89c11731",
+  "source_tree": "08408689427adce2dad37db34947b4724edf6698",
+  "implementation_commits": [
+    "7819c06",
+    "6f42ccd",
+    "2531fb5"
+  ],
+  "included_parallel_commit": "385fbfb",
+  "database_schema": 16,
+  "task_details_formats": {
+    "legacy": 1,
+    "extended_semantics": 2,
+    "unfenced_extended_data_rejected": true,
+    "old_client_requires_pre_format2_backup_for_rollback": true
+  },
+  "toolchain": {
+    "flutter": "3.44.9",
+    "flutter_revision": "6b182d2c7585eba26d4edce0f97630effd256c33",
+    "dart": "3.12.2"
+  },
+  "scope": {
+    "multi_source_medication": "implemented_offline",
+    "explicit_meal_linkage": "implemented_offline",
+    "ordinary_and_departure_date_exceptions": "implemented_offline",
+    "medication_date_exceptions": "not_implemented",
+    "phone_notification_owner": "优化项目架构与产品体验",
+    "phone_cross_day": "pending_by_user_scope",
+    "build": false,
+    "installation": false,
+    "push": false,
+    "release": false,
+    "real_database_access": false,
+    "real_notification_access": false,
+    "real_model_or_weather_acceptance": false
+  },
+  "validation": {
+    "full_flutter": {
+      "passed": 1729,
+      "failed": 0,
+      "skipped": 0,
+      "command": "flutter test --no-pub --reporter expanded",
+      "location": "exact committed source archive in an isolated directory"
+    },
+    "full_python": {
+      "passed": 126,
+      "failed": 0,
+      "skipped": 0,
+      "command": "python3 -m unittest discover -s scripts/tests -v",
+      "location": "original repository; all Python script bytes verified against the commit and isolated archive"
+    },
+    "static_analysis": {
+      "issues": 0,
+      "command": "flutter analyze --no-pub"
+    },
+    "timezone_specialized": {
+      "timezone": "America/Los_Angeles",
+      "passed": 94,
+      "failed": 0,
+      "tests": [
+        "test/medication_calendar_test.dart",
+        "test/planning_routines_test.dart",
+        "test/departure_rolling_test.dart",
+        "test/departure_refill_recovery_test.dart",
+        "test/recurrence_timezone_process_test.dart"
+      ]
+    },
+    "snapshot": {
+      "source_commit": "2531fb5f9f1bc56912e6e4eeac62542a89c11731",
+      "tracked_files": 754,
+      "all_tracked_files_byte_equivalent": true
+    },
+    "backup_restore": {
+      "formats": [
+        "json",
+        "sqlite"
+      ],
+      "actual_restore_and_reopen": true,
+      "field_equality": true,
+      "temporary_data_only": true
+    },
+    "ui": {
+      "languages": [
+        "zh",
+        "en",
+        "ja"
+      ],
+      "widths": [
+        375,
+        768,
+        1440
+      ],
+      "new_controls_text_scale": 1.8,
+      "dark_keyboard_case": true,
+      "existing_light_and_dark_regression": true
+    }
+  },
+  "regressions_fixed": [
+    "selected source values refresh form fields",
+    "partial meal and invalid exception drafts restore safely",
+    "meal edits do not recreate taken dose slots",
+    "calendar month-end anchor retained after excluded first date",
+    "cross-day event follows extra reminder day",
+    "sparse intervals and 366 excluded weekly dates continue",
+    "lazy dose action test waits for scroll layout"
+  ],
+  "private_evidence_directory": "build/phase2-medication-calendar-20261028-2531fb5",
+  "manifest_sha256": "e8de6b66aa09a5f64c0532f94543df24a7b29fadc5f2209ba07b861eeec3516a",
+  "evidence_sha256": {
+    "flutter-all.log": "1249cc036083b190960c93cbec30ab150e3ffe4211be80d6aeb4f5c55f4ee762",
+    "python-all.log": "7612f963980055879e727843821380db36cd9234dd0c716331ad2e6aa7a75ee9",
+    "flutter-analyze.log": "cbb75238e8f150ff0ed927356f0d864eaea2ff3d33062a86189b3bf6c9a25de0",
+    "timezone-los-angeles.log": "996b41a6aaf629b3b74b0ad2dc925764d8ddd4eb2d611845c57a4d5e07453764",
+    "tree-byte-check.json": "173f24912d9a3bcfb861fd481b6b6aa89240209284401a4cf0c03fbdbc31fee6",
+    "source-sha256.json": "02e55ad11bbac66f67a0910d34da3dcc336f6a876a1e91a925655be74eed37e2"
+  },
+  "remaining": {
+    "phase2": [
+      "phone matrix and future package-specific native acceptance",
+      "multi-day courses and natural expiry; sleep, long absence, real timezone/DST",
+      "image region coordinates and real multimodal recognition quality",
+      "independent ordinary recurring dates; statutory holidays",
+      "background weather and explicit location permission",
+      "secure storage; optional encrypted and larger backups; cross-device restore",
+      "unified content controls; template import/export; project/tag bulk edits"
+    ],
+    "phase3": [
+      "whole learning plans and cross-plan operations",
+      "long-term workload and personalization; archive controls; pronunciation/dictation and identity migration",
+      "sharing/global capture; task focus and week view",
+      "LAN edits/deletes/media/conflict persistence and real-device validation"
+    ]
+  },
+  "notes": [
+    "The first Python run inside a temporary repository hit two existing non-temporary-root safety-test assumptions; no safeguards were relaxed. The full suite passed in the original repository with identical script bytes.",
+    "Shared uncommitted work and native acceptance evidence were not included in the isolated source snapshot.",
+    "Native delivery/clicks and physical-device behavior are not inferred from these automated results."
+  ]
+}
