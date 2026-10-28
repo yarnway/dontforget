@@ -1,0 +1,88 @@
+{
+  "date": "2026-10-28",
+  "native_version": "1.7.0+43",
+  "native_source": "8aeba8d7c933fab9e6be5bd16b068a367eb7ff75",
+  "ci_run": 40650007828,
+  "ci_quality_and_five_builds": "PASS",
+  "next_version": "1.7.0+44",
+  "voice_source": "de58b53775d9a38eb320155ac66d0b743a6e7761",
+  "voice_review": {
+    "flutter_passed": 1956,
+    "analysis_issues": 0,
+    "verified_tracked_files": 828
+  },
+  "phone": {
+    "bundle": "com.yarnway.dontforget.acceptance.p1current28",
+    "same_identity_upgrade": "PASS",
+    "native_launch_and_reopen": "PASS",
+    "counts": {
+      "Reminders": 9,
+      "MediaRecords": 3,
+      "Settings": 1
+    },
+    "same_rows": true,
+    "same_media_bytes": true,
+    "schema": 16,
+    "integrity": "ok",
+    "new_tasks_or_notifications_created": 0,
+    "final_owned_processes_absent": true
+  },
+  "mac": {
+    "bundle": "com.example.dontForget.acceptance.study27-local",
+    "upgrade_quit_reopen_quit": "PASS",
+    "counts": {
+      "Reminders": 5,
+      "MediaRecords": 1,
+      "Settings": 1
+    },
+    "same_rows_media_and_database_bytes": true,
+    "credential_ui": "SYSTEM_STORAGE_UNAVAILABLE_AI_DISABLED; no credential or settings mutation"
+  },
+  "QA40": {
+    "reminder_id": "b110c67f-e5bc-4fe7-85e2-9507a7d5a14d",
+    "native_id": 1260435943,
+    "soft_deleted": true,
+    "notice_revision": 1,
+    "action": "cancel",
+    "status": "submitted",
+    "attempts_before_after": [
+      30,
+      32
+    ],
+    "system_preupgrade_pending_retained": [
+      2,
+      0
+    ],
+    "pending_cancellation_preupgrade": 0,
+    "exact_os_id_deletion": "NOT_INDEPENDENTLY_OBSERVED",
+    "original_two_future_protected": true
+  },
+  "input": {
+    "mirror_typeText": "REORDERED_CHARACTERS; root cause not isolated",
+    "mirror_paste": "NO_REPLACEMENT_OBSERVED",
+    "select_all_backspace_clear": "PASS; no submitted fixture",
+    "japanese_software_keyboard": "NOT_ACCEPTED",
+    "physical_voice_gestures": "NOT_ACCEPTED"
+  },
+  "native_attachments43": "NOT_COMPLETED",
+  "freed_KiB": 181456,
+  "release": "NOT_PUBLISHED; macOS and iOS native gates remain",
+  "evidence_sha256": {
+    "ci.json": "1af6f2c703e392ca6359b61d75770a8b5440226a51c113918ef1fd11b25a0f7c",
+    "macos43-download-verification.json": "8e3cefda12c26a308c82ca712a2d62887e377f21fac90a6b9a31ddb8f5c5fdf2",
+    "ios43-download-verification.json": "8704a37be674813169b392dd3623ed6a41f685ef55878586394363e172e141b0",
+    "ios43-signature.json": "ed650c11586c5931b02447d1a58d1cb4a5a10e3949d3ac31a2dd59d1be1bf01a",
+    "ios43-install.json": "304c95f09d07284b57ea9f9b735aff67b0589dde2e834fabe355122b1ddb0110",
+    "mac43-preupgrade.json": "cda60fc514ab36463235af4c564f2a17b8cc1d69c8985e6ebc05669513ec5052",
+    "mac43-after-quit.json": "6b35187be71003cd675d22fced2078c77e0b90e4cb14039988efe5ba6b35a940",
+    "mac43-final.json": "623dce17fa873fce961af0a4d27bf0aa9ff1a7a21357ee20ce8643ecd007253b",
+    "phone43-preupgrade/snapshot.json": "fded55b60274315084c6631dffea7514b2e5a65fe7a088d172fcf2706a3d7769",
+    "phone43-after-upgrade/readback.json": "9658d6fdf37ad4235e33acd355a9454a83a606024be8204d2c76ef0c885daa5d",
+    "phone43-final/readback.json": "42d7197cc171f4902407a68d4e9a6b2f2002dc705e26bdf2e1b40f32887d6c74",
+    "voice-independent-review.json": "7de5006bdd55466fbf312782f36776ee6974502edd28dc5c59a01f2861d7bafa",
+    "voice-review-verified-files.json": "2072ca57253bf9bcf3c2da305d6d7e247eaa64b60069fe52ad1ad68c648426da",
+    "cleanup.json": "4c70a4a4eadcf93aa03dc0487ea5d4ff7dd7889971287555b1d97647880e54f3",
+    "candidate-cleanup.json": "590ee526620a50a7f294a6e3fc7e19d47f6a6580caa017469490204022e63d7b",
+    "ui-handback.json": "bf7d2d184dd29ca0b18547707e32c55d8b82680f975fb89b0c821ce0a96b7d18"
+  }
+}
