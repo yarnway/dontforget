@@ -1,0 +1,86 @@
+{
+  "date": "2026-10-28",
+  "timezone": "Asia/Shanghai",
+  "source_revision": "de58b53775d9a38eb320155ac66d0b743a6e7761",
+  "base_main": "8aeba8d7c933fab9e6be5bd16b068a367eb7ff75",
+  "source_version": "1.7.0+43",
+  "schema": 16,
+  "scope": "Voice overlay vertical spacing only; desktop large editor is a later stage",
+  "changes": [
+    "Anchor feedback above action arcs instead of screen top",
+    "Fixed status line box across preparing/save/cancel/text",
+    "Compact layout keeps 2x text clear of arcs"
+  ],
+  "checks": {
+    "focused": 55,
+    "flutter": 1956,
+    "python": 126,
+    "analyze_issues": 0,
+    "real_font_geometry": 3,
+    "render_checks": 14,
+    "iphone_release_host_extension_strict_signature": "PASS",
+    "post_build_tracked_source_hashes": "PASS"
+  },
+  "candidate": {
+    "at": "2026-10-28T07:43:17.300395+00:00",
+    "source_revision": "de58b53775d9a38eb320155ac66d0b743a6e7761",
+    "schema": 16,
+    "tracked_source_hashes_after_build_unchanged": true,
+    "ios": {
+      "host": {
+        "bundle": "com.yarnway.dontforget.acceptance.p1current28",
+        "version": "1.7.0",
+        "build": "44",
+        "strict_signature": "PASS",
+        "team": "23J2CXYK23",
+        "development": true,
+        "device_in_profile": true,
+        "architectures": "arm64",
+        "binary_sha256": "5b6bf796d2578d86012c0671e1e4db4d4c6a027419a0ac640e31917722a40792"
+      },
+      "extension": {
+        "bundle": "com.yarnway.dontforget.acceptance.p1current28.ReminderActivity",
+        "version": "1.7.0",
+        "build": "44",
+        "strict_signature": "PASS",
+        "team": "23J2CXYK23",
+        "development": true,
+        "device_in_profile": true,
+        "architectures": "arm64",
+        "binary_sha256": "0239ff9bff26407ac8c4a16faeb20a666a147a36bf80a0a7cade3ee901464211"
+      }
+    },
+    "installed_or_launched": false
+  },
+  "raw_evidence_directory": "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/p1-voice-spacing-20261028",
+  "raw_sha256": {
+    "focused-tests.log": "ab92e1f851a978144d800e6a23d5160dc9dd7da05ecc2c7753945012fe69c3ba",
+    "full-flutter.log": "957fd6f1314cf9be1deddd53de68a7af98ffac24dc922a2eebfdc79e41c89bc7",
+    "python-tests.log": "a8b176ee3473e8e60ce88cb31d2a804a99104b4006b9c30ead7da109ecd9b03d",
+    "analyze.log": "96ca8403053d17b9949e97527f11450c270ee5748086d5c36054a4278be12082",
+    "real-font-layout.log": "c7eb95cdc320173ddd14714b7f92d90c2313abb1d7f44fa7bc10c07074c67319",
+    "render.log": "4f3bc472f392534af156ab4b0bb7db13901e5e5ebe5c46ad90b1a9393e4a66a7",
+    "source-freeze.json": "5ed42238a1eac4180cdc25356a536b5eb8167d0c50cf68847ebbb7b217e99562",
+    "ios-build-steps.json": "c66c337b442d3a94f30e88bdc274803dcb760f7f7c4c4a2b59c63f2a0b1e44d4",
+    "iphone-build-verification.json": "ac0e7e4f6f2c20fe97d304ef8f20add4aab896fe218b0f70038b3bf04c1ff582",
+    "phone-explicit-handback.json": "73f6f1e214884b8b7ec1094a2c992e80065c1c013c4817340560fc7e24453a9c"
+  },
+  "phone_handoff": {
+    "at": "2026-10-28T15:42:15.219235+08:00",
+    "canonical_revision": 34,
+    "status": "EXPLICIT_RETURN_AWAITING_ARCH_RECEPTION",
+    "last_installed_source": "e0045a0fb50f2889422ef4e7e2151742fd3f934f",
+    "last_installed_build": "42",
+    "current_post_human_draft_or_media": "NOT_READ; preserve all later additions",
+    "new_candidate_installed": false
+  },
+  "native_voice_or_first_word_acceptance": "PENDING; user deferred until evening",
+  "main_integration": "REVIEW_PENDING_IN_ARCH_TASK",
+  "pushed_or_published_by_this_task": false,
+  "remaining": [
+    "Install fixed candidate after explicit next device handoff and latest-data backup",
+    "Real microphone cancel/transcript/first-words and persistence readback",
+    "P1 native notification matrix, exact QA40 native queue closure, owned fixture cleanup",
+    "Desktop large editor and pointer-hold voice editing requested as next separate stage"
+  ]
+}
