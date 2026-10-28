@@ -223,7 +223,26 @@
   ],
   "data_protection": "Own p1current28 only; old iphone17 not read or modified; original2 future notifications retained; no new task/media by agent",
   "phone_status": "HUMAN_MIC_ACCEPTANCE_PENDING; independent lease still UX-owned",
-  "main_integration": "READY_FOR_COORDINATED_LOCAL_INTEGRATION; primary main not advanced in this step",
+  "main_integration": {
+    "merge_commit": "051dfac",
+    "runtime_combination": "b257bdffe48bcecd15c133c4612016c28f19003a",
+    "target_version": "1.7.0+43",
+    "protected_unrelated_files": 27,
+    "main_advanced": true,
+    "pushed": false,
+    "native_phone_version_remains": "e0045a0 independent +42",
+    "validation": "PASS",
+    "flutter_passed": 1953,
+    "python_passed": 126,
+    "analysis_issues": 0,
+    "source_files_verified": 548,
+    "private_evidence": "build/native_acceptance/study-stage41-materials/ui43-final-verification.json",
+    "cleanup": {
+      "removed": "build/ui-stage43-validation",
+      "kib": 118644,
+      "evidence_files_unchanged": 92
+    }
+  },
   "pushed_or_published": false,
   "raw_evidence_sha256": {
     "full-release.log": "00c0bbd184b2809c682356e06fa10c8b2b2dc557dd1a2b5f3aedd3c6412e7843",
