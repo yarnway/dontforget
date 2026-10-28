@@ -1386,9 +1386,28 @@ void main() {
             .fullScreen,
         isTrue,
       );
+      final targets = {
+        for (final action in ['cancel', 'text'])
+          action: tester.getRect(find.byKey(ValueKey('voice-target-$action'))),
+      };
       await press.moveTo(before.center + const Offset(0, -80));
       await tester.pump();
-      await press.moveTo(before.center + const Offset(-80, -80));
+      for (final offset in [
+        const Offset(-80, -80),
+        const Offset(80, -80),
+        const Offset(0, -80),
+        const Offset(-80, -80),
+      ]) {
+        await press.moveTo(before.center + offset);
+        await tester.pumpAndSettle();
+        for (final entry in targets.entries) {
+          expect(
+            tester.getRect(find.byKey(ValueKey('voice-target-${entry.key}'))),
+            entry.value,
+          );
+        }
+        expect(tester.getRect(input), before);
+      }
       await press.up();
       await tester.pumpAndSettle();
       expect(home.cancels, 1);
