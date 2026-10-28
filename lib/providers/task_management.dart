@@ -2,6 +2,36 @@ part of 'providers.dart';
 
 /// Mutations share the reminder queue, recovery admission and notification journal.
 extension TaskManagement on RemindersNotifier {
+  String? _editDetails(Reminder row) {
+    if (row.details.kind != 'departure' ||
+        row.details.planId != null ||
+        row.details.data['_weather_refresh'] == null) {
+      return row.detailsJson;
+    }
+    return row.details.patch({
+      'data': {...row.details.data}..remove('_weather_refresh'),
+    }).encode();
+  }
+
+  bool _sameEditSnapshot(Reminder a, Reminder b) => mapEquals(
+    {...a.toJson(), 'details_json': _editDetails(a)},
+    {...b.toJson(), 'details_json': _editDetails(b)},
+  );
+
+  TaskDetails _preserveWeatherRefresh(Reminder current, TaskDetails proposed) {
+    if (current.details.kind != 'departure' || current.details.planId != null) {
+      return proposed;
+    }
+    final data = {...proposed.data}..remove('_weather_refresh');
+    if (data['weather_enabled'] == true &&
+        data['latitude'] == current.details.data['latitude'] &&
+        data['longitude'] == current.details.data['longitude'] &&
+        current.details.data['_weather_refresh'] != null) {
+      data['_weather_refresh'] = current.details.data['_weather_refresh'];
+    }
+    return proposed.patch({'data': data});
+  }
+
   /// Classification only: no deadlines, outcomes or native schedules change.
   Future<ReminderBatchResult> updateMetadataBatch(
     List<Reminder> expected,
@@ -345,8 +375,7 @@ extension TaskManagement on RemindersNotifier {
             throw const StaleReminderOccurrenceException();
           }
           if (baseline != null &&
-              (current == null ||
-                  !mapEquals(current.toJson(), baseline.toJson()))) {
+              (current == null || !_sameEditSnapshot(current, baseline))) {
             throw const StaleReminderOccurrenceException();
           }
           final changes = <Reminder>[];
@@ -425,15 +454,18 @@ extension TaskManagement on RemindersNotifier {
             changes.add(
               proposed.copyWith(
                 noticeRevision: old == null ? 0 : old.noticeRevision + 1,
-                detailsJson: proposed.details
-                    .patch({
-                      'history': old?.details.toJson()['history'] ?? [],
-                      'attachment_ids':
-                          old?.details.attachmentIds ??
-                          proposed.details.attachmentIds,
-                    })
-                    .record(old == null ? 'created' : 'plan_changed', at)
-                    .encode(),
+                detailsJson:
+                    (old == null
+                            ? proposed.details
+                            : _preserveWeatherRefresh(old, proposed.details))
+                        .patch({
+                          'history': old?.details.toJson()['history'] ?? [],
+                          'attachment_ids':
+                              old?.details.attachmentIds ??
+                              proposed.details.attachmentIds,
+                        })
+                        .record(old == null ? 'created' : 'plan_changed', at)
+                        .encode(),
               ),
             );
           }
@@ -484,12 +516,15 @@ extension TaskManagement on RemindersNotifier {
         );
         if (rows.isEmpty) throw const StaleReminderOccurrenceException();
         final current = Reminder.fromJson(rows.single);
-        if (current.detailsJson != expected.detailsJson ||
+        if (_editDetails(current) != _editDetails(expected) ||
             current.occurrenceIdentity != expected.occurrenceIdentity) {
           throw const StaleReminderOccurrenceException();
         }
         final saved = current.copyWith(
-          detailsJson: details.record(action, DateTime.now()).encode(),
+          detailsJson: _preserveWeatherRefresh(
+            current,
+            details,
+          ).record(action, DateTime.now()).encode(),
           noticeRevision: current.noticeRevision + 1,
           noticeAcknowledgedAt: null,
           upcomingDismissedAt: null,

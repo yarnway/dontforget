@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/database_helper.dart';
 import '../models/settings.dart';
 import '../models/reminder.dart';
+import '../models/ordinary_series.dart';
 import '../models/notification_payload.dart';
 import '../models/task_details.dart';
 import '../models/task_metadata_patch.dart';
@@ -41,6 +42,7 @@ import '../services/capture_automation_policy.dart';
 part 'task_management.dart';
 part 'task_attachments.dart';
 part 'departure_routines.dart';
+part 'ordinary_routines.dart';
 
 final departureWeatherProvider = Provider<DepartureWeatherService>((ref) {
   final service = DepartureWeatherService();
@@ -296,6 +298,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       // Loading UI state must not reschedule or mutate it a second time.
       if (!runEffects) return;
       await _reconcileDepartures(generation, DateTime.now());
+      await _reconcileOrdinary(generation, DateTime.now());
       // Promote before scheduling so startup uses the final saved priority.
       await _applyDynamicUrgency(generation, synchronize: false);
       final journal = await _notificationEntries(generation);
@@ -875,7 +878,23 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
             );
             if (pinned.length >= 3) throw const PinLimitException();
           }
+          if (OrdinarySeries.isOwner(current) &&
+              (!OrdinarySeries.isOwner(saved) ||
+                  saved.isRecurring ||
+                  saved.isCompleted ||
+                  saved.triggerTime != null ||
+                  saved.eventTime != null)) {
+            throw StateError('Edit independent schedules through their plan');
+          }
+          if (OrdinarySeries.isOccurrence(current) &&
+              (!OrdinarySeries.isOccurrence(saved) ||
+                  saved.details.planId != current.details.planId ||
+                  saved.details.data['scheduled_at'] !=
+                      current.details.data['scheduled_at'])) {
+            throw StateError('An independent date cannot change its identity');
+          }
           if ((current.details.kind == 'medication' ||
+                  OrdinarySeries.isOccurrence(current) ||
                   (current.details.kind == 'departure' &&
                       current.details.planId != null)) &&
               (saved.isRecurring ||
@@ -1485,7 +1504,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       _ => null,
     };
     if (action == null ||
-        (action == _ReminderAction.skip && !expected.isRecurring) ||
+        (action == _ReminderAction.skip && !expected.canSkipOccurrence) ||
         occurredAt.isAfter(at.add(const Duration(minutes: 5)))) {
       return Future.value(
         const ReminderActionResult(ReminderActionDisposition.stale),
@@ -1549,10 +1568,11 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
                         currentDatasetEpoch: epoch!,
                       ) ||
                       (action == _ReminderAction.skip &&
-                          !current.isRecurring))) ||
+                          !current.canSkipOccurrence))) ||
               (!current.isVisible ||
                   current.details.paused ||
                   current.isCompleted ||
+                  OrdinarySeries.isOwner(current) ||
                   current.details.kind == 'medicationPlan') ||
               (action == _ReminderAction.skip && !current.canSkipOccurrence) ||
               current.occurrenceIdentity != wanted.occurrenceIdentity ||

@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import 'reminder.dart';
 import 'task_details.dart';
 import 'calendar_exceptions.dart';
+import 'holiday_calendar.dart';
 import '../services/departure_weather_service.dart';
 
 class DeparturePlan {
@@ -16,6 +17,8 @@ class DeparturePlan {
     this.items = const [],
     this.learningEnabled = false,
     this.weatherEnabled = false,
+    this.backgroundWeather = false,
+    this.holidayPolicy = const HolidayPolicy(),
     this.latitude,
     this.longitude,
     this.city = '',
@@ -35,7 +38,8 @@ class DeparturePlan {
   static const rollingDays = 60;
   final List<int> weekdays;
   final List<ChecklistItem> items;
-  final bool learningEnabled, weatherEnabled;
+  final bool learningEnabled, weatherEnabled, backgroundWeather;
+  final HolidayPolicy holidayPolicy;
   final double? latitude, longitude;
   final List<DepartureRecord> records;
   final Map<String, dynamic>? weather;
@@ -78,6 +82,10 @@ class DeparturePlan {
       throw const FormatException('Invalid departure bounds');
     }
     final lat = data['latitude'], lon = data['longitude'];
+    if (data['weather_background'] != null &&
+        data['weather_background'] is! bool) {
+      throw const FormatException('Invalid background weather consent');
+    }
     if (lat != null &&
             (lat is! num || !lat.isFinite || lat < -90 || lat > 90) ||
         lon != null &&
@@ -94,6 +102,8 @@ class DeparturePlan {
       items: items.map(ChecklistItem.fromJson).toList(),
       learningEnabled: data['learning'] == true,
       weatherEnabled: data['weather_enabled'] == true,
+      backgroundWeather: data['weather_background'] == true,
+      holidayPolicy: HolidayPolicy.fromJson(data['holiday_policy']),
       latitude: (lat as num?)?.toDouble(),
       longitude: (lon as num?)?.toDouble(),
       city: TaskDetails.text(data['city'] ?? '', 160),
@@ -117,6 +127,8 @@ class DeparturePlan {
     'items': items.map((e) => e.toJson()).toList(),
     'learning': learningEnabled,
     'weather_enabled': weatherEnabled,
+    if (backgroundWeather) 'weather_background': true,
+    if (holidayPolicy.mode != 'none') 'holiday_policy': holidayPolicy.toJson(),
     'latitude': latitude,
     'longitude': longitude,
     'city': city,
@@ -129,6 +141,13 @@ class DeparturePlan {
   };
   DeparturePlan patch(Map<String, dynamic> changes) =>
       DeparturePlan.fromJson({...toJson(), ...changes});
+  Map<String, dynamic> mergeData(Map<String, dynamic> previous) => {
+    ...({...previous}
+      ..remove('weather_background')
+      ..remove('holiday_policy')
+      ..remove('calendar_exceptions')),
+    ...toJson(),
+  };
   Reminder build(DateTime now) {
     CalendarExceptions.fromJson(exceptions.toJson());
     if (title.trim().isEmpty ||
@@ -222,7 +241,13 @@ class DeparturePlan {
     final occurrences = <Reminder>[];
     for (var day = 0; day <= rollingDays; day++) {
       final date = DateTime(now.year, now.month, now.day + day);
-      if (!exceptions.permits(date, weekdays)) continue;
+      if (!holidayPolicy.permits(
+        date,
+        exceptions.permits(date, weekdays),
+        exceptions,
+      )) {
+        continue;
+      }
       final event = DateTime(
         date.year,
         date.month,

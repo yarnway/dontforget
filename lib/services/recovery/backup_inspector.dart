@@ -1,5 +1,8 @@
 import '../../models/credential_reference.dart';
 import '../../models/task_details.dart';
+import '../../models/calendar_exceptions.dart';
+import '../../models/ordinary_series.dart';
+import '../../models/holiday_calendar.dart';
 import '../../models/medication_plan.dart';
 import '../../models/departure_plan.dart';
 import '../../models/settings.dart';
@@ -973,9 +976,9 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
     }
     try {
       final details = TaskDetails.decode(row['details_json'] as String?);
-      unresolved += details.attachmentIds.where(
-        (id) => !ids['media_records']!.contains(id),
-      ).length;
+      unresolved += details.attachmentIds
+          .where((id) => !ids['media_records']!.contains(id))
+          .length;
     } catch (_) {
       _fail(BackupInspectionError.invalidData);
     }
@@ -1076,6 +1079,46 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
               ].contains(rule['value']))) {
         _fail(BackupInspectionError.invalidData);
       }
+    }
+  }
+  // Independent dates are meaningful only with their durable owner. Reject a
+  // malformed restore rather than silently rebuilding or losing dated history.
+  if (data['version'] >= 15) {
+    try {
+      final reminders = (data['reminders'] as List)
+          .map((e) => Reminder.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+      final byId = {for (final row in reminders) row.id: row};
+      for (final row in reminders) {
+        if (OrdinarySeries.isOwner(row)) {
+          if (row.triggerTime != null ||
+              row.eventTime != null ||
+              row.isRecurring ||
+              row.snoozedAt != null) {
+            throw const FormatException('Invalid independent owner');
+          }
+          final template = OrdinarySeries.template(row);
+          if (HolidayPolicy.fromJson(row.details.data['holiday_policy']).mode ==
+                  'workdays' &&
+              (template.recurrenceRule != 'workday' ||
+                  (row.details.repeat?.interval ?? 1) != 1)) {
+            throw const FormatException('Invalid workday series');
+          }
+        } else if (OrdinarySeries.isOccurrence(row)) {
+          final owner = byId[row.details.planId];
+          final scheduled = TaskDetails.date(row.details.data['scheduled_at'])!;
+          if (owner == null ||
+              !OrdinarySeries.isOwner(owner) ||
+              row.isRecurring ||
+              row.details.repeat != null ||
+              row.id !=
+                  '${owner.id}:ordinary:${CalendarExceptions.key(scheduled)}') {
+            throw const FormatException('Invalid independent date reference');
+          }
+        }
+      }
+    } catch (_) {
+      _fail(BackupInspectionError.invalidData);
     }
   }
   return _Validated(

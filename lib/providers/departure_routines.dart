@@ -20,7 +20,7 @@ extension DepartureRoutines on RemindersNotifier {
         (r) => r.details.kind == 'departure' && r.details.planId == null,
       )) {
         final plan = _departurePlan(owner).retained(now);
-        final data = {...owner.details.data, ...plan.toJson()};
+        final data = plan.mergeData(owner.details.data);
         var updated = owner;
         if (owner.isVisible && !owner.details.paused) {
           final language = data['notification_language'] as String? ?? 'zh';
@@ -369,16 +369,20 @@ extension DepartureRoutines on RemindersNotifier {
     generation: generation,
   );
 
-  /// Foreground prefetch only, with consent, per-plan cooldown and generation
+  /// Prefetch with explicit foreground/background consent, durable cooldown and generation
   /// fencing. Network waits never hold the database admission or mutation queue.
   Future<void> refreshDepartureWeather(
     DepartureWeatherService service, {
     required bool Function() isActive,
+    bool background = false,
+    bool Function()? isBackground,
     DateTime? now,
   }) async {
     final generation = _dbHelper.captureGeneration();
     final at = now ?? DateTime.now();
     bool current() => mounted && _dbHelper.isCurrent(generation) && isActive();
+    bool allowed(DeparturePlan plan) =>
+        !(isBackground?.call() ?? background) || plan.backgroundWeather;
     if (!current()) return;
     final owners = _managedReminders
         .where(
@@ -393,7 +397,8 @@ extension DepartureRoutines on RemindersNotifier {
     for (final baseline in owners) {
       if (!current()) return;
       final plan = _departurePlan(baseline);
-      if (!plan.weatherEnabled ||
+      if (!allowed(plan) ||
+          !plan.weatherEnabled ||
           plan.latitude == null ||
           plan.longitude == null) {
         continue;
@@ -407,6 +412,18 @@ extension DepartureRoutines on RemindersNotifier {
             !r.triggerTime!.isAfter(at.add(const Duration(hours: 6))),
       )) {
         continue;
+      }
+      final persisted = baseline.details.data['_weather_refresh'];
+      if (persisted is Map) {
+        final attemptedAt = TaskDetails.date(persisted['attempt']);
+        final nextAt = TaskDetails.date(persisted['next']);
+        if (attemptedAt != null &&
+            nextAt != null &&
+            !attemptedAt.isAfter(at.add(const Duration(minutes: 1))) &&
+            at.difference(attemptedAt) < const Duration(hours: 9) &&
+            at.isBefore(nextAt)) {
+          continue;
+        }
       }
       final attempted = _departureWeatherAttempts[plan.id];
       if (attempted != null &&
@@ -428,13 +445,58 @@ extension DepartureRoutines on RemindersNotifier {
       }
       if (requests++ >= 3) break;
       _departureWeatherAttempts[plan.id] = at;
+      Reminder? reserved;
       try {
+        reserved = await _enqueue(
+          (ticket) => _dbHelper.runOperation(ticket, () async {
+            final value = await _dbHelper.writeTransaction(ticket, (db) async {
+              if (!current() || !allowed(plan)) return null;
+              final rows = await db.query(
+                'Reminders',
+                where: 'id = ?',
+                whereArgs: [plan.id],
+              );
+              if (rows.isEmpty) return null;
+              final owner = Reminder.fromJson(rows.single);
+              if (owner.detailsJson != baseline.detailsJson) return null;
+              final updated = owner.copyWith(
+                detailsJson: owner.details.patch({
+                  'data': {
+                    ...owner.details.data,
+                    '_weather_refresh': {
+                      'attempt': at.toIso8601String(),
+                      'next': at
+                          .add(const Duration(minutes: 30))
+                          .toIso8601String(),
+                      'status': 'pending',
+                      'failures': persisted is Map
+                          ? (persisted['failures'] as int? ?? 0)
+                          : 0,
+                    },
+                  },
+                }).encode(),
+              );
+              await db.update(
+                'Reminders',
+                updated.toJson(),
+                where: 'id = ?',
+                whereArgs: [updated.id],
+              );
+              return updated;
+            });
+            if (value != null) _publishManaged([value]);
+            return value;
+          }),
+          generation: generation,
+        );
+        if (reserved == null || !current() || !allowed(plan)) continue;
         final forecast = await service.fetch(
           plan.latitude!,
           plan.longitude!,
           now: at,
         );
         if (!current()) return;
+        if (!allowed(plan)) continue;
         await _enqueue(
           (ticket) => _dbHelper.runOperation(ticket, () async {
             final changed = await _dbHelper.writeTransaction(ticket, (
@@ -448,12 +510,13 @@ extension DepartureRoutines on RemindersNotifier {
               if (owner == null ||
                   !owner.isVisible ||
                   owner.details.paused ||
-                  owner.detailsJson != baseline.detailsJson ||
+                  owner.detailsJson != reserved!.detailsJson ||
                   !current()) {
                 return <Reminder>[];
               }
               final latest = _departurePlan(owner);
-              if (!latest.weatherEnabled ||
+              if (!allowed(latest) ||
+                  !latest.weatherEnabled ||
                   latest.latitude != forecast.latitude ||
                   latest.longitude != forecast.longitude) {
                 return <Reminder>[];
@@ -462,7 +525,17 @@ extension DepartureRoutines on RemindersNotifier {
               final changes = [
                 owner.copyWith(
                   detailsJson: owner.details.patch({
-                    'data': {...owner.details.data, ...updated.toJson()},
+                    'data': {
+                      ...updated.mergeData(owner.details.data),
+                      '_weather_refresh': {
+                        'attempt': at.toIso8601String(),
+                        'next': at
+                            .add(const Duration(minutes: 30))
+                            .toIso8601String(),
+                        'status': 'ok',
+                        'failures': 0,
+                      },
+                    },
                   }).encode(),
                 ),
               ];
@@ -511,6 +584,57 @@ extension DepartureRoutines on RemindersNotifier {
         );
       } catch (_) {
         _dbHelper.checkGeneration(generation);
+        if (reserved != null && current()) {
+          final expected = reserved;
+          await _enqueue(
+            (ticket) => _dbHelper.runOperation(ticket, () async {
+              final saved = await _dbHelper.writeTransaction(ticket, (
+                db,
+              ) async {
+                if (!current()) return null;
+                final rows = await db.query(
+                  'Reminders',
+                  where: 'id = ?',
+                  whereArgs: [plan.id],
+                );
+                if (rows.isEmpty) return null;
+                final owner = Reminder.fromJson(rows.single);
+                if (owner.detailsJson != expected.detailsJson) return null;
+                final failures =
+                    ((persisted is Map
+                                ? persisted['failures'] as int? ?? 0
+                                : 0) +
+                            1)
+                        .clamp(1, 4);
+                final minutes = 30 * (1 << failures);
+                final updated = owner.copyWith(
+                  detailsJson: owner.details.patch({
+                    'data': {
+                      ...owner.details.data,
+                      '_weather_refresh': {
+                        'attempt': at.toIso8601String(),
+                        'next': at
+                            .add(Duration(minutes: minutes))
+                            .toIso8601String(),
+                        'status': 'failed',
+                        'failures': failures,
+                      },
+                    },
+                  }).encode(),
+                );
+                await db.update(
+                  'Reminders',
+                  updated.toJson(),
+                  where: 'id = ?',
+                  whereArgs: [updated.id],
+                );
+                return updated;
+              });
+              if (saved != null) _publishManaged([saved]);
+            }),
+            generation: generation,
+          );
+        }
         // Saved base items and the explicit unknown-weather fallback remain.
       }
     }
