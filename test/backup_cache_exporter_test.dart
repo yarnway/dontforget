@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dont_forget/services/backup_cache_service.dart';
@@ -100,14 +101,17 @@ void main() {
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(channel, (call) async {
             request = call;
-            return '${temp.path}/destination.dfbackup';
+            final path = '${temp.path}/destination.dfbackup';
+            return Platform.isWindows
+                ? Int64List.fromList(path.codeUnits)
+                : path;
           });
       try {
         final source = await File(
           '${temp.path}/source',
         ).writeAsString('synthetic');
-        // Exercise the native channel contract on every test host. Linux's
-        // directory-copy contract is covered separately below.
+        // Select the native contract independently of the app's platform
+        // routing. Linux's supported directory-copy contract is tested below.
         final result = await const BackupFileExporter(
           useDirectoryPicker: false,
         ).save(source, 'backup.dfbackup');
@@ -120,6 +124,9 @@ void main() {
             .setMockMethodCallHandler(channel, null);
       }
     },
+    skip: Platform.isLinux
+        ? 'FileSaver has no Linux saveAs channel; directory export is tested below.'
+        : false,
   );
   test(
     'directory export copies source into a new file and cancellation creates nothing',
