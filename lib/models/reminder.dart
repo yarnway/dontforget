@@ -45,6 +45,11 @@ class Reminder {
   final ReminderTimeOrigin timeOrigin;
   final DateTime? eventTime;
   final DateTime? suggestedTriggerTime;
+  DateTime? get usableSuggestedTriggerTime =>
+      details.data['ordinary_occurrence'] == true &&
+          details.data['ordinary_occurrence_version'] != 2
+      ? null
+      : suggestedTriggerTime;
   final String? sourceText;
   final bool capturePending;
   final String? captureProposalJson;

@@ -6,12 +6,44 @@ import 'task_details.dart';
 /// Explicit opt-in; legacy recurrence remains readable and is never silently migrated.
 class OrdinarySeries {
   static const days = 60;
+  static DateTime _onDate(DateTime base, DateTime wanted, DateTime day) {
+    final clock = base.isUtc ? wanted.toUtc() : wanted.toLocal();
+    final offset = DateTime.utc(
+      clock.year,
+      clock.month,
+      clock.day,
+    ).difference(DateTime.utc(base.year, base.month, base.day)).inDays;
+    return day.isUtc
+        ? DateTime.utc(
+            day.year,
+            day.month,
+            day.day + offset,
+            clock.hour,
+            clock.minute,
+            clock.second,
+            clock.millisecond,
+            clock.microsecond,
+          )
+        : DateTime(
+            day.year,
+            day.month,
+            day.day + offset,
+            clock.hour,
+            clock.minute,
+            clock.second,
+            clock.millisecond,
+            clock.microsecond,
+          );
+  }
+
   static bool isOwner(Reminder r) => r.details.data['ordinary_series'] != null;
   static bool isOccurrence(Reminder r) =>
       r.details.data['ordinary_occurrence'] == true;
   static Reminder template(Reminder owner) {
     final raw = owner.details.data['ordinary_series'];
-    if (raw is! Map || raw['version'] != 1 || raw['rule'] is! String) {
+    if (raw is! Map ||
+        !const [1, 2].contains(raw['version']) ||
+        raw['rule'] is! String) {
       throw const FormatException('Invalid ordinary series');
     }
     final due = TaskDetails.date(raw['trigger_anchor']);
@@ -20,6 +52,10 @@ class OrdinarySeries {
     return owner.copyWith(
       triggerTime: due,
       eventTime: TaskDetails.date(raw['event_anchor']),
+      // Legacy plans lack a suggestion reference date; do not infer an offset.
+      suggestedTriggerTime: raw['version'] == 2
+          ? TaskDetails.date(raw['suggestion_anchor'])
+          : null,
       isRecurring: true,
       recurrenceRule: raw['rule'],
       recurrenceAnchorTime: due,
@@ -61,7 +97,16 @@ class OrdinarySeries {
         window.anchor ?? template.recurrenceAnchorTime ?? template.triggerTime!;
     final eventAnchor =
         template.recurrenceEventAnchorTime ??
-        template.eventTime?.subtract(template.triggerTime!.difference(anchor));
+        (template.eventTime == null
+            ? null
+            : _onDate(template.triggerTime!, template.eventTime!, anchor));
+    final suggestionAnchor = template.suggestedTriggerTime == null
+        ? null
+        : _onDate(
+            template.triggerTime!,
+            template.suggestedTriggerTime!,
+            anchor,
+          );
     if (policy.mode == 'workdays' &&
         (rule != 'workday' || window.interval != 1)) {
       throw const FormatException(
@@ -71,6 +116,7 @@ class OrdinarySeries {
     final owner = template.copyWith(
       triggerTime: null,
       eventTime: null,
+      suggestedTriggerTime: suggestionAnchor,
       isRecurring: false,
       recurrenceRule: 'none',
       recurrenceAnchorTime: null,
@@ -81,10 +127,11 @@ class OrdinarySeries {
         'data': {
           ...template.details.data,
           'ordinary_series': {
-            'version': 1,
+            'version': 2,
             'rule': rule,
             'trigger_anchor': anchor.toIso8601String(),
             'event_anchor': eventAnchor?.toIso8601String(),
+            'suggestion_anchor': suggestionAnchor?.toIso8601String(),
           },
         },
       }).encode(),
@@ -143,43 +190,18 @@ class OrdinarySeries {
       if (!policy.permits(day, baseline, window.exceptions)) continue;
       if (window.end != null && day.isAfter(window.end!)) continue;
       final id = '${template.id}:ordinary:${CalendarExceptions.key(day)}';
-      // Keep the event's local wall time and calendar-day offset across DST.
-      final eventAt = eventAnchor == null
+      final event = eventAnchor == null
           ? null
-          : (anchor.isUtc ? eventAnchor.toUtc() : eventAnchor.toLocal());
-      final offset = eventAt == null
-          ? 0
-          : DateTime.utc(eventAt.year, eventAt.month, eventAt.day)
-                .difference(DateTime.utc(anchor.year, anchor.month, anchor.day))
-                .inDays;
-      final event = eventAt == null
+          : _onDate(anchor, eventAnchor, day);
+      final suggestion = suggestionAnchor == null
           ? null
-          : day.isUtc
-          ? DateTime.utc(
-              day.year,
-              day.month,
-              day.day + offset,
-              eventAt.hour,
-              eventAt.minute,
-              eventAt.second,
-              eventAt.millisecond,
-              eventAt.microsecond,
-            )
-          : DateTime(
-              day.year,
-              day.month,
-              day.day + offset,
-              eventAt.hour,
-              eventAt.minute,
-              eventAt.second,
-              eventAt.millisecond,
-              eventAt.microsecond,
-            );
+          : _onDate(anchor, suggestionAnchor, day);
       final data = {...template.details.data}..remove('ordinary_series');
       occurrences.add(
         Reminder.fromJson({...template.toJson(), 'id': id}).copyWith(
           triggerTime: day,
           eventTime: event,
+          suggestedTriggerTime: suggestion,
           isRecurring: false,
           recurrenceRule: 'none',
           recurrenceAnchorTime: null,
@@ -196,6 +218,7 @@ class OrdinarySeries {
             'data': {
               ...data,
               'ordinary_occurrence': true,
+              'ordinary_occurrence_version': 2,
               'scheduled_at': day.toIso8601String(),
             },
             'checklist': template.details.checklist

@@ -711,6 +711,8 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
         _items('always', true, t('onceItems')),
         _items('rain', false, t('rainItems')),
         HolidayPolicyEditor(
+          key: ValueKey('departure-holidays:${_draft['id']}'),
+          isCurrent: () => _current,
           value: plan.holidayPolicy,
           enabled: !_busy,
           onChanged: (value) => _change(() {

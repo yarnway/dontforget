@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 import '../l10n/app_localizations.dart';
+import '../l10n/routine_policy_strings.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
@@ -421,7 +422,17 @@ class HomeController extends StateNotifier<HomeState> {
     }
     final settings = _ref.read(settingsProvider);
     final parsed = QuickReminderParser.parse(trimmed);
-    final time = memoOnly ? null : reminderTime ?? parsed;
+    final localRule = !memoOnly && !settings.hasConfiguredExtraction
+        ? QuickReminderParser.recurrence(trimmed)
+        : null;
+    final needsRecurringPlan =
+        !settings.hasConfiguredExtraction &&
+        !memoOnly &&
+        QuickReminderParser.hasRecurrenceIntent(trimmed) &&
+        (localRule == null || parsed == null);
+    final time = memoOnly
+        ? null
+        : reminderTime ?? (needsRecurringPlan ? null : parsed);
     if (time != null && !time.isAfter(DateTime.now())) {
       _reportError(
         generation,
@@ -436,6 +447,7 @@ class HomeController extends StateNotifier<HomeState> {
     if (existing != null) return existing.sourceText == text;
     final local = Reminder(
       id: captureId ?? const Uuid().v4(),
+      createdAt: DateTime.now(),
       taskTitle: String.fromCharCodes(trimmed.runes.take(80)),
       taskSummary: text,
       sourceText: text,
@@ -444,15 +456,17 @@ class HomeController extends StateNotifier<HomeState> {
       timeOrigin: time == null
           ? ReminderTimeOrigin.unknown
           : ReminderTimeOrigin.manual,
-      eventTime: parsed,
+      eventTime: needsRecurringPlan ? null : parsed,
       capturePending: settings.hasConfiguredExtraction && !memoOnly,
+      isRecurring: localRule != null && parsed != null,
+      recurrenceRule: parsed == null ? 'none' : localRule ?? 'none',
     );
     final saving = _startPending(generation);
     var nativeFailed = false;
     try {
       final result = await _ref
           .read(remindersProvider.notifier)
-          .addReminderForGeneration(local, generation);
+          .addCapturedReminderForGeneration(local, generation);
       _check(generation);
       nativeFailed = result.nativeSyncFailed;
     } catch (_) {
@@ -468,6 +482,11 @@ class HomeController extends StateNotifier<HomeState> {
         AppLocalizations(
           Locale(settings.language),
         ).get('reminderNativeSyncFailed'),
+      );
+    } else if (needsRecurringPlan) {
+      _reportError(
+        generation,
+        routinePolicyText(settings.language, 'captureNeedsPlan'),
       );
     }
     return true;

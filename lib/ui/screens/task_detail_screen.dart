@@ -23,6 +23,7 @@ import '../../services/notification_permission_service.dart';
 import '../../services/notification_schedule_reader.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/planning_strings.dart';
+import '../../l10n/routine_policy_strings.dart';
 import '../widgets/planning_panel.dart';
 import 'knowledge_graph_screen.dart';
 import 'settings_screen.dart';
@@ -1063,6 +1064,32 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if (widget.task.details.data['ordinary_occurrence'] ==
+                            true &&
+                        widget.task.details.planId != null)
+                      OutlinedButton.icon(
+                        key: const ValueKey('detail-independent-plan'),
+                        icon: const Icon(Icons.event_repeat),
+                        label: Text(routineText(context, 'manageCapturedPlan')),
+                        onPressed: _isMutating
+                            ? null
+                            : () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (c) => Scaffold(
+                                    appBar: AppBar(
+                                      title: Text(
+                                        routineText(c, 'manageCapturedPlan'),
+                                      ),
+                                    ),
+                                    body: PlanningPanel(
+                                      initialOrdinaryId:
+                                          widget.task.details.planId,
+                                      onClose: () => Navigator.pop(c),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                      ),
                     if (const {
                           'medication',
                           'departure',
@@ -1531,21 +1558,20 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                                   : () => setState(() => _eventTime = null),
                             ),
                     ),
-                    if (widget.task.suggestedTriggerTime != null)
+                    if (widget.task.usableSuggestedTriggerTime != null)
                       TextButton(
                         onPressed:
                             _isMutating ||
-                                !widget.task.suggestedTriggerTime!.isAfter(
-                                  DateTime.now(),
-                                )
+                                !widget.task.usableSuggestedTriggerTime!
+                                    .isAfter(DateTime.now())
                             ? null
                             : () => setState(() {
                                 _selectedTime =
-                                    widget.task.suggestedTriggerTime;
+                                    widget.task.usableSuggestedTriggerTime;
                                 _acceptedSuggestion = true;
                               }),
                         child: Text(
-                          '${l10n.get('adoptSuggestion')}: ${formatLocalDateTime(widget.task.suggestedTriggerTime!)}',
+                          '${l10n.get('adoptSuggestion')}: ${formatLocalDateTime(widget.task.usableSuggestedTriggerTime!)}',
                         ),
                       ),
                     // 4. Reminder Time Section (提示时间与快捷设定)

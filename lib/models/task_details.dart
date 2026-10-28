@@ -55,7 +55,7 @@ class TaskDetails {
     final json = decodeStoredJson(raw);
     if (json is! Map<String, dynamic> ||
         json['version'] is! int ||
-        !const [1, 2, 3, 4].contains(json['version']) ||
+        !const [1, 2, 3, 4, 5].contains(json['version']) ||
         json['version'] != _formatVersion(json)) {
       throw const FormatException('Invalid task details');
     }
@@ -113,15 +113,16 @@ class TaskDetails {
       if (kind != 'task' ||
           json['plan_id'] != null ||
           series is! Map ||
-          series.length != 4 ||
+          !const [1, 2].contains(series['version']) ||
+          series.length != (series['version'] == 2 ? 5 : 4) ||
           !series.keys.toSet().containsAll([
             'version',
             'rule',
             'trigger_anchor',
             'event_anchor',
+            if (series['version'] == 2) 'suggestion_anchor',
           ]) ||
           series['version'] is! int ||
-          series['version'] != 1 ||
           !const [
             'daily',
             'workday',
@@ -133,6 +134,7 @@ class TaskDetails {
         throw const FormatException('Invalid ordinary series');
       }
       date(series['event_anchor']);
+      date(series['suggestion_anchor']);
     }
     if (data.containsKey('ordinary_occurrence')) {
       if (kind != 'task' ||
@@ -142,6 +144,12 @@ class TaskDetails {
           date(data['scheduled_at']) == null) {
         throw const FormatException('Invalid independent date');
       }
+    }
+    if (data.containsKey('ordinary_occurrence_version') &&
+        (data['ordinary_occurrence'] != true ||
+            data['ordinary_occurrence_version'] is! int ||
+            data['ordinary_occurrence_version'] != 2)) {
+      throw const FormatException('Invalid occurrence format');
     }
     if (data['weather_background'] != null &&
         data['weather_background'] is! bool) {
@@ -258,6 +266,20 @@ class TaskDetails {
   };
   static int _formatVersion(Map<String, dynamic> data) {
     final extended = data['data'];
+    if (extended is Map && extended['ordinary_occurrence_version'] != null) {
+      return 5;
+    }
+    if (extended is Map &&
+        extended['ordinary_series'] is Map &&
+        extended['ordinary_series']['version'] == 2) {
+      return 5;
+    }
+    if (extended is Map &&
+        extended['holiday_policy'] is Map &&
+        extended['holiday_policy']['calendar'] is Map &&
+        extended['holiday_policy']['calendar']['version'] == 2) {
+      return 5;
+    }
     if (extended is Map &&
         (extended['ordinary_series'] != null ||
             extended['ordinary_occurrence'] != null ||

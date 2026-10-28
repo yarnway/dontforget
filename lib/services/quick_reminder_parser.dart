@@ -5,6 +5,56 @@ class QuickReminderParser {
     caseSensitive: false,
   );
   static bool isAmbiguous(String text) => _unclear.hasMatch(text);
+  static bool hasRecurrenceIntent(String text) => RegExp(
+    r'每天|每日|毎日|每周|毎週|每星期|每月|每年|工作日|平日|\b(?:daily|weekly|monthly|yearly|weekdays)\b|every\s+',
+    caseSensitive: false,
+  ).hasMatch(text);
+
+  /// Only one unbounded cadence and one readable clock may bypass AI review.
+  static String? recurrence(String text) {
+    if (text.length > 500 ||
+        RegExp(
+          r'提前|之前|before|in advance',
+          caseSensitive: false,
+        ).hasMatch(text) ||
+        isAmbiguous(text) ||
+        RegExp(
+          r'[;；。\n]|[0-9一二两三四五六七八九十]+\s*(?:天|周|星期|个月|月|年)|截至|截止|直到|到期|until|ending',
+          caseSensitive: false,
+        ).hasMatch(text)) {
+      return null;
+    }
+    final clocks = RegExp(
+      r'(?:\d{1,2}|[一二两三四五六七八九十]{1,3})(?::\d{2}|[点時]|\s*(?:am|pm)\b)',
+      caseSensitive: false,
+    ).allMatches(text).length;
+    if (clocks != 1) return null;
+    final matches = <String>[];
+    if (RegExp(
+      r'每天|每日|毎日|\bdaily\b|every day',
+      caseSensitive: false,
+    ).hasMatch(text)) {
+      matches.add('daily');
+    }
+    if (RegExp(
+      r'工作日|平日|\bweekdays\b|every workday',
+      caseSensitive: false,
+    ).hasMatch(text)) {
+      matches.add('workday');
+    }
+    if (RegExp(
+          r'(?:每周|每星期|毎週)[一二三四五六日天月火水木金土]|every (?:mon|tues|wednes|thurs|fri|satur|sun)day',
+          caseSensitive: false,
+        ).allMatches(text).length ==
+        1) {
+      matches.add('weekly');
+    }
+    if (RegExp(r'(?:每周|每星期|毎週)[一二三四五六日天月火水木金土][、和及至到-]').hasMatch(text)) {
+      return null;
+    }
+    return matches.length == 1 ? matches.single : null;
+  }
+
   static DateTime? parse(String text, {DateTime? now}) =>
       isAmbiguous(text) ? null : _parse(text, now: now);
   static DateTime? _parse(String text, {DateTime? now, bool calendar = true}) {

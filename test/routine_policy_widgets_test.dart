@@ -249,8 +249,12 @@ void main() {
       );
       await tester.tap(find.widgetWithText(FilledButton, '确认'));
       await settle(tester);
-      expect(value.calendar!.id, 'next-year-fixture');
-      expect(value.calendar!.from, '2027-01-01');
+      await tap(tester, const ValueKey('calendar-apply-update'));
+      expect(value.calendar!.snapshots.map((e) => e.id), [
+        'CN-2026-20251104',
+        'next-year-fixture',
+      ]);
+      expect(value.calendar!.from, '2026-01-01');
       await finish(tester);
     },
   );

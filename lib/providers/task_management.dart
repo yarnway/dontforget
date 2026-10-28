@@ -378,6 +378,37 @@ extension TaskManagement on RemindersNotifier {
               (current == null || !_sameEditSnapshot(current, baseline))) {
             throw const StaleReminderOccurrenceException();
           }
+          final departureEdit = current?.details.kind == 'departure';
+          if (departureEdit &&
+              (!current!.isVisible ||
+                  all.any(
+                    (r) =>
+                        r.details.planId == owner.id &&
+                        r.details.kind != 'departure',
+                  ))) {
+            throw const StaleReminderOccurrenceException();
+          }
+          bool protectedDeparture(Reminder row) =>
+              departureEdit &&
+              row.details.planId == owner.id &&
+              (row.isCompleted ||
+                  row.details.archivedAt != null ||
+                  (row.details.deletedAt != null &&
+                      row.details.history.lastOrNull?.action !=
+                          'plan_changed') ||
+                  row.snoozedAt != null ||
+                  row.noticeAcknowledgedAt != null ||
+                  row.upcomingDismissedAt != null ||
+                  (row.details.paused && current?.details.paused != true) ||
+                  row.details.checklist.any((e) => e.done && !e.once) ||
+                  row.details.history.any(
+                    (e) =>
+                        !const ['created', 'plan_changed'].contains(e.action) &&
+                        current?.details.history.any(
+                              (p) => p.action == e.action && p.at == e.at,
+                            ) !=
+                            true,
+                  ));
           final changes = <Reminder>[];
           final ids = children.map((r) => r.id).toSet();
           // A changed meal clock changes the native/date ID. Match the dose's
@@ -416,6 +447,7 @@ extension TaskManagement on RemindersNotifier {
             (r) => r.details.planId == owner.id,
           )) {
             if (!ids.contains(previous.id) &&
+                !protectedDeparture(previous) &&
                 !previous.isCompleted &&
                 (previous.eventTime ?? previous.triggerTime)!.isAfter(at)) {
               changes.add(
@@ -447,7 +479,8 @@ extension TaskManagement on RemindersNotifier {
             // Already acted or historical doses keep their original instructions.
             if (old != null &&
                 old.id != owner.id &&
-                (old.isCompleted ||
+                (protectedDeparture(old) ||
+                    old.isCompleted ||
                     !(old.eventTime ?? old.triggerTime)!.isAfter(at))) {
               continue;
             }
@@ -460,6 +493,10 @@ extension TaskManagement on RemindersNotifier {
                             : _preserveWeatherRefresh(old, proposed.details))
                         .patch({
                           'history': old?.details.toJson()['history'] ?? [],
+                          if (departureEdit)
+                            'paused':
+                                current!.details.paused ||
+                                proposed.details.paused,
                           'attachment_ids':
                               old?.details.attachmentIds ??
                               proposed.details.attachmentIds,

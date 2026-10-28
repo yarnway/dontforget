@@ -167,6 +167,8 @@ const _strings = <String, List<String>>{
   ],
 
   'created': ['已创建', 'Created', '作成'],
+  'capture_applied': ['已确认整理', 'Confirmed and organized', '確認して整理済み'],
+  'reopened': ['已重新打开', 'Reopened', '未完了に戻しました'],
   'edited': ['已修改', 'Edited', '変更'],
   'completed': ['已完成', 'Completed', '完了'],
   'snoozed': ['已延后', 'Snoozed', '通知を延期'],

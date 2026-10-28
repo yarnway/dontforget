@@ -377,7 +377,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                 action == 'pin'
                     ? widget.task.copyWith(isPinned: !widget.task.isPinned)
                     : widget.task.copyWith(
-                        triggerTime: widget.task.suggestedTriggerTime,
+                        triggerTime: widget.task.usableSuggestedTriggerTime,
                         timeOrigin: ReminderTimeOrigin.aiSuggested,
                         suggestedTriggerTime: null,
                       ),
@@ -550,7 +550,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
           Icons.event_busy_outlined,
           colors.error,
         ),
-      if (task.isRecurring)
+      if (task.isRecurring || details.data['ordinary_occurrence'] == true)
         _badge(
           task.recurrenceDescription ?? l10n.get('recurrencePeriodic'),
           Icons.autorenew_rounded,
@@ -705,20 +705,21 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                     padding: const EdgeInsets.only(top: 8),
                     child: Wrap(spacing: 6, runSpacing: 6, children: metadata),
                   ),
-                if (task.suggestedTriggerTime != null && !task.isCompleted)
+                if (task.usableSuggestedTriggerTime != null &&
+                    !task.isCompleted)
                   Wrap(
                     crossAxisAlignment: WrapCrossAlignment.center,
                     spacing: 6,
                     children: [
                       Text(
-                        '${l10n.get('suggestedReminder')}: ${formatLocalDateTime(task.suggestedTriggerTime!)}',
+                        '${l10n.get('suggestedReminder')}: ${formatLocalDateTime(task.usableSuggestedTriggerTime!)}',
                         style: Theme.of(context).textTheme.bodySmall,
                       ),
                       TextButton(
                         key: ValueKey('adopt-time-${task.id}'),
                         onPressed:
                             _isBusy ||
-                                !task.suggestedTriggerTime!.isAfter(
+                                !task.usableSuggestedTriggerTime!.isAfter(
                                   DateTime.now(),
                                 )
                             ? null

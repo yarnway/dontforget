@@ -4,7 +4,13 @@ import 'quick_reminder_parser.dart';
 /// Automatic application uses grounded intent and independently readable times.
 /// Model-suggested preparation time remains a suggestion, not a new alarm.
 class CaptureAutomationPolicy {
-  static bool needsReview(String text) => QuickReminderParser.isAmbiguous(text);
+  static bool needsReview(String text) =>
+      QuickReminderParser.isAmbiguous(text) ||
+      (QuickReminderParser.hasRecurrenceIntent(text) &&
+          RegExp(
+            r'提前|之前|before|in advance',
+            caseSensitive: false,
+          ).hasMatch(text));
   static bool _grounded(String title, String source) {
     final tokens = RegExp(
       r'[a-z0-9]+|[^\x00-\x7f\s，。！？：；、（）“”‘’]',

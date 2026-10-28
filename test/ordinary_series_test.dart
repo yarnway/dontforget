@@ -63,7 +63,7 @@ void main() {
       expect(OrdinarySeries.template(schedule.owner).triggerTime, due);
       expect(
         TaskDetails.decode(schedule.owner.detailsJson).toJson()['version'],
-        4,
+        5,
       );
       final more = OrdinarySeries.schedule(
         OrdinarySeries.template(schedule.owner),

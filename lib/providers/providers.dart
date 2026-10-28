@@ -43,6 +43,8 @@ part 'task_management.dart';
 part 'task_attachments.dart';
 part 'departure_routines.dart';
 part 'ordinary_routines.dart';
+part 'routine_dates.dart';
+part 'capture_routines.dart';
 
 final departureWeatherProvider = Provider<DepartureWeatherService>((ref) {
   final service = DepartureWeatherService();
@@ -890,11 +892,16 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
               (!OrdinarySeries.isOccurrence(saved) ||
                   saved.details.planId != current.details.planId ||
                   saved.details.data['scheduled_at'] !=
-                      current.details.data['scheduled_at'])) {
+                      current.details.data['scheduled_at'] ||
+                  saved.isRecurring ||
+                  saved.spacedRepetitionLevel > 0 ||
+                  saved.eventTime != current.eventTime ||
+                  (saved.triggerTime != current.triggerTime &&
+                      (saved.triggerTime == null ||
+                          !saved.triggerTime!.isAfter(DateTime.now()))))) {
             throw StateError('An independent date cannot change its identity');
           }
           if ((current.details.kind == 'medication' ||
-                  OrdinarySeries.isOccurrence(current) ||
                   (current.details.kind == 'departure' &&
                       current.details.planId != null)) &&
               (saved.isRecurring ||
@@ -981,13 +988,11 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         'created_at': current.createdAt?.toIso8601String(),
         'capture_pending': 0,
         'capture_proposal_json': null,
-        'details_json': automatic
-            ? (i == 0 ? current.details : const TaskDetails())
-                  .record('capture_auto_applied', DateTime.now())
-                  .encode()
-            : i == 0
-            ? current.detailsJson
-            : null,
+        'details_json': _captureDetails(
+          i == 0 ? current.details : const TaskDetails(),
+          edited[i],
+          automatic,
+        ).encode(),
         'is_pinned': i == 0 && current.isPinned ? 1 : 0,
         'notice_revision': i == 0 ? current.noticeRevision + 1 : 0,
         'notice_acknowledged_at': null,
@@ -998,24 +1003,59 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       }),
   ];
 
+  TaskDetails _captureDetails(
+    TaskDetails original,
+    Reminder candidate,
+    bool automatic,
+  ) {
+    final details = candidate.details;
+    if (details.kind != 'task' ||
+        details.planId != null ||
+        OrdinarySeries.isOwner(candidate) ||
+        OrdinarySeries.isOccurrence(candidate)) {
+      throw const FormatException('Capture needs an ordinary task');
+    }
+    return original
+        .patch({
+          'repeat': candidate.isRecurring ? details.repeat?.toJson() : null,
+          'checklist': details.checklist.isEmpty
+              ? original.checklist.map((e) => e.toJson()).toList()
+              : details.checklist.map((e) => e.toJson()).toList(),
+          'tags': automatic || details.tags.isEmpty
+              ? original.tags
+              : details.tags,
+          'project': automatic || details.project.isEmpty
+              ? original.project
+              : details.project,
+        })
+        .record(
+          automatic ? 'capture_auto_applied' : 'capture_applied',
+          DateTime.now(),
+        );
+  }
+
   /// Clear, grounded captures apply atomically; uncertain output stays a proposal.
   Future<ReminderBatchResult> enrichCapture(
     Reminder baseline,
     List<Reminder> extracted,
     DataGeneration generation, {
     bool allowAutomatic = true,
+    DateTime? now,
   }) => _enqueue(
     (ticket) => _dbHelper.runOperation(ticket, () async {
+      final at = now ?? DateTime.now();
       final saved = await _dbHelper.writeTransaction(ticket, (txn) async {
         final rows = await txn.query(
           'Reminders',
           where: 'id = ?',
           whereArgs: [baseline.id],
         );
-        if (rows.isEmpty) return (rows: <Reminder>[], automatic: false);
+        if (rows.isEmpty) {
+          return (rows: <Reminder>[], automatic: false, taskCount: 0);
+        }
         final current = Reminder.fromJson(rows.single);
         if (!current.capturePending || current.isCompleted) {
-          return (rows: <Reminder>[], automatic: false);
+          return (rows: <Reminder>[], automatic: false, taskCount: 0);
         }
         if (extracted.length > 32) {
           throw const FormatException('Too many extracted tasks');
@@ -1035,16 +1075,17 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
             ? CaptureAutomationPolicy.resolve(
                 current,
                 extracted,
-                now: DateTime.now(),
+                now: at,
                 imageSource: imageSource,
               )
             : null;
         if (automatic != null) {
-          final accepted = _acceptedCaptureRows(
+          final roots = _acceptedCaptureRows(
             current,
             automatic,
             automatic: true,
           );
+          final accepted = _independentCaptures(roots, at);
           for (var i = 0; i < accepted.length; i++) {
             if (i == 0) {
               await txn.update(
@@ -1057,7 +1098,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
               await txn.insert('Reminders', accepted[i].toJson());
             }
           }
-          return (rows: accepted, automatic: true);
+          return (rows: accepted, automatic: true, taskCount: roots.length);
         }
         final saved = current.copyWith(
           capturePending: false,
@@ -1072,7 +1113,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           where: 'id = ?',
           whereArgs: [saved.id],
         );
-        return (rows: [saved], automatic: false);
+        return (rows: [saved], automatic: false, taskCount: 1);
       });
       _dbHelper.checkGeneration(ticket);
       if (saved.rows.isNotEmpty) _publishManaged(saved.rows);
@@ -1085,7 +1126,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         }
       }
       return ReminderBatchResult(
-        changed: saved.rows.length,
+        changed: saved.taskCount,
         nativeSyncFailures: failures,
       );
     }),
@@ -1096,15 +1137,16 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     Reminder expected,
     List<Reminder> edited, {
     DataGeneration? generation,
+    DateTime? now,
   }) => _enqueue(
     (ticket) => _dbHelper.runOperation(ticket, () async {
+      final at = now ?? DateTime.now();
       if (edited.isEmpty ||
           edited.length > 32 ||
           edited.any(
             (r) =>
                 r.taskTitle.trim().isEmpty ||
-                (r.triggerTime != null &&
-                    !r.triggerTime!.isAfter(DateTime.now())),
+                (r.triggerTime != null && !r.triggerTime!.isAfter(at)),
           )) {
         throw const FormatException(
           'Review the extracted tasks and their reminder times',
@@ -1131,7 +1173,10 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
             !unchanged) {
           throw const StaleReminderOccurrenceException();
         }
-        final result = _acceptedCaptureRows(current, edited);
+        final result = _independentCaptures(
+          _acceptedCaptureRows(current, edited),
+          at,
+        );
         for (var i = 0; i < result.length; i++) {
           final item = result[i];
           if (i == 0) {
@@ -1162,7 +1207,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         }
       }
       return ReminderBatchResult(
-        changed: saved.length,
+        changed: edited.length,
         nativeSyncFailures: failures,
       );
     }),

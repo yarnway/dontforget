@@ -19,6 +19,7 @@ import '../screens/notification_repair_screen.dart';
 import '../../l10n/app_localizations.dart';
 import 'departure_plan_panel.dart';
 import 'routine_coverage_panel.dart';
+import 'routine_dates_panel.dart';
 import 'medication_plan_panel.dart';
 import 'portable_backup_panel.dart';
 import 'learning_management_panel.dart';
@@ -39,8 +40,9 @@ class PlanningPanel extends StatefulWidget {
     this.onClose,
     this.initialMedicationId,
     this.initialDepartureId,
+    this.initialOrdinaryId,
   });
-  final String? initialMedicationId, initialDepartureId;
+  final String? initialMedicationId, initialDepartureId, initialOrdinaryId;
   final VoidCallback? onClose;
   @override
   State<PlanningPanel> createState() => _PlanningPanelState();
@@ -51,7 +53,11 @@ class _PlanningPanelState extends State<PlanningPanel> {
   @override
   void initState() {
     super.initState();
-    _tab = widget.initialDepartureId == null ? 0 : 1;
+    _tab = widget.initialOrdinaryId != null
+        ? 2
+        : widget.initialDepartureId == null
+        ? 0
+        : 1;
   }
 
   @override
@@ -96,7 +102,7 @@ class _PlanningPanelState extends State<PlanningPanel> {
             children: [
               MedicationPlanPanel(initialPlanId: widget.initialMedicationId),
               DeparturePlanPanel(initialPlanId: widget.initialDepartureId),
-              const TaskManagementPanel(),
+              TaskManagementPanel(initialPlanId: widget.initialOrdinaryId),
               const PortableBackupPanel(),
               const LearningManagementPanel(),
               _tab == 5
@@ -111,7 +117,8 @@ class _PlanningPanelState extends State<PlanningPanel> {
 }
 
 class TaskManagementPanel extends ConsumerStatefulWidget {
-  const TaskManagementPanel({super.key});
+  const TaskManagementPanel({super.key, this.initialPlanId});
+  final String? initialPlanId;
   @override
   ConsumerState<TaskManagementPanel> createState() =>
       _TaskManagementPanelState();
@@ -122,6 +129,7 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
   final _queryController = TextEditingController();
   String _view = 'manage', _query = '';
   bool _busy = false;
+  String? _initialPlanId;
   bool _promptOpen = false;
   bool _selecting = false;
   final _selection = <String, Reminder>{};
@@ -171,6 +179,7 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
   @override
   void initState() {
     super.initState();
+    _initialPlanId = widget.initialPlanId;
     _database = ref.read(databaseHelperProvider);
     _generation = _database.captureGeneration();
     _runtime = ref.read(runtimeRecoveryGateProvider);
@@ -357,6 +366,7 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
             _ => r.isVisible,
           };
           return accepted &&
+              (_initialPlanId == null || r.id == _initialPlanId) &&
               r.details.data['learning_archive'] != true &&
               r.details.planId == null &&
               '${r.taskTitle} ${r.details.project} ${r.details.tags.join(' ')}'
@@ -407,6 +417,11 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
                         ),
                     ],
                   ),
+                  if (_initialPlanId != null)
+                    TextButton(
+                      onPressed: () => setState(() => _initialPlanId = null),
+                      child: Text(routineText(context, 'dateShowAllPlans')),
+                    ),
                   TextField(
                     controller: _queryController,
                     decoration: InputDecoration(
@@ -681,6 +696,21 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
                               spacing: 5,
                               runSpacing: 5,
                               children: [
+                                if (OrdinarySeries.isOwner(row) ||
+                                    const [
+                                      'medicationPlan',
+                                      'departure',
+                                    ].contains(row.details.kind))
+                                  TextButton(
+                                    key: ValueKey('routine-dates:${row.id}'),
+                                    onPressed: _busy
+                                        ? null
+                                        : () =>
+                                              showRoutineDates(context, row.id),
+                                    child: Text(
+                                      routineText(context, 'datesTitle'),
+                                    ),
+                                  ),
                                 if (row.details.deletedAt != null)
                                   TextButton(
                                     onPressed: _busy
@@ -983,6 +1013,11 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
               .copyWith(
                 taskTitle: _title.text.trim(),
                 triggerTime: effectiveDue,
+                suggestedTriggerTime:
+                    base?.triggerTime == effectiveDue &&
+                        base?.recurrenceRule == _rule
+                    ? base?.suggestedTriggerTime
+                    : null,
                 eventTime:
                     base?.eventTime != null &&
                         base?.triggerTime != null &&
@@ -1138,7 +1173,16 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
                 ],
                 onChanged: _saving
                     ? null
-                    : (v) => setState(() => _rule = v ?? 'none'),
+                    : (v) => setState(() {
+                        _rule = v ?? 'none';
+                        if (_rule != 'workday' &&
+                            _holidayPolicy.mode == 'workdays') {
+                          _holidayPolicy = HolidayPolicy(
+                            mode: 'skip_holidays',
+                            calendar: _holidayPolicy.calendar,
+                          );
+                        }
+                      }),
               ),
               TextButton.icon(
                 icon: const Icon(Icons.schedule),
@@ -1197,6 +1241,8 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
                 ),
                 if (_independent)
                   HolidayPolicyEditor(
+                    key: ValueKey('ordinary-holidays:$_id'),
+                    isCurrent: () => _current,
                     value: _holidayPolicy,
                     enabled: !_saving,
                     onChanged: (value) => setState(() {
@@ -1221,6 +1267,9 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
                 ),
                 TextFormField(
                   controller: _interval,
+                  enabled:
+                      !_saving &&
+                      (!_independent || _holidayPolicy.mode != 'workdays'),
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(labelText: t('interval')),
                   validator: (v) {

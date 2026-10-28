@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'calendar_exceptions.dart';
 import 'stored_json.dart';
 
@@ -12,11 +13,48 @@ class HolidayCalendar {
     required this.source,
     required this.holidays,
     required this.workdays,
-  });
+  }) : _parts = null;
+  HolidayCalendar._bundle(List<HolidayCalendar> parts)
+    : _parts = List.unmodifiable(parts),
+      id =
+          'bundle:${sha256.convert(utf8.encode(jsonEncode(parts.map((e) => e.toJson()).toList())))}',
+      region = parts.first.region,
+      from = parts.first.from,
+      to = parts.last.to,
+      source = parts.last.source,
+      holidays = List.unmodifiable(parts.expand((e) => e.holidays)),
+      workdays = List.unmodifiable(parts.expand((e) => e.workdays));
+  final List<HolidayCalendar>? _parts;
+  List<HolidayCalendar> get snapshots => _parts ?? [this];
+  static const maxSnapshots = 4;
   final String id, region, from, to, source;
   final List<String> holidays, workdays;
   static const maxBytes = 49152;
   factory HolidayCalendar.fromJson(dynamic raw) {
+    if (raw is Map && raw['version'] == 2) {
+      if (raw['version'] is! int ||
+          raw.length != 2 ||
+          raw['snapshots'] is! List ||
+          (raw['snapshots'] as List).length < 2 ||
+          (raw['snapshots'] as List).length > maxSnapshots ||
+          utf8.encode(jsonEncode(raw)).length > maxBytes) {
+        throw const FormatException('Invalid calendar bundle');
+      }
+      final parts = (raw['snapshots'] as List).map((e) {
+        if (e is! Map || e['version'] != 1) {
+          throw const FormatException('Nested calendar bundle');
+        }
+        return HolidayCalendar.fromJson(e);
+      }).toList()..sort((a, b) => a.from.compareTo(b.from));
+      for (var i = 0; i < parts.length; i++) {
+        if (parts[i].region != parts.first.region ||
+            parts.take(i).any((p) => p.id == parts[i].id) ||
+            (i > 0 && parts[i].from.compareTo(parts[i - 1].to) <= 0)) {
+          throw const FormatException('Conflicting calendar coverage');
+        }
+      }
+      return HolidayCalendar._bundle(parts);
+    }
     if (raw is! Map ||
         raw.length != 8 ||
         raw['version'] is! int ||
@@ -89,20 +127,74 @@ class HolidayCalendar {
     return HolidayCalendar.fromJson(decodeStoredJson(raw));
   }
 
-  Map<String, dynamic> toJson() => {
-    'version': 1,
-    'id': id,
-    'region': region,
-    'from': from,
-    'to': to,
-    'source': source,
-    'holidays': holidays,
-    'workdays': workdays,
-  };
+  Map<String, dynamic> toJson() => _parts != null
+      ? {'version': 2, 'snapshots': _parts.map((e) => e.toJson()).toList()}
+      : {
+          'version': 1,
+          'id': id,
+          'region': region,
+          'from': from,
+          'to': to,
+          'source': source,
+          'holidays': holidays,
+          'workdays': workdays,
+        };
   bool covers(DateTime day) {
+    if (_parts != null) return _parts.any((e) => e.covers(day));
     final k = CalendarExceptions.key(day);
     return k.compareTo(from) >= 0 && k.compareTo(to) <= 0;
   }
+
+  HolidayCalendar merge(
+    HolidayCalendar update, {
+    bool replaceOverlaps = false,
+  }) {
+    if (region != update.region) {
+      throw const FormatException('Calendar regions differ');
+    }
+    final parts = [...snapshots];
+    for (final next in update.snapshots) {
+      if (parts.any(
+        (p) => jsonEncode(p.toJson()) == jsonEncode(next.toJson()),
+      )) {
+        continue;
+      }
+      final overlaps = parts
+          .where(
+            (p) =>
+                p.from.compareTo(next.to) <= 0 &&
+                p.to.compareTo(next.from) >= 0,
+          )
+          .toList();
+      if (overlaps.isNotEmpty && !replaceOverlaps) {
+        throw const CalendarUpdateConflict();
+      }
+      if (overlaps.any(
+        (p) => next.from.compareTo(p.from) > 0 || next.to.compareTo(p.to) < 0,
+      )) {
+        throw const FormatException(
+          'Update must include entire overlapping coverage',
+        );
+      }
+      parts.removeWhere(overlaps.contains);
+      if (parts.any((p) => p.id == next.id)) {
+        throw const FormatException('Calendar ID reused');
+      }
+      parts.add(next);
+    }
+    parts.sort((a, b) => a.from.compareTo(b.from));
+    return HolidayCalendar.fromJson(
+      parts.length == 1
+          ? parts.single.toJson()
+          : {'version': 2, 'snapshots': parts.map((p) => p.toJson()).toList()},
+    );
+  }
+
+  List<int> missingYears(DateTime start, {int days = 60}) => {
+    for (var i = 0; i <= days; i++)
+      if (!covers(DateTime(start.year, start.month, start.day + i)))
+        DateTime(start.year, start.month, start.day + i).year,
+  }.toList()..sort();
 
   static HolidayCalendar get mainland2026 {
     final off = <String>[];
@@ -137,6 +229,10 @@ class HolidayCalendar {
       ],
     });
   }
+}
+
+class CalendarUpdateConflict implements Exception {
+  const CalendarUpdateConflict();
 }
 
 class HolidayPolicy {
