@@ -1,7 +1,9 @@
 import 'dart:io';
 
 import 'package:dont_forget/models/notification_payload.dart';
+import 'package:dont_forget/models/ordinary_series.dart';
 import 'package:dont_forget/models/reminder.dart';
+import 'package:dont_forget/models/task_details.dart';
 import 'package:dont_forget/services/macos_notification_scheduler.dart';
 import 'package:dont_forget/services/notification_action_presentation.dart';
 import 'package:dont_forget/services/notification_service.dart';
@@ -65,6 +67,11 @@ Reminder _task({bool recurring = false}) => Reminder(
   isRecurring: recurring,
   recurrenceRule: recurring ? 'daily' : 'none',
 );
+
+({Reminder owner, Reminder occurrence}) _ordinarySeries() {
+  final series = OrdinarySeries.schedule(_task(recurring: true), _now);
+  return (owner: series.owner, occurrence: series.occurrences.first);
+}
 
 String _payload() =>
     NotificationPayload.forReminder(_task(), datasetEpoch: _epoch).encode();
@@ -218,6 +225,121 @@ void main() {
   }
 
   test(
+    'independent ordinary occurrence exposes skip on every native platform',
+    () async {
+      final child = _ordinarySeries().occurrence;
+      expect(child.isRecurring, isFalse);
+      expect(child.canSkipOccurrence, isTrue);
+      await service.setNotificationLanguage('ja');
+      await service.scheduleReminderStrict(child);
+      final scheduled = native.schedules.single;
+      expect(scheduled.details.android!.actions!.map((action) => action.id), [
+        'complete',
+        'snooze_15',
+        'skip_occurrence',
+      ]);
+      expect(
+        scheduled.details.iOS!.categoryIdentifier,
+        'dontforget_ios_recurring_ja',
+      );
+      expect(
+        scheduled.details.macOS!.categoryIdentifier,
+        'dontforget_macos_recurring_ja',
+      );
+      expect(
+        NotificationPayload.tryParse(
+          scheduled.payload,
+        )!.matches(child, currentDatasetEpoch: _epoch),
+        isTrue,
+      );
+    },
+  );
+
+  for (final kind in ['medication', 'departure']) {
+    test('$kind plan occurrence keeps its supported skip action', () async {
+      final child = _task().copyWith(
+        detailsJson: TaskDetails(kind: kind, planId: 'synthetic-plan').encode(),
+      );
+      expect(child.isRecurring, isFalse);
+      expect(child.canSkipOccurrence, isTrue);
+      await service.setNotificationLanguage('zh');
+      await service.scheduleReminderStrict(child);
+      final scheduled = native.schedules.single;
+      expect(scheduled.details.android!.actions!.map((action) => action.id), [
+        'complete',
+        'snooze_15',
+        'skip_occurrence',
+      ]);
+      expect(
+        scheduled.details.iOS!.categoryIdentifier,
+        'dontforget_ios_recurring_zh',
+      );
+      expect(
+        scheduled.details.macOS!.categoryIdentifier,
+        'dontforget_macos_recurring_zh',
+      );
+    });
+  }
+
+  test(
+    'skip capability alone reconciles the native action variant in both directions',
+    () async {
+      final child = _ordinarySeries().occurrence;
+      final oneOff = child.copyWith(detailsJson: const TaskDetails().encode());
+      expect(oneOff.isRecurring, child.isRecurring);
+      expect(oneOff.noticeRevision, child.noticeRevision);
+      expect(oneOff.triggerTime, child.triggerTime);
+      expect(oneOff.canSkipOccurrence, isFalse);
+      await service.scheduleReminderStrict(oneOff);
+      await service.scheduleReminderStrict(child);
+      await service.scheduleReminderStrict(oneOff);
+      expect(native.schedules, hasLength(3));
+      expect(native.schedules.map((entry) => entry.id).toSet(), hasLength(1));
+      expect(
+        native.schedules.map((entry) => entry.payload).toSet(),
+        hasLength(1),
+      );
+      expect(
+        native.schedules.map((entry) => entry.details.iOS!.categoryIdentifier),
+        [
+          'dontforget_ios_once_en',
+          'dontforget_ios_recurring_en',
+          'dontforget_ios_once_en',
+        ],
+      );
+      expect(
+        native.schedules[1].details.android!.actions!.last.id,
+        'skip_occurrence',
+      );
+      expect(
+        native.schedules.last.details.android!.actions!.last.id,
+        'snooze_60',
+      );
+    },
+  );
+
+  test(
+    'closing an independent occurrence cancels its native reminder',
+    () async {
+      final child = _ordinarySeries().occurrence;
+      await service.scheduleReminderStrict(child);
+      final closed = child.copyWith(isCompleted: true);
+      expect(closed.canSkipOccurrence, isFalse);
+      await service.scheduleReminderStrict(closed);
+      expect(native.schedules, hasLength(1));
+      expect(native.cancelled.last, native.schedules.single.id);
+    },
+  );
+
+  test('ordinary series owner has no native reminder or skip action', () async {
+    final owner = _ordinarySeries().owner;
+    expect(owner.triggerTime, isNull);
+    expect(owner.canSkipOccurrence, isFalse);
+    await service.scheduleReminderStrict(owner);
+    expect(native.schedules, isEmpty);
+  });
+
+  test(
     'language change re-registers labels and reschedules same occurrence and native ID',
     () async {
       await service.setNotificationLanguage('ja');
@@ -322,54 +444,58 @@ void main() {
     },
   );
 
-  test(
-    'custom macOS scheduler forwards the same category and payload',
-    () async {
-      await service.pauseForMaintenance();
-      service = NotificationService.forTesting(
-        native,
-        usesNativeNotifications: true,
-        now: () => _now,
-        readDatasetEpoch: () async => _epoch,
-        macScheduler: const MacOSNotificationScheduler(),
-        pendingActionStore: () async => queue,
-      );
-      final calls = <MethodCall>[];
-      final messenger =
-          TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-      messenger.setMockMethodCallHandler(MacOSNotificationScheduler.channel, (
-        call,
-      ) async {
-        calls.add(call);
-        return null;
-      });
-      try {
-        await service.setNotificationLanguage('zh');
-        final task = _task(recurring: true);
-        await service.scheduleReminderStrict(task);
-        final arguments = calls.single.arguments as Map;
-        expect(calls.single.method, 'schedule');
-        expect(
-          arguments['categoryIdentifier'],
-          'dontforget_macos_recurring_zh',
+  for (final independent in [false, true]) {
+    test(
+      'custom macOS scheduler forwards ${independent ? 'independent' : 'legacy'} occurrence category and payload',
+      () async {
+        await service.pauseForMaintenance();
+        service = NotificationService.forTesting(
+          native,
+          usesNativeNotifications: true,
+          now: () => _now,
+          readDatasetEpoch: () async => _epoch,
+          macScheduler: const MacOSNotificationScheduler(),
+          pendingActionStore: () async => queue,
         );
-        expect(
-          NotificationPayload.tryParse(
-            arguments['payload'] as String,
-          )!.matches(task, currentDatasetEpoch: _epoch),
-          isTrue,
-        );
-        expect(
-          arguments['triggerMilliseconds'],
-          task.triggerTime!.millisecondsSinceEpoch,
-        );
-        expect(native.schedules, isEmpty);
-      } finally {
-        messenger.setMockMethodCallHandler(
-          MacOSNotificationScheduler.channel,
-          null,
-        );
-      }
-    },
-  );
+        final calls = <MethodCall>[];
+        final messenger =
+            TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+        messenger.setMockMethodCallHandler(MacOSNotificationScheduler.channel, (
+          call,
+        ) async {
+          calls.add(call);
+          return null;
+        });
+        try {
+          await service.setNotificationLanguage('zh');
+          final task = independent
+              ? _ordinarySeries().occurrence
+              : _task(recurring: true);
+          await service.scheduleReminderStrict(task);
+          final arguments = calls.single.arguments as Map;
+          expect(calls.single.method, 'schedule');
+          expect(
+            arguments['categoryIdentifier'],
+            'dontforget_macos_recurring_zh',
+          );
+          expect(
+            NotificationPayload.tryParse(
+              arguments['payload'] as String,
+            )!.matches(task, currentDatasetEpoch: _epoch),
+            isTrue,
+          );
+          expect(
+            arguments['triggerMilliseconds'],
+            task.triggerTime!.millisecondsSinceEpoch,
+          );
+          expect(native.schedules, isEmpty);
+        } finally {
+          messenger.setMockMethodCallHandler(
+            MacOSNotificationScheduler.channel,
+            null,
+          );
+        }
+      },
+    );
+  }
 }

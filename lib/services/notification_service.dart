@@ -764,6 +764,8 @@ class NotificationService {
     Importance importance;
     bool enableVibration = false;
     bool playSound = false;
+    // Independent dated occurrences can be skipped without legacy recurrence.
+    final hasSkipAction = reminder.canSkipOccurrence;
 
     if (reminder.quadrantLevel == 1) {
       channelId = 'q1_channel';
@@ -801,7 +803,7 @@ class NotificationService {
       playSound: playSound,
       fullScreenIntent: reminder.quadrantLevel == 1,
       actions: NotificationActionPresentation.android(
-        reminder.isRecurring,
+        hasSkipAction,
         _notificationLanguage,
       ),
     );
@@ -811,7 +813,7 @@ class NotificationService {
       iOS: DarwinNotificationDetails(
         categoryIdentifier: NotificationActionPresentation.category(
           'ios',
-          reminder.isRecurring,
+          hasSkipAction,
           _categoryLanguage,
         ),
         presentSound: playSound,
@@ -824,7 +826,7 @@ class NotificationService {
       macOS: DarwinNotificationDetails(
         categoryIdentifier: NotificationActionPresentation.category(
           'macos',
-          reminder.isRecurring,
+          hasSkipAction,
           _categoryLanguage,
         ),
         presentSound: playSound,
@@ -853,7 +855,7 @@ class NotificationService {
             payload: payload,
             categoryIdentifier: NotificationActionPresentation.category(
               'macos',
-              reminder.isRecurring,
+              hasSkipAction,
               _categoryLanguage,
             ),
           );
@@ -902,6 +904,7 @@ class NotificationService {
   String _nativeSignature(Reminder task) => jsonEncode([
     _categoryLanguage,
     task.isRecurring,
+    task.canSkipOccurrence,
     task.triggerTime!.toUtc().microsecondsSinceEpoch,
     task.noticeRevision,
     task.taskTitle,
