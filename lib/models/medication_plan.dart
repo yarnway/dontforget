@@ -284,7 +284,7 @@ class Medicine {
     citations,
     resolvedFields,
     requiredFields: requireEvidence
-        ? const {'name', 'strength', 'amount', 'unit', 'meal', 'times'}
+        ? MedicationFacts.requiredMedicineFields
         : const {},
   );
   String mealDescription(List<MealTime> meals) => mealLinks

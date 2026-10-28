@@ -87,6 +87,16 @@ class MedicationFacts {
     'notes',
   };
   static const planFields = {'title', 'person', 'start', 'end'};
+  static const requiredMedicineFields = {
+    'name',
+    'strength',
+    'amount',
+    'unit',
+    'meal',
+    'times',
+    'start',
+    'end',
+  };
   static List<MedicationCitation> citations(dynamic raw, Set<String> fields) {
     if (raw == null) return const [];
     if (raw is! List || raw.length > 48) {

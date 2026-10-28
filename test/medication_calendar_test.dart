@@ -477,6 +477,20 @@ void main() {
         MedicationPlan.fromJson(raw).build(now: DateTime(2030, 1, 6)).doses,
         hasLength(3),
       );
+      m['start'] = '2030-01-08';
+      expect(
+        MedicationPlan.fromJson(raw).issues,
+        contains('medicineSources:1'),
+      );
+      m['resolved_fields']['start'] = MedicationFacts.fingerprint(
+        'start',
+        m['start'],
+        [],
+      );
+      expect(
+        MedicationPlan.fromJson(raw).build(now: DateTime(2030, 1, 6)).doses,
+        hasLength(2),
+      );
     });
   });
   group('source extraction ownership', () {
