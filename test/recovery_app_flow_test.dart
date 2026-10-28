@@ -16,6 +16,7 @@ import 'package:dont_forget/providers/recovery_coordinator.dart';
 import 'package:dont_forget/services/lan_sync_service.dart';
 import 'package:dont_forget/services/llm_service.dart';
 import 'package:dont_forget/services/notification_service.dart';
+import 'package:dont_forget/services/notification_diagnostics_service.dart';
 import 'package:dont_forget/services/recovery/backup_inspector.dart';
 import 'package:dont_forget/services/recovery/database_recovery.dart';
 import 'package:dont_forget/ui/screens/backup_preview_screen.dart';
@@ -217,6 +218,9 @@ void main() {
     );
     container = ProviderContainer(
       overrides: [
+        notificationFailureHistoryReaderProvider.overrideWithValue(
+          () async => const NotificationFailureHistory(available: false),
+        ),
         databaseHelperProvider.overrideWithValue(database),
         notificationServiceProvider.overrideWithValue(notifications),
         lanSyncServiceProvider.overrideWithValue(lan),

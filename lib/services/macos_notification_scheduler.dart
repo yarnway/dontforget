@@ -14,6 +14,7 @@ class MacOSNotificationScheduler {
     required DateTime trigger,
     required bool playSound,
     required String payload,
+    String? categoryIdentifier,
   }) => channel.invokeMethod<void>('schedule', {
     'id': nativeId,
     'title': title,
@@ -21,5 +22,6 @@ class MacOSNotificationScheduler {
     'triggerMilliseconds': trigger.toUtc().millisecondsSinceEpoch,
     'playSound': playSound,
     'payload': payload,
+    if (categoryIdentifier != null) 'categoryIdentifier': categoryIdentifier,
   });
 }

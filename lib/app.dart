@@ -16,6 +16,7 @@ import 'providers/recovery_coordinator.dart';
 import 'data/database_helper.dart';
 import 'models/reminder.dart';
 import 'services/notification_route_service.dart';
+import 'services/pending_notification_actions.dart';
 import 'services/live_reminder_service.dart';
 import 'models/notification_payload.dart';
 import 'services/notification_service.dart';
@@ -41,7 +42,10 @@ class _MyAppState extends ConsumerState<MyApp>
     with WindowListener, TrayListener, WidgetsBindingObserver {
   late final NotificationService _notifications;
   late final RecoveryCoordinator _recovery;
+  late final RuntimeRecoveryGate _actionRuntimeGate;
   late final NotificationRouteService _notificationRoutes;
+  late final NotificationActionRouteService _notificationActions;
+  StreamSubscription<void>? _notificationActionSubscription;
   StreamSubscription<String>? _notificationSubscription;
   GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
   DataGeneration? _routeDataGeneration;
@@ -67,7 +71,9 @@ class _MyAppState extends ConsumerState<MyApp>
   void initState() {
     super.initState();
     _notifications = ref.read(notificationServiceProvider);
+    _notifications.attachNotificationActionReceiver();
     _recovery = ref.read(recoveryCoordinatorProvider);
+    _actionRuntimeGate = ref.read(runtimeRecoveryGateProvider);
     _navigationEpoch = _recovery.navigationEpoch;
     _lastRecoveryPhase = _recovery.state.phase;
     if (Platform.isMacOS) {
@@ -95,6 +101,18 @@ class _MyAppState extends ConsumerState<MyApp>
       readSnapshot: _notificationSnapshot,
       openReminder: _openNotificationReminder,
     );
+    _notificationActions = NotificationActionRouteService(
+      readQueue: _notifications.pendingNotificationActions,
+      readSnapshot: _notificationSnapshot,
+      apply: _applyNotificationAction,
+      onResult: _notificationActionFeedback,
+    );
+    _actionRuntimeGate.register(
+          _notificationActions,
+          () => _notificationActions.setReady(false),
+        );
+    _notificationActionSubscription = _notifications.onNotificationAction
+        .listen((_) => _drainNotificationActions());
     _notificationSubscription = _notifications.onNotificationPayload.listen(
       _receiveNotificationPayload,
     );
@@ -163,6 +181,7 @@ class _MyAppState extends ConsumerState<MyApp>
       // keep them queued and reject any old epoch at the final readiness check.
       discardPending: enteringRecovery,
     );
+    unawaited(_notificationActions.setReady(false));
     if (_navigationEpoch != _recovery.navigationEpoch) {
       _navigationEpoch = _recovery.navigationEpoch;
       // Reusing this GlobalKey would reparent the previous Navigator and retain
@@ -192,6 +211,8 @@ class _MyAppState extends ConsumerState<MyApp>
       _routeDataGeneration = generation;
       _routeReminders = reminders;
       _routeDataReady = true;
+      unawaited(_syncNotificationLanguage());
+      _drainNotificationActions();
       _syncLiveReminder();
       _syncMacMenu();
       StartupTrace.mark('notifications_ready');
@@ -209,6 +230,85 @@ class _MyAppState extends ConsumerState<MyApp>
       _routeDataReady &&
       _recovery.state.phase == RecoveryPhase.idle &&
       !ref.read(runtimeRecoveryGateProvider).paused;
+
+  Future<void> _syncNotificationLanguage() async {
+    final settings = ref.read(settingsProvider.notifier);
+    try {
+      await settings.ready;
+      if (!mounted || !_nativeCommandsReady ||
+          !identical(settings, ref.read(settingsProvider.notifier))) {
+        return;
+      }
+      await _notifications.setNotificationLanguage(ref.read(settingsProvider).language);
+    } catch (_) {
+      // Existing journal/repair readback reports any failed native reschedule.
+    }
+  }
+
+  Future<NotificationActionOutcome> _applyNotificationAction(
+    Reminder reminder,
+    NotificationActionRequest request,
+  ) async {
+    if (!_nativeCommandsReady) return NotificationActionOutcome.rejected;
+    final gate = ref.read(runtimeRecoveryGateProvider);
+    final token = gate.capture();
+    gate.check(token);
+    final result = await ref
+        .read(remindersProvider.notifier)
+        .performNotificationAction(
+          reminder,
+          payload: request.payload,
+          actionId: request.actionId,
+          occurredAt: request.occurredAt,
+        );
+    if (!result.accepted) return NotificationActionOutcome.rejected;
+    return result.nativeSyncFailed
+        ? NotificationActionOutcome.repair
+        : NotificationActionOutcome.applied;
+  }
+
+  void _notificationActionFeedback(NotificationActionOutcome outcome) {
+    if (!mounted ||
+        WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
+      return;
+    }
+    final context = _navigatorKey.currentContext;
+    if (context == null) return;
+    final feedback = context.findAncestorStateOfType<InlineFeedbackState>();
+    feedback?.showSnackBar(
+      SnackBar(
+        content: Text(
+          AppLocalizations.of(context).get(
+            outcome == NotificationActionOutcome.repair
+                ? 'notificationActionRepair'
+                : 'notificationActionApplied',
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _drainNotificationActions() {
+    if (!_nativeCommandsReady) return;
+    unawaited(
+      _notificationActions.setReady(true).catchError((Object _) {
+        if (!mounted) return;
+        final feedbackContext = _navigatorKey.currentContext;
+        if (feedbackContext == null || !feedbackContext.mounted) return;
+        feedbackContext
+            .findAncestorStateOfType<InlineFeedbackState>()
+            ?.showSnackBar(
+              SnackBar(
+                content: Text(
+                  AppLocalizations.of(
+                    feedbackContext,
+                  ).get('notificationActionFailed'),
+                ),
+              ),
+            );
+      }),
+    );
+  }
 
   void _receiveLivePayload(String encoded) {
     final payload = NotificationPayload.tryParse(encoded);
@@ -283,7 +383,11 @@ class _MyAppState extends ConsumerState<MyApp>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _syncLiveReminder();
+    if (state == AppLifecycleState.resumed) {
+      _syncLiveReminder();
+      _drainNotificationActions();
+      unawaited(_syncNotificationLanguage());
+    }
   }
 
   Future<_MacInputToken?> _beginNativeInput() async {
@@ -353,6 +457,7 @@ class _MyAppState extends ConsumerState<MyApp>
         _notifications.isPausedForMaintenance) {
       return null;
     }
+    if (ref.read(runtimeRecoveryGateProvider).paused) return null;
     final generation = _routeDataGeneration;
     final epoch = _notifications.datasetEpoch;
     if (generation == null ||
@@ -380,6 +485,7 @@ class _MyAppState extends ConsumerState<MyApp>
       }
       try {
         _notificationRoutes.setReady(true);
+        _drainNotificationActions();
         StartupTrace.mark('routes_ready_frame');
       } catch (error) {
         debugPrint('Notification navigation unavailable: $error');
@@ -450,6 +556,10 @@ class _MyAppState extends ConsumerState<MyApp>
     _routeInitialization++;
     _recovery.removeListener(_onRecoveryChanged);
     unawaited(_notificationSubscription?.cancel());
+    unawaited(_notificationActionSubscription?.cancel());
+    _actionRuntimeGate.unregister(_notificationActions);
+    _notificationActions.dispose();
+    _notifications.detachNotificationActionReceiver();
     _notificationRoutes.dispose();
     WidgetsBinding.instance.removeObserver(this);
     if (_isDesktop) {
@@ -523,6 +633,9 @@ class _MyAppState extends ConsumerState<MyApp>
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
+    ref.listen(settingsProvider.select((settings) => settings.language), (_, _) {
+      unawaited(_syncNotificationLanguage());
+    });
     if (_supportsLiveActivities) {
       ref.listen(remindersProvider, (_, _) => _syncLiveReminder());
       ref.listen(

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:dont_forget/data/database_helper.dart';
+import 'package:dont_forget/services/notification_diagnostics_service.dart';
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/providers/providers.dart';
 import 'package:dont_forget/models/notification_schedule_status.dart';
@@ -133,6 +134,9 @@ void main() {
       launcher = _ConsoleLauncher();
       container = ProviderContainer(
         overrides: [
+          notificationFailureHistoryReaderProvider.overrideWithValue(
+            () async => const NotificationFailureHistory(available: false),
+          ),
           notificationScheduleStatusReaderProvider.overrideWithValue(
             () async => const NotificationScheduleStatus(
               upcoming: 0,

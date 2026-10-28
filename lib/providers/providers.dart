@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/database_helper.dart';
 import '../models/settings.dart';
 import '../models/reminder.dart';
+import '../models/notification_payload.dart';
 import '../models/task_details.dart';
 import '../models/medication_plan.dart';
 import '../models/departure_plan.dart';
@@ -1478,6 +1479,42 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     now ?? DateTime.now(),
   ).then((results) => results.single);
 
+  /// Payload validation is repeated under the existing operation/generation
+  /// gate and in the same transaction that edits the occurrence.
+  Future<ReminderActionResult> performNotificationAction(
+    Reminder expected, {
+    required NotificationPayload payload,
+    required String actionId,
+    required DateTime occurredAt,
+    DateTime? now,
+  }) {
+    final at = now ?? DateTime.now();
+    final action = switch (actionId) {
+      'complete' => _ReminderAction.complete,
+      'snooze_15' || 'snooze_60' => _ReminderAction.snooze,
+      'skip_occurrence' => _ReminderAction.skip,
+      _ => null,
+    };
+    if (action == null ||
+        (action == _ReminderAction.skip && !expected.isRecurring) ||
+        occurredAt.isAfter(at.add(const Duration(minutes: 5)))) {
+      return Future.value(
+        const ReminderActionResult(ReminderActionDisposition.stale),
+      );
+    }
+    var target = occurredAt.add(
+      Duration(minutes: actionId == 'snooze_60' ? 60 : 15),
+    );
+    if (!target.isAfter(at)) target = at.add(const Duration(minutes: 1));
+    return _actOnOccurrences(
+      [expected],
+      [action],
+      at,
+      snoozeDuration: target.difference(at),
+      notificationPayload: payload,
+    ).then((results) => results.single);
+  }
+
   Future<ReminderActionResult> skipOccurrence(
     Reminder expected, {
     DateTime? now,
@@ -1492,6 +1529,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     List<_ReminderAction> actions,
     DateTime now, {
     Duration snoozeDuration = const Duration(minutes: 5),
+    NotificationPayload? notificationPayload,
   }) => _enqueue(
     (generation) => _dbHelper.runOperation(generation, () async {
       if (!mounted) {
@@ -1500,6 +1538,10 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
             const ReminderActionResult(ReminderActionDisposition.stale),
         ];
       }
+      final epoch = notificationPayload == null
+          ? null
+          : await _dbHelper.readNotificationEpoch();
+      _dbHelper.checkGeneration(generation);
       final results = await _dbHelper.writeTransaction(generation, (txn) async {
         final saved = <ReminderActionResult>[];
         for (var index = 0; index < expected.length; index++) {
@@ -1512,6 +1554,13 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           );
           final current = rows.isEmpty ? null : Reminder.fromJson(rows.single);
           if (current == null ||
+              (notificationPayload != null &&
+                  (!notificationPayload.matches(
+                        current,
+                        currentDatasetEpoch: epoch!,
+                      ) ||
+                      (action == _ReminderAction.skip &&
+                          !current.isRecurring))) ||
               (!current.isVisible ||
                   current.details.paused ||
                   current.isCompleted ||

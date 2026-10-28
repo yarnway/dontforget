@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'task_consistency_strings.dart';
+import 'notification_diagnostics_strings.dart';
 
 class AppLocalizations {
   final Locale locale;
@@ -10,6 +12,11 @@ class AppLocalizations {
 
   static const Map<String, Map<String, String>> _localizedValues = {
     'en': {
+      'notificationActionComplete': 'Complete this occurrence',
+      'notificationActionApplied': 'Reminder updated',
+      'notificationActionRepair': 'Saved. Notification needs repair.',
+      'notificationActionFailed':
+          'Could not apply notification action. Retry in the app.',
       'captureInbox': 'Captured and awaiting review',
       'capturedAttachment': 'Original attachment',
       'capturePreview': "Review AI extraction",
@@ -848,6 +855,10 @@ class AppLocalizations {
       'viewInGraph': 'View in Graph',
     },
     'zh': {
+      'notificationActionComplete': '完成本次提醒',
+      'notificationActionApplied': '提醒已更新',
+      'notificationActionRepair': '已保存，通知待修复。',
+      'notificationActionFailed': '通知操作未能完成，请在应用内重试。',
       'captureInbox': '记录与待确认',
       'capturedAttachment': '附件原始记录',
       'capturePreview': "确认 AI 解析结果",
@@ -1542,6 +1553,10 @@ class AppLocalizations {
       'viewInGraph': '在图谱中定位',
     },
     'ja': {
+      'notificationActionComplete': '今回の通知を完了',
+      'notificationActionApplied': '通知を更新しました',
+      'notificationActionRepair': '保存しました。通知の修復が必要です。',
+      'notificationActionFailed': '通知の操作に失敗しました。アプリで再試行してください。',
       'captureInbox': '記録と確認待ち',
       'capturedAttachment': '添付の元の記録',
       'capturePreview': "AI解析を確認",
@@ -2272,7 +2287,9 @@ class AppLocalizations {
   };
 
   String get(String key) {
-    return _localizedValues[locale.languageCode]?[key] ??
+    return taskConsistencyStrings[locale.languageCode]?[key] ??
+        notificationDiagnosticsStrings[locale.languageCode]?[key] ??
+        _localizedValues[locale.languageCode]?[key] ??
         _localizedValues['en']?[key] ??
         key;
   }

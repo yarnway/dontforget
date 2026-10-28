@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:dont_forget/data/database_helper.dart';
+import 'package:dont_forget/services/notification_diagnostics_service.dart';
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/providers/providers.dart';
 import 'package:dont_forget/models/settings.dart';
@@ -41,6 +42,9 @@ void main() {
     helper = DatabaseHelper.forTesting(directory.path, databaseFactoryFfi);
     container = ProviderContainer(
       overrides: [
+        notificationFailureHistoryReaderProvider.overrideWithValue(
+          () async => const NotificationFailureHistory(available: false),
+        ),
         // These tests exercise persistence, not a real OS channel. Dedicated
         // reader tests cover native results, partial failure and timeouts.
         notificationServiceProvider.overrideWithValue(

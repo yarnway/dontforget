@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
+import '../../data/database_helper.dart';
+import '../../services/recovery/runtime_gate.dart';
 import '../../providers/providers.dart';
 import '../../providers/home_controller.dart';
 import '../../l10n/app_localizations.dart';
@@ -28,6 +30,22 @@ class _TaskCardState extends ConsumerState<TaskCard> {
   bool _isUpdating = false;
   bool _isDeleting = false;
   bool _showSubtasks = true;
+  bool _showChecklist = false;
+  DataGeneration? _checklistGeneration;
+  RuntimeRecoveryToken? _checklistToken;
+
+  @override
+  void initState() {
+    super.initState();
+    try {
+      _checklistGeneration = ref
+          .read(databaseHelperProvider)
+          .captureGeneration();
+      _checklistToken = ref.read(runtimeRecoveryGateProvider).capture();
+    } catch (_) {
+      // A card opened during recovery remains readable until it is remounted.
+    }
+  }
 
   bool get _isBusy => _isUpdating || _isDeleting;
 
@@ -139,6 +157,35 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       }
     } catch (_) {
       _showMessage(l10n.get('reminderUpdateFailed'));
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
+  Future<void> _setChecklistItem(String id, bool done) async {
+    if (_isBusy || widget.task.details.kind != 'task') return;
+    final database = ref.read(databaseHelperProvider);
+    final gate = ref.read(runtimeRecoveryGateProvider);
+    final l10n = AppLocalizations.of(context);
+    setState(() => _isUpdating = true);
+    try {
+      final token = _checklistToken;
+      final generation = _checklistGeneration;
+      if (generation == null) throw const RuntimeRecoveryException();
+      gate.check(token);
+      final result = await database.runOperation(generation, () async {
+        gate.check(token);
+        return ref
+            .read(remindersProvider.notifier)
+            .setChecklistItem(widget.task, id, done, generation);
+      });
+      database.checkGeneration(generation);
+      gate.check(token);
+      if (result.nativeSyncFailed) {
+        _showMessage(l10n.get('reminderNativeSyncFailed'));
+      }
+    } catch (_) {
+      if (!gate.paused) _showMessage(l10n.get('reminderUpdateFailed'));
     } finally {
       if (mounted) setState(() => _isUpdating = false);
     }
@@ -406,6 +453,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     if (!task.isVisible) return const SizedBox.shrink();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final subTasks = task.subTasksView;
+    final details = task.details;
     final priorityColor = switch (task.quadrantLevel) {
       1 => isDark ? Colors.red.shade300 : Colors.red.shade700,
       2 => isDark ? Colors.orange.shade300 : Colors.orange.shade800,
@@ -429,6 +477,20 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       };
     }
     final metadata = <Widget>[
+      if (details.project.isNotEmpty)
+        _badge(
+          '${l10n.get('taskProject')}: ${details.project}',
+          Icons.folder_outlined,
+          colors.onSurfaceVariant,
+        ),
+      for (final tag in details.tags.take(3))
+        _badge(tag, Icons.tag, colors.onSurfaceVariant),
+      if (details.tags.length > 3)
+        _badge(
+          '+${details.tags.length - 3}',
+          Icons.tag,
+          colors.onSurfaceVariant,
+        ),
       if (task.isPinned && !task.isCompleted)
         _badge(
           l10n.get('todayPinned'),
@@ -501,6 +563,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     ];
     final showBreakdown =
         subTasks.isEmpty &&
+        details.checklist.isEmpty &&
         !task.isCompleted &&
         (task.quadrantLevel == 2 || task.isStagnant(hours: 24));
 
@@ -727,6 +790,55 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                       ],
                     ),
                   ),
+                if (details.checklist.isNotEmpty) ...[
+                  TextButton(
+                    key: ValueKey('checklist-${task.id}'),
+                    onPressed: () =>
+                        setState(() => _showChecklist = !_showChecklist),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.checklist_rounded, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            l10n
+                                .get('taskChecklistProgress')
+                                .replaceAll(
+                                  '{done}',
+                                  '${details.checklist.where((e) => e.done).length}',
+                                )
+                                .replaceAll(
+                                  '{total}',
+                                  '${details.checklist.length}',
+                                ),
+                          ),
+                        ),
+                        Icon(
+                          _showChecklist
+                              ? Icons.expand_less
+                              : Icons.expand_more,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_showChecklist)
+                    for (final item in details.checklist)
+                      Material(
+                        color: Colors.transparent,
+                        child: CheckboxListTile(
+                          key: ValueKey('checklist-item-${task.id}-${item.id}'),
+                          value: item.done,
+                          dense: true,
+                          contentPadding: EdgeInsets.zero,
+                          controlAffinity: ListTileControlAffinity.leading,
+                          title: Text(item.label),
+                          onChanged: _isBusy || details.kind != 'task'
+                              ? null
+                              : (value) =>
+                                    _setChecklistItem(item.id, value ?? false),
+                        ),
+                      ),
+                ],
                 if (subTasks.isNotEmpty) ...[
                   const SizedBox(height: 6),
                   Semantics(
@@ -746,7 +858,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              '${l10n.get('subTasksTitle')} (${subTasks.length})',
+                              '${l10n.get('taskMicroHabits')} (${subTasks.length})',
                             ),
                           ),
                           Tooltip(

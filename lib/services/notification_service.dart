@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
+import 'dart:ui' show DartPluginRegistrant, IsolateNameServer;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -16,6 +18,37 @@ import 'macos_notification_scheduler.dart';
 import 'startup_trace.dart';
 import 'system_notification_reader.dart';
 import 'notification_window.dart';
+import 'pending_notification_actions.dart';
+import 'notification_action_presentation.dart';
+
+const _notificationActionPort = 'dontforget.notification_actions.v1';
+
+/// This callback runs without StorageBootstrap. It must only persist an intent;
+/// it never constructs a database helper or touches business storage.
+@pragma('vm:entry-point')
+void notificationActionBackground(NotificationResponse response) async {
+  DartPluginRegistrant.ensureInitialized();
+  final payload = NotificationPayload.tryParse(response.payload);
+  final action = response.actionId;
+  if (payload == null ||
+      action == null ||
+      !NotificationActionRequest.isSupported(action)) {
+    return;
+  }
+  try {
+    final queue = await PendingNotificationActions.open();
+    await queue.enqueue(
+      NotificationActionRequest(
+        payload: payload,
+        actionId: action,
+        occurredAt: DateTime.now(),
+      ),
+    );
+    IsolateNameServer.lookupPortByName(_notificationActionPort)?.send(null);
+  } catch (_) {
+    // A failed file write is never permission to open user data here.
+  }
+}
 
 class NotificationService {
   static final _instances = Expando<NotificationService>();
@@ -31,6 +64,9 @@ class NotificationService {
           ? const MacOSNotificationScheduler()
           : null,
       _database = database,
+      pendingActionStore = (() async => PendingNotificationActions.forDirectory(
+        await database.notificationActionQueueDirectory,
+      )),
       _readDatasetEpoch = database.readNotificationEpoch;
 
   @visibleForTesting
@@ -42,6 +78,7 @@ class NotificationService {
     DatabaseHelper? database,
     this.macScheduler,
     this.nativePendingLimit,
+    this.pendingActionStore,
   }) : _now = now ?? DateTime.now,
        _database = database,
        _readDatasetEpoch =
@@ -186,6 +223,45 @@ class NotificationService {
       '00000000-0000-4000-8000-000000000001';
 
   final Future<String> Function() _readDatasetEpoch;
+  final Future<PendingNotificationActions> Function()? pendingActionStore;
+  final _actionSignals = StreamController<void>.broadcast();
+  Stream<void> get onNotificationAction => _actionSignals.stream;
+  ReceivePort? _actionPort;
+
+  void attachNotificationActionReceiver() {
+    if (pendingActionStore == null || _actionPort != null) return;
+    final port = ReceivePort();
+    if (IsolateNameServer.registerPortWithName(port.sendPort, _notificationActionPort)) {
+      _actionPort = port;
+      port.listen((_) => _actionSignals.add(null));
+    } else {
+      port.close();
+    }
+  }
+
+  void detachNotificationActionReceiver() {
+    if (_actionPort == null) return;
+    IsolateNameServer.removePortNameMapping(_notificationActionPort);
+    _actionPort!.close();
+    _actionPort = null;
+  }
+
+  Future<PendingNotificationActions?> pendingNotificationActions() async =>
+      pendingActionStore == null ? null : await pendingActionStore!();
+
+  Future<void> _receiveAction(NotificationActionRequest request) async {
+    try {
+      final queue = await pendingNotificationActions();
+      if (queue == null) {
+        return; // Test instances must explicitly inject a temp.
+      }
+      await queue.enqueue(request);
+      _actionSignals.add(null);
+    } catch (_) {
+      debugPrint('Notification action could not be queued.');
+    }
+  }
+
   String? _datasetEpoch;
   String? get datasetEpoch => _datasetEpoch;
   final _payloads = StreamController<String>.broadcast();
@@ -198,6 +274,22 @@ class NotificationService {
   }
 
   void _receiveNotificationResponse(NotificationResponse response) {
+    final action = response.actionId;
+    if (action != null && action.isNotEmpty) {
+      final payload = NotificationPayload.tryParse(response.payload);
+      if (payload != null && NotificationActionRequest.isSupported(action)) {
+        unawaited(
+          _receiveAction(
+            NotificationActionRequest(
+              payload: payload,
+              actionId: action,
+              occurredAt: _now(),
+            ),
+          ),
+        );
+      }
+      return;
+    }
     if (response.notificationResponseType !=
             NotificationResponseType.selectedNotification ||
         (response.actionId?.isNotEmpty ?? false)) {
@@ -402,6 +494,51 @@ class NotificationService {
 
   Stream<Reminder> get onReminderDue => _reminderDueController.stream;
 
+  String _notificationLanguage = 'en';
+  String? _registeredNotificationLanguage;
+  String get _categoryLanguage => _registeredNotificationLanguage ?? _notificationLanguage;
+  bool _languageNeedsReconcile = false;
+  Future<void> _languageTail = Future.value();
+
+  /// Re-register Darwin labels and pass saved occurrences through the existing
+  /// scheduling/journal path so pending requests use the new interface language.
+  Future<void> setNotificationLanguage(String language) {
+    final normalized = const {'zh', 'en', 'ja'}.contains(language)
+        ? language
+        : 'en';
+    final operation = _languageTail.then((_) => _track(() async {
+      if (_maintenance) return;
+      if (_notificationLanguage == normalized && !_languageNeedsReconcile &&
+          _registeredNotificationLanguage == normalized) {
+        return;
+      }
+      _notificationLanguage = normalized;
+      _languageNeedsReconcile = true;
+      await init();
+      if (_maintenance) return;
+      if (!_initialized) throw StateError('Notification initialization failed.');
+      // Another caller may have started initialization with the old language.
+      // Its completion is a barrier, not proof that our categories registered.
+      if (_registeredNotificationLanguage != normalized) {
+        await _initialize(rethrowFailures: true);
+      }
+      _windowMutation++;
+      final tasks = _scheduledReminders.values.toList();
+      for (final task in tasks) {
+        if (_maintenance) return;
+        if (identical(_scheduledReminders[task.id], task)) {
+          await scheduleReminderStrict(task);
+        }
+      }
+      _languageNeedsReconcile = false;
+    }));
+    _languageTail = operation.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace __) {},
+    );
+    return operation;
+  }
+
   Future<void> init() {
     // UI route readiness calls init repeatedly. Reuse the completed native
     // initialization instead of reopening local files on every widget build.
@@ -438,7 +575,8 @@ class NotificationService {
     return _initialization = pending;
   }
 
-  Future<void> _initialize() async {
+  Future<void> _initialize({bool rethrowFailures = false}) async {
+    final language = _notificationLanguage;
     try {
       tz.initializeTimeZones();
       _datasetEpoch = await _readDatasetEpoch();
@@ -447,23 +585,38 @@ class NotificationService {
         const AndroidInitializationSettings initializationSettingsAndroid =
             AndroidInitializationSettings('@mipmap/ic_launcher');
 
-        const DarwinInitializationSettings initializationSettingsDarwin =
+        final DarwinInitializationSettings initializationSettingsDarwin =
             DarwinInitializationSettings(
               requestSoundPermission: false,
               requestBadgePermission: false,
               requestAlertPermission: false,
+              notificationCategories: NotificationActionPresentation.categories(
+                'ios',
+                language,
+              ),
             );
 
-        const InitializationSettings initializationSettings =
+        final InitializationSettings initializationSettings =
             InitializationSettings(
               android: initializationSettingsAndroid,
               iOS: initializationSettingsDarwin,
-              macOS: initializationSettingsDarwin,
+              macOS: DarwinInitializationSettings(
+                requestSoundPermission: false,
+                requestBadgePermission: false,
+                requestAlertPermission: false,
+                notificationCategories:
+                    NotificationActionPresentation.categories(
+                      'macos',
+                  language,
+                    ),
+              ),
             );
 
         final initialized = await flutterLocalNotificationsPlugin.initialize(
           initializationSettings,
           onDidReceiveNotificationResponse: _receiveNotificationResponse,
+          onDidReceiveBackgroundNotificationResponse:
+              notificationActionBackground,
         );
         // In plugin 17.2.x Darwin returns the authorization request result.
         // With every request flag false it returns false after successfully
@@ -482,9 +635,10 @@ class NotificationService {
           _receiveNotificationResponse(launch!.notificationResponse!);
         }
       }
+      _registeredNotificationLanguage = language;
       _initialized = true;
     } catch (e) {
-      if (_strictFailures) rethrow;
+      if (_strictFailures || rethrowFailures) rethrow;
       debugPrint('Notification init error: $e');
     }
   }
@@ -621,11 +775,20 @@ class NotificationService {
       enableVibration: enableVibration,
       playSound: playSound,
       fullScreenIntent: reminder.quadrantLevel == 1,
+      actions: NotificationActionPresentation.android(
+        reminder.isRecurring,
+        _notificationLanguage,
+      ),
     );
 
     final platformChannelSpecifics = NotificationDetails(
       android: androidPlatformChannelSpecifics,
       iOS: DarwinNotificationDetails(
+        categoryIdentifier: NotificationActionPresentation.category(
+          'ios',
+          reminder.isRecurring,
+          _categoryLanguage,
+        ),
         presentSound: playSound,
         presentAlert: true,
         presentBadge: true,
@@ -634,6 +797,11 @@ class NotificationService {
             : InterruptionLevel.active,
       ),
       macOS: DarwinNotificationDetails(
+        categoryIdentifier: NotificationActionPresentation.category(
+          'macos',
+          reminder.isRecurring,
+          _categoryLanguage,
+        ),
         presentSound: playSound,
         presentAlert: true,
         presentBadge: true,
@@ -658,6 +826,11 @@ class NotificationService {
             trigger: reminder.triggerTime!,
             playSound: playSound,
             payload: payload,
+            categoryIdentifier: NotificationActionPresentation.category(
+              'macos',
+              reminder.isRecurring,
+              _categoryLanguage,
+            ),
           );
         }
         return flutterLocalNotificationsPlugin.zonedSchedule(
@@ -702,6 +875,8 @@ class NotificationService {
   }
 
   String _nativeSignature(Reminder task) => jsonEncode([
+    _categoryLanguage,
+    task.isRecurring,
     task.triggerTime!.toUtc().microsecondsSinceEpoch,
     task.noticeRevision,
     task.taskTitle,

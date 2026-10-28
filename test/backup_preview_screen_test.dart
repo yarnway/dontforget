@@ -8,6 +8,7 @@ import 'package:dont_forget/models/notification_schedule_status.dart';
 import 'package:dont_forget/services/recovery/backup_inspector.dart';
 import 'package:dont_forget/ui/screens/backup_preview_screen.dart';
 import 'package:dont_forget/ui/screens/settings_screen.dart';
+import 'package:dont_forget/services/notification_diagnostics_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
@@ -134,6 +135,9 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          notificationFailureHistoryReaderProvider.overrideWithValue(
+            () async => const NotificationFailureHistory(available: false),
+          ),
           notificationScheduleStatusReaderProvider.overrideWithValue(
             () async => const NotificationScheduleStatus(
               upcoming: 0,

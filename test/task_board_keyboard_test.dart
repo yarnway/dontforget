@@ -62,6 +62,10 @@ void main() {
     await container.read(workspaceDraftsProvider.notifier).ready;
     // Complete real filesystem identity I/O outside the widget fake-async zone.
     await container.read(notificationServiceProvider).init();
+    // Complete language category registration before widget fake async.
+    await container.read(notificationServiceProvider).setNotificationLanguage(
+      container.read(settingsProvider).language,
+    );
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(
           const MethodChannel('com.llfbandit.record/messages'),

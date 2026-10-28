@@ -1,4 +1,9 @@
+import 'dart:convert';
+
 import '../widgets/inline_feedback.dart';
+import '../widgets/task_metadata_editor.dart';
+import '../../models/task_details.dart';
+import '../../services/recovery/runtime_gate.dart';
 import '../widgets/live_reminder_button.dart';
 import '../widgets/foreground_time_builder.dart';
 import '../widgets/vocabulary_deck.dart';
@@ -34,6 +39,8 @@ class TaskDetailScreen extends ConsumerStatefulWidget {
 }
 
 typedef _DetailDraft = ({
+  String metadata,
+  bool metadataValid,
   String title,
   String summary,
   int quadrant,
@@ -75,6 +82,18 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   bool _allowPop = false;
   bool _exitDialogOpen = false;
   DataGeneration? _editorGeneration;
+  RuntimeRecoveryToken? _editorToken;
+  late TaskDetails _detailsDraft;
+  late String _savedMetadata;
+  bool _metadataValid = true;
+
+  Map<String, dynamic> _metadataFields(TaskDetails details) => {
+    'project': details.project,
+    'tags': details.tags,
+    'checklist': details.checklist.map((e) => e.toJson()).toList(),
+  };
+  String _metadataIdentity(TaskDetails details) =>
+      jsonEncode(_metadataFields(details));
   bool _isSaving = false;
   bool _editingVocabulary = false;
   String? _parsedVocabularySource;
@@ -103,9 +122,12 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
     super.initState();
     try {
       _editorGeneration = ref.read(databaseHelperProvider).captureGeneration();
-    } on DatabaseAccessException {
+      _editorToken = ref.read(runtimeRecoveryGateProvider).capture();
+    } catch (_) {
       // Opening during maintenance leaves the form readable but unable to save.
     }
+    _detailsDraft = widget.task.details;
+    _savedMetadata = _metadataIdentity(_detailsDraft);
     _titleController = TextEditingController(text: widget.task.taskTitle);
     _summaryController = TextEditingController(
       text: widget.task.taskSummary ?? '',
@@ -265,6 +287,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   }
 
   _DetailDraft _captureDraft() => (
+    metadata: _metadataIdentity(_detailsDraft),
+    metadataValid: _metadataValid,
     title: _titleController.text,
     summary: _summaryController.text,
     quadrant: _selectedQuadrant,
@@ -358,13 +382,16 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   Future<void> _save() async {
     if (_isMutating) return;
     final submittedDraft = _captureDraft();
+    final submittedDetails = _detailsDraft;
     final l10n = AppLocalizations.of(context);
     final title = _titleController.text.trim();
-    if (title.isEmpty) {
+    if (title.isEmpty || !_metadataValid) {
       InlineFeedback.of(context).showSnackBar(
         SnackBar(
           duration: const Duration(seconds: 2),
-          content: Text(l10n.get('taskTitleLabel')),
+          content: Text(
+            l10n.get(title.isEmpty ? 'taskTitleLabel' : 'taskChecklistInvalid'),
+          ),
         ),
       );
       return;
@@ -477,11 +504,50 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       final database = ref.read(databaseHelperProvider);
       final generation = _editorGeneration;
       if (generation == null) throw StateError('Editor unavailable');
-      final result = await database.runOperation(
-        generation,
-        () => notifier.updateReminder(updatedTask, baseline: current),
-      );
+      final gate = ref.read(runtimeRecoveryGateProvider);
+      gate.check(_editorToken);
+      final metadataChanged =
+          _metadataIdentity(submittedDetails) != _savedMetadata;
+      final result = await database.runOperation(generation, () async {
+        gate.check(_editorToken);
+        var saveBaseline = current;
+        var saveTask = updatedTask;
+        var metadataSyncFailed = false;
+        if (metadataChanged) {
+          // Reject a concurrent metadata edit before changing any field. Merge
+          // only these three fields so routine/history data is never copied.
+          if (current.details.kind != 'task' ||
+              _metadataIdentity(current.details) != _savedMetadata) {
+            throw const StaleReminderOccurrenceException();
+          }
+          final metadataResult = await notifier.editTaskDetails(
+            current,
+            current.details.patch(_metadataFields(submittedDetails)),
+            generation,
+          );
+          saveBaseline = metadataResult.reminder!;
+          metadataSyncFailed = metadataResult.nativeSyncFailed;
+          // If a later field write fails, a retry must preserve this successful
+          // metadata write instead of treating it as someone else's change.
+          _savedMetadata = _metadataIdentity(submittedDetails);
+          saveTask = updatedTask.copyWith(
+            detailsJson: saveBaseline.detailsJson,
+            noticeRevision: saveBaseline.noticeRevision,
+          );
+        }
+        gate.check(_editorToken);
+        final saved = await notifier.updateReminder(
+          saveTask,
+          baseline: saveBaseline,
+        );
+        return ReminderActionResult(
+          saved.disposition,
+          reminder: saved.reminder,
+          nativeSyncFailed: saved.nativeSyncFailed || metadataSyncFailed,
+        );
+      });
       database.checkGeneration(generation);
+      gate.check(_editorToken);
       if (!mounted) return;
       if (result.reminder case final saved?) {
         _statusReference = saved;
@@ -1380,6 +1446,57 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
 
                     const SizedBox(height: 14),
 
+                    if (widget.task.details.kind == 'task') ...[
+                      TaskMetadataEditor(
+                        details: _detailsDraft,
+                        enabled: !_isMutating,
+                        onChanged: (details) =>
+                            setState(() => _detailsDraft = details),
+                        onValidityChanged: (valid) {
+                          _metadataValid = valid;
+                          _draftChanged();
+                        },
+                      ),
+                      const SizedBox(height: 14),
+                    ] else ...[
+                      if (widget.task.details.project.isNotEmpty)
+                        Text(
+                          '${l10n.get('taskProject')}: ${widget.task.details.project}',
+                        ),
+                      if (widget.task.details.tags.isNotEmpty)
+                        Wrap(
+                          spacing: 6,
+                          children: [
+                            for (final tag in widget.task.details.tags)
+                              Chip(label: Text(tag)),
+                          ],
+                        ),
+                      if (widget.task.details.checklist.isNotEmpty) ...[
+                        Text(
+                          l10n
+                              .get('taskChecklistProgress')
+                              .replaceAll(
+                                '{done}',
+                                '${widget.task.details.checklist.where((e) => e.done).length}',
+                              )
+                              .replaceAll(
+                                '{total}',
+                                '${widget.task.details.checklist.length}',
+                              ),
+                        ),
+                        Text(l10n.get('taskChecklistReadOnly')),
+                        const SizedBox(height: 14),
+                      ],
+                    ],
+                    if (widget.task.subTasksView.isNotEmpty)
+                      ExpansionTile(
+                        key: const ValueKey('detail-micro-habits'),
+                        title: Text(l10n.get('taskMicroHabits')),
+                        children: [
+                          for (final habit in widget.task.subTasksView)
+                            ListTile(title: Text(habit)),
+                        ],
+                      ),
                     if (widget.task.sourceText != null)
                       ExpansionTile(
                         title: Text(l10n.get('sourceText')),

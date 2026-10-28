@@ -45,7 +45,7 @@ class MainFlutterWindow: NSWindow {
   // foreground and cold-start delegate handles these notifications unchanged.
   private static func scheduleNotification(_ arguments: Any?, result: @escaping FlutterResult) {
     guard let args = arguments as? [String: Any],
-          let id = args["id"] as? Int, id > 0, id <= 0x7fffffff,
+          let id = args["id"] as? Int, id >= 0, id <= 0x7fffffff,
           let title = args["title"] as? String,
           let body = args["body"] as? String,
           let milliseconds = args["triggerMilliseconds"] as? Int64,
@@ -57,6 +57,9 @@ class MainFlutterWindow: NSWindow {
     let content = UNMutableNotificationContent()
     content.title = title
     content.body = body
+    if let category = args["categoryIdentifier"] as? String {
+      content.categoryIdentifier = category
+    }
     content.sound = sound ? .default : nil
     content.userInfo = [
       "payload": payload, "presentAlert": true, "presentBadge": true,

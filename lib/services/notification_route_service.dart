@@ -2,6 +2,7 @@ import 'dart:collection';
 
 import '../models/notification_payload.dart';
 import '../models/reminder.dart';
+import 'pending_notification_actions.dart';
 
 /// The host publishes this only after recovery and provider loading finish.
 /// Obtaining a snapshot and opening its route must not yield to asynchronous
@@ -14,6 +15,95 @@ final class NotificationRouteSnapshot {
 
   final String datasetEpoch;
   final List<Reminder> reminders;
+}
+
+enum NotificationActionOutcome { applied, repair, rejected }
+
+/// Consumes durable intents only when the host's StorageBootstrap, provider,
+/// dataset and runtime gates are ready. Database mutation belongs to the host's
+/// existing notifier; native synchronization stays in its journal path.
+final class NotificationActionRouteService {
+  NotificationActionRouteService({
+    required this.readQueue,
+    required this.readSnapshot,
+    required this.apply,
+    this.onResult,
+  });
+
+  final Future<PendingNotificationActions?> Function() readQueue;
+  final NotificationRouteSnapshot? Function() readSnapshot;
+  final Future<NotificationActionOutcome> Function(
+    Reminder,
+    NotificationActionRequest,
+  )
+  apply;
+  final void Function(NotificationActionOutcome)? onResult;
+  bool _ready = false;
+  bool _disposed = false;
+  Future<void>? _flushing;
+  bool _flushAgain = false;
+  final LinkedHashSet<String> _handled = LinkedHashSet();
+
+  Future<void> setReady(bool ready) {
+    _ready = ready;
+    return ready ? flush() : (_flushing ?? Future.value());
+  }
+
+  Future<void> flush() {
+    if (_disposed || !_ready) return Future.value();
+    _flushAgain = true;
+    if (_flushing != null) return _flushing!;
+    return _flushing = (() async {
+      while (_flushAgain && _ready && !_disposed) {
+        _flushAgain = false;
+        await _consume();
+      }
+    })().whenComplete(() => _flushing = null);
+  }
+
+  Future<void> _consume() async {
+    final queue = await readQueue();
+    if (queue == null) return;
+    while (_ready && !_disposed) {
+      final entries = await queue.read();
+      if (entries.isEmpty || !_ready || _disposed) return;
+      final snapshot = readSnapshot();
+      if (snapshot == null) return;
+      final request = entries.first;
+      Reminder? target;
+      if (!_handled.contains(request.identity)) {
+        for (final reminder in snapshot.reminders) {
+          if (request.payload.matches(
+            reminder,
+            currentDatasetEpoch: snapshot.datasetEpoch,
+          )) {
+            target = reminder;
+            break;
+          }
+        }
+      }
+      var outcome = NotificationActionOutcome.rejected;
+      if (target != null &&
+          (request.actionId != 'skip_occurrence' || target.isRecurring)) {
+        outcome = await apply(target, request);
+      }
+      // Keep the intent on an exception. Once committed, noticeRevision makes
+      // even a crash before remove harmless on the next launch.
+      _handled.add(request.identity);
+      while (_handled.length > 256) {
+        _handled.remove(_handled.first);
+      }
+      await queue.remove(request.identity);
+      if (!_disposed && outcome != NotificationActionOutcome.rejected) {
+        onResult?.call(outcome);
+      }
+    }
+  }
+
+  void dispose() {
+    _disposed = true;
+    _ready = false;
+  }
 }
 
 enum NotificationRouteDisposition { rejected, duplicate, queued, opened }

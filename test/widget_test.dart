@@ -117,6 +117,10 @@ void main() {
     await container.read(remindersProvider.notifier).ready;
     // Finish identity file I/O before entering a widget fake-async zone.
     await container.read(notificationServiceProvider).init();
+    // Complete language category registration before widget fake async.
+    await container.read(notificationServiceProvider).setNotificationLanguage(
+      container.read(settingsProvider).language,
+    );
   });
   tearDownAll(() async {
     await container.read(notificationServiceProvider).pauseForMaintenance();

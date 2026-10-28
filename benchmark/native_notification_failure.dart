@@ -28,6 +28,7 @@ class _InvalidRequestScheduler extends MacOSNotificationScheduler {
     required DateTime trigger,
     required bool playSound,
     required String payload,
+    String? categoryIdentifier,
   }) => super.schedule(
     nativeId: nativeId,
     title: mode == 'empty_content' ? '' : title,
@@ -35,6 +36,7 @@ class _InvalidRequestScheduler extends MacOSNotificationScheduler {
     trigger: mode == 'past_date' ? DateTime.utc(2000) : trigger,
     playSound: false,
     payload: payload,
+    categoryIdentifier: categoryIdentifier,
   );
 }
 

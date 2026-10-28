@@ -6,6 +6,8 @@ import '../widgets/input_send_mode_picker.dart';
 import '../../data/database_helper.dart';
 import '../../services/recovery/runtime_gate.dart';
 import '../widgets/notification_permission_panel.dart';
+import '../widgets/notification_diagnostics_panel.dart';
+import '../../services/notification_diagnostics_service.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -56,6 +58,12 @@ class ConsoleUrlLauncher {
 final consoleUrlLauncherProvider = Provider<ConsoleUrlLauncher>(
   (_) => const ConsoleUrlLauncher(),
 );
+
+final notificationFailureHistoryReaderProvider =
+    Provider<Future<NotificationFailureHistory> Function()>((ref) {
+      final database = ref.read(databaseHelperProvider);
+      return () => NotificationFailureHistory.read(database);
+    });
 
 class ModelProvider {
   final String name;
@@ -127,6 +135,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late _SettingsDraft _savedDraft;
   late final DataGeneration _generation;
   late final RuntimeRecoveryToken _birth;
+  late final NotificationDiagnosticsService _notificationDiagnostics;
   bool _ready = false, _dirty = false;
   String? _loadError;
 
@@ -204,6 +213,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     super.initState();
     _generation = ref.read(databaseHelperProvider).captureGeneration();
     _birth = ref.read(runtimeRecoveryGateProvider).capture();
+    _notificationDiagnostics = NotificationDiagnosticsService.forNotifications(
+      ref.read(notificationServiceProvider),
+      database: ref.read(databaseHelperProvider),
+      readSchedule: ref.read(notificationScheduleStatusReaderProvider),
+      readFailureHistory: ref.read(notificationFailureHistoryReaderProvider),
+      checkCurrent: _checkCurrent,
+    );
     final settings = ref.read(settingsProvider);
     _apiKeyController = TextEditingController(text: settings.apiKey);
     _baseUrlController = TextEditingController(text: settings.baseUrl);
@@ -821,6 +837,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       onRetryReminders: () => ref
                           .read(remindersProvider.notifier)
                           .retryNotificationDelivery(),
+                    ),
+                    const SizedBox(height: 14),
+
+                    NotificationDiagnosticsPanel(
+                      service: _notificationDiagnostics,
                     ),
                     const SizedBox(height: 14),
 

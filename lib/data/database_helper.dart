@@ -54,6 +54,13 @@ class DatabaseHelper {
   }) : _directory = directory,
        _factory = factory;
 
+  /// Background intent storage is outside business data. Isolated helpers keep
+  /// every operational sidecar in their temp directory, never user support.
+  Future<Directory> get notificationActionQueueDirectory async =>
+      _directory == null
+          ? await getApplicationSupportDirectory()
+          : Directory(_directory);
+
   /// Raw handles are only available on an explicitly isolated test helper.
   @visibleForTesting
   Future<Database> get database {

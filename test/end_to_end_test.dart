@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/providers/providers.dart';
 import 'package:dont_forget/services/notification_schedule_reader.dart';
+import 'package:dont_forget/services/notification_diagnostics_service.dart';
+import 'package:dont_forget/ui/screens/settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -65,8 +67,12 @@ void main() {
     final scheduleStatus = await NotificationScheduleReader(
       testDatabase,
     ).read();
+    final notificationHistory = await NotificationFailureHistory.read(testDatabase);
     container = ProviderContainer(
       overrides: [
+        notificationFailureHistoryReaderProvider.overrideWithValue(
+          () async => notificationHistory,
+        ),
         databaseHelperProvider.overrideWithValue(testDatabase),
         notificationScheduleStatusReaderProvider.overrideWithValue(
           () async => scheduleStatus,
@@ -77,6 +83,10 @@ void main() {
     await container.read(remindersProvider.notifier).ready;
     // Complete the file-backed notification epoch outside widget fake async.
     await container.read(notificationServiceProvider).init();
+    // Complete language category registration before widget fake async.
+    await container.read(notificationServiceProvider).setNotificationLanguage(
+      container.read(settingsProvider).language,
+    );
   });
   tearDownAll(() async {
     container.dispose();
