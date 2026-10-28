@@ -1,0 +1,231 @@
+{
+  "date": "2026-10-28",
+  "timezone": "Asia/Shanghai",
+  "source_commit": "7777956b930963ff823dce0657a982f5a3ebadac",
+  "feature_commit": "43baf08f153e2c0b57bd933fc88894c3afee9892",
+  "integrated_recovery_fix": "972fbbd",
+  "version": "1.7.0+42",
+  "schema": 16,
+  "task_details_version": 4,
+  "toolchain": {
+    "flutter": "3.44.9",
+    "dart": "3.12.2",
+    "xcode": "27.1 (27A9275)"
+  },
+  "frozen_inputs": {
+    "files": 548,
+    "test_and_native_inputs_match_commit": true,
+    "separate_test_and_build_directories": true,
+    "manifest": "build/phase2-recurring-calendar-context-20261028/input-manifest-final.json"
+  },
+  "tests": {
+    "flutter": {
+      "passed": 1950,
+      "failed": 0,
+      "skipped": 0,
+      "log": "flutter-full-7777956.log"
+    },
+    "python": {
+      "passed": 126,
+      "failed": 0,
+      "skipped": 0,
+      "log": "python-full-7777956.log"
+    },
+    "analysis": {
+      "issues": 0,
+      "log": "analyze-7777956.log"
+    },
+    "dst": {
+      "timezone": "America/New_York",
+      "passed": 46,
+      "failed": 0,
+      "log": "dst-7777956.log"
+    },
+    "new_feature_cases": 69,
+    "new_peer_recovery_cases": 2,
+    "widget_cases": 6,
+    "actual_restore_formats": [
+      "json",
+      "sqlite"
+    ]
+  },
+  "native_builds": {
+    "source_commit": "7777956b930963ff823dce0657a982f5a3ebadac",
+    "runtime_files": 548,
+    "all_runtime_inputs_still_match": true,
+    "signed": false,
+    "installed_or_launched": false,
+    "products": {
+      "macos": {
+        "bundle_id": "com.example.dontForget",
+        "version": "1.7.0",
+        "build": "42",
+        "executable_sha256": "91eafafce39c0b38dd62a588ecc96cd071e9bbee4fdf80b8b098ea228f66bdf1",
+        "location_when_in_use": false,
+        "location_usage": true,
+        "location_always": false,
+        "status": "unsigned_compile_passed"
+      },
+      "ios_simulator": {
+        "bundle_id": "com.example.dontForget",
+        "version": "1.7.0",
+        "build": "42",
+        "executable_sha256": "ab7abd53319dc3ead1834480160c02bb97052fcc65b766796bf302a656d82176",
+        "location_when_in_use": true,
+        "location_usage": false,
+        "location_always": false,
+        "status": "unsigned_compile_passed"
+      }
+    }
+  },
+  "acceptance": {
+    "phone_owner_thread_id": "01a15c7c-8a67-7562-9db6-e540460d05c1",
+    "phone_operated": false,
+    "phone_cross_day": "pending",
+    "actual_location_permissions": "pending",
+    "actual_weather_service": "not_requested",
+    "actual_background_delivery": "pending",
+    "installed_or_launched": false,
+    "push_by_this_task": false,
+    "published_by_this_task": false
+  },
+  "calendar": {
+    "default_enabled": false,
+    "builtin_region": "CN",
+    "coverage": [
+      "2026-01-01",
+      "2026-12-31"
+    ],
+    "official_source": "https://www.gov.cn/zhengce/content/202511/content_7047090.htm",
+    "official_mirror": "https://www.beijing.gov.cn/fuwu/bmfw/sy/jrts/202511/t20251104_4258838.html",
+    "days_off": 33,
+    "makeup_days": 6,
+    "uncovered_dates": "hold_new_occurrences_except_explicit_extra_dates",
+    "import_behavior": "replace_plan_snapshot_not_multi_year_merge"
+  },
+  "weather": {
+    "background_default": false,
+    "explicit_foreground_one_shot_location": true,
+    "saved_coordinate_decimal_places": 2,
+    "background_location_reads": false,
+    "background_execution": "best_effort_while_process_runs",
+    "durable_cooldown_minutes": 30,
+    "failure_backoff_minutes": [
+      60,
+      120,
+      240,
+      480
+    ],
+    "max_requests_per_pump": 3,
+    "closed_app_refresh_guarantee": false
+  },
+  "regressions": {
+    "recovery_lazy_mount": "fixed_by_972fbbd_and_included_in_final",
+    "initial_nonfrozen_run": "auxiliary_only",
+    "shared_build_directory_failure": {
+      "kind": "validation_environment_native_asset_conflict",
+      "failure_count": 1,
+      "test": "notification_retry_test.dart strict retry processes all saved tasks",
+      "resolution": "fresh_test_only_checkout_full_suite_passed_no_assertions_weakened",
+      "log": "flutter-full-7777956-shared-build.log"
+    }
+  },
+  "preserved_original_dirty_files": {
+    "docs/Architecture_Design.md": "d484c9824a433ea1dba22036092e72e9f3983ec60575efca270a89b252ff4e55",
+    "docs/Developer_Guide.md": "d0a3023151ba3bd328c52c4cbdf8ab7687150bc6868922c73607388f59a7f9e3"
+  },
+  "logs": {
+    "flutter-full-7777956.log": {
+      "path": "build/phase2-recurring-calendar-context-20261028/flutter-full-7777956.log",
+      "sha256": "69fa77fc0e348a85f1f39dc4f2317d0a378d6f956bbab63d13fbfa340bd03a6f",
+      "bytes": 508802
+    },
+    "analyze-7777956.log": {
+      "path": "build/phase2-recurring-calendar-context-20261028/analyze-7777956.log",
+      "sha256": "2c6ebf7100171a50b0a875508592f0dcbfde8bce752b1a89011600b5d906f89c",
+      "bytes": 96
+    },
+    "python-full-7777956.log": {
+      "path": "build/phase2-recurring-calendar-context-20261028/python-full-7777956.log",
+      "sha256": "7fbc0bfc28858f2d1c9992f0a4f9b650c973cdd9f8ccb57cc2a108d3812d789c",
+      "bytes": 13567
+    },
+    "dst-7777956.log": {
+      "path": "build/phase2-recurring-calendar-context-20261028/dst-7777956.log",
+      "sha256": "95dc10c5af816e70ee0bd626b2d1b3ee1c61f8bf98d141ef07b90ca5a095cf64",
+      "bytes": 11100
+    },
+    "macos-build-7777956.log": {
+      "path": "build/phase2-recurring-calendar-context-20261028/macos-build-7777956.log",
+      "sha256": "ad060158974cee3fcd1a60b12daca38eb2cdbb7c38dea9995640f84a79ad2368",
+      "bytes": 266880
+    },
+    "ios-simulator-build-7777956.log": {
+      "path": "build/phase2-recurring-calendar-context-20261028/ios-simulator-build-7777956.log",
+      "sha256": "14f2ca2d6e81945882c16298e267a434aea6b368ecfe57c05b7890d35eb3290c",
+      "bytes": 539
+    },
+    "flutter-full-43baf08.log": {
+      "path": "build/phase2-recurring-calendar-context-20261028/flutter-full-43baf08.log",
+      "sha256": "f5c6c4086a38ae7794679ad8a46894786fd2e44c280ae196202da272dd43b794",
+      "bytes": 501492
+    },
+    "flutter-full-prelint.log": {
+      "path": "build/phase2-recurring-calendar-context-20261028/flutter-full-prelint.log",
+      "sha256": "d065b6fc75e2135b4a9c58dfb35673536b806b0240c417011c2ef209ea97db6d",
+      "bytes": 508602
+    },
+    "analyze-prelint.log": {
+      "path": "build/phase2-recurring-calendar-context-20261028/analyze-prelint.log",
+      "sha256": "e8652a6b39c6632cf1f54b46fdc20d87ff59692e21cfb4a338debe39a7cccda9",
+      "bytes": 291
+    },
+    "flutter-full-7777956-shared-build.log": {
+      "path": "build/phase2-recurring-calendar-context-20261028/flutter-full-7777956-shared-build.log",
+      "sha256": "efba187cf38140748567e60dee6805f8696df9779bd5840987cfc57e8bf4d618",
+      "bytes": 510876
+    }
+  },
+  "remaining": {
+    "phase2": [
+      "phone_and_five_platform_native_acceptance",
+      "calendar_merge_and_updates",
+      "capture_entry_linkage_and_historical_dates",
+      "background_geofencing_and_system_wake_design",
+      "real_multimodal_quality",
+      "full_capacity_disk_failure_cross_device_restore",
+      "backup_retention_external_reference_registration_space_statistics"
+    ],
+    "phase3": [
+      "learning_plan_group_management_and_long_term_load",
+      "pronunciation_dictation_profile_migration",
+      "share_global_capture_focus_week_view",
+      "lan_edit_delete_attachments_persistent_conflicts_real_devices"
+    ]
+  },
+  "cleanup": {
+    "status": "complete",
+    "scope": "only_four_owned_rebuildable_checkouts_and_outputs",
+    "removed": [
+      {
+        "path": "build/phase2-recurring-calendar-context-20261028/source-43baf08",
+        "allocated_kib_estimate": 118132
+      },
+      {
+        "path": "build/phase2-recurring-calendar-context-20261028/native-43baf08",
+        "allocated_kib_estimate": 1755516
+      },
+      {
+        "path": "build/phase2-recurring-calendar-context-20261028/integrated-final",
+        "allocated_kib_estimate": 1853380
+      },
+      {
+        "path": "build/phase2-recurring-calendar-context-20261028/test-only-7777956",
+        "allocated_kib_estimate": 112564
+      }
+    ],
+    "allocated_kib_estimate": 3839592,
+    "logs_input_manifests_executable_hashes_retained": true,
+    "user_data_other_task_resources_and_rollback_materials_touched": false
+  }
+}
