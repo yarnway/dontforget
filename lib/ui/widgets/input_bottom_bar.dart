@@ -1098,7 +1098,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                                   constraints: const BoxConstraints(
                                     minHeight: 48,
                                   ),
-                                  contentPadding: EdgeInsets.symmetric(
+                                  contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 12,
                                     vertical: 12,
                                   ),
