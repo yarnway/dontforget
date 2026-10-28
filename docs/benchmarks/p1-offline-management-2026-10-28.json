@@ -1,0 +1,344 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-10-28T10:01:57.650513+08:00",
+  "timezone": "Asia/Shanghai",
+  "status": "SOURCE_AND_AUTOMATION_PASSED_NATIVE_NOT_RUN",
+  "stage": "P1_offline_management",
+  "source": {
+    "commit": "2de76827c1ac92d9b89e22916597487a919c16f6",
+    "branch": "main",
+    "base_at_turn_start": "dfb34f1",
+    "parent": "763a2cd937cdb8c5eee0ed531989edca007bb1b9",
+    "database_schema": 16,
+    "package_version_field": "1.7.0+37",
+    "trees": {
+      "lib": "2e32f56995733e3e958e7296166e91193aae4286",
+      "test": "41b34f11050c427f902f4221b5a9ae6b19468cdb",
+      "scripts": "1a2328b32069629a1a63a4ef134bcee63318d275"
+    },
+    "changed_files": [
+      {
+        "path": "lib/l10n/planning_strings.dart",
+        "sha256": "19756bb6d4c97befada72deaf9293e6bb589b8d00c064ee8900695599ad49aee"
+      },
+      {
+        "path": "lib/models/task_details.dart",
+        "sha256": "8d8f6fc434eed85fb4a322152bb2eb66a026eefbe43c7621bc23292aa6a9207f"
+      },
+      {
+        "path": "lib/models/task_template.dart",
+        "sha256": "0fd6c3d7e30b795498e9262b74c16f1c284a1f5a0a3ea872455e9149dd8aec73"
+      },
+      {
+        "path": "lib/models/weekly_task_review.dart",
+        "sha256": "51ec965129f1ef7456bc1e0b7a8298838af0640691653423123bb1be8d200a17"
+      },
+      {
+        "path": "lib/providers/home_controller.dart",
+        "sha256": "e7cde3425bef71148e886a80b0a1139c51e226e9f1f8e97de899c9aef4af7357"
+      },
+      {
+        "path": "lib/providers/providers.dart",
+        "sha256": "5e8edf79092c252461d046a38434c07293ad6470bc03d8d40773ce5d04ccec2a"
+      },
+      {
+        "path": "lib/providers/task_management.dart",
+        "sha256": "f54df59d4220c0b4a27cced0dce4e58194126170b686053c01af5369b598e969"
+      },
+      {
+        "path": "lib/providers/task_templates_provider.dart",
+        "sha256": "6118d8fb2828be1816522997222177eb24f602b7580834885314c72f6967f9a0"
+      },
+      {
+        "path": "lib/services/capture_automation_policy.dart",
+        "sha256": "3a6c5ef5fd24d367dd1e362001a1fea216c02bdc58447cfe52929f0743ffb987"
+      },
+      {
+        "path": "lib/services/llm_service.dart",
+        "sha256": "f5e154ea7c7756ddb4a74e48573b05c8fca8a7aa59f2a72b04064455e218d35e"
+      },
+      {
+        "path": "lib/services/quick_reminder_parser.dart",
+        "sha256": "826ffff7fabb52fb715971146326539978715b430961364a758ed37577968cb8"
+      },
+      {
+        "path": "lib/services/recovery/backup_inspector.dart",
+        "sha256": "834ef473df2f854d5689f77f50ca96d4424ff3482ca74bd517aa23ddbfa2a86c"
+      },
+      {
+        "path": "lib/ui/widgets/dose_taken_time_dialog.dart",
+        "sha256": "0be64a6342695e76bcae19ba4e3482e55495c5d6766cb34a5a861c4ce0bbb2c6"
+      },
+      {
+        "path": "lib/ui/widgets/medication_plan_panel.dart",
+        "sha256": "4fa2bda3bfd3ba7ed4cf603b6916231dc068c7ab0a955b41358de207e6ac6bf0"
+      },
+      {
+        "path": "lib/ui/widgets/planning_panel.dart",
+        "sha256": "9ad562b0937a720ee57f1fe0c2273b617fa02e35e5455375ac4d3438227f341e"
+      },
+      {
+        "path": "lib/ui/widgets/task_template_library.dart",
+        "sha256": "4cc2f272eeeeea2a9e78e7b854cdaaaa9fc01e128beae0abec911c366da02265"
+      },
+      {
+        "path": "lib/ui/widgets/weekly_task_review_panel.dart",
+        "sha256": "d16f19e6cd5a0318e6ea4ee302b77e2c5e9733acab0bbdfd3b745984f2b7eb6c"
+      },
+      {
+        "path": "test/capture_automation_test.dart",
+        "sha256": "7734dc01b8cf78575d51be267db6e697e5c28b5c8be35bde8da3b883037e2a8b"
+      },
+      {
+        "path": "test/home_runtime_recovery_test.dart",
+        "sha256": "9f91297edcd94530bea5df7d0ff2ce1388dc2be9184309ad37355f3903a61ebd"
+      },
+      {
+        "path": "test/offline_management_widgets_test.dart",
+        "sha256": "45df98580288bccc0cb0d9ed4169e74b7d528367bbf012ea446e165ab120c525"
+      },
+      {
+        "path": "test/offline_task_actions_test.dart",
+        "sha256": "d5195883762a9f20175f7ac3056bcbd5852f7a2d60d3754f1f4d7b154767504a"
+      },
+      {
+        "path": "test/recording_reminders_phase1_test.dart",
+        "sha256": "2f866040c332bbca60f666e17eab812142e9542c1c0e5841f9d4f0e557341cbc"
+      },
+      {
+        "path": "test/support/offline_management_harness.dart",
+        "sha256": "478cec159c88f94e5b0c595c6ee7abcf58edfba456abb82c19025f88f91d9c55"
+      },
+      {
+        "path": "test/task_templates_test.dart",
+        "sha256": "2b142f6c0764f632ab968138938ce11dea0837910b21985ec8b227c8a0ecc1aa"
+      },
+      {
+        "path": "test/weekly_task_review_test.dart",
+        "sha256": "3e701abd485c0e1c70dd5e002bf987039d3e0fe3a13ee80ada2fac070a460d10"
+      }
+    ]
+  },
+  "toolchain": {
+    "flutter": "3.44.9",
+    "dart": "3.12.2",
+    "flutter_path": "/Users/james/.local/opt/flutter-3.44.9/bin/flutter",
+    "python": "Python 3.9.6"
+  },
+  "features": {
+    "clear_capture_automation": {
+      "status": "PASS",
+      "raw_saved_first": true,
+      "explicit_grounded_tasks_apply_without_confirmation": true,
+      "uncertain_outputs_remain_reviewable": true,
+      "original_user_reminder_preserved": true,
+      "ai_preparation_time_is_suggestion": true,
+      "automatic_tasks_max": 8,
+      "proposal_tasks_max": 32,
+      "source_chunk_characters_max": 500,
+      "image_requires_model_clarity_and_readable_quote": true,
+      "strict_snapshot_and_generation_checks": true,
+      "atomic_split_and_stable_ids": true,
+      "real_model_or_media_tested": false
+    },
+    "dose_actual_time": {
+      "status": "PASS",
+      "planned_actual_and_recorded_times_separate": true,
+      "backfill_and_correction_audited": true,
+      "future_actual_time_rejected": true,
+      "legacy_actual_time_not_invented": true,
+      "native_cancel_failure_retains_record": true
+    },
+    "task_templates": {
+      "status": "PASS",
+      "max_count": 24,
+      "max_utf8_bytes": 262144,
+      "checklist_items_max": 64,
+      "namespace": "taskTemplates",
+      "apply_to_form_before_task_save": true,
+      "fresh_unchecked_item_ids": true,
+      "no_dates_outcomes_or_notices_copied": true,
+      "durable_cas_and_corruption_guards": true,
+      "json_and_sqlite_recovery_tested": true
+    },
+    "bulk_lifecycle": {
+      "status": "PASS",
+      "max_ordinary_root_tasks": 50,
+      "actions": [
+        "pause",
+        "resume",
+        "trash",
+        "restore",
+        "archive",
+        "unarchive"
+      ],
+      "preview_confirmation": true,
+      "stale_selection_rejects_whole_batch": true,
+      "sql_failure_rolls_back_whole_batch": true,
+      "plan_children_excluded": true,
+      "native_failures_reported_after_durable_commit": true
+    },
+    "weekly_review": {
+      "status": "PASS",
+      "week_start": "Monday 00:00 local",
+      "week_end_exclusive": "next Monday 00:00 local",
+      "metrics": [
+        "completed",
+        "skipped",
+        "snoozed",
+        "taken",
+        "not_taken",
+        "pause",
+        "resume",
+        "active_days"
+      ],
+      "latest_dose_outcome_counted_once": true,
+      "group_pause_counts_parent_only": true,
+      "current_query_applies": true,
+      "retained_history_limit_per_task": 512,
+      "frequent_postponements_max": 5,
+      "deleted_history_not_invented": true
+    }
+  },
+  "validation": {
+    "new_test_count": 74,
+    "previous_full_count": 1544,
+    "logs": {
+      "flutter": {
+        "path": "build/phase2-offline-20261028-2de7682/flutter.log",
+        "sha256": "6b980cc69d2b722c365ee66535a462f836aaffca7f417113f30af2dd4135a764",
+        "bytes": 314311,
+        "exit_code": 0,
+        "passed": 1618,
+        "failed": 0,
+        "issues": null
+      },
+      "python": {
+        "path": "build/phase2-offline-20261028-2de7682/python.log",
+        "sha256": "8ded354b5f7b7cbb31c4af1845ecd41fa1c568053e1d603cff8c1e17a4a790aa",
+        "bytes": 478,
+        "exit_code": 0,
+        "passed": 126,
+        "failed": 0,
+        "issues": null
+      },
+      "analyze": {
+        "path": "build/phase2-offline-20261028-2de7682/analyze.log",
+        "sha256": "270846f1192dfb0cd0810282804d3dd508bdab219dfe547e44759e36c44de481",
+        "bytes": 96,
+        "exit_code": 0,
+        "passed": null,
+        "failed": null,
+        "issues": 0
+      },
+      "los_angeles": {
+        "path": "build/phase2-offline-20261028-2de7682/los_angeles.log",
+        "sha256": "645ccdee2c488e0b0eab8d522826b33dd5a5e7d74cbed675f987355d733e757a",
+        "bytes": 6442,
+        "exit_code": 0,
+        "passed": 36,
+        "failed": 0,
+        "issues": null
+      }
+    },
+    "ui": {
+      "widths": [
+        375,
+        768,
+        1440
+      ],
+      "locales": [
+        "zh",
+        "en",
+        "ja"
+      ],
+      "themes": [
+        "light",
+        "dark"
+      ],
+      "text_scale": 1.8,
+      "keyboard_case": {
+        "width": 375,
+        "text_scale": 2,
+        "bottom_inset": 300
+      },
+      "real_device": false
+    },
+    "diff_check": "PASS",
+    "regressions_preserved": [
+      {
+        "path": "build/phase2-offline-20261028-2de7682/initial_widgets.log",
+        "sha256": "eaf0c1cc955e071738f7922f0a0c6f1ecf644e4dca19b8505bb9331ae614c24d",
+        "final_pass_replaces_failed_result": true
+      },
+      {
+        "path": "build/phase2-offline-20261028-2de7682/previous_confirmation_assertion.log",
+        "sha256": "55699c0f76be37cbfcd07fec319619e98b0a0f0ff9c1b7ce2ec5a646660b319b",
+        "final_pass_replaces_failed_result": true
+      }
+    ]
+  },
+  "native_and_release": {
+    "phone_owner_thread_title": "优化项目架构与产品体验",
+    "phone_control_returned_at": "2026-10-28T07:04:03.858899+08:00",
+    "phone_or_mirror_or_app_process_operations_this_run": false,
+    "user_database_operations_this_run": false,
+    "real_notifications_modified_this_run": false,
+    "real_ai_or_weather_requests_this_run": false,
+    "new_build_install_push_upload_or_release_by_this_run": false,
+    "current_source_native_acceptance": "PENDING_FUTURE_ARTIFACT",
+    "phone_cross_day": "DEFERRED_BY_USER"
+  },
+  "preservation": {
+    "protected_dirty_files": {
+      "docs/Architecture_Design.md": {
+        "sha256": "d484c9824a433ea1dba22036092e72e9f3983ec60575efca270a89b252ff4e55",
+        "unchanged": true
+      },
+      "docs/Developer_Guide.md": {
+        "sha256": "d0a3023151ba3bd328c52c4cbdf8ab7687150bc6868922c73607388f59a7f9e3",
+        "unchanged": true
+      }
+    },
+    "excluded_unrelated_paths": [
+      ".vscode/",
+      "docs/diagrams/",
+      "scripts/render_diagrams.py"
+    ],
+    "raw_test_databases_or_media_committed": false
+  },
+  "remaining": {
+    "P1_scenarios": [
+      "multi-image and multi-source medication review",
+      "field-level provenance",
+      "meal timing and offsets",
+      "richer clear-date and recurrence automation",
+      "independent recurring dates and holiday exceptions",
+      "weather background and location authorization",
+      "history date management"
+    ],
+    "P1_protection_and_management": [
+      "system secure storage",
+      "encrypted and large attachment backups",
+      "cross-device restore acceptance",
+      "unified content controls",
+      "template import export",
+      "bulk tags and projects"
+    ],
+    "P1_native": [
+      "phone matrix owned by coordinated task",
+      "new source artifact acceptance",
+      "multiday medication and workday departures",
+      "failure recovery and long inactivity",
+      "sleep wake and real timezone DST"
+    ],
+    "P2_learning_and_devices": [
+      "whole-plan and cross-plan management",
+      "long-term load personalization",
+      "learning archive controls and identity migration",
+      "pronunciation dictation",
+      "sharing global capture focus weekly view",
+      "LAN edit delete attachment conflict persistence and real-device sync"
+    ]
+  }
+}

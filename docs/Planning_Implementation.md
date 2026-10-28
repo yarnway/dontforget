@@ -1,10 +1,14 @@
 # 计划管理：实现与验收索引
 
-日期：2026-10-27。最新边界源码 `9ec94b9` 已保存到本地 main，沿用 schema 16；**1508 Flutter、126 Python、静态分析 0 issues、洛杉矶专项 51 项通过**，本次没有构建、安装、推送或发布。总状态见[阶段台账](Recording_Reminders_Phases.md)，详细分阶段结果见[持续日期与容量验收](P1_Rolling_Notification_Window.md)；`e336f05` 的 1499 项和双平台调试构建、`d04a3b0` 的集成结果保留原有归属。
+日期：2026-10-28。最新离线源码 **2de7682** 已保存本地 main，沿用 schema 16；清晰事项自动创建、实际服药时间、模板库、普通事项批量操作和执行记录周复盘通过 **1618 Flutter／126 Python、静态分析 0 issues、洛杉矶专项36项**。本轮未构建、安装或发布，手机通知验收由“优化项目架构与产品体验”继续。详见[本轮离线验收](P1_Offline_Management_2026-10-28.md)和[阶段台账](Recording_Reminders_Phases.md)。
+
+此前边界源码 `9ec94b9` 的 **1508 Flutter／126 Python、洛杉矶专项51项**见[持续日期与容量验收](P1_Rolling_Notification_Window.md)；`e336f05` 的1499项和双平台调试构建、`d04a3b0` 的集成结果分别保留原有归属。
 
 ## 使用入口
 
-最新手机续验见[手机通知矩阵](P1_Phone_Notification_Matrix_2026-10-28.md)：独占交接已完成，+34 实际读回 **50 待发／2 原有保留／6 待补排**；QA36 和辅助触控已清理恢复。Mac 锁屏需要用户手动解锁，动作矩阵及本轮未来 QA 提醒清理未完成，手机尚未归还，本轮手机跨日继续待验。源码 `c2ebdca` 修复中文输入全角冒号，**1542 Flutter、126 Python、静态分析 0 issues**；该修复尚未安装到冻结包。
+采集入口现按清晰度自动整理：可核对来源和时间的普通事项直接应用，缺失／冲突及复杂解释保留提案。原文先保存，AI 提前提醒单独作为建议；普通清晰事项不再要求手动“确认 AI 解析结果”。
+
+手机 +34 的历史容量读回与 **07:04 归还**见[手机通知矩阵](P1_Phone_Notification_Matrix_2026-10-28.md)，后续清理、新版本与设备结果以[最新检查点](Task_Resume_Checkpoint.md)为准。本任务不重放原生样本，本任务手机跨日保留待验。`c2ebdca` 的 **1542 Flutter／126 Python**和旧冻结包分别保留归属。
 
 前轮动作续验见[第二阶段原生动作记录](P1_Native_Actions_2026-10-27.md)：固定 +33 的 Mac 热点击、暂停／修改取消和有限周期末次处理停止续排已通过；该轮手机仅完成权限／OS 队列预检，后续见上条独占续验。该 Mac 身份未验自然跨日；另一路 e336f05 的结果独立记录如下。`0611331` 修正跨午夜的测试夹具，全量 **1542 Flutter、126 Python、静态分析 0 issues**。
 
@@ -14,9 +18,9 @@
 
 从“更多功能”搜索“计划与清单”或 /plans，进入用药、出门、管理、备份、学习管理五个面板。
 
-- **用药**：先填写或从已保存文字、图片、录音提取草稿，逐药核对药名、规格、数量、单位、饭前饭后说明和具体时刻，再填写起止日期。单药日期留空时沿用计划日期；不完整仍可保存草稿。预览首末剂次，逐药核对并勾选确认后启动。选择计划和日期查看每剂记录；详情可返回对应计划修改未来安排。
+- **用药**：从文字、图片、录音提取草稿，逐药核对药名、规格、数量、单位、餐次、时刻及起止日期，预览后启动。单药日期可沿用计划日期，不完整保留草稿；选择日期查看逐剂结局，可补记／修正实际服用时刻，保留计划、实际及记录时间。详情可返回计划修改未来安排。
 - **出门**：填写场景与出门时刻、提前量、重复星期及清单。未来 60 日范围内逐日独立保存并在前台补排，常备项按日期独立，一次性项同步到未来日期。天气与出门习惯记录分别主动开启；支持设置返程观察时段，前台预取有效天气并更新通知正文。延后提醒按新的通知时间检查缓存；失效或缺测保留清单并提示未知。记录出门只修改观察记录，正式时刻、地点、城市和授权须经采用、预览、保存后改变。
-- **管理**：查找标题、标签和项目，编辑清单及重复规则；暂停、回收站恢复、已完成归档，以及浏览执行记录。一般删除保留在回收站，旧撤销不能跨数据恢复代次执行。原有明确的永久清理操作继续保持其含义。
+- **管理**：查找标题、标签和项目，编辑清单及重复规则；管理最多24个可复用模板，并在编辑表单中载入／存为模板。最多50条普通事项批量暂停／继续、回收站／恢复、归档／取消归档，显示选择预览后同事务保存。执行记录提供按周统计和反复延后事项，沿用当前筛选；一般删除保留在回收站，旧操作不能跨数据恢复代次执行。
 - **备份**：选择位置导出任务与附件包，模型密钥被排除；附件合计 32 MiB、整个包 64 MiB。导入先准备独立附件副本，再通过现有预检和确认恢复数据库；原文件不被覆盖，准备材料在取消后保留。不加密，大附件与可选加密仍待后续实现。
 - **学习管理**：查看逐词档案、记录开始后的趋势及七日到期量，逐批暂停、继续、校对词条；调整后续“认识”反馈的五级间隔；粘贴 Tab 分隔的单词、释义、例句，预览后创建最多七批；进行不会自动更改掌握度的拼写练习。
 
@@ -33,6 +37,8 @@
 | 共用通知窗口与状态 | [notification_window.dart](../lib/services/notification_window.dart)、[notification_service.dart](../lib/services/notification_service.dart)、[notification_schedule_reader.dart](../lib/services/notification_schedule_reader.dart) |
 | 通用扩展与周期 | [task_details.dart](../lib/models/task_details.dart)、[reminder.dart](../lib/models/reminder.dart) |
 | 原子变更、历史及组操作 | [providers.dart](../lib/providers/providers.dart)、[task_management.dart](../lib/providers/task_management.dart) |
+| 自动整理判定与明确日期 | [capture_automation_policy.dart](../lib/services/capture_automation_policy.dart)、[quick_reminder_parser.dart](../lib/services/quick_reminder_parser.dart) |
+| 模板库与周复盘 | [task_template_library.dart](../lib/ui/widgets/task_template_library.dart)、[task_templates_provider.dart](../lib/providers/task_templates_provider.dart)、[weekly_task_review.dart](../lib/models/weekly_task_review.dart) |
 | 天气接口与数据校验 | [departure_weather_service.dart](../lib/services/departure_weather_service.dart) |
 | 附件备份与恢复准备 | [portable_backup_service.dart](../lib/services/portable_backup_service.dart)、[portable_backup_panel.dart](../lib/ui/widgets/portable_backup_panel.dart) |
 | 学习管理与队列 | [learning_management_panel.dart](../lib/ui/widgets/learning_management_panel.dart)、[learning_queue_service.dart](../lib/services/learning_queue_service.dart) |
@@ -53,6 +59,7 @@
 
 ## 自动化证据
 
+- [离线管理与自动整理](P1_Offline_Management_2026-10-28.md)：新增74项纳入全量 **1618 Flutter／126 Python、静态分析0 issues**，另有洛杉矶专项36项；覆盖 [自动创建](../test/capture_automation_test.dart)、[模板持久化与恢复](../test/task_templates_test.dart)、[批量与补录](../test/offline_task_actions_test.dart)、[周复盘口径](../test/weekly_task_review_test.dart)、[实际组件流程](../test/offline_management_widgets_test.dart)。本轮未构建、安装或发布。
 - [常用筛选](P1_Saved_Task_Filters.md)：当前分类与关键词的命名保存／应用、重命名、删除撤销、原工作区字段持久化及备份恢复；专项 126 项包含三语三种宽度及小屏键盘。新增源码全量 **1542 Flutter、126 Python 通过，静态分析 0 issues，macOS／iOS 模拟器调试构建通过**；未安装或启动新构建，原生筛选界面待验。
 - [departure_rolling_test.dart](../test/departure_rolling_test.dart)、[departure_refill_recovery_test.dart](../test/departure_refill_recovery_test.dart)：独立日期、跨午夜、补排去重、重启保留、长时间缺席、单独删除、整组恢复、独立跳过和天气有效期。
 - [notification_window_test.dart](../test/notification_window_test.dart)、[notification_capacity_recovery_test.dart](../test/notification_capacity_recovery_test.dart)、[notification_capacity_status_test.dart](../test/notification_capacity_status_test.dart)：跨计划容量、取消／提交故障、冷启动和维护恢复、相同时刻覆盖边界、单条待补排状态。
