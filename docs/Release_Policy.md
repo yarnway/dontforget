@@ -13,3 +13,5 @@
 策略变更 `caa488d` 的[主线 CI](https://github.com/yarnway/dontforget/actions/runs/40614747575) 已通过质量检查与五平台构建，共六项成功；标签专用校验按 main 分支条件跳过。五份内部 artifact 已保留，工作流没有创建 Release。正式版仍需完成验收总表中的剩余项目。
 
 参见[发布验收总表](Release_Acceptance_v1.7.md)及[本轮证据](benchmarks/build37-and-native36-2026-10-28.json)。
+
+2026-10-28 后续主线使用内部 **1.7.0+38** 区分已合入的离线管理与搜索／语音圆弧源码。固定 `dfb34f1` 的手机 +37 已升级及完成 QA39 到期／取消读回；普通通知点击等门槛仍开放，历史留存差异单独追踪。没有新增 RC 标签或 Release；详见[阶段三十四证据](benchmarks/iphone37-native-upgrade-2026-10-28.json)。

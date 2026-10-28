@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 class _Native implements FlutterLocalNotificationsPlugin {
   final pending = <int, String>{};
+  final retained = <int, String>{};
   int highWater = 0, schedules = 0;
   bool failCancel = false, uncertainSchedule = false;
   Completer<void>? blocked;
@@ -20,18 +21,25 @@ class _Native implements FlutterLocalNotificationsPlugin {
         return Future<NotificationAppLaunchDetails?>.value();
       case #cancelAll:
         pending.clear();
+        retained.clear();
         return Future<void>.value();
       case #cancel:
         if (failCancel) {
           return Future<void>.error(StateError('Synthetic cancel failure'));
         }
         pending.remove(call.positionalArguments.first);
+        retained.remove(call.positionalArguments.first);
         return Future<void>.value();
       case #zonedSchedule:
         return _schedule(call);
       default:
         throw UnsupportedError('${call.memberName}');
     }
+  }
+
+  void deliver(String id) {
+    final nativeId = stableNotificationId(id);
+    retained[nativeId] = pending.remove(nativeId)!;
   }
 
   Future<void> _schedule(Invocation call) async {
@@ -166,11 +174,47 @@ void main() {
       for (var i = 1; i <= 4; i++) {
         await service.scheduleReminderStrict(task('$i', i));
       }
-      // The OS has delivered the first request; the fake removes its pending row.
-      native.pending.remove(stableNotificationId('1'));
+      // Delivery moves a request into the independently retained OS collection.
+      native.deliver('1');
       now = start.add(const Duration(minutes: 1));
       await service.fireReminderNow(task('1', 1));
       expect(native.pending.values.toSet(), {'2', '3', '4'});
+      expect(native.retained.values, ['1']);
+    },
+  );
+  test(
+    'adding, delivering and cancelling another task preserves old banners and future requests',
+    () async {
+      for (final reminder in [
+        task('old-a', 1),
+        task('old-b', 2),
+        task('future-a', 5),
+        task('future-b', 6),
+      ]) {
+        await service.scheduleReminderStrict(reminder);
+      }
+      native.deliver('old-a');
+      native.deliver('old-b');
+      now = start.add(const Duration(minutes: 2));
+      await service.fireReminderNow(task('old-b', 2));
+      final oldBanners = Map<int, String>.of(native.retained);
+      final futureRequests = Map<int, String>.of(native.pending);
+      expect(oldBanners.values.toSet(), {'old-a', 'old-b'});
+      expect(futureRequests.values.toSet(), {'future-a', 'future-b'});
+
+      final sample = task('sample', 3);
+      await service.scheduleReminderStrict(sample);
+      expect(native.retained, oldBanners);
+      expect(native.pending.length, 3);
+      native.deliver(sample.id);
+      now = start.add(const Duration(minutes: 3));
+      await service.fireReminderNow(sample);
+      expect(native.retained.values.toSet(), {'old-a', 'old-b', 'sample'});
+      expect(native.pending, futureRequests);
+
+      await service.cancelReminderStrict(sample.id);
+      expect(native.retained, oldBanners);
+      expect(native.pending, futureRequests);
     },
   );
   test(

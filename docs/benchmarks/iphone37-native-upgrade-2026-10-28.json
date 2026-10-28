@@ -1,0 +1,177 @@
+{
+  "date": "2026-10-28",
+  "status": "IPHONE37_UPGRADE_DELIVERY_CLEANUP_PASSED_CLICK_GATES_OPEN",
+  "phone": {
+    "model": "iPhone 15 Pro Max",
+    "bundle": "com.yarnway.dontforget.acceptance.iphone17",
+    "source": "dfb34f1f26b628f880fe802f9ffe4b84de78fc0d",
+    "fromBuild": 36,
+    "toBuild": 37,
+    "schema": 16,
+    "installDocumentsByteEqual": 17,
+    "preservedOriginalRows": {
+      "Reminders": 67,
+      "MediaRecords": 5,
+      "Settings": 1
+    },
+    "mediaFilesByteEqual": 5,
+    "finalRows": {
+      "Reminders": 68,
+      "MediaRecords": 5,
+      "Settings": 1
+    },
+    "qa39": {
+      "reminderId": "67514a48-cbe3-48e6-a18b-93454eec0599",
+      "nativeId": 1436660306,
+      "due": "2026-10-28T10:14:31.506632+08:00",
+      "actualOsRetainedTitleReadback": true,
+      "softDeletedAt": "2026-10-28T10:28:06.490032",
+      "cancelStatus": "submitted",
+      "warmClick": "NOT_OBSERVED",
+      "coldClick": "NOT_PERFORMED"
+    },
+    "finalNativeReadback": {
+      "atLocal": "10:28",
+      "pending": 2,
+      "retained": 0,
+      "pendingVerification": 0,
+      "pendingCancel": 0
+    },
+    "historicalRetainedNotices": {
+      "before": 2,
+      "afterDueBeforeQaDeletion": 0,
+      "cause": "UNRESOLVED",
+      "journalOnlyChangedQa39AfterSubmission": true,
+      "notReplayed": true
+    },
+    "stoppedExactPid": 4988,
+    "temporaryShortcutRestored": true,
+    "ownership": "explicitly handed to independent P1 UI task after final snapshot; explicit handback required"
+  },
+  "validation": {
+    "previousMainCi": "SUCCESS",
+    "previousMainCiHead": "caa488d35fbcb503db11c35070ef271097e64ea8",
+    "integratedProductSource": "9e297cee0498277ad8662128e055aa8c4bbdc4cf",
+    "productTreesMatchValidatedSource": [
+      "lib",
+      "scripts",
+      "ios",
+      "macos",
+      "pubspec.lock"
+    ],
+    "independentlyCheckedPrivateEvidenceHashes": 15,
+    "priorFullFlutterPassed": 1618,
+    "targetedNotificationPassed": 70,
+    "pythonPassed": 126,
+    "analysisIssues": 0,
+    "newRegression": "retained banners and pending requests are independent; new delivery and cancellation preserve old banners",
+    "deviceSubstitution": false,
+    "previousMainCiRun": 40614747575
+  },
+  "nextBuild": {
+    "version": "1.7.0+38",
+    "purpose": "internal CI artifact; separate identity from frozen dfb34f1 +37",
+    "rcTagCreated": false,
+    "releaseCreated": false
+  },
+  "cleanup": {
+    "at": "2026-10-28T10:35:08.324549+08:00",
+    "removed": "study-stage39-materials/ios37-install",
+    "verifiedFiles": 78,
+    "archiveAppleDoubleSidecars": "kept in original zip; not extracted",
+    "strictSignature": "PASS",
+    "archiveCRC": "PASS",
+    "keptArchive": "study-stage38-materials/ios37-isolated-development.zip",
+    "archiveSha256": "558a8e4ea92ae0b68b64860e0a0c8f04802d57b7e42802c97c523df5de0e3e7a",
+    "allocatedKiBRemoved": 24632,
+    "notRemoved": [
+      "all three phone snapshots",
+      "signed rollback packages",
+      "study37-local",
+      "other tasks build trees",
+      "shared SDK/cache"
+    ]
+  },
+  "remaining": [
+    "ordinary notification warm/cold/late/deleted-target clicks",
+    "historical retained notification disappearance",
+    "Japanese software keyboard composing and landscape",
+    "real microphone capture and continuous arc gestures",
+    "Live Activity edit/pause/delete synchronization on current source",
+    "current-source macOS and iOS final regression before stable release"
+  ],
+  "privateEvidence": {
+    "preflight.json": {
+      "bytes": 807,
+      "sha256": "f78ddb320c9524ab176b73370617dddeafd177969ac4a8b61d98cad4cd45d2c0"
+    },
+    "phone-handback.json": {
+      "bytes": 456,
+      "sha256": "4e79aac4d77dfd65e313ad73df834ec9600321aecff9fd45ab50d510495e44b1"
+    },
+    "before-verification.json": {
+      "bytes": 601,
+      "sha256": "4ec26177069656edf204acea7346b74c515d4efe0f9732652558435174c8898c"
+    },
+    "installed-verification.json": {
+      "bytes": 152,
+      "sha256": "67e5ddb09f6397746802103d1ba23fafda2069ae4e4080f9151decd439090c6d"
+    },
+    "ios37-install-result.json": {
+      "bytes": 1154,
+      "sha256": "95150367fbf8ca473c9b44da91ef0eb68058206f61f2fbbeb29000504ebf9759"
+    },
+    "native-baseline.json": {
+      "bytes": 403,
+      "sha256": "a554744e201005ea3e813c1ebcff3c1750631b6c622a8ee6cbdbe1c1b7b62ca5"
+    },
+    "warm-before-click.json": {
+      "bytes": 262,
+      "sha256": "60420b1cbbe2d374f1d4472d39b61e5cb92fa226ccfc05fbfcad73ab57acf5f2"
+    },
+    "warm-delivered-readback.png": {
+      "bytes": 165081,
+      "sha256": "5a0c3ca6b97dc256888b2825183613c65655c799146eb16cd9e7ec489ec6c5c3"
+    },
+    "qa39-cancel-os.png": {
+      "bytes": 157098,
+      "sha256": "dcc8c68d7d28f563affcb97b79d05c7d46c23f0b711da7037aaa68d282e48b8f"
+    },
+    "final-verification.json": {
+      "bytes": 1700,
+      "sha256": "83b65cf19da1d69873f1fc0c4ec0713da3f45358887f630d5673cea5884372c9"
+    },
+    "after-cleanup-capture.json": {
+      "bytes": 193,
+      "sha256": "0d70bd931a485fa11a410a804c30d2bee6a65dc3041e08d0377f7177cb1b3b45"
+    },
+    "temporary-shortcut.json": {
+      "bytes": 422,
+      "sha256": "cd76f16f2e86552423389c22eaf0ea0dae7e5b17816d5dfad3c66241763a998f"
+    },
+    "shortcut-restored.png": {
+      "bytes": 121269,
+      "sha256": "d1b1c4d0b4ee1b7a9a4c3d8c22693b92da05f324358eab0496ebda1863cc019f"
+    },
+    "phone-next-handoff.json": {
+      "bytes": 757,
+      "sha256": "4cd94b22f5731ccf99900ed1704ecaffb50fe8e88b4c4fd5a096e591a55b0270"
+    },
+    "notification-regression.log": {
+      "bytes": 13831,
+      "sha256": "0a7dc012cb6489bf3b3e6e1e74392885798c682960cd334a76fd981cd1f650e5"
+    },
+    "python-tests.log": {
+      "bytes": 478,
+      "sha256": "39bf92f6a26b2399a217222357672f5820f22256d1b9519cba6d1551d079c0f5"
+    },
+    "analyze.log": {
+      "bytes": 96,
+      "sha256": "cdc29338622f86bd0860a178b793f97b99208d4b8367403db2bf11552682e8b3"
+    },
+    "cleanup-package.json": {
+      "bytes": 605,
+      "sha256": "afa4b7867805fd68900d4f31139683b8076d762eb82547fa53ece49550e04ad5"
+    }
+  }
+}
