@@ -1,5 +1,5 @@
 {
-  "recorded_at": "2026-10-28T14:58:26.580772+08:00",
+  "recorded_at": "2026-10-28T15:03:19.681799+08:00",
   "timezone": "Asia/Shanghai",
   "status": "PARTIAL_R4_CLIENT_SAFETY_BLOCK_NATIVE_ACTIONS_UNVERIFIED_OWNED_APPS_EXITED",
   "source": {
@@ -211,11 +211,11 @@
     "historical_root_desktop_returned_without_ui_control": true,
     "historical_idle_followup_automation": "NOT_CREATED: same tool approval policy",
     "idle_followup_automation": {
-      "status": "ACTIVE_QUIET_WAIT_FOR_NEW_EXECUTABLE_CONDITION_NO_UI_RETRY",
+      "status": "DELETED",
       "id": "macos",
-      "interval_minutes": 5,
-      "only_after_explicit_handoff": true,
-      "never_reuse_1130_as_empty_baseline": true
+      "deleted_at": "2026-10-28T15:03:19.681799+08:00",
+      "task_complete": false,
+      "reason": "Persistent client safety refusal is not changed by desktop ownership polling; resume from new human input or explicitly supported UI condition, no automatic UI retry"
     }
   },
   "timing_fix": {

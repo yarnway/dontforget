@@ -186,6 +186,6 @@ UX于14:53:34明确归还Mac共享桌面，架构确认通知任务可接5分钟
 
 未写入R4合成任务，未提交测试或业务通知，未改变本身份通知样式，也未发生可验证的原生按钮/三语菜单/冷响应。本身份正常Quit后Cua读回`isRunning=false`；持既有owner/pending锁只读核对DB0/0/1、schema16、integrityok、DB仍精确为空基线SHA-256 `b2a3bda8621d51b154c63f267478ffc3f3d6aa0c182a9041116107a599ca2aa5`，pending文件不存在。初始native0/0是观察值，权限请求后刷新未完成，没有虚构新的最终native读回。没有新的任务或通知需要删除；日常身份、旧1110、含用户配置的1130及其他任务验收状态未改。
 
-本轮证据位于`build/native_acceptance/trust-actions-20261028-1430-materials/round4-probe/`，manifest SHA-256 `0c382b3144d4c1942b1d5ff55db8f3e60588b86886d9ad230ba966bceceb01f0`。当前结论为 **PARTIAL_R4_CLIENT_SAFETY_BLOCK_NATIVE_ACTIONS_UNVERIFIED_OWNED_APPS_EXITED**。自动跟进仅等待新的可执行条件，不自动重试被拒入口、不重复要求用户寻找已清理的R3旧卡。若后续有人能实际操作系统卡，需先重新交接、准备全新未来时刻的1430通知，再给出准确标题和最少点击；当前没有待用户点击的R4通知。
+本轮证据位于`build/native_acceptance/trust-actions-20261028-1430-materials/round4-probe/`，manifest SHA-256 `0c382b3144d4c1942b1d5ff55db8f3e60588b86886d9ad230ba966bceceb01f0`。当前结论为 **PARTIAL_R4_CLIENT_SAFETY_BLOCK_NATIVE_ACTIONS_UNVERIFIED_OWNED_APPS_EXITED**。每5分钟跟进已删除：桌面ownership轮询不能解除明确的控制安全拒绝，继续定时检查没有可执行进展。删除不代表原生验收完成；等待新的用户输入或明确可用的受支持UI条件，不自动重试被拒入口、不重复要求用户寻找已清理的R3旧卡。若后续有人能实际操作系统卡，需先重新交接、准备全新未来时刻的1430通知，再给出准确标题和最少点击；当前没有待用户点击的R4通知。
 
 本次仅更新验收文档，没有修改产品或scripts。固定623c525的源码/构建/自动化测试证据保持原范围；本轮`python3 -m json.tool docs/benchmarks/reminder-trust-macos-2026-10-28.json`、`git diff --check`均通过；R4纯工具20项自测通过，测试未访问真实数据库或系统通知。iOS/Android待验仍为上文的原生按钮数量和三语、前后台/终止队列、延后与周期语义、幂等/过期/代次、自检失败及连续替换、真实投递/点击和各自安全清理，均未用Mac证据替代。

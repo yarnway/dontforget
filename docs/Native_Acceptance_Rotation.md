@@ -86,4 +86,4 @@ Mac 共享桌面、键盘/指针、通知中心以及 iPhone Mirroring 使用同
 
 UX14:53:34明确归还后，架构确认通知任务5分钟候接。新1430实际Cua控制成功，root登记14:56:35接收、预计15:01:35归还；14:57:33因`com.apple.UserNotificationCenter`被控制工具以安全原因明确拒绝，提前归还架构候接（canonical当时revision30）。回执`build/native_acceptance/trust-actions-20261028-1430-materials/round4-probe/ui-handback.json`。没有绕过拒绝或继续占用；phone仍UX所有，不随Mac桌面归还。
 
-1430仅正常bootstrap和点击本身份权限请求，结果未观察到；未seed、未排程、未改通知样式。已正常Quit、DB0/0/1、schema16、integrityok、既有owner/pending锁空闲、pending文件不存在。设置页初始native0/0，后续刷新未完成，不能声称读到新的最终系统队列。旧1130用户配置与两条可恢复删除数据、旧1110及日常/其他任务状态均保护。下一次真实动作必须有新的可执行控制条件与明确交接；跟进不自动重试被拒入口，也不要求用户点击已清理旧卡。
+1430仅正常bootstrap和点击本身份权限请求，结果未观察到；未seed、未排程、未改通知样式。已正常Quit、DB0/0/1、schema16、integrityok、既有owner/pending锁空闲、pending文件不存在。设置页初始native0/0，后续刷新未完成，不能声称读到新的最终系统队列。旧1130用户配置与两条可恢复删除数据、旧1110及日常/其他任务状态均保护。下一次真实动作必须有新的可执行控制条件与明确交接。15:02跟进只读确认仍无该条件后已删除：ownership轮询不能解除控制安全拒绝，任务仍partial；不会自动重试被拒入口，也不要求用户点击已清理旧卡。
