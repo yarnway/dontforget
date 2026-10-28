@@ -23,7 +23,6 @@ class WorkspaceDrafts extends StateNotifier<Map<String, dynamic>> {
   bool _edited = false;
   bool failed = false;
   bool loaded = false;
-  Map<String, dynamic> _data = {};
 
   Future<void> _load() async {
     try {
@@ -46,7 +45,6 @@ class WorkspaceDrafts extends StateNotifier<Map<String, dynamic>> {
         throw const FormatException('Invalid drafts');
       }
       if (!_edited) {
-        _data = decoded;
         if (mounted) state = decoded;
       }
       loaded = true;
@@ -66,17 +64,33 @@ class WorkspaceDrafts extends StateNotifier<Map<String, dynamic>> {
         // Never write defaults over unreadable drafts.
         await ready;
         database.checkGeneration(generation);
-        final next = {..._data};
-        if (frozen == null) {
-          next.remove(key);
-        } else {
-          next[key] = frozen;
-        }
-        final raw = jsonEncode(next);
-        if (raw.length > 1048576) {
-          throw const FormatException('Drafts too large');
-        }
+        late Map<String, dynamic> next;
         await database.writeTransaction(generation, (db) async {
+          // Secure-credential cleanup metadata shares this row. Merge the
+          // latest committed workspace rather than overwriting another writer.
+          final rows = await db.query(
+            'Settings',
+            where: 'id = ?',
+            whereArgs: ['default'],
+          );
+          if (rows.length != 1) throw StateError('Settings unavailable');
+          final stored = rows.single['workspace_drafts_json'];
+          final current = stored == null
+              ? <String, dynamic>{}
+              : jsonDecode(stored as String);
+          if (current is! Map<String, dynamic>) {
+            throw const FormatException('Invalid drafts');
+          }
+          next = {...current};
+          if (frozen == null) {
+            next.remove(key);
+          } else {
+            next[key] = frozen;
+          }
+          final raw = jsonEncode(next);
+          if (raw.length > 1048576) {
+            throw const FormatException('Drafts too large');
+          }
           final count = await db.update(
             'Settings',
             {'workspace_drafts_json': raw},
@@ -86,7 +100,6 @@ class WorkspaceDrafts extends StateNotifier<Map<String, dynamic>> {
           if (count != 1) throw StateError('Settings unavailable');
         });
         database.checkGeneration(generation);
-        _data = next;
         if (mounted) {
           _edited = true;
           failed = false;

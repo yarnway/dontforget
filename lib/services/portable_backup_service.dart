@@ -138,7 +138,7 @@ class PortableBackupService {
       throw const FormatException('Unsafe media root');
     }
     await ownedMediaRoot.create(recursive: true);
-    final destination = await ownedMediaRoot.createTemp('restored-bundle-');
+    final destination = await ownedMediaRoot.createTemp('import-');
     try {
       final records = (bundle['snapshot']['media_records'] as List);
       for (final attachment in bundle['attachments'] as List) {
@@ -160,6 +160,15 @@ class PortableBackupService {
         record['content_or_path'] = file.path;
       }
       if (!isCurrent()) throw StateError('Backup session expired');
+      final missing = (bundle['missing_media'] as List).toSet();
+      for (var i = 0; i < records.length; i++) {
+        if (missing.contains(records[i]['id'])) {
+          records[i]['content_or_path'] = p.join(
+            destination.path,
+            'missing-$i.bin',
+          );
+        }
+      }
       final snapshot = File(p.join(destination.path, 'snapshot.json'));
       await snapshot.writeAsString(jsonEncode(bundle['snapshot']), flush: true);
       return snapshot;

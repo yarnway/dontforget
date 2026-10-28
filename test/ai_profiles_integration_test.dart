@@ -9,6 +9,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/ai_profile.dart';
 import 'package:dont_forget/models/settings.dart';
+import 'package:dont_forget/models/credential_reference.dart';
 import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/providers/providers.dart';
@@ -62,10 +63,10 @@ void main() {
         Map<String, dynamic>.from(data['settings'].single),
       );
       expect(saved.aiProfiles.map((p) => p.id), ['b', 'a']);
-      expect(saved.aiProfiles.map((p) => p.settings.apiKey), [
-        'fixture-b',
-        'fixture-a',
-      ]);
+      expect(saved.aiProfiles.map((p) => p.settings.apiKey), ['', '']);
+      expect(isCredentialReference(saved.apiKey), isTrue);
+      expect(jsonEncode(data), isNot(contains('fixture-b')));
+      expect(jsonEncode(data), isNot(contains('fixture-a')));
       expect(saved.aiFallbackEnabled, isTrue);
       await helper.close();
       final db = await helper.database;
@@ -74,6 +75,13 @@ void main() {
         AppSettings.fromJson((await db.query('Settings')).single).toJson(),
         saved.toJson(),
       );
+      final reloaded = SettingsNotifier(helper);
+      await reloaded.ready;
+      expect(reloaded.state.aiProfiles.map((p) => p.settings.apiKey), [
+        'fixture-b',
+        'fixture-a',
+      ]);
+      reloaded.dispose();
     },
   );
 

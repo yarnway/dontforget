@@ -10,6 +10,7 @@ import 'package:sqflite/sqflite.dart' as sqflite;
 import '../models/settings.dart';
 import '../models/legacy_credentials.dart';
 import '../models/task_details.dart';
+import '../services/security/credential_store.dart';
 import '../services/notification_epoch_store.dart';
 import '../services/notification_journal.dart';
 import '../services/storage_directory_lease.dart';
@@ -40,10 +41,12 @@ class DatabaseHelper {
   final String? _directory;
   final DatabaseFactory? _factory;
   final bool migrateNotificationJournal;
+  final CredentialStore credentialStore;
 
   DatabaseHelper._init()
     : _directory = null,
       _factory = null,
+      credentialStore = const SystemCredentialStore(),
       migrateNotificationJournal = Platform.isMacOS;
 
   @visibleForTesting
@@ -51,15 +54,18 @@ class DatabaseHelper {
     String directory,
     DatabaseFactory factory, {
     this.migrateNotificationJournal = false,
+    CredentialStore? credentialStore,
   }) : _directory = directory,
+       credentialStore =
+           credentialStore ?? MemoryCredentialStore.forTesting(directory),
        _factory = factory;
 
   /// Background intent storage is outside business data. Isolated helpers keep
   /// every operational sidecar in their temp directory, never user support.
   Future<Directory> get notificationActionQueueDirectory async =>
       _directory == null
-          ? await getApplicationSupportDirectory()
-          : Directory(_directory);
+      ? await getApplicationSupportDirectory()
+      : Directory(_directory);
 
   /// Raw handles are only available on an explicitly isolated test helper.
   @visibleForTesting

@@ -7,6 +7,9 @@ import '../../data/database_helper.dart';
 import '../../services/recovery/runtime_gate.dart';
 import '../widgets/notification_permission_panel.dart';
 import '../widgets/notification_diagnostics_panel.dart';
+import '../widgets/credential_status_panel.dart';
+import '../widgets/portable_backup_panel.dart';
+import '../../l10n/data_protection_strings.dart';
 import '../../services/notification_diagnostics_service.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -303,6 +306,43 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       );
       _dirty = _captureDraft() != _savedDraft;
     });
+  }
+
+  Future<void> _reloadCredentials() async {
+    if (_dirty) {
+      InlineFeedback.of(context).showSnackBar(
+        SnackBar(content: Text(protectionText(context, 'retryDirty'))),
+      );
+      return;
+    }
+    _checkCurrent();
+    await ref.read(settingsProvider.notifier).reloadCredentials();
+    if (!mounted) return;
+    _checkCurrent();
+    await _load();
+  }
+
+  Future<void> _openDataProtection() async {
+    if (_dirty) {
+      InlineFeedback.of(context).showSnackBar(
+        SnackBar(content: Text(protectionText(context, 'retryDirty'))),
+      );
+      return;
+    }
+    _checkCurrent();
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => Scaffold(
+          appBar: AppBar(title: Text(protectionText(context, 'title'))),
+          body: const PortableBackupPanel(),
+        ),
+      ),
+    );
+    if (!mounted) return;
+    try {
+      _checkCurrent();
+      await _load();
+    } catch (_) {}
   }
 
   bool _isSaving = false;
@@ -789,6 +829,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         subtitle: Text(l10n.get('aiProfilesEntryHint')),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: _isSaving ? null : _openModelProfiles,
+                      ),
+                    ),
+                    CredentialStatusPanel(
+                      onRetry: _reloadCredentials,
+                      allowRemove: false,
+                    ),
+                    Card.outlined(
+                      margin: EdgeInsets.zero,
+                      child: ListTile(
+                        key: const ValueKey('settings-data-protection'),
+                        leading: const Icon(Icons.enhanced_encryption_outlined),
+                        title: Text(protectionText(context, 'title')),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: _isSaving || !_ready
+                            ? null
+                            : _openDataProtection,
                       ),
                     ),
                     ValueListenableBuilder<AiExtractionStatus?>(

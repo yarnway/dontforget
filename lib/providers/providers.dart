@@ -10,6 +10,7 @@ import '../models/settings.dart';
 import '../models/reminder.dart';
 import '../models/notification_payload.dart';
 import '../models/task_details.dart';
+import '../services/security/credential_repository.dart';
 import '../models/medication_plan.dart';
 import '../models/departure_plan.dart';
 import '../services/departure_weather_service.dart';
@@ -124,53 +125,38 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     unawaited(ready.then<void>((_) {}, onError: (Object _, StackTrace __) {}));
   }
 
+  CredentialStatus credentialStatus = CredentialStatus.notConfigured;
   Future<void> _loadSettings() async {
     final generation = _dbHelper.captureGeneration();
-    final rows = await _dbHelper.read(
-      generation,
-      (db) => db.query('Settings', where: 'id = ?', whereArgs: ['default']),
-    );
+    final loaded = await CredentialRepository(_dbHelper).load(generation);
     _dbHelper.checkGeneration(generation);
     _stateGeneration = generation;
-    if (rows.isNotEmpty && mounted) {
-      state = AppSettings.fromJson(rows.first);
-    }
+    credentialStatus = loaded.status;
+    if (mounted) state = loaded.settings;
     StartupTrace.mark('settings_loaded');
   }
 
-  Future<void> updateSettings(AppSettings newSettings) async {
-    // Capture before waiting for startup: maintenance must not retarget a save.
+  Future<void> reloadCredentials() async {
+    await ready;
+    if (_stateGeneration != null) _dbHelper.checkGeneration(_stateGeneration!);
+    await _loadSettings();
+  }
+
+  Future<void> updateSettings(
+    AppSettings newSettings, {
+    bool clearCredentials = false,
+  }) async {
     final generation = _dbHelper.captureGeneration();
-    if (_stateGeneration != null) {
-      _dbHelper.checkGeneration(_stateGeneration!);
-    }
+    if (_stateGeneration != null) _dbHelper.checkGeneration(_stateGeneration!);
     await ready;
     _dbHelper.checkGeneration(generation);
     _dbHelper.checkGeneration(_stateGeneration!);
-    final saved = AppSettings.fromJson(newSettings.toJson());
-    String? drafts;
-    await _dbHelper.writeTransaction(generation, (txn) async {
-      final current = await txn.query(
-        'Settings',
-        where: 'id = ?',
-        whereArgs: ['default'],
-      );
-      drafts = current.firstOrNull?['workspace_drafts_json'] as String?;
-      await txn.delete('Settings', where: 'id = ?', whereArgs: ['default']);
-      await txn.insert('Settings', {
-        ...saved.toJson(),
-        'id': 'default',
-        'workspace_drafts_json': drafts,
-      });
-    });
+    final loaded = await CredentialRepository(
+      _dbHelper,
+    ).save(newSettings, generation, clear: clearCredentials);
     _dbHelper.checkGeneration(generation);
-    if (mounted) {
-      state = AppSettings.fromJson({
-        ...saved.toJson(),
-        'id': 'default',
-        'workspace_drafts_json': drafts,
-      });
-    }
+    credentialStatus = loaded.status;
+    if (mounted) state = loaded.settings;
   }
 }
 

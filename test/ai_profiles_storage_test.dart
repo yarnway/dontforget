@@ -6,6 +6,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/ai_profile.dart';
 import 'package:dont_forget/models/settings.dart';
+import 'package:dont_forget/models/credential_reference.dart';
 import 'package:dont_forget/providers/providers.dart';
 import 'package:dont_forget/services/notification_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -205,7 +206,7 @@ void main() {
 
   for (final format in ['sqlite', 'json']) {
     test(
-      'current $format restores ordered disabled keys and reports sensitivity',
+      'current $format restores model order and resolves same-device keys without exporting them',
       () async {
         final source = DatabaseHelper.forTesting(
           '${root.path}/source',
@@ -248,10 +249,11 @@ void main() {
         );
         final preview = await inspector.inspect(file);
         expect(preview.version, DatabaseHelper.schemaVersion);
-        expect(preview.containsCredentials, isTrue);
+        expect(preview.containsCredentials, isFalse);
         final live = DatabaseHelper.forTesting(
           '${root.path}/live',
           databaseFactoryFfi,
+          credentialStore: source.credentialStore,
         );
         try {
           await DatabaseRecovery(
@@ -265,7 +267,12 @@ void main() {
           final restored = AppSettings.fromJson(
             (await (await live.database).query('Settings')).single,
           );
-          expect(restored.toJson(), settings.toJson());
+          expect(isCredentialReference(restored.apiKey), isTrue);
+          expect(restored.aiProfiles.map((p) => p.settings.apiKey), ['', '']);
+          final hydrated = SettingsNotifier(live);
+          await hydrated.ready;
+          expect(hydrated.state.toJson(), settings.toJson());
+          hydrated.dispose();
           expect(await file.readAsBytes(), before);
         } finally {
           await live.close();

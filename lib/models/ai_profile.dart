@@ -1,4 +1,5 @@
 import 'settings.dart';
+import 'credential_reference.dart';
 
 /// A user-ordered endpoint. Credentials never belong to shared router state.
 class AiProfile {
@@ -70,6 +71,7 @@ class AiProfile {
         !uri.hasQuery &&
         !uri.hasFragment &&
         settings.modelName.trim().isNotEmpty &&
-        settings.apiKey.trim().isNotEmpty;
+        settings.apiKey.trim().isNotEmpty &&
+        !isCredentialReference(settings.apiKey);
   }
 }

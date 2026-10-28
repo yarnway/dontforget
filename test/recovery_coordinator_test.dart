@@ -7,6 +7,7 @@ import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/media_record.dart';
 import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/models/settings.dart';
+import 'package:dont_forget/models/credential_reference.dart';
 import 'package:dont_forget/providers/home_controller.dart';
 import 'package:dont_forget/providers/providers.dart';
 import 'package:dont_forget/providers/recovery_coordinator.dart';
@@ -368,8 +369,23 @@ void main() {
       );
       try {
         expect(
-          (await rollbackDb.query('Settings')).single['api_key'],
-          'old-test-key',
+          isCredentialReference(
+            (await rollbackDb.query('Settings')).single['api_key'],
+          ),
+          isTrue,
+        );
+        final rollbackSettings = AppSettings.fromJson(
+          (await rollbackDb.query('Settings')).single,
+        );
+        final secret = await live.credentialStore.read(rollbackSettings.apiKey);
+        expect(jsonDecode(secret!)['api_key'], 'old-test-key');
+        expect(
+          rollbackSettings.aiProfiles.every((p) => p.settings.apiKey.isEmpty),
+          isTrue,
+        );
+        expect(
+          jsonEncode(await rollbackDb.query('Settings')),
+          isNot(contains('old-test-key')),
         );
         expect((await rollbackDb.query('Reminders')).single['id'], 'old-task');
         expect(

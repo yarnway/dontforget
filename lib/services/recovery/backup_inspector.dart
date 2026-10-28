@@ -1,3 +1,4 @@
+import '../../models/credential_reference.dart';
 import '../../models/task_details.dart';
 import '../../models/medication_plan.dart';
 import '../../models/departure_plan.dart';
@@ -1081,9 +1082,12 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
     data['version'] as int,
     timestamp,
     counts,
-    parsedSettings.apiKey.isNotEmpty ||
+    (parsedSettings.apiKey.isNotEmpty &&
+            !isCredentialReference(parsedSettings.apiKey)) ||
         parsedSettings.effectiveProfiles.any(
-          (p) => p.settings.apiKey.isNotEmpty,
+          (p) =>
+              p.settings.apiKey.isNotEmpty &&
+              !isCredentialReference(p.settings.apiKey),
         ),
     mediaPaths,
     unresolved,

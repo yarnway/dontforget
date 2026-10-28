@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/models/settings.dart';
+import 'package:dont_forget/services/security/credential_repository.dart';
 import 'package:dont_forget/providers/providers.dart';
 import 'package:dont_forget/models/notification_schedule_status.dart';
 import 'package:dont_forget/services/recovery/backup_inspector.dart';
@@ -38,12 +39,19 @@ class _Inspector implements BackupInspector {
 class _Settings extends StateNotifier<AppSettings> implements SettingsNotifier {
   _Settings() : super(AppSettings.defaults());
   int writes = 0;
+  @override
+  CredentialStatus credentialStatus = CredentialStatus.notConfigured;
+  @override
+  Future<void> reloadCredentials() async {}
 
   @override
   Future<void> ready = Future.value();
 
   @override
-  Future<void> updateSettings(AppSettings newSettings) async {
+  Future<void> updateSettings(
+    AppSettings newSettings, {
+    bool clearCredentials = false,
+  }) async {
     writes++;
     state = newSettings;
   }
