@@ -340,7 +340,12 @@ extension TaskManagement on RemindersNotifier {
               proposed.copyWith(
                 noticeRevision: old == null ? 0 : old.noticeRevision + 1,
                 detailsJson: proposed.details
-                    .patch({'history': old?.details.toJson()['history'] ?? []})
+                    .patch({
+                      'history': old?.details.toJson()['history'] ?? [],
+                      'attachment_ids':
+                          old?.details.attachmentIds ??
+                          proposed.details.attachmentIds,
+                    })
                     .record(old == null ? 'created' : 'plan_changed', at)
                     .encode(),
               ),

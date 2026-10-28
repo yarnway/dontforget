@@ -8,6 +8,7 @@ class TaskDetails {
   const TaskDetails({
     this.repeat,
     this.checklist = const [],
+    this.attachmentIds = const [],
     this.tags = const [],
     this.project = '',
     this.history = const [],
@@ -22,6 +23,8 @@ class TaskDetails {
   });
   final RepeatWindow? repeat;
   final List<ChecklistItem> checklist;
+  static const maxAttachments = 12;
+  final List<String> attachmentIds;
   final List<String> tags;
   final String project;
   final List<TaskEvent> history;
@@ -51,7 +54,7 @@ class TaskDetails {
     final json = decodeStoredJson(raw);
     if (json is! Map<String, dynamic> ||
         json['version'] is! int ||
-        !const [1, 2].contains(json['version']) ||
+        !const [1, 2, 3].contains(json['version']) ||
         json['version'] != _formatVersion(json)) {
       throw const FormatException('Invalid task details');
     }
@@ -59,6 +62,7 @@ class TaskDetails {
       'version',
       'repeat',
       'checklist',
+      'attachment_ids',
       'tags',
       'project',
       'history',
@@ -109,7 +113,17 @@ class TaskDetails {
     if (items.map((e) => e.id).toSet().length != items.length) {
       throw const FormatException('Duplicate checklist ID');
     }
+    final attachments = list(
+      'attachment_ids',
+      maxAttachments,
+      (v) => text(v, 160),
+    );
+    if (attachments.any((id) => id.trim().isEmpty) ||
+        attachments.toSet().length != attachments.length) {
+      throw const FormatException('Invalid attachment references');
+    }
     return TaskDetails(
+      attachmentIds: attachments,
       repeat: json['repeat'] == null
           ? null
           : RepeatWindow.fromJson(json['repeat']),
@@ -155,11 +169,13 @@ class TaskDetails {
 
   Map<String, dynamic> toJson() => {
     'version': _formatVersion({
+      'attachment_ids': attachmentIds,
       'kind': kind,
       'repeat': repeat?.toJson(),
       'data': data,
     }),
     'repeat': repeat?.toJson(),
+    if (attachmentIds.isNotEmpty) 'attachment_ids': attachmentIds,
     'checklist': checklist.map((e) => e.toJson()).toList(),
     'tags': tags,
     'project': project,
@@ -174,6 +190,8 @@ class TaskDetails {
     'data': data,
   };
   static int _formatVersion(Map<String, dynamic> data) {
+    final attachments = data['attachment_ids'];
+    if (attachments is List && attachments.isNotEmpty) return 3;
     final repeat = data['repeat'];
     if (repeat is Map) {
       if (repeat['anchor'] != null) return 2;

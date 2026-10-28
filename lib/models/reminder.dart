@@ -170,7 +170,8 @@ class Reminder {
     }
     if (isRecurring) mask |= TaskBitmask.recurring;
     if (isEmotionFiltered) mask |= TaskBitmask.emotionFiltered;
-    if (recordId != null && recordId!.isNotEmpty) {
+    if ((recordId != null && recordId!.isNotEmpty) ||
+        details.attachmentIds.isNotEmpty) {
       mask |= TaskBitmask.hasAttachment;
     }
     if (subTasks != null && subTasks!.trim().isNotEmpty && subTasks != '[]') {

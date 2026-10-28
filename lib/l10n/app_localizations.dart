@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'task_consistency_strings.dart';
+import 'task_attachment_strings.dart';
 import 'notification_diagnostics_strings.dart';
 
 class AppLocalizations {
@@ -2289,7 +2290,8 @@ class AppLocalizations {
   };
 
   String get(String key) {
-    return taskConsistencyStrings[locale.languageCode]?[key] ??
+    return taskAttachmentStrings[locale.languageCode]?[key] ??
+        taskConsistencyStrings[locale.languageCode]?[key] ??
         notificationDiagnosticsStrings[locale.languageCode]?[key] ??
         _localizedValues[locale.languageCode]?[key] ??
         _localizedValues['en']?[key] ??

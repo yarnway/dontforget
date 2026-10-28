@@ -970,6 +970,14 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
         _fail(BackupInspectionError.invalidData);
       }
     }
+    try {
+      final details = TaskDetails.decode(row['details_json'] as String?);
+      unresolved += details.attachmentIds.where(
+        (id) => !ids['media_records']!.contains(id),
+      ).length;
+    } catch (_) {
+      _fail(BackupInspectionError.invalidData);
+    }
     if (row['record_id'] != null &&
         !ids['media_records']!.contains(row['record_id'])) {
       unresolved++;

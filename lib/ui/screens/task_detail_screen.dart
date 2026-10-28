@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../widgets/inline_feedback.dart';
 import '../widgets/task_metadata_editor.dart';
+import '../widgets/task_attachments_panel.dart';
 import '../../models/task_details.dart';
 import '../../services/recovery/runtime_gate.dart';
 import '../widgets/live_reminder_button.dart';
@@ -108,7 +109,8 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   }
 
   bool _isDeleting = false;
-  bool get _isMutating => _isSaving || _isDeleting;
+  bool _attachmentBusy = false;
+  bool get _isMutating => _isSaving || _isDeleting || _attachmentBusy;
 
   // Context Trigger state
   late String _contextTriggerType; // 'none', 'wifi', 'profile'
@@ -2148,6 +2150,15 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                           ],
                         ],
                       ),
+                    ),
+
+                    const SizedBox(height: 14),
+                    TaskAttachmentsPanel(
+                      task: widget.task,
+                      enabled: !_isSaving && !_isDeleting,
+                      onBusyChanged: (busy) {
+                        if (mounted) setState(() => _attachmentBusy = busy);
+                      },
                     ),
 
                     // 8. Media Attachment if any

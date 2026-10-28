@@ -476,6 +476,9 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         _ => null,
       };
     }
+    if (details.attachmentIds.isNotEmpty) {
+      mediaIcon = Icons.attach_file_rounded;
+    }
     final metadata = <Widget>[
       if (details.project.isNotEmpty)
         _badge(
@@ -767,7 +770,11 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                 if (mediaIcon != null)
                   TextButton(
                     key: ValueKey('media-${task.id}'),
-                    onPressed: _isBusy ? null : widget.onPlayMedia,
+                    onPressed: _isBusy
+                        ? null
+                        : details.attachmentIds.isNotEmpty
+                        ? _openDetails
+                        : widget.onPlayMedia,
                     style: TextButton.styleFrom(
                       minimumSize: const Size(48, 48),
                       foregroundColor: colors.primary,
@@ -783,7 +790,9 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            l10n.get('playOrPreview'),
+                            details.attachmentIds.isNotEmpty
+                                ? '${l10n.get('taskAttachments')} · ${details.attachmentIds.length}'
+                                : l10n.get('playOrPreview'),
                             style: const TextStyle(fontSize: 12),
                           ),
                         ),

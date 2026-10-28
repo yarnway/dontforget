@@ -17,6 +17,7 @@ import '../models/notification_schedule_status.dart';
 import '../services/notification_schedule_reader.dart';
 import '../services/notification_permission_service.dart';
 import '../models/media_record.dart';
+import '../services/task_attachment_files.dart';
 import '../services/llm_service.dart';
 import '../services/notification_service.dart';
 import '../services/notification_window.dart';
@@ -36,6 +37,7 @@ import '../services/context_trigger_service.dart';
 import '../services/capture_automation_policy.dart';
 
 part 'task_management.dart';
+part 'task_attachments.dart';
 part 'departure_routines.dart';
 
 final departureWeatherProvider = Provider<DepartureWeatherService>((ref) {
