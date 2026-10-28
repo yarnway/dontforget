@@ -60,8 +60,9 @@ python3 scripts/check_ios_device.py --output /tmp/dontforget-ios-preflight.json
 
 1. main 推送、PR、手动运行：先分析、Flutter 测试和打包脚本测试，再运行 Windows、Android、Linux、macOS、iOS 构建矩阵。
 2. 桌面产物解压后执行 10 秒进程启动检查。Windows 另在带空格的临时路径中安装、覆盖安装与卸载，校验历史文件哈希不变；不是实际旧数据库迁移测试。Linux 使用 Xvfb；仅在隔离 GitHub runner 执行。记录进程存活与退出状态，仍需人工窗口、安装、数据库升级及通知验收。
-3. 校验各平台提交号、版本和哈希后上传候选 artifact，保留 30 天。
-4. 只有 `v*` 标签可以进入 release job；校验标签与 pubspec 一致、五平台七个文件齐备后创建 **draft prerelease**。main 和手动运行不会创建正式 Release。签名、商店提交和正式公开发布另行处理。
+3. 校验各平台提交号、版本和哈希后上传内部验证 artifact，保留 30 天。
+4. `v*` 标签额外进入 `verify_packages`，核验标签与 pubspec 一致、五平台七个文件齐备；该作业只校验，不创建或发布 Release。整个工作流仅有 `contents: read` 权限。
+5. 后续迭代默认不创建 RC 标签或 Release 草稿。macOS、iOS 验收与相关回归完成后，再从对应通过的源码和产物发布正式稳定版，并读回版本、正文及附件摘要。签名和商店提交单独核验，详见[发布策略](Release_Policy.md)。
 
 本地有未提交改动时，清单中的 HEAD 不能表示全部源文件；发布候选应来自干净、已提交的 CI checkout。勿把本地 dirty 构建当作可追溯正式产物。
 

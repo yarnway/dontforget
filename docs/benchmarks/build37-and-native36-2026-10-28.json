@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-10-28T09:10:46.801583+08:00",
+  "checkedAt": "2026-10-28T09:44:42.539363+08:00",
   "version": "1.7.0+37",
   "source": "dfb34f1f26b628f880fe802f9ffe4b84de78fc0d",
   "schema": 16,
@@ -99,7 +99,10 @@
     "deviceInstallPerformed": false,
     "deviceAcceptancePerformed": false
   },
-  "nativeVersion": "1.7.0+36",
+  "nativeVersion": {
+    "macos": "1.7.0+37",
+    "iosLastVerified": "1.7.0+36"
+  },
   "macNative": {
     "version": "1.7.0+36",
     "bundleID": "com.example.dontForget.acceptance.study27-local",
@@ -159,10 +162,10 @@
     "finalPendingCancel": 0,
     "finalReminderRowsIncludingTrash": 63,
     "nativeInput": "hardware keyboard only",
-    "phoneHandoff": "independent P1 notification matrix; explicit return required"
+    "phoneHandoff": "First segment explicitly returned; second segment explicitly handed to independent P1 matrix at 09:38; explicit return required, target 10:08."
   },
   "remaining": [
-    "rc.37 native install and command-palette verification",
+    "iPhone internal +37 upgrade and native regression when device channel is available and phone explicitly returned",
     "iPhone ordinary notification warm/cold/late/deleted clicks",
     "Japanese software keyboard composition and orientation",
     "real microphone capture and continuous arc gestures",
@@ -283,6 +286,50 @@
     "packaging-policy-tests.log": {
       "bytes": 1724,
       "sha256": "cd1931694a362dfabbec2a3adaf87b13991ffbe13d1c4dff0614b0fcb3ad226f"
+    },
+    "ci-policy-final.json": {
+      "bytes": 37215,
+      "sha256": "090dde3be6364307300729308ca543ac5307546f0ae050240a03ec9b284b1c69"
+    },
+    "ci-policy.log": {
+      "bytes": 1115910,
+      "sha256": "11eee5713931ed7d045ffcf439f8d5a8f7ffb46fed12736281ab904fdc5187a5"
+    },
+    "ci-policy-artifacts.json": {
+      "bytes": 4287,
+      "sha256": "167da0272b682c0f82ac3574b5e37015609b0fd6bf2d693243abee536981f055"
+    },
+    "mac37-prepared-verification.json": {
+      "bytes": 1369,
+      "sha256": "f76ecd2992670148b53700c709ce59db26c1b0b888287a87f51be874bdedbb3a"
+    },
+    "mac37-native-upgrade.json": {
+      "bytes": 639,
+      "sha256": "9177ca21d5aa5cc846c3e92fb32ffef473976fcd48b43cd08a6a7e516afd60ef"
+    },
+    "ios37-signature.json": {
+      "bytes": 18184,
+      "sha256": "614e9a338c337a12782c53027015cc9a88552104553b4254e7a816437e8cf2c0"
+    },
+    "phone-handback-20261028-0937.json": {
+      "bytes": 677,
+      "sha256": "f7a81de0be2c3d4433f1d43821d05549dbcc806ef632360fdde19c5d3a7694d4"
+    },
+    "phone-next-handoff.json": {
+      "bytes": 763,
+      "sha256": "4894516ea95b83e0c7d0df1739b1b8a653c60ea83a17d1cabdd2681e24a73761"
+    },
+    "cleanup-followup.json": {
+      "bytes": 1104,
+      "sha256": "eb2ee375a63530ee232a658563876d7eaaf250b5fc7d11934e66ce06c78808cf"
+    },
+    "mac37-keyboard-search.png": {
+      "bytes": 228465,
+      "sha256": "4f81fc1381e8962b0499e71643f8cdc48e5fde28b52a86715a3caf4f01758332"
+    },
+    "release-policy-final-readback.json": {
+      "bytes": 243,
+      "sha256": "4bcc643d492fe0357fce63dc725bc1ad4e8f11f2e320dc8bb09739d6deb12089"
     }
   },
   "releasePolicy": {
@@ -290,12 +337,138 @@
     "automaticReleaseWritePermission": false,
     "newRcReleases": false,
     "stableRequiresMacAndIosAcceptance": true,
-    "workflowValidation": "YAML parse and 19 packaging tests passed; new main CI pending"
+    "workflowValidation": "YAML parse and 19 packaging tests passed; main CI 40614747575 passed quality and all five builds",
+    "mainCi": {
+      "revision": "caa488d35fbcb503db11c35070ef271097e64ea8",
+      "run": 40614747575,
+      "url": "https://github.com/yarnway/dontforget/actions/runs/40614747575",
+      "conclusion": "success",
+      "successfulJobs": 6,
+      "skippedJobs": [
+        "Verify tag packages without publishing"
+      ],
+      "quality": {
+        "flutterPassed": 1543,
+        "flutterPlatformSkipped": 1,
+        "pythonPassed": 125,
+        "pythonPlatformSkipped": 1,
+        "analysisIssues": 0,
+        "darwinStorageLockTest": "PASS in macOS build"
+      },
+      "artifacts": [
+        {
+          "name": "windows-deliverables",
+          "id": 12785196323,
+          "bytes": 30498020,
+          "digest": "sha256:8635f567d1e0bd6ccb7db34171dc97ee424c2d7ce9581209922f2c12d52e9950",
+          "expiresAt": "2026-11-27T01:33:01Z"
+        },
+        {
+          "name": "ios-deliverables",
+          "id": 12785196138,
+          "bytes": 10452525,
+          "digest": "sha256:2a7919b4acc50c54aeffd1b30c8a1a513bf2c0e5f24d416df37bf61149531da2",
+          "expiresAt": "2026-11-27T01:31:18Z"
+        },
+        {
+          "name": "macos-deliverables",
+          "id": 12784629638,
+          "bytes": 24983119,
+          "digest": "sha256:7a1bced2cb2000f217f52c6401e3c9f6b1a71346a5ea32fbb9639467dcb74eda",
+          "expiresAt": "2026-11-27T01:38:08Z"
+        },
+        {
+          "name": "android-deliverables",
+          "id": 12784364828,
+          "bytes": 101681064,
+          "digest": "sha256:dc0479016bdb6e57f231404699f8afa81c89dd493d469f1e9148a61c81579c56",
+          "expiresAt": "2026-11-27T01:33:19Z"
+        },
+        {
+          "name": "linux-deliverables",
+          "id": 12784213605,
+          "bytes": 13588307,
+          "digest": "sha256:fbdfb08fbfab3a6f21ca3083cb9d3d630ea157e6b71d4da762697bfe86fa912d",
+          "expiresAt": "2026-11-27T01:30:42Z"
+        }
+      ],
+      "packageHashChecks": "Seven packages verified on platform runners; this main run was not independently downloaded in full",
+      "nativeAcceptance": "NOT implied by CI; native Mac37 uses fixed product revision dfb34f1"
+    },
+    "releaseReadbackAt": "2026-10-28T09:45:32.530849+08:00",
+    "newReleaseVisibleAfterMainCI": false
   },
   "fullCiArtifactRecovery": {
     "artifactFilesVerified": 21,
     "fullPackagesVerified": 7,
     "matchEarlierVerifiedDraftDigests": true,
     "uploaded": false
-  }
+  },
+  "mac37Native": {
+    "at": "2026-10-28T09:37:06.803297+08:00",
+    "source": "dfb34f1f26b628f880fe802f9ffe4b84de78fc0d",
+    "version": "1.7.0+37",
+    "schema": 16,
+    "integrity": "ok",
+    "tableRows": {
+      "Reminders": 4,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "allOriginalTableFieldsUnchanged": true,
+    "nativeCommands": [
+      "Cmd+K opened palette",
+      "8 Down selected export after scrolling",
+      "1 more Down selected search",
+      "Enter opened search with 4 results",
+      "Escape returned to home",
+      "Cmd+Q exited exact app"
+    ],
+    "normalExitConfirmed": true,
+    "coldStartPerformanceMeasured": false,
+    "osNotificationClickTested": false
+  },
+  "ios37Prepared": {
+    "source": "dfb34f1f26b628f880fe802f9ffe4b84de78fc0d",
+    "strictSignature": "PASS",
+    "machOFilesUnchanged": 7,
+    "otherResourcesUnchanged": 60,
+    "signedPrivateArchiveVerified": true,
+    "installed": false,
+    "deviceAppEnumeration": "CoreDeviceError 4016",
+    "deviceTunnel": "unavailable",
+    "normalMirroringConnect": "timed out",
+    "snapshotOrDeviceMutationPerformed": false
+  },
+  "cleanupFollowup": {
+    "at": "2026-10-28T09:41:36.850274+08:00",
+    "mac36Rollback": {
+      "file": "mac36-rollback.zip",
+      "sha256": "a233f396c869960fe2574ee6ec2f0e933d640113860457dcc656f2d5c460a15d",
+      "entries": 118,
+      "treeModesLinksBytesVerifiedBeforeRemoval": true,
+      "strictSignatureRechecked": "PASS",
+      "protectedTreeMatchesReceipt": true,
+      "restoredEquivalentKiB": 59908,
+      "archiveKiB": 25268
+    },
+    "ios37ExpandedRemovedKiB": 24632,
+    "ios37ArchiveFilesByteVerified": 78,
+    "netAdditionalKiBEstimate": 59272,
+    "estimateReason": "Mac original allocation was read before removal but final receipt write was interrupted by an incorrect iOS archive prefix. Reconstructed equal Mac tree allocation used for estimate; iOS removed allocation measured directly.",
+    "removed": [
+      "study36-local/dont_forget.app",
+      "study-stage38-materials/ios37-derived"
+    ],
+    "preserved": [
+      "Mac37 active verification app",
+      "Mac36 rollback archive and preparation receipt",
+      "iOS37 signed private archive",
+      "existing phone data and prior rollback materials"
+    ],
+    "otherTaskCachesTouched": false
+  },
+  "cleanupTotalEstimatedKiB": 390800,
+  "observedRootProjectKiBAfterFollowup": 3189492,
+  "rootObservationIncludesOtherTaskChanges": true
 }
