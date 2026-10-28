@@ -1,6 +1,8 @@
 # 计划管理：实现与验收索引
 
-最新数据保护源码 **3cddb2b**／**+40**：系统凭据存储、可选密码备份、1 MiB 分块大附件和统一数据与安全入口已完成；**1815 Flutter／126 Python、静态分析 0 issues，macOS／iOS 模拟器 Debug 编译通过**。原生插件合成 Keychain 读写与删除通过，实际应用升级／锁定、五平台系统导出及跨设备恢复另验。见[数据保护验收](P1_Data_Protection_2026-10-28.md)。本机内容和旧备份未因此全部加密，手机矩阵仍由指定任务继续。
+最新统一内容管理源码 **069a163**／**+41**：原件／恢复材料引用检查与中断恢复、统一归档、模板导入导出和普通事项项目／标签批量编辑已完成源码，**1879 Flutter／126 Python、静态分析 0 issues**。全量测试、分析及边界见[本轮验收](P1_Unified_Content_2026-10-28.md)；手机通知仍由指定任务继续。
+
+前轮数据保护源码 **3cddb2b**／**+40**：系统凭据存储、可选密码备份、1 MiB 分块大附件和统一数据与安全入口已完成；**1815 Flutter／126 Python、静态分析 0 issues，macOS／iOS 模拟器 Debug 编译通过**。原生插件合成 Keychain 读写与删除通过，实际应用升级／锁定、五平台系统导出及跨设备恢复另验。见[数据保护验收](P1_Data_Protection_2026-10-28.md)。本机内容和旧备份未因此全部加密，手机矩阵仍由指定任务继续。
 
 前轮三项优化源码 **2531fb5**：多来源用药逐字段核对、明确餐时偏移、普通周期／出门日期例外已完成；保留已服剂次和周期锚点，支持两种备份的实际恢复。**1729 Flutter／126 Python、静态分析 0 issues、洛杉矶专项 94 项通过**；最终全量与分析结果固定于[本轮验收](P1_Medication_Calendar_2026-10-28.md)，不沿用下方旧源码计数。新任务语义使用扩展记录 version 2，旧程序回退需写入该格式前的备份；schema 16 不变。
 
@@ -20,13 +22,16 @@
 
 原生结果另见 [P1 容量、退出进程与跨日验收](P1_Native_Acceptance_2026-10-27.md)：固定 e336f05 的 Mac 四阶段及清理均已通过。两次真实跨日送达为 **23:59:00.146／00:02:00.100**；重开仅补一条至 **210 行**，再次重开／刷新不重复，最后恢复空基线并独立读回系统 **0／0**。iPhone 新身份待签名；固定构建与后续主线修改分别记录。
 
-从“更多功能”搜索“计划与清单”或 /plans，进入用药、出门、管理、备份、学习管理五个面板。
+从“更多功能”搜索“计划与清单”或 /plans，进入用药、出门、管理、备份、学习管理、内容管理六个面板。
 
 - **用药**：联合最多 8 份文字、图片、录音提取草稿，逐字段查看来源摘录并解决冲突；可设置餐次及明确餐前／餐后偏移，换算具体时刻并仅更新未来未处理剂次。逐药核对药名、规格、数量、单位、餐次、时刻及起止日期，预览后启动。单药日期可沿用计划日期，不完整保留草稿；选择日期查看逐剂结局，可补记／修正实际服用时刻，保留计划、实际及记录时间。详情可返回计划修改未来安排。
 - **出门**：填写场景与出门时刻、提前量、重复星期及清单；可按出门日指定跳过／额外日期，跨午夜提前提醒仍按出门日判断。未来 60 日范围内逐日独立保存并在前台补排，常备项按日期独立，一次性项同步到未来日期。天气与出门习惯记录分别主动开启；支持设置返程观察时段，前台预取有效天气并更新通知正文。延后提醒按新的通知时间检查缓存；失效或缺测保留清单并提示未知。记录出门只修改观察记录，正式时刻、地点、城市和授权须经采用、预览、保存后改变。
 - **管理**：查找标题、标签和项目，编辑清单、重复规则及明确日期例外；管理最多24个可复用模板，并在编辑表单中载入／存为模板。最多50条普通事项批量暂停／继续、回收站／恢复、归档／取消归档，显示选择预览后同事务保存。执行记录提供按周统计和反复延后事项，沿用当前筛选；一般删除保留在回收站，旧操作不能跨数据恢复代次执行。
 - **备份／数据与安全**：设置或备份面板集中模型密钥状态、重试与移除、可选密码备份、导入预检和备份缓存清理。新 v2 文件按 1 MiB 分块，可选 AES-256-GCM；单附件 512 MiB、合计 2 GiB，所有便携导出排除密钥。旧 JSON 可读；导入校验后在独立目录准备附件，再确认恢复；原件不覆盖。本机任务、附件、自动恢复副本及旧备份没有因此全部加密。
+- **内容管理**：设置或计划面板可进入原始资料／恢复材料／统一归档。清理前逐项选择、核对清单并再次检查引用；保留最近24小时、使用中、回收站／归档／草稿和历史备份需要的文件，失败／中断可重试。统一归档按事项及计划成员预览处理，保留历史与完成状态；归档停止提醒，移回重新检查已有安排。
 - **学习管理**：查看逐词档案、记录开始后的趋势及七日到期量，逐批暂停、继续、校对词条；调整后续“认识”反馈的五级间隔；粘贴 Tab 分隔的单词、释义、例句，预览后创建最多七批；进行不会自动更改掌握度的拼写练习。
+
+管理中的批量选择支持项目保持／设定／清空、标签保持／添加／移除／替换，最多50条普通事项，逐项预览后同事务保存，不改变时间或原生排程。常用模板支持JSON导入／导出，同名默认跳过，可明确复制或替换；不传输实际任务和模型密钥。
 
 模型配置测试为用户主动的一次文字 JSON 请求，既不携带任务内容，也不创建任务；成功不证明图片、语音能力。
 
@@ -46,6 +51,8 @@
 | 模板库与周复盘 | [task_template_library.dart](../lib/ui/widgets/task_template_library.dart)、[task_templates_provider.dart](../lib/providers/task_templates_provider.dart)、[weekly_task_review.dart](../lib/models/weekly_task_review.dart) |
 | 天气接口与数据校验 | [departure_weather_service.dart](../lib/services/departure_weather_service.dart) |
 | 系统凭据、备份与缓存 | [credential_repository.dart](../lib/services/security/credential_repository.dart)、[streaming_backup_service.dart](../lib/services/streaming_backup_service.dart)、[backup_cache_service.dart](../lib/services/backup_cache_service.dart)、[portable_backup_panel.dart](../lib/ui/widgets/portable_backup_panel.dart) |
+| 统一内容与保留备份引用 | [content_cleanup_service.dart](../lib/services/content/content_cleanup_service.dart)、[retained_media_references.dart](../lib/services/content/retained_media_references.dart)、[content_management_panel.dart](../lib/ui/widgets/content_management_panel.dart) |
+| 模板传输与分类批量 | [task_template_transfer.dart](../lib/models/task_template_transfer.dart)、[task_template_file_service.dart](../lib/services/task_template_file_service.dart)、[task_metadata_patch.dart](../lib/models/task_metadata_patch.dart) |
 | 学习管理与队列 | [learning_management_panel.dart](../lib/ui/widgets/learning_management_panel.dart)、[learning_queue_service.dart](../lib/services/learning_queue_service.dart) |
 | 三语控件文案 | [planning_strings.dart](../lib/l10n/planning_strings.dart) |
 | 冻结格式 | [当前 v16](../test/fixtures/schema_v16.sql)、[历史 P0 v15](../test/fixtures/schema_v15.sql)、[历史任务管理 v15](../test/fixtures/schema_v15_task_management.sql) |
