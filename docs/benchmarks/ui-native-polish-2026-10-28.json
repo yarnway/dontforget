@@ -1,9 +1,8 @@
 {
   "schema": 1,
-  "recorded_at": "2026-10-28T11:50:02.951333+08:00",
+  "recorded_at": "2026-10-28T11:58:01.659774+08:00",
   "source_revision": "3d91d6e372124373aa6453c391891cade5e20e29",
   "source_base_includes_main": "4faadea3bf253dd171a1053423041b502003cee0",
-  "functional_tree_unchanged_after_source_freeze": true,
   "version": "1.7.0+38",
   "database_schema": 16,
   "toolchain": {
@@ -379,6 +378,99 @@
       "file": "build/native_acceptance/p1-ui-native-20261028-102820/composer-preview-v6/composer-light-filled-375.png",
       "sha256": "45bc4f61d814419a9e86d46ddd2827c3e5a5bf3b8574e3a8902b7daad436d3ce",
       "bytes": 44023
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/integrated-build-preparation.json",
+      "sha256": "622243991721ebc49db097a49e72cfe12c8a1318d696a71996619b6f9fe1b6b5",
+      "bytes": 173
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/integrated-flutter-full.log",
+      "sha256": "b2b72afc4cd501b51445aa6a8af77be53b2af52439a2a15e7c9b2a485e26198b",
+      "bytes": 338299
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/integrated-python.log",
+      "sha256": "e5011fe4e626d89fb0cc91f8a001d79787878eeadbfe82337864648d86f8a603",
+      "bytes": 478
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/integrated-analyze.log",
+      "sha256": "50d974b76897a7e33dc5dd602dc1ce6d19a7e34d6318b324d9b43ea1c0c92193",
+      "bytes": 96
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/integrated-native-response-compile.log",
+      "sha256": "7d6d897c6c9784432e179887f95568fc031d551c0e534363b67f26d000a66416",
+      "bytes": 215
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/integrated-native-response-compile-fixed.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/integrated-native-response-result.log",
+      "sha256": "bc34c603b6244f69d16c06567fda5be43ea91ec6291501dd1927bbd922310f5c",
+      "bytes": 75
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/integrated-macos-build.log",
+      "sha256": "49e64071f81d0c98dbddb290e82d1d66bcc3eaab7098ff87b852355e7b48e9d6",
+      "bytes": 4270
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/integrated-macos-strict.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/integrated-simulator-build.log",
+      "sha256": "7e82d5e1184feb50b849a550543de092b4e87b1af7852e14fd0c5a91a4f81584",
+      "bytes": 545
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/local-main-code-integration.json",
+      "sha256": "3ece988cc0dfa020eef070adc12847a64f0750992d1a5d76238ba4cd6ca27751",
+      "bytes": 186
     }
-  ]
+  ],
+  "frozen_ui_build_source_tree_was_unmodified": true,
+  "integrated_main": {
+    "source_revision": "9b2f3586ea5b02b97dc9fa9b75e4112b6105a01d",
+    "includes_parallel_source": "623c525",
+    "flutter_passed": 1748,
+    "flutter_failed": 0,
+    "python_passed": 126,
+    "analysis_issues": 0,
+    "macos_debug_build_and_strict_signature": "PASS",
+    "ios_simulator_host_and_extension_build": "PASS",
+    "native_response_time_swift_test": "PASS: real frameworks, registrant stub, FIFO, first timestamp, input bounds, completion once; no UI or notifications",
+    "products": {
+      "macos_debug": {
+        "bundle": "com.example.dontForget",
+        "build": "38",
+        "launched": false
+      },
+      "ios_simulator_host": {
+        "bundle": "com.example.dontForget",
+        "build": "38",
+        "launched": false
+      },
+      "ios_simulator_extension": {
+        "bundle": "com.example.dontForget.ReminderActivity",
+        "build": "38",
+        "launched": false
+      }
+    },
+    "native_acceptance_for_this_integrated_source": "NOT_PERFORMED",
+    "installed_phone_package_remains_source": "3d91d6e372124373aa6453c391891cade5e20e29",
+    "local_main_code_integration": {
+      "at": "2026-10-28T11:55:11.916856+08:00",
+      "source": "9b2f3586ea5b02b97dc9fa9b75e4112b6105a01d",
+      "protected_file_count": 62,
+      "changed_protected_paths": [],
+      "result": "PASS"
+    }
+  }
 }
