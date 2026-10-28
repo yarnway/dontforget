@@ -1,0 +1,120 @@
+{
+  "schema": 1,
+  "recorded_at": "2026-10-28T12:36:08.038259+08:00",
+  "source_revision": "3d91d6e372124373aa6453c391891cade5e20e29",
+  "bundle": "com.yarnway.dontforget.acceptance.p1current28",
+  "stage": "OFFLINE_PREPARATION_PASS_NATIVE_RECHECK_WAITING_USER",
+  "product_source_changed": false,
+  "phone_data_read_or_written_this_stage": false,
+  "phone_notification_tests_started": false,
+  "native_ui_observation": "CUA: iPhone in use; lock iPhone to connect",
+  "manual_actions_pending": [
+    "Unlock Mac normally",
+    "Keep iPhone locked and connected by USB"
+  ],
+  "new_active_lease": false,
+  "rotation_minutes_after_real_reception": 20,
+  "offline_input_test_passed": 1,
+  "new_fixture_rows": 57,
+  "new_fixture_future": 56,
+  "application_budget": 50,
+  "deferred_fixture_only": 6,
+  "live_future_total": "PENDING_FRESH_DEVICE_READBACK",
+  "fixture_contains_credentials": false,
+  "historical_clone_dryrun": {
+    "baseline_counts": {
+      "Reminders": 7,
+      "MediaRecords": 2,
+      "Settings": 1
+    },
+    "after_append_counts": {
+      "Reminders": 64,
+      "MediaRecords": 2,
+      "Settings": 1
+    },
+    "all_original_business_rows_preserved": {
+      "Reminders": true,
+      "MediaRecords": true,
+      "Settings": true
+    },
+    "rollback_only_new_prefix_rows": true,
+    "rollback_business_tables_identical": true,
+    "schema": 16,
+    "integrity": "ok",
+    "historical_snapshot_only": true
+  },
+  "previous_owner_sample": {
+    "title": "QA40 WARM NOTIFICATION IN 3 MINUTES",
+    "created_at_reported": "2026-10-28T11:58:00+08:00",
+    "due_at_reported": "2026-10-28T12:01:00+08:00",
+    "row_id": null,
+    "native_id": null,
+    "cleanup": "PENDING_CONNECTION; exact single-row soft deletion first",
+    "previous_owner_historical_pending_retained": [
+      0,
+      0
+    ],
+    "previous_owner_permission": "notEnabled",
+    "current_native_queue": "NOT_READ"
+  },
+  "remaining": [
+    "fresh identity and full backup; precise QA40 soft-delete/readback",
+    "native input and draft persistence; physical cancel and transcription arcs",
+    "native compact failure feedback and repair",
+    "notification permission capacity delivery warm/cold tap refill/duplicate/cancellation controls",
+    "recoverable test cleanup plus independent native queue readback"
+  ],
+  "protected_other_bundles": [
+    "com.yarnway.dontforget.acceptance.iphone17",
+    "com.example.dontForget.acceptance.trust-actions-20261028-1130"
+  ],
+  "raw_evidence": [
+    {
+      "file": "build/native_acceptance/p1-iphone-recheck-20261028-121005/preparation.json",
+      "bytes": 1311,
+      "sha256": "a0544165a1481aa9cd4c461a9dd049ac8222eb873ebc6ea9869178f1d16c3da7"
+    },
+    {
+      "file": "build/native_acceptance/p1-iphone-recheck-20261028-121005/ui-lease.json",
+      "bytes": 252,
+      "sha256": "e5e18f2b2038f5d0aa3fdd50f67d174776380231bdc76ce5ffcb90f4e93c02de"
+    },
+    {
+      "file": "build/native_acceptance/p1-iphone-recheck-20261028-121005/ui-precheck-return.json",
+      "bytes": 786,
+      "sha256": "05aba1c0dbba44411cf4a24bcde3ed851e8021c9e7022a8a87b4866d7692a833"
+    },
+    {
+      "file": "build/native_acceptance/p1-iphone-recheck-20261028-121005/capacity-input-preflight.log",
+      "bytes": 272,
+      "sha256": "ce2ac98784732427ac071dc832b9c4a6a9d4fe3d272abbcb5bde2951571d100c"
+    },
+    {
+      "file": "build/native_acceptance/p1-iphone-recheck-20261028-121005/capacity-inputs/synthetic-capacity-v16.json",
+      "bytes": 113694,
+      "sha256": "5a8650845d6bc5d83a261b9f0df198ea3c8fdfab1fa53bb83b096a8b0ccdfe96"
+    },
+    {
+      "file": "build/native_acceptance/p1-iphone-recheck-20261028-121005/capacity-inputs/expectations.json",
+      "bytes": 15827,
+      "sha256": "5b89b3b43b71ede169bda31f18e7aaf862c951c984124e97a1e7490d6575e6b7"
+    },
+    {
+      "file": "build/native_acceptance/p1-iphone-recheck-20261028-121005/append-rollback-dryrun.json",
+      "bytes": 954,
+      "sha256": "266792e5b141f5cbf14e71a1f0317ee3493721712eaa652c46b697dadd55de1c"
+    },
+    {
+      "file": "build/native_acceptance/p1-iphone-recheck-20261028-121005/acceptance-plan.json",
+      "bytes": 4862,
+      "sha256": "b2a89e28bba20f58a221a9e53104cb188f4d137a53b84ee0c275f5c97a9bbce4"
+    },
+    {
+      "file": "build/native_acceptance/p1-iphone-recheck-20261028-121005/current-readiness.json",
+      "bytes": 445,
+      "sha256": "fbc0a185dc262640bac528e1bba0234781af35d23adbb59ed2ec85127c1bbcf2"
+    }
+  ],
+  "published": false,
+  "pushed": false
+}
