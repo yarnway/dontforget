@@ -1,0 +1,70 @@
+{
+  "date": "2026-10-28",
+  "timezone": "Asia/Shanghai",
+  "status": "verified_code_closed_native_paused",
+  "runtime_source_commit": "5c44427a6af950c95fcce36170f6d4a00c61f61a",
+  "frozen_base": "2ab4c885dec8bebce98789c3bbd0a2a1df928e8a",
+  "overlays": {
+    "lib/providers/providers.dart": "a6805c13ddab983fe1ee63056761ffd43ce63c7919e57f255c0cd5db03f5c8a7",
+    "test/schema16_integration_test.dart": "804dc280143cbdeb016c2272a9d854fd358038aa2721f8dc7e9270dd5aa2f429",
+    "lib/services/notification_service.dart": "abe1b6264653c74d7cf4e9de5c56779508e98971e1d08e2a4cf40ce22b086e0f",
+    "test/notification_action_bridge_test.dart": "cc7dd47dad3e4cb58897aa16551815009178e17f31d2440bee95ec0ed361810e"
+  },
+  "frozen_files": 843,
+  "frozen_files_unchanged_after_tests": true,
+  "current_runtime_inputs_byte_matched": 507,
+  "flutter": {
+    "passed": 2028,
+    "failed": 0
+  },
+  "python": {
+    "passed": 126,
+    "failed": 0
+  },
+  "analyze_issues": 0,
+  "toolchain": {
+    "flutter": "3.44.9",
+    "dart": "3.12.2"
+  },
+  "log_sha256": {
+    "input-manifest.json": "f10ebd3de6a8dd66b27c3a586bc8b41d94b89566199248fe418f5729d5c4dedd",
+    "owned-runtime.patch": "aed8ca66354ff1221c92a4f2ca4d0c934e2f22d3219136d1465b64c1dd56a194",
+    "pub-get.log": "d4cb7a3c68b4133b4f6e58c67ff5bfd13725d8021e930388cdc98da8a575919d",
+    "analyze.log": "b901212629a38292a17db8911d9844d6090339e9a1be2075c3cd37603ccefcb5",
+    "flutter-full.log": "9128ebe79c842264dfab13f2066cd945f3da826c97a7e9f38e33db681f47a351",
+    "python-full.log": "5533f47ac24bafcfe1124b6816288ef1d9db7a7a6577e3657c54e0a146966be7"
+  },
+  "cleanup": {
+    "deleted": "build/native_acceptance/main-close-20261028/source",
+    "kib": 118960,
+    "reason": "completed isolated regression copy and generated caches; source reproducible from commits and preserved patch",
+    "retained": [
+      "input manifest",
+      "validation logs",
+      "scoped patch",
+      "original verified candidate archives",
+      "signed iOS rollback archive",
+      "native before/after snapshots",
+      "existing current and rollback packages"
+    ],
+    "prior_this_turn_kib": 181456
+  },
+  "ci": {
+    "prior_verified_main": "897104c269eb613db6b63e705c0bbd79996a8825",
+    "run": 40656245161,
+    "result": "success; quality and all five platform builds",
+    "closeout_push_ci": "read separately after push"
+  },
+  "release_created": false,
+  "new_native_acceptance_after_pause": false,
+  "native_phone_installed_version": "1.7.0+43",
+  "native_remaining": [
+    "QA40 exact OS request absence",
+    "attachment picker preview save reopen on current phone package",
+    "phone notification warm and cold clicks",
+    "Japanese software keyboard",
+    "real recording and cancellation/transcription gestures",
+    "Live Activity state synchronization"
+  ],
+  "resume": "only after manual user request"
+}
