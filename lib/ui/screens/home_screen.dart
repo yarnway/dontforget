@@ -1381,19 +1381,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             action: next.error == l10n.get('reminderNativeSyncFailed')
                 ? notificationRepairAction(context)
                 : null,
-            content: Row(
-              children: [
-                const Icon(Icons.info_outline, color: Colors.white, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    next.error!,
-                    style: const TextStyle(fontSize: 13),
-                  ),
-                ),
-              ],
+            content: Text(
+              next.error == l10n.get('reminderNativeSyncFailed')
+                  ? l10n.get('reminderNativeSyncFailedCompact')
+                  : next.error!,
             ),
           ),
+          tone: next.error == l10n.get('reminderNativeSyncFailed')
+              ? FeedbackTone.warning
+              : FeedbackTone.error,
         );
         ref.read(homeControllerProvider.notifier).clearError();
       }

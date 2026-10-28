@@ -114,15 +114,12 @@ class InlineFeedbackState extends State<InlineFeedback> {
                     liveRegion: true,
                     child: Material(
                       key: const ValueKey('inline-feedback'),
-                      color: Color.alphaBlend(
-                        accent.withValues(alpha: 0.05),
-                        colors.surfaceContainerHigh,
-                      ),
-                      elevation: 6,
-                      shadowColor: colors.shadow.withValues(alpha: 0.22),
+                      color: colors.surfaceContainer,
+                      elevation: 3,
+                      shadowColor: colors.shadow.withValues(alpha: 0.16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(color: accent.withValues(alpha: 0.3)),
+                        side: BorderSide(color: accent.withValues(alpha: 0.22)),
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: ConstrainedBox(
@@ -139,20 +136,29 @@ class InlineFeedbackState extends State<InlineFeedback> {
                           ),
                         ),
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(14, 6, 4, 6),
+                          padding: const EdgeInsets.fromLTRB(12, 6, 4, 6),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Padding(
-                                padding: const EdgeInsets.only(top: 12),
-                                child: Icon(icon, color: accent, size: 22),
+                                padding: const EdgeInsets.only(top: 6),
+                                child: DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    color: accent.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(9),
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(6),
+                                    child: Icon(icon, color: accent, size: 18),
+                                  ),
+                                ),
                               ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Padding(
                                   padding: const EdgeInsets.only(
-                                    top: 12,
-                                    bottom: 12,
+                                    top: 10,
+                                    bottom: 2,
                                   ),
                                   child: Column(
                                     crossAxisAlignment:
@@ -174,13 +180,36 @@ class InlineFeedbackState extends State<InlineFeedback> {
                                         ),
                                       ),
                                       if (message.action case final action?)
-                                        TextButton(
-                                          focusNode: _actionFocus,
-                                          onPressed: () {
-                                            hideCurrentSnackBar();
-                                            action.onPressed();
-                                          },
-                                          child: Text(action.label),
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 6,
+                                          ),
+                                          child: Align(
+                                            alignment:
+                                                AlignmentDirectional.centerEnd,
+                                            child: TextButton(
+                                              focusNode: _actionFocus,
+                                              style: TextButton.styleFrom(
+                                                backgroundColor: colors.primary
+                                                    .withValues(alpha: 0.1),
+                                                minimumSize: const Size(64, 44),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 14,
+                                                      vertical: 8,
+                                                    ),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                ),
+                                              ),
+                                              onPressed: () {
+                                                hideCurrentSnackBar();
+                                                action.onPressed();
+                                              },
+                                              child: Text(action.label),
+                                            ),
+                                          ),
                                         ),
                                     ],
                                   ),

@@ -3,10 +3,78 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:dont_forget/ui/widgets/inline_feedback.dart';
 import 'package:dont_forget/ui/theme/app_theme.dart';
+import 'package:dont_forget/l10n/app_localizations.dart';
 import 'support/interaction_preview.dart';
 
 void main() {
   setUpAll(loadInteractionPreviewFonts);
+  for (final language in ['zh', 'en', 'ja']) {
+    for (final scale in [1.0, 2.0]) {
+      testWidgets(
+        'repair notice stays compact and actionable $language $scale',
+        (tester) async {
+          tester.view.devicePixelRatio = 1;
+          tester.view.physicalSize = const Size(375, 667);
+          addTearDown(tester.view.resetDevicePixelRatio);
+          addTearDown(tester.view.resetPhysicalSize);
+          final loc = AppLocalizations(Locale(language));
+          late BuildContext page;
+          var repaired = false;
+          await tester.pumpWidget(
+            MaterialApp(
+              theme: AppTheme.dark,
+              builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: TextScaler.linear(scale)),
+                child: InlineFeedback(child: child!),
+              ),
+              home: Builder(
+                builder: (context) {
+                  page = context;
+                  return const Scaffold(body: TextField());
+                },
+              ),
+            ),
+          );
+          final input = tester.getRect(find.byType(TextField));
+          InlineFeedback.of(page).showSnackBar(
+            SnackBar(
+              content: Text(loc.get('reminderNativeSyncFailedCompact')),
+              action: SnackBarAction(
+                label: loc.get('repairNotifications'),
+                onPressed: () => repaired = true,
+              ),
+            ),
+            tone: FeedbackTone.warning,
+          );
+          await tester.pump();
+          final card = tester.getRect(
+            find.byKey(const ValueKey('inline-feedback')),
+          );
+          final action = find.widgetWithText(
+            TextButton,
+            loc.get('repairNotifications'),
+          );
+          expect(action.hitTestable(), findsOneWidget);
+          expect(tester.getSize(action).height, greaterThanOrEqualTo(44));
+          expect(
+            find.byIcon(Icons.close_rounded).hitTestable(),
+            findsOneWidget,
+          );
+          expect(tester.getRect(find.byType(TextField)), input);
+          if (language == 'zh' && scale == 1)
+            expect(card.height, lessThanOrEqualTo(100));
+          expect(tester.takeException(), isNull);
+          await tester.tap(action);
+          await tester.pump();
+          expect(repaired, isTrue);
+          expect(find.byKey(const ValueKey('inline-feedback')), findsNothing);
+          await tester.pumpWidget(const SizedBox());
+        },
+      );
+    }
+  }
   testWidgets(
     'long actionable feedback keeps Undo and close visible at large text',
     (tester) async {
