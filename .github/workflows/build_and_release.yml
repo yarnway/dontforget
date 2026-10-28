@@ -17,6 +17,7 @@ concurrency:
 
 env:
   FLUTTER_VERSION: '3.44.9'
+  BYPASS_PERMISSION_LOCATION_ALWAYS: '1'
 
 jobs:
   quality:

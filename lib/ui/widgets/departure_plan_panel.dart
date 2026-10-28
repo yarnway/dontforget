@@ -13,12 +13,19 @@ import '../../models/task_details.dart';
 import '../../providers/providers.dart';
 import '../../providers/workspace_drafts_provider.dart';
 import '../../services/departure_weather_service.dart';
+import '../../services/location_access_service.dart';
+import '../../l10n/routine_policy_strings.dart';
+import 'holiday_policy_editor.dart';
 import '../../services/recovery/runtime_gate.dart';
 import '../formatters/local_date_time.dart';
 import '../screens/notification_repair_screen.dart';
 import 'inline_feedback.dart';
 import 'routine_coverage_panel.dart';
 import 'calendar_exceptions_editor.dart';
+
+final locationAccessServiceProvider = Provider<LocationAccessService>(
+  (_) => LocationAccessService(),
+);
 
 class DeparturePlanPanel extends ConsumerStatefulWidget {
   const DeparturePlanPanel({super.key, this.initialPlanId});
@@ -115,6 +122,7 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
     if (!mounted || !context.mounted || !_current || _busy) return;
     setState(() {
       edit();
+      _locationResult = null;
       _preview = false;
       _aiSuggestion = null;
       _revision++;
@@ -352,6 +360,57 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
     }
   }
 
+  bool get _foreground =>
+      WidgetsBinding.instance.lifecycleState == null ||
+      WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+  bool _locating = false;
+  LocationAccessResult? _locationResult;
+  Future<void> _locate() async {
+    if (!_current || _busy || _locating || !_foreground) return;
+    setState(() => _locating = true);
+    final revision = _revision;
+    bool active() =>
+        _current &&
+        _foreground &&
+        revision == _revision &&
+        _draft['weather_enabled'] == true;
+    final result = await ref
+        .read(locationAccessServiceProvider)
+        .locate(isCurrent: active);
+    if (_current) {
+      setState(() {
+        if (active()) _locationResult = result;
+        _locating = false;
+      });
+    }
+  }
+
+  Future<void> _repairLocation() async {
+    final access = _locationResult?.access;
+    if (!_current || !_foreground || access == null) return;
+    final opened = await ref.read(locationAccessServiceProvider).repair(access);
+    if (mounted && context.mounted && _current && !opened) {
+      _feedback(routineText(context, 'settingsUnavailable'));
+    }
+  }
+
+  void _applyLocation() {
+    final point = _locationResult?.point;
+    if (point == null ||
+        !_current ||
+        !_foreground ||
+        _draft['weather_enabled'] != true) {
+      return;
+    }
+    _change(() {
+      _draft['latitude'] = point.latitude;
+      _draft['longitude'] = point.longitude;
+      _draft['city'] = routineText(context, 'approximate');
+      _draft['weather'] = null;
+      _locationResult = null;
+    });
+  }
+
   Future<void> _weather() async {
     if (!mounted ||
         !context.mounted ||
@@ -500,8 +559,10 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
     final plan = _plan;
     final suggestion = plan.learningEnabled ? plan.suggestion() : null;
     Reminder? preview;
+    bool validPlan = false;
     try {
-      preview = plan.build(DateTime.now());
+      preview = plan.schedule(DateTime.now()).occurrences.firstOrNull;
+      validPlan = true;
     } catch (_) {}
     bool? rain;
     WeatherForecast? weather;
@@ -649,6 +710,17 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
         _items('always', false, t('items')),
         _items('always', true, t('onceItems')),
         _items('rain', false, t('rainItems')),
+        HolidayPolicyEditor(
+          value: plan.holidayPolicy,
+          enabled: !_busy,
+          onChanged: (value) => _change(() {
+            if (value.mode == 'none') {
+              _draft.remove('holiday_policy');
+            } else {
+              _draft['holiday_policy'] = value.toJson();
+            }
+          }),
+        ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           value: plan.weatherEnabled,
@@ -657,11 +729,51 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
               ? null
               : (v) => _change(() {
                   _draft['weather_enabled'] = v;
-                  if (!v) _draft['weather'] = null;
+                  if (!v) {
+                    _draft['weather'] = null;
+                    _draft.remove('weather_background');
+                    _draft.remove('_weather_refresh');
+                    _locationResult = null;
+                  }
                 }),
         ),
         if (plan.weatherEnabled) ...[
           Text(t('weatherConsent')),
+          Text(routineText(context, 'locationHint')),
+          TextButton.icon(
+            key: const ValueKey('departure-locate'),
+            onPressed: _busy || _locating ? null : _locate,
+            icon: const Icon(Icons.my_location),
+            label: Text(routineText(context, 'location')),
+          ),
+          if (_locating) const LinearProgressIndicator(),
+          if (_locationResult != null)
+            Text(routineText(context, _locationResult!.access.name)),
+          if (_locationResult?.point != null)
+            TextButton(
+              key: const ValueKey('departure-apply-location'),
+              onPressed: _applyLocation,
+              child: Text(
+                '${routineText(context, 'apply')} · ${_locationResult!.point!.latitude}, ${_locationResult!.point!.longitude}',
+              ),
+            ),
+          if (_locationResult?.access == LocationAccess.deniedForever ||
+              _locationResult?.access == LocationAccess.disabled)
+            TextButton(
+              onPressed: _repairLocation,
+              child: Text(routineText(context, 'settings')),
+            ),
+          SwitchListTile(
+            key: const ValueKey('departure-background-weather'),
+            value: _draft['weather_background'] == true,
+            title: Text(routineText(context, 'background')),
+            subtitle: Text(routineText(context, 'backgroundHint')),
+            onChanged: _busy
+                ? null
+                : (value) =>
+                      _change(() => _draft['weather_background'] = value),
+          ),
+
           _field('rain_threshold', t('rainThreshold')),
           _field('return_minutes', t('returnWindow')),
           TextField(
@@ -798,18 +910,18 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
         ],
         FilledButton.tonal(
           onPressed:
-              _busy ||
-                  !_exceptionsValid ||
-                  preview == null ||
-                  _invalid.isNotEmpty
+              _busy || !_exceptionsValid || !validPlan || _invalid.isNotEmpty
               ? null
               : () => setState(() => _preview = true),
           child: Text(t('preview')),
         ),
-        if (_preview && preview != null) ...[
-          Text(
-            '${t('departureTime')}: ${formatLocalDateTime(preview.eventTime!)}\n${formatLocalDateTime(preview.triggerTime!)}',
-          ),
+        if (_preview && validPlan) ...[
+          if (preview == null)
+            Text(routineText(context, 'calendarMissing'))
+          else
+            Text(
+              '${t('departureTime')}: ${formatLocalDateTime(preview.eventTime!)}\n${formatLocalDateTime(preview.triggerTime!)}',
+            ),
           for (final item in plan.items.where(
             (item) =>
                 !(item.once && item.done) &&

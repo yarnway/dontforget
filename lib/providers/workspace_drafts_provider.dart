@@ -11,6 +11,7 @@ final workspaceDraftsProvider =
 /// Uses the business DB's ownership, transaction and recovery generation gate.
 /// Settings updates omit this column, so saving a key cannot overwrite drafts.
 class WorkspaceDrafts extends StateNotifier<Map<String, dynamic>> {
+  static const _anyExpected = Object();
   WorkspaceDrafts(this.database) : super({}) {
     generation = database.captureGeneration();
     ready = _load();
@@ -54,7 +55,35 @@ class WorkspaceDrafts extends StateNotifier<Map<String, dynamic>> {
     }
   }
 
-  Future<void> put(String key, Object? value) {
+  Future<Object?> readPersistedKey(String key) async {
+    await ready;
+    database.checkGeneration(generation);
+    return database.read(generation, (db) async {
+      final rows = await db.query(
+        'Settings',
+        where: 'id = ?',
+        whereArgs: ['default'],
+      );
+      if (rows.length != 1) throw StateError('Settings unavailable');
+      final raw = rows.single['workspace_drafts_json'];
+      final data = raw == null
+          ? <String, dynamic>{}
+          : jsonDecode(raw as String);
+      if (data is! Map<String, dynamic>) {
+        throw const FormatException('Invalid drafts');
+      }
+      return data[key];
+    });
+  }
+
+  Future<void> compareAndPut(String key, Object? expected, Object? value) =>
+      _put(key, value, expected: expected);
+  Future<void> put(String key, Object? value) => _put(key, value);
+  Future<void> _put(
+    String key,
+    Object? value, {
+    Object? expected = _anyExpected,
+  }) {
     late Future<void> operation;
     try {
       final frozen = value == null ? null : jsonDecode(jsonEncode(value));
@@ -82,6 +111,10 @@ class WorkspaceDrafts extends StateNotifier<Map<String, dynamic>> {
             throw const FormatException('Invalid drafts');
           }
           next = {...current};
+          if (!identical(expected, _anyExpected) &&
+              jsonEncode(current[key]) != jsonEncode(expected)) {
+            throw StateError('Workspace entry changed');
+          }
           if (frozen == null) {
             next.remove(key);
           } else {

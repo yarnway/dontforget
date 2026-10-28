@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:convert';
+import 'content/owned_material_activity.dart';
 
 import 'package:path/path.dart' as path;
 import 'package:uuid/uuid.dart';
@@ -58,6 +60,22 @@ class TaskAttachmentFiles {
     try {
       final file = File(copied);
       if (await file.exists()) await file.delete();
+      final remaining = await file.parent.list(followLinks: false).toList();
+      if (remaining.length == 1 &&
+          remaining.single is File &&
+          path.basename(remaining.single.path) ==
+              OwnedMaterialActivity.markerName) {
+        final marker = remaining.single as File;
+        if (await marker.length() <= 1024) {
+          final value = jsonDecode(await marker.readAsString());
+          if (value is Map &&
+              value['format'] == 'dontforget.material' &&
+              value['version'] == 1 &&
+              value['role'] == 'original') {
+            await marker.delete();
+          }
+        }
+      }
       if (await file.parent.exists() && await file.parent.list().isEmpty) {
         await file.parent.delete();
       }

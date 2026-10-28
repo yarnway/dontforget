@@ -84,5 +84,7 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>仅在您选择使用当前位置时获取一次约略位置，用于确认提醒计划的天气地点。</string>
 </dict>
 </plist>

@@ -1,0 +1,127 @@
+{
+  "date": "2026-10-28",
+  "source_version": "1.7.0+40",
+  "latest_pushed_commit": "7ae002bab1c92a9ec8e16a0c82407a852e78270e",
+  "ci": {
+    "run_id": 40641204861,
+    "status": "completed",
+    "conclusion": "success",
+    "quality_and_platform_jobs_passed": 6
+  },
+  "source_review": {
+    "commit": "3cddb2b105c66a6722b480c4aa04ea254b272b13",
+    "source_hashes": 523,
+    "evidence_hashes": 14
+  },
+  "credential_fix": {
+    "commit": "489920fd3c68babc6db53142799f1a11cc33de10",
+    "regressions_reproduced": 3,
+    "flutter_pass": 1818,
+    "analyze_issues": 0
+  },
+  "ci_fixes": [
+    "cb060511d7bbc0bc70629608d6c1254857f88e6d",
+    "7ae002bab1c92a9ec8e16a0c82407a852e78270e"
+  ],
+  "native_mac": {
+    "at": "2026-10-28T13:58:06.066358+08:00",
+    "bundle_id": "com.example.dontForget.acceptance.study27-local",
+    "version": "1.7.0+39",
+    "source": "a257502",
+    "qa_task_id": "219c8c18-853f-43b7-8a02-b9c3dbda50a5",
+    "media_id": "77f105e2-f93c-42cc-a3cc-ae974766d255",
+    "checks": {
+      "native_image_picker": true,
+      "native_image_preview": true,
+      "native_save_cancel": true,
+      "native_save_copy_equal": true,
+      "quit_reopen_preview": true,
+      "remove_and_undo": true,
+      "qa41_soft_deleted": true,
+      "original_4_reminders_unchanged": true,
+      "normal_quit_process_absent": true
+    },
+    "counts": {
+      "Reminders": 5,
+      "MediaRecords": 1,
+      "Settings": 1
+    },
+    "asset_sha256": "416efd77cde932d42ef34168da24dd428a495b1f4f34bbbd125a18d2add186a2",
+    "qa_deleted_at": "2026-10-28T13:56:55.577151",
+    "os_reminders_added": 0,
+    "pending": "Plus40 fresh package upgrade and iOS attachment acceptance still pending; no phone acquired",
+    "evidence_hashes": {
+      "mac39-after-cleanup.sqlite": "54ff90ec10ce9871a5add54d3eba07e4d874b6f8b95048280a930c6365fff0f6",
+      "mac39-after-quit.sqlite": "005be3e5493c9f218cddb790616b14b4880cb05b390a6e6c19ee8fe8b9c48ad0",
+      "mac39-reopened-preview.png": "2a1431eeda972912cec8a4eae6cb80887744e1f80fcc73a8ac72aff6a2d16790",
+      "QA41-exported.png": "416efd77cde932d42ef34168da24dd428a495b1f4f34bbbd125a18d2add186a2"
+    }
+  },
+  "phone": {
+    "ui_acquired": false,
+    "qa40_cleanup": "PENDING",
+    "new_package_installed": false,
+    "notifications_hot_cold": "PENDING",
+    "japanese_soft_keyboard": "PENDING",
+    "real_recording_gestures": "PENDING",
+    "live_activity_sync": "PENDING"
+  },
+  "cleanup": {
+    "at": "2026-10-28T14:11:27.638090+08:00",
+    "source_commit": "489920fd3c68babc6db53142799f1a11cc33de10",
+    "removed": [
+      {
+        "path": "build/attachment-stage41-validation",
+        "kib": 116400
+      },
+      {
+        "path": "build/attachment-stage41-ci-validation",
+        "kib": 98908
+      },
+      {
+        "path": "build/native_acceptance/study-stage41-materials/ios40-derived",
+        "kib": 25492
+      },
+      {
+        "path": "build/native_acceptance/study-stage41-materials/ios40-archive-check",
+        "kib": 25492
+      },
+      {
+        "path": "build/native_acceptance/study-stage41-materials/ios40-outer.zip",
+        "kib": 11280
+      }
+    ],
+    "total_kib": 277572,
+    "kept_evidence_files_verified": 36,
+    "prior_packages_snapshots_other_tasks": "UNTOUCHED"
+  },
+  "release": {
+    "rc_created": false,
+    "stable_released": false,
+    "gate": "macOS and iOS necessary acceptance plus green main CI"
+  },
+  "private_evidence": {
+    "mac39-native-attachment-acceptance.json": "26e5dcbd42c705df3df0c2e54f09a4e357308553e0175d53dbe3c3d1aa6bb31b",
+    "credential-save-guard-validation.json": "025dfa86a1daedb6fbbdc107b8ede59fabef8eb71eb510f8a476104c6380b37c",
+    "exporter-ci-fix-validation.json": "686d10739fe5d16ed45dd0cce57f8cf11cc1d6cf6459931eee822fe670b2f025",
+    "android-manifest-validation.json": "ea472c9b398d92aa2de30e56663c15ed7b8e88c267ce9cd5b9663cb7004ce0ef"
+  },
+  "combined_plus41_review": {
+    "source_commit": "069a163e803be09caaae322d1b85a22311e995ae",
+    "runtime_files_verified": 537,
+    "evidence_files_verified": 11,
+    "mismatches": [],
+    "flutter_passed": 1879,
+    "python_passed": 126,
+    "analysis_issues": 0,
+    "native_acceptance": "NOT_RUN_ON_THIS_COMBINATION"
+  },
+  "ios40_package": {
+    "source": "7ae002bab1c92a9ec8e16a0c82407a852e78270e",
+    "strict_host_and_extension_signature": "PASS",
+    "unchanged_binaries": 7,
+    "unchanged_resources": 62,
+    "archive_entries_equal": 80,
+    "installed": false
+  }
+}

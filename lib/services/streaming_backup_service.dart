@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'content/owned_material_activity.dart';
 import 'dart:isolate';
 import 'dart:math';
 import 'dart:typed_data';
@@ -478,6 +479,7 @@ class StreamingBackupService {
         await _safeDirectory(destination);
         check();
         created = await destination.createTemp('import-');
+        OwnedMaterialActivity.hold(created);
       }
       for (var index = 0; index < files.length; index++) {
         final meta = files[index] as Map, digest = _HashSink();
@@ -533,6 +535,7 @@ class StreamingBackupService {
         result = await File(
           p.join(created.path, 'snapshot.json'),
         ).writeAsString(jsonEncode(snapshot), flush: true);
+        await OwnedMaterialActivity.mark(created, 'restore');
         check();
       }
       return (
@@ -545,6 +548,7 @@ class StreamingBackupService {
       );
     } catch (_) {
       if (created != null && await created.exists()) {
+        OwnedMaterialActivity.releaseDirectory(created);
         await created.delete(recursive: true);
       }
       rethrow;

@@ -35,6 +35,12 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    if target.name == "geolocator_apple"
+      target.build_configurations.each do |config|
+        definitions = Array(config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] || '$(inherited)')
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = definitions | ['BYPASS_PERMISSION_LOCATION_ALWAYS=1']
+      end
+    end
     target.build_configurations.each do |config|
       # Privacy bundles and Flutter's fallback pod can retain older targets.
       # Raise those to the app's floor without lowering a dependency's own floor.

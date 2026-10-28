@@ -8,7 +8,16 @@ class BackupFileExporter {
   const BackupFileExporter({this.useDirectoryPicker, this.pickDirectory});
   final bool? useDirectoryPicker;
   final Future<String?> Function()? pickDirectory;
-  Future<String?> save(File source, String filename) async {
+  Future<String?> save(File source, String filename) =>
+      saveWithExtension(source, filename, extension: 'dfbackup');
+  Future<String?> saveWithExtension(
+    File source,
+    String filename, {
+    required String extension,
+  }) async {
+    if (!RegExp(r'^[a-z0-9]{1,16}$').hasMatch(extension)) {
+      throw const FormatException('Invalid export extension');
+    }
     if (useDirectoryPicker ?? Platform.isLinux) {
       final directory =
           await (pickDirectory?.call() ??
@@ -17,7 +26,7 @@ class BackupFileExporter {
       final destination = File(
         p.join(
           directory,
-          '${p.basenameWithoutExtension(filename)}-${const Uuid().v4()}.dfbackup',
+          '${p.basenameWithoutExtension(filename)}-${const Uuid().v4()}.$extension',
         ),
       );
       if (await destination.exists()) {
@@ -42,7 +51,7 @@ class BackupFileExporter {
     return FileSaver.instance.saveAs(
       name: p.basenameWithoutExtension(filename),
       filePath: source.path,
-      fileExtension: 'dfbackup',
+      fileExtension: extension,
       mimeType: MimeType.other,
     );
   }

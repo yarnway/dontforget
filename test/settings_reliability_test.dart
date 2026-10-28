@@ -338,12 +338,17 @@ void main() {
         'user-test-key',
       );
       await tester.ensureVisible(find.text('一键选用 DeepSeek'));
+      await tester.pumpAndSettle();
+      expect(find.text('一键选用 DeepSeek').hitTestable(), findsOneWidget);
       await tester.tap(find.text('一键选用 DeepSeek'));
       await tester.pump();
       expect(
         tester.widget<TextField>(keyField).controller!.text,
         'user-test-key',
       );
+      await tester.ensureVisible(find.text('一键选用 Gemini'));
+      await tester.pumpAndSettle();
+      expect(find.text('一键选用 Gemini').hitTestable(), findsOneWidget);
       await tester.tap(find.text('一键选用 Gemini'));
       await tester.pump();
       expect(tester.widget<TextField>(keyField).controller!.text, isEmpty);

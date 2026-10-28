@@ -1,0 +1,252 @@
+{
+  "date": "2026-10-28",
+  "timezone": "Asia/Shanghai",
+  "phase": "phase2-unified-content",
+  "status": "SOURCE_AND_AUTOMATION_PASSED_NATIVE_ACCEPTANCE_PENDING",
+  "source_commit": "069a163e803be09caaae322d1b85a22311e995ae",
+  "validation_base_commit": "50d612f4d9530b3a2c1fc060447fa2d7809dbfd2",
+  "version": "1.7.0+41",
+  "schema_version": 16,
+  "task_record_versions": [
+    1,
+    2,
+    3
+  ],
+  "toolchain": {
+    "flutter": "3.44.9",
+    "dart": "3.12.2"
+  },
+  "new_dependencies": [],
+  "owned_paths": [
+    "lib/l10n/content_management_strings.dart",
+    "lib/l10n/planning_strings.dart",
+    "lib/models/task_metadata_patch.dart",
+    "lib/models/task_template_transfer.dart",
+    "lib/providers/providers.dart",
+    "lib/providers/task_management.dart",
+    "lib/providers/task_templates_provider.dart",
+    "lib/providers/workspace_drafts_provider.dart",
+    "lib/services/backup_file_exporter.dart",
+    "lib/services/content/content_cleanup_service.dart",
+    "lib/services/content/owned_material_activity.dart",
+    "lib/services/content/retained_media_references.dart",
+    "lib/services/local_media_store.dart",
+    "lib/services/portable_backup_service.dart",
+    "lib/services/streaming_backup_service.dart",
+    "lib/services/task_attachment_files.dart",
+    "lib/services/task_template_file_service.dart",
+    "lib/ui/screens/settings_screen.dart",
+    "lib/ui/widgets/content_management_panel.dart",
+    "lib/ui/widgets/planning_panel.dart",
+    "lib/ui/widgets/portable_backup_panel.dart",
+    "lib/ui/widgets/task_metadata_dialog.dart",
+    "lib/ui/widgets/task_template_library.dart",
+    "lib/ui/widgets/task_template_transfer_dialog.dart",
+    "pubspec.yaml",
+    "test/content_archive_metadata_test.dart",
+    "test/content_cleanup_test.dart",
+    "test/settings_reliability_test.dart",
+    "test/task_template_transfer_test.dart",
+    "test/unified_content_widgets_test.dart"
+  ],
+  "verified_runtime_source_files": 537,
+  "completed": [
+    "Reference-aware cleanup of standalone records, owned originals and restore preparation material",
+    "Read-only retained backup reference protection and durable interrupted cleanup retry",
+    "Cross-kind root and member archive and return with notification reconciliation",
+    "Strict template JSON import/export with explicit skip/copy/replace conflicts",
+    "Atomic ordinary-root project/tag bulk editing with before/after preview"
+  ],
+  "tests": {
+    "flutter": {
+      "passed": 1879,
+      "failed": 0,
+      "skipped": 0
+    },
+    "python": {
+      "passed": 126,
+      "failed": 0,
+      "skipped": 0
+    },
+    "static_analysis": {
+      "issues": 0
+    },
+    "new_ui_test_cases": 14,
+    "focused_regression_cases": 22
+  },
+  "data_safety": {
+    "physical_cleanup_root": "Documents/media/import-*",
+    "minimum_retention_hours": 24,
+    "maximum_selected_entries": 100,
+    "protects": [
+      "Task source records",
+      "Attachments",
+      "Medication evidence and nested plan data",
+      "Capture proposals",
+      "Persisted drafts",
+      "Trash and archive references",
+      "Shared files and active imports/restores",
+      "Retained known mirror/schema-upgrade/recovery backup references"
+    ],
+    "unmarked_original_files_preserved": true,
+    "external_originals_deleted": false,
+    "automatic_backups_deleted": false,
+    "rollback_assets_deleted": false,
+    "symlinks_followed": false,
+    "selection_confirmation_required": true,
+    "revalidates_references_and_stream_sha256": true,
+    "sql_failure_restores_staged_files": true,
+    "interrupted_purge_persisted_and_retried_after_reopen": true,
+    "newly_referenced_staged_files_restored": true,
+    "old_generation_rejected": true
+  },
+  "retained_backup_inspection": {
+    "max_bytes_per_file": 67108864,
+    "max_files": 256,
+    "max_media_rows_per_file": 100000,
+    "uses_private_read_only_copies": true,
+    "corrupt_oversized_changed_or_sidecar_backup_protects_physical_files": true,
+    "external_manual_backups_enumerated": false
+  },
+  "archive": {
+    "kinds": [
+      "task",
+      "study",
+      "medicationPlan",
+      "departure"
+    ],
+    "preview_members_limit": 1000,
+    "new_or_changed_members_reject_old_preview": true,
+    "preserves_deleted_or_independently_archived_members": true,
+    "preserves_outcomes_and_history": true,
+    "native_sync_failure_reported_after_commit": true
+  },
+  "template_transfer": {
+    "format": "dontforget.templates",
+    "version": 1,
+    "max_count": 24,
+    "max_file_bytes": 262272,
+    "choices": [
+      "skip",
+      "copy",
+      "replace"
+    ],
+    "same_name_default": "skip",
+    "copy_uses_new_local_id": true,
+    "replace_by_name_preserves_local_id": true,
+    "includes_actual_tasks_or_api_keys": false,
+    "library_compare_and_swap": true
+  },
+  "classification": {
+    "max_tasks": 50,
+    "scope": "ordinary non-deleted root tasks including archived tasks",
+    "project_modes": [
+      "keep",
+      "set",
+      "clear"
+    ],
+    "tag_modes": [
+      "keep",
+      "add",
+      "remove",
+      "replace"
+    ],
+    "max_project_characters": 128,
+    "max_tags": 16,
+    "max_tag_characters": 64,
+    "reschedules_notifications": false,
+    "all_or_nothing": true
+  },
+  "restore_validation": {
+    "json_actual_recovery_and_reopen": true,
+    "sqlite_actual_recovery_and_reopen": true,
+    "preserves": [
+      "Imported templates",
+      "Project and tags",
+      "Archive state",
+      "Existing reminder fields"
+    ],
+    "physical_cross_device_tested": false
+  },
+  "ui": {
+    "languages": [
+      "zh",
+      "en",
+      "ja"
+    ],
+    "widths": [
+      375,
+      768,
+      1440
+    ],
+    "text_scale": 1.8,
+    "dark_theme": true,
+    "soft_keyboard": true,
+    "real_controls_and_persisted_results_asserted": true
+  },
+  "commands": [
+    "flutter pub get --enforce-lockfile",
+    "flutter test --no-pub --reporter expanded",
+    "flutter analyze --no-pub",
+    "CLANG_MODULE_CACHE_PATH=<owned cache> SWIFT_MODULECACHE_PATH=<owned cache> python3 -m unittest discover -s scripts/tests -v"
+  ],
+  "native": {
+    "built_this_run": false,
+    "installed": false,
+    "launched": false,
+    "phone_accessed": false,
+    "real_user_database_accessed": false,
+    "native_notifications_accessed": false,
+    "system_credentials_accessed": false
+  },
+  "phone_owner": "优化项目架构与产品体验",
+  "phone_cross_day": "PENDING_THIS_TASK",
+  "pushed_this_task": false,
+  "released_this_task": false,
+  "private_evidence_root": "build/phase2-unified-content-20261028/",
+  "evidence_sha256": {
+    "aux-regressions.log": "208efafe274882dec709514c70c92516902800ee1cb214f498e7961eb999332b",
+    "validation-source.json": "3259c59955caffdd90e8d3f80c884afd5bb7b3bcc27f9f7c23017013caaa2686",
+    "aux-ui.log": "626016068d1eccc13646258dccab1b6cdb3433b1741a358938e6c030daeb2987",
+    "source-sha256.json": "86169c2c39a67dca6875049a979a92cc0a9c0e4156a9f202c9f4d3b0928700fd",
+    "cleanup.json": "0447e30410e70bcf28dd5cc8fe9141d14bc3f29e5dab55dc34542b7d14ab29c4",
+    "committed-source.json": "ed606ddc1d71c99204735e56511b8bca2cd7c4976e905836650730598fe1b501",
+    "aux-encrypted-recovery.log": "e9204a8955ac7b45ac2a194f758142f5ab2daaf1a9f683535ae647461d9aaefe",
+    "python.log": "d836427351d4285599b7b701eeaabdb3a5bf7022a1abfa65cbf19437b732b654",
+    "analyze.log": "d2360304ee3b6a1263ec8de26c368703b231096c96ad61118edc6acdc84e4760",
+    "flutter.log": "7d7cf5ca1c7fbc199f1cc862e6c94eeb4b5c4f774c0f3b8c1b1a45ccafaf1909",
+    "aux-focused.log": "8becfb0b9a07662238f213a209a3dca57e865427b033781da10375f081195f47"
+  },
+  "unrelated_preserved_sha256": {
+    "docs/Architecture_Design.md": "d484c9824a433ea1dba22036092e72e9f3983ec60575efca270a89b252ff4e55",
+    "docs/Developer_Guide.md": "d0a3023151ba3bd328c52c4cbdf8ab7687150bc6868922c73607388f59a7f9e3"
+  },
+  "remaining_phase2": [
+    "Five-platform content/credential upgrade and native file operation acceptance; full capacity/disk full/abrupt termination and physical cross-device restore",
+    "Historical backup retention policy, external backup registration, manual adoption of unknown old folders, space reporting",
+    "Ordinary independent recurring dates, statutory holidays, background weather, independent location consent/history and real multimodal quality",
+    "Assigned phone matrix, multi-day medication/workday/expiry/failure repair/sleep/DST"
+  ],
+  "remaining_phase3": [
+    "Plan-group and cross-plan learning actions/classification, long-term workload, automatic personalization, archive management, dictation and vocabulary identity migration",
+    "Share/global capture, linked focus/week view, LAN edit/delete/media/conflict persistence and physical device validation"
+  ],
+  "previous_isolated_pass": {
+    "base_commit": "cb060511d7bbc0bc70629608d6c1254857f88e6d",
+    "flutter_passed": 1873,
+    "python_passed": 126,
+    "analysis_issues": 0
+  },
+  "integrated_parent_changes": [
+    "Android legacy storage permission compatibility",
+    "Voice input capture and layout"
+  ],
+  "cleanup": {
+    "only_own_rebuildable_validation_directory_removed": true,
+    "removed_path": "build/content-management-20261028-validation",
+    "rebuildable_kib_removed": 116904,
+    "retained_final_logs_and_source_hashes": true,
+    "other_work_and_rollback_assets_touched": false
+  },
+  "auxiliary_logs_scope": "Earlier focused checks; committed source uses final full/analysis/python logs."
+}

@@ -4,7 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/planning_strings.dart';
 import '../../models/task_template.dart';
+import '../../models/task_template_transfer.dart';
+import '../../services/task_template_file_service.dart';
+import '../../l10n/content_management_strings.dart';
+import 'task_template_transfer_dialog.dart';
 import '../../providers/task_templates_provider.dart';
+
+final taskTemplateFileServiceProvider = Provider<TaskTemplateFileService>(
+  (_) => const TaskTemplateFileService(),
+);
 
 String _failure(Object error) => switch (error) {
   TaskTemplateException(reason: TaskTemplateFailure.duplicateName) =>
@@ -29,6 +37,8 @@ class _TaskTemplateLibraryState extends ConsumerState<TaskTemplateLibrary> {
   List<TaskTemplate> _items = [];
   bool _busy = true;
   String? _error;
+  bool _transferError = false;
+  bool _transferPrompting = false;
   String t(String key) => planningText(context, key);
   @override
   void initState() {
@@ -49,6 +59,39 @@ class _TaskTemplateLibraryState extends ConsumerState<TaskTemplateLibrary> {
       if (mounted) setState(() => _items = items);
     } catch (_) {
       if (mounted) setState(() => _error = 'templatesUnreadable');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _transfer(bool importing) async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _transferError = false;
+    });
+    try {
+      final files = ref.read(taskTemplateFileServiceProvider);
+      if (importing) {
+        final imported = await files.pick();
+        if (!mounted || imported == null) return;
+        final expected = await _store.load();
+        if (!mounted) return;
+        setState(() => _transferPrompting = true);
+        final choices = await showDialog<List<TemplateImportChoice>>(
+          context: context,
+          builder: (_) =>
+              TaskTemplateTransferDialog(current: expected, imported: imported),
+        );
+        if (mounted) setState(() => _transferPrompting = false);
+        if (!mounted || choices == null) return;
+        await _store.importTemplates(expected, choices);
+        if (mounted) await _load();
+      } else {
+        await files.save(await _store.load());
+      }
+    } catch (_) {
+      if (mounted) setState(() => _transferError = true);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -159,7 +202,29 @@ class _TaskTemplateLibraryState extends ConsumerState<TaskTemplateLibrary> {
       child: ListView(
         children: [
           Text(t('templateHint')),
-          if (_busy) const LinearProgressIndicator(),
+          Wrap(
+            spacing: 6,
+            children: [
+              TextButton.icon(
+                key: const ValueKey('templates-import'),
+                onPressed: _busy || _error != null
+                    ? null
+                    : () => _transfer(true),
+                icon: const Icon(Icons.file_open_outlined),
+                label: Text(contentText(context, 'templateImport')),
+              ),
+              TextButton.icon(
+                key: const ValueKey('templates-export'),
+                onPressed: _busy || _error != null || _items.isEmpty
+                    ? null
+                    : () => _transfer(false),
+                icon: const Icon(Icons.save_alt),
+                label: Text(contentText(context, 'templateExport')),
+              ),
+            ],
+          ),
+          if (_transferError) Text(contentText(context, 'templateInvalid')),
+          if (_busy && !_transferPrompting) const LinearProgressIndicator(),
           if (_error != null)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),

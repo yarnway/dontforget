@@ -260,11 +260,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         bool active() => _runtimeActive && isActive();
         if (!active()) return;
         final notifier = ref.read(remindersProvider.notifier);
+        await notifier.refreshOrdinarySchedules();
+        if (!active()) return;
         await notifier.refreshDepartureSchedules();
         if (!active()) return;
         await notifier.refreshDepartureWeather(
           ref.read(departureWeatherProvider),
           isActive: active,
+          isBackground: () =>
+              WidgetsBinding.instance.lifecycleState != null &&
+              WidgetsBinding.instance.lifecycleState !=
+                  AppLifecycleState.resumed,
         );
       },
     )..setForeground(true);
@@ -382,7 +388,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _notificationRetries?.setForeground(state == AppLifecycleState.resumed);
-    _departureMaintenance?.setForeground(state == AppLifecycleState.resumed);
+    final backgroundAllowed = ref
+        .read(remindersProvider)
+        .any(
+          (r) =>
+              r.details.kind == 'departure' &&
+              r.details.planId == null &&
+              r.isVisible &&
+              !r.details.paused &&
+              r.details.data['weather_background'] == true &&
+              r.details.data['weather_enabled'] == true,
+        );
+    _departureMaintenance?.setForeground(
+      state == AppLifecycleState.resumed || backgroundAllowed,
+    );
     if (state == AppLifecycleState.resumed && _runtimeActive) {
       // Desktop/mobile timers can pause while hidden or asleep. Reconcile from
       // current task state instead of waiting for another timer/broadcast.

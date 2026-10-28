@@ -55,6 +55,7 @@ class Reminder {
   bool get isWorkspaceItem =>
       isVisible &&
       details.kind != 'medicationPlan' &&
+      details.data['ordinary_series'] == null &&
       !(details.kind == 'departure' &&
           details.planId == null &&
           details.data['_departure_rolling'] != null);
@@ -71,6 +72,7 @@ class Reminder {
   bool get canSkipOccurrence =>
       canNotify &&
       (isRecurring ||
+          details.data['ordinary_occurrence'] == true ||
           (details.planId != null &&
               const {'medication', 'departure'}.contains(details.kind)));
   final bool isPinned;

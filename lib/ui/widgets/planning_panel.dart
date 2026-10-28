@@ -8,12 +8,17 @@ import '../../models/reminder.dart';
 import '../../models/task_details.dart';
 import '../../models/task_template.dart';
 import '../../models/calendar_exceptions.dart';
+import '../../models/ordinary_series.dart';
+import '../../models/holiday_calendar.dart';
+import '../../l10n/routine_policy_strings.dart';
+import 'holiday_policy_editor.dart';
 import '../../providers/providers.dart';
 import '../../services/recovery/runtime_gate.dart';
 import '../formatters/local_date_time.dart';
 import '../screens/notification_repair_screen.dart';
 import '../../l10n/app_localizations.dart';
 import 'departure_plan_panel.dart';
+import 'routine_coverage_panel.dart';
 import 'medication_plan_panel.dart';
 import 'portable_backup_panel.dart';
 import 'learning_management_panel.dart';
@@ -23,6 +28,10 @@ import 'saved_task_filters_bar.dart';
 import 'task_template_library.dart';
 import 'weekly_task_review_panel.dart';
 import 'calendar_exceptions_editor.dart';
+import '../../l10n/content_management_strings.dart';
+import '../../models/task_metadata_patch.dart';
+import 'task_metadata_dialog.dart';
+import 'content_management_panel.dart';
 
 class PlanningPanel extends StatefulWidget {
   const PlanningPanel({
@@ -59,19 +68,21 @@ class _PlanningPanelState extends State<PlanningPanel> {
             spacing: 5,
             runSpacing: 5,
             children: [
-              for (var i = 0; i < 5; i++)
+              for (var i = 0; i < 6; i++)
                 ChoiceChip(
                   label: Text(
-                    planningText(
-                      context,
-                      [
-                        'medication',
-                        'departure',
-                        'manage',
-                        'backup',
-                        'learningManage',
-                      ][i],
-                    ),
+                    i == 5
+                        ? contentText(context, 'title')
+                        : planningText(
+                            context,
+                            [
+                              'medication',
+                              'departure',
+                              'manage',
+                              'backup',
+                              'learningManage',
+                            ][i],
+                          ),
                   ),
                   selected: _tab == i,
                   onSelected: (_) => setState(() => _tab = i),
@@ -88,6 +99,9 @@ class _PlanningPanelState extends State<PlanningPanel> {
               const TaskManagementPanel(),
               const PortableBackupPanel(),
               const LearningManagementPanel(),
+              _tab == 5
+                  ? const ContentManagementPanel()
+                  : const SizedBox.shrink(),
             ],
           ),
         ),
@@ -286,6 +300,38 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
     }
   }
 
+  Future<void> _metadata() async {
+    if (!_current || _busy || _promptOpen || _selection.isEmpty) return;
+    final rows = List<Reminder>.unmodifiable(_selection.values);
+    _promptOpen = true;
+    try {
+      final patch = await showDialog<TaskMetadataPatch>(
+        context: context,
+        builder: (_) => TaskMetadataDialog(rows: rows),
+      );
+      if (!_current || patch == null) return;
+      setState(() => _busy = true);
+      await ref
+          .read(remindersProvider.notifier)
+          .updateMetadataBatch(rows, patch, _generation);
+      if (_current) {
+        setState(() {
+          _selection.clear();
+          _selecting = false;
+        });
+      }
+    } catch (_) {
+      if (mounted && _current) {
+        InlineFeedback.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(t('bulkChanged'))));
+      }
+    } finally {
+      _promptOpen = false;
+      if (_current) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final all = ref.watch(remindersProvider);
@@ -460,6 +506,14 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
                                 }),
                           child: Text(t('bulkSelectVisible')),
                         ),
+                        if (_view != 'trash')
+                          TextButton(
+                            key: const ValueKey('bulk-metadata'),
+                            onPressed: _busy || _selection.isEmpty
+                                ? null
+                                : _metadata,
+                            child: Text(contentText(context, 'metadata')),
+                          ),
                         for (final action in [
                           if (_view == 'trash')
                             'restore'
@@ -518,7 +572,7 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
                     return ListTile(
                       title: Text(e.row.taskTitle),
                       subtitle: Text(
-                        '${formatLocalDateTime(e.event.at)} · ${t(e.event.action == 'not_taken' ? 'notTaken' : e.event.action)}\n${e.event.scheduled == null ? '' : formatLocalDateTime(e.event.scheduled!)}',
+                        '${formatLocalDateTime(e.event.at)} · ${e.event.action == 'schedule_replaced' ? routineText(context, 'schedule_replaced') : t(e.event.action == 'not_taken' ? 'notTaken' : e.event.action)}\n${e.event.scheduled == null ? '' : formatLocalDateTime(e.event.scheduled!)}',
                       ),
                     );
                   },
@@ -569,53 +623,60 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
                               Text(
                                 '${row.details.project} · ${row.details.tags.join(' / ')}',
                               ),
+                            if (OrdinarySeries.isOwner(row))
+                              Text(routineText(context, 'seriesOwner')),
                             if (row.triggerTime != null)
                               Text(formatLocalDateTime(row.triggerTime!)),
-                            for (final item in row.details.checklist.take(10))
-                              CheckboxListTile(
-                                contentPadding: EdgeInsets.zero,
-                                dense: true,
-                                value: item.done,
-                                title: Text(item.label),
-                                onChanged: _busy || !row.isVisible
-                                    ? null
-                                    : (v) async {
-                                        if (!mounted ||
-                                            !context.mounted ||
-                                            !_current) {
-                                          return;
-                                        }
-                                        setState(() => _busy = true);
-                                        try {
-                                          await ref
-                                              .read(remindersProvider.notifier)
-                                              .setChecklistItem(
-                                                row,
-                                                item.id,
-                                                v ?? false,
-                                                _generation,
+                            if (OrdinarySeries.isOwner(row))
+                              RoutineCoveragePanel(planId: row.id),
+                            if (!OrdinarySeries.isOwner(row))
+                              for (final item in row.details.checklist.take(10))
+                                CheckboxListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  dense: true,
+                                  value: item.done,
+                                  title: Text(item.label),
+                                  onChanged: _busy || !row.isVisible
+                                      ? null
+                                      : (v) async {
+                                          if (!mounted ||
+                                              !context.mounted ||
+                                              !_current) {
+                                            return;
+                                          }
+                                          setState(() => _busy = true);
+                                          try {
+                                            await ref
+                                                .read(
+                                                  remindersProvider.notifier,
+                                                )
+                                                .setChecklistItem(
+                                                  row,
+                                                  item.id,
+                                                  v ?? false,
+                                                  _generation,
+                                                );
+                                          } catch (_) {
+                                            if (mounted &&
+                                                context.mounted &&
+                                                _current) {
+                                              InlineFeedback.of(
+                                                context,
+                                              ).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(t('failed')),
+                                                ),
                                               );
-                                        } catch (_) {
-                                          if (mounted &&
-                                              context.mounted &&
-                                              _current) {
-                                            InlineFeedback.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(t('failed')),
-                                              ),
-                                            );
+                                            }
+                                          } finally {
+                                            if (mounted &&
+                                                context.mounted &&
+                                                _current) {
+                                              setState(() => _busy = false);
+                                            }
                                           }
-                                        } finally {
-                                          if (mounted &&
-                                              context.mounted &&
-                                              _current) {
-                                            setState(() => _busy = false);
-                                          }
-                                        }
-                                      },
-                              ),
+                                        },
+                                ),
                             Wrap(
                               spacing: 5,
                               runSpacing: 5,
@@ -706,6 +767,8 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
   final _form = GlobalKey<FormState>();
   String _rule = 'none';
   bool _templateApplied = false;
+  bool _independent = true;
+  HolidayPolicy _holidayPolicy = const HolidayPolicy();
   List<int> _weekdays = [];
   DateTime? _end, _due;
   CalendarExceptions _exceptions = const CalendarExceptions();
@@ -719,7 +782,13 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
   @override
   void initState() {
     super.initState();
-    final task = widget.task;
+    final task = widget.task != null && OrdinarySeries.isOwner(widget.task!)
+        ? OrdinarySeries.template(widget.task!)
+        : widget.task;
+    _independent = widget.task == null || OrdinarySeries.isOwner(widget.task!);
+    _holidayPolicy = HolidayPolicy.fromJson(
+      task?.details.data['holiday_policy'],
+    );
     _id = task?.id ?? const Uuid().v4();
     final details = task?.details ?? const TaskDetails();
     _title = TextEditingController(text: task?.taskTitle ?? '');
@@ -805,7 +874,16 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
     }
     setState(() => _saving = true);
     try {
-      final base = widget.task, details = base?.details ?? const TaskDetails();
+      final baseline = widget.task;
+      final base = baseline != null && OrdinarySeries.isOwner(baseline)
+          ? OrdinarySeries.template(baseline)
+          : baseline;
+      final details = base?.details ?? const TaskDetails();
+      if (baseline != null &&
+          OrdinarySeries.isOwner(baseline) &&
+          _rule == 'none') {
+        throw const FormatException('Pause the plan to stop independent dates');
+      }
       var effectiveDue = _due;
       final retainedAnchor =
           _due == base?.triggerTime && _rule == base?.recurrenceRule
@@ -867,7 +945,9 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
                   ((_rule == 'weekly' &&
                           _weekdays.isNotEmpty &&
                           !_weekdays.contains(_due!.weekday)) ||
-                      (_rule == 'workday' && _due!.weekday > 5))))) {
+                      (_rule == 'workday' &&
+                          _holidayPolicy.mode != 'workdays' &&
+                          _due!.weekday > 5))))) {
         final next = repeat.next(
           _due!,
           _due!.subtract(const Duration(microseconds: 1)),
@@ -881,11 +961,16 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
       if (repeat?.end != null && effectiveDue!.isAfter(repeat!.end!)) {
         throw const FormatException('Repeat end precedes first time');
       }
+      final data = {...details.data}..remove('holiday_policy');
+      if (_independent && _rule != 'none' && _holidayPolicy.mode != 'none') {
+        data['holiday_policy'] = _holidayPolicy.toJson();
+      }
       final updated = details.patch({
         'tags': tags,
         'project': _project.text.trim(),
         'checklist': items.map((e) => e.toJson()).toList(),
         'repeat': repeat?.toJson(),
+        'data': data,
       });
       final row =
           (base ??
@@ -911,15 +996,26 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
                 detailsJson: updated.encode(),
               );
       final notifier = ref.read(remindersProvider.notifier);
-      final result = base == null
-          ? await notifier.addReminderForGeneration(row, _generation)
-          : await notifier.updateReminderForGeneration(
-              row,
-              _generation,
-              baseline: base,
-            );
+      final bool nativeFailed;
+      if (_independent && _rule != 'none') {
+        final batch = await notifier.saveOrdinarySeries(
+          row,
+          _generation,
+          baseline: baseline,
+        );
+        nativeFailed = batch.nativeSyncFailures > 0;
+      } else {
+        final result = baseline == null
+            ? await notifier.addReminderForGeneration(row, _generation)
+            : await notifier.updateReminderForGeneration(
+                row,
+                _generation,
+                baseline: baseline,
+              );
+        nativeFailed = result.nativeSyncFailed;
+      }
       if (!mounted || !context.mounted || !_current) return;
-      if (result.nativeSyncFailed) {
+      if (nativeFailed) {
         InlineFeedback.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -1022,7 +1118,9 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
                 isExpanded: true,
                 items: [
                   for (final rule in [
-                    'none',
+                    if (widget.task == null ||
+                        !OrdinarySeries.isOwner(widget.task!))
+                      'none',
                     'daily',
                     'workday',
                     'weekly',
@@ -1084,6 +1182,32 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
                         }
                       },
               ),
+              if (_rule != 'none') ...[
+                SwitchListTile(
+                  key: const ValueKey('ordinary-independent'),
+                  title: Text(routineText(context, 'independent')),
+                  subtitle: Text(routineText(context, 'independentHint')),
+                  value: _independent,
+                  onChanged:
+                      _saving ||
+                          (widget.task != null &&
+                              OrdinarySeries.isOwner(widget.task!))
+                      ? null
+                      : (value) => setState(() => _independent = value),
+                ),
+                if (_independent)
+                  HolidayPolicyEditor(
+                    value: _holidayPolicy,
+                    enabled: !_saving,
+                    onChanged: (value) => setState(() {
+                      _holidayPolicy = value;
+                      if (value.mode == 'workdays') {
+                        _rule = 'workday';
+                        _interval.text = '1';
+                      }
+                    }),
+                  ),
+              ],
               if (_rule != 'none') ...[
                 CalendarExceptionsEditor(
                   key: const ValueKey('task-date-exceptions'),

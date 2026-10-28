@@ -9,6 +9,8 @@ import '../widgets/notification_permission_panel.dart';
 import '../widgets/notification_diagnostics_panel.dart';
 import '../widgets/credential_status_panel.dart';
 import '../widgets/portable_backup_panel.dart';
+import '../widgets/content_management_panel.dart';
+import '../../l10n/content_management_strings.dart';
 import '../../l10n/data_protection_strings.dart';
 import '../../services/notification_diagnostics_service.dart';
 import 'dart:io';
@@ -829,6 +831,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         subtitle: Text(l10n.get('aiProfilesEntryHint')),
                         trailing: const Icon(Icons.chevron_right),
                         onTap: _isSaving ? null : _openModelProfiles,
+                      ),
+                    ),
+                    Card.outlined(
+                      margin: EdgeInsets.zero,
+                      child: ListTile(
+                        key: const ValueKey('settings-content-management'),
+                        leading: const Icon(Icons.inventory_2_outlined),
+                        title: Text(contentText(context, 'title')),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: _isSaving || !_ready
+                            ? null
+                            : () => Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (context) => Scaffold(
+                                    appBar: AppBar(
+                                      title: Text(
+                                        contentText(context, 'title'),
+                                      ),
+                                    ),
+                                    body: const ContentManagementPanel(),
+                                  ),
+                                ),
+                              ),
                       ),
                     ),
                     CredentialStatusPanel(

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'stored_datetime.dart';
 import 'stored_json.dart';
 import 'calendar_exceptions.dart';
+import 'holiday_calendar.dart';
 
 /// Versioned, bounded extension data. Historical tasks retain null storage.
 class TaskDetails {
@@ -54,7 +55,7 @@ class TaskDetails {
     final json = decodeStoredJson(raw);
     if (json is! Map<String, dynamic> ||
         json['version'] is! int ||
-        !const [1, 2, 3].contains(json['version']) ||
+        !const [1, 2, 3, 4].contains(json['version']) ||
         json['version'] != _formatVersion(json)) {
       throw const FormatException('Invalid task details');
     }
@@ -105,6 +106,72 @@ class TaskDetails {
     final data = json['data'] ?? <String, dynamic>{};
     if (data is! Map<String, dynamic> || jsonEncode(data).length > 65536) {
       throw const FormatException('Invalid task data');
+    }
+    HolidayPolicy.fromJson(data['holiday_policy']);
+    if (data['ordinary_series'] != null) {
+      final series = data['ordinary_series'];
+      if (kind != 'task' ||
+          json['plan_id'] != null ||
+          series is! Map ||
+          series.length != 4 ||
+          !series.keys.toSet().containsAll([
+            'version',
+            'rule',
+            'trigger_anchor',
+            'event_anchor',
+          ]) ||
+          series['version'] is! int ||
+          series['version'] != 1 ||
+          !const [
+            'daily',
+            'workday',
+            'weekly',
+            'monthly',
+            'yearly',
+          ].contains(series['rule']) ||
+          date(series['trigger_anchor']) == null) {
+        throw const FormatException('Invalid ordinary series');
+      }
+      date(series['event_anchor']);
+    }
+    if (data.containsKey('ordinary_occurrence')) {
+      if (kind != 'task' ||
+          data['ordinary_occurrence'] != true ||
+          json['plan_id'] == null ||
+          data['ordinary_series'] != null ||
+          date(data['scheduled_at']) == null) {
+        throw const FormatException('Invalid independent date');
+      }
+    }
+    if (data['weather_background'] != null &&
+        data['weather_background'] is! bool) {
+      throw const FormatException('Invalid background consent');
+    }
+    if (data['_weather_refresh'] != null) {
+      final refresh = data['_weather_refresh'];
+      if (kind != 'departure' ||
+          json['plan_id'] != null ||
+          refresh is! Map ||
+          refresh.length != 4 ||
+          !refresh.keys.toSet().containsAll([
+            'attempt',
+            'next',
+            'status',
+            'failures',
+          ]) ||
+          !const ['pending', 'ok', 'failed'].contains(refresh['status']) ||
+          refresh['failures'] is! int ||
+          refresh['failures'] < 0 ||
+          refresh['failures'] > 4) {
+        throw const FormatException('Invalid weather refresh');
+      }
+      final attempt = date(refresh['attempt']), next = date(refresh['next']);
+      if (attempt == null ||
+          next == null ||
+          !next.isAfter(attempt) ||
+          next.difference(attempt) > const Duration(hours: 8)) {
+        throw const FormatException('Invalid weather retry time');
+      }
     }
     if (kind == 'medication' && data['dose_taken_at'] != null) {
       date(data['dose_taken_at']);
@@ -190,6 +257,15 @@ class TaskDetails {
     'data': data,
   };
   static int _formatVersion(Map<String, dynamic> data) {
+    final extended = data['data'];
+    if (extended is Map &&
+        (extended['ordinary_series'] != null ||
+            extended['ordinary_occurrence'] != null ||
+            extended['holiday_policy'] != null ||
+            extended['weather_background'] != null ||
+            extended['_weather_refresh'] != null)) {
+      return 4;
+    }
     final attachments = data['attachment_ids'];
     if (attachments is List && attachments.isNotEmpty) return 3;
     final repeat = data['repeat'];
@@ -444,8 +520,26 @@ class RepeatWindow {
 
   DateTime? _nextRegular(DateTime base, DateTime after, String rule) {
     DateTime calendar(int year, int month, int day) => base.isUtc
-        ? DateTime.utc(year, month, day, base.hour, base.minute, base.second)
-        : DateTime(year, month, day, base.hour, base.minute, base.second);
+        ? DateTime.utc(
+            year,
+            month,
+            day,
+            base.hour,
+            base.minute,
+            base.second,
+            base.millisecond,
+            base.microsecond,
+          )
+        : DateTime(
+            year,
+            month,
+            day,
+            base.hour,
+            base.minute,
+            base.second,
+            base.millisecond,
+            base.microsecond,
+          );
     final cutoff = base.isUtc ? after.toUtc() : after.toLocal();
     final beginning = start;
     DateTime? accept(DateTime candidate) {

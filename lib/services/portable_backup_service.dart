@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'content/owned_material_activity.dart';
 import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
@@ -139,6 +140,7 @@ class PortableBackupService {
     }
     await ownedMediaRoot.create(recursive: true);
     final destination = await ownedMediaRoot.createTemp('import-');
+    OwnedMaterialActivity.hold(destination);
     try {
       final records = (bundle['snapshot']['media_records'] as List);
       for (final attachment in bundle['attachments'] as List) {
@@ -171,8 +173,10 @@ class PortableBackupService {
       }
       final snapshot = File(p.join(destination.path, 'snapshot.json'));
       await snapshot.writeAsString(jsonEncode(bundle['snapshot']), flush: true);
+      await OwnedMaterialActivity.mark(destination, 'restore');
       return snapshot;
     } catch (_) {
+      OwnedMaterialActivity.releaseDirectory(destination);
       await destination.delete(recursive: true);
       rethrow;
     }
