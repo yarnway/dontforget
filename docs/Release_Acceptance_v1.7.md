@@ -107,3 +107,6 @@ rc.37 的七项 CI 最初生成过 21 附件草稿，但发布时该草稿已不
 ### 2026-10-28 提醒可信度 macOS 独立验收补充
 
 冻结 `6f42ccd` / `1.7.0+38` / schema 16 的产品 release 原生构建与签名校验通过；新 Sandbox 身份的通知自检完成未授权拒绝、授权读数、id0 提交/实际投递/连续替换及业务 journal 排除核验。状态仍为 **PARTIAL_NATIVE_BUILD_AND_DIAGNOSTICS_UI_HANDOFF_REQUIRED**：并行桌面输入向隔离库加入了未知归属记录，已保全并停止 UI，第二个唯一可执行身份准备完成，等待窗口使用权交接。通知动作、前后台/退出消费、三语菜单及清理不记通过；iOS/Android 原生矩阵仍开放。详见 [本轮原生证据](benchmarks/reminder-trust-macos-2026-10-28.json) 与 [交付记录补充](Reminder_Trust_2026-10-28.md)。
+
+
+原生计时复核补充：最早 native 回调时间转交既有 pending 队列的修复已通过 76 项相关 Dart 回归、0 issues 和纯 Swift FIFO/completion 测试。用户已归还共享桌面，但客户端仍拒绝控制唯一应用；根已退还桌面。后续按限时轮换提案执行，Mac 四动作/前后台/退出消费/三语菜单及 iOS/Android 原生矩阵继续开放，不将源码测试或旧包自检当作修复后真机验收。

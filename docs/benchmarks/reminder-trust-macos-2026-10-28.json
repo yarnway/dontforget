@@ -1,7 +1,7 @@
 {
   "recorded_at": "2026-10-28T11:28:53.381780+08:00",
   "timezone": "Asia/Shanghai",
-  "status": "PARTIAL_NATIVE_BUILD_AND_DIAGNOSTICS_UI_HANDOFF_REQUIRED",
+  "status": "PARTIAL_NATIVE_BUILD_DIAGNOSTICS_TIMING_FIX_CLIENT_UI_BLOCKED",
   "source": {
     "revision": "6f42ccda4dd6cfe2b0def0a33027a22cd97eb2f5",
     "version": "1.7.0+38",
@@ -130,8 +130,9 @@
     "cleanup_boundary": "No unknown rows or other sessions cleaned; old isolated test notification retention remains unclosed."
   },
   "known_source_limitations": [
-    "macOS plugin cold response has no original action time; Dart records occurredAt after StorageBootstrap. A slow cold bootstrap can shift snooze later. Needs native callback time capture before strict click-time acceptance.",
-    "macOS has no background isolate in pinned plugin; exited action launches app, then main isolate queues/consumes. This does not prove queue persisted while process was absent."
+    "Initial 6f42ccd artifact uses Dart response time after StorageBootstrap. This has been addressed in the verified source overlay; rebuilt release/native action regression remain pending.",
+    "New native time is callback observation, not original physical click time; cache is bounded and process-local, durable queue still starts in Dart after bootstrap.",
+    "macOS plugin uses main isolate with cold launch response; Android/iOS background isolate acceptance remains separate."
   ],
   "automation": {
     "frozen_related_flutter_tests": 65,
@@ -157,6 +158,24 @@
     "current_lease": "EXCLUSIVE_RECEIVED; explicit_return_required=true; no return observed",
     "message_delivery": "NOT_SENT: MCP tool call requires approval, but approval policy is never",
     "idle_followup_automation": "NOT_CREATED: same tool approval policy",
-    "policy_boundary": "No substitute message channel or scheduler used; no lease expiry or temporary inactivity treated as explicit return"
+    "policy_boundary": "No substitute message channel or scheduler used; no lease expiry or temporary inactivity treated as explicit return",
+    "human_desktop_return_received": true,
+    "root_desktop_returned_without_ui_control": true,
+    "client_target_app_access": "DENIED again after human said already allowed; no selector/CLI workaround used",
+    "rotation_requested_by_user": true
+  },
+  "timing_fix": {
+    "scope": "Verified 6f42ccd source overlay integrated by exact per-file hashes; no other dirty paths overwritten",
+    "files": [
+      "macos/Runner/MainFlutterWindow.swift",
+      "lib/services/macos_notification_scheduler.dart",
+      "lib/services/notification_service.dart"
+    ],
+    "new_dart_tests": 11,
+    "related_dart_tests_passed": 76,
+    "targeted_analyze": "0 issues",
+    "native_swift_test": "PASS: FIFO, first time, input bounds, completion once; real frameworks, registrant stub, no UI or notifications",
+    "device_acceptance": "NOT_PERFORMED",
+    "native_time_boundary": "Earliest native delegate callback observation; Apple exposes no original physical click timestamp; absent or invalid cache falls back to Dart time"
   }
 }

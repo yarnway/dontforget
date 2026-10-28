@@ -249,11 +249,35 @@ class NotificationService {
   Future<PendingNotificationActions?> pendingNotificationActions() async =>
       pendingActionStore == null ? null : await pendingActionStore!();
 
-  Future<void> _receiveAction(NotificationActionRequest request) async {
+  Future<void> _receiveAction(
+    NotificationActionRequest request, {
+    String? encodedPayload,
+  }) async {
     try {
       final queue = await pendingNotificationActions();
       if (queue == null) {
         return; // Test instances must explicitly inject a temp.
+      }
+      final mac = macScheduler;
+      if (mac != null) {
+        try {
+          final nativeTime = await mac.takeResponseOccurredAt(
+            payload: encodedPayload ?? request.payload.encode(),
+            actionId: request.actionId,
+          );
+          if (nativeTime != null &&
+              nativeTime.microsecondsSinceEpoch > 0 &&
+              !nativeTime.isAfter(request.occurredAt)) {
+            request = NotificationActionRequest(
+              payload: request.payload,
+              actionId: request.actionId,
+              occurredAt: nativeTime,
+            );
+          }
+        } catch (_) {
+          // Older native hosts and unavailable/evicted context retain Dart's
+          // observation time. They cannot prove the original native time.
+        }
       }
       await queue.enqueue(request);
       _actionSignals.add(null);
@@ -285,6 +309,7 @@ class NotificationService {
               actionId: action,
               occurredAt: _now(),
             ),
+            encodedPayload: response.payload,
           ),
         );
       }
