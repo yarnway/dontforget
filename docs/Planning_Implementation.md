@@ -1,6 +1,8 @@
 # 计划管理：实现与验收索引
 
-最新三项优化源码 **2531fb5**：多来源用药逐字段核对、明确餐时偏移、普通周期／出门日期例外已完成；保留已服剂次和周期锚点，支持两种备份的实际恢复。**1729 Flutter／126 Python、静态分析 0 issues、洛杉矶专项 94 项通过**；最终全量与分析结果固定于[本轮验收](P1_Medication_Calendar_2026-10-28.md)，不沿用下方旧源码计数。新任务语义使用扩展记录 version 2，旧程序回退需写入该格式前的备份；schema 16 不变。
+最新数据保护源码 **3cddb2b**／**+40**：系统凭据存储、可选密码备份、1 MiB 分块大附件和统一数据与安全入口已完成；**1815 Flutter／126 Python、静态分析 0 issues，macOS／iOS 模拟器 Debug 编译通过**。原生插件合成 Keychain 读写与删除通过，实际应用升级／锁定、五平台系统导出及跨设备恢复另验。见[数据保护验收](P1_Data_Protection_2026-10-28.md)。本机内容和旧备份未因此全部加密，手机矩阵仍由指定任务继续。
+
+前轮三项优化源码 **2531fb5**：多来源用药逐字段核对、明确餐时偏移、普通周期／出门日期例外已完成；保留已服剂次和周期锚点，支持两种备份的实际恢复。**1729 Flutter／126 Python、静态分析 0 issues、洛杉矶专项 94 项通过**；最终全量与分析结果固定于[本轮验收](P1_Medication_Calendar_2026-10-28.md)，不沿用下方旧源码计数。新任务语义使用扩展记录 version 2，旧程序回退需写入该格式前的备份；schema 16 不变。
 
 前轮离线源码 **2de7682** 已保存本地 main，沿用 schema 16；清晰事项自动创建、实际服药时间、模板库、普通事项批量操作和执行记录周复盘通过 **1618 Flutter／126 Python、静态分析 0 issues、洛杉矶专项36项**。本轮未构建、安装或发布，手机通知验收由“优化项目架构与产品体验”继续。详见[本轮离线验收](P1_Offline_Management_2026-10-28.md)和[阶段台账](Recording_Reminders_Phases.md)。
 
@@ -23,7 +25,7 @@
 - **用药**：联合最多 8 份文字、图片、录音提取草稿，逐字段查看来源摘录并解决冲突；可设置餐次及明确餐前／餐后偏移，换算具体时刻并仅更新未来未处理剂次。逐药核对药名、规格、数量、单位、餐次、时刻及起止日期，预览后启动。单药日期可沿用计划日期，不完整保留草稿；选择日期查看逐剂结局，可补记／修正实际服用时刻，保留计划、实际及记录时间。详情可返回计划修改未来安排。
 - **出门**：填写场景与出门时刻、提前量、重复星期及清单；可按出门日指定跳过／额外日期，跨午夜提前提醒仍按出门日判断。未来 60 日范围内逐日独立保存并在前台补排，常备项按日期独立，一次性项同步到未来日期。天气与出门习惯记录分别主动开启；支持设置返程观察时段，前台预取有效天气并更新通知正文。延后提醒按新的通知时间检查缓存；失效或缺测保留清单并提示未知。记录出门只修改观察记录，正式时刻、地点、城市和授权须经采用、预览、保存后改变。
 - **管理**：查找标题、标签和项目，编辑清单、重复规则及明确日期例外；管理最多24个可复用模板，并在编辑表单中载入／存为模板。最多50条普通事项批量暂停／继续、回收站／恢复、归档／取消归档，显示选择预览后同事务保存。执行记录提供按周统计和反复延后事项，沿用当前筛选；一般删除保留在回收站，旧操作不能跨数据恢复代次执行。
-- **备份**：选择位置导出任务与附件包，模型密钥被排除；附件合计 32 MiB、整个包 64 MiB。导入先准备独立附件副本，再通过现有预检和确认恢复数据库；原文件不被覆盖，准备材料在取消后保留。不加密，大附件与可选加密仍待后续实现。
+- **备份／数据与安全**：设置或备份面板集中模型密钥状态、重试与移除、可选密码备份、导入预检和备份缓存清理。新 v2 文件按 1 MiB 分块，可选 AES-256-GCM；单附件 512 MiB、合计 2 GiB，所有便携导出排除密钥。旧 JSON 可读；导入校验后在独立目录准备附件，再确认恢复；原件不覆盖。本机任务、附件、自动恢复副本及旧备份没有因此全部加密。
 - **学习管理**：查看逐词档案、记录开始后的趋势及七日到期量，逐批暂停、继续、校对词条；调整后续“认识”反馈的五级间隔；粘贴 Tab 分隔的单词、释义、例句，预览后创建最多七批；进行不会自动更改掌握度的拼写练习。
 
 模型配置测试为用户主动的一次文字 JSON 请求，既不携带任务内容，也不创建任务；成功不证明图片、语音能力。
@@ -43,7 +45,7 @@
 | 自动整理判定与明确日期 | [capture_automation_policy.dart](../lib/services/capture_automation_policy.dart)、[quick_reminder_parser.dart](../lib/services/quick_reminder_parser.dart) |
 | 模板库与周复盘 | [task_template_library.dart](../lib/ui/widgets/task_template_library.dart)、[task_templates_provider.dart](../lib/providers/task_templates_provider.dart)、[weekly_task_review.dart](../lib/models/weekly_task_review.dart) |
 | 天气接口与数据校验 | [departure_weather_service.dart](../lib/services/departure_weather_service.dart) |
-| 附件备份与恢复准备 | [portable_backup_service.dart](../lib/services/portable_backup_service.dart)、[portable_backup_panel.dart](../lib/ui/widgets/portable_backup_panel.dart) |
+| 系统凭据、备份与缓存 | [credential_repository.dart](../lib/services/security/credential_repository.dart)、[streaming_backup_service.dart](../lib/services/streaming_backup_service.dart)、[backup_cache_service.dart](../lib/services/backup_cache_service.dart)、[portable_backup_panel.dart](../lib/ui/widgets/portable_backup_panel.dart) |
 | 学习管理与队列 | [learning_management_panel.dart](../lib/ui/widgets/learning_management_panel.dart)、[learning_queue_service.dart](../lib/services/learning_queue_service.dart) |
 | 三语控件文案 | [planning_strings.dart](../lib/l10n/planning_strings.dart) |
 | 冻结格式 | [当前 v16](../test/fixtures/schema_v16.sql)、[历史 P0 v15](../test/fixtures/schema_v15.sql)、[历史任务管理 v15](../test/fixtures/schema_v15_task_management.sql) |
@@ -51,6 +53,8 @@
 天气接口按 Open-Meteo 的[小时预报](https://open-meteo.com/en/docs)和[城市查询](https://open-meteo.com/en/docs/geocoding-api)文档实现，使用 UTC 时间戳对齐预报时段。需用户开启天气并手选城市；允许主动查询，以及出门前六小时内的前台有限预取，不采集 GPS、不发送出门记录给天气服务。每计划 30 分钟冷却，每轮最多三个请求，退出前台或设置变化后的迟到结果丢弃。AI 时间建议仅发送样本数量、所选星期和时刻中位数摘要，地点标签、坐标和轨迹不进入该请求。
 
 ## 存储与生命周期
+
+模型 API 密钥只写系统安全存储，当前 SQL 配置保留随机引用；旧明文配置经安全写入和读回后迁移，失败保留原数据并暂停 AI 使用。新便携包不导出模型密钥；跨设备恢复需重新配置。旧备份和 SQLite 历史页可能仍含旧明文，不自动删除回退材料，不承诺安全擦除。格式与限额见[数据保护记录](P1_Data_Protection_2026-10-28.md)。
 
 当前 schema 16 保留原三表及旧字段，统一提醒时间来源与 Reminders.details_json；识别历史两类 v14／v15，兼容方案见 [P0/P1 集成验收](UX_P0_Record_Reminder.md)。扩展结构有版本、大小、枚举、日期、重复 ID 和数组限制，嵌套数据不可变。旧任务维持扩展 version 1；含多来源、餐时、核对决定、日期例外或新锚点时写 version 2，并校验版本与内容一致。旧客户端拒绝新格式，不能直接降级读取该库。普通、用药、出门和学习记录共享现有数据库准入与提醒串行队列。
 

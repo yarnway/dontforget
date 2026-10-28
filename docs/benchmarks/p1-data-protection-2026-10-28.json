@@ -1,0 +1,249 @@
+{
+  "date": "2026-10-28",
+  "timezone": "Asia/Shanghai",
+  "stage": "phase2-data-protection",
+  "status": "SOURCE_AUTOMATION_AND_APPLE_DEBUG_BUILD_PASSED_NATIVE_ACCEPTANCE_PARTIAL",
+  "source_commit": "3cddb2b105c66a6722b480c4aa04ea254b272b13",
+  "base_commit": "a2575020c110a80b7cf0ffbbf8f94ecce47e0a52",
+  "version": "1.7.0+40",
+  "schema_version": 16,
+  "source_overlay_paths": [
+    ".github/workflows/build_and_release.yml",
+    "android/app/src/main/AndroidManifest.xml",
+    "ios/Runner.xcodeproj/project.pbxproj",
+    "lib/data/database_helper.dart",
+    "lib/models/ai_profile.dart",
+    "lib/providers/providers.dart",
+    "lib/providers/workspace_drafts_provider.dart",
+    "lib/services/portable_backup_service.dart",
+    "lib/services/recovery/backup_inspector.dart",
+    "lib/ui/screens/settings_screen.dart",
+    "lib/ui/widgets/portable_backup_panel.dart",
+    "linux/flutter/generated_plugin_registrant.cc",
+    "linux/flutter/generated_plugins.cmake",
+    "macos/Flutter/GeneratedPluginRegistrant.swift",
+    "pubspec.lock",
+    "pubspec.yaml",
+    "test/ai_profiles_integration_test.dart",
+    "test/ai_profiles_storage_test.dart",
+    "test/backup_preview_screen_test.dart",
+    "test/recovery_coordinator_test.dart",
+    "windows/flutter/generated_plugin_registrant.cc",
+    "windows/flutter/generated_plugins.cmake",
+    "android/app/src/main/res/xml/credential_backup_rules.xml",
+    "android/app/src/main/res/xml/credential_extraction_rules.xml",
+    "ios/Runner/Runner.entitlements",
+    "lib/l10n/data_protection_strings.dart",
+    "lib/models/credential_reference.dart",
+    "lib/services/backup_cache_service.dart",
+    "lib/services/backup_file_exporter.dart",
+    "lib/services/security/credential_repository.dart",
+    "lib/services/security/credential_store.dart",
+    "lib/services/streaming_backup_service.dart",
+    "lib/ui/widgets/credential_status_panel.dart",
+    "test/backup_cache_exporter_test.dart",
+    "test/credential_storage_test.dart",
+    "test/data_protection_widgets_test.dart",
+    "test/fixtures/protected_backup/README.md",
+    "test/fixtures/protected_backup/python-aesgcm-v2.dfbackup",
+    "test/streaming_backup_test.dart",
+    "test/system_credential_store_test.dart"
+  ],
+  "verified_runtime_source_files": 523,
+  "toolchain": {
+    "flutter": "3.44.9",
+    "dart": "3.12.2",
+    "xcode": "27.1",
+    "cocoapods": "1.16.2"
+  },
+  "dependencies": {
+    "cryptography": "2.9.0",
+    "flutter_secure_storage": "11.2.0",
+    "flutter_secure_storage_darwin": "0.4.3",
+    "file_saver": "0.4.0"
+  },
+  "completed": [
+    "System credential vault with readback before SQL commit, migration, binding, explicit clear and trusted cleanup jobs",
+    "Optional AES-256-GCM framed v2 export, credential exclusion and v1 compatibility",
+    "Streaming attachments, safe independent import, progress/cancel and cache cleanup through data-and-security UI"
+  ],
+  "tests": {
+    "flutter": {
+      "passed": 1815,
+      "failed": 0,
+      "skipped": 0
+    },
+    "python": {
+      "passed": 126,
+      "failed": 0,
+      "skipped": 0
+    },
+    "analyze": {
+      "issues": 0
+    }
+  },
+  "commands": [
+    "flutter test --no-pub --reporter expanded",
+    "flutter analyze --no-pub",
+    "CLANG_MODULE_CACHE_PATH=<private cache> SWIFT_MODULECACHE_PATH=<private cache> python3 -m unittest discover -s scripts/tests -v",
+    "PATH=<existing CocoaPods bin>:$PATH flutter build macos --debug --no-pub",
+    "PATH=<existing CocoaPods bin>:$PATH flutter build ios --simulator --debug --no-pub",
+    "codesign --verify --deep --strict <isolated macOS debug bundle>"
+  ],
+  "native": {
+    "macos_debug": "BUILD_AND_STRICT_SIGNATURE_PASSED",
+    "ios_simulator_debug": "BUILD_PASSED",
+    "identities": [
+      {
+        "path": "build/data-protection-20261028-native-validation/build/macos/Build/Products/Debug/dont_forget.app",
+        "CFBundleIdentifier": "com.example.dontForget",
+        "CFBundleShortVersionString": "1.7.0",
+        "CFBundleVersion": "40",
+        "CFBundleSupportedPlatforms": [
+          "MacOSX"
+        ],
+        "DTPlatformName": "macosx",
+        "executable_sha256": "57f005d75796f1e854b980ea1410cf299e766679cbab781ed1f1fa7905a4c860"
+      },
+      {
+        "path": "build/data-protection-20261028-native-validation/build/ios/iphonesimulator/Runner.app",
+        "CFBundleIdentifier": "com.example.dontForget",
+        "CFBundleShortVersionString": "1.7.0",
+        "CFBundleVersion": "40",
+        "CFBundleSupportedPlatforms": [
+          "iPhoneSimulator"
+        ],
+        "DTPlatformName": "iphonesimulator",
+        "executable_sha256": "0aa46de4bf17dbbcddfa39cb21f38d67907474378ecafbe09b7b2897f704eeb4"
+      },
+      {
+        "path": "build/data-protection-20261028-native-validation/build/ios/iphonesimulator/Runner.app/PlugIns/ReminderActivity.appex",
+        "CFBundleIdentifier": "com.example.dontForget.ReminderActivity",
+        "CFBundleShortVersionString": "1.7.0",
+        "CFBundleVersion": "40",
+        "CFBundleSupportedPlatforms": [
+          "iPhoneSimulator"
+        ],
+        "DTPlatformName": "iphonesimulator",
+        "executable_sha256": "8dcb588489076ef7ca3dc48b15617cb712759470d538eeb2bc7255520111fcf0"
+      }
+    ],
+    "installed": false,
+    "launched": false,
+    "phone_accessed": false,
+    "notifications_accessed": false,
+    "real_user_database_accessed": false
+  },
+  "keychain_probe": {
+    "backend": "flutter_secure_storage_darwin 0.4.3 native source",
+    "context": "UNSANDBOXED_SYNTHETIC_PROCESS",
+    "data_protection_keychain": false,
+    "system_keychain_unlocked_by_test": false,
+    "authentication_ui_allowed": false,
+    "preexisting_keys_read": false,
+    "random_synthetic_item_only": true,
+    "create_read_update_delete_and_empty_read": "PASSED",
+    "synthetic_item_cleanup": "PASSED",
+    "formal_app_upgrade_or_lock_acceptance": false
+  },
+  "backup": {
+    "format_version": 2,
+    "legacy_version_readable": 1,
+    "cipher": "AES-256-GCM",
+    "kdf": "PBKDF2-HMAC-SHA256",
+    "iterations": 600000,
+    "salt_bytes": 16,
+    "nonce_prefix_bytes": 8,
+    "frame_bytes": 1048576,
+    "aad": [
+      "raw_header",
+      "frame_sequence",
+      "plaintext_length"
+    ],
+    "max_attachment_bytes": 536870912,
+    "max_attachments_bytes": 2147483648,
+    "max_snapshot_bytes": 33554432,
+    "max_manifest_bytes": 67108864,
+    "max_rows_per_table": 100000,
+    "largest_actual_attachment_test_bytes": 41943040,
+    "independent_python_fixture_sha256": "a3ce2dd58b9d5e0fbce6a1193ff56a2939c02b1bb05701c247c04ec9514bc9ae",
+    "all_new_portable_exports_include_api_keys": false,
+    "local_content_encryption": false,
+    "old_backups_deleted": false,
+    "secure_erasure_claimed": false,
+    "full_limit_stress_passed": false,
+    "physical_cross_device_restore_passed": false
+  },
+  "ui_automation": {
+    "languages": [
+      "zh",
+      "en",
+      "ja"
+    ],
+    "widths": [
+      375,
+      768,
+      1440
+    ],
+    "large_text_scale": 1.8,
+    "dark_and_keyboard": true,
+    "native_dialog_acceptance": false
+  },
+  "private_evidence_root": "build/phase2-data-protection-20261028/",
+  "evidence_sha256": {
+    "validation-source.json": "8b3cfbd4e043093839e653128e12baeef2ec65c0699721668400ef8b22b52892",
+    "ios-simulator-debug.log": "4b93fe2acf08341cee31b6c0312689e899dcc3d9fa271f6da29b2bcfd6ed3592",
+    "source-sha256.json": "3c4cb0222effb8ef12f7726ac0e2659cfd2dcea2d44ae7eb33d87ea3ee9bd313",
+    "cleanup.json": "900317d8435ddea89c9e03edbf7a3960b9c1dd960e9d51080456aaf992e1159f",
+    "committed-source.json": "9b0b0adc1bf9ae7c3ad27a3847b8b4f7d84680eb689756c4329df389b2f7164a",
+    "native-identities.json": "5cac2e6254aba8daeaa91b958fe038086a7520d51c8e042d0105065f39aff454",
+    "macos-debug.log": "e6131b4ae001d24dd121321bf8d9ada17ea8ca63fe71ebae7b49f94653eca8f5",
+    "python.log": "e86ff36d1aad13f6637d09fb95a26e303658c0884b651e754bedb6debc6db837",
+    "analyze.log": "91ebede217f1431e1d70933309fada3586a99e697bb648c0fd833c61191dbdb1",
+    "flutter.log": "dfdae6db1ad5928b513038610d6b45bd1694286c8c2833f62af9d53110de77dc",
+    "synthetic-keychain/compile.log": "2ae83f2b1f7c54c8bea1bc5675dc5f910c6d5a2ce84a6e5f26825ce39a6b859f",
+    "synthetic-keychain/result.log": "1cd3dcb16095d677317e96a88eae9eef1c731e1c3a70614ba6fd5b7d32598281",
+    "synthetic-keychain/main.swift": "e09b5ee5d9908f7e1f852a934c88c8172bcfd592f925d949062d2f05f990d2ed",
+    "synthetic-keychain/dependency-source-sha256.txt": "2cc6a0af9e8da2c56c04dd75666c5edd5b270bd4896fc2020f54ee4726592ab9"
+  },
+  "unrelated_preserved_sha256": {
+    "docs/Architecture_Design.md": "d484c9824a433ea1dba22036092e72e9f3983ec60575efca270a89b252ff4e55",
+    "docs/Developer_Guide.md": "d0a3023151ba3bd328c52c4cbdf8ab7687150bc6868922c73607388f59a7f9e3"
+  },
+  "phone_owner": "优化项目架构与产品体验",
+  "phone_cross_day": "PENDING_THIS_TASK",
+  "publishing": {
+    "push": false,
+    "release": false,
+    "new_rc": false
+  },
+  "remaining_phase2": [
+    "Five-platform actual secure-storage upgrade/lock/reauthorization and native file export/import",
+    "512 MiB/2 GiB and disk-full stress; physical cross-device restore; local/historical backup protection strategy",
+    "Reference-aware original/import material cleanup, archive, template import/export, project/tag bulk editing",
+    "Assigned phone matrix, multi-day medication/workday/expiry/sleep/DST verification",
+    "Independent ordinary recurring dates, statutory holidays, background weather, location consent/history and real multimodal recognition"
+  ],
+  "remaining_phase3": [
+    "Plan-group and cross-plan learning management, long-term workload, personalization, archive management, dictation and identity migration",
+    "Share/global capture, linked focus/week views, LAN edit/delete/media/conflict persistence and physical devices"
+  ],
+  "commit_parent": "f7ef571420c8d888776f218ce9b9ea11b7bc701b",
+  "cleanup": {
+    "only_current_task_rebuildable_validation_directories": true,
+    "removed": [
+      {
+        "path": "build/data-protection-20261028-validation",
+        "rebuildable_kib_removed": 116336
+      },
+      {
+        "path": "build/data-protection-20261028-native-validation",
+        "rebuildable_kib_removed": 1663244
+      }
+    ],
+    "total_rebuildable_kib_removed": 1779580,
+    "prior_evidence_and_rollback_assets_touched": false,
+    "new_debug_bundles_retained": false,
+    "logs_source_and_binary_hashes_retained": true
+  }
+}
