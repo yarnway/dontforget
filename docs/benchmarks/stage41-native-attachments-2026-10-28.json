@@ -151,15 +151,18 @@
   "ci": {
     "source": "972fbbd80dba39ae7353723164c33e77ff3cb7be",
     "run_id": 40646057227,
-    "status": "in_progress",
+    "status": "completed",
     "previous_failure_run": 40642641265,
     "quality": "success",
-    "platforms": "in_progress",
+    "platforms": "success",
     "flutter_passed": 1948,
     "flutter_platform_skipped": 2,
     "python_passed": 125,
     "python_platform_skipped": 1,
-    "quality_log_sha256": "51c8b186c7705ffa2389f855cffd1277530b8fb308d6c34277585e2e1ee41db6"
+    "quality_log_sha256": "51c8b186c7705ffa2389f855cffd1277530b8fb308d6c34277585e2e1ee41db6",
+    "conclusion": "success",
+    "quality_and_platform_jobs_passed": 6,
+    "tag_only_verification": "skipped_on_main"
   },
   "mac40_upgrade": {
     "at": "2026-10-28T14:31:56.999901+08:00",
@@ -278,5 +281,16 @@
     "apple": "MACOS_AND_IOS_SIMULATOR_UNSIGNED_COMPILE_ONLY",
     "native_phone": "NOT_PERFORMED",
     "separate_test_build_directories": true
+  },
+  "workspace_size": {
+    "at": "2026-10-28T15:06:12.142833+08:00",
+    "allocated_kib": {
+      ".": 4122084,
+      "build": 3363048,
+      "build/native_acceptance": 2730740
+    },
+    "source_note": "Point-in-time allocated sizes; peers can create new build outputs",
+    "owned_cleanup_kib": 3728316,
+    "peer_recurring_cleanup_kib": 3839592
   }
 }
