@@ -87,3 +87,11 @@ Mac 共享桌面、键盘/指针、通知中心以及 iPhone Mirroring 使用同
 UX14:53:34明确归还后，架构确认通知任务5分钟候接。新1430实际Cua控制成功，root登记14:56:35接收、预计15:01:35归还；14:57:33因`com.apple.UserNotificationCenter`被控制工具以安全原因明确拒绝，提前归还架构候接（canonical当时revision30）。回执`build/native_acceptance/trust-actions-20261028-1430-materials/round4-probe/ui-handback.json`。没有绕过拒绝或继续占用；phone仍UX所有，不随Mac桌面归还。
 
 1430仅正常bootstrap和点击本身份权限请求，结果未观察到；未seed、未排程、未改通知样式。已正常Quit、DB0/0/1、schema16、integrityok、既有owner/pending锁空闲、pending文件不存在。设置页初始native0/0，后续刷新未完成，不能声称读到新的最终系统队列。旧1130用户配置与两条可恢复删除数据、旧1110及日常/其他任务状态均保护。下一次真实动作必须有新的可执行控制条件与明确交接。15:02跟进只读确认仍无该条件后已删除：ownership轮询不能解除控制安全拒绝，任务仍partial；不会自动重试被拒入口，也不要求用户点击已清理旧卡。
+
+## 第五轮人工系统动作与清理归还（15:51:09）
+
+用户明确愿意实际手动点击受限系统按钮，形成新的可执行条件。架构明确交回空闲Mac-only20分钟，root实际15:24:04接收、原定15:44:04；下一任务明确ACK延长至15:49:04。15:51:09明确归还，超出延期截止125.035秒仅做已开始的正式恢复、权限/样式恢复、最终读回和Quit，无新增场景。回执`build/native_acceptance/trust-actions-20261028-1430-materials/round5-manual-native/ui-handback.json`，canonical当时revision35；phone同期由UX另行归还架构候接，root从未操作，不混入Mac交接。
+
+七条1430通知均有用户实际点击、精确native ID的OS response和业务副本证据；zh/en/ja菜单抽样人工确认，两次真正退出后启动新PID。两条英文窗口焦点运行路径与三条日文后台路径分开记录；日文skip虽然case名有fg，实际后台，不按名称补猜。未调用受拒UserNotificationCenter，也未绕过限制。具体边界见专属验收记录。
+
+先保全七行完整rollback，再通过现有产品RecoveryCoordinator恢复本轮pure空基线。最终DB0/0/1/schema16/integrityok/hashb2，系统实际读回pending/retained0/0，pending为空；原permissionoff/临时样式恢复，最终Quit且Cua读回false。1130含用户配置、旧1110未知数据、daily及其他任务状态均保护。归还后本任务仅只读副本、日志和文档，不再使用UI；下一架构任务须按其真实接收登记新时段，不按15:49或15:51时间自动接管。
