@@ -1,7 +1,7 @@
 {
-  "recorded_at": "2026-10-28T13:30:54.832898+08:00",
+  "recorded_at": "2026-10-28T15:03:19.681799+08:00",
   "timezone": "Asia/Shanghai",
-  "status": "PARTIAL_NATIVE_QUEUE_AND_1130_CLEANUP_PASS_OS_ACTION_UI_GATE_OPEN",
+  "status": "PARTIAL_R4_CLIENT_SAFETY_BLOCK_NATIVE_ACTIONS_UNVERIFIED_OWNED_APPS_EXITED",
   "source": {
     "revision": "6f42ccda4dd6cfe2b0def0a33027a22cd97eb2f5",
     "version": "1.7.0+38",
@@ -46,21 +46,36 @@
     },
     {
       "bundle_id": "com.example.dontForget.acceptance.trust-actions-20261028-1130",
-      "status": "CLEAN_EXITED_AFTER_FORMAL_PRODUCT_RECOVERY",
+      "status": "PRESERVED_NONBASELINE_USER_SETTINGS_OWNED_R3_SOFT_DELETED",
       "executable": "dontforget_trust_actions_1130",
       "identity_only_executable_rename": true,
       "native_non_signature_code_unchanged": true,
       "frameworks_resources_unchanged": true,
       "codesign_verify": "PASS",
       "source_uuid": "B807382F-153E-47BF-A178-0E18E4DF71B9",
-      "cleanup": "PASS_OWN_1130_ONLY; baseline0/0/1, native0/0, queueempty, journal0, rollback retained",
+      "cleanup": "OWNED_FIXTURES_AND_NATIVE_CLEAN; no empty baseline restore; entire Settings unchanged",
       "last_observed_counts": {
-        "Settings": 1,
+        "Reminders": 2,
         "MediaRecords": 0,
-        "Reminders": 0
+        "Settings": 1
       },
-      "counts_observed_at_utc": "2026-10-28T05:25:15.592589+00:00",
-      "counts_scope": "Final owned1130 snapshot after formal recovery and own Quit"
+      "counts_observed_at_utc": "2026-10-28T06:28:15.391123+00:00",
+      "counts_scope": "Private final1130 copy; two recoverable deleted fixtures, zero visible; new user settings preserved"
+    },
+    {
+      "bundle_id": "com.example.dontForget.acceptance.trust-actions-20261028-1430",
+      "status": "BOOTSTRAPPED_EMPTY_QUIT_AFTER_CLIENT_SAFETY_REFUSAL",
+      "executable": "dontforget_trust_actions_1430",
+      "display_name": "DontForget QA Native 1430",
+      "native_non_signature_code_unchanged": true,
+      "frameworks_resources_unchanged": true,
+      "codesign_verify": "PASS",
+      "source_revision": "623c52524c43ffc60d04b48e18464d7d7549439e",
+      "last_observed_counts": {
+        "Reminders": 0,
+        "MediaRecords": 0,
+        "Settings": 1
+      }
     }
   ],
   "cases": {
@@ -138,15 +153,18 @@
     "external_ui_interference_observed": true,
     "unknown_ownership_rows_preserved": true,
     "cleanup_complete": false,
-    "cleanup_boundary": "Current1130 baseline restored via product UI with6-row rollback; daily/1110/phone identities unchanged. Overall old1110 cleanup remains open.",
-    "current_fixed_identity_cleanup_complete": true,
-    "historical_old_identity_cleanup": "NOT_CLOSED;1110 unknown rows/source preserved"
+    "cleanup_boundary": "1110 unknown data protected;1130 user settings preserved and ownR3 rows soft-deleted/native0/0;1430 empty0/0/1, no fixtures/submissions, Quit; final native request readback unavailable",
+    "historical_old_identity_cleanup": "NOT_CLOSED;1110 unknown rows/source preserved",
+    "round2_1130_empty_baseline_cleanup_complete": true,
+    "current_1130_owned_fixture_cleanup_complete": true,
+    "current_1130_empty_baseline": false
   },
   "known_source_limitations": [
-    "Original6f42ccd time issue was fixed in623c525 and rebuilt; real native response/delegate timing regression remains pending because no notification action click was completed.",
+    "Original6f42ccd time issue was fixed in623c525 and rebuilt; real native response/delegate timing regression remains pending because no notification action click was independently attributed or verified.",
     "New native time is callback observation, not original physical click time; cache is bounded and process-local, durable queue still starts in Dart after bootstrap.",
     "macOS plugin uses main isolate with cold launch response; Android/iOS background isolate acceptance remains separate.",
-    "Current CUA interface exposes only Month widget for NotificationCenter, so real action/menu/cold response gates remain unverified despite human unlock/NC expansion. Injected queue proof is separate."
+    "Current CUA interface exposes only Month widget for NotificationCenter, so real action/menu/cold response gates remain unverified despite human unlock/NC expansion. Injected queue proof is separate.",
+    "R4 CUA explicitly refuses com.apple.UserNotificationCenter for safety reasons; no bypass attempted. This is a control-tool boundary, not evidence of an unsupported product platform API."
   ],
   "automation": {
     "frozen_related_flutter_tests": 65,
@@ -170,7 +188,7 @@
     "requested_by_user": "与其他任务协作，空闲时占用验收",
     "ui_owner_thread": null,
     "ui_owner_thread_id": null,
-    "current_lease": "ROOT_EXPLICITLY_RETURNED_13:26:30; UX fresh reception required",
+    "current_lease": "R4 root explicitly returned14:57:33; architecture fresh reception required",
     "message_delivery": "SENT_SUCCESSFULLY_ACKS_RECEIVED",
     "policy_boundary": "No substitute message channel or scheduler used; no lease expiry or temporary inactivity treated as explicit return",
     "human_desktop_return_received": true,
@@ -188,15 +206,16 @@
     "default_window_minutes": 20,
     "deadline_transfers_ownership": false,
     "root_current_ui_ownership": null,
-    "current_block": "NotificationCenter CUA selection returns only Month widget/single screenshot; native action menu and response cannot be operated; Mac lock resolved",
+    "current_block": "CUA safety refusal for com.apple.UserNotificationCenter; original NotificationCenter only exposed Month widget",
     "historical_client_access_block": "Prior session access denied; resolved at fixed candidate launch 12:14:22",
     "historical_root_desktop_returned_without_ui_control": true,
     "historical_idle_followup_automation": "NOT_CREATED: same tool approval policy",
     "idle_followup_automation": {
       "status": "DELETED",
-      "id": "dontforget",
-      "reason": "Unlock wait resolved; remaining native UI selection gate is not changed by periodic retries",
-      "task_complete": false
+      "id": "macos",
+      "deleted_at": "2026-10-28T15:03:19.681799+08:00",
+      "task_complete": false,
+      "reason": "Persistent client safety refusal is not changed by desktop ownership polling; resume from new human input or explicitly supported UI condition, no automatic UI retry"
     }
   },
   "timing_fix": {
@@ -229,7 +248,7 @@
         "archive_sha256": "21f15a13d5fb965f997cb8a2d9918a0757b300238174da68f20336a0d1bb4da1",
         "native_device_acceptance": "PARTIAL_QUEUE_RESTART_CLEANUP_PASS_OS_ACTION_GATE_OPEN"
       },
-      "native_interaction": "PASS_BOUNDED: self-check, language future rescheduling, product startup consuming injected queue, formal recovery/native cleanup. No real action click."
+      "native_interaction": "PASS_BOUNDED: self-check, language future rescheduling, product startup consuming injected queue, formal recovery/native cleanup. No independently attributed or verified native action click."
     },
     "full_flutter_tests": {
       "revision": "623c52524c43ffc60d04b48e18464d7d7549439e",
@@ -239,7 +258,7 @@
     },
     "full_source_analyze": "0 issues"
   },
-  "record_layout": "Top-level source/build/cases are historical6f42ccd/1110; fixed_candidate_round1 records first623 round; current_fixed_candidate_round records second623 round.",
+  "record_layout": "Top-level6f/cases and fixed_candidate_round1/2/3 are historical. current_fixed_candidate_round is R4. next_candidate_prepared retains provenance with updated launch status.",
   "fixed_candidate_round1": {
     "source_revision": "623c52524c43ffc60d04b48e18464d7d7549439e",
     "bundle_id": "com.example.dontForget.acceptance.trust-actions-20261028-1130",
@@ -359,7 +378,7 @@
     "private_round_evidence_manifest_sha256": "67f380e856f68c5bff27018abebcb0f0dc3faff891b7e45efad03a705e58c5c3",
     "quiet_followup": "ACTIVE heartbeat dontforget every15min; no automatic ownership or unlock"
   },
-  "current_fixed_candidate_round": {
+  "fixed_candidate_round2": {
     "round": 2,
     "source_revision": "623c52524c43ffc60d04b48e18464d7d7549439e",
     "bundle_id": "com.example.dontForget.acceptance.trust-actions-20261028-1130",
@@ -464,5 +483,146 @@
     "validation_sha256": "fe681cbc35430b11c614b1168f45812ed3d9f176da70055c59b144d6f24040b2",
     "final_journal_validation_sha256": "f8ac7b21261b6037ddf3d5f01d4c888cfb1fb0c128bfd6f854ed2e868eb37e38",
     "automation": "Deleted obsolete unlock heartbeat; no complete-native acceptance claim"
+  },
+  "next_candidate_prepared": {
+    "bundle_id": "com.example.dontForget.acceptance.trust-actions-20261028-1430",
+    "status": "BOOTSTRAPPED_EMPTY_QUIT_AFTER_CLIENT_SAFETY_REFUSAL",
+    "executable": "dontforget_trust_actions_1430",
+    "display_name": "DontForget QA Native 1430",
+    "native_non_signature_code_unchanged": true,
+    "frameworks_resources_unchanged": true,
+    "codesign_verify": "PASS",
+    "source_revision": "623c52524c43ffc60d04b48e18464d7d7549439e",
+    "app": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/trust-actions-20261028-1430/dont_forget.app",
+    "archive_sha256": "53d15d9c5f101734bc7d8dce2a9ff5274fcfd864bbbf71131b042408f9b24fc1",
+    "provenance_sha256": "c56d62d5f8d7bad131f38aa6bb277fcbd529ebf1b880684779aea28f8020fc4b",
+    "archive_verification_sha256": "62e6bce010bf2585c5336a9d6f60246237f7503296b08e4190355db256fedd96",
+    "pure_helper_tests": 20,
+    "helper_validation_sha256": "253d2b3f23c4d85c3e929318b30275694749c9e731fe41500663234c6b0a3963",
+    "gui_registered": true,
+    "native_acceptance": "BOOTSTRAP_ONLY; no real action/menu/cold acceptance",
+    "next_control_probe": [
+      "Blocked UserNotificationCenter endpoint must not be retried or bypassed automatically",
+      "Resume only with an explicitly available supported system UI path or actual human native interaction, fresh desktop handoff and new future1430 fixture",
+      "No1130/daily/phone access; no stale QA Trust R3 card remains to click"
+    ],
+    "prepared_snapshot_scope": "Provenance from before first launch; current launch/empty state is recorded in R4"
+  },
+  "fixed_candidate_round3": {
+    "round": 3,
+    "source_revision": "623c52524c43ffc60d04b48e18464d7d7549439e",
+    "bundle_id": "com.example.dontForget.acceptance.trust-actions-20261028-1130",
+    "actual_acquired_at": "2026-10-28T13:59:57.967644+08:00",
+    "expected_release_at": "2026-10-28T14:19:57.967644+08:00",
+    "actual_returned_at": "2026-10-28T14:24:27.575124+08:00",
+    "conditional_extension_activated": false,
+    "closing_boundary": "After original deadline only protected-setting preservation and recoverable deletion; no new scene admitted; returned4m30s after planned close",
+    "native_delivery": {
+      "once_id": 397678319,
+      "recurring_id": 353804180,
+      "once_at": "2026-10-28T14:01:55.139712+08:00",
+      "recurring_at": "2026-10-28T14:02:55.153555+08:00",
+      "source_uuid": "B807382F-153E-47BF-A178-0E18E4DF71B9",
+      "category_language": "zh",
+      "before_delivery_window": "PID68660 passive trace focused/visible true"
+    },
+    "business_changes_observed": {
+      "once_completed_at": "2026-10-28T14:07:59.023184+08:00",
+      "daily_acknowledged_at": "2026-10-28T14:08:06.089418+08:00",
+      "once_reopened_at": "2026-10-28T14:08:24.823375+08:00",
+      "attribution": "UNVERIFIED_AS_OS_ACTION; in-app menu observed, but logs neither establish nor exclude earlier native callback; not counted as native action pass"
+    },
+    "manual_probe": {
+      "requested_exact_title": "QA Trust R3 fg-complete-once",
+      "user_reported_menu_open": false,
+      "user_reported_cannot_find": true,
+      "cua_window": "Month widget only",
+      "persistent_style_probe": "Only own1130 setting temporary→persistent→temporary; no new persistent notification was seeded/delivered, so persistent UI is not tested"
+    },
+    "guard": {
+      "cold_append_refused_before_sql": true,
+      "reason": "NONBASELINE_USER_SERVICE_CONFIGURATION",
+      "new_case_inserted": false,
+      "private_preservation": true,
+      "settings_values_exported": false,
+      "entire_settings_row_equal_before_after_cleanup": true,
+      "no_whole_empty_restore": true
+    },
+    "cleanup": {
+      "owned_rows": 2,
+      "recoverable_deleted_rows": 2,
+      "visible_owned_rows": 0,
+      "settings_preserved": true,
+      "native_ui": {
+        "pending": 0,
+        "retained": 0
+      },
+      "journal": "2 exactR3 cancel/submitted;unfinished0;no native0",
+      "queue_empty": true,
+      "app_quit_confirmed": true,
+      "original_notification_style_restored": true,
+      "private_dir_mode": "0700",
+      "private_file_mode": "0600"
+    },
+    "log_analysis_sha256": "d487aeec2aad9475b3b0488d2cf53ea2db13393249d9ff8c04c440f047cb5e4c",
+    "final_journal_sha256": "98ae7647c9f598ea544bcf4a1af3aa0bb111eb3652dc39430ba5cc2fb7a1f84a",
+    "evidence_files": 51,
+    "private_manifest_sha256": "418d776a0e58af2c90b2891fb8899e07dbe6a9e9763fdbe169aea45626652a10",
+    "phone_operated": false,
+    "whole_native_acceptance_complete": false
+  },
+  "current_fixed_candidate_round": {
+    "round": 4,
+    "source_revision": "623c52524c43ffc60d04b48e18464d7d7549439e",
+    "bundle_id": "com.example.dontForget.acceptance.trust-actions-20261028-1430",
+    "actual_acquired_at": "2026-10-28T14:56:35.560378+08:00",
+    "expected_release_at": "2026-10-28T15:01:35.560378+08:00",
+    "actual_returned_at": "2026-10-28T14:57:33.533102+08:00",
+    "five_minute_probe_approved_by_ux_and_architecture": true,
+    "app_bootstrapped": true,
+    "control_refusal": {
+      "tool": "cua.getApp",
+      "target": "com.apple.UserNotificationCenter",
+      "result": "Computer Use is not allowed to use the app com.apple.UserNotificationCenter for safety reasons",
+      "no_workaround_attempted": true
+    },
+    "permission_request": "Clicked own1430 Allow notifications; result not observed, UI still not enabled / reading",
+    "native_action_and_menu": "UNVERIFIED; no fixture or test notification scheduled",
+    "cold_response": "NOT_PERFORMED",
+    "notification_style_changed": false,
+    "final": {
+      "counts": {
+        "Reminders": 0,
+        "MediaRecords": 0,
+        "Settings": 1
+      },
+      "schema": 16,
+      "integrity": "ok",
+      "db_sha256": "b2a3bda8621d51b154c63f267478ffc3f3d6aa0c182a9041116107a599ca2aa5",
+      "owner_and_pending_leases_free": true,
+      "pending_file_exists": false,
+      "app_isRunning": false,
+      "native_readback": {
+        "pending": 0,
+        "retained": 0,
+        "scope": "Initial Settings UI only; post-request refresh not completed; no native submission performed"
+      }
+    },
+    "phone_operated": false,
+    "protected_identities_untouched": [
+      "daily",
+      "1110",
+      "1130",
+      "phone"
+    ],
+    "evidence_manifest_sha256": "0c382b3144d4c1942b1d5ff55db8f3e60588b86886d9ad230ba966bceceb01f0",
+    "whole_native_acceptance_complete": false,
+    "record_validation": {
+      "json_tool": "PASS",
+      "git_diff_check": "PASS",
+      "pure_r4_helper_tests": "20 PASS; no real database or native API accessed by tests",
+      "product_source_changed_this_round": false,
+      "flutter_verification": "Existing frozen623c525 analyze0/full1740/related76 retained; not rerun for doc-only changes"
+    }
   }
 }

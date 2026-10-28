@@ -2,7 +2,7 @@
 
 更新日期：2026-10-28（Asia/Shanghai）。协议已获得参与任务确认并执行首轮；实时归还状态见规范 JSON。写入状态文件本身不授予桌面、设备或客户端访问权限。
 
-## 参与任务与当前状态
+## 参与任务与历史归还快照
 
 | 任务 | Chat ID | 新轮换请求状态 |
 | --- | --- | --- |
@@ -62,7 +62,7 @@ Mac 共享桌面、键盘/指针、通知中心以及 iPhone Mirroring 使用同
 每轮记录任务 ID/标题、实际开始与预计释放时间、精确 bundle/设备、验收目标、下一任务及其确认、实际归还时间、自己创建的通知/数据收尾结果、未保存编辑、需保护资产与证据路径。构建、系统提交、实际送达、动作回调、queue 消费及清理分别登记，不将轮换顺利或 UI 可操作当成产品验收通过。
 
 
-本任务继续仅使用修复后候选：`/Users/james/gitresources/opensources/dontforget/build/native_acceptance/trust-actions-20261028-1130-timing/dont_forget.app`，源码`623c525`，主程序`dontforget_trust_actions_1130`。它已实际运行，自检、三语未来重排、独立注入队列重启及本身份清理已有证据；真实OS动作菜单/回调与退出后原生响应仍开放。后续仍须重新确认UI交接，不能根据曾授权或预计时间取得控制权。
+第一、二轮当时仅使用修复后候选：`/Users/james/gitresources/opensources/dontforget/build/native_acceptance/trust-actions-20261028-1130-timing/dont_forget.app`，源码`623c525`，主程序`dontforget_trust_actions_1130`。其自检、三语未来重排、独立注入队列重启及本身份清理已有证据；第三轮发现用户配置后停止将其作为纯测试库，后续改用1430，见末尾。真实OS动作菜单/回调与退出后原生响应仍开放。后续仍须重新确认UI交接，不能根据曾授权或预计时间取得控制权。
 
 历史上建立的每15分钟锁屏跟进（automation `dontforget`）已删除：手动解锁已完成，当前固定选窗限制无法通过周期重试解决。删除跟进不代表全部原生验收通过，也不授予任何任务UI使用权。
 
@@ -74,3 +74,16 @@ Mac 共享桌面、键盘/指针、通知中心以及 iPhone Mirroring 使用同
 通知任务实际接收13:13:57，预计释放13:33:57，**13:26:30提前明确归还**给UX候接，回执`build/native_acceptance/trust-actions-native-time-623c525-materials/round2-ui-handback.json`。1130经产品正式恢复空基线，DB0/0/1、schema16、integrityok、native pending/retained0/0、queueempty、journal0、repair/cancel0，自身Quit后isRunning=false；六行回退材料保留，旧1110及日常/phone数据未改。归还后不再操作UI，UX仍须登记其新20分钟的实际接收；架构任务随后与UX协调，不因13:33:57到期抢占。
 
 注入队列6动作/3过期/2重复、跨重启旧动作重放和恢复代次轮换后旧队列丢弃已通过。实际OS按钮/三语菜单/前后台回调/退出后原生时间转交仍受Cua只选择“月”widget的限制，不能把注入测试当成这些结果。当前任务仍partial，后续需可选择真实通知卡的控制入口或人工原生动作配合。实时owner与revision以规范JSON为准。
+
+
+## 第三轮与下一纯测试身份
+
+架构13:58:43归还后，通知任务13:59:57接收至原定14:19:57。下位UX对“首个OS菜单已定位”的条件延期未激活；实际14:24:27归还，超出原计划的部分仅安全收尾。回执`build/native_acceptance/trust-actions-native-time-623c525-materials/round3-native-20261028-1400/ui-handback.json`记录应用Quit、native0/0、原通知样式恢复、两条自建记录软删。1130发现非基线用户设置，整行保留，不整库恢复、不再继续seed；含配置本地副本保持私有。原生动作来源未建立，也不以缺少日志否定OS回调。
+
+第三轮归还后的准备快照：新1430独立包与20项纯工具自测当时仅准备完成，未启动。当时下一短探测需当前owner明确归还与root实际接收，先验独立UserNotificationCenter入口/持续系统卡，不能用过去的14:19或14:29推断拥有窗口。phone ownership仍独立。每5分钟安静跟进已重新启用并改为新1430；保护旧1110和含用户配置的1130，禁止按旧空基线自动重置。实时owner、顺序与实际截止仍以规范JSON为准。
+
+## 第四轮短探测与明确归还（14:57:33）
+
+UX14:53:34明确归还后，架构确认通知任务5分钟候接。新1430实际Cua控制成功，root登记14:56:35接收、预计15:01:35归还；14:57:33因`com.apple.UserNotificationCenter`被控制工具以安全原因明确拒绝，提前归还架构候接（canonical当时revision30）。回执`build/native_acceptance/trust-actions-20261028-1430-materials/round4-probe/ui-handback.json`。没有绕过拒绝或继续占用；phone仍UX所有，不随Mac桌面归还。
+
+1430仅正常bootstrap和点击本身份权限请求，结果未观察到；未seed、未排程、未改通知样式。已正常Quit、DB0/0/1、schema16、integrityok、既有owner/pending锁空闲、pending文件不存在。设置页初始native0/0，后续刷新未完成，不能声称读到新的最终系统队列。旧1130用户配置与两条可恢复删除数据、旧1110及日常/其他任务状态均保护。下一次真实动作必须有新的可执行控制条件与明确交接。15:02跟进只读确认仍无该条件后已删除：ownership轮询不能解除控制安全拒绝，任务仍partial；不会自动重试被拒入口，也不要求用户点击已清理旧卡。
