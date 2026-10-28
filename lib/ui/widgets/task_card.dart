@@ -29,7 +29,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
   bool _isDecomposing = false;
   bool _isUpdating = false;
   bool _isDeleting = false;
-  bool _showSubtasks = true;
+  bool _showSubtasks = false;
   bool _showChecklist = false;
   DataGeneration? _checklistGeneration;
   RuntimeRecoveryToken? _checklistToken;
@@ -94,6 +94,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
             baseline: current,
           );
       database.checkGeneration(generation);
+      if (mounted) setState(() => _showSubtasks = true);
       _showMessage(l10n.get('addMicroHabitsAsSubtasks'));
     } catch (_) {
       _showMessage(l10n.get('taskBreakdownFailed'));
@@ -430,7 +431,6 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withValues(alpha: 0.24)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -454,6 +454,16 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final subTasks = task.subTasksView;
     final details = task.details;
+    final summary = task.taskSummary?.trim();
+    final showSummary =
+        summary != null &&
+        summary.isNotEmpty &&
+        summary.replaceAll(RegExp(r'\s+'), ' ') !=
+            task.taskTitle.trim().replaceAll(RegExp(r'\s+'), ' ');
+    final sharedTime =
+        task.eventTime != null &&
+        task.triggerTime != null &&
+        task.eventTime!.isAtSameMomentAs(task.triggerTime!);
     final priorityColor = switch (task.quadrantLevel) {
       1 => isDark ? Colors.red.shade300 : Colors.red.shade700,
       2 => isDark ? Colors.orange.shade300 : Colors.orange.shade800,
@@ -481,11 +491,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     }
     final metadata = <Widget>[
       if (details.project.isNotEmpty)
-        _badge(
-          '${l10n.get('taskProject')}: ${details.project}',
-          Icons.folder_outlined,
-          colors.onSurfaceVariant,
-        ),
+        _badge(details.project, Icons.folder_outlined, colors.onSurfaceVariant),
       for (final tag in details.tags.take(3))
         _badge(tag, Icons.tag, colors.onSurfaceVariant),
       if (details.tags.length > 3)
@@ -502,7 +508,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         ),
       if (task.eventTime != null)
         _badge(
-          '${l10n.get('eventTimeShort')}: ${formatLocalDateTime(task.eventTime!)}',
+          '${l10n.get(sharedTime ? 'taskTimeAndReminder' : 'eventTimeShort')}: ${formatLocalDateTime(task.eventTime!)}',
           Icons.event_outlined,
           colors.onSurfaceVariant,
         ),
@@ -516,11 +522,11 @@ class _TaskCardState extends ConsumerState<TaskCard> {
           !task.isCompleted &&
           task.quadrantLevel == 1)
         _badge(
-          l10n.get('promotedToQ1Badge'),
+          l10n.get('priorityRaisedBadge'),
           Icons.bolt_outlined,
           colors.error,
         ),
-      if (task.triggerTime != null)
+      if (task.triggerTime != null && !sharedTime)
         _badge(
           '${l10n.get('reminderTimeShort')}: ${formatLocalDateTime(task.triggerTime!)}',
           Icons.access_time,
@@ -536,6 +542,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       if (!task.isCompleted && task.isOverdue)
         _badge(l10n.get('overdue'), Icons.schedule_rounded, colors.error),
       if (!task.isCompleted &&
+          !sharedTime &&
           task.eventTime != null &&
           task.eventTime!.isBefore(DateTime.now()))
         _badge(
@@ -564,11 +571,6 @@ class _TaskCardState extends ConsumerState<TaskCard> {
           colors.primary,
         ),
     ];
-    final showBreakdown =
-        subTasks.isEmpty &&
-        details.checklist.isEmpty &&
-        !task.isCompleted &&
-        (task.quadrantLevel == 2 || task.isStagnant(hours: 24));
 
     return Dismissible(
       key: ValueKey(task.id),
@@ -594,12 +596,12 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         key: ValueKey('task-surface-${task.id}'),
         margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
-          color: task.isCompleted ? colors.surfaceContainerLow : colors.surface,
+          color: task.isCompleted
+              ? colors.surfaceContainerLowest
+              : colors.surfaceContainerLow,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: task.isCompleted
-                ? colors.outlineVariant
-                : priorityColor.withValues(alpha: 0.3),
+            color: colors.outlineVariant.withValues(alpha: 0.65),
           ),
         ),
         child: InkWell(
@@ -608,16 +610,16 @@ class _TaskCardState extends ConsumerState<TaskCard> {
           onSecondaryTapUp: (details) =>
               _showContextMenu(details.globalPosition),
           child: Padding(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.only(top: 16, right: 8),
+                      padding: const EdgeInsets.only(right: 8),
                       child: Icon(
                         Icons.circle,
                         size: 6,
@@ -627,24 +629,21 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                       ),
                     ),
                     Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 7),
-                        child: Text(
-                          task.taskTitle,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            height: 1.35,
-                            color: task.isCompleted
-                                ? colors.onSurfaceVariant
-                                : colors.onSurface,
-                            decoration: task.isCompleted
-                                ? TextDecoration.lineThrough
-                                : null,
-                          ),
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
+                      child: Text(
+                        task.taskTitle,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          height: 1.35,
+                          color: task.isCompleted
+                              ? colors.onSurfaceVariant
+                              : colors.onSurface,
+                          decoration: task.isCompleted
+                              ? TextDecoration.lineThrough
+                              : null,
                         ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     SizedBox(
@@ -687,7 +686,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                     ),
                   ],
                 ),
-                if (task.taskSummary?.isNotEmpty ?? false)
+                if (showSummary)
                   Padding(
                     padding: const EdgeInsets.only(left: 14, top: 2),
                     child: Text(
@@ -910,27 +909,10 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                           ],
                         ),
                       ),
-                ] else if (showBreakdown)
-                  TextButton.icon(
-                    onPressed: _isDecomposing || _isBusy
-                        ? null
-                        : _decomposeToMicroHabits,
-                    style: TextButton.styleFrom(
-                      minimumSize: const Size(48, 48),
-                      foregroundColor: colors.primary,
-                    ),
-                    icon: _isDecomposing
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.auto_awesome_outlined, size: 18),
-                    label: Text(
-                      l10n.get(
-                        _isDecomposing ? 'breakdownLoading' : 'breakdownHabits',
-                      ),
-                    ),
+                ],
+                if (_isDecomposing)
+                  LinearProgressIndicator(
+                    semanticsLabel: l10n.get('breakdownLoading'),
                   ),
               ],
             ),

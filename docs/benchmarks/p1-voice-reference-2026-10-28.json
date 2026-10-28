@@ -1,0 +1,147 @@
+{
+  "phase": "P1_VOICE_REFERENCE_AND_COMPOSER_CENTERING",
+  "status": "SOURCE_AND_BUILDS_PASS_NATIVE_ACCEPTANCE_PENDING",
+  "at": "2026-10-28T14:23:50.204527",
+  "functional_source": "f239b3a3ab0117e7b9eaca4525a9208e0a4b5a1c",
+  "local_main_integration": {
+    "at": "2026-10-28T14:01:11.221049",
+    "target": "local main",
+    "before": "7ae002bab1c92a9ec8e16a0c82407a852e78270e",
+    "integration_commit": "50d612f4d9530b3a2c1fc060447fa2d7809dbfd2",
+    "functional_commit": "f239b3a3ab0117e7b9eaca4525a9208e0a4b5a1c",
+    "merge": "FAST_FORWARD_AFTER_MERGING_COMMITTED_ANDROID_PERMISSION_FIX",
+    "unrelated_files_checked": 62,
+    "hashes_and_modes_preserved": true,
+    "pushed": false
+  },
+  "schema": 16,
+  "tests": {
+    "flutter_full": 1824,
+    "flutter_focused": 79,
+    "python": 126,
+    "static_analysis_issues": 0,
+    "real_font_geometry_variants": 2,
+    "input_rendered_cases": 54,
+    "voice_and_tools_render_tests": 11
+  },
+  "ios_build": {
+    "at": "2026-10-28T14:02:06.239071",
+    "source_revision": "f239b3a3ab0117e7b9eaca4525a9208e0a4b5a1c",
+    "schema": 16,
+    "ios": {
+      "host": {
+        "bundle": "com.yarnway.dontforget.acceptance.p1current28",
+        "version": "1.7.0",
+        "build": "41",
+        "strict_signature": "PASS",
+        "architectures": "arm64",
+        "team": "23J2CXYK23",
+        "application_identifier": "23J2CXYK23.com.yarnway.dontforget.acceptance.p1current28",
+        "keychain_access_groups": [],
+        "development": true,
+        "device_in_profile": true,
+        "profile_uuid": "98c9cafd-a885-4212-9ca6-bbc14f713611",
+        "profile_expiration_utc": "2026-11-04T01:34:47Z",
+        "binary_sha256": "a385d299b9e5688818c115cfd5b3522af7e9c87e589a416b19f90c9acc80289e",
+        "url_schemes": [
+          "dontforget-p1current28"
+        ]
+      },
+      "extension": {
+        "bundle": "com.yarnway.dontforget.acceptance.p1current28.ReminderActivity",
+        "version": "1.7.0",
+        "build": "41",
+        "strict_signature": "PASS",
+        "architectures": "arm64",
+        "team": "23J2CXYK23",
+        "application_identifier": "23J2CXYK23.com.yarnway.dontforget.acceptance.p1current28.ReminderActivity",
+        "keychain_access_groups": null,
+        "development": true,
+        "device_in_profile": true,
+        "profile_uuid": "249a8c7f-66e4-4121-8ffe-725521584b02",
+        "profile_expiration_utc": "2026-11-04T01:34:45Z",
+        "binary_sha256": "9b35424b7d8dbdf7fbdbcce903cd0e3553c8b266f590d54526f810917055adc1",
+        "url_schemes": []
+      }
+    },
+    "installed_or_launched": false,
+    "device_runtime": "OLD_38; QA40_NOT_YET_CLEANED"
+  },
+  "platform_builds": {
+    "at": "2026-10-28T14:06:23.845673",
+    "source_revision": "f239b3a3ab0117e7b9eaca4525a9208e0a4b5a1c",
+    "builds": {
+      "macos": {
+        "bundle": "com.example.dontForget",
+        "version": "1.7.0",
+        "build": "41",
+        "platform": "macosx",
+        "architectures": "arm64",
+        "binary_sha256": "e5799ece564f937dfdb7ccde04411411bd819dc3e6fb26d4c1136ca7dfea932f",
+        "installed_or_launched": false
+      },
+      "ios_simulator": {
+        "bundle": "com.yarnway.dontforget.acceptance.p1current28",
+        "version": "1.7.0",
+        "build": "41",
+        "platform": "iphonesimulator",
+        "architectures": "x86_64 arm64",
+        "binary_sha256": "b7fdcaac50aa49cbc179aaa7bfa9adc9db8c5b92e43f913c4c0a8573b3664d60",
+        "installed_or_launched": false
+      },
+      "ios_simulator_extension": {
+        "bundle": "com.yarnway.dontforget.acceptance.p1current28.ReminderActivity",
+        "version": "1.7.0",
+        "build": "41",
+        "platform": "iphonesimulator",
+        "architectures": "x86_64 arm64",
+        "binary_sha256": "797ce5b70c04cde3bc8df97dd2fbfacc5adf27278a3d5c286ca0932be2cc8d16",
+        "installed_or_launched": false
+      }
+    },
+    "macos_deep_strict_signature": "PASS"
+  },
+  "preupgrade_clone": {
+    "source_revision": "f239b3a3ab0117e7b9eaca4525a9208e0a4b5a1c",
+    "scope": "LOCAL_CLONED_DATABASE_AND_MEMORY_CREDENTIAL_STORE_ONLY",
+    "device_access": false,
+    "system_keychain_access": false,
+    "native_calls": false,
+    "schema": 16,
+    "preserved_tasks": 8,
+    "preserved_media": 2,
+    "task_rows_equal": true,
+    "media_rows_equal": true,
+    "runtime_credentials_equal": true,
+    "legacy_sql_credentials_migrated_in_clone": true,
+    "future_new_only": 56,
+    "future_preserved_snapshot": 2,
+    "future_combined_snapshot": 58,
+    "application_budget": 50,
+    "theoretical_deferred": 8,
+    "native_submission_or_delivery": "NOT_TESTED",
+    "qa40_product_cleanup": "NOT_TESTED_OR_PERFORMED"
+  },
+  "mac_isolated_identity": "com.example.dontForget.acceptance.p1-voice-ref-20261028-41",
+  "installed_or_launched": false,
+  "current_phone_build": "38",
+  "qa40_cleanup": "NOT_PERFORMED; CUA noWindowsAvailable",
+  "runtime_original_preservation": "13:46 read-only live copy: original7 rows and2 media/audio hashes identical",
+  "pending": [
+    "Exact QA40 recoverable UI deletion and independent readback",
+    "New iPhone native UI and physical microphone leading-word acceptance",
+    "Actual notification capacity/delivery/cold/reopen matrix and scoped cleanup"
+  ],
+  "subsequent_home_layout_changes": "Separate source and package; not covered by this +41 evidence",
+  "pushed": false,
+  "raw_evidence": {
+    "full-release-source.log": "9fa3bb43908f2614355793e950b450b620240861e803f7749257de016b281efa",
+    "focused-release-source.log": "10019ef3113f81ba3271c3febb88f6bd60de43b4d9e720bf23aa5815986ad48a",
+    "analyze-release-source.log": "bd68f779d4b5c1b14c28ab0c2595532e915c024e1bf2c023972fb0a008edec07",
+    "python-tests.log": "6738eaed14a7cc9c7dfe56216672e2bb3a71bb84b4f6dc6fa83def4cdf47b8e7",
+    "real-font-centering.log": "a38aba4e6eff40a8b9ac91d718b860dff99bcbbd338dcaded65e2f123e4d6084",
+    "input-render-confirmed.log": "4f673aa06b09a226a4659a519c5d86033a555314efb179f0f2cb4edf9da3d319",
+    "render-combined-final.log": "5bed8c9b0b676d3c128bed8e73a93498e7507eed66f98d2ccc115daaaf2cd93f",
+    "preupgrade-compatibility-v2.log": "d230eb2600208bae2f594d22e42d27d8e464d4a67284a43ea9900fb8d36488eb"
+  }
+}

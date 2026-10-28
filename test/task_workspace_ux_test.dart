@@ -1294,6 +1294,7 @@ void main() {
       ),
     );
     final button = find.byKey(const ValueKey('subtasks-keyboard'));
+    expect(find.text('Subtask contents'), findsNothing);
     Focus.of(
       tester.element(
         find.descendant(of: button, matching: find.byType(Text)).first,
@@ -1302,7 +1303,7 @@ void main() {
     await tester.pump();
     await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pump();
-    expect(find.text('Subtask contents'), findsNothing);
+    expect(find.text('Subtask contents'), findsOneWidget);
     expect(find.bySemanticsLabel('标为已完成: Keyboard task'), findsOneWidget);
     final menu = find.byKey(const ValueKey('actions-keyboard'));
     Focus.of(
@@ -1318,6 +1319,42 @@ void main() {
     addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets(
+    'compact task card hides repeated summary and keeps secondary actions available',
+    (tester) async {
+      final time = DateTime.now().add(const Duration(days: 1));
+      await show(
+        tester,
+        TaskCard(
+          task: Reminder(
+            id: 'compact',
+            taskTitle: 'Review the plan',
+            taskSummary: 'Review  the plan',
+            quadrantLevel: 2,
+            eventTime: time,
+            triggerTime: time,
+            subTasks: '["A secondary step"]',
+          ),
+          onPlayMedia: () {},
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Review the plan'), findsOneWidget);
+      expect(find.text('Review  the plan'), findsNothing);
+      expect(find.text('A secondary step'), findsNothing);
+      expect(find.textContaining('截止与提醒:'), findsOneWidget);
+      expect(find.textContaining('提醒:'), findsOneWidget);
+      expect(find.text('5分钟微习惯拆解'), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('subtasks-compact')));
+      await tester.pumpAndSettle();
+      expect(find.text('A secondary step'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('actions-compact')));
+      await tester.pumpAndSettle();
+      expect(find.text('5分钟微习惯拆解'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets(
     'completion write failure keeps the task open and does not cancel notifications',

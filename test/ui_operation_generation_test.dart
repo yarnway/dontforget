@@ -310,9 +310,16 @@ void main() {
     'micro-habit response from before maintenance cannot change restored task',
     (tester) async {
       await show(tester, TaskCard(task: task, onPlayMedia: () {}));
+      final decompose =
+          tester
+                  .widget<PopupMenuButton<String>>(
+                    find.byKey(ValueKey('actions-${task.id}')),
+                  )
+                  .onSelected
+              as Future<void> Function(String);
       late Future<void> pending;
       await tester.runAsync(() async {
-        pending = command(tester, '5-Min Micro Habits')();
+        pending = decompose('decompose');
         await llm.started.future;
         // This must finish while the network response remains pending.
         await advanceGeneration().timeout(const Duration(seconds: 5));

@@ -56,7 +56,7 @@ void main() {
       expect(
         find.descendant(
           of: find.byKey(ValueKey('promotion-card-$index')),
-          matching: find.text('⚡ 动态跃迁至 Q1'),
+          matching: find.text('优先处理'),
         ),
         scenarios[index].visible ? findsOneWidget : findsNothing,
       );

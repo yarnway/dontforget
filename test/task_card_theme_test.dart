@@ -83,8 +83,8 @@ void main() {
         tester.element(find.byType(TaskCard).first),
       ).colorScheme;
       for (final entry in [
-        ('active-theme', 'Active task', colors.surface),
-        ('done-theme', 'Completed task', colors.surfaceContainerLow),
+        ('active-theme', 'Active task', colors.surfaceContainerLow),
+        ('done-theme', 'Completed task', colors.surfaceContainerLowest),
       ]) {
         final surface = find.byKey(ValueKey('task-surface-${entry.$1}'));
         final painted =
