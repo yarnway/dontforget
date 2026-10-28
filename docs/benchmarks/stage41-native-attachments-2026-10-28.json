@@ -1,13 +1,7 @@
 {
   "date": "2026-10-28",
-  "source_version": "1.7.0+40",
-  "latest_pushed_commit": "7ae002bab1c92a9ec8e16a0c82407a852e78270e",
-  "ci": {
-    "run_id": 40641204861,
-    "status": "completed",
-    "conclusion": "success",
-    "quality_and_platform_jobs_passed": 6
-  },
+  "source_version": "1.7.0+42",
+  "latest_pushed_commit": "972fbbd80dba39ae7353723164c33e77ff3cb7be",
   "source_review": {
     "commit": "3cddb2b105c66a6722b480c4aa04ea254b272b13",
     "source_hashes": 523,
@@ -49,7 +43,7 @@
     "asset_sha256": "416efd77cde932d42ef34168da24dd428a495b1f4f34bbbd125a18d2add186a2",
     "qa_deleted_at": "2026-10-28T13:56:55.577151",
     "os_reminders_added": 0,
-    "pending": "Plus40 fresh package upgrade and iOS attachment acceptance still pending; no phone acquired",
+    "pending": "iOS native attachment loop and final integrated version acceptance remain pending",
     "evidence_hashes": {
       "mac39-after-cleanup.sqlite": "54ff90ec10ce9871a5add54d3eba07e4d874b6f8b95048280a930c6365fff0f6",
       "mac39-after-quit.sqlite": "005be3e5493c9f218cddb790616b14b4880cb05b390a6e6c19ee8fe8b9c48ad0",
@@ -59,15 +53,35 @@
   },
   "phone": {
     "ui_acquired": false,
-    "qa40_cleanup": "PENDING",
+    "qa40_cleanup": "PRODUCT_SOFT_DELETE_AND_ORIGINAL7_MEDIA2_SETTINGS_UNCHANGED",
     "new_package_installed": false,
     "notifications_hot_cold": "PENDING",
     "japanese_soft_keyboard": "PENDING",
     "real_recording_gestures": "PENDING",
-    "live_activity_sync": "PENDING"
+    "live_activity_sync": "PENDING",
+    "qa40_native_queue_cleanup": "PENDING_SEPARATE_READBACK",
+    "qa40_deleted_at": "2026-10-28T14:36:28.943692",
+    "independent_ui_candidate_source": "e0045a0fb50f2889422ef4e7e2151742fd3f934f",
+    "qa40_cancel_native_id": 1260435943,
+    "qa40_journal_cancel": "submitted",
+    "native_readback": {
+      "pending": 2,
+      "retained": 0,
+      "cancel_repairs": 0,
+      "qa40_absence_by_exact_native_id": "NOT_INDEPENDENTLY_OBSERVED",
+      "original_future_requests": "PROTECTED"
+    },
+    "ownership": "UX_HUMAN_MIC_ACCEPTANCE_PENDING; not handed to this task",
+    "connection": {
+      "observed_at": "2026-10-28T15:04:05.468042+08:00",
+      "transport": "wired",
+      "paired": true,
+      "connected": true,
+      "developer_mode": "enabled"
+    }
   },
   "cleanup": {
-    "at": "2026-10-28T14:11:27.638090+08:00",
+    "at": "2026-10-28T14:17:18.573424+08:00",
     "source_commit": "489920fd3c68babc6db53142799f1a11cc33de10",
     "removed": [
       {
@@ -89,9 +103,13 @@
       {
         "path": "build/native_acceptance/study-stage41-materials/ios40-outer.zip",
         "kib": 11280
+      },
+      {
+        "path": "build/native_acceptance/study-stage41-materials/macos40-outer.zip",
+        "kib": 25616
       }
     ],
-    "total_kib": 277572,
+    "total_kib": 303188,
     "kept_evidence_files_verified": 36,
     "prior_packages_snapshots_other_tasks": "UNTOUCHED"
   },
@@ -123,5 +141,142 @@
     "unchanged_resources": 62,
     "archive_entries_equal": 80,
     "installed": false
+  },
+  "ci_plus40": {
+    "run_id": 40641204861,
+    "status": "completed",
+    "conclusion": "success",
+    "quality_and_platform_jobs_passed": 6
+  },
+  "ci": {
+    "source": "972fbbd80dba39ae7353723164c33e77ff3cb7be",
+    "run_id": 40646057227,
+    "status": "in_progress",
+    "previous_failure_run": 40642641265,
+    "quality": "success",
+    "platforms": "in_progress",
+    "flutter_passed": 1948,
+    "flutter_platform_skipped": 2,
+    "python_passed": 125,
+    "python_platform_skipped": 1,
+    "quality_log_sha256": "51c8b186c7705ffa2389f855cffd1277530b8fb308d6c34277585e2e1ee41db6"
+  },
+  "mac40_upgrade": {
+    "at": "2026-10-28T14:31:56.999901+08:00",
+    "source": "7ae002bab1c92a9ec8e16a0c82407a852e78270e",
+    "version": "1.7.0+40",
+    "same_reminders_and_media": {
+      "Reminders": true,
+      "MediaRecords": true
+    },
+    "only_expected_credential_columns_changed": [
+      "api_key",
+      "ai_profiles_json"
+    ],
+    "sql_contains_reference_and_redacted_profile_keys": true,
+    "system_credential_ui_after_upgrade": "SECURED",
+    "system_credential_ui_after_reload": "SECURED",
+    "system_credential_ui_after_reopen": "SECURED",
+    "new_tasks_created": 0,
+    "normal_exit_confirmed": true,
+    "db_sha256": "6d3a3304a7e67fdafc3c25ce185294d754a1fe949e05719adf07e3ddc850f970",
+    "native_attachment_picker_repeated_on_40": false,
+    "phone_used": false
+  },
+  "recovery_ci_fix": {
+    "at": "2026-10-28T14:47:24.847707+08:00",
+    "base": "43baf08f153e2c0b57bd933fc88894c3afee9892",
+    "reproduced_before": 2,
+    "full_passed": 1950,
+    "targeted_final_passed": 21,
+    "analysis_issues": 0,
+    "cause": "Lazy credential status child captured runtime while restore gate paused; database capture also rejected during maintenance",
+    "fix": "Children born while paused keep null runtime/data tokens and disabled actions until remounted; late results do not update stale UI",
+    "private_evidence_sha256": {
+      "recovery-repro-1.log": "5aef0389bd5e0dd02ad53d43fe9ba4e2decf59adbf42553ef06b8dafd9f48fa6",
+      "recovery-regression-before.log": "bdee22c20bfca990937f93ec8b3636e302d34dcf750b8fea856022a33cbd614a",
+      "recovery-regression-after.log": "ca371f6b043dcf2a392527ff2d21464080e9a841d2b794377c97270924a14669",
+      "recovery-full-plus42.log": "369bdaa8742757bc5443aabe8f065f99c6b6763022573b966d3f887f0354eab9",
+      "recovery-final-targeted.log": "189de237eaed0be6de34343fad0cb093de46ab50213e29c9fa41c2d5f4f7ca7d",
+      "recovery-final-analyze.log": "664faf5f17302e58a78a08142cf28b2f3324eb558eea7fb0b0040e9355c853d2",
+      "recovery-validation-source.json": "3566fdb81f90f7e2156754f9a88f3ff29d4aeb2daaed9a35bd7e7159c962c835"
+    }
+  },
+  "combined_plus42_review": {
+    "at": "2026-10-28T14:44:41.260972+08:00",
+    "source": "43baf08f153e2c0b57bd933fc88894c3afee9892",
+    "files_verified": 548,
+    "mismatches": [],
+    "evidence": {
+      "flutter-full-43baf08.log": "f5c6c4086a38ae7794679ad8a46894786fd2e44c280ae196202da272dd43b794",
+      "python-full-43baf08.log": "d67b157d1ae4ac3810b648ca266dae326ace7366bf2f5553def70b0efe23492d",
+      "analyze-43baf08.log": "fdaaf05ad4e7f8094985dcae0f1e7614bfc109c16627694346e3656cb0f02ced",
+      "native-builds-43baf08.json": "c2ea162f60689cf70a0ffd1c539762932c3509d30a83d50275e5af928154e573",
+      "macos-build-43baf08.log": "1da963a6b5b35fb9b5a1f067f67de1df390d675ce9205d97709a1b74b317383a",
+      "ios-simulator-build-43baf08.log": "27aa58a0e208cf02a705dc56527a5b05e59cf5a72d30a76688d6f21843399d52"
+    },
+    "flutter": 1948,
+    "python": 126,
+    "analyze_issues": 0,
+    "native": "COMPILE_ONLY_MACOS_AND_IOS_SIMULATOR_NO_INSTALL"
+  },
+  "additional_cache_cleanup": {
+    "at": "2026-10-28T14:52:17.857436+08:00",
+    "removed": [
+      {
+        "path": "build/native_acceptance/trust-actions-native-time-623c525-source/build/macos",
+        "kib": 1589600,
+        "lsof_exit": 1,
+        "open_files": false,
+        "lsof_stderr": ""
+      },
+      {
+        "path": "build/native_acceptance/trust-actions-native-time-623c525-source/build/test_cache",
+        "kib": 62628,
+        "lsof_exit": 1,
+        "open_files": false,
+        "lsof_stderr": ""
+      },
+      {
+        "path": "build/native_acceptance/trust-actions-20261028-1110-source/build/macos",
+        "kib": 1588420,
+        "lsof_exit": 1,
+        "open_files": false,
+        "lsof_stderr": ""
+      },
+      {
+        "path": "build/native_acceptance/trust-actions-20261028-1110-source/build/test_cache",
+        "kib": 62516,
+        "lsof_exit": 1,
+        "open_files": false,
+        "lsof_stderr": ""
+      }
+    ],
+    "released_kib": 3303164,
+    "retained_files_verified": 2306,
+    "retained_hashes_unchanged": true,
+    "protected": "all candidates, material snapshots, source outside selected build caches, .dart_tool and containers"
+  },
+  "phase_total_released_kib": 3728316,
+  "recovery_cache_cleanup": {
+    "at": "2026-10-28T14:56:47.809703+08:00",
+    "removed": "build/recovery-stage41-validation",
+    "kib": 121964,
+    "source_files_verified": 548,
+    "evidence_files_unchanged": 77,
+    "source_commit": "972fbbd80dba39ae7353723164c33e77ff3cb7be"
+  },
+  "final_plus42_review": {
+    "at": "2026-10-28T15:01:15.930580+08:00",
+    "source": "7777956b930963ff823dce0657a982f5a3ebadac",
+    "source_files_verified": 548,
+    "log_hashes_verified": 10,
+    "mismatches": [],
+    "flutter": 1950,
+    "python": 126,
+    "analysis_issues": 0,
+    "apple": "MACOS_AND_IOS_SIMULATOR_UNSIGNED_COMPILE_ONLY",
+    "native_phone": "NOT_PERFORMED",
+    "separate_test_build_directories": true
   }
 }
