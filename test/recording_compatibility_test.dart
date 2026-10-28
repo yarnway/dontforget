@@ -83,6 +83,8 @@ void main() {
   bool produceAudio = false;
   int captureMillis = 2000;
   late _Speech speech;
+  Completer<bool>? permissionReply;
+  Completer<void>? nativeStartReply;
 
   test(
     'background completion keeps feedback until it is explicitly cleared',
@@ -103,6 +105,8 @@ void main() {
     captureMillis = 2000;
     recordingPath = null;
     speech = _Speech();
+    permissionReply = null;
+    nativeStartReply = null;
     // path_provider may return a bundle-specific macOS cache path that does
     // not exist yet. The native recorder does not create parent directories.
     temporaryPath = '${directory.path}/missing/cache';
@@ -118,13 +122,16 @@ void main() {
         case 'create':
           return null;
         case 'hasPermission':
-          return permitted;
+          return permissionReply == null
+              ? permitted
+              : await permissionReply!.future;
         case 'start':
           final path = (call.arguments as Map)['path'] as String;
           if (!await File(path).parent.exists()) {
             throw PlatformException(code: 'missing_recording_directory');
           }
           if (failStart) throw PlatformException(code: 'device_unavailable');
+          if (nativeStartReply != null) await nativeStartReply!.future;
           recordingPath = path;
           return null;
         case 'stop':
@@ -170,6 +177,49 @@ void main() {
     messenger.setMockMethodCallHandler(paths, null);
     await directory.delete(recursive: true);
   });
+
+  test(
+    'recording readiness waits for the native mic and deduplicates starts',
+    () async {
+      permissionReply = Completer<bool>();
+      nativeStartReply = Completer<void>();
+      final home = container.read(homeControllerProvider.notifier);
+      final first = home.startRecording();
+      final second = home.startRecording();
+      expect(identical(first, second), isTrue);
+      expect(home.state.isPreparingRecording, isTrue);
+      expect(home.state.isRecording, isFalse);
+      permissionReply!.complete(true);
+      for (var i = 0; i < 100 && !calls.any((c) => c.method == 'start'); i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 2));
+      }
+      expect(calls.where((c) => c.method == 'hasPermission').length, 1);
+      expect(calls.where((c) => c.method == 'start').length, 1);
+      expect(home.state.isPreparingRecording, isTrue);
+      expect(home.state.isRecording, isFalse);
+      nativeStartReply!.complete();
+      expect(await first, isTrue);
+      expect(await second, isTrue);
+      expect(home.state.isPreparingRecording, isFalse);
+      expect(home.state.isRecording, isTrue);
+      expect(await home.cancelRecording(), isTrue);
+      expect(home.state.isRecording, isFalse);
+      expect(container.read(remindersProvider), isEmpty);
+    },
+  );
+
+  test(
+    'denied mic resets readiness without starting or saving audio',
+    () async {
+      permitted = false;
+      final home = container.read(homeControllerProvider.notifier);
+      expect(await home.startRecording(), isFalse);
+      expect(home.state.isPreparingRecording, isFalse);
+      expect(home.state.isRecording, isFalse);
+      expect(calls.where((c) => c.method == 'start'), isEmpty);
+      expect(container.read(remindersProvider), isEmpty);
+    },
+  );
 
   test(
     'recording uses explicit AAC config and stops without inventing an audio file',

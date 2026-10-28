@@ -398,18 +398,21 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     });
   }
 
-  Future<void> _startLongPressRecording(LongPressStartDetails details) async {
+  Future<void> _startLongPressRecording(LongPressStartDetails details) =>
+      _beginHeldRecording(details.globalPosition);
+
+  Future<void> _beginHeldRecording(Offset origin) async {
     if (!_current) return;
     if ((!_voiceMode && _textController.text.isNotEmpty) ||
         _isTranscribing ||
         _pendingRecordingStart != null ||
-        ref.read(homeControllerProvider).isRecording) {
+        ref.read(homeControllerProvider).isRecording ||
+        ref.read(homeControllerProvider).isPreparingRecording) {
       return;
     }
     _focusNode.unfocus();
-    HapticFeedback.heavyImpact();
     setState(() {
-      _voiceOrigin = details.globalPosition;
+      _voiceOrigin = origin;
       _voiceGesture.reset();
       _voiceAction = VoiceReleaseAction.save;
       _isLongPressRecording = true;
@@ -419,7 +422,13 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     final operation = controller.startRecording();
     _pendingRecordingStart = operation;
     final started = await operation;
-    if (mounted && !started) setState(() => _isLongPressRecording = false);
+    if (!mounted || !identical(_pendingRecordingStart, operation)) return;
+    if (!started) {
+      setState(() => _isLongPressRecording = false);
+    } else if (_isLongPressRecording && !_isFinishingLongPress) {
+      // The ready feedback must follow native start, never precede the mic.
+      unawaited(HapticFeedback.heavyImpact());
+    }
   }
 
   Future<void> _finishLongPressRecording() async {
@@ -663,6 +672,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         !_isTranscribing;
     final captureBusy =
         isRecording ||
+        homeState.isPreparingRecording ||
         _isTranscribing ||
         _pendingRecordingStart != null ||
         _submitting ||
@@ -688,6 +698,18 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         }
       });
     }
+    final inputStyle = TextStyle(
+      fontSize: isMobile ? 16 : 14,
+      height: 1.45,
+      leadingDistribution: TextLeadingDistribution.even,
+    );
+    final inputHint = l10n.get(
+      _focusNode.hasFocus
+          ? 'inputTypingHint'
+          : isLocalMode
+          ? 'localInputHint'
+          : 'inputHint',
+    );
     final composer = SafeArea(
       top: false,
       child: Container(
@@ -891,10 +913,16 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                             : Theme.of(context).colorScheme.onSurfaceVariant,
                         size: 22,
                       ),
-                      tooltip: isRecording
-                          ? l10n.get('recordingClickStop')
-                          : l10n.get('recordingStart'),
-                      onPressed: _pendingRecordingStart != null
+                      tooltip: l10n.get(
+                        homeState.isPreparingRecording
+                            ? 'voicePreparing'
+                            : isRecording
+                            ? 'recordingClickStop'
+                            : 'recordingStart',
+                      ),
+                      onPressed:
+                          _pendingRecordingStart != null ||
+                              homeState.isPreparingRecording
                           ? null
                           : () => ref
                                 .read(homeControllerProvider.notifier)
@@ -921,6 +949,14 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                     onLongPressStart: idleVoiceTarget
                         ? _startLongPressRecording
                         : null,
+                    // In explicit voice mode begin mic startup while the hold
+                    // recognizer waits. A tap, drag cancellation or
+                    // permission-delayed release always discards this capture.
+                    // Ordinary text taps never open the microphone.
+                    onLongPressDown: idleVoiceTarget && voiceMode
+                        ? (details) =>
+                              _beginHeldRecording(details.globalPosition)
+                        : null,
                     onLongPressMoveUpdate: idleVoiceTarget
                         ? _moveLongPress
                         : null,
@@ -933,7 +969,10 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                     onSecondaryTapDown: idleVoiceTarget && !voiceMode
                         ? (_) => _openEmptyEditMenu()
                         : null,
-                    child: isRecording || _isTranscribing
+                    child:
+                        isRecording ||
+                            homeState.isPreparingRecording ||
+                            _isTranscribing
                         ? ConstrainedBox(
                             constraints: BoxConstraints(
                               minHeight: isMobile ? 48 : 0,
@@ -954,6 +993,8 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                                     l10n.get(
                                       _isTranscribing
                                           ? 'voiceTranscribing'
+                                          : homeState.isPreparingRecording
+                                          ? 'voicePreparing'
                                           : _isLongPressRecording
                                           ? !homeState.isRecording
                                                 ? 'voicePreparing'
@@ -1035,68 +1076,87 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                                   shift: true,
                                 ): _insertLineBreak,
                               },
-                              child: TextField(
-                                controller: _textController,
-                                focusNode: _focusNode,
-                                contextMenuBuilder: buildEditableTextMenu,
-                                minLines: 1,
-                                maxLines: 4,
-                                textAlign: TextAlign.center,
-                                textAlignVertical: TextAlignVertical.center,
-                                keyboardType: TextInputType.multiline,
-                                textInputAction: enterSends
-                                    ? TextInputAction.send
-                                    : TextInputAction.newline,
-                                style: TextStyle(
-                                  fontSize: isMobile ? 16 : 14,
-                                  height: 1.45,
+                              child: Container(
+                                key: const ValueKey('composer-text-frame'),
+                                alignment: Alignment.center,
+                                constraints: const BoxConstraints(
+                                  minHeight: 48,
                                 ),
-                                decoration: InputDecoration(
-                                  hintText: l10n.get(
-                                    _focusNode.hasFocus
-                                        ? 'inputTypingHint'
-                                        : isLocalMode
-                                        ? 'localInputHint'
-                                        : 'inputHint',
-                                  ),
-                                  hintMaxLines: 2,
-                                  hintStyle: TextStyle(
-                                    fontSize: 14,
-                                    height: 1.45,
-                                    color: colors.onSurfaceVariant,
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                    borderSide: BorderSide(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
-                                    ),
-                                  ),
-                                  filled: true,
-                                  fillColor: Theme.of(
-                                    context,
-                                  ).colorScheme.surfaceContainerLow,
-                                  isDense: true,
-                                  constraints: const BoxConstraints(
-                                    minHeight: 48,
-                                  ),
-                                  contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: compact ? 8 : 12,
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: compact ? 8 : 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: colors.surfaceContainerLow,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: _focusNode.hasFocus
+                                        ? colors.primary
+                                        : Colors.transparent,
                                   ),
                                 ),
-                                onSubmitted: enterSends
-                                    ? (_) => _submitText()
-                                    : null,
+                                child: Semantics(
+                                  label: _textController.text.isEmpty
+                                      ? inputHint
+                                      : null,
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      if (_textController.text.isEmpty)
+                                        Positioned.fill(
+                                          child: IgnorePointer(
+                                            child: ExcludeSemantics(
+                                              child: Center(
+                                                child: Text(
+                                                  inputHint,
+                                                  key: const ValueKey(
+                                                    'composer-placeholder',
+                                                  ),
+                                                  textAlign: TextAlign.center,
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: inputStyle.copyWith(
+                                                    color:
+                                                        colors.onSurfaceVariant,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      TextField(
+                                        controller: _textController,
+                                        focusNode: _focusNode,
+                                        contextMenuBuilder:
+                                            buildEditableTextMenu,
+                                        minLines: 1,
+                                        maxLines: 4,
+                                        textAlign: TextAlign.center,
+                                        textAlignVertical:
+                                            TextAlignVertical.center,
+                                        keyboardType: TextInputType.multiline,
+                                        textInputAction: enterSends
+                                            ? TextInputAction.send
+                                            : TextInputAction.newline,
+                                        style: inputStyle,
+                                        strutStyle: StrutStyle(
+                                          fontSize: inputStyle.fontSize,
+                                          height: inputStyle.height,
+                                          leadingDistribution:
+                                              TextLeadingDistribution.even,
+                                          forceStrutHeight: true,
+                                        ),
+                                        // Keep the editor free of InputDecorator baseline
+                                        // and helper spacing; the visible frame owns centering.
+                                        decoration: null,
+                                        onSubmitted: enterSends
+                                            ? (_) => _submitText()
+                                            : null,
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -1181,6 +1241,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                         onPressed:
                             value.text.trim().isEmpty ||
                                 isRecording ||
+                                homeState.isPreparingRecording ||
                                 _isTranscribing ||
                                 voiceMode
                             ? null

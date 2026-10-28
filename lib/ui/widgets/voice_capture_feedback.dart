@@ -6,13 +6,8 @@ enum VoiceReleaseAction { save, cancel, text }
 
 class VoiceCaptureGesture {
   bool _selectionOpen = false;
-
   void reset() => _selectionOpen = false;
-
   VoiceReleaseAction update(Offset movement) {
-    // Slide up to choose, then move horizontally. A small vertical drift while
-    // choosing must not unexpectedly save the recording. Returning to the input
-    // closes the selection area and restores the normal release-to-save action.
     if (movement.dy <= -48) _selectionOpen = true;
     if (movement.dy >= -16) _selectionOpen = false;
     if (!_selectionOpen || movement.dx.abs() < 24) {
@@ -24,7 +19,7 @@ class VoiceCaptureGesture {
   }
 }
 
-/// The held input keeps ownership of the gesture; these are visual targets.
+/// Visual feedback only: the original held input retains its pointer route.
 class VoiceCaptureFeedback extends StatelessWidget {
   const VoiceCaptureFeedback({
     super.key,
@@ -34,345 +29,344 @@ class VoiceCaptureFeedback extends StatelessWidget {
   });
   final VoiceReleaseAction action;
   final bool fullScreen, preparing;
+  static const _green = Color(0xFF3BB47B);
+  static const _cancel = Color(0xFFC63C3C);
+  static const _neutral = Color(0xFF252525);
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final l10n = AppLocalizations.of(context);
-    final background = fullScreen
-        ? Color.lerp(colors.surfaceContainerHighest, Colors.black, .62)!
-        : colors.surfaceContainerHighest;
-    final unselected = Color.lerp(
-      background,
-      fullScreen ? Colors.white : colors.surface,
-      .055,
-    )!;
-    final release = preparing
+    final loc = AppLocalizations.of(context);
+    final scaler = MediaQuery.textScalerOf(context);
+    final status = preparing
         ? 'voicePreparing'
         : switch (action) {
             VoiceReleaseAction.save => 'voiceReleaseSave',
             VoiceReleaseAction.cancel => 'voiceReleaseCancel',
             VoiceReleaseAction.text => 'voiceReleaseText',
           };
-    final surface = LayoutBuilder(
-      builder: (context, bounds) {
-        final compact = bounds.maxHeight < 440;
-        final bottom = fullScreen ? MediaQuery.paddingOf(context).bottom : 0.0;
-        final scaler = MediaQuery.textScalerOf(context);
-        final statusStyle = TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          color: fullScreen ? Colors.white : colors.onSurface,
-        );
-        final iconWidth = compact
-            ? math.min(176.0, bounds.maxWidth * .45)
-            : 244.0;
-        final messageWidth = math.max(
-          1.0,
-          bounds.maxWidth - 48 - (compact ? iconWidth + 12 : 0),
-        );
-        var messageHeight = 0.0;
-        // Reserve the same space for every action, so selecting an arc never
-        // moves the circle under the held finger, including large text.
-        for (final key in [
-          'voicePreparing',
-          'voiceReleaseSave',
-          'voiceReleaseCancel',
-          'voiceReleaseText',
-        ]) {
-          final text = TextPainter(
-            text: TextSpan(text: l10n.get(key), style: statusStyle),
-            textDirection: Directionality.of(context),
-            textScaler: scaler,
-            maxLines: 3,
-          )..layout(maxWidth: messageWidth);
-          messageHeight = math.max(messageHeight, text.height);
-          text.dispose();
-        }
-        final statusHeight = compact
-            ? math.max(62.0, messageHeight)
-            : 94 + messageHeight;
-        final radius = math.min(
-          math.min(bounds.maxWidth / 2, 320.0),
-          math.max(48.0, bounds.maxHeight - bottom - statusHeight - 36),
-        );
-        final band = math.min(
-          radius * .75,
-          math.max(80.0, scaler.scale(14) * 3.4 + 24),
-        );
-        final geometry = _VoiceArcGeometry(radius, band);
-        final left = (bounds.maxWidth - radius * 2) / 2;
-        final labelWidth = math.min(radius * .55, band * .85);
-        final labelHeight = math.min(band * .8, scaler.scale(14) * 3.8);
-        final duration = MediaQuery.disableAnimationsOf(context)
-            ? Duration.zero
-            : const Duration(milliseconds: 120);
-        final leftFill = action == VoiceReleaseAction.cancel
-            ? colors.error
-            : unselected;
-        final rightFill = action == VoiceReleaseAction.text
-            ? colors.primary
-            : unselected;
-        Widget target(VoiceReleaseAction value) {
-          final selected = action == value;
-          final cancel = value == VoiceReleaseAction.cancel;
-          final center = geometry.labelCenter(cancel);
-          return Positioned(
-            left: left + center.dx - labelWidth / 2,
-            bottom: bottom + radius - center.dy - labelHeight / 2,
-            width: labelWidth,
-            height: labelHeight,
-            child: Semantics(
-              selected: selected,
-              child: Container(
-                key: ValueKey('voice-target-${value.name}'),
-                alignment: Alignment.center,
-                child: Text(
-                  l10n.get(cancel ? 'cancel' : 'voiceTextTarget'),
-                  semanticsLabel: l10n.get(
-                    cancel ? 'voiceSlideCancel' : 'voiceSlideText',
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: selected
-                        ? (cancel ? colors.onError : colors.onPrimary)
-                        : fullScreen
-                        ? Colors.white
-                        : colors.onSurface,
+    return Material(
+      type: MaterialType.transparency,
+      child: SizedBox(
+        height: fullScreen
+            ? null
+            : 280 + math.max(0, scaler.scale(14) - 14) * 5,
+        child: LayoutBuilder(
+          builder: (context, bounds) {
+            final compact = bounds.maxHeight < 440;
+            final width = math.min(
+              bounds.maxWidth,
+              compact ? math.min(640.0, bounds.maxHeight * 1.35) : 640.0,
+            );
+            final shortLabels = scaler.scale(14) > 20 || width < 280;
+            final cancelLabel = loc.get(
+              shortLabels ? 'voiceShortCancelTarget' : 'cancel',
+            );
+            final textLabel = loc.get(
+              shortLabels ? 'voiceShortTextTarget' : 'voiceSlideTextTarget',
+            );
+            const targetStyle = TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              height: 1.15,
+            );
+            final labelWidth = width * .4;
+            var labelHeight = 0.0;
+            for (final value in [cancelLabel, textLabel]) {
+              final painter = TextPainter(
+                text: TextSpan(text: value, style: targetStyle),
+                textDirection: Directionality.of(context),
+                textScaler: scaler,
+                maxLines: 3,
+              )..layout(maxWidth: math.max(1, labelWidth));
+              labelHeight = math.max(labelHeight, painter.height);
+              painter.dispose();
+            }
+            final band = math.max(width * .15, labelHeight + 20);
+            final geometry = _VoiceSceneGeometry(width, bounds.maxHeight, band);
+            final left = (bounds.maxWidth - width) / 2;
+            final topInset = fullScreen
+                ? MediaQuery.paddingOf(context).top
+                : 0.0;
+            final bubbleWidth = compact
+                ? math.min(120.0, width * .4)
+                : width * .408;
+            final bubbleHeight = compact ? 46.0 : width * .185;
+            final bubbleColor = preparing
+                ? const Color(0xFF3C5147)
+                : action == VoiceReleaseAction.cancel
+                ? _cancel
+                : _green;
+            final bubble = SizedBox(
+              key: const ValueKey('voice-recording-bubble'),
+              width: bubbleWidth,
+              height: bubbleHeight + 8,
+              child: CustomPaint(
+                painter: _VoiceBubblePainter(bubbleColor),
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Center(
+                    child: preparing
+                        ? SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              value: MediaQuery.disableAnimationsOf(context)
+                                  ? .7
+                                  : null,
+                              strokeWidth: 2,
+                              color: const Color(0xFFBFD4C9),
+                            ),
+                          )
+                        : SizedBox(
+                            width: bubbleWidth * .43,
+                            height: math.max(7, width * .014),
+                            child: CustomPaint(
+                              painter: _VoiceWavePainter(
+                                action == VoiceReleaseAction.cancel
+                                    ? Colors.white70
+                                    : const Color(0xFF1E7850),
+                              ),
+                            ),
+                          ),
                   ),
                 ),
               ),
-            ),
-          );
-        }
-
-        final selectedColor = action == VoiceReleaseAction.cancel
-            ? colors.error
-            : colors.primary;
-        final icon = Container(
-          constraints: BoxConstraints(
-            maxWidth: iconWidth,
-            minHeight: compact ? 52 : 84,
-          ),
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? 16 : 26,
-            vertical: 16,
-          ),
-          decoration: BoxDecoration(
-            color: selectedColor,
-            borderRadius: BorderRadius.circular(28),
-          ),
-          child: ExcludeSemantics(
-            child: action == VoiceReleaseAction.save
-                ? SizedBox(
-                    height: 28,
-                    width: compact ? math.max(40, iconWidth - 32) : 124,
-                    child: CustomPaint(
-                      painter: _VoiceWavePainter(colors.onPrimary),
-                    ),
-                  )
-                : Icon(
-                    action == VoiceReleaseAction.cancel
-                        ? Icons.close_rounded
-                        : Icons.text_fields_rounded,
-                    size: 30,
-                    color: action == VoiceReleaseAction.cancel
-                        ? colors.onError
-                        : colors.onPrimary,
-                  ),
-          ),
-        );
-        final message = Semantics(
-          liveRegion: true,
-          child: Text(
-            l10n.get(release),
-            textAlign: TextAlign.center,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-            style: statusStyle,
-          ),
-        );
-        return Stack(
-          clipBehavior: Clip.hardEdge,
-          children: [
-            if (fullScreen)
-              Positioned.fill(
-                child: ColoredBox(color: Colors.black.withValues(alpha: .76)),
+            );
+            final caption = Semantics(
+              liveRegion: true,
+              child: Text(
+                loc.get(status),
+                textAlign: TextAlign.center,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 15,
+                  height: 1.35,
+                  color: Color(0xFFAAAAAA),
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            Positioned(
-              left: left,
-              bottom: 0,
-              width: radius * 2,
-              height: radius + bottom,
-              child: TweenAnimationBuilder<Color?>(
-                tween: ColorTween(end: leftFill),
-                duration: duration,
-                builder: (context, animatedLeft, _) =>
-                    TweenAnimationBuilder<Color?>(
-                      tween: ColorTween(end: rightFill),
-                      duration: duration,
-                      builder: (context, animatedRight, _) => CustomPaint(
-                        painter: _VoiceArcPainter(
-                          geometry,
-                          background,
-                          animatedLeft!,
-                          animatedRight!,
-                          fullScreen ? Colors.white24 : colors.outlineVariant,
+            );
+            final duration = MediaQuery.disableAnimationsOf(context)
+                ? Duration.zero
+                : const Duration(milliseconds: 120);
+            Widget target(bool cancel) {
+              final value = cancel
+                  ? VoiceReleaseAction.cancel
+                  : VoiceReleaseAction.text;
+              final selected = action == value;
+              final center = geometry.labelCenter(cancel);
+              return Positioned(
+                left: left + center.dx - labelWidth / 2,
+                top: center.dy - (labelHeight + 4) / 2,
+                width: labelWidth,
+                height: labelHeight + 4,
+                child: Transform.rotate(
+                  angle: geometry.labelAngle(cancel),
+                  child: Semantics(
+                    selected: selected,
+                    label: loc.get(
+                      cancel ? 'voiceSlideCancel' : 'voiceSlideText',
+                    ),
+                    child: Container(
+                      key: ValueKey('voice-target-${value.name}'),
+                      alignment: Alignment.center,
+                      child: Text(
+                        cancel ? cancelLabel : textLabel,
+                        textAlign: TextAlign.center,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: targetStyle.copyWith(
+                          color: selected && !cancel
+                              ? const Color(0xFF103D29)
+                              : const Color(0xFFDADADA),
                         ),
                       ),
                     ),
-              ),
-            ),
-            target(VoiceReleaseAction.cancel),
-            target(VoiceReleaseAction.text),
-            Positioned(
-              left: 24,
-              right: 24,
-              bottom: bottom + radius + 24,
-              child: compact
-                  ? Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        icon,
-                        const SizedBox(width: 12),
-                        Expanded(child: message),
-                      ],
-                    )
-                  : Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [icon, const SizedBox(height: 10), message],
+                  ),
+                ),
+              );
+            }
+
+            return Stack(
+              clipBehavior: Clip.hardEdge,
+              children: [
+                if (fullScreen)
+                  Positioned.fill(
+                    child: ColoredBox(
+                      color: Colors.black.withValues(alpha: .76),
                     ),
-            ),
-          ],
-        );
-      },
-    );
-    return Material(
-      type: MaterialType.transparency,
-      child: fullScreen ? surface : SizedBox(height: 280, child: surface),
+                  ),
+                Positioned(
+                  left: left,
+                  top: 0,
+                  width: width,
+                  height: bounds.maxHeight,
+                  child: TweenAnimationBuilder<Color?>(
+                    tween: ColorTween(
+                      end: action == VoiceReleaseAction.cancel
+                          ? _cancel
+                          : _neutral,
+                    ),
+                    duration: duration,
+                    builder: (_, leftFill, _) => TweenAnimationBuilder<Color?>(
+                      tween: ColorTween(
+                        end: action == VoiceReleaseAction.text
+                            ? _green
+                            : _neutral,
+                      ),
+                      duration: duration,
+                      builder: (_, rightFill, _) => CustomPaint(
+                        painter: _VoiceScenePainter(
+                          geometry,
+                          leftFill!,
+                          rightFill!,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                target(true),
+                target(false),
+                Positioned(
+                  left: 24,
+                  right: 24,
+                  top: compact
+                      ? 8
+                      : math.max(topInset + 8, bounds.maxHeight * .07),
+                  child: compact
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            bubble,
+                            const SizedBox(width: 12),
+                            Expanded(child: caption),
+                          ],
+                        )
+                      : Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            bubble,
+                            SizedBox(height: width * .04),
+                            caption,
+                          ],
+                        ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
     );
   }
 }
 
-/// One circle defines the base, both target bands and both label positions.
-/// Target edges are inset concentric arcs, rather than rotated floating pills.
-class _VoiceArcGeometry {
-  const _VoiceArcGeometry(this.radius, this.band);
-  final double radius, band;
-  double get outer => math.max(1, radius - 4);
-  double get inner => math.max(1, outer - band);
-  Offset get center => Offset(radius, radius);
-  static const startLeft = -math.pi + .11;
-  static const endLeft = -math.pi / 2 - .13;
-  Offset point(double r, double angle) =>
-      center + Offset(math.cos(angle), math.sin(angle)) * r;
-  Offset labelCenter(bool left) {
-    final angle = left
-        ? (startLeft + endLeft) / 2
-        : -math.pi - (startLeft + endLeft) / 2;
-    return point((outer + inner) / 2, angle);
-  }
-
-  Path target(bool left) {
-    final start = left ? startLeft : -math.pi - endLeft;
-    final end = left ? endLeft : -math.pi - startLeft;
-    final sweep = end - start;
-    final corner = math.min(12.0, band / 5);
-    const delta = .055;
-    final initial = point(outer, start + delta);
-    final p = Path()
-      ..moveTo(initial.dx, initial.dy)
-      ..arcTo(
-        Rect.fromCircle(center: center, radius: outer),
-        start + delta,
-        sweep - 2 * delta,
-        false,
-      );
-    void curve(Offset control, Offset end) =>
-        p.quadraticBezierTo(control.dx, control.dy, end.dx, end.dy);
-    void line(Offset end) => p.lineTo(end.dx, end.dy);
-    curve(point(outer, end), point(outer - corner, end));
-    line(point(inner + corner, end));
-    curve(point(inner, end), point(inner, end - delta));
-    p.arcTo(
-      Rect.fromCircle(center: center, radius: inner),
-      end - delta,
-      -(sweep - 2 * delta),
-      false,
-    );
-    curve(point(inner, start), point(inner + corner, start));
-    line(point(outer - corner, start));
-    curve(point(outer, start), initial);
-    return p..close();
-  }
-}
-
-class _VoiceArcPainter extends CustomPainter {
-  const _VoiceArcPainter(
-    this.geometry,
-    this.background,
-    this.leftFill,
-    this.rightFill,
-    this.outline,
+/// A large circle makes the same shallow arc as the reference. Its two
+/// concentric strokes have round inner ends and extend beyond the side edges.
+class _VoiceSceneGeometry {
+  const _VoiceSceneGeometry(this.width, this.height, this.band);
+  final double width, height, band;
+  double get radius => width * 1.42;
+  double get capTop => height - width * .30;
+  Offset get center => Offset(width / 2, capTop + radius);
+  double get actionRadius => radius + width * .045 + band / 2;
+  double get innerEnd => width * .04 + band / 2;
+  double angle(double x) =>
+      -math.pi / 2 + math.asin((x / actionRadius).clamp(-1.0, 1.0));
+  Offset point(double x) => Offset(
+    center.dx + x,
+    center.dy - math.sqrt(math.max(0, actionRadius * actionRadius - x * x)),
   );
-  final _VoiceArcGeometry geometry;
-  final Color background, leftFill, rightFill, outline;
+  Offset labelCenter(bool left) => point((left ? -1 : 1) * width * .3);
+  double labelAngle(bool left) =>
+      math.asin(((left ? -1 : 1) * width * .3 / actionRadius).clamp(-1.0, 1.0));
+  Path target(bool left) {
+    final outerX = width / 2 + band;
+    final start = angle(left ? -outerX : innerEnd);
+    final end = angle(left ? -innerEnd : outerX);
+    return Path()..addArc(
+      Rect.fromCircle(center: center, radius: actionRadius),
+      start,
+      end - start,
+    );
+  }
+}
+
+class _VoiceScenePainter extends CustomPainter {
+  const _VoiceScenePainter(this.geometry, this.leftFill, this.rightFill);
+  final _VoiceSceneGeometry geometry;
+  final Color leftFill, rightFill;
   @override
   void paint(Canvas canvas, Size size) {
-    final circle = Rect.fromCircle(
-      center: geometry.center,
-      radius: geometry.radius,
-    );
-    final base = Path()
-      ..moveTo(0, geometry.radius)
-      ..arcTo(circle, math.pi, math.pi, false)
-      ..lineTo(size.width, size.height)
-      ..lineTo(0, size.height)
-      ..close();
-    canvas.drawPath(
-      base,
+    canvas.clipRect(Offset.zero & size);
+    canvas.drawCircle(
+      geometry.center,
+      geometry.radius,
       Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color.lerp(background, Colors.white, .045)!, background],
-        ).createShader(Offset.zero & size),
+        ..shader =
+            const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFF606060), Color(0xFF929292)],
+            ).createShader(
+              Rect.fromLTRB(0, geometry.capTop, size.width, size.height),
+            ),
     );
-    canvas.drawArc(
-      circle,
-      math.pi,
-      math.pi,
-      false,
+    canvas.drawCircle(
+      geometry.center,
+      geometry.radius,
       Paint()
-        ..color = outline
+        ..color = const Color(0xFF737373)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1,
+        ..strokeWidth = math.max(2, geometry.width * .007),
     );
     for (final left in [true, false]) {
-      final path = geometry.target(left);
-      canvas.drawPath(path, Paint()..color = left ? leftFill : rightFill);
       canvas.drawPath(
-        path,
+        geometry.target(left),
         Paint()
-          ..color = outline
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1,
+          ..strokeCap = StrokeCap.round
+          ..strokeWidth = geometry.band
+          ..color = left ? leftFill : rightFill,
       );
     }
   }
 
   @override
-  bool shouldRepaint(_VoiceArcPainter old) =>
-      geometry.radius != old.geometry.radius ||
+  bool shouldRepaint(_VoiceScenePainter old) =>
+      geometry.width != old.geometry.width ||
+      geometry.height != old.geometry.height ||
       geometry.band != old.geometry.band ||
-      background != old.background ||
       leftFill != old.leftFill ||
-      rightFill != old.rightFill ||
-      outline != old.outline;
+      rightFill != old.rightFill;
+}
+
+class _VoiceBubblePainter extends CustomPainter {
+  const _VoiceBubblePainter(this.color);
+  final Color color;
+  @override
+  void paint(Canvas canvas, Size size) {
+    final body = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, size.width, size.height - 8),
+      Radius.circular(size.width * .09),
+    );
+    canvas.drawRRect(body, Paint()..color = color);
+    final tail = Path()
+      ..moveTo(size.width / 2 - 8, size.height - 9)
+      ..lineTo(size.width / 2 - 2, size.height - 2)
+      ..quadraticBezierTo(
+        size.width / 2,
+        size.height,
+        size.width / 2 + 2,
+        size.height - 2,
+      )
+      ..lineTo(size.width / 2 + 8, size.height - 9)
+      ..close();
+    canvas.drawPath(tail, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_VoiceBubblePainter old) => color != old.color;
 }
 
 class _VoiceWavePainter extends CustomPainter {
@@ -382,30 +376,11 @@ class _VoiceWavePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
-      ..strokeWidth = 3
+      ..strokeWidth = 2
       ..strokeCap = StrokeCap.round;
-    const levels = [
-      0.2,
-      0.35,
-      0.5,
-      0.3,
-      0.7,
-      0.45,
-      0.85,
-      1.0,
-      0.65,
-      0.9,
-      0.5,
-      0.7,
-      0.4,
-      0.55,
-      0.3,
-      0.4,
-      0.2,
-    ];
-    for (var i = 0; i < levels.length; i++) {
-      final x = (i + .5) * size.width / levels.length;
-      final amplitude = size.height * levels[i] / 2;
+    for (var i = 0; i < 25; i++) {
+      final x = (i + .5) * size.width / 25;
+      final amplitude = size.height * (.32 + .12 * math.sin(i * .73).abs());
       canvas.drawLine(
         Offset(x, size.height / 2 - amplitude),
         Offset(x, size.height / 2 + amplitude),
@@ -415,6 +390,5 @@ class _VoiceWavePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_VoiceWavePainter oldDelegate) =>
-      oldDelegate.color != color;
+  bool shouldRepaint(_VoiceWavePainter old) => color != old.color;
 }

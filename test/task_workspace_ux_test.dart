@@ -14,6 +14,7 @@ import 'package:dont_forget/ui/widgets/input_bottom_bar.dart';
 import 'package:dont_forget/ui/widgets/voice_capture_feedback.dart';
 import 'package:dont_forget/ui/widgets/task_card.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -59,6 +60,8 @@ class _ControlledHomeController extends HomeController {
   }
 
   void setRecording(bool value) => state = state.copyWith(isRecording: value);
+  void setPreparing(bool value) =>
+      state = state.copyWith(isPreparingRecording: value);
 
   @override
   Future<bool> startRecording() async {
@@ -266,6 +269,77 @@ void main() {
   );
 
   testWidgets(
+    'composer visible frame, hint and text lines share the vertical center',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      for (final width in [375.0, 768.0, 1440.0]) {
+        tester.view.physicalSize = Size(width, 800);
+        for (final scale in [1.0, 2.0]) {
+          for (final language in ['zh', 'en', 'ja']) {
+            await show(
+              tester,
+              const InputBottomBar(),
+              language: language,
+              textScale: scale,
+            );
+            final field = find.byType(TextField);
+            await tester.enterText(field, '');
+            await tester.pumpAndSettle();
+            final emptyFrame = tester.getRect(
+              find.byKey(const ValueKey('composer-text-frame')),
+            );
+            final hint = tester.getRect(
+              find.byKey(const ValueKey('composer-placeholder')),
+            );
+            expect(
+              (hint.center.dy - emptyFrame.center.dy).abs(),
+              lessThan(1),
+              reason: 'hint $width/$scale/$language',
+            );
+            for (final value in ['AB', '中', 'AB\n文']) {
+              await tester.enterText(field, value);
+              await tester.pumpAndSettle();
+              final frame = tester.getRect(
+                find.byKey(const ValueKey('composer-text-frame')),
+              );
+              final RenderEditable editable = tester
+                  .state<EditableTextState>(find.byType(EditableText))
+                  .renderEditable;
+              final first = editable.getLocalRectForCaret(
+                const TextPosition(offset: 0),
+              );
+              final last = editable.getLocalRectForCaret(
+                TextPosition(offset: value.length),
+              );
+              final top = editable.localToGlobal(first.topLeft).dy;
+              final bottom = editable.localToGlobal(last.bottomRight).dy;
+              expect(
+                ((top + bottom) / 2 - frame.center.dy).abs(),
+                lessThan(1),
+                reason: 'text $width/$scale/$language/$value',
+              );
+              final attachment = tester.getCenter(
+                find.byKey(const ValueKey('composer-attachment')),
+              );
+              expect((attachment.dy - frame.center.dy).abs(), lessThan(.5));
+              expect(home.sent, isEmpty);
+              expect(tester.takeException(), isNull);
+            }
+            await tester.pumpWidget(const SizedBox());
+            await drainWorkspaceDrafts(tester, container);
+          }
+        }
+      }
+    },
+    variant: const TargetPlatformVariant({
+      TargetPlatform.macOS,
+      TargetPlatform.iOS,
+    }),
+  );
+
+  testWidgets(
     'input has no idle ticks and reduced motion stops recording animation',
     (tester) async {
       await show(tester, const InputBottomBar());
@@ -306,6 +380,10 @@ void main() {
     await tester.enterText(find.byType(TextField), 'Keep this draft');
     await tester.pump();
     expect(tester.widget<IconButton>(send).onPressed, isNotNull);
+    home.setPreparing(true);
+    await tester.pump();
+    expect(tester.widget<IconButton>(send).onPressed, isNull);
+    home.setPreparing(false);
     home.setRecording(true);
     await tester.pump();
     expect(tester.widget<IconButton>(send).onPressed, isNull);
@@ -441,6 +519,10 @@ void main() {
       expect(home.starts, 0);
       final origin = tester.getCenter(surface);
       final press = await tester.startGesture(origin);
+      // The explicit voice pad requests mic startup before the long-press
+      // timeout; real audio onset still depends on native readiness.
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(home.starts, 1);
       await tester.pump(const Duration(milliseconds: 700));
       expect(home.starts, 1);
       expect(tester.widget<IconButton>(attachment).onPressed, isNull);
@@ -829,7 +911,7 @@ void main() {
       expect(
         find.descendant(
           of: find.byType(VoiceCaptureFeedback),
-          matching: find.text('松手发送语音'),
+          matching: find.text('松手 发语音'),
         ),
         findsOneWidget,
       );
@@ -1017,7 +1099,9 @@ void main() {
             final box = tester.renderObject<RenderBox>(label);
             final origin = box.localToGlobal(Offset.zero);
             final right = box.localToGlobal(Offset(box.size.width, 0));
-            expect((right.dy - origin.dy).abs(), lessThan(.5));
+            final slope = (right.dy - origin.dy) / (right.dx - origin.dx);
+            expect(slope.abs(), inInclusiveRange(.12, .25));
+            expect(slope.isNegative, action == 'cancel');
           }
           expect((centers[0].dy - centers[1].dy).abs(), lessThan(.5));
           await press.up();
@@ -1027,6 +1111,53 @@ void main() {
       }
       expect(home.cancels, 6);
       expect(home.stops, 0);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
+    'explicit voice pad short tap discards the early capture',
+    (tester) async {
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      await tester.tap(find.byKey(const ValueKey('composer-mode-toggle')));
+      await tester.pumpAndSettle();
+      final press = await tester.startGesture(
+        tester.getCenter(find.byKey(const ValueKey('composer-voice-pad'))),
+      );
+      await tester.pump(const Duration(milliseconds: 80));
+      expect(home.starts, 1);
+      await press.up();
+      await tester.pumpAndSettle();
+      expect(home.cancels, 1);
+      expect(home.stops, 0);
+      expect(home.drafts, 0);
+      expect(home.sent, isEmpty);
+      expect(home.state.isRecording, isFalse);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
+    'explicit voice tap released during permission discards a late start',
+    (tester) async {
+      home.pendingStart = Completer<bool>();
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      await tester.tap(find.byKey(const ValueKey('composer-mode-toggle')));
+      await tester.pumpAndSettle();
+      final press = await tester.startGesture(
+        tester.getCenter(find.byKey(const ValueKey('composer-voice-pad'))),
+      );
+      await tester.pump(const Duration(milliseconds: 80));
+      expect(home.starts, 1);
+      await press.up();
+      await tester.pump();
+      home.pendingStart!.complete(true);
+      await tester.pumpAndSettle();
+      expect(home.cancels, 1);
+      expect(home.stops, 0);
+      expect(home.drafts, 0);
+      expect(home.sent, isEmpty);
+      expect(home.state.isRecording, isFalse);
     },
     variant: TargetPlatformVariant.only(TargetPlatform.iOS),
   );

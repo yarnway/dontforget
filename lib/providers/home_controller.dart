@@ -26,12 +26,14 @@ class HomeState {
   static const _unchanged = Object();
   final bool isLoading;
   final bool isRecording;
+  final bool isPreparingRecording;
   final int pendingTasksCount;
   final String? error;
 
   HomeState({
     this.isLoading = false,
     this.isRecording = false,
+    this.isPreparingRecording = false,
     this.pendingTasksCount = 0,
     this.error,
   });
@@ -41,12 +43,14 @@ class HomeState {
   HomeState copyWith({
     bool? isLoading,
     bool? isRecording,
+    bool? isPreparingRecording,
     int? pendingTasksCount,
     Object? error = _unchanged,
   }) {
     return HomeState(
       isLoading: isLoading ?? this.isLoading,
       isRecording: isRecording ?? this.isRecording,
+      isPreparingRecording: isPreparingRecording ?? this.isPreparingRecording,
       pendingTasksCount: pendingTasksCount ?? this.pendingTasksCount,
       error: identical(error, _unchanged) ? this.error : error as String?,
     );
@@ -68,6 +72,7 @@ class HomeController extends StateNotifier<HomeState> {
   late final RuntimeRecoveryToken? _birth;
   Future<void> _recorderOperations = Future<void>.value();
   bool _nativeRecording = false;
+  Future<bool>? _recordingStart;
   final Future<XFile?> Function(ImageSource) _pickImage;
   final Future<XFile?> Function() _pickVideo;
   final Future<PlatformFile?> Function() _pickFile;
@@ -566,9 +571,24 @@ class HomeController extends StateNotifier<HomeState> {
     );
   }
 
-  Future<bool> startRecording() async {
+  Future<bool> startRecording() {
+    final pending = _recordingStart;
+    if (pending != null) return pending;
+    if (state.isRecording) return Future.value(true);
+    final operation = _startRecording();
+    _recordingStart = operation;
+    unawaited(
+      operation.then((_) {
+        if (identical(_recordingStart, operation)) _recordingStart = null;
+      }),
+    );
+    return operation;
+  }
+
+  Future<bool> _startRecording() async {
     final generation = _beginInput();
     if (generation == null) return false;
+    state = state.copyWith(isPreparingRecording: true, error: null);
     try {
       final permitted = await _audioRecorder.hasPermission();
       _check(generation);
@@ -594,7 +614,11 @@ class HomeController extends StateNotifier<HomeState> {
           await _audioRecorder.start(const RecordConfig(), path: path);
           _check(generation);
           _recordingGeneration = generation;
-          state = state.copyWith(isRecording: true, error: null);
+          state = state.copyWith(
+            isRecording: true,
+            isPreparingRecording: false,
+            error: null,
+          );
           return true;
         } catch (_) {
           // Native start may have succeeded before the runtime was paused.
@@ -606,6 +630,10 @@ class HomeController extends StateNotifier<HomeState> {
     } catch (error) {
       _reportError(generation, '启动录音失败: $error');
       return false;
+    } finally {
+      if (_isCurrent(generation)) {
+        state = state.copyWith(isPreparingRecording: false);
+      }
     }
   }
 
