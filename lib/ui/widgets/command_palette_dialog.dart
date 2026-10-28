@@ -184,12 +184,17 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                       controller: _searchController,
                       focusNode: _inputFocusNode,
                       autofocus: true,
+                      maxLines: 1,
+                      textAlign: TextAlign.center,
+                      textAlignVertical: TextAlignVertical.center,
                       contextMenuBuilder: buildEditableTextMenu,
                       decoration: InputDecoration(
-                        labelText: loc.get('commandSearchLabel'),
                         hintText: loc.get('commandSearchHint'),
                         border: InputBorder.none,
                         isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                        ),
                       ),
                     ),
                   ),

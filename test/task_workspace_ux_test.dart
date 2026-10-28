@@ -958,6 +958,22 @@ void main() {
           expect(tester.takeException(), isNull);
           final targets = tester.getRect(find.byType(VoiceCaptureFeedback));
           expect(targets.width, lessThanOrEqualTo(320));
+          final centers = <Offset>[];
+          for (final action in ['cancel', 'text']) {
+            final target = find.byKey(ValueKey('voice-target-$action'));
+            final label = find.descendant(
+              of: target,
+              matching: find.byType(Text),
+            );
+            final center = tester.getCenter(target);
+            centers.add(center);
+            expect((tester.getCenter(label) - center).distance, lessThan(.5));
+            final box = tester.renderObject<RenderBox>(label);
+            final origin = box.localToGlobal(Offset.zero);
+            final right = box.localToGlobal(Offset(box.size.width, 0));
+            expect((right.dy - origin.dy).abs(), lessThan(.5));
+          }
+          expect((centers[0].dy - centers[1].dy).abs(), lessThan(.5));
           await press.up();
           await tester.pumpAndSettle();
           expect(tester.takeException(), isNull);

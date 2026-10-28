@@ -58,7 +58,7 @@ class VoiceCaptureFeedback extends StatelessWidget {
         final compact = bounds.maxHeight < 440;
         final bottom = fullScreen ? MediaQuery.paddingOf(context).bottom : 0.0;
         final targetBottom = bottom + (compact ? 42.0 : 100.0);
-        final bubbleBottom = bottom + (compact ? 155.0 : 260.0);
+        final bubbleBottom = bottom + (compact ? 176.0 : 260.0);
         Widget target(VoiceReleaseAction value, bool left) {
           final selected = action == value;
           final tint = value == VoiceReleaseAction.cancel
@@ -73,6 +73,7 @@ class VoiceCaptureFeedback extends StatelessWidget {
                     ? Duration.zero
                     : const Duration(milliseconds: 120),
                 constraints: BoxConstraints(minHeight: compact ? 72 : 88),
+                alignment: Alignment.center,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 14,
                   vertical: 16,
@@ -96,22 +97,26 @@ class VoiceCaptureFeedback extends StatelessWidget {
                         ]
                       : null,
                 ),
-                child: Text(
-                  l10n.get(left ? 'cancel' : 'voiceTextTarget'),
-                  semanticsLabel: l10n.get(
-                    left ? 'voiceSlideCancel' : 'voiceSlideText',
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: selected
-                        ? (left ? colors.onError : colors.onPrimary)
-                        : fullScreen
-                        ? Colors.white
-                        : colors.onSurface,
+                // Keep the label level while the two surfaces follow the arc.
+                child: Transform.rotate(
+                  angle: left ? 0.13 : -0.13,
+                  child: Text(
+                    l10n.get(left ? 'cancel' : 'voiceTextTarget'),
+                    semanticsLabel: l10n.get(
+                      left ? 'voiceSlideCancel' : 'voiceSlideText',
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: selected
+                          ? (left ? colors.onError : colors.onPrimary)
+                          : fullScreen
+                          ? Colors.white
+                          : colors.onSurface,
+                    ),
                   ),
                 ),
               ),
@@ -131,18 +136,31 @@ class VoiceCaptureFeedback extends StatelessWidget {
               right: 0,
               bottom: 0,
               height: bottom + (compact ? 82 : 140),
-              child: CustomPaint(painter: _VoiceArcPainter(arcSurface)),
+              child: CustomPaint(
+                painter: _VoiceArcPainter(
+                  arcSurface,
+                  fullScreen ? Colors.white12 : colors.outlineVariant,
+                ),
+              ),
             ),
             Positioned(
               left: 18,
               right: 18,
               bottom: targetBottom,
-              child: Row(
-                children: [
-                  target(VoiceReleaseAction.cancel, true),
-                  const SizedBox(width: 24),
-                  target(VoiceReleaseAction.text, false),
-                ],
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 560),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        target(VoiceReleaseAction.cancel, true),
+                        const SizedBox(width: 24),
+                        target(VoiceReleaseAction.text, false),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
             Positioned(
@@ -215,27 +233,45 @@ class VoiceCaptureFeedback extends StatelessWidget {
 }
 
 class _VoiceArcPainter extends CustomPainter {
-  const _VoiceArcPainter(this.color);
-  final Color color;
+  const _VoiceArcPainter(this.color, this.outline);
+  final Color color, outline;
   @override
   void paint(Canvas canvas, Size size) {
-    final path = Path()
-      ..moveTo(0, size.height * .58)
-      ..quadraticBezierTo(
-        size.width / 2,
-        -size.height * .12,
-        size.width,
-        size.height * .58,
-      )
+    final curve = Path()
+      ..moveTo(-size.width * .06, size.height * .78)
+      ..cubicTo(
+        size.width * .16,
+        size.height * .03,
+        size.width * .84,
+        size.height * .03,
+        size.width * 1.06,
+        size.height * .78,
+      );
+    final path = Path.from(curve)
       ..lineTo(size.width, size.height)
       ..lineTo(0, size.height)
       ..close();
-    canvas.drawPath(path, Paint()..color = color);
+    canvas.drawPath(
+      path,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color.lerp(color, Colors.white, .06)!, color],
+        ).createShader(Offset.zero & size),
+    );
+    canvas.drawPath(
+      curve,
+      Paint()
+        ..color = outline
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1,
+    );
   }
 
   @override
   bool shouldRepaint(_VoiceArcPainter oldDelegate) =>
-      oldDelegate.color != color;
+      oldDelegate.color != color || oldDelegate.outline != outline;
 }
 
 class _VoiceWavePainter extends CustomPainter {

@@ -197,6 +197,13 @@ void main() {
           scale: 2,
           brightness: size.width == 768 ? Brightness.dark : Brightness.light,
         );
+        final loc = AppLocalizations.of(
+          tester.element(find.byType(CommandPaletteDialog)),
+        );
+        expect(find.text(loc.get('commandSearchLabel')), findsNothing);
+        final input = tester.getRect(find.byType(TextField));
+        final hint = tester.getRect(find.text(loc.get('commandSearchHint')));
+        expect((hint.center - input.center).distance, lessThan(.5));
         expect(tester.takeException(), isNull);
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
         await tester.pump();
