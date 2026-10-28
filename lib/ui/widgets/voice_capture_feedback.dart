@@ -55,7 +55,7 @@ class VoiceCaptureFeedback extends StatelessWidget {
             final compact = bounds.maxHeight < 440;
             final width = math.min(
               bounds.maxWidth,
-              compact ? math.min(640.0, bounds.maxHeight * 1.35) : 640.0,
+              compact ? math.min(640.0, bounds.maxHeight * 1.1) : 640.0,
             );
             final shortLabels = scaler.scale(14) > 20 || width < 280;
             final cancelLabel = loc.get(
@@ -91,6 +91,43 @@ class VoiceCaptureFeedback extends StatelessWidget {
                 ? math.min(120.0, width * .4)
                 : width * .408;
             final bubbleHeight = compact ? 46.0 : width * .185;
+            const captionStyle = TextStyle(
+              fontSize: 15,
+              height: 1.35,
+              color: Color(0xFFAAAAAA),
+              fontWeight: FontWeight.w500,
+            );
+            final feedbackWidth = math.min(bounds.maxWidth - 48, 640.0);
+            final captionWidth = compact
+                ? feedbackWidth - bubbleWidth - 12
+                : feedbackWidth;
+            // Reserve the same line box for every release state so sliding
+            // changes the message without moving the bubble or its targets.
+            var captionHeight = 0.0;
+            for (final key in [
+              'voicePreparing',
+              'voiceReleaseSave',
+              'voiceReleaseCancel',
+              'voiceReleaseText',
+            ]) {
+              final painter = TextPainter(
+                text: TextSpan(text: loc.get(key), style: captionStyle),
+                textDirection: Directionality.of(context),
+                textScaler: scaler,
+                maxLines: 3,
+              )..layout(maxWidth: math.max(1, captionWidth));
+              captionHeight = math.max(captionHeight, painter.height);
+              painter.dispose();
+            }
+            final bubbleCaptionGap = (width * .04).clamp(12.0, 20.0);
+            final feedbackHeight = compact
+                ? math.max(bubbleHeight + 8, captionHeight)
+                : bubbleHeight + 8 + bubbleCaptionGap + captionHeight;
+            final feedbackGap = compact ? 16.0 : 24.0;
+            final feedbackTop = math.max(
+              topInset + 8,
+              geometry.targetsTop - feedbackGap - feedbackHeight,
+            );
             final bubbleColor = preparing
                 ? const Color(0xFF3C5147)
                 : action == VoiceReleaseAction.cancel
@@ -134,16 +171,17 @@ class VoiceCaptureFeedback extends StatelessWidget {
             );
             final caption = Semantics(
               liveRegion: true,
-              child: Text(
-                loc.get(status),
-                textAlign: TextAlign.center,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 15,
-                  height: 1.35,
-                  color: Color(0xFFAAAAAA),
-                  fontWeight: FontWeight.w500,
+              child: SizedBox(
+                height: captionHeight,
+                child: Center(
+                  child: Text(
+                    loc.get(status),
+                    key: const ValueKey('voice-release-caption'),
+                    textAlign: TextAlign.center,
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: captionStyle,
+                  ),
                 ),
               ),
             );
@@ -229,11 +267,10 @@ class VoiceCaptureFeedback extends StatelessWidget {
                 target(true),
                 target(false),
                 Positioned(
-                  left: 24,
-                  right: 24,
-                  top: compact
-                      ? 8
-                      : math.max(topInset + 8, bounds.maxHeight * .07),
+                  key: const ValueKey('voice-recording-feedback'),
+                  left: (bounds.maxWidth - feedbackWidth) / 2,
+                  width: feedbackWidth,
+                  top: feedbackTop,
                   child: compact
                       ? Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -247,7 +284,7 @@ class VoiceCaptureFeedback extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             bubble,
-                            SizedBox(height: width * .04),
+                            SizedBox(height: bubbleCaptionGap),
                             caption,
                           ],
                         ),
@@ -271,6 +308,7 @@ class _VoiceSceneGeometry {
   Offset get center => Offset(width / 2, capTop + radius);
   double get actionRadius => radius + width * .045 + band / 2;
   double get innerEnd => width * .04 + band / 2;
+  double get targetsTop => point(innerEnd).dy - band / 2;
   double angle(double x) =>
       -math.pi / 2 + math.asin((x / actionRadius).clamp(-1.0, 1.0));
   Offset point(double x) => Offset(
