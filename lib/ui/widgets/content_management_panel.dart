@@ -284,191 +284,241 @@ class _ContentManagementPanelState
             )
             .toList()
           ..sort((a, b) => a.taskTitle.compareTo(b.taskTitle));
-    return Column(
-      children: [
-        ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(context).height * .48,
-          ),
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Wrap(
-                    spacing: 6,
-                    children: [
-                      for (final view in ['originals', 'restore', 'archive'])
-                        ChoiceChip(
-                          label: Text(t(view)),
-                          selected: _view == view,
-                          onSelected: _busy
-                              ? null
-                              : (_) => setState(() {
-                                  _view = view;
-                                  _selected.clear();
-                                }),
-                        ),
-                    ],
-                  ),
-                  TextField(
-                    key: const ValueKey('content-query'),
-                    controller: _query,
-                    decoration: InputDecoration(labelText: t('filter')),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                  if (_view != 'archive') ...[
-                    Text(t('hint')),
-                    Wrap(
-                      spacing: 6,
-                      children: [
-                        TextButton.icon(
-                          key: const ValueKey('content-scan'),
-                          onPressed: _busy ? null : _load,
-                          icon: const Icon(Icons.refresh),
-                          label: Text(t('scan')),
-                        ),
-                        FilledButton.tonal(
-                          key: const ValueKey('content-clean'),
-                          onPressed: _busy || _selected.isEmpty ? null : _clean,
-                          child: Text(
-                            '${t('clean')} (${_selected.length}/100)',
-                          ),
-                        ),
-                      ],
-                    ),
-                    for (final job in _inventory?.pendingJobs ?? <String>[])
-                      ListTile(
-                        title: Text(t('pending')),
-                        trailing: TextButton(
-                          key: ValueKey('content-repair:$job'),
-                          onPressed: _busy ? null : () => _repair(job),
-                          child: Text(t('retry')),
-                        ),
-                      ),
-                  ] else
-                    Wrap(
-                      spacing: 6,
-                      children: [
-                        for (final value in [true, false])
-                          ChoiceChip(
-                            label: Text(t(value ? 'archived' : 'available')),
-                            selected: _showArchive == value,
-                            onSelected: _busy
-                                ? null
-                                : (_) => setState(() => _showArchive = value),
-                          ),
-                      ],
-                    ),
-                  if (_message != null) Text(t(_message!)),
-                  if (_nativeFailed)
-                    TextButton(
-                      onPressed: notificationRepairAction(context).onPressed,
-                      child: Text(
-                        AppLocalizations.of(context).get('repairNotifications'),
-                      ),
-                    ),
-                  if (_busy && !_prompting) const LinearProgressIndicator(),
-                ],
+    return Align(
+      alignment: Alignment.topCenter,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1040),
+        child: Column(
+          children: [
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.sizeOf(context).height * .48,
               ),
-            ),
-          ),
-        ),
-        Expanded(
-          child: _view == 'archive'
-              ? (roots.isEmpty
-                    ? Center(child: Text(t('empty')))
-                    : ListView.builder(
-                        itemCount: roots.length,
-                        itemBuilder: (context, i) {
-                          final row = roots[i];
-                          return Card(
-                            child: ListTile(
-                              title: Text(row.taskTitle),
-                              subtitle: Text(
-                                '${t(row.details.kind)} · ${row.details.project} ${row.details.tags.join(' / ')}',
-                              ),
-                              isThreeLine: false,
-                              trailing: IconButton(
-                                key: ValueKey('content-archive:${row.id}'),
-                                tooltip: t(
-                                  row.details.archivedAt == null
-                                      ? 'archiveAction'
-                                      : 'unarchiveAction',
-                                ),
-                                onPressed: _busy
-                                    ? null
-                                    : () => _archive(row, all),
-                                icon: Icon(
-                                  row.details.archivedAt == null
-                                      ? Icons.archive_outlined
-                                      : Icons.unarchive_outlined,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ))
-              : entries.isEmpty
-              ? Center(child: Text(t('empty')))
-              : ListView.builder(
-                  itemCount: entries.length,
-                  itemBuilder: (context, i) {
-                    final entry = entries[i];
-                    return Card(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
                         children: [
-                          CheckboxListTile(
-                            key: ValueKey('content-entry:${entry.key}'),
-                            title: Text(
-                              entry.label,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+                          for (final view in [
+                            'originals',
+                            'restore',
+                            'archive',
+                          ])
+                            ChoiceChip(
+                              label: Text(t(view)),
+                              selected: _view == view,
+                              onSelected: _busy
+                                  ? null
+                                  : (_) => setState(() {
+                                      _view = view;
+                                      _selected.clear();
+                                    }),
                             ),
-                            subtitle: Text(
-                              '${_size(entry.bytes)} · ${t(entry.reason.isEmpty ? 'eligible' : entry.reason)}',
-                            ),
-                            value: _selected.contains(entry.key),
-                            onChanged:
-                                _busy ||
-                                    !entry.eligible ||
-                                    (!_selected.contains(entry.key) &&
-                                        _selected.length >= 100)
-                                ? null
-                                : (value) => setState(() {
-                                    if (value == true) {
-                                      _selected.add(entry.key);
-                                    } else {
-                                      _selected.remove(entry.key);
-                                    }
-                                  }),
-                          ),
-                          if (entry.eligible &&
-                              entry.record != null &&
-                              entry.record!['type'] != 'text' &&
-                              entry.files.isEmpty)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                              ),
-                              child: Text(t('external')),
-                            ),
-                          Align(
-                            alignment: AlignmentDirectional.centerEnd,
-                            child: TextButton(
-                              onPressed: () => _detail(entry),
-                              child: Text(t('detail')),
-                            ),
-                          ),
                         ],
                       ),
-                    );
-                  },
+                      const SizedBox(height: 16),
+                      TextField(
+                        key: const ValueKey('content-query'),
+                        controller: _query,
+                        decoration: InputDecoration(
+                          hintText: t('filter'),
+                          prefixIcon: const Icon(Icons.search_rounded),
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                        ),
+                        onChanged: (_) => setState(() {}),
+                      ),
+                      const SizedBox(height: 16),
+                      if (_view != 'archive') ...[
+                        Text(
+                          t('hint'),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                                height: 1.5,
+                              ),
+                        ),
+                        const SizedBox(height: 12),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            TextButton.icon(
+                              key: const ValueKey('content-scan'),
+                              onPressed: _busy ? null : _load,
+                              icon: const Icon(Icons.refresh),
+                              label: Text(t('scan')),
+                            ),
+                            FilledButton.tonal(
+                              key: const ValueKey('content-clean'),
+                              onPressed: _busy || _selected.isEmpty
+                                  ? null
+                                  : _clean,
+                              child: Text(
+                                '${t('clean')} (${_selected.length}/100)',
+                              ),
+                            ),
+                          ],
+                        ),
+                        for (final job in _inventory?.pendingJobs ?? <String>[])
+                          ListTile(
+                            title: Text(t('pending')),
+                            trailing: TextButton(
+                              key: ValueKey('content-repair:$job'),
+                              onPressed: _busy ? null : () => _repair(job),
+                              child: Text(t('retry')),
+                            ),
+                          ),
+                      ] else
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            for (final value in [true, false])
+                              ChoiceChip(
+                                label: Text(
+                                  t(value ? 'archived' : 'available'),
+                                ),
+                                selected: _showArchive == value,
+                                onSelected: _busy
+                                    ? null
+                                    : (_) =>
+                                          setState(() => _showArchive = value),
+                              ),
+                          ],
+                        ),
+                      if (_message != null) ...[
+                        const SizedBox(height: 12),
+                        Text(t(_message!)),
+                      ],
+                      if (_nativeFailed)
+                        TextButton(
+                          onPressed: notificationRepairAction(
+                            context,
+                          ).onPressed,
+                          child: Text(
+                            AppLocalizations.of(
+                              context,
+                            ).get('repairNotifications'),
+                          ),
+                        ),
+                      if (_busy && !_prompting) ...[
+                        const SizedBox(height: 8),
+                        const LinearProgressIndicator(),
+                      ],
+                    ],
+                  ),
                 ),
+              ),
+            ),
+            Expanded(
+              child: _view == 'archive'
+                  ? (roots.isEmpty
+                        ? Center(child: Text(t('empty')))
+                        : ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                            itemCount: roots.length,
+                            itemBuilder: (context, i) {
+                              final row = roots[i];
+                              return Card(
+                                child: ListTile(
+                                  title: Text(row.taskTitle),
+                                  subtitle: Text(
+                                    '${t(row.details.kind)} · ${row.details.project} ${row.details.tags.join(' / ')}',
+                                  ),
+                                  isThreeLine: false,
+                                  trailing: IconButton(
+                                    key: ValueKey('content-archive:${row.id}'),
+                                    tooltip: t(
+                                      row.details.archivedAt == null
+                                          ? 'archiveAction'
+                                          : 'unarchiveAction',
+                                    ),
+                                    onPressed: _busy
+                                        ? null
+                                        : () => _archive(row, all),
+                                    icon: Icon(
+                                      row.details.archivedAt == null
+                                          ? Icons.archive_outlined
+                                          : Icons.unarchive_outlined,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ))
+                  : entries.isEmpty
+                  ? Center(child: Text(t('empty')))
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                      itemCount: entries.length,
+                      itemBuilder: (context, i) {
+                        final entry = entries[i];
+                        return Card(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              CheckboxListTile(
+                                key: ValueKey('content-entry:${entry.key}'),
+                                title: Text(
+                                  entry.label,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                subtitle: Text(
+                                  '${_size(entry.bytes)} · ${t(entry.reason.isEmpty ? 'eligible' : entry.reason)}',
+                                ),
+                                value: _selected.contains(entry.key),
+                                onChanged:
+                                    _busy ||
+                                        !entry.eligible ||
+                                        (!_selected.contains(entry.key) &&
+                                            _selected.length >= 100)
+                                    ? null
+                                    : (value) => setState(() {
+                                        if (value == true) {
+                                          _selected.add(entry.key);
+                                        } else {
+                                          _selected.remove(entry.key);
+                                        }
+                                      }),
+                              ),
+                              if (entry.eligible &&
+                                  entry.record != null &&
+                                  entry.record!['type'] != 'text' &&
+                                  entry.files.isEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                  ),
+                                  child: Text(t('external')),
+                                ),
+                              Align(
+                                alignment: AlignmentDirectional.centerEnd,
+                                child: TextButton(
+                                  onPressed: () => _detail(entry),
+                                  child: Text(t('detail')),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
