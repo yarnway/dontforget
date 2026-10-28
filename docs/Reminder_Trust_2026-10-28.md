@@ -78,8 +78,30 @@
 
 ## 已知限制
 
-- 尚未做本轮 macOS/iOS/Android 原生构建或设备验收；后台 FlutterEngine 回调、FFI 文件锁符号、系统通知按钮和投递仍需设备验证。
+- 初次交付未做原生构建。后续 macOS 构建与部分自检已推进，范围与阻断见下方补充；iOS/Android 设备验收仍未完成。
 - Android 周期通知按确认的三个动作展示，1 小时延后在应用内；Windows/Linux 无本应用可用的原生定时通知时，自检按钮不可用并明确提示保持运行。
 - pending 超过 32 条丢弃最早条目；终止态操作需要下次正常启动消费。系统权限、专注模式与平台调度仍决定实际投递。
 - 详情沿用两个现有保存命令。metadata 成功而普通字段保存失败时保留未提交草稿，可安全重试；不声称单事务保存。
 - 工作中观察到并发提交将 HEAD 从 `ec31b08` 推进至 `7819c06`；该药物/日历提交已保留，不属于本轮变更。已有架构/开发文档、图源、编辑器配置与脚本未回退或纳入本轮提交。
+
+
+## macOS 原生构建与隔离自检进展（2026-10-28）
+
+状态：**PARTIAL_NATIVE_BUILD_AND_DIAGNOSTICS_UI_HANDOFF_REQUIRED**。本节不标记通知动作矩阵、三语菜单或退出后消费已通过。结构化证据见 [原生记录](benchmarks/reminder-trust-macos-2026-10-28.json)。
+
+- 冻结源码 `6f42ccda4dd6cfe2b0def0a33027a22cd97eb2f5`，产品入口 `lib/main.dart`，启用既有被动 startup/retry trace，真实 OS transport。Flutter 3.44.9 / Dart 3.12.2、Xcode 27.1、已有项目专用 CocoaPods 1.16.2 构建 release 成功（61.8 MB，主程序 arm64/x86_64），签名验证通过。未公证，不等同于发布包验收。
+- 原 ZIP SHA-256 `5f92b090cea0b85d0b9eb9eb8825d34ab073bd777529c9c89c61aa60dda7368b`；通过既有准备脚本派生全新 `com.example.dontForget.acceptance.trust-actions-20261028-1110`。Sandbox 开启，无共享容器权限，Frameworks/Resources 保持不变。
+- 原生界面确认未授权自检拒绝提交；授权后显示已允许、系统安排 0、待修复 0。测试通知报告“已提交系统”，连续替换读数为 1；精确 bundle/source 日志确认 id 0 实际投递和横幅呈现，未把提交当作送达。
+- 测试后、并行写入发生前，隔离库为 Settings/MediaRecords/Reminders = 1/0/0、schema 16、integrity ok。只复制通知 sidecar 后用既有解码器离线核对，业务 journal 中没有 id 0；真实测试通知点击路由尚未验证。
+- 操作期间该隔离库于 11:21:23 出现 3 条非本轮创建的记录。已停止 UI 操作、私下保全完整副本，未删除或改写这些记录。它们不作为本轮合成数据或动作验收证据，不将其他会话的退出归因于本轮成功。
+- 第二个新身份 `com.example.dontForget.acceptance.trust-actions-20261028-1130` 已准备，主可执行文件更名为 `dontforget_trust_actions_1130` 以避免同名进程歧义。仅改变包身份字段及文件名，原生非签名字节和 Frameworks/Resources 再验证相同；未启动，等待独占窗口使用权确认。
+- 实际冻结源码的 65 项相关 fake/temp Flutter 测试通过，静态分析 0 issues。本轮没有把原有 1728 项证据当作新冻结原生包的全量结果。
+
+待继续：取得独占 Mac 验收窗口后，用第二身份重新授权、写入纯合成数据，验证通知四动作、前台/后台与退出后冷响应、明确标注的注入队列重启消费、中英日菜单与未来请求重排，以及同一候选的 pending/retained 清理。旧身份含未知归属记录，不做整库或整通知来源清理。
+
+另有源码边界需后续修复/验证：macOS 固定插件没有原始点击时间字段，目前 Dart 在 StorageBootstrap 后接到 cold response 才记录 occurredAt；慢冷启动可能使延后时间偏后。严格点击时间验收需在原生 delegate 最早回调处采集时间，并保持既有插件转发与队列。macOS 无插件后台 isolate，不能把冷启动成功扩张为 Android/iOS 后台队列已验收。
+
+iOS/Android 剩余：按钮实际呈现、前台/后台 FlutterEngine 与终止态消费、去重及旧 payload/数据代次拒绝、两种延后和周期锚点、三语切换/失败重试、权限与专注/调度限制、自检 id0 无业务写入、实际送达/点击及安全清理。
+
+
+协作补充：用户已要求“与其他任务协作，空闲时占用验收”。只读确认“评估 DontForget 的 UX/UI 优化点”仍有 `EXCLUSIVE_RECEIVED / explicit_return_required=true` 的交接，未见明确归还。向相关聊天发送交接请求及创建空闲跟进均被客户端拒绝：`MCP tool call requires approval, but approval policy is never`。消息未发送、跟进未创建；没有改用其他渠道或调度方式绕过，也没有按 45 分钟已过推断归还。下一步需要现持有任务明确交回共享桌面使用权，或客户端允许协调工具后发送请求。

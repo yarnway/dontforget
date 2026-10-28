@@ -1,0 +1,162 @@
+{
+  "recorded_at": "2026-10-28T11:28:53.381780+08:00",
+  "timezone": "Asia/Shanghai",
+  "status": "PARTIAL_NATIVE_BUILD_AND_DIAGNOSTICS_UI_HANDOFF_REQUIRED",
+  "source": {
+    "revision": "6f42ccda4dd6cfe2b0def0a33027a22cd97eb2f5",
+    "version": "1.7.0+38",
+    "schema": 16,
+    "toolchain": "Flutter 3.44.9 / Dart 3.12.2 / Xcode 27.1 / CocoaPods 1.16.2",
+    "entrypoint": "lib/main.dart",
+    "passive_startup_and_retry_trace": true
+  },
+  "build": {
+    "status": "PASS",
+    "bundle_bytes_display": "61.8 MB",
+    "main_architectures": [
+      "arm64",
+      "x86_64"
+    ],
+    "archive_sha256": "5f92b090cea0b85d0b9eb9eb8825d34ab073bd777529c9c89c61aa60dda7368b",
+    "codesign_verify": "PASS",
+    "native_transport": "real",
+    "notarized": false,
+    "warnings": "Third-party Swift concurrency/deprecation and native asset framework-name warnings retained in private build log"
+  },
+  "identities": [
+    {
+      "bundle_id": "com.example.dontForget.acceptance.trust-actions-20261028-1110",
+      "source_uuid": "73CDBD87-C762-41A3-B2DA-EF757370DBE5",
+      "status": "PRESERVED_AFTER_UNEXPECTED_EXTERNAL_ROWS",
+      "initial_counts": {
+        "Settings": 1,
+        "MediaRecords": 0,
+        "Reminders": 0
+      },
+      "last_counts": {
+        "Settings": 1,
+        "MediaRecords": 0,
+        "Reminders": 3
+      },
+      "unrelated_rows_rewritten_or_deleted": false,
+      "unexpected_rows_created_at": "2026-10-28T11:21:23.596677+08:00",
+      "private_backup_sha256": "0073979ef2263bf73693adf96505b40c84401c6a78990dbcf99e9aa9b7ba9fb3"
+    },
+    {
+      "bundle_id": "com.example.dontForget.acceptance.trust-actions-20261028-1130",
+      "status": "PREPARED_NOT_LAUNCHED_AWAITING_UI_OWNERSHIP",
+      "executable": "dontforget_trust_actions_1130",
+      "identity_only_executable_rename": true,
+      "native_non_signature_code_unchanged": true,
+      "frameworks_resources_unchanged": true,
+      "codesign_verify": "PASS"
+    }
+  ],
+  "cases": {
+    "permission_denied_self_test": {
+      "status": "PASS",
+      "ui_result": "通知尚未开启，请检查系统权限后重试。",
+      "native_submission": false
+    },
+    "permission_granted_readback": {
+      "status": "PASS",
+      "ui_permission": "已允许",
+      "initial_pending": 0,
+      "needs_repair": 0
+    },
+    "test_notification_submission_delivery": {
+      "status": "PASS_BOUNDED",
+      "native_id": 0,
+      "ui_result": "已提交系统",
+      "system_observed_pending_after_submit": 1,
+      "first_delivered_at": "2026-10-28T11:16:56.124831+08:00",
+      "first_banner_presented_at": "2026-10-28T11:16:56.125101+08:00",
+      "native_delivery_evidence": true,
+      "delivery_not_inferred_from_submission": true,
+      "business_counts_after_test_before_external_write": {
+        "Settings": 1,
+        "MediaRecords": 0,
+        "Reminders": 0
+      }
+    },
+    "continuous_test_replacement": {
+      "status": "PASS_BOUNDED_NATIVE_READBACK",
+      "consecutive_ui_submissions": 2,
+      "pending_after_each": 1,
+      "native_id_reused": 0,
+      "boundary": "Repeated manual tests across separate minutes produced multiple separate deliveries; only the close consecutive replacement pair is a duplicate-click case."
+    },
+    "test_route_journal_exclusion": {
+      "status": "PARTIAL",
+      "business_rows_unchanged": true,
+      "business_journal_entry_readback": "PASS: native id 0 absent from decoded copied incremental journal",
+      "default_test_click_routing": "NOT_PERFORMED",
+      "journal_read_scope": "After external rows appeared, copied only operational sidecars under the existing owner lease; decoder did not create a database connection."
+    },
+    "native_queue_ffi_bootstrap": {
+      "status": "PASS_INITIALIZATION_ONLY",
+      "lock_file_created": true,
+      "queue_file_absent_at_observation": true,
+      "restart_consumption": "NOT_PERFORMED"
+    },
+    "language_categories": {
+      "status": "PARTIAL_REGISTRATION_ONLY",
+      "native_categories_registered": [
+        "dontforget_macos_once_en",
+        "dontforget_macos_recurring_en",
+        "dontforget_macos_once_zh",
+        "dontforget_macos_recurring_zh"
+      ],
+      "japanese": "NOT_PERFORMED",
+      "actual_action_menu_titles": "NOT_PERFORMED",
+      "future_request_reconciliation": "NOT_PERFORMED"
+    },
+    "notification_actions_foreground_background_cold": {
+      "status": "NOT_PERFORMED_AWAITING_EXCLUSIVE_UI"
+    },
+    "durable_pending_restart_consumption": {
+      "status": "NOT_PERFORMED",
+      "plan": "Use explicitly labelled injected queue separately from actual macOS cold response"
+    }
+  },
+  "isolation": {
+    "new_sandbox_identities": true,
+    "shared_container_entitlements_absent": true,
+    "daily_database_paths_not_accessed": true,
+    "daily_notification_source_not_targeted": true,
+    "external_ui_interference_observed": true,
+    "unknown_ownership_rows_preserved": true,
+    "cleanup_complete": false,
+    "cleanup_boundary": "No unknown rows or other sessions cleaned; old isolated test notification retention remains unclosed."
+  },
+  "known_source_limitations": [
+    "macOS plugin cold response has no original action time; Dart records occurredAt after StorageBootstrap. A slow cold bootstrap can shift snooze later. Needs native callback time capture before strict click-time acceptance.",
+    "macOS has no background isolate in pinned plugin; exited action launches app, then main isolate queues/consumes. This does not prove queue persisted while process was absent."
+  ],
+  "automation": {
+    "frozen_related_flutter_tests": 65,
+    "result": "PASS",
+    "full_flutter_test_rerun_this_native_turn": false,
+    "previous_1728_test_evidence_scope": "Earlier 385fbfb feature source, separate from this frozen native artifact",
+    "frozen_source_analyze": "0 issues"
+  },
+  "private_evidence_root": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/trust-actions-20261028-1130-materials",
+  "evidence_hash_manifest_sha256": "d1cd804e20addd09eec08d05c031d7d71ef0a15acd8e64c6e996cabd75c54823",
+  "ios_android_remaining": [
+    "Native action visibility (iOS recurring four; Android recurring complete/snooze15/skip, one-off complete/snooze15/snooze60)",
+    "Foreground main isolate and background FlutterEngine queue signal; terminated restart consumption",
+    "Event/anchor preservation, skip/complete recurrence, late snooze clamp, duplicate and stale epoch/revision rejection",
+    "Three languages registration/reconciliation and initialization/registration-failure recovery",
+    "Permission denied, focus/platform scheduling restrictions, native id0 replacement and business/journal exclusion",
+    "Actual delivery/click/cleanup with protected data comparison"
+  ],
+  "coordination": {
+    "requested_by_user": "与其他任务协作，空闲时占用验收",
+    "ui_owner_thread": "评估 DontForget 的 UX/UI 优化点",
+    "ui_owner_thread_id": "01a17c24-05d0-7273-ac6c-a2e578ad2c8b",
+    "current_lease": "EXCLUSIVE_RECEIVED; explicit_return_required=true; no return observed",
+    "message_delivery": "NOT_SENT: MCP tool call requires approval, but approval policy is never",
+    "idle_followup_automation": "NOT_CREATED: same tool approval policy",
+    "policy_boundary": "No substitute message channel or scheduler used; no lease expiry or temporary inactivity treated as explicit return"
+  }
+}
