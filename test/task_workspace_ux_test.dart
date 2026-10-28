@@ -223,7 +223,7 @@ void main() {
   }
 
   testWidgets(
-    'composer and save hint stay centered across widths and text sizes',
+    'mobile composer and save hint stay centered across widths and text sizes',
     (tester) async {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -262,14 +262,11 @@ void main() {
         }
       }
     },
-    variant: const TargetPlatformVariant({
-      TargetPlatform.macOS,
-      TargetPlatform.iOS,
-    }),
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
   );
 
   testWidgets(
-    'composer visible frame, hint and text lines share the vertical center',
+    'mobile composer frame, hint and text lines share the vertical center',
     (tester) async {
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -333,10 +330,284 @@ void main() {
         }
       }
     },
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
+    'desktop large editor keeps upload and Send aligned at the bottom right',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      for (final size in [
+        const Size(375, 500),
+        const Size(768, 800),
+        const Size(1440, 900),
+      ]) {
+        tester.view.physicalSize = size;
+        for (final language in ['zh', 'en', 'ja']) {
+          for (final scale in [1.0, 2.0]) {
+            await show(
+              tester,
+              const InputBottomBar(),
+              reducedMotion: true,
+              language: language,
+              textScale: scale,
+            );
+            await tester.enterText(find.byType(TextField), '');
+            tester
+                .widget<TextField>(find.byType(TextField))
+                .focusNode!
+                .unfocus();
+            await tester.pumpAndSettle();
+            final frame = tester.getRect(
+              find.byKey(const ValueKey('composer-frame')),
+            );
+            final area = tester.getRect(
+              find.byKey(const ValueKey('composer-text-frame')),
+            );
+            final hint = tester.getRect(
+              find.byKey(const ValueKey('composer-placeholder')),
+            );
+            expect(frame.center.dx, closeTo(size.width / 2, .5));
+            expect(frame.width, lessThanOrEqualTo(1040));
+            expect(
+              area.height,
+              greaterThanOrEqualTo(size.height < 600 ? 84 : 132),
+            );
+            expect(hint.center.dy, closeTo(area.center.dy, 1));
+            final field = tester.widget<TextField>(find.byType(TextField));
+            expect(field.textAlign, TextAlign.start);
+            expect(field.textAlignVertical, TextAlignVertical.top);
+            expect(field.minLines, greaterThanOrEqualTo(2));
+            final attachment = tester.getRect(
+              find.byKey(const ValueKey('composer-attachment')),
+            );
+            final send = tester.getRect(
+              find.byKey(const ValueKey('composer-send')),
+            );
+            expect(attachment.center.dy, greaterThan(area.bottom));
+            expect(send.center.dy, closeTo(attachment.center.dy, .5));
+            expect(send.left, greaterThanOrEqualTo(attachment.right));
+            expect(frame.right - send.right, inInclusiveRange(8, 24));
+            await tester.enterText(
+              find.byType(TextField),
+              'Editable draft\nSecond line',
+            );
+            await tester.pumpAndSettle();
+            expect(
+              find.byKey(const ValueKey('composer-save-hint')),
+              findsNothing,
+            );
+            expect(field.controller!.text, 'Editable draft\nSecond line');
+            expect(home.starts, 0);
+            expect(home.sent, isEmpty);
+            expect(tester.takeException(), isNull);
+            await tester.pumpWidget(const SizedBox());
+            await drainWorkspaceDrafts(tester, container);
+          }
+        }
+      }
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.macOS),
+  );
+
+  testWidgets(
+    'desktop mouse click and drag retain normal text editing and clipboard shortcuts',
+    (tester) async {
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      await tester.tap(find.byType(TextField), kind: PointerDeviceKind.mouse);
+      await tester.pump();
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.focusNode!.hasFocus, isTrue);
+      await tester.enterText(find.byType(TextField), 'one two three');
+      final editor = tester
+          .state<EditableTextState>(find.byType(EditableText))
+          .renderEditable;
+      final origin = editor.localToGlobal(const Offset(1, 10));
+      final drag = await tester.startGesture(
+        origin,
+        kind: PointerDeviceKind.mouse,
+      );
+      await drag.moveBy(const Offset(45, 0));
+      await tester.pump(const Duration(milliseconds: 16));
+      await drag.moveBy(const Offset(45, 0));
+      await tester.pump(const Duration(milliseconds: 16));
+      await drag.up();
+      await tester.pump();
+      expect(field.controller!.selection.isCollapsed, isFalse);
+      Future<void> shortcut(LogicalKeyboardKey key) async {
+        await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+        await tester.sendKeyEvent(key);
+        await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+        await tester.pumpAndSettle();
+      }
+
+      await shortcut(LogicalKeyboardKey.keyA);
+      await shortcut(LogicalKeyboardKey.keyC);
+      expect(clipboard, 'one two three');
+      await shortcut(LogicalKeyboardKey.keyX);
+      expect(field.controller!.text, isEmpty);
+      await shortcut(LogicalKeyboardKey.keyV);
+      expect(field.controller!.text, 'one two three');
+      expect(home.starts, 0);
+      expect(home.sent, isEmpty);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.macOS),
+  );
+
+  testWidgets(
+    'desktop mouse hold appends editable speech to an existing draft and waits for Send',
+    (tester) async {
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      await tester.enterText(find.byType(TextField), 'Existing draft');
+      final surface = find.byKey(const ValueKey('composer-input-surface'));
+      final before = tester.getRect(surface);
+      final press = await tester.startGesture(
+        before.center,
+        kind: PointerDeviceKind.mouse,
+      );
+      await tester.pump(const Duration(milliseconds: 700));
+      expect(home.starts, 1);
+      expect(tester.getRect(surface), before);
+      expect(tester.widget<TextField>(find.byType(TextField)).readOnly, isTrue);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      expect(home.sent, isEmpty);
+      await press.up();
+      await tester.pumpAndSettle();
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.controller!.text, 'Existing draft\n明日の予定を確認');
+      expect(field.focusNode!.hasFocus, isTrue);
+      expect(field.readOnly, isFalse);
+      expect(home.drafts, 1);
+      expect(home.stops, 0);
+      expect(home.sent, isEmpty);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      expect(home.sent, isEmpty);
+      await tester.enterText(find.byType(TextField), 'Edited voice draft');
+      await tester.tap(find.byKey(const ValueKey('composer-send')));
+      await waitForSent(tester, 1);
+      expect(home.sent, ['Edited voice draft']);
+    },
     variant: const TargetPlatformVariant({
       TargetPlatform.macOS,
-      TargetPlatform.iOS,
+      TargetPlatform.windows,
+      TargetPlatform.linux,
     }),
+  );
+
+  testWidgets(
+    'desktop Escape cancels held speech and leaves the original draft intact',
+    (tester) async {
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      await tester.enterText(
+        find.byType(TextField),
+        'Keep this original draft',
+      );
+      final press = await tester.startGesture(
+        tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
+        kind: PointerDeviceKind.mouse,
+      );
+      await tester.pump(const Duration(milliseconds: 700));
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      await press.up();
+      await tester.pumpAndSettle();
+      expect(home.cancels, 1);
+      expect(home.drafts, 0);
+      expect(home.stops, 0);
+      expect(home.sent, isEmpty);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        'Keep this original draft',
+      );
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.macOS),
+  );
+
+  testWidgets(
+    'desktop release during permission delay still finishes into a draft',
+    (tester) async {
+      home.pendingStart = Completer<bool>();
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      final press = await tester.startGesture(
+        tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
+        kind: PointerDeviceKind.mouse,
+      );
+      await tester.pump(const Duration(milliseconds: 700));
+      await press.up();
+      await tester.pump();
+      home.pendingStart!.complete(true);
+      await tester.pumpAndSettle();
+      expect(home.starts, 1);
+      expect(home.drafts, 1);
+      expect(home.stops, 0);
+      expect(home.state.isRecording, isFalse);
+      expect(home.sent, isEmpty);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        '明日の予定を確認',
+      );
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.macOS),
+  );
+
+  testWidgets(
+    'desktop microphone denial can retry and stop into an editable draft',
+    (tester) async {
+      home.pendingStart = Completer<bool>()..complete(false);
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      final microphone = find.byKey(const ValueKey('composer-desktop-voice'));
+      await tester.tap(microphone);
+      await tester.pumpAndSettle();
+      expect(home.starts, 1);
+      expect(home.drafts, 0);
+      home.pendingStart = null;
+      await tester.tap(microphone);
+      await tester.pump();
+      expect(home.starts, 2);
+      expect(home.state.isRecording, isTrue);
+      await tester.tap(microphone);
+      await tester.pumpAndSettle();
+      expect(home.drafts, 1);
+      expect(home.stops, 0);
+      expect(home.sent, isEmpty);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        '明日の予定を確認',
+      );
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.macOS),
+  );
+
+  testWidgets(
+    'desktop hold does not interrupt an active IME composition',
+    (tester) async {
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      final field = tester.widget<TextField>(find.byType(TextField));
+      field.focusNode!.requestFocus();
+      field.controller!.value = const TextEditingValue(
+        text: 'ming',
+        selection: TextSelection.collapsed(offset: 4),
+        composing: TextRange(start: 0, end: 4),
+      );
+      await tester.pump();
+      final press = await tester.startGesture(
+        tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
+        kind: PointerDeviceKind.mouse,
+      );
+      await tester.pump(const Duration(milliseconds: 700));
+      await press.up();
+      await tester.pumpAndSettle();
+      expect(home.starts, 0);
+      expect(field.controller!.text, 'ming');
+      expect(
+        field.controller!.value.composing,
+        const TextRange(start: 0, end: 4),
+      );
+      expect(home.sent, isEmpty);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.macOS),
   );
 
   testWidgets(

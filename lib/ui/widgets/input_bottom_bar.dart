@@ -26,6 +26,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   final _textController = TextEditingController();
   final _focusNode = FocusNode();
   bool _isLongPressRecording = false;
+  bool _desktopVoiceDraft = false;
   Future<bool>? _pendingRecordingStart;
   bool _isFinishingLongPress = false;
   Offset _voiceOrigin = Offset.zero;
@@ -48,6 +49,15 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   late final RuntimeRecoveryGate _inputRuntime;
   late final RuntimeRecoveryToken? _inputBirth;
   bool get _current => mounted && _inputRuntime.isCurrent(_inputBirth);
+  bool get _voiceBusy {
+    final state = ref.read(homeControllerProvider);
+    return _isLongPressRecording ||
+        _pendingRecordingStart != null ||
+        _isTranscribing ||
+        state.isRecording ||
+        state.isPreparingRecording;
+  }
+
   bool _lastFocused = false;
 
   @override
@@ -147,7 +157,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   }
 
   Future<void> _submitText() async {
-    if (_submitting || _resolvingPending || !_current) return;
+    if (_submitting || _resolvingPending || !_current || _voiceBusy) return;
     final composing = _textController.value.composing;
     if (composing.isValid && !composing.isCollapsed) return;
     final text = _textController.text;
@@ -371,6 +381,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   }
 
   void _insertLineBreak() {
+    if (!_current || _voiceBusy) return;
     final value = _textController.value;
     if (value.composing.isValid && !value.composing.isCollapsed) return;
     final selection = value.selection;
@@ -399,22 +410,40 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   }
 
   Future<void> _startLongPressRecording(LongPressStartDetails details) =>
-      _beginHeldRecording(details.globalPosition);
+      _beginHeldRecording(
+        details.globalPosition,
+        editable: ![
+          TargetPlatform.iOS,
+          TargetPlatform.android,
+        ].contains(Theme.of(context).platform),
+      );
 
-  Future<void> _beginHeldRecording(Offset origin) async {
+  Future<void> _beginHeldRecording(
+    Offset origin, {
+    bool editable = false,
+  }) async {
     if (!_current) return;
-    if ((!_voiceMode && _textController.text.isNotEmpty) ||
+    final composing = _textController.value.composing;
+    if (editable && composing.isValid && !composing.isCollapsed) return;
+    if ((!editable && !_voiceMode && _textController.text.isNotEmpty) ||
         _isTranscribing ||
         _pendingRecordingStart != null ||
         ref.read(homeControllerProvider).isRecording ||
         ref.read(homeControllerProvider).isPreparingRecording) {
       return;
     }
-    _focusNode.unfocus();
+    if (editable) {
+      _focusNode.requestFocus();
+    } else {
+      _focusNode.unfocus();
+    }
     setState(() {
       _voiceOrigin = origin;
       _voiceGesture.reset();
-      _voiceAction = VoiceReleaseAction.save;
+      _desktopVoiceDraft = editable;
+      _voiceAction = editable
+          ? VoiceReleaseAction.text
+          : VoiceReleaseAction.save;
       _isLongPressRecording = true;
     });
     final controller = ref.read(homeControllerProvider.notifier);
@@ -424,7 +453,14 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     final started = await operation;
     if (!mounted || !identical(_pendingRecordingStart, operation)) return;
     if (!started) {
-      setState(() => _isLongPressRecording = false);
+      setState(() {
+        _isLongPressRecording = false;
+        if (!_isFinishingLongPress) {
+          _pendingRecordingStart = null;
+          _heldRecorder = null;
+          _desktopVoiceDraft = false;
+        }
+      });
     } else if (_isLongPressRecording && !_isFinishingLongPress) {
       // The ready feedback must follow native start, never precede the mic.
       unawaited(HapticFeedback.heavyImpact());
@@ -478,6 +514,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
           _isFinishingLongPress = false;
           _isTranscribing = false;
           _heldRecorder = null;
+          _desktopVoiceDraft = false;
         });
       }
     }
@@ -485,7 +522,12 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
 
   void _moveLongPress(LongPressMoveUpdateDetails details) {
     if (!_isLongPressRecording || _isFinishingLongPress) return;
-    final action = _voiceGesture.update(details.globalPosition - _voiceOrigin);
+    final selected = _voiceGesture.update(
+      details.globalPosition - _voiceOrigin,
+    );
+    final action = _desktopVoiceDraft && selected == VoiceReleaseAction.save
+        ? VoiceReleaseAction.text
+        : selected;
     if (action == _voiceAction) return;
     HapticFeedback.selectionClick();
     setState(() => _voiceAction = action);
@@ -494,6 +536,21 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   void _cancelLongPress() {
     _voiceAction = VoiceReleaseAction.cancel;
     _finishLongPressRecording();
+  }
+
+  Future<void> _toggleDesktopVoiceDraft() async {
+    if (!_current || _isTranscribing) return;
+    if (_pendingRecordingStart != null) {
+      await _finishLongPressRecording();
+    } else if (ref.read(homeControllerProvider).isRecording) {
+      // A recording may also have been started by the application shortcut.
+      _heldRecorder = ref.read(homeControllerProvider.notifier);
+      _pendingRecordingStart = Future.value(true);
+      _voiceAction = VoiceReleaseAction.text;
+      await _finishLongPressRecording();
+    } else {
+      await _beginHeldRecording(Offset.zero, editable: true);
+    }
   }
 
   void _focusTextAfterBuild() {
@@ -699,16 +756,408 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
       });
     }
     final inputStyle = TextStyle(
-      fontSize: isMobile ? 16 : 14,
+      fontSize: isMobile ? 16 : 15,
       height: 1.45,
       leadingDistribution: TextLeadingDistribution.even,
     );
     final inputHint = l10n.get(
-      _focusNode.hasFocus
+      !isMobile
+          ? 'desktopInputHint'
+          : _focusNode.hasFocus
           ? 'inputTypingHint'
           : isLocalMode
           ? 'localInputHint'
           : 'inputHint',
+    );
+    final showTimeOptions =
+        !isRecording &&
+        !voiceMode &&
+        (_textController.text.isNotEmpty || _quickTime != null || _memoOnly);
+    final canHold = isMobile
+        ? idleVoiceTarget
+        : !_isTranscribing && !_submitting && !_resolvingPending;
+    final timeOptions = PopupMenuButton<String>(
+      key: const ValueKey('capture-time-options'),
+      tooltip: l10n.get('quickChoose'),
+      enabled: !captureBusy,
+      icon: Icon(
+        _memoOnly ? Icons.notes_outlined : Icons.schedule_outlined,
+        color: displayedTime != null || _memoOnly
+            ? Theme.of(context).colorScheme.primary
+            : null,
+      ),
+      onSelected: (value) {
+        switch (value) {
+          case 'evening':
+            _selectTime(QuickReminderParser.tonight(DateTime.now()));
+          case 'morning':
+            _selectTime(QuickReminderParser.tomorrowMorning(DateTime.now()));
+          case 'custom':
+            _pickQuickTime();
+          case 'memo':
+            _selectTime(null, memo: true);
+          case 'reset':
+            _selectTime(null);
+        }
+      },
+      itemBuilder: (_) => [
+        PopupMenuItem<String>(
+          enabled: false,
+          child: Text(
+            _memoOnly
+                ? l10n.get('memoNoAlarm')
+                : displayedTime == null
+                ? l10n.get('noTimeMemo')
+                : formatLocalDateTime(displayedTime),
+          ),
+        ),
+        for (final entry in const {
+          'evening': 'quickEvening',
+          'morning': 'quickMorning',
+          'custom': 'quickChoose',
+          'memo': 'memoOnly',
+          'reset': 'quickReset',
+        }.entries)
+          PopupMenuItem(value: entry.key, child: Text(l10n.get(entry.value))),
+      ],
+    );
+    final mobileModeToggle = IconButton(
+      key: const ValueKey('composer-mode-toggle'),
+      icon: Icon(
+        homeState.isRecording && _pendingRecordingStart == null
+            ? Icons.stop_circle_rounded
+            : voiceMode
+            ? Icons.keyboard_outlined
+            : Icons.mic_none_rounded,
+      ),
+      tooltip: homeState.isRecording && _pendingRecordingStart == null
+          ? l10n.get('recordingClickStop')
+          : l10n.get(voiceMode ? 'switchToText' : 'switchToVoice'),
+      onPressed: homeState.isRecording && _pendingRecordingStart == null
+          ? () => ref.read(homeControllerProvider.notifier).toggleRecording()
+          : captureBusy
+          ? null
+          : _toggleInputMode,
+    );
+    final inputSurface = GestureDetector(
+      key: const ValueKey('composer-input-surface'),
+      behavior: HitTestBehavior.translucent,
+      onTap: () {
+        if (!voiceMode &&
+            !isRecording &&
+            !_isTranscribing &&
+            !_focusNode.hasFocus) {
+          _focusNode.requestFocus();
+        }
+      },
+      onLongPressStart: canHold ? _startLongPressRecording : null,
+      // In explicit voice mode begin mic startup while the hold
+      // recognizer waits. A tap, drag cancellation or
+      // permission-delayed release always discards this capture.
+      // Ordinary text taps never open the microphone.
+      onLongPressDown: idleVoiceTarget && voiceMode
+          ? (details) => _beginHeldRecording(details.globalPosition)
+          : null,
+      onLongPressMoveUpdate: canHold ? _moveLongPress : null,
+      onLongPressEnd: canHold ? (_) => _finishLongPressRecording() : null,
+      onLongPressCancel: canHold ? _cancelLongPress : null,
+      onSecondaryTapDown: isMobile && idleVoiceTarget && !voiceMode
+          ? (_) => _openEmptyEditMenu()
+          : null,
+      child:
+          isMobile &&
+              (isRecording || homeState.isPreparingRecording || _isTranscribing)
+          ? ConstrainedBox(
+              constraints: BoxConstraints(minHeight: isMobile ? 48 : 0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      l10n.get(
+                        _isTranscribing
+                            ? 'voiceTranscribing'
+                            : homeState.isPreparingRecording
+                            ? 'voicePreparing'
+                            : _isLongPressRecording
+                            ? !homeState.isRecording
+                                  ? 'voicePreparing'
+                                  : switch (_voiceAction) {
+                                      VoiceReleaseAction.save =>
+                                        'voiceReleaseSave',
+                                      VoiceReleaseAction.cancel =>
+                                        'voiceReleaseCancel',
+                                      VoiceReleaseAction.text =>
+                                        'voiceReleaseText',
+                                    }
+                            : 'recordingClickStop',
+                      ),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.red.shade700,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          // iOS TextField's selection recognizer otherwise wins the
+          // gesture arena before our hold-to-record recognizer. Only
+          // the empty, unfocused surface delegates pointer gestures;
+          // typing, selection and IME retain normal TextField behavior.
+          : voiceMode
+          ? Semantics(
+              button: true,
+              label: l10n.get('holdToTalk'),
+              child: Container(
+                key: const ValueKey('composer-voice-pad'),
+                alignment: Alignment.center,
+                constraints: const BoxConstraints(minHeight: 48),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerLow,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                  ),
+                ),
+                child: Text(
+                  l10n.get('holdToTalk'),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+            )
+          : IgnorePointer(
+              ignoring: isMobile && idleVoiceTarget,
+              child: CallbackShortcuts(
+                bindings: {
+                  if (!isMobile &&
+                      _isLongPressRecording &&
+                      !_isFinishingLongPress)
+                    const SingleActivator(LogicalKeyboardKey.escape):
+                        _cancelLongPress,
+                  const SingleActivator(LogicalKeyboardKey.enter): enterSends
+                      ? _submitText
+                      : _insertLineBreak,
+                  const SingleActivator(LogicalKeyboardKey.numpadEnter):
+                      enterSends ? _submitText : _insertLineBreak,
+                  const SingleActivator(LogicalKeyboardKey.enter, shift: true):
+                      _insertLineBreak,
+                  const SingleActivator(
+                    LogicalKeyboardKey.numpadEnter,
+                    shift: true,
+                  ): _insertLineBreak,
+                },
+                child: Container(
+                  key: const ValueKey('composer-text-frame'),
+                  alignment: isMobile ? Alignment.center : Alignment.topLeft,
+                  constraints: BoxConstraints(
+                    minHeight: isMobile
+                        ? 48
+                        : compact
+                        ? 84
+                        : 132,
+                  ),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: compact ? 8 : 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isMobile
+                        ? colors.surfaceContainerLow
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                    border: isMobile
+                        ? Border.all(
+                            color: _focusNode.hasFocus
+                                ? colors.primary
+                                : Colors.transparent,
+                          )
+                        : null,
+                  ),
+                  child: Semantics(
+                    label: _textController.text.isEmpty ? inputHint : null,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: isMobile
+                            ? 0
+                            : compact
+                            ? 68
+                            : 112,
+                      ),
+                      child: Stack(
+                        alignment: isMobile
+                            ? Alignment.center
+                            : Alignment.topLeft,
+                        children: [
+                          if (_textController.text.isEmpty &&
+                              (isMobile || !_focusNode.hasFocus))
+                            Positioned.fill(
+                              child: IgnorePointer(
+                                child: ExcludeSemantics(
+                                  child: Center(
+                                    child: Text(
+                                      inputHint,
+                                      key: const ValueKey(
+                                        'composer-placeholder',
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      maxLines: isMobile ? 1 : 3,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: inputStyle.copyWith(
+                                        color: colors.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          TextField(
+                            controller: _textController,
+                            focusNode: _focusNode,
+                            contextMenuBuilder: buildEditableTextMenu,
+                            readOnly:
+                                !isMobile &&
+                                (isRecording ||
+                                    homeState.isPreparingRecording ||
+                                    _isTranscribing),
+                            minLines: isMobile
+                                ? 1
+                                : compact
+                                ? 2
+                                : 4,
+                            maxLines: isMobile
+                                ? 4
+                                : compact
+                                ? 4
+                                : 8,
+                            textAlign: isMobile
+                                ? TextAlign.center
+                                : TextAlign.start,
+                            textAlignVertical: isMobile
+                                ? TextAlignVertical.center
+                                : TextAlignVertical.top,
+                            keyboardType: TextInputType.multiline,
+                            textInputAction: enterSends
+                                ? TextInputAction.send
+                                : TextInputAction.newline,
+                            style: inputStyle,
+                            strutStyle: StrutStyle(
+                              fontSize: inputStyle.fontSize,
+                              height: inputStyle.height,
+                              leadingDistribution: TextLeadingDistribution.even,
+                              forceStrutHeight: true,
+                            ),
+                            // Keep the editor free of InputDecorator baseline
+                            // and helper spacing; the visible frame owns centering.
+                            decoration: null,
+                            onSubmitted: enterSends
+                                ? (_) => _submitText()
+                                : null,
+                          ),
+                          if (!isMobile &&
+                              (isRecording ||
+                                  homeState.isPreparingRecording ||
+                                  _isTranscribing))
+                            Positioned.fill(
+                              child: ColoredBox(
+                                color: colors.surfaceContainerLowest,
+                                child: Center(
+                                  child: Text(
+                                    l10n.get(
+                                      _isTranscribing
+                                          ? 'voiceTranscribing'
+                                          : homeState.isPreparingRecording
+                                          ? 'voicePreparing'
+                                          : _voiceAction ==
+                                                VoiceReleaseAction.cancel
+                                          ? 'voiceReleaseCancel'
+                                          : 'desktopReleaseHint',
+                                    ),
+                                    textAlign: TextAlign.center,
+                                    style: inputStyle.copyWith(
+                                      color: colors.primary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+    );
+    final attachment = IconButton(
+      key: const ValueKey('composer-attachment'),
+      constraints: isMobile
+          ? null
+          : const BoxConstraints.tightFor(width: 44, height: 44),
+      icon: Icon(
+        isMobile ? Icons.add_circle_outline_rounded : Icons.attach_file_rounded,
+      ),
+      tooltip: l10n.get('uploadMaterial'),
+      onPressed: captureBusy ? null : () => _showMediaOptionsSheet(context),
+    );
+    final send = Container(
+      key: const ValueKey('composer-send'),
+      margin: const EdgeInsets.only(left: 4),
+      child: ValueListenableBuilder<TextEditingValue>(
+        valueListenable: _textController,
+        builder: (context, value, _) {
+          final onSend = value.text.trim().isEmpty || captureBusy || voiceMode
+              ? null
+              : _submitText;
+          if (!isMobile) {
+            return FilledButton(
+              onPressed: onSend,
+              style: FilledButton.styleFrom(
+                backgroundColor: colors.primary,
+                foregroundColor: colors.onPrimary,
+                minimumSize: const Size(88, 44),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: Text(l10n.get('send')),
+            );
+          }
+          return IconButton(
+            icon: const Icon(Icons.arrow_upward_rounded, size: 18),
+            style: IconButton.styleFrom(
+              backgroundColor: colors.primary,
+              foregroundColor: colors.onPrimary,
+              padding: const EdgeInsets.all(5),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+            tooltip: l10n.get('send'),
+            onPressed: onSend,
+          );
+        },
+      ),
     );
     final composer = SafeArea(
       top: false,
@@ -745,7 +1194,8 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                   '${l10n.get('failedInputTitle')} (${pending.length})',
                 ),
               ),
-            if (!isRecording &&
+            if (isMobile &&
+                !isRecording &&
                 !voiceMode &&
                 !keyboardVisible &&
                 MediaQuery.sizeOf(context).height >= 600 &&
@@ -787,11 +1237,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
-            if (_isLongPressRecording && !keyboardVisible && !isMobile)
-              VoiceCaptureFeedback(action: _voiceAction),
-            if (isMobile &&
-                homeState.isProcessingInBackground &&
-                !_isTranscribing)
+            if (homeState.isProcessingInBackground && !_isTranscribing)
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 2, 12, 4),
                 child: LinearProgressIndicator(
@@ -799,458 +1245,76 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                   semanticsLabel: l10n.get('aiProcessing'),
                 ),
               ),
-            Row(
-              children: [
-                if (!isRecording &&
-                    !voiceMode &&
-                    (_textController.text.isNotEmpty ||
-                        _quickTime != null ||
-                        _memoOnly))
-                  PopupMenuButton<String>(
-                    key: const ValueKey('capture-time-options'),
-                    tooltip: l10n.get('quickChoose'),
-                    enabled: !captureBusy,
-                    icon: Icon(
-                      _memoOnly
-                          ? Icons.notes_outlined
-                          : Icons.schedule_outlined,
-                      color: displayedTime != null || _memoOnly
-                          ? Theme.of(context).colorScheme.primary
-                          : null,
-                    ),
-                    onSelected: (value) {
-                      switch (value) {
-                        case 'evening':
-                          _selectTime(
-                            QuickReminderParser.tonight(DateTime.now()),
-                          );
-                        case 'morning':
-                          _selectTime(
-                            QuickReminderParser.tomorrowMorning(DateTime.now()),
-                          );
-                        case 'custom':
-                          _pickQuickTime();
-                        case 'memo':
-                          _selectTime(null, memo: true);
-                        case 'reset':
-                          _selectTime(null);
-                      }
-                    },
-                    itemBuilder: (_) => [
-                      PopupMenuItem<String>(
-                        enabled: false,
-                        child: Text(
-                          _memoOnly
-                              ? l10n.get('memoNoAlarm')
-                              : displayedTime == null
-                              ? l10n.get('noTimeMemo')
-                              : formatLocalDateTime(displayedTime),
-                        ),
-                      ),
-                      for (final entry in const {
-                        'evening': 'quickEvening',
-                        'morning': 'quickMorning',
-                        'custom': 'quickChoose',
-                        'memo': 'memoOnly',
-                        'reset': 'quickReset',
-                      }.entries)
-                        PopupMenuItem(
-                          value: entry.key,
-                          child: Text(l10n.get(entry.value)),
-                        ),
-                    ],
-                  ),
-                if (isMobile)
-                  IconButton(
-                    key: const ValueKey('composer-mode-toggle'),
-                    icon: Icon(
-                      homeState.isRecording && _pendingRecordingStart == null
-                          ? Icons.stop_circle_rounded
-                          : voiceMode
-                          ? Icons.keyboard_outlined
-                          : Icons.mic_none_rounded,
-                    ),
-                    tooltip:
-                        homeState.isRecording && _pendingRecordingStart == null
-                        ? l10n.get('recordingClickStop')
-                        : l10n.get(
-                            voiceMode ? 'switchToText' : 'switchToVoice',
-                          ),
-                    onPressed:
-                        homeState.isRecording && _pendingRecordingStart == null
-                        ? () => ref
-                              .read(homeControllerProvider.notifier)
-                              .toggleRecording()
-                        : captureBusy
-                        ? null
-                        : _toggleInputMode,
-                  ),
-                if (!isMobile) ...[
-                  IconButton(
-                    key: const ValueKey('composer-attachment'),
-                    icon: const Icon(
-                      Icons.add_circle_outline_rounded,
-                      size: 22,
-                    ),
-                    color: Theme.of(context).colorScheme.primary,
-                    tooltip: l10n.get('uploadMaterial'),
-                    splashRadius: 18,
-                    onPressed: captureBusy
-                        ? null
-                        : () => _showMediaOptionsSheet(context),
-                  ),
-
-                  // Mic toggle button (for desktop click or single tap)
-                  _RecordingPulse(
-                    active: isRecording,
-                    child: IconButton(
-                      icon: Icon(
-                        isRecording
-                            ? Icons.stop_circle_rounded
-                            : Icons.mic_none_rounded,
-                        color: isRecording
-                            ? Colors.red
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
-                        size: 22,
-                      ),
-                      tooltip: l10n.get(
-                        homeState.isPreparingRecording
-                            ? 'voicePreparing'
-                            : isRecording
-                            ? 'recordingClickStop'
-                            : 'recordingStart',
-                      ),
-                      onPressed:
-                          _pendingRecordingStart != null ||
-                              homeState.isPreparingRecording
-                          ? null
-                          : () => ref
-                                .read(homeControllerProvider.notifier)
-                                .toggleRecording(),
-                    ),
-                  ),
+            if (isMobile)
+              Row(
+                children: [
+                  if (showTimeOptions) timeOptions,
+                  mobileModeToggle,
+                  const SizedBox(width: 4),
+                  Expanded(child: inputSurface),
+                  attachment,
+                  if (!enterSends) send,
                 ],
-
-                const SizedBox(width: 4),
-
-                // Center Input Area: Single tap to type, Long press to speak
-                Expanded(
-                  child: GestureDetector(
-                    key: const ValueKey('composer-input-surface'),
-                    behavior: HitTestBehavior.translucent,
-                    onTap: () {
-                      if (!voiceMode &&
-                          !isRecording &&
-                          !_isTranscribing &&
-                          !_focusNode.hasFocus) {
-                        _focusNode.requestFocus();
-                      }
-                    },
-                    onLongPressStart: idleVoiceTarget
-                        ? _startLongPressRecording
-                        : null,
-                    // In explicit voice mode begin mic startup while the hold
-                    // recognizer waits. A tap, drag cancellation or
-                    // permission-delayed release always discards this capture.
-                    // Ordinary text taps never open the microphone.
-                    onLongPressDown: idleVoiceTarget && voiceMode
-                        ? (details) =>
-                              _beginHeldRecording(details.globalPosition)
-                        : null,
-                    onLongPressMoveUpdate: idleVoiceTarget
-                        ? _moveLongPress
-                        : null,
-                    onLongPressEnd: idleVoiceTarget
-                        ? (_) => _finishLongPressRecording()
-                        : null,
-                    onLongPressCancel: idleVoiceTarget
-                        ? _cancelLongPress
-                        : null,
-                    onSecondaryTapDown: idleVoiceTarget && !voiceMode
-                        ? (_) => _openEmptyEditMenu()
-                        : null,
-                    child:
-                        isRecording ||
-                            homeState.isPreparingRecording ||
-                            _isTranscribing
-                        ? ConstrainedBox(
-                            constraints: BoxConstraints(
-                              minHeight: isMobile ? 48 : 0,
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.red,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    l10n.get(
-                                      _isTranscribing
-                                          ? 'voiceTranscribing'
-                                          : homeState.isPreparingRecording
-                                          ? 'voicePreparing'
-                                          : _isLongPressRecording
-                                          ? !homeState.isRecording
-                                                ? 'voicePreparing'
-                                                : switch (_voiceAction) {
-                                                    VoiceReleaseAction.save =>
-                                                      'voiceReleaseSave',
-                                                    VoiceReleaseAction.cancel =>
-                                                      'voiceReleaseCancel',
-                                                    VoiceReleaseAction.text =>
-                                                      'voiceReleaseText',
-                                                  }
-                                          : 'recordingClickStop',
-                                    ),
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.red.shade700,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        // iOS TextField's selection recognizer otherwise wins the
-                        // gesture arena before our hold-to-record recognizer. Only
-                        // the empty, unfocused surface delegates pointer gestures;
-                        // typing, selection and IME retain normal TextField behavior.
-                        : voiceMode
-                        ? Semantics(
-                            button: true,
-                            label: l10n.get('holdToTalk'),
-                            child: Container(
-                              key: const ValueKey('composer-voice-pad'),
-                              alignment: Alignment.center,
-                              constraints: const BoxConstraints(minHeight: 48),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.surfaceContainerLow,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.outlineVariant,
-                                ),
-                              ),
+              )
+            else ...[
+              inputSurface,
+              Padding(
+                key: const ValueKey('composer-desktop-toolbar'),
+                padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          if (showTimeOptions)
+                            SizedBox(width: 44, height: 44, child: timeOptions),
+                          if (displayedTime != null || _memoOnly)
+                            Expanded(
                               child: Text(
-                                l10n.get('holdToTalk'),
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                _memoOnly
+                                    ? l10n.get('memoOnly')
+                                    : formatLocalDateTime(displayedTime!),
+                                key: const ValueKey('composer-time-summary'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.labelMedium
+                                    ?.copyWith(color: colors.onSurfaceVariant),
                               ),
                             ),
-                          )
-                        : IgnorePointer(
-                            ignoring: idleVoiceTarget,
-                            child: CallbackShortcuts(
-                              bindings: {
-                                const SingleActivator(LogicalKeyboardKey.enter):
-                                    enterSends ? _submitText : _insertLineBreak,
-                                const SingleActivator(
-                                  LogicalKeyboardKey.numpadEnter,
-                                ): enterSends
-                                    ? _submitText
-                                    : _insertLineBreak,
-                                const SingleActivator(
-                                  LogicalKeyboardKey.enter,
-                                  shift: true,
-                                ): _insertLineBreak,
-                                const SingleActivator(
-                                  LogicalKeyboardKey.numpadEnter,
-                                  shift: true,
-                                ): _insertLineBreak,
-                              },
-                              child: Container(
-                                key: const ValueKey('composer-text-frame'),
-                                alignment: Alignment.center,
-                                constraints: const BoxConstraints(
-                                  minHeight: 48,
-                                ),
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: compact ? 8 : 10,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: colors.surfaceContainerLow,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: _focusNode.hasFocus
-                                        ? colors.primary
-                                        : Colors.transparent,
-                                  ),
-                                ),
-                                child: Semantics(
-                                  label: _textController.text.isEmpty
-                                      ? inputHint
-                                      : null,
-                                  child: Stack(
-                                    alignment: Alignment.center,
-                                    children: [
-                                      if (_textController.text.isEmpty)
-                                        Positioned.fill(
-                                          child: IgnorePointer(
-                                            child: ExcludeSemantics(
-                                              child: Center(
-                                                child: Text(
-                                                  inputHint,
-                                                  key: const ValueKey(
-                                                    'composer-placeholder',
-                                                  ),
-                                                  textAlign: TextAlign.center,
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  style: inputStyle.copyWith(
-                                                    color:
-                                                        colors.onSurfaceVariant,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      TextField(
-                                        controller: _textController,
-                                        focusNode: _focusNode,
-                                        contextMenuBuilder:
-                                            buildEditableTextMenu,
-                                        minLines: 1,
-                                        maxLines: 4,
-                                        textAlign: TextAlign.center,
-                                        textAlignVertical:
-                                            TextAlignVertical.center,
-                                        keyboardType: TextInputType.multiline,
-                                        textInputAction: enterSends
-                                            ? TextInputAction.send
-                                            : TextInputAction.newline,
-                                        style: inputStyle,
-                                        strutStyle: StrutStyle(
-                                          fontSize: inputStyle.fontSize,
-                                          height: inputStyle.height,
-                                          leadingDistribution:
-                                              TextLeadingDistribution.even,
-                                          forceStrutHeight: true,
-                                        ),
-                                        // Keep the editor free of InputDecorator baseline
-                                        // and helper spacing; the visible frame owns centering.
-                                        decoration: null,
-                                        onSubmitted: enterSends
-                                            ? (_) => _submitText()
-                                            : null,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                  ),
-                ),
-
-                // Background Processing capsule (Wireframe)
-                if (!isMobile &&
-                    homeState.isProcessingInBackground &&
-                    !_isTranscribing)
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 3,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primary.withValues(alpha: 0.4),
-                        width: 1,
+                        ],
                       ),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: 9,
-                          height: 9,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 1.5,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
+                    _RecordingPulse(
+                      active: isRecording,
+                      child: IconButton(
+                        key: const ValueKey('composer-desktop-voice'),
+                        constraints: const BoxConstraints.tightFor(
+                          width: 44,
+                          height: 44,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          homeState.pendingTasksCount > 1
-                              ? 'AI (${homeState.pendingTasksCount})'
-                              : 'AI...',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
+                        icon: Icon(
+                          isRecording
+                              ? Icons.stop_circle_rounded
+                              : Icons.mic_none_rounded,
                         ),
-                      ],
-                    ),
-                  ),
-
-                if (isMobile)
-                  IconButton(
-                    key: const ValueKey('composer-attachment'),
-                    icon: const Icon(Icons.add_circle_outline_rounded),
-                    tooltip: l10n.get('uploadMaterial'),
-                    onPressed: captureBusy
-                        ? null
-                        : () => _showMediaOptionsSheet(context),
-                  ),
-                if (!isMobile || !enterSends)
-                  Container(
-                    key: const ValueKey('composer-send'),
-                    margin: const EdgeInsets.only(left: 4),
-                    child: ValueListenableBuilder<TextEditingValue>(
-                      valueListenable: _textController,
-                      builder: (context, value, _) => IconButton(
-                        icon: const Icon(Icons.arrow_upward_rounded, size: 18),
-                        style: IconButton.styleFrom(
-                          backgroundColor: Theme.of(
-                            context,
-                          ).colorScheme.primary,
-                          foregroundColor: Theme.of(
-                            context,
-                          ).colorScheme.onPrimary,
-                          padding: const EdgeInsets.all(5),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
-                          ),
+                        tooltip: l10n.get(
+                          isRecording ? 'desktopVoiceStop' : 'recordingStart',
                         ),
-                        tooltip: l10n.get('send'),
                         onPressed:
-                            value.text.trim().isEmpty ||
-                                isRecording ||
-                                homeState.isPreparingRecording ||
+                            homeState.isPreparingRecording ||
                                 _isTranscribing ||
-                                voiceMode
+                                _submitting ||
+                                _resolvingPending
                             ? null
-                            : _submitText,
+                            : _toggleDesktopVoiceDraft,
                       ),
                     ),
-                  ),
-              ],
-            ),
+                    attachment,
+                    send,
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
