@@ -1,0 +1,110 @@
+{
+  "at": "2026-10-28T10:16:25.188575+08:00",
+  "source": "9e297cee0498277ad8662128e055aa8c4bbdc4cf",
+  "base": "2de76827c1ac92d9b89e22916597487a919c16f6",
+  "scope": "UI polish and current main builds; separate from dfb34f1 native acceptance",
+  "version": "1.7.0+37",
+  "installed_or_launched": false,
+  "artifacts": {
+    "macos": {
+      "bundle": "com.example.dontForget",
+      "version": "1.7.0",
+      "build": "37",
+      "binary_sha256": "b91dd7800c56b81ca13970273f422e7558e4bfd4585350ab05e598149741359a",
+      "architectures": "x86_64 arm64",
+      "private_copy": "macos-release/dont_forget.app",
+      "strict_signature": "PASS",
+      "notarized": false
+    },
+    "ios_simulator": {
+      "bundle": "com.example.dontForget",
+      "version": "1.7.0",
+      "build": "37",
+      "binary_sha256": "05244db0634013d9f42e21ef13197c74a8e35da05c8c6c89d5708e496ad5f5c9",
+      "architectures": "x86_64 arm64",
+      "private_copy": "ios-simulator/Runner.app",
+      "platform": "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/ui-polish-20261028/ios-simulator/Runner.app/Runner (architecture x86_64):\nLoad command 11\n      cmd LC_BUILD_VERSION\n  cmdsize 32\n platform IOSSIMULATOR\n    minos 15.0\n      sdk 27.1\n   ntools 1\n     tool LD\n  version 27037.1\n/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/ui-polish-20261028/ios-simulator/Runner.app/Runner (architecture arm64):\nLoad command 11\n      cmd LC_BUILD_VERSION\n  cmdsize 32\n platform IOSSIMULATOR\n    minos 15.0\n      sdk 27.1\n   ntools 1\n     tool LD\n  version 27037.1\n",
+      "extension": {
+        "bundle": "com.example.dontForget.ReminderActivity",
+        "version": "1.7.0",
+        "build": "37",
+        "architectures": "x86_64 arm64",
+        "platform": "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/ui-polish-20261028/ios-simulator/Runner.app/PlugIns/ReminderActivity.appex/ReminderActivity (architecture x86_64):\nLoad command 11\n      cmd LC_BUILD_VERSION\n  cmdsize 32\n platform IOSSIMULATOR\n    minos 16.2\n      sdk 27.1\n   ntools 1\n     tool LD\n  version 27037.1\n/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/ui-polish-20261028/ios-simulator/Runner.app/PlugIns/ReminderActivity.appex/ReminderActivity (architecture arm64):\nLoad command 11\n      cmd LC_BUILD_VERSION\n  cmdsize 32\n platform IOSSIMULATOR\n    minos 16.2\n      sdk 27.1\n   ntools 1\n     tool LD\n  version 27037.1\n",
+        "binary_sha256": "3259590e3bf6bbce45df6431442aaf8c05fb01a75b2e43b77c0755b35da57c02"
+      }
+    }
+  },
+  "status": "SOURCE_TESTS_BUILDS_PASS_NATIVE_UI_PENDING",
+  "tests": {
+    "targeted": 63,
+    "flutter_full": 1618,
+    "python_full": 126,
+    "failed": 0,
+    "static_analysis_issues": 0,
+    "rendered_scenarios": 7
+  },
+  "native_device_or_microphone_acceptance": "NOT_PERFORMED",
+  "pushed_or_released_by_this_chat": false,
+  "private_evidence": {
+    "flutter-full-final.log": {
+      "bytes": 307551,
+      "sha256": "442071494d3510567b96340a93c28c71bcb6dc8d68d885cb2b93cdddd4326855"
+    },
+    "python-full.log": {
+      "bytes": 478,
+      "sha256": "fb66fe0671d32036ab122419bf8f746ab4ec84cb89d086067467316e17e13890"
+    },
+    "analyze-final.log": {
+      "bytes": 96,
+      "sha256": "e9bc02089f1eef23b98455fe4b32aa39503ac5e1e59edc6800472ed1fe6719c4"
+    },
+    "macos-release-build.log": {
+      "bytes": 376,
+      "sha256": "5ea07cee8969e80c10cd82139fe59e3bd1e3ab87b3290c1dc128b64a3d8e8813"
+    },
+    "ios-simulator-build.log": {
+      "bytes": 472,
+      "sha256": "52b8561f698ab0e3f45a499cee05e2516150c6179ee178d7249ac2b7edcf35ad"
+    },
+    "render-final.log": {
+      "bytes": 510,
+      "sha256": "9f24061568166251aeeb7a4899448cff4544447304e7fdf6d291dfa1f9a084c0"
+    },
+    "build-verification.json": {
+      "bytes": 2660,
+      "sha256": "05ad7026d43e9106ad2ff1e55e4da5950b77ff9fa8864a0b1881febf158414a6"
+    },
+    "tools-375.png": {
+      "bytes": 81964,
+      "sha256": "b16d89e419679118fcc503c59510d3bb3350137341bee28724f66d865d6bfc10"
+    },
+    "tools-1440.png": {
+      "bytes": 105846,
+      "sha256": "a40cb0fd6b56d7baf6c43b4808242fba6bfd2a58bf103b76d8cb61454c96be57"
+    },
+    "voice-cancel-375.png": {
+      "bytes": 43106,
+      "sha256": "b62293c74ea6cbcbea472bbfff92107d3b5c7708a182fb93092932134a82e58f"
+    },
+    "voice-cancel-1440.png": {
+      "bytes": 75189,
+      "sha256": "c10249fc9296104caddf324099dce20ee64f50d2cf58c17066e81fedc381432b"
+    },
+    "voice-text-375.png": {
+      "bytes": 45200,
+      "sha256": "d18794f1b3954b986cdd3c27819634ad31c11d64bb02bc8f6e36d767e96f0734"
+    },
+    "voice-text-1440.png": {
+      "bytes": 77660,
+      "sha256": "0c05d6b5cbf95f22a42eef12913b5eff426d1804b75bf9dbd21ec471ff9321f9"
+    },
+    "voice-ja-320-2x.png": {
+      "bytes": 63653,
+      "sha256": "808e91ff496792814905e58a48a81f2b150e30a2a66d2e34c98e7f53484d11fd"
+    },
+    "../ui-polish-20261028-targeted.log": {
+      "bytes": 11649,
+      "sha256": "0c1f43cb44cbccb412b89a63f04ccd624b5d2fe0f4e84789da48bbb89661213a"
+    }
+  }
+}

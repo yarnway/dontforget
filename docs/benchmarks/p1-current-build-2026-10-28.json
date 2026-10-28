@@ -280,28 +280,188 @@
     "protected-files-readback.json": {
       "bytes": 161,
       "sha256": "9d5f3cf953a243a9d1ef2af5530bcbaf689c5c18cf151f2b9a8cf73ac56e4c91"
+    },
+    "ios-new-identity-install.json": {
+      "bytes": 1137,
+      "sha256": "6e4a0203193962cb02208c9411a93dafd057f58442c500718bd5da1d34bbc829"
+    },
+    "ios-new-identity-install.log": {
+      "bytes": 335,
+      "sha256": "f3dcf992504818ba40d5ca50a884a209534d7749ef2974d1c3f0963eb8607b59"
+    },
+    "ios-new-identity-installed-readback.json": {
+      "bytes": 1775,
+      "sha256": "bb57fa258f480fcb27e5f4c2543888e2f0e28f7346c464d75a17a7205686add0"
+    },
+    "new-phone-identity-before-install.json": {
+      "bytes": 900,
+      "sha256": "40545b143004aba098c25eac3d338c72b2726623b31228110e04184922f7a906"
+    },
+    "devices-after-user-connected.json": {
+      "bytes": 22314,
+      "sha256": "1317851e5c159ce6537f3789a47d674423060b70688c00e9a4750cd7bcb25715"
+    },
+    "phone-processes-before-final-return.json": {
+      "bytes": 58586,
+      "sha256": "99cf7551f14da15344a8cf578d348e0775499b5ef1dbfe558b9f62a11bcd2dcb"
+    },
+    "final-handoff-return-corrected.json": {
+      "bytes": 1371,
+      "sha256": "fda7dd158619d6f848a4c3cfdd62af4345a4c03acb09d045e00e5dabf506a217"
+    },
+    "macos-native/empty-baseline.json": {
+      "bytes": 712,
+      "sha256": "6d8f9c1e2ba7c8c61de8d464cd0ab9f0792b0d49a175cd89809f1ab646a062b2"
+    },
+    "macos-native/before-reopen.json": {
+      "bytes": 604,
+      "sha256": "613a897287a1e42accaeb4c08c250189bec350a8d168c2fe27281c8b63ebfbd9"
+    },
+    "macos-native/after-reopen.json": {
+      "bytes": 286,
+      "sha256": "f6a7111dc201a263285191be122bbb203584bd8a8d6eecdc287d7ee836b68aea"
+    },
+    "macos-native/final-stopped.json": {
+      "bytes": 796,
+      "sha256": "8b06325f8ec8659e09e0e335395dbd53fe1d51078f490171412e1c26e9d85d82"
+    },
+    "macos-native/filter-saved.ax.txt": {
+      "bytes": 2169,
+      "sha256": "3299d95a14fd620e56e346dfd90394b9d730d048a7039d74e76548b44d9f04a2"
+    },
+    "macos-native/filter-restored.ax.txt": {
+      "bytes": 2118,
+      "sha256": "d7a70c26f57b9587efc84bb844521adbb16d689967a186b361860da03aa18066"
+    },
+    "macos-native/filter-reopened.ax.txt": {
+      "bytes": 754,
+      "sha256": "a11a10a3157658a53142c56f1be843c01481fde87cfa1785a5c220edb1dded82"
+    },
+    "macos-native/filter-applied-after-reopen.ax.txt": {
+      "bytes": 2207,
+      "sha256": "bd375417b8ebe05c7df0dd5b8cc12ac4b3c4f6dd1c9ab78e843917b26790dee6"
+    },
+    "macos-native/final-settings.ax.txt": {
+      "bytes": 936,
+      "sha256": "7711dc2ceb2a3f57cb9d8a4ca3e51a2d357c7615d3cf24117fab5af9eeadd584"
     }
   },
   "release_or_push_performed": false,
   "phase_b": {
-    "status": "PENDING_USER_DEVICE_CONNECTION_AND_MAC_NOTIFICATION_PERMISSION",
-    "phone_installed": false,
-    "phone_matrix": "NOT_STARTED",
-    "phone_connection": "paired; tunnel unavailable; normal mirror reconnect timed out",
-    "phone_old_identity_accessed": false,
-    "macos_empty_baseline": {
-      "schema": 16,
-      "integrity": "ok",
-      "reminders": 0,
-      "media_records": 0,
-      "settings": 1,
-      "os_pending": 0,
-      "os_retained": 0
+    "status": "MAC_SAVED_FILTERS_PASS_PHONE_MATRIX_PENDING",
+    "source": "dfb34f1f26b628f880fe802f9ffe4b84de78fc0d",
+    "macos": {
+      "saved_filter_cases": {
+        "create_and_save": "PASS",
+        "keyword_switch": "PASS",
+        "apply_saved_filter": "PASS",
+        "rename": "PASS",
+        "delete_and_undo": "PASS",
+        "normal_quit_and_reopen": "PASS",
+        "apply_after_reopen": "PASS"
+      },
+      "reopen_readback": {
+        "at": "2026-10-28T09:51:34.545369+08:00",
+        "result": "PASS",
+        "rows_identical": true,
+        "reminders": 2,
+        "saved_filters_identical": true,
+        "filter_count": 1,
+        "settings_identical": true,
+        "snapshot_sha256": "5842601e3ccaecdcc11206b3d3d071896a01795211c6b8997fbb41ad71785ea4"
+      },
+      "final_readback": {
+        "at": "2026-10-28T10:00:26.493848+08:00",
+        "counts": {
+          "Reminders": 2,
+          "MediaRecords": 0,
+          "Settings": 1
+        },
+        "integrity": "ok",
+        "process_pids": [],
+        "all_synthetic_reminders_have_no_time": true,
+        "rows_identical_to_before_reopen": true,
+        "settings_identical_to_before_reopen": true,
+        "saved_filter_count": 1,
+        "os_readback_last": {
+          "pending": 0,
+          "retained": 0,
+          "authorization": "NOT_ENABLED"
+        },
+        "cleanup": "SAMPLES_PRESERVED_IN_NEW_ISOLATED_CONTAINER; no scheduled QA notifications",
+        "frozen_app_signature_resources_native_bytes": "PASS",
+        "snapshot_sha256": "5842601e3ccaecdcc11206b3d3d071896a01795211c6b8997fbb41ad71785ea4"
+      },
+      "recovery": {
+        "status": "NOT_EXECUTED",
+        "ui_reached": "Backup inspection page; no file selected",
+        "input_limitation": "CUA coordinate and scroll noWindowsAvailable"
+      },
+      "cleanup": {
+        "scheduled_qa_notifications_created": 0,
+        "last_os_readback_pending": 0,
+        "last_os_readback_retained": 0,
+        "preserved_synthetic_memos": 2,
+        "preserved_synthetic_saved_filters": 1,
+        "sample_data_cleanup": "PENDING_NEXT_NATIVE_SLOT",
+        "permission_actual": "NOT_ENABLED; user authorization response is not OS grant proof"
+      },
+      "app_signature_frameworks_resources_native_bytes_reverified": "PASS"
     },
-    "macos_fixture_loaded": false,
-    "macos_notification_permission": "REQUESTED_NOT_CONFIRMED",
-    "cua_permission_ui_denied": "Computer Use is not allowed to use the app com.apple.UserNotificationCenter for safety reasons",
-    "second_handoff_at": "2026-10-28T09:39:35+08:00",
-    "explicit_return_required": true
+    "phone": {
+      "install": "PASS",
+      "independent_installed_metadata_readback": {
+        "bundle": "com.yarnway.dontforget.acceptance.p1current28",
+        "version": "1.7.0",
+        "build": "37",
+        "container_accessible": true
+      },
+      "our_launch_actions": 0,
+      "observed_processes": {
+        "main_pid": 4952,
+        "extension_pid": 4953,
+        "startup_origin": "NOT_DETERMINED"
+      },
+      "old_identity_container_accessed": false,
+      "samples_created_by_this_chat": 0,
+      "matrix": "NOT_STARTED"
+    },
+    "handoff": {
+      "at": "2026-10-28T10:02:23.921352+08:00",
+      "ownership": "EXPLICITLY_RETURNED",
+      "recipient_thread": "01a15c7c-8a67-7562-9db6-e540460d05c1",
+      "phone_installed_new_identity": true,
+      "phone_installed_build": "37",
+      "phone_processes_observed": [
+        {
+          "executable": "file:///private/var/containers/Bundle/Application/6E47FED9-D35C-4F6E-A15B-428E65A7E4B1/Runner.app/Runner",
+          "processIdentifier": 4952
+        },
+        {
+          "executable": "file:///private/var/containers/Bundle/Application/6E47FED9-D35C-4F6E-A15B-428E65A7E4B1/Runner.app/PlugIns/ReminderActivity.appex/ReminderActivity",
+          "processIdentifier": 4953
+        }
+      ],
+      "our_launch_actions": 0,
+      "startup_origin": "NOT_DETERMINED",
+      "phone_samples_created_by_this_chat": 0,
+      "phone_matrix": "NOT_STARTED",
+      "old_phone_container_accessed": false,
+      "macos_test_app_stopped_at_snapshot": true,
+      "macos_synthetic_memos_preserved": 2,
+      "macos_saved_filters_preserved": 1,
+      "macos_future_reminders": 0,
+      "macos_last_os_pending_retained": [
+        0,
+        0
+      ],
+      "owned_wake_pid": 51216,
+      "owned_wake_command_matched": true,
+      "owned_wake_stop_signal_sent": true,
+      "permanent_power_settings_changed": false,
+      "correction": "Initial handoff message prematurely stated no matching phone process and wake released before checking failed precondition; corrected from preserved process readback."
+    },
+    "native_input_ownership_after_return": "Other chat; no further UI/device operations by this chat",
+    "notification_and_full_recovery_acceptance": "PENDING; not inferred from compilation or filter cases"
   }
 }
