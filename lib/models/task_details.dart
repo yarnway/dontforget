@@ -28,6 +28,10 @@ class TaskDetails {
   final DateTime? deletedAt, archivedAt, completedAt;
   final String kind;
   final String? doseOutcome;
+  DateTime? get actualDoseTakenAt =>
+      kind == 'medication' && effectiveDoseOutcome == 'taken'
+      ? date(data['dose_taken_at'])
+      : null;
   String? get effectiveDoseOutcome =>
       doseOutcome ??
       history
@@ -93,6 +97,9 @@ class TaskDetails {
     final data = json['data'] ?? <String, dynamic>{};
     if (data is! Map<String, dynamic> || jsonEncode(data).length > 65536) {
       throw const FormatException('Invalid task data');
+    }
+    if (kind == 'medication' && data['dose_taken_at'] != null) {
+      date(data['dose_taken_at']);
     }
     final items = list('checklist', 64, ChecklistItem.fromJson);
     if (items.map((e) => e.id).toSet().length != items.length) {

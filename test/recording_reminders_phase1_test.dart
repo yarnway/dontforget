@@ -163,7 +163,7 @@ void main() {
           );
       final home = container.read(homeControllerProvider.notifier);
       expect(
-        await home.processText('明天9点开会', captureId: 'stable-capture'),
+        await home.processText('明天9点开会；会后整理纪要', captureId: 'stable-capture'),
         isTrue,
       );
       await until(() => model.requests.isNotEmpty);
@@ -171,13 +171,13 @@ void main() {
         database.captureGeneration(),
         (db) => db.query('Reminders'),
       )).single;
-      expect(raw['source_text'], '明天9点开会');
+      expect(raw['source_text'], '明天9点开会；会后整理纪要');
       expect(raw['capture_pending'], 1);
       model.requests.single.completeError(StateError('Synthetic timeout'));
       await until(() => !home.state.isProcessingInBackground);
       expect(container.read(remindersProvider).length, 1);
       expect(
-        await home.processText('明天9点开会', captureId: 'stable-capture'),
+        await home.processText('明天9点开会；会后整理纪要', captureId: 'stable-capture'),
         isTrue,
       );
       expect(container.read(remindersProvider).length, 1);
@@ -196,7 +196,7 @@ void main() {
       await until(() => !home.state.isProcessingInBackground);
       final saved = container.read(remindersProvider).single;
       expect(saved.id, 'stable-capture');
-      expect(saved.taskTitle, '明天9点开会');
+      expect(saved.taskTitle, '明天9点开会；会后整理纪要');
       expect(saved.triggerTime, event);
       expect(saved.eventTime, event);
       final proposals = (jsonDecode(saved.captureProposalJson!) as List)
@@ -210,7 +210,7 @@ void main() {
         event.subtract(const Duration(minutes: 15)),
       );
       expect(saved.capturePending, isFalse);
-      expect(saved.sourceText, '明天9点开会');
+      expect(saved.sourceText, '明天9点开会；会后整理纪要');
       await container
           .read(remindersProvider.notifier)
           .applyCaptureProposal(saved, proposals);

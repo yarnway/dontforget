@@ -1,7 +1,6 @@
 import 'support/workspace_drafts.dart';
 import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
@@ -219,22 +218,13 @@ void main() {
         final saved = await rows('Reminders');
         expect(saved, hasLength(1));
         expect(saved.single['source_text'], '明天下午三点检查报告');
-        expect(saved.single['task_title'], '明天下午三点检查报告');
-        final proposal =
-            jsonDecode(saved.single['capture_proposal_json'] as String) as List;
-        expect(proposal.single['task_title'], '检查报告');
+        expect(saved.single['task_title'], '检查报告');
+        expect(saved.single['capture_proposal_json'], isNull);
         final raw = container!.read(remindersProvider).single;
-        expect(raw.captureProposalJson, isNotNull);
-        await container!.read(remindersProvider.notifier).applyCaptureProposal(
-          raw,
-          [
-            Reminder(
-              id: 'ignored-model-id',
-              taskTitle: '检查报告',
-              quadrantLevel: 2,
-            ),
-          ],
-        );
+        expect(raw.capturePending, isFalse);
+        expect(raw.triggerTime, raw.eventTime);
+        expect(raw.timeOrigin, ReminderTimeOrigin.manual);
+        expect(raw.details.history.last.action, 'capture_auto_applied');
         expect((await rows('Reminders')).single['task_title'], '检查报告');
         expect(home.state.error, isNull);
       } finally {

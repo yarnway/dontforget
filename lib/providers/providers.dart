@@ -31,6 +31,7 @@ import '../services/data_export_service.dart';
 import '../services/dynamic_urgency_service.dart';
 import '../services/bidirectional_link_service.dart';
 import '../services/context_trigger_service.dart';
+import '../services/capture_automation_policy.dart';
 
 part 'task_management.dart';
 part 'departure_routines.dart';
@@ -862,6 +863,13 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
                           : null,
                     if (statusChanged && medication)
                       'dose_outcome': saved.isCompleted ? 'taken' : null,
+                    if (statusChanged && medication)
+                      'data': {
+                        ...saved.details.data,
+                        'dose_taken_at': saved.isCompleted
+                            ? at.toIso8601String()
+                            : null,
+                      },
                   })
                   .encode(),
             );
@@ -949,12 +957,44 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     );
   }
 
-  /// Model output is a durable proposal. Only explicit confirmation applies it.
+  List<Reminder> _acceptedCaptureRows(
+    Reminder current,
+    List<Reminder> edited, {
+    bool automatic = false,
+  }) => [
+    for (var i = 0; i < edited.length; i++)
+      Reminder.fromJson({
+        ...edited[i].toJson(),
+        'id': i == 0 ? current.id : '${current.id}:capture:$i',
+        'source_text': current.sourceText,
+        'record_id': current.recordId,
+        'created_at': current.createdAt?.toIso8601String(),
+        'capture_pending': 0,
+        'capture_proposal_json': null,
+        'details_json': automatic
+            ? (i == 0 ? current.details : const TaskDetails())
+                  .record('capture_auto_applied', DateTime.now())
+                  .encode()
+            : i == 0
+            ? current.detailsJson
+            : null,
+        'is_pinned': i == 0 && current.isPinned ? 1 : 0,
+        'notice_revision': i == 0 ? current.noticeRevision + 1 : 0,
+        'notice_acknowledged_at': null,
+        'upcoming_dismissed_at': null,
+        'snoozed_at': null,
+        'recurrence_anchor_time': null,
+        'recurrence_event_anchor_time': null,
+      }),
+  ];
+
+  /// Clear, grounded captures apply atomically; uncertain output stays a proposal.
   Future<ReminderBatchResult> enrichCapture(
     Reminder baseline,
     List<Reminder> extracted,
-    DataGeneration generation,
-  ) => _enqueue(
+    DataGeneration generation, {
+    bool allowAutomatic = true,
+  }) => _enqueue(
     (ticket) => _dbHelper.runOperation(ticket, () async {
       final saved = await _dbHelper.writeTransaction(ticket, (txn) async {
         final rows = await txn.query(
@@ -962,11 +1002,52 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           where: 'id = ?',
           whereArgs: [baseline.id],
         );
-        if (rows.isEmpty) return null;
+        if (rows.isEmpty) return (rows: <Reminder>[], automatic: false);
         final current = Reminder.fromJson(rows.single);
-        if (!current.capturePending || current.isCompleted) return null;
+        if (!current.capturePending || current.isCompleted) {
+          return (rows: <Reminder>[], automatic: false);
+        }
         if (extracted.length > 32) {
           throw const FormatException('Too many extracted tasks');
+        }
+        final unchanged = mapEquals(current.toJson(), baseline.toJson());
+        var imageSource = false;
+        if (current.recordId != null) {
+          final media = await txn.query(
+            'MediaRecords',
+            columns: ['type'],
+            where: 'id = ?',
+            whereArgs: [current.recordId],
+          );
+          imageSource = media.firstOrNull?['type'] == 'image';
+        }
+        final automatic = allowAutomatic && unchanged
+            ? CaptureAutomationPolicy.resolve(
+                current,
+                extracted,
+                now: DateTime.now(),
+                imageSource: imageSource,
+              )
+            : null;
+        if (automatic != null) {
+          final accepted = _acceptedCaptureRows(
+            current,
+            automatic,
+            automatic: true,
+          );
+          for (var i = 0; i < accepted.length; i++) {
+            if (i == 0) {
+              await txn.update(
+                'Reminders',
+                accepted[i].toJson(),
+                where: 'id = ?',
+                whereArgs: [current.id],
+              );
+            } else {
+              await txn.insert('Reminders', accepted[i].toJson());
+            }
+          }
+          return (rows: accepted, automatic: true);
         }
         final saved = current.copyWith(
           capturePending: false,
@@ -981,11 +1062,22 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           where: 'id = ?',
           whereArgs: [saved.id],
         );
-        return saved;
+        return (rows: [saved], automatic: false);
       });
       _dbHelper.checkGeneration(ticket);
-      if (saved != null) _publish([saved]);
-      return ReminderBatchResult(changed: saved == null ? 0 : 1);
+      if (saved.rows.isNotEmpty) _publishManaged(saved.rows);
+      var failures = 0;
+      if (saved.automatic) {
+        for (final row in saved.rows) {
+          if (await _synchronizeReminder(row, ticket, cancelOverdue: true)) {
+            failures++;
+          }
+        }
+      }
+      return ReminderBatchResult(
+        changed: saved.rows.length,
+        nativeSyncFailures: failures,
+      );
     }),
     generation: generation,
   );
@@ -1029,25 +1121,9 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
             !unchanged) {
           throw const StaleReminderOccurrenceException();
         }
-        final result = <Reminder>[];
-        for (var i = 0; i < edited.length; i++) {
-          final item = Reminder.fromJson({
-            ...edited[i].toJson(),
-            'id': i == 0 ? current.id : '${current.id}:capture:$i',
-            'source_text': current.sourceText,
-            'record_id': current.recordId,
-            'created_at': current.createdAt?.toIso8601String(),
-            'capture_pending': 0,
-            'capture_proposal_json': null,
-            'details_json': i == 0 ? current.detailsJson : null,
-            'is_pinned': i == 0 && current.isPinned ? 1 : 0,
-            'notice_revision': i == 0 ? current.noticeRevision + 1 : 0,
-            'notice_acknowledged_at': null,
-            'upcoming_dismissed_at': null,
-            'snoozed_at': null,
-            'recurrence_anchor_time': null,
-            'recurrence_event_anchor_time': null,
-          });
+        final result = _acceptedCaptureRows(current, edited);
+        for (var i = 0; i < result.length; i++) {
+          final item = result[i];
           if (i == 0) {
             await txn.update(
               'Reminders',
@@ -1058,7 +1134,6 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           } else {
             await txn.insert('Reminders', item.toJson());
           }
-          result.add(item);
         }
         return result;
       });
@@ -1563,6 +1638,13 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
                             'dose_outcome': action == _ReminderAction.skip
                                 ? 'not_taken'
                                 : 'taken',
+                          if (!snooze && current.details.kind == 'medication')
+                            'data': {
+                              ...current.details.data,
+                              'dose_taken_at': action == _ReminderAction.skip
+                                  ? null
+                                  : now.toIso8601String(),
+                            },
                           if (!snooze && nextTime != null)
                             'checklist': [
                               for (final item in current.details.checklist)

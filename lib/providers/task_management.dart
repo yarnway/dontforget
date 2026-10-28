@@ -124,6 +124,7 @@ extension TaskManagement on RemindersNotifier {
               .patch({
                 'completed_at': at.toIso8601String(),
                 'dose_outcome': 'not_taken',
+                'data': {...current.details.data, 'dose_taken_at': null},
               })
               .encode(),
         );
@@ -145,6 +146,80 @@ extension TaskManagement on RemindersNotifier {
     }),
     generation: generation,
   );
+
+  Future<ReminderActionResult> recordDoseTakenAt(
+    Reminder expected,
+    DateTime actualAt,
+    DataGeneration generation, {
+    DateTime? now,
+  }) {
+    final at = now ?? DateTime.now();
+    if (actualAt.isAfter(at) || actualAt.year < 1900 || actualAt.year > 2200) {
+      throw const FormatException('Actual dose time must not be in the future');
+    }
+    return _enqueue(
+      (ticket) => _dbHelper.runOperation(ticket, () async {
+        final saved = await _dbHelper.writeTransaction(ticket, (db) async {
+          final rows = await db.query(
+            'Reminders',
+            where: 'id = ?',
+            whereArgs: [expected.id],
+          );
+          if (rows.isEmpty) throw const StaleReminderOccurrenceException();
+          final current = Reminder.fromJson(rows.single);
+          if (current.details.kind != 'medication' ||
+              !current.isVisible ||
+              current.details.paused ||
+              !mapEquals(current.toJson(), expected.toJson())) {
+            throw const StaleReminderOccurrenceException();
+          }
+          final wasTaken =
+              current.isCompleted &&
+              current.details.effectiveDoseOutcome == 'taken';
+          final next = current.copyWith(
+            isCompleted: true,
+            isPinned: false,
+            noticeRevision: current.noticeRevision + 1,
+            noticeAcknowledgedAt: null,
+            upcomingDismissedAt: null,
+            detailsJson: current.details
+                .record(
+                  wasTaken ? 'dose_time_corrected' : 'taken',
+                  at,
+                  scheduled: current.eventTime ?? current.triggerTime,
+                  note: actualAt.toIso8601String(),
+                )
+                .patch({
+                  'completed_at':
+                      (wasTaken ? current.details.completedAt ?? at : at)
+                          .toIso8601String(),
+                  'dose_outcome': 'taken',
+                  'data': {
+                    ...current.details.data,
+                    'dose_taken_at': actualAt.toIso8601String(),
+                  },
+                })
+                .encode(),
+          );
+          await db.update(
+            'Reminders',
+            next.toJson(),
+            where: 'id = ?',
+            whereArgs: [next.id],
+          );
+          return next;
+        });
+        _dbHelper.checkGeneration(ticket);
+        _publishManaged([saved]);
+        return ReminderActionResult(
+          ReminderActionDisposition.applied,
+          reminder: saved,
+          nativeSyncFailed: await _synchronizeReminder(saved, ticket),
+        );
+      }),
+      generation: generation,
+    );
+  }
 
   Future<ReminderBatchResult> saveRoutine(
     Reminder owner,
@@ -345,6 +420,36 @@ extension TaskManagement on RemindersNotifier {
     String action,
     DataGeneration generation, {
     DateTime? now,
+  }) => _changeLifecycles([expected], action, generation, now: now);
+
+  /// Ordinary root tasks only. Validation and all business writes are atomic;
+  /// native failures are reported after the durable transaction has committed.
+  Future<ReminderBatchResult> changeLifecycleBatch(
+    List<Reminder> expected,
+    String action,
+    DataGeneration generation, {
+    DateTime? now,
+  }) {
+    if (expected.isEmpty ||
+        expected.length > 50 ||
+        expected.map((e) => e.id).toSet().length != expected.length) {
+      throw const FormatException('Select between 1 and 50 distinct tasks');
+    }
+    return _changeLifecycles(
+      List.unmodifiable(expected),
+      action,
+      generation,
+      now: now,
+      ordinaryOnly: true,
+    );
+  }
+
+  Future<ReminderBatchResult> _changeLifecycles(
+    List<Reminder> expected,
+    String action,
+    DataGeneration generation, {
+    DateTime? now,
+    bool ordinaryOnly = false,
   }) {
     if (!const {
       'pause',
@@ -363,84 +468,112 @@ extension TaskManagement on RemindersNotifier {
           final all = (await db.query(
             'Reminders',
           )).map(Reminder.fromJson).toList();
-          final target = all.where((r) => r.id == expected.id).firstOrNull;
-          if (target == null ||
-              target.detailsJson != expected.detailsJson ||
-              target.occurrenceIdentity != expected.occurrenceIdentity) {
-            throw const StaleReminderOccurrenceException();
-          }
-          if (action == 'archive' &&
-              !target.isCompleted &&
-              target.details.kind != 'medicationPlan') {
-            throw StateError('Only completed tasks can be archived');
+          final targets = <Reminder>[];
+          for (final wanted in expected) {
+            final target = all.where((r) => r.id == wanted.id).firstOrNull;
+            if (target == null ||
+                !mapEquals(target.toJson(), wanted.toJson())) {
+              throw const StaleReminderOccurrenceException();
+            }
+            if (ordinaryOnly &&
+                (target.details.kind != 'task' ||
+                    target.details.planId != null ||
+                    all.any((r) => r.details.planId == target.id))) {
+              throw StateError('Bulk actions only accept ordinary root tasks');
+            }
+            if (ordinaryOnly &&
+                !switch (action) {
+                  'pause' ||
+                  'resume' => target.isVisible && !target.isCompleted,
+                  'trash' => target.details.deletedAt == null,
+                  'restore' => target.details.deletedAt != null,
+                  'archive' => target.isVisible && target.isCompleted,
+                  _ =>
+                    target.details.deletedAt == null &&
+                        target.details.archivedAt != null,
+                }) {
+              throw StateError('Task is not eligible for this bulk action');
+            }
+            if (action == 'archive' &&
+                !target.isCompleted &&
+                target.details.kind != 'medicationPlan') {
+              throw StateError('Only completed tasks can be archived');
+            }
+            targets.add(target);
           }
           final changes = <Reminder>[];
-          for (final row in all.where(
-            (r) => r.id == target.id || r.details.planId == target.id,
-          )) {
-            if (row.id != target.id) {
-              if (action == 'trash' && row.details.deletedAt != null) continue;
-              if (action == 'restore' &&
-                  (target.details.deletedAt == null ||
-                      row.details.deletedAt != target.details.deletedAt)) {
+          for (final target in targets) {
+            for (final row in all.where(
+              (r) => r.id == target.id || r.details.planId == target.id,
+            )) {
+              if (row.id != target.id) {
+                if (action == 'trash' && row.details.deletedAt != null) {
+                  continue;
+                }
+                if (action == 'restore' &&
+                    (target.details.deletedAt == null ||
+                        row.details.deletedAt != target.details.deletedAt)) {
+                  continue;
+                }
+                if (action == 'archive' && row.details.archivedAt != null) {
+                  continue;
+                }
+                if (action == 'unarchive' &&
+                    (target.details.archivedAt == null ||
+                        row.details.archivedAt != target.details.archivedAt)) {
+                  continue;
+                }
+              }
+              if (row.id != target.id &&
+                  row.isCompleted &&
+                  (action == 'pause' || action == 'resume')) {
                 continue;
               }
-              if (action == 'archive' && row.details.archivedAt != null) {
-                continue;
-              }
-              if (action == 'unarchive' &&
-                  (target.details.archivedAt == null ||
-                      row.details.archivedAt != target.details.archivedAt)) {
-                continue;
-              }
-            }
-            if (row.id != target.id &&
-                row.isCompleted &&
-                (action == 'pause' || action == 'resume')) {
-              continue;
-            }
-            final fields = switch (action) {
-              'pause' => <String, dynamic>{'paused': true},
-              'resume' => <String, dynamic>{'paused': false},
-              'trash' => <String, dynamic>{'deleted_at': at.toIso8601String()},
-              'restore' => <String, dynamic>{'deleted_at': null},
-              'archive' => <String, dynamic>{
-                'archived_at': at.toIso8601String(),
-              },
-              _ => <String, dynamic>{'archived_at': null},
-            };
-            var next = row.copyWith(
-              detailsJson: row.details
-                  .patch(fields)
-                  .record(action, at)
-                  .encode(),
-              noticeRevision: row.noticeRevision + 1,
-              noticeAcknowledgedAt: null,
-              upcomingDismissedAt: null,
-            );
-            if (action == 'resume' &&
-                next.isRecurring &&
-                next.triggerTime != null &&
-                !next.triggerTime!.isAfter(at)) {
-              final due = next.getNextOccurrence(after: at);
-              next = next.copyWith(
-                eventTime:
-                    due != null &&
-                        row.eventTime != null &&
-                        row.triggerTime != null
-                    ? due.add(row.eventTime!.difference(row.triggerTime!))
-                    : row.eventTime,
-                triggerTime: due ?? next.triggerTime,
-                isCompleted: due == null,
+              final fields = switch (action) {
+                'pause' => <String, dynamic>{'paused': true},
+                'resume' => <String, dynamic>{'paused': false},
+                'trash' => <String, dynamic>{
+                  'deleted_at': at.toIso8601String(),
+                },
+                'restore' => <String, dynamic>{'deleted_at': null},
+                'archive' => <String, dynamic>{
+                  'archived_at': at.toIso8601String(),
+                },
+                _ => <String, dynamic>{'archived_at': null},
+              };
+              var next = row.copyWith(
+                detailsJson: row.details
+                    .patch(fields)
+                    .record(action, at)
+                    .encode(),
+                noticeRevision: row.noticeRevision + 1,
+                noticeAcknowledgedAt: null,
+                upcomingDismissedAt: null,
               );
+              if (action == 'resume' &&
+                  next.isRecurring &&
+                  next.triggerTime != null &&
+                  !next.triggerTime!.isAfter(at)) {
+                final due = next.getNextOccurrence(after: at);
+                next = next.copyWith(
+                  eventTime:
+                      due != null &&
+                          row.eventTime != null &&
+                          row.triggerTime != null
+                      ? due.add(row.eventTime!.difference(row.triggerTime!))
+                      : row.eventTime,
+                  triggerTime: due ?? next.triggerTime,
+                  isCompleted: due == null,
+                );
+              }
+              await db.update(
+                'Reminders',
+                next.toJson(),
+                where: 'id = ?',
+                whereArgs: [next.id],
+              );
+              changes.add(next);
             }
-            await db.update(
-              'Reminders',
-              next.toJson(),
-              where: 'id = ?',
-              whereArgs: [next.id],
-            );
-            changes.add(next);
           }
           return changes;
         });

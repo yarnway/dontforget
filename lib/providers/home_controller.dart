@@ -250,11 +250,26 @@ class HomeController extends StateNotifier<HomeState> {
           generation,
           baseline: raw,
         );
-        source = source.copyWith(
-          detailsJson: updatedSource.reminder?.detailsJson,
-        );
+        source = updatedSource.reminder ?? source;
         if (preview) {
-          await notifier.enrichCapture(source, tasks, generation);
+          final label = AppLocalizations(
+            Locale(_ref.read(settingsProvider).language),
+          ).get('capturedAttachment');
+          final result = await notifier.enrichCapture(
+            source,
+            tasks,
+            generation,
+            allowAutomatic:
+                raw.taskTitle == label && raw.details.history.isEmpty,
+          );
+          if (result.nativeSyncFailures > 0) {
+            _reportError(
+              generation,
+              AppLocalizations(
+                Locale(_ref.read(settingsProvider).language),
+              ).get('reminderNativeSyncFailed'),
+            );
+          }
         } else if (tasks.isNotEmpty) {
           final memo = Reminder.fromJson({
             ...tasks.first.toJson(),

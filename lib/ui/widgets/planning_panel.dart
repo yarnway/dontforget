@@ -6,6 +6,7 @@ import '../../data/database_helper.dart';
 import '../../l10n/planning_strings.dart';
 import '../../models/reminder.dart';
 import '../../models/task_details.dart';
+import '../../models/task_template.dart';
 import '../../providers/providers.dart';
 import '../../services/recovery/runtime_gate.dart';
 import '../formatters/local_date_time.dart';
@@ -18,6 +19,8 @@ import 'learning_management_panel.dart';
 import 'inline_feedback.dart';
 import 'workspace_tool_panel.dart';
 import 'saved_task_filters_bar.dart';
+import 'task_template_library.dart';
+import 'weekly_task_review_panel.dart';
 
 class PlanningPanel extends StatefulWidget {
   const PlanningPanel({
@@ -103,6 +106,9 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
   final _queryController = TextEditingController();
   String _view = 'manage', _query = '';
   bool _busy = false;
+  bool _promptOpen = false;
+  bool _selecting = false;
+  final _selection = <String, Reminder>{};
   late final DatabaseHelper _database;
   late final DataGeneration _generation;
   late final RuntimeRecoveryGate _runtime;
@@ -199,6 +205,85 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
     );
   }
 
+  Future<void> _bulk(String action) async {
+    if (!_current || _busy || _promptOpen || _selection.isEmpty) return;
+    final selected = List<Reminder>.unmodifiable(_selection.values);
+    _promptOpen = true;
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(
+            '${t('bulkConfirm')} · ${t(action == 'trash' ? 'moveTrash' : action)} · ${selected.length}',
+          ),
+          content: SizedBox(
+            width: 420,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(t('bulkHint')),
+                  for (final row in selected.take(5)) Text(row.taskTitle),
+                  if (selected.length > 5) Text('… +${selected.length - 5}'),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(AppLocalizations.of(context).get('cancel')),
+            ),
+            FilledButton(
+              key: const ValueKey('bulk-confirm'),
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(t(action == 'trash' ? 'moveTrash' : action)),
+            ),
+          ],
+        ),
+      );
+      if (!mounted || !context.mounted || !_current || confirmed != true) {
+        return;
+      }
+      setState(() => _busy = true);
+      final result = await ref
+          .read(remindersProvider.notifier)
+          .changeLifecycleBatch(selected, action, _generation);
+      if (!mounted || !context.mounted || !_current) return;
+      setState(() {
+        _selection.clear();
+        _selecting = false;
+      });
+      InlineFeedback.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result.nativeSyncFailures > 0
+                ? AppLocalizations.of(context).get('reminderNativeSyncFailed')
+                : t('saved'),
+          ),
+          action: result.nativeSyncFailures > 0
+              ? SnackBarAction(
+                  label: AppLocalizations.of(
+                    context,
+                  ).get('repairNotifications'),
+                  onPressed: notificationRepairAction(context).onPressed,
+                )
+              : null,
+        ),
+      );
+    } catch (_) {
+      if (mounted && context.mounted && _current) {
+        InlineFeedback.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(t('bulkChanged'))));
+      }
+    } finally {
+      _promptOpen = false;
+      if (_current) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final all = ref.watch(remindersProvider);
@@ -264,7 +349,13 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
                         ChoiceChip(
                           label: Text(t(view)),
                           selected: _view == view,
-                          onSelected: (_) => setState(() => _view = view),
+                          onSelected: _busy
+                              ? null
+                              : (_) => setState(() {
+                                  _view = view;
+                                  _selection.clear();
+                                  _selecting = false;
+                                }),
                         ),
                     ],
                   ),
@@ -274,7 +365,10 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
                       labelText: t('filter'),
                       prefixIcon: const Icon(Icons.search),
                     ),
-                    onChanged: (v) => setState(() => _query = v),
+                    onChanged: (v) => setState(() {
+                      _query = v;
+                      _selection.clear();
+                    }),
                   ),
                   SavedTaskFiltersBar(
                     view: _view,
@@ -285,6 +379,8 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
                         _view = filter.view;
                         _query = filter.query;
                         _queryController.text = filter.query;
+                        _selection.clear();
+                        _selecting = false;
                       });
                     },
                   ),
@@ -298,6 +394,111 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
                     icon: const Icon(Icons.add),
                     label: Text(t('newChecklist')),
                   ),
+                  Wrap(
+                    spacing: 6,
+                    children: [
+                      TextButton.icon(
+                        key: const ValueKey('manage-templates'),
+                        onPressed: _busy
+                            ? null
+                            : () => showDialog<void>(
+                                context: context,
+                                builder: (_) => const TaskTemplateLibrary(),
+                              ),
+                        icon: const Icon(Icons.library_books_outlined),
+                        label: Text(t('templates')),
+                      ),
+                      if (_view != 'history')
+                        TextButton.icon(
+                          key: const ValueKey('bulk-select'),
+                          onPressed: _busy
+                              ? null
+                              : () => setState(() {
+                                  _selecting = !_selecting;
+                                  _selection.clear();
+                                }),
+                          icon: const Icon(Icons.checklist),
+                          label: Text(
+                            t(_selecting ? 'bulkCancel' : 'bulkSelect'),
+                          ),
+                        ),
+                    ],
+                  ),
+                  if (_selecting) ...[
+                    Text('${t('bulkSelected')}: ${_selection.length}/50'),
+                    Text(
+                      t('bulkHint'),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 4,
+                      children: [
+                        TextButton(
+                          key: const ValueKey('bulk-visible'),
+                          onPressed: _busy
+                              ? null
+                              : () => setState(() {
+                                  _selection.clear();
+                                  for (final row
+                                      in rows
+                                          .where(
+                                            (r) =>
+                                                r.details.kind == 'task' &&
+                                                r.details.planId == null &&
+                                                !all.any(
+                                                  (child) =>
+                                                      child.details.planId ==
+                                                      r.id,
+                                                ),
+                                          )
+                                          .take(50)) {
+                                    _selection[row.id] = row;
+                                  }
+                                }),
+                          child: Text(t('bulkSelectVisible')),
+                        ),
+                        for (final action in [
+                          if (_view == 'trash')
+                            'restore'
+                          else if (_view == 'archive')
+                            'unarchive'
+                          else ...[
+                            'pause',
+                            'resume',
+                            'archive',
+                            'trash',
+                          ],
+                        ])
+                          TextButton(
+                            key: ValueKey('bulk-$action'),
+                            onPressed:
+                                _busy ||
+                                    _selection.isEmpty ||
+                                    (action == 'pause' &&
+                                        _selection.values.any(
+                                          (r) =>
+                                              r.isCompleted || r.details.paused,
+                                        )) ||
+                                    (action == 'resume' &&
+                                        _selection.values.any(
+                                          (r) =>
+                                              r.isCompleted ||
+                                              !r.details.paused,
+                                        )) ||
+                                    (action == 'archive' &&
+                                        _selection.values.any(
+                                          (r) => !r.isCompleted,
+                                        ))
+                                ? null
+                                : () => _bulk(action),
+                            child: Text(
+                              t(action == 'trash' ? 'moveTrash' : action),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -306,9 +507,12 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
         Expanded(
           child: _view == 'history'
               ? ListView.builder(
-                  itemCount: events.length > 300 ? 300 : events.length,
+                  itemCount: (events.length > 300 ? 300 : events.length) + 1,
                   itemBuilder: (context, i) {
-                    final e = events[i];
+                    if (i == 0) {
+                      return WeeklyTaskReviewPanel(rows: all, query: _query);
+                    }
+                    final e = events[i - 1];
                     return ListTile(
                       title: Text(e.row.taskTitle),
                       subtitle: Text(
@@ -330,6 +534,30 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
+                            if (_selecting &&
+                                row.details.kind == 'task' &&
+                                row.details.planId == null &&
+                                !all.any(
+                                  (child) => child.details.planId == row.id,
+                                ))
+                              CheckboxListTile(
+                                key: ValueKey('bulk-row:${row.id}'),
+                                contentPadding: EdgeInsets.zero,
+                                value: _selection.containsKey(row.id),
+                                title: Text(t('bulkSelectTask')),
+                                onChanged:
+                                    _busy ||
+                                        (!_selection.containsKey(row.id) &&
+                                            _selection.length >= 50)
+                                    ? null
+                                    : (value) => setState(() {
+                                        if (value == true) {
+                                          _selection[row.id] = row;
+                                        } else {
+                                          _selection.remove(row.id);
+                                        }
+                                      }),
+                              ),
                             Text(
                               row.taskTitle,
                               style: Theme.of(context).textTheme.titleSmall,
@@ -475,6 +703,7 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
   late final String _id;
   final _form = GlobalKey<FormState>();
   String _rule = 'none';
+  bool _templateApplied = false;
   List<int> _weekdays = [];
   DateTime? _end, _due;
   bool _saving = false;
@@ -513,6 +742,54 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
     super.dispose();
   }
 
+  Future<void> _chooseTemplate() async {
+    if (!_current || _saving) return;
+    setState(() => _saving = true);
+    try {
+      final item = await showDialog<TaskTemplate>(
+        context: context,
+        builder: (_) => const TaskTemplateLibrary(allowApply: true),
+      );
+      if (!_current || item == null) return;
+      setState(() {
+        _title.text = item.title;
+        _items.text = item.items.join('\n');
+        _tags.text = item.tags.join(', ');
+        _project.text = item.project;
+        _templateApplied = true;
+      });
+    } finally {
+      if (_current) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _saveTemplate() async {
+    if (!_current || _saving) return;
+    setState(() => _saving = true);
+    try {
+      await showDialog<bool>(
+        context: context,
+        builder: (_) => TaskTemplateEditorDialog(
+          seedTitle: _title.text.trim(),
+          seedItems: _items.text
+              .split('\n')
+              .map((e) => e.trim())
+              .where((e) => e.isNotEmpty)
+              .toList(),
+          seedTags: _tags.text
+              .split(RegExp('[,，]'))
+              .map((e) => e.trim())
+              .where((e) => e.isNotEmpty)
+              .toSet()
+              .toList(),
+          seedProject: _project.text.trim(),
+        ),
+      );
+    } finally {
+      if (_current) setState(() => _saving = false);
+    }
+  }
+
   Future<void> _save() async {
     if (!mounted ||
         !context.mounted ||
@@ -532,11 +809,18 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
       if (labels.length > 64 || labels.any((e) => e.length > 512)) {
         throw const FormatException('Too many checklist items');
       }
-      final items = [
-        for (final label in labels)
-          details.checklist.where((item) => item.label == label).firstOrNull ??
-              ChecklistItem(const Uuid().v4(), label),
-      ];
+      final available = _templateApplied
+          ? <ChecklistItem>[]
+          : [...details.checklist];
+      final items = <ChecklistItem>[];
+      for (final label in labels) {
+        final index = available.indexWhere((item) => item.label == label);
+        items.add(
+          index < 0
+              ? ChecklistItem(const Uuid().v4(), label)
+              : available.removeAt(index),
+        );
+      }
       final tags = _tags.text
           .split(RegExp('[,，]'))
           .map((e) => e.trim())
@@ -650,6 +934,7 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TextFormField(
+                key: const ValueKey('task-management-title'),
                 controller: _title,
                 maxLength: 160,
                 decoration: InputDecoration(labelText: t('title')),
@@ -657,19 +942,40 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
                     v == null || v.trim().isEmpty ? t('incomplete') : null,
               ),
               TextFormField(
+                key: const ValueKey('task-management-tags'),
                 controller: _tags,
                 decoration: InputDecoration(labelText: t('tags')),
               ),
               TextFormField(
+                key: const ValueKey('task-management-project'),
                 controller: _project,
                 maxLength: 128,
                 decoration: InputDecoration(labelText: t('project')),
               ),
               TextFormField(
+                key: const ValueKey('task-management-items'),
                 controller: _items,
                 maxLines: 5,
                 decoration: InputDecoration(labelText: t('checklist')),
               ),
+              if (widget.task == null || widget.task!.details.kind == 'task')
+                Wrap(
+                  spacing: 6,
+                  children: [
+                    TextButton.icon(
+                      key: const ValueKey('editor-templates'),
+                      onPressed: _saving ? null : _chooseTemplate,
+                      icon: const Icon(Icons.library_books_outlined),
+                      label: Text(t('useTemplate')),
+                    ),
+                    TextButton.icon(
+                      key: const ValueKey('editor-save-template'),
+                      onPressed: _saving ? null : _saveTemplate,
+                      icon: const Icon(Icons.bookmark_add_outlined),
+                      label: Text(t('saveAsTemplate')),
+                    ),
+                  ],
+                ),
               Wrap(
                 spacing: 4,
                 children: [
@@ -816,6 +1122,7 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
         child: Text(AppLocalizations.of(context).get('cancel')),
       ),
       FilledButton(
+        key: const ValueKey('task-management-save'),
         onPressed: _saving ? null : _save,
         child: Text(t('activate')),
       ),

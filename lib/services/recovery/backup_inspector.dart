@@ -4,6 +4,7 @@ import '../../models/departure_plan.dart';
 import '../../models/settings.dart';
 import '../../models/reminder.dart';
 import '../../models/saved_task_filter.dart';
+import '../../models/task_template.dart';
 import '../learning_queue_service.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -896,6 +897,7 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
         _fail(BackupInspectionError.invalidData);
       }
       SavedTaskFilter.decode(decoded[SavedTaskFilter.storageKey]);
+      TaskTemplate.decode(decoded[TaskTemplate.storageKey]);
     }
     parsedSettings = AppSettings.fromJson(Map<String, dynamic>.from(settings));
   } catch (_) {

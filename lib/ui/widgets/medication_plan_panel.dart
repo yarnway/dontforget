@@ -17,6 +17,7 @@ import '../formatters/local_date_time.dart';
 import '../screens/notification_repair_screen.dart';
 import 'inline_feedback.dart';
 import 'routine_coverage_panel.dart';
+import 'dose_taken_time_dialog.dart';
 
 class MedicationPlanPanel extends ConsumerStatefulWidget {
   const MedicationPlanPanel({super.key, this.initialPlanId});
@@ -36,6 +37,7 @@ class _MedicationPlanPanelState extends ConsumerState<MedicationPlanPanel> {
   String? _record;
   int _formRevision = 0;
   bool _loaded = false, _busy = false, _confirmed = false;
+  bool _promptOpen = false;
   List<Reminder>? _preview;
   DateTime _day = DateTime.now();
   final _cancel = CancelToken();
@@ -363,7 +365,7 @@ Use YYYY-MM-DD dates only when an exact date is stated. times contains only expl
     try {
       final notifier = ref.read(remindersProvider.notifier);
       final result = taken
-          ? await notifier.completeOccurrence(dose)
+          ? await notifier.recordDoseTakenAt(dose, DateTime.now(), _generation)
           : await notifier.markNotTaken(dose, _generation);
       if (mounted && context.mounted && _current) {
         _feedback(
@@ -377,6 +379,36 @@ Use YYYY-MM-DD dates only when an exact date is stated. times contains only expl
       if (mounted && context.mounted && _current) _feedback(t('failed'));
     } finally {
       if (mounted && context.mounted && _current) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _recordDoseTime(Reminder dose) async {
+    if (!_current || _busy || _promptOpen) return;
+    _promptOpen = true;
+    try {
+      final actual = await showDialog<DateTime>(
+        context: context,
+        builder: (_) =>
+            DoseTakenTimeDialog(initialTime: dose.details.actualDoseTakenAt),
+      );
+      if (!mounted || !context.mounted || !_current || actual == null) return;
+      setState(() => _busy = true);
+      final result = await ref
+          .read(remindersProvider.notifier)
+          .recordDoseTakenAt(dose, actual, _generation);
+      if (mounted && context.mounted && _current) {
+        _feedback(
+          result.nativeSyncFailed
+              ? AppLocalizations.of(context).get('reminderNativeSyncFailed')
+              : t('saved'),
+          repair: result.nativeSyncFailed,
+        );
+      }
+    } catch (_) {
+      if (_current) _feedback(t('failed'));
+    } finally {
+      _promptOpen = false;
+      if (_current) setState(() => _busy = false);
     }
   }
 
@@ -677,6 +709,28 @@ Use YYYY-MM-DD dates only when an exact date is stated. times contains only expl
                         ),
                       ],
                     ),
+                  if (dose.details.actualDoseTakenAt != null)
+                    Text(
+                      '${t('actualDoseTime')}: ${formatLocalDateTime(dose.details.actualDoseTakenAt!)}',
+                    )
+                  else if (dose.isCompleted && dose.details.completedAt != null)
+                    Text(
+                      '${t('recordedDoseTime')}: ${formatLocalDateTime(dose.details.completedAt!)}',
+                    ),
+                  TextButton.icon(
+                    key: ValueKey('dose-time:${dose.id}'),
+                    onPressed: _busy || dose.details.paused
+                        ? null
+                        : () => _recordDoseTime(dose),
+                    icon: const Icon(Icons.edit_calendar),
+                    label: Text(
+                      t(
+                        dose.details.actualDoseTakenAt == null
+                            ? 'recordDoseTime'
+                            : 'correctDoseTime',
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
