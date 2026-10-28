@@ -79,7 +79,6 @@
     }
   },
   "acceptance": {
-    "phone_owner_thread_id": "01a15c7c-8a67-7562-9db6-e540460d05c1",
     "phone_operated": false,
     "phone_cross_day": "pending",
     "actual_location_permissions": "pending",
@@ -87,7 +86,33 @@
     "actual_background_delivery": "pending",
     "installed_or_launched": false,
     "push_by_this_task": false,
-    "published_by_this_task": false
+    "published_by_this_task": false,
+    "phone_notification_acceptance_responsible_thread_id": "01a15c7c-8a67-7562-9db6-e540460d05c1",
+    "physical_phone_ownership_snapshot": {
+      "canonical_state_path": "build/native_acceptance/shared-desktop-rotation.json",
+      "canonical_revision": 30,
+      "canonical_updated_at": "2026-10-28T14:57:33.533102+08:00",
+      "read_at_utc": "2026-10-28T07:02:07Z",
+      "owner_task_id": "01a17c24-05d0-7273-ac6c-a2e578ad2c8b",
+      "status": "HUMAN_MIC_ACCEPTANCE_PENDING",
+      "explicit_return_required": true,
+      "grants_access": false
+    },
+    "release_gate": {
+      "policy": "docs/Release_Policy.md",
+      "required_native_platforms": [
+        "macos",
+        "ios"
+      ],
+      "ci_build_platforms": [
+        "macos",
+        "ios",
+        "android",
+        "windows",
+        "linux"
+      ],
+      "requires_all_platform_physical_devices": false
+    }
   },
   "calendar": {
     "default_enabled": false,
@@ -188,7 +213,7 @@
   },
   "remaining": {
     "phase2": [
-      "phone_and_five_platform_native_acceptance",
+      "macos_ios_required_native_acceptance_and_other_platform_ci",
       "calendar_merge_and_updates",
       "capture_entry_linkage_and_historical_dates",
       "background_geofencing_and_system_wake_design",
