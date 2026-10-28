@@ -178,26 +178,32 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
         return Column(
           children: [
             Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 2,
-                  children: [
-                    for (final entry in const {
-                      'today': 'viewToday',
-                      'future': 'viewFuture',
-                      'all': 'viewAll',
-                      'board': 'viewBoard',
-                    }.entries)
-                      ChoiceChip(
-                        key: ValueKey('workspace-view-${entry.key}'),
-                        label: Text(loc.get(entry.value)),
-                        selected: view == entry.key,
-                        onSelected: (_) => _select(entry.key),
-                      ),
-                  ],
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1040),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 2,
+                      children: [
+                        for (final entry in const {
+                          'today': 'viewToday',
+                          'future': 'viewFuture',
+                          'all': 'viewAll',
+                          'board': 'viewBoard',
+                        }.entries)
+                          ChoiceChip(
+                            key: ValueKey('workspace-view-${entry.key}'),
+                            label: Text(loc.get(entry.value)),
+                            selected: view == entry.key,
+                            onSelected: (_) => _select(entry.key),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -210,7 +216,7 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                   : Align(
                       alignment: Alignment.topCenter,
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 960),
+                        constraints: const BoxConstraints(maxWidth: 1040),
                         child: rows.isEmpty && view != 'all'
                             ? Center(
                                 child: Column(
@@ -222,6 +228,16 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                                             ? 'todayEmpty'
                                             : 'futureEmpty',
                                       ),
+                                      textAlign: TextAlign.center,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
+                                            height: 1.5,
+                                          ),
                                     ),
                                     TextButton(
                                       onPressed: () => _select('all'),
@@ -234,7 +250,7 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                                 key: ValueKey('workspace-$view'),
                                 slivers: [
                                   SliverPadding(
-                                    padding: const EdgeInsets.all(16),
+                                    padding: const EdgeInsets.all(12),
                                     sliver: SliverList(
                                       delegate: SliverChildBuilderDelegate((
                                         context,

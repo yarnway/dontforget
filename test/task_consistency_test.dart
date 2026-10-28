@@ -140,6 +140,11 @@ void main() {
         expect(find.text('four'), findsNothing);
         expect(find.text('+2'), findsOneWidget);
         expect(find.textContaining('1/2'), findsOneWidget);
+        expect(find.text('Legacy habit'), findsNothing);
+        final legacySteps = find.byKey(const ValueKey('subtasks-metadata'));
+        await tester.ensureVisible(legacySteps);
+        await tester.tap(legacySteps);
+        await tester.pumpAndSettle();
         expect(find.text('Legacy habit'), findsOneWidget);
         final l10n = AppLocalizations.of(tester.element(find.byType(TaskCard)));
         expect(
@@ -233,6 +238,10 @@ void main() {
         find.byKey(const ValueKey('checklist-item-metadata-second')),
       );
       expect(tile.onChanged, isNull);
+      expect(find.text('Old habit'), findsNothing);
+      await tester.ensureVisible(find.byKey(const ValueKey('subtasks-legacy')));
+      await tester.tap(find.byKey(const ValueKey('subtasks-legacy')));
+      await tester.pumpAndSettle();
       expect(find.text('Old habit'), findsOneWidget);
     },
   );
