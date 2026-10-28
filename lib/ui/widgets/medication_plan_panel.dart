@@ -559,7 +559,7 @@ class _MedicationPlanPanelState extends ConsumerState<MedicationPlanPanel> {
     requiredFields: _draft['review_sources'] == true
         ? (identical(target, _draft)
               ? MedicationFacts.planFields
-              : const {'name', 'strength', 'amount', 'unit', 'meal', 'times'})
+              : MedicationFacts.requiredMedicineFields)
         : const {},
     enabled: !_busy,
     onChoose: (field, value) => _chooseFact(target, field, value),

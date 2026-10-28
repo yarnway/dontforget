@@ -46,10 +46,10 @@
     },
     "stoppedExactPid": 4988,
     "temporaryShortcutRestored": true,
-    "ownership": "explicitly handed to independent P1 UI task after final snapshot; explicit handback required"
+    "ownership": "explicitly handed to independent P1 UI task after final snapshot; explicit handback required",
+    "handoffExtendedUntilLocal": "2026-10-28T11:45:00+08:00"
   },
   "validation": {
-    "previousMainCi": "SUCCESS",
     "previousMainCiHead": "caa488d35fbcb503db11c35070ef271097e64ea8",
     "integratedProductSource": "9e297cee0498277ad8662128e055aa8c4bbdc4cf",
     "productTreesMatchValidatedSource": [
@@ -66,7 +66,54 @@
     "analysisIssues": 0,
     "newRegression": "retained banners and pending requests are independent; new delivery and cancellation preserve old banners",
     "deviceSubstitution": false,
-    "previousMainCiRun": 40614747575
+    "previousMainCiRun": 40614747575,
+    "previousMainCiConclusion": "SUCCESS",
+    "currentMainCommit": "ec31b0873a5d6a2f6b3a26e8c570798ec31d8530",
+    "currentMainCiRun": 40622083457,
+    "currentMainCiStatus": "success",
+    "currentCloudQuality": {
+      "flutterPassed": 1618,
+      "flutterPlatformSkipped": 1,
+      "pythonPassed": 125,
+      "pythonPlatformSkipped": 1,
+      "staticAnalysisIssues": 0
+    },
+    "currentMainCiSuccessJobs": 6,
+    "currentMainCiTagVerification": "skipped on main",
+    "currentMainCiArtifacts": [
+      {
+        "name": "macos-deliverables",
+        "id": 12789045249,
+        "bytes": 25087877,
+        "digest": "sha256:f3499264c071eaa221852c60b770006dc6b1e933bcebe890f361340c5957c8d4"
+      },
+      {
+        "name": "android-deliverables",
+        "id": 12788805017,
+        "bytes": 102161412,
+        "digest": "sha256:fca4f3b241242345c11173b21434ffe59ad87532502058d2241b878639e8b2e7"
+      },
+      {
+        "name": "ios-deliverables",
+        "id": 12788326593,
+        "bytes": 10505822,
+        "digest": "sha256:f562b99c4f27717e05e8d01dbf8fba3458777c295bbf344acccd4b991f8ad814"
+      },
+      {
+        "name": "linux-deliverables",
+        "id": 12788306251,
+        "bytes": 13640462,
+        "digest": "sha256:b8b9d7241acb7548a826d948e12b6c6cb01de5e988592dd4ebcece3b502e3af1"
+      },
+      {
+        "name": "windows-deliverables",
+        "id": 12787917287,
+        "bytes": 30594930,
+        "digest": "sha256:3574a537c950f17348128c4c5df5e7356bcdba13852fad326770dbf7892a8286"
+      }
+    ],
+    "artifactClaim": "metadata and job verification read back; complete archives not downloaded locally",
+    "releaseReadback": "only pre-existing untagged draft remains; no RC or stable release created"
   },
   "nextBuild": {
     "version": "1.7.0+38",
@@ -172,6 +219,71 @@
     "cleanup-package.json": {
       "bytes": 605,
       "sha256": "afa4b7867805fd68900d4f31139683b8076d762eb82547fa53ece49550e04ad5"
+    },
+    "cleanup-cache.json": {
+      "bytes": 369,
+      "sha256": "8706f4aacaedbc71e2352a10ae97c4736f584fe0c8a6bf25e7bd60ed942df982"
+    },
+    "cleanup-old-macs.json": {
+      "bytes": 844,
+      "sha256": "f0ef3589d3f61ac67b096bc18275b80a0b27b69e707aaaceba7b72679e3f3361"
+    },
+    "cleanup-summary.json": {
+      "bytes": 555,
+      "sha256": "d42d896ce795a441d119b357c77a9cbe923c181107e4eb9153fb4e73936466de"
+    },
+    "cleanup-old-snapshots.json": {
+      "bytes": 3869,
+      "sha256": "54780a272c9b3dc9105f8ea6181086593fc5f5c84dc0bf55fdb274ef2d87f3e7"
+    },
+    "historical-notification-investigation.json": {
+      "bytes": 5064,
+      "sha256": "4729bbee53cde97616095d4d3b14f6bc73868af404f57b40c0ede6b217f5cc59"
+    },
+    "ci38-quality.log": {
+      "bytes": 388465,
+      "sha256": "c877bd7eaecbb7ac1232bcb504ab6874c12a425f76b5b17183eee970950e34ac"
+    },
+    "ci38-final.json": {
+      "bytes": 24686,
+      "sha256": "423a524473d2ba196a2a687090642c6bce6f072bed5c5177332f16b152df98d3"
+    },
+    "ci38-artifacts-final.json": {
+      "bytes": 3459,
+      "sha256": "6492186e7d78f2438992eaf056b70af8f76c03214afdb146ced825508cbe82e9"
+    },
+    "ci38-watch.log": {
+      "bytes": 139224,
+      "sha256": "d87fb158b3ef64373c736b0bd23ec88213f6373709d20593101e65c013b6a775"
+    },
+    "release-final.json": {
+      "bytes": 113,
+      "sha256": "b18f7ef9626f36292010cb5ca39a2d778f12e626b9b2a8ed0f168c0faf641dea"
+    },
+    "phone-handoff-extension.json": {
+      "bytes": 272,
+      "sha256": "213f9c2a346f69abd2a5022312b1d726dec253ee19d59fbd1279fd9bd562501d"
     }
+  },
+  "cleanupSummary": {
+    "at": "2026-10-28T10:52:47.103778+08:00",
+    "netFreedKiB": 392880,
+    "netFreedMiB": 383.67,
+    "rootObservedKiB": 2914200,
+    "rootObservationIncludesConcurrentOtherTaskFiles": true,
+    "receipts": [
+      "cleanup-package.json",
+      "cleanup-cache.json",
+      "cleanup-old-macs.json",
+      "cleanup-old-snapshots.json"
+    ],
+    "preserved": [
+      "current Mac +37",
+      "iOS +36/+37 signed archives",
+      "all original phone snapshots",
+      "verified macOS rollback archives",
+      "other tasks workspaces and build caches"
+    ],
+    "oldSnapshotsArchived": 10
   }
 }

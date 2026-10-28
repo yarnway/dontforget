@@ -145,7 +145,7 @@ class DeparturePlan {
     DateTime? due;
     for (
       var i = 0;
-      i < 368;
+      i < 7 * (exceptions.skip.length + 1) + 8;
       i++, date = DateTime(date.year, date.month, date.day + 1)
     ) {
       final event = DateTime(
