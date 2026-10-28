@@ -216,69 +216,72 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
             padding: constraints.maxHeight < 320
                 ? const EdgeInsets.symmetric(horizontal: 12, vertical: 4)
                 : const EdgeInsets.fromLTRB(12, 8, 12, 12),
-            child: Column(
-              key: const ValueKey('compact-task-board'),
-              children: [
-                FocusTraversalGroup(
-                  child: constraints.maxHeight < 320
-                      ? SingleChildScrollView(
-                          key: const ValueKey('short-category-picker'),
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              for (var index = 0; index < 4; index++) ...[
-                                if (index > 0) const SizedBox(width: 8),
-                                SizedBox(
-                                  width: 180,
-                                  child: _categoryButton(
-                                    context,
-                                    index,
-                                    pending[index],
-                                    selection,
-                                    singleLine: true,
+            child: _ShortBoardViewport(
+              height: constraints.maxHeight,
+              child: Column(
+                key: const ValueKey('compact-task-board'),
+                children: [
+                  FocusTraversalGroup(
+                    child: constraints.maxHeight < 320
+                        ? SingleChildScrollView(
+                            key: const ValueKey('short-category-picker'),
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                for (var index = 0; index < 4; index++) ...[
+                                  if (index > 0) const SizedBox(width: 8),
+                                  SizedBox(
+                                    width: 180,
+                                    child: _categoryButton(
+                                      context,
+                                      index,
+                                      pending[index],
+                                      selection,
+                                      singleLine: true,
+                                    ),
                                   ),
+                                ],
+                              ],
+                            ),
+                          )
+                        : Column(
+                            children: [
+                              for (var row = 0; row < 2; row++) ...[
+                                if (row > 0) const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _categoryButton(
+                                        context,
+                                        row * 2,
+                                        pending[row * 2],
+                                        selection,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: _categoryButton(
+                                        context,
+                                        row * 2 + 1,
+                                        pending[row * 2 + 1],
+                                        selection,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ],
                           ),
-                        )
-                      : Column(
-                          children: [
-                            for (var row = 0; row < 2; row++) ...[
-                              if (row > 0) const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _categoryButton(
-                                      context,
-                                      row * 2,
-                                      pending[row * 2],
-                                      selection,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: _categoryButton(
-                                      context,
-                                      row * 2 + 1,
-                                      pending[row * 2 + 1],
-                                      selection,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ],
-                        ),
-                ),
-                SizedBox(height: constraints.maxHeight < 320 ? 6 : 12),
-                Expanded(
-                  child: panel(
-                    selection,
-                    showHeader: constraints.maxHeight >= 200,
                   ),
-                ),
-              ],
+                  SizedBox(height: constraints.maxHeight < 320 ? 6 : 12),
+                  Expanded(
+                    child: panel(
+                      selection,
+                      showHeader: constraints.maxHeight >= 200,
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         }
@@ -305,4 +308,17 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
       },
     );
   }
+}
+
+/// A keyboard can leave less room than the category buttons themselves need.
+/// Keep the picker and task list reachable instead of overflowing that viewport.
+class _ShortBoardViewport extends StatelessWidget {
+  const _ShortBoardViewport({required this.height, required this.child});
+  final double height;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => height < 96
+      ? SingleChildScrollView(child: SizedBox(height: 160, child: child))
+      : child;
 }

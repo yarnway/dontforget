@@ -672,6 +672,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     final keyboardVisible =
         MediaQuery.viewInsetsOf(context).bottom > 0 ||
         View.of(context).viewInsets.bottom > 0;
+    final compact =
+        !isMobile &&
+        (keyboardVisible || MediaQuery.sizeOf(context).height < 600);
 
     _captureOverlayWanted =
         isMobile && _isLongPressRecording && !keyboardVisible;
@@ -690,7 +693,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
       child: Container(
         key: const ValueKey('composer-frame'),
         margin: const EdgeInsets.fromLTRB(10, 0, 10, 8),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: compact ? 2 : 6),
         decoration: BoxDecoration(
           color: colors.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(20),
@@ -1062,34 +1065,22 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                                     height: 1.45,
                                     color: colors.onSurfaceVariant,
                                   ),
-                                  border: isMobile
-                                      ? OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          borderSide: BorderSide.none,
-                                        )
-                                      : InputBorder.none,
-                                  enabledBorder: isMobile
-                                      ? OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          borderSide: BorderSide.none,
-                                        )
-                                      : InputBorder.none,
-                                  focusedBorder: isMobile
-                                      ? OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12,
-                                          ),
-                                          borderSide: BorderSide(
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.primary,
-                                          ),
-                                        )
-                                      : InputBorder.none,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                    ),
+                                  ),
                                   filled: true,
                                   fillColor: Theme.of(
                                     context,
@@ -1098,9 +1089,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                                   constraints: const BoxConstraints(
                                     minHeight: 48,
                                   ),
-                                  contentPadding: const EdgeInsets.symmetric(
+                                  contentPadding: EdgeInsets.symmetric(
                                     horizontal: 12,
-                                    vertical: 12,
+                                    vertical: compact ? 8 : 12,
                                   ),
                                 ),
                                 onSubmitted: enterSends
