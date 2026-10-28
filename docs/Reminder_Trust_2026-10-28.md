@@ -141,3 +141,21 @@ macOS 后续目标仍为：真实四动作、前台/后台/退出后响应、独
 下一轮Mac目标：手动解锁并明确接收UI → 系统通知卡三/四动作及三语标题 → 主进程前后台动作、真正退出后响应及原生时间转交 → 单独标注的pending重启/重复/过期/迟到snooze消费 → 仅本身份六项合成任务可恢复软删、系统pending/retained与queue读回。iOS/Android仍需原生按钮数量、前后台/终止引擎、32项队列与代次/重复拒绝、延后锚点、三语重排、自检权限/失败/连续替换、真实点击与清理；自动化证据不能替代设备结果。
 
 本聊天已建立每15分钟的安静跟进，等待手动解锁和新交接；状态不变时不重复通知，不自动接管UI。第一轮私有证据hash清单SHA-256：`67f380e856f68c5bff27018abebcb0f0dc3faff891b7e45efad03a705e58c5c3`。
+
+
+### 第二轮：持久队列消费与1130清理闭环（13:13–13:26）
+
+用户已手动解锁Mac并展开通知中心。双方交叉消息后确认：通知任务已实际取得Mac-only窗口，UX没有进行UI/phone操作并明确等待；UX仅获准独立devicectl元数据/Documents只读准备。通知任务实际接收**13:13:57**，预计释放13:33:57，实际**13:26:30提前明确归还**，其后只离线更新证据，从未操作phone/Mirroring。准确623c525签名、唯一程序hash和六条合成记录在接手时均与上一轮相符。
+
+- **主进程正常重启消费注入队列通过。** 应用自身原生Quit后，Cua精确身份读回isRunning=false；取得既有DB owner fcntl与pending独立flock后，原子写入11条（6有效、dataset/trigger/revision各1过期、2重复）。正常产品main启动后，六行各只增加1个revision和1条history，队列清空：两条非周期完成；周期完成及跳过推进次日本地同刻，跳过保持未完成。
+- **两种延后通过。** 迟到snooze15的存储目标等于处理时刻+60秒；snooze60等于动作时刻+3600秒，计算误差0微秒。两者eventTime原文和有效周期锚点保持。原本为空的持久锚点按现有语义显式保存原trigger/event，不能声称原始null字段没变。实际UNCalendar投递是秒精度，微秒断言仅针对业务目标计算。
+- **跨重启重放通过。** 旧11条再次落盘，同时附加一条当前正常snooze15；正常重启后仅该新请求改变bg15至revision2/history2，目标精确为动作时刻+900秒，其他行逐字段不变，队列再次清空。仍属`INJECTED_QUEUE`，不能冒称真实OS按钮或插件background isolate测试。
+- **journal独立解码通过。** 清理前持owner锁复制的sidecar在临时目录由固定源码LeasedIncrementalJournal读取，未创建DatabaseHelper/SQL连接；选中快照6项（2 cancel/submitted、4 schedule/submitted），无id0、pending/failed0，schedule trigger/revision与业务快照相符；原复制sidecar hash不变。
+- **正式产品恢复清理通过。** 先保留六条处理后记录的完整数据库/sidecar回退副本，再在当前1130的备份检查页选本轮空基线，逐项核对0/0/1及SHA-256，恢复计划显示本身份6→0。现有RecoveryCoordinator完成恢复与native取消/重建；没有直接覆盖数据库清理。数据epoch从`49251748-a96a-4919-8b6d-02374664e1fa`轮换为`8190fa4c-77c9-4e6a-adab-aa7c4a3ebaf2`。旧epoch的11条再次注入，正常启动全部丢弃，库保持0/0/1；该次空基线也无匹配行，不能单独称为“仅epoch一项差异”的隔离实验。
+- **最终读回闭合。** 设置与自检均显示系统pending/retained0/0、repair/review/cancel0。自身Quit后isRunning=false，持既有owner锁确认schema16/integrityok、Reminders/MediaRecords/Settings=0/0/1、queue有效空文档；最终journal选中0项且epoch正确。最终DB与原空基线SHA相同：`b2a3bda8621d51b154c63f267478ffc3f3d6aa0c182a9041116107a599ca2aa5`。六行回退DB SHA：`1f71746905405dd43866561f535d02a17a89a75751b89f91d4db48513ae49517`，已私下保留。
+
+最新状态：**PARTIAL_NATIVE_QUEUE_AND_1130_CLEANUP_PASS_OS_ACTION_UI_GATE_OPEN**。当前1130已清理并退出，旧1110含未知归属记录仍不触碰，日常数据及其他任务的phone状态未修改。原Mac锁屏阻断已解决，剩余是电脑控制工具选窗限制：即使用户展开通知中心，Cua仍只返回“月”日历widget，snapshot仅state/screenshot，没有其他窗口区域，切换窗口超时。没有因获得授权或队列通过就把真实系统按钮、三语菜单、前后台OS回调、终止后原生时间转交、测试通知正文点击写成通过。没有发现或引入不支持的产品平台API。
+
+剩余Mac验收需要可选择真实通知卡的控制入口或人工原生动作配合；当前不再有需要清理的1130任务/通知。锁屏等待heartbeat已删除，因为其等待条件已解除、定时重试不能解决固定选窗限制；本任务没有被记为全部完成。第一轮的锁屏/未清理状态为历史。第二轮55项私有证据hash清单SHA-256：`bda358421b632790366688a7f7cc5f59a6a0cab28407997abcfa3a334b89dd77`。本轮没有修改产品源码或scripts；固定623c525的1740项全量Flutter、76项相关回归、analyze0与release构建证据继续有效，不扩张到主工作区并行未提交代码。
+
+iOS/Android仍待：iOS周期四动作及非周期三动作，Android周期完成/15分钟/跳过及非周期完成/15分钟/1小时；前台主isolate、后台FlutterEngine信号、终止态落盘及重启消费；事件/周期锚点、周期推进与跳过、迟到目标、重复和过期/数据恢复代次；三语真实菜单与未来重排、权限拒绝/注册和排程失败重试、id0连续替换及正文路由隔离；真实投递/点击、业务/journal读回及只清理本身份的native pending/retained。Mac注入结果不替代这些移动设备证据。

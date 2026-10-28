@@ -1,7 +1,7 @@
 {
-  "recorded_at": "2026-10-28T12:30:45.307945+08:00",
+  "recorded_at": "2026-10-28T13:30:54.832898+08:00",
   "timezone": "Asia/Shanghai",
-  "status": "PARTIAL_FIXED_NATIVE_DIAGNOSTICS_LANGUAGE_RECONCILE_MAC_LOCKED",
+  "status": "PARTIAL_NATIVE_QUEUE_AND_1130_CLEANUP_PASS_OS_ACTION_UI_GATE_OPEN",
   "source": {
     "revision": "6f42ccda4dd6cfe2b0def0a33027a22cd97eb2f5",
     "version": "1.7.0+38",
@@ -46,21 +46,21 @@
     },
     {
       "bundle_id": "com.example.dontForget.acceptance.trust-actions-20261028-1130",
-      "status": "LAUNCHED_SYNTHETIC_STATE_PRESERVED_MAC_LOCKED",
+      "status": "CLEAN_EXITED_AFTER_FORMAL_PRODUCT_RECOVERY",
       "executable": "dontforget_trust_actions_1130",
       "identity_only_executable_rename": true,
       "native_non_signature_code_unchanged": true,
       "frameworks_resources_unchanged": true,
       "codesign_verify": "PASS",
       "source_uuid": "B807382F-153E-47BF-A178-0E18E4DF71B9",
-      "cleanup": "PENDING_NORMAL_UI_SOFT_DELETE_AND_NATIVE_READBACK",
+      "cleanup": "PASS_OWN_1130_ONLY; baseline0/0/1, native0/0, queueempty, journal0, rollback retained",
       "last_observed_counts": {
         "Settings": 1,
         "MediaRecords": 0,
-        "Reminders": 6
+        "Reminders": 0
       },
-      "counts_observed_at_utc": "2026-10-28T04:28:57.835675+00:00",
-      "counts_scope": "Read-only owned1130 database snapshot; not native pending/retained live readback"
+      "counts_observed_at_utc": "2026-10-28T05:25:15.592589+00:00",
+      "counts_scope": "Final owned1130 snapshot after formal recovery and own Quit"
     }
   ],
   "cases": {
@@ -138,12 +138,15 @@
     "external_ui_interference_observed": true,
     "unknown_ownership_rows_preserved": true,
     "cleanup_complete": false,
-    "cleanup_boundary": "Old1110 unknown records preserved. New1130 six owned synthetic rows and delivered notifications remain; Mac lock prevented normal UI cleanup. No cleanup success claimed."
+    "cleanup_boundary": "Current1130 baseline restored via product UI with6-row rollback; daily/1110/phone identities unchanged. Overall old1110 cleanup remains open.",
+    "current_fixed_identity_cleanup_complete": true,
+    "historical_old_identity_cleanup": "NOT_CLOSED;1110 unknown rows/source preserved"
   },
   "known_source_limitations": [
     "Original6f42ccd time issue was fixed in623c525 and rebuilt; real native response/delegate timing regression remains pending because no notification action click was completed.",
     "New native time is callback observation, not original physical click time; cache is bounded and process-local, durable queue still starts in Dart after bootstrap.",
-    "macOS plugin uses main isolate with cold launch response; Android/iOS background isolate acceptance remains separate."
+    "macOS plugin uses main isolate with cold launch response; Android/iOS background isolate acceptance remains separate.",
+    "Current CUA interface exposes only Month widget for NotificationCenter, so real action/menu/cold response gates remain unverified despite human unlock/NC expansion. Injected queue proof is separate."
   ],
   "automation": {
     "frozen_related_flutter_tests": 65,
@@ -167,16 +170,16 @@
     "requested_by_user": "与其他任务协作，空闲时占用验收",
     "ui_owner_thread": null,
     "ui_owner_thread_id": null,
-    "current_lease": "ROOT_EXPLICITLY_RETURNED_12:26:27; next UX requires explicit reception",
+    "current_lease": "ROOT_EXPLICITLY_RETURNED_13:26:30; UX fresh reception required",
     "message_delivery": "SENT_SUCCESSFULLY_ACKS_RECEIVED",
     "policy_boundary": "No substitute message channel or scheduler used; no lease expiry or temporary inactivity treated as explicit return",
     "human_desktop_return_received": true,
-    "client_target_app_access": "SUCCEEDED_EXACT_FIXED_CANDIDATE_THIS_ROUND",
+    "client_target_app_access": "SUCCEEDED; NotificationCenter exposes Month widget only",
     "rotation_requested_by_user": true,
     "rotation_protocol": "docs/Native_Acceptance_Rotation.md",
     "canonical_state": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/shared-desktop-rotation.json",
     "canonical_lock": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/shared-desktop-rotation.lock",
-    "rotation_state_revision": 10,
+    "rotation_state_revision": 15,
     "reservation_confirmed": true,
     "other_task_acknowledgements": [
       "01a17c24-05d0-7273-ac6c-a2e578ad2c8b",
@@ -185,16 +188,15 @@
     "default_window_minutes": 20,
     "deadline_transfers_ownership": false,
     "root_current_ui_ownership": null,
-    "current_block": "Mac locked; manual unlock required. Quit was not confirmed; no queue write attempted.",
+    "current_block": "NotificationCenter CUA selection returns only Month widget/single screenshot; native action menu and response cannot be operated; Mac lock resolved",
     "historical_client_access_block": "Prior session access denied; resolved at fixed candidate launch 12:14:22",
     "historical_root_desktop_returned_without_ui_control": true,
     "historical_idle_followup_automation": "NOT_CREATED: same tool approval policy",
     "idle_followup_automation": {
-      "status": "ACTIVE",
+      "status": "DELETED",
       "id": "dontforget",
-      "interval_minutes": 15,
-      "quiet_when_unchanged": true,
-      "only_after_manual_unlock_and_explicit_ui_handoff": true
+      "reason": "Unlock wait resolved; remaining native UI selection gate is not changed by periodic retries",
+      "task_complete": false
     }
   },
   "timing_fix": {
@@ -208,7 +210,7 @@
     "related_dart_tests_passed": 76,
     "targeted_analyze": "0 issues",
     "native_swift_test": "PASS: FIFO, first time, input bounds, completion once; real frameworks, registrant stub, no UI or notifications",
-    "device_acceptance": "PARTIAL_SELF_CHECK_LANGUAGE_RECONCILE_DELIVERY_ONLY",
+    "device_acceptance": "PARTIAL_PRODUCT_QUEUE_RESTART_AND_CLEANUP; real native action response time transfer unverified",
     "native_time_boundary": "Earliest native delegate callback observation; Apple exposes no original physical click timestamp; absent or invalid cache falls back to Dart time",
     "commit": "623c52524c43ffc60d04b48e18464d7d7549439e",
     "release_build": {
@@ -225,9 +227,9 @@
         "codesign_verify": "PASS",
         "launched": true,
         "archive_sha256": "21f15a13d5fb965f997cb8a2d9918a0757b300238174da68f20336a0d1bb4da1",
-        "native_device_acceptance": "PARTIAL_NO_ACTION_RESPONSE_OR_QUEUE_CONSUMPTION_PROOF"
+        "native_device_acceptance": "PARTIAL_QUEUE_RESTART_CLEANUP_PASS_OS_ACTION_GATE_OPEN"
       },
-      "native_interaction": "PASS_BOUNDED: denied/allowed self-check, id0 replacement/delivery, zh/en/ja registration and future same-ID rescheduling"
+      "native_interaction": "PASS_BOUNDED: self-check, language future rescheduling, product startup consuming injected queue, formal recovery/native cleanup. No real action click."
     },
     "full_flutter_tests": {
       "revision": "623c52524c43ffc60d04b48e18464d7d7549439e",
@@ -237,7 +239,8 @@
     },
     "full_source_analyze": "0 issues"
   },
-  "current_fixed_candidate_round": {
+  "record_layout": "Top-level source/build/cases are historical6f42ccd/1110; fixed_candidate_round1 records first623 round; current_fixed_candidate_round records second623 round.",
+  "fixed_candidate_round1": {
     "source_revision": "623c52524c43ffc60d04b48e18464d7d7549439e",
     "bundle_id": "com.example.dontForget.acceptance.trust-actions-20261028-1130",
     "source_uuid": "B807382F-153E-47BF-A178-0E18E4DF71B9",
@@ -356,5 +359,110 @@
     "private_round_evidence_manifest_sha256": "67f380e856f68c5bff27018abebcb0f0dc3faff891b7e45efad03a705e58c5c3",
     "quiet_followup": "ACTIVE heartbeat dontforget every15min; no automatic ownership or unlock"
   },
-  "record_layout": "Top-level source/build/cases are historical6f42ccd/1110 evidence; current candidate is timing_fix and current_fixed_candidate_round."
+  "current_fixed_candidate_round": {
+    "round": 2,
+    "source_revision": "623c52524c43ffc60d04b48e18464d7d7549439e",
+    "bundle_id": "com.example.dontForget.acceptance.trust-actions-20261028-1130",
+    "source_uuid": "B807382F-153E-47BF-A178-0E18E4DF71B9",
+    "actual_acquired_at": "2026-10-28T13:13:57.096534+08:00",
+    "expected_release_at": "2026-10-28T13:33:57.096534+08:00",
+    "actual_returned_at": "2026-10-28T13:26:30.402559+08:00",
+    "new_startup_pids": [
+      45886,
+      47165,
+      48002,
+      49436
+    ],
+    "startup_scope": "all fixed623 release product main; StorageBootstrap/tasks/notifications/routes readiness complete",
+    "preflight": "signature/executable hash unchanged;6 synthetic rows matched round1 exactly at13:15:11; no unknown data",
+    "queue_test": {
+      "scope": "INJECTED_QUEUE_NOT_OS_ACTION_RESPONSE",
+      "first_input": {
+        "entries": 11,
+        "unique_valid": 6,
+        "stale_dataset": 1,
+        "stale_trigger": 1,
+        "stale_revision": 1,
+        "duplicates": 2
+      },
+      "first_result": "PASS: six rows each noticeRevision+1/history1, pendingempty",
+      "one_off_complete": "PASS: two completed",
+      "recurring_complete": "PASS: next local day, unfinished next occurrence",
+      "skip_recurring": "PASS: next local day, unfinished, history skipped",
+      "late_snooze15": "PASS: stored trigger equals processing time+60seconds; eventTime and effective anchors unchanged",
+      "snooze60": "PASS: stored trigger equals occurredAt+3600seconds; eventTime and effective anchors unchanged",
+      "time_comparison": "explicit Asia/Shanghai for naive local values, Z interpreted UTC; calculation error0microseconds",
+      "replay_plus_new_normal15": "PASS: old11 replay caused no extra effects; only current normal15 request changed bg15 revision1→2/history1→2, target occurredAt+900seconds; all other fields/rows unchanged",
+      "intermediate_trace_boundary": "No per-entry runtime trace; stale/duplicate result supported by exact payload variants and final single-increment comparison",
+      "normalization_boundary": "Uninitialized raw recurrence anchors are materialized from original trigger/event; effective anchors preserved",
+      "native_late_notification_delivery_at": "2026-10-28T13:17:51.126049+08:00",
+      "delivery_precision_boundary": "UNCalendar scheduling uses seconds; target arithmetic assertions do not claim physical delivery microsecond precision"
+    },
+    "journal": {
+      "precleanup": "PASS:6 entries,2cancel/submitted+4schedule/submitted; id0 absent; pending/failed0; trigger/revision match after replay",
+      "final": "PASS:0entries and new epoch; original copied sidecar hashes unchanged; SQL-free LeasedIncrementalJournal decoder on scratch copies"
+    },
+    "formal_recovery": {
+      "method": "Existing product BackupPreview/RecoveryCoordinator UI; selected own baseline path and SHA; preserved6-row rollback; no direct database overwrite for cleanup",
+      "input_baseline_sha256": "b2a3bda8621d51b154c63f267478ffc3f3d6aa0c182a9041116107a599ca2aa5",
+      "rollback6_database_sha256": "1f71746905405dd43866561f535d02a17a89a75751b89f91d4db48513ae49517",
+      "old_epoch": "49251748-a96a-4919-8b6d-02374664e1fa",
+      "new_epoch": "8190fa4c-77c9-4e6a-adab-aa7c4a3ebaf2",
+      "old11_queue_after_restore": "PASS: consumed/deleted, business0",
+      "epoch_only_boundary": "Restored baseline has no matching rows as well as a rotated epoch; exact epoch-only rejection covered separately by synthetic first queue and automation"
+    },
+    "final_cleanup": {
+      "counts": {
+        "Settings": 1,
+        "MediaRecords": 0,
+        "Reminders": 0
+      },
+      "schema": 16,
+      "integrity": "ok",
+      "database_sha256": "b2a3bda8621d51b154c63f267478ffc3f3d6aa0c182a9041116107a599ca2aa5",
+      "queue": {
+        "version": 1,
+        "actions": []
+      },
+      "native_ui": {
+        "permission": "granted",
+        "pending": 0,
+        "retained": 0,
+        "needs_repair": 0,
+        "needs_review": 0,
+        "pending_cancellation": 0
+      },
+      "journal_entries": 0,
+      "process": "Cua exact bundle isRunning false after own native Quit",
+      "rollback_retained": true,
+      "observed_at_utc": "2026-10-28T05:25:15.592589+00:00"
+    },
+    "remaining_native_mac": [
+      "Actual one-off3/recurring4 action menus in zh/en/ja",
+      "Foreground/background real OS action responses and occurrence mutations",
+      "Terminated OS action→native delegate callback timestamp→existing Dart pending queue→main consumption",
+      "Actual test-notification body click and business-route rejection",
+      "Real scheduling-failure repair/cleanup; automated injected-failure coverage remains separate"
+    ],
+    "control_gate": {
+      "user_mac_unlock_confirmed": true,
+      "user_nc_expanded_confirmed": true,
+      "cua_window": "Month calendar widget",
+      "cua_snapshot_keys": [
+        "state",
+        "screenshot"
+      ],
+      "alternate_window_regions_exposed": false,
+      "window_cycle": "timeoutReached",
+      "platform_action_api_unsupported": false,
+      "permission_denial_current": false
+    },
+    "phone_operated": false,
+    "private_evidence_root": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/trust-actions-native-time-623c525-materials",
+    "private_evidence_count": 55,
+    "private_manifest_sha256": "bda358421b632790366688a7f7cc5f59a6a0cab28407997abcfa3a334b89dd77",
+    "validation_sha256": "fe681cbc35430b11c614b1168f45812ed3d9f176da70055c59b144d6f24040b2",
+    "final_journal_validation_sha256": "f8ac7b21261b6037ddf3d5f01d4c888cfb1fb0c128bfd6f854ed2e868eb37e38",
+    "automation": "Deleted obsolete unlock heartbeat; no complete-native acceptance claim"
+  }
 }

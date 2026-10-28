@@ -6,15 +6,15 @@
 
 | 任务 | Chat ID | 新轮换请求状态 |
 | --- | --- | --- |
-| 增加提醒通知快捷操作 | `01a18064-4ca8-7643-9100-2df4460110be` | `EXPLICITLY_RETURNED`（12:26:27） |
-| 评估 DontForget 的 UX/UI 优化点 | `01a17c24-05d0-7273-ac6c-a2e578ad2c8b` | `WAITING_MANUAL_UNLOCK`，未接收新时段 |
+| 增加提醒通知快捷操作 | `01a18064-4ca8-7643-9100-2df4460110be` | `EXPLICITLY_RETURNED`（13:26:30） |
+| 评估 DontForget 的 UX/UI 优化点 | `01a17c24-05d0-7273-ac6c-a2e578ad2c8b` | `ACK_NEXT_20_MINUTES`，实际接收另登记 |
 | 优化项目架构与产品体验 | `01a15c7c-8a67-7562-9db6-e540460d05c1` | `EXPLICITLY_RETURNED`（12:05:50） |
 
 所有工作区统一使用同一个规范绝对路径：`/Users/james/gitresources/opensources/dontforget/build/native_acceptance/shared-desktop-rotation.json`。不得按各自 worktree 的相对路径创建第二份状态。实时交接状态保存在该文件；该文件位于本机验收目录，不作为成功验收结果。初始提案当时使用“通知 → UX → 架构”，没有绝对开始时间或已确认的下一任务；本轮实际协调顺序与交接另见下方。每一轮仅由受影响的当前持有方与下一接收方确认；未确认的未来任务不阻止已获明确交接的当前轮次。
 
-通知任务早期因客户端拒绝控制而于11:42:31归还，这是历史记录。12:05本轮跨任务消息已成功送达并取得ACK：架构先安全归还，UX再因等待人手锁定手机将Mac交给通知任务。通知任务实际取得12:14:32、预计释放12:34:32，控制准确623c525候选成功；因Mac随后锁屏，于**12:26:27提前明确归还**。归还时规范状态revision9，当前通知任务不占用UI，下一候接为UX，需要其明确接收，不能按截止时间自动转移。
+通知任务早期因客户端拒绝控制而于11:42:31归还，这是历史记录。12:05本轮跨任务消息已成功送达并取得ACK：架构先安全归还，UX再因等待人手锁定手机将Mac交给通知任务。通知任务实际取得12:14:32、预计释放12:34:32，控制准确623c525候选成功；因Mac随后锁屏，于**12:26:27提前明确归还**。第一轮归还时规范状态revision9；该轮锁屏状态为历史，第二轮见下方。每次下一方仍需明确接收，不能按截止时间自动转移。
 
-实际回执：`build/native_acceptance/trust-actions-native-time-623c525-materials/round1-ui-handback.json`。新1130应用最后为最小化/运行中，Quit被Mac锁屏阻止，六条本任务合成记录与已投递通知尚未清理，其他任务不得代为清空。旧1110含未知归属记录，继续保护。
+实际回执：`build/native_acceptance/trust-actions-native-time-623c525-materials/round1-ui-handback.json`。第一轮当时1130最小化/运行中，Quit被锁屏阻止，六条合成记录与通知保留；该待清理状态已在第二轮闭合。旧1110含未知归属记录，继续保护。
 
 物理iPhone的旧UX租约已于11:44:44明确归还，回执为`/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/p1-ui-native-20261028-102820/native-handoff-return.json`，不再沿用“未归还”的旧推断。架构后续QA40清理与人手使用导致连接不可用；UX已承接p1current28保护和待清理项。通知任务本轮从未使用phone或Mirroring，也不将Mac的交接等同于phone使用权。`com.yarnway.dontforget.acceptance.iphone17`仍是独立受保护身份。
 
@@ -55,13 +55,22 @@ Mac 共享桌面、键盘/指针、通知中心以及 iPhone Mirroring 使用同
 3. 在同目录写唯一临时文件，限制权限为 `0600`，flush/fsync 后以 rename 原子替换 JSON，并同步目录；更新 `revision`、`updated_at` 及简短 history。
 4. 读取校验新 JSON 后释放元数据写锁。释放写锁不会归还 UI；UI 的明确归还必须另行登记。
 
-初始尝试跨任务消息和automation曾被工具拒绝，未发送/未创建；该历史失败已保留。12:05后消息工具成功，参与者ACK与实际交接均已写入规范状态。旧有截止提醒未创建，新增安静跟进另见末尾，不宣称自动接管已生效；本轮由实际时间和明确归还收尾。当前产品验收阻断为Mac锁屏，需要人手解锁，不再误报为新包客户端访问拒绝。
+初始尝试跨任务消息和automation曾被工具拒绝，未发送/未创建；该历史失败已保留。12:05后消息工具成功，参与者ACK与实际交接均已写入规范状态。旧有截止提醒未创建，新增安静跟进另见末尾，不宣称自动接管已生效；本轮由实际时间和明确归还收尾。第一轮Mac锁屏已由用户手动解除；当前剩余为通知中心选窗工具限制，不再误报为应用控制权限拒绝或Mac未解锁。
 
 ## 每轮最小交接记录
 
 每轮记录任务 ID/标题、实际开始与预计释放时间、精确 bundle/设备、验收目标、下一任务及其确认、实际归还时间、自己创建的通知/数据收尾结果、未保存编辑、需保护资产与证据路径。构建、系统提交、实际送达、动作回调、queue 消费及清理分别登记，不将轮换顺利或 UI 可操作当成产品验收通过。
 
 
-本任务继续仅使用修复后候选：`/Users/james/gitresources/opensources/dontforget/build/native_acceptance/trust-actions-20261028-1130-timing/dont_forget.app`，源码`623c525`，主程序`dontforget_trust_actions_1130`。它已实际运行，自检和三语未来重排已有部分原生证据；动作点击、真正退出后响应、注入队列重启及清理仍开放。Mac解锁后也必须重新确认UI交接，不能根据已构建、曾授权或预计时间取得控制权。
+本任务继续仅使用修复后候选：`/Users/james/gitresources/opensources/dontforget/build/native_acceptance/trust-actions-20261028-1130-timing/dont_forget.app`，源码`623c525`，主程序`dontforget_trust_actions_1130`。它已实际运行，自检、三语未来重排、独立注入队列重启及本身份清理已有证据；真实OS动作菜单/回调与退出后原生响应仍开放。后续仍须重新确认UI交接，不能根据曾授权或预计时间取得控制权。
 
-本聊天已建立每15分钟的安静跟进（automation `dontforget`，元数据revision10）。它仅核对新交接/可执行状态；无变化时不重复通知，不能代替手动解锁、明确归还/接收或形成自动占用。全部验收完成后停用。
+历史上建立的每15分钟锁屏跟进（automation `dontforget`）已删除：手动解锁已完成，当前固定选窗限制无法通过周期重试解决。删除跟进不代表全部原生验收通过，也不授予任何任务UI使用权。
+
+
+## 第二轮归还状态（13:26:30）
+
+用户已确认Mac手动解锁、通知中心展开；UX另外收到phone已锁定/USB连接确认。消息交叉时通知任务已持规范锁写入revision13并实际接手，UX确认未开始UI操作、同意等待该段结束；其独立phone后台元数据/Documents只读准备获准，不启动/终止app、不写phone、不操作共享UI。
+
+通知任务实际接收13:13:57，预计释放13:33:57，**13:26:30提前明确归还**给UX候接，回执`build/native_acceptance/trust-actions-native-time-623c525-materials/round2-ui-handback.json`。1130经产品正式恢复空基线，DB0/0/1、schema16、integrityok、native pending/retained0/0、queueempty、journal0、repair/cancel0，自身Quit后isRunning=false；六行回退材料保留，旧1110及日常/phone数据未改。归还后不再操作UI，UX仍须登记其新20分钟的实际接收；架构任务随后与UX协调，不因13:33:57到期抢占。
+
+注入队列6动作/3过期/2重复、跨重启旧动作重放和恢复代次轮换后旧队列丢弃已通过。实际OS按钮/三语菜单/前后台回调/退出后原生时间转交仍受Cua只选择“月”widget的限制，不能把注入测试当成这些结果。当前任务仍partial，后续需可选择真实通知卡的控制入口或人工原生动作配合。实时owner与revision以规范JSON为准。
