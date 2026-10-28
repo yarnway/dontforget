@@ -1,0 +1,87 @@
+{
+  "updated_at": "2026-10-28T12:36:32.607878+08:00",
+  "source_commit": "a2575020c110a80b7cf0ffbbf8f94ecce47e0a52",
+  "version": "1.7.0+39",
+  "schema": 16,
+  "attachment_details_version": 3,
+  "tests": {
+    "flutter": 1759,
+    "targeted": 24,
+    "attachment": 11,
+    "analysis_issues": 0,
+    "native_attachment_acceptance": "NOT_RUN"
+  },
+  "native": {
+    "iphone17_build": 37,
+    "snapshot_before_equal_prior_after": true,
+    "os_pending": 2,
+    "os_retained": 0,
+    "qa40_bundle": "com.yarnway.dontforget.acceptance.p1current28",
+    "qa40_build": 38,
+    "qa40_status": "SAVED_AND_IN_APP_DUE_ONLY_CLEANUP_PENDING",
+    "qa40_os_pending": 0,
+    "qa40_os_retained": 0,
+    "qa40_permission": "NOT_ENABLED",
+    "qa40_native_click": "NOT_OBSERVED",
+    "phone_connectivity": "HUMAN_IN_USE_THEN_COREDEVICE4016",
+    "shared_ui_returned_at": "2026-10-28T12:05:50.039935+08:00",
+    "original_rows_verification_after_qa40": "PENDING"
+  },
+  "cleanup": {
+    "freed_kib": 397768,
+    "freed_mib": 388.45,
+    "shared_caches_removed": false,
+    "prior_rollback_packages_removed": false,
+    "project_observed_kib": 7125180,
+    "initial_retained_files_compared": 71
+  },
+  "ci": {
+    "source": "a2575020c110a80b7cf0ffbbf8f94ecce47e0a52",
+    "run": 40631296338,
+    "status": "SUCCESS",
+    "url": "https://github.com/yarnway/dontforget/actions/runs/40631296338",
+    "successful_jobs": 6,
+    "tag_only_job": "SKIPPED",
+    "flutter_pass": 1758,
+    "flutter_platform_skip": 1,
+    "python_pass": 125,
+    "python_platform_skip": 1,
+    "artifacts_metadata_verified": 5
+  },
+  "release": {
+    "rc_created": false,
+    "stable_created": false,
+    "gate": "macOS and iOS native acceptance incomplete"
+  },
+  "evidence_sha256": {
+    "flutter-full-final.log": "d669daba676fc1979c2b305466e0b1aa6b42be860580b3e01af4091e2fa3a8fd",
+    "integration-flutter-full.log": "40a06b5b6f74213a9bbbe52faac270227eaf052807caa9e653c560cb473c8b45",
+    "integration-analyze-final.log": "d5eaf635914768104506ba813355979dbce67ff7750918b430669c22e44a172a",
+    "integration-targeted-final.log": "1f26afa3b72de2dce99b657e045ce9324a9ff933f46a859688a43347811fb4ef",
+    "attachments-render-bounded.log": "adbf8498bdf7693322e8c413dbb550d978de31caf6eebcf6f19360ce66877bc3",
+    "previews/attachments-en-320-2x.png": "3abf0353546870c3284265332506cb0405fac4989ad3a076f2eb9d81325cec5f",
+    "previews/attachments-ja-320-2x.png": "5372a4680c1db8588518ffe0ad6ff84b3090f524fbc4d06361c1d6346a17f3a6",
+    "previews/attachments-zh-320-2x.png": "36149327e0ab70056f259cc7bfd2d273649c484d390b8253c85d7112d2ccd158",
+    "previews/attachments-image.png": "bdf9c2ff4de3a4574de4cb411e81a834b8efa3b17f31fd79e3b5f2151e11dd9d",
+    "previews/attachment-zoomed-preview.png": "b4c967278d8898c1245b61ed9f1d1006e200eefbfc2756f4eaac8ad6c56b25db",
+    "ci-quality.log": "2eba97038b9880e42b3753f6bf300f98471bb9896e0ecb16e8c02c89cb4809df"
+  },
+  "packages": {
+    "macos": {
+      "version": "1.7.0+39",
+      "strict_signature": "PASS",
+      "unchanged_resources": true,
+      "universal_macho_count": 6,
+      "started": false,
+      "registered": false
+    },
+    "ios": {
+      "version": "1.7.0+39",
+      "strict_signature": "PASS",
+      "unchanged_macho_sections_and_uuids": 7,
+      "unchanged_resources": 60,
+      "restored_archive_entries_compared": 113,
+      "installed": false
+    }
+  }
+}
