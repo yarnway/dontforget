@@ -1,0 +1,112 @@
+{
+  "date": "2026-10-28",
+  "timezone": "Asia/Shanghai",
+  "schema": 16,
+  "desktop_source": "701d79cc06b072b87e4a0740e4d2b81d229d353e",
+  "combined_source": "c00b24512b7a01c36ac940195167e9482267d3f5",
+  "main_base": "897104c269eb613db6b63e705c0bbd79996a8825",
+  "repository_version": "1.7.0+44",
+  "frozen_source_version": "1.7.0+43",
+  "isolated_mac_build": "46",
+  "modified_runtime_paths": [
+    "lib/ui/widgets/input_bottom_bar.dart",
+    "lib/l10n/app_localizations.dart",
+    "lib/ui/widgets/content_management_panel.dart"
+  ],
+  "checks": {
+    "flutter_desktop": 1963,
+    "flutter_latest_combination": 1963,
+    "analysis_issues": 0,
+    "content_existing_tests": 14,
+    "desktop_real_font_interaction": 9,
+    "desktop_real_font_previews": 2,
+    "content_real_font_previews": 9,
+    "mac_debug_deep_strict_signature": "PASS",
+    "ios_simulator_host_and_extension": "BUILD_PASS_ONLY",
+    "runtime_files_match_frozen_combination": true,
+    "python": "126 passed in preceding voice stage; scripts unchanged, not rerun for UI-only changes"
+  },
+  "native_mac": {
+    "at": "2026-10-28T16:25:00.629820+08:00",
+    "bundle": "com.example.dontForget.acceptance.p1-desktop-editor-20261028-46",
+    "source_revision": "c00b24512b7a01c36ac940195167e9482267d3f5",
+    "exact_processes": [],
+    "schema": 16,
+    "integrity": "ok",
+    "counts": {
+      "Reminders": 0,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "capture_draft_absent": true,
+    "other_draft_keys": [],
+    "native_visual_pass": [
+      "Large editor and bottom-right controls",
+      "Actual paste and select-all/delete",
+      "Persisted draft exact readback",
+      "Originals/archive/restore control spacing and navigation"
+    ],
+    "not_claimed": [
+      "AX setValue was not a Flutter edit",
+      "Native mouse/trackpad hold recording and STT",
+      "Native copy/cut clipboard contents",
+      "Native Send submission or scheduling",
+      "System notification queue count"
+    ],
+    "phone_or_mirror_used": false,
+    "notifications_scheduled_by_agent": false
+  },
+  "evidence_directories": {
+    "desktop": "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/p1-desktop-composer-20261028",
+    "combined": "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/p1-content-spacing-20261028"
+  },
+  "raw_sha256": {
+    "desktop": {
+      "full-flutter.log": "37a971a91fa44323fc34475a4699f01cf732cb57b716331814d9088e4689ac31",
+      "analyze.log": "7b1aea715047d6871cf061b2dc8f8dbf7e84b52abf2d11cca393e86a084e0570",
+      "desktop-tests.log": "0e9973919a09439f5ee1f2aea8dcc404cb9978adcb962fd780164ccb403e5064",
+      "real-font-final.log": "f70dd9375728e7afe4e58da774cdd381873923809a5b1a9396002d48af236259",
+      "render.log": "d3808c1232986fd93cfc0798931afe40c00099a07eb8758a2cd4a61f75361ee3",
+      "source-freeze.json": "4dfbf286ac65464de4d5a7d4a75b73aef5acead6445e0eb32c7afb68fc15cb0d",
+      "build-steps.json": "8548248535427cbb76029449903855e0e6d306f9f71f4eab57af0320240325c6"
+    },
+    "combined": {
+      "focused-tests.log": "ccb88073dc9591ce41e1b315c54b249108a0d9c83d1570643fc93a477183d456",
+      "full-combination.log": "c92ea59d05b67b1fb7084fdabbd0b9de8ef4a9b0eeb8c8a2511b397779e4a53e",
+      "analyze.log": "7919b3fd0d481561d3a8ad1bcffc376e2f69f9a96b5e740b9c5a23c2d4756538",
+      "render.log": "fb874dcdb92483ed70f4de0235a650218d34946692b8bc2cbea9e91b7d34e9ac",
+      "source-freeze.json": "5f908b8262a8162322d5e8197477ebc3446c0489f99741e02cfcd5a9cdafdcc8",
+      "build-steps.json": "ce12ea28020f6c61284f327d83e356c58e9fe238ffb510a849e5c02c59a69391",
+      "platform-build-verification.json": "4a9c6518f4c281a89ab269295b7fbfc1af37d0a664536b7ad7c886a6b00f310b",
+      "native-before.json": "e688d1c264024d795c1484c6b8b0ce7310ba0fdcc85370e42683c455e08555d9",
+      "native-pasted-draft.json": "3b34715fe0b1e15ba5cc1d6516a90ab2e768e5fddff04591635c6059f2c68884",
+      "native-after.json": "ab0686a8adfa0d6e6d5feb79a1af0561032ca0c4635367a22fe2dbb2827e8890",
+      "ui-reception.json": "e4ad02d9c17fd9bcf964659c1953a418389f60b04d85e35607563c81d676b5a0",
+      "ui-handback.json": "48ad7a155a0e497db15ed527941df319831a11baf4f3052137f8c3fc73880cb0"
+    }
+  },
+  "native_screenshots": [
+    "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/p1-content-spacing-20261028/native-first-home.png",
+    "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/p1-content-spacing-20261028/native-pasted-editor.png",
+    "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/p1-content-spacing-20261028/native-content-originals.png",
+    "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/p1-content-spacing-20261028/native-content-archive.png",
+    "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/p1-content-spacing-20261028/native-content-restore.png"
+  ],
+  "main_integration": {
+    "target": "main",
+    "verified_base": "897104c269eb613db6b63e705c0bbd79996a8825",
+    "functional_commits": [
+      "701d79cc06b072b87e4a0740e4d2b81d229d353e",
+      "c00b24512b7a01c36ac940195167e9482267d3f5"
+    ],
+    "receipt": "/Users/james/.codex/worktrees/p0-record-reminder/dontforget/build/native_acceptance/p1-content-spacing-20261028/main-integration.json",
+    "protect_unrelated_work": true
+  },
+  "pushed_or_published_by_this_task": false,
+  "remaining": [
+    "Real microphone mouse/trackpad hold, cancellation, STT full prefix and editable speech on native devices",
+    "P1 iPhone native notification capacity, actual delivery/action/cold process/reopen refill, cross-day and exact owned cleanup",
+    "Protected iPhone43 newer9/3 remain architecture-owned; do not replay old snapshots",
+    "Follow-up main native acceptance and release gates remain independent"
+  ]
+}
