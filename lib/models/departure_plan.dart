@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:uuid/uuid.dart';
 import 'reminder.dart';
 import 'task_details.dart';
+import 'calendar_exceptions.dart';
 import '../services/departure_weather_service.dart';
 
 class DeparturePlan {
@@ -23,6 +24,7 @@ class DeparturePlan {
     this.returnMinutes = 180,
     this.records = const [],
     this.weather,
+    this.exceptions = const CalendarExceptions(),
   }) : id = id ?? const Uuid().v4();
   final String id, title, place, city;
   final int departureMinute,
@@ -37,6 +39,7 @@ class DeparturePlan {
   final double? latitude, longitude;
   final List<DepartureRecord> records;
   final Map<String, dynamic>? weather;
+  final CalendarExceptions exceptions;
   factory DeparturePlan.fromJson(Map data) {
     final days = data['weekdays'];
     final minute = data['minute'], lead = data['lead'];
@@ -101,6 +104,7 @@ class DeparturePlan {
       weather: data['weather'] == null
           ? null
           : Map<String, dynamic>.from(data['weather']),
+      exceptions: CalendarExceptions.fromJson(data['calendar_exceptions']),
     );
   }
   Map<String, dynamic> toJson() => {
@@ -121,10 +125,12 @@ class DeparturePlan {
     'return_minutes': returnMinutes,
     'records': records.map((r) => r.toJson()).toList(),
     'weather': weather,
+    if (!exceptions.isEmpty) 'calendar_exceptions': exceptions.toJson(),
   };
   DeparturePlan patch(Map<String, dynamic> changes) =>
       DeparturePlan.fromJson({...toJson(), ...changes});
   Reminder build(DateTime now) {
+    CalendarExceptions.fromJson(exceptions.toJson());
     if (title.trim().isEmpty ||
         items.isEmpty ||
         rainThreshold < 1 ||
@@ -139,7 +145,7 @@ class DeparturePlan {
     DateTime? due;
     for (
       var i = 0;
-      i < 9;
+      i < 368;
       i++, date = DateTime(date.year, date.month, date.day + 1)
     ) {
       final event = DateTime(
@@ -150,7 +156,7 @@ class DeparturePlan {
         departureMinute % 60,
       );
       final alarm = event.subtract(Duration(minutes: leadMinutes));
-      if (weekdays.contains(date.weekday) && alarm.isAfter(now)) {
+      if (exceptions.permits(date, weekdays) && alarm.isAfter(now)) {
         due = alarm;
         break;
       }
@@ -179,7 +185,12 @@ class DeparturePlan {
       detailsJson: TaskDetails(
         kind: 'departure',
         checklist: items,
-        repeat: RepeatWindow(weekdays: alarmDays),
+        repeat: RepeatWindow(
+          weekdays: alarmDays,
+          exceptions: exceptions.shift(
+            departureMinute - leadMinutes < 0 ? -1 : 0,
+          ),
+        ),
         data: toJson(),
       ).encode(),
     );
@@ -211,7 +222,7 @@ class DeparturePlan {
     final occurrences = <Reminder>[];
     for (var day = 0; day <= rollingDays; day++) {
       final date = DateTime(now.year, now.month, now.day + day);
-      if (!weekdays.contains(date.weekday)) continue;
+      if (!exceptions.permits(date, weekdays)) continue;
       final event = DateTime(
         date.year,
         date.month,

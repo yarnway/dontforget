@@ -9,6 +9,7 @@ import '../data/database_helper.dart';
 import '../models/settings.dart';
 import '../models/reminder.dart';
 import '../models/task_details.dart';
+import '../models/medication_plan.dart';
 import '../models/departure_plan.dart';
 import '../services/departure_weather_service.dart';
 import '../models/notification_schedule_status.dart';
@@ -1575,10 +1576,12 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
                         nextTime != null &&
                         current.eventTime != null &&
                         current.details.repeat != null &&
-                        !const {
-                          'monthly',
-                          'yearly',
-                        }.contains(current.recurrenceRule)
+                        (current.details.repeat!.anchor != null ||
+                            !current.details.repeat!.exceptions.isEmpty ||
+                            !const {
+                              'monthly',
+                              'yearly',
+                            }.contains(current.recurrenceRule))
                   ? _eventForTrigger(current, nextTime)
                   : !snooze && nextTime != null && current.eventTime != null
                   ? current

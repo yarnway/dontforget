@@ -7,6 +7,7 @@ import '../../l10n/planning_strings.dart';
 import '../../models/reminder.dart';
 import '../../models/task_details.dart';
 import '../../models/task_template.dart';
+import '../../models/calendar_exceptions.dart';
 import '../../providers/providers.dart';
 import '../../services/recovery/runtime_gate.dart';
 import '../formatters/local_date_time.dart';
@@ -21,6 +22,7 @@ import 'workspace_tool_panel.dart';
 import 'saved_task_filters_bar.dart';
 import 'task_template_library.dart';
 import 'weekly_task_review_panel.dart';
+import 'calendar_exceptions_editor.dart';
 
 class PlanningPanel extends StatefulWidget {
   const PlanningPanel({
@@ -706,6 +708,8 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
   bool _templateApplied = false;
   List<int> _weekdays = [];
   DateTime? _end, _due;
+  CalendarExceptions _exceptions = const CalendarExceptions();
+  bool _exceptionsValid = true;
   bool _saving = false;
   String t(String key) => planningText(context, key);
   bool get _current =>
@@ -727,6 +731,7 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
     _interval = TextEditingController(text: '${details.repeat?.interval ?? 1}');
     _weekdays = details.repeat?.weekdays.toList() ?? [];
     _end = details.repeat?.end;
+    _exceptions = details.repeat?.exceptions ?? const CalendarExceptions();
     _due = task?.triggerTime;
     _rule = task?.recurrenceRule ?? 'none';
     _generation = ref.read(databaseHelperProvider).captureGeneration();
@@ -801,6 +806,11 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
     setState(() => _saving = true);
     try {
       final base = widget.task, details = base?.details ?? const TaskDetails();
+      var effectiveDue = _due;
+      final retainedAnchor =
+          _due == base?.triggerTime && _rule == base?.recurrenceRule
+          ? details.repeat?.anchor
+          : null;
       final labels = _items.text
           .split('\n')
           .map((v) => v.trim())
@@ -832,6 +842,10 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
           : RepeatWindow(
               interval: int.parse(_interval.text),
               weekdays: _rule == 'weekly' ? _weekdays : const [],
+              exceptions: _exceptions,
+              anchor: _exceptions.isEmpty
+                  ? retainedAnchor
+                  : retainedAnchor ?? _due,
               end: _end == null
                   ? null
                   : DateTime(_end!.year, _end!.month, _end!.day, 23, 59, 59),
@@ -839,12 +853,21 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
       if (_rule != 'none' && _due == null) {
         throw const FormatException('Repeat time required');
       }
+      if (_rule != 'none' &&
+          (!_exceptionsValid ||
+              _exceptions.add.any(
+                (day) => day.compareTo(CalendarExceptions.key(_due!)) < 0,
+              ))) {
+        throw const FormatException('Invalid exception dates');
+      }
       if (repeat != null &&
           _due != null &&
-          ((_rule == 'weekly' &&
-                  _weekdays.isNotEmpty &&
-                  !_weekdays.contains(_due!.weekday)) ||
-              (_rule == 'workday' && _due!.weekday > 5))) {
+          (_exceptions.excludes(_due!) ||
+              (!_exceptions.includes(_due!) &&
+                  ((_rule == 'weekly' &&
+                          _weekdays.isNotEmpty &&
+                          !_weekdays.contains(_due!.weekday)) ||
+                      (_rule == 'workday' && _due!.weekday > 5))))) {
         final next = repeat.next(
           _due!,
           _due!.subtract(const Duration(microseconds: 1)),
@@ -853,9 +876,9 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
         if (next == null) {
           throw const FormatException('No occurrence inside repeat dates');
         }
-        _due = next;
+        effectiveDue = next;
       }
-      if (repeat?.end != null && _due!.isAfter(repeat!.end!)) {
+      if (repeat?.end != null && effectiveDue!.isAfter(repeat!.end!)) {
         throw const FormatException('Repeat end precedes first time');
       }
       final updated = details.patch({
@@ -874,13 +897,15 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
                   ))
               .copyWith(
                 taskTitle: _title.text.trim(),
-                triggerTime: _due,
+                triggerTime: effectiveDue,
                 eventTime:
                     base?.eventTime != null &&
                         base?.triggerTime != null &&
-                        _due != null
-                    ? _due!.add(base!.eventTime!.difference(base.triggerTime!))
-                    : _due,
+                        effectiveDue != null
+                    ? effectiveDue.add(
+                        base!.eventTime!.difference(base.triggerTime!),
+                      )
+                    : effectiveDue,
                 isRecurring: _rule != 'none',
                 recurrenceRule: _rule,
                 detailsJson: updated.encode(),
@@ -1060,6 +1085,16 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
                       },
               ),
               if (_rule != 'none') ...[
+                CalendarExceptionsEditor(
+                  key: const ValueKey('task-date-exceptions'),
+                  initial: _exceptions,
+                  enabled: !_saving,
+                  scopeHint: 'reminderDatesHint',
+                  onChanged: (value, raw) => setState(() {
+                    _exceptionsValid = value != null;
+                    if (value != null) _exceptions = value;
+                  }),
+                ),
                 TextFormField(
                   controller: _interval,
                   keyboardType: TextInputType.number,

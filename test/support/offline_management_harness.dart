@@ -15,6 +15,8 @@ class OfflineTestNotifications implements NotificationService {
   @override
   bool get isPausedForMaintenance => false;
   @override
+  Future<void> init() async {}
+  @override
   Future<void> scheduleReminderStrict(Reminder task) async {
     if (fail) throw StateError('Synthetic notification failure');
     scheduled.add(task.id);

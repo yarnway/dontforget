@@ -265,6 +265,38 @@ extension TaskManagement on RemindersNotifier {
           }
           final changes = <Reminder>[];
           final ids = children.map((r) => r.id).toSet();
+          // A changed meal clock changes the native/date ID. Match the dose's
+          // ordinal within its medicine/day too, so a taken or historical dose
+          // cannot be recreated as a new future dose on the same day.
+          String? doseSlot(Reminder row) {
+            if (row.details.kind != 'medication') return null;
+            final at = row.eventTime ?? row.triggerTime;
+            final data = row.details.data;
+            final times = data['times'];
+            if (at == null ||
+                data['id'] is! String ||
+                times is! List ||
+                times.any((v) => v is! String)) {
+              return null;
+            }
+            final sorted = List<String>.from(times)..sort();
+            final index = sorted.indexOf(
+              Medicine.clockText(at.hour * 60 + at.minute),
+            );
+            return index < 0
+                ? null
+                : '${data['id']}|${MedicationPlan.dateKey(at)}|$index';
+          }
+
+          final protectedDoseSlots = <String>{
+            for (final row in all.where(
+              (r) =>
+                  r.details.planId == owner.id &&
+                  (r.isCompleted ||
+                      !(r.eventTime ?? r.triggerTime)!.isAfter(at)),
+            ))
+              if (doseSlot(row) != null) doseSlot(row)!,
+          };
           for (final previous in all.where(
             (r) => r.details.planId == owner.id,
           )) {
@@ -287,6 +319,10 @@ extension TaskManagement on RemindersNotifier {
             }
           }
           for (final proposed in planned) {
+            if (proposed.id != owner.id &&
+                protectedDoseSlots.contains(doseSlot(proposed))) {
+              continue;
+            }
             final old = all.where((r) => r.id == proposed.id).firstOrNull;
             if (old != null &&
                 old.id != owner.id &&
@@ -560,7 +596,12 @@ extension TaskManagement on RemindersNotifier {
                       due != null &&
                           row.eventTime != null &&
                           row.triggerTime != null
-                      ? due.add(row.eventTime!.difference(row.triggerTime!))
+                      ? row.details.repeat?.anchor != null ||
+                                row.details.repeat?.exceptions.isEmpty == false
+                            ? RemindersNotifier._eventForTrigger(row, due)
+                            : due.add(
+                                row.eventTime!.difference(row.triggerTime!),
+                              )
                       : row.eventTime,
                   triggerTime: due ?? next.triggerTime,
                   isCompleted: due == null,

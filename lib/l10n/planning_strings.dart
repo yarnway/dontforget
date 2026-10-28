@@ -14,6 +14,99 @@ String planningText(BuildContext context, String key) {
 }
 
 const _strings = <String, List<String>>{
+  'dateExceptions': ["指定日期调整", "Date exceptions", "日付の例外"],
+  'dateExceptionsHint': [
+    "跳过或额外增加指定日期，以逗号或换行分隔，最多各 366 天。",
+    "Skip or add dates, separated by commas or new lines, up to 366 each.",
+    "除外・追加日をカンマか改行で入力します（各 366 日まで）。",
+  ],
+  'skipDates': [
+    "跳过日期 · YYYY-MM-DD",
+    "Skip dates · YYYY-MM-DD",
+    "除外日 · YYYY-MM-DD",
+  ],
+  'addDates': [
+    "额外提醒日期 · YYYY-MM-DD",
+    "Extra dates · YYYY-MM-DD",
+    "追加日 · YYYY-MM-DD",
+  ],
+  'invalidDateExceptions': [
+    "请检查日期格式、重复或冲突；修正后才能保存。",
+    "Check date format, duplicates and conflicts before saving.",
+    "日付の形式、重複、矛盾を修正して保存してください。",
+  ],
+  'reminderDatesHint': [
+    "按提醒日期调整；额外日期沿用提醒时间，且须在重复起止范围内。",
+    "Dates refer to reminder days. Extra dates use the reminder time within the repeat range.",
+    "通知日を指定します。追加日は同じ通知時刻と繰り返し期間を使います。",
+  ],
+  'departureDatesHint': [
+    "按出门日期调整；提前到前一天的提醒仍按出门日判断。",
+    "Dates refer to departure days, including reminders sent the previous day.",
+    "外出日を指定します。前日に届く通知も外出日で判定します。",
+  ],
+  'sourceReview': ["资料核对", "Source review", "資料の照合"],
+  'sourcePending': ["个待核对字段", "fields need review", "項目が要確認"],
+  'currentValue': ["当前填写值", "Current value", "現在の値"],
+  'sourceConflict': [
+    "资料内容与当前值不一致，请核对原文后选择。",
+    "Sources disagree with each other or the current value. Review the excerpts and choose.",
+    "資料間または現在の値と相違があります。原文を確認してください。",
+  ],
+  'sourceNoEvidence': [
+    "该字段缺少原文引用，请核对原始资料。",
+    "This field has no source excerpt. Check the original sources.",
+    "この項目の引用がありません。元の資料を確認してください。",
+  ],
+  'useSourceValue': ["采用此值", "Use this value", "この値を使用"],
+  'viewSource': ["查看原始资料", "View source", "元の資料を表示"],
+  'confirmCurrentValue': [
+    "已核对，保留当前值",
+    "Reviewed: keep current value",
+    "確認して現在の値を保持",
+  ],
+  'sourceReviewNeeded': [
+    "还有资料冲突或缺少引用的字段，请先完成资料核对。",
+    "Review conflicting fields and fields without citations first.",
+    "相違のある項目や引用のない項目を先に確認してください。",
+  ],
+  'sourceAttachmentHint': [
+    "查看附件原文；语音解析后会显示转写文本。",
+    "Check the attachment. Audio transcripts appear after extraction.",
+    "添付資料を確認してください。音声は解析後に文字起こしを表示します。",
+  ],
+  'sourceMissing': [
+    "原始附件当前不可用",
+    "Source attachment unavailable",
+    "元の添付資料を開けません",
+  ],
+  'multiSourceHint': [
+    "可合并最多 8 份文字、图片或语音资料；有冲突时逐项核对。",
+    "Combine up to 8 text, image or audio sources; review conflicting fields.",
+    "テキスト・画像・音声を 8 件まで組み合わせ、相違を項目ごとに確認できます。",
+  ],
+  'addSavedSource': ["添加已保存的资料", "Add a saved source", "保存済み資料を追加"],
+  'mealSettings': ["用餐时间（可选）", "Meal times (optional)", "食事時刻（任意）"],
+  'mealSettingsHint': [
+    "填写实际用餐时间，再为单药选择餐前或餐后及分钟数；修改后仅更新未来剂次。",
+    "Enter meal times, then set each medicine’s before/after offset. Changes update future doses only.",
+    "食事時刻を入力し、各薬の食前・食後の分数を指定します。変更は今後の服用分に反映します。",
+  ],
+  'mealLabel': ["餐次名称", "Meal name", "食事名"],
+  'mealClock': ["用餐时间 · HH:mm", "Meal time · HH:mm", "食事時刻 · HH:mm"],
+  'addMeal': ["添加餐次", "Add meal", "食事を追加"],
+  'mealLink': ["按餐时安排（可选）", "Schedule around meals (optional)", "食事に連動（任意）"],
+  'mealOffsetHint': [
+    "必须明确选择餐次、餐前／餐后和分钟数（0–180）；跨日请填写明确服药时间。",
+    "Choose a meal, before/after and 0–180 minutes. Across midnight, enter an explicit dose time.",
+    "食事、食前・食後、分数（0–180）を指定します。日付をまたぐ場合は服用時刻を直接入力してください。",
+  ],
+  'mealSide': ["餐前／餐后", "Before / after", "食前・食後"],
+  'beforeMeal': ["餐前", "Before meal", "食前"],
+  'afterMeal': ["餐后", "After meal", "食後"],
+  'mealOffset': ["间隔分钟数 · 0–180", "Offset minutes · 0–180", "間隔（分）· 0–180"],
+  'addMealLink': ["添加餐时安排", "Add meal timing", "食事連動を追加"],
+
   'savedFilters': ['常用筛选', 'Saved filters', '保存した絞り込み'],
   'saveCurrentFilter': ['保存当前筛选', 'Save current filter', '現在の絞り込みを保存'],
   'savedFilterName': ['筛选名称', 'Filter name', '絞り込み名'],

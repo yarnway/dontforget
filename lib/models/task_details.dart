@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'stored_datetime.dart';
 import 'stored_json.dart';
+import 'calendar_exceptions.dart';
 
 /// Versioned, bounded extension data. Historical tasks retain null storage.
 class TaskDetails {
@@ -48,7 +49,10 @@ class TaskDetails {
       throw const FormatException('Task details too large');
     }
     final json = decodeStoredJson(raw);
-    if (json is! Map<String, dynamic> || json['version'] != 1) {
+    if (json is! Map<String, dynamic> ||
+        json['version'] is! int ||
+        !const [1, 2].contains(json['version']) ||
+        json['version'] != _formatVersion(json)) {
       throw const FormatException('Invalid task details');
     }
     const keys = {
@@ -150,7 +154,11 @@ class TaskDetails {
   }
 
   Map<String, dynamic> toJson() => {
-    'version': 1,
+    'version': _formatVersion({
+      'kind': kind,
+      'repeat': repeat?.toJson(),
+      'data': data,
+    }),
     'repeat': repeat?.toJson(),
     'checklist': checklist.map((e) => e.toJson()).toList(),
     'tags': tags,
@@ -165,8 +173,55 @@ class TaskDetails {
     'plan_id': planId,
     'data': data,
   };
-  TaskDetails patch(Map<String, dynamic> changes) =>
-      decode(jsonEncode({...toJson(), ...changes}));
+  static int _formatVersion(Map<String, dynamic> data) {
+    final repeat = data['repeat'];
+    if (repeat is Map) {
+      if (repeat['anchor'] != null) return 2;
+      final e = repeat['exceptions'];
+      if (e is Map &&
+          ((e['skip'] is List && (e['skip'] as List).isNotEmpty) ||
+              (e['add'] is List && (e['add'] as List).isNotEmpty))) {
+        return 2;
+      }
+    }
+    final body = data['data'];
+    if (body is Map) {
+      if (data['kind'] == 'departure' && body['calendar_exceptions'] is Map) {
+        final e = body['calendar_exceptions'] as Map;
+        if ((e['skip'] is List && (e['skip'] as List).isNotEmpty) ||
+            (e['add'] is List && (e['add'] as List).isNotEmpty)) {
+          return 2;
+        }
+      }
+      bool medicationExtension(Map value) =>
+          value['review_sources'] == true ||
+          (value['resolved_fields'] is Map &&
+              (value['resolved_fields'] as Map).isNotEmpty) ||
+          const [
+            'sources',
+            'meals',
+            'meal_links',
+            'meal_context',
+            'provenance',
+          ].any((key) => value[key] is List && (value[key] as List).isNotEmpty);
+      if (const ['medication', 'medicationPlan'].contains(data['kind']) &&
+          (medicationExtension(body) ||
+              (body['medicines'] is List &&
+                  (body['medicines'] as List).whereType<Map>().any(
+                    medicationExtension,
+                  )))) {
+        return 2;
+      }
+    }
+    return 1;
+  }
+
+  TaskDetails patch(Map<String, dynamic> changes) {
+    final next = {...toJson(), ...changes};
+    next['version'] = _formatVersion(next);
+    return decode(jsonEncode(next));
+  }
+
   TaskDetails record(
     String action,
     DateTime at, {
@@ -261,10 +316,13 @@ class RepeatWindow {
     this.weekdays = const [],
     this.start,
     this.end,
+    this.anchor,
+    this.exceptions = const CalendarExceptions(),
   });
   final int interval;
   final List<int> weekdays;
-  final DateTime? start, end;
+  final DateTime? start, end, anchor;
+  final CalendarExceptions exceptions;
   factory RepeatWindow.fromJson(dynamic value) {
     if (value is! Map ||
         value['interval'] is! int ||
@@ -284,11 +342,22 @@ class RepeatWindow {
     if (start != null && end != null && end.isBefore(start)) {
       throw const FormatException('Invalid repeat range');
     }
+    final exceptions = CalendarExceptions.fromJson(value['exceptions']);
+    if (exceptions.add.any(
+      (date) =>
+          (start != null &&
+              date.compareTo(CalendarExceptions.key(start)) < 0) ||
+          (end != null && date.compareTo(CalendarExceptions.key(end)) > 0),
+    )) {
+      throw const FormatException('Extra date outside repeat range');
+    }
     return RepeatWindow(
       interval: value['interval'],
       weekdays: List<int>.unmodifiable(days),
       start: start,
       end: end,
+      anchor: TaskDetails.date(value['anchor']),
+      exceptions: exceptions,
     );
   }
   Map<String, dynamic> toJson() => {
@@ -296,10 +365,55 @@ class RepeatWindow {
     'weekdays': weekdays,
     'start': start?.toIso8601String(),
     'end': end?.toIso8601String(),
+    if (anchor != null) 'anchor': anchor!.toIso8601String(),
+    if (!exceptions.isEmpty) 'exceptions': exceptions.toJson(),
   };
 
   /// Calendar arithmetic, never 24-hour additions across DST boundaries.
   DateTime? next(DateTime base, DateTime after, String rule) {
+    RepeatWindow.fromJson(toJson());
+    base = anchor ?? base;
+    final ordinary = _nextRegular(base, after, rule);
+    DateTime? extra;
+    for (final key in exceptions.add) {
+      final day = CalendarExceptions.day(key);
+      final at = base.isUtc
+          ? DateTime.utc(
+              day.year,
+              day.month,
+              day.day,
+              base.hour,
+              base.minute,
+              base.second,
+              base.millisecond,
+              base.microsecond,
+            )
+          : DateTime(
+              day.year,
+              day.month,
+              day.day,
+              base.hour,
+              base.minute,
+              base.second,
+              base.millisecond,
+              base.microsecond,
+            );
+      if (!at.isBefore(base) &&
+          at.isAfter(after) &&
+          (start == null || !at.isBefore(start!)) &&
+          (end == null || !at.isAfter(end!)) &&
+          (extra == null || at.isBefore(extra))) {
+        extra = at;
+      }
+    }
+    return ordinary == null
+        ? extra
+        : extra == null || ordinary.isBefore(extra)
+        ? ordinary
+        : extra;
+  }
+
+  DateTime? _nextRegular(DateTime base, DateTime after, String rule) {
     DateTime calendar(int year, int month, int day) => base.isUtc
         ? DateTime.utc(year, month, day, base.hour, base.minute, base.second)
         : DateTime(year, month, day, base.hour, base.minute, base.second);
@@ -331,7 +445,8 @@ class RepeatWindow {
           base.day > last ? last : base.day,
         );
         if (candidate.isAfter(cutoff) &&
-            (beginning == null || !candidate.isBefore(beginning))) {
+            (beginning == null || !candidate.isBefore(beginning)) &&
+            !exceptions.excludes(candidate)) {
           return accept(candidate);
         }
       }
@@ -377,7 +492,7 @@ class RepeatWindow {
                     : offset % interval == 0) &&
                 (rule != 'workday' || candidate.weekday <= 5) &&
                 (weekdays.isEmpty || weekdays.contains(candidate.weekday));
-      if (matches) return candidate;
+      if (matches && !exceptions.excludes(candidate)) return candidate;
     }
     return null;
   }

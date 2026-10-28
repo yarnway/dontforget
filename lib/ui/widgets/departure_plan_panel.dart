@@ -18,6 +18,7 @@ import '../formatters/local_date_time.dart';
 import '../screens/notification_repair_screen.dart';
 import 'inline_feedback.dart';
 import 'routine_coverage_panel.dart';
+import 'calendar_exceptions_editor.dart';
 
 class DeparturePlanPanel extends ConsumerStatefulWidget {
   const DeparturePlanPanel({super.key, this.initialPlanId});
@@ -34,6 +35,8 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
   Map<String, dynamic> _draft = DeparturePlan().toJson();
   Reminder? _baseline;
   bool _loaded = false, _busy = false, _preview = false;
+  bool _exceptionsValid = true;
+  int _exceptionsRevision = 0;
   int _revision = 0;
   final _invalid = <String>{};
   final _city = TextEditingController();
@@ -220,6 +223,7 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
   String _clock(int minute) =>
       '${(minute ~/ 60).toString().padLeft(2, '0')}:${(minute % 60).toString().padLeft(2, '0')}';
   Future<void> _save() async {
+    if (!_exceptionsValid) return;
     if (!mounted || !context.mounted || !_current || _busy || !_preview) return;
     setState(() => _busy = true);
     try {
@@ -265,6 +269,9 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
         jsonDecode(jsonEncode(row.details.data)),
       );
       _draft['items'] = row.details.checklist.map((e) => e.toJson()).toList();
+      _exceptionsValid = true;
+      _exceptionsRevision++;
+      _invalid.clear();
       _preview = false;
       _aiSuggestion = null;
       _revision++;
@@ -563,6 +570,9 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
               : () => _change(() {
                   _baseline = null;
                   _draft = DeparturePlan().toJson();
+                  _exceptionsValid = true;
+                  _exceptionsRevision++;
+                  _invalid.clear();
                 }),
         ),
         _field('title', t('title')),
@@ -614,6 +624,28 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
           ],
         ),
         Text(t('calendarHint')),
+        CalendarExceptionsEditor(
+          key: ValueKey(
+            'departure-exceptions:${_draft['id']}:$_exceptionsRevision',
+          ),
+          initial: plan.exceptions,
+          raw: _draft['exceptions_draft'] is Map
+              ? Map<String, dynamic>.from(_draft['exceptions_draft'])
+              : null,
+          enabled: !_busy,
+          scopeHint: 'departureDatesHint',
+          onChanged: (value, raw) => _change(() {
+            _exceptionsValid = value != null;
+            _draft['exceptions_draft'] = raw;
+            if (value != null) {
+              if (value.isEmpty) {
+                _draft.remove('calendar_exceptions');
+              } else {
+                _draft['calendar_exceptions'] = value.toJson();
+              }
+            }
+          }),
+        ),
         _items('always', false, t('items')),
         _items('always', true, t('onceItems')),
         _items('rain', false, t('rainItems')),
@@ -765,7 +797,11 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
           ),
         ],
         FilledButton.tonal(
-          onPressed: _busy || preview == null || _invalid.isNotEmpty
+          onPressed:
+              _busy ||
+                  !_exceptionsValid ||
+                  preview == null ||
+                  _invalid.isNotEmpty
               ? null
               : () => setState(() => _preview = true),
           child: Text(t('preview')),

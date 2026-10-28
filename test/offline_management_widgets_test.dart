@@ -468,8 +468,13 @@ void main() {
             )
             .first,
       );
+      // Lazy children can change the scroll extent after the first layout.
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(button);
+      await tester.pumpAndSettle();
       await tester.tap(button);
       await settle(tester);
+      expect(find.byType(DoseTakenTimeDialog), findsOneWidget);
       await tap(tester, const ValueKey('dose-actual-save'));
       final saved = (await tester.runAsync(() => h.row(dose.id)))!;
       expect(saved.isCompleted, isTrue);
@@ -500,7 +505,11 @@ void main() {
                 scale: 1.8,
                 brightness: brightness,
               );
-              expect(tester.takeException(), isNull, reason: child.runtimeType.toString());
+              expect(
+                tester.takeException(),
+                isNull,
+                reason: child.runtimeType.toString(),
+              );
               await finish(tester);
             }
           },
