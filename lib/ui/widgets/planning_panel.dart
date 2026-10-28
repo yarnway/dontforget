@@ -23,6 +23,10 @@ import 'saved_task_filters_bar.dart';
 import 'task_template_library.dart';
 import 'weekly_task_review_panel.dart';
 import 'calendar_exceptions_editor.dart';
+import '../../l10n/content_management_strings.dart';
+import '../../models/task_metadata_patch.dart';
+import 'task_metadata_dialog.dart';
+import 'content_management_panel.dart';
 
 class PlanningPanel extends StatefulWidget {
   const PlanningPanel({
@@ -59,19 +63,21 @@ class _PlanningPanelState extends State<PlanningPanel> {
             spacing: 5,
             runSpacing: 5,
             children: [
-              for (var i = 0; i < 5; i++)
+              for (var i = 0; i < 6; i++)
                 ChoiceChip(
                   label: Text(
-                    planningText(
-                      context,
-                      [
-                        'medication',
-                        'departure',
-                        'manage',
-                        'backup',
-                        'learningManage',
-                      ][i],
-                    ),
+                    i == 5
+                        ? contentText(context, 'title')
+                        : planningText(
+                            context,
+                            [
+                              'medication',
+                              'departure',
+                              'manage',
+                              'backup',
+                              'learningManage',
+                            ][i],
+                          ),
                   ),
                   selected: _tab == i,
                   onSelected: (_) => setState(() => _tab = i),
@@ -88,6 +94,9 @@ class _PlanningPanelState extends State<PlanningPanel> {
               const TaskManagementPanel(),
               const PortableBackupPanel(),
               const LearningManagementPanel(),
+              _tab == 5
+                  ? const ContentManagementPanel()
+                  : const SizedBox.shrink(),
             ],
           ),
         ),
@@ -286,6 +295,38 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
     }
   }
 
+  Future<void> _metadata() async {
+    if (!_current || _busy || _promptOpen || _selection.isEmpty) return;
+    final rows = List<Reminder>.unmodifiable(_selection.values);
+    _promptOpen = true;
+    try {
+      final patch = await showDialog<TaskMetadataPatch>(
+        context: context,
+        builder: (_) => TaskMetadataDialog(rows: rows),
+      );
+      if (!_current || patch == null) return;
+      setState(() => _busy = true);
+      await ref
+          .read(remindersProvider.notifier)
+          .updateMetadataBatch(rows, patch, _generation);
+      if (_current) {
+        setState(() {
+          _selection.clear();
+          _selecting = false;
+        });
+      }
+    } catch (_) {
+      if (mounted && _current) {
+        InlineFeedback.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(t('bulkChanged'))));
+      }
+    } finally {
+      _promptOpen = false;
+      if (_current) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final all = ref.watch(remindersProvider);
@@ -460,6 +501,14 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
                                 }),
                           child: Text(t('bulkSelectVisible')),
                         ),
+                        if (_view != 'trash')
+                          TextButton(
+                            key: const ValueKey('bulk-metadata'),
+                            onPressed: _busy || _selection.isEmpty
+                                ? null
+                                : _metadata,
+                            child: Text(contentText(context, 'metadata')),
+                          ),
                         for (final action in [
                           if (_view == 'trash')
                             'restore'

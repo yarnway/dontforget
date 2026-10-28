@@ -10,6 +10,7 @@ import '../models/settings.dart';
 import '../models/reminder.dart';
 import '../models/notification_payload.dart';
 import '../models/task_details.dart';
+import '../models/task_metadata_patch.dart';
 import '../services/security/credential_repository.dart';
 import '../models/medication_plan.dart';
 import '../models/departure_plan.dart';

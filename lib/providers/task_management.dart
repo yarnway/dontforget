@@ -2,6 +2,92 @@ part of 'providers.dart';
 
 /// Mutations share the reminder queue, recovery admission and notification journal.
 extension TaskManagement on RemindersNotifier {
+  /// Classification only: no deadlines, outcomes or native schedules change.
+  Future<ReminderBatchResult> updateMetadataBatch(
+    List<Reminder> expected,
+    TaskMetadataPatch patch,
+    DataGeneration generation, {
+    DateTime? now,
+  }) {
+    if (expected.isEmpty ||
+        expected.length > 50 ||
+        expected.map((e) => e.id).toSet().length != expected.length) {
+      throw const FormatException('Select between 1 and 50 distinct tasks');
+    }
+    final frozen = List<Reminder>.unmodifiable(expected);
+    return _enqueue(
+      (ticket) => _dbHelper.runOperation(ticket, () async {
+        final saved = await _dbHelper.writeTransaction(ticket, (db) async {
+          final all = (await db.query(
+            'Reminders',
+          )).map(Reminder.fromJson).toList();
+          final changes = <Reminder>[];
+          for (final wanted in frozen) {
+            final row = all.where((e) => e.id == wanted.id).firstOrNull;
+            if (row == null ||
+                !mapEquals(row.toJson(), wanted.toJson()) ||
+                row.details.kind != 'task' ||
+                row.details.planId != null ||
+                row.details.deletedAt != null ||
+                all.any((e) => e.details.planId == row.id)) {
+              throw const StaleReminderOccurrenceException();
+            }
+            final details = patch.apply(row.details);
+            if (details.project == row.details.project &&
+                listEquals(details.tags, row.details.tags)) {
+              continue;
+            }
+            final next = row.copyWith(
+              detailsJson: details
+                  .record('metadata_updated', now ?? DateTime.now())
+                  .encode(),
+            );
+            await db.update(
+              'Reminders',
+              next.toJson(),
+              where: 'id = ?',
+              whereArgs: [row.id],
+            );
+            changes.add(next);
+          }
+          return changes;
+        });
+        _dbHelper.checkGeneration(ticket);
+        _publishManaged(saved);
+        return ReminderBatchResult(
+          changed: saved.length,
+          nativeSyncFailures: 0,
+        );
+      }),
+      generation: generation,
+    );
+  }
+
+  /// One root and its explicitly previewed members, across every task kind.
+  Future<ReminderBatchResult> changeContentArchive(
+    Reminder expected,
+    List<Reminder> children,
+    bool archived,
+    DataGeneration generation,
+  ) {
+    if (expected.details.planId != null ||
+        expected.details.data['learning_archive'] == true ||
+        children.length > 1000 ||
+        children.any((e) => e.details.planId != expected.id) ||
+        {expected.id, ...children.map((e) => e.id)}.length !=
+            children.length + 1) {
+      throw const FormatException('Invalid archive group');
+    }
+    return _changeLifecycles(
+      [expected],
+      archived ? 'archive' : 'unarchive',
+      generation,
+      contentBaseline: {
+        for (final e in [expected, ...children]) e.id: e,
+      },
+    );
+  }
+
   Future<void> _archiveLearning(DatabaseExecutor db, Reminder source) async {
     final progress = LearningQueueService.decode(source.wordProgressJson);
     if (progress.isEmpty) return;
@@ -491,6 +577,7 @@ extension TaskManagement on RemindersNotifier {
     DataGeneration generation, {
     DateTime? now,
     bool ordinaryOnly = false,
+    Map<String, Reminder>? contentBaseline,
   }) {
     if (!const {
       'pause',
@@ -509,6 +596,24 @@ extension TaskManagement on RemindersNotifier {
           final all = (await db.query(
             'Reminders',
           )).map(Reminder.fromJson).toList();
+          if (contentBaseline != null) {
+            final root = expected.single;
+            final members = all
+                .where((e) => e.id == root.id || e.details.planId == root.id)
+                .toList();
+            if (root.details.deletedAt != null ||
+                (action == 'archive'
+                    ? root.details.archivedAt != null
+                    : root.details.archivedAt == null) ||
+                members.length != contentBaseline.length ||
+                members.any(
+                  (e) =>
+                      contentBaseline[e.id] == null ||
+                      !mapEquals(e.toJson(), contentBaseline[e.id]!.toJson()),
+                )) {
+              throw const StaleReminderOccurrenceException();
+            }
+          }
           final targets = <Reminder>[];
           for (final wanted in expected) {
             final target = all.where((r) => r.id == wanted.id).firstOrNull;
@@ -535,7 +640,8 @@ extension TaskManagement on RemindersNotifier {
                 }) {
               throw StateError('Task is not eligible for this bulk action');
             }
-            if (action == 'archive' &&
+            if (contentBaseline == null &&
+                action == 'archive' &&
                 !target.isCompleted &&
                 target.details.kind != 'medicationPlan') {
               throw StateError('Only completed tasks can be archived');
@@ -547,6 +653,9 @@ extension TaskManagement on RemindersNotifier {
             for (final row in all.where(
               (r) => r.id == target.id || r.details.planId == target.id,
             )) {
+              if (contentBaseline != null && row.details.deletedAt != null) {
+                continue;
+              }
               if (row.id != target.id) {
                 if (action == 'trash' && row.details.deletedAt != null) {
                   continue;

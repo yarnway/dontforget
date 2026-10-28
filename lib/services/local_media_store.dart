@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'content/owned_material_activity.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
@@ -69,10 +70,15 @@ class LocalMediaStore {
     // A unique directory also preserves the original display name/extension.
     // Two imports with the same basename cannot overwrite an older attachment.
     final destination = await media.createTemp('import-');
+    OwnedMaterialActivity.hold(destination);
     try {
       final copied = await File(
         sourcePath,
       ).copy(path.join(destination.path, path.basename(sourcePath)));
+      // Preserve even a user file whose name equals our optional marker.
+      if (path.basename(sourcePath) != OwnedMaterialActivity.markerName) {
+        await OwnedMaterialActivity.mark(destination, 'original');
+      }
       return copied.path;
     } catch (_) {
       try {
@@ -81,6 +87,8 @@ class LocalMediaStore {
         // Preserve the original copy failure if cleanup also fails.
       }
       rethrow;
+    } finally {
+      OwnedMaterialActivity.releaseDirectory(destination);
     }
   }
 }

@@ -551,4 +551,5 @@ const _strings = <String, List<String>>{
     'Choose a date to view dose records',
     '日付を選んで各薬の記録を表示',
   ],
+  'metadata_updated': ['项目与标签更新', 'Project and tag update', 'プロジェクトとタグの更新'],
 };

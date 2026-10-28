@@ -1,4 +1,5 @@
 import 'dart:io';
+import '../../services/content/owned_material_activity.dart';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:file_picker/file_picker.dart';
@@ -206,6 +207,7 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
     if (!_current || _busy) return;
     _start();
     String? password;
+    File? preparedSnapshot;
     try {
       final chosen = await FilePicker.pickFile(dialogTitle: t('import'));
       if (!_current || chosen?.path == null) return;
@@ -236,6 +238,7 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
         isCurrent: () => _current,
         onProgress: _updateProgress,
       );
+      preparedSnapshot = snapshot;
       if (!mounted || !_current) return;
       // Password is no longer needed once the private, verified restore copy exists.
       password = null;
@@ -248,6 +251,9 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
     } catch (error) {
       _message(error);
     } finally {
+      if (preparedSnapshot != null) {
+        OwnedMaterialActivity.release(preparedSnapshot);
+      }
       password = null;
       if (_current) {
         setState(() {
