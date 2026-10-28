@@ -1,0 +1,384 @@
+{
+  "schema": 1,
+  "recorded_at": "2026-10-28T11:50:02.951333+08:00",
+  "source_revision": "3d91d6e372124373aa6453c391891cade5e20e29",
+  "source_base_includes_main": "4faadea3bf253dd171a1053423041b502003cee0",
+  "functional_tree_unchanged_after_source_freeze": true,
+  "version": "1.7.0+38",
+  "database_schema": 16,
+  "toolchain": {
+    "flutter": "3.44.9",
+    "dart": "3.12.2",
+    "xcode": "27.1"
+  },
+  "tests": {
+    "flutter_passed": 1737,
+    "flutter_failed": 0,
+    "python_passed": 126,
+    "analysis_issues": 0,
+    "input_and_workspace_targeted_passed": 145,
+    "feedback_targeted_passed": 49,
+    "component_render_scenarios_passed": 21
+  },
+  "builds": {
+    "ios_physical": {
+      "host": {
+        "bundle": "com.yarnway.dontforget.acceptance.p1current28",
+        "version": "1.7.0",
+        "build": "38",
+        "strict_signature": "PASS",
+        "architectures": "arm64",
+        "platform": "IOS",
+        "device_in_profile": true,
+        "binary_sha256": "4ff5614b66e41c1f8b4e3d44096ce2092911891a82627ce672f068b22813b747"
+      },
+      "extension": {
+        "bundle": "com.yarnway.dontforget.acceptance.p1current28.ReminderActivity",
+        "version": "1.7.0",
+        "build": "38",
+        "strict_signature": "PASS",
+        "architectures": "arm64",
+        "platform": "IOS",
+        "device_in_profile": true,
+        "binary_sha256": "a078dc53a43b8842a517460a253f3ff29e073197a9945aeb23fa5e3adf1cc317"
+      }
+    },
+    "macos_debug": {
+      "bundle": "com.example.dontForget",
+      "build": "38",
+      "platform": "MACOS",
+      "architectures": [
+        "arm64"
+      ],
+      "binary_sha256": "77f8a6336931182d44d9793844faa13996af6926442587779b5fec44cc48d11d",
+      "launched": false
+    },
+    "ios_simulator_host": {
+      "bundle": "com.yarnway.dontforget.acceptance.p1current28",
+      "build": "38",
+      "platform": "IOSSIMULATOR",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "binary_sha256": "0cf5f737820bcea817ea6b6751282b6fb882b719ac46581847c87465c842eb93",
+      "launched": false
+    },
+    "ios_simulator_extension": {
+      "bundle": "com.yarnway.dontforget.acceptance.p1current28.ReminderActivity",
+      "build": "38",
+      "platform": "IOSSIMULATOR",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "binary_sha256": "820bccc7911e9e6196f57c001a2f9daae6595909dd39e5d8b58ebdf5d6ab820b",
+      "launched": false
+    }
+  },
+  "iphone_final": {
+    "at": "2026-10-28T11:44:06.197933+08:00",
+    "source": "3d91d6e372124373aa6453c391891cade5e20e29",
+    "bundle": "com.yarnway.dontforget.acceptance.p1current28",
+    "version": "1.7.0+38",
+    "schema": 16,
+    "integrity": "ok",
+    "counts": {
+      "Reminders": 7,
+      "MediaRecords": 2,
+      "Settings": 1
+    },
+    "business_tables_equal_preupgrade": {
+      "Reminders": true,
+      "MediaRecords": true,
+      "Settings": true
+    },
+    "media_files_unchanged": true,
+    "capture_draft_nonempty": false,
+    "poststop_exact_processes": [],
+    "notification_matrix": "NOT_STARTED",
+    "phone_test_records": "PRESERVED_WITH_BACKUPS_NOT_DELETED",
+    "physical_voice_new_geometry": "PENDING",
+    "native_ui_observed": [
+      "centered composer placeholder",
+      "centered single-line command search"
+    ],
+    "other_identity_not_accessed": "com.yarnway.dontforget.acceptance.iphone17"
+  },
+  "iphone_install": {
+    "at": "2026-10-28T11:40:11.221617+08:00",
+    "source": "3d91d6e372124373aa6453c391891cade5e20e29",
+    "bundle": "com.yarnway.dontforget.acceptance.p1current28",
+    "version": "1.7.0+38",
+    "schema": 16,
+    "integrity": "ok",
+    "counts": {
+      "Reminders": 7,
+      "MediaRecords": 2,
+      "Settings": 1
+    },
+    "full_business_tables_identical_before_launch": true,
+    "all_backed_up_files_byte_equal_before_launch": true,
+    "files_compared": 7,
+    "copied_scope": [
+      "Documents",
+      "Library/Preferences"
+    ],
+    "other_identity_not_accessed": "com.yarnway.dontforget.acceptance.iphone17"
+  },
+  "mac_cleanup": {
+    "at": "2026-10-28T11:18:03.808794+08:00",
+    "identity": "com.example.dontForget.acceptance.p1-current-20261028-090619",
+    "source": "f1754a1f42d6248339d788b563f185dea93e8bee",
+    "schema": 16,
+    "integrity": "ok",
+    "counts": {
+      "Reminders": 0,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "full_business_tables_equal_empty_baseline": true,
+    "rollback_counts": {
+      "Reminders": 2,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "native_queue_readback": "PASS: pending 0; retained 0; future 0; submitted 0; unverified 0; pending cancellation 0",
+    "normal_quit_verified": true
+  },
+  "handoff": {
+    "returned_at": "2026-10-28T11:44:44.006674+08:00",
+    "extended_lease": "AUTOMATIC_APPROVAL_REJECTED",
+    "native_ui_returned": true,
+    "phone_records_deleted": false,
+    "wake_state": "ALREADY_ENDED"
+  },
+  "remaining": [
+    "new geometry physical voice cancellation and transcription draft",
+    "native typed input and save-hint visual acceptance",
+    "native repair-feedback trigger and action",
+    "independent iPhone notification permission capacity delivery cold/warm click cancellation refill matrix",
+    "recoverable cleanup of this phone identity and independent native queue readback",
+    "multi-day sleep timezone DST and data-protection scenarios"
+  ],
+  "not_performed": [
+    "push",
+    "publish",
+    "old iphone17 database access",
+    "new macOS build launch",
+    "simulator installation or launch",
+    "this iPhone notification matrix"
+  ],
+  "evidence": [
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/ui-v6-preparation.json",
+      "sha256": "37cde8c2c4cb34e735f7928904478983b57da9bb69650935b9dac6f18fab44cd",
+      "bytes": 596
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/ui-v6-flutter-full.log",
+      "sha256": "70165bce993db8eb1ff06798abcbb1c416ce836524a6dbf07fcc7d897e61d138",
+      "bytes": 335925
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/ui-v6-python.log",
+      "sha256": "f62f3771017bbd24605570cbc7d813b27d7fcad866e758f7b8b401cd5278e39b",
+      "bytes": 478
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/ui-v6-analyze.log",
+      "sha256": "cdc29338622f86bd0860a178b793f97b99208d4b8367403db2bf11552682e8b3",
+      "bytes": 96
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/ui-layout-final-targeted.log",
+      "sha256": "223a57eca453f68d78e0f160bac5def341cf42052f14af29dfb3b57dfc5683b5",
+      "bytes": 26146
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/feedback-responsive-targeted.log",
+      "sha256": "70f26e84edc68ad7e83d363c2726f24f20fb50e030a22c369d4aea8e607d7462",
+      "bytes": 8584
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/ui-v6-component-renders-final.log",
+      "sha256": "824b08c4d4037814fbb23629d3b124c7cc5be221bb1ae1d2c128eb1cc647cd5f",
+      "bytes": 5367
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/ui-v6-build-verification.json",
+      "sha256": "8ddf7a3b2b524300c24bdbd81da59f7749b1dda09d5e8dad8d24b33d5023c609",
+      "bytes": 1005
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/ui-v6-ios-unsigned.log",
+      "sha256": "283228acfc5e713e77bac2f89bb6547bebf46b37c5b949cddf5410b1b8fa4242",
+      "bytes": 694
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/ui-v6-ios-signed.log",
+      "sha256": "441811961477b1c032d75fc8ded85fa6ed2df19c339c91632b6622c429e66ce0",
+      "bytes": 1264455
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/ui-v6-macos-build.log",
+      "sha256": "fe53b4cc859598db2560f98bdcce221ae77697f131999403c3f731854ae08643",
+      "bytes": 3946
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/ui-v6-macos-strict.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/ui-v6-simulator-build.log",
+      "sha256": "ce862dbb1d2fa54a0e0c0308cca2681a0f3e091ab5bfee721118a0e5b998f8ba",
+      "bytes": 495
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/phone-after-ui-v6-install/comparison.json",
+      "sha256": "afe83fed8433353225039c2d54325438a56db1f61591f8a0d4443d70b731f8a9",
+      "bytes": 588
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/phone-final-preserved/readback.json",
+      "sha256": "5ce90723deae03a3defe738a77511181f44be97bd0e1dce711ff94e7107a7bd3",
+      "bytes": 858
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/macos-cleanup-final.json",
+      "sha256": "5e1a9a9e58d5ceb72e7cfe0cae522f4aa54609709109132f64c08d9357fbaa5b",
+      "bytes": 892
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/macos-cleanup-native-final.ax.txt",
+      "sha256": "41a58c671041c038e4a4dbd91421df0519eeb95167cd71a5067268d533713a4b",
+      "bytes": 2546
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/native-handoff-return.json",
+      "sha256": "2ad61eb905aecb112bebfe18d62fd731d59b72c790894ca09f1079ca245bcd17",
+      "bytes": 1363
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/wake-final-release.json",
+      "sha256": "63e4df84bc22431b193d8e6f7465432f2260b75e17f2564db2f784fcdd3adde6",
+      "bytes": 91
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/phone-v6-home.png",
+      "sha256": "815a7a58c04be74165bfdeb50d1d2b5334a53ce649539bcb863b33c29e6bb347",
+      "bytes": 164883
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/phone-v6-search-centered.png",
+      "sha256": "ece472e15c5581daf5e8597403beb71021060a95594d9bc6ef16f2869a27efc5",
+      "bytes": 128311
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/arc-preview/tools-1440.png",
+      "sha256": "a40cb0fd6b56d7baf6c43b4808242fba6bfd2a58bf103b76d8cb61454c96be57",
+      "bytes": 105846
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/arc-preview/tools-375.png",
+      "sha256": "b16d89e419679118fcc503c59510d3bb3350137341bee28724f66d865d6bfc10",
+      "bytes": 81964
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/arc-preview/voice-cancel-1440.png",
+      "sha256": "81494dfb6c661959593185b7d5dcb29e6500d22c4f417d9f46b6f0d8004a382c",
+      "bytes": 120801
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/arc-preview/voice-cancel-375.png",
+      "sha256": "2765e9c9313eb1b407bd081f9e11fb457d232960562724aab5944368c8c99bcd",
+      "bytes": 63669
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/arc-preview/voice-ja-320-2x.png",
+      "sha256": "97b71475a54a84076a069a8c068614953fc9ab08f007626a19a301413787898a",
+      "bytes": 77263
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/arc-preview/voice-text-1440.png",
+      "sha256": "2308277e259e405a0fe36c14f223c60a59c0c157cd294ed6df5e6ee9a52488b7",
+      "bytes": 124325
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/arc-preview/voice-text-375.png",
+      "sha256": "f2f2f38bf5f932daf16e36abfcf810bf4750097dfa53eb0eb70291c9eab38d12",
+      "bytes": 66382
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/feedback-preview/repair-dark-1440.png",
+      "sha256": "644c6f98958589338120b5f7c3bab63b67f5249e8dd930be2bfc700ae4799e17",
+      "bytes": 68467
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/feedback-preview/repair-dark-375.png",
+      "sha256": "d36fa3d96357b51e7e3dec5ceaa991318d576a45dbdaa201b43e3e18609c4789",
+      "bytes": 45364
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/feedback-preview/repair-dark-430.png",
+      "sha256": "de40ec955354361ec0c7b8b1c008c99ddfb79da875a346b402bb0faf25fa7b21",
+      "bytes": 46289
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/feedback-preview/repair-light-1440.png",
+      "sha256": "b1cf13ec2da21ecff28eb3ce636539fddb9d25cdad580717ac1fed121d9d3e91",
+      "bytes": 69609
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/feedback-preview/repair-light-375.png",
+      "sha256": "4c54b7675876aeeff111bbd13436f4cff2d96e9c89b5a5a58416d7e1aa9bad2d",
+      "bytes": 46223
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/feedback-preview/repair-light-430.png",
+      "sha256": "0be9a33d3dc649fd07acd0aa049b64cd0c1a166469c664960aac76e5f188f7d6",
+      "bytes": 47108
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/composer-preview-v6/composer-dark-empty-1440.png",
+      "sha256": "9a94a40ef9efa81da5742b2d0c787cdf8b5927fd5290d4c2f4100b98448076c9",
+      "bytes": 47755
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/composer-preview-v6/composer-dark-empty-375.png",
+      "sha256": "3df44f4655b5e71bbeaa97fb8865c6f51c96c4c32049a3b8880e0c951a9af29d",
+      "bytes": 34958
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/composer-preview-v6/composer-dark-filled-1440.png",
+      "sha256": "a52e03960f9a328c02f59625e840aaa1ab7c5b41c22b61cfaaaeee61086e03ff",
+      "bytes": 58506
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/composer-preview-v6/composer-dark-filled-375.png",
+      "sha256": "ecbb51ed6d17c580b83ef37c460b2966bd1245f01c90600e193af8109a374fca",
+      "bytes": 44953
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/composer-preview-v6/composer-light-empty-1440.png",
+      "sha256": "256287aa4b76d440d9e867a9d879a613f4c625ac449f715279218b41488958c2",
+      "bytes": 46920
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/composer-preview-v6/composer-light-empty-375.png",
+      "sha256": "91a1e738bc269d4c4653cacbb2cd01dd36e2f24d3ce3337a76a44cfd8fdbdeaf",
+      "bytes": 34051
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/composer-preview-v6/composer-light-filled-1440.png",
+      "sha256": "05341fa4adb8302beadaa1282d99caad8ccee9accf6f140798113432f8f006aa",
+      "bytes": 57746
+    },
+    {
+      "file": "build/native_acceptance/p1-ui-native-20261028-102820/composer-preview-v6/composer-light-filled-375.png",
+      "sha256": "45bc4f61d814419a9e86d46ddd2827c3e5a5bf3b8574e3a8902b7daad436d3ce",
+      "bytes": 44023
+    }
+  ]
+}
