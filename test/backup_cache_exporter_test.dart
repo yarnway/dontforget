@@ -106,10 +106,11 @@ void main() {
         final source = await File(
           '${temp.path}/source',
         ).writeAsString('synthetic');
-        final result = await const BackupFileExporter().save(
-          source,
-          'backup.dfbackup',
-        );
+        // Exercise the native channel contract on every test host. Linux's
+        // directory-copy contract is covered separately below.
+        final result = await const BackupFileExporter(
+          useDirectoryPicker: false,
+        ).save(source, 'backup.dfbackup');
         expect(result, '${temp.path}/destination.dfbackup');
         expect(request!.method, 'saveAs');
         expect(request!.arguments['sourcePath'], source.path);
