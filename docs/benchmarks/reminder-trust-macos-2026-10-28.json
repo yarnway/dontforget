@@ -1,5 +1,5 @@
 {
-  "recorded_at": "2026-10-28T11:28:53.381780+08:00",
+  "recorded_at": "2026-10-28T11:57:47.508801+08:00",
   "timezone": "Asia/Shanghai",
   "status": "PARTIAL_NATIVE_BUILD_DIAGNOSTICS_TIMING_FIX_CLIENT_UI_BLOCKED",
   "source": {
@@ -137,9 +137,10 @@
   "automation": {
     "frozen_related_flutter_tests": 65,
     "result": "PASS",
-    "full_flutter_test_rerun_this_native_turn": false,
+    "full_flutter_test_rerun_this_native_turn": true,
     "previous_1728_test_evidence_scope": "Earlier 385fbfb feature source, separate from this frozen native artifact",
-    "frozen_source_analyze": "0 issues"
+    "frozen_source_analyze": "0 issues",
+    "latest_full_test_scope": "623c525 frozen archive:1740 PASS; main workspace parallel security/attachment changes excluded"
   },
   "private_evidence_root": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/trust-actions-20261028-1130-materials",
   "evidence_hash_manifest_sha256": "d1cd804e20addd09eec08d05c031d7d71ef0a15acd8e64c6e996cabd75c54823",
@@ -162,7 +163,16 @@
     "human_desktop_return_received": true,
     "root_desktop_returned_without_ui_control": true,
     "client_target_app_access": "DENIED again after human said already allowed; no selector/CLI workaround used",
-    "rotation_requested_by_user": true
+    "rotation_requested_by_user": true,
+    "rotation_protocol": "docs/Native_Acceptance_Rotation.md",
+    "canonical_state": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/shared-desktop-rotation.json",
+    "canonical_lock": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/shared-desktop-rotation.lock",
+    "rotation_state_revision": 3,
+    "reservation_confirmed": false,
+    "other_task_acknowledgements": [],
+    "default_window_minutes": 20,
+    "deadline_transfers_ownership": false,
+    "root_current_ui_ownership": null
   },
   "timing_fix": {
     "scope": "Verified 6f42ccd source overlay integrated by exact per-file hashes; no other dirty paths overwritten",
@@ -176,6 +186,32 @@
     "targeted_analyze": "0 issues",
     "native_swift_test": "PASS: FIFO, first time, input bounds, completion once; real frameworks, registrant stub, no UI or notifications",
     "device_acceptance": "NOT_PERFORMED",
-    "native_time_boundary": "Earliest native delegate callback observation; Apple exposes no original physical click timestamp; absent or invalid cache falls back to Dart time"
+    "native_time_boundary": "Earliest native delegate callback observation; Apple exposes no original physical click timestamp; absent or invalid cache falls back to Dart time",
+    "commit": "623c52524c43ffc60d04b48e18464d7d7549439e",
+    "release_build": {
+      "status": "PASS",
+      "display_size": "61.8 MB",
+      "candidate": {
+        "source_revision": "623c52524c43ffc60d04b48e18464d7d7549439e",
+        "app": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/trust-actions-20261028-1130-timing/dont_forget.app",
+        "bundle_id": "com.example.dontForget.acceptance.trust-actions-20261028-1130",
+        "executable": "/Users/james/gitresources/opensources/dontforget/build/native_acceptance/trust-actions-20261028-1130-timing/dont_forget.app/Contents/MacOS/dontforget_trust_actions_1130",
+        "identity_only_derivation": true,
+        "native_non_signature_code_unchanged": true,
+        "frameworks_resources_unchanged": true,
+        "codesign_verify": "PASS",
+        "launched": false,
+        "archive_sha256": "21f15a13d5fb965f997cb8a2d9918a0757b300238174da68f20336a0d1bb4da1",
+        "native_device_acceptance": "NOT_PERFORMED_CLIENT_TARGET_ACCESS_DENIED"
+      },
+      "native_interaction": "NOT_PERFORMED_CLIENT_ACCESS_DENIED"
+    },
+    "full_flutter_tests": {
+      "revision": "623c52524c43ffc60d04b48e18464d7d7549439e",
+      "count": 1740,
+      "result": "PASS",
+      "elapsed_seconds": 61
+    },
+    "full_source_analyze": "0 issues"
   }
 }

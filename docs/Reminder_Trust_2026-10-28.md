@@ -114,3 +114,12 @@ iOS/Android 剩余：按钮实际呈现、前台/后台 FlutterEngine 与终止�
 新增 11 项 Dart 回归与原有 65 项合跑 76/76，通过 targeted analyze（0 issues）。使用真实 FlutterMacOS/UserNotifications framework 编译运行 FIFO、首次时间、输入边界和 completion 纯 Swift 测试通过；registrant stub 未创建引擎/UI/系统通知。新版完整 release 构建另行取证。
 
 用户已明确交回共享桌面，但客户端在其再次允许后仍拒绝控制唯一验收应用（`Computer Use was not approved to use ...1130`），控制会话刷新也未成功。本任务已明确归还桌面，不继续占用。用户要求各任务限时轮换：每轮记录实际开始、预计释放、本轮目标、精确应用身份，明确归还后下一任务接手；时间到只提醒收尾，不自动抢占。共享记录为待各任务确认的提案；协调工具拒绝的消息不得记作已发送或已预约。
+
+
+### 修复后冻结候选与本轮结论
+
+- 修复提交 `623c52524c43ffc60d04b48e18464d7d7549439e` 的准确 git archive 已重新构建：全源码 `flutter analyze --no-pub` 0 issues，全量 `flutter test --no-pub --reporter expanded` **1740 项通过（61 秒）**；其中 76 项为本轮相关回归。该结果不覆盖主工作区其后并行的安全存储/附件未提交修改。
+- 修复后 macOS release 再次成功（61.8 MB），ZIP SHA-256 `21f15a13d5fb965f997cb8a2d9918a0757b300238174da68f20336a0d1bb4da1`。准备好的唯一身份应用为 `build/native_acceptance/trust-actions-20261028-1130-timing/dont_forget.app`，已通过签名、资源与非签名字节校验；**未启动，未做修复后原生动作验收**。
+- 共享桌面仍不由本任务占用；限时轮换提案、精确的当前状态和客户端阻断见 [轮换协议](Native_Acceptance_Rotation.md)。所有工作树使用该协议中的同一个绝对路径，禁止生成各自独立的“共享锁”。当前无已确认的下一时段或自动跟进。
+
+macOS 后续目标仍为：真实四动作、前台/后台/退出后响应、独立标注的持久队列重启消费、日文及完整中英日菜单/未来通知重排、自检实际点击与精确 source 清理。iOS/Android 剩余项继续按本记录前述矩阵执行。
