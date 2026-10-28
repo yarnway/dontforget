@@ -63,8 +63,9 @@ void main() {
             findsOneWidget,
           );
           expect(tester.getRect(find.byType(TextField)), input);
-          if (language == 'zh' && scale == 1)
-            expect(card.height, lessThanOrEqualTo(100));
+          if (language == 'zh' && scale == 1) {
+            expect(card.height, lessThanOrEqualTo(64));
+          }
           expect(tester.takeException(), isNull);
           await tester.tap(action);
           await tester.pump();

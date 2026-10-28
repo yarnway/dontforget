@@ -67,6 +67,21 @@ class InlineFeedbackState extends State<InlineFeedback> {
     if (mounted && _message != null) setState(() => _message = null);
   }
 
+  Widget _actionButton(SnackBarAction action, ColorScheme colors) => TextButton(
+    focusNode: _actionFocus,
+    style: TextButton.styleFrom(
+      backgroundColor: colors.primary.withValues(alpha: 0.1),
+      minimumSize: const Size(64, 44),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+    ),
+    onPressed: () {
+      hideCurrentSnackBar();
+      action.onPressed();
+    },
+    child: Text(action.label),
+  );
+
   @override
   void dispose() {
     _expiry?.cancel();
@@ -96,6 +111,49 @@ class InlineFeedbackState extends State<InlineFeedback> {
         builder: (context, size) {
           final insets = MediaQuery.paddingOf(context);
           final top = insets.top + kToolbarHeight + 8;
+          final width = math.min(
+            440.0,
+            math.max(0.0, size.maxWidth - 24 - insets.horizontal),
+          );
+          final textStyle = Theme.of(context).textTheme.bodyMedium!.copyWith(
+            color: colors.onSurface,
+            height: 1.4,
+          );
+          double textWidth(String text, TextStyle style) {
+            final painter = TextPainter(
+              text: TextSpan(text: text, style: style),
+              textDirection: Directionality.of(context),
+              textScaler: MediaQuery.textScalerOf(context),
+              maxLines: 1,
+            )..layout();
+            final result = painter.width;
+            painter.dispose();
+            return result;
+          }
+
+          final content = message?.content;
+          final action = message?.action;
+          final inlineAction =
+              action != null &&
+              content is Text &&
+              content.data != null &&
+              !content.data!.contains('\n') &&
+              textWidth(content.data!, textStyle.merge(content.style)) +
+                      math.max(
+                        64,
+                        textWidth(
+                              action.label,
+                              Theme.of(context).textTheme.labelLarge!,
+                            ) +
+                            28,
+                      ) +
+                      // Outer padding, icon, gaps, close target and action target.
+                      16 +
+                      30 +
+                      10 +
+                      8 +
+                      48 <=
+                  width;
           return Stack(
             fit: StackFit.expand,
             children: [
@@ -105,10 +163,7 @@ class InlineFeedbackState extends State<InlineFeedback> {
                 PositionedDirectional(
                   top: top,
                   end: 12 + insets.right,
-                  width: math.min(
-                    440,
-                    math.max(0, size.maxWidth - 24 - insets.horizontal),
-                  ),
+                  width: width,
                   child: Semantics(
                     container: true,
                     liveRegion: true,
@@ -138,10 +193,14 @@ class InlineFeedbackState extends State<InlineFeedback> {
                         child: Padding(
                           padding: const EdgeInsets.fromLTRB(12, 6, 4, 6),
                           child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: inlineAction
+                                ? CrossAxisAlignment.center
+                                : CrossAxisAlignment.start,
                             children: [
                               Padding(
-                                padding: const EdgeInsets.only(top: 6),
+                                padding: EdgeInsets.only(
+                                  top: inlineAction ? 0 : 6,
+                                ),
                                 child: DecoratedBox(
                                   decoration: BoxDecoration(
                                     color: accent.withValues(alpha: 0.1),
@@ -156,10 +215,12 @@ class InlineFeedbackState extends State<InlineFeedback> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
-                                    top: 10,
-                                    bottom: 2,
-                                  ),
+                                  padding: inlineAction
+                                      ? EdgeInsets.zero
+                                      : const EdgeInsets.only(
+                                          top: 10,
+                                          bottom: 2,
+                                        ),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -168,18 +229,12 @@ class InlineFeedbackState extends State<InlineFeedback> {
                                       Flexible(
                                         child: SingleChildScrollView(
                                           child: DefaultTextStyle(
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyMedium!
-                                                .copyWith(
-                                                  color: colors.onSurface,
-                                                  height: 1.4,
-                                                ),
+                                            style: textStyle,
                                             child: message.content,
                                           ),
                                         ),
                                       ),
-                                      if (message.action case final action?)
+                                      if (!inlineAction && action != null)
                                         Padding(
                                           padding: const EdgeInsets.only(
                                             top: 6,
@@ -187,27 +242,9 @@ class InlineFeedbackState extends State<InlineFeedback> {
                                           child: Align(
                                             alignment:
                                                 AlignmentDirectional.centerEnd,
-                                            child: TextButton(
-                                              focusNode: _actionFocus,
-                                              style: TextButton.styleFrom(
-                                                backgroundColor: colors.primary
-                                                    .withValues(alpha: 0.1),
-                                                minimumSize: const Size(64, 44),
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 14,
-                                                      vertical: 8,
-                                                    ),
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(10),
-                                                ),
-                                              ),
-                                              onPressed: () {
-                                                hideCurrentSnackBar();
-                                                action.onPressed();
-                                              },
-                                              child: Text(action.label),
+                                            child: _actionButton(
+                                              action,
+                                              colors,
                                             ),
                                           ),
                                         ),
@@ -215,6 +252,10 @@ class InlineFeedbackState extends State<InlineFeedback> {
                                   ),
                                 ),
                               ),
+                              if (inlineAction) ...[
+                                const SizedBox(width: 8),
+                                _actionButton(action, colors),
+                              ],
                               Semantics(
                                 label: MaterialLocalizations.of(
                                   context,

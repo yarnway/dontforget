@@ -546,8 +546,7 @@ class AppLocalizations {
       'snoozeSuccess': 'Postponed for 5 minutes',
       'reminderNativeSyncFailed':
           'Saved, but system reminders could not be updated. Check notification permissions and save the task again.',
-      'reminderNativeSyncFailedCompact':
-          'Task saved. System reminder needs attention.',
+      'reminderNativeSyncFailedCompact': 'Saved. Reminder needs attention.',
       'reminderNativeDeleteFailed':
           'Tasks were deleted, but system reminders could not be removed. In Settings, select “Retry reminder scheduling”.',
       'reminderOccurrenceChanged':
@@ -1280,7 +1279,7 @@ class AppLocalizations {
       'iKnow': '我知道了',
       'snoozeSuccess': '已推迟 5 分钟后再次提醒',
       'reminderNativeSyncFailed': '已保存，但系统提醒未能更新。请检查通知权限并重新保存任务。',
-      'reminderNativeSyncFailedCompact': '事项已保存，系统提醒未更新。',
+      'reminderNativeSyncFailedCompact': '已保存，提醒未更新',
       'reminderNativeDeleteFailed': '任务已删除，但系统提醒未能移除。请在设置中点击“重新安排提醒”重试。',
       'reminderOccurrenceChanged': '此提醒已变化，请根据最新状态操作。',
       'taskCompleted': '事项已标为完成',
@@ -2008,7 +2007,7 @@ class AppLocalizations {
       'snoozeSuccess': '5分延期しました',
       'reminderNativeSyncFailed':
           '保存しましたが、システム通知を更新できませんでした。通知権限を確認してタスクを再保存してください。',
-      'reminderNativeSyncFailedCompact': '保存済み。システム通知は未更新です。',
+      'reminderNativeSyncFailedCompact': '保存済み・通知は未更新',
       'reminderNativeDeleteFailed':
           'タスクは削除しましたが、システム通知を削除できませんでした。設定の「リマインダーを再設定」から再試行してください。',
       'reminderOccurrenceChanged': 'このリマインダーは変更されました。最新の状態で操作してください。',
