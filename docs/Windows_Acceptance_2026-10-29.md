@@ -6,7 +6,7 @@
 
 - Windows 桌面已能**构建、启动、录入、到期提醒、系统 Toast、托盘、录音、附件导入、设置页**运行，并完成一次真实到期验收。
 - 构建阻塞的根因是**工具链不足**，不是源码：原机只有 VS 2019 Build Tools（MSVC 14.29，且缺 ATL），`audioplayers_windows` 需要 C++20 协程、`flutter_secure_storage_windows` 需要 `atlstr.h`。已安装 VS 2022 Build Tools + ATL 后 debug/release 均构建成功。
-- 本轮修复 4 处 Windows 适配缺陷（Toast 去重与可诊断、Toast 应用身份、安装器 AUMID、桌面隐藏拍照入口），新增 10 项回归。
+- 本轮修复 4 处 Windows 适配缺陷（Toast 去重与可诊断、Toast 应用身份、安装器 AUMID、桌面隐藏拍照入口），新增 10 项回归；并在 Release 包上复验生效：系统通知应用名为 `DontForget`、正文单行。
 - **Windows 仍不是"完全对齐"平台**：退出/休眠/重启会漏提醒、Toast 无动作与点击回跳、第二实例无交接、无开机自启、桌面全量测试在 Windows 下有 66 项失败（POSIX 持久化语义 + 工具链版本漂移）。详见第 4 节。
 - 稳定版仍受 macOS/iOS 原生门槛约束，本轮不发布。
 
@@ -50,8 +50,10 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 | 12 | 附件导入 | 通过：原生 `Select File`（#32770）选图后生成“文件任务: qa-attach.png”，附件可预览 | `picker-open.png`、`release-parsed.png` |
 | 13 | 静态分析 | `flutter analyze --no-pub`：0 issues | 命令输出 |
 | 14 | 相关回归 | 新增 10 项 Toast 测试通过；通知/输入相关 57 项通过 | 测试输出 |
+| 15 | Toast 修复复验 | 通过：Release 包 09:57 到期，系统通知显示应用名 `DontForget`，正文仅一行（不再重复标题） | `frames2/frame-08-095702.png` |
+| 16 | 第二实例 | **未通过**：同时启动两个实例，两个窗口都可见并展示同一数据库内容（PID 21740 / 23032） | `second-window-front.png` |
 
-未在本轮取得证据：安装/升级/卸载（需 Inno Setup 打包与重启环境）、真实麦克风听感、系统通知中心点击、第二实例交接、跨日与休眠。
+未在本轮取得证据：安装/升级/卸载（需 Inno Setup 打包与重启环境）、真实麦克风听感、系统通知中心点击、跨日与休眠。
 
 ## 3 发现并修复的 Windows 问题
 
@@ -69,14 +71,14 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 
 1. **退出/休眠/重启漏提醒（最高）**：Windows 无系统级排程，只有进程内 Timer；启动时过期提醒被取消而不是补发（`lib/providers/providers.dart`）。需要"启动补发窗口 + 错过汇总"设计，并考虑开机自启。
 2. **Toast 无动作按钮、无点击回跳**：Windows 侧只有标题/正文，点击不打开应用。要做需自定义 AppUserModelID 注册 + 激活回调（ToastNotification.Activated / 协议激活）。
-3. **第二实例无交接**：双击第二个实例会停在“存储不可用”页，而不是激活已有窗口。需要在 runner 加单实例 mutex + 激活消息。
+3. **第二实例同时打开同一数据库（已实测）**：两个实例的窗口同时可见并展示同一份数据（PID 21740 / 23032），没有出现“存储不可用”拦截。对应回归 `database_maintenance_test.dart` 的 "process ownership rejects a second process before any database creation" 在 Windows 下失败，说明**进程级租约在 Windows 未生效**，存在并发写入风险。应改为 Windows 命名 mutex 单实例 + 激活已有窗口。
 4. **无开机自启 / 无 URL 协议**：仓库里没有 autostart 与协议注册，重启后提醒不会恢复。
 5. **Windows 权限与自检显示“不可用”**：权限查询与测试通知在 Windows 返回 unsupported（设计如此），但界面需要解释清楚，避免与"未授权"混淆。
 6. **数据位置与身份**：附件在 `Documents\media`、数据库在 Roaming，bundle 身份仍是 `com.example`；正式版应改为 `com.yarnway.dontforget` 并评估 Roaming/OneDrive 同步风险。
 7. **托盘退出 `exit(0)`**：未关闭数据库与 journal，可能留下未刷盘状态；应改为优雅关闭。
 8. **录音细节**：固定 `.m4a` 扩展名但 Windows 写 ADTS AAC；时长解析只认 MP4 `moov`，250 ms 最短录音保护在 Windows 失效。
 9. **桌面文案与 i18n**：托盘菜单、Toast 正文、部分提示为中文硬编码（本轮已移除 Toast 正文的中文兜底）。
-10. **测试基线**：Windows 下全量 1944 通过 / 19 跳过 / 66 失败。失败集中在 POSIX 持久化语义（文件锁租约、SIGKILL 恢复、目录 fsync/权限）与 Flutter 版本漂移；CI 只在 ubuntu 跑全量。需要"平台限定 skip 清单 + Windows 专项矩阵"，否则 Windows 回归无法判定。
+10. **测试基线**：Windows 下全量首测 1944 通过 / 19 跳过 / 66 失败。并发修复（`d14adfb`：`schema16_integration_test`、`content_cleanup_service`）后复测相关文件仍为 151 通过 / 41 失败，集中在 `notification_startup_batch`（并发批次与超时）、`product_incremental_journal`、`leased_incremental_journal`、`recovery_app_flow`。这些套件依赖 POSIX 文件锁、SIGKILL 与目录权限语义；CI 只在 ubuntu 跑全量。需要"平台限定 skip 清单 + Windows 专项矩阵"，否则 Windows 回归无法判定，也不能把该结果当作本轮引入的回归。
 11. **安装器与文档不一致**：`installer.iss` 要求 Win10+，架构文档仍写 Win7/8；`windows_redist/` 与打包脚本注释冲突。
 12. **未提交的第三方改动**：`lib/services/content/content_cleanup_service.dart` 在本次会话开始后出现未提交修改（路径归一化/大小写比较），非本轮产生，需确认归属后再决定提交或回退。
 
