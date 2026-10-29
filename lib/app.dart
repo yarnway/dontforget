@@ -20,6 +20,7 @@ import 'services/pending_notification_actions.dart';
 import 'services/live_reminder_service.dart';
 import 'models/notification_payload.dart';
 import 'services/notification_service.dart';
+import 'services/desktop_shutdown.dart';
 import 'services/startup_trace.dart';
 import 'services/mac_menu_commands.dart';
 import 'services/recovery/runtime_gate.dart';
@@ -618,13 +619,21 @@ class _MyAppState extends ConsumerState<MyApp>
         try {
           trayManager.destroy();
         } catch (_) {}
-        try {
-          windowManager.destroy();
-        } catch (_) {}
-        exit(0);
+        unawaited(_closeStorageAndExit());
       }
     } catch (_) {}
   }
+
+  /// The tray exit is the normal desktop shutdown path. Closing the database
+  /// first flushes the mirror backup and the notification journal, so a tray
+  /// exit cannot leave a half-written store behind (the previous `exit(0)`
+  /// skipped this).
+  Future<void> _closeStorageAndExit() => shutdownDesktopApp(
+    closeStorage: () => DatabaseHelper.instance.close(),
+    destroyWindow: () => windowManager.destroy(),
+    exitProcess: exit,
+    onError: (error, _) => debugPrint('Shutdown step failed: $error'),
+  );
 
   @override
   Future<bool> didPopRoute() async =>

@@ -6,8 +6,8 @@
 
 - Windows 桌面已能**构建、启动、录入、到期提醒、系统 Toast、托盘、录音、附件导入、设置页**运行，并完成一次真实到期验收。
 - 构建阻塞的根因是**工具链不足**，不是源码：原机只有 VS 2019 Build Tools（MSVC 14.29，且缺 ATL），`audioplayers_windows` 需要 C++20 协程、`flutter_secure_storage_windows` 需要 `atlstr.h`。已安装 VS 2022 Build Tools + ATL 后 debug/release 均构建成功。
-- 本轮修复 4 处 Windows 适配缺陷（Toast 去重与可诊断、Toast 应用身份、安装器 AUMID、桌面隐藏拍照入口），新增 10 项回归；并在 Release 包上复验生效：系统通知应用名为 `DontForget`、正文单行。
-- **Windows 仍不是"完全对齐"平台**：退出/休眠/重启会漏提醒、Toast 无动作与点击回跳、第二实例无交接、无开机自启、桌面全量测试在 Windows 下有 66 项失败（POSIX 持久化语义 + 工具链版本漂移）。详见第 4 节。
+- 本轮修复 6 处 Windows 适配缺陷（Toast 去重与可诊断、Toast 应用身份、安装器 AUMID、桌面隐藏拍照入口、单实例互斥、托盘退出优雅关闭），新增 14 项回归；并在 Release 包上复验生效：系统通知应用名为 `DontForget`、正文单行、第二次启动不再开出第二个窗口。
+- **Windows 仍不是"完全对齐"平台**：退出/休眠/重启会漏提醒、Toast 无动作与点击回跳、无开机自启、桌面全量测试仍有 41 项失败（POSIX 持久化语义 + 工具链版本漂移）。详见第 4 节。
 - 稳定版仍受 macOS/iOS 原生门槛约束，本轮不发布。
 
 ## 1 环境与工具链修复
@@ -51,7 +51,9 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 | 13 | 静态分析 | `flutter analyze --no-pub`：0 issues | 命令输出 |
 | 14 | 相关回归 | 新增 10 项 Toast 测试通过；通知/输入相关 57 项通过 | 测试输出 |
 | 15 | Toast 修复复验 | 通过：Release 包 09:57 到期，系统通知显示应用名 `DontForget`，正文仅一行（不再重复标题） | `frames2/frame-08-095702.png` |
-| 16 | 第二实例 | **未通过**：同时启动两个实例，两个窗口都可见并展示同一数据库内容（PID 21740 / 23032） | `second-window-front.png` |
+| 16 | 第二实例 | 第一轮未通过（两实例同开一库）；**第二轮已修复**，见第 17 行 | `second-window-front.png` |
+| 17 | 单实例与激活（W2） | 通过：第二次启动进程立即以 0 退出，仅保留一个窗口；窗口隐藏到托盘后再次启动会恢复并置于前台 | 两轮 Debug/Release 实测 |
+| 18 | 托盘退出优雅关闭（W2） | 通过（单测）：先 `DatabaseHelper.close()`，再销毁窗口，最后 `exit(0)`；任一步失败仍退出且退出只调用一次 | `test/desktop_shutdown_test.dart` 4 项 |
 
 未在本轮取得证据：安装/升级/卸载（需 Inno Setup 打包与重启环境）、真实麦克风听感、系统通知中心点击、跨日与休眠。
 
@@ -64,18 +66,20 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 | F3 | Toast 失败被静默吞掉（不检查 `Process.run` 结果） | 企业策略禁用 PowerShell 时无任何线索 | `WindowsToast.show` 返回布尔并记录 exitCode/stderr；失败可见于日志 |
 | F4 | 桌面端仍显示“拍照照片”入口（`image_picker` 在桌面不支持） | 点了必然失败 | `input_bottom_bar.dart` 仅在 Android/iOS 显示拍照入口 |
 | F5 | `+40~+44` 的变更未写入 CHANGELOG；README 仍称“未实现应用层加密” | 文档与实现不一致 | 见第 6 节遗留（本轮未改） |
+| F6 | 第二实例同时打开同一数据库（并发写入风险） | 数据可能被两个进程同时写 | `windows/runner/main.cpp` 增加 `Local\DontForget.SingleInstance` 命名 mutex：已存在实例时激活其窗口（含托盘隐藏态）后以 0 退出；CLI 参数（`--add`/`--list`/`--help`）不受影响，仍返回 75 “数据被占用” |
+| F7 | 托盘退出直接 `exit(0)`，跳过数据库关闭 | 镜像备份/journal 可能未落盘 | 新增 `lib/services/desktop_shutdown.dart`：先关库、再销毁窗口、最后退出；失败也退出 |
 
-回归：`test/windows_toast_test.dart`（10 项）覆盖模板选择、转义、截断、静音、AUMID、失败上报与异常包含；`flutter analyze` 0 issues；通知/输入相关 57 项通过。
+回归：`test/windows_toast_test.dart`（10 项）覆盖模板选择、转义、截断、静音、AUMID、失败上报与异常包含；`test/desktop_shutdown_test.dart`（4 项）覆盖关库顺序、两步失败与退出幂等；`flutter analyze` 0 issues；通知/输入相关 57 项通过。
 
 ## 4 仍需处理（按用户影响排序）
 
-1. **退出/休眠/重启漏提醒（最高）**：Windows 无系统级排程，只有进程内 Timer；启动时过期提醒被取消而不是补发（`lib/providers/providers.dart`）。需要"启动补发窗口 + 错过汇总"设计，并考虑开机自启。
+1. **退出/休眠/重启漏提醒（最高，仍开放）**：Windows 无系统级排程，只有进程内 Timer；启动时只有 15 分钟内到期会由 `home_screen._checkDueReminders` 补发，更早的逾期既不补发也不汇总（`lib/providers/providers.dart` 只取消时间被改动/有挂起取消的项）。建议实现：启动时把"上次运行以来错过"的提醒聚合为一张"错过的提醒"卡（不逐条弹 Toast，避免刷屏），并提供一次性"已查看"标记；同时评估开机自启。
 2. **Toast 无动作按钮、无点击回跳**：Windows 侧只有标题/正文，点击不打开应用。要做需自定义 AppUserModelID 注册 + 激活回调（ToastNotification.Activated / 协议激活）。
-3. **第二实例同时打开同一数据库（已实测）**：两个实例的窗口同时可见并展示同一份数据（PID 21740 / 23032），没有出现“存储不可用”拦截。对应回归 `database_maintenance_test.dart` 的 "process ownership rejects a second process before any database creation" 在 Windows 下失败，说明**进程级租约在 Windows 未生效**，存在并发写入风险。应改为 Windows 命名 mutex 单实例 + 激活已有窗口。
+3. ~~第二实例同时打开同一数据库~~ **已修复（W2，`F6`）**：命名 mutex + 激活已有窗口；Debug/Release 双验证，CLI 行为保持。
 4. **无开机自启 / 无 URL 协议**：仓库里没有 autostart 与协议注册，重启后提醒不会恢复。
 5. **Windows 权限与自检显示“不可用”**：权限查询与测试通知在 Windows 返回 unsupported（设计如此），但界面需要解释清楚，避免与"未授权"混淆。
 6. **数据位置与身份**：附件在 `Documents\media`、数据库在 Roaming，bundle 身份仍是 `com.example`；正式版应改为 `com.yarnway.dontforget` 并评估 Roaming/OneDrive 同步风险。
-7. **托盘退出 `exit(0)`**：未关闭数据库与 journal，可能留下未刷盘状态；应改为优雅关闭。
+7. ~~托盘退出 `exit(0)`~~ **已修复（W2，`F7`）**：改为先关库再退出，单测覆盖顺序与失败路径。仍需在真实托盘菜单上做一次人工点验。
 8. **录音细节**：固定 `.m4a` 扩展名但 Windows 写 ADTS AAC；时长解析只认 MP4 `moov`，250 ms 最短录音保护在 Windows 失效。
 9. **桌面文案与 i18n**：托盘菜单、Toast 正文、部分提示为中文硬编码（本轮已移除 Toast 正文的中文兜底）。
 10. **测试基线**：Windows 下全量首测 1944 通过 / 19 跳过 / 66 失败。并发修复（`d14adfb`：`schema16_integration_test`、`content_cleanup_service`）后复测相关文件仍为 151 通过 / 41 失败，集中在 `notification_startup_batch`（并发批次与超时）、`product_incremental_journal`、`leased_incremental_journal`、`recovery_app_flow`。这些套件依赖 POSIX 文件锁、SIGKILL 与目录权限语义；CI 只在 ubuntu 跑全量。需要"平台限定 skip 清单 + Windows 专项矩阵"，否则 Windows 回归无法判定，也不能把该结果当作本轮引入的回归。
@@ -87,7 +91,7 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 ### W 系列（Windows，可立即执行）
 
 - **W1（已完成）**：工具链修复、debug/release 构建、启动、录入、到期提醒、Toast、托盘、录音、附件、静态分析与回归。
-- **W2（下一轮，1–2 天）**：第二实例单实例化 + 托盘退出优雅关闭；启动补发逾期提醒（含"错过的提醒"汇总卡）；窗口位置/尺寸持久化。
+- **W2（部分完成）**：✅ 单实例 mutex + 激活已有窗口（含托盘隐藏态，Debug/Release 验证）；✅ 托盘退出优雅关闭（单测 4 项）。⏳ 仍待：启动补发/汇总"错过的提醒"、窗口位置与尺寸持久化。
 - **W3（2–3 天）**：录音容器与时长（ADTS/MP4 双支持、250 ms 保护）；Toast 点击回跳（协议激活）；i18n 硬编码清理。
 - **W4（1–2 天）**：Inno Setup 打包 + 安装/覆盖升级/卸载验收（`scripts/package_windows.ps1`、`scripts/smoke_windows_installer.ps1`）；产物摘要校验。
 - **W5（2 天）**：Windows 测试基线（平台 skip 清单、CI 增加 Windows 测试作业、失败分类归档），并把 Windows 验收集成进 `docs`。
