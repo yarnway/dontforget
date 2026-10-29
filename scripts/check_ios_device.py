@@ -5,7 +5,7 @@ import argparse
 from datetime import datetime, timezone
 import json
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import platform
 import plistlib
 import re
@@ -140,8 +140,8 @@ def collect(run=subprocess.run, devices=usb_devices):
         'xcodeVersion': match.group(1) if match else None,
         'xcodeBuild': match.group(2) if match else None,
         'iPhoneOSSDK': sdk_version,
-        'devicectlAvailable': bool(devicectl and Path(devicectl.strip()).is_absolute()
-                                  and Path(devicectl.strip()).name == 'devicectl'),
+        'devicectlAvailable': bool(devicectl and PurePosixPath(devicectl.strip()).is_absolute()
+                                  and PurePosixPath(devicectl.strip()).name == 'devicectl'),
     }
     result['signing'] = {
         'identityQuery': 'READ' if identities is not None else 'UNAVAILABLE',

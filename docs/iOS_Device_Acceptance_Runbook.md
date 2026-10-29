@@ -25,8 +25,8 @@ python3 scripts/check_ios_device.py            # 退出码 0 仅表示 REQUIRES_
 git archive <commit> | tar -x -C <clean-dir>
 
 # 3) 在副本中改写验收身份（主应用 + 扩展 + URL scheme/显示名）
-#    ios/Runner.xcodeproj/project.pbxproj 的 PRODUCT_BUNDLE_IDENTIFIER
-#    ios/Runner/Info.plist 的显示名，URL scheme 现为 dontforget-live
+#    ios/Runner.xcodeproj/project.pbxproj 的 PRODUCT_BUNDLE_IDENTIFIER（基线已统一为 com.yarnway.dontforget）
+#    ios/Runner/Info.plist 的显示名，URL scheme 现已支持 dontforget 与 dontforget-live 双协议唤醒
 
 # 4) 依赖与回归
 flutter pub get --enforce-lockfile

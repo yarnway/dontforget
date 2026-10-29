@@ -189,7 +189,8 @@ class IOSPreflightTest(unittest.TestCase):
                     patch.object(ios, 'collect', return_value=result), \
                     contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(ios.main(['--output', str(target)]), 2)
-            self.assertEqual(target.stat().st_mode & 0o777, 0o600)
+            if sys.platform != 'win32':
+                self.assertEqual(target.stat().st_mode & 0o777, 0o600)
             self.assertEqual(json.loads(target.read_text()), result)
 
 

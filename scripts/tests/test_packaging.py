@@ -182,7 +182,7 @@ class PackagingTest(unittest.TestCase):
     def test_macos_thin_plugin_stops_before_archive(self):
         self.macos_fixture()
         def architectures(args, **kwargs):
-            return 'x86_64\n' if args[-1].endswith('/Plugin') else 'x86_64 arm64\n'
+            return 'x86_64\n' if args[-1].replace('\\', '/').endswith('/Plugin') else 'x86_64 arm64\n'
         with patch('package_artifacts.subprocess.check_output', side_effect=architectures), \
                 patch('package_artifacts.subprocess.run') as ditto, \
                 self.assertRaisesRegex(ValueError, 'Plugin'):

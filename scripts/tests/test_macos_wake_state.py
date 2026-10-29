@@ -111,7 +111,8 @@ class MacOSWakeStateTest(unittest.TestCase):
                     contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(wake.main(['--output', str(output)]), 2)
             self.assertIn('INCOMPLETE', output.read_text())
-            self.assertEqual(output.stat().st_mode & 0o777, 0o600)
+            if sys.platform != 'win32':
+                self.assertEqual(output.stat().st_mode & 0o777, 0o600)
 
 
 if __name__ == '__main__':

@@ -8,7 +8,11 @@
 	<false/>
 	<key>CFBundleURLTypes</key>
 	<array><dict>
-		<key>CFBundleURLSchemes</key><array><string>dontforget-live</string></array>
+		<key>CFBundleURLSchemes</key>
+		<array>
+			<string>dontforget-live</string>
+			<string>dontforget</string>
+		</array>
 	</dict></array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>

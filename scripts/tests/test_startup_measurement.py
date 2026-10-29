@@ -1,5 +1,6 @@
 import importlib.util
 from pathlib import Path
+import sys
 import unittest
 import subprocess
 
@@ -9,6 +10,7 @@ spec.loader.exec_module(module)
 
 
 class StartupMeasurementTest(unittest.TestCase):
+    @unittest.skipIf(sys.platform == 'win32', 'macOS bash script test not supported on Windows')
     def test_retry_build_help_and_unknown_arguments_do_not_build(self):
         script = Path(__file__).resolve().parents[1] / 'build_macos_startup_measurement.sh'
         help_result = subprocess.run(['bash', str(script), '--help'], capture_output=True, text=True)
