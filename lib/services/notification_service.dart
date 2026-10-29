@@ -20,6 +20,7 @@ import 'system_notification_reader.dart';
 import 'notification_window.dart';
 import 'pending_notification_actions.dart';
 import 'notification_action_presentation.dart';
+import 'windows_toast.dart';
 
 const _notificationActionPort = 'dontforget.notification_actions.v1';
 
@@ -1128,14 +1129,12 @@ class NotificationService {
     // Native notifications own the sound policy. Do not add another app sound
     // or steal keyboard focus when an occurrence arrives.
     if (Platform.isWindows) {
-      final summary =
-          reminder.taskSummary != null && reminder.taskSummary!.isNotEmpty
-          ? reminder.notificationSummary!
-          : '您设置的待办事项时间已到，请及时处理！';
-
+      // The desktop build has no scheduled OS channel, so the due occurrence is
+      // shown from the running app. The body is only sent when it adds context
+      // beyond the title; otherwise the single-line template is used.
       await showWindowsToast(
         reminder.taskTitle,
-        summary,
+        reminder.notificationSummary ?? '',
         playSound: reminder.quadrantLevel <= 2,
       );
     }
@@ -1146,44 +1145,6 @@ class NotificationService {
     String body, {
     bool playSound = true,
   }) async {
-    try {
-      final safeTitle = title
-          .replaceAll("'", "''")
-          .replaceAll('`', '``')
-          .replaceAll(r'$', r'`$')
-          .replaceAll('\r', '')
-          .replaceAll('\n', ' ');
-      final safeBody = body
-          .replaceAll("'", "''")
-          .replaceAll('`', '``')
-          .replaceAll(r'$', r'`$')
-          .replaceAll('\r', '')
-          .replaceAll('\n', ' ');
-
-      final script =
-          '''
-[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > \$null
-\$template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02)
-\$textNodes = \$template.GetElementsByTagName('text')
-\$textNodes.Item(0).AppendChild(\$template.CreateTextNode('$safeTitle')) > \$null
-\$textNodes.Item(1).AppendChild(\$template.CreateTextNode('$safeBody')) > \$null
-\$audio = \$template.CreateElement('audio')
-\$audio.SetAttribute('silent', '${!playSound}')
-\$template.DocumentElement.AppendChild(\$audio) > \$null
-\$notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Don't Forget")
-\$notification = [Windows.UI.Notifications.ToastNotification]::new(\$template)
-\$notifier.Show(\$notification)
-''';
-
-      await Process.run('powershell', [
-        '-NoProfile',
-        '-WindowStyle',
-        'Hidden',
-        '-Command',
-        script,
-      ]);
-    } catch (e) {
-      debugPrint('Windows Toast Error: $e');
-    }
+    await WindowsToast.show(title: title, body: body, playSound: playSound);
   }
 }

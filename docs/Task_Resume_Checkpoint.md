@@ -1,8 +1,21 @@
 # 手动续行检查点
 
-日期：2026-10-28，时区 Asia/Shanghai。
+日期：2026-10-29，时区 Asia/Shanghai。
 
-**整体任务已按用户要求暂停，待手动恢复。** 当前运行源码 `5c44427` 已完成组合回归：2028 Flutter／126 Python／分析0。桌面、日历与通知修复均已合入本地main；最终提交推送由本轮收尾完成，不开展后续设备操作或发布。详见[整体收尾及剩余任务](Main_Closeout_2026-10-28.md)。以下各阶段记录为历史范围，不代表正在继续执行。
+## 阶段四十五：Windows 平台适配、Toast 规范化与跨平台工程修复（2026-10-29）
+
+- **Windows 适配与真机验证**：完成 VS 2022 Build Tools + ATL 工具链修复，实现 Windows Debug/Release 构建、应用启动、深色主题、本地 SQLite/租约锁持久化、快速文本录入与时间解析、到期横幅与四动作交互、托盘关闭、麦克风录音与文件附件导入。
+- **Windows Toast 机制重构**：新增 `lib/services/windows_toast.dart`，解决正文重复、未登记 AUMID、失败静默被吞问题；`windows/runner/main.cpp` 与 `installer.iss` 统一登记 AUMID `DontForget`；新增 10 项回归测试全通过。
+- **桌面媒体选项微调**：`lib/ui/widgets/input_bottom_bar.dart` 在桌面端隐藏无系统支持的拍照入口，保留文件选择。
+- **跨平台测试与静态分析修复**：
+  - 修复 `test/schema16_integration_test.dart` 中的 `unawaited_return_in_try_block` 静态分析警告与 Windows 下 `lastIndexOf('/')` 路径异常，28 项测试全通过；
+  - 修复 `lib/services/content/content_cleanup_service.dart` 的跨平台路径分隔符与目录穿越校验逻辑，`test/content_cleanup_test.dart` 20 项测试全部通过；
+  - 静态分析 `flutter analyze --no-pub` 达到 **0 issues**。
+- **验收产物**：输出详细验收文档 `docs/Windows_Acceptance_2026-10-29.md` 以及便于在 Mac 上执行 iOS 真机验收的 `docs/iOS_Device_Acceptance_Runbook.md`。
+
+---
+
+## 历史检查点（2026-10-28 及以前）
 
 本任务最新收尾：跨年日历、历史日期管理与采集独立周期联动功能 **fb476d5**（含限定采集元数据修正）已通过修正后的558份冻结输入验证：**2014 Flutter／126 Python、分析0、纽约专项121项**。schema16不变，TaskDetails新语义version5；降级需写入新格式前备份。没有构建、安装、推送或设备操作；手机矩阵仍由“优化项目架构与产品体验”继续，本任务手机跨日待验。验收与剩余阶段见[本轮记录](P1_Calendar_History_Capture_2026-10-28.md)。用户要求当前提交及台账收尾后**暂停，待手动恢复**，不自动展开后续任务。
 

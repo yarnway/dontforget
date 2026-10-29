@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
+
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/data/schema_15_compatibility.dart';
 import 'package:dont_forget/models/reminder.dart';
@@ -121,7 +123,7 @@ void main() {
       options: OpenDatabaseOptions(readOnly: true, singleInstance: false),
     );
     try {
-      return File('${root.path}/$name').writeAsString(
+      return await File('${root.path}/$name').writeAsString(
         jsonEncode({
           'version': 15,
           'timestamp': null,
@@ -173,7 +175,7 @@ void main() {
     for (final name in ['ha_snapshot.json', 'dont_forget_v3.mirror.db']) {
       expect(
         (await inspector().inspect(
-          File('${db.path.substring(0, db.path.lastIndexOf('/'))}/$name'),
+          File(p.join(p.dirname(db.path), name)),
         )).version,
         16,
       );

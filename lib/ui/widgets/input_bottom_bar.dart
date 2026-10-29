@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import '../../services/recovery/runtime_gate.dart';
 import 'package:uuid/uuid.dart';
 import '../../providers/workspace_drafts_provider.dart';
@@ -609,15 +610,18 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    _buildMediaOption(
-                      icon: Icons.camera_alt_outlined,
-                      color: Colors.blue.shade600,
-                      label: l10n.get('takePhoto'),
-                      onTap: () {
-                        Navigator.pop(sheetCtx);
-                        controller.processImageWithSource(ImageSource.camera);
-                      },
-                    ),
+                    // Desktop builds have no camera capture path, so the entry
+                    // would always fail; mobile keeps it.
+                    if (Platform.isAndroid || Platform.isIOS)
+                      _buildMediaOption(
+                        icon: Icons.camera_alt_outlined,
+                        color: Colors.blue.shade600,
+                        label: l10n.get('takePhoto'),
+                        onTap: () {
+                          Navigator.pop(sheetCtx);
+                          controller.processImageWithSource(ImageSource.camera);
+                        },
+                      ),
                     _buildMediaOption(
                       icon: Icons.photo_library_outlined,
                       color: Colors.purple.shade500,

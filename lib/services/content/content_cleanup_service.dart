@@ -85,10 +85,17 @@ class ContentCleanupService {
     return root;
   }
 
+  static bool _hasTraversal(String path) {
+    for (final part in path.split(RegExp(r'[/\\]'))) {
+      if (part == '.' || part == '..') return true;
+    }
+    return false;
+  }
+
   Future<String?> _owned(String path, String root) async {
     final file = File(path);
     if (!file.isAbsolute ||
-        p.normalize(path) != path ||
+        _hasTraversal(path) ||
         !_import.hasMatch(p.basename(p.dirname(path)))) {
       return null;
     }
@@ -98,7 +105,7 @@ class ContentCleanupService {
       return null;
     }
     final canonical = await parent.resolveSymbolicLinks();
-    if (p.dirname(canonical) != root ||
+    if (!p.equals(p.dirname(canonical), root) ||
         !_import.hasMatch(p.basename(canonical))) {
       return null;
     }
@@ -107,7 +114,7 @@ class ContentCleanupService {
         FileSystemEntityType.link) {
       return null;
     }
-    return result;
+    return p.equals(path, result) ? path : result;
   }
 
   Future<_Graph> _graph(DatabaseExecutor db, String root) async {
@@ -135,8 +142,8 @@ class ContentCleanupService {
       }
       if (value is String) {
         if (rows.containsKey(value)) referenced.add(value);
-        if (p.isAbsolute(value) && p.normalize(value) == value) {
-          pathReferences.add(value);
+        if (p.isAbsolute(value) && !_hasTraversal(value)) {
+          pathReferences.add(p.normalize(value));
         }
       } else if (value is List) {
         for (final item in value) {
@@ -219,7 +226,7 @@ class ContentCleanupService {
     final marker = File(
       p.join(directory.path, OwnedMaterialActivity.markerName),
     );
-    if (files.any((e) => e.path == marker.path)) {
+    if (files.any((e) => p.equals(e.path, marker.path))) {
       if (await marker.length() > 1024) return null;
       final raw = decodeStoredJson(await marker.readAsString());
       if (raw is Map &&
@@ -236,10 +243,10 @@ class ContentCleanupService {
     }
     // Recognize only the exact flat layout emitted by the previous restorers.
     final snapshot = File(p.join(directory.path, 'snapshot.json'));
-    if (!files.any((e) => e.path == snapshot.path) ||
+    if (!files.any((e) => p.equals(e.path, snapshot.path)) ||
         files.any(
           (e) =>
-              e.path != snapshot.path &&
+              !p.equals(e.path, snapshot.path) &&
               !RegExp(
                 r'^attachment-\d+\.[a-z0-9]{1,10}$',
               ).hasMatch(p.basename(e.path)),
@@ -268,12 +275,16 @@ class ContentCleanupService {
         if (row['type'] != 'text') {
           final path = row['content_or_path'] as String;
           final safe = await _owned(path, p.dirname(directory.path));
-          if (safe == null || p.dirname(safe) != directory.path) return null;
+          if (safe == null || !p.equals(p.dirname(safe), directory.path)) {
+            return null;
+          }
           paths.add(safe);
         }
       }
       if (files.any(
-        (f) => f.path != snapshot.path && !paths.contains(f.path),
+        (f) =>
+            !p.equals(f.path, snapshot.path) &&
+            !paths.any((p0) => p.equals(p0, f.path)),
       )) {
         return null;
       }
@@ -455,7 +466,10 @@ class ContentCleanupService {
 
     for (final entry in entries) {
       for (final path in entry.files) {
-        if (await _owned(path, root) != path || prints.containsKey(path)) {
+        final ownedPath = await _owned(path, root);
+        if (ownedPath == null ||
+            !p.equals(ownedPath, path) ||
+            prints.containsKey(path)) {
           throw StateError('Unsafe or overlapping content');
         }
         prints[path] = await _fingerprint(path, check);
@@ -521,7 +535,9 @@ class ContentCleanupService {
     for (final move in moves.reversed) {
       final from = File(p.join(quarantine.path, move['to'] as String));
       if (!await from.exists()) continue;
-      final destination = File(p.join(root, move['from'] as String));
+      final relativeFrom =
+          p.joinAll(p.posix.split((move['from'] as String).replaceAll('\\', '/')));
+      final destination = File(p.join(root, relativeFrom));
       if (await FileSystemEntity.type(destination.path, followLinks: false) !=
           FileSystemEntityType.notFound) {
         throw StateError('Restore destination changed');
@@ -533,7 +549,8 @@ class ContentCleanupService {
           FileSystemEntityType.notFound) {
         await destination.parent.create();
       }
-      if (await _owned(destination.path, root) != destination.path) {
+      final ownedDest = await _owned(destination.path, root);
+      if (ownedDest == null || !p.equals(ownedDest, destination.path)) {
         throw StateError('Unsafe content path');
       }
       await from.rename(destination.path);
@@ -569,12 +586,14 @@ class ContentCleanupService {
           }
         }
         for (final item in plan.fingerprints.entries) {
-          if (await _owned(item.key, root) != item.key ||
+          final ownedItem = await _owned(item.key, root);
+          if (ownedItem == null ||
+              !p.equals(ownedItem, item.key) ||
               await _fingerprint(item.key, check) != item.value) {
             throw StateError('Content changed after preview');
           }
           moves.add({
-            'from': p.relative(item.key, from: root),
+            'from': p.posix.joinAll(p.split(p.relative(item.key, from: root))),
             'to': 'file-${moves.length}',
           });
         }
@@ -595,8 +614,10 @@ class ContentCleanupService {
         ).writeAsString(journalData, flush: true);
         for (final move in moves) {
           check();
+          final relativeFrom =
+              p.joinAll(p.posix.split(move['from'] as String));
           await File(
-            p.join(root, move['from'] as String),
+            p.join(root, relativeFrom),
           ).rename(p.join(quarantine.path, move['to'] as String));
         }
         for (final entry in plan.entries.where((e) => e.record != null)) {
@@ -687,21 +708,21 @@ class ContentCleanupService {
           value['to'] is! String) {
         throw const FormatException('Invalid cleanup path');
       }
-      final from = value['from'] as String,
+      final from = (value['from'] as String).replaceAll('\\', '/'),
           to = value['to'] as String,
-          parts = p.split(from);
-      if (p.isAbsolute(from) ||
+          parts = p.posix.split(from);
+      if (p.posix.isAbsolute(from) ||
           parts.length != 2 ||
           !_import.hasMatch(parts.first) ||
           parts.last == '.' ||
           parts.last == '..' ||
-          p.normalize(from) != from ||
+          p.posix.normalize(from) != from ||
           !RegExp(r'^file-\d+$').hasMatch(to) ||
           !sources.add(from) ||
           !targets.add(to)) {
         throw const FormatException('Unsafe cleanup path');
       }
-      moves.add(Map<String, dynamic>.from(value));
+      moves.add({'from': from, 'to': to});
     }
     final files = await _flatFiles(quarantine);
     if (files.any(
@@ -725,11 +746,15 @@ class ContentCleanupService {
       final protected =
           graph.backupUncertain ||
           moves.any(
-            (m) =>
-                currentPaths.contains(p.join(root, m['from'] as String)) ||
-                currentPaths.contains(
-                  p.join(quarantine.path, m['to'] as String),
-                ),
+            (m) {
+              final relativeFrom =
+                  p.joinAll(p.posix.split(m['from'] as String));
+              final diskFrom = p.join(root, relativeFrom);
+              final diskTo = p.join(quarantine.path, m['to'] as String);
+              return currentPaths.any(
+                (cp) => p.equals(cp, diskFrom) || p.equals(cp, diskTo),
+              );
+            },
           );
       if (!committed || protected) {
         await _restoreMoves(root, quarantine, moves);
@@ -754,8 +779,9 @@ class ContentCleanupService {
     });
     await _removeJournal(quarantine);
     for (final move in moves) {
+      final relativeFrom = p.joinAll(p.posix.split(move['from'] as String));
       final directory = Directory(
-        p.dirname(p.join(root, move['from'] as String)),
+        p.dirname(p.join(root, relativeFrom)),
       );
       if (await FileSystemEntity.type(directory.path, followLinks: false) ==
               FileSystemEntityType.directory &&

@@ -1,5 +1,6 @@
 #include <flutter/dart_project.h>
 #include <flutter/flutter_view_controller.h>
+#include <shobjidl.h>
 #include <windows.h>
 
 #include "flutter_window.h"
@@ -25,6 +26,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   // Initialize COM, so that it is available for use in the library and/or
   // plugins.
   ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+
+  // Give the process the same AppUserModelID the installer writes on its
+  // shortcuts, so toasts raised through the Windows toast API are attributed to
+  // DontForget instead of being dropped for an unknown application identity.
+  ::SetCurrentProcessExplicitAppUserModelID(L"DontForget");
 
   flutter::DartProject project(L"data");
 
