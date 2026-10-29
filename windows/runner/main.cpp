@@ -29,7 +29,7 @@ bool IsCliInvocation(const wchar_t *command_line) {
 
 // A second GUI launch activates the instance that already owns the database
 // instead of opening a second editor over the same store.
-void ActivateExistingWindow() {
+void ActivateExistingWindow(const wchar_t *command_line) {
   // The window may still be under construction when a double launch races in.
   for (int attempt = 0; attempt < 40; ++attempt) {
     HWND existing =
@@ -41,10 +41,60 @@ void ActivateExistingWindow() {
         ::ShowWindow(existing, SW_SHOW);
       }
       ::SetForegroundWindow(existing);
+
+      if (command_line != nullptr && wcslen(command_line) > 0) {
+        COPYDATASTRUCT cds;
+        cds.dwData = 0x4446;  // 'DF' (DontForget)
+        cds.cbData = static_cast<DWORD>((wcslen(command_line) + 1) * sizeof(wchar_t));
+        cds.lpData = const_cast<wchar_t*>(command_line);
+        ::SendMessageW(existing, WM_COPYDATA, reinterpret_cast<WPARAM>(existing),
+                       reinterpret_cast<LPARAM>(&cds));
+      }
       return;
     }
     ::Sleep(100);
   }
+}
+
+// Registers the `dontforget://` custom protocol scheme in HKCU so that toast
+// notification clicks and external links can activate the application.
+void RegisterProtocolHandler() {
+  wchar_t exe_path[MAX_PATH];
+  if (::GetModuleFileNameW(nullptr, exe_path, MAX_PATH) == 0) {
+    return;
+  }
+
+  HKEY hKey;
+  LSTATUS status = ::RegCreateKeyExW(
+      HKEY_CURRENT_USER,
+      L"Software\\Classes\\dontforget",
+      0, nullptr, REG_OPTION_NON_VOLATILE, KEY_WRITE, nullptr, &hKey, nullptr);
+  if (status != ERROR_SUCCESS) return;
+
+  const wchar_t* desc = L"URL:DontForget Protocol";
+  ::RegSetValueExW(hKey, nullptr, 0, REG_SZ,
+                   reinterpret_cast<const BYTE*>(desc),
+                   static_cast<DWORD>((wcslen(desc) + 1) * sizeof(wchar_t)));
+
+  const wchar_t* empty = L"";
+  ::RegSetValueExW(hKey, L"URL Protocol", 0, REG_SZ,
+                   reinterpret_cast<const BYTE*>(empty),
+                   sizeof(wchar_t));
+
+  HKEY hCmdKey;
+  status = ::RegCreateKeyExW(
+      hKey, L"shell\\open\\command", 0, nullptr,
+      REG_OPTION_NON_VOLATILE, KEY_WRITE, nullptr, &hCmdKey, nullptr);
+  if (status == ERROR_SUCCESS) {
+    wchar_t cmd_value[MAX_PATH + 16];
+    swprintf_s(cmd_value, L"\"%s\" \"%%1\"", exe_path);
+    ::RegSetValueExW(
+        hCmdKey, nullptr, 0, REG_SZ,
+        reinterpret_cast<const BYTE*>(cmd_value),
+        static_cast<DWORD>((wcslen(cmd_value) + 1) * sizeof(wchar_t)));
+    ::RegCloseKey(hCmdKey);
+  }
+  ::RegCloseKey(hKey);
 }
 
 }  // namespace
@@ -75,6 +125,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   // DontForget instead of being dropped for an unknown application identity.
   ::SetCurrentProcessExplicitAppUserModelID(L"DontForget");
 
+  // Ensure protocol handler is registered in HKCU for toast activation & custom URL scheme.
+  RegisterProtocolHandler();
+
   // One GUI instance per user session. The mutex is intentionally kept open for
   // the process lifetime; Windows releases it on exit.
   HANDLE single_instance_mutex = nullptr;
@@ -83,7 +136,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
         ::CreateMutexW(nullptr, FALSE, L"Local\\DontForget.SingleInstance");
     if (single_instance_mutex != nullptr &&
         ::GetLastError() == ERROR_ALREADY_EXISTS) {
-      ActivateExistingWindow();
+      ActivateExistingWindow(command_line);
       ::CloseHandle(single_instance_mutex);
       ::CoUninitialize();
       return EXIT_SUCCESS;

@@ -13,6 +13,7 @@ import 'ui/screens/storage_unavailable_screen.dart';
 import 'app.dart';
 import 'services/startup_trace.dart';
 import 'services/desktop_window_service.dart';
+import 'services/windows_protocol_service.dart';
 
 void _writeCrashLog(dynamic error, StackTrace? stack) {
   try {
@@ -206,7 +207,15 @@ void main(List<String> args) async {
         return;
       }
 
-      runApp(const ProviderScope(child: MyApp()));
+      final initialProtocolRoute =
+          Platform.isWindows
+              ? WindowsProtocolService.extractRouteFromArgs(args)
+              : null;
+      runApp(
+        ProviderScope(
+          child: MyApp(initialProtocolRoute: initialProtocolRoute),
+        ),
+      );
     },
     (error, stack) {
       _writeCrashLog('Unhandled Zone Error: $error', stack);

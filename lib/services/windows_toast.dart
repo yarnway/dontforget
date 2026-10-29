@@ -32,11 +32,18 @@ class WindowsToast {
   ///
   /// A toast whose body repeats the title uses the single-line template, so
   /// the bubble does not show the same sentence twice. The audio element is
-  /// only silent for low-priority reminders.
+  /// only silent for low-priority reminders. Protocol activation and action
+  /// buttons allow clicking the notification or interactive buttons to launch
+  /// or focus the application without requiring COM server registration.
   static String script({
     required String title,
     String body = '',
     bool playSound = true,
+    String? launchUri,
+    String? completeActionTitle,
+    String? completeActionUri,
+    String? snoozeActionTitle,
+    String? snoozeActionUri,
   }) {
     final safeTitle = _escape(title.trim());
     final safeBody = _escape(body.trim());
@@ -55,7 +62,20 @@ class WindowsToast {
         '\$template = [Windows.UI.Notifications.ToastNotificationManager]'
         '::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]'
         '::$template)',
-      )
+      );
+
+    if (launchUri != null && launchUri.isNotEmpty) {
+      final safeLaunch = _escape(launchUri);
+      buffer
+        ..writeln(
+          "\$template.DocumentElement.SetAttribute('activationType', 'protocol')",
+        )
+        ..writeln(
+          "\$template.DocumentElement.SetAttribute('launch', '$safeLaunch')",
+        );
+    }
+
+    buffer
       ..writeln('\$textNodes = \$template.GetElementsByTagName(\'text\')')
       ..writeln(
         '\$textNodes.Item(0).AppendChild(\$template.CreateTextNode('
@@ -70,7 +90,39 @@ class WindowsToast {
     buffer
       ..writeln('\$audio = \$template.CreateElement(\'audio\')')
       ..writeln('\$audio.SetAttribute(\'silent\', \'${!playSound}\')')
-      ..writeln('\$template.DocumentElement.AppendChild(\$audio) > \$null')
+      ..writeln('\$template.DocumentElement.AppendChild(\$audio) > \$null');
+
+    final hasActions =
+        (completeActionUri != null && completeActionUri.isNotEmpty) ||
+        (snoozeActionUri != null && snoozeActionUri.isNotEmpty);
+    if (hasActions) {
+      buffer.writeln("\$actions = \$template.CreateElement('actions')");
+      if (completeActionUri != null && completeActionUri.isNotEmpty) {
+        final safeCompleteTitle = _escape(completeActionTitle ?? '完成');
+        final safeCompleteUri = _escape(completeActionUri);
+        buffer
+          ..writeln("\$a0 = \$template.CreateElement('action')")
+          ..writeln("\$a0.SetAttribute('content', '$safeCompleteTitle')")
+          ..writeln("\$a0.SetAttribute('activationType', 'protocol')")
+          ..writeln("\$a0.SetAttribute('arguments', '$safeCompleteUri')")
+          ..writeln("\$actions.AppendChild(\$a0) > \$null");
+      }
+      if (snoozeActionUri != null && snoozeActionUri.isNotEmpty) {
+        final safeSnoozeTitle = _escape(snoozeActionTitle ?? '延后 15 分钟');
+        final safeSnoozeUri = _escape(snoozeActionUri);
+        buffer
+          ..writeln("\$a1 = \$template.CreateElement('action')")
+          ..writeln("\$a1.SetAttribute('content', '$safeSnoozeTitle')")
+          ..writeln("\$a1.SetAttribute('activationType', 'protocol')")
+          ..writeln("\$a1.SetAttribute('arguments', '$safeSnoozeUri')")
+          ..writeln("\$actions.AppendChild(\$a1) > \$null");
+      }
+      buffer.writeln(
+        "\$template.DocumentElement.AppendChild(\$actions) > \$null",
+      );
+    }
+
+    buffer
       ..writeln(
         '\$notifier = [Windows.UI.Notifications.ToastNotificationManager]'
         '::CreateToastNotifier("$appUserModelId")',
@@ -89,6 +141,11 @@ class WindowsToast {
     required String title,
     String body = '',
     bool playSound = true,
+    String? launchUri,
+    String? completeActionTitle,
+    String? completeActionUri,
+    String? snoozeActionTitle,
+    String? snoozeActionUri,
     @visibleForTesting
     Future<ProcessResult> Function(List<String> arguments)? runner,
   }) async {
@@ -100,7 +157,16 @@ class WindowsToast {
         '-WindowStyle',
         'Hidden',
         '-Command',
-        script(title: title, body: body, playSound: playSound),
+        script(
+          title: title,
+          body: body,
+          playSound: playSound,
+          launchUri: launchUri,
+          completeActionTitle: completeActionTitle,
+          completeActionUri: completeActionUri,
+          snoozeActionTitle: snoozeActionTitle,
+          snoozeActionUri: snoozeActionUri,
+        ),
       ]);
       if (result.exitCode != 0) {
         debugPrint(

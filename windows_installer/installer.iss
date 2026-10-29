@@ -45,6 +45,12 @@ Type: files; Name: "{commondesktop}\别忘了.lnk"
 Type: files; Name: "{userprograms}\DontForget\别忘了.lnk"
 Type: files; Name: "{commonprograms}\DontForget\别忘了.lnk"
 
+[Registry]
+; Register dontforget:// protocol for Toast notification activation and custom URL scheme
+Root: HKCU; Subkey: "Software\Classes\dontforget"; ValueType: string; ValueName: ""; ValueData: "URL:DontForget Protocol"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\dontforget"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\dontforget\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Flags: uninsdeletekey
+
 [Files]
 ; Main executable and all dependencies in the Release folder
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.db,*.log,.dart_tool\*,.dart_tool,*.pdb,run.log,error_log.txt"

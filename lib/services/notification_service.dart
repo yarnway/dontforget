@@ -91,8 +91,16 @@ class NotificationService {
            _testDatasetEpoch;
 
   final bool _isTesting;
-  Future<void> Function(String title, String body, {bool playSound})?
-      windowsToastHandler;
+  Future<void> Function(
+    String title,
+    String body, {
+    bool playSound,
+    String? launchUri,
+    String? completeActionTitle,
+    String? completeActionUri,
+    String? snoozeActionTitle,
+    String? snoozeActionUri,
+  })? windowsToastHandler;
 
   // Journal admission and OS concurrency are independent: larger groups can
   // share durable writes without flooding the platform notification plugin.
@@ -1139,17 +1147,31 @@ class NotificationService {
       // The desktop build has no scheduled OS channel, so the due occurrence is
       // shown from the running app. The body is only sent when it adds context
       // beyond the title; otherwise the single-line template is used.
+      final launchUri = 'dontforget://task/${reminder.id}';
+      final completeUri = 'dontforget://action/complete?id=${reminder.id}';
+      final snoozeUri =
+          'dontforget://action/snooze?id=${reminder.id}&minutes=15';
       if (windowsToastHandler != null) {
         await windowsToastHandler!(
           reminder.taskTitle,
           reminder.notificationSummary ?? '',
           playSound: reminder.quadrantLevel <= 2,
+          launchUri: launchUri,
+          completeActionTitle: '完成',
+          completeActionUri: completeUri,
+          snoozeActionTitle: '延后 15 分钟',
+          snoozeActionUri: snoozeUri,
         );
       } else {
         await showWindowsToast(
           reminder.taskTitle,
           reminder.notificationSummary ?? '',
           playSound: reminder.quadrantLevel <= 2,
+          launchUri: launchUri,
+          completeActionTitle: '完成',
+          completeActionUri: completeUri,
+          snoozeActionTitle: '延后 15 分钟',
+          snoozeActionUri: snoozeUri,
         );
       }
     }
@@ -1159,7 +1181,21 @@ class NotificationService {
     String title,
     String body, {
     bool playSound = true,
+    String? launchUri,
+    String? completeActionTitle,
+    String? completeActionUri,
+    String? snoozeActionTitle,
+    String? snoozeActionUri,
   }) async {
-    await WindowsToast.show(title: title, body: body, playSound: playSound);
+    await WindowsToast.show(
+      title: title,
+      body: body,
+      playSound: playSound,
+      launchUri: launchUri,
+      completeActionTitle: completeActionTitle,
+      completeActionUri: completeActionUri,
+      snoozeActionTitle: snoozeActionTitle,
+      snoozeActionUri: snoozeActionUri,
+    );
   }
 }

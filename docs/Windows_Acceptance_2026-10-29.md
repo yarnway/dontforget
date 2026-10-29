@@ -60,6 +60,7 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 | 22 | 错过的提醒聚合与确认（W2/P1） | 通过：启动时将 72h 内未确认逾期聚合成条，不弹 Toast 刷屏；支持点击筛选、三语、全部知道了标记落盘（重启不再出现）；单测 25 项全通，全量 2047 项全通 | `test/missed_reminders_bar_test.dart` (25 项全通) |
 | 23 | 窗口位置与尺寸持久化（W2/P2） | 通过：窗口位置、尺寸与最大化状态持久化至 Settings（workspace_drafts_json），移动/缩放防抖写入并在退出前即时写盘；启动校验屏幕越界安全回退到主屏居中；单测 23 项全通，全量 2070 项全通 | `test/desktop_window_service_test.dart` (23 项全通) |
 | 24 | 录音容器与时长（W3/P3） | 通过：支持 ADTS AAC 与 MP4 双容器时长解析；Windows 适配 .aac 扩展名；250ms 最短录音保护对裸流与容器均严格生效并删除过短临时文件；旧 .m4a 数据完全兼容；单测 11 项全通，录音兼容测试 18 项全通 | `test/recording_duration_reader_test.dart` (11 项全通) |
+| 25 | Toast 点击回跳与动作按钮（W3/P4） | 通过：Toast 注入 protocol 激活与 actions 节点；免管理员提权注册 HKCU\Software\Classes\dontforget；支持冷启动与单实例 WM_COPYDATA 唤醒；支持点击回跳进入事项详情、完成按钮（直接完成）、稍后提醒按钮（延后15分钟）；单测 15 项全通，Toast 测试 27 项全通，Release 构建成功，全量 2094 项测试全通 | `test/windows_protocol_service_test.dart` (15 项), `test/windows_toast_test.dart` (27 项) |
 
 未在本轮取得证据：真实麦克风听感、系统通知中心点击、跨日与休眠。
 
@@ -85,9 +86,9 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 ## 4 仍需处理（按用户影响排序）
 
 1. ~~退出/休眠/重启漏提醒（最高，仍开放）~~ **已修复并完成聚合（W2，P1）**：Windows 无系统级排程，针对进程内 Timer 启动时历史逾期（< launchTime）进行静音以避免弹窗刷屏；启动后把 72 小时内、未完成、未确认、可提醒的逾期提醒聚合为“错过的提醒 · N”入口（`MissedRemindersBar`）；点击按“错过”视图筛选；提供“全部知道了”一键标记 `noticeAcknowledgedAt` 并写入既有 `Reminders` 表 `notice_acknowledged_at` 字段（无需 schema 迁移），重启后不再出现；覆盖中英日三语及 375/768/1440 响应式渲染和大字体缩放。单测 `test/missed_reminders_bar_test.dart` 25 项全通，全量 2047 项全通。后续可继续评估开机自启。
-2. **Toast 无动作按钮、无点击回跳**：Windows 侧只有标题/正文，点击不打开应用。要做需自定义 AppUserModelID 注册 + 激活回调（ToastNotification.Activated / 协议激活）。
+2. ~~Toast 无动作按钮、无点击回跳~~ **已修复落地（W3，P4）**：Toast 启用 WinRT 原生 `activationType="protocol"` 及 `<actions>` 原生动作按钮；支持免管理员提权在 `HKCU\Software\Classes\dontforget` 注册自定义协议 scheme；冷启动通过 entrypoint args 解析 `initialProtocolRoute`，热实例通过 Windows 单实例 Mutex 唤醒并经由 `WM_COPYDATA` (0x4446) 跨进程投递至已运行窗口，再经由 C++ MethodChannel `onProtocolUrl` 驱动 Dart 侧导航或状态更新；支持查看事项详情（`dontforget://task/<id>`）、直接完成（`dontforget://action/complete?id=<id>`）与稍后提醒（`dontforget://action/snooze?id=<id>&minutes=15`）；单测 15 项全通、Toast XML 与转义单测 27 项全通、Windows Release 构建 0 错误、全量 2094 项测试通过。
 3. ~~第二实例同时打开同一数据库~~ **已修复（W2，`F6`）**：命名 mutex + 激活已有窗口；Debug/Release 双验证，CLI 行为保持。
-4. **无开机自启 / 无 URL 协议**：仓库里没有 autostart 与协议注册，重启后提醒不会恢复。
+4. **无开机自启 / 无 URL 协议**：URL 协议已在 P4 阶段完成 HKCU 注册与 Inno Setup 卸载清理；开机自启待后续评估。
 5. **Windows 权限与自检显示“不可用”**：权限查询与测试通知在 Windows 返回 unsupported（设计如此），但界面需要解释清楚，避免与"未授权"混淆。
 6. **数据位置与身份**：附件在 `Documents\media`、数据库在 Roaming，bundle 身份仍是 `com.example`；正式版应改为 `com.yarnway.dontforget` 并评估 Roaming/OneDrive 同步风险。
 7. ~~托盘退出 `exit(0)`~~ **已修复（W2，`F7`）**：改为先关库再退出，单测覆盖顺序与失败路径。仍需在真实托盘菜单上做一次人工点验。
@@ -103,7 +104,7 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 
 - **W1（已完成）**：工具链修复、debug/release 构建、启动、录入、到期提醒、Toast、托盘、录音、附件、静态分析与回归。
 - **W2（已全部完成）**：✅ 单实例 mutex + 激活已有窗口（含托盘隐藏态，Debug/Release 验证）；✅ 托盘退出优雅关闭（单测 4 项）；✅ 启动补发/汇总“错过的提醒”（72h 聚合横幅条、中英日三语、筛选与一键全部已知落盘、单测 25 项全通，`test/missed_reminders_bar_test.dart`）；✅ 窗口位置、尺寸与最大化持久化（Settings 表零 schema 迁移、移动/缩放防抖与退出即时落盘、多屏越界回退主屏居中、单测 23 项全通，`test/desktop_window_service_test.dart`）。全量测试通过（2070 passed）。
-- **W3（进行中）**：✅ 录音容器与时长（ADTS/MP4 双支持、.aac 平台映射、250 ms 保护，P3 完成）；⏳ 仍待：Toast 点击回跳（协议激活，P4）；i18n 硬编码清理（P5）。
+- **W3（进行中）**：✅ 录音容器与时长（ADTS/MP4 双支持、.aac 平台映射、250 ms 保护，P3 完成）；✅ Toast 点击回跳与动作按钮（WinRT protocol 激活、免提权 HKCU 协议、WM_COPYDATA 实例间通信、完成与延后动作支持，P4 完成）；⏳ 仍待：i18n 硬编码清理（P5）。
 - **W4（已完成）**：Inno Setup 6 打包验证，生成 `dist/DontForget_Setup_v1.7.0.exe` 与绿色便携包，通过静默安装（51 项文件完备）与静默卸载（无残留清理）全链路验收；留存 SHA256 与清单。
 - **W5（已完成）**：Windows 测试基线全面攻克（修复文件锁、路径正反斜杠、FakeAsync 子进程阻塞与 rename 重试），本地全量 2022 个测试用例全部绿灯通过，静态检查 0 issues；验收记录写入文档。
 - **W6（发布前）**：生产身份 `com.yarnway.dontforget`、正式签名（若需要）、README/CHANGELOG 同步。

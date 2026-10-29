@@ -86,4 +86,41 @@ void main() {
     );
     expect(ok, isFalse);
   });
+
+  test('launchUri injects activationType protocol and launch attribute', () {
+    final script = WindowsToast.script(
+      title: '会议',
+      launchUri: 'dontforget://task/meeting-123',
+    );
+    expect(script, contains(r"SetAttribute('activationType', 'protocol')"));
+    expect(script, contains(r"SetAttribute('launch', 'dontforget://task/meeting-123')"));
+    expect(script, isNot(contains(r'<actions>')));
+  });
+
+  test('action buttons inject actions node with protocol activation', () {
+    final script = WindowsToast.script(
+      title: '待办',
+      launchUri: 'dontforget://task/task-456',
+      completeActionTitle: '完成',
+      completeActionUri: 'dontforget://action/complete?id=task-456',
+      snoozeActionTitle: '稍后提醒',
+      snoozeActionUri: 'dontforget://action/snooze?id=task-456&minutes=15',
+    );
+    expect(script, contains(r"SetAttribute('activationType', 'protocol')"));
+    expect(script, contains(r"SetAttribute('launch', 'dontforget://task/task-456')"));
+    expect(script, contains(r"$template.CreateElement('actions')"));
+    expect(script, contains(r"$a0.SetAttribute('content', '完成')"));
+    expect(script, contains(r"$a0.SetAttribute('arguments', 'dontforget://action/complete?id=task-456')"));
+    expect(script, contains(r"$a1.SetAttribute('content', '稍后提醒')"));
+    expect(script, contains(r"$a1.SetAttribute('arguments', 'dontforget://action/snooze?id=task-456&minutes=15')"));
+  });
+
+  test('action buttons escape special characters safely', () {
+    final script = WindowsToast.script(
+      title: '待办',
+      completeActionTitle: "It's `done` \$1",
+      completeActionUri: 'dontforget://action/complete?id=test',
+    );
+    expect(script, contains(r"$a0.SetAttribute('content', 'It''s ``done`` `$1')"));
+  });
 }

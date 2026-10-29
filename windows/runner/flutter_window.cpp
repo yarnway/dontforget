@@ -3,6 +3,7 @@
 #include <optional>
 
 #include "flutter/generated_plugin_registrant.h"
+#include "utils.h"
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -27,6 +28,12 @@ bool FlutterWindow::OnCreate() {
   RegisterPlugins(flutter_controller_->engine());
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
 
+  protocol_channel_ =
+      std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+          flutter_controller_->engine()->messenger(),
+          "com.yarnway.dontforget/protocol",
+          &flutter::StandardMethodCodec::GetInstance());
+
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
     this->Show();
   });
@@ -40,6 +47,7 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  protocol_channel_ = nullptr;
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
   }
@@ -65,6 +73,20 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
     case WM_FONTCHANGE:
       flutter_controller_->engine()->ReloadSystemFonts();
       break;
+    case WM_COPYDATA: {
+      auto* cds = reinterpret_cast<PCOPYDATASTRUCT>(lparam);
+      if (cds != nullptr && cds->dwData == 0x4446 && cds->lpData != nullptr) {
+        const wchar_t* cmd = reinterpret_cast<const wchar_t*>(cds->lpData);
+        std::string utf8_cmd = Utf8FromUtf16(cmd);
+        if (protocol_channel_ && !utf8_cmd.empty()) {
+          protocol_channel_->InvokeMethod(
+              "onProtocolUrl",
+              std::make_unique<flutter::EncodableValue>(utf8_cmd));
+        }
+        return TRUE;
+      }
+      break;
+    }
   }
 
   return Win32Window::MessageHandler(hwnd, message, wparam, lparam);

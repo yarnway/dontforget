@@ -25,6 +25,7 @@ import 'services/desktop_window_service.dart';
 import 'services/startup_trace.dart';
 import 'services/mac_menu_commands.dart';
 import 'services/recovery/runtime_gate.dart';
+import 'services/windows_protocol_service.dart';
 import 'ui/screens/home_screen.dart';
 import 'ui/screens/recovery_outcome_screen.dart';
 import 'ui/screens/task_detail_screen.dart';
@@ -34,7 +35,9 @@ import 'l10n/app_localizations.dart';
 typedef _MacInputToken = ({DataGeneration data, RuntimeRecoveryToken runtime});
 
 class MyApp extends ConsumerStatefulWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, this.initialProtocolRoute});
+
+  final ProtocolRoute? initialProtocolRoute;
 
   @override
   ConsumerState<MyApp> createState() => _MyAppState();
@@ -59,6 +62,8 @@ class _MyAppState extends ConsumerState<MyApp>
   bool _routeFramePending = false;
   MacMenuCommands<_MacInputToken>? _macMenu;
   Route<void>? _nativeSettingsRoute;
+  ProtocolRoute? _pendingProtocolRoute;
+  bool _protocolFramePending = false;
   String? _pendingLivePayload;
   String? _openLiveIdentity;
   bool _liveFramePending = false;
@@ -135,6 +140,12 @@ class _MyAppState extends ConsumerState<MyApp>
     }
     for (final payload in _notifications.takePendingNotificationPayloads()) {
       _receiveNotificationPayload(payload);
+    }
+    if (widget.initialProtocolRoute != null) {
+      _pendingProtocolRoute = widget.initialProtocolRoute;
+    }
+    if (!kIsWeb && Platform.isWindows) {
+      WindowsProtocolService.initialize(onRoute: _receiveProtocolRoute);
     }
     _recovery.addListener(_onRecoveryChanged);
     _prepareNotificationRoutes();
@@ -219,6 +230,9 @@ class _MyAppState extends ConsumerState<MyApp>
       _syncMacMenu();
       StartupTrace.mark('notifications_ready');
       _scheduleNotificationRoutes();
+      if (_pendingProtocolRoute != null) {
+        _scheduleProtocolRoute();
+      }
     } catch (error) {
       // Recovery/read errors are handled by their owning screens. A route is
       // never allowed to bypass a failed load by treating an empty list as data.
@@ -389,6 +403,9 @@ class _MyAppState extends ConsumerState<MyApp>
       _syncLiveReminder();
       _drainNotificationActions();
       unawaited(_syncNotificationLanguage());
+      if (_pendingProtocolRoute != null) {
+        _scheduleProtocolRoute();
+      }
     }
   }
 
@@ -525,6 +542,66 @@ class _MyAppState extends ConsumerState<MyApp>
     }
   }
 
+  void _receiveProtocolRoute(ProtocolRoute route) {
+    if (!mounted) return;
+    _pendingProtocolRoute = route;
+    if (_routeDataReady) {
+      _scheduleProtocolRoute();
+    }
+  }
+
+  void _scheduleProtocolRoute() {
+    if (!Platform.isWindows ||
+        !_routeDataReady ||
+        _protocolFramePending ||
+        _pendingProtocolRoute == null) {
+      return;
+    }
+    _protocolFramePending = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _protocolFramePending = false;
+      if (!mounted ||
+          !_routeDataReady ||
+          _recovery.state.phase != RecoveryPhase.idle) {
+        return;
+      }
+      final route = _pendingProtocolRoute;
+      _pendingProtocolRoute = null;
+      if (route == null) return;
+      _dispatchProtocolRoute(route);
+    });
+    WidgetsBinding.instance.scheduleFrame();
+  }
+
+  void _dispatchProtocolRoute(ProtocolRoute route) {
+    if (!mounted || _recovery.state.phase != RecoveryPhase.idle) return;
+    if (!_routeDataReady) return;
+    final reminders = ref.read(remindersProvider);
+    final target = reminders.where((r) => r.id == route.taskId).firstOrNull;
+    if (target == null) {
+      if (_isDesktop) unawaited(_showNotificationWindow());
+      return;
+    }
+
+    switch (route.action) {
+      case ProtocolAction.viewTask:
+        _openNotificationReminder(target);
+      case ProtocolAction.completeTask:
+        unawaited(
+          ref.read(remindersProvider.notifier).completeOccurrence(target),
+        );
+        if (_isDesktop) unawaited(_showNotificationWindow());
+      case ProtocolAction.snoozeTask:
+        unawaited(
+          ref.read(remindersProvider.notifier).snoozeOccurrence(
+            target,
+            duration: Duration(minutes: route.snoozeMinutes ?? 15),
+          ),
+        );
+        if (_isDesktop) unawaited(_showNotificationWindow());
+    }
+  }
+
   Future<void> _initTray() async {
     if (!_isDesktop) return;
     try {
@@ -554,6 +631,9 @@ class _MyAppState extends ConsumerState<MyApp>
     _macMenu?.dispose();
     if (_supportsLiveActivities) {
       ChannelLiveReminderBackend.channel.setMethodCallHandler(null);
+    }
+    if (!kIsWeb && Platform.isWindows) {
+      WindowsProtocolService.dispose();
     }
     _routeInitialization++;
     _recovery.removeListener(_onRecoveryChanged);
