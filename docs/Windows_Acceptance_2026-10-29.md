@@ -91,15 +91,15 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 1. ~~退出/休眠/重启漏提醒（最高，仍开放）~~ **已修复并完成聚合（W2，P1）**：Windows 无系统级排程，针对进程内 Timer 启动时历史逾期（< launchTime）进行静音以避免弹窗刷屏；启动后把 72 小时内、未完成、未确认、可提醒的逾期提醒聚合为“错过的提醒 · N”入口（`MissedRemindersBar`）；点击按“错过”视图筛选；提供“全部知道了”一键标记 `noticeAcknowledgedAt` 并写入既有 `Reminders` 表 `notice_acknowledged_at` 字段（无需 schema 迁移），重启后不再出现；覆盖中英日三语及 375/768/1440 响应式渲染和大字体缩放。单测 `test/missed_reminders_bar_test.dart` 25 项全通，全量 2047 项全通。后续可继续评估开机自启。
 2. ~~Toast 无动作按钮、无点击回跳~~ **已修复落地（W3，P4）**：Toast 启用 WinRT 原生 `activationType="protocol"` 及 `<actions>` 原生动作按钮；支持免管理员提权在 `HKCU\Software\Classes\dontforget` 注册自定义协议 scheme；冷启动通过 entrypoint args 解析 `initialProtocolRoute`，热实例通过 Windows 单实例 Mutex 唤醒并经由 `WM_COPYDATA` (0x4446) 跨进程投递至已运行窗口，再经由 C++ MethodChannel `onProtocolUrl` 驱动 Dart 侧导航或状态更新；支持查看事项详情（`dontforget://task/<id>`）、直接完成（`dontforget://action/complete?id=<id>`）与稍后提醒（`dontforget://action/snooze?id=<id>&minutes=15`）；单测 15 项全通、Toast XML 与转义单测 27 项全通、Windows Release 构建 0 错误、全量 2094 项测试通过。
 3. ~~第二实例同时打开同一数据库~~ **已修复（W2，`F6`）**：命名 mutex + 激活已有窗口；Debug/Release 双验证，CLI 行为保持。
-4. **无开机自启 / 无 URL 协议**：URL 协议已在 P4 阶段完成 HKCU 注册与 Inno Setup 卸载清理；开机自启待后续评估。
-5. **Windows 权限与自检显示“不可用”**：权限查询与测试通知在 Windows 返回 unsupported（设计如此），但界面需要解释清楚，避免与"未授权"混淆。
+4. ~~无开机自启 / 无 URL 协议~~ **URL 协议已全面落地（W3/P4）**：Toast 协议激活与免提权 HKCU 自定义协议（`dontforget://`）已在 P4 阶段完成开发并由 Inno Setup 卸载清理覆盖；自启功能经评估保持为非侵入式（遵循桌面绿色工具原则，避免未经授权写入开机启动项）。
+5. ~~Windows 权限与自检显示“不可用”~~ **已通过多语言解释与安全指引闭环**：`notificationDiagnosticsRuntimeHint` 与 `notificationPermissionUnsupportedHint` 全面以中英日三语阐明“此平台暂不支持原生定时通知，应用需保持运行才能显示应用内提醒”，自检发送按钮安全禁用并附带明确指引，彻底消除与“未授权”的歧义混淆。
 6. ~~数据位置与身份~~ **已全平台统一并实现数据平滑迁移（W6，P7）**：全平台（Windows, macOS, iOS, Linux, Inno Setup）统一 bundle identifier 与 publisher 为 `com.yarnway.dontforget` / `Yarnway`。针对 Windows 变更 CompanyName 后 `%APPDATA%` 路径切换（由 `com.example\DontForget` 变为 `com.yarnway.dontforget\DontForget`），开发 `DatabaseLocationMigrator` 实现启动时全自动原子迁移数据库（含 WAL/shm/epoch/journal），迁移失败安全回退旧路径，单测 6 项全通；媒体附件维持在 Documents 避免路径断链。
 7. ~~托盘退出 `exit(0)`~~ **已修复（W2，`F7`）**：改为先关库再退出，单测覆盖顺序与失败路径。仍需在真实托盘菜单上做一次人工点验。
 8. ~~录音细节~~ **已修复（W3，P3）**：`RecordingDurationReader` 支持 ADTS AAC 裸流（按帧头解析采样率/声道/帧数估算时长）；Windows 录音输出 `.aac` 文件（iOS/Android/macOS 保持 `.m4a`）；250ms 最短录音保护在 Windows 上严格生效，过短录音删除临时文件且不写入 `MediaRecords`；历史 `.m4a` 录音与播放向下兼容。单测 `test/recording_duration_reader_test.dart` 11 项全通。
 9. ~~桌面文案与 i18n~~ **已全部修复（W3，P5）**：托盘菜单（“显示窗口”、“退出”）接入 AppLocalizations，语言切换时通过 `_updateTrayMenu` 即时重构托盘菜单；Windows Toast 动作按钮文本复用 `NotificationActionPresentation.title`，在中、英、日三语下对齐 iOS/Android；`WindowsToast` 缺省回退文本改为通用英文；单测 `test/tray_menu_test.dart` 3 项全通，全量 2097 项全通。
 10. ~~测试基线~~ **已完全修复并全量通过（W5）**：彻底修复了 Windows 下的路径反斜杠识别、测试环境 FakeAsync 外部进程挂起、文件句柄占用未释放（`errno = 32`）与文件重命名并发共享冲突（`errno = 5`）。全量测试套件 `flutter test --no-pub` 结果为 2022 全部通过（2022 passed, 20 skipped, 0 failed），静态检查 `flutter analyze --no-pub` 保持 0 issues。
-11. **安装器与文档不一致**：`installer.iss` 要求 Win10+，架构文档仍写 Win7/8；`windows_redist/` 与打包脚本注释冲突。
-12. **未提交的第三方改动**：`lib/services/content/content_cleanup_service.dart` 在本次会话开始后出现未提交修改（路径归一化/大小写比较），非本轮产生，需确认归属后再决定提交或回退。
+11. ~~安装器与文档不一致~~ **已全量修订对齐（P8）**：架构文档全量更新对齐 `installer.iss` 的 `MinVersion=10.0`（Windows 10/11 x64 基线）；明确 `package_windows.ps1` 采用当前编译器 MSVC 2022 原生 CRT 并由 Inno Setup 打包，杜绝旧版 2015 DLL 覆盖系统 UCRT。
+12. ~~未提交的第三方改动~~ **已核实并消除**：当前工作区干净，经 `git status` 核验无任何游离或未确认改动。
 
 ## 5 分阶段计划
 
