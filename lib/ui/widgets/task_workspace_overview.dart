@@ -15,10 +15,12 @@ class TaskWorkspaceOverview extends ConsumerStatefulWidget {
     required this.reminders,
     required this.onPlayMedia,
     this.onOpenLearning,
+    this.activeView,
   });
   final List<Reminder> reminders;
   final ValueChanged<String> onPlayMedia;
   final VoidCallback? onOpenLearning;
+  final String? activeView;
   @override
   ConsumerState<TaskWorkspaceOverview> createState() =>
       _TaskWorkspaceOverviewState();
@@ -32,8 +34,19 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
   @override
   void initState() {
     super.initState();
+    if (widget.activeView != null) {
+      _selected = widget.activeView;
+    }
     WidgetsBinding.instance.addObserver(this);
     _startClock();
+  }
+
+  @override
+  void didUpdateWidget(TaskWorkspaceOverview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.activeView != null && widget.activeView != oldWidget.activeView) {
+      _selected = widget.activeView;
+    }
   }
 
   void _startClock() {
@@ -88,7 +101,7 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
     );
     final view =
         _selected ??
-        (const ['today', 'future', 'all', 'board'].contains(stored)
+        (const ['today', 'future', 'all', 'board', 'missed'].contains(stored)
             ? stored as String
             : 'today');
     final now = DateTime.now();
@@ -161,6 +174,12 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
       for (final group in groups.entries) {
         if (group.value.isNotEmpty) rows.addAll([group.key, ...group.value]);
       }
+    } else if (view == 'missed') {
+      final missedTasks = widget.reminders
+          .where((r) => r.isWorkspaceItem && r.isMissed(now))
+          .toList()
+        ..sort((a, b) => (a.triggerTime ?? DateTime(0)).compareTo(b.triggerTime ?? DateTime(0)));
+      rows.addAll(missedTasks);
     } else if (view != 'board') {
       rows.addAll(
         tasks.where(
@@ -172,6 +191,16 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
         ),
       );
     }
+    final missedCount = widget.reminders
+        .where((r) => r.isWorkspaceItem && r.isMissed(now))
+        .length;
+    final choices = <String, String>{
+      'today': 'viewToday',
+      'future': 'viewFuture',
+      'all': 'viewAll',
+      'board': 'viewBoard',
+      if (missedCount > 0 || view == 'missed') 'missed': 'viewMissed',
+    };
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxHeight < 96) return const SizedBox.shrink();
@@ -189,15 +218,14 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                       spacing: 8,
                       runSpacing: 2,
                       children: [
-                        for (final entry in const {
-                          'today': 'viewToday',
-                          'future': 'viewFuture',
-                          'all': 'viewAll',
-                          'board': 'viewBoard',
-                        }.entries)
+                        for (final entry in choices.entries)
                           ChoiceChip(
                             key: ValueKey('workspace-view-${entry.key}'),
-                            label: Text(loc.get(entry.value)),
+                            label: Text(
+                              entry.key == 'missed'
+                                  ? '${loc.get(entry.value)} · $missedCount'
+                                  : loc.get(entry.value),
+                            ),
                             selected: view == entry.key,
                             onSelected: (_) => _select(entry.key),
                           ),
@@ -226,6 +254,8 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                                       loc.get(
                                         view == 'today'
                                             ? 'todayEmpty'
+                                            : view == 'missed'
+                                            ? 'emptyMissed'
                                             : 'futureEmpty',
                                       ),
                                       textAlign: TextAlign.center,

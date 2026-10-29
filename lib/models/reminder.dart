@@ -563,6 +563,22 @@ class Reminder {
     }
     return false;
   }
+
+  bool isMissed([DateTime? now]) {
+    if (!canNotify || isCompleted || triggerTime == null) return false;
+    if (noticeAcknowledgedAt != null) return false;
+    final current = now ?? DateTime.now();
+    final trigger = triggerTime!;
+    if (!trigger.isBefore(current)) return false;
+    final elapsed = current.difference(trigger);
+    return elapsed <= const Duration(hours: 72);
+  }
+}
+
+List<Reminder> selectMissedReminders(List<Reminder> reminders, [DateTime? now]) {
+  final current = now ?? DateTime.now();
+  return reminders.where((r) => r.isMissed(current)).toList()
+    ..sort((a, b) => a.triggerTime!.compareTo(b.triggerTime!));
 }
 
 DateTime? _storedDate(Object? value) {

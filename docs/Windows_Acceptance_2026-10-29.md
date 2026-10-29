@@ -57,6 +57,7 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 | 19 | Inno Setup 打包（W4） | 通过：生成安装包 `dist/DontForget_Setup_v1.7.0.exe` (14.08 MB) 与绿色便携包 `dist/DontForget_Windows_Portable_v1.7.0.zip` (17.10 MB)，生成 SHA256 与清单 | `dist/windows-manifest.json`、`dist/windows-SHA256SUMS.txt` |
 | 20 | 静默安装与卸载（W4） | 通过：执行 `/VERYSILENT` 安装至测试目录产出 51 项文件（含可执行文件、VC CRT、各个插件 DLL）；执行 `unins000.exe /VERYSILENT` 干净移除目标目录（Exists: False） | PowerShell 执行结果与目录校验 |
 | 21 | Windows 全量自动化测试（W5） | 通过：修复 Windows 路径分隔符、文件锁占用（`errno = 32`）与重命名并发冲突（`errno = 5`）后，`flutter test --no-pub` 全量 2022 项测试全数通过（2022 passed, 20 skipped, 0 failed） | `flutter test` 执行日志 |
+| 22 | 错过的提醒聚合与确认（W2/P1） | 通过：启动时将 72h 内未确认逾期聚合成条，不弹 Toast 刷屏；支持点击筛选、三语、全部知道了标记落盘（重启不再出现）；单测 25 项全通，全量 2047 项全通 | `test/missed_reminders_bar_test.dart` (25 项全通) |
 
 未在本轮取得证据：真实麦克风听感、系统通知中心点击、跨日与休眠。
 
@@ -81,7 +82,7 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 
 ## 4 仍需处理（按用户影响排序）
 
-1. **退出/休眠/重启漏提醒（最高，仍开放）**：Windows 无系统级排程，只有进程内 Timer；启动时只有 15 分钟内到期会由 `home_screen._checkDueReminders` 补发，更早的逾期既不补发也不汇总（`lib/providers/providers.dart` 只取消时间被改动/有挂起取消的项）。建议实现：启动时把"上次运行以来错过"的提醒聚合为一张"错过的提醒"卡（不逐条弹 Toast，避免刷屏），并提供一次性"已查看"标记；同时评估开机自启。
+1. ~~退出/休眠/重启漏提醒（最高，仍开放）~~ **已修复并完成聚合（W2，P1）**：Windows 无系统级排程，针对进程内 Timer 启动时历史逾期（< launchTime）进行静音以避免弹窗刷屏；启动后把 72 小时内、未完成、未确认、可提醒的逾期提醒聚合为“错过的提醒 · N”入口（`MissedRemindersBar`）；点击按“错过”视图筛选；提供“全部知道了”一键标记 `noticeAcknowledgedAt` 并写入既有 `Reminders` 表 `notice_acknowledged_at` 字段（无需 schema 迁移），重启后不再出现；覆盖中英日三语及 375/768/1440 响应式渲染和大字体缩放。单测 `test/missed_reminders_bar_test.dart` 25 项全通，全量 2047 项全通。后续可继续评估开机自启。
 2. **Toast 无动作按钮、无点击回跳**：Windows 侧只有标题/正文，点击不打开应用。要做需自定义 AppUserModelID 注册 + 激活回调（ToastNotification.Activated / 协议激活）。
 3. ~~第二实例同时打开同一数据库~~ **已修复（W2，`F6`）**：命名 mutex + 激活已有窗口；Debug/Release 双验证，CLI 行为保持。
 4. **无开机自启 / 无 URL 协议**：仓库里没有 autostart 与协议注册，重启后提醒不会恢复。
@@ -99,7 +100,7 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 ### W 系列（Windows，可立即执行）
 
 - **W1（已完成）**：工具链修复、debug/release 构建、启动、录入、到期提醒、Toast、托盘、录音、附件、静态分析与回归。
-- **W2（已完成核心）**：✅ 单实例 mutex + 激活已有窗口（含托盘隐藏态，Debug/Release 验证）；✅ 托盘退出优雅关闭（单测 4 项）。⏳ 仍待：启动补发/汇总"错过的提醒"、窗口位置与尺寸持久化。
+- **W2（已完成）**：✅ 单实例 mutex + 激活已有窗口（含托盘隐藏态，Debug/Release 验证）；✅ 托盘退出优雅关闭（单测 4 项）；✅ 启动补发/汇总“错过的提醒”（72h 聚合横幅条、中英日三语、筛选与一键全部已知落盘、单测 25 项全通，`test/missed_reminders_bar_test.dart`）。⏳ 后续待推进：窗口位置与尺寸持久化。
 - **W3（2–3 天）**：录音容器与时长（ADTS/MP4 双支持、250 ms 保护）；Toast 点击回跳（协议激活）；i18n 硬编码清理。
 - **W4（已完成）**：Inno Setup 6 打包验证，生成 `dist/DontForget_Setup_v1.7.0.exe` 与绿色便携包，通过静默安装（51 项文件完备）与静默卸载（无残留清理）全链路验收；留存 SHA256 与清单。
 - **W5（已完成）**：Windows 测试基线全面攻克（修复文件锁、路径正反斜杠、FakeAsync 子进程阻塞与 rename 重试），本地全量 2022 个测试用例全部绿灯通过，静态检查 0 issues；验收记录写入文档。

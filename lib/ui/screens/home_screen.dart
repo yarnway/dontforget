@@ -26,6 +26,7 @@ import '../widgets/command_palette_dialog.dart';
 import '../widgets/spaced_repetition_sheet.dart';
 import '../widgets/focus_mode_sheet.dart';
 import '../widgets/context_digest_sheet.dart';
+import '../widgets/missed_reminders_bar.dart';
 import '../widgets/task_workspace_overview.dart';
 import '../widgets/learning_queue_panel.dart';
 import '../widgets/planning_panel.dart';
@@ -120,6 +121,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   final Set<String> _promptedReminderIds = {};
   final Map<String, Reminder> _dueNotices = {};
   final Set<String> _noticeOperations = {};
+  String? _workspaceView;
+  late final DateTime _launchTime = DateTime.now();
   List<Reminder> _contextDigest = [];
   final _shortcutFocus = FocusNode(
     debugLabel: 'workspace-shortcuts',
@@ -435,6 +438,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       if (r.canNotify &&
           r.triggerTime != null &&
           r.noticeAcknowledgedAt == null) {
+        // Reminders already overdue before app launch are aggregated into "missed reminders"
+        // without firing noisy individual toasts on startup.
+        if (r.triggerTime!.isBefore(_launchTime)) {
+          continue;
+        }
         // If due and within the last 15 minutes and not yet prompted
         if (r.triggerTime!.isBefore(now) &&
             r.triggerTime!.isAfter(now.subtract(const Duration(minutes: 15))) &&
@@ -538,6 +546,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           : _dueNotices.containsKey(key) ||
                 now.difference(r.triggerTime!) <= const Duration(minutes: 15);
     }).toList()..sort((a, b) => a.triggerTime!.compareTo(b.triggerTime!));
+  }
+
+  void _openMissedFilter() {
+    setState(() => _workspaceView = 'missed');
+  }
+
+  Future<void> _acknowledgeAllMissed(List<Reminder> missed) async {
+    if (missed.isEmpty) return;
+    final now = DateTime.now();
+    await ref
+        .read(remindersProvider.notifier)
+        .acknowledgeOccurrences(missed, now: now);
+    if (mounted) {
+      setState(() {
+        if (_workspaceView == 'missed') {
+          _workspaceView = 'today';
+        }
+      });
+    }
   }
 
   Future<void> _dismissNotice(Reminder reminder) async {
@@ -1661,36 +1688,48 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     valueListenable: _noticeClock,
                     builder: (context, _, _) {
                       final now = DateTime.now();
-                      return ReminderNoticePanel(
-                        reminders: _visibleNotices(reminders, now),
-                        now: now,
-                        busyIds: _noticeOperations,
-                        onDismiss: _dismissNotice,
-                        onSnooze: (r) => _actOnNotice(r, snooze: true),
-                        onSnoozeUntil: (r, until) {
-                          final at = DateTime.now();
-                          if (!until.isAfter(at)) return;
-                          _performNoticeAction(
-                            r,
-                            () => ref
-                                .read(remindersProvider.notifier)
-                                .snoozeOccurrence(
-                                  r,
-                                  now: at,
-                                  duration: until.difference(at),
-                                ),
-                            snooze: true,
-                          );
-                        },
-                        onSkip: (r) => _performNoticeAction(
-                          r,
-                          () => ref
-                              .read(remindersProvider.notifier)
-                              .skipOccurrence(r),
-                          snooze: false,
-                        ),
-                        onComplete: (r) => _actOnNotice(r, snooze: false),
-                        onReview: _toolBlocked ? null : _openNoticeReview,
+                      final missed = selectMissedReminders(reminders, now);
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ReminderNoticePanel(
+                            reminders: _visibleNotices(reminders, now),
+                            now: now,
+                            busyIds: _noticeOperations,
+                            onDismiss: _dismissNotice,
+                            onSnooze: (r) => _actOnNotice(r, snooze: true),
+                            onSnoozeUntil: (r, until) {
+                              final at = DateTime.now();
+                              if (!until.isAfter(at)) return;
+                              _performNoticeAction(
+                                r,
+                                () => ref
+                                    .read(remindersProvider.notifier)
+                                    .snoozeOccurrence(
+                                      r,
+                                      now: at,
+                                      duration: until.difference(at),
+                                    ),
+                                snooze: true,
+                              );
+                            },
+                            onSkip: (r) => _performNoticeAction(
+                              r,
+                              () => ref
+                                  .read(remindersProvider.notifier)
+                                  .skipOccurrence(r),
+                              snooze: false,
+                            ),
+                            onComplete: (r) => _actOnNotice(r, snooze: false),
+                            onReview: _toolBlocked ? null : _openNoticeReview,
+                          ),
+                          MissedRemindersBar(
+                            reminders: missed,
+                            onOpenMissed: _openMissedFilter,
+                            onAcknowledgeAll: () =>
+                                _acknowledgeAllMissed(missed),
+                          ),
+                        ],
                       );
                     },
                   ),
@@ -1777,6 +1816,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             )
                           : TaskWorkspaceOverview(
                               reminders: reminders,
+                              activeView: _workspaceView,
                               onPlayMedia: _playMedia,
                               onOpenLearning: () =>
                                   _selectTool(_WorkspaceTool.learning),
