@@ -1,4 +1,4 @@
-package com.example.dont_forget
+package com.yarnway.dontforget
 
 import io.flutter.embedding.android.FlutterActivity
 
