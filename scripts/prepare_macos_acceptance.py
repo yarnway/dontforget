@@ -16,7 +16,7 @@ import tempfile
 import zipfile
 
 
-ORIGINAL_ID = 'com.example.dontForget'
+ORIGINAL_ID = 'com.yarnway.dontforget'
 ACCEPTANCE_PREFIX = ORIGINAL_ID + '.acceptance.'
 APP_NAME = 'dont_forget.app'
 

@@ -63,6 +63,7 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 | 25 | Toast 点击回跳与动作按钮（W3/P4） | 通过：Toast 注入 protocol 激活与 actions 节点；免管理员提权注册 HKCU\Software\Classes\dontforget；支持冷启动与单实例 WM_COPYDATA 唤醒；支持点击回跳进入事项详情、完成按钮（直接完成）、稍后提醒按钮（延后15分钟）；单测 15 项全通，Toast 测试 27 项全通，Release 构建成功，全量 2094 项测试全通 | `test/windows_protocol_service_test.dart` (15 项), `test/windows_toast_test.dart` (27 项) |
 | 26 | 桌面文案与 i18n 硬编码清理（W3/P5） | 通过：托盘菜单（显示窗口/退出）与 Windows Toast 动作按钮（完成/15分钟后）全面接入 AppLocalizations；支持中、英、日三语动态切换即时更新；单测 3 项全通，协议多语言测试通过，全量 2097 项全通 | `test/tray_menu_test.dart` (3 项), `test/windows_protocol_service_test.dart` |
 | 27 | CI 增加 Windows 测试作业与版本一致性（W5/P6） | 通过：GitHub Actions 新增 `quality-windows` 作业，全流程覆盖 Flutter 3.44.9 setup、--enforce-lockfile、analyze、全量 Windows 测试与跳过用例 POSIX 审查；编写 `check_flutter_version.py` 与 `report_windows_skipped_tests.py`，单测 2 项全通 | `scripts/check_flutter_version.py`, `scripts/report_windows_skipped_tests.py`, `test_windows_ci_tooling.py` (2 项) |
+| 28 | 生产身份统一与数据目录平滑迁移（W6/P7） | 通过：Windows Runner.rc 公司名统一为 `com.yarnway.dontforget`，版权为 `Copyright (C) 2026 Yarnway`；macOS、iOS、Linux、Inno Setup 安装器 Publisher 同步更新为 Yarnway / `com.yarnway.dontforget`；新增 `DatabaseLocationMigrator`，启动自动探测候选旧目录（`%APPDATA%\com.example\DontForget\databases` 等），执行原子化迁移（`.tmp` + rename）并校验主库与 sidecar 文件完整性，降级保护确保零数据丢失；单测 6 项全通，全量测试全通 | `test/database_location_migrator_test.dart` (6 项全通), `lib/data/database_location_migrator.dart` |
 
 未在本轮取得证据：真实麦克风听感、系统通知中心点击、跨日与休眠。
 
@@ -92,7 +93,7 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 3. ~~第二实例同时打开同一数据库~~ **已修复（W2，`F6`）**：命名 mutex + 激活已有窗口；Debug/Release 双验证，CLI 行为保持。
 4. **无开机自启 / 无 URL 协议**：URL 协议已在 P4 阶段完成 HKCU 注册与 Inno Setup 卸载清理；开机自启待后续评估。
 5. **Windows 权限与自检显示“不可用”**：权限查询与测试通知在 Windows 返回 unsupported（设计如此），但界面需要解释清楚，避免与"未授权"混淆。
-6. **数据位置与身份**：附件在 `Documents\media`、数据库在 Roaming，bundle 身份仍是 `com.example`；正式版应改为 `com.yarnway.dontforget` 并评估 Roaming/OneDrive 同步风险。
+6. ~~数据位置与身份~~ **已全平台统一并实现数据平滑迁移（W6，P7）**：全平台（Windows, macOS, iOS, Linux, Inno Setup）统一 bundle identifier 与 publisher 为 `com.yarnway.dontforget` / `Yarnway`。针对 Windows 变更 CompanyName 后 `%APPDATA%` 路径切换（由 `com.example\DontForget` 变为 `com.yarnway.dontforget\DontForget`），开发 `DatabaseLocationMigrator` 实现启动时全自动原子迁移数据库（含 WAL/shm/epoch/journal），迁移失败安全回退旧路径，单测 6 项全通；媒体附件维持在 Documents 避免路径断链。
 7. ~~托盘退出 `exit(0)`~~ **已修复（W2，`F7`）**：改为先关库再退出，单测覆盖顺序与失败路径。仍需在真实托盘菜单上做一次人工点验。
 8. ~~录音细节~~ **已修复（W3，P3）**：`RecordingDurationReader` 支持 ADTS AAC 裸流（按帧头解析采样率/声道/帧数估算时长）；Windows 录音输出 `.aac` 文件（iOS/Android/macOS 保持 `.m4a`）；250ms 最短录音保护在 Windows 上严格生效，过短录音删除临时文件且不写入 `MediaRecords`；历史 `.m4a` 录音与播放向下兼容。单测 `test/recording_duration_reader_test.dart` 11 项全通。
 9. ~~桌面文案与 i18n~~ **已全部修复（W3，P5）**：托盘菜单（“显示窗口”、“退出”）接入 AppLocalizations，语言切换时通过 `_updateTrayMenu` 即时重构托盘菜单；Windows Toast 动作按钮文本复用 `NotificationActionPresentation.title`，在中、英、日三语下对齐 iOS/Android；`WindowsToast` 缺省回退文本改为通用英文；单测 `test/tray_menu_test.dart` 3 项全通，全量 2097 项全通。
@@ -109,7 +110,7 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 - **W3（已全部完成）**：✅ 录音容器与时长（ADTS/MP4 双支持、.aac 平台映射、250 ms 保护，P3 完成）；✅ Toast 点击回跳与动作按钮（WinRT protocol 激活、免提权 HKCU 协议、WM_COPYDATA 实例间通信、完成与延后动作支持，P4 完成）；✅ 桌面文案与 i18n 硬编码清理（托盘菜单、Toast 动作按钮中英日三语动态刷新，P5 完成）。全量 2097 项测试通过。
 - **W4（已完成）**：Inno Setup 6 打包验证，生成 `dist/DontForget_Setup_v1.7.0.exe` 与绿色便携包，通过静默安装（51 项文件完备）与静默卸载（无残留清理）全链路验收；留存 SHA256 与清单。
 - **W5（已完成）**：Windows 测试基线全面攻克（修复文件锁、路径正反斜杠、FakeAsync 子进程阻塞与 rename 重试），本地全量 2022 个测试用例全部绿灯通过，静态检查 0 issues；验收记录写入文档。
-- **W6（发布前）**：生产身份 `com.yarnway.dontforget`、正式签名（若需要）、README/CHANGELOG 同步。
+- **W6（已完成 P6/P7）**：✅ CI 增加 `quality-windows` 自动化作业，编写 `check_flutter_version.py` 与 `report_windows_skipped_tests.py`，规范化显式跳过（P6 完成）；✅ 全平台生产身份统一为 `com.yarnway.dontforget`，开发 `DatabaseLocationMigrator` 实现旧目录原子平滑迁移与安全回退（P7 完成）。后续仅剩正式签名评估与文档全面同步（P8）。
 
 ### I 系列（iOS，需 macOS）
 

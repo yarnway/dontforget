@@ -8,7 +8,7 @@
 PRODUCT_NAME = dont_forget
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.dontForget
+PRODUCT_BUNDLE_IDENTIFIER = com.yarnway.dontforget
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 Yarnway. All rights reserved.

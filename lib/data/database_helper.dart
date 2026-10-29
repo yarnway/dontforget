@@ -16,6 +16,7 @@ import '../services/notification_journal.dart';
 import '../services/storage_directory_lease.dart';
 import 'schema_14_compatibility.dart';
 import 'schema_15_compatibility.dart';
+import 'database_location_migrator.dart';
 
 part 'database_access.dart';
 
@@ -368,6 +369,11 @@ class DatabaseHelper {
         if (!await dbDir.exists()) {
           await dbDir.create(recursive: true);
         }
+        if (Platform.isWindows) {
+          return await DatabaseLocationMigrator.resolveAndMigrate(
+            targetDir: dbDir.path,
+          );
+        }
         return dbDir.path;
       } catch (e) {
         debugPrint('Error getting application support directory: $e');
@@ -383,7 +389,9 @@ class DatabaseHelper {
           if (!fallbackDir.existsSync()) {
             fallbackDir.createSync(recursive: true);
           }
-          return fallbackDir.path;
+          return await DatabaseLocationMigrator.resolveAndMigrate(
+            targetDir: fallbackDir.path,
+          );
         }
       }
     }

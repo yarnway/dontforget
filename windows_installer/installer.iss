@@ -5,7 +5,7 @@
 #ifndef MyAppVersion
   #error Pass /DMyAppVersion from pubspec.yaml using scripts/package_windows.ps1
 #endif
-#define MyAppPublisher "DontForget Team"
+#define MyAppPublisher "Yarnway"
 #define MyAppExeName "dont_forget.exe"
 #define SourceDir "..\build\windows\x64\runner\Release"
 
