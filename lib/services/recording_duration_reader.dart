@@ -1,19 +1,35 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-/// Reads finalized M4A capture metadata without decoding or loading audio data.
-/// Unknown formats return null and keep the existing import behavior. This is
-/// a short-capture guard, not a claim that the microphone recorded audible sound.
+/// Reads finalized capture metadata (M4A/MP4 or ADTS AAC) without decoding or loading
+/// full audio data. Unknown formats return null and keep the existing import behavior.
+/// This is a short-capture guard, not a claim that the microphone recorded audible sound.
 class RecordingDurationReader {
   const RecordingDurationReader();
 
   static const minimumCapture = Duration(milliseconds: 250);
+
+  static const List<int> adtsSampleRates = <int>[
+    96000, 88200, 64000, 48000, 44100, 32000,
+    24000, 22050, 16000, 12000, 11025, 8000, 7350,
+  ];
 
   Future<Duration?> read(String path) async {
     RandomAccessFile? file;
     try {
       file = await File(path).open();
       final length = await file.length();
+      if (length < 7) return null;
+
+      // Check first two bytes for ADTS syncword (0xFFF) and layer == 00
+      await file.setPosition(0);
+      final initial = await file.read(2);
+      if (initial.length == 2 &&
+          initial[0] == 0xff &&
+          (initial[1] & 0xf6) == 0xf0) {
+        return await _readAdts(file, length);
+      }
+
       var remainingAtoms = 256;
       var offset = 0;
       while (offset < length && remainingAtoms-- > 0) {
@@ -38,6 +54,70 @@ class RecordingDurationReader {
     } finally {
       await file?.close();
     }
+  }
+
+  Future<Duration?> _readAdts(RandomAccessFile file, int fileLength) async {
+    var offset = 0;
+    var totalSamples = 0;
+    var sampleRate = 0;
+    var validFrames = 0;
+    const maxFramesToScan = 2000;
+
+    while (offset + 7 <= fileLength && validFrames < maxFramesToScan) {
+      await file.setPosition(offset);
+      final header = await file.read(7);
+      if (header.length < 7) break;
+
+      // Verify syncword (0xFFF) and layer == 00
+      if (header[0] != 0xff || (header[1] & 0xf6) != 0xf0) {
+        if (validFrames == 0) return null;
+        break;
+      }
+
+      final protectionAbsent = header[1] & 0x01;
+      final headerSize = protectionAbsent == 1 ? 7 : 9;
+
+      final srIndex = (header[2] & 0x3c) >> 2;
+      if (srIndex >= adtsSampleRates.length) {
+        if (validFrames == 0) return null;
+        break;
+      }
+
+      final currentRate = adtsSampleRates[srIndex];
+      if (sampleRate == 0) {
+        sampleRate = currentRate;
+      }
+
+      final frameLength =
+          ((header[3] & 0x03) << 11) |
+          (header[4] << 3) |
+          ((header[5] & 0xe0) >> 5);
+      if (frameLength < headerSize) {
+        if (validFrames == 0) return null;
+        break;
+      }
+
+      final rawBlocks = (header[6] & 0x03) + 1;
+      totalSamples += 1024 * rawBlocks;
+      validFrames++;
+      offset += frameLength;
+    }
+
+    if (validFrames == 0 || sampleRate <= 0) return null;
+
+    if (offset >= fileLength || validFrames < maxFramesToScan) {
+      final microseconds =
+          (totalSamples * Duration.microsecondsPerSecond) ~/ sampleRate;
+      return Duration(microseconds: microseconds);
+    }
+
+    final avgFrameLength = offset / validFrames;
+    if (avgFrameLength <= 0) return null;
+    final estimatedTotalFrames = fileLength / avgFrameLength;
+    final estimatedSamples = (estimatedTotalFrames * 1024).round();
+    final microseconds =
+        (estimatedSamples * Duration.microsecondsPerSecond) ~/ sampleRate;
+    return Duration(microseconds: microseconds);
   }
 
   Future<_Atom?> _atom(RandomAccessFile file, int offset, int end) async {

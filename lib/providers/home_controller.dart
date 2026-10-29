@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 import '../l10n/app_localizations.dart';
@@ -604,6 +605,11 @@ class HomeController extends StateNotifier<HomeState> {
     return operation;
   }
 
+  static String recordingExtensionForPlatform([TargetPlatform? platform]) {
+    final target = platform ?? defaultTargetPlatform;
+    return target == TargetPlatform.windows ? 'aac' : 'm4a';
+  }
+
   Future<bool> _startRecording() async {
     final generation = _beginInput();
     if (generation == null) return false;
@@ -627,7 +633,8 @@ class HomeController extends StateNotifier<HomeState> {
         if (_nativeRecording) return true;
         await tempDir.create(recursive: true);
         _check(generation);
-        final path = '${tempDir.path}/audio_${const Uuid().v4()}.m4a';
+        final ext = recordingExtensionForPlatform();
+        final path = '${tempDir.path}/audio_${const Uuid().v4()}.$ext';
         try {
           _nativeRecording = true;
           await _audioRecorder.start(const RecordConfig(), path: path);

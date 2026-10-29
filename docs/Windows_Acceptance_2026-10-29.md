@@ -59,6 +59,7 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 | 21 | Windows 全量自动化测试（W5） | 通过：修复 Windows 路径分隔符、文件锁占用（`errno = 32`）与重命名并发冲突（`errno = 5`）后，`flutter test --no-pub` 全量 2022 项测试全数通过（2022 passed, 20 skipped, 0 failed） | `flutter test` 执行日志 |
 | 22 | 错过的提醒聚合与确认（W2/P1） | 通过：启动时将 72h 内未确认逾期聚合成条，不弹 Toast 刷屏；支持点击筛选、三语、全部知道了标记落盘（重启不再出现）；单测 25 项全通，全量 2047 项全通 | `test/missed_reminders_bar_test.dart` (25 项全通) |
 | 23 | 窗口位置与尺寸持久化（W2/P2） | 通过：窗口位置、尺寸与最大化状态持久化至 Settings（workspace_drafts_json），移动/缩放防抖写入并在退出前即时写盘；启动校验屏幕越界安全回退到主屏居中；单测 23 项全通，全量 2070 项全通 | `test/desktop_window_service_test.dart` (23 项全通) |
+| 24 | 录音容器与时长（W3/P3） | 通过：支持 ADTS AAC 与 MP4 双容器时长解析；Windows 适配 .aac 扩展名；250ms 最短录音保护对裸流与容器均严格生效并删除过短临时文件；旧 .m4a 数据完全兼容；单测 11 项全通，录音兼容测试 18 项全通 | `test/recording_duration_reader_test.dart` (11 项全通) |
 
 未在本轮取得证据：真实麦克风听感、系统通知中心点击、跨日与休眠。
 
@@ -90,7 +91,7 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 5. **Windows 权限与自检显示“不可用”**：权限查询与测试通知在 Windows 返回 unsupported（设计如此），但界面需要解释清楚，避免与"未授权"混淆。
 6. **数据位置与身份**：附件在 `Documents\media`、数据库在 Roaming，bundle 身份仍是 `com.example`；正式版应改为 `com.yarnway.dontforget` 并评估 Roaming/OneDrive 同步风险。
 7. ~~托盘退出 `exit(0)`~~ **已修复（W2，`F7`）**：改为先关库再退出，单测覆盖顺序与失败路径。仍需在真实托盘菜单上做一次人工点验。
-8. **录音细节**：固定 `.m4a` 扩展名但 Windows 写 ADTS AAC；时长解析只认 MP4 `moov`，250 ms 最短录音保护在 Windows 失效。
+8. ~~录音细节~~ **已修复（W3，P3）**：`RecordingDurationReader` 支持 ADTS AAC 裸流（按帧头解析采样率/声道/帧数估算时长）；Windows 录音输出 `.aac` 文件（iOS/Android/macOS 保持 `.m4a`）；250ms 最短录音保护在 Windows 上严格生效，过短录音删除临时文件且不写入 `MediaRecords`；历史 `.m4a` 录音与播放向下兼容。单测 `test/recording_duration_reader_test.dart` 11 项全通。
 9. **桌面文案与 i18n**：托盘菜单、Toast 正文、部分提示为中文硬编码（本轮已移除 Toast 正文的中文兜底）。
 10. ~~测试基线~~ **已完全修复并全量通过（W5）**：彻底修复了 Windows 下的路径反斜杠识别、测试环境 FakeAsync 外部进程挂起、文件句柄占用未释放（`errno = 32`）与文件重命名并发共享冲突（`errno = 5`）。全量测试套件 `flutter test --no-pub` 结果为 2022 全部通过（2022 passed, 20 skipped, 0 failed），静态检查 `flutter analyze --no-pub` 保持 0 issues。
 11. **安装器与文档不一致**：`installer.iss` 要求 Win10+，架构文档仍写 Win7/8；`windows_redist/` 与打包脚本注释冲突。
@@ -102,7 +103,7 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 
 - **W1（已完成）**：工具链修复、debug/release 构建、启动、录入、到期提醒、Toast、托盘、录音、附件、静态分析与回归。
 - **W2（已全部完成）**：✅ 单实例 mutex + 激活已有窗口（含托盘隐藏态，Debug/Release 验证）；✅ 托盘退出优雅关闭（单测 4 项）；✅ 启动补发/汇总“错过的提醒”（72h 聚合横幅条、中英日三语、筛选与一键全部已知落盘、单测 25 项全通，`test/missed_reminders_bar_test.dart`）；✅ 窗口位置、尺寸与最大化持久化（Settings 表零 schema 迁移、移动/缩放防抖与退出即时落盘、多屏越界回退主屏居中、单测 23 项全通，`test/desktop_window_service_test.dart`）。全量测试通过（2070 passed）。
-- **W3（2–3 天）**：录音容器与时长（ADTS/MP4 双支持、250 ms 保护）；Toast 点击回跳（协议激活）；i18n 硬编码清理。
+- **W3（进行中）**：✅ 录音容器与时长（ADTS/MP4 双支持、.aac 平台映射、250 ms 保护，P3 完成）；⏳ 仍待：Toast 点击回跳（协议激活，P4）；i18n 硬编码清理（P5）。
 - **W4（已完成）**：Inno Setup 6 打包验证，生成 `dist/DontForget_Setup_v1.7.0.exe` 与绿色便携包，通过静默安装（51 项文件完备）与静默卸载（无残留清理）全链路验收；留存 SHA256 与清单。
 - **W5（已完成）**：Windows 测试基线全面攻克（修复文件锁、路径正反斜杠、FakeAsync 子进程阻塞与 rename 重试），本地全量 2022 个测试用例全部绿灯通过，静态检查 0 issues；验收记录写入文档。
 - **W6（发布前）**：生产身份 `com.yarnway.dontforget`、正式签名（若需要）、README/CHANGELOG 同步。
