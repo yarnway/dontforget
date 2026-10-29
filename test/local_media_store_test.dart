@@ -103,6 +103,7 @@ void main() {
       expect(await reader.resolvePath(source.path), source.path);
       expect(await source.readAsString(), 'second recording');
     },
+    skip: Platform.isWindows ? 'iOS container relocation is POSIX-only' : false,
   );
 
   test('unowned and unsafe paths do not request the app directory', () async {

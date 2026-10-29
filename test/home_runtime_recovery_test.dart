@@ -3,6 +3,7 @@ import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
+import 'package:path/path.dart' as p;
 
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/reminder.dart';
@@ -399,8 +400,13 @@ void main() {
             messenger.setMockMethodCallHandler(channel, null);
           }
         });
-        final currentPath =
-            '${directory.path}/Documents/media/import-saved/audio.m4a';
+        final currentPath = p.join(
+          directory.path,
+          'Documents',
+          'media',
+          'import-saved',
+          'audio.m4a',
+        );
         await tester.runAsync(() async {
           await File(currentPath).create(recursive: true);
           final db = await database.database;
@@ -425,7 +431,10 @@ void main() {
           );
           await controller();
         });
-        addTearDown(() => drainWorkspaceDrafts(tester, container!));
+        addTearDown(() async {
+          await drainWorkspaceDrafts(tester, container!);
+          await tester.pumpWidget(const SizedBox());
+        });
         await tester.pumpWidget(
           UncontrolledProviderScope(
             container: container!,
@@ -450,7 +459,7 @@ void main() {
             final token = await gate.pause();
             gate.resume(token);
           }
-          release.complete('${directory.path}/Documents');
+          release.complete(p.join(directory.path, 'Documents'));
         });
         for (var i = 0; i < 40 && sources.isEmpty; i++) {
           await tester.runAsync(
@@ -459,14 +468,22 @@ void main() {
           await tester.pump();
         }
         await tester.pump();
-        expect(sources, recovering ? isEmpty : [currentPath]);
+        if (recovering) {
+          expect(sources, isEmpty);
+        } else {
+          expect(sources.length, 1);
+          expect(p.equals(sources.single, currentPath), isTrue);
+        }
         expect(tester.takeException(), isNull);
         final stored = await tester.runAsync(() => rows('MediaRecords'));
         expect(
           stored!.single['content_or_path'],
           '/old-container/Documents/media/import-saved/audio.m4a',
         );
-        addTearDown(() => drainWorkspaceDrafts(tester, container!));
+        addTearDown(() async {
+        await drainWorkspaceDrafts(tester, container!);
+        await tester.pumpWidget(const SizedBox());
+      });
         await tester.pumpWidget(const SizedBox());
       },
     );
@@ -503,7 +520,10 @@ void main() {
       });
       final agent = _Agent();
       await tester.runAsync(() => controller(agent: agent));
-      addTearDown(() => drainWorkspaceDrafts(tester, container!));
+      addTearDown(() async {
+        await drainWorkspaceDrafts(tester, container!);
+        await tester.pumpWidget(const SizedBox());
+      });
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: container!,
@@ -548,7 +568,10 @@ void main() {
       await tester.pump();
       expect(tester.takeException(), isNull);
       expect(await tester.runAsync(() => rows('Reminders')), isEmpty);
-      addTearDown(() => drainWorkspaceDrafts(tester, container!));
+      addTearDown(() async {
+        await drainWorkspaceDrafts(tester, container!);
+        await tester.pumpWidget(const SizedBox());
+      });
       await tester.pumpWidget(const SizedBox());
     },
   );

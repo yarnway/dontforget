@@ -58,7 +58,8 @@ class NotificationService {
   factory NotificationService.forDatabase(DatabaseHelper database) =>
       _instances[database] ??= NotificationService._internal(database);
   NotificationService._internal(DatabaseHelper database)
-    : flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin(),
+    : _isTesting = false,
+      flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin(),
       usesNativeNotifications = !Platform.isWindows && !Platform.isLinux,
       nativePendingLimit = NotificationWindow.platformLimit,
       macScheduler = Platform.isMacOS
@@ -80,12 +81,18 @@ class NotificationService {
     this.macScheduler,
     this.nativePendingLimit,
     this.pendingActionStore,
-  }) : _now = now ?? DateTime.now,
+    this.windowsToastHandler,
+  }) : _isTesting = true,
+       _now = now ?? DateTime.now,
        _database = database,
        _readDatasetEpoch =
            readDatasetEpoch ??
            database?.readNotificationEpoch ??
            _testDatasetEpoch;
+
+  final bool _isTesting;
+  Future<void> Function(String title, String body, {bool playSound})?
+      windowsToastHandler;
 
   // Journal admission and OS concurrency are independent: larger groups can
   // share durable writes without flooding the platform notification plugin.
@@ -1128,15 +1135,23 @@ class NotificationService {
 
     // Native notifications own the sound policy. Do not add another app sound
     // or steal keyboard focus when an occurrence arrives.
-    if (Platform.isWindows) {
+    if (Platform.isWindows && (!_isTesting || windowsToastHandler != null)) {
       // The desktop build has no scheduled OS channel, so the due occurrence is
       // shown from the running app. The body is only sent when it adds context
       // beyond the title; otherwise the single-line template is used.
-      await showWindowsToast(
-        reminder.taskTitle,
-        reminder.notificationSummary ?? '',
-        playSound: reminder.quadrantLevel <= 2,
-      );
+      if (windowsToastHandler != null) {
+        await windowsToastHandler!(
+          reminder.taskTitle,
+          reminder.notificationSummary ?? '',
+          playSound: reminder.quadrantLevel <= 2,
+        );
+      } else {
+        await showWindowsToast(
+          reminder.taskTitle,
+          reminder.notificationSummary ?? '',
+          playSound: reminder.quadrantLevel <= 2,
+        );
+      }
     }
   }
 

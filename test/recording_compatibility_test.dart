@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
+import 'package:path/path.dart' as p;
 import 'package:dont_forget/models/settings.dart';
 import 'package:dont_forget/services/llm_service.dart';
 import 'package:flutter/services.dart';
@@ -409,7 +410,10 @@ void main() {
       expect(reminders.single['record_id'], media.single['id']);
       expect(media.single['type'], 'audio');
       final saved = File(media.single['content_or_path'] as String);
-      expect(saved.path, startsWith('${directory.path}/missing/documents/'));
+      expect(
+        p.isWithin(p.join(directory.path, 'missing', 'documents'), saved.path),
+        isTrue,
+      );
       expect(await saved.readAsBytes(), m4aMetadata(ticks: captureMillis));
       expect(notifications.scheduled, isEmpty);
       expect(reminders.single['trigger_time'], isNull);

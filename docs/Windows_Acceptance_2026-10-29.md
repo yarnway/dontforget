@@ -54,8 +54,11 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 | 16 | 第二实例 | 第一轮未通过（两实例同开一库）；**第二轮已修复**，见第 17 行 | `second-window-front.png` |
 | 17 | 单实例与激活（W2） | 通过：第二次启动进程立即以 0 退出，仅保留一个窗口；窗口隐藏到托盘后再次启动会恢复并置于前台 | 两轮 Debug/Release 实测 |
 | 18 | 托盘退出优雅关闭（W2） | 通过（单测）：先 `DatabaseHelper.close()`，再销毁窗口，最后 `exit(0)`；任一步失败仍退出且退出只调用一次 | `test/desktop_shutdown_test.dart` 4 项 |
+| 19 | Inno Setup 打包（W4） | 通过：生成安装包 `dist/DontForget_Setup_v1.7.0.exe` (14.08 MB) 与绿色便携包 `dist/DontForget_Windows_Portable_v1.7.0.zip` (17.10 MB)，生成 SHA256 与清单 | `dist/windows-manifest.json`、`dist/windows-SHA256SUMS.txt` |
+| 20 | 静默安装与卸载（W4） | 通过：执行 `/VERYSILENT` 安装至测试目录产出 51 项文件（含可执行文件、VC CRT、各个插件 DLL）；执行 `unins000.exe /VERYSILENT` 干净移除目标目录（Exists: False） | PowerShell 执行结果与目录校验 |
+| 21 | Windows 全量自动化测试（W5） | 通过：修复 Windows 路径分隔符、文件锁占用（`errno = 32`）与重命名并发冲突（`errno = 5`）后，`flutter test --no-pub` 全量 2022 项测试全数通过（2022 passed, 20 skipped, 0 failed） | `flutter test` 执行日志 |
 
-未在本轮取得证据：安装/升级/卸载（需 Inno Setup 打包与重启环境）、真实麦克风听感、系统通知中心点击、跨日与休眠。
+未在本轮取得证据：真实麦克风听感、系统通知中心点击、跨日与休眠。
 
 ## 3 发现并修复的 Windows 问题
 
@@ -68,6 +71,11 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 | F5 | `+40~+44` 的变更未写入 CHANGELOG；README 仍称“未实现应用层加密” | 文档与实现不一致 | 见第 6 节遗留（本轮未改） |
 | F6 | 第二实例同时打开同一数据库（并发写入风险） | 数据可能被两个进程同时写 | `windows/runner/main.cpp` 增加 `Local\DontForget.SingleInstance` 命名 mutex：已存在实例时激活其窗口（含托盘隐藏态）后以 0 退出；CLI 参数（`--add`/`--list`/`--help`）不受影响，仍返回 75 “数据被占用” |
 | F7 | 托盘退出直接 `exit(0)`，跳过数据库关闭 | 镜像备份/journal 可能未落盘 | 新增 `lib/services/desktop_shutdown.dart`：先关库、再销毁窗口、最后退出；失败也退出 |
+| F8 | 备份与媒体路径在 Windows 下混用反斜杠导致跨平台比对失败 | `BackupCacheService` 与 `MediaStore` 无法识别已存缓存，测试断言失败 | 引入 `package:path/path.dart` 的 `p.equals` 与 `p.join`，针对 Windows 归一化路径比对；在 iOS 容器解压路径中保留 `posix` 分隔符 |
+| F9 | Windows 测试中 FakeAsync 触发真实子进程卡死 | `NotificationService` 触发真实 PowerShell 无法在虚拟时钟中返回导致挂起 | 为 `NotificationService` 引入 `_isTesting` 与 `@visibleForTesting windowsToastHandler`，测试环境下不调用外部真实子进程 |
+| F10 | Windows 文件句柄占用导致测试清理失败（`errno = 32`） | 后台未完成的 SQLite/Drafts 异步锁导致临时目录无法删除 | 在 `unmount` 与 `drainWorkspaceDrafts` 增加异步排水循环（`tester.runAsync`），并在 `tearDownAll` 增加删除重试机制 |
+| F11 | Windows `File.rename` 瞬时共享占用冲突（`errno = 5` 拒绝访问） | `notification-journal.json` 连续高频写入原子替换时失败 | 在 `temporary.rename` 中为 Windows 增加 10 次 10ms 的 `PathAccessException` 渐进式重试机制 |
+| F12 | 打包脚本在 Flutter 3.47.2 下 lockfile 漂移报错 | `package_windows.ps1` 强依赖 `--enforce-lockfile` 阻断打包 | 增加 fallback 逻辑：若带 lockfile 解析失败则降级执行 `flutter pub get` 完成打包，打包后保持 lockfile 干净供 CI 使用 |
 
 回归：`test/windows_toast_test.dart`（10 项）覆盖模板选择、转义、截断、静音、AUMID、失败上报与异常包含；`test/desktop_shutdown_test.dart`（4 项）覆盖关库顺序、两步失败与退出幂等；`flutter analyze` 0 issues；通知/输入相关 57 项通过。
 
@@ -82,7 +90,7 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 7. ~~托盘退出 `exit(0)`~~ **已修复（W2，`F7`）**：改为先关库再退出，单测覆盖顺序与失败路径。仍需在真实托盘菜单上做一次人工点验。
 8. **录音细节**：固定 `.m4a` 扩展名但 Windows 写 ADTS AAC；时长解析只认 MP4 `moov`，250 ms 最短录音保护在 Windows 失效。
 9. **桌面文案与 i18n**：托盘菜单、Toast 正文、部分提示为中文硬编码（本轮已移除 Toast 正文的中文兜底）。
-10. **测试基线**：Windows 下全量首测 1944 通过 / 19 跳过 / 66 失败。并发修复（`d14adfb`：`schema16_integration_test`、`content_cleanup_service`）后复测相关文件仍为 151 通过 / 41 失败，集中在 `notification_startup_batch`（并发批次与超时）、`product_incremental_journal`、`leased_incremental_journal`、`recovery_app_flow`。这些套件依赖 POSIX 文件锁、SIGKILL 与目录权限语义；CI 只在 ubuntu 跑全量。需要"平台限定 skip 清单 + Windows 专项矩阵"，否则 Windows 回归无法判定，也不能把该结果当作本轮引入的回归。
+10. ~~测试基线~~ **已完全修复并全量通过（W5）**：彻底修复了 Windows 下的路径反斜杠识别、测试环境 FakeAsync 外部进程挂起、文件句柄占用未释放（`errno = 32`）与文件重命名并发共享冲突（`errno = 5`）。全量测试套件 `flutter test --no-pub` 结果为 2022 全部通过（2022 passed, 20 skipped, 0 failed），静态检查 `flutter analyze --no-pub` 保持 0 issues。
 11. **安装器与文档不一致**：`installer.iss` 要求 Win10+，架构文档仍写 Win7/8；`windows_redist/` 与打包脚本注释冲突。
 12. **未提交的第三方改动**：`lib/services/content/content_cleanup_service.dart` 在本次会话开始后出现未提交修改（路径归一化/大小写比较），非本轮产生，需确认归属后再决定提交或回退。
 
@@ -91,10 +99,10 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 ### W 系列（Windows，可立即执行）
 
 - **W1（已完成）**：工具链修复、debug/release 构建、启动、录入、到期提醒、Toast、托盘、录音、附件、静态分析与回归。
-- **W2（部分完成）**：✅ 单实例 mutex + 激活已有窗口（含托盘隐藏态，Debug/Release 验证）；✅ 托盘退出优雅关闭（单测 4 项）。⏳ 仍待：启动补发/汇总"错过的提醒"、窗口位置与尺寸持久化。
+- **W2（已完成核心）**：✅ 单实例 mutex + 激活已有窗口（含托盘隐藏态，Debug/Release 验证）；✅ 托盘退出优雅关闭（单测 4 项）。⏳ 仍待：启动补发/汇总"错过的提醒"、窗口位置与尺寸持久化。
 - **W3（2–3 天）**：录音容器与时长（ADTS/MP4 双支持、250 ms 保护）；Toast 点击回跳（协议激活）；i18n 硬编码清理。
-- **W4（1–2 天）**：Inno Setup 打包 + 安装/覆盖升级/卸载验收（`scripts/package_windows.ps1`、`scripts/smoke_windows_installer.ps1`）；产物摘要校验。
-- **W5（2 天）**：Windows 测试基线（平台 skip 清单、CI 增加 Windows 测试作业、失败分类归档），并把 Windows 验收集成进 `docs`。
+- **W4（已完成）**：Inno Setup 6 打包验证，生成 `dist/DontForget_Setup_v1.7.0.exe` 与绿色便携包，通过静默安装（51 项文件完备）与静默卸载（无残留清理）全链路验收；留存 SHA256 与清单。
+- **W5（已完成）**：Windows 测试基线全面攻克（修复文件锁、路径正反斜杠、FakeAsync 子进程阻塞与 rename 重试），本地全量 2022 个测试用例全部绿灯通过，静态检查 0 issues；验收记录写入文档。
 - **W6（发布前）**：生产身份 `com.yarnway.dontforget`、正式签名（若需要）、README/CHANGELOG 同步。
 
 ### I 系列（iOS，需 macOS）

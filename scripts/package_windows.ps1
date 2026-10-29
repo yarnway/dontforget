@@ -3,7 +3,11 @@ $rootDir = Split-Path $PSScriptRoot -Parent
 Push-Location $rootDir
 try {
     & flutter pub get --enforce-lockfile
-    if ($LASTEXITCODE -ne 0) { throw "Dependency resolution failed" }
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "flutter pub get --enforce-lockfile failed (e.g. local Flutter SDK version differences). Falling back to flutter pub get."
+        & flutter pub get
+        if ($LASTEXITCODE -ne 0) { throw "Dependency resolution failed" }
+    }
     & flutter build windows --release --no-pub
     if ($LASTEXITCODE -ne 0) { throw "Windows build failed" }
     $releaseDir = Join-Path $rootDir "build\windows\x64\runner\Release"

@@ -234,9 +234,8 @@ void main() {
       final attachment = await File(
         paths.join(imported.path, 'recording.m4a'),
       ).writeAsString('preserved attachment bytes');
-      final old = paths.join(
-        directory.path,
-        'old',
+      final old = paths.posix.join(
+        '/old-container',
         'Documents',
         'media',
         'import-saved',

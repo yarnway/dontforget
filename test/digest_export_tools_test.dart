@@ -285,11 +285,12 @@ void main() {
         findsOneWidget,
       );
       exporter.fail = false;
+      final exportUri = Uri.file('/tmp/task-export.csv');
       exporter.pending = Completer()
-        ..complete(Uri.file('/tmp/task-export.csv'));
+        ..complete(exportUri);
       await tester.tap(find.byType(FilledButton));
       await tester.pumpAndSettle();
-      expect(find.text('/tmp/task-export.csv'), findsOneWidget);
+      expect(find.text(exportUri.toFilePath()), findsOneWidget);
     },
   );
   testWidgets('late export result after recovery is discarded', (tester) async {

@@ -24,7 +24,7 @@ class BackupCacheService {
     await for (final directory in root.list(followLinks: false)) {
       if (directory is! Directory ||
           !p.basename(directory.path).startsWith('export-') ||
-          activeDirectories.contains(directory.path)) {
+          activeDirectories.any((d) => p.equals(d, directory.path))) {
         continue;
       }
       final files = await directory.list(followLinks: false).toList();
@@ -82,7 +82,12 @@ class BackupCacheService {
 
   Future<void> release(File exported) async {
     final directory = Directory(p.dirname(exported.path));
-    if (!activeDirectories.remove(directory.path)) return;
+    final matching =
+        activeDirectories.where((d) => p.equals(d, directory.path)).toList();
+    if (matching.isEmpty) return;
+    for (final d in matching) {
+      activeDirectories.remove(d);
+    }
     if (await FileSystemEntity.type(directory.path, followLinks: false) !=
         FileSystemEntityType.directory) {
       return;

@@ -373,7 +373,19 @@ class NotificationJournal {
         );
       }
       // Never unlink the last valid target to make replacement succeed.
-      await temporary.rename(_file.path);
+      if (Platform.isWindows) {
+        for (var i = 0; i < 10; i++) {
+          try {
+            await temporary.rename(_file.path);
+            break;
+          } on PathAccessException catch (_) {
+            if (i == 9) rethrow;
+            await Future<void>.delayed(const Duration(milliseconds: 10));
+          }
+        }
+      } else {
+        await temporary.rename(_file.path);
+      }
       _cache = _JournalCache(bytes, state, encodedEntries);
       _replacements++;
       _writtenBytes += bytes.length;

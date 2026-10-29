@@ -1,6 +1,7 @@
 // Selection, migration and rollback under one database directory lease.
 import 'dart:convert';
 import 'dart:io';
+import 'package:path/path.dart' as p;
 import 'notification_journal_model.dart';
 import 'storage_directory_lease.dart';
 import 'incremental_journal_engine.dart';
@@ -73,9 +74,9 @@ class LeasedIncrementalJournal {
   Future<void> Function(String point)? hook;
   Directory get directory => _lease.directory;
   Directory get managed =>
-      Directory('${directory.path}/notification-incremental');
-  File _root(String name) => File('${directory.path}/$name');
-  File _managed(String name) => File('${managed.path}/$name');
+      Directory(p.join(directory.path, 'notification-incremental'));
+  File _root(String name) => File(p.join(directory.path, name));
+  File _managed(String name) => File(p.join(managed.path, name));
   static const _v1Selection = {'format': 1, 'backend': 'v1'};
 
   static Future<LeasedIncrementalJournal> acquire(
@@ -198,7 +199,7 @@ class LeasedIncrementalJournal {
     if (type == FileSystemEntityType.notFound) await managed.create();
     if (await FileSystemEntity.type(managed.path, followLinks: false) !=
             FileSystemEntityType.directory ||
-        await managed.resolveSymbolicLinks() != managed.path) {
+        !p.equals(await managed.resolveSymbolicLinks(), managed.path)) {
       throw const FormatException('Unsafe incremental directory');
     }
   }

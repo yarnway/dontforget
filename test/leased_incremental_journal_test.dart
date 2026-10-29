@@ -142,7 +142,7 @@ void main() {
       final files = await session!.managed.list().toList();
       expect(
         files.where(
-          (f) => RegExp(r'/[0-9a-f-]{36}\.(json|log)$').hasMatch(f.path),
+          (f) => RegExp(r'[/\\][0-9a-f-]{36}\.(json|log)$').hasMatch(f.path),
         ),
         hasLength(4),
       );

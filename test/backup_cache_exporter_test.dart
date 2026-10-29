@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:dont_forget/services/backup_cache_service.dart';
 import 'package:dont_forget/services/backup_file_exporter.dart';
 
@@ -17,9 +18,9 @@ void main() {
   });
   Future<File> cached(String name, {String data = 'synthetic'}) async {
     final d = await Directory(
-      '${temp.path}/cache/export-$name',
+      p.join(temp.path, 'cache', 'export-$name'),
     ).create(recursive: true);
-    return File('${d.path}/backup.dfbackup').writeAsString(data);
+    return File(p.join(d.path, 'backup.dfbackup')).writeAsString(data);
   }
 
   test(
@@ -28,19 +29,19 @@ void main() {
       final one = await cached('one'), active = await cached('active');
       BackupCacheService.activeDirectories.add(active.parent.path);
       final original = await File(
-        '${temp.path}/original.bin',
+        p.join(temp.path, 'original.bin'),
       ).writeAsString('original');
       final imported = await Directory(
-        '${temp.path}/cache/import-owned',
+        p.join(temp.path, 'cache', 'import-owned'),
       ).create(recursive: true);
-      await File('${imported.path}/attachment.bin').writeAsString('restored');
+      await File(p.join(imported.path, 'attachment.bin')).writeAsString('restored');
       const service = BackupCacheService();
-      final entries = await service.inspect(Directory('${temp.path}/cache'));
+      final entries = await service.inspect(Directory(p.join(temp.path, 'cache')));
       expect(entries, hasLength(1));
-      expect(entries.single.path, one.path);
+      expect(p.equals(entries.single.path, one.path), isTrue);
       expect(
         await service.clearSelected(
-          Directory('${temp.path}/cache'),
+          Directory(p.join(temp.path, 'cache')),
           entries,
           isCurrent: () => true,
         ),

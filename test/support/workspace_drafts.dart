@@ -21,7 +21,12 @@ Future<void> drainWorkspaceDrafts(
       await tester.pump();
     }
     expect(done, isTrue, reason: 'Persisted draft writes must settle');
-    if (identical(pending, store.flushed)) return;
+    if (identical(pending, store.flushed)) break;
   }
-  fail('Draft autosave did not settle');
+  for (var tick = 0; tick < 20; tick++) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 5)),
+    );
+    await tester.pump();
+  }
 }

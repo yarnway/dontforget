@@ -10,6 +10,7 @@ import 'dart:ui' as ui;
 import 'dart:io';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/providers/providers.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -135,7 +136,15 @@ void main() {
           .setMockMethodCallHandler(channel, null);
     }
     await testDatabase.close();
-    await testDirectory.delete(recursive: true);
+    for (var i = 0; i < 15; i++) {
+      try {
+        await testDirectory.delete(recursive: true);
+        break;
+      } catch (_) {
+        if (i == 14) rethrow;
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+      }
+    }
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(recorderChannel, null);
   });
@@ -161,7 +170,11 @@ void main() {
 
     // Verify modal options exist
     expect(find.text('上传素材给大模型'), findsOneWidget);
-    expect(find.text('拍摄照片'), findsOneWidget);
+    if (Platform.isAndroid || Platform.isIOS) {
+      expect(find.text('拍摄照片'), findsOneWidget);
+    } else {
+      expect(find.text('拍摄照片'), findsNothing);
+    }
     expect(find.text('相册图片'), findsOneWidget);
     expect(find.text('导入文件'), findsOneWidget);
     expect(find.text('上传视频'), findsOneWidget);

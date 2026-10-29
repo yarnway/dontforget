@@ -254,7 +254,12 @@ void main() {
   Future<void> unmount(WidgetTester tester) async {
     await drainWorkspaceDrafts(tester, container);
     await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump();
+    for (var i = 0; i < 20; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 20)),
+      );
+      await tester.pump();
+    }
   }
 
   testWidgets(

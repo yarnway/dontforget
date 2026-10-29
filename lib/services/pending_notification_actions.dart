@@ -96,6 +96,15 @@ final class PendingNotificationActions {
         await getApplicationSupportDirectory(),
       );
 
+  Future<void> get idle async {
+    try {
+      final canonical = await directory.resolveSymbolicLinks();
+      while (_tails.containsKey(canonical)) {
+        await _tails[canonical];
+      }
+    } catch (_) {}
+  }
+
   Future<void> enqueue(NotificationActionRequest request) =>
       _withLock((file) async {
         final actions = await _read(file);

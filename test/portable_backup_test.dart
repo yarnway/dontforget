@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:path/path.dart' as p;
 import 'package:crypto/crypto.dart';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/media_record.dart';
@@ -191,7 +192,10 @@ void main() {
     final image = (data['media_records'] as List).firstWhere(
       (r) => r['id'] == 'image',
     );
-    expect(image['content_or_path'], startsWith('${root.path}/safe/'));
+    expect(
+      p.isWithin(p.join(root.path, 'safe'), image['content_or_path'] as String),
+      isTrue,
+    );
     expect(await File('${root.path}/override.png').exists(), isFalse);
   });
   test('missing attachment manifest cannot silently omit a file', () async {
