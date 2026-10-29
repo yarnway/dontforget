@@ -24,9 +24,10 @@ python3 scripts/check_ios_device.py            # 退出码 0 仅表示 REQUIRES_
 # 2) 从固定提交导出干净副本
 git archive <commit> | tar -x -C <clean-dir>
 
-# 3) 在副本中改写验收身份（主应用 + 扩展 + URL scheme/显示名）
-#    ios/Runner.xcodeproj/project.pbxproj 的 PRODUCT_BUNDLE_IDENTIFIER（基线已统一为 com.yarnway.dontforget）
-#    ios/Runner/Info.plist 的显示名，URL scheme 现已支持 dontforget 与 dontforget-live 双协议唤醒
+# 3) 在副本中自动化改写验收身份（主应用 + 扩展 + URL scheme/显示名）
+python3 scripts/prepare_ios_acceptance.py --run-id <run-id>
+# 校验改写后身份：com.yarnway.dontforget.acceptance.<run-id> 与 .ReminderActivity
+# 如需在测试后恢复原工程，可执行：python3 scripts/prepare_ios_acceptance.py --revert
 
 # 4) 依赖与回归
 flutter pub get --enforce-lockfile
