@@ -65,12 +65,14 @@ v1.7 正在候选验收阶段，尚未发布稳定版；当前源码、公开候
 
 ## 本地开发
 
-使用 Flutter 3.44.9 / Dart 3.12.2 和仓库 lockfile：
+使用 Flutter 3.44.9 / Dart 3.12.2 和仓库 lockfile（可运行 `python scripts/check_flutter_version.py` 检查）：
 
 ```bash
-flutter pub get --enforce-lockfile
+python scripts/check_flutter_version.py         # 检查是否与 CI 基线 3.44.9 一致
+flutter pub get --enforce-lockfile              # 3.44.9 下强校验锁文件；本地高版本使用普通 pub get
 flutter analyze --no-pub
 flutter test --no-pub
+python scripts/report_windows_skipped_tests.py # 查看 Windows 下 POSIX 约束跳过的测试清单
 python3 -m unittest discover -s scripts/tests -v
 flutter run -d macos # 或 windows / linux / 已连接移动设备
 ```

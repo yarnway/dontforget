@@ -27,9 +27,11 @@ macOS 同时保留 Swift Package Manager 与 CocoaPods 集成。锁定的通知�
 ## 校验
 
 ```bash
-flutter pub get --enforce-lockfile
+python scripts/check_flutter_version.py  # 验证 Flutter SDK 与 CI 基准 (3.44.9) 一致性
+flutter pub get --enforce-lockfile       # 在 3.44.9 下严格按 lockfile 解析；本地较高版本使用普通 pub get
 flutter analyze --no-pub
 flutter test --no-pub --reporter expanded
+python scripts/report_windows_skipped_tests.py  # 汇总 Windows 平台跳过测试及其 POSIX 原因
 python3 -m unittest discover -s scripts/tests -v
 # 单个平台（将 COMMIT 替换为构建时的完整提交号）
 python3 scripts/verify_artifacts.py dist --platform macos --revision COMMIT
@@ -58,7 +60,10 @@ python3 scripts/check_ios_device.py --output /tmp/dontforget-ios-preflight.json
 
 工作流：`.github/workflows/build_and_release.yml`。
 
-1. main 推送、PR、手动运行：先分析、Flutter 测试和打包脚本测试，再运行 Windows、Android、Linux、macOS、iOS 构建矩阵。
+1. main 推送、PR、手动运行：
+   - Linux 质量门禁（`quality`）：在 `ubuntu-24.04` 上执行分析、全量 Flutter 测试与 Python 脚本回归；
+   - Windows 质量门禁（`quality-windows`）：在 `windows-2022` 上执行分析、全量 Windows Flutter 测试，以及 Windows POSIX 跳过清单审查；
+   - 五平台构建矩阵（`build`）：Windows、Android、Linux、macOS、iOS 构建与启动烟测。
 2. 桌面产物解压后执行 10 秒进程启动检查。Windows 另在带空格的临时路径中安装、覆盖安装与卸载，校验历史文件哈希不变；不是实际旧数据库迁移测试。Linux 使用 Xvfb；仅在隔离 GitHub runner 执行。记录进程存活与退出状态，仍需人工窗口、安装、数据库升级及通知验收。
 3. 校验各平台提交号、版本和哈希后上传内部验证 artifact，保留 30 天。
 4. `v*` 标签额外进入 `verify_packages`，核验标签与 pubspec 一致、五平台七个文件齐备；该作业只校验，不创建或发布 Release。整个工作流仅有 `contents: read` 权限。

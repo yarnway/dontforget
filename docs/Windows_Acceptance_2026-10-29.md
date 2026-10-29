@@ -62,6 +62,7 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 | 24 | 录音容器与时长（W3/P3） | 通过：支持 ADTS AAC 与 MP4 双容器时长解析；Windows 适配 .aac 扩展名；250ms 最短录音保护对裸流与容器均严格生效并删除过短临时文件；旧 .m4a 数据完全兼容；单测 11 项全通，录音兼容测试 18 项全通 | `test/recording_duration_reader_test.dart` (11 项全通) |
 | 25 | Toast 点击回跳与动作按钮（W3/P4） | 通过：Toast 注入 protocol 激活与 actions 节点；免管理员提权注册 HKCU\Software\Classes\dontforget；支持冷启动与单实例 WM_COPYDATA 唤醒；支持点击回跳进入事项详情、完成按钮（直接完成）、稍后提醒按钮（延后15分钟）；单测 15 项全通，Toast 测试 27 项全通，Release 构建成功，全量 2094 项测试全通 | `test/windows_protocol_service_test.dart` (15 项), `test/windows_toast_test.dart` (27 项) |
 | 26 | 桌面文案与 i18n 硬编码清理（W3/P5） | 通过：托盘菜单（显示窗口/退出）与 Windows Toast 动作按钮（完成/15分钟后）全面接入 AppLocalizations；支持中、英、日三语动态切换即时更新；单测 3 项全通，协议多语言测试通过，全量 2097 项全通 | `test/tray_menu_test.dart` (3 项), `test/windows_protocol_service_test.dart` |
+| 27 | CI 增加 Windows 测试作业与版本一致性（W5/P6） | 通过：GitHub Actions 新增 `quality-windows` 作业，全流程覆盖 Flutter 3.44.9 setup、--enforce-lockfile、analyze、全量 Windows 测试与跳过用例 POSIX 审查；编写 `check_flutter_version.py` 与 `report_windows_skipped_tests.py`，单测 2 项全通 | `scripts/check_flutter_version.py`, `scripts/report_windows_skipped_tests.py`, `test_windows_ci_tooling.py` (2 项) |
 
 未在本轮取得证据：真实麦克风听感、系统通知中心点击、跨日与休眠。
 

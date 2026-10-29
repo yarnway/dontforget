@@ -38,6 +38,31 @@ jobs:
       - run: flutter test --no-pub --reporter expanded
       - run: python -m unittest discover -s scripts/tests -v
 
+  quality-windows:
+    name: Windows analyze and test
+    runs-on: windows-2022
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: Verify Flutter version baseline
+        run: python scripts/check_flutter_version.py
+      - name: Install dependencies with strict lockfile
+        run: flutter pub get --enforce-lockfile
+      - name: Run static analysis
+        run: flutter analyze --no-pub
+      - name: Run full Windows test suite
+        run: flutter test --no-pub --reporter expanded
+      - name: Inventory and verify Windows skipped test rationales
+        run: python scripts/report_windows_skipped_tests.py
+
   build:
     name: Build ${{ matrix.platform }} candidate
     needs: quality

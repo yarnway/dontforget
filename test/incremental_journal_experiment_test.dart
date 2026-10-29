@@ -192,7 +192,9 @@ void main() {
         FileSystemEntityType.link,
       );
     },
-    skip: Platform.isWindows,
+    skip: Platform.isWindows
+        ? 'Creating symlinks requires host privileges'
+        : false,
   );
 
   test(
@@ -210,7 +212,9 @@ void main() {
       expect(await target.readAsString(), 'unchanged');
       expect(log.snapshot, isNull);
     },
-    skip: Platform.isWindows,
+    skip: Platform.isWindows
+        ? 'Creating symlinks requires host privileges'
+        : false,
   );
 
   test(
@@ -227,7 +231,9 @@ void main() {
       );
       expect(await File('${dir.path}/current.json').readAsBytes(), before);
     },
-    skip: Platform.isWindows,
+    skip: Platform.isWindows
+        ? 'Creating symlinks requires host privileges'
+        : false,
   );
 
   test('replay and checkpoint retain pending intent and native ID', () async {

@@ -217,7 +217,9 @@ void main() {
       await expectLater(session!.collect(), throwsFormatException);
       expect(await target.readAsString(), 'keep');
     },
-    skip: Platform.isWindows,
+    skip: Platform.isWindows
+        ? 'Creating symlinks requires host privileges'
+        : false,
   );
 
   test('segment capacity rotates without changing identity', () async {

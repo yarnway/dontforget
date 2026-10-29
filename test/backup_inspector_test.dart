@@ -755,7 +755,9 @@ void main() {
         throwsA(error(BackupInspectionError.unsafeSource)),
       );
     },
-    skip: Platform.isWindows,
+    skip: Platform.isWindows
+        ? 'Creating directory symlinks requires host privileges'
+        : false,
   );
   test(
     'macOS system temp aliases are checked through their canonical parent',
