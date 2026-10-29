@@ -256,6 +256,7 @@ class _MyAppState extends ConsumerState<MyApp>
         return;
       }
       await _notifications.setNotificationLanguage(ref.read(settingsProvider).language);
+      if (_isDesktop) unawaited(_updateTrayMenu());
     } catch (_) {
       // Existing journal/repair readback reports any failed native reschedule.
     }
@@ -613,16 +614,27 @@ class _MyAppState extends ConsumerState<MyApp>
       );
       // The Linux tray backend does not implement tooltips.
       if (!Platform.isLinux) await trayManager.setToolTip("DontForget");
-      Menu menu = Menu(
+      await _updateTrayMenu();
+    } catch (e) {
+      debugPrint('Tray initialization error: $e');
+    }
+  }
+
+  Future<void> _updateTrayMenu() async {
+    if (!_isDesktop) return;
+    try {
+      final language = ref.read(settingsProvider).language;
+      final l10n = AppLocalizations(Locale(language));
+      final menu = Menu(
         items: [
-          MenuItem(key: 'show_window', label: '显示应用'),
+          MenuItem(key: 'show_window', label: l10n.get('trayShowWindow')),
           MenuItem.separator(),
-          MenuItem(key: 'exit_app', label: '退出'),
+          MenuItem(key: 'exit_app', label: l10n.get('trayExitApp')),
         ],
       );
       await trayManager.setContextMenu(menu);
     } catch (e) {
-      debugPrint('Tray initialization error: $e');
+      debugPrint('Tray menu update error: $e');
     }
   }
 

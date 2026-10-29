@@ -98,7 +98,7 @@ class WindowsToast {
     if (hasActions) {
       buffer.writeln("\$actions = \$template.CreateElement('actions')");
       if (completeActionUri != null && completeActionUri.isNotEmpty) {
-        final safeCompleteTitle = _escape(completeActionTitle ?? '完成');
+        final safeCompleteTitle = _escape(completeActionTitle ?? 'Complete');
         final safeCompleteUri = _escape(completeActionUri);
         buffer
           ..writeln("\$a0 = \$template.CreateElement('action')")
@@ -108,7 +108,7 @@ class WindowsToast {
           ..writeln("\$actions.AppendChild(\$a0) > \$null");
       }
       if (snoozeActionUri != null && snoozeActionUri.isNotEmpty) {
-        final safeSnoozeTitle = _escape(snoozeActionTitle ?? '延后 15 分钟');
+        final safeSnoozeTitle = _escape(snoozeActionTitle ?? 'Snooze 15m');
         final safeSnoozeUri = _escape(snoozeActionUri);
         buffer
           ..writeln("\$a1 = \$template.CreateElement('action')")

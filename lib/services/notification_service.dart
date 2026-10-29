@@ -1151,15 +1151,23 @@ class NotificationService {
       final completeUri = 'dontforget://action/complete?id=${reminder.id}';
       final snoozeUri =
           'dontforget://action/snooze?id=${reminder.id}&minutes=15';
+      final completeTitle = NotificationActionPresentation.title(
+        'complete',
+        _notificationLanguage,
+      );
+      final snoozeTitle = NotificationActionPresentation.title(
+        'snooze_15',
+        _notificationLanguage,
+      );
       if (windowsToastHandler != null) {
         await windowsToastHandler!(
           reminder.taskTitle,
           reminder.notificationSummary ?? '',
           playSound: reminder.quadrantLevel <= 2,
           launchUri: launchUri,
-          completeActionTitle: '完成',
+          completeActionTitle: completeTitle,
           completeActionUri: completeUri,
-          snoozeActionTitle: '延后 15 分钟',
+          snoozeActionTitle: snoozeTitle,
           snoozeActionUri: snoozeUri,
         );
       } else {
@@ -1168,9 +1176,9 @@ class NotificationService {
           reminder.notificationSummary ?? '',
           playSound: reminder.quadrantLevel <= 2,
           launchUri: launchUri,
-          completeActionTitle: '完成',
+          completeActionTitle: completeTitle,
           completeActionUri: completeUri,
-          snoozeActionTitle: '延后 15 分钟',
+          snoozeActionTitle: snoozeTitle,
           snoozeActionUri: snoozeUri,
         );
       }

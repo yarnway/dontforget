@@ -176,7 +176,7 @@ void main() {
   });
 
   group('NotificationService fireReminderNow Windows protocol wiring', () {
-    test('passes protocol URIs and action buttons to windowsToastHandler', () async {
+    test('passes localized protocol action titles based on notification language', () async {
       final service = NotificationService();
       String? capturedLaunchUri;
       String? capturedCompleteTitle;
@@ -209,12 +209,13 @@ void main() {
         triggerTime: DateTime.now(),
       );
 
+      // 1. Default (en)
       await service.fireReminderNow(reminder);
 
       expect(capturedLaunchUri, 'dontforget://task/toast-task-123');
-      expect(capturedCompleteTitle, '完成');
+      expect(capturedCompleteTitle, 'Complete this occurrence');
       expect(capturedCompleteUri, 'dontforget://action/complete?id=toast-task-123');
-      expect(capturedSnoozeTitle, '延后 15 分钟');
+      expect(capturedSnoozeTitle, 'In 15 minutes');
       expect(capturedSnoozeUri, 'dontforget://action/snooze?id=toast-task-123&minutes=15');
 
       final launchRoute = ProtocolRoute.tryParse(capturedLaunchUri);
@@ -229,6 +230,18 @@ void main() {
       expect(snoozeRoute?.action, ProtocolAction.snoozeTask);
       expect(snoozeRoute?.taskId, 'toast-task-123');
       expect(snoozeRoute?.snoozeMinutes, 15);
+
+      // 2. Chinese (zh)
+      await service.setNotificationLanguage('zh');
+      await service.fireReminderNow(reminder);
+      expect(capturedCompleteTitle, '完成本次提醒');
+      expect(capturedSnoozeTitle, '15分钟后');
+
+      // 3. Japanese (ja)
+      await service.setNotificationLanguage('ja');
+      await service.fireReminderNow(reminder);
+      expect(capturedCompleteTitle, '今回の通知を完了');
+      expect(capturedSnoozeTitle, '15分後');
     });
   });
 }

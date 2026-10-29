@@ -867,6 +867,8 @@ class AppLocalizations {
       'linkedTaskUnavailable': 'Task deleted or unavailable',
       'removeTaskLink': 'Remove link: {task}',
       'viewInGraph': 'View in Graph',
+      'trayShowWindow': 'Show window',
+      'trayExitApp': 'Exit',
     },
     'zh': {
       'notificationActionComplete': '完成本次提醒',
@@ -1578,6 +1580,8 @@ class AppLocalizations {
       'linkedTaskUnavailable': '事项已删除或不可用',
       'removeTaskLink': '解除关联：{task}',
       'viewInGraph': '在图谱中定位',
+      'trayShowWindow': '显示窗口',
+      'trayExitApp': '退出',
     },
     'ja': {
       'notificationActionComplete': '今回の通知を完了',
@@ -2323,6 +2327,8 @@ class AppLocalizations {
       'linkedTaskUnavailable': '削除済み、または利用できないタスク',
       'removeTaskLink': '関連を解除：{task}',
       'viewInGraph': 'グラフで表示',
+      'trayShowWindow': 'ウィンドウを表示',
+      'trayExitApp': '終了',
     },
   };
 
