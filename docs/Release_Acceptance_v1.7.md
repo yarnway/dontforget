@@ -115,3 +115,12 @@ rc.37 的七项 CI 最初生成过 21 附件草稿，但发布时该草稿已不
 
 
 修复后冻结 `623c525` 补充：macOS release 61.8 MB、签名校验通过，1740 项全量 Flutter（61 秒）与全源码 analyze 0 issues；唯一身份候选已准备但未启动。客户端应用控制仍受阻，通知动作/冷启动/三语等原生项保持开放。共享 UI 轮换采用 [限时轮换提案](Native_Acceptance_Rotation.md)，当前未确认任何预约，不自动按预计时间转移 ownership。
+
+### 2026-10-29 Windows 深度适配与生产就绪验收补充
+
+Windows 平台完成深度适配与全量自动化验收闭环：
+- **原生构建与安装包产物**：升级 VS 2022 Build Tools (MSVC 14.44 + ATL) 解决 C++20 协程依赖；Debug 与 Release 构建顺利通过；Inno Setup 6 打包产出 `dist/DontForget_Setup_v1.7.0.exe` (14.08 MB) 与绿色便携包 `dist/DontForget_Windows_Portable_v1.7.0.zip` (17.10 MB)；通过 `/VERYSILENT` 静默安装（51 项文件完备）与卸载（残留零残留）实测。
+- **28 项原生验收矩阵全部闭环**：涵盖应用内与系统 Toast 到期提醒、单实例互斥唤醒（`WM_COPYDATA`）、WinRT Toast 原生 protocol 激活与完成/延后动作、托盘菜单与 Toast 动作中英日动态本地化、优雅退出关库保护、窗口位置跨会话记忆与多屏越界回退、72 小时错过的提醒启动聚合、ADTS AAC 录音时长精准计算与 250ms 防抖保护、生产 Bundle ID `com.yarnway.dontforget` 统一与历史数据全自动原子平滑迁移。
+- **全量测试与静态分析**：Windows 本地全量运行 `flutter test --no-pub` 达到 **2103 项全部通过（20 项 POSIX 平台约束规范化标记跳过，0 失败）**；静态分析 `flutter analyze --no-pub` 保持 **0 issues**。CI 新增 `quality-windows` 自动化守护流水线与版本基线校验。
+- **文档与依据**：详见 [Windows 适配与真机验收记录](Windows_Acceptance_2026-10-29.md)。
+

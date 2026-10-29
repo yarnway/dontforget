@@ -4,6 +4,25 @@
 
 ---
 
+## Windows 深度适配与桌面端生产就绪 / 1.7.0+45 - 2026-10-29
+
+- **生产身份统一与数据平滑迁移**：全平台（Windows, macOS, iOS, Linux, Inno Setup）统一生产 Bundle ID 与发布者为 `com.yarnway.dontforget` / `Yarnway`。新增 `DatabaseLocationMigrator`，在 Windows 启动时自动探测候选旧目录（`%APPDATA%\com.example\DontForget\databases` 等），执行原子化复制（`.tmp` + rename）并校验主库与 sidecar（WAL/shm/epoch/journal），迁移失败自动安全降级回退旧目录，确保零数据丢失；媒体目录继续保留在 `%USERPROFILE%\Documents\media` 避免历史断链。
+- **WinRT Toast 协议激活与原生动作**：Windows Toast 采用原生 `activationType="protocol"` 与 `<actions>` 按钮；免管理员提权注册 `HKCU\Software\Classes\dontforget` 自定义协议；支持冷启动与单实例 `WM_COPYDATA` (0x4446) 跨进程激活已运行窗口，支持通知中心点击进入事项详情、直接完成任务以及延后 15 分钟提醒。
+- **启动聚合“错过的提醒”**：针对 Windows 桌面无系统排程的特性，进程启动时自动扫描 72 小时内、未完成、未确认的逾期提醒，聚合成顶部横幅条（`MissedRemindersBar`），避免唤醒时大量弹出 Toast 刷屏；支持一键筛选错过事项及“全部知道了”已读标记写盘（零 schema 变更），重启不再出现。
+- **窗口位置、尺寸与最大化持久化**：桌面窗口状态在退出前与尺寸变化时防抖写入 `Settings` 表（`workspace_drafts_json`）；启动时读取恢复，并在多显示器拔出或分辨率变化越界时自动安全回退至主屏幕居中，杜绝“隐形窗口”。
+- **录音精准时长与 250ms 防抖保护**：新增 `RecordingDurationReader` 支持 ADTS AAC 裸流按帧头计算采样率与帧数估算精准时长；Windows 输出统一映射为 `.aac` 扩展名；严格执行 250ms 最短录音保护，过短碎片自动清理不入库，同时完美向下兼容历史 `.m4a` 录音文件播放。
+- **托盘菜单与 Toast 动作中英日动态本地化**：托盘右键菜单（“显示窗口”、“退出”）与 Toast 动作按钮文本全面接入 `AppLocalizations`；语言热切换时即时重构托盘原生菜单，彻底清理硬编码。
+- **托盘退出优雅关库与单实例守护**：托盘退出时先完整关闭 SQLite 数据库连接并释放锁，再销毁窗口退出；新增命名 Mutex 守护避免第二实例并发修改损坏数据库。
+- **CI 质量流水线与版本基线守护**：GitHub Actions 新增 `quality-windows` 自动化作业；编写 `scripts/check_flutter_version.py` 与 `scripts/report_windows_skipped_tests.py`，全量测试套件 2103 项全部通过（20 项非 Windows POSIX 特性规范化标记跳过），静态分析 0 issues。
+- **安装与打包全链路验证**：使用 Inno Setup 6 产出安装包（Setup.exe，14.08 MB）与绿色便携包（Portable.zip，17.10 MB），通过静默安装与卸载残留零残留验证。
+
+## 原生升级、安全流式备份与交互防抖 / 1.7.0+40~+44 - 2026-10-28
+
+- **流式加密备份与恢复（StreamingBackupService）**：引入基于 AES-256-GCM 与 Argon2id 的流式加密备份架构（`.dfbackup` 格式），支持任务数据、系统设置与多媒体附件本体一体化打包归档与跨设备加密恢复；具备帧校验、防重放、抗篡改与中间失败原子回退清理保障。
+- **凭据平台安全存储**：API Key 等敏感凭据接入 `CredentialRepository`，在支持的平台上使用硬件/操作系统安全存储（Windows DPAPI、macOS/iOS Keychain、Android KeyStore），与明文数据库隔离。
+- **录音交互与视觉避让优化**：底部录音圆弧手势提示组靠近释放动作区域，优化各释放状态共享行框，横屏及大字号自适应避让，隔离第二触点防止手势干扰。
+- **真机设备升级与数据完整性复验**：Mac 与 iPhone 完成 +43 同身份升级与重开验证，严格核验任务记录、媒体哈希及设置项前后逐字节一致；验证 QA40 软删除与系统通知队列精确读回清理。
+
 ## 事项附件与图片预览 / 1.7.0+39 - 2026-10-28
 
 - 提醒详情支持添加图片和文件，保留原始输入；图片缩略图可打开缩放预览，文件可保存副本，移除后可撤销。每事项最多 12 个新增附件、每个 32 MiB，附加资料不会自动发给 AI。

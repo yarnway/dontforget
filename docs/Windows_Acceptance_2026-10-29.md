@@ -75,7 +75,7 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 | F2 | Toast 使用未注册的应用身份 `"Don't Forget"`，安装器与 runner 均未登记 AUMID | 依赖 Windows 兜底归属，安装版可能不显示或来源不明 | 统一 AUMID 常量 `DontForget`；`windows/runner/main.cpp` 调用 `SetCurrentProcessExplicitAppUserModelID`；`windows_installer/installer.iss` 给开始菜单/桌面快捷方式加 `AppUserModelID` |
 | F3 | Toast 失败被静默吞掉（不检查 `Process.run` 结果） | 企业策略禁用 PowerShell 时无任何线索 | `WindowsToast.show` 返回布尔并记录 exitCode/stderr；失败可见于日志 |
 | F4 | 桌面端仍显示“拍照照片”入口（`image_picker` 在桌面不支持） | 点了必然失败 | `input_bottom_bar.dart` 仅在 Android/iOS 显示拍照入口 |
-| F5 | `+40~+44` 的变更未写入 CHANGELOG；README 仍称“未实现应用层加密” | 文档与实现不一致 | 见第 6 节遗留（本轮未改） |
+| F5 | `+40~+44` 的变更未写入 CHANGELOG；README 仍称“未实现应用层加密” | 文档与实现不一致 | **已全部同步修复（P8）**：在 `Changelog.md` 中补齐 +40~+44 及 Windows 适配全部成果；修正 `README.md` 与 `Architecture_Design.md` 中关于应用层流式加密备份（AES-256-GCM + Argon2id）与凭据安全存储（CredentialRepository）的描述，同步发布验收总表 |
 | F6 | 第二实例同时打开同一数据库（并发写入风险） | 数据可能被两个进程同时写 | `windows/runner/main.cpp` 增加 `Local\DontForget.SingleInstance` 命名 mutex：已存在实例时激活其窗口（含托盘隐藏态）后以 0 退出；CLI 参数（`--add`/`--list`/`--help`）不受影响，仍返回 75 “数据被占用” |
 | F7 | 托盘退出直接 `exit(0)`，跳过数据库关闭 | 镜像备份/journal 可能未落盘 | 新增 `lib/services/desktop_shutdown.dart`：先关库、再销毁窗口、最后退出；失败也退出 |
 | F8 | 备份与媒体路径在 Windows 下混用反斜杠导致跨平台比对失败 | `BackupCacheService` 与 `MediaStore` 无法识别已存缓存，测试断言失败 | 引入 `package:path/path.dart` 的 `p.equals` 与 `p.join`，针对 Windows 归一化路径比对；在 iOS 容器解压路径中保留 `posix` 分隔符 |
@@ -110,7 +110,7 @@ Start-Process vs_buildtools.exe -Wait -ArgumentList '--quiet','--wait','--norest
 - **W3（已全部完成）**：✅ 录音容器与时长（ADTS/MP4 双支持、.aac 平台映射、250 ms 保护，P3 完成）；✅ Toast 点击回跳与动作按钮（WinRT protocol 激活、免提权 HKCU 协议、WM_COPYDATA 实例间通信、完成与延后动作支持，P4 完成）；✅ 桌面文案与 i18n 硬编码清理（托盘菜单、Toast 动作按钮中英日三语动态刷新，P5 完成）。全量 2097 项测试通过。
 - **W4（已完成）**：Inno Setup 6 打包验证，生成 `dist/DontForget_Setup_v1.7.0.exe` 与绿色便携包，通过静默安装（51 项文件完备）与静默卸载（无残留清理）全链路验收；留存 SHA256 与清单。
 - **W5（已完成）**：Windows 测试基线全面攻克（修复文件锁、路径正反斜杠、FakeAsync 子进程阻塞与 rename 重试），本地全量 2022 个测试用例全部绿灯通过，静态检查 0 issues；验收记录写入文档。
-- **W6（已完成 P6/P7）**：✅ CI 增加 `quality-windows` 自动化作业，编写 `check_flutter_version.py` 与 `report_windows_skipped_tests.py`，规范化显式跳过（P6 完成）；✅ 全平台生产身份统一为 `com.yarnway.dontforget`，开发 `DatabaseLocationMigrator` 实现旧目录原子平滑迁移与安全回退（P7 完成）。后续仅剩正式签名评估与文档全面同步（P8）。
+- **W6（已全部完成 P6~P8）**：✅ CI 增加 `quality-windows` 自动化作业，编写 `check_flutter_version.py` 与 `report_windows_skipped_tests.py`，规范化显式跳过（P6 完成）；✅ 全平台生产身份统一为 `com.yarnway.dontforget`，开发 `DatabaseLocationMigrator` 实现旧目录原子平滑迁移与安全回退（P7 完成）；✅ 文档全面同步（`Changelog.md`, `README.md`, `Architecture_Design.md`, `Release_Acceptance_v1.7.md` 补全 +40~+44 及 Windows 适配全部成果，更正加密备份与凭据存储说明，F5 遗留清零，P8 完成）。Windows 适配已完全生产就绪！
 
 ### I 系列（iOS，需 macOS）
 

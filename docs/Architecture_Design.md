@@ -78,9 +78,10 @@ DontForget 采用现代清晰的分层架构（Clean Architecture）结合响应
 - **`NotificationService`**：
   - 封装桌面与移动端本地通知，支持分类通知渠道（High/Urgent 强提醒，General 常规提醒）。
   - 结合 `timezone` 库实现精准跨时区绝对时间调度。
-- **`AudioService` & `FmediaEngine`**：
-  - 录音使用跨平台统一插件 `record`。
-  - Windows 端针对系统老旧版本（Windows 7/8/10 无内置编解码器）的问题，内嵌轻量级绿色免安装的 `fmedia` 原生音频引擎，保障在任何 Windows 环境下均可无损播放音频。
+- **`AudioService` & 音频引擎**：
+  - 录音使用跨平台统一组件 `record`。Windows 端生成规范 `.aac` 音频，iOS/Android/macOS 生成 `.m4a`。
+  - 采用 `RecordingDurationReader` 支持 ADTS AAC 裸流与 MP4 容器双模式解析，基于帧头计算采样率与帧数获得精准时长。
+  - 严格实施 250ms 最短录音保护，杜绝碎片空音频落盘，历史录音完全向下兼容。
 
 ### 2.4 数据持久层 (Data Layer)
 - **本地绝对隐私原则**：
@@ -99,8 +100,7 @@ DontForget 采用现代清晰的分层架构（Clean Architecture）结合响应
 
 | 操作系统 | 架构 | 特殊适配措施 |
 |---|---|---|
-| **Windows 10 / 11** | x64 | 原生 64 位构建，支持现代毛玻璃亚克力与桌面右下角系统托盘集成 |
-| **Windows 7 / 8 / 8.1** | x64 | **100% 免运行库直启**：构建流程自动内嵌 VC++ 2015-2022 CRT（`vcruntime140.dll`, `msvcp140.dll` 等）与 DirectX `d3dcompiler_47.dll`，杜绝缺少 dll 报错 |
+| **Windows 10 / 11** | x64 | 现代 MSVC (VS 2022 C++20 + ATL) 原生编译构建，支持 WinRT Toast 原生动作与免提权协议唤醒、托盘动态多语言与优雅退出、单实例守护、窗口记忆与旧版数据原子迁移；提供 Inno Setup 安装包与绿色便携包 |
 | **macOS** | Universal | 支持 macOS 原生 MenuBar 与暗黑模式切换 |
 | **Linux (Ubuntu)** | x64 | GTK 3.0 前端适配，遵循 XDG 桌面规范与桌面本地通知 |
 | **Android & iOS** | ARM64 / ARMv7 | 触摸手势优化、移动端通知权限申请与麦克风/相册权限按需申请 |
@@ -110,13 +110,15 @@ DontForget 采用现代清晰的分层架构（Clean Architecture）结合响应
 ## 4. 安全与性能指标
 
 1. **凭据安全**：
-   - 用户填写的 API Key 仅保存在本地 SQLite 数据库中，所有 HTTP 通信直接从客户端发送至对应模型服务商，无中间代理或中继服务器。
-2. **渲染性能**：
+   - 敏感凭据（如 API Key）由 `CredentialRepository` 托管，优先使用平台安全存储（Windows DPAPI、macOS/iOS Keychain、Android KeyStore），与明文业务库解耦。
+2. **端到端加密流式备份**：
+   - 引入 `StreamingBackupService`，采用 **AES-256-GCM** 配合 **Argon2id** 密钥派生函数对全量数据及多媒体附件本体进行流式分块打包加密（`.dfbackup` 格式），具备防重放、抗篡改与原子安全恢复。
+3. **渲染性能**：
    - 3D 光粒子全息系统采用独立的 `RepaintBoundary` 分离重绘区域。
    - 粒子连线与脉冲计算采用 $O(N)$ 临近局部检索算法，在常规桌面集成显卡上均能稳定跑满 60 FPS，CPU 占用率低于 2%。
-3. **打包体积控制**：
-   - 独立安装包（Setup.exe）体积压缩至仅约 **16.3 MB**。
-   - 绿色便携包（Portable.zip）体积仅约 **20.1 MB**（已包含全部系统兼容 DLL 与音频引擎）。
+4. **打包体积控制**：
+   - 独立安装包（Setup.exe）体积约 **14.08 MB**。
+   - 绿色便携包（Portable.zip）体积约 **17.10 MB**（已包含系统依赖与完整运行时）。
 
 
 ## v1.5.2 一致性与渲染更新
@@ -148,3 +150,29 @@ DontForget 采用现代清晰的分层架构（Clean Architecture）结合响应
 提交边界先于候选通知启用：`committed` journal 写入前失败回退旧库；写入后通知重建/归档失败保留新库与提交记录，门禁保持关闭，重启继续提交决定。外部通知已可能生效，因此该阶段不再回退到旧库。
 
 验证：静态分析无问题，326 项 Flutter 回归与 10 项脚本测试通过，其中本轮新增 91 项。当前证据来自临时数据库、loopback 和受控通知/故障注入。过程边界的中断与重启测试不证明突然断电时目录 fsync 的持久性；真实用户库替换和真机通知重建未验收，录音播放按用户要求跳过。阶段和验收边界见 [v1.6 迭代记录](Iteration_v1.6.md)。
+
+## v1.7 桌面端与端侧安全架构演进（当前实现）
+
+### 1. 桌面端（Windows）架构深度适配
+- **WinRT Toast 协议激活与原生动作**：
+  - Windows Toast 采用原生 `activationType="protocol"` 与 `<actions>` 结构，免管理员提权注册 `HKCU\Software\Classes\dontforget` 协议；
+  - 冷启动通过 entrypoint 命令行参数分发 `initialProtocolRoute`；
+  - 运行时通过命名互斥体唤醒并经由 `WM_COPYDATA` (0x4446) 跨进程通信投递至已运行实例，驱动 Flutter MethodChannel 进行任务查看、完成及延后操作。
+- **单实例互斥与优雅退出**：
+  - Windows 原生层增加 `Local\DontForget.SingleInstance` 命名 Mutex，已有进程时激活窗口并立即退出，杜绝多实例并发写库风险；
+  - 托盘右键退出接入 `DesktopShutdown`，遵循“先关库、再销毁窗口、最后退出”的严格生命周期。
+- **状态持久化与响应式容错**：
+  - 窗口尺寸、位置与最大化状态防抖持久化至 `Settings` 表，启动自动读取并针对多屏拔出/分辨率变更进行虚拟桌面边界检测，越界自动居中回退；
+  - 启动阶段自动聚合 72 小时内可提醒的逾期事项为 `MissedRemindersBar`，提供一键知晓已读落盘。
+- **生产身份与平滑数据迁移**：
+  - 全平台统一应用标识为 `com.yarnway.dontforget`；
+  - Windows 侧开发 `DatabaseLocationMigrator`，在启动时自动探测候选旧数据路径（如 `%APPDATA%\com.example\DontForget\databases`），通过原子重命名完成主库及 WAL/shm/epoch/journal 完整迁移，异常时安全回退旧路径。
+
+### 2. 端侧安全架构
+- **流式加密备份（StreamingBackupService）**：
+  - 格式版本升级为支持带密码端到端加密的 `.dfbackup` 容器；
+  - 采用 **Argon2id** 进行高强度密钥派生（包含防降级参数校验），核心载荷与媒体文件采用 **AES-256-GCM** 分帧加密传输；
+  - 恢复时严格校验帧序号与认证标签，防止重放与篡改，并在恢复中断时原子清理临时解密数据。
+- **凭据分级存储（CredentialRepository）**：
+  - 平台原生安全存储（DPAPI / Keychain / KeyStore）与普通 SQLite 数据库完全物理隔离。
+
