@@ -12,6 +12,7 @@ import 'services/recovery/storage_bootstrap.dart';
 import 'ui/screens/storage_unavailable_screen.dart';
 import 'app.dart';
 import 'services/startup_trace.dart';
+import 'services/desktop_window_service.dart';
 
 void _writeCrashLog(dynamic error, StackTrace? stack) {
   try {
@@ -158,25 +159,11 @@ void main(List<String> args) async {
       };
 
       // Initialize window manager safely on desktop platforms
-      if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      final isDesktop =
+          Platform.isWindows || Platform.isLinux || Platform.isMacOS;
+      if (isDesktop) {
         try {
           await windowManager.ensureInitialized();
-          const windowOptions = WindowOptions(
-            size: Size(1000, 700),
-            center: true,
-            title: "DontForget",
-          );
-          windowManager.waitUntilReadyToShow(windowOptions, () async {
-            try {
-              await windowManager.show();
-              await windowManager.focus();
-              StartupTrace.mark('window_shown');
-              // Prevent default close so we can hide to tray instead
-              await windowManager.setPreventClose(true);
-            } catch (e, st) {
-              _writeCrashLog('windowManager show error: $e', st);
-            }
-          });
         } catch (e, st) {
           _writeCrashLog('windowManager ensureInitialized error: $e', st);
         }
@@ -191,8 +178,23 @@ void main(List<String> args) async {
         }
         await StorageBootstrap(helper).prepare();
         StartupTrace.mark('storage_ready');
+
+        if (isDesktop) {
+          try {
+            await DesktopWindowService.restoreWindow(helper);
+          } catch (e, st) {
+            _writeCrashLog('restoreWindow error: $e', st);
+          }
+        }
       } catch (error) {
         StartupTrace.fail('storage');
+        if (isDesktop) {
+          try {
+            await DesktopWindowService.showDefaultFallbackWindow();
+          } catch (e, st) {
+            _writeCrashLog('showDefaultFallbackWindow error: $e', st);
+          }
+        }
         runApp(
           StorageUnavailableScreen(
             busy:

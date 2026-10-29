@@ -21,6 +21,7 @@ import 'services/live_reminder_service.dart';
 import 'models/notification_payload.dart';
 import 'services/notification_service.dart';
 import 'services/desktop_shutdown.dart';
+import 'services/desktop_window_service.dart';
 import 'services/startup_trace.dart';
 import 'services/mac_menu_commands.dart';
 import 'services/recovery/runtime_gate.dart';
@@ -566,6 +567,7 @@ class _MyAppState extends ConsumerState<MyApp>
     if (_isDesktop) {
       windowManager.removeListener(this);
       trayManager.removeListener(this);
+      unawaited(DesktopWindowService.flush(DatabaseHelper.instance));
     }
     super.dispose();
   }
@@ -576,11 +578,60 @@ class _MyAppState extends ConsumerState<MyApp>
     if (!_isDesktop) return;
     if (ref.read(recoveryCoordinatorProvider).state.working) return;
     try {
+      await DesktopWindowService.flush(DatabaseHelper.instance);
       // Hide window instead of closing
       bool isPreventClose = await windowManager.isPreventClose();
       if (isPreventClose) {
         windowManager.hide();
       }
+    } catch (_) {}
+  }
+
+  @override
+  void onWindowMoved() {
+    if (!_isDesktop) return;
+    _handleWindowBoundsChanged();
+  }
+
+  @override
+  void onWindowResized() {
+    if (!_isDesktop) return;
+    _handleWindowBoundsChanged();
+  }
+
+  @override
+  void onWindowMaximize() {
+    if (!_isDesktop) return;
+    _handleWindowMaximizeChanged(true);
+  }
+
+  @override
+  void onWindowUnmaximize() {
+    if (!_isDesktop) return;
+    _handleWindowMaximizeChanged(false);
+  }
+
+  void _handleWindowBoundsChanged() {
+    try {
+      windowManager.isMaximized().then((isMax) {
+        if (!isMax) {
+          windowManager.getBounds().then((bounds) {
+            DesktopWindowService.recordBoundsChanged(
+              dbHelper: DatabaseHelper.instance,
+              bounds: bounds,
+            );
+          }).catchError((Object _) {});
+        }
+      }).catchError((Object _) {});
+    } catch (_) {}
+  }
+
+  void _handleWindowMaximizeChanged(bool isMaximized) {
+    try {
+      DesktopWindowService.recordMaximizeChanged(
+        dbHelper: DatabaseHelper.instance,
+        isMaximized: isMaximized,
+      );
     } catch (_) {}
   }
 
@@ -629,6 +680,7 @@ class _MyAppState extends ConsumerState<MyApp>
   /// exit cannot leave a half-written store behind (the previous `exit(0)`
   /// skipped this).
   Future<void> _closeStorageAndExit() => shutdownDesktopApp(
+    saveState: () => DesktopWindowService.flush(DatabaseHelper.instance),
     closeStorage: () => DatabaseHelper.instance.close(),
     destroyWindow: () => windowManager.destroy(),
     exitProcess: exit,

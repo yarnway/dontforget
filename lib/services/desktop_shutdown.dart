@@ -8,11 +8,19 @@
 typedef AsyncVoid = Future<void> Function();
 
 Future<void> shutdownDesktopApp({
+  AsyncVoid? saveState,
   required AsyncVoid closeStorage,
   required AsyncVoid destroyWindow,
   required void Function(int code) exitProcess,
   void Function(Object error, StackTrace stack)? onError,
 }) async {
+  if (saveState != null) {
+    try {
+      await saveState();
+    } catch (error, stack) {
+      onError?.call(error, stack);
+    }
+  }
   try {
     await closeStorage();
   } catch (error, stack) {
