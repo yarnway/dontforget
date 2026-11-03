@@ -93,7 +93,11 @@ void main() {
     final db = await databaseFactoryFfi.openDatabase(file.path);
     try {
       var sql = await fixture(shape);
-      if (changeSchema != null) sql = changeSchema(sql);
+      if (changeSchema != null) {
+        final changed = changeSchema(sql);
+        expect(changed, isNot(sql), reason: 'Schema fixture mutation must apply');
+        sql = changed;
+      }
       sql = sql.split('\n').where((line) => !line.startsWith('--')).join('\n');
       for (final statement in sql.split(';')) {
         if (statement.trim().isNotEmpty) await db.execute(statement);
@@ -272,7 +276,7 @@ void main() {
             empty: true,
             changeSchema: (sql) => switch (mutation) {
               'missing' => sql.replaceFirst(
-                '  capture_proposal_json TEXT,\n',
+                RegExp(r'  capture_proposal_json TEXT,\r?\n'),
                 '',
               ),
               'hybrid' => sql.replaceFirst(

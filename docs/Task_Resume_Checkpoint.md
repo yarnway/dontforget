@@ -1,5 +1,11 @@
 # 手动续行检查点
 
+## 2026-11-03 +49 通知动作及 Linux CI
+
+- Pixel +49 热正文、后台完成、周期跳过与两档延后按钮通过；清理后旧数据及原音频保持。详见 [实机数据](benchmarks/android-notification-actions-49-2026-11-03.json)。
+- CI run 41603768413 Linux 2项Windows通知测试失败，测试注入分支已修正，Windows CI另有2项因CRLF测试夹具未修改而失败，已修正；隔离CRLF专项54通过，最终本机专项64通过、分析0。两平台 CI 均待复验。
+
+
 ## 2026-11-03 Android +49 冷通知
 
 - Pixel 隔离debug +49 系统通知冷正文与终止后完成动作通过；两条夹具软删除，原23条、设置与音频保持，强停前队列0。[验收数据](benchmarks/android-cold-notification-49-2026-11-03.json)。GitHub Actions run 41603032275 最近查询仍在进行。

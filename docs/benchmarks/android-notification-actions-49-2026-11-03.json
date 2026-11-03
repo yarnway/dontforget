@@ -1,0 +1,69 @@
+{
+  "version": "1.7.0+49",
+  "matrix": {
+    "warm": {
+      "same_pid": true,
+      "system_notification_body_opens_correct_detail": true,
+      "view_does_not_acknowledge": true,
+      "single_back_leaves_detail": true,
+      "promotion_fields_changed_on_due_time": true
+    },
+    "complete": {
+      "system_notification_complete_tapped_from_background": true,
+      "completion_after_reopen": true,
+      "revision_one_history_one": true,
+      "queue_empty": true
+    },
+    "skip": {
+      "system_notification_skip_tapped": true,
+      "same_pid": true,
+      "next_occurrence_exactly_one_day": true,
+      "revision_one_history_one": true
+    },
+    "cleanup": {
+      "synthetic_tasks_product_deleted": 3,
+      "original_twenty_five_rows_unchanged": true,
+      "media_and_settings_unchanged": true,
+      "original_audio_sha256_unchanged": true,
+      "database_integrity": "ok",
+      "total_rows_including_trash": 28,
+      "qa_pending_alarms": 0,
+      "qa_active_notifications": 0,
+      "action_queue_empty": true,
+      "checked_before_force_stop": true,
+      "app_stopped": true
+    }
+  },
+  "snooze": {
+    "15": {
+      "system_notification_button_clicked": true,
+      "next_trigger_minutes": 15,
+      "one_history_and_revision": true,
+      "difference_from_history_seconds": 899.923849
+    },
+    "60": {
+      "system_notification_button_clicked": true,
+      "next_trigger_minutes": 60,
+      "one_history_and_revision": true,
+      "difference_from_history_seconds": 3599.92855
+    }
+  },
+  "snooze_cleanup": {
+    "synthetic_tasks_product_deleted": 2,
+    "original_twenty_eight_rows_unchanged": true,
+    "media_and_settings_unchanged": true,
+    "original_audio_sha256_unchanged": true,
+    "database_integrity": "ok",
+    "total_rows_including_trash": 30,
+    "qa_pending_alarms": 0,
+    "qa_active_notifications": 0,
+    "action_queue_empty": true,
+    "checked_before_force_stop": true,
+    "app_stopped": true
+  },
+  "notes": [
+    "Warm initial full-row comparison failed because due-time quadrant promotion changed three fields; completion state and revision then verified.",
+    "Snooze subsequent delivery was not tested.",
+    "Fixture names do not represent application build numbers."
+  ]
+}

@@ -1143,7 +1143,8 @@ class NotificationService {
 
     // Native notifications own the sound policy. Do not add another app sound
     // or steal keyboard focus when an occurrence arrives.
-    if (Platform.isWindows && (!_isTesting || windowsToastHandler != null)) {
+    if ((!_isTesting && Platform.isWindows) ||
+        (_isTesting && windowsToastHandler != null)) {
       // The desktop build has no scheduled OS channel, so the due occurrence is
       // shown from the running app. The body is only sent when it adds context
       // beyond the title; otherwise the single-line template is used.
