@@ -1,5 +1,10 @@
 # 手动续行检查点
 
+## 2026-11-03 Android +49 冷通知
+
+- Pixel 隔离debug +49 系统通知冷正文与终止后完成动作通过；两条夹具软删除，原23条、设置与音频保持，强停前队列0。[验收数据](benchmarks/android-cold-notification-49-2026-11-03.json)。GitHub Actions run 41603032275 最近查询仍在进行。
+
+
 ## 2026-11-03 +49 构建与 Pixel 升级
 
 - Windows +49 安装器／便携包构建、版本及37项包内容核验完成；安装／Toast实机待验。Pixel隔离debug +48→+49同签名升级，18文件与启动后三表、音频保持，队列清空。详见[构建数据](benchmarks/build-upgrade-49-2026-11-03.json)。
