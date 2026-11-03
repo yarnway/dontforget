@@ -1,5 +1,7 @@
 # v1.7 发布验收总表
 
+**当前状态（2026-11-03）**：工作区源码为 `1.7.0+48 / schema16`，当前包与Pixel媒体入口见[本轮验收](Native_Media_Routing_48_2026-11-03.md)；Windows `+47`包及Android QA同身份升级见[构建升级验收](Windows_Android_Build_47_2026-11-03.md)；新Windows动作与冻结Android `+46` 的系统通知实测见[本轮验收](Windows_Android_Validation_2026-11-03.md)；Android深链与Pixel验证见[阶段47验收](Android_Deep_Link_Acceptance_2026-11-02.md)。Windows `+45`验证包保留[阶段46验收](Stage46_Validation_2026-11-02.md)的独立归属；最近实施结论仍为[有条件通过](Gemini_Implementation_Acceptance_2026-10-29.md)，剩余工作见[阶段任务](Next_Steps_2026-11-02.md)。下面的+39、旧包及设备结果保留历史归属；安装矩阵及macOS／iOS门槛尚未全部闭合，稳定版未发布。
+
 本阶段已推送源码：**1.7.0+39 / schema 16** 新增事项附件与图片预览，集成回归 **1759 Flutter / 分析 0 issues**；原生选图、保存重开和通知点击仍待验。本轮源码 `a257502` 已推送，[CI 40631296338](https://github.com/yarnway/dontforget/actions/runs/40631296338) 六项成功、标签校验按条件跳过；Mac/iOS +39 私有验收包已核验但未启动/安装。设备在本机使用后镜像断开，QA40 合成项尚待原生软删除及独立读回；12:05:50 已明确归还共享 UI。详见[附件阶段完成及剩余清单](Task_Attachments_2026-10-28.md)。**不创建 RC，正式稳定版继续等待 macOS/iOS 门槛闭合。**
 
 前一阶段内部构建版本：**1.7.0+38 / schema 16**，纳入 `2de7682` 离线管理和 `9e297ce` 搜索／录音圆弧布局。对应产品源码的 1618 Flutter／126 Python／分析日志及 15 份原件摘要已独立核对；本轮另补通知留存回归，70 项专项、126 Python、分析通过。**不创建 RC 草稿，内部包仅留 CI；macOS 与 iOS 门槛闭合后再发布正式稳定版。稳定版尚未发布。**
@@ -118,9 +120,9 @@ rc.37 的七项 CI 最初生成过 21 附件草稿，但发布时该草稿已不
 
 ### 2026-10-29 Windows 深度适配与生产就绪验收补充
 
-Windows 平台完成深度适配与全量自动化验收闭环：
+以下为Windows历史实现与本地验证记录，覆盖范围以[逐项复核报告](Gemini_Implementation_Acceptance_2026-10-29.md)为准，不代表当前安装包或完整原生矩阵通过：
 - **原生构建与安装包产物**：升级 VS 2022 Build Tools (MSVC 14.44 + ATL) 解决 C++20 协程依赖；Debug 与 Release 构建顺利通过；Inno Setup 6 打包产出 `dist/DontForget_Setup_v1.7.0.exe` (14.08 MB) 与绿色便携包 `dist/DontForget_Windows_Portable_v1.7.0.zip` (17.10 MB)；通过 `/VERYSILENT` 静默安装（51 项文件完备）与卸载（残留零残留）实测。
-- **28 项原生验收矩阵全部闭环**：涵盖应用内与系统 Toast 到期提醒、单实例互斥唤醒（`WM_COPYDATA`）、WinRT Toast 原生 protocol 激活与完成/延后动作、托盘菜单与 Toast 动作中英日动态本地化、优雅退出关库保护、窗口位置跨会话记忆与多屏越界回退、72 小时错过的提醒启动聚合、ADTS AAC 录音时长精准计算与 250ms 防抖保护、生产 Bundle ID `com.yarnway.dontforget` 统一与历史数据全自动原子平滑迁移。
+- **原生验收部分通过**：迁移、窗口恢复、协议热／冷激活和Toast正文点击有运行证据；完成动作通过协议调用验证。Toast按钮真实点击、托盘三语视觉核对及新ADTS真实采集仍需独立补验；源码与单元测试能力不转记为这些场景的原生通过。
 - **全量测试与静态分析**：Windows 本地全量运行 `flutter test --no-pub` 达到 **2103 项全部通过（20 项 POSIX 平台约束规范化标记跳过，0 失败）**；静态分析 `flutter analyze --no-pub` 保持 **0 issues**。CI 新增 `quality-windows` 自动化守护流水线与版本基线校验。
 - **文档与依据**：详见 [Windows 适配与真机验收记录](Windows_Acceptance_2026-10-29.md)。
 

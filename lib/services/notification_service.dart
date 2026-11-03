@@ -1147,10 +1147,31 @@ class NotificationService {
       // The desktop build has no scheduled OS channel, so the due occurrence is
       // shown from the running app. The body is only sent when it adds context
       // beyond the title; otherwise the single-line template is used.
-      final launchUri = 'dontforget://task/${reminder.id}';
-      final completeUri = 'dontforget://action/complete?id=${reminder.id}';
-      final snoozeUri =
-          'dontforget://action/snooze?id=${reminder.id}&minutes=15';
+      final launchUri = Uri(
+        scheme: 'dontforget',
+        host: 'task',
+        pathSegments: [reminder.id],
+      ).toString();
+      String? completeUri;
+      String? snoozeUri;
+      if (reminder.canNotify && reminder.noticeAcknowledgedAt == null) {
+        final payload = NotificationPayload.forReminder(
+          reminder,
+          datasetEpoch: await _readDatasetEpoch(),
+        ).encode();
+        String actionUri(String action, {String? minutes}) => Uri(
+          scheme: 'dontforget',
+          host: 'action',
+          pathSegments: [action],
+          queryParameters: {
+            'id': reminder.id,
+            'payload': payload,
+            if (minutes != null) 'minutes': minutes,
+          },
+        ).toString();
+        completeUri = actionUri('complete');
+        snoozeUri = actionUri('snooze', minutes: '15');
+      }
       final completeTitle = NotificationActionPresentation.title(
         'complete',
         _notificationLanguage,

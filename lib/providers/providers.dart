@@ -111,6 +111,7 @@ final workspaceToolsCommandProvider = Provider(
 class WorkspaceToolsCommand {
   bool Function()? open;
   bool Function()? search;
+  void Function(String recordId)? playMedia;
 }
 
 final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>((

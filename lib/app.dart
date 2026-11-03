@@ -26,6 +26,7 @@ import 'services/startup_trace.dart';
 import 'services/mac_menu_commands.dart';
 import 'services/recovery/runtime_gate.dart';
 import 'services/windows_protocol_service.dart';
+import 'services/android_protocol_service.dart';
 import 'ui/screens/home_screen.dart';
 import 'ui/screens/recovery_outcome_screen.dart';
 import 'ui/screens/task_detail_screen.dart';
@@ -64,12 +65,20 @@ class _MyAppState extends ConsumerState<MyApp>
   Route<void>? _nativeSettingsRoute;
   ProtocolRoute? _pendingProtocolRoute;
   bool _protocolFramePending = false;
+  final _androidProtocol = AndroidProtocolService();
+  String? _openProtocolTaskId;
   String? _pendingLivePayload;
   String? _openLiveIdentity;
   bool _liveFramePending = false;
 
   bool get _supportsLiveActivities =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+
+  bool get _supportsAndroidProtocol =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
+  bool get _supportsProtocol =>
+      !kIsWeb && (Platform.isWindows || _supportsAndroidProtocol);
 
   bool get _isDesktop =>
       Platform.isWindows || Platform.isLinux || Platform.isMacOS;
@@ -115,9 +124,9 @@ class _MyAppState extends ConsumerState<MyApp>
       onResult: _notificationActionFeedback,
     );
     _actionRuntimeGate.register(
-          _notificationActions,
-          () => _notificationActions.setReady(false),
-        );
+      _notificationActions,
+      () => _notificationActions.setReady(false),
+    );
     _notificationActionSubscription = _notifications.onNotificationAction
         .listen((_) => _drainNotificationActions());
     _notificationSubscription = _notifications.onNotificationPayload.listen(
@@ -144,7 +153,9 @@ class _MyAppState extends ConsumerState<MyApp>
     if (widget.initialProtocolRoute != null) {
       _pendingProtocolRoute = widget.initialProtocolRoute;
     }
-    if (!kIsWeb && Platform.isWindows) {
+    if (_supportsAndroidProtocol) {
+      unawaited(_androidProtocol.initialize(onRoute: _receiveProtocolRoute));
+    } else if (_supportsProtocol) {
       WindowsProtocolService.initialize(onRoute: _receiveProtocolRoute);
     }
     _recovery.addListener(_onRecoveryChanged);
@@ -174,6 +185,11 @@ class _MyAppState extends ConsumerState<MyApp>
     final enteringRecovery =
         _lastRecoveryPhase == RecoveryPhase.idle && phase != RecoveryPhase.idle;
     if (enteringRecovery) _macMenu?.invalidate();
+    if (enteringRecovery) {
+      _pendingProtocolRoute = null;
+      _openProtocolTaskId = null;
+      _androidProtocol.invalidatePendingInitialization();
+    }
     if (enteringRecovery && _supportsLiveActivities) {
       _pendingLivePayload = null;
       _openLiveIdentity = null;
@@ -251,11 +267,14 @@ class _MyAppState extends ConsumerState<MyApp>
     final settings = ref.read(settingsProvider.notifier);
     try {
       await settings.ready;
-      if (!mounted || !_nativeCommandsReady ||
+      if (!mounted ||
+          !_nativeCommandsReady ||
           !identical(settings, ref.read(settingsProvider.notifier))) {
         return;
       }
-      await _notifications.setNotificationLanguage(ref.read(settingsProvider).language);
+      await _notifications.setNotificationLanguage(
+        ref.read(settingsProvider).language,
+      );
       if (_isDesktop) unawaited(_updateTrayMenu());
     } catch (_) {
       // Existing journal/repair readback reports any failed native reschedule.
@@ -363,12 +382,13 @@ class _MyAppState extends ConsumerState<MyApp>
           .firstOrNull;
       if (target == null) return;
       _openLiveIdentity = payload.identity;
+      final navigationEpoch = _navigationEpoch;
       unawaited(
         navigator
             .push<void>(
               MaterialPageRoute<void>(
                 settings: RouteSettings(name: '/live-reminder/${target.id}'),
-                builder: (_) => TaskDetailScreen(task: target),
+                builder: (_) => _nativeTaskDetail(target, navigationEpoch),
               ),
             )
             .whenComplete(() {
@@ -514,24 +534,56 @@ class _MyAppState extends ConsumerState<MyApp>
     WidgetsBinding.instance.scheduleFrame();
   }
 
-  bool _openNotificationReminder(Reminder reminder) {
+  bool _openNotificationReminder(
+    Reminder reminder, {
+    bool fromProtocol = false,
+  }) {
     final navigator = _navigatorKey.currentState;
     if (!mounted ||
         navigator == null ||
         _recovery.state.phase != RecoveryPhase.idle) {
       return false;
     }
+    if (fromProtocol && _openProtocolTaskId == reminder.id) return true;
+    final navigationEpoch = _navigationEpoch;
+    if (fromProtocol) _openProtocolTaskId = reminder.id;
     unawaited(
-      navigator.push<void>(
-        MaterialPageRoute<void>(
-          settings: RouteSettings(name: '/notification/${reminder.id}'),
-          builder: (_) => TaskDetailScreen(task: reminder),
-        ),
-      ),
+      navigator
+          .push<void>(
+            MaterialPageRoute<void>(
+              settings: RouteSettings(name: '/notification/${reminder.id}'),
+              builder: (_) => _nativeTaskDetail(reminder, navigationEpoch),
+            ),
+          )
+          .whenComplete(() {
+            if (fromProtocol &&
+                navigationEpoch == _navigationEpoch &&
+                _openProtocolTaskId == reminder.id) {
+              _openProtocolTaskId = null;
+            }
+          }),
     );
     if (_isDesktop) unawaited(_showNotificationWindow());
     return true;
   }
+
+  Widget _nativeTaskDetail(Reminder task, int navigationEpoch) =>
+      TaskDetailScreen(
+        task: task,
+        onPlayMedia: task.recordId == null
+            ? null
+            : () {
+                if (!mounted ||
+                    navigationEpoch != _navigationEpoch ||
+                    !_nativeCommandsReady) {
+                  return;
+                }
+                ref
+                    .read(workspaceToolsCommandProvider)
+                    .playMedia
+                    ?.call(task.recordId!);
+              },
+      );
 
   Future<void> _showNotificationWindow() async {
     try {
@@ -544,7 +596,11 @@ class _MyAppState extends ConsumerState<MyApp>
   }
 
   void _receiveProtocolRoute(ProtocolRoute route) {
-    if (!mounted) return;
+    if (!mounted ||
+        _recovery.state.phase != RecoveryPhase.idle ||
+        ref.read(runtimeRecoveryGateProvider).paused) {
+      return;
+    }
     _pendingProtocolRoute = route;
     if (_routeDataReady) {
       _scheduleProtocolRoute();
@@ -552,7 +608,7 @@ class _MyAppState extends ConsumerState<MyApp>
   }
 
   void _scheduleProtocolRoute() {
-    if (!Platform.isWindows ||
+    if (!_supportsProtocol ||
         !_routeDataReady ||
         _protocolFramePending ||
         _pendingProtocolRoute == null) {
@@ -561,9 +617,7 @@ class _MyAppState extends ConsumerState<MyApp>
     _protocolFramePending = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _protocolFramePending = false;
-      if (!mounted ||
-          !_routeDataReady ||
-          _recovery.state.phase != RecoveryPhase.idle) {
+      if (!mounted || !_routeDataReady || !_nativeCommandsReady) {
         return;
       }
       final route = _pendingProtocolRoute;
@@ -575,10 +629,12 @@ class _MyAppState extends ConsumerState<MyApp>
   }
 
   void _dispatchProtocolRoute(ProtocolRoute route) {
-    if (!mounted || _recovery.state.phase != RecoveryPhase.idle) return;
-    if (!_routeDataReady) return;
-    final reminders = ref.read(remindersProvider);
-    final target = reminders.where((r) => r.id == route.taskId).firstOrNull;
+    if (!_nativeCommandsReady) return;
+    final snapshot = _notificationSnapshot();
+    if (snapshot == null) return;
+    final target = snapshot.reminders
+        .where((r) => r.id == route.taskId && r.isVisible)
+        .firstOrNull;
     if (target == null) {
       if (_isDesktop) unawaited(_showNotificationWindow());
       return;
@@ -586,20 +642,66 @@ class _MyAppState extends ConsumerState<MyApp>
 
     switch (route.action) {
       case ProtocolAction.viewTask:
-        _openNotificationReminder(target);
-      case ProtocolAction.completeTask:
-        unawaited(
-          ref.read(remindersProvider.notifier).completeOccurrence(target),
-        );
+        _openNotificationReminder(target, fromProtocol: true);
+      case ProtocolAction.completeTask || ProtocolAction.snoozeTask:
+        unawaited(_applyProtocolAction(route, target));
         if (_isDesktop) unawaited(_showNotificationWindow());
-      case ProtocolAction.snoozeTask:
-        unawaited(
-          ref.read(remindersProvider.notifier).snoozeOccurrence(
-            target,
-            duration: Duration(minutes: route.snoozeMinutes ?? 15),
-          ),
+    }
+  }
+
+  Future<void> _applyProtocolAction(
+    ProtocolRoute route,
+    Reminder target,
+  ) async {
+    if (!_nativeCommandsReady) return;
+    final notifier = ref.read(remindersProvider.notifier);
+    try {
+      final payload = route.payload;
+      final ReminderActionResult result;
+      if (payload != null) {
+        result = await notifier.performNotificationAction(
+          target,
+          payload: payload,
+          actionId: route.action == ProtocolAction.completeTask
+              ? 'complete'
+              : route.snoozeMinutes == 60
+              ? 'snooze_60'
+              : 'snooze_15',
+          occurredAt: DateTime.now(),
         );
-        if (_isDesktop) unawaited(_showNotificationWindow());
+      } else {
+        // Keep existing Windows links compatible; Android never mutates from
+        // an ID-only URL, including a directly injected initial route.
+        if (_supportsAndroidProtocol) return;
+        result = route.action == ProtocolAction.completeTask
+            ? await notifier.completeOccurrence(target)
+            : await notifier.snoozeOccurrence(
+                target,
+                duration: Duration(minutes: route.snoozeMinutes ?? 15),
+              );
+      }
+      if (result.accepted) {
+        _notificationActionFeedback(
+          result.nativeSyncFailed
+              ? NotificationActionOutcome.repair
+              : NotificationActionOutcome.applied,
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+      final feedbackContext = _navigatorKey.currentContext;
+      if (feedbackContext == null || !feedbackContext.mounted) return;
+      feedbackContext
+          .findAncestorStateOfType<InlineFeedbackState>()
+          ?.showSnackBar(
+            SnackBar(
+              content: Text(
+                AppLocalizations.of(
+                  feedbackContext,
+                ).get('notificationActionFailed'),
+              ),
+            ),
+          );
     }
   }
 
@@ -644,7 +746,9 @@ class _MyAppState extends ConsumerState<MyApp>
     if (_supportsLiveActivities) {
       ChannelLiveReminderBackend.channel.setMethodCallHandler(null);
     }
-    if (!kIsWeb && Platform.isWindows) {
+    if (_supportsAndroidProtocol) {
+      _androidProtocol.dispose();
+    } else if (_supportsProtocol) {
       WindowsProtocolService.dispose();
     }
     _routeInitialization++;
@@ -705,16 +809,22 @@ class _MyAppState extends ConsumerState<MyApp>
 
   void _handleWindowBoundsChanged() {
     try {
-      windowManager.isMaximized().then((isMax) {
-        if (!isMax) {
-          windowManager.getBounds().then((bounds) {
-            DesktopWindowService.recordBoundsChanged(
-              dbHelper: DatabaseHelper.instance,
-              bounds: bounds,
-            );
-          }).catchError((Object _) {});
-        }
-      }).catchError((Object _) {});
+      windowManager
+          .isMaximized()
+          .then((isMax) {
+            if (!isMax) {
+              windowManager
+                  .getBounds()
+                  .then((bounds) {
+                    DesktopWindowService.recordBoundsChanged(
+                      dbHelper: DatabaseHelper.instance,
+                      bounds: bounds,
+                    );
+                  })
+                  .catchError((Object _) {});
+            }
+          })
+          .catchError((Object _) {});
     } catch (_) {}
   }
 
@@ -786,7 +896,10 @@ class _MyAppState extends ConsumerState<MyApp>
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
-    ref.listen(settingsProvider.select((settings) => settings.language), (_, _) {
+    ref.listen(settingsProvider.select((settings) => settings.language), (
+      _,
+      _,
+    ) {
       unawaited(_syncNotificationLanguage());
     });
     if (_supportsLiveActivities) {

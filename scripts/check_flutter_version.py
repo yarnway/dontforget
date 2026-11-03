@@ -20,11 +20,12 @@ def get_current_flutter_version() -> str | None:
     try:
         flutter_exe = shutil.which("flutter") or "flutter"
         result = subprocess.run(
-            [flutter_exe, "--version"],
+            [flutter_exe, "--no-version-check", "--version"],
             capture_output=True,
             encoding="utf-8",
             errors="replace",
             check=True,
+            timeout=30,
         )
         match = re.search(r"Flutter\s+([0-9]+\.[0-9]+\.[0-9]+)", result.stdout)
         if match:

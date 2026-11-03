@@ -1,0 +1,48 @@
+{
+  "version": "1.7.0+47",
+  "build": "PASS",
+  "packaging": "PASS",
+  "archive_file_count": 37,
+  "archive_matches_bundle": true,
+  "installed_paths_all_in_bundle": true,
+  "runtime_sources_match_working_tree": true,
+  "package_verification": "PASS",
+  "artifacts": [
+    {
+      "file": "DontForget_Setup_v1.7.0.exe",
+      "bytes": 14109310,
+      "sha256": "3c5661eba7369825e6f88b66c27ac08591c96564845ce3a7ba0f02e02a82ecc2"
+    },
+    {
+      "file": "DontForget_Windows_Portable_v1.7.0.zip",
+      "bytes": 17148741,
+      "sha256": "fc4cae36c972c461c121700534232824740ca6099f6c80497b64a272bfa5ae3c"
+    }
+  ],
+  "source_snapshot_sha256": "065ecae2166977f9938bcafa5bf1d8e306254a30e264246d2389651df4bfdb98",
+  "native": {
+    "version": "1.7.0.47",
+    "product_version": "1.7.0+47",
+    "old_45_rejected_as_47": true,
+    "powershell_syntax": "PASS",
+    "executable_launched": false,
+    "installer_launched": false
+  },
+  "python_tests": {
+    "run": 136,
+    "passed": 130,
+    "skipped": 6,
+    "failed": 0
+  },
+  "installer_acceptance": "NOT_PERFORMED",
+  "native_toast_clicks": "NOT_PERFORMED",
+  "mutations": "no application or installer launch, no install/uninstall or protocol registration",
+  "android_connection_initial": "NOT_ENUMERATED_BY_ADB_OR_WINDOWS_PNP",
+  "android_connection_final": "device",
+  "android_upgrade": "PASS: 46 to 47, 16 files preserved",
+  "acceptance_tools_sha256": {
+    "scripts/smoke_windows_installer.ps1": "33330a5d4cfb87fbc56b698b7b7f87dacd38e0a2c5cf9b5ec992843962776be7",
+    "scripts/windows_installer_checks.ps1": "2e21e64573fedae94c0735eb9347bb4f9cb1ca223816447b64b98f6374ee80d1",
+    "scripts/tests/test_windows_installer_checks.py": "7860197924aa3a5797dc2aa78cf675d109395ed922f942b0ed5ce2db09541044"
+  }
+}

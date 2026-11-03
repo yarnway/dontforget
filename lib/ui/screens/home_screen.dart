@@ -4,6 +4,7 @@ import '../widgets/inline_feedback.dart';
 import '../formatters/local_date_time.dart';
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -88,6 +89,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final command = ref.read(workspaceToolsCommandProvider);
     if (identical(command.open, _nativeToolsHandler)) command.open = null;
     if (identical(command.search, _nativeSearchHandler)) command.search = null;
+    if (identical(command.playMedia, _nativeMediaHandler)) {
+      command.playMedia = null;
+    }
     _heartbeatTimer?.cancel();
     _searchDebounce?.cancel();
     _studyDraft.request?.cancel('Workspace paused for recovery');
@@ -131,6 +135,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   WorkspaceToolsCommand? _toolsCommand;
   late final bool Function() _nativeToolsHandler = _openNativeTools;
   late final bool Function() _nativeSearchHandler = _openNativeSearch;
+  late final void Function(String) _nativeMediaHandler = _playMedia;
   bool _openNativeTools() => !_hasComposingText && _openCommandPalette();
   bool _openNativeSearch() => !_hasComposingText && _openSearch();
 
@@ -229,6 +234,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _toolsCommand = ref.read(workspaceToolsCommandProvider);
     _toolsCommand!.open = _nativeToolsHandler;
     _toolsCommand!.search = _nativeSearchHandler;
+    _toolsCommand!.playMedia = _nativeMediaHandler;
     _runtime.register(this, _quiesce);
     WidgetsBinding.instance.addObserver(this);
 
@@ -363,6 +369,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
     if (identical(_toolsCommand?.search, _nativeSearchHandler)) {
       _toolsCommand?.search = null;
+    }
+    if (identical(_toolsCommand?.playMedia, _nativeMediaHandler)) {
+      _toolsCommand?.playMedia = null;
     }
     _runtime.unregister(this);
     WidgetsBinding.instance.removeObserver(this);
@@ -550,6 +559,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   void _openMissedFilter() {
     setState(() => _workspaceView = 'missed');
+  }
+
+  List<Reminder> _missedReminders(List<Reminder> reminders, DateTime now) =>
+      selectMissedReminders(
+        reminders,
+        now,
+        visibleNoticeOccurrences: _visibleNotices(
+          reminders,
+          now,
+        ).map(reminderOccurrenceKey),
+      );
+
+  Widget _buildWorkspaceOverview(List<Reminder> reminders) {
+    List<Reminder>? previousMissed;
+    TaskWorkspaceOverview? overview;
+    return ValueListenableBuilder<DateTime>(
+      valueListenable: _noticeClock,
+      builder: (context, _, _) {
+        final missed = _missedReminders(reminders, DateTime.now());
+        // Keep the board intact on idle heartbeats; rebuild only when this
+        // clock actually changes missed-list membership. Task edits rebuild
+        // Home and create a fresh builder with the current task data.
+        if (overview == null || !listEquals(previousMissed, missed)) {
+          previousMissed = missed;
+          overview = TaskWorkspaceOverview(
+            reminders: reminders,
+            missedReminders: missed,
+            activeView: _workspaceView,
+            onPlayMedia: _playMedia,
+            onOpenLearning: () => _selectTool(_WorkspaceTool.learning),
+          );
+        }
+        return overview!;
+      },
+    );
   }
 
   Future<void> _acknowledgeAllMissed(List<Reminder> missed) async {
@@ -1688,7 +1732,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     valueListenable: _noticeClock,
                     builder: (context, _, _) {
                       final now = DateTime.now();
-                      final missed = selectMissedReminders(reminders, now);
+                      final missed = _missedReminders(reminders, now);
                       return Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -1814,13 +1858,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                               onClearQuery: _clearSearch,
                               onPlayMedia: _playMedia,
                             )
-                          : TaskWorkspaceOverview(
-                              reminders: reminders,
-                              activeView: _workspaceView,
-                              onPlayMedia: _playMedia,
-                              onOpenLearning: () =>
-                                  _selectTool(_WorkspaceTool.learning),
-                            ),
+                          : _buildWorkspaceOverview(reminders),
                     ),
                   ),
                   const InputBottomBar(),

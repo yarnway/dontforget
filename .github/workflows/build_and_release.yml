@@ -41,7 +41,6 @@ jobs:
   quality-windows:
     name: Windows analyze and test
     runs-on: windows-2022
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -53,7 +52,7 @@ jobs:
           channel: stable
           cache: true
       - name: Verify Flutter version baseline
-        run: python scripts/check_flutter_version.py
+        run: python scripts/check_flutter_version.py --strict
       - name: Install dependencies with strict lockfile
         run: flutter pub get --enforce-lockfile
       - name: Run static analysis
@@ -67,7 +66,7 @@ jobs:
 
   build:
     name: Build ${{ matrix.platform }} candidate
-    needs: quality
+    needs: [quality, quality-windows]
     strategy:
       fail-fast: false
       matrix:

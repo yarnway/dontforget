@@ -301,6 +301,26 @@ void main() {
       expect(map[DesktopWindowService.preferenceKey]['is_maximized'], true);
     });
 
+    test('saving never replaces unreadable or oversized workspace data', () async {
+      for (final raw in <String>[
+        '', '{broken', '["preserve"]', 'null',
+        jsonEncode({'draft': 'x' * 1048570}),
+        jsonEncode({'draft': 'x' * 1048500}),
+      ]) {
+        final generation = dbHelper.captureGeneration();
+        await dbHelper.writeTransaction(generation, (db) => db.update(
+          'Settings', {'workspace_drafts_json': raw},
+          where: 'id = ?', whereArgs: ['default'],
+        ));
+        await DesktopWindowService.save(
+          dbHelper, const WindowPreferences(width: 1280, height: 800),
+        );
+        final rows = await dbHelper.read(generation,
+          (db) => db.query('Settings', where: 'id = ?', whereArgs: ['default']));
+        expect(rows.single['workspace_drafts_json'], raw);
+      }
+    });
+
     test('recordBoundsChanged and recordMaximizeChanged debounce and flush correctly', () async {
       DesktopWindowService.setCurrentForTesting(null);
 

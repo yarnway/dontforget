@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-03",
+  "source_version": "1.7.0+47",
+  "schema": 16,
+  "build_seconds": 247,
+  "upgrade": {
+    "from_build": 46,
+    "to_build": 47,
+    "signature_matches": true,
+    "installation": "PASS",
+    "data_files_preserved_before_first_launch": 16,
+    "all_data_file_bytes_match": true,
+    "baseline_rows": {
+      "Reminders": 9,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "cold_launch": "PASS",
+    "artifact": {
+      "version": "1.7.0+47",
+      "package": "com.yarnway.dontforget.acceptance.p4720261102",
+      "type": "QA debug APK; not production identity or release signing",
+      "bytes": 174549380,
+      "sha256": "17e8287c2a0f152767e2f7c0258225d261962df32f75068fb776968688864a6e",
+      "certificate_sha256": "4f8518351e90e3293ad293b74b009ad40949e871adf91614bb27ba1ba098eea9",
+      "signature_matches_46": true,
+      "source_sha256": "32cba4e350a205b7afca3a0fd326fcded8866057dc345be074e0510d1fbf6a80",
+      "file": "DontForget_Android_QA_debug_v1.7.0+47.apk"
+    },
+    "home_visible": true,
+    "all_business_tables_unchanged_after_launch": true,
+    "database_integrity": "ok"
+  },
+  "capture": {
+    "send_button_creates_one_local_task": true,
+    "no_ai_extraction_queued": true,
+    "draft_clears_after_save": true,
+    "cold_reopen_correct_task": true,
+    "previous_nine_rows_unchanged": true,
+    "actual_soft_ime_send": "NOT_PERFORMED: current input method exposes candidate strip, no Send key was observed",
+    "temporary_keyboard_flag_restored": true
+  },
+  "cleanup": {
+    "synthetic_task_product_soft_deleted": true,
+    "total_reminders_including_trash": 10,
+    "original_nine_rows_unchanged": true,
+    "all_settings_fields_restored": true,
+    "media_records": 0,
+    "database_integrity": "ok",
+    "qa_pending_alarms": 0,
+    "qa_active_notifications": 0,
+    "queue_checked_before_force_stop": true,
+    "app_stopped": true
+  },
+  "source_manifest": "build/stage47/android-source-47-inputs.json",
+  "notification_matrix_on_47": "NOT_PERFORMED",
+  "release_aab": "NOT_PERFORMED"
+}

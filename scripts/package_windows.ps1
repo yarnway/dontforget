@@ -1,14 +1,21 @@
+param(
+    # Reuse dependencies already resolved and verified by local tests.
+    [switch]$NoPub
+)
+
 $ErrorActionPreference = "Stop"
 $rootDir = Split-Path $PSScriptRoot -Parent
 Push-Location $rootDir
 try {
-    & flutter pub get --enforce-lockfile
-    if ($LASTEXITCODE -ne 0) {
-        Write-Warning "flutter pub get --enforce-lockfile failed (e.g. local Flutter SDK version differences). Falling back to flutter pub get."
-        & flutter pub get
-        if ($LASTEXITCODE -ne 0) { throw "Dependency resolution failed" }
+    if (-not $NoPub) {
+        & flutter --no-version-check pub get --enforce-lockfile
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "flutter pub get --enforce-lockfile failed (e.g. local Flutter SDK version differences). Falling back to flutter pub get."
+            & flutter --no-version-check pub get
+            if ($LASTEXITCODE -ne 0) { throw "Dependency resolution failed" }
+        }
     }
-    & flutter build windows --release --no-pub
+    & flutter --no-version-check build windows --release --no-pub
     if ($LASTEXITCODE -ne 0) { throw "Windows build failed" }
     $releaseDir = Join-Path $rootDir "build\windows\x64\runner\Release"
     # Use the compiler's redistributables. Do not shadow Windows 10/11's UCRT
@@ -32,6 +39,11 @@ try {
     Copy-Item (Join-Path $redistDir.FullName "*.dll") -Destination $releaseDir -Force
     & python scripts/package_artifacts.py --check-clean $releaseDir
     if ($LASTEXITCODE -ne 0) { throw "Runtime data found in build output; packaging stopped" }
+    foreach ($requiredOutput in @('dont_forget.exe', 'flutter_windows.dll', 'data\flutter_assets')) {
+        if (-not (Test-Path -LiteralPath (Join-Path $releaseDir $requiredOutput))) {
+            throw "Incomplete Windows bundle: $requiredOutput. Packaging stopped before compiling the installer."
+        }
+    }
     $version = & python scripts/package_artifacts.py --version-only
     if ($LASTEXITCODE -ne 0) { throw "Version lookup failed" }
     $isccCommand = Get-Command ISCC.exe -ErrorAction SilentlyContinue

@@ -187,8 +187,16 @@ void main(List<String> args) async {
             _writeCrashLog('restoreWindow error: $e', st);
           }
         }
-      } catch (error) {
+      } catch (error, stack) {
         StartupTrace.fail('storage');
+        if (kDebugMode) {
+          // Keep record contents and credentials out of startup diagnostics.
+          debugPrint('Storage bootstrap failed: ${error.runtimeType}');
+          if (error is FileSystemException) {
+            debugPrint('Storage filesystem code: ${error.osError?.errorCode}');
+          }
+          debugPrintStack(stackTrace: stack, maxFrames: 12);
+        }
         if (isDesktop) {
           try {
             await DesktopWindowService.showDefaultFallbackWindow();

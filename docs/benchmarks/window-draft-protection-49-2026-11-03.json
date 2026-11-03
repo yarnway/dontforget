@@ -1,0 +1,12 @@
+{
+  "version": "1.7.0+49",
+  "full_flutter_tests": {
+    "passed": 2158,
+    "skipped": 20,
+    "note": "before final error-log redaction"
+  },
+  "final_focused_tests_passed": 24,
+  "final_flutter_analyze_issues": 0,
+  "current_build_or_native_acceptance": false,
+  "independent_preference_storage": "not implemented"
+}

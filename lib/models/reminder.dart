@@ -575,9 +575,17 @@ class Reminder {
   }
 }
 
-List<Reminder> selectMissedReminders(List<Reminder> reminders, [DateTime? now]) {
-  final current = now ?? DateTime.now();
-  return reminders.where((r) => r.isMissed(current)).toList()
+/// Excludes occurrences already presented by the active reminder panel.
+/// A new revision of the same task remains eligible for the missed list.
+List<Reminder> selectMissedReminders(
+  List<Reminder> reminders,
+  DateTime now, {
+  Iterable<String> visibleNoticeOccurrences = const [],
+}) {
+  final visible = visibleNoticeOccurrences.toSet();
+  return reminders
+      .where((r) => r.isMissed(now) && !visible.contains(r.occurrenceIdentity))
+      .toList()
     ..sort((a, b) => a.triggerTime!.compareTo(b.triggerTime!));
 }
 

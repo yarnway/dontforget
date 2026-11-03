@@ -1,0 +1,56 @@
+{
+  "version": "1.7.0+49",
+  "windows": {
+    "version": "1.7.0",
+    "build_number": "49",
+    "revision": "2826e2671df8a0d12305f61f2cdefd3816e2a820",
+    "platform": "windows",
+    "signing": "unsigned",
+    "runtime_acceptance": "NOT_PERFORMED",
+    "artifacts": [
+      {
+        "file": "DontForget_Setup_v1.7.0.exe",
+        "bytes": 14105663,
+        "sha256": "2ef63a3cf08490b0f9df1e9f039f1e9bf08e228d525f98fb444f397d7626fed7"
+      },
+      {
+        "file": "DontForget_Windows_Portable_v1.7.0.zip",
+        "bytes": 17151553,
+        "sha256": "743b2f001b2fd792909de60b6a41c963882e95fa78036c82e0167d83547a3ec7"
+      }
+    ]
+  },
+  "android": {
+    "from_build": 48,
+    "to_build": 49,
+    "signature_matches": true,
+    "installation": "PASS",
+    "data_files_preserved_before_first_launch": 18,
+    "all_data_file_bytes_match": true,
+    "baseline_rows": {
+      "Reminders": 23,
+      "MediaRecords": 1,
+      "Settings": 1
+    },
+    "cold_launch": "PASS",
+    "artifact": {
+      "version": "1.7.0+49",
+      "package": "com.yarnway.dontforget.acceptance.p4720261102",
+      "type": "QA debug APK; not production identity or release signing",
+      "bytes": 97850626,
+      "sha256": "17bb7d0a0e1b6ab79a4c9b06a13c9b1ee114466f3aa0b8b3077530a461cef3fc",
+      "certificate_sha256": "4f8518351e90e3293ad293b74b009ad40949e871adf91614bb27ba1ba098eea9",
+      "signature_matches_48": true,
+      "source_sha256": "0f23d9e9ef30059449d9675e5cdd0916369d50c81e2251bacf6f12ba4037d964",
+      "file": "DontForget_Android_QA_debug_v1.7.0+49.apk"
+    },
+    "all_business_tables_unchanged": true,
+    "original_audio_sha256_unchanged": true,
+    "system_queues_empty_before_force_stop": true,
+    "qa_app_stopped": true
+  },
+  "windows_portable_entries_verified": 37,
+  "windows_install_paths_confined_to_bundle": true,
+  "windows_installer_or_toast_runtime": "NOT_PERFORMED",
+  "nuget_tls_initial_failure": "previous successful cache matched plugin pinned sha256; reused without disabling TLS"
+}

@@ -1,0 +1,130 @@
+{
+  "date": "2026-11-03",
+  "source_version": "1.7.0+48",
+  "schema": 16,
+  "quality": {
+    "flutter_passed": 2157,
+    "flutter_skipped": 20,
+    "flutter_failed": 0,
+    "seconds": 282,
+    "analysis_issues": 0,
+    "analysis_seconds": 53.8,
+    "routing_special_passed": 22
+  },
+  "android_47_native_matrix": {
+    "version": "1.7.0+47",
+    "native_checks": {
+      "warm_body_same_pid": true,
+      "warm_correct_detail": true,
+      "warm_single_back_home": true,
+      "view_not_acknowledged": true,
+      "pid_absent_before_native_action": true,
+      "headless_action_persisted_without_business_write": true,
+      "reopen_consumes_action_once": true,
+      "queue_empty_after_consumption": true,
+      "recurring_native_skip_same_pid": true,
+      "skip_advances_exactly_one_daily_occurrence": true,
+      "skip_revision_one_history_one": true
+    },
+    "cleanup": {
+      "synthetic_tasks_product_deleted": 3,
+      "original_ten_rows_unchanged": true,
+      "settings_and_media_unchanged": true,
+      "total_rows_including_trash": 13,
+      "qa_pending_alarms": 0,
+      "qa_active_notifications": 0,
+      "action_queue_empty": true,
+      "queue_checked_before_force_stop": true,
+      "app_stopped": true
+    }
+  },
+  "voice": {
+    "native_mic_running_observed": true,
+    "save_creates_one_audio_and_one_memo": true,
+    "previous_thirteen_rows_unchanged": true,
+    "settings_unchanged": true,
+    "bytes": 54457,
+    "sha256": "583a7b41d6de7ca6b5b280f75aecb08cdc0ee4adf8853501c20198e3778c5a44",
+    "m4a_duration_seconds": 3.1811,
+    "aac_sample_entry_present": true,
+    "audio_quality_or_transcription": "NOT_PERFORMED",
+    "cancel": {
+      "native_gesture_cancel": true,
+      "business_tables_unchanged": true,
+      "no_new_audio_cache_file": true,
+      "red_cancel_scene_visually_verified": true,
+      "native_mic_running_observed": true
+    },
+    "reopen_on_47": "correct memo and original attachment present; original-record play action missing",
+    "fix_source_version": "1.7.0+48"
+  },
+  "android_48_upgrade": {
+    "from_build": 47,
+    "to_build": 48,
+    "signature_matches": true,
+    "installation": "PASS",
+    "data_files_preserved_before_first_launch": 18,
+    "all_data_file_bytes_match": true,
+    "baseline_rows": {
+      "Reminders": 14,
+      "MediaRecords": 1,
+      "Settings": 1
+    },
+    "cold_launch": "PASS",
+    "artifact": {
+      "version": "1.7.0+48",
+      "package": "com.yarnway.dontforget.acceptance.p4720261102",
+      "type": "QA debug APK; not production identity or release signing",
+      "bytes": 97850566,
+      "sha256": "2dae04286064ac3da4fd2836593971cfb29e20d0a8a18b68dad33cbdf71311d2",
+      "certificate_sha256": "4f8518351e90e3293ad293b74b009ad40949e871adf91614bb27ba1ba098eea9",
+      "signature_matches_47": true,
+      "source_sha256": "4d69abaf8293a859c1b20e8ac9d67dfc2900b4512531784775be133c767366e7",
+      "file": "DontForget_Android_QA_debug_v1.7.0+48.apk"
+    },
+    "voice_detail_opens": true,
+    "all_business_tables_unchanged_after_launch": true,
+    "voice_original_sha256_unchanged": true,
+    "play_button_visible": true,
+    "native_play_button_tapped": true,
+    "native_play_feedback_observed": true,
+    "audio_audibility_not_assessed": true,
+    "cleanup": {
+      "voice_memo_soft_deleted": true,
+      "voice_file_retained_for_trash": true,
+      "voice_sha256_unchanged": true,
+      "other_thirteen_rows_unchanged": true,
+      "media_and_settings_unchanged": true,
+      "database_integrity": "ok",
+      "qa_pending_alarms": 0,
+      "qa_active_notifications": 0,
+      "queue_empty": true,
+      "checked_before_force_stop": true,
+      "microphone_not_running": true,
+      "qa_process_stopped": true
+    }
+  },
+  "windows_native": {
+    "version": "1.7.0.48",
+    "product_version": "1.7.0+48",
+    "old_47_rejected_as_48": true,
+    "powershell_syntax": "PASS",
+    "executable_launched": false,
+    "installer_launched": false
+  },
+  "windows_artifacts": [
+    {
+      "file": "DontForget_Setup_v1.7.0.exe",
+      "bytes": 14107869,
+      "sha256": "3660ce689daff2597ac48e932af7209efa6f1f2249c45fe0beeb70f910cc058b"
+    },
+    {
+      "file": "DontForget_Windows_Portable_v1.7.0.zip",
+      "bytes": 17151040,
+      "sha256": "2597406be751e71820c877029f7dd3dcb73e4047562d355f682ff3ba24896eef"
+    }
+  ],
+  "windows_source_sha256": "f4a2b09c94c728f794d2739462a79c63ef8e3487c01d694c2b4fad39fba1b171",
+  "windows_installer_and_toast_native": "NOT_PERFORMED",
+  "sqlite_android_cache_sha256": "0c2d3bfc8c87abceb21ed72a4bb49964121c5fe1a8ef3848d83ba907d01b6161"
+}

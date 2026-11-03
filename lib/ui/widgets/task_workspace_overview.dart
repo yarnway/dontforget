@@ -16,11 +16,14 @@ class TaskWorkspaceOverview extends ConsumerStatefulWidget {
     required this.onPlayMedia,
     this.onOpenLearning,
     this.activeView,
+    this.missedReminders,
   });
   final List<Reminder> reminders;
   final ValueChanged<String> onPlayMedia;
   final VoidCallback? onOpenLearning;
   final String? activeView;
+  // Home supplies the same selection used by its missed-reminder banner.
+  final List<Reminder>? missedReminders;
   @override
   ConsumerState<TaskWorkspaceOverview> createState() =>
       _TaskWorkspaceOverviewState();
@@ -44,7 +47,8 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
   @override
   void didUpdateWidget(TaskWorkspaceOverview oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.activeView != null && widget.activeView != oldWidget.activeView) {
+    if (widget.activeView != null &&
+        widget.activeView != oldWidget.activeView) {
       _selected = widget.activeView;
     }
   }
@@ -105,6 +109,10 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
             ? stored as String
             : 'today');
     final now = DateTime.now();
+    final missedTasks =
+        (widget.missedReminders ?? selectMissedReminders(widget.reminders, now))
+            .where((r) => r.isWorkspaceItem)
+            .toList();
     final tomorrow = DateTime(now.year, now.month, now.day + 1);
     final rows = <Object>[];
     final completed = view == 'all' && _showCompleted
@@ -175,10 +183,6 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
         if (group.value.isNotEmpty) rows.addAll([group.key, ...group.value]);
       }
     } else if (view == 'missed') {
-      final missedTasks = widget.reminders
-          .where((r) => r.isWorkspaceItem && r.isMissed(now))
-          .toList()
-        ..sort((a, b) => (a.triggerTime ?? DateTime(0)).compareTo(b.triggerTime ?? DateTime(0)));
       rows.addAll(missedTasks);
     } else if (view != 'board') {
       rows.addAll(
@@ -191,9 +195,7 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
         ),
       );
     }
-    final missedCount = widget.reminders
-        .where((r) => r.isWorkspaceItem && r.isMissed(now))
-        .length;
+    final missedCount = missedTasks.length;
     final choices = <String, String>{
       'today': 'viewToday',
       'future': 'viewFuture',

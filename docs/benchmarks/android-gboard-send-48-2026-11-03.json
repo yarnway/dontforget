@@ -1,0 +1,18 @@
+{
+  "version": "1.7.0+48",
+  "actual_gboard_send_key_tapped": true,
+  "text_entered_via_adb": true,
+  "one_task_created": true,
+  "cold_reopen_correct_task": true,
+  "synthetic_task_soft_deleted": true,
+  "original_21_rows_unchanged": true,
+  "media_and_audio_unchanged": true,
+  "settings_changed_fields": [],
+  "qa_pending_alarms": 0,
+  "qa_active_notifications": 0,
+  "queue_empty": true,
+  "checked_before_force_stop": true,
+  "qa_app_stopped": true,
+  "initial_composition_left_extra_characters": true,
+  "keyboard_and_display_setting_restored": true
+}

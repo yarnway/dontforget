@@ -1,0 +1,129 @@
+{
+  "date": "2026-11-03",
+  "source_version": "1.7.0+47",
+  "schema": 16,
+  "changed_input_sha256": {
+    "lib/services/notification_service.dart": "deb2dd5af43a93738963a874a271a710ea67314cf146671dd47b390fb077c6bb",
+    "lib/services/windows_protocol_service.dart": "9f216a652a3b2c0384b47f2731ab98cc53eb9db636d23eaf7cda6aaf6bace2a0",
+    "test/windows_protocol_service_test.dart": "0887f1fc8f4e323398e1d6eec06af31ed11a6f42fdbb2bdec75a7af36216f250",
+    "pubspec.yaml": "5e29bcdd39dc75b75ea019a3904407493c8fadb7d4dde6d1cc6955724b3e9107"
+  },
+  "android_native": {
+    "process_absent_before_click": true,
+    "native_notification_delivered": true,
+    "native_body_click_opens_correct_task": true,
+    "version": "1.7.0+46",
+    "native_complete_button_background": true,
+    "complete_preserved_after_reopen": true,
+    "native_snooze15_foreground": true,
+    "native_snooze60_foreground": true,
+    "view_does_not_acknowledge": true,
+    "warm_body_click": "NOT_PERFORMED",
+    "terminated_action_queue": "NOT_PERFORMED",
+    "reboot_and_sleep_wake": "NOT_PERFORMED",
+    "native_test_identity": "com.yarnway.dontforget.acceptance.p4720261102",
+    "notification_permission": "Allowed, read back in app",
+    "exact_alarm_permission": "Allowed, read back in app"
+  },
+  "cleanup": {
+    "synthetic_tasks_added": 4,
+    "product_soft_deleted": 4,
+    "previous_five_rows_unchanged": true,
+    "settings_and_media_unchanged": true,
+    "database_integrity": "ok",
+    "qa_pending_alarms": 0,
+    "qa_active_notifications": 0,
+    "queue_verified_before_force_stop": true,
+    "qa_app_stopped": true,
+    "qa_notification_permission": "Allowed"
+  },
+  "validation": {
+    "targeted_passed": 106,
+    "flutter_passed": 2153,
+    "flutter_skipped": 20,
+    "flutter_failed": 0,
+    "flutter_seconds": 265,
+    "analysis": {
+      "issues": 0,
+      "seconds": 5.2
+    },
+    "full_suite_after_semantic_fixes": true,
+    "final_followup": "curly braces only; analysis PASS"
+  },
+  "windows_new_build_install_native_buttons": "NOT_PERFORMED",
+  "legacy_id_only_windows_links": "retained compatibility; no new occurrence protection",
+  "usb": {
+    "user_confirmed": "stationary, direct to computer",
+    "confirmed_lower_layer_disconnects_local": [
+      "10:01:58.324",
+      "10:03:07.614",
+      "10:03:50.002",
+      "10:06:52.494"
+    ],
+    "observed_roles_on_disconnect": [
+      "no-power",
+      "no-data"
+    ],
+    "new_cable_same_port_confirmed": true,
+    "port": "USBROOT(0)/USB(4), HS04",
+    "device_problem_code": 0,
+    "power_policy_changed": false,
+    "drivers_changed": false,
+    "cable_conclusion": "Both cables reproduced USB-C role loss; old cable alone is not established as root cause. Host port/controller and phone-side causes require additional hardware comparison.",
+    "sampling": [
+      {
+        "phase": "usb-monitor",
+        "samples": 85,
+        "usb_connection_epochs": 1,
+        "first_utc": "2026-11-03T02:08:57.258788+00:00",
+        "last_utc": "2026-11-03T02:10:36.788272+00:00",
+        "adb_request_failures": 0
+      },
+      {
+        "phase": "usb-new-cable",
+        "samples": 85,
+        "usb_connection_epochs": 1,
+        "first_utc": "2026-11-03T02:13:17.499275+00:00",
+        "last_utc": "2026-11-03T02:14:56.751867+00:00",
+        "adb_request_failures": 0
+      },
+      {
+        "phase": "usb-new-cable-extended",
+        "samples": 140,
+        "usb_connection_epochs": 2,
+        "first_utc": "2026-11-03T02:15:29.851661+00:00",
+        "last_utc": "2026-11-03T02:18:11.331768+00:00",
+        "adb_request_failures": 3
+      }
+    ],
+    "new_cable_transfer": {
+      "rounds": [
+        {
+          "round": 1,
+          "bytes": 33554432,
+          "sha256_match": true,
+          "seconds": 3.504
+        },
+        {
+          "round": 2,
+          "bytes": 33554432,
+          "sha256_match": true,
+          "seconds": 3.543
+        },
+        {
+          "round": 3,
+          "bytes": 33554432,
+          "sha256_match": true,
+          "seconds": 3.456
+        }
+      ],
+      "remote_probe_removed": true
+    },
+    "new_cable_disconnect_reproduced": true,
+    "new_cable_disconnect_phone_local": "10:16:49.141",
+    "windows_event_id": 1010,
+    "windows_event_classification": "device surprise-removed after being reported missing from bus",
+    "spare_pc_port_available": false,
+    "failure_count_interpretation": "Request failures are not a count of confirmed USB disconnects; one post-cable-swap drop is confirmed by phone roles and Windows event 1010."
+  }
+}

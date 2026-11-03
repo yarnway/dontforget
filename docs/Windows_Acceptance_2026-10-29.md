@@ -1,5 +1,7 @@
 # Windows 适配与真机验收（2026-10-29）
 
+**后续复核（2026-11-02）**：本页W系列状态为历史实现记录。[逐项验收](Gemini_Implementation_Acceptance_2026-10-29.md)认定有条件通过，确认D1重复提醒、D5／G2版本与旧包差异，Toast动作按钮及托盘三语等场景仍需补验。当前源码修复与构建情况见[阶段46验收](Stage46_Validation_2026-11-02.md)，后续以[阶段任务](Next_Steps_2026-11-02.md)为准，不能将下面“已全部完成”解释为当前版本完整原生通过。
+
 本轮目标：优先完成 Windows 与 iOS 的适配与真机验收。**iOS 无法在 Windows 主机上构建/安装**（Flutter 仅支持在 macOS+Xcode 部署 iOS），因此本轮在 Windows 侧做完整适配与验收，iOS 交付可在 Mac 上一次执行的[真机验收 Runbook](iOS_Device_Acceptance_Runbook.md)。
 
 ## 结论

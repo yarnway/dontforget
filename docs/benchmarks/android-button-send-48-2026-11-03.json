@@ -1,0 +1,16 @@
+{
+  "version": "1.7.0+48",
+  "gboard_return_adds_newline": true,
+  "no_task_before_send": true,
+  "product_button_send_creates_one": true,
+  "text_injected_via_adb": true,
+  "cold_reopen_correct_task": true,
+  "task_soft_deleted": true,
+  "original_22_rows_unchanged": true,
+  "all_settings_restored": true,
+  "media_and_audio_unchanged": true,
+  "system_queues_empty_before_force_stop": true,
+  "qa_app_stopped": true,
+  "original_keyboard_and_display_setting_restored": true,
+  "wetype_full_keyboard_not_observed": true
+}

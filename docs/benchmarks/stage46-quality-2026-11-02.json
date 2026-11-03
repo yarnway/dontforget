@@ -1,0 +1,68 @@
+{
+  "date": "2026-11-02",
+  "version": "1.7.0+45",
+  "schema": 16,
+  "source": {
+    "revision": "2826e2671df8a0d12305f61f2cdefd3816e2a820-worktree-4c24ecc0bd4c",
+    "base_revision": "2826e2671df8a0d12305f61f2cdefd3816e2a820",
+    "working_tree_dirty": true,
+    "source_snapshot_sha256": "4c24ecc0bd4ce2ff57dedfbfcc8cd04e7127b701ddf6f22bbfd070a3fa5da066",
+    "flutter_version": "3.47.2"
+  },
+  "source_files_verified": 211,
+  "analysis": {
+    "issues": 0
+  },
+  "flutter_tests": {
+    "passed": 2105,
+    "skipped": 20,
+    "failed": 0,
+    "seconds": 259
+  },
+  "focused_tests": {
+    "passed": 34,
+    "included_in_full_suite": true
+  },
+  "python_tests": {
+    "run": 134,
+    "passed": 128,
+    "skipped": 6,
+    "failed": 0
+  },
+  "windows": {
+    "build": "PASS",
+    "packaging": "PASS",
+    "integrity": "PASS",
+    "archive_executable_matches_build": true,
+    "install_outputs_within_bundle": true,
+    "lockfile_unchanged": true,
+    "artifacts": [
+      {
+        "file": "DontForget_Setup_v1.7.0.exe",
+        "bytes": 14106080,
+        "sha256": "33a03f08c0171a8756187738ac40c4865b77c451bd40e48d42d7123be999f229"
+      },
+      {
+        "file": "DontForget_Windows_Portable_v1.7.0.zip",
+        "bytes": 17146267,
+        "sha256": "1ef3aa0b544dd0c5560763edc9651d963405014b080ad2d67be67ef11a2aecc6"
+      }
+    ],
+    "installation_acceptance": "NOT_PERFORMED",
+    "runtime_acceptance": "NOT_PERFORMED"
+  },
+  "ci": "NOT_RUN",
+  "system_install_side_effect": {
+    "occurred_before_cmake_fix": true,
+    "path": "C:/Program Files/dont_forget",
+    "rollback": "NOT_PERFORMED_NO_PREVIOUS_FILE_SNAPSHOT",
+    "preserved_manifest": "build/stage46/unintended-system-install-manifest.txt"
+  },
+  "pending": [
+    "G2 current-package installer matrix on isolated runner",
+    "G1 Android deep links",
+    "R1 window preferences storage",
+    "Windows native action/tray/ADTS checks",
+    "macOS and iOS current-source native gates"
+  ]
+}

@@ -171,28 +171,36 @@ class DesktopWindowService {
           where: 'id = ?',
           whereArgs: ['default'],
         );
+        if (rows.length != 1) throw StateError('Settings unavailable');
         Map<String, dynamic> drafts = {};
-        if (rows.isNotEmpty) {
-          final rawDrafts = rows.first['workspace_drafts_json'] as String?;
-          if (rawDrafts != null && rawDrafts.isNotEmpty) {
-            final decoded = jsonDecode(rawDrafts);
-            if (decoded is Map<String, dynamic>) {
-              drafts = Map<String, dynamic>.from(decoded);
-            }
+        final rawDrafts = rows.first['workspace_drafts_json'] as String?;
+        if (rawDrafts != null) {
+          if (rawDrafts.length > 1048576) {
+            throw const FormatException('Drafts too large');
           }
+          final decoded = jsonDecode(rawDrafts);
+          if (decoded is! Map<String, dynamic>) {
+            throw const FormatException('Invalid drafts');
+          }
+          drafts = Map<String, dynamic>.from(decoded);
         }
         drafts[preferenceKey] = prefs.toJson();
         final encoded = jsonEncode(drafts);
-        await db.update(
+        if (encoded.length > 1048576) {
+          throw const FormatException('Drafts too large');
+        }
+        final count = await db.update(
           'Settings',
           {'workspace_drafts_json': encoded},
           where: 'id = ?',
           whereArgs: ['default'],
         );
+        if (count != 1) throw StateError('Settings unavailable');
       });
       _currentPreferences = prefs;
     } catch (e) {
-      debugPrint('Failed to save window preferences: $e');
+      // FormatException may contain the raw workspace draft text.
+      debugPrint('Failed to save window preferences: ${e.runtimeType}');
     }
   }
 

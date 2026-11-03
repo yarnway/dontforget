@@ -1,5 +1,7 @@
 # Gemini 实施验收报告（2026-10-29）
 
+后续处理（2026-11-02）：本报告保留原始验收结论；D1、D5／G2与CI门禁的修复结果及剩余边界见[阶段46验收](Stage46_Validation_2026-11-02.md)，后续任务见[阶段46—50清单](Next_Steps_2026-11-02.md)。
+
 验收范围：`d476744..d091b4e`（12 个提交，对应提示词 P1–P13）。
 验收方式：逐提交 diff 审查 + 全量测试/静态分析 + Python 工具链测试 + Windows Release 运行时验收（截图/数据库读回）。
 验收环境：Windows 11、Flutter 3.47.2（本地）/ 3.44.9（CI 固定）、VS 2022 Build Tools、`flutter build windows --release` 产物。

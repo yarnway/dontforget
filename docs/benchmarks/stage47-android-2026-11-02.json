@@ -1,0 +1,139 @@
+{
+  "date": "2026-11-02",
+  "version": "1.7.0+46",
+  "schema": 16,
+  "source_sha256": "d2184059e5cf9832bca74e855ffb52a10ffd05de12fa5ee7b3e3f82dda252531",
+  "analysis": {
+    "issues": 0,
+    "seconds": 48.2
+  },
+  "flutter_tests": {
+    "passed": 2142,
+    "skipped": 20,
+    "failed": 0,
+    "seconds": 260
+  },
+  "python_tests": {
+    "run": 134,
+    "passed": 128,
+    "skipped": 6,
+    "failed": 0,
+    "seconds": 5.801
+  },
+  "protocol_tests": {
+    "passed": 63,
+    "included_in_full_suite": true
+  },
+  "android": {
+    "model": "Pixel 8 Pro",
+    "os": "Android 17",
+    "qa_application_id": "com.yarnway.dontforget.acceptance.p4720261102",
+    "build": "PASS",
+    "installed": true,
+    "native_deep_links": "PASS",
+    "first_start_fresh_qa_schema16": "PASS",
+    "native_deep_link_checks": {
+      "cold_view_opens_correct_task": true,
+      "warm_duplicate_same_pid_and_single_route": true,
+      "reopen_after_close": true,
+      "missing_and_invalid_urls_ignored": true,
+      "warm_complete_and_snooze_15_60_once": true,
+      "view_does_not_acknowledge": true,
+      "cold_stale_bare_wrong_epoch_revision_and_target_rejected": true,
+      "cold_valid_complete_once_and_stale_replay_ignored": true,
+      "deleted_task_view_ignored": true,
+      "all_five_synthetic_tasks_product_soft_deleted": true
+    },
+    "cleanup": {
+      "qa_application_id": "com.yarnway.dontforget.acceptance.p4720261102",
+      "database_integrity": "ok",
+      "reminders_total": 5,
+      "all_synthetic_tasks_soft_deleted": true,
+      "media_records": 0,
+      "capture_draft_empty": true,
+      "qa_pending_alarms": 0,
+      "qa_active_notifications": 0,
+      "qa_process_stopped": true,
+      "notification_delivery_or_button_clicks": "NOT_PERFORMED"
+    },
+    "apk": {
+      "apk": "build/stage47/android-source/build/app/outputs/flutter-apk/app-debug.apk",
+      "bytes": 97849742,
+      "sha256": "7b1e78c98663af016b5513a8606c73c4eff8c72bbfffee49d1e8043a5abfe1e8",
+      "source_sha256": "d2184059e5cf9832bca74e855ffb52a10ffd05de12fa5ee7b3e3f82dda252531",
+      "input_count": 218,
+      "badging": [
+        "package: name='com.yarnway.dontforget.acceptance.p4720261102' versionCode='46' versionName='1.7.0' platformBuildVersionName='16' platformBuildVersionCode='36' compileSdkVersion='36' compileSdkVersionCodename='16'",
+        "sdkVersion:'24'",
+        "targetSdkVersion:'36'",
+        "application-label:'别忘了 QA47'",
+        "native-code: 'arm64-v8a' 'armeabi-v7a' 'x86_64'"
+      ],
+      "type": "debug, isolated QA application identity",
+      "release_signing": "NOT_PERFORMED"
+    },
+    "jdk": "Temurin 21.0.13+9, full JDK including jlink; local build-only directory",
+    "kotlin_incremental": false,
+    "gradle_workers": 2,
+    "release_apk_aab_and_formal_signing": "NOT_PERFORMED",
+    "text_input_send_and_reopen": "NOT_PERFORMED",
+    "notification_delivery_and_buttons": "NOT_PERFORMED",
+    "first_snapshot_plugin_registration": {
+      "initial_result": "FAIL: snapshot omitted ignored GeneratedPluginRegistrant.java",
+      "resolution": "copied generated file, rebuilt and reinstalled QA identity only",
+      "final_result": "PASS"
+    }
+  },
+  "usb": {
+    "root_cause_observed": "ADB listener bind 10013; default 5037 inside Windows excluded TCP range 4955-5054",
+    "adb_version": "37.0.1",
+    "adb_port": 15037,
+    "authorization": "device",
+    "samples": 30,
+    "all_samples_online": true,
+    "max_latency_ms": 47,
+    "transfer": {
+      "rounds": [
+        {
+          "round": 1,
+          "bytes": 33554432,
+          "sha256_match": true,
+          "seconds": 2.953
+        },
+        {
+          "round": 2,
+          "bytes": 33554432,
+          "sha256_match": true,
+          "seconds": 3.047
+        },
+        {
+          "round": 3,
+          "bytes": 33554432,
+          "sha256_match": true,
+          "seconds": 3.078
+        }
+      ],
+      "sha256": "0c82db3a05b8420816119872b58db8e7d1f99096c90ad98418bbf23cc2d4a0c8",
+      "remote_test_file_removed": true,
+      "adb_port": 15037
+    }
+  },
+  "codex_local_configuration": {
+    "stream_max_retries": 2,
+    "provider": "openai-two-retries",
+    "user_approved_provider_change": true,
+    "strict_validation": "PASS",
+    "reload_in_current_session": "NOT_VERIFIED"
+  },
+  "remaining": [
+    "Android actual IME send/reopen, notification permission/delivery/body and button clicks, foreground/background/terminated/reopen rescheduling, real recording",
+    "USB long-term sleep/wake and alternate-cable observation",
+    "stage46 current-source CI run, Windows installer matrix, original system-program-directory baseline and recovery assessment",
+    "stage47 Windows native buttons/tray/ADTS, macOS/iOS current-source matrices and R1 separate window preferences",
+    "stage48 data protection and long-term management",
+    "stage49 learning and cross-device",
+    "stage50 signing, notarization and release gates"
+  ],
+  "source_inputs": 218,
+  "source_hash_algorithm": "SHA256 of UTF-8 JSON(file hashes, sort_keys=true, separators=comma:colon)"
+}

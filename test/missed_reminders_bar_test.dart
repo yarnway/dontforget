@@ -9,6 +9,7 @@ import 'package:dont_forget/services/notification_service.dart';
 import 'package:dont_forget/ui/screens/home_screen.dart';
 import 'package:dont_forget/ui/widgets/inline_feedback.dart';
 import 'package:dont_forget/ui/widgets/missed_reminders_bar.dart';
+import 'package:dont_forget/ui/widgets/reminder_notice_panel.dart';
 import 'package:dont_forget/ui/widgets/task_workspace_overview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -37,7 +38,7 @@ Widget _buildTestApp({
       data: MediaQuery.of(context).copyWith(
         textScaler: TextScaler.linear(textScale),
       ),
-      child: child,
+      child: c!,
     ),
     home: Scaffold(body: child),
   );
@@ -160,6 +161,25 @@ void main() {
       expect(completed.isMissed(now), isFalse);
       expect(selectMissedReminders([acknowledged, completed], now), isEmpty);
     });
+
+    test(
+      'visible occurrences are excluded without hiding a later revision',
+      () {
+        final task = Reminder(
+          id: 'visible',
+          taskTitle: 'Visible due reminder',
+          quadrantLevel: 1,
+          triggerTime: now.subtract(const Duration(hours: 1)),
+        );
+        final revised = task.copyWith(noticeRevision: task.noticeRevision + 1);
+        final missed = selectMissedReminders(
+          [task, revised],
+          now,
+          visibleNoticeOccurrences: [task.occurrenceIdentity],
+        );
+        expect(missed, [revised]);
+      },
+    );
   });
 
   group('MissedRemindersBar responsive rendering & tri-lingual display', () {
@@ -327,7 +347,7 @@ void main() {
     });
 
     testWidgets(
-      'Windows scenario: 10m ago, 2h ago, 3d ago -> count is 2 -> acknowledge all -> restart shows 0',
+      '20m ago, 2h ago, 3d ago -> count is 2 -> acknowledge all -> restart shows 0',
       (tester) async {
         final now = DateTime.now();
 
@@ -336,10 +356,10 @@ void main() {
           final notifier = container.read(remindersProvider.notifier);
           await notifier.addReminder(
             Reminder(
-              id: 'task-10m',
-              taskTitle: 'Task 10 Minutes Ago',
+              id: 'task-20m',
+              taskTitle: 'Task 20 Minutes Ago',
               quadrantLevel: 1,
-              triggerTime: now.subtract(const Duration(minutes: 10)),
+              triggerTime: now.subtract(const Duration(minutes: 20)),
             ),
           );
           await notifier.addReminder(
@@ -399,7 +419,7 @@ void main() {
         expect(
           find.descendant(
             of: find.byType(TaskWorkspaceOverview),
-            matching: find.text('Task 10 Minutes Ago'),
+            matching: find.text('Task 20 Minutes Ago'),
           ),
           findsOneWidget,
         );
@@ -463,6 +483,121 @@ void main() {
         expect(find.text('错过的提醒 · 2'), findsNothing);
         expect(tester.takeException(), isNull);
         expect(find.text('错过的提醒 · 2'), findsNothing);
+        expect(tester.takeException(), isNull);
+      },
+    );
+
+    testWidgets(
+      'due notices and missed list stay disjoint, including older queued notices',
+      (tester) async {
+        addTearDown(() => drainWorkspaceDrafts(tester, container));
+        final now = DateTime.now();
+        final recent = Reminder(
+          id: 'recent-due',
+          taskTitle: 'Recent due only',
+          quadrantLevel: 1,
+          triggerTime: now.subtract(const Duration(minutes: 10)),
+        );
+        final queued = Reminder(
+          id: 'queued-due',
+          taskTitle: 'Older active notice only',
+          quadrantLevel: 1,
+          triggerTime: now.subtract(const Duration(hours: 1)),
+        );
+        final missed = Reminder(
+          id: 'missed-only',
+          taskTitle: 'Historical missed only',
+          quadrantLevel: 1,
+          triggerTime: now.subtract(const Duration(hours: 2)),
+        );
+        await tester.runAsync(() async {
+          for (final task in [recent, queued, missed]) {
+            await reminders.addReminder(task);
+          }
+        });
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: _buildTestApp(
+              language: 'zh',
+              child: const InlineFeedback(child: HomeScreen()),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 100));
+        // Model a due event retained in this session beyond the 15m window.
+        await tester.runAsync(() => notifications.fireReminderNow(queued));
+        await tester.pump(const Duration(milliseconds: 100));
+
+        final panel = tester.widget<ReminderNoticePanel>(
+          find.byType(ReminderNoticePanel),
+        );
+        expect(panel.reminders.map((r) => r.id), [queued.id, recent.id]);
+        expect(
+          find.descendant(
+            of: find.byKey(const ValueKey('missed-reminders-bar')),
+            matching: find.text('错过的提醒 · 1'),
+          ),
+          findsOneWidget,
+        );
+        await tester.tap(
+          find.byKey(const ValueKey('missed-reminders-title')),
+        );
+        await tester.pump(const Duration(milliseconds: 100));
+        final workspace = find.byType(TaskWorkspaceOverview);
+        expect(
+          find.descendant(
+            of: workspace,
+            matching: find.text(missed.taskTitle),
+          ),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(
+            of: workspace,
+            matching: find.text(recent.taskTitle),
+          ),
+          findsNothing,
+        );
+        expect(
+          find.descendant(
+            of: workspace,
+            matching: find.text(queued.taskTitle),
+          ),
+          findsNothing,
+        );
+
+        await tester.runAsync(() async {
+          await tester.tap(
+            find.byKey(const ValueKey('missed-reminders-acknowledge-all')),
+          );
+          await reminders.lastAction;
+        });
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(find.byType(MissedRemindersBar), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('missed-reminders-bar')),
+          findsNothing,
+        );
+        final saved = container.read(remindersProvider);
+        expect(
+          saved.singleWhere((r) => r.id == missed.id).noticeAcknowledgedAt,
+          isNotNull,
+        );
+        expect(
+          saved.singleWhere((r) => r.id == recent.id).noticeAcknowledgedAt,
+          isNull,
+        );
+        expect(
+          saved.singleWhere((r) => r.id == queued.id).noticeAcknowledgedAt,
+          isNull,
+        );
+        expect(
+          tester
+              .widget<ReminderNoticePanel>(find.byType(ReminderNoticePanel))
+              .reminders,
+          hasLength(2),
+        );
         expect(tester.takeException(), isNull);
       },
     );

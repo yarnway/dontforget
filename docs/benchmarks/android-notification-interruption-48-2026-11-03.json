@@ -1,0 +1,63 @@
+{
+  "date": "2026-11-03",
+  "version": "1.7.0+48",
+  "package": "com.yarnway.dontforget.acceptance.p4720261102",
+  "native_notification": {
+    "warm": {
+      "same_pid": true,
+      "system_notification_body_opens_correct_detail": true,
+      "view_does_not_acknowledge": true,
+      "single_back_leaves_detail": true,
+      "promotion_fields_changed_on_due_time": true
+    },
+    "complete": {
+      "system_notification_complete_tapped_from_background": true,
+      "completion_after_reopen": true,
+      "revision_one_history_one": true,
+      "queue_empty": true
+    },
+    "skip": {
+      "system_notification_skip_tapped": true,
+      "same_pid": true,
+      "next_occurrence_exactly_one_day": true,
+      "revision_one_history_one": true
+    }
+  },
+  "cleanup": {
+    "synthetic_tasks_product_deleted": 3,
+    "original_fourteen_rows_unchanged": true,
+    "media_and_settings_unchanged": true,
+    "original_audio_sha256_unchanged": true,
+    "database_integrity": "ok",
+    "total_rows_including_trash": 17,
+    "qa_pending_alarms": 0,
+    "qa_active_notifications": 0,
+    "action_queue_empty": true,
+    "checked_before_force_stop": true,
+    "app_stopped": true
+  },
+  "recording_home_interruption": {
+    "native_mic_active": true,
+    "home_pressed_while_holding": true,
+    "mic_not_running_after_home": true,
+    "reopen_business_tables_unchanged": true,
+    "no_new_audio_cache_file": true,
+    "database_integrity": "ok",
+    "qa_app_stopped": true
+  },
+  "not_performed": [
+    "notification_cold_body",
+    "terminated_action_queue",
+    "snooze_15_and_60",
+    "reboot_and_sleep",
+    "software_ime_send",
+    "other_recording_interruptions",
+    "windows_native_toast_and_isolated_installer"
+  ],
+  "notes": [
+    "Fixture IDs prefixed qa49 are test identifiers; app version is +48.",
+    "Initial full-row warm assertion detected existing due-time quadrant promotion, not acknowledgment.",
+    "First cleanup attempt found system shade expanded; resumed after collapsing without replaying actions.",
+    "USB physical stability not established."
+  ]
+}

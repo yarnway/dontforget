@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import '../models/notification_payload.dart';
 
 enum ProtocolAction { viewTask, completeTask, snoozeTask }
 
@@ -8,11 +9,13 @@ class ProtocolRoute {
   final ProtocolAction action;
   final String taskId;
   final int? snoozeMinutes;
+  final NotificationPayload? payload;
 
   const ProtocolRoute({
     required this.action,
     required this.taskId,
     this.snoozeMinutes,
+    this.payload,
   });
 
   /// Safely parses a URI string or command line into a [ProtocolRoute].
@@ -46,20 +49,54 @@ class ProtocolRoute {
         final id = uri.queryParameters['id']?.trim();
         if (id == null || id.isEmpty) return null;
 
+        NotificationPayload? payload;
+        if (uri.queryParameters.containsKey('payload')) {
+          // New toasts identify the exact occurrence. Malformed payloads must
+          // never fall back to the legacy ID-only action path.
+          if (uriString.length > 8192 ||
+              pathSegments.length != 1 ||
+              uri.userInfo.isNotEmpty ||
+              uri.hasPort ||
+              uri.hasFragment ||
+              uri.queryParametersAll.entries.any(
+                (entry) =>
+                    entry.value.length != 1 ||
+                    !{
+                      'id',
+                      'payload',
+                      if (actionType == 'snooze') 'minutes',
+                    }.contains(entry.key),
+              )) {
+            return null;
+          }
+          payload = NotificationPayload.tryParse(
+            uri.queryParameters['payload'],
+          );
+          if (payload == null) return null;
+          if (actionType == 'snooze' &&
+              uri.queryParameters['minutes'] != null &&
+              !{'15', '60'}.contains(uri.queryParameters['minutes'])) {
+            return null;
+          }
+        }
+
         if (actionType == 'complete') {
           return ProtocolRoute(
             action: ProtocolAction.completeTask,
             taskId: id,
+            payload: payload,
           );
         }
         if (actionType == 'snooze') {
           final rawMinutes = uri.queryParameters['minutes'];
-          final minutes =
-              rawMinutes != null ? int.tryParse(rawMinutes) ?? 15 : 15;
+          final minutes = rawMinutes != null
+              ? int.tryParse(rawMinutes) ?? 15
+              : 15;
           return ProtocolRoute(
             action: ProtocolAction.snoozeTask,
             taskId: id,
             snoozeMinutes: minutes > 0 ? minutes : 15,
+            payload: payload,
           );
         }
       }
@@ -82,10 +119,12 @@ class ProtocolRoute {
           runtimeType == other.runtimeType &&
           action == other.action &&
           taskId == other.taskId &&
-          snoozeMinutes == other.snoozeMinutes;
+          snoozeMinutes == other.snoozeMinutes &&
+          payload?.identity == other.payload?.identity;
 
   @override
-  int get hashCode => Object.hash(action, taskId, snoozeMinutes);
+  int get hashCode =>
+      Object.hash(action, taskId, snoozeMinutes, payload?.identity);
 
   @override
   String toString() =>

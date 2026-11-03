@@ -2,6 +2,8 @@
 
 当前候选版本和构建号以 `pubspec.yaml` 为准，Flutter 固定为 3.44.9。构建成功、打包成功、安装运行、系统通知和正式发布分别验收。当前执行状态见 [v1.7 发布验收总表](Release_Acceptance_v1.7.md)，历史结果见 [v1.6 阶段验收记录](Native_Acceptance_v1.6.md) 和 [v1.5.1 验收记录](Release_Acceptance_v1.5.1.md)。
 
+本机当前 `+48` Windows产物与Android QA debug包保留于 `dist/candidate-1.7.0+48/`，旧+47包不覆盖；构建与Pixel数据保持升级结果见[本轮验收](Native_Media_Routing_48_2026-11-03.md)，前轮完整PE检查见[+47记录](Windows_Android_Build_47_2026-11-03.md)。安装验收逐项比较manifest的版本与构建号，不仅比较语义版本前缀。
+
 ## 构建与产物
 
 在项目根目录执行；先安装相应平台 Flutter 原生编译依赖与 Python 3。下表 `<version>` 代表 `pubspec.yaml` 中的语义版本，构建号另外记录在清单中。
@@ -15,6 +17,10 @@
 | iOS 15+ | `bash scripts/build_ios.sh` | `DontForget_iOS_unsigned_v<version>.ipa` | 完整 Xcode、CocoaPods；未签名，不能直接真机安装 |
 
 每个平台还生成 `<platform>-manifest.json` 和 `<platform>-SHA256SUMS.txt`，包含版本、构建号、提交号、签名状态、文件大小与 SHA-256。桌面 CI 另有 `<platform>-startup.json`。便携包只表示免安装解压，应用数据仍按平台应用支持目录存放，不能当作包含用户数据的可迁移备份。
+
+Windows本地若已解析依赖并完成 `--no-pub` 回归，可用 `pwsh -File scripts/package_windows.ps1 -NoPub` 复用这组依赖打包，避免打包阶段再次改变解析结果；CI默认仍执行依赖解析。Windows测试与构建共享 `build/native_assets/windows/sqlite3.dll`，须串行运行以免动态库占用。不同SDK的本地包需明确标注，不能代替固定SDK的CI包。
+
+Windows构建Android时须使用包含 `jlink` 的完整JDK。若Pub缓存与项目跨盘而出现Kotlin `different roots`，可用 `pwsh -File scripts/build_android.ps1 -NoPub -DisableKotlinIncremental`；该开关为APK／AAB传递 `-Pkotlin.incremental=false`，不修改全局Gradle配置，CI默认不关闭该缓存。Pixel本轮的ADB端口冲突与独立身份验证见[Android／Pixel记录](Android_Deep_Link_Acceptance_2026-11-02.md)。
 
 iOS 的 `Podfile` 与 Runner 均要求最低 iOS 15。部分插件仍通过 CocoaPods 集成；安装后将较低的 pod/隐私资源包目标提升至 15，保留依赖自身更高的要求，避免新 Xcode 拒绝编译旧的 iOS 9/13 目标。不要删除 Podfile 后依赖 Flutter 自动生成的默认部署版本。
 
@@ -62,7 +68,7 @@ python3 scripts/check_ios_device.py --output /tmp/dontforget-ios-preflight.json
 
 1. main 推送、PR、手动运行：
    - Linux 质量门禁（`quality`）：在 `ubuntu-24.04` 上执行分析、全量 Flutter 测试与 Python 脚本回归；
-   - Windows 质量门禁（`quality-windows`）：在 `windows-2022` 上执行分析、全量 Windows Flutter 测试，以及 Windows POSIX 跳过清单审查；
+   - Windows 质量门禁（`quality-windows`）：在 `windows-2022` 上严格核对Flutter基线，执行分析、全量Windows Flutter及Python测试和POSIX跳过清单审查；失败阻断后续多平台构建；
    - 五平台构建矩阵（`build`）：Windows、Android、Linux、macOS、iOS 构建与启动烟测。
 2. 桌面产物解压后执行 10 秒进程启动检查。Windows 另在带空格的临时路径中安装、覆盖安装与卸载，校验历史文件哈希不变；不是实际旧数据库迁移测试。Linux 使用 Xvfb；仅在隔离 GitHub runner 执行。记录进程存活与退出状态，仍需人工窗口、安装、数据库升级及通知验收。
 3. 校验各平台提交号、版本和哈希后上传内部验证 artifact，保留 30 天。
