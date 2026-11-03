@@ -1,4 +1,5 @@
 import argparse
+from contextlib import closing
 from datetime import datetime, timedelta, timezone
 import hashlib
 import json
@@ -24,7 +25,7 @@ class RecoveryAcceptanceFixtureTest(unittest.TestCase):
         manifest = generate(self.output, self.start)
         baseline = json.loads((self.output / 'baseline.json').read_text())
         candidate = json.loads((self.output / 'candidate.json').read_text())
-        with sqlite3.connect(self.output / 'candidate.sqlite') as connection:
+        with closing(sqlite3.connect(self.output / 'candidate.sqlite')) as connection:
             connection.row_factory = sqlite3.Row
             self.assertEqual(connection.execute('PRAGMA user_version').fetchone()[0], 8)
             self.assertEqual(connection.execute('PRAGMA integrity_check').fetchone()[0], 'ok')

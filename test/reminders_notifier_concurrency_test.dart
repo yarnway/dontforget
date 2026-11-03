@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/reminder.dart';
+import 'package:dont_forget/models/task_details.dart';
 import 'package:dont_forget/providers/providers.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -70,6 +71,35 @@ void main() {
     ]);
     expect(current.state.map((item) => item.id), ['alpha', 'beta', 'gamma']);
     expect(await database.query('Reminders'), hasLength(3));
+  });
+
+  test('automatic links exclude deleted and archived reminders', () async {
+    final hiddenAt = DateTime.utc(2026, 1, 1);
+    for (final entry in [
+      ('deleted', TaskDetails(deletedAt: hiddenAt)),
+      ('archived', TaskDetails(archivedAt: hiddenAt)),
+    ]) {
+      await database.insert(
+        'Reminders',
+        task(entry.$1, title: 'Voice memo')
+            .copyWith(detailsJson: entry.$2.encode())
+            .toJson(),
+      );
+    }
+    await database.insert('Reminders', task('visible', title: 'Voice memo').toJson());
+    final current = await loadedNotifier();
+    await current.addReminder(task('new', title: 'Voice memo'));
+    expect((await stored('new')).linkedTaskIds, ['visible']);
+    expect((await stored('visible')).linkedTaskIds, ['new']);
+    expect((await stored('deleted')).linkedTaskIds, isEmpty);
+    expect((await stored('archived')).linkedTaskIds, isEmpty);
+
+    await current.addReminder(
+      task('new-hidden', title: 'Voice memo')
+          .copyWith(detailsJson: TaskDetails(deletedAt: hiddenAt).encode()),
+    );
+    expect((await stored('new-hidden')).linkedTaskIds, isEmpty);
+    expect((await stored('visible')).linkedTaskIds, ['new']);
   });
 
   test('queued edits preserve changes to different fields', () async {

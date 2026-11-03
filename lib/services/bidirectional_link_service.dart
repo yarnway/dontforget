@@ -135,6 +135,7 @@ class BiDirectionalLinkService {
     int maxSuggestions = 3,
     double threshold = 0.22,
   }) {
+    if (!targetTask.isVisible) return [];
     final targetContent = '${targetTask.taskTitle} ${targetTask.taskSummary ?? ''}';
     final targetTokens = extractTokens(targetContent);
     if (targetTokens.isEmpty) return [];
@@ -142,7 +143,7 @@ class BiDirectionalLinkService {
     final scored = <MapEntry<String, double>>[];
 
     for (final other in allReminders) {
-      if (other.id == targetTask.id) continue;
+      if (other.id == targetTask.id || !other.isVisible) continue;
       // 已存在链接则不重复作为新推荐
       if (targetTask.linkedTaskIds.contains(other.id)) continue;
 

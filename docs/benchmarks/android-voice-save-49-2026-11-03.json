@@ -1,0 +1,15 @@
+{
+  "version": "1.7.0+49",
+  "cancel_preserved_data_and_cache": true,
+  "new_audio_and_memo_created": true,
+  "unexpected_deleted_task_link_observed": true,
+  "unlinked_using_product_ui": true,
+  "voice_memo_soft_deleted": true,
+  "original_30_rows_and_settings_unchanged": true,
+  "new_audio_retained_for_trash": true,
+  "system_queues_empty_before_force_stop": true,
+  "microphone_stopped": true,
+  "qa_app_stopped": true,
+  "audibility_not_assessed": true,
+  "result": "bug reproduced; corrected in +50 source, native retest pending"
+}

@@ -1,0 +1,11 @@
+{
+  "version": "1.7.0+49",
+  "native_mic_active": true,
+  "home_pressed_while_holding": true,
+  "mic_not_running_after_home": true,
+  "reopen_business_tables_unchanged": true,
+  "no_new_audio_cache_file": true,
+  "database_integrity": "ok",
+  "qa_app_stopped": true,
+  "scope": "Home interruption only"
+}
