@@ -1,0 +1,150 @@
+{
+  "date": "2026-11-04",
+  "version": "1.7.0+52",
+  "business_schema": 16,
+  "source": {
+    "windows_inputs_sha256": "c749d9b58b3b1162537ccb8b4cd401ce977da9905a78f9dd03abd0b586b784ab",
+    "legacy_source_preserved": true,
+    "db_published_last": true,
+    "recovery_gate_before_path_selection": true,
+    "canonical_system_aliases_supported": true,
+    "no_migration_exception_path_fallback": true
+  },
+  "automation": {
+    "host": "Windows",
+    "flutter": "3.47.2",
+    "dart": "3.13.2",
+    "flutter_passed": 2203,
+    "flutter_skipped": 20,
+    "flutter_failed": 0,
+    "python_run": 136,
+    "python_skipped": 6,
+    "python_failed": 0,
+    "analysis_issues": 0,
+    "final_migrator_cases": 37,
+    "initial_migrator_passed": 28
+  },
+  "windows_package": {
+    "manifest": {
+      "version": "1.7.0",
+      "build_number": "52",
+      "revision": "a4499b720a2c534bf9ec1278042770d66ab6b5d6",
+      "platform": "windows",
+      "signing": "unsigned",
+      "runtime_acceptance": "NOT_PERFORMED",
+      "artifacts": [
+        {
+          "file": "DontForget_Setup_v1.7.0.exe",
+          "bytes": 14121954,
+          "sha256": "b60c68b0e1e6ad14c3c1854d948bb3efe60516cc1918fb752b2f450490d607fc"
+        },
+        {
+          "file": "DontForget_Windows_Portable_v1.7.0.zip",
+          "bytes": 17168901,
+          "sha256": "793e2d183ccd6db2cb27a9bac7ac8292db33015b2168595f790bc79a44e57149"
+        }
+      ]
+    },
+    "revision_note": "Pre-commit working source identified by input hashes; final commit metadata pending",
+    "native_version_check": {
+      "version": "1.7.0.52",
+      "product_version": "1.7.0+52",
+      "old_51_rejected_as_52": true,
+      "powershell_syntax": "PASS",
+      "executable_launched": false,
+      "installer_launched": false
+    },
+    "archive_check": {
+      "version": "1.7.0+52",
+      "files": 37,
+      "byte_hashes_match": true,
+      "manifest_hashes_and_sizes_match": true,
+      "runtime_acceptance": "NOT_PERFORMED"
+    },
+    "local_installation": "NOT_PERFORMED"
+  },
+  "native_qa_cli": {
+    "version": "1.7.0+52",
+    "native_executable_sha256": "264379e120904c30c7d898c9a186b054d0c857bcb4317bd2e214d213a8b18e3a",
+    "native_identity": {
+      "CompanyName": "com.yarnway.dontforget.acceptance.location52",
+      "ProductName": "DontForgetLocationQA52",
+      "FileVersion": "1.7.0+52"
+    },
+    "dart_sources_unmodified": false,
+    "migration_sources_unmodified": true,
+    "qa_entrypoint_diagnostics": true,
+    "scenarios": [
+      {
+        "scenario": "first-upgrade",
+        "exit_code": 0,
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "scenario": "live-sql-reader-blocked",
+        "exit_code": 1,
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "scenario": "retry-after-reader-exit",
+        "exit_code": 0,
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "scenario": "same-target-reopen",
+        "exit_code": 0,
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "old_schema": 7,
+    "new_schema": 16,
+    "business_tables": {
+      "Settings": 1,
+      "MediaRecords": 1,
+      "Reminders": 4
+    },
+    "legacy_fields_preserved": true,
+    "legacy_file_hashes_preserved": true,
+    "source_media_hash_preserved": true,
+    "operational_files_preserved": true,
+    "window_preferences_preserved": true,
+    "no_alternate_database_after_busy_failure": true,
+    "protocol_registration_unchanged": true,
+    "gui_acceptance": "NOT_PERFORMED",
+    "real_user_data": "NOT_ACCESSED",
+    "formal_package_installation": "NOT_PERFORMED",
+    "scope": "isolated QA native CLI, synthetic historical schema7 database",
+    "console_output_captured": false,
+    "cli_text_rendering": "NOT_PERFORMED"
+  },
+  "qa_variant": {
+    "files": {
+      "windows/runner/Runner.rc": "08b512b056aa7c60356033f8e411b2eeda919acb646ccfacacf989010c8fc20a",
+      "windows/runner/main.cpp": "8eba48a2131afb8977b3d8bdeb7642dd600067d37182352188d181e377a510c1",
+      "lib/main.dart": "be65c635b715fad377f4efff9d045f7046d2d4ea9895ab0b892e4c7eb6173a2e"
+    },
+    "changes": [
+      "QA company and product directory",
+      "QA AUMID and mutex",
+      "protocol registration disabled; CLI only",
+      "CLI input namespace guard and private failure diagnostics in Dart entrypoint",
+      "QA native window title"
+    ],
+    "migration_sources_unmodified": true
+  },
+  "earlier_native_attempts": {
+    "exit_code": 1,
+    "diagnosis": "Strict root canonical-path equality rejected Windows MSIX RoamingAppData virtualization",
+    "fixed_before_commit": true,
+    "full_suite_repeated_after_fix": true
+  },
+  "windows_computer_use": {
+    "initialization_attempts": 2,
+    "result": "unavailable: sandboxCwd is not a local file URI",
+    "gui_actions_performed": false
+  },
+  "github_ci": {
+    "status": "pending push"
+  },
+  "release_created": false
+}

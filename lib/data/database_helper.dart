@@ -379,36 +379,32 @@ class DatabaseHelper {
       return _directory;
     }
     if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      String? dbDirectory;
       try {
         final supportDir = await getApplicationSupportDirectory();
-        final dbDir = Directory(join(supportDir.path, 'databases'));
-        if (!await dbDir.exists()) {
-          await dbDir.create(recursive: true);
-        }
-        if (Platform.isWindows) {
-          return await DatabaseLocationMigrator.resolveAndMigrate(
-            targetDir: dbDir.path,
-          );
-        }
-        return dbDir.path;
-      } catch (e) {
-        debugPrint('Error getting application support directory: $e');
+        final directory = Directory(join(supportDir.path, 'databases'));
+        await directory.create(recursive: true);
+        dbDirectory = directory.path;
+      } catch (_) {
         if (Platform.isWindows) {
           final localAppData =
               Platform.environment['LOCALAPPDATA'] ??
               Platform.environment['APPDATA'] ??
               Platform.environment['USERPROFILE'] ??
               '.';
-          final fallbackDir = Directory(
+          final fallback = Directory(
             join(localAppData, 'DontForget', 'databases'),
           );
-          if (!fallbackDir.existsSync()) {
-            fallbackDir.createSync(recursive: true);
-          }
-          return await DatabaseLocationMigrator.resolveAndMigrate(
-            targetDir: fallbackDir.path,
-          );
+          await fallback.create(recursive: true);
+          dbDirectory = fallback.path;
         }
+      }
+      if (dbDirectory != null) {
+        // An ambiguous migration/recovery result must not select a different
+        // directory through the path-provider fallback above.
+        return Platform.isWindows
+            ? DatabaseLocationMigrator.resolveAndMigrate(targetDir: dbDirectory)
+            : dbDirectory;
       }
     }
     return await sqflite.getDatabasesPath();

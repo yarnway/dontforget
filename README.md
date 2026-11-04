@@ -7,7 +7,7 @@
 
 [使用指南](docs/User_Guide.md) · [开发指南](docs/Developer_Guide.md) · [架构](docs/Architecture_Design.md) · [变更日志](docs/Changelog.md)
 
-后续工作按[2026-11-02 阶段与任务](docs/Next_Steps_2026-11-02.md)推进：先关闭候选缺陷与安装包差异，再做原生提醒、数据保护、学习与跨设备验收。当前源码为 `1.7.0+51`，设备窗口偏好独立存储及源码／自动化／包／实机状态见[R1验收](docs/Desktop_Window_Storage_51_2026-11-04.md)；Android +50通知与录音证据保留在阶段台账。历史+48通知、录音与媒体入口见[原生验收](docs/Native_Media_Routing_48_2026-11-03.md)；Windows +47包与Pixel隔离升级见[构建升级验收](docs/Windows_Android_Build_47_2026-11-03.md)，Windows新动作与Pixel通知／USB结果见[11月3日验收](docs/Windows_Android_Validation_2026-11-03.md)。Android冻结 `+46` 深链及Pixel结果见[阶段47验收](docs/Android_Deep_Link_Acceptance_2026-11-02.md)；Windows `+45` 包保留[阶段46验收](docs/Stage46_Validation_2026-11-02.md)的独立归属。
+后续工作按[2026-11-02 阶段与任务](docs/Next_Steps_2026-11-02.md)推进：先关闭候选缺陷与安装包差异，再做原生提醒、数据保护、学习与跨设备验收。当前源码为 `1.7.0+52`，Windows旧目录迁移保护及分层验收见[迁移记录](docs/Legacy_Location_Storage_52_2026-11-04.md)；设备窗口偏好独立存储见[R1验收](docs/Desktop_Window_Storage_51_2026-11-04.md)；Android +50通知与录音证据保留在阶段台账。历史+48通知、录音与媒体入口见[原生验收](docs/Native_Media_Routing_48_2026-11-03.md)；Windows +47包与Pixel隔离升级见[构建升级验收](docs/Windows_Android_Build_47_2026-11-03.md)，Windows新动作与Pixel通知／USB结果见[11月3日验收](docs/Windows_Android_Validation_2026-11-03.md)。Android冻结 `+46` 深链及Pixel结果见[阶段47验收](docs/Android_Deep_Link_Acceptance_2026-11-02.md)；Windows `+45` 包保留[阶段46验收](docs/Stage46_Validation_2026-11-02.md)的独立归属。
 
 当前工作区的“记录与提醒”优化及后续阶段见[分阶段功能清单](docs/Recording_Reminders_Phases.md)，其中开发中功能与公开候选分别记录。 本轮新增的用药计划、出门清单、附件备份和学习管理入口见[实现与验收索引](docs/Planning_Implementation.md)，尚未计入本轮安装包验收。
 
