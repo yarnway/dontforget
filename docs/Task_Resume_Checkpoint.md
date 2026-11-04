@@ -3,7 +3,7 @@
 ## 2026-11-04 R1 独立窗口偏好 +51
 
 - 窗口状态已与业务草稿分离，首次迁移保持旧草稿原文，schema16不变；串行保存、恢复边界、损坏回退和未来格式保留已实现。
-- 最终Windows Flutter2172通过／20跳过、Python136运行／6跳过、分析0；Windows+51包重建并核验PE版本与37项内容。未安装；CI、其他平台构建与真实窗口跨屏／DPI待验，不继承+50设备证据。详见[R1实施记录](Desktop_Window_Storage_51_2026-11-04.md)。
+- 最终Windows Flutter2172通过／20跳过、Python136运行／6跳过、分析0；Windows+51包重建并核验PE版本与37项内容。本地包未安装；源码 `9928879` 已推送，[CI 41794751796](https://github.com/yarnway/dontforget/actions/runs/41794751796)双平台质量／五平台构建及Windows隔离安装／启动冒烟通过，五份artifact源码身份已核对。真实窗口跨屏／DPI、Toast、旧库迁移和+51手机矩阵待验，不继承+50设备证据。详见[R1实施记录](Desktop_Window_Storage_51_2026-11-04.md)。
 
 
 ## 2026-11-04 Android +50 录音后台中断

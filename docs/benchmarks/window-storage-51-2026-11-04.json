@@ -50,7 +50,7 @@
     "manifest": {
       "version": "1.7.0",
       "build_number": "51",
-      "revision": "e1db3fd43ed59c0594395f8897cbfd48ed91f37b",
+      "revision": "992887989266224e5c891a5f6bd59c7b169d03a7",
       "platform": "windows",
       "signing": "unsigned",
       "runtime_acceptance": "NOT_PERFORMED",
@@ -67,7 +67,7 @@
         }
       ]
     },
-    "revision_note": "Local build before commit; input hashes identify working source. Commit metadata finalized after source commit.",
+    "revision_note": "Final build inputs match source commit; regenerated package manifest verified against that commit.",
     "native_version_check": {
       "version": "1.7.0.51",
       "product_version": "1.7.0+51",
@@ -92,7 +92,165 @@
     "native_acceptance": "NOT_PERFORMED"
   },
   "github_ci": {
-    "status": "pending push"
+    "run_id": 41794751796,
+    "url": "https://github.com/yarnway/dontforget/actions/runs/41794751796",
+    "commit": "992887989266224e5c891a5f6bd59c7b169d03a7",
+    "status": "completed",
+    "conclusion": "success",
+    "configured_flutter": "3.44.9",
+    "quality_logs": [
+      {
+        "job": "Windows analyze and test",
+        "flutter_passed": 2172,
+        "flutter_skipped": 20,
+        "python_run": 136,
+        "python_skipped": 6,
+        "log_sha256": "7ee27400cb65099a547eba59fe023a9823fb71385179672dea842e486478af0c"
+      },
+      {
+        "job": "Analyze and test",
+        "flutter_passed": 2190,
+        "flutter_skipped": 2,
+        "python_run": 136,
+        "python_skipped": 3,
+        "log_sha256": "11c0aa4a0c6604f88a6af44b9b4d7d0005ed19b053d2af5ef87e59bdefa8aa00"
+      }
+    ],
+    "jobs": [
+      {
+        "name": "Windows analyze and test",
+        "conclusion": "success",
+        "checks": []
+      },
+      {
+        "name": "Analyze and test",
+        "conclusion": "success",
+        "checks": []
+      },
+      {
+        "name": "Build ios candidate",
+        "conclusion": "success",
+        "checks": [
+          {
+            "name": "Verify packaged hashes and source identity",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "Build windows candidate",
+        "conclusion": "success",
+        "checks": [
+          {
+            "name": "Windows install upgrade and uninstall acceptance",
+            "conclusion": "success"
+          },
+          {
+            "name": "Windows native startup smoke check",
+            "conclusion": "success"
+          },
+          {
+            "name": "Verify packaged hashes and source identity",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "Build android candidate",
+        "conclusion": "success",
+        "checks": [
+          {
+            "name": "Verify packaged hashes and source identity",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "Build macos candidate",
+        "conclusion": "success",
+        "checks": [
+          {
+            "name": "macOS storage lock acceptance",
+            "conclusion": "success"
+          },
+          {
+            "name": "macOS native startup smoke check",
+            "conclusion": "success"
+          },
+          {
+            "name": "Verify packaged hashes and source identity",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "Build linux candidate",
+        "conclusion": "success",
+        "checks": [
+          {
+            "name": "Linux native startup smoke check",
+            "conclusion": "success"
+          },
+          {
+            "name": "Verify packaged hashes and source identity",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "Verify tag packages without publishing",
+        "conclusion": "skipped",
+        "checks": []
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 13306081834,
+        "name": "macos-deliverables",
+        "bytes": 26278067,
+        "digest": "sha256:1a6367bd3f9f95c1bff768b67af930f9c6a70f3322bcfe76154426f17e51d6d6",
+        "expired": false,
+        "source_commit": "992887989266224e5c891a5f6bd59c7b169d03a7"
+      },
+      {
+        "id": 13306050973,
+        "name": "linux-deliverables",
+        "bytes": 14241393,
+        "digest": "sha256:bbea4fa29287997fefe3d4a8e682c3026f0d11bb30da22b84b85d100d2571387",
+        "expired": false,
+        "source_commit": "992887989266224e5c891a5f6bd59c7b169d03a7"
+      },
+      {
+        "id": 13306007801,
+        "name": "windows-deliverables",
+        "bytes": 31743663,
+        "digest": "sha256:f6aeac0e06e173703d8d0e7081c89c964560cba6f0e635b0dd6cfaf80bfe8804",
+        "expired": false,
+        "source_commit": "992887989266224e5c891a5f6bd59c7b169d03a7"
+      },
+      {
+        "id": 13305902913,
+        "name": "ios-deliverables",
+        "bytes": 11047400,
+        "digest": "sha256:5592b9c68e764849aec799c360d057f6cb9662658a916d2c1d22532dd0fe6f25",
+        "expired": false,
+        "source_commit": "992887989266224e5c891a5f6bd59c7b169d03a7"
+      },
+      {
+        "id": 13305484476,
+        "name": "android-deliverables",
+        "bytes": 106958311,
+        "digest": "sha256:f435266411c9b4f80ea4c5a96002479a286eba53fd0e92be953c900cd440bb0a",
+        "expired": false,
+        "source_commit": "992887989266224e5c891a5f6bd59c7b169d03a7"
+      }
+    ],
+    "native_candidate_packages_downloaded_locally": false,
+    "tag_package_verification": "skipped: non-tag run",
+    "windows_installation_scope": "isolated CI install / same-package upgrade / uninstall / synthetic legacy file preservation / startup smoke",
+    "real_database_migration": "NOT_PERFORMED",
+    "native_toast_click": "NOT_PERFORMED",
+    "release_created": false
   },
   "release_created": false,
   "remaining": [
@@ -103,5 +261,6 @@
     "Stage49 capture/sync/learning workflow",
     "Stage50 native Apple acceptance, signing and release",
     "USB cross-port/host hardware comparison"
-  ]
+  ],
+  "commit": "992887989266224e5c891a5f6bd59c7b169d03a7"
 }

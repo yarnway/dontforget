@@ -23,9 +23,11 @@
 | --- | --- |
 | 源码 | 已实现独立存储、迁移、恢复边界和并发保护 |
 | 自动化 | 最终Windows Flutter全量2172通过／20跳过、Python136运行／6跳过、分析0；本机Flutter3.47.2／Dart3.13.2，固定SDK的CI独立记录 |
-| 构建与安装包 | +51 Windows安装器／便携包已重建，PE1.7.0.51、37项归档内容与包摘要／大小通过；未安装／运行；Android和其他平台待CI构建 |
+| 构建与安装包 | +51 Windows安装器／便携包已重建，PE1.7.0.51、37项归档内容与包摘要／大小通过；本地包未安装／运行；CI五平台候选包构建、摘要和源码身份检查通过 |
 | 真实设备 | 本轮未操作真实业务库、Windows窗口或Pixel；跨屏／DPI／重开及原生矩阵待验 |
-| GitHub | 本轮提交与 CI 待记录；未创建标签或 Release |
+| GitHub | 源码 `9928879` 已推送main；[CI 41794751796](https://github.com/yarnway/dontforget/actions/runs/41794751796) 双平台质量检查及五平台候选构建通过。Windows隔离runner安装／同包升级／卸载、合成旧文件保留与启动冒烟通过；tag专用校验按main跳过，未创建标签或Release |
+
+CI日志已读回：Linux Flutter2190通过／2跳过、Python136运行／3跳过；Windows Flutter2172通过／20跳过、Python136运行／6跳过。五份artifact的API摘要、大小及源码提交已核对；未在本地下载云端所有原生包，实际旧数据库迁移和Toast仍待验。
 
 本轮机器证据见[验收数据](benchmarks/window-storage-51-2026-11-04.json)。
 
