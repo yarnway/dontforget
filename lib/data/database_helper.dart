@@ -12,6 +12,7 @@ import '../models/legacy_credentials.dart';
 import '../models/task_details.dart';
 import '../services/security/credential_store.dart';
 import '../services/notification_epoch_store.dart';
+import '../services/device_window_preferences_store.dart';
 import '../services/notification_journal.dart';
 import '../services/storage_directory_lease.dart';
 import 'schema_14_compatibility.dart';
@@ -36,6 +37,7 @@ class DatabaseHelper {
   String? _ownedDirectory;
   StorageDirectoryLease? _ownershipLock;
   NotificationEpochStore? _notificationEpochStore;
+  DeviceWindowPreferencesStore? _deviceWindowPreferences;
   NotificationJournal? _notificationJournal;
   static final Map<String, DatabaseHelper> _directoryOwners = {};
   static final Object _operationZoneKey = Object();
@@ -67,6 +69,19 @@ class DatabaseHelper {
       _directory == null
       ? await getApplicationSupportDirectory()
       : Directory(_directory);
+
+  /// Device geometry is outside the business DB and its backups. Keep each
+  /// operation admitted until file I/O finishes, so maintenance and shutdown
+  /// drain it before releasing process ownership. No SQL/schema migration.
+  Future<T> withDeviceWindowPreferences<T>(
+    Future<T> Function(DeviceWindowPreferencesStore) action,
+  ) => runOperation(captureGeneration(), () async {
+    await _acquireOwnership();
+    final store = _deviceWindowPreferences ??= DeviceWindowPreferencesStore(
+      _ownershipLock!,
+    );
+    return store.run(action);
+  });
 
   /// Raw handles are only available on an explicitly isolated test helper.
   @visibleForTesting
@@ -334,6 +349,7 @@ class DatabaseHelper {
     await handle.close();
     _ownershipLock = null;
     _notificationEpochStore = null;
+    _deviceWindowPreferences = null;
     _notificationJournal = null;
     _ownedDirectory = null;
     if (identical(_directoryOwners[directory], this)) {

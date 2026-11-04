@@ -13,7 +13,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class _Native implements FlutterLocalNotificationsPlugin {
-  _Native(this.directory, {required this.incremental});
+  _Native(this.directory, {required this.incremental, required this.database});
+  final DatabaseHelper database;
   final bool incremental;
   final Directory directory;
   final pending = <int>{};
@@ -25,18 +26,23 @@ class _Native implements FlutterLocalNotificationsPlugin {
   int peakActive = 0;
 
   Future<void> mutate(int id, String action) async {
-    // Bypass the live cache and read the durable file at the native boundary.
-    final state = incremental
-        ? await IncrementalJournalEngine(
-            Directory('${directory.path}/notification-incremental'),
-          ).open()
-        : NotificationJournalSnapshot.decode(
-            jsonDecode(
-              await File(
-                '${directory.path}/${NotificationJournal.fileName}',
-              ).readAsString(),
-            ),
-          );
+    // Read disk independently at the native boundary, under the writer's
+    // serializer so checkpoint publication/reclamation cannot race the probe.
+    final state = await database.withNotificationJournal(
+      (journal) => journal.inspectPersistedForTesting(
+        () async => incremental
+            ? await IncrementalJournalEngine(
+                Directory('${directory.path}/notification-incremental'),
+              ).open()
+            : NotificationJournalSnapshot.decode(
+                jsonDecode(
+                  await File(
+                    '${directory.path}/${NotificationJournal.fileName}',
+                  ).readAsString(),
+                ),
+              ),
+      ),
+    );
     final entry = state.entries.values.singleWhere((e) => e.nativeId == id);
     expect(entry.action, action);
     expect(entry.status, 'pending');
@@ -100,7 +106,7 @@ void main() {
           databaseFactoryFfi,
           migrateNotificationJournal: incremental,
         );
-        native = _Native(directory, incremental: incremental);
+        native = _Native(directory, incremental: incremental, database: helper);
         service = NotificationService.forTesting(
           native,
           usesNativeNotifications: true,
@@ -158,7 +164,9 @@ void main() {
           notifier = RemindersNotifier(helper, notifications: service);
           var ready = false;
           final loaded = notifier!.ready.then((_) => ready = true);
-          await native.firstBatch.future.timeout(const Duration(seconds: 5));
+          // This checks disk ordering and concurrency, not a five-second
+          // performance target on a loaded build host.
+          await native.firstBatch.future.timeout(const Duration(seconds: 30));
           expect(native.active, 32);
           expect(native.schedules, 32);
           expect(ready, isFalse);
@@ -221,7 +229,7 @@ void main() {
         () async {
           native.release = Completer<void>();
           notifier = RemindersNotifier(helper, notifications: service);
-          await native.firstBatch.future.timeout(const Duration(seconds: 5));
+          await native.firstBatch.future.timeout(const Duration(seconds: 30));
           final stopped = expectLater(
             notifier!.ready,
             throwsA(isA<DatabaseAccessException>()),
@@ -263,7 +271,7 @@ void main() {
             service.resumeFromReminders(tasks),
             throwsStateError,
           );
-          await native.firstBatch.future.timeout(const Duration(seconds: 5));
+          await native.firstBatch.future.timeout(const Duration(seconds: 30));
           expect(native.active, 32);
           expect(service.isPausedForMaintenance, isTrue);
           native.release!.complete();

@@ -1,0 +1,107 @@
+{
+  "date": "2026-11-04",
+  "version": "1.7.0+51",
+  "business_schema": 16,
+  "source": {
+    "independent_device_preferences": true,
+    "legacy_drafts_preserved": true,
+    "business_restore_retains_local_geometry": true,
+    "future_format_preserved": true,
+    "serialized_owned_io": true,
+    "windows_inputs_sha256": "8b37b463ea7e09a93ffe513d360a52579db3c11acd81aaa00c53a796a6e22e48"
+  },
+  "automation": {
+    "host": "Windows",
+    "flutter": "3.47.2",
+    "dart": "3.13.2",
+    "flutter_passed": 2172,
+    "flutter_skipped": 20,
+    "flutter_failed": 0,
+    "python_run": 136,
+    "python_skipped": 6,
+    "python_failed": 0,
+    "analysis_issues": 0,
+    "initial_window_recovery_targeted_passed": 60,
+    "earlier_attempts": [
+      {
+        "flutter_passed": 2171,
+        "flutter_skipped": 20,
+        "flutter_failed": 1,
+        "test": "incremental timezone refresh",
+        "underlying_exception_captured": false
+      },
+      {
+        "flutter_passed": 2172,
+        "flutter_skipped": 20,
+        "flutter_failed": 0,
+        "diagnostics_before_final_probe_change": true
+      },
+      {
+        "flutter_passed": 2171,
+        "flutter_skipped": 20,
+        "flutter_failed": 1,
+        "test": "incremental maintenance first batch timeout",
+        "native_build_running_concurrently": true
+      }
+    ],
+    "notification_probe_final": "independent disk reads under journal serializer; first-batch wait bounded at 30 seconds"
+  },
+  "windows_package": {
+    "manifest": {
+      "version": "1.7.0",
+      "build_number": "51",
+      "revision": "e1db3fd43ed59c0594395f8897cbfd48ed91f37b",
+      "platform": "windows",
+      "signing": "unsigned",
+      "runtime_acceptance": "NOT_PERFORMED",
+      "artifacts": [
+        {
+          "file": "DontForget_Setup_v1.7.0.exe",
+          "bytes": 14109319,
+          "sha256": "44da9e0269fa71e15964b379a2b58a83dcd88457310672945fb9502d48eb296a"
+        },
+        {
+          "file": "DontForget_Windows_Portable_v1.7.0.zip",
+          "bytes": 17151103,
+          "sha256": "3e8b698faeb02d86d650e36a3dffdd8c495389284a15e33b812172ee3ff7f9e6"
+        }
+      ]
+    },
+    "revision_note": "Local build before commit; input hashes identify working source. Commit metadata finalized after source commit.",
+    "native_version_check": {
+      "version": "1.7.0.51",
+      "product_version": "1.7.0+51",
+      "old_50_rejected_as_51": true,
+      "powershell_syntax": "PASS",
+      "executable_launched": false,
+      "installer_launched": false
+    },
+    "archive_check": {
+      "version": "1.7.0+51",
+      "files": 37,
+      "byte_hashes_match": true,
+      "manifest_hashes_and_sizes_match": true,
+      "runtime_acceptance": "NOT_PERFORMED"
+    },
+    "sqlite_cache": {
+      "file": "sqlite3.x64.windows.dll",
+      "sha256": "2bf39f2aadafdc59a90b260f582a8fccebc5b89eb94175fdbaa9148c1e1f084d",
+      "verified_against": "sqlite3-3.5.2/lib/src/hook/asset_hashes.dart"
+    },
+    "installed": false,
+    "native_acceptance": "NOT_PERFORMED"
+  },
+  "github_ci": {
+    "status": "pending push"
+  },
+  "release_created": false,
+  "remaining": [
+    "R1 native multi-display/DPI/window and tray checks",
+    "Windows Toast and real database upgrade",
+    "Android IME composition, recording interruptions, delayed redelivery and sleep/reboot",
+    "Stage48 protection and cross-device restore",
+    "Stage49 capture/sync/learning workflow",
+    "Stage50 native Apple acceptance, signing and release",
+    "USB cross-port/host hardware comparison"
+  ]
+}

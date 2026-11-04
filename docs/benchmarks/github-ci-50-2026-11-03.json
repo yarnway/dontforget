@@ -1,0 +1,26 @@
+{
+  "version": "1.7.0+50",
+  "commit": "e1db3fd43ed59c0594395f8897cbfd48ed91f37b",
+  "run_id": 41609600737,
+  "url": "https://github.com/yarnway/dontforget/actions/runs/41609600737",
+  "conclusion": "success",
+  "quality": {
+    "linux": "success",
+    "windows": "success"
+  },
+  "candidate_builds": {
+    "windows": "success",
+    "android": "success",
+    "linux": "success",
+    "macos": "success",
+    "ios": "success"
+  },
+  "windows_installer": {
+    "install_same_package_upgrade_uninstall": "success",
+    "synthetic_legacy_file_preserved": true,
+    "real_database_migration": "not performed",
+    "toast_click": "not performed",
+    "native_startup_smoke": "success"
+  },
+  "tag_package_verification": "skipped: non-tag run"
+}

@@ -108,6 +108,17 @@ class NotificationJournal {
     return _serialize(_read);
   }
 
+  /// A test-only independent disk reader must share the writer's serializer:
+  /// checkpoint publication and reclamation can otherwise invalidate its input.
+  /// The inspector must only read files, never enqueue journal mutations.
+  Future<T> inspectPersistedForTesting<T>(Future<T> Function() inspector) {
+    _pendingChanges = null;
+    return _serialize(() async {
+      _lease?.checkHeld();
+      return inspector();
+    });
+  }
+
   Future<void> reset(String epoch) {
     _pendingChanges = null; // Never combine mutations across an epoch reset.
     return _serialize(() async {

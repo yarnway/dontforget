@@ -1,9 +1,41 @@
 # 手动续行检查点
 
+## 2026-11-04 R1 独立窗口偏好 +51
+
+- 窗口状态已与业务草稿分离，首次迁移保持旧草稿原文，schema16不变；串行保存、恢复边界、损坏回退和未来格式保留已实现。
+- 最终Windows Flutter2172通过／20跳过、Python136运行／6跳过、分析0；Windows+51包重建并核验PE版本与37项内容。未安装；CI、其他平台构建与真实窗口跨屏／DPI待验，不继承+50设备证据。详见[R1实施记录](Desktop_Window_Storage_51_2026-11-04.md)。
+
+
+## 2026-11-04 Android +50 录音后台中断
+
+- Pixel +50 按住录音时按 Home 后麦克风停止，重开后三表与临时文件保持；仅覆盖 Home 场景。[实机数据](benchmarks/android-recording-home-50-2026-11-04.json)。
+
+
+## 2026-11-04 Android +50 通知动作
+
+- +50 热正文、后台完成、周期跳过及两档延后按钮实机通过；五条夹具软删除，原数据及音频保持，系统队列清空且屏幕超时恢复。延后二次送达和休眠／重启仍待验。[实机数据](benchmarks/android-notification-actions-50-2026-11-04.json)。
+
+
+## 2026-11-03 Android +50 冷通知重验
+
+- 解锁后清理中断夹具；重新实机验证 +50 冷正文和终止后完成动作通过，重开消费一次。两条新夹具软删除，原34条与音频保持，屏幕超时已恢复。[验收数据](benchmarks/android-cold-notification-50-2026-11-03.json)。
+
+
+## 2026-11-03 工作区窗口并发及Pixel锁屏
+
+- 工作区窗口旧写入不再覆盖新位置，专项26通过（含草稿与窗口并发写入）、分析0；尚未构建或发布。Pixel锁屏使+50冷通知点击中断，已强停隔离QA取消通知与闹钟，解锁后两条合成事项已通过应用清理；不得将强停后队列视为正常取消证据。
+- Linux Flutter探测误移动本机Windows Dart SDK后已从原备份恢复；Windows Python全量136运行／6跳过、无失败。
+
+
+## 2026-11-03 +50 GitHub CI
+
+- e1db3fd 的 GitHub Actions run 41609600737 成功，双平台质量检查和五平台候选构建通过；Windows隔离安装、同包升级、卸载、合成旧文件保留与原生启动冒烟通过，真实数据库迁移及Toast仍待验。[CI证据](benchmarks/github-ci-50-2026-11-03.json)。
+
+
 ## 2026-11-03 +50 构建及实机录音修复
 
 - +50 Flutter全量2159通过／20跳过，Windows与Android构建；Pixel同签名升级前20文件保持，实际录音新事项不再关联回收站，测试事项已软删除，原31条与音频保持。[验收数据](benchmarks/build-voice-fix-50-2026-11-03.json)。
-- 上一CI Linux通过，Windows Python因缺时区数据与SQLite连接未关闭失败；修复后Windows相关专项12通过，本机其余Python 135运行／6跳过，Flutter版本子进程检查存在本机路径问题而未覆盖，曾在Windows CI通过。新CI待验证。
+- 上一CI Linux通过，Windows Python因缺时区数据与SQLite连接未关闭失败；修复后Windows相关专项12通过，恢复本机Windows Dart SDK后Python全量136运行／6跳过、无失败。新CI待验证。
 
 
 ## 2026-11-03 +50 隐藏事项自动关联

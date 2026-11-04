@@ -5,6 +5,8 @@ import 'package:crypto/crypto.dart';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/services/recovery/backup_inspector.dart';
+import 'package:dont_forget/services/desktop_window_service.dart';
+import 'package:dont_forget/services/device_window_preferences_store.dart';
 import 'package:dont_forget/services/recovery/database_recovery.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -101,7 +103,13 @@ void main() {
           quadrantLevel: 2,
         ).toJson(),
       );
-      await db.update('Settings', {'api_key': 'synthetic-key'});
+      await db.update('Settings', {
+        'api_key': 'synthetic-key',
+        'workspace_drafts_json': jsonEncode({
+          'capture': {'text': 'imported unsent draft'},
+          'windowPreferences': {'width': 1700, 'height': 950},
+        }),
+      });
     });
     await source.close();
     sqliteSource = File(
@@ -154,6 +162,44 @@ void main() {
         } finally {
           await rollback.close();
         }
+      },
+    );
+  }
+
+  for (final format in ['sqlite', 'json']) {
+    test(
+      '$format business restore retains device geometry and imported drafts',
+      () async {
+        const local = WindowPreferences(
+          width: 1440,
+          height: 900,
+          x: -700,
+          y: 100,
+        );
+        await DesktopWindowService.save(live, local);
+        final deviceFile = File(
+          livePath(DeviceWindowPreferencesStore.fileName),
+        );
+        final before = await hash(deviceFile);
+        final source = format == 'sqlite' ? sqliteSource : jsonSource;
+        await DatabaseRecovery(
+          live,
+          notifications: notifications(),
+          inspector: inspector,
+        ).restore(source, expectedDigest: await hash(source));
+        expect(await ids(), ['new']);
+        expect(await hash(deviceFile), before);
+        expect(await DesktopWindowService.load(live), local);
+        final settings = await live.read(
+          live.captureGeneration(),
+          (db) => db.query('Settings'),
+        );
+        final drafts = jsonDecode(
+          settings.single['workspace_drafts_json'] as String,
+        );
+        expect(drafts['capture']['text'], 'imported unsent draft');
+        expect(drafts['windowPreferences']['width'], 1700);
+        await backupsUnchanged();
       },
     );
   }

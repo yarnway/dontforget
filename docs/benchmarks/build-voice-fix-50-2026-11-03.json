@@ -70,9 +70,10 @@
     "audibility_not_assessed": true
   },
   "python_windows_local": {
-    "run": 135,
+    "run": 136,
     "skipped": 6,
-    "excluded": "Flutter version subprocess check: local Flutter --version exits with path error; this check passed on prior Windows CI",
+    "failed": 0,
+    "note": "Re-run after restoring Windows Dart SDK displaced by an accidental Linux Flutter probe",
     "focused_dst_tests": 4,
     "focused_recovery_tests": 8
   },

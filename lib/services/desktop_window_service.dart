@@ -51,8 +51,8 @@ class WindowPreferences {
         : defaultWidth;
     final parsedHeight =
         (rawHeight is num && rawHeight.isFinite && rawHeight > 0)
-            ? rawHeight.toDouble()
-            : defaultHeight;
+        ? rawHeight.toDouble()
+        : defaultHeight;
 
     final width = parsedWidth < minWidth ? minWidth : parsedWidth;
     final height = parsedHeight < minHeight ? minHeight : parsedHeight;
@@ -124,82 +124,57 @@ class DesktopWindowService {
   static bool get hasPendingDebounce =>
       _debounceTimer != null && _debounceTimer!.isActive;
 
-  /// Loads saved window preferences from Settings.workspace_drafts_json.
-  /// Falls back to defaults if not found, corrupt, or on error.
+  /// Local device state takes precedence over legacy business drafts. Copy the
+  /// legacy value once, retaining the original bytes for older app versions.
   static Future<WindowPreferences> load(DatabaseHelper dbHelper) async {
     try {
-      final generation = dbHelper.captureGeneration();
-      final rows = await dbHelper.read(
-        generation,
-        (db) => db.query(
-          'Settings',
-          columns: ['workspace_drafts_json'],
-          where: 'id = ?',
-          whereArgs: ['default'],
-        ),
-      );
-      if (rows.isEmpty) return const WindowPreferences();
-      final rawDrafts = rows.first['workspace_drafts_json'] as String?;
-      if (rawDrafts == null || rawDrafts.isEmpty) {
-        return const WindowPreferences();
-      }
-      final decoded = jsonDecode(rawDrafts);
-      if (decoded is! Map<String, dynamic>) {
-        return const WindowPreferences();
-      }
-      final rawPrefs = decoded[preferenceKey];
-      if (rawPrefs is! Map<String, dynamic>) {
-        return const WindowPreferences();
-      }
-      return WindowPreferences.fromJson(rawPrefs);
+      return await dbHelper.withDeviceWindowPreferences((store) async {
+        final local = await store.read();
+        if (local != null) return WindowPreferences.fromJson(local);
+        var preferences = const WindowPreferences();
+        try {
+          final generation = dbHelper.captureGeneration();
+          final rows = await dbHelper.read(
+            generation,
+            (db) => db.query(
+              'Settings',
+              columns: ['workspace_drafts_json'],
+              where: 'id = ?',
+              whereArgs: ['default'],
+            ),
+          );
+          final raw = rows.single['workspace_drafts_json'];
+          if (raw is String && raw.length <= 1048576) {
+            final drafts = jsonDecode(raw);
+            if (drafts is Map<String, dynamic> &&
+                drafts[preferenceKey] is Map<String, dynamic>) {
+              preferences = WindowPreferences.fromJson(drafts[preferenceKey]);
+            }
+          }
+        } on FormatException {
+          // Malformed drafts remain untouched; geometry can use defaults.
+        }
+        // Even a new install gets a local record, so a later business restore
+        // cannot import another device's legacy window geometry.
+        await store.write(preferences.toJson());
+        return preferences;
+      });
     } catch (_) {
       return const WindowPreferences();
     }
   }
 
-  /// Saves window preferences into Settings.workspace_drafts_json.
+  /// Window moves never write business data or the legacy workspace entry.
   static Future<void> save(
     DatabaseHelper dbHelper,
     WindowPreferences prefs,
   ) async {
     try {
-      final generation = dbHelper.captureGeneration();
-      await dbHelper.writeTransaction(generation, (db) async {
-        final rows = await db.query(
-          'Settings',
-          columns: ['workspace_drafts_json'],
-          where: 'id = ?',
-          whereArgs: ['default'],
-        );
-        if (rows.length != 1) throw StateError('Settings unavailable');
-        Map<String, dynamic> drafts = {};
-        final rawDrafts = rows.first['workspace_drafts_json'] as String?;
-        if (rawDrafts != null) {
-          if (rawDrafts.length > 1048576) {
-            throw const FormatException('Drafts too large');
-          }
-          final decoded = jsonDecode(rawDrafts);
-          if (decoded is! Map<String, dynamic>) {
-            throw const FormatException('Invalid drafts');
-          }
-          drafts = Map<String, dynamic>.from(decoded);
-        }
-        drafts[preferenceKey] = prefs.toJson();
-        final encoded = jsonEncode(drafts);
-        if (encoded.length > 1048576) {
-          throw const FormatException('Drafts too large');
-        }
-        final count = await db.update(
-          'Settings',
-          {'workspace_drafts_json': encoded},
-          where: 'id = ?',
-          whereArgs: ['default'],
-        );
-        if (count != 1) throw StateError('Settings unavailable');
-      });
-      _currentPreferences = prefs;
+      await dbHelper.withDeviceWindowPreferences(
+        (store) => store.write(prefs.toJson()),
+      );
+      // Event handlers own current state; an older save must not replace it.
     } catch (e) {
-      // FormatException may contain the raw workspace draft text.
       debugPrint('Failed to save window preferences: ${e.runtimeType}');
     }
   }
@@ -226,14 +201,12 @@ class DesktopWindowService {
         .map((d) => d.height)
         .reduce(math.max);
 
-    final clampedWidth = prefs.width.clamp(
-      minWidth,
-      math.max(minWidth, maxAvailableWidth),
-    ).toDouble();
-    final clampedHeight = prefs.height.clamp(
-      minHeight,
-      math.max(minHeight, maxAvailableHeight),
-    ).toDouble();
+    final clampedWidth = prefs.width
+        .clamp(minWidth, math.max(minWidth, maxAvailableWidth))
+        .toDouble();
+    final clampedHeight = prefs.height
+        .clamp(minHeight, math.max(minHeight, maxAvailableHeight))
+        .toDouble();
 
     if (prefs.x == null || prefs.y == null) {
       final centerX = primary.left + (primary.width - clampedWidth) / 2;
@@ -358,7 +331,10 @@ class DesktopWindowService {
   static Future<void> showDefaultFallbackWindow({WindowManager? wm}) async {
     final manager = wm ?? windowManager;
     const windowOptions = WindowOptions(
-      size: Size(WindowPreferences.defaultWidth, WindowPreferences.defaultHeight),
+      size: Size(
+        WindowPreferences.defaultWidth,
+        WindowPreferences.defaultHeight,
+      ),
       center: true,
       title: "DontForget",
     );
@@ -393,9 +369,7 @@ class DesktopWindowService {
     required bool isMaximized,
     Duration debounceDuration = const Duration(milliseconds: 500),
   }) {
-    _currentPreferences = currentPreferences.copyWith(
-      isMaximized: isMaximized,
-    );
+    _currentPreferences = currentPreferences.copyWith(isMaximized: isMaximized);
     _scheduleSave(dbHelper, debounceDuration);
   }
 

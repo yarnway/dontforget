@@ -1,0 +1,55 @@
+{
+  "version": "1.7.0+50",
+  "interrupted_attempt": {
+    "locked": true,
+    "force_stopped": true,
+    "prior_fixture_cleanup": {
+      "synthetic_tasks_product_deleted": 2,
+      "original_thirty_two_rows_unchanged": true,
+      "media_and_settings_unchanged": true,
+      "original_audio_sha256_unchanged": true,
+      "database_integrity": "ok",
+      "total_rows_including_trash": 34,
+      "qa_pending_alarms": 0,
+      "qa_active_notifications": 0,
+      "action_queue_empty": true,
+      "checked_before_force_stop": true,
+      "app_stopped": true
+    },
+    "natural_alarm_cancel_not_inferred_from_force_stop": true
+  },
+  "successful_retry": {
+    "body": {
+      "native_body_delivered": true,
+      "pid_absent_before_tap": true,
+      "cold_tap_opens_correct_detail": true,
+      "not_acknowledged": true
+    },
+    "action": {
+      "native_action_delivered": true,
+      "pid_absent_before_tap": true,
+      "headless_action_persisted": true,
+      "business_row_unchanged_until_reopen": true,
+      "reopen_completed_once": true,
+      "queue_empty": true
+    },
+    "cleanup": {
+      "synthetic_tasks_product_deleted": 2,
+      "original_thirty_four_rows_unchanged": true,
+      "media_and_settings_unchanged": true,
+      "original_audio_sha256_unchanged": true,
+      "database_integrity": "ok",
+      "total_rows_including_trash": 36,
+      "qa_pending_alarms": 0,
+      "qa_active_notifications": 0,
+      "action_queue_empty": true,
+      "checked_before_force_stop": true,
+      "app_stopped": true
+    }
+  },
+  "screen_timeout": {
+    "original": "120000",
+    "restored": true,
+    "other_change_preserved": false
+  }
+}
