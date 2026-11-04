@@ -3,7 +3,7 @@
 ## 2026-11-04 旧目录迁移保护 +52
 
 - +52源码补齐旧目录租约、SQLite独占、暂存摘要及主库最后发布；重开先核对迁移意图，源丢失／改变或不明目标保留并阻止自动初始化。增量通知状态及窗口偏好一起迁移，schema16不变。
-- 最终Flutter2203通过／20跳过、Python136运行／6跳过、分析0；+52 Windows包及37项内容核验。QA原生CLI合成schema7→16、占用拒绝／重试和重开通过，字段／原文件／媒体及操作状态保持；真实用户旧库和CI另验。Computer Use初始化／重置仍报工作目录URI错误，窗口／托盘／Toast未操作；Pixel未操作。源码与原生进度见[本轮记录](Legacy_Location_Storage_52_2026-11-04.md)。
+- 最终Flutter2203通过／20跳过、Python136运行／6跳过、分析0；+52 Windows包及37项内容核验。QA原生CLI合成schema7→16、占用拒绝／重试和重开通过，字段／原文件／媒体及操作状态保持；源码 `ff0d205` 已推送，[CI 41810048450](https://github.com/yarnway/dontforget/actions/runs/41810048450)双平台质量／五平台构建及Windows隔离安装／启动冒烟通过，五份artifact源码身份核对；真实用户旧库和UI仍待验。Computer Use初始化／重置仍报工作目录URI错误，窗口／托盘／Toast未操作；Pixel未操作。源码与原生进度见[本轮记录](Legacy_Location_Storage_52_2026-11-04.md)。
 
 
 ## 2026-11-04 R1 独立窗口偏好 +51

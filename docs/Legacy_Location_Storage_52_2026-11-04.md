@@ -23,9 +23,11 @@
 | 安装包 | +52 Windows正式身份安装器／便携包与QA变体构建完成；PE1.7.0.52、37项归档内容与包摘要核验通过。本地安装器未安装；未发布Release |
 | 原生进程 | 独立Windows QA身份，合成schema7→16升级、旧SQLite读者占用拒绝、释放后重试、已有目标重开均通过；4事项／1媒体／1设置旧字段与源文件、媒体摘要保持，操作文件及窗口偏好保持，协议注册未变。标准输出未捕获，命令行文字展示不计通过 |
 | 真实UI／设备 | Windows Computer Use初始化两次均报 `sandboxCwd is not a local file URI: file:///mnt/d/gitspace/opensources/dontforget`；未取得目标窗口，未进行窗口／托盘／Toast操作。Pixel本轮未操作 |
-| GitHub | 源码提交及CI待记录；+51 CI不转记为+52通过 |
+| GitHub | 源码 `ff0d205` 已推送main；[CI 41810048450](https://github.com/yarnway/dontforget/actions/runs/41810048450) 双平台质量及五平台候选构建通过。Windows隔离runner安装／同包升级／卸载和启动冒烟通过；tag专用校验按main跳过；未创建Release |
 
 原生首验定位到MSIX环境的RoamingAppData虚拟化：逻辑路径与实际目录不同。最终允许父级系统路径别名并锁定解析后的目录，新增Windows junction／POSIX父链接及别名嵌套回归；数据目录叶节点、内部文件和增量目录链接仍拒绝。QA变体仅调整公司／产品、进程身份、窗口标题、禁用协议注册，并在入口加入输入目录保护与私有诊断；数据库和迁移源码与正式候选一致。完整[机器证据](benchmarks/location-migration-52-2026-11-04.json)。
+
+CI日志读回：Windows analyze and test Flutter2203通过／20跳过、Python136运行／6跳过；Analyze and test Flutter2221通过／2跳过、Python136运行／3跳过。五份artifact的API摘要、大小及源码提交已核对，未在本地下载云端所有原生包。
 
 故障注入是自动化重现持久化边界，并非真实断电验收。Windows QA变体身份差异与源码摘要已单独记录；该原生进程验收限定于合成旧库及当前MSIX启动环境。正式安装包的真实用户旧库、系统协议、Toast、凭据或窗口多屏仍待验。
 

@@ -28,7 +28,7 @@
     "manifest": {
       "version": "1.7.0",
       "build_number": "52",
-      "revision": "a4499b720a2c534bf9ec1278042770d66ab6b5d6",
+      "revision": "ff0d2057c4efc0baf27544098156073d761d2f98",
       "platform": "windows",
       "signing": "unsigned",
       "runtime_acceptance": "NOT_PERFORMED",
@@ -45,7 +45,7 @@
         }
       ]
     },
-    "revision_note": "Pre-commit working source identified by input hashes; final commit metadata pending",
+    "revision_note": "Final compiled source inputs match this commit; regenerated package manifest verified against it",
     "native_version_check": {
       "version": "1.7.0.52",
       "product_version": "1.7.0+52",
@@ -144,7 +144,166 @@
     "gui_actions_performed": false
   },
   "github_ci": {
-    "status": "pending push"
+    "run_id": 41810048450,
+    "url": "https://github.com/yarnway/dontforget/actions/runs/41810048450",
+    "commit": "ff0d2057c4efc0baf27544098156073d761d2f98",
+    "status": "completed",
+    "conclusion": "success",
+    "configured_flutter": "3.44.9",
+    "quality_logs": [
+      {
+        "job": "Windows analyze and test",
+        "flutter_passed": 2203,
+        "flutter_skipped": 20,
+        "python_run": 136,
+        "python_skipped": 6,
+        "log_sha256": "99ef8324f777372579c0961bc420ae28755f0d930728f3cf1ddfa87eedacced7"
+      },
+      {
+        "job": "Analyze and test",
+        "flutter_passed": 2221,
+        "flutter_skipped": 2,
+        "python_run": 136,
+        "python_skipped": 3,
+        "log_sha256": "47647a6ade9e66219793ee693b7cf3766e5d64480e4b4a463c7236984b83102c"
+      }
+    ],
+    "jobs": [
+      {
+        "name": "Windows analyze and test",
+        "conclusion": "success",
+        "checks": []
+      },
+      {
+        "name": "Analyze and test",
+        "conclusion": "success",
+        "checks": []
+      },
+      {
+        "name": "Build android candidate",
+        "conclusion": "success",
+        "checks": [
+          {
+            "name": "Verify packaged hashes and source identity",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "Build macos candidate",
+        "conclusion": "success",
+        "checks": [
+          {
+            "name": "macOS storage lock acceptance",
+            "conclusion": "success"
+          },
+          {
+            "name": "macOS native startup smoke check",
+            "conclusion": "success"
+          },
+          {
+            "name": "Verify packaged hashes and source identity",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "Build linux candidate",
+        "conclusion": "success",
+        "checks": [
+          {
+            "name": "Linux native startup smoke check",
+            "conclusion": "success"
+          },
+          {
+            "name": "Verify packaged hashes and source identity",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "Build ios candidate",
+        "conclusion": "success",
+        "checks": [
+          {
+            "name": "Verify packaged hashes and source identity",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "Build windows candidate",
+        "conclusion": "success",
+        "checks": [
+          {
+            "name": "Windows install upgrade and uninstall acceptance",
+            "conclusion": "success"
+          },
+          {
+            "name": "Windows native startup smoke check",
+            "conclusion": "success"
+          },
+          {
+            "name": "Verify packaged hashes and source identity",
+            "conclusion": "success"
+          }
+        ]
+      },
+      {
+        "name": "Verify tag packages without publishing",
+        "conclusion": "skipped",
+        "checks": []
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 13313710302,
+        "name": "macos-deliverables",
+        "bytes": 26277517,
+        "digest": "sha256:272a0ef346353618df1ecfdf179523b9646dc2c4196fa5c865fbaa838446d4a8",
+        "expired": false,
+        "source_commit": "ff0d2057c4efc0baf27544098156073d761d2f98"
+      },
+      {
+        "id": 13313260754,
+        "name": "android-deliverables",
+        "bytes": 106958155,
+        "digest": "sha256:c34838d7bb28571b874b5c5d9902cbdf67ff815e39078f393490de26c320864f",
+        "expired": false,
+        "source_commit": "ff0d2057c4efc0baf27544098156073d761d2f98"
+      },
+      {
+        "id": 13312642487,
+        "name": "ios-deliverables",
+        "bytes": 11047315,
+        "digest": "sha256:806681daa85554411c617a998622f6d5fceb560dbca66f014c6f62d0818b0e93",
+        "expired": false,
+        "source_commit": "ff0d2057c4efc0baf27544098156073d761d2f98"
+      },
+      {
+        "id": 13312562611,
+        "name": "linux-deliverables",
+        "bytes": 14241358,
+        "digest": "sha256:dc598afb86b62b15f4f790882dafb246da9d0825abae53385eec876440189df2",
+        "expired": false,
+        "source_commit": "ff0d2057c4efc0baf27544098156073d761d2f98"
+      },
+      {
+        "id": 13312059630,
+        "name": "windows-deliverables",
+        "bytes": 31778777,
+        "digest": "sha256:4479b4d0d1ac8be37a59b175cc84df90a6095d8629cef272b008925efd5f3842",
+        "expired": false,
+        "source_commit": "ff0d2057c4efc0baf27544098156073d761d2f98"
+      }
+    ],
+    "native_candidate_packages_downloaded_locally": false,
+    "tag_package_verification": "skipped: non-tag run",
+    "windows_installation_scope": "isolated CI install / same-package upgrade / uninstall / synthetic legacy file preservation / startup smoke",
+    "real_user_database_migration": "NOT_PERFORMED",
+    "native_toast_click": "NOT_PERFORMED",
+    "release_created": false
   },
-  "release_created": false
+  "release_created": false,
+  "commit": "ff0d2057c4efc0baf27544098156073d761d2f98"
 }
