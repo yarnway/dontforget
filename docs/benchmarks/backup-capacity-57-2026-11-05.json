@@ -1,0 +1,118 @@
+{
+  "product_version": "1.7.0+57",
+  "schema": 17,
+  "product_commit": "2b640958cb1dc1021fe9d9c209c64e7d613cc38a",
+  "scope": "Windows service acceptance with synthetic data; plaintext total2GiB and protected single512MiB are separate cases",
+  "acceptance_script_sha256": "c400ce326868ff001fee5b7cd1d9b16408d642932dd3669d4c4c7f93f646ffc6",
+  "local_report": {
+    "format": 1,
+    "platform": "windows",
+    "dart": "3.13.2",
+    "attachment_bytes": 536870912,
+    "total_attachment_bytes": 2147483648,
+    "full_capacity_boundary": true,
+    "baseline_rss_bytes": 156753920,
+    "cases": [
+      {
+        "stage": "single_attachment_limit_plus_one",
+        "elapsed_ms": 26,
+        "rss_bytes": 157782016,
+        "max_rss_bytes": 157782016
+      },
+      {
+        "stage": "seed_and_hash_four_attachments",
+        "elapsed_ms": 24557,
+        "rss_bytes": 187092992,
+        "max_rss_bytes": 210808832
+      },
+      {
+        "stage": "total_attachment_limit_plus_one",
+        "elapsed_ms": 22267,
+        "rss_bytes": 201306112,
+        "max_rss_bytes": 210808832
+      },
+      {
+        "stage": "plain_export",
+        "elapsed_ms": 51944,
+        "rss_bytes": 211107840,
+        "max_rss_bytes": 230809600
+      },
+      {
+        "stage": "plain_inspect",
+        "elapsed_ms": 45600,
+        "rss_bytes": 205725696,
+        "max_rss_bytes": 230809600
+      },
+      {
+        "stage": "cancel_after_first_attachment",
+        "elapsed_ms": 12472,
+        "rss_bytes": 212156416,
+        "max_rss_bytes": 230809600
+      },
+      {
+        "stage": "plain_prepare_restore",
+        "elapsed_ms": 87297,
+        "rss_bytes": 220180480,
+        "max_rss_bytes": 231149568
+      },
+      {
+        "stage": "verify_all_restored_and_original_hashes",
+        "elapsed_ms": 109893,
+        "rss_bytes": 202907648,
+        "max_rss_bytes": 231149568
+      },
+      {
+        "stage": "restore_database_and_reopen",
+        "elapsed_ms": 172,
+        "rss_bytes": 203341824,
+        "max_rss_bytes": 231149568
+      },
+      {
+        "stage": "protected_single_export",
+        "elapsed_ms": 67081,
+        "rss_bytes": 232079360,
+        "max_rss_bytes": 259162112
+      },
+      {
+        "stage": "protected_single_inspect",
+        "elapsed_ms": 56363,
+        "rss_bytes": 231776256,
+        "max_rss_bytes": 259162112
+      },
+      {
+        "stage": "protected_single_prepare_restore",
+        "elapsed_ms": 56483,
+        "rss_bytes": 205238272,
+        "max_rss_bytes": 259162112
+      }
+    ],
+    "plain_backup_bytes": 2147497941,
+    "outcome": "PASS",
+    "max_rss_bytes": 259162112
+  },
+  "automation": {
+    "smoke_passed": 1,
+    "full_capacity_passed": 1,
+    "backup_regressions_passed": 112,
+    "backup_regressions_skipped": 3,
+    "analysis_issues": 0
+  },
+  "logs": {
+    "capacity-full.log": {
+      "sha256": "fd2e7fe3afe11000cec3ca79164660438cacc99540aaf893acf4dda21288cc6d"
+    },
+    "backup-regression.log": {
+      "sha256": "c14c9eafeefd1059ad1025478168ce253f089bda5cb221fbc955c0bea38a96ac"
+    },
+    "analyze-final.log": {
+      "sha256": "8d7ee3e345e9cae3f2fab9180a2dc4bb7009f1c2d9ab88c5cdf073dba49ec611"
+    }
+  },
+  "ci": "manual Linux/Windows full boundary workflow prepared; not dispatched yet",
+  "remaining": [
+    "2GiB encrypted total",
+    "actual Android document exporter",
+    "real cross-device restore",
+    "disk-full/power-loss/device storage lock scenarios"
+  ]
+}

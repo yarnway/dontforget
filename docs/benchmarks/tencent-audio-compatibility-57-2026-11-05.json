@@ -75,5 +75,7 @@
     "android-build.log": {
       "sha256": "135bb56ad739de4f99e0d3dd5daee6cd113586ec99b81edaeb4f41398266eea1"
     }
-  }
+  },
+  "device_snapshot_note": "Original disconnected-device snapshot retained; follow-up upgrade/native results in android-native-57-2026-11-05.json",
+  "latest_native_evidence": "android-native-57-2026-11-05.json"
 }

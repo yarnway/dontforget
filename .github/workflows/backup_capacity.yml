@@ -1,0 +1,68 @@
+name: Backup Capacity Acceptance
+
+on:
+  workflow_dispatch:
+    inputs:
+      attachment_mib:
+        description: 'Per attachment: 4 MiB smoke or 512 MiB full boundary (four attachments)'
+        type: choice
+        options: ['4', '512']
+        default: '4'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup-capacity-${{ github.ref }}-${{ inputs.attachment_mib }}
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: '3.44.9'
+  CAPACITY_MIB: ${{ inputs.attachment_mib }}
+
+jobs:
+  capacity:
+    name: Capacity ${{ matrix.platform }} ${{ inputs.attachment_mib }} MiB
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux
+            runner: ubuntu-24.04
+          - platform: windows
+            runner: windows-2022
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 35
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: Check SDK and temporary disk capacity
+        run: |
+          if ($env:CAPACITY_MIB -notin @('4', '512')) { throw 'Invalid capacity selection' }
+          python scripts/check_flutter_version.py --strict
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -c "import shutil,tempfile; free=shutil.disk_usage(tempfile.gettempdir()).free; print('Temporary free bytes:',free); assert free >= 10*1024**3, 'At least 10 GiB of temporary space is required'"
+      - name: Install locked dependencies
+        run: flutter pub get --enforce-lockfile
+      - name: Analyze acceptance and application source
+        run: flutter analyze --no-pub
+      - name: Run capacity acceptance
+        run: flutter test --no-pub scripts/acceptance/backup_capacity_test.dart "--dart-define=DF_BACKUP_CAPACITY_MIB=$env:CAPACITY_MIB" --dart-define=DF_BACKUP_CAPACITY_REPORT=build/acceptance/backup-capacity.json --reporter expanded
+      - name: Upload successful capacity report
+        uses: actions/upload-artifact@v7
+        with:
+          name: backup-capacity-${{ matrix.platform }}-${{ inputs.attachment_mib }}
+          path: build/acceptance/backup-capacity.json
+          if-no-files-found: error
+          retention-days: 30

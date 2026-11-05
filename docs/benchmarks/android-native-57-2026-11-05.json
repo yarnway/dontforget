@@ -1,0 +1,77 @@
+{
+  "version": "1.7.0+57",
+  "product_commit": "2b640958cb1dc1021fe9d9c209c64e7d613cc38a",
+  "artifact": {
+    "version": "1.7.0+57",
+    "package": "com.yarnway.dontforget.acceptance.p4720261102",
+    "type": "QA debug APK; not production identity or release signing",
+    "bytes": 97922326,
+    "sha256": "48ece4df3c3788a40c42e440caa1f132c1afe222c6be5fb259c86a5bc5e0f8bd",
+    "certificate_sha256": "4f8518351e90e3293ad293b74b009ad40949e871adf91614bb27ba1ba098eea9",
+    "signature_matches_56": true,
+    "source_sha256": "96c85129bc9d1c8597c4f7b082f0a8d838d596040e059085c96db69ad7798c58",
+    "file": "DontForget_Android_QA_debug_v1.7.0+57.apk"
+  },
+  "upgrade": {
+    "version_from": 56,
+    "version_to": 57,
+    "schema": 17,
+    "tables_identical": true,
+    "counts": {
+      "Reminders": 50,
+      "MediaRecords": 9,
+      "Settings": 1
+    },
+    "original_media_vault_files_identical": 22
+  },
+  "final": {
+    "version": 57,
+    "schema": 17,
+    "original_reminders_unchanged": 50,
+    "original_media_unchanged": 9,
+    "original_settings_non_draft_fields_unchanged": true,
+    "original_workspace_drafts_unchanged": true,
+    "capture_empty": true,
+    "synthetic_memo_added": 1,
+    "synthetic_memo_soft_deleted": true,
+    "final_reminders_including_recycle_bin": 51,
+    "original_media_vault_and_other_files_identical": 21,
+    "profile_installer_marker_changed": true,
+    "microphone_idle": true,
+    "original_default_ime_restored": true,
+    "speech_enabled": false
+  },
+  "keyboard": {
+    "initial_default": "WeType",
+    "chinese_composing_and_candidate_selection": "PASS: actual on-screen WeType keys",
+    "gboard_chinese_and_english_switch_kept_exact_committed_draft": true,
+    "software_send": "PASS: actual Gboard Send created one local-only memo; exact committed source text; no AI or reminder",
+    "hide_reopen": "PASS: Gboard and fresh WeType",
+    "transient_wetype_issue": "Returning to WeType once showed no keys while system reported input shown; service restarted and original default reselected, keyboard displayed and hide/reopen passed. Root cause not isolated; not claimed fully resolved."
+  },
+  "voice": {
+    "version": 57,
+    "native_microphone_started": true,
+    "up_left_cancel": {
+      "business_tables_unchanged": true,
+      "audio_cache_unchanged": true,
+      "microphone_stopped": true
+    },
+    "home_interruption": {
+      "microphone_stopped": true,
+      "reopen_business_tables_unchanged": true,
+      "audio_cache_unchanged": true
+    },
+    "tencent_api_called": false
+  },
+  "right_target": "PASS: up/right highlighted convert-to-text and showed release-to-edit label; moved left to cancel before release; no recognition submitted",
+  "real_tencent": "NOT_CALLED: user deferred app configuration, AppID pending",
+  "windows_native_ui": "NOT_RUN: computer-use initialization and reset failed with sandboxCwd local file URI error",
+  "private_evidence": "ignored build/stage58; application data/screenshots not published",
+  "remaining": [
+    "real Chinese/English/mixed Tencent recognition",
+    "actual16k encoder output",
+    "other native interruption/notification matrices",
+    "Windows and Apple native acceptance"
+  ]
+}
