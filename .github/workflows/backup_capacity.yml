@@ -9,6 +9,12 @@ on:
         options: ['4', '512']
         default: '4'
         required: true
+      backup_mode:
+        description: 'Standard plain + single encrypted, or four-attachment encrypted total'
+        type: choice
+        options: ['standard', 'encrypted-total']
+        default: 'standard'
+        required: true
 
 permissions:
   contents: read
@@ -20,10 +26,11 @@ concurrency:
 env:
   FLUTTER_VERSION: '3.44.9'
   CAPACITY_MIB: ${{ inputs.attachment_mib }}
+  CAPACITY_MODE: ${{ inputs.backup_mode }}
 
 jobs:
   capacity:
-    name: Capacity ${{ matrix.platform }} ${{ inputs.attachment_mib }} MiB
+    name: Capacity ${{ matrix.platform }} ${{ inputs.attachment_mib }} MiB ${{ inputs.backup_mode }}
     strategy:
       fail-fast: false
       matrix:
@@ -33,7 +40,7 @@ jobs:
           - platform: windows
             runner: windows-2022
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 35
+    timeout-minutes: 50
     defaults:
       run:
         shell: pwsh
@@ -50,19 +57,22 @@ jobs:
       - name: Check SDK and temporary disk capacity
         run: |
           if ($env:CAPACITY_MIB -notin @('4', '512')) { throw 'Invalid capacity selection' }
+          if ($env:CAPACITY_MODE -notin @('standard', 'encrypted-total')) { throw 'Invalid backup mode' }
           python scripts/check_flutter_version.py --strict
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          python -c "import shutil,tempfile; free=shutil.disk_usage(tempfile.gettempdir()).free; print('Temporary free bytes:',free); assert free >= 10*1024**3, 'At least 10 GiB of temporary space is required'"
+          python -c "import shutil,tempfile; free=shutil.disk_usage(tempfile.gettempdir()).free; print('Temporary free bytes:',free); assert free >= 12*1024**3, 'At least 12 GiB of temporary space is required'"
       - name: Install locked dependencies
         run: flutter pub get --enforce-lockfile
       - name: Analyze acceptance and application source
         run: flutter analyze --no-pub
       - name: Run capacity acceptance
-        run: flutter test --no-pub scripts/acceptance/backup_capacity_test.dart "--dart-define=DF_BACKUP_CAPACITY_MIB=$env:CAPACITY_MIB" --dart-define=DF_BACKUP_CAPACITY_REPORT=build/acceptance/backup-capacity.json --reporter expanded
+        run: |
+          $acceptance = if ($env:CAPACITY_MODE -eq 'encrypted-total') { 'scripts/acceptance/encrypted_backup_capacity_test.dart' } else { 'scripts/acceptance/backup_capacity_test.dart' }
+          flutter test --no-pub $acceptance "--dart-define=DF_BACKUP_CAPACITY_MIB=$env:CAPACITY_MIB" --dart-define=DF_BACKUP_CAPACITY_REPORT=build/acceptance/backup-capacity.json --reporter expanded
       - name: Upload successful capacity report
         uses: actions/upload-artifact@v7
         with:
-          name: backup-capacity-${{ matrix.platform }}-${{ inputs.attachment_mib }}
+          name: backup-capacity-${{ matrix.platform }}-${{ inputs.attachment_mib }}-${{ inputs.backup_mode }}
           path: build/acceptance/backup-capacity.json
           if-no-files-found: error
           retention-days: 30

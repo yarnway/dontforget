@@ -18,4 +18,12 @@ C:\src\flutter\bin\flutter.bat --no-version-check test --no-pub scripts/acceptan
 
 宿主服务测试不替代手机文件选择器、真实跨设备恢复、磁盘满、断电、系统安全存储锁定或正式分发验收。当前结果按 `docs/Next_Steps_2026-11-02.md` 分层记录。
 
+## 四附件总体加密验收
+
+`encrypted_backup_capacity_test.dart`独立验证四份512MiB、总2GiB的AES-GCM加密导出、预览、恢复、全部原件与恢复件SHA-256，以及DatabaseRecovery完成后关闭重开并再次核对四份媒体。还验证错误密码和解密中取消不会留下部分恢复文件。它不修改`backup_capacity_test.dart`已有普通／单附件结果的历史归属。
+
+本地先用同一Windows命令替换测试文件名，并加`--dart-define=DF_BACKUP_CAPACITY_MIB=4`进行16MiB冒烟；完整边界为512。预留12GiB临时空间和45分钟，报告的`scope`须为`encrypted-total`，完整验收须同时满足`full_capacity_boundary:true`、`outcome:PASS`和进程成功退出；不能用4MiB冒烟记作2GiB通过。
+
 GitHub Actions 的 **Backup Capacity Acceptance** 仅通过 `workflow_dispatch` 手动运行，可选择 `4` 或 `512`。它在 Linux／Windows 的项目固定 Flutter SDK 上分别分析并执行验收，报告保留为带平台和容量标识的 artifacts；不会创建安装包、Release 或修改应用数据。
+
+工作流`backup_mode`选择`standard`保留既有普通／单附件模式；选择`encrypted-total`执行上述四附件加密模式，artifact名称同时标明平台、容量和模式。两种报告分别留存，不混记容量范围。
