@@ -108,7 +108,19 @@
       "sha256": "8d7ee3e345e9cae3f2fab9180a2dc4bb7009f1c2d9ab88c5cdf073dba49ec611"
     }
   },
-  "ci": "manual Linux/Windows full boundary workflow prepared; not dispatched yet",
+  "ci": {
+    "commit": "7420f4f98fac103e2c5fdb79d1f0ce447388fcc2",
+    "id": 41984153074,
+    "url": "https://github.com/yarnway/dontforget/actions/runs/41984153074",
+    "conclusion": "success",
+    "platforms": [
+      "linux",
+      "windows"
+    ],
+    "flutter": "3.44.9",
+    "artifact_archive_hashes_verified": 2,
+    "evidence": "github-capacity-ci-57-2026-11-05.json"
+  },
   "remaining": [
     "2GiB encrypted total",
     "actual Android document exporter",

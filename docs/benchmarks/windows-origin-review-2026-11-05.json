@@ -1,0 +1,9 @@
+{
+  "status": "PARTIAL: original source and reliable restore package still unknown",
+  "registry_scope": "HKLM/HKCU standard uninstall keys, 32/64-bit views",
+  "matched_registry_entries": 0,
+  "unintended_output_files_checked": 27,
+  "files_matching_stage46_manifest": 27,
+  "operation": "read-only; registry, installation files and running application untouched",
+  "private_evidence_sha256": "53cb27a8da4eba231b9fb5e9cc2d428dc12e1849077495fcb4c444bdac515640"
+}

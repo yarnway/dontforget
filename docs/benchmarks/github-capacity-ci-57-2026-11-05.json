@@ -1,0 +1,415 @@
+{
+  "commit": "7420f4f98fac103e2c5fdb79d1f0ce447388fcc2",
+  "id": 41984153074,
+  "url": "https://github.com/yarnway/dontforget/actions/runs/41984153074",
+  "conclusion": "success",
+  "jobs": [
+    {
+      "name": "Capacity linux 512 MiB",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-05T07:00:11Z",
+          "completed_at": "2026-11-05T07:00:13Z"
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-05T07:00:13Z",
+          "completed_at": "2026-11-05T07:00:14Z"
+        },
+        {
+          "name": "Run actions/setup-python@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-05T07:00:14Z",
+          "completed_at": "2026-11-05T07:00:14Z"
+        },
+        {
+          "name": "Run subosito/flutter-action@v2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-05T07:00:14Z",
+          "completed_at": "2026-11-05T07:00:33Z"
+        },
+        {
+          "name": "Check SDK and temporary disk capacity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-05T07:00:33Z",
+          "completed_at": "2026-11-05T07:00:38Z"
+        },
+        {
+          "name": "Install locked dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-05T07:00:38Z",
+          "completed_at": "2026-11-05T07:00:41Z"
+        },
+        {
+          "name": "Analyze acceptance and application source",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-11-05T07:00:41Z",
+          "completed_at": "2026-11-05T07:00:57Z"
+        },
+        {
+          "name": "Run capacity acceptance",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-11-05T07:00:57Z",
+          "completed_at": "2026-11-05T07:10:15Z"
+        },
+        {
+          "name": "Upload successful capacity report",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-11-05T07:10:15Z",
+          "completed_at": "2026-11-05T07:10:16Z"
+        },
+        {
+          "name": "Post Run subosito/flutter-action@v2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-11-05T07:10:16Z",
+          "completed_at": "2026-11-05T07:10:16Z"
+        },
+        {
+          "name": "Post Run actions/setup-python@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-11-05T07:10:16Z",
+          "completed_at": "2026-11-05T07:10:16Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18,
+          "started_at": "2026-11-05T07:10:16Z",
+          "completed_at": "2026-11-05T07:10:17Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-11-05T07:10:17Z",
+          "completed_at": "2026-11-05T07:10:17Z"
+        }
+      ]
+    },
+    {
+      "name": "Capacity windows 512 MiB",
+      "conclusion": "success",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-11-05T07:00:11Z",
+          "completed_at": "2026-11-05T07:00:12Z"
+        },
+        {
+          "name": "Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-11-05T07:00:12Z",
+          "completed_at": "2026-11-05T07:00:18Z"
+        },
+        {
+          "name": "Run actions/setup-python@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-11-05T07:00:18Z",
+          "completed_at": "2026-11-05T07:00:18Z"
+        },
+        {
+          "name": "Run subosito/flutter-action@v2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-11-05T07:00:18Z",
+          "completed_at": "2026-11-05T07:01:43Z"
+        },
+        {
+          "name": "Check SDK and temporary disk capacity",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-11-05T07:01:43Z",
+          "completed_at": "2026-11-05T07:01:47Z"
+        },
+        {
+          "name": "Install locked dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-11-05T07:01:47Z",
+          "completed_at": "2026-11-05T07:01:49Z"
+        },
+        {
+          "name": "Analyze acceptance and application source",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-11-05T07:01:49Z",
+          "completed_at": "2026-11-05T07:02:05Z"
+        },
+        {
+          "name": "Run capacity acceptance",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-11-05T07:02:05Z",
+          "completed_at": "2026-11-05T07:10:02Z"
+        },
+        {
+          "name": "Upload successful capacity report",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-11-05T07:10:02Z",
+          "completed_at": "2026-11-05T07:10:03Z"
+        },
+        {
+          "name": "Post Run subosito/flutter-action@v2",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-11-05T07:10:03Z",
+          "completed_at": "2026-11-05T07:10:04Z"
+        },
+        {
+          "name": "Post Run actions/setup-python@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-11-05T07:10:04Z",
+          "completed_at": "2026-11-05T07:10:04Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18,
+          "started_at": "2026-11-05T07:10:04Z",
+          "completed_at": "2026-11-05T07:10:06Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-11-05T07:10:06Z",
+          "completed_at": "2026-11-05T07:10:06Z"
+        }
+      ]
+    }
+  ],
+  "verification": "Both complete report ZIP archives downloaded; GitHub API SHA-256, ZIP CRC and workflow head identity verified",
+  "artifacts": [
+    {
+      "name": "backup-capacity-linux-512",
+      "bytes": 666,
+      "sha256": "b7e75f6a85cc69e8a94522d94f069f9df8371fda6be0ff26b12cc891cd93f150",
+      "workflow_head_sha": "7420f4f98fac103e2c5fdb79d1f0ce447388fcc2",
+      "report": {
+        "format": 1,
+        "platform": "linux",
+        "dart": "3.12.2",
+        "attachment_bytes": 536870912,
+        "total_attachment_bytes": 2147483648,
+        "full_capacity_boundary": true,
+        "baseline_rss_bytes": 160268288,
+        "cases": [
+          {
+            "stage": "single_attachment_limit_plus_one",
+            "elapsed_ms": 30,
+            "rss_bytes": 161116160,
+            "max_rss_bytes": 160821248
+          },
+          {
+            "stage": "seed_and_hash_four_attachments",
+            "elapsed_ms": 36630,
+            "rss_bytes": 207003648,
+            "max_rss_bytes": 225984512
+          },
+          {
+            "stage": "total_attachment_limit_plus_one",
+            "elapsed_ms": 30639,
+            "rss_bytes": 211968000,
+            "max_rss_bytes": 225984512
+          },
+          {
+            "stage": "plain_export",
+            "elapsed_ms": 67381,
+            "rss_bytes": 236089344,
+            "max_rss_bytes": 247476224
+          },
+          {
+            "stage": "plain_inspect",
+            "elapsed_ms": 56002,
+            "rss_bytes": 234246144,
+            "max_rss_bytes": 251162624
+          },
+          {
+            "stage": "cancel_after_first_attachment",
+            "elapsed_ms": 14456,
+            "rss_bytes": 233193472,
+            "max_rss_bytes": 252051456
+          },
+          {
+            "stage": "plain_prepare_restore",
+            "elapsed_ms": 61044,
+            "rss_bytes": 244862976,
+            "max_rss_bytes": 252051456
+          },
+          {
+            "stage": "verify_all_restored_and_original_hashes",
+            "elapsed_ms": 58086,
+            "rss_bytes": 224505856,
+            "max_rss_bytes": 252051456
+          },
+          {
+            "stage": "restore_database_and_reopen",
+            "elapsed_ms": 169,
+            "rss_bytes": 225103872,
+            "max_rss_bytes": 252051456
+          },
+          {
+            "stage": "protected_single_export",
+            "elapsed_ms": 81849,
+            "rss_bytes": 255619072,
+            "max_rss_bytes": 286031872
+          },
+          {
+            "stage": "protected_single_inspect",
+            "elapsed_ms": 62893,
+            "rss_bytes": 243625984,
+            "max_rss_bytes": 286031872
+          },
+          {
+            "stage": "protected_single_prepare_restore",
+            "elapsed_ms": 65990,
+            "rss_bytes": 227557376,
+            "max_rss_bytes": 286031872
+          }
+        ],
+        "plain_backup_bytes": 2147497793,
+        "outcome": "PASS",
+        "max_rss_bytes": 286031872
+      }
+    },
+    {
+      "name": "backup-capacity-windows-512",
+      "bytes": 646,
+      "sha256": "70b1a4fa69d9678b22db5ad89f0784591343588feed30df29438dd7f0447970c",
+      "workflow_head_sha": "7420f4f98fac103e2c5fdb79d1f0ce447388fcc2",
+      "report": {
+        "format": 1,
+        "platform": "windows",
+        "dart": "3.12.2",
+        "attachment_bytes": 536870912,
+        "total_attachment_bytes": 2147483648,
+        "full_capacity_boundary": true,
+        "baseline_rss_bytes": 151027712,
+        "cases": [
+          {
+            "stage": "single_attachment_limit_plus_one",
+            "elapsed_ms": 56,
+            "rss_bytes": 152051712,
+            "max_rss_bytes": 152051712
+          },
+          {
+            "stage": "seed_and_hash_four_attachments",
+            "elapsed_ms": 38221,
+            "rss_bytes": 183894016,
+            "max_rss_bytes": 210087936
+          },
+          {
+            "stage": "total_attachment_limit_plus_one",
+            "elapsed_ms": 23441,
+            "rss_bytes": 196632576,
+            "max_rss_bytes": 210087936
+          },
+          {
+            "stage": "plain_export",
+            "elapsed_ms": 54571,
+            "rss_bytes": 198119424,
+            "max_rss_bytes": 223961088
+          },
+          {
+            "stage": "plain_inspect",
+            "elapsed_ms": 47276,
+            "rss_bytes": 161517568,
+            "max_rss_bytes": 223961088
+          },
+          {
+            "stage": "cancel_after_first_attachment",
+            "elapsed_ms": 13755,
+            "rss_bytes": 155602944,
+            "max_rss_bytes": 223961088
+          },
+          {
+            "stage": "plain_prepare_restore",
+            "elapsed_ms": 55388,
+            "rss_bytes": 119947264,
+            "max_rss_bytes": 223961088
+          },
+          {
+            "stage": "verify_all_restored_and_original_hashes",
+            "elapsed_ms": 46888,
+            "rss_bytes": 105590784,
+            "max_rss_bytes": 223961088
+          },
+          {
+            "stage": "restore_database_and_reopen",
+            "elapsed_ms": 525,
+            "rss_bytes": 110112768,
+            "max_rss_bytes": 223961088
+          },
+          {
+            "stage": "protected_single_export",
+            "elapsed_ms": 66107,
+            "rss_bytes": 118681600,
+            "max_rss_bytes": 223961088
+          },
+          {
+            "stage": "protected_single_inspect",
+            "elapsed_ms": 54466,
+            "rss_bytes": 129519616,
+            "max_rss_bytes": 223961088
+          },
+          {
+            "stage": "protected_single_prepare_restore",
+            "elapsed_ms": 57991,
+            "rss_bytes": 108675072,
+            "max_rss_bytes": 223961088
+          }
+        ],
+        "plain_backup_bytes": 2147497953,
+        "outcome": "PASS",
+        "max_rss_bytes": 223961088
+      }
+    }
+  ]
+}
