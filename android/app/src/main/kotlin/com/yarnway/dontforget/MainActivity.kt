@@ -6,12 +6,23 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
+    private var dictationBridge: LiveDictationBridge? = null
+    private var speechChannel: MethodChannel? = null
+    private var speechBridge: LocalSpeechBridge? = null
     private var protocolChannel: MethodChannel? = null
     private var protocolReady = false
     private var pendingProtocolUrl: String? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        val dictationChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger,
+            "dontforget/live_dictation")
+        dictationBridge = LiveDictationBridge(this, dictationChannel).also {
+            dictationChannel.setMethodCallHandler(it)
+        }
+        speechBridge = LocalSpeechBridge(applicationContext)
+        speechChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger,
+            "dontforget/local_speech").also { it.setMethodCallHandler(speechBridge) }
         protocolReady = false
         pendingProtocolUrl = protocolUrl(intent)
         protocolChannel = MethodChannel(
@@ -44,11 +55,27 @@ class MainActivity : FlutterActivity() {
     }
 
     override fun cleanUpFlutterEngine(flutterEngine: FlutterEngine) {
+        dictationBridge?.dispose()
+        dictationBridge = null
+        speechChannel?.setMethodCallHandler(null)
+        speechChannel = null
+        speechBridge?.dispose()
+        speechBridge = null
         protocolChannel?.setMethodCallHandler(null)
         protocolChannel = null
         protocolReady = false
         pendingProtocolUrl = null
         super.cleanUpFlutterEngine(flutterEngine)
+    }
+
+    override fun onStop() {
+        dictationBridge?.onBackground()
+        super.onStop()
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LiveDictationBridge.PERMISSION_REQUEST) dictationBridge?.onPermissionResult(grantResults)
     }
 
     private fun protocolUrl(intent: Intent?): String? {

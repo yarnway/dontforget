@@ -1,0 +1,79 @@
+{
+  "version": "1.7.0+55",
+  "schema": 17,
+  "base_commit": "7996af3",
+  "source": "implemented; validated locally; system-service live microphone recognition; Chinese/English selectable; no app API key",
+  "automation": {
+    "flutter_passed": 2228,
+    "flutter_skipped": 20,
+    "python_run": 136,
+    "python_skipped": 6,
+    "analysis_issues": 0,
+    "flutter_version": "3.47.2",
+    "ci_baseline": "3.44.9",
+    "initial_failures": "Tooltip intercepted hold, media sheet overflow, held-input layout movement, settings ListTile missing Material and narrow task review blocked by a new hint; fixed and final full run passed"
+  },
+  "artifact": {
+    "version": "1.7.0+55",
+    "package": "com.yarnway.dontforget.acceptance.p4720261102",
+    "type": "QA debug APK; not production identity or release signing",
+    "bytes": 97914898,
+    "sha256": "391ffacd76b6bd28d353ca8520d3359fe72e8fe02f739550edbd1c482675ec73",
+    "certificate_sha256": "4f8518351e90e3293ad293b74b009ad40949e871adf91614bb27ba1ba098eea9",
+    "signature_matches_54": true,
+    "source_sha256": "4e55a52c4d42434c055bff4104b8c8011cd3c5ac59b960f7724a665aed93f96e",
+    "file": "DontForget_Android_QA_debug_v1.7.0+55.apk"
+  },
+  "device": {
+    "identity": "Pixel independent QA debug; production identity untouched",
+    "upgrade": {
+      "from_build": 55,
+      "to_build": 55,
+      "initial_upgrade_from_build": 54,
+      "schema_before": 17,
+      "schema_after": 17,
+      "table_rows_unchanged": {
+        "Reminders": true,
+        "MediaRecords": true,
+        "Settings": true
+      },
+      "critical_files_unchanged": true,
+      "critical_files_count": 21,
+      "counts": {
+        "Reminders": 49,
+        "MediaRecords": 9,
+        "Settings": 1
+      },
+      "concurrent_settings_preserved": "appearance and credential metadata changed before final install; fresh baseline taken, no rollback"
+    },
+    "live_input_ui": "PASS: actual app microphone tap enters ready state, microphone indicator shown; cancel stops capture; hold opens Chinese/English sheet; original locale kept",
+    "native_english_final_apk": "matching English partial from speaker TTS, then ERROR_NO_MATCH; words preserved by native callback. Earlier +55 package probe obtained a full final, not transferred to this final APK",
+    "native_chinese_final_apk": "ready then ERROR_NO_MATCH with no text; earlier +55 probe returned ERROR_NETWORK. Real Chinese dictation is NOT passed",
+    "human_chinese_and_english": "pending user verification; asked asynchronously",
+    "microphone_after_ui": "not running",
+    "test_instrumentation_package": "uninstalled; QA app kept"
+  },
+  "github": {
+    "commit_push": "pending",
+    "ci": "pending"
+  },
+  "stable_release": "NOT_CREATED: live Chinese/human acceptance and existing native/signing gates remain",
+  "next_scope": "User requested performance/stability/compatibility, simpler settings and overall visual polish; stable release authorized only after validation",
+  "logs": {
+    "flutter-final.log": {
+      "sha256": "ef394f4e0a27209205523a70c360d71e7db4c212ce1be8ec40cffe7fbd659796"
+    },
+    "python-final.log": {
+      "sha256": "887c724bfdbb92c4aeb2f309ea87d2ea22b28a90fef0971cbff682e95e4b43c5"
+    },
+    "analyze-final.log": {
+      "sha256": "7e6f5dd187246990e18a42f476a5cca7295db652ada83b163a12ce58f20e750d"
+    },
+    "probe-final-en.txt": {
+      "sha256": "b0f66cd434cdfd33d0e8f2ad9b52df5df97ec48b6bbe3b25a252ed24c1ef7967"
+    },
+    "probe-final-zh.txt": {
+      "sha256": "6f20d36a57cca9dd2350ce4635974183611306df1d7a097cff66820098cccb37"
+    }
+  }
+}

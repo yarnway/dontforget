@@ -93,6 +93,7 @@ class _CredentialStatusPanelState extends ConsumerState<CredentialStatusPanel> {
           .updateSettings(
             settings.copyWith(
               apiKey: '',
+              speech: settings.speech.copyWith(enabled: false, apiKey: ''),
               aiProfiles: settings.effectiveProfiles
                   .map(
                     (p) => p.copyWith(

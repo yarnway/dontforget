@@ -74,10 +74,13 @@ class CredentialRepository {
       p['api_key'] = '';
     }
     data['ai_profiles_json'] = jsonEncode(profiles);
+    data['speech_config_json'] = jsonEncode(
+      settings.speech.copyWith(apiKey: '').toJson(),
+    );
     return data;
   }
 
-  static String _binding(Map<String, dynamic> raw) {
+  static String _binding(Map<String, dynamic> raw, {bool speech = false}) {
     final settings = AppSettings.fromJson(raw);
     return sha256
         .convert(
@@ -88,6 +91,12 @@ class CredentialRepository {
               settings.aiFallbackEnabled,
               for (final p in settings.effectiveProfiles)
                 [p.id, p.settings.baseUrl, p.settings.modelName, p.enabled],
+              if (speech)
+                [
+                  settings.speech.enabled,
+                  settings.speech.endpoint,
+                  settings.speech.model,
+                ],
             ]),
           ),
         )
@@ -96,6 +105,7 @@ class CredentialRepository {
 
   static bool _hasKeys(AppSettings settings) =>
       settings.apiKey.isNotEmpty ||
+      settings.speech.apiKey.isNotEmpty ||
       settings.effectiveProfiles.any((p) => p.settings.apiKey.isNotEmpty);
   static Map<String, dynamic> _drafts(Map row) {
     final raw = row['workspace_drafts_json'];
@@ -144,11 +154,15 @@ class CredentialRepository {
         if (stored.length > 262144) throw const CredentialStorageException();
         final data = jsonDecode(stored);
         if (data is! Map ||
-            data['version'] != 1 ||
-            data['binding'] != _binding(row) ||
+            !const [1, 2].contains(data['version']) ||
+            data['binding'] != _binding(row, speech: data['version'] == 2) ||
             data['api_key'] is! String ||
             (data['api_key'] as String).length > 8192 ||
             data['profiles'] is! Map) {
+          throw const CredentialStorageException();
+        }
+        final speechKey = data['version'] == 1 ? '' : data['speech_api_key'];
+        if (speechKey is! String || speechKey.length > 8192) {
           throw const CredentialStorageException();
         }
         final profiles = raw.effectiveProfiles.map((p) {
@@ -161,6 +175,9 @@ class CredentialRepository {
         final settings = AppSettings.fromJson({
           ...row,
           'api_key': data['api_key'],
+          'speech_config_json': jsonEncode(
+            raw.speech.copyWith(apiKey: speechKey).toJson(),
+          ),
           'ai_profiles_json': jsonEncode(
             profiles.map((p) => p.toJson()).toList(),
           ),
@@ -219,7 +236,9 @@ class CredentialRepository {
   }) async {
     final current = await _row(generation);
     final saved = AppSettings.fromJson({...settings.toJson(), 'id': 'default'});
-    if (isReference(saved.apiKey)) throw const CredentialStorageException();
+    if (isReference(saved.apiKey) || isReference(saved.speech.apiKey)) {
+      throw const CredentialStorageException();
+    }
     final oldReference = isReference(current['api_key'])
         ? current['api_key'] as String
         : null;
@@ -235,9 +254,10 @@ class CredentialRepository {
     String? newReference;
     if (_hasKeys(saved)) {
       final entry = jsonEncode({
-        'version': 1,
-        'binding': _binding(persisted),
+        'version': 2,
+        'binding': _binding(persisted, speech: true),
         'api_key': saved.apiKey,
+        'speech_api_key': saved.speech.apiKey,
         'profiles': {
           for (final p in saved.effectiveProfiles) p.id: p.settings.apiKey,
         },
@@ -294,6 +314,7 @@ class CredentialRepository {
           'model_name',
           'ai_profiles_json',
           'ai_fallback_enabled',
+          'speech_config_json',
         ]) {
           if (rows.isNotEmpty && row[field] != current[field]) {
             throw const CredentialStorageException();

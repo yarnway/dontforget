@@ -46,7 +46,9 @@ class _PreviewModel extends LLMService {
 
 class _Speech extends LocalSpeechService {
   _Speech() : super(isIOS: false);
-  bool enabled = false;
+  bool enabled = false, androidPlatform = false;
+  @override
+  bool get android => androidPlatform;
   int calls = 0, cancels = 0;
   Object? error;
   Completer<String>? pending;
@@ -531,6 +533,38 @@ void main() {
       );
     },
   );
+  test(
+    'Android original audio saves as memo without recorded-file recognition',
+    () async {
+      speech.androidPlatform = true;
+      speech.enabled = true;
+      produceAudio = true;
+      final home = container.read(homeControllerProvider.notifier);
+      final done = Completer<void>();
+      var busy = false;
+      final stop = home.addListener((state) {
+        busy = busy || state.pendingTasksCount > 0;
+        if (busy && state.pendingTasksCount == 0 && !done.isCompleted) {
+          done.complete();
+        }
+      }, fireImmediately: false);
+      expect(await home.startRecording(), true);
+      await home.stopRecordingAndProcess();
+      await done.future.timeout(const Duration(seconds: 5));
+      stop();
+      expect(speech.calls, 0);
+      final raw = container.read(remindersProvider).single;
+      expect(raw.captureProposalJson, isNull);
+      expect(raw.recordId, isNotNull);
+      expect(
+        await File(
+          container.read(mediaRecordsProvider).single.contentOrPath,
+        ).exists(),
+        true,
+      );
+    },
+  );
+
   test(
     'audio keeps its original file and waits for extraction confirmation',
     () async {

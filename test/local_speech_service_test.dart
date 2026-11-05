@@ -9,6 +9,54 @@ void main() {
   final messenger =
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
   tearDown(() => messenger.setMockMethodCallHandler(channel, null));
+  test(
+    'Android uses finalized audio and never opens a live speech session',
+    () async {
+      final calls = <MethodCall>[];
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        calls.add(call);
+        return call.method == 'transcribe' ? ' 明天下午开会 ' : null;
+      });
+      final service = LocalSpeechService(
+        isIOS: false,
+        isAndroid: true,
+        channel: channel,
+      );
+      expect(service.supported, isTrue);
+      expect(service.android, isTrue);
+      expect(await service.transcribe('/private/capture.m4a', 'zh'), '明天下午开会');
+      expect(calls.single.method, 'transcribe');
+      expect(calls.single.arguments, {
+        'path': '/private/capture.m4a',
+        'locale': 'zh-CN',
+      });
+      await service.cancel();
+      expect(calls.last.method, 'cancel');
+    },
+  );
+  test(
+    'Android capability and language errors retain their native codes',
+    () async {
+      for (final code in [
+        'speech_unavailable',
+        'speech_language_unavailable',
+        'speech_permission_denied',
+      ]) {
+        messenger.setMockMethodCallHandler(
+          channel,
+          (_) async => throw PlatformException(code: code),
+        );
+        await expectLater(
+          LocalSpeechService(
+            isIOS: false,
+            isAndroid: true,
+            channel: channel,
+          ).transcribe('/private/capture.m4a', 'zh'),
+          throwsA(isA<PlatformException>().having((e) => e.code, 'code', code)),
+        );
+      }
+    },
+  );
   for (final language in ['zh', 'ja', 'en']) {
     test('$language is recognized through the local channel only', () async {
       MethodCall? request;

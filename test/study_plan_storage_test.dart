@@ -74,7 +74,9 @@ void main() {
     }
     await db.insert(
       'Settings',
-      (AppSettings.defaults().toJson()..remove('workspace_drafts_json')),
+      (AppSettings.defaults().toJson()
+        ..remove('workspace_drafts_json')
+        ..remove('speech_config_json')),
     );
     await db.insert('Reminders', legacy);
     if (broken) {
@@ -166,7 +168,8 @@ void main() {
                   'timestamp': DateTime.now().toIso8601String(),
                   'settings': [
                     (AppSettings.defaults().toJson()
-                      ..remove('workspace_drafts_json')),
+                      ..remove('workspace_drafts_json')
+                      ..remove('speech_config_json')),
                   ],
                   'media_records': [],
                   'reminders': [legacy],

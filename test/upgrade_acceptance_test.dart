@@ -20,6 +20,7 @@ void main() {
             ...row,
             if (table.key == 'Settings') ...AppSettings.fromJson(row).toJson(),
             if (table.key == 'Settings') 'workspace_drafts_json': null,
+            if (table.key == 'Settings') 'speech_config_json': '{}',
             if (table.key == 'Reminders') ...{
               'notice_revision': 0,
               'notice_acknowledged_at': null,

@@ -166,6 +166,7 @@ void main() {
           ..remove('ai_fallback_enabled')
           ..remove('appearance')
           ..remove('workspace_drafts_json')
+          ..remove('speech_config_json')
           ..remove('input_send_mode'),
       ],
       'media_records': [

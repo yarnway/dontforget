@@ -24,6 +24,9 @@ import '../../models/settings.dart';
 import '../../l10n/app_localizations.dart';
 import 'backup_preview_screen.dart';
 import 'ai_profiles_screen.dart';
+import '../../services/live_dictation_service.dart';
+import '../../l10n/dictation_strings.dart';
+import '../widgets/dictation_language_sheet.dart';
 
 typedef ConsoleProcessRunner =
     Future<ProcessResult> Function(String executable, List<String> arguments);
@@ -760,6 +763,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             },
                     ),
                     const SizedBox(height: 14),
+                    if (Theme.of(context).platform == TargetPlatform.android)
+                      Material(
+                        color: Colors.transparent,
+                        child: ListTile(
+                          leading: const Icon(Icons.mic_none),
+                          title: Text(dictationText(l10n, 'title')),
+                          subtitle: const Text('中文 / English'),
+                          onTap: () => showDictationLanguages(
+                            context,
+                            ref.read(liveDictationServiceProvider),
+                          ),
+                        ),
+                      ),
                     // Privacy Shield Guarantee
                     Container(
                       padding: const EdgeInsets.all(12),

@@ -238,7 +238,7 @@ void main() {
           final preview = await BackupInspector(
             databaseFactoryFfi,
           ).inspect(File('${h.directory.path}/$name'));
-          expect(preview.version, 16);
+          expect(preview.version, DatabaseHelper.schemaVersion);
         }
         final source = File('${h.directory.path}/ha_snapshot.json');
         final raw = jsonDecode(await source.readAsString());

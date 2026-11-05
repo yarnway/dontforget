@@ -46,6 +46,12 @@ class PortableBackupService {
     final safe = Map<String, dynamic>.from(jsonDecode(jsonEncode(snapshot)));
     for (final row in safe['settings'] as List) {
       row['api_key'] = '';
+      if (row['speech_config_json'] is String) {
+        final speech =
+            jsonDecode(row['speech_config_json']) as Map<String, dynamic>;
+        speech['api_key'] = '';
+        row['speech_config_json'] = jsonEncode(speech);
+      }
       final profiles = jsonDecode(row['ai_profiles_json'] as String);
       for (final profile in profiles as List) {
         profile['api_key'] = '';

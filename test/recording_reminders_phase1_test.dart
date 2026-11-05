@@ -548,7 +548,9 @@ void main() {
       }
       await db.insert(
         'Settings',
-        AppSettings.defaults().toJson()..remove('workspace_drafts_json'),
+        AppSettings.defaults().toJson()
+          ..remove('workspace_drafts_json')
+          ..remove('speech_config_json'),
       );
       await db.insert('Reminders', {
         'id': 'old',

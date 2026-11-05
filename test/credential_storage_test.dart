@@ -4,6 +4,9 @@ import 'dart:io';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/ai_profile.dart';
 import 'package:dont_forget/models/settings.dart';
+import 'package:dont_forget/models/speech_settings.dart';
+import 'package:dont_forget/services/streaming_backup_service.dart';
+import 'package:crypto/crypto.dart';
 import 'package:dont_forget/providers/providers.dart';
 import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'package:dont_forget/services/security/credential_repository.dart';
@@ -414,6 +417,100 @@ void main() {
       await lease.resume();
       expect((await row())['api_key'], '');
       expect(vault.values, isEmpty);
+    },
+  );
+  test(
+    'speech key is independent, vault-only, and excluded from portable snapshots',
+    () async {
+      await settings.updateSettings(
+        keyed('chat-secret').copyWith(
+          speech: const SpeechSettings(enabled: true, apiKey: 'speech-secret'),
+        ),
+      );
+      final stored = await row();
+      expect(jsonEncode(stored), isNot(contains('speech-secret')));
+      expect(jsonDecode(stored['speech_config_json'])['api_key'], '');
+      await reload();
+      expect(settings.state.apiKey, 'chat-secret');
+      expect(settings.state.speech.apiKey, 'speech-secret');
+      expect(settings.state.speech.isConfigured, isTrue);
+      await db.createMirrorBackup();
+      expect(
+        await File('${temp.path}/ha_snapshot.json').readAsString(),
+        isNot(contains('speech-secret')),
+      );
+      final portable = StreamingBackupService.redactedSnapshot({
+        'settings': [settings.state.toJson()],
+      });
+      expect(jsonEncode(portable), isNot(contains('speech-secret')));
+      expect(jsonEncode(portable), isNot(contains('chat-secret')));
+      expect(
+        jsonDecode(portable['settings'][0]['speech_config_json'])['enabled'],
+        isTrue,
+      );
+    },
+  );
+
+  test(
+    'speech endpoint binding cannot be changed by raw SQL to steal a key',
+    () async {
+      await settings.updateSettings(
+        keyed('chat-secret').copyWith(
+          speech: const SpeechSettings(enabled: true, apiKey: 'speech-secret'),
+        ),
+      );
+      final stored = await row();
+      final speech = jsonDecode(stored['speech_config_json']);
+      speech['endpoint'] = 'https://other.invalid/asr';
+      await (await db.database).update('Settings', {
+        'speech_config_json': jsonEncode(speech),
+      });
+      await reload();
+      expect(settings.state.speech.apiKey, isEmpty);
+      expect(settings.state.apiKey, isEmpty);
+      expect(settings.credentialStatus, CredentialStatus.unavailable);
+    },
+  );
+
+  test(
+    'version1 vault credentials survive schema17 and upgrade on an explicit save',
+    () async {
+      await settings.updateSettings(keyed('old-chat-secret'));
+      final stored = await row();
+      final raw = AppSettings.fromJson(stored);
+      final binding = sha256
+          .convert(
+            utf8.encode(
+              jsonEncode([
+                raw.baseUrl,
+                raw.modelName,
+                raw.aiFallbackEnabled,
+                for (final p in raw.effectiveProfiles)
+                  [p.id, p.settings.baseUrl, p.settings.modelName, p.enabled],
+              ]),
+            ),
+          )
+          .toString();
+      final entry = jsonDecode(vault.values[stored['api_key']]!);
+      entry['version'] = 1;
+      entry['binding'] = binding;
+      entry.remove('speech_api_key');
+      vault.values[stored['api_key']] = jsonEncode(entry);
+      await reload();
+      expect(settings.state.apiKey, 'old-chat-secret');
+      expect(settings.state.speech.apiKey, isEmpty);
+      await settings.updateSettings(
+        settings.state.copyWith(
+          speech: const SpeechSettings(
+            enabled: true,
+            apiKey: 'new-speech-secret',
+          ),
+        ),
+      );
+      await reload();
+      expect(settings.state.apiKey, 'old-chat-secret');
+      expect(settings.state.speech.apiKey, 'new-speech-secret');
+      expect(jsonDecode(vault.values[(await row())['api_key']]!)['version'], 2);
     },
   );
 }

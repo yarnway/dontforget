@@ -8,19 +8,23 @@ final localSpeechServiceProvider = Provider<LocalSpeechService>((ref) {
   return service;
 });
 
-/// iOS recognition is explicitly on-device. An unavailable language or denied
-/// permission never silently sends the audio to another service.
+/// Recorded-file native recognition. Live Android input uses LiveDictationService.
+/// Unsupported Android languages remain explicit failures.
 class LocalSpeechService {
-  LocalSpeechService({bool? isIOS, MethodChannel? channel})
-    : supported = isIOS ?? Platform.isIOS,
+  LocalSpeechService({bool? isIOS, bool? isAndroid, MethodChannel? channel})
+    : android = isAndroid ?? (isIOS == null && Platform.isAndroid),
+      supported =
+          (isIOS ?? Platform.isIOS) ||
+          (isAndroid ?? (isIOS == null && Platform.isAndroid)),
       _channel = channel ?? const MethodChannel('dontforget/local_speech');
 
   final bool supported;
+  final bool android;
   final MethodChannel _channel;
   int _epoch = 0;
 
   Future<String> transcribe(String path, String language) async {
-    if (!supported) throw UnsupportedError('Local speech requires iOS');
+    if (!supported) throw UnsupportedError('Native speech is unavailable');
     final epoch = _epoch;
     final text = await _channel
         .invokeMethod<String>('transcribe', {

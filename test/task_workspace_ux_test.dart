@@ -1,4 +1,5 @@
 import 'support/workspace_drafts.dart';
+import 'package:dont_forget/services/live_dictation_service.dart';
 import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'dart:async';
 import 'dart:io';
@@ -110,10 +111,56 @@ void main() {
   late _ControlledHomeController home;
   late _Notifications notifications;
   String? clipboard;
+  late LiveDictationService dictation;
+  late List<MethodCall> dictationCalls;
+  String dictationLocale = 'zh-CN';
+  const dictationChannel = MethodChannel('test/workspace_dictation');
+  Future<void> liveEvent(
+    String type, {
+    String text = '',
+    String? code,
+    String? session,
+  }) async {
+    final id =
+        session ??
+        (dictationCalls.lastWhere((c) => c.method == 'start').arguments
+            as Map)['session'];
+    await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .handlePlatformMessage(
+          dictationChannel.name,
+          dictationChannel.codec.encodeMethodCall(
+            MethodCall('onEvent', {
+              'session': id,
+              'type': type,
+              'text': text,
+              'code': code,
+            }),
+          ),
+          (_) {},
+        );
+  }
+
   const recorderChannel = MethodChannel('com.llfbandit.record/messages');
 
   setUp(() async {
     clipboard = null;
+    dictationCalls = [];
+    dictationLocale = 'zh-CN';
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(dictationChannel, (call) async {
+          dictationCalls.add(call);
+          if (call.method == 'availability') {
+            return {'available': true, 'locale': dictationLocale};
+          }
+          if (call.method == 'setLanguage') {
+            dictationLocale = (call.arguments as Map)['locale'] as String;
+          }
+          return null;
+        });
+    dictation = LiveDictationService(
+      channel: dictationChannel,
+      isAndroid: true,
+    );
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(SystemChannels.platform, (call) async {
           if (call.method == 'Clipboard.setData') {
@@ -135,6 +182,7 @@ void main() {
     notifications = _Notifications();
     container = ProviderContainer(
       overrides: [
+        liveDictationServiceProvider.overrideWithValue(dictation),
         databaseHelperProvider.overrideWithValue(database),
         notificationServiceProvider.overrideWithValue(notifications),
         homeControllerProvider.overrideWith(
@@ -149,6 +197,10 @@ void main() {
   });
 
   tearDown(() async {
+    await dictation.cancel();
+    dictation.dispose();
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(dictationChannel, null);
     container.dispose();
     await database.close();
     await directory.delete(recursive: true);
@@ -197,6 +249,20 @@ void main() {
       ),
     );
     await tester.pump();
+  }
+
+  Future<void> openVoiceMemo(WidgetTester tester) async {
+    if (Theme.of(tester.element(find.byType(InputBottomBar))).platform ==
+        TargetPlatform.android) {
+      await tester.tap(find.byKey(const ValueKey('composer-attachment')));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.byKey(const ValueKey('composer-original-recording')),
+      );
+    } else {
+      await tester.tap(find.byKey(const ValueKey('composer-mode-toggle')));
+    }
+    await tester.pumpAndSettle();
   }
 
   Widget card(String id) => Consumer(
@@ -580,35 +646,33 @@ void main() {
     variant: TargetPlatformVariant.only(TargetPlatform.macOS),
   );
 
-  testWidgets(
-    'desktop hold does not interrupt an active IME composition',
-    (tester) async {
-      await show(tester, const InputBottomBar(), reducedMotion: true);
-      final field = tester.widget<TextField>(find.byType(TextField));
-      field.focusNode!.requestFocus();
-      field.controller!.value = const TextEditingValue(
-        text: 'ming',
-        selection: TextSelection.collapsed(offset: 4),
-        composing: TextRange(start: 0, end: 4),
-      );
-      await tester.pump();
-      final press = await tester.startGesture(
-        tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
-        kind: PointerDeviceKind.mouse,
-      );
-      await tester.pump(const Duration(milliseconds: 700));
-      await press.up();
-      await tester.pumpAndSettle();
-      expect(home.starts, 0);
-      expect(field.controller!.text, 'ming');
-      expect(
-        field.controller!.value.composing,
-        const TextRange(start: 0, end: 4),
-      );
-      expect(home.sent, isEmpty);
-    },
-    variant: TargetPlatformVariant.only(TargetPlatform.macOS),
-  );
+  testWidgets('desktop hold does not interrupt an active IME composition', (
+    tester,
+  ) async {
+    await show(tester, const InputBottomBar(), reducedMotion: true);
+    final field = tester.widget<TextField>(find.byType(TextField));
+    field.focusNode!.requestFocus();
+    field.controller!.value = const TextEditingValue(
+      text: 'ming',
+      selection: TextSelection.collapsed(offset: 4),
+      composing: TextRange(start: 0, end: 4),
+    );
+    await tester.pump();
+    final press = await tester.startGesture(
+      tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
+      kind: PointerDeviceKind.mouse,
+    );
+    await tester.pump(const Duration(milliseconds: 700));
+    await press.up();
+    await tester.pumpAndSettle();
+    expect(home.starts, 0);
+    expect(field.controller!.text, 'ming');
+    expect(
+      field.controller!.value.composing,
+      const TextRange(start: 0, end: 4),
+    );
+    expect(home.sent, isEmpty);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.macOS));
 
   testWidgets(
     'input has no idle ticks and reduced motion stops recording animation',
@@ -757,6 +821,40 @@ void main() {
   }
 
   testWidgets(
+    'mobile editor reopens a hidden IME and reconnects after repeated mode switches',
+    (tester) async {
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      await tester.enterText(find.byType(TextField), '未发送的中文草稿');
+      await tester.pumpAndSettle();
+      final toggle = find.byKey(const ValueKey('composer-mode-toggle'));
+      for (var attempt = 0; attempt < 3; attempt++) {
+        await openVoiceMemo(tester);
+        expect(find.byType(TextField), findsNothing);
+        await tester.tap(toggle);
+        await tester.pumpAndSettle();
+        final field = tester.widget<TextField>(find.byType(TextField));
+        expect(field.controller!.text, '未发送的中文草稿');
+        expect(field.focusNode!.hasFocus, isTrue);
+        expect(tester.testTextInput.isVisible, isTrue);
+        // Android Back and an IME replacement can hide the keyboard without
+        // changing Flutter focus. Tapping the editor must explicitly reopen it.
+        tester.testTextInput.hide();
+        expect(field.focusNode!.hasFocus, isTrue);
+        await tester.tap(find.byKey(const ValueKey('composer-input-surface')));
+        await tester.pumpAndSettle();
+        expect(tester.testTextInput.isVisible, isTrue);
+      }
+      expect(home.starts, 0);
+      expect(home.sent, isEmpty);
+      expect(tester.takeException(), isNull);
+    },
+    variant: const TargetPlatformVariant({
+      TargetPlatform.android,
+      TargetPlatform.iOS,
+    }),
+  );
+
+  testWidgets(
     'mobile composer switches modes, preserves draft and places attachments on right',
     (tester) async {
       tester.view.devicePixelRatio = 1;
@@ -783,8 +881,7 @@ void main() {
         greaterThan(tester.getRect(surface).right),
       );
       await tester.enterText(find.byType(TextField), '日本語の下書き');
-      await tester.tap(toggle);
-      await tester.pumpAndSettle();
+      await openVoiceMemo(tester);
       expect(find.byKey(const ValueKey('composer-voice-pad')), findsOneWidget);
       expect(find.byType(TextField), findsNothing);
       expect(home.starts, 0);
@@ -924,10 +1021,123 @@ void main() {
       expect(home.stops, 0);
       expect(tester.takeException(), isNull);
     },
-    variant: const TargetPlatformVariant({
-      TargetPlatform.iOS,
-      TargetPlatform.android,
-    }),
+    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
+  );
+
+  testWidgets(
+    'Android live dictation replaces partials at selection and sends only after review',
+    (tester) async {
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      await tester.enterText(find.byType(TextField), 'before OLD after');
+      final field = tester.widget<TextField>(find.byType(TextField));
+      field.controller!.selection = const TextSelection(
+        baseOffset: 7,
+        extentOffset: 10,
+      );
+      await tester.tap(find.byKey(const ValueKey('composer-mode-toggle')));
+      await tester.pumpAndSettle();
+      expect(field.controller!.text, 'before OLD after');
+      expect(tester.widget<TextField>(find.byType(TextField)).readOnly, true);
+      await liveEvent('ready');
+      await liveEvent('partial', text: '明天');
+      await tester.pump();
+      expect(field.controller!.text, 'before 明天 after');
+      await liveEvent('partial', text: '明天开会');
+      await tester.pump();
+      expect(field.controller!.text, 'before 明天开会 after');
+      await tester.tap(find.byKey(const ValueKey('composer-mode-toggle')));
+      await tester.pump();
+      expect(dictationCalls.last.method, 'stop');
+      expect(home.sent, isEmpty);
+      await liveEvent('final', text: '明天开会。');
+      await tester.pumpAndSettle();
+      expect(field.controller!.text, 'before 明天开会。 after');
+      expect(tester.widget<TextField>(find.byType(TextField)).readOnly, false);
+      expect(tester.testTextInput.isVisible, true);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pump();
+      expect(home.sent, isEmpty);
+      expect(field.controller!.text, contains('明天开会。'));
+      await tester.tap(find.byTooltip('发送'));
+      await drainWorkspaceDrafts(tester, container);
+      expect(home.sent.single, contains('before 明天开会。'));
+      expect(home.starts, 0);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.android),
+  );
+
+  testWidgets(
+    'Android dictation cancel restores exact draft and network failure retains recognized words',
+    (tester) async {
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      await tester.enterText(find.byType(TextField), 'Original');
+      final field = tester.widget<TextField>(find.byType(TextField));
+      final base = field.controller!.value;
+      await tester.tap(find.byKey(const ValueKey('composer-mode-toggle')));
+      await tester.pumpAndSettle();
+      final first = (dictationCalls.last.arguments as Map)['session'] as String;
+      await liveEvent('partial', text: ' discard');
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('dictation-discard')));
+      await tester.pumpAndSettle();
+      expect(field.controller!.value, base);
+      await tester.tap(find.byKey(const ValueKey('composer-mode-toggle')));
+      await tester.pumpAndSettle();
+      await liveEvent('final', session: first, text: 'STALE');
+      await tester.pump();
+      expect(field.controller!.text, 'Original');
+      await liveEvent('partial', text: ' English');
+      await liveEvent('error', code: 'dictation_network');
+      await tester.pumpAndSettle();
+      expect(field.controller!.text, 'Original English');
+      expect(home.sent, isEmpty);
+      await drainWorkspaceDrafts(tester, container);
+      expect(
+        container.read(workspaceDraftsProvider)['capture']['text'],
+        'Original English',
+      );
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.android),
+  );
+
+  testWidgets(
+    'Android language chooser supports Chinese and English without changing chat settings',
+    (tester) async {
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      final original = container.read(settingsProvider).toJson();
+      await tester.longPress(
+        find.byKey(const ValueKey('composer-mode-toggle')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('系统语音服务识别'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('dictation-language-en-US')));
+      await tester.pumpAndSettle();
+      expect(dictationLocale, 'en-US');
+      expect(container.read(settingsProvider).toJson(), original);
+      expect(home.starts, 0);
+      expect(dictation.active, false);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.android),
+  );
+
+  testWidgets(
+    'Android refuses dictation while IME composition is unconfirmed',
+    (tester) async {
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      await tester.enterText(find.byType(TextField), '中文');
+      final field = tester.widget<TextField>(find.byType(TextField));
+      field.controller!.value = const TextEditingValue(
+        text: '中文',
+        selection: TextSelection.collapsed(offset: 2),
+        composing: TextRange(start: 0, end: 2),
+      );
+      await tester.tap(find.byKey(const ValueKey('composer-mode-toggle')));
+      await tester.pumpAndSettle();
+      expect(dictationCalls, isEmpty);
+      expect(field.controller!.text, '中文');
+      expect(find.textContaining('请先确认输入法候选文字'), findsOneWidget);
+    },
+    variant: TargetPlatformVariant.only(TargetPlatform.android),
   );
 
   testWidgets(
@@ -1068,62 +1278,58 @@ void main() {
     variant: TargetPlatformVariant.only(TargetPlatform.iOS),
   );
 
-  testWidgets(
-    'denied iOS hold can be retried with a new pointer gesture',
-    (tester) async {
-      home.pendingStart = Completer<bool>()..complete(false);
-      await show(tester, const InputBottomBar(), reducedMotion: true);
-      await tester.longPress(
-        find.byKey(const ValueKey('composer-input-surface')),
-      );
-      await tester.pumpAndSettle();
-      expect(home.stops, 0);
-      home.pendingStart = null;
-      await tester.longPress(
-        find.byKey(const ValueKey('composer-input-surface')),
-      );
-      await tester.pumpAndSettle();
-      expect(home.starts, 2);
-      expect(home.stops, 1);
-    },
-    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
-  );
+  testWidgets('denied iOS hold can be retried with a new pointer gesture', (
+    tester,
+  ) async {
+    home.pendingStart = Completer<bool>()..complete(false);
+    await show(tester, const InputBottomBar(), reducedMotion: true);
+    await tester.longPress(
+      find.byKey(const ValueKey('composer-input-surface')),
+    );
+    await tester.pumpAndSettle();
+    expect(home.stops, 0);
+    home.pendingStart = null;
+    await tester.longPress(
+      find.byKey(const ValueKey('composer-input-surface')),
+    );
+    await tester.pumpAndSettle();
+    expect(home.starts, 2);
+    expect(home.stops, 1);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 
-  testWidgets(
-    'iOS slide up then left cancels without processing or drafting',
-    (tester) async {
-      await show(tester, const InputBottomBar(), reducedMotion: true);
-      final origin = tester.getCenter(
-        find.byKey(const ValueKey('composer-input-surface')),
-      );
-      final press = await tester.startGesture(origin);
-      await tester.pump(const Duration(milliseconds: 700));
-      await press.moveTo(origin + const Offset(0, -100));
-      await tester.pump();
-      await press.moveTo(origin + const Offset(-80, -100));
-      await tester.pumpAndSettle();
-      expect(
-        tester
-            .widget<VoiceCaptureFeedback>(find.byType(VoiceCaptureFeedback))
-            .action,
-        VoiceReleaseAction.cancel,
-      );
-      expect(
-        find.descendant(
-          of: find.byType(VoiceCaptureFeedback),
-          matching: find.text('松手取消录音'),
-        ),
-        findsOneWidget,
-      );
-      await press.up();
-      await tester.pumpAndSettle();
-      expect(home.cancels, 1);
-      expect(home.stops, 0);
-      expect(home.drafts, 0);
-      expect(find.byType(VoiceCaptureFeedback), findsNothing);
-    },
-    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
-  );
+  testWidgets('iOS slide up then left cancels without processing or drafting', (
+    tester,
+  ) async {
+    await show(tester, const InputBottomBar(), reducedMotion: true);
+    final origin = tester.getCenter(
+      find.byKey(const ValueKey('composer-input-surface')),
+    );
+    final press = await tester.startGesture(origin);
+    await tester.pump(const Duration(milliseconds: 700));
+    await press.moveTo(origin + const Offset(0, -100));
+    await tester.pump();
+    await press.moveTo(origin + const Offset(-80, -100));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<VoiceCaptureFeedback>(find.byType(VoiceCaptureFeedback))
+          .action,
+      VoiceReleaseAction.cancel,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(VoiceCaptureFeedback),
+        matching: find.text('松手取消录音'),
+      ),
+      findsOneWidget,
+    );
+    await press.up();
+    await tester.pumpAndSettle();
+    expect(home.cancels, 1);
+    expect(home.stops, 0);
+    expect(home.drafts, 0);
+    expect(find.byType(VoiceCaptureFeedback), findsNothing);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 
   testWidgets(
     'iOS slide up then right fills an editable draft without sending',
@@ -1164,35 +1370,33 @@ void main() {
     variant: TargetPlatformVariant.only(TargetPlatform.iOS),
   );
 
-  testWidgets(
-    'iOS dragging back from cancel returns to voice save',
-    (tester) async {
-      await show(tester, const InputBottomBar(), reducedMotion: true);
-      final origin = tester.getCenter(
-        find.byKey(const ValueKey('composer-input-surface')),
-      );
-      final press = await tester.startGesture(origin);
-      await tester.pump(const Duration(milliseconds: 700));
-      await press.moveTo(origin + const Offset(0, -100));
-      await tester.pump();
-      await press.moveTo(origin + const Offset(-80, -100));
-      await tester.pump();
-      await press.moveTo(origin);
-      await tester.pump();
-      expect(
-        find.descendant(
-          of: find.byType(VoiceCaptureFeedback),
-          matching: find.text('松手 发语音'),
-        ),
-        findsOneWidget,
-      );
-      await press.up();
-      await tester.pumpAndSettle();
-      expect(home.stops, 1);
-      expect(home.cancels, 0);
-    },
-    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
-  );
+  testWidgets('iOS dragging back from cancel returns to voice save', (
+    tester,
+  ) async {
+    await show(tester, const InputBottomBar(), reducedMotion: true);
+    final origin = tester.getCenter(
+      find.byKey(const ValueKey('composer-input-surface')),
+    );
+    final press = await tester.startGesture(origin);
+    await tester.pump(const Duration(milliseconds: 700));
+    await press.moveTo(origin + const Offset(0, -100));
+    await tester.pump();
+    await press.moveTo(origin + const Offset(-80, -100));
+    await tester.pump();
+    await press.moveTo(origin);
+    await tester.pump();
+    expect(
+      find.descendant(
+        of: find.byType(VoiceCaptureFeedback),
+        matching: find.text('松手 发语音'),
+      ),
+      findsOneWidget,
+    );
+    await press.up();
+    await tester.pumpAndSettle();
+    expect(home.stops, 1);
+    expect(home.cancels, 0);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 
   testWidgets(
     'iOS unfocused empty input can record while its prior keyboard closes',
@@ -1386,27 +1590,25 @@ void main() {
     variant: TargetPlatformVariant.only(TargetPlatform.iOS),
   );
 
-  testWidgets(
-    'explicit voice pad short tap discards the early capture',
-    (tester) async {
-      await show(tester, const InputBottomBar(), reducedMotion: true);
-      await tester.tap(find.byKey(const ValueKey('composer-mode-toggle')));
-      await tester.pumpAndSettle();
-      final press = await tester.startGesture(
-        tester.getCenter(find.byKey(const ValueKey('composer-voice-pad'))),
-      );
-      await tester.pump(const Duration(milliseconds: 80));
-      expect(home.starts, 1);
-      await press.up();
-      await tester.pumpAndSettle();
-      expect(home.cancels, 1);
-      expect(home.stops, 0);
-      expect(home.drafts, 0);
-      expect(home.sent, isEmpty);
-      expect(home.state.isRecording, isFalse);
-    },
-    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
-  );
+  testWidgets('explicit voice pad short tap discards the early capture', (
+    tester,
+  ) async {
+    await show(tester, const InputBottomBar(), reducedMotion: true);
+    await tester.tap(find.byKey(const ValueKey('composer-mode-toggle')));
+    await tester.pumpAndSettle();
+    final press = await tester.startGesture(
+      tester.getCenter(find.byKey(const ValueKey('composer-voice-pad'))),
+    );
+    await tester.pump(const Duration(milliseconds: 80));
+    expect(home.starts, 1);
+    await press.up();
+    await tester.pumpAndSettle();
+    expect(home.cancels, 1);
+    expect(home.stops, 0);
+    expect(home.drafts, 0);
+    expect(home.sent, isEmpty);
+    expect(home.state.isRecording, isFalse);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 
   testWidgets(
     'explicit voice tap released during permission discards a late start',
@@ -1433,46 +1635,42 @@ void main() {
     variant: TargetPlatformVariant.only(TargetPlatform.iOS),
   );
 
-  testWidgets(
-    'unmount during permission discards the late recording start',
-    (tester) async {
-      home.pendingStart = Completer<bool>();
-      await show(tester, const InputBottomBar(), reducedMotion: true);
-      final press = await tester.startGesture(
-        tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
-      );
-      await tester.pump(const Duration(milliseconds: 700));
-      addTearDown(() => drainWorkspaceDrafts(tester, container));
-      await tester.pumpWidget(const SizedBox());
-      home.pendingStart!.complete(true);
-      await tester.pumpAndSettle();
-      await press.up();
-      expect(home.cancels, 1);
-      expect(home.stops, 0);
-      expect(home.state.isRecording, isFalse);
-      expect(tester.takeException(), isNull);
-    },
-    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
-  );
+  testWidgets('unmount during permission discards the late recording start', (
+    tester,
+  ) async {
+    home.pendingStart = Completer<bool>();
+    await show(tester, const InputBottomBar(), reducedMotion: true);
+    final press = await tester.startGesture(
+      tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
+    );
+    await tester.pump(const Duration(milliseconds: 700));
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
+    await tester.pumpWidget(const SizedBox());
+    home.pendingStart!.complete(true);
+    await tester.pumpAndSettle();
+    await press.up();
+    expect(home.cancels, 1);
+    expect(home.stops, 0);
+    expect(home.state.isRecording, isFalse);
+    expect(tester.takeException(), isNull);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 
-  testWidgets(
-    'iOS pointer cancellation discards a delayed native start',
-    (tester) async {
-      home.pendingStart = Completer<bool>();
-      await show(tester, const InputBottomBar(), reducedMotion: true);
-      final press = await tester.startGesture(
-        tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
-      );
-      await tester.pump(const Duration(milliseconds: 700));
-      await press.cancel();
-      await tester.pump();
-      home.pendingStart!.complete(true);
-      await tester.pumpAndSettle();
-      expect(home.cancels, 1);
-      expect(home.stops, 0);
-    },
-    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
-  );
+  testWidgets('iOS pointer cancellation discards a delayed native start', (
+    tester,
+  ) async {
+    home.pendingStart = Completer<bool>();
+    await show(tester, const InputBottomBar(), reducedMotion: true);
+    final press = await tester.startGesture(
+      tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
+    );
+    await tester.pump(const Duration(milliseconds: 700));
+    await press.cancel();
+    await tester.pump();
+    home.pendingStart!.complete(true);
+    await tester.pumpAndSettle();
+    expect(home.cancels, 1);
+    expect(home.stops, 0);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 
   testWidgets(
     'release during native recorder startup still stops that recording',
@@ -1823,37 +2021,35 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     },
   );
-  testWidgets(
-    'restored voice transcript still requires explicit Send',
-    (tester) async {
-      final drafts = container.read(workspaceDraftsProvider.notifier);
-      await tester.runAsync(
-        () => drafts.put('capture', {
-          'text': '明日の単語を復習',
-          'voiceText': true,
-          'id': 'voice-reopen',
-        }),
-      );
-      await show(tester, const InputBottomBar(), reducedMotion: true);
-      await tester.pumpAndSettle();
-      var field = tester.widget<TextField>(find.byType(TextField));
-      expect(field.controller!.text, '明日の単語を復習');
-      final send = find.widgetWithIcon(IconButton, Icons.arrow_upward_rounded);
-      expect(send, findsOneWidget);
-      field.focusNode!.requestFocus();
-      await tester.pump();
-      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-      await tester.pump();
-      expect(home.sent, isEmpty);
-      expect(field.controller!.text, contains('\n'));
-      await tester.enterText(find.byType(TextField), '明日9時に単語を復習');
-      await tester.tap(send);
-      await drainWorkspaceDrafts(tester, container);
-      expect(home.sent, ['明日9時に単語を復習']);
-      expect(container.read(workspaceDraftsProvider)['capture'], isNull);
-    },
-    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
-  );
+  testWidgets('restored voice transcript still requires explicit Send', (
+    tester,
+  ) async {
+    final drafts = container.read(workspaceDraftsProvider.notifier);
+    await tester.runAsync(
+      () => drafts.put('capture', {
+        'text': '明日の単語を復習',
+        'voiceText': true,
+        'id': 'voice-reopen',
+      }),
+    );
+    await show(tester, const InputBottomBar(), reducedMotion: true);
+    await tester.pumpAndSettle();
+    var field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.controller!.text, '明日の単語を復習');
+    final send = find.widgetWithIcon(IconButton, Icons.arrow_upward_rounded);
+    expect(send, findsOneWidget);
+    field.focusNode!.requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    expect(home.sent, isEmpty);
+    expect(field.controller!.text, contains('\n'));
+    await tester.enterText(find.byType(TextField), '明日9時に単語を復習');
+    await tester.tap(send);
+    await drainWorkspaceDrafts(tester, container);
+    expect(home.sent, ['明日9時に単語を復習']);
+    expect(container.read(workspaceDraftsProvider)['capture'], isNull);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 
   testWidgets(
     'arc overlay keeps the held input in place',

@@ -22,7 +22,7 @@ import 'database_location_migrator.dart';
 part 'database_access.dart';
 
 class DatabaseHelper {
-  static const schemaVersion = 16;
+  static const schemaVersion = 17;
   static final DatabaseHelper instance = DatabaseHelper._init();
   Database? _database;
   Future<Database>? _opening;
@@ -569,7 +569,8 @@ CREATE TABLE Settings (
   ai_fallback_enabled INTEGER NOT NULL DEFAULT 0,
   appearance TEXT NOT NULL DEFAULT 'system',
   input_send_mode TEXT NOT NULL DEFAULT 'enter',
-  workspace_drafts_json TEXT
+  workspace_drafts_json TEXT,
+  speech_config_json TEXT NOT NULL DEFAULT '{}'
 )
 ''');
 
@@ -753,6 +754,12 @@ CREATE TABLE Reminders (
       for (final statement in schema15UpgradeStatements(shape)) {
         await db.execute(statement);
       }
+    }
+
+    if (oldVersion < 17) {
+      await db.execute(
+        "ALTER TABLE Settings ADD COLUMN speech_config_json TEXT NOT NULL DEFAULT '{}' ",
+      );
     }
 
     if (oldVersion < 4) {

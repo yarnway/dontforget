@@ -95,7 +95,11 @@ void main() {
       var sql = await fixture(shape);
       if (changeSchema != null) {
         final changed = changeSchema(sql);
-        expect(changed, isNot(sql), reason: 'Schema fixture mutation must apply');
+        expect(
+          changed,
+          isNot(sql),
+          reason: 'Schema fixture mutation must apply',
+        );
         sql = changed;
       }
       sql = sql.split('\n').where((line) => !line.startsWith('--')).join('\n');
@@ -103,7 +107,7 @@ void main() {
         if (statement.trim().isNotEmpty) await db.execute(statement);
       }
       await db.insert('Settings', {
-        ...AppSettings.defaults().toJson(),
+        ...(AppSettings.defaults().toJson()..remove('speech_config_json')),
         'workspace_drafts_json': jsonEncode({
           'capture': {'text': 'unsent draft', 'id': 'draft'},
         }),
@@ -153,7 +157,7 @@ void main() {
     Schema15Shape shape,
   ) async {
     final db = await helper.database;
-    expect(await db.getVersion(), 16);
+    expect(await db.getVersion(), DatabaseHelper.schemaVersion);
     final saved = (await db.query('Reminders')).single;
     for (final entry in row(shape).entries) {
       expect(saved[entry.key], entry.value, reason: entry.key);
@@ -181,14 +185,14 @@ void main() {
         (await inspector().inspect(
           File(p.join(p.dirname(db.path), name)),
         )).version,
-        16,
+        DatabaseHelper.schemaVersion,
       );
     }
   }
 
   for (final shape in Schema15Shape.values) {
     test(
-      'v15 ${shape.name} upgrades to v16 and keeps an inspectable rollback snapshot',
+      'v15 ${shape.name} upgrades to the current schema and keeps an inspectable rollback snapshot',
       () async {
         await create15(shape, name: 'live/dont_forget_v3.db');
         final helper = DatabaseHelper.forTesting(
@@ -201,7 +205,9 @@ void main() {
               .listSync()
               .whereType<Directory>()
               .singleWhere(
-                (d) => d.path.contains('schema-upgrade-v15-to-v16-'),
+                (d) => d.path.contains(
+                  'schema-upgrade-v15-to-v${DatabaseHelper.schemaVersion}-',
+                ),
               );
           expect(
             (await inspector().inspect(
@@ -239,27 +245,30 @@ void main() {
           }
         },
       );
-      test('empty v15 ${shape.name} $format backup restores to v16', () async {
-        final sqlite = await create15(shape, empty: true);
-        final source = format == 'sqlite' ? sqlite : await jsonBackup(sqlite);
-        final preview = await inspector().inspect(source);
-        final helper = DatabaseHelper.forTesting(
-          '${root.path}/empty',
-          databaseFactoryFfi,
-        );
-        try {
-          await DatabaseRecovery(
-            helper,
-            inspector: inspector(),
-            notifications: notifications(),
-          ).restore(source, expectedDigest: preview.digest);
-          final db = await helper.database;
-          expect(await db.getVersion(), 16);
-          expect(await db.query('Reminders'), isEmpty);
-        } finally {
-          await helper.close(createBackup: false);
-        }
-      });
+      test(
+        'empty v15 ${shape.name} $format backup restores to the current schema',
+        () async {
+          final sqlite = await create15(shape, empty: true);
+          final source = format == 'sqlite' ? sqlite : await jsonBackup(sqlite);
+          final preview = await inspector().inspect(source);
+          final helper = DatabaseHelper.forTesting(
+            '${root.path}/empty',
+            databaseFactoryFfi,
+          );
+          try {
+            await DatabaseRecovery(
+              helper,
+              inspector: inspector(),
+              notifications: notifications(),
+            ).restore(source, expectedDigest: preview.digest);
+            final db = await helper.database;
+            expect(await db.getVersion(), DatabaseHelper.schemaVersion);
+            expect(await db.query('Reminders'), isEmpty);
+          } finally {
+            await helper.close(createBackup: false);
+          }
+        },
+      );
     }
     for (final mutation in [
       'missing',
@@ -427,7 +436,9 @@ void main() {
       jsonEncode({
         'version': 15,
         'timestamp': null,
-        'settings': [AppSettings.defaults().toJson()],
+        'settings': [
+          AppSettings.defaults().toJson()..remove('speech_config_json'),
+        ],
         'media_records': [],
         'reminders': [
           row(Schema15Shape.recordReminder),

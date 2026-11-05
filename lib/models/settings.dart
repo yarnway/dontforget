@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'ai_profile.dart';
+import 'speech_settings.dart';
 
 enum AppAppearance { system, light, dark }
 
@@ -14,6 +15,7 @@ class AppSettings {
   final AppAppearance appearance;
   final InputSendMode inputSendMode;
   final String? workspaceDraftsJson;
+  final SpeechSettings speech;
   final List<AiProfile>? _profiles;
   final bool aiFallbackEnabled;
   List<AiProfile> get aiProfiles => _profiles ?? const [];
@@ -78,6 +80,7 @@ class AppSettings {
     this.appearance = AppAppearance.system,
     this.inputSendMode = InputSendMode.enter,
     this.workspaceDraftsJson,
+    this.speech = const SpeechSettings(),
     List<AiProfile>? aiProfiles,
     this.aiFallbackEnabled = false,
   }) : _profiles = aiProfiles == null ? null : List.unmodifiable(aiProfiles);
@@ -141,6 +144,7 @@ class AppSettings {
       aiProfiles: _readProfiles(json['ai_profiles_json']),
       aiFallbackEnabled: json['ai_fallback_enabled'] == 1,
       workspaceDraftsJson: json['workspace_drafts_json'] as String?,
+      speech: _readSpeech(json['speech_config_json']),
     );
   }
 
@@ -153,6 +157,7 @@ class AppSettings {
     'appearance': appearance.name,
     'input_send_mode': inputSendMode.name,
     'workspace_drafts_json': workspaceDraftsJson,
+    'speech_config_json': jsonEncode(speech.toJson()),
     'ai_profiles_json': jsonEncode(
       effectiveProfiles.map((p) => p.toJson()).toList(),
     ),
@@ -168,6 +173,7 @@ class AppSettings {
     InputSendMode? inputSendMode,
     List<AiProfile>? aiProfiles,
     bool? aiFallbackEnabled,
+    SpeechSettings? speech,
   }) {
     var profiles = aiProfiles ?? _profiles;
     if (aiProfiles == null &&
@@ -204,6 +210,19 @@ class AppSettings {
       workspaceDraftsJson: workspaceDraftsJson,
       aiProfiles: profiles,
       aiFallbackEnabled: aiFallbackEnabled ?? this.aiFallbackEnabled,
+      speech: speech ?? this.speech,
     );
+  }
+
+  static SpeechSettings _readSpeech(Object? raw) {
+    if (raw == null) return const SpeechSettings();
+    if (raw is! String || raw.length > 16384) {
+      throw const FormatException('Invalid speech configuration');
+    }
+    final value = jsonDecode(raw);
+    if (value is! Map<String, dynamic>) {
+      throw const FormatException('Invalid speech configuration');
+    }
+    return SpeechSettings.fromJson(value);
   }
 }

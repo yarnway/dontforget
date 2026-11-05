@@ -1,0 +1,100 @@
+{
+  "status": "ARCHIVED PARTIAL +53 snapshot; superseded by +55 live Android dictation after uncommitted +54 prototype",
+  "version": "1.7.0+53",
+  "schema": 16,
+  "base_commit": "7996af3",
+  "source_content_sha256": "ec17b6e0ea23f59deed92ec3b8a027c0999f7d0cefaace6551f9e3de63834d1e",
+  "local_flutter": "3.47.2",
+  "ci_baseline_flutter": "3.44.9",
+  "source": {
+    "keyboard_reopen": "implemented",
+    "android_on_device_recorded_audio_bridge": "implemented; API33+; bounded decode and recognition, owned files only",
+    "configured_asr_fallback": "implemented; further recovery boundary review pending",
+    "independent_chinese_asr_configuration": "NOT_IMPLEMENTED in +53; implemented in +54"
+  },
+  "automation": {
+    "flutter_passed": 2210,
+    "flutter_skipped": 20,
+    "targeted_passed": 89,
+    "python_run": 136,
+    "python_skipped": 6,
+    "analysis_issues": 0,
+    "initial_full_run": "one notification startup timeout while native builds ran; isolated 10 passed; final complete run at concurrency4 and timeout2m passed",
+    "initial_parallel_test_attempt": "shared Windows SQLite DLL locked; rerun sequentially passed"
+  },
+  "artifact": {
+    "version": "1.7.0+53",
+    "package": "com.yarnway.dontforget.acceptance.p4720261102",
+    "type": "QA debug APK; not production identity or release signing",
+    "bytes": 97871946,
+    "sha256": "6fba2a17e9313c6e7f987b3d1e2dc039671edb8dd5ac08929ef2efa890e7c77c",
+    "certificate_sha256": "4f8518351e90e3293ad293b74b009ad40949e871adf91614bb27ba1ba098eea9",
+    "signature_matches_50": true,
+    "source_sha256": "ec17b6e0ea23f59deed92ec3b8a027c0999f7d0cefaace6551f9e3de63834d1e",
+    "file": "DontForget_Android_QA_debug_v1.7.0+53.apk"
+  },
+  "device": {
+    "identity": "independent Pixel QA debug; original app identity untouched",
+    "from_build": 50,
+    "to_build": 53,
+    "signature_matches_previous": true,
+    "pre_first_launch_byte_comparison": "NOT_PERFORMED",
+    "keyboard": "Gboard visible; WeType visible after restarting its process; original default IME restored",
+    "ime_chinese_composition": "actual on-screen Pinyin keys and candidate selection observed",
+    "ime_send": "actual on-screen WeType Send saved exactly one local-only memo; no AI or reminder request",
+    "native_english": "PASS: synthetic TTS WAV through production native decoder and on-device recognizer; not human microphone evidence",
+    "native_chinese": "NOT_PASSED: speech_language_unavailable",
+    "system_recognizer_experiment": "rejected recorded audio (speech_client); not retained in production source",
+    "data": {
+      "original_46_reminder_rows_unchanged": true,
+      "synthetic_text_items_added": 1,
+      "synthetic_item_soft_deleted": true,
+      "fixture_alarm": false,
+      "original_media_rows": 7,
+      "original_settings_rows": 1
+    },
+    "comparison": {
+      "before_rows": {
+        "Reminders": 46,
+        "MediaRecords": 7,
+        "Settings": 1
+      },
+      "after_rows": {
+        "Reminders": 47,
+        "MediaRecords": 7,
+        "Settings": 1
+      },
+      "tables_unchanged": {
+        "Reminders": false,
+        "MediaRecords": true,
+        "Settings": true
+      },
+      "original_media_and_secure_files_kept": 17
+    },
+    "probe_test_package": "uninstalled after verification"
+  },
+  "github_ci": "NOT_RUN for +53; +52 run41810048450 belongs to ff0d205",
+  "commit_push": "No separate +53 source commit; consolidated into +55",
+  "release_created": false,
+  "logs": {
+    "flutter-final.log": {
+      "sha256": "44471f132bd3299e2820f9f1139ae1751def463778bbd6e19160cd70571b69b2"
+    },
+    "changed-final.log": {
+      "sha256": "e046e54b3df4f59d352c676ec3ff5c58387a56be63b1bc498a59fc0f6ea93c5e"
+    },
+    "python-full.log": {
+      "sha256": "a12b5d13fbdc693dc78da159295d59145ce502da8fc2ffbdc1ea68c7d4dce86c"
+    },
+    "analyze-final.log": {
+      "sha256": "64a067ddcfa15d07a86bc4da175741a6bc79ed2e6c830c358bb8605c0a3eec59"
+    },
+    "native-final-en.log": {
+      "sha256": "3bca1798cf11f41f8692236e494cbac33c9aa3ef8423e458dd71eb3c959337e9"
+    },
+    "native-final-zh.log": {
+      "sha256": "19fdfebd0f5a1a223dfa3760a9c584b5a4ac891e527ca621ea9fd0bb8cf6553d"
+    }
+  },
+  "superseded_by": "1.7.0+55"
+}

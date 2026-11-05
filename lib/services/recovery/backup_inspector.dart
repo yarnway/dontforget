@@ -84,7 +84,7 @@ class BackupPreview {
   final DateTime? timestamp;
 }
 
-/// Inspects a bounded private copy of one standalone v7–v16 export.
+/// Inspects a bounded private copy of one standalone v7–v17 export.
 ///
 /// Never opens the source through SQLite, imports data, opens the app database,
 /// or reads attachment contents. Symlinks (including parent directories) and
@@ -433,6 +433,7 @@ Map<String, String> _columnsFor(
   },
   if (table == 'settings' && version >= 11) 'appearance': 's',
   if (table == 'settings' && version >= 12) 'input_send_mode': 's',
+  if (table == 'settings' && version >= 17) 'speech_config_json': 's',
   if (table == 'reminders' && version >= 13)
     'review_notifications_enabled': 'b',
   if (table == 'reminders' &&
@@ -613,6 +614,8 @@ Future<void> _checkSchema(
           ? defaultValue == '0'
           : name == 'ai_profiles_json'
           ? defaultValue == "'[]'"
+          : name == 'speech_config_json'
+          ? defaultValue == "'{}'"
           : name == 'appearance'
           ? defaultValue == "'system'"
           : name == 'input_send_mode'
@@ -651,7 +654,7 @@ Future<void> _checkSchema(
 
 void _checkVersion(Object? value) {
   if (value is! int ||
-      !const {7, 8, 9, 10, 11, 12, 13, 14, 15, 16}.contains(value)) {
+      !const {7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17}.contains(value)) {
     _fail(BackupInspectionError.unsupportedVersion);
   }
 }
@@ -1125,7 +1128,8 @@ _Validated _validate(Map<String, dynamic> data, int maxRows) {
     data['version'] as int,
     timestamp,
     counts,
-    (parsedSettings.apiKey.isNotEmpty &&
+    parsedSettings.speech.apiKey.isNotEmpty ||
+        (parsedSettings.apiKey.isNotEmpty &&
             !isCredentialReference(parsedSettings.apiKey)) ||
         parsedSettings.effectiveProfiles.any(
           (p) =>

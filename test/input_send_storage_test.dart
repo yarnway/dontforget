@@ -15,6 +15,7 @@ void main() {
   final legacy =
       AppSettings.defaults().copyWith(appearance: AppAppearance.dark).toJson()
         ..remove('workspace_drafts_json')
+        ..remove('speech_config_json')
         ..remove('input_send_mode');
   Future<File> createLegacy({bool broken = false}) async {
     final file = File('${root.path}/dont_forget_v3.db');
@@ -55,6 +56,7 @@ void main() {
         ...legacy,
         'input_send_mode': 'enter',
         'workspace_drafts_json': null,
+        'speech_config_json': '{}',
       });
       final snapshotDir = root.listSync().whereType<Directory>().singleWhere(
         (d) => d.path.contains(
@@ -164,6 +166,7 @@ void main() {
             ...legacy,
             'input_send_mode': 'enter',
             'workspace_drafts_json': null,
+            'speech_config_json': '{}',
           });
           expect(await source.readAsBytes(), bytes);
         } finally {

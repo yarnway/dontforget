@@ -69,7 +69,9 @@ void main() {
     }
     await db.insert(
       'Settings',
-      AppSettings.defaults().toJson()..remove('workspace_drafts_json'),
+      AppSettings.defaults().toJson()
+        ..remove('workspace_drafts_json')
+        ..remove('speech_config_json'),
     );
     await db.insert('Reminders', oldTask);
     await db.setVersion(13);
@@ -122,7 +124,8 @@ void main() {
                   'timestamp': '2026-10-27T00:00:00Z',
                   'settings': [
                     AppSettings.defaults().toJson()
-                      ..remove('workspace_drafts_json'),
+                      ..remove('workspace_drafts_json')
+                      ..remove('speech_config_json'),
                   ],
                   'media_records': [],
                   'reminders': [oldTask],

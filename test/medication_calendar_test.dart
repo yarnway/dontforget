@@ -1091,7 +1091,7 @@ void main() {
           ).copy('${h.directory.path}/source-$format');
           final inspector = BackupInspector(databaseFactoryFfi);
           final preview = await inspector.inspect(source);
-          expect(preview.version, 16);
+          expect(preview.version, DatabaseHelper.schemaVersion);
           await h.seed(
             Reminder(
               id: 'later',

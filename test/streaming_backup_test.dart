@@ -184,7 +184,7 @@ void main() {
       );
       expect(
         (await BackupInspector(databaseFactoryFfi).inspect(prepared)).version,
-        16,
+        DatabaseHelper.schemaVersion,
       );
     },
     timeout: const Timeout(Duration(minutes: 3)),

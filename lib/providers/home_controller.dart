@@ -531,7 +531,7 @@ class HomeController extends StateNotifier<HomeState> {
             late List<Reminder> tasks;
             switch (record.type) {
               case 'audio':
-                source = await _transcribeCapture(path);
+                source = await _transcribeCapture(path, generation);
                 tasks = await service.extractTasks(source, settings);
               case 'image':
                 tasks = await service.extractTasksFromImage(
@@ -719,10 +719,18 @@ class HomeController extends StateNotifier<HomeState> {
     }
   }
 
-  Future<String> _transcribeCapture(String path) {
+  Future<String> _transcribeCapture(
+    String path,
+    DataGeneration generation,
+  ) async {
+    _check(generation);
     final settings = _ref.read(settingsProvider);
     final local = _ref.read(localSpeechServiceProvider);
-    if (local.supported) return local.transcribe(path, settings.language);
+    if (local.supported) {
+      final text = await local.transcribe(path, settings.language);
+      _check(generation);
+      return text;
+    }
     return _ref.read(llmServiceProvider).transcribeAudio(path, settings);
   }
 
@@ -796,7 +804,7 @@ class HomeController extends StateNotifier<HomeState> {
         );
         return null;
       }
-      final text = await _transcribeCapture(path);
+      final text = await _transcribeCapture(path, generation);
       _check(generation);
       if (text.trim().isEmpty) {
         throw const FormatException('No recognized speech');
@@ -886,8 +894,15 @@ class HomeController extends StateNotifier<HomeState> {
           durableCapture: true,
         );
         _check(generation);
+        // Android's microphone button now performs live dictation. Holding the
+        // separate memo pad only saves original audio and never starts another
+        // recognizer or silently sends the recording to a chat endpoint.
+        if (_ref.read(localSpeechServiceProvider).android) {
+          await _saveVoiceMemo(savedPath, generation, recordId: id);
+          return;
+        }
         try {
-          final text = await _transcribeCapture(savedPath);
+          final text = await _transcribeCapture(savedPath, generation);
           _check(generation);
           final tasks = await service.extractTasks(text, settings);
           _check(generation);

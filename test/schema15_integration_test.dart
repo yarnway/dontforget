@@ -24,7 +24,9 @@ void main() {
   tearDown(() async => root.delete(recursive: true));
 
   Map<String, Object?> settings(bool capture) => {
-    ...(AppSettings.defaults().toJson()..remove('workspace_drafts_json')),
+    ...(AppSettings.defaults().toJson()
+      ..remove('workspace_drafts_json')
+      ..remove('speech_config_json')),
     if (capture)
       'workspace_drafts_json': jsonEncode({'composer': 'keep draft'}),
   };

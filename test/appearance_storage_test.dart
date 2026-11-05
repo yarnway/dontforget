@@ -19,6 +19,7 @@ void main() {
           .toJson()
         ..remove('appearance')
         ..remove('workspace_drafts_json')
+        ..remove('speech_config_json')
         ..remove('input_send_mode');
   final task = Reminder(
     id: 'kept',
@@ -92,6 +93,7 @@ void main() {
         'appearance': 'system',
         'input_send_mode': 'enter',
         'workspace_drafts_json': null,
+        'speech_config_json': '{}',
       });
       expect((await db.query('Reminders')).single, task);
       final snapshotDir = root.listSync().whereType<Directory>().singleWhere(
@@ -252,6 +254,7 @@ void main() {
             'appearance': 'system',
             'input_send_mode': 'enter',
             'workspace_drafts_json': null,
+            'speech_config_json': '{}',
           });
           expect((await db.query('Reminders')).single, task);
           expect(await file.readAsBytes(), before);

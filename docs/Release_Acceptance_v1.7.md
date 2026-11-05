@@ -1,6 +1,6 @@
 # v1.7 发布验收总表
 
-**当前状态（2026-11-03）**：工作区源码为 `1.7.0+48 / schema16`，当前包与Pixel媒体入口见[本轮验收](Native_Media_Routing_48_2026-11-03.md)；Windows `+47`包及Android QA同身份升级见[构建升级验收](Windows_Android_Build_47_2026-11-03.md)；新Windows动作与冻结Android `+46` 的系统通知实测见[本轮验收](Windows_Android_Validation_2026-11-03.md)；Android深链与Pixel验证见[阶段47验收](Android_Deep_Link_Acceptance_2026-11-02.md)。Windows `+45`验证包保留[阶段46验收](Stage46_Validation_2026-11-02.md)的独立归属；最近实施结论仍为[有条件通过](Gemini_Implementation_Acceptance_2026-10-29.md)，剩余工作见[阶段任务](Next_Steps_2026-11-02.md)。下面的+39、旧包及设备结果保留历史归属；安装矩阵及macOS／iOS门槛尚未全部闭合，稳定版未发布。
+**当前状态（2026-11-05）**：源码候选 `1.7.0+55 / schema17`，本机Flutter2228通过／20跳过、Python136运行／6跳过、分析0，Android隔离QA包已构建安装，原数据保持。App内实时听写、取消和语言面板已接通，中文／英文真人识别仍待验，中文探针未通过；详见[+55验收](Live_Dictation_55_2026-11-05.md)。用户已授权性能／稳定性／兼容性、设置精简和美观优化，并在验证通过后发布稳定Release，后续按[阶段台账](Next_Steps_2026-11-02.md)执行。现有真实旧库、原生矩阵、正式签名／公证等门槛仍未全部闭合，当前未创建稳定Release；历史证据保留原版本归属。
 
 本阶段已推送源码：**1.7.0+39 / schema 16** 新增事项附件与图片预览，集成回归 **1759 Flutter / 分析 0 issues**；原生选图、保存重开和通知点击仍待验。本轮源码 `a257502` 已推送，[CI 40631296338](https://github.com/yarnway/dontforget/actions/runs/40631296338) 六项成功、标签校验按条件跳过；Mac/iOS +39 私有验收包已核验但未启动/安装。设备在本机使用后镜像断开，QA40 合成项尚待原生软删除及独立读回；12:05:50 已明确归还共享 UI。详见[附件阶段完成及剩余清单](Task_Attachments_2026-10-28.md)。**不创建 RC，正式稳定版继续等待 macOS/iOS 门槛闭合。**
 

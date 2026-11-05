@@ -95,6 +95,12 @@ class StreamingBackupService {
     final copy = Map<String, dynamic>.from(jsonDecode(jsonEncode(data)));
     for (final row in copy['settings'] as List) {
       row['api_key'] = '';
+      if (row['speech_config_json'] is String) {
+        final speech =
+            jsonDecode(row['speech_config_json']) as Map<String, dynamic>;
+        speech['api_key'] = '';
+        row['speech_config_json'] = jsonEncode(speech);
+      }
       if (row['ai_profiles_json'] != null) {
         final profiles = jsonDecode(row['ai_profiles_json'] as String) as List;
         for (final profile in profiles) {
@@ -696,6 +702,13 @@ class StreamingBackupService {
     // New files never carry credentials, even when encrypted.
     for (final row in m['snapshot']['settings'] as List) {
       if ((row['api_key'] as String? ?? '').isNotEmpty) {
+        throw const FormatException('Backup contains credentials');
+      }
+      if (row['speech_config_json'] is String &&
+          ((jsonDecode(row['speech_config_json']) as Map)['api_key']
+                      as String? ??
+                  '')
+              .isNotEmpty) {
         throw const FormatException('Backup contains credentials');
       }
       if (row['ai_profiles_json'] is String) {

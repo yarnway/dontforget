@@ -743,7 +743,10 @@ void main() {
             },
           ),
         );
-        await old.insert('Settings', AppSettings.defaults().toJson());
+        await old.insert(
+          'Settings',
+          AppSettings.defaults().toJson()..remove('speech_config_json'),
+        );
         final row =
             Reminder(
                 id: 'legacy',
