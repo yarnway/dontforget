@@ -27,6 +27,12 @@ import 'services/mac_menu_commands.dart';
 import 'services/recovery/runtime_gate.dart';
 import 'services/windows_protocol_service.dart';
 import 'services/android_protocol_service.dart';
+import 'services/android_share_service.dart';
+import 'services/shared_text_inbox.dart';
+import 'providers/shared_text_provider.dart';
+import 'providers/workspace_drafts_provider.dart';
+import 'l10n/shared_text_strings.dart';
+import 'ui/screens/shared_text_inbox_screen.dart';
 import 'ui/screens/home_screen.dart';
 import 'ui/screens/recovery_outcome_screen.dart';
 import 'ui/screens/task_detail_screen.dart';
@@ -66,6 +72,16 @@ class _MyAppState extends ConsumerState<MyApp>
   ProtocolRoute? _pendingProtocolRoute;
   bool _protocolFramePending = false;
   final _androidProtocol = AndroidProtocolService();
+  final _androidShares = AndroidShareService();
+  bool _sharesAvailable = false,
+      _shareFramePending = false,
+      _shareAgain = false;
+  int _shareEpoch = 0;
+  Object? _shareDrain;
+  Route<void>? _sharedInboxRoute;
+  bool _sharedInboxWanted = false, _sharedInboxFramePending = false;
+  late final bool Function() _openSharedCommand;
+  late final SharedTextInboxCommand _sharedCommand;
   String? _openProtocolTaskId;
   String? _pendingLivePayload;
   String? _openLiveIdentity;
@@ -90,6 +106,9 @@ class _MyAppState extends ConsumerState<MyApp>
     _notifications.attachNotificationActionReceiver();
     _recovery = ref.read(recoveryCoordinatorProvider);
     _actionRuntimeGate = ref.read(runtimeRecoveryGateProvider);
+    _openSharedCommand = _openSharedInbox;
+    _sharedCommand = ref.read(sharedTextInboxCommandProvider);
+    _sharedCommand.open = _openSharedCommand;
     _navigationEpoch = _recovery.navigationEpoch;
     _lastRecoveryPhase = _recovery.state.phase;
     if (Platform.isMacOS) {
@@ -189,6 +208,14 @@ class _MyAppState extends ConsumerState<MyApp>
       _pendingProtocolRoute = null;
       _openProtocolTaskId = null;
       _androidProtocol.invalidatePendingInitialization();
+      _shareEpoch++;
+      _sharesAvailable = false;
+      _shareDrain = null;
+      _sharedInboxRoute = null;
+      _sharedInboxWanted = false;
+      if (_supportsAndroidProtocol) {
+        unawaited(_androidShares.resetForRecovery().catchError((Object _) {}));
+      }
     }
     if (enteringRecovery && _supportsLiveActivities) {
       _pendingLivePayload = null;
@@ -246,6 +273,7 @@ class _MyAppState extends ConsumerState<MyApp>
       _syncMacMenu();
       StartupTrace.mark('notifications_ready');
       _scheduleNotificationRoutes();
+      if (_supportsAndroidProtocol) unawaited(_initializeSharedTexts());
       if (_pendingProtocolRoute != null) {
         _scheduleProtocolRoute();
       }
@@ -262,6 +290,115 @@ class _MyAppState extends ConsumerState<MyApp>
       _routeDataReady &&
       _recovery.state.phase == RecoveryPhase.idle &&
       !ref.read(runtimeRecoveryGateProvider).paused;
+
+  Future<void> _initializeSharedTexts() async {
+    final epoch = ++_shareEpoch;
+    final dataset = _notifications.datasetEpoch;
+    if (dataset == null) return;
+    final available = await _androidShares.initialize(
+      datasetEpoch: dataset,
+      onPending: _scheduleSharedTexts,
+    );
+    if (!mounted || epoch != _shareEpoch || !_nativeCommandsReady) return;
+    _sharesAvailable = available;
+    _scheduleSharedTexts();
+  }
+
+  void _scheduleSharedTexts() {
+    if (!_sharesAvailable ||
+        !_nativeCommandsReady ||
+        WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
+      return;
+    }
+    if (_shareDrain != null) {
+      _shareAgain = true;
+      return;
+    }
+    if (_shareFramePending) return;
+    _shareFramePending = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _shareFramePending = false;
+      if (mounted && _sharesAvailable && _nativeCommandsReady) {
+        unawaited(_drainSharedTexts());
+      }
+    });
+    WidgetsBinding.instance.scheduleFrame();
+  }
+
+  Future<void> _drainSharedTexts() async {
+    if (_shareDrain != null) {
+      _shareAgain = true;
+      return;
+    }
+    final owner = Object();
+    _shareDrain = owner;
+    _shareAgain = false;
+    final epoch = _shareEpoch;
+    bool current() => mounted && epoch == _shareEpoch && _nativeCommandsReady;
+    try {
+      final pending = await _androidShares.pending();
+      if (!current() || pending.isEmpty) return;
+      final inbox = ref.read(sharedTextInboxProvider);
+      for (final item in pending) {
+        if (!current()) return;
+        final accepted = await inbox.accept(item);
+        if (!current()) return;
+        if (!accepted) {
+          _sharedFeedback('full');
+          break;
+        }
+        await _androidShares.acknowledge(item.id);
+      }
+      if (current() &&
+          SharedTextInbox.count(ref.read(workspaceDraftsProvider)) > 0) {
+        _openSharedInbox();
+      }
+    } catch (_) {
+      if (current()) _sharedFeedback('failed');
+    } finally {
+      if (identical(owner, _shareDrain)) {
+        _shareDrain = null;
+        if (_shareAgain) _scheduleSharedTexts();
+      }
+    }
+  }
+
+  void _sharedFeedback(String key) {
+    final context = _navigatorKey.currentContext;
+    if (context == null || !mounted) return;
+    context.findAncestorStateOfType<InlineFeedbackState>()?.showSnackBar(
+      SnackBar(
+        content: Text(
+          sharedTextLabel(ref.read(settingsProvider).language, key),
+        ),
+      ),
+    );
+  }
+
+  bool _openSharedInbox() {
+    if (!_nativeCommandsReady) return false;
+    if (_sharedInboxRoute != null) {
+      _sharedInboxWanted = false;
+      return true;
+    }
+    final navigator = _navigatorKey.currentState;
+    if (navigator == null) {
+      _sharedInboxWanted = true;
+      return false;
+    }
+    final route = MaterialPageRoute<void>(
+      settings: const RouteSettings(name: '/shared-drafts'),
+      builder: (_) => const SharedTextInboxScreen(),
+    );
+    _sharedInboxRoute = route;
+    _sharedInboxWanted = false;
+    unawaited(
+      navigator.push<void>(route).whenComplete(() {
+        if (identical(_sharedInboxRoute, route)) _sharedInboxRoute = null;
+      }),
+    );
+    return true;
+  }
 
   Future<void> _syncNotificationLanguage() async {
     final settings = ref.read(settingsProvider.notifier);
@@ -421,6 +558,7 @@ class _MyAppState extends ConsumerState<MyApp>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      _scheduleSharedTexts();
       _syncLiveReminder();
       _drainNotificationActions();
       unawaited(_syncNotificationLanguage());
@@ -742,6 +880,11 @@ class _MyAppState extends ConsumerState<MyApp>
 
   @override
   void dispose() {
+    _shareEpoch++;
+    _androidShares.dispose();
+    if (identical(_sharedCommand.open, _openSharedCommand)) {
+      _sharedCommand.open = null;
+    }
     _macMenu?.dispose();
     if (_supportsLiveActivities) {
       ChannelLiveReminderBackend.channel.setMethodCallHandler(null);
@@ -895,6 +1038,10 @@ class _MyAppState extends ConsumerState<MyApp>
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(
+      workspaceDraftsProvider.select(SharedTextInbox.count),
+      (_, _) => _scheduleSharedTexts(),
+    );
     final settings = ref.watch(settingsProvider);
     ref.listen(settingsProvider.select((settings) => settings.language), (
       _,
@@ -941,6 +1088,13 @@ class _MyAppState extends ConsumerState<MyApp>
         // queued click is not stranded by an earlier null currentState check.
         _scheduleNotificationRoutes();
         _scheduleLiveRoute();
+        if (_sharedInboxWanted && !_sharedInboxFramePending) {
+          _sharedInboxFramePending = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _sharedInboxFramePending = false;
+            if (mounted && _sharedInboxWanted) _openSharedInbox();
+          });
+        }
         return InlineFeedback(
           child: Stack(
             fit: StackFit.expand,

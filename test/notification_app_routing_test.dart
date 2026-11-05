@@ -12,6 +12,10 @@ import 'package:dont_forget/providers/recovery_coordinator.dart';
 import 'package:dont_forget/services/context_trigger_service.dart';
 import 'package:dont_forget/services/notification_service.dart';
 import 'package:dont_forget/services/android_protocol_service.dart';
+import 'package:dont_forget/services/android_share_service.dart';
+import 'package:dont_forget/services/shared_text_inbox.dart';
+import 'package:dont_forget/providers/shared_text_provider.dart';
+import 'package:dont_forget/ui/screens/shared_text_inbox_screen.dart';
 import 'package:dont_forget/ui/screens/recovery_outcome_screen.dart';
 import 'package:dont_forget/ui/screens/task_detail_screen.dart';
 import 'package:flutter/material.dart';
@@ -125,11 +129,23 @@ void main() {
   Completer<String?>? protocolInitialization;
   final channels = <MethodChannel>[];
   var windowActivationFails = false;
+  final nativeShares = <Map<String, Object>>[];
+  final shareAcks = <String>[];
+  String? sharedEpoch;
+  SharedText share(int n, {String text = 'Shared 中文 https://example.com'}) =>
+      SharedText(
+        id: '00000000-0000-4000-8000-${n.toString().padLeft(12, '0')}',
+        text: text,
+        createdAt: 1762300800000,
+      );
 
   String payload({String epoch = _firstEpoch}) =>
       NotificationPayload.forReminder(task, datasetEpoch: epoch).encode();
 
   setUp(() async {
+    nativeShares.clear();
+    shareAcks.clear();
+    sharedEpoch = null;
     initialProtocolUrl = null;
     protocolInitialization = null;
     sqfliteFfiInit();
@@ -143,9 +159,28 @@ void main() {
       MethodChannel('tray_manager'),
       MethodChannel('window_manager'),
       AndroidProtocolService.channel,
+      AndroidShareService.channel,
     ]);
     for (final channel in List<MethodChannel>.of(channels)) {
       messenger.setMockMethodCallHandler(channel, (call) async {
+        if (channel == AndroidShareService.channel) {
+          if (call.method == 'initialize') {
+            sharedEpoch = call.arguments as String;
+          }
+          if (call.method == 'pending') return List.of(nativeShares);
+          if (call.method == 'acknowledge') {
+            final raw = await container
+                .read(workspaceDraftsProvider.notifier)
+                .readPersistedKey(SharedTextInbox.key);
+            expect(
+              SharedTextInboxData.parse(raw).receipts,
+              contains(call.arguments),
+            );
+            shareAcks.add(call.arguments as String);
+            nativeShares.removeWhere((item) => item['id'] == call.arguments);
+          }
+          return null;
+        }
         if (channel == AndroidProtocolService.channel &&
             call.method == 'initialize') {
           return protocolInitialization?.future ?? initialProtocolUrl;
@@ -214,6 +249,7 @@ void main() {
   });
 
   Future<void> mount(WidgetTester tester) async {
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(
       UncontrolledProviderScope(container: container, child: const MyApp()),
@@ -230,6 +266,168 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 350));
   }
+
+  Future<void> waitShare(WidgetTester tester, bool Function() done) async {
+    final watch = Stopwatch()..start();
+    while (!done() && watch.elapsed < const Duration(seconds: 10)) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 10)),
+      );
+      await tester.pump(const Duration(milliseconds: 30));
+    }
+    expect(
+      done(),
+      true,
+      reason:
+          'Shared handoff must settle; lifecycle=${tester.binding.lifecycleState}, epoch=$sharedEpoch, acks=${shareAcks.length}',
+    );
+    await tester.pump(const Duration(milliseconds: 350));
+  }
+
+  testWidgets(
+    'shared cold text waits for readiness and durable admission before native ack',
+    (tester) async {
+      final capture = {
+        'id': 'original-capture',
+        'text': 'Original composer draft',
+      };
+      await tester.runAsync(
+        () => container
+            .read(workspaceDraftsProvider.notifier)
+            .put('capture', capture),
+      );
+      nativeShares.add(share(1).toJson());
+      notifications.initialization = Completer<void>();
+      await mount(tester);
+      expect(shareAcks, isEmpty);
+      expect(find.byType(SharedTextInboxScreen), findsNothing);
+      notifications.initialization!.complete();
+      await ready(tester);
+      await waitShare(
+        tester,
+        () => find.byType(SharedTextInboxScreen).evaluate().isNotEmpty,
+      );
+      expect(sharedEpoch, _firstEpoch);
+      expect(shareAcks, [share(1).id]);
+      expect(container.read(workspaceDraftsProvider)['capture'], capture);
+      expect(container.read(remindersProvider).map((r) => r.id), [task.id]);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets(
+    'shared editor autosaves and explicit local save cannot create duplicate memos on redelivery',
+    (tester) async {
+      nativeShares.add(share(1).toJson());
+      await mount(tester);
+      await ready(tester);
+      await waitShare(
+        tester,
+        () => find.byType(SharedTextInboxScreen).evaluate().isNotEmpty,
+      );
+      await tester.tap(find.byKey(ValueKey('shared-item-${share(1).id}')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('shared-text-editor')),
+        'Edited 中文 link',
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await waitShare(
+        tester,
+        () =>
+            SharedTextInboxData.parse(
+              container.read(workspaceDraftsProvider)[SharedTextInbox.key],
+            ).items.single.text ==
+            'Edited 中文 link',
+      );
+      await tester.tap(find.byKey(const ValueKey('shared-save-memo')));
+      await waitShare(
+        tester,
+        () =>
+            find.byKey(const ValueKey('shared-text-editor')).evaluate().isEmpty,
+      );
+      final rows = container
+          .read(remindersProvider)
+          .where((row) => row.id == share(1).id)
+          .toList();
+      expect(rows, hasLength(1));
+      expect(rows.single.sourceText, 'Edited 中文 link');
+      expect(rows.single.triggerTime, isNull);
+      expect(rows.single.capturePending, false);
+      nativeShares.add(share(1).toJson());
+      await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .handlePlatformMessage(
+            AndroidShareService.channel.name,
+            const StandardMethodCodec().encodeMethodCall(
+              const MethodCall('onPendingShares'),
+            ),
+            (_) {},
+          );
+      await waitShare(tester, () => shareAcks.length == 2);
+      expect(
+        SharedTextInboxData.parse(
+          container.read(workspaceDraftsProvider)[SharedTextInbox.key],
+        ).items,
+        isEmpty,
+      );
+      expect(
+        container.read(remindersProvider).where((row) => row.id == share(1).id),
+        hasLength(1),
+      );
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets(
+    'a stale shared editor keeps newer stored text and asks before discarding failed edits',
+    (tester) async {
+      nativeShares.add(share(1).toJson());
+      await mount(tester);
+      await ready(tester);
+      await waitShare(
+        tester,
+        () => find.byType(SharedTextInboxScreen).evaluate().isNotEmpty,
+      );
+      await tester.tap(find.byKey(ValueKey('shared-item-${share(1).id}')));
+      await tester.pumpAndSettle();
+      var externalSaved = false;
+      unawaited(
+        container
+            .read(sharedTextInboxProvider)
+            .edit(share(1).id, share(1).text, 'External newer edit')
+            .then((_) => externalSaved = true),
+      );
+      await waitShare(tester, () => externalSaved);
+      await tester.enterText(
+        find.byKey(const ValueKey('shared-text-editor')),
+        'Stale local edit',
+      );
+      await tester.pump(const Duration(milliseconds: 300));
+      await waitShare(
+        tester,
+        () => find.text('Retry saving draft').evaluate().isNotEmpty,
+      );
+      await tester.tap(find.byIcon(Icons.arrow_back).last);
+      await waitShare(
+        tester,
+        () => find.text('Discard unsaved edits').evaluate().isNotEmpty,
+      );
+      await tester.tap(find.text('Discard unsaved edits'));
+      await waitShare(
+        tester,
+        () =>
+            find.byKey(const ValueKey('shared-text-editor')).evaluate().isEmpty,
+      );
+      expect(
+        SharedTextInboxData.parse(
+          container.read(workspaceDraftsProvider)[SharedTextInbox.key],
+        ).items.single.text,
+        'External newer edit',
+      );
+      expect(container.read(remindersProvider), hasLength(1));
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
 
   Finder details() => find.byType(TaskDetailScreen, skipOffstage: false);
 

@@ -11,6 +11,8 @@ import '../../services/content/content_cleanup_service.dart';
 import '../../services/local_media_store.dart';
 import '../../services/recovery/runtime_gate.dart';
 import '../screens/notification_repair_screen.dart';
+import '../screens/shared_text_inbox_screen.dart';
+import '../../l10n/shared_text_strings.dart';
 
 final contentCleanupServiceProvider = Provider<Future<ContentCleanupService>>((
   ref,
@@ -300,6 +302,20 @@ class _ContentManagementPanelState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      ListTile(
+                        key: const ValueKey('content-shared-drafts'),
+                        leading: const Icon(Icons.inbox_outlined),
+                        title: Text(
+                          sharedTextLabel(
+                            AppLocalizations.of(context).locale.languageCode,
+                            'title',
+                          ),
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: _busy
+                            ? null
+                            : () => openSharedTextInbox(context, ref),
+                      ),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,

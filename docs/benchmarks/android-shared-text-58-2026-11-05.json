@@ -1,0 +1,126 @@
+{
+  "date": "2026-11-05",
+  "version": "1.7.0+58",
+  "schema": 17,
+  "scope": "Stage 49 Android shared text/link intake only; not all stages complete",
+  "source": {
+    "implemented": true,
+    "native_queue_limit": 16,
+    "inbox_limit": 32,
+    "text_limit_utf16": 16000,
+    "receipt_limit": 128,
+    "explicit_local_memo_only": true,
+    "composer_preserved": true,
+    "attachments_supported": false
+  },
+  "automation": {
+    "local_flutter_full": {
+      "passed": 2270,
+      "skipped": 20,
+      "before_final_backup_interop_test_added": true
+    },
+    "local_python": {
+      "run": 136,
+      "skipped": 6
+    },
+    "analyze_issues": 0,
+    "sharing_routing_subset_passed": 47,
+    "final_domain_subset_passed": 23,
+    "native_queue": {
+      "passed": true,
+      "case_count": 8,
+      "cases": [
+        {
+          "name": "cold_unbound_survives_bridge_recreation_and_ack",
+          "passed": true
+        },
+        {
+          "name": "saved_instance_replay_is_one_pending_event_external_ids_are_ignored",
+          "passed": true
+        },
+        {
+          "name": "cancelled_recovery_keeps_old_and_new_pending_events",
+          "passed": true
+        },
+        {
+          "name": "new_dataset_drops_old_bound_event_and_adopts_new_unbound_event",
+          "passed": true
+        },
+        {
+          "name": "full_queue_does_not_modify_original_intent_or_existing_entries",
+          "passed": true
+        },
+        {
+          "name": "failed_commit_is_not_acknowledgement_and_does_not_consume_intent",
+          "passed": true
+        },
+        {
+          "name": "invalid_text_attachment_and_history_are_rejected_without_queue_mutation",
+          "passed": true
+        },
+        {
+          "name": "corrupt_journal_is_preserved",
+          "passed": true
+        }
+      ]
+    }
+  },
+  "package": {
+    "version": "1.7.0+58",
+    "package": "com.yarnway.dontforget.acceptance.p4720261102",
+    "type": "QA debug APK; not production identity or release signing",
+    "bytes": 97943642,
+    "sha256": "1ebae420610502e41ca0da28343c635adfd2bf0ab2b17a7c8a02916ba46d5258",
+    "certificate_sha256": "4f8518351e90e3293ad293b74b009ad40949e871adf91614bb27ba1ba098eea9",
+    "signature_matches_57": true,
+    "source_sha256": "4069ce374b2c6e51b33e718dc9f4bb60304ff9a156cf244d7c29c69a737a5bcb",
+    "file": "DontForget_Android_QA_debug_v1.7.0+58.apk"
+  },
+  "device_upgrade": {
+    "version_from": 57,
+    "version_to": 58,
+    "schema_before": 17,
+    "schema_after": 17,
+    "counts": {
+      "Reminders": 51,
+      "MediaRecords": 9,
+      "Settings": 1
+    },
+    "all_business_rows_identical": true,
+    "prelaunch_non_profile_files_identical": 21,
+    "prelaunch_profile_marker_updated": true,
+    "postlaunch_non_profile_files_identical": 21,
+    "profile_marker_updated": true,
+    "real_tencent_called": false
+  },
+  "device_shared_text": {
+    "version": 58,
+    "temporary_identity": "com.yarnway.dontforget.acceptance.s5820261105",
+    "native_queue_cases_passed": 8,
+    "system_chooser_target_visible": true,
+    "system_chooser_delivery_exact": true,
+    "intake_does_not_create_reminder": true,
+    "editor_change_autosaved": true,
+    "explicit_save_one_local_memo": true,
+    "warm_share_preserves_exact_composer_draft": true,
+    "restart_business_rows_and_both_drafts_identical": true,
+    "no_duplicate_on_restart": true,
+    "restored_inbox_accessible_from_content_management": true,
+    "delete_cancel_preserves_item": true,
+    "delete_confirm_removes_only_shared_draft": true,
+    "test_reminders": 1,
+    "test_media": 0,
+    "test_share_receipts": 2,
+    "cleanup": "temporary app and sender/runner removed after all data matched owned synthetic fixtures",
+    "real_tencent_called": false
+  },
+  "github_ci": {
+    "status": "pending source commit and full workflow"
+  },
+  "release": {
+    "stable_published": false,
+    "tencent_real_service_verified": false,
+    "credentials_configured_in_app": false,
+    "app_id_pending": true
+  }
+}
