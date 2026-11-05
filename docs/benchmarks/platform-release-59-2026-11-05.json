@@ -1,0 +1,27 @@
+{
+  "certificate_sha256": "3db49656984fb848a73b1e8d056846b97e2a7caf47c9a9ae74f475cdbb79e9f1",
+  "algorithm": "RSA 4096 / SHA256withRSA",
+  "local_acl_restricted": true,
+  "password_vault_roundtrip": true,
+  "dpapi_backup_roundtrip": true,
+  "github_secrets_created": [
+    "DONTFORGET_ANDROID_CERT_SHA256",
+    "DONTFORGET_ANDROID_KEYSTORE_BASE64",
+    "DONTFORGET_ANDROID_KEY_ALIAS",
+    "DONTFORGET_ANDROID_KEY_PASSWORD",
+    "DONTFORGET_ANDROID_STORE_PASSWORD"
+  ],
+  "private_values_printed": false,
+  "tencent_credentials_accessed": false,
+  "local_build": {
+    "result": "dependency_download_failed",
+    "reason": "Maven/Flutter dependency TLS handshake failed; TLS validation preserved",
+    "apk_created": false
+  },
+  "automation": {
+    "new_release_signing_tests_passed": 19,
+    "windows_python_run": 155,
+    "windows_python_skipped": 6,
+    "analyze_issues": 0
+  }
+}

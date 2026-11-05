@@ -129,9 +129,20 @@ jobs:
         if: matrix.platform == 'windows'
         shell: pwsh
         run: ./scripts/package_windows.ps1
-      - name: Build Android test-signed packages
+      - name: Build Android packages with the pinned distribution identity
         if: matrix.platform == 'android'
-        run: bash scripts/build_android.sh
+        env:
+          DONTFORGET_ANDROID_KEYSTORE_BASE64: ${{ github.event_name != 'pull_request' && secrets.DONTFORGET_ANDROID_KEYSTORE_BASE64 || '' }}
+          DONTFORGET_ANDROID_STORE_PASSWORD: ${{ github.event_name != 'pull_request' && secrets.DONTFORGET_ANDROID_STORE_PASSWORD || '' }}
+          DONTFORGET_ANDROID_KEY_ALIAS: ${{ github.event_name != 'pull_request' && secrets.DONTFORGET_ANDROID_KEY_ALIAS || '' }}
+          DONTFORGET_ANDROID_KEY_PASSWORD: ${{ github.event_name != 'pull_request' && secrets.DONTFORGET_ANDROID_KEY_PASSWORD || '' }}
+          DONTFORGET_ANDROID_CERT_SHA256: ${{ github.event_name != 'pull_request' && secrets.DONTFORGET_ANDROID_CERT_SHA256 || '' }}
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" != "pull_request" ]] && [[ "$GITHUB_REF" == refs/heads/main || "$GITHUB_REF" == refs/tags/v* ]]; then
+            python scripts/android_release_signing.py --required -- bash scripts/build_android.sh
+          else
+            python scripts/android_release_signing.py -- bash scripts/build_android.sh
+          fi
       - name: Build Linux archive
         if: matrix.platform == 'linux'
         run: bash scripts/build_linux.sh

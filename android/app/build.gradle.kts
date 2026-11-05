@@ -4,6 +4,21 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+// Distribution credentials are supplied only to the release build process.
+// A partial configuration must never silently fall back to the debug key.
+val signingEnvironment = listOf(
+    "DONTFORGET_ANDROID_KEYSTORE_PATH",
+    "DONTFORGET_ANDROID_STORE_PASSWORD",
+    "DONTFORGET_ANDROID_KEY_ALIAS",
+    "DONTFORGET_ANDROID_KEY_PASSWORD",
+).associateWith { System.getenv(it).orEmpty() }
+val hasDistributionSigning = signingEnvironment.values.all { it.isNotBlank() }
+if ((signingEnvironment.values.any { it.isNotEmpty() } ||
+        System.getenv("DONTFORGET_REQUIRE_RELEASE_SIGNING") == "1") &&
+    !hasDistributionSigning) {
+    throw GradleException("Complete Android distribution signing configuration is required")
+}
+
 android {
     namespace = "com.yarnway.dontforget"
     compileSdk = flutter.compileSdkVersion
@@ -26,11 +41,22 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (hasDistributionSigning) {
+            create("distribution") {
+                storeFile = file(signingEnvironment.getValue("DONTFORGET_ANDROID_KEYSTORE_PATH"))
+                storePassword = signingEnvironment.getValue("DONTFORGET_ANDROID_STORE_PASSWORD")
+                keyAlias = signingEnvironment.getValue("DONTFORGET_ANDROID_KEY_ALIAS")
+                keyPassword = signingEnvironment.getValue("DONTFORGET_ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName(
+                if (hasDistributionSigning) "distribution" else "debug"
+            )
         }
     }
 }

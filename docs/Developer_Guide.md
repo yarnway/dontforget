@@ -146,3 +146,11 @@ DontForget 使用 `flutter_riverpod` 构建单向数据流：
    - 属于单元测试环境下内存 SQLite 驱动的正常信息，不影响测试断言与功能。
 3. **音视频播报异常**：
    - Windows 平台构建脚本已配置好 `fmedia` 绿色便携音频内核，请勿随意删除构建输出目录中的 `fmedia/` 文件夹。
+
+## Android／Windows／Linux发行（+59）
+
+主线只构建和校验。明确发布时，手动运行 `Publish verified Android Windows Linux release`，输入同一main提交已成功的构建run ID；工作流重新下载三平台完整归档，核验来源／摘要／Android证书及桌面报告，再发布并读回。不要把旧源码run ID用于新提交，不覆盖已有不匹配标签。
+
+Android发行材料由 `DONTFORGET_ANDROID_KEYSTORE_BASE64`、`DONTFORGET_ANDROID_STORE_PASSWORD`、`DONTFORGET_ANDROID_KEY_ALIAS`、`DONTFORGET_ANDROID_KEY_PASSWORD`、`DONTFORGET_ANDROID_CERT_SHA256` 五项仓库Secrets供CI使用，值不写入源码、参数或日志。公开证书固定在 `android/release-certificate.sha256`；更换证书会影响已有安装，普通版本更新不可重新生成签名身份。
+
+本机发行身份位于当前Windows用户 `%LOCALAPPDATA%\DontForget\Signing`，密码在系统凭据库专用项 `DontForget/AndroidDistribution/v1/password`，DPAPI恢复文件绑定当前用户环境。保留PKCS12、系统凭据及加密恢复副本；不要清理、上传到Release或写入Git。腾讯云服务凭据与发行签名完全独立，本轮没有读取腾讯云凭据。Windows代码签名、Android商店上架及Apple签名公证另行处理。

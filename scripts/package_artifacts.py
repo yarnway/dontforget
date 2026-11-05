@@ -12,6 +12,7 @@ import subprocess
 import tarfile
 import tempfile
 import zipfile
+from android_release_signing import verify_android_signatures
 
 ROOT = Path(__file__).resolve().parents[1]
 MACOS_ARCHITECTURES = {'arm64', 'x86_64'}
@@ -124,6 +125,7 @@ def package(root, platform, revision=None):
     signing = 'not-applicable'
     native_architectures = None
     native_extensions = None
+    android_certificate = None
     with tempfile.TemporaryDirectory(prefix=f'{platform}-', dir=dist) as work:
         staging = Path(work)
         if platform == 'windows':
@@ -139,16 +141,22 @@ def package(root, platform, revision=None):
             names.append(archive_name)
             signing = 'unsigned'
         elif platform == 'android':
-            # The repository deliberately uses the Android debug signing key.
-            # These artifacts are for acceptance testing, not store distribution.
+            distribution = os.environ.get('DONTFORGET_REQUIRE_RELEASE_SIGNING') == '1'
+            if distribution:
+                android_certificate = verify_android_signatures(
+                    require(root / 'build/app/outputs/flutter-apk/app-release.apk'),
+                    require(root / 'build/app/outputs/bundle/release/app-release.aab'),
+                    os.environ.get('DONTFORGET_ANDROID_CERT_SHA256', ''),
+                )
             for extension, source in {
                 'apk': 'build/app/outputs/flutter-apk/app-release.apk',
                 'aab': 'build/app/outputs/bundle/release/app-release.aab',
             }.items():
-                name = f'DontForget_Android_test-signed_v{release_version}.{extension}'
+                label = '' if distribution else '_test-signed'
+                name = f'DontForget_Android{label}_v{release_version}.{extension}'
                 shutil.copy2(require(root / source), staging / name)
                 names.append(name)
-            signing = 'test-key'
+            signing = 'release-key' if distribution else 'test-key'
         elif platform == 'linux':
             bundle = require(root / 'build/linux/x64/release/bundle')
             require(bundle / 'dont_forget')
@@ -202,6 +210,8 @@ def package(root, platform, revision=None):
     }
     if native_extensions is not None:
         manifest['native_extensions'] = native_extensions
+    if android_certificate is not None:
+        manifest['certificate_sha256'] = android_certificate
     if native_architectures is not None:
         manifest['native_architectures'] = native_architectures
     manifest_path = dist / f'{platform}-manifest.json'
