@@ -13,9 +13,9 @@
 - 本地Windows全量Flutter2270通过／20跳过，Python136运行／6跳过，分析0；分享与路由专项47通过。
 - 全量后追加一项真实StreamingBackupService → BackupInspector → DatabaseRecovery → 关闭重开互通用例，最终领域专项23通过、再次分析0；产品源码未再修改，不将其写作本地2271项全量已运行。
 - Pixel原生Kotlin独立夹具8项通过：冷接收持久化与确认、Activity保存身份与外部身份忽略、恢复取消、实际数据集切换、队列满、提交失败、无效附件／历史Intent、损坏日志保留。
-- GitHub固定SDK双平台质量及五平台构建待源码提交后独立核实，不沿用+57结果。
+- 源码0554803的[CI42017944393](https://github.com/yarnway/dontforget/actions/runs/42017944393)双平台质量与五平台构建7项成功，tag专用检查按条件跳过；五份artifact元数据和源码身份已核对，包摘要／清单由CI核验，未在本地重复下载全部归档。Linux Flutter2289通过／2跳过，Windows Flutter2271通过／20跳过，Python两端各136运行（跳过数分别3／6）；[独立证据](benchmarks/github-ci-58-2026-11-05.json)。
 
-初次源码6b40e8e的CI42014043261：Linux2289通过／2跳过，Windows2267通过／20跳过／4失败；四项既有界面夹具在真实I/O完成前断言或只推进假时钟。现只修正测试等待条件、保留原断言，相关85项通过、分析0，产品源码和已安装QA包未变；修正后的固定SDK全量CI待核实。[失败及修正证据](benchmarks/github-ci-58-initial-failure-2026-11-05.json)。
+初次源码6b40e8e的CI42014043261：Linux2289通过／2跳过，Windows2267通过／20跳过／4失败；四项既有界面夹具在真实I/O完成前断言或只推进假时钟。现只修正测试等待条件、保留原断言，相关85项通过、分析0，产品源码和已安装QA包未变；修正后的固定SDK全量CI已通过，见本节CI记录。[失败及修正证据](benchmarks/github-ci-58-initial-failure-2026-11-05.json)。
 
 ## 安装包
 

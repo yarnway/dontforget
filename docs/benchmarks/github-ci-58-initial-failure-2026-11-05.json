@@ -51,5 +51,9 @@
     "related_tests_passed": 85,
     "analysis_issues": 0
   },
-  "new_ci": "pending"
+  "new_ci": {
+    "id": 42017944393,
+    "source": "0554803d790cd8a87064c9b1249efd6010be9e1c",
+    "conclusion": "success"
+  }
 }
