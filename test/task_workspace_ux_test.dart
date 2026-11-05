@@ -1,3 +1,4 @@
+import 'support/real_io.dart';
 import 'support/workspace_drafts.dart';
 import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'dart:async';
@@ -212,12 +213,11 @@ void main() {
   );
 
   Future<void> waitForSent(WidgetTester tester, int count) async {
-    for (var i = 0; i < 100 && home.sent.length < count; i++) {
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 2)),
-      );
-      await tester.pump();
-    }
+    await pumpUntilRealIo(
+      tester,
+      () => home.sent.length >= count,
+      reason: 'Send must finish its durable draft write before dispatch',
+    );
     expect(home.sent.length, count);
     await drainWorkspaceDrafts(tester, container);
   }

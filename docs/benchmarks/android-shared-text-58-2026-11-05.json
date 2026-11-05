@@ -63,7 +63,8 @@
           "passed": true
         }
       ]
-    }
+    },
+    "test_wait_fix_subset_passed": 85
   },
   "package": {
     "version": "1.7.0+58",
@@ -115,7 +116,10 @@
     "real_tencent_called": false
   },
   "github_ci": {
-    "status": "pending source commit and full workflow"
+    "initial_run": 42014043261,
+    "initial_conclusion": "failure",
+    "evidence": "github-ci-58-initial-failure-2026-11-05.json",
+    "new_run": "pending test-only fix commit"
   },
   "release": {
     "stable_published": false,

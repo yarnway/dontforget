@@ -1,3 +1,4 @@
+import 'support/real_io.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:dont_forget/data/database_helper.dart';
@@ -194,6 +195,14 @@ void main() {
         );
       });
       await tap(tester, 'preferences-save');
+      await pumpUntilRealIo(
+        tester,
+        () =>
+            container.read(settingsProvider).inputSendMode ==
+            InputSendMode.button,
+        reason: 'Preference transaction must commit before reading saved state',
+      );
+      await tester.pumpAndSettle();
       expect(
         container.read(settingsProvider).inputSendMode,
         InputSendMode.button,
@@ -240,6 +249,16 @@ void main() {
       );
       await tap(tester, 'speech-enabled');
       await tap(tester, 'speech-save');
+      await pumpUntilRealIo(
+        tester,
+        () =>
+            TencentSpeechCredentials.decode(
+              container.read(settingsProvider).speech.apiKey,
+            )?.secretKey ==
+            'tencent-unit-private-key',
+        reason: 'Vault and settings transaction must finish before readback',
+      );
+      await tester.pumpAndSettle();
       final state = container.read(settingsProvider);
       expect(
         TencentSpeechCredentials.decode(state.speech.apiKey)?.secretKey,

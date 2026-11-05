@@ -1,3 +1,4 @@
+import 'support/real_io.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -87,6 +88,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 20));
     }
     await drainWorkspaceDrafts(tester, h.container);
+    await pumpUntilRealIo(
+      tester,
+      () => !tester.binding.hasScheduledFrame,
+      reason: 'Credential or backup operation must finish before settling UI',
+    );
     await tester.pumpAndSettle(
       const Duration(milliseconds: 50),
       EnginePhase.sendSemanticsUpdate,
