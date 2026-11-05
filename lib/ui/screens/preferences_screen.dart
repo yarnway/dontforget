@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/database_helper.dart';
@@ -9,6 +10,7 @@ import '../../models/settings.dart';
 import '../../providers/providers.dart';
 import '../../services/recovery/runtime_gate.dart';
 import '../widgets/content_management_panel.dart';
+import '../widgets/global_capture_shortcut_panel.dart';
 import '../widgets/portable_backup_panel.dart';
 import '../widgets/unsaved_editor_scope.dart';
 import 'settings_screen.dart';
@@ -234,6 +236,7 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
           ],
         ),
       ),
+      if (Platform.isWindows) const GlobalCaptureShortcutPanel(),
       Padding(
         padding: const EdgeInsets.fromLTRB(4, 24, 4, 10),
         child: Text(

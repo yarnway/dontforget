@@ -27,3 +27,13 @@ C:\src\flutter\bin\flutter.bat --no-version-check test --no-pub scripts/acceptan
 GitHub Actions 的 **Backup Capacity Acceptance** 仅通过 `workflow_dispatch` 手动运行，可选择 `4` 或 `512`。它在 Linux／Windows 的项目固定 Flutter SDK 上分别分析并执行验收，报告保留为带平台和容量标识的 artifacts；不会创建安装包、Release 或修改应用数据。
 
 工作流`backup_mode`选择`standard`保留既有普通／单附件模式；选择`encrypted-total`执行上述四附件加密模式，artifact名称同时标明平台、容量和模式。两种报告分别留存，不混记容量范围。
+
+## 合成跨设备文件往返
+
+`cross_device_backup_test.dart`只接受本轮新建的合成导出（1条标题为“测试”的记录、0附件、公开夹具密码），由`DF_DEVICE_BACKUP`指定输入、`DF_DEVICE_RETURN`指定不存在的输出文件。它在隔离桌面数据库中实际恢复、关闭重开、核对全部原字段，保留设备独立快捷键偏好，再追加`CrossDeviceStage61`并导出加密返回文件。报告明确桌面GUI与手机返回导入尚未验证；手机SAF选择、确认恢复和重开须另做真机验收。
+
+```bat
+C:\src\flutter\bin\flutter.bat --no-version-check test --no-pub scripts/acceptance/cross_device_backup_test.dart --dart-define=DF_DEVICE_BACKUP=build/synthetic-phone.dfbackup --dart-define=DF_DEVICE_RETURN=build/synthetic-return.dfbackup
+```
+
+不可用于个人备份或真实凭据，不与另一组共享SQLite DLL的测试并行。

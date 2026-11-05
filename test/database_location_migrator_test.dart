@@ -88,6 +88,10 @@ void main() {
         source,
         'device-window-preferences.json',
       ).writeAsString('{"version":1,"preferences":{"width":1280}}');
+      await file(
+        source,
+        'device-capture-shortcut.json',
+      ).writeAsString('{"version":1,"enabled":true}');
       final before = await snapshot(source);
       expect(await resolve(), target.path);
       expect(await snapshot(source), before);

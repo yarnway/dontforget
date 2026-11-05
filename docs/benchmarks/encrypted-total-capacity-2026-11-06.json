@@ -1,0 +1,151 @@
+{
+  "source": "b981592ff32a7ceb2e443438294f52f56a6e6e88",
+  "run": 42060707116,
+  "url": "https://github.com/yarnway/dontforget/actions/runs/42060707116",
+  "reports": [
+    {
+      "artifact": {
+        "id": 13432194352,
+        "name": "backup-capacity-windows-512-encrypted-total",
+        "digest": "sha256:f5234e54332f988dcb0aea07898b43fffc9847b922c412938db5f49c32a3acfa",
+        "size_in_bytes": 613
+      },
+      "archive_sha256_crc_verified": true,
+      "report": {
+        "format": 1,
+        "scope": "encrypted-total",
+        "platform": "windows",
+        "dart": "3.12.2",
+        "attachment_bytes": 536870912,
+        "total_attachment_bytes": 2147483648,
+        "full_capacity_boundary": true,
+        "baseline_rss_bytes": 151371776,
+        "cases": [
+          {
+            "stage": "seed_and_hash_four_attachments",
+            "elapsed_ms": 42705,
+            "rss_bytes": 185090048,
+            "max_rss_bytes": 211169280
+          },
+          {
+            "stage": "encrypted_total_export",
+            "elapsed_ms": 304345,
+            "rss_bytes": 105123840,
+            "max_rss_bytes": 253984768
+          },
+          {
+            "stage": "encrypted_total_inspect",
+            "elapsed_ms": 253054,
+            "rss_bytes": 105734144,
+            "max_rss_bytes": 253984768
+          },
+          {
+            "stage": "wrong_password_leaves_no_restore_output",
+            "elapsed_ms": 3107,
+            "rss_bytes": 111136768,
+            "max_rss_bytes": 253984768
+          },
+          {
+            "stage": "encrypted_cancel_cleans_partial_files",
+            "elapsed_ms": 65822,
+            "rss_bytes": 111935488,
+            "max_rss_bytes": 253984768
+          },
+          {
+            "stage": "encrypted_total_prepare_restore",
+            "elapsed_ms": 253716,
+            "rss_bytes": 93118464,
+            "max_rss_bytes": 253984768
+          },
+          {
+            "stage": "verify_all_restored_and_original_hashes",
+            "elapsed_ms": 58440,
+            "rss_bytes": 97468416,
+            "max_rss_bytes": 253984768
+          },
+          {
+            "stage": "restore_database_close_reopen_and_hash",
+            "elapsed_ms": 29522,
+            "rss_bytes": 99749888,
+            "max_rss_bytes": 253984768
+          }
+        ],
+        "encrypted_backup_bytes": 2147531055,
+        "outcome": "PASS",
+        "max_rss_bytes": 253984768
+      }
+    },
+    {
+      "artifact": {
+        "id": 13432133015,
+        "name": "backup-capacity-linux-512-encrypted-total",
+        "digest": "sha256:5aba414113d17b0d2fe98bc76090bdc820b480d26030193051589a46123abc4e",
+        "size_in_bytes": 615
+      },
+      "archive_sha256_crc_verified": true,
+      "report": {
+        "format": 1,
+        "scope": "encrypted-total",
+        "platform": "linux",
+        "dart": "3.12.2",
+        "attachment_bytes": 536870912,
+        "total_attachment_bytes": 2147483648,
+        "full_capacity_boundary": true,
+        "baseline_rss_bytes": 160370688,
+        "cases": [
+          {
+            "stage": "seed_and_hash_four_attachments",
+            "elapsed_ms": 34556,
+            "rss_bytes": 205217792,
+            "max_rss_bytes": 224927744
+          },
+          {
+            "stage": "encrypted_total_export",
+            "elapsed_ms": 258494,
+            "rss_bytes": 239058944,
+            "max_rss_bytes": 281481216
+          },
+          {
+            "stage": "encrypted_total_inspect",
+            "elapsed_ms": 205905,
+            "rss_bytes": 236748800,
+            "max_rss_bytes": 281481216
+          },
+          {
+            "stage": "wrong_password_leaves_no_restore_output",
+            "elapsed_ms": 2262,
+            "rss_bytes": 243548160,
+            "max_rss_bytes": 281481216
+          },
+          {
+            "stage": "encrypted_cancel_cleans_partial_files",
+            "elapsed_ms": 57369,
+            "rss_bytes": 240590848,
+            "max_rss_bytes": 281481216
+          },
+          {
+            "stage": "encrypted_total_prepare_restore",
+            "elapsed_ms": 222443,
+            "rss_bytes": 241528832,
+            "max_rss_bytes": 281481216
+          },
+          {
+            "stage": "verify_all_restored_and_original_hashes",
+            "elapsed_ms": 46027,
+            "rss_bytes": 233803776,
+            "max_rss_bytes": 281481216
+          },
+          {
+            "stage": "restore_database_close_reopen_and_hash",
+            "elapsed_ms": 23219,
+            "rss_bytes": 233369600,
+            "max_rss_bytes": 281481216
+          }
+        ],
+        "encrypted_backup_bytes": 2147530895,
+        "outcome": "PASS",
+        "max_rss_bytes": 281481216
+      }
+    }
+  ]
+}

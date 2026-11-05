@@ -605,11 +605,21 @@ Future<void> _requireDigest(File file, String digest) async {
 }
 
 Future<void> _requireStandalone(String path) async {
+  // Called only for the owned primary after SQLite has closed and the runtime
+  // and directory lease have drained all writers. Android TRUNCATE mode keeps
+  // a zero-byte rollback journal after a clean close; it has no recovery data.
+  // Retain it. Never delete a journal, accept a link, or relax imported-source
+  // inspection. Nonempty rollback journals and every WAL/SHM remain blocked.
   for (final suffix in ['-wal', '-shm', '-journal']) {
-    if (await FileSystemEntity.type('$path$suffix', followLinks: false) !=
-        FileSystemEntityType.notFound) {
-      throw const FormatException();
+    final file = File('$path$suffix');
+    final type = await FileSystemEntity.type(file.path, followLinks: false);
+    if (type == FileSystemEntityType.notFound) continue;
+    if (suffix == '-journal' &&
+        type == FileSystemEntityType.file &&
+        await file.length() == 0) {
+      continue;
     }
+    throw const FormatException();
   }
 }
 

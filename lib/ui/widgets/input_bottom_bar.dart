@@ -3,6 +3,7 @@ import 'dart:io' show Platform;
 import '../../services/recovery/runtime_gate.dart';
 import 'package:uuid/uuid.dart';
 import '../../providers/workspace_drafts_provider.dart';
+import '../../providers/global_capture_provider.dart';
 import '../../services/quick_reminder_parser.dart';
 import '../formatters/local_date_time.dart';
 import '../../providers/providers.dart';
@@ -26,6 +27,8 @@ class InputBottomBar extends ConsumerStatefulWidget {
 class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   final _textController = TextEditingController();
   final _focusNode = FocusNode();
+  late final CaptureInputCommand _captureCommand;
+  late final bool Function() _focusCapture;
   bool _isLongPressRecording = false;
   bool _desktopVoiceDraft = false;
   Future<bool>? _pendingRecordingStart;
@@ -67,6 +70,17 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     _inputRuntime = ref.read(runtimeRecoveryGateProvider);
     _inputBirth = _inputRuntime.paused ? null : _inputRuntime.capture();
     _draftStore = ref.read(workspaceDraftsProvider.notifier);
+    _captureCommand = ref.read(captureInputCommandProvider);
+    _focusCapture = () {
+      if (!_current || _voiceBusy || _submitting || _resolvingPending) {
+        return false;
+      }
+      if (_voiceMode) setState(() => _voiceMode = false);
+      _focusTextAfterBuild();
+      WidgetsBinding.instance.scheduleFrame();
+      return true;
+    };
+    _captureCommand.focus = _focusCapture;
     _focusNode.addListener(_inputChanged);
     _textController.addListener(_inputChanged);
     unawaited(_restoreDraft());
@@ -140,6 +154,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
 
   @override
   void dispose() {
+    if (identical(_captureCommand.focus, _focusCapture)) {
+      _captureCommand.focus = null;
+    }
     final pending = _pendingRecordingStart;
     final controller = _heldRecorder;
     if (pending != null && controller != null && !_isFinishingLongPress) {

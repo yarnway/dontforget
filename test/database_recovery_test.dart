@@ -14,6 +14,21 @@ import 'package:dont_forget/services/notification_service.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+// Exercise Android's real rollback-journal mode using SQLite, not a mocked
+// sidecar deletion. Read-only inspectors retain their normal strict policy.
+class _TruncateFactory implements DatabaseFactory {
+  @override
+  Future<Database> openDatabase(String path, {OpenDatabaseOptions? options}) async {
+    final db = await databaseFactoryFfi.openDatabase(path, options: options);
+    if (options?.readOnly != true) {
+      await db.rawQuery('PRAGMA journal_mode=TRUNCATE');
+    }
+    return db;
+  }
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 class _RebuildProbe extends NotificationService {
   _RebuildProbe(this.failures, {this.beforeRebuild})
     : super.forTesting(
@@ -589,6 +604,74 @@ void main() {
       expect(probe.isPausedForMaintenance, isFalse);
     },
   );
+
+  test('Android TRUNCATE journals restore JSON and retain the original rollback bytes', () async {
+    await live.close(createBackup: false);
+    live = DatabaseHelper.forTesting(p.join(root.path, 'live'), _TruncateFactory());
+    final sql = await live.database;
+    await sql.execute("UPDATE Reminders SET task_title='Original task TRUNCATE'");
+    final journal = File(livePath('dont_forget_v3.db-journal'));
+    expect(await journal.exists(), isTrue);
+    expect(await journal.length(), 0);
+    final before = await hash(jsonSource);
+    final result = await DatabaseRecovery(live, inspector: inspector,
+        notifications: notifications()).restore(jsonSource, expectedDigest: before);
+    expect(await ids(), ['new']);
+    final rollback = File(p.join(result.rollbackDirectory, 'rollback.db'));
+    expect(await rollback.exists(), isTrue);
+    final old = await databaseFactoryFfi.openDatabase(rollback.path,
+        options: OpenDatabaseOptions(readOnly: true, singleInstance: false));
+    try {
+      expect((await old.query('Reminders')).single['id'], 'old');
+    } finally {
+      await old.close();
+    }
+    expect(await hash(jsonSource), before);
+    expect(await File(livePath(DatabaseRecovery.journalName)).exists(), isFalse);
+    await backupsUnchanged();
+    await live.close(createBackup: false);
+    live = DatabaseHelper.forTesting(p.join(root.path, 'live'), _TruncateFactory());
+    expect(await ids(), ['new']);
+  });
+
+  for (final point in [RecoveryCheckpoint.candidateOpened, RecoveryCheckpoint.committed]) {
+    test('TRUNCATE empty journal survives restart at ${point.name}', () async {
+      await live.close(createBackup: false);
+      live = DatabaseHelper.forTesting(p.join(root.path, 'live'), _TruncateFactory());
+      await (await live.database).execute("UPDATE Reminders SET task_title='TRUNCATE restart'");
+      await expectLater(DatabaseRecovery(live, inspector: inspector,
+        notifications: notifications(), checkpoint: (at) async {
+          if (at == point) {
+            // Model Android's retained, already-truncated rollback journal at
+            // process interruption. No SQL transaction is active here.
+            await File(livePath('dont_forget_v3.db-journal')).writeAsBytes([]);
+            throw const RecoveryInterruption();
+          }
+        }).restore(jsonSource, expectedDigest: await hash(jsonSource)),
+        throwsA(isA<RecoveryInterruption>()));
+      await live.close(createBackup: false);
+      live = DatabaseHelper.forTesting(p.join(root.path, 'live'), _TruncateFactory());
+      await DatabaseRecovery(live, inspector: inspector, notifications: notifications()).recoverInterrupted();
+      expect(await ids(), [point == RecoveryCheckpoint.committed ? 'new' : 'old']);
+      expect(await File(livePath(DatabaseRecovery.journalName)).exists(), isFalse);
+      await backupsUnchanged();
+    });
+  }
+
+  test('nonempty PERSIST journal is retained and blocks primary replacement', () async {
+    final sql = await live.database;
+    await sql.rawQuery('PRAGMA journal_mode=PERSIST');
+    await sql.execute("UPDATE Reminders SET task_title='PERSIST retained'");
+    final journal = File(livePath('dont_forget_v3.db-journal'));
+    expect(await journal.length(), greaterThan(0));
+    final before = await hash(journal);
+    await expectLater(DatabaseRecovery(live, inspector: inspector,
+      notifications: notifications()).restore(jsonSource, expectedDigest: await hash(jsonSource)),
+      throwsA(isA<DatabaseRecoveryException>().having((e) => e.rolledBack, 'original preserved', true)));
+    expect(await ids(), ['old']);
+    expect(await hash(journal), before);
+    await backupsUnchanged();
+  });
 
   for (final target in ['source', 'live']) {
     test(

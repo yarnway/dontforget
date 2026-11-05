@@ -1,3 +1,4 @@
+import 'package:dont_forget/providers/global_capture_provider.dart';
 import 'support/real_io.dart';
 import 'support/workspace_drafts.dart';
 import 'package:dont_forget/providers/workspace_drafts_provider.dart';
@@ -454,6 +455,31 @@ void main() {
       expect(home.sent, isEmpty);
     },
     variant: TargetPlatformVariant.only(TargetPlatform.macOS),
+  );
+
+  testWidgets(
+    'global capture focuses the existing draft without submitting or interrupting recording',
+    (tester) async {
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      await tester.enterText(find.byType(TextField), 'Keep this draft 中文');
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pump();
+      final command = container.read(captureInputCommandProvider);
+      expect(command.focus, isNotNull);
+      expect(command.focus!(), isTrue);
+      await tester.pumpAndSettle();
+      final field = tester.widget<TextField>(find.byType(TextField));
+      expect(field.focusNode!.hasFocus, isTrue);
+      expect(field.controller!.text, 'Keep this draft 中文');
+      expect(home.sent, isEmpty);
+      home.setRecording(true);
+      expect(command.focus!(), isFalse);
+      expect(field.controller!.text, 'Keep this draft 中文');
+      home.setRecording(false);
+      await tester.pumpWidget(const SizedBox());
+      expect(command.focus, isNull);
+      expect(home.sent, isEmpty);
+    },
   );
 
   testWidgets(

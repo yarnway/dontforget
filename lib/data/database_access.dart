@@ -243,10 +243,25 @@ class DatabaseMaintenanceLease {
 
   Future<void> _closeCandidate(Database database) async {
     try {
-      await database.close();
-    } catch (_) {
-      _helper._accessState = _AccessState.faulted;
-      rethrow;
+      // Android SQLite defaults to TRUNCATE and retains an empty -journal even
+      // after a clean close. Only our private candidate is normalized through
+      // SQLite, never by deleting a sidecar or changing an imported source.
+      final mode = (await database.rawQuery('PRAGMA journal_mode'))
+          .single.values.single.toString().toLowerCase();
+      if (mode == 'truncate' || mode == 'persist') {
+        final changed = await database.rawQuery('PRAGMA journal_mode=DELETE');
+        if (changed.single.values.single.toString().toLowerCase() != 'delete') {
+          throw StateError('Candidate rollback journal could not be closed.');
+        }
+      }
+      // WAL candidates remain WAL and are rejected by the recovery protocol.
+    } finally {
+      try {
+        await database.close();
+      } catch (_) {
+        _helper._accessState = _AccessState.faulted;
+        rethrow;
+      }
     }
   }
 

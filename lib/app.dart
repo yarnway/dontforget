@@ -30,6 +30,8 @@ import 'services/android_protocol_service.dart';
 import 'services/android_share_service.dart';
 import 'services/shared_text_inbox.dart';
 import 'providers/shared_text_provider.dart';
+import 'providers/global_capture_provider.dart';
+import 'services/global_capture_shortcut.dart';
 import 'providers/workspace_drafts_provider.dart';
 import 'l10n/shared_text_strings.dart';
 import 'ui/screens/shared_text_inbox_screen.dart';
@@ -82,6 +84,7 @@ class _MyAppState extends ConsumerState<MyApp>
   bool _sharedInboxWanted = false, _sharedInboxFramePending = false;
   late final bool Function() _openSharedCommand;
   late final SharedTextInboxCommand _sharedCommand;
+  GlobalCaptureShortcut? _globalCapture;
   String? _openProtocolTaskId;
   String? _pendingLivePayload;
   String? _openLiveIdentity;
@@ -109,6 +112,9 @@ class _MyAppState extends ConsumerState<MyApp>
     _openSharedCommand = _openSharedInbox;
     _sharedCommand = ref.read(sharedTextInboxCommandProvider);
     _sharedCommand.open = _openSharedCommand;
+    if (Platform.isWindows) {
+      _globalCapture = ref.read(globalCaptureShortcutProvider);
+    }
     _navigationEpoch = _recovery.navigationEpoch;
     _lastRecoveryPhase = _recovery.state.phase;
     if (Platform.isMacOS) {
@@ -274,6 +280,9 @@ class _MyAppState extends ConsumerState<MyApp>
       StartupTrace.mark('notifications_ready');
       _scheduleNotificationRoutes();
       if (_supportsAndroidProtocol) unawaited(_initializeSharedTexts());
+      if (_globalCapture != null) {
+        unawaited(_globalCapture!.start(_activateGlobalCapture));
+      }
       if (_pendingProtocolRoute != null) {
         _scheduleProtocolRoute();
       }
@@ -733,6 +742,22 @@ class _MyAppState extends ConsumerState<MyApp>
     }
   }
 
+  void _activateGlobalCapture() {
+    if (!_nativeCommandsReady) return;
+    final epoch = _navigationEpoch;
+    unawaited(
+      _showNotificationWindow().then((_) {
+        if (!mounted || !_nativeCommandsReady || epoch != _navigationEpoch) {
+          return;
+        }
+        // Preserve modal editors and their unsaved text. Never pop navigation or
+        // insert/submit content merely because a global key was pressed.
+        if (_navigatorKey.currentState?.canPop() != false) return;
+        ref.read(captureInputCommandProvider).focus?.call();
+      }),
+    );
+  }
+
   void _receiveProtocolRoute(ProtocolRoute route) {
     if (!mounted ||
         _recovery.state.phase != RecoveryPhase.idle ||
@@ -880,6 +905,7 @@ class _MyAppState extends ConsumerState<MyApp>
 
   @override
   void dispose() {
+    unawaited(_globalCapture?.pause().catchError((Object _) {}));
     _shareEpoch++;
     _androidShares.dispose();
     if (identical(_sharedCommand.open, _openSharedCommand)) {
@@ -1025,7 +1051,10 @@ class _MyAppState extends ConsumerState<MyApp>
   /// exit cannot leave a half-written store behind (the previous `exit(0)`
   /// skipped this).
   Future<void> _closeStorageAndExit() => shutdownDesktopApp(
-    saveState: () => DesktopWindowService.flush(DatabaseHelper.instance),
+    saveState: () async {
+      await _globalCapture?.pause();
+      await DesktopWindowService.flush(DatabaseHelper.instance);
+    },
     closeStorage: () => DatabaseHelper.instance.close(),
     destroyWindow: () => windowManager.destroy(),
     exitProcess: exit,

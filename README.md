@@ -13,7 +13,7 @@
 
 ## v1.7：任务浏览与清晰复盘
 
-Android／Windows／Linux v1.7.0已发布，平台验收范围见[发布验收总表](docs/Release_Acceptance_v1.7.md)。当前工作区还包含[分阶段清单](docs/Recording_Reminders_Phases.md)中的未发布优化；既有版本记录见 [v1.7 迭代清单](docs/Iteration_v1.7.md)。
+Android／Windows／Linux v1.7.0已发布，平台验收范围见[发布验收总表](docs/Release_Acceptance_v1.7.md)。当前内部候选为`1.7.1+60`，新增[Windows全局快捷录入](docs/Windows_Global_Capture_60_2026-11-06.md)，并修复[Android备份恢复](docs/Encrypted_Total_And_Cross_Device_2026-11-06.md)的TRUNCATE日志兼容问题，尚未发布。当前工作区还包含[分阶段清单](docs/Recording_Reminders_Phases.md)中的未发布优化；既有版本记录见 [v1.7 迭代清单](docs/Iteration_v1.7.md)。
 
 - **按状态找任务**：搜索页直接浏览全部、待办、今日提醒、提醒时间已过或已完成事项，无需先输入文字；提醒时间不是事件截止时间。
 - **组合关键词**：同时搜索标题、摘要和子任务；空格分隔的关键词可以出现在不同字段中。

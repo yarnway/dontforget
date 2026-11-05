@@ -43,6 +43,7 @@ class DatabaseLocationMigrator {
     'notification-journal.log',
     'notification-storage.json',
     'device-window-preferences.json',
+    'device-capture-shortcut.json',
   ];
   static const _activeFiles = [
     '$databaseFileName-wal',

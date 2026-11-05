@@ -34,6 +34,40 @@ bool FlutterWindow::OnCreate() {
           "com.yarnway.dontforget/protocol",
           &flutter::StandardMethodCodec::GetInstance());
 
+  capture_hotkey_ = std::make_unique<GlobalCaptureHotkey>(GetHandle());
+  capture_channel_ =
+      std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+          flutter_controller_->engine()->messenger(),
+          "com.yarnway.dontforget/global_capture",
+          &flutter::StandardMethodCodec::GetInstance());
+  capture_channel_->SetMethodCallHandler(
+      [this](const flutter::MethodCall<flutter::EncodableValue>& call,
+             std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
+        if (call.method_name() != "setEnabled") {
+          result->NotImplemented();
+          return;
+        }
+        const auto* args = call.arguments()
+            ? std::get_if<flutter::EncodableMap>(call.arguments()) : nullptr;
+        if (args == nullptr) {
+          result->Error("invalid_capture_binding", "Invalid shortcut request");
+          return;
+        }
+        const auto enabled = args->find(flutter::EncodableValue("enabled"));
+        const auto nonce = args->find(flutter::EncodableValue("nonce"));
+        const auto* value = enabled == args->end()
+            ? nullptr : std::get_if<bool>(&enabled->second);
+        const auto* token = nonce == args->end()
+            ? nullptr : std::get_if<std::string>(&nonce->second);
+        if (value == nullptr || token == nullptr || !capture_hotkey_) {
+          result->Error("invalid_capture_binding", "Invalid shortcut request");
+          return;
+        }
+        const bool success = *value ? capture_hotkey_->Enable(*token)
+                                    : capture_hotkey_->Disable();
+        result->Success(flutter::EncodableValue(success));
+      });
+
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
     this->Show();
   });
@@ -47,6 +81,8 @@ bool FlutterWindow::OnCreate() {
 }
 
 void FlutterWindow::OnDestroy() {
+  capture_channel_ = nullptr;
+  capture_hotkey_ = nullptr;
   protocol_channel_ = nullptr;
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
@@ -59,6 +95,12 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  if (message == WM_HOTKEY && capture_hotkey_ && capture_channel_ &&
+      capture_hotkey_->Matches(wparam, lparam)) {
+    capture_channel_->InvokeMethod("onCapture",
+        std::make_unique<flutter::EncodableValue>(capture_hotkey_->nonce()));
+    return 0;
+  }
   // Give Flutter, including plugins, an opportunity to handle window messages.
   if (flutter_controller_) {
     std::optional<LRESULT> result =

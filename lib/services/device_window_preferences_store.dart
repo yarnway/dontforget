@@ -14,6 +14,7 @@ final class DeviceWindowPreferencesStore {
 
   static const fileName = 'device-window-preferences.json';
   static const maxFileBytes = 4096;
+  static const shortcutFileName = 'device-capture-shortcut.json';
   final StorageDirectoryLease _lease;
   Future<void> _tail = Future<void>.value();
 
@@ -27,6 +28,43 @@ final class DeviceWindowPreferencesStore {
   }
 
   File get _file => File(p.join(_lease.directory.path, fileName));
+
+  Future<bool> readCaptureShortcut() async {
+    _lease.checkHeld();
+    final file = File(p.join(_lease.directory.path, shortcutFileName));
+    final type = await FileSystemEntity.type(file.path, followLinks: false);
+    if (type == FileSystemEntityType.notFound) return false;
+    if (type != FileSystemEntityType.file ||
+        await file.length() > maxFileBytes) {
+      throw const FileSystemException('Unsafe capture shortcut preferences');
+    }
+    final value = jsonDecode(await file.readAsString());
+    if (value is! Map ||
+        value['version'] != 1 ||
+        value['version'] is! int ||
+        value.length != 2 ||
+        value['enabled'] is! bool) {
+      throw const FormatException('Unsupported capture shortcut preferences');
+    }
+    return value['enabled'] as bool;
+  }
+
+  Future<void> writeCaptureShortcut(bool enabled) async {
+    // Do not overwrite corrupt or future files, or touch window geometry.
+    await readCaptureShortcut();
+    final file = File(p.join(_lease.directory.path, shortcutFileName));
+    final temporary = File('${file.path}.${const Uuid().v4()}.tmp');
+    try {
+      await temporary.writeAsString(
+        jsonEncode({'version': 1, 'enabled': enabled}),
+        flush: true,
+      );
+      _lease.checkHeld();
+      await temporary.rename(file.path);
+    } finally {
+      if (await temporary.exists()) await temporary.delete();
+    }
+  }
 
   Future<Map<String, dynamic>?> _readDocument() async {
     _lease.checkHeld();

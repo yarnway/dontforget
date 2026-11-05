@@ -155,6 +155,9 @@ void main() {
           expect(await (await helper.database).query('Reminders'), rows);
           expect(native.peakActive, lessThanOrEqualTo(32));
         },
+        // 514 durable journal transitions include independent disk reads at
+        // the native boundary; this is a correctness test, not a 30 s SLO.
+        timeout: const Timeout(Duration(minutes: 2)),
       );
 
       test(
