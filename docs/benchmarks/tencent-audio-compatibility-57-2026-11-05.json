@@ -37,12 +37,43 @@
     "upgrade_57": "NOT_INSTALLED: device disconnected before installer could start"
   },
   "real_api": "NOT_CALLED: app configuration deferred by user; AppID pending",
-  "github": "not yet committed/pushed",
+  "github": {
+    "source_commit": "2b640958cb1dc1021fe9d9c209c64e7d613cc38a",
+    "run_id": 41970455791,
+    "url": "https://github.com/yarnway/dontforget/actions/runs/41970455791",
+    "conclusion": "success",
+    "successful_jobs": 7,
+    "artifacts_source_identity_verified": 5,
+    "evidence": "github-ci-57-2026-11-05.json"
+  },
   "release": "NOT_CREATED: actual acceptance/signing gates remain",
   "credentials": {
     "storage": "current-user Windows Credential Manager; readback verified",
     "app_configured": false,
     "appid_pending": true,
     "deferred_by_user": true
+  },
+  "logs": {
+    "flutter-final.log": {
+      "sha256": "9d546a8cf70d121529a8a8956ad6eeb4e50b48eb88fe87ba480f496ffe7ff93f"
+    },
+    "python-final.log": {
+      "sha256": "ac60a4cbb05e65ca5c440d67ad33dc2c302450b13834b9f47d83b9bd9c0755a7"
+    },
+    "analyze-final.log": {
+      "sha256": "fa6592e731868996bcb522be1aff1858aa410e10e36ce76e0dd888323fa6f808"
+    },
+    "routes.log": {
+      "sha256": "c2edc708c3ef62772313a485e15ed6425f68aedf1ec604756b2a9f3cc1db113e"
+    },
+    "analyze-final-routes.log": {
+      "sha256": "c1d25d76ef6eeffd1a1a96235da77d2e352c069ec837c2a366a250b868002ac9"
+    },
+    "targeted.log": {
+      "sha256": "c154ef46d29f6231995dafde24a607ad766df7a9be255d4b217bd6f992714828"
+    },
+    "android-build.log": {
+      "sha256": "135bb56ad739de4f99e0d3dd5daee6cd113586ec99b81edaeb4f41398266eea1"
+    }
   }
 }

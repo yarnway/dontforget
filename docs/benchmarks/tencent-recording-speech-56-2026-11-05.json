@@ -63,13 +63,18 @@
       "critical_files_count": 21
     },
     "settings_ui": "PASS: actual compact preferences, AI secondary page and Tencent credential page; original locale/appearance/credentials retained",
-    "original_gesture_with_tencent_live": "PENDING: user must configure Tencent credentials securely in app; currently awaiting reply",
-    "real_api": "NOT_CALLED; no credentials yet",
+    "original_gesture_with_tencent_live": "PENDING: user deferred app configuration; credentials staged locally; AppID pending",
+    "real_api": "NOT_CALLED; app credentials not configured",
     "historical_data": "50 current reminders include user-added items; none treated as disposable test fixtures"
   },
   "github": {
-    "commit_push": "pending",
-    "ci": "pending"
+    "commit": "96143f13348f6fa1947cc139b40a8dac251c723d",
+    "pushed": true,
+    "run_id": 41965318976,
+    "conclusion": "success",
+    "successful_jobs": 7,
+    "artifacts_source_identity_verified": 5,
+    "evidence": "github-ci-56-2026-11-05.json"
   },
   "stable_release": "NOT_CREATED: real Tencent/human/device and existing distribution-signing gates remain",
   "logs": {
