@@ -19,9 +19,249 @@
     "apk_created": false
   },
   "automation": {
-    "new_release_signing_tests_passed": 19,
-    "windows_python_run": 155,
+    "new_release_signing_tests_passed": 22,
+    "windows_python_run": 158,
     "windows_python_skipped": 6,
     "analyze_issues": 0
+  },
+  "source_ci": {
+    "source": "71602c83aa8fc7f379dbecaa27e89c173aa7fa6b",
+    "id": 42044381809,
+    "url": "https://github.com/yarnway/dontforget/actions/runs/42044381809",
+    "successful_jobs": 7,
+    "quality": [
+      {
+        "job": "Analyze and test",
+        "flutter_passed": 2289,
+        "flutter_skipped": 2,
+        "python_run": 157,
+        "python_skipped": 3,
+        "log_sha256": "99e512fb7fa72338561e55fdff6dcc13ab4f2aff9247c79027cecb42d7271e12"
+      },
+      {
+        "job": "Windows analyze and test",
+        "flutter_passed": 2271,
+        "flutter_skipped": 20,
+        "python_run": 157,
+        "python_skipped": 6,
+        "log_sha256": "b2e7f5b58fcfc65025587e848f635d6b1590a160cb17aa9aca8cf67900fe90d3"
+      }
+    ]
+  },
+  "release_preparation": {
+    "version": "1.7.0",
+    "build_number": "59",
+    "revision": "71602c83aa8fc7f379dbecaa27e89c173aa7fa6b",
+    "ci_run": 42044381809,
+    "ci_url": "https://github.com/yarnway/dontforget/actions/runs/42044381809",
+    "platforms": [
+      "android",
+      "windows",
+      "linux"
+    ],
+    "android_certificate_sha256": "3db49656984fb848a73b1e8d056846b97e2a7caf47c9a9ae74f475cdbb79e9f1",
+    "archives": [
+      {
+        "name": "android-deliverables",
+        "sha256": "sha256:238451b83fd9b1612145a4523e686f5d9084246d6ccdae437d0f8b35de4c903a",
+        "bytes": 107416847
+      },
+      {
+        "name": "windows-deliverables",
+        "sha256": "sha256:6e51f837e3526949a799c6afca3c5a79b45dccdcb7dfe4ccf0d8e421559570be",
+        "bytes": 31857144
+      },
+      {
+        "name": "linux-deliverables",
+        "sha256": "sha256:5eb0c824954f35d1a7c7945f5d8e38dd9538a0e4f42d90d8a2db39d7f86dd693",
+        "bytes": 14291549
+      }
+    ],
+    "acceptance_reports": [
+      "windows-startup.json",
+      "linux-startup.json",
+      "windows-installation.json"
+    ],
+    "full_runtime_matrix": "NOT_PERFORMED",
+    "publisher_script_sha256": "41befa5e1cb631ffce1b461ddc44c33435b7e80eb5ee4fbe2fdd6aad5afbd252",
+    "files": [
+      {
+        "file": "android-manifest.json",
+        "sha256": "7ee9d60dd617561a86031c1c6771aae1d802567f9f670bf2ce526ee602dcda7c",
+        "bytes": 650
+      },
+      {
+        "file": "android-SHA256SUMS.txt",
+        "sha256": "7a1b073164baba507205f925c8bb500ca24aa516e9aa4343b4f3cfc1ad0af523",
+        "bytes": 192
+      },
+      {
+        "file": "DontForget_Android_v1.7.0.aab",
+        "sha256": "d879c59fc504adc8b90cb17f5674e45ee41e916cc9f2f719429fda918e80ec0a",
+        "bytes": 72788719
+      },
+      {
+        "file": "DontForget_Android_v1.7.0.apk",
+        "sha256": "c7c3ac0114abfb0df2535f27300de7d2cefbbea33ce6d9248cb62658cc9e7eb5",
+        "bytes": 75899600
+      },
+      {
+        "file": "DontForget_Linux_x64_v1.7.0.tar.gz",
+        "sha256": "1371320d631ed19d63c549432960a2c6cdfeb20253e85cb9aaae70af51ef2d35",
+        "bytes": 14327273
+      },
+      {
+        "file": "DontForget_Setup_v1.7.0.exe",
+        "sha256": "ae179b8be03d8fa87ee90de7a3bc8d681102c4f6524d3fa7715eb58e3b640e41",
+        "bytes": 14605983
+      },
+      {
+        "file": "DontForget_Windows_Portable_v1.7.0.zip",
+        "sha256": "29b8ff2000b8a082ddcac205173a01ae689bdcd5d2453b06f68cdc3c3dc32aa7",
+        "bytes": 17805590
+      },
+      {
+        "file": "linux-manifest.json",
+        "sha256": "2df2c999a5b1428f4929ac169cd57881b3ae13ae62cef79e94b53392ebc22caa",
+        "bytes": 401
+      },
+      {
+        "file": "linux-SHA256SUMS.txt",
+        "sha256": "251a919e452d400e88f5fec8618c8946c09c247ec3eff06afed8ce2588d2af55",
+        "bytes": 101
+      },
+      {
+        "file": "linux-startup.json",
+        "sha256": "fffdaa1b220366975a62494cec00e873ab4867531cc5b4e1f66a8a616cba5d26",
+        "bytes": 572
+      },
+      {
+        "file": "windows-installation.json",
+        "sha256": "e3505132f124d1279ebb6a67bd9d286be97000cc9968679c22acc40c871a01fc",
+        "bytes": 286
+      },
+      {
+        "file": "windows-manifest.json",
+        "sha256": "d0af24bca4150502101bbdcd5704a06646d98b1e7ebd372c28b3388d54a5e02a",
+        "bytes": 657
+      },
+      {
+        "file": "windows-SHA256SUMS.txt",
+        "sha256": "fd38c4db683dd2b7e07cd704fd797109fb9b1d399c7c77152c8743fe359f46b7",
+        "bytes": 201
+      },
+      {
+        "file": "windows-startup.json",
+        "sha256": "2f426b328910fdf1b58c658f205d42d4e27879fabed5872a052912297d39f2e8",
+        "bytes": 442
+      }
+    ]
+  },
+  "publication": {
+    "url": "https://github.com/yarnway/dontforget/releases/tag/v1.7.0",
+    "tag": "v1.7.0",
+    "revision": "71602c83aa8fc7f379dbecaa27e89c173aa7fa6b",
+    "published": true,
+    "prerelease": false,
+    "body_verified": true,
+    "assets": [
+      {
+        "file": "android-manifest.json",
+        "bytes": 650,
+        "sha256": "7ee9d60dd617561a86031c1c6771aae1d802567f9f670bf2ce526ee602dcda7c"
+      },
+      {
+        "file": "android-SHA256SUMS.txt",
+        "bytes": 192,
+        "sha256": "7a1b073164baba507205f925c8bb500ca24aa516e9aa4343b4f3cfc1ad0af523"
+      },
+      {
+        "file": "DontForget_Android_v1.7.0.aab",
+        "bytes": 72788719,
+        "sha256": "d879c59fc504adc8b90cb17f5674e45ee41e916cc9f2f719429fda918e80ec0a"
+      },
+      {
+        "file": "DontForget_Android_v1.7.0.apk",
+        "bytes": 75899600,
+        "sha256": "c7c3ac0114abfb0df2535f27300de7d2cefbbea33ce6d9248cb62658cc9e7eb5"
+      },
+      {
+        "file": "DontForget_Linux_x64_v1.7.0.tar.gz",
+        "bytes": 14327273,
+        "sha256": "1371320d631ed19d63c549432960a2c6cdfeb20253e85cb9aaae70af51ef2d35"
+      },
+      {
+        "file": "DontForget_Setup_v1.7.0.exe",
+        "bytes": 14605983,
+        "sha256": "ae179b8be03d8fa87ee90de7a3bc8d681102c4f6524d3fa7715eb58e3b640e41"
+      },
+      {
+        "file": "DontForget_Windows_Portable_v1.7.0.zip",
+        "bytes": 17805590,
+        "sha256": "29b8ff2000b8a082ddcac205173a01ae689bdcd5d2453b06f68cdc3c3dc32aa7"
+      },
+      {
+        "file": "linux-manifest.json",
+        "bytes": 401,
+        "sha256": "2df2c999a5b1428f4929ac169cd57881b3ae13ae62cef79e94b53392ebc22caa"
+      },
+      {
+        "file": "linux-SHA256SUMS.txt",
+        "bytes": 101,
+        "sha256": "251a919e452d400e88f5fec8618c8946c09c247ec3eff06afed8ce2588d2af55"
+      },
+      {
+        "file": "linux-startup.json",
+        "bytes": 572,
+        "sha256": "fffdaa1b220366975a62494cec00e873ab4867531cc5b4e1f66a8a616cba5d26"
+      },
+      {
+        "file": "release-provenance.json",
+        "bytes": 3519,
+        "sha256": "114d960de6a5c9d818b5011563b30d3d5f16da49335fb4dd87567f1d9936ca4c"
+      },
+      {
+        "file": "SHA256SUMS.txt",
+        "bytes": 1388,
+        "sha256": "79aa67aa83b119411effaa67dd26aa858223bff850b69d191dc583839037f0e0"
+      },
+      {
+        "file": "windows-installation.json",
+        "bytes": 286,
+        "sha256": "e3505132f124d1279ebb6a67bd9d286be97000cc9968679c22acc40c871a01fc"
+      },
+      {
+        "file": "windows-manifest.json",
+        "bytes": 657,
+        "sha256": "d0af24bca4150502101bbdcd5704a06646d98b1e7ebd372c28b3388d54a5e02a"
+      },
+      {
+        "file": "windows-SHA256SUMS.txt",
+        "bytes": 201,
+        "sha256": "fd38c4db683dd2b7e07cd704fd797109fb9b1d399c7c77152c8743fe359f46b7"
+      },
+      {
+        "file": "windows-startup.json",
+        "bytes": 442,
+        "sha256": "2f426b328910fdf1b58c658f205d42d4e27879fabed5872a052912297d39f2e8"
+      }
+    ],
+    "release_id": 435358548,
+    "ci_run": 42044381809,
+    "publication_method": "Local corrected publisher after full source/archive/signature/desktop report verification",
+    "initial_publish_workflow": 42049042304,
+    "initial_publish_conclusion": "failure before publication",
+    "local_prepare_patch_sha256": "41befa5e1cb631ffce1b461ddc44c33435b7e80eb5ee4fbe2fdd6aad5afbd252"
+  },
+  "android_device_59": {
+    "installed": false,
+    "native_ui_verified": false,
+    "reason": "Device disconnected before release identity validation",
+    "qa58_results_not_relabelled": true
+  },
+  "initial_publisher_failure": {
+    "id": 42049042304,
+    "reason": "Receipt generation called pathlib st_size integer; validation completed before error, no release published",
+    "recovery": "Fixed receipt/stat and UTF-8 handling; complete prepare regression and full Windows Python 158 passed; repeated full local package validation before draft upload, then published and read back"
   }
 }

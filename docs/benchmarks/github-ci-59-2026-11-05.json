@@ -1,0 +1,135 @@
+{
+  "commit": "71602c83aa8fc7f379dbecaa27e89c173aa7fa6b",
+  "id": 42044381809,
+  "url": "https://github.com/yarnway/dontforget/actions/runs/42044381809",
+  "status": "completed",
+  "conclusion": "success",
+  "jobs": [
+    {
+      "name": "Analyze and test",
+      "conclusion": "success"
+    },
+    {
+      "name": "Windows analyze and test",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build linux candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build ios candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build android candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build macos candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build windows candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Verify tag packages without publishing",
+      "conclusion": "skipped"
+    }
+  ],
+  "quality": [
+    {
+      "job": "Analyze and test",
+      "flutter_passed": 2289,
+      "flutter_skipped": 2,
+      "python_run": 157,
+      "python_skipped": 3,
+      "log_sha256": "99e512fb7fa72338561e55fdff6dcc13ab4f2aff9247c79027cecb42d7271e12"
+    },
+    {
+      "job": "Windows analyze and test",
+      "flutter_passed": 2271,
+      "flutter_skipped": 20,
+      "python_run": 157,
+      "python_skipped": 6,
+      "log_sha256": "b2e7f5b58fcfc65025587e848f635d6b1590a160cb17aa9aca8cf67900fe90d3"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 13425631713,
+      "name": "windows-deliverables",
+      "size_in_bytes": 31857144,
+      "digest": "sha256:6e51f837e3526949a799c6afca3c5a79b45dccdcb7dfe4ccf0d8e421559570be",
+      "expired": false,
+      "workflow_run": {
+        "id": 42044381809,
+        "repository_id": 1362330634,
+        "head_repository_id": 1362330634,
+        "head_branch": "main",
+        "head_sha": "71602c83aa8fc7f379dbecaa27e89c173aa7fa6b"
+      }
+    },
+    {
+      "id": 13425487767,
+      "name": "macos-deliverables",
+      "size_in_bytes": 26372083,
+      "digest": "sha256:b8ea96cb3efb047f1362c8d3a56fa3f4d603f64428ca670d1ac22ced6655047a",
+      "expired": false,
+      "workflow_run": {
+        "id": 42044381809,
+        "repository_id": 1362330634,
+        "head_repository_id": 1362330634,
+        "head_branch": "main",
+        "head_sha": "71602c83aa8fc7f379dbecaa27e89c173aa7fa6b"
+      }
+    },
+    {
+      "id": 13425450947,
+      "name": "linux-deliverables",
+      "size_in_bytes": 14291549,
+      "digest": "sha256:5eb0c824954f35d1a7c7945f5d8e38dd9538a0e4f42d90d8a2db39d7f86dd693",
+      "expired": false,
+      "workflow_run": {
+        "id": 42044381809,
+        "repository_id": 1362330634,
+        "head_repository_id": 1362330634,
+        "head_branch": "main",
+        "head_sha": "71602c83aa8fc7f379dbecaa27e89c173aa7fa6b"
+      }
+    },
+    {
+      "id": 13425046665,
+      "name": "ios-deliverables",
+      "size_in_bytes": 11092019,
+      "digest": "sha256:0bdbe75df1e0f51d3859563fb193ade21a7be40c54140d5dfe02fb8820b9bdd5",
+      "expired": false,
+      "workflow_run": {
+        "id": 42044381809,
+        "repository_id": 1362330634,
+        "head_repository_id": 1362330634,
+        "head_branch": "main",
+        "head_sha": "71602c83aa8fc7f379dbecaa27e89c173aa7fa6b"
+      }
+    },
+    {
+      "id": 13425022213,
+      "name": "android-deliverables",
+      "size_in_bytes": 107416847,
+      "digest": "sha256:238451b83fd9b1612145a4523e686f5d9084246d6ccdae437d0f8b35de4c903a",
+      "expired": false,
+      "workflow_run": {
+        "id": 42044381809,
+        "repository_id": 1362330634,
+        "head_repository_id": 1362330634,
+        "head_branch": "main",
+        "head_sha": "71602c83aa8fc7f379dbecaa27e89c173aa7fa6b"
+      }
+    }
+  ],
+  "archive_verification": {
+    "android_windows_linux": "Full local ZIP SHA-256 and CRC, manifests, package hashes, Android APK/AAB signatures and desktop reports verified",
+    "macos_ios": "Metadata source identity only; not included in this release"
+  }
+}

@@ -1,6 +1,7 @@
 import copy
 import hashlib
 import json
+import os
 from pathlib import Path
 import stat
 import sys
@@ -8,10 +9,12 @@ import tempfile
 import unittest
 import urllib.error
 import zipfile
+from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from prepare_platform_release import (REPOSITORY, PLATFORMS, validate_run, select_artifacts,
                                       extract_archive, validate_files, verify_existing_tag)
 from verify_published_release import verify_release
+from prepare_platform_release import prepare
 
 REV = 'b' * 40
 CERT = 'a' * 64
@@ -94,6 +97,46 @@ class ReleaseFilesTest(unittest.TestCase):
 
     def test_exact_three_platform_inventory_and_reports_pass(self):
         self.assertEqual(len(self.validate()), 3)
+
+    def test_complete_prepare_writes_provenance_checksums_and_utf8_notes(self):
+        (self.root / 'pubspec.yaml').write_text('version: 1.7.0+59\n')
+        (self.root / 'android').mkdir()
+        (self.root / 'android/release-certificate.sha256').write_text(CERT)
+        (self.root / 'docs').mkdir()
+        (self.root / 'docs/Release_Notes_v1.7.0.md').write_text('三平台发行说明\n', encoding='utf-8')
+        archives = {}
+        artifacts = []
+        for platform in PLATFORMS:
+            name = platform + '-deliverables'
+            archive = self.root / (name + '.zip')
+            with zipfile.ZipFile(archive, 'w') as target:
+                for file in self.files.iterdir():
+                    if file.name.startswith(platform + '-') or file.name.startswith('DontForget_' + ('Android' if platform == 'android' else 'Linux' if platform == 'linux' else 'Windows')) or (platform == 'windows' and file.name.startswith('DontForget_Setup')):
+                        target.write(file, file.name)
+            archives[name] = archive
+            artifacts.append({'name': name, 'expired': False, 'size_in_bytes': archive.stat().st_size, 'workflow_run': {'id': 42, 'head_sha': REV},
+                              'digest': 'sha256:' + hashlib.sha256(archive.read_bytes()).hexdigest()})
+        class Fake:
+            def get(self, path):
+                if path.startswith('git/ref/'):
+                    raise urllib.error.HTTPError('synthetic', 404, '', None, None)
+                if '/jobs?' in path: return {'jobs': job_fixture()}
+                if '/artifacts?' in path: return {'artifacts': artifacts}
+                return {**run_fixture(), 'html_url': 'https://example.com/synthetic'}
+            def download(self, item, path): path.write_bytes(archives[item['name']].read_bytes())
+        previous = Path.cwd()
+        try:
+            os.chdir(self.root)
+            with patch('prepare_platform_release.ROOT', self.root), \
+                 patch('prepare_platform_release.subprocess.check_output', return_value=REV), \
+                 patch('prepare_platform_release.verify_android_signatures', return_value=CERT):
+                result = prepare(42, self.root / 'prepared', Fake())
+            self.assertEqual(len(result['files']), 14)
+            self.assertTrue(all(isinstance(item['bytes'], int) for item in result['files']))
+            self.assertEqual(len((self.root / 'prepared/SHA256SUMS.txt').read_text().splitlines()), 15)
+            self.assertIn('三平台发行说明', (self.root / 'release-notes.md').read_text(encoding='utf-8'))
+        finally:
+            os.chdir(previous)
 
     def test_debug_android_or_wrong_certificate_cannot_be_published(self):
         path = self.files / 'android-manifest.json'; original = path.read_text()

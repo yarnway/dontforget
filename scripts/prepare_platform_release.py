@@ -188,11 +188,12 @@ def prepare(run_id, directory, github):
                'android_certificate_sha256': expected_certificate,
                'archives': [{'name': a['name'], 'sha256': a['digest'], 'bytes': a['size_in_bytes']} for a in selected],
                'acceptance_reports': list(reports), 'full_runtime_matrix': 'NOT_PERFORMED',
-               'files': [{'file': p.name, 'sha256': digest(p), 'bytes': p.stat().st_size()} for p in sorted(directory.iterdir())]}
+               'publisher_script_sha256': digest(Path(__file__)),
+               'files': [{'file': p.name, 'sha256': digest(p), 'bytes': p.stat().st_size} for p in sorted(directory.iterdir())]}
     (directory / 'release-provenance.json').write_text(json.dumps(receipt, indent=2) + '\n')
     (directory / 'SHA256SUMS.txt').write_text(''.join(f'{digest(p)}  {p.name}\n' for p in sorted(directory.iterdir())))
-    notes = (ROOT / 'docs/Release_Notes_v1.7.0.md').read_text()
-    Path('release-notes.md').write_text(notes + f'\n构建号：{build_number}；源码：`{revision}`；[完整CI]({run["html_url"]})。\n')
+    notes = (ROOT / 'docs/Release_Notes_v1.7.0.md').read_text(encoding='utf-8')
+    Path('release-notes.md').write_text(notes + f'\n构建号：{build_number}；源码：`{revision}`；[完整CI]({run["html_url"]})。\n', encoding='utf-8')
     if os.environ.get('GITHUB_OUTPUT'):
         with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
             stream.write('tag=v' + release_version + '\nrevision=' + revision + '\n')

@@ -1,0 +1,96 @@
+{
+  "url": "https://github.com/yarnway/dontforget/releases/tag/v1.7.0",
+  "tag": "v1.7.0",
+  "revision": "71602c83aa8fc7f379dbecaa27e89c173aa7fa6b",
+  "published": true,
+  "prerelease": false,
+  "body_verified": true,
+  "assets": [
+    {
+      "file": "android-manifest.json",
+      "bytes": 650,
+      "sha256": "7ee9d60dd617561a86031c1c6771aae1d802567f9f670bf2ce526ee602dcda7c"
+    },
+    {
+      "file": "android-SHA256SUMS.txt",
+      "bytes": 192,
+      "sha256": "7a1b073164baba507205f925c8bb500ca24aa516e9aa4343b4f3cfc1ad0af523"
+    },
+    {
+      "file": "DontForget_Android_v1.7.0.aab",
+      "bytes": 72788719,
+      "sha256": "d879c59fc504adc8b90cb17f5674e45ee41e916cc9f2f719429fda918e80ec0a"
+    },
+    {
+      "file": "DontForget_Android_v1.7.0.apk",
+      "bytes": 75899600,
+      "sha256": "c7c3ac0114abfb0df2535f27300de7d2cefbbea33ce6d9248cb62658cc9e7eb5"
+    },
+    {
+      "file": "DontForget_Linux_x64_v1.7.0.tar.gz",
+      "bytes": 14327273,
+      "sha256": "1371320d631ed19d63c549432960a2c6cdfeb20253e85cb9aaae70af51ef2d35"
+    },
+    {
+      "file": "DontForget_Setup_v1.7.0.exe",
+      "bytes": 14605983,
+      "sha256": "ae179b8be03d8fa87ee90de7a3bc8d681102c4f6524d3fa7715eb58e3b640e41"
+    },
+    {
+      "file": "DontForget_Windows_Portable_v1.7.0.zip",
+      "bytes": 17805590,
+      "sha256": "29b8ff2000b8a082ddcac205173a01ae689bdcd5d2453b06f68cdc3c3dc32aa7"
+    },
+    {
+      "file": "linux-manifest.json",
+      "bytes": 401,
+      "sha256": "2df2c999a5b1428f4929ac169cd57881b3ae13ae62cef79e94b53392ebc22caa"
+    },
+    {
+      "file": "linux-SHA256SUMS.txt",
+      "bytes": 101,
+      "sha256": "251a919e452d400e88f5fec8618c8946c09c247ec3eff06afed8ce2588d2af55"
+    },
+    {
+      "file": "linux-startup.json",
+      "bytes": 572,
+      "sha256": "fffdaa1b220366975a62494cec00e873ab4867531cc5b4e1f66a8a616cba5d26"
+    },
+    {
+      "file": "release-provenance.json",
+      "bytes": 3519,
+      "sha256": "114d960de6a5c9d818b5011563b30d3d5f16da49335fb4dd87567f1d9936ca4c"
+    },
+    {
+      "file": "SHA256SUMS.txt",
+      "bytes": 1388,
+      "sha256": "79aa67aa83b119411effaa67dd26aa858223bff850b69d191dc583839037f0e0"
+    },
+    {
+      "file": "windows-installation.json",
+      "bytes": 286,
+      "sha256": "e3505132f124d1279ebb6a67bd9d286be97000cc9968679c22acc40c871a01fc"
+    },
+    {
+      "file": "windows-manifest.json",
+      "bytes": 657,
+      "sha256": "d0af24bca4150502101bbdcd5704a06646d98b1e7ebd372c28b3388d54a5e02a"
+    },
+    {
+      "file": "windows-SHA256SUMS.txt",
+      "bytes": 201,
+      "sha256": "fd38c4db683dd2b7e07cd704fd797109fb9b1d399c7c77152c8743fe359f46b7"
+    },
+    {
+      "file": "windows-startup.json",
+      "bytes": 442,
+      "sha256": "2f426b328910fdf1b58c658f205d42d4e27879fabed5872a052912297d39f2e8"
+    }
+  ],
+  "release_id": 435358548,
+  "ci_run": 42044381809,
+  "publication_method": "Local corrected publisher after full source/archive/signature/desktop report verification",
+  "initial_publish_workflow": 42049042304,
+  "initial_publish_conclusion": "failure before publication",
+  "local_prepare_patch_sha256": "41befa5e1cb631ffce1b461ddc44c33435b7e80eb5ee4fbe2fdd6aad5afbd252"
+}
