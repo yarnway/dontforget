@@ -1,0 +1,68 @@
+{
+  "commit": "142dac4aa7a2fa2b21ccae1650b5752a45e0a361",
+  "id": 42029917742,
+  "url": "https://github.com/yarnway/dontforget/actions/runs/42029917742",
+  "status": "completed",
+  "conclusion": "failure",
+  "jobs": [
+    {
+      "name": "Analyze and test",
+      "conclusion": "success"
+    },
+    {
+      "name": "Windows analyze and test",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build macos candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build ios candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build linux candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build android candidate",
+      "conclusion": "failure"
+    },
+    {
+      "name": "Build windows candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Verify tag packages without publishing",
+      "conclusion": "skipped"
+    }
+  ],
+  "quality": [
+    {
+      "job": "Analyze and test",
+      "flutter_passed": 2289,
+      "flutter_skipped": 2,
+      "python_run": 155,
+      "python_skipped": 3,
+      "log_sha256": "7207dd76260c24546c6feb0e9b8a6b3262d1f7156380e6baeef09fdb09618323"
+    },
+    {
+      "job": "Windows analyze and test",
+      "flutter_passed": 2271,
+      "flutter_skipped": 20,
+      "python_run": 155,
+      "python_skipped": 6,
+      "log_sha256": "cb96179dff8171df1e836bfdb87945beeb009a8d1129dca65c1d417feb1447b4"
+    }
+  ],
+  "android": "APK and AAB compiled; APK verification tool failed before package publication. No release or tag created.",
+  "repair": "Prefer stable build-tools 36.0.0, exclude preview tools, expose only verification diagnostics and public certificate mismatch.",
+  "local_signature_fixture": {
+    "actual_resigned_qa58_apk_verifies": true,
+    "synthetic_jar_signed_and_certificate_verified": true,
+    "unsigned_jar_entry_rejected": true,
+    "certificate_sha256": "3db49656984fb848a73b1e8d056846b97e2a7caf47c9a9ae74f475cdbb79e9f1",
+    "not_a_59_application_build": true
+  }
+}

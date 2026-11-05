@@ -70,14 +70,25 @@ def verify_android_signatures(apk, aab, expected, environment=None):
     expected = certificate(expected)
     sdk = env.get('ANDROID_SDK_ROOT') or env.get('ANDROID_HOME')
     candidates = list((Path(sdk) / 'build-tools').glob('*/apksigner' + ('.bat' if os.name == 'nt' else ''))) if sdk else []
-    if not candidates:
+    stable = [path for path in candidates if re.fullmatch(r'\d+\.\d+\.\d+', path.parent.name)]
+    if not stable:
         raise ValueError('Android SDK signature verifier is required')
+    # Hosted runners also install preview build tools. Prefer the reproducible
+    # build-tools baseline instead of a preview that may require a newer Java.
+    stable.sort(key=lambda path: tuple(map(int, path.parent.name.split('.'))))
+    verifier = next((path for path in stable if path.parent.name == '36.0.0'), stable[-1])
     def run(args):
         return subprocess.run(args, env=env, capture_output=True, text=True, errors='replace', timeout=90)
-    checked = run([str(sorted(candidates)[-1]), 'verify', '--verbose', '--print-certs', str(apk)])
+    checked = run([str(verifier), 'verify', '--verbose', '--print-certs', str(apk)])
     apk_certificates = re.findall(r'Signer #\d+ certificate SHA-256 digest:\s*([a-fA-F0-9]+)', checked.stdout)
-    if checked.returncode or len(apk_certificates) != 1 or certificate(apk_certificates[0]) != expected:
-        raise ValueError('APK signing verification failed')
+    if checked.returncode:
+        # Verification has no password arguments. Tool errors and public
+        # certificate identities are useful diagnostics and contain no key.
+        raise ValueError(f'APK verifier {verifier.parent.name} exited {checked.returncode}: {checked.stderr[:2000]}')
+    if len(apk_certificates) != 1:
+        raise ValueError('APK verifier did not return exactly one certificate')
+    if certificate(apk_certificates[0]) != expected:
+        raise ValueError('APK signing certificate differs from pinned identity: ' + apk_certificates[0])
     # A self-signed Android certificate has no public CA chain (strict code 4).
     # Other strict warnings, including unsigned entries (16), are rejected.
     checked = run([tool('jarsigner', env), '-J-Duser.language=en', '-J-Duser.country=US', '-verify', '-strict', str(aab)])

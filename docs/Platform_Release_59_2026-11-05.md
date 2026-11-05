@@ -12,6 +12,8 @@ Android使用独立RSA4096发行证书，公开SHA-256为 `3db49656984fb848a73b1
 
 新增签名及发行门禁19项专项通过；Windows Python全量155运行／6跳过、Flutter分析0；固定SDK CI待验。新增测试覆盖缺失／部分材料拒绝、证书不匹配、临时密钥清理、APK／AAB失败拒发、来源／报告失配、ZIP路径／符号链接、额外私有文件及发布后正文／附件摘要。
 
+初次源码142dac4的CI42029917742：双平台质量及Windows／Linux／Apple构建成功，Android APK／AAB编译成功但APK校验工具失败，未生成发行附件或Release。校验器现优先固定稳定build-tools36.0.0、拒绝预览工具并增加公开诊断；真实重签+58 APK／合成JAR证书通过，未签名JAR条目被拒绝（不是+59应用构建通过）。[失败与修正记录](benchmarks/github-ci-59-initial-failure-2026-11-05.json)。
+
 ## 安装包与设备
 
 本地发行构建因Maven／Flutter依赖下载TLS握手失败，未产包，也未关闭TLS或把旧包记作本轮通过；本地高版本SDK引起的锁文件变更已恢复。+59固定SDK云端包、APK／AAB真实签名和五包完整摘要待验，最终Release只使用对应通过CI的源码产物。

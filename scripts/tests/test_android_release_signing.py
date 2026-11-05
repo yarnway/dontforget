@@ -58,13 +58,31 @@ class AndroidSigningTest(unittest.TestCase):
         outputs = [subprocess.CompletedProcess([], apk_code, f'Signer #1 certificate SHA-256 digest: {apk_cert}', ''),
                    subprocess.CompletedProcess([], aab_code, 'jar verified, with signer errors.', ''),
                    subprocess.CompletedProcess([], 0, 'SHA256: ' + aab_cert, '')]
-        with patch('android_release_signing.Path.glob', return_value=[Path('synthetic-apksigner')]), \
+        with patch('android_release_signing.Path.glob', return_value=[Path('synthetic-sdk/build-tools/36.0.0/apksigner')]), \
              patch('android_release_signing.tool', return_value='synthetic-java-tool'), \
              patch('android_release_signing.subprocess.run', side_effect=outputs):
             return verify_android_signatures('app.apk', 'app.aab', CERT, {'ANDROID_HOME': 'synthetic-sdk'})
 
     def test_both_signatures_checked_with_self_signed_certificate(self):
         self.assertEqual(self.check(), CERT)
+
+    def test_stable_baseline_precedes_newer_and_preview_sdk_tools(self):
+        tools = [Path('sdk/build-tools/37.0.0-rc9/apksigner'),
+                 Path('sdk/build-tools/37.0.0/apksigner'),
+                 Path('sdk/build-tools/36.0.0/apksigner')]
+        failed = subprocess.CompletedProcess([], 1, '', 'synthetic tool diagnostic')
+        with patch('android_release_signing.Path.glob', return_value=tools), \
+             patch('android_release_signing.subprocess.run', return_value=failed) as run:
+            with self.assertRaisesRegex(ValueError, '36.0.0 exited 1'):
+                verify_android_signatures('app.apk', 'app.aab', CERT, {'ANDROID_HOME': 'sdk'})
+        self.assertEqual(Path(run.call_args.args[0][0]).parent.name, '36.0.0')
+
+    def test_preview_only_sdk_is_rejected_without_running_it(self):
+        with patch('android_release_signing.Path.glob', return_value=[Path('sdk/build-tools/37.0.0-rc9/apksigner')]), \
+             patch('android_release_signing.subprocess.run') as run:
+            with self.assertRaises(ValueError):
+                verify_android_signatures('app.apk', 'app.aab', CERT, {'ANDROID_HOME': 'sdk'})
+        run.assert_not_called()
 
     def test_tampered_apk_wrong_certificate_or_unsigned_aab_rejected(self):
         for arguments in [{'apk_code': 1}, {'apk_cert': 'b' * 64}, {'aab_code': 20}, {'aab_cert': 'b' * 64}]:
