@@ -1,4 +1,7 @@
 import 'dart:async';
+import 'package:dont_forget/models/speech_settings.dart';
+import 'package:dont_forget/models/tencent_speech_credentials.dart';
+import 'package:dont_forget/services/speech_recognition_service.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:path/path.dart' as p;
@@ -67,6 +70,29 @@ class _Speech extends LocalSpeechService {
   }
 }
 
+class _TencentSpeech extends SpeechRecognitionService {
+  int calls = 0, cancels = 0;
+  Object? error;
+  Completer<String>? pending;
+  final entered = Completer<void>();
+  @override
+  Future<String> transcribe(
+    String path,
+    SpeechSettings settings, {
+    dynamic cancelToken,
+  }) async {
+    calls++;
+    if (!entered.isCompleted) entered.complete();
+    if (error != null) throw error!;
+    return pending == null ? '明天 meeting at nine' : await pending!.future;
+  }
+
+  @override
+  void cancel() {
+    cancels++;
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const recorder = MethodChannel('com.llfbandit.record/messages');
@@ -86,6 +112,7 @@ void main() {
   bool produceAudio = false;
   int captureMillis = 2000;
   late _Speech speech;
+  late _TencentSpeech tencent;
   Completer<bool>? permissionReply;
   Completer<void>? nativeStartReply;
 
@@ -108,6 +135,7 @@ void main() {
     captureMillis = 2000;
     recordingPath = null;
     speech = _Speech();
+    tencent = _TencentSpeech();
     permissionReply = null;
     nativeStartReply = null;
     // path_provider may return a bundle-specific macOS cache path that does
@@ -165,6 +193,7 @@ void main() {
         databaseHelperProvider.overrideWithValue(database),
         notificationServiceProvider.overrideWithValue(notifications),
         localSpeechServiceProvider.overrideWithValue(speech),
+        speechRecognitionServiceProvider.overrideWithValue(tencent),
       ],
     );
     await container.read(settingsProvider.notifier).ready;
@@ -533,6 +562,83 @@ void main() {
       );
     },
   );
+  Future<void> configureTencent() async {
+    final notifier = container.read(settingsProvider.notifier);
+    await notifier.updateSettings(
+      notifier.state.copyWith(
+        speech: SpeechSettings(
+          enabled: true,
+          endpoint: TencentSpeechCredentials.endpoint,
+          model: TencentSpeechCredentials.engine,
+          apiKey: const TencentSpeechCredentials(
+            appId: '1259000000',
+            secretId: 'AKIDTESTID12345678',
+            secretKey: 'unit-private',
+          ).encode(),
+        ),
+      ),
+    );
+  }
+
+  test(
+    'explicit up/right disposition returns Tencent Chinese/English draft without native recognition or sending',
+    () async {
+      await configureTencent();
+      speech.enabled = true;
+      speech.androidPlatform = true;
+      produceAudio = true;
+      final home = container.read(homeControllerProvider.notifier);
+      expect(await home.startRecording(), true);
+      expect(await home.stopRecordingToText(), '明天 meeting at nine');
+      expect(tencent.calls, 1);
+      expect(speech.calls, 0);
+      expect(container.read(remindersProvider), isEmpty);
+      expect(container.read(mediaRecordsProvider), isEmpty);
+    },
+  );
+
+  test(
+    'Tencent failure preserves original audio and explains configuration without chat fallback',
+    () async {
+      await configureTencent();
+      produceAudio = true;
+      tencent.error = const SpeechRecognitionException('authentication');
+      final home = container.read(homeControllerProvider.notifier);
+      expect(await home.startRecording(), true);
+      expect(await home.stopRecordingToText(), isNull);
+      expect(tencent.calls, 1);
+      expect(speech.calls, 0);
+      expect(home.state.error, contains('腾讯云鉴权失败'));
+      expect(container.read(remindersProvider).single.recordId, isNotNull);
+      expect(
+        await File(
+          container.read(mediaRecordsProvider).single.contentOrPath,
+        ).exists(),
+        true,
+      );
+    },
+  );
+
+  test(
+    'recovery cancels Tencent and rejects delayed text from an old recording',
+    () async {
+      await configureTencent();
+      produceAudio = true;
+      tencent.pending = Completer<String>();
+      final home = container.read(homeControllerProvider.notifier);
+      expect(await home.startRecording(), true);
+      final pending = home.stopRecordingToText();
+      await tencent.entered.future;
+      final gate = container.read(runtimeRecoveryGateProvider);
+      final paused = await gate.pause();
+      tencent.pending!.complete('late private draft');
+      expect(await pending, isNull);
+      expect(tencent.cancels, greaterThan(0));
+      expect(container.read(remindersProvider), isEmpty);
+      gate.resume(paused);
+    },
+  );
+
   test(
     'Android original audio saves as memo without recorded-file recognition',
     () async {
@@ -577,6 +683,7 @@ void main() {
           databaseHelperProvider.overrideWithValue(database),
           notificationServiceProvider.overrideWithValue(notifications),
           localSpeechServiceProvider.overrideWithValue(speech),
+          speechRecognitionServiceProvider.overrideWithValue(tencent),
           llmServiceProvider.overrideWithValue(model),
         ],
       );

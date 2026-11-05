@@ -224,6 +224,44 @@ class CredentialRepository {
     );
   }, admitted: false);
 
+  /// Non-secret preferences do not rotate, read or rewrite vault credentials.
+  /// Share the credential writer serializer so a model save cannot race this SQL
+  /// patch; the transaction also rejects stale editors from another notifier.
+  Future<void> savePreferences(
+    AppPreferences expected,
+    AppPreferences value,
+    DataGeneration generation,
+  ) => _serial(
+    generation,
+    () => database.writeTransaction(generation, (db) async {
+      if (!const {'zh', 'en', 'ja'}.contains(value.language)) {
+        throw const FormatException('Unsupported language preference');
+      }
+      final rows = await db.query(
+        'Settings',
+        where: 'id = ?',
+        whereArgs: ['default'],
+      );
+      if (rows.length != 1) throw StateError('Settings unavailable');
+      if (AppSettings.fromJson(rows.single).preferences != expected) {
+        throw const PreferencesConflict();
+      }
+      if (await db.update(
+            'Settings',
+            {
+              'language': value.language,
+              'appearance': value.appearance.name,
+              'input_send_mode': value.send.name,
+            },
+            where: 'id = ?',
+            whereArgs: ['default'],
+          ) !=
+          1) {
+        throw StateError('Settings unavailable');
+      }
+    }),
+  );
+
   Future<CredentialLoad> save(
     AppSettings settings,
     DataGeneration generation, {

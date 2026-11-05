@@ -80,6 +80,91 @@ void main() {
   }
 
   test(
+    'preference save patches only non-secret fields without secure storage I/O',
+    () async {
+      await settings.updateSettings(keyed('preserved-model-secret'));
+      final before = await row();
+      final contents = Map.of(vault.values);
+      final writes = vault.writes;
+      final expected = settings.state.preferences;
+      vault.failRead = true;
+      vault.failWrite = true;
+      await settings.updatePreferences(
+        expected: expected,
+        value: (
+          language: 'en',
+          appearance: AppAppearance.dark,
+          send: InputSendMode.button,
+        ),
+      );
+      expect(vault.writes, writes);
+      expect(vault.values, contents);
+      expect(settings.state.apiKey, 'preserved-model-secret');
+      final after = await row();
+      final changed = before.keys.where((k) => before[k] != after[k]).toSet();
+      expect(changed, {'language', 'appearance', 'input_send_mode'});
+      expect(after['api_key'], before['api_key']);
+      vault.failRead = false;
+      vault.failWrite = false;
+      await reload();
+      expect(settings.state.appearance, AppAppearance.dark);
+      expect(settings.state.apiKey, 'preserved-model-secret');
+    },
+  );
+
+  test(
+    'two preference writers cannot silently overwrite a stale draft',
+    () async {
+      final expected = settings.state.preferences;
+      final first = settings.updatePreferences(
+        expected: expected,
+        value: (
+          language: 'en',
+          appearance: AppAppearance.dark,
+          send: InputSendMode.button,
+        ),
+      );
+      final second = settings.updatePreferences(
+        expected: expected,
+        value: (
+          language: 'ja',
+          appearance: AppAppearance.light,
+          send: InputSendMode.enter,
+        ),
+      );
+      final rejected = expectLater(second, throwsA(isA<PreferencesConflict>()));
+      await first;
+      await rejected;
+      expect(settings.state.language, 'en');
+      await reload();
+      expect(settings.state.language, 'en');
+    },
+  );
+
+  test(
+    'preference write refuses a paused database and preserves current values',
+    () async {
+      final expected = settings.state.preferences;
+      final lease = await db.beginMaintenance();
+      await expectLater(
+        Future.sync(
+          () => settings.updatePreferences(
+            expected: expected,
+            value: (
+              language: 'en',
+              appearance: AppAppearance.dark,
+              send: InputSendMode.enter,
+            ),
+          ),
+        ),
+        throwsA(isA<DatabaseAccessException>()),
+      );
+      await lease.resume();
+      expect(settings.state.preferences, expected);
+    },
+  );
+
+  test(
     'secrets live only in vault; runtime state hydrates after restart',
     () async {
       await settings.updateSettings(keyed('synthetic-private-one'));

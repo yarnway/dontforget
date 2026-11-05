@@ -24,9 +24,9 @@ import '../../models/settings.dart';
 import '../../l10n/app_localizations.dart';
 import 'backup_preview_screen.dart';
 import 'ai_profiles_screen.dart';
-import '../../services/live_dictation_service.dart';
-import '../../l10n/dictation_strings.dart';
-import '../widgets/dictation_language_sheet.dart';
+import 'speech_settings_screen.dart';
+import '../../l10n/preferences_strings.dart';
+import '../../l10n/speech_recognition_strings.dart';
 
 typedef ConsoleProcessRunner =
     Future<ProcessResult> Function(String executable, List<String> arguments);
@@ -123,8 +123,13 @@ const List<ModelProvider> _providers = [
   ),
 ];
 
+enum SettingsArea { ai, notifications, sync }
+
+/// Advanced pages reuse the existing save/recovery logic. Null retains the
+/// legacy full editor for compatibility with internal callers and fixtures.
 class SettingsScreen extends ConsumerStatefulWidget {
-  const SettingsScreen({super.key});
+  const SettingsScreen({super.key, this.area});
+  final SettingsArea? area;
 
   @override
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
@@ -143,7 +148,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late _SettingsDraft _savedDraft;
   late final DataGeneration _generation;
   late final RuntimeRecoveryToken _birth;
-  late final NotificationDiagnosticsService _notificationDiagnostics;
+  NotificationDiagnosticsService? _diagnostics;
+  NotificationDiagnosticsService get _notificationDiagnostics =>
+      _diagnostics ??= NotificationDiagnosticsService.forNotifications(
+        ref.read(notificationServiceProvider),
+        database: ref.read(databaseHelperProvider),
+        readSchedule: ref.read(notificationScheduleStatusReaderProvider),
+        readFailureHistory: ref.read(notificationFailureHistoryReaderProvider),
+        checkCurrent: _checkCurrent,
+      );
   bool _ready = false, _dirty = false;
   String? _loadError;
 
@@ -221,13 +234,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     super.initState();
     _generation = ref.read(databaseHelperProvider).captureGeneration();
     _birth = ref.read(runtimeRecoveryGateProvider).capture();
-    _notificationDiagnostics = NotificationDiagnosticsService.forNotifications(
-      ref.read(notificationServiceProvider),
-      database: ref.read(databaseHelperProvider),
-      readSchedule: ref.read(notificationScheduleStatusReaderProvider),
-      readFailureHistory: ref.read(notificationFailureHistoryReaderProvider),
-      checkCurrent: _checkCurrent,
-    );
     final settings = ref.read(settingsProvider);
     _apiKeyController = TextEditingController(text: settings.apiKey);
     _baseUrlController = TextEditingController(text: settings.baseUrl);
@@ -253,10 +259,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       }
     }
 
-    final lanSync = ref.read(lanSyncServiceProvider);
-    _isLanServerRunning = lanSync.isRunning;
-    _lanIp = lanSync.localIp;
-    _lanPin = lanSync.pin;
+    if (widget.area == null || widget.area == SettingsArea.sync) {
+      final lanSync = ref.read(lanSyncServiceProvider);
+      _isLanServerRunning = lanSync.isRunning;
+      _lanIp = lanSync.localIp;
+      _lanPin = lanSync.pin;
+    }
   }
 
   @override
@@ -660,6 +668,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  Widget _advancedConnection(Widget child) => widget.area == null
+      ? child
+      : Card.outlined(
+          child: ExpansionTile(
+            key: const ValueKey('settings-advanced-connection'),
+            leading: const Icon(Icons.tune),
+            title: Text(
+              preferencesText(
+                AppLocalizations.of(context).locale.languageCode,
+                'connection',
+              ),
+            ),
+            children: [child],
+          ),
+        );
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -678,50 +702,65 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         appBar: AppBar(
           leading: BackButton(onPressed: exit),
           title: Text(
-            l10n.get('settings'),
+            widget.area == null
+                ? l10n.get('settings')
+                : preferencesText(l10n.locale.languageCode, widget.area!.name),
             style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
           ),
           elevation: 0,
           backgroundColor: Colors.transparent,
         ),
-        bottomNavigationBar: SafeArea(
-          top: false,
-          child: Center(
-            heightFactor: 1,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 840),
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  12,
-                  16,
-                  12 + MediaQuery.viewInsetsOf(context).bottom,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _isBackingUp ? null : _backupNow,
-                        icon: const Icon(Icons.backup_outlined, size: 18),
-                        label: Text(
-                          l10n.get('backupNow'),
-                          textAlign: TextAlign.center,
-                        ),
+        bottomNavigationBar:
+            widget.area == SettingsArea.notifications ||
+                widget.area == SettingsArea.sync
+            ? null
+            : SafeArea(
+                top: false,
+                child: Center(
+                  heightFactor: 1,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 840),
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        16,
+                        12,
+                        16,
+                        12 + MediaQuery.viewInsetsOf(context).bottom,
+                      ),
+                      child: Row(
+                        children: [
+                          if (widget.area == null)
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: _isBackingUp ? null : _backupNow,
+                                icon: const Icon(
+                                  Icons.backup_outlined,
+                                  size: 18,
+                                ),
+                                label: Text(
+                                  l10n.get('backupNow'),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: FilledButton(
+                              onPressed:
+                                  !_ready ||
+                                      _isSaving ||
+                                      (widget.area != null && !_dirty)
+                                  ? null
+                                  : save,
+                              child: Text(l10n.get('save')),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: !_ready || _isSaving ? null : save,
-                        child: Text(l10n.get('save')),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
-        ),
         body: ColoredBox(
           color: Theme.of(context).colorScheme.surface,
           child: SafeArea(
@@ -743,902 +782,992 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           color: Theme.of(context).colorScheme.error,
                         ),
                       ),
-                    AppearancePicker(
-                      value: _selectedAppearance,
-                      onChanged: !_ready || _isSaving
-                          ? null
-                          : (value) {
-                              setState(() => _selectedAppearance = value);
-                              _draftChanged();
-                            },
-                    ),
-                    const SizedBox(height: 14),
-                    InputSendModePicker(
-                      value: _selectedSendMode,
-                      onChanged: !_ready || _isSaving
-                          ? null
-                          : (value) {
-                              setState(() => _selectedSendMode = value);
-                              _draftChanged();
-                            },
-                    ),
-                    const SizedBox(height: 14),
-                    if (Theme.of(context).platform == TargetPlatform.android)
-                      Material(
-                        color: Colors.transparent,
+                    if (widget.area == null) ...[
+                      AppearancePicker(
+                        value: _selectedAppearance,
+                        onChanged: !_ready || _isSaving
+                            ? null
+                            : (value) {
+                                setState(() => _selectedAppearance = value);
+                                _draftChanged();
+                              },
+                      ),
+                    ],
+                    if (widget.area == null) ...[const SizedBox(height: 14)],
+                    if (widget.area == null) ...[
+                      InputSendModePicker(
+                        value: _selectedSendMode,
+                        onChanged: !_ready || _isSaving
+                            ? null
+                            : (value) {
+                                setState(() => _selectedSendMode = value);
+                                _draftChanged();
+                              },
+                      ),
+                    ],
+                    if (widget.area == null) ...[const SizedBox(height: 14)],
+                    if (widget.area == null ||
+                        widget.area == SettingsArea.ai) ...[
+                      Card.outlined(
                         child: ListTile(
-                          leading: const Icon(Icons.mic_none),
-                          title: Text(dictationText(l10n, 'title')),
-                          subtitle: const Text('中文 / English'),
-                          onTap: () => showDictationLanguages(
-                            context,
-                            ref.read(liveDictationServiceProvider),
+                          key: const ValueKey('settings-speech'),
+                          leading: const Icon(Icons.record_voice_over_outlined),
+                          title: Text(
+                            speechText(l10n.locale.languageCode, 'title'),
                           ),
+                          subtitle: Text(
+                            speechText(l10n.locale.languageCode, 'provider'),
+                          ),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: !_ready || _isSaving
+                              ? null
+                              : () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) =>
+                                        const SpeechSettingsScreen(),
+                                  ),
+                                ),
                         ),
                       ),
-                    // Privacy Shield Guarantee
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.teal.shade900.withValues(alpha: 0.25)
-                            : Colors.teal.shade50.withValues(alpha: 0.75),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
+                    ],
+                    if (widget.area == null ||
+                        widget.area == SettingsArea.ai) ...[
+                      const SizedBox(height: 14),
+                    ],
+                    if (widget.area == null ||
+                        widget.area == SettingsArea.ai) ...[
+                      // Privacy Shield Guarantee
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
                           color: isDark
-                              ? Colors.tealAccent.withValues(alpha: 0.3)
-                              : Colors.teal.shade300,
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(
-                            Icons.security_rounded,
+                              ? Colors.teal.shade900.withValues(alpha: 0.25)
+                              : Colors.teal.shade50.withValues(alpha: 0.75),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
                             color: isDark
-                                ? Colors.tealAccent
-                                : Colors.teal.shade700,
-                            size: 22,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  l10n.get('privacyShieldTitle'),
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: isDark
-                                        ? Colors.tealAccent
-                                        : Colors.teal.shade900,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  l10n.get('privacyShieldDesc'),
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: isDark
-                                        ? Colors.grey.shade300
-                                        : Colors.teal.shade900.withValues(
-                                            alpha: 0.8,
-                                          ),
-                                    height: 1.35,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    Card.outlined(
-                      margin: EdgeInsets.zero,
-                      child: ListTile(
-                        key: const ValueKey('settings-model-profiles'),
-                        leading: const Icon(Icons.swap_vert),
-                        title: Text(l10n.get('aiProfilesEntry')),
-                        subtitle: Text(l10n.get('aiProfilesEntryHint')),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: _isSaving ? null : _openModelProfiles,
-                      ),
-                    ),
-                    Card.outlined(
-                      margin: EdgeInsets.zero,
-                      child: ListTile(
-                        key: const ValueKey('settings-content-management'),
-                        leading: const Icon(Icons.inventory_2_outlined),
-                        title: Text(contentText(context, 'title')),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: _isSaving || !_ready
-                            ? null
-                            : () => Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (context) => Scaffold(
-                                    appBar: AppBar(
-                                      title: Text(
-                                        contentText(context, 'title'),
-                                      ),
-                                    ),
-                                    body: const ContentManagementPanel(),
-                                  ),
-                                ),
-                              ),
-                      ),
-                    ),
-                    CredentialStatusPanel(
-                      onRetry: _reloadCredentials,
-                      allowRemove: false,
-                    ),
-                    Card.outlined(
-                      margin: EdgeInsets.zero,
-                      child: ListTile(
-                        key: const ValueKey('settings-data-protection'),
-                        leading: const Icon(Icons.enhanced_encryption_outlined),
-                        title: Text(protectionText(context, 'title')),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: _isSaving || !_ready
-                            ? null
-                            : _openDataProtection,
-                      ),
-                    ),
-                    ValueListenableBuilder<AiExtractionStatus?>(
-                      valueListenable: ref
-                          .watch(llmServiceProvider)
-                          .lastExtraction,
-                      builder: (context, status, _) => status == null
-                          ? const SizedBox.shrink()
-                          : Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Text(
-                                status.label == null
-                                    ? l10n.get('aiProfilesAllFailed')
-                                    : '${l10n.get('aiProfilesLast').replaceAll('{name}', status.label!)}${status.usedFallback ? ' · ${l10n.get('aiProfilesUsedFallback')}' : ''}',
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ),
-                    ),
-                    const SizedBox(height: 14),
-
-                    Card.outlined(
-                      margin: EdgeInsets.zero,
-                      child: ListTile(
-                        key: const ValueKey('settings-backup-preview'),
-                        leading: const Icon(Icons.fact_check_outlined),
-                        title: Text(l10n.get('backupPreviewTitle')),
-                        subtitle: Text(l10n.get('backupPreviewReadOnly')),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => const BackupPreviewScreen(),
+                                ? Colors.tealAccent.withValues(alpha: 0.3)
+                                : Colors.teal.shade300,
+                            width: 1,
                           ),
                         ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    NotificationPermissionPanel(
-                      onReadSystemNotifications: ref
-                          .read(notificationServiceProvider)
-                          .readSystemNotifications,
-                      onReadScheduleStatus: ref.read(
-                        notificationScheduleStatusReaderProvider,
-                      ),
-                      onRetryReminders: () => ref
-                          .read(remindersProvider.notifier)
-                          .retryNotificationDelivery(),
-                    ),
-                    const SizedBox(height: 14),
-
-                    NotificationDiagnosticsPanel(
-                      service: _notificationDiagnostics,
-                    ),
-                    const SizedBox(height: 14),
-
-                    // Language Setting
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.black26
-                            : Colors.white.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outlineVariant,
-                          width: 1,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.language_rounded,
-                                size: 18,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                l10n.get('language'),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          DropdownButtonFormField<String>(
-                            decoration: InputDecoration(
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              isDense: true,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 10,
-                              ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.security_rounded,
+                              color: isDark
+                                  ? Colors.tealAccent
+                                  : Colors.teal.shade700,
+                              size: 22,
                             ),
-                            key: ValueKey('settings-language-$_ready'),
-                            initialValue: _selectedLang,
-                            items: const [
-                              DropdownMenuItem(
-                                value: 'zh',
-                                child: Text('简体中文'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'en',
-                                child: Text('English'),
-                              ),
-                              DropdownMenuItem(value: 'ja', child: Text('日本語')),
-                            ],
-                            onChanged: (val) {
-                              if (val != null) {
-                                setState(() {
-                                  _selectedLang = val;
-                                  _dirty = _captureDraft() != _savedDraft;
-                                });
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    // Edge AI Inference Probe Card
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.black26
-                            : Colors.white.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outlineVariant,
-                          width: 1,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.radar_rounded,
-                                size: 18,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  l10n.get('localEngineProbe'),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                              OutlinedButton.icon(
-                                style: OutlinedButton.styleFrom(
-                                  visualDensity: VisualDensity.compact,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                ),
-                                onPressed: _isProbing
-                                    ? null
-                                    : _probeLocalEngines,
-                                icon: _isProbing
-                                    ? const SizedBox(
-                                        width: 12,
-                                        height: 12,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 1.5,
-                                        ),
-                                      )
-                                    : const Icon(
-                                        Icons.refresh_rounded,
-                                        size: 14,
-                                      ),
-                                label: Text(
-                                  _isProbing
-                                      ? l10n.get('probing')
-                                      : l10n.get('probeNow'),
-                                  style: const TextStyle(fontSize: 11),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            l10n.get('probeDesc'),
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                          if (_probeResults != null) ...[
-                            const SizedBox(height: 10),
-                            for (final ep in _probeResults!)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 6),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isDark
-                                        ? Colors.white.withValues(alpha: 0.03)
-                                        : Colors.grey.shade50,
-                                    borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(
-                                      color: ep.isAvailable
-                                          ? Colors.green.withValues(alpha: 0.4)
-                                          : Colors.grey.withValues(alpha: 0.2),
-                                      width: 0.8,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        ep.isAvailable
-                                            ? Icons.check_circle_rounded
-                                            : Icons.radio_button_unchecked,
-                                        size: 16,
-                                        color: ep.isAvailable
-                                            ? Colors.green
-                                            : Colors.grey,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              '${ep.name} (Port ${ep.port})',
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            Text(
-                                              ep.isAvailable
-                                                  ? '${ep.recommendedModel} · ${ep.latencyMs}ms'
-                                                  : '端口未监听',
-                                              style: TextStyle(
-                                                fontSize: 10,
-                                                color: ep.isAvailable
-                                                    ? Colors.green.shade700
-                                                    : Colors.grey,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      if (ep.isAvailable)
-                                        ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                            visualDensity:
-                                                VisualDensity.compact,
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 2,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(4),
-                                            ),
-                                          ),
-                                          onPressed: () =>
-                                              _applyLocalEngine(ep),
-                                          child: Text(
-                                            l10n.get('applyToSettings'),
-                                            style: const TextStyle(
-                                              fontSize: 10,
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    // Decentralized LAN Sync Card
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.black26
-                            : Colors.white.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outlineVariant,
-                          width: 1,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.wifi_tethering_rounded,
-                                size: 18,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  l10n.get('lanSyncTitle'),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                              Switch(
-                                value: _isLanServerRunning,
-                                onChanged: (_) => _toggleLanServer(),
-                              ),
-                            ],
-                          ),
-                          Text(
-                            l10n.get('lanSyncDesc'),
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                          if (_isLanServerRunning) ...[
-                            const SizedBox(height: 10),
-                            Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? Colors.blueGrey.shade900.withValues(
-                                        alpha: 0.3,
-                                      )
-                                    : Colors.blueGrey.shade50,
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: Colors.blueGrey.withValues(alpha: 0.3),
-                                  width: 0.8,
-                                ),
-                              ),
+                            const SizedBox(width: 10),
+                            Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.router_rounded,
-                                        size: 14,
-                                        color: Colors.blueAccent,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        '${l10n.get('lanServerRunning')}$_lanIp:42888',
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ],
+                                  Text(
+                                    l10n.get('privacyShieldTitle'),
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: isDark
+                                          ? Colors.tealAccent
+                                          : Colors.teal.shade900,
+                                    ),
                                   ),
-                                  const SizedBox(height: 6),
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.vpn_key_rounded,
-                                        size: 14,
-                                        color: Colors.amber,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        '${l10n.get('syncPin')}$_lanPin',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          letterSpacing: 1.5,
-                                          color: Colors.amber,
-                                        ),
-                                      ),
-                                    ],
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    l10n.get('privacyShieldDesc'),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: isDark
+                                          ? Colors.grey.shade300
+                                          : Colors.teal.shade900.withValues(
+                                              alpha: 0.8,
+                                            ),
+                                      height: 1.35,
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
                           ],
-                          const Divider(height: 20),
-                          Text(
-                            l10n.get('connectToDevice'),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Expanded(
-                                flex: 3,
-                                child: TextField(
-                                  controller: _targetIpController,
-                                  style: const TextStyle(fontSize: 12),
-                                  decoration: InputDecoration(
-                                    labelText: l10n.get('enterTargetIp'),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    isDense: true,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 8,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                flex: 2,
-                                child: TextField(
-                                  controller: _targetPinController,
-                                  style: const TextStyle(fontSize: 12),
-                                  decoration: InputDecoration(
-                                    labelText: l10n.get('enterPin'),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    isDense: true,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 8,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: FilledButton.icon(
-                              style: FilledButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 8,
-                                ),
-                              ),
-                              onPressed: _isSyncing ? null : _syncWithTarget,
-                              icon: _isSyncing
-                                  ? const SizedBox(
-                                      width: 12,
-                                      height: 12,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 1.5,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : const Icon(Icons.sync_rounded, size: 14),
-                              label: Text(
-                                _isSyncing
-                                    ? l10n.get('syncing')
-                                    : l10n.get('syncNow'),
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    // AI Configuration (Wireframe style)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.black26
-                            : Colors.white.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outlineVariant,
-                          width: 1,
                         ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.memory_rounded,
-                                size: 18,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
+                    ],
+                    if (widget.area == null ||
+                        widget.area == SettingsArea.ai) ...[
+                      const SizedBox(height: 14),
+                    ],
+                    if (widget.area == null ||
+                        widget.area == SettingsArea.ai) ...[
+                      Card.outlined(
+                        margin: EdgeInsets.zero,
+                        child: ListTile(
+                          key: const ValueKey('settings-model-profiles'),
+                          leading: const Icon(Icons.swap_vert),
+                          title: Text(l10n.get('aiProfilesEntry')),
+                          subtitle: Text(l10n.get('aiProfilesEntryHint')),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: _isSaving ? null : _openModelProfiles,
+                        ),
+                      ),
+                    ],
+                    if (widget.area == null) ...[
+                      Card.outlined(
+                        margin: EdgeInsets.zero,
+                        child: ListTile(
+                          key: const ValueKey('settings-content-management'),
+                          leading: const Icon(Icons.inventory_2_outlined),
+                          title: Text(contentText(context, 'title')),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: _isSaving || !_ready
+                              ? null
+                              : () => Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (context) => Scaffold(
+                                      appBar: AppBar(
+                                        title: Text(
+                                          contentText(context, 'title'),
+                                        ),
+                                      ),
+                                      body: const ContentManagementPanel(),
+                                    ),
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ],
+                    if (widget.area == null ||
+                        widget.area == SettingsArea.ai) ...[
+                      CredentialStatusPanel(
+                        onRetry: _reloadCredentials,
+                        allowRemove: false,
+                      ),
+                    ],
+                    if (widget.area == null) ...[
+                      Card.outlined(
+                        margin: EdgeInsets.zero,
+                        child: ListTile(
+                          key: const ValueKey('settings-data-protection'),
+                          leading: const Icon(
+                            Icons.enhanced_encryption_outlined,
+                          ),
+                          title: Text(protectionText(context, 'title')),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: _isSaving || !_ready
+                              ? null
+                              : _openDataProtection,
+                        ),
+                      ),
+                    ],
+                    if (widget.area == null ||
+                        widget.area == SettingsArea.ai) ...[
+                      ValueListenableBuilder<AiExtractionStatus?>(
+                        valueListenable: ref
+                            .watch(llmServiceProvider)
+                            .lastExtraction,
+                        builder: (context, status, _) => status == null
+                            ? const SizedBox.shrink()
+                            : Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
                                 child: Text(
-                                  l10n.get('llmConfigTitle'),
+                                  status.label == null
+                                      ? l10n.get('aiProfilesAllFailed')
+                                      : '${l10n.get('aiProfilesLast').replaceAll('{name}', status.label!)}${status.usedFallback ? ' · ${l10n.get('aiProfilesUsedFallback')}' : ''}',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ),
+                      ),
+                    ],
+                    if (widget.area == null ||
+                        widget.area == SettingsArea.ai) ...[
+                      const SizedBox(height: 14),
+                    ],
+                    if (widget.area == null) ...[
+                      Card.outlined(
+                        margin: EdgeInsets.zero,
+                        child: ListTile(
+                          key: const ValueKey('settings-backup-preview'),
+                          leading: const Icon(Icons.fact_check_outlined),
+                          title: Text(l10n.get('backupPreviewTitle')),
+                          subtitle: Text(l10n.get('backupPreviewReadOnly')),
+                          trailing: const Icon(Icons.chevron_right),
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const BackupPreviewScreen(),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (widget.area == null) ...[const SizedBox(height: 14)],
+                    if (widget.area == null ||
+                        widget.area == SettingsArea.notifications) ...[
+                      NotificationPermissionPanel(
+                        onReadSystemNotifications: ref
+                            .read(notificationServiceProvider)
+                            .readSystemNotifications,
+                        onReadScheduleStatus: ref.read(
+                          notificationScheduleStatusReaderProvider,
+                        ),
+                        onRetryReminders: () => ref
+                            .read(remindersProvider.notifier)
+                            .retryNotificationDelivery(),
+                      ),
+                    ],
+                    if (widget.area == null ||
+                        widget.area == SettingsArea.notifications) ...[
+                      const SizedBox(height: 14),
+                    ],
+                    if (widget.area == null ||
+                        widget.area == SettingsArea.notifications) ...[
+                      NotificationDiagnosticsPanel(
+                        service: _notificationDiagnostics,
+                      ),
+                    ],
+                    if (widget.area == null ||
+                        widget.area == SettingsArea.notifications) ...[
+                      const SizedBox(height: 14),
+                    ],
+                    if (widget.area == null) ...[
+                      // Language Setting
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.black26
+                              : Colors.white.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                            width: 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.language_rounded,
+                                  size: 18,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  l10n.get('language'),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w700,
                                     fontSize: 14,
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              ActionChip(
-                                avatar: const Icon(
-                                  Icons.bolt_rounded,
-                                  size: 15,
-                                  color: Colors.blue,
-                                ),
-                                label: Text(
-                                  l10n.get('quickDeepSeek'),
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  side: BorderSide(
-                                    color: Colors.blue.withValues(alpha: 0.4),
-                                    width: 1,
-                                  ),
-                                ),
-                                onPressed: () =>
-                                    _onProviderChanged(_providers[0]),
-                              ),
-                              ActionChip(
-                                avatar: const Icon(
-                                  Icons.auto_awesome,
-                                  size: 15,
-                                  color: Colors.deepPurple,
-                                ),
-                                label: Text(
-                                  l10n.get('quickGemini'),
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  side: BorderSide(
-                                    color: Colors.deepPurple.withValues(
-                                      alpha: 0.4,
-                                    ),
-                                    width: 1,
-                                  ),
-                                ),
-                                onPressed: () =>
-                                    _onProviderChanged(_providers[1]),
-                              ),
-                              ActionChip(
-                                avatar: const Icon(
-                                  Icons.download_for_offline_rounded,
-                                  size: 15,
-                                  color: Colors.teal,
-                                ),
-                                label: Text(
-                                  l10n.get('ollamaLocal'),
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                  side: BorderSide(
-                                    color: Colors.teal.withValues(alpha: 0.4),
-                                    width: 1,
-                                  ),
-                                ),
-                                onPressed: () =>
-                                    _onProviderChanged(_providers[2]),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          DropdownButtonFormField<ModelProvider>(
-                            isExpanded: true,
-                            decoration: InputDecoration(
-                              labelText: l10n.get('presetProvider'),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              isDense: true,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 10,
-                              ),
+                              ],
                             ),
-                            initialValue: _selectedProvider,
-                            items: [
-                              DropdownMenuItem(
-                                value: null,
-                                child: Text(l10n.get('customProvider')),
-                              ),
-                              ..._providers.map(
-                                (p) => DropdownMenuItem(
-                                  value: p,
-                                  child: Text(
-                                    p.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                            const SizedBox(height: 12),
+                            DropdownButtonFormField<String>(
+                              decoration: InputDecoration(
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
                                 ),
                               ),
-                            ],
-                            onChanged: _onProviderChanged,
-                          ),
-                          const SizedBox(height: 14),
-                          TextField(
-                            key: const ValueKey('settings-api-key'),
-                            controller: _apiKeyController,
-                            decoration: InputDecoration(
-                              labelText: l10n.get('apiKey'),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              helperText: l10n.get('apiKeyHelper'),
-                              isDense: true,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 10,
-                              ),
+                              key: ValueKey('settings-language-$_ready'),
+                              initialValue: _selectedLang,
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'zh',
+                                  child: Text('简体中文'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'en',
+                                  child: Text('English'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'ja',
+                                  child: Text('日本語'),
+                                ),
+                              ],
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setState(() {
+                                    _selectedLang = val;
+                                    _dirty = _captureDraft() != _savedDraft;
+                                  });
+                                }
+                              },
                             ),
-                            obscureText: true,
+                          ],
+                        ),
+                      ),
+                    ],
+                    if (widget.area == null) ...[const SizedBox(height: 14)],
+                    if (widget.area == null ||
+                        widget.area == SettingsArea.sync) ...[
+                      // Edge AI Inference Probe Card
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.black26
+                              : Colors.white.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                            width: 1,
                           ),
-                          const SizedBox(height: 8),
-                          // Platform Official Console Direct Links
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2, bottom: 6),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
                               children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.open_in_new_rounded,
-                                      size: 13,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      l10n.get('openOfficialSite'),
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.primary,
-                                      ),
-                                    ),
-                                  ],
+                                Icon(
+                                  Icons.radar_rounded,
+                                  size: 18,
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
-                                const SizedBox(height: 6),
-                                Wrap(
-                                  spacing: 6,
-                                  runSpacing: 6,
-                                  children: [
-                                    _buildConsoleLinkChip(
-                                      'DeepSeek',
-                                      'https://platform.deepseek.com/api_keys',
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    l10n.get('localEngineProbe'),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14,
                                     ),
-                                    _buildConsoleLinkChip(
-                                      'Google AI Studio',
-                                      'https://aistudio.google.com/app/apikey',
+                                  ),
+                                ),
+                                OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    visualDensity: VisualDensity.compact,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
                                     ),
-                                    _buildConsoleLinkChip(
-                                      'OpenAI',
-                                      'https://platform.openai.com/api-keys',
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(6),
                                     ),
-                                    _buildConsoleLinkChip(
-                                      'Moonshot (Kimi)',
-                                      'https://platform.moonshot.cn/console/api-keys',
-                                    ),
-                                    _buildConsoleLinkChip(
-                                      '阿里百炼 (Qwen)',
-                                      'https://bailian.console.aliyun.com/',
-                                    ),
-                                  ],
+                                  ),
+                                  onPressed: _isProbing
+                                      ? null
+                                      : _probeLocalEngines,
+                                  icon: _isProbing
+                                      ? const SizedBox(
+                                          width: 12,
+                                          height: 12,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 1.5,
+                                          ),
+                                        )
+                                      : const Icon(
+                                          Icons.refresh_rounded,
+                                          size: 14,
+                                        ),
+                                  label: Text(
+                                    _isProbing
+                                        ? l10n.get('probing')
+                                        : l10n.get('probeNow'),
+                                    style: const TextStyle(fontSize: 11),
+                                  ),
                                 ),
                               ],
                             ),
-                          ),
-                          const SizedBox(height: 10),
-                          TextField(
-                            key: const ValueKey('settings-base-url'),
-                            contextMenuBuilder: buildEditableTextMenu,
-                            controller: _baseUrlController,
-                            onChanged: (_) => _apiKeyController.clear(),
-                            decoration: InputDecoration(
-                              labelText: l10n.get('baseUrl'),
-                              helperText: l10n.get('aiProfilesUrlHint'),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              isDense: true,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 10,
+                            const SizedBox(height: 6),
+                            Text(
+                              l10n.get('probeDesc'),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey.shade600,
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 14),
-                          TextField(
-                            key: const ValueKey('settings-model-name'),
-                            contextMenuBuilder: buildEditableTextMenu,
-                            controller: _modelNameController,
-                            decoration: InputDecoration(
-                              labelText: l10n.get('modelNameLabel'),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              isDense: true,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 10,
-                              ),
-                            ),
-                          ),
-                        ],
+                            if (_probeResults != null) ...[
+                              const SizedBox(height: 10),
+                              for (final ep in _probeResults!)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 6),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isDark
+                                          ? Colors.white.withValues(alpha: 0.03)
+                                          : Colors.grey.shade50,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: ep.isAvailable
+                                            ? Colors.green.withValues(
+                                                alpha: 0.4,
+                                              )
+                                            : Colors.grey.withValues(
+                                                alpha: 0.2,
+                                              ),
+                                        width: 0.8,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          ep.isAvailable
+                                              ? Icons.check_circle_rounded
+                                              : Icons.radio_button_unchecked,
+                                          size: 16,
+                                          color: ep.isAvailable
+                                              ? Colors.green
+                                              : Colors.grey,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                '${ep.name} (Port ${ep.port})',
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              Text(
+                                                ep.isAvailable
+                                                    ? '${ep.recommendedModel} · ${ep.latencyMs}ms'
+                                                    : '端口未监听',
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  color: ep.isAvailable
+                                                      ? Colors.green.shade700
+                                                      : Colors.grey,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        if (ep.isAvailable)
+                                          ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              visualDensity:
+                                                  VisualDensity.compact,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 2,
+                                                  ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                            ),
+                                            onPressed: () =>
+                                                _applyLocalEngine(ep),
+                                            child: Text(
+                                              l10n.get('applyToSettings'),
+                                              style: const TextStyle(
+                                                fontSize: 10,
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ],
+                        ),
                       ),
-                    ),
-
-                    const SizedBox(height: 24),
-                    Text(
-                      l10n.get('backupDescription'),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 16),
+                    ],
+                    if (widget.area == null ||
+                        widget.area == SettingsArea.sync) ...[
+                      const SizedBox(height: 14),
+                    ],
+                    if (widget.area == null ||
+                        widget.area == SettingsArea.sync) ...[
+                      // Decentralized LAN Sync Card
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.black26
+                              : Colors.white.withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                            width: 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.wifi_tethering_rounded,
+                                  size: 18,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    l10n.get('lanSyncTitle'),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                                Switch(
+                                  value: _isLanServerRunning,
+                                  onChanged: (_) => _toggleLanServer(),
+                                ),
+                              ],
+                            ),
+                            Text(
+                              l10n.get('lanSyncDesc'),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            if (_isLanServerRunning) ...[
+                              const SizedBox(height: 10),
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? Colors.blueGrey.shade900.withValues(
+                                          alpha: 0.3,
+                                        )
+                                      : Colors.blueGrey.shade50,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: Colors.blueGrey.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                    width: 0.8,
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.router_rounded,
+                                          size: 14,
+                                          color: Colors.blueAccent,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          '${l10n.get('lanServerRunning')}$_lanIp:42888',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.vpn_key_rounded,
+                                          size: 14,
+                                          color: Colors.amber,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          '${l10n.get('syncPin')}$_lanPin',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 1.5,
+                                            color: Colors.amber,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            const Divider(height: 20),
+                            Text(
+                              l10n.get('connectToDevice'),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  flex: 3,
+                                  child: TextField(
+                                    controller: _targetIpController,
+                                    style: const TextStyle(fontSize: 12),
+                                    decoration: InputDecoration(
+                                      labelText: l10n.get('enterTargetIp'),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      isDense: true,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 8,
+                                          ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  flex: 2,
+                                  child: TextField(
+                                    controller: _targetPinController,
+                                    style: const TextStyle(fontSize: 12),
+                                    decoration: InputDecoration(
+                                      labelText: l10n.get('enterPin'),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      isDense: true,
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 8,
+                                          ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: FilledButton.icon(
+                                style: FilledButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 8,
+                                  ),
+                                ),
+                                onPressed: _isSyncing ? null : _syncWithTarget,
+                                icon: _isSyncing
+                                    ? const SizedBox(
+                                        width: 12,
+                                        height: 12,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 1.5,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : const Icon(Icons.sync_rounded, size: 14),
+                                label: Text(
+                                  _isSyncing
+                                      ? l10n.get('syncing')
+                                      : l10n.get('syncNow'),
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    if (widget.area == null ||
+                        widget.area == SettingsArea.sync) ...[
+                      const SizedBox(height: 14),
+                    ],
+                    if (widget.area == null ||
+                        widget.area == SettingsArea.ai) ...[
+                      // AI Configuration (Wireframe style)
+                      _advancedConnection(
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: isDark
+                                ? Colors.black26
+                                : Colors.white.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.outlineVariant,
+                              width: 1,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.memory_rounded,
+                                    size: 18,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      l10n.get('llmConfigTitle'),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  ActionChip(
+                                    avatar: const Icon(
+                                      Icons.bolt_rounded,
+                                      size: 15,
+                                      color: Colors.blue,
+                                    ),
+                                    label: Text(
+                                      l10n.get('quickDeepSeek'),
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(6),
+                                      side: BorderSide(
+                                        color: Colors.blue.withValues(
+                                          alpha: 0.4,
+                                        ),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    onPressed: () =>
+                                        _onProviderChanged(_providers[0]),
+                                  ),
+                                  ActionChip(
+                                    avatar: const Icon(
+                                      Icons.auto_awesome,
+                                      size: 15,
+                                      color: Colors.deepPurple,
+                                    ),
+                                    label: Text(
+                                      l10n.get('quickGemini'),
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(6),
+                                      side: BorderSide(
+                                        color: Colors.deepPurple.withValues(
+                                          alpha: 0.4,
+                                        ),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    onPressed: () =>
+                                        _onProviderChanged(_providers[1]),
+                                  ),
+                                  ActionChip(
+                                    avatar: const Icon(
+                                      Icons.download_for_offline_rounded,
+                                      size: 15,
+                                      color: Colors.teal,
+                                    ),
+                                    label: Text(
+                                      l10n.get('ollamaLocal'),
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(6),
+                                      side: BorderSide(
+                                        color: Colors.teal.withValues(
+                                          alpha: 0.4,
+                                        ),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    onPressed: () =>
+                                        _onProviderChanged(_providers[2]),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              DropdownButtonFormField<ModelProvider>(
+                                isExpanded: true,
+                                decoration: InputDecoration(
+                                  labelText: l10n.get('presetProvider'),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                ),
+                                initialValue: _selectedProvider,
+                                items: [
+                                  DropdownMenuItem(
+                                    value: null,
+                                    child: Text(l10n.get('customProvider')),
+                                  ),
+                                  ..._providers.map(
+                                    (p) => DropdownMenuItem(
+                                      value: p,
+                                      child: Text(
+                                        p.name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                onChanged: _onProviderChanged,
+                              ),
+                              const SizedBox(height: 14),
+                              TextField(
+                                key: const ValueKey('settings-api-key'),
+                                controller: _apiKeyController,
+                                decoration: InputDecoration(
+                                  labelText: l10n.get('apiKey'),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  helperText: l10n.get('apiKeyHelper'),
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                ),
+                                obscureText: true,
+                              ),
+                              const SizedBox(height: 8),
+                              // Platform Official Console Direct Links
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  top: 2,
+                                  bottom: 6,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.open_in_new_rounded,
+                                          size: 13,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          l10n.get('openOfficialSite'),
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Wrap(
+                                      spacing: 6,
+                                      runSpacing: 6,
+                                      children: [
+                                        _buildConsoleLinkChip(
+                                          'DeepSeek',
+                                          'https://platform.deepseek.com/api_keys',
+                                        ),
+                                        _buildConsoleLinkChip(
+                                          'Google AI Studio',
+                                          'https://aistudio.google.com/app/apikey',
+                                        ),
+                                        _buildConsoleLinkChip(
+                                          'OpenAI',
+                                          'https://platform.openai.com/api-keys',
+                                        ),
+                                        _buildConsoleLinkChip(
+                                          'Moonshot (Kimi)',
+                                          'https://platform.moonshot.cn/console/api-keys',
+                                        ),
+                                        _buildConsoleLinkChip(
+                                          '阿里百炼 (Qwen)',
+                                          'https://bailian.console.aliyun.com/',
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              TextField(
+                                key: const ValueKey('settings-base-url'),
+                                contextMenuBuilder: buildEditableTextMenu,
+                                controller: _baseUrlController,
+                                onChanged: (_) => _apiKeyController.clear(),
+                                decoration: InputDecoration(
+                                  labelText: l10n.get('baseUrl'),
+                                  helperText: l10n.get('aiProfilesUrlHint'),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+                              TextField(
+                                key: const ValueKey('settings-model-name'),
+                                contextMenuBuilder: buildEditableTextMenu,
+                                controller: _modelNameController,
+                                decoration: InputDecoration(
+                                  labelText: l10n.get('modelNameLabel'),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  isDense: true,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (widget.area == null ||
+                        widget.area == SettingsArea.ai) ...[
+                      const SizedBox(height: 24),
+                    ],
+                    if (widget.area == null) ...[
+                      Text(
+                        l10n.get('backupDescription'),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                    if (widget.area == null) ...[const SizedBox(height: 16)],
                   ],
                 ),
               ),

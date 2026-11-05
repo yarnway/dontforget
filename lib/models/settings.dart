@@ -6,7 +6,21 @@ enum AppAppearance { system, light, dark }
 
 enum InputSendMode { enter, button }
 
+typedef AppPreferences = ({
+  String language,
+  AppAppearance appearance,
+  InputSendMode send,
+});
+
+class PreferencesConflict implements Exception {
+  const PreferencesConflict();
+  @override
+  String toString() => 'Preferences changed in another editor.';
+}
+
 class AppSettings {
+  AppPreferences get preferences =>
+      (language: language, appearance: appearance, send: inputSendMode);
   final String id;
   final String apiKey;
   final String baseUrl;

@@ -19,7 +19,7 @@ import '../../services/time_zone_change_coordinator.dart';
 import '../../services/startup_trace.dart';
 import '../../services/local_media_store.dart';
 import '../../services/recovery/runtime_gate.dart';
-import 'settings_screen.dart';
+import 'preferences_screen.dart';
 import 'dashboard_screen.dart';
 import '../widgets/task_search_panel.dart';
 import '../widgets/input_bottom_bar.dart';
@@ -1309,7 +1309,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         shortcut: ',',
         onExecute: () => Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const SettingsScreen()),
+          MaterialPageRoute(builder: (_) => const PreferencesScreen()),
         ),
       ),
       CommandPaletteAction(
@@ -1715,7 +1715,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       onPressed: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const SettingsScreen(),
+                          builder: (_) => const PreferencesScreen(),
                         ),
                       ),
                     ),

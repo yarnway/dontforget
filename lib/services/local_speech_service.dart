@@ -8,8 +8,8 @@ final localSpeechServiceProvider = Provider<LocalSpeechService>((ref) {
   return service;
 });
 
-/// Recorded-file native recognition. Live Android input uses LiveDictationService.
-/// Unsupported Android languages remain explicit failures.
+/// Recorded-file device recognition. Explicitly configured Tencent recognition
+/// runs in SpeechRecognitionService; unavailable device languages stay failures.
 class LocalSpeechService {
   LocalSpeechService({bool? isIOS, bool? isAndroid, MethodChannel? channel})
     : android = isAndroid ?? (isIOS == null && Platform.isAndroid),

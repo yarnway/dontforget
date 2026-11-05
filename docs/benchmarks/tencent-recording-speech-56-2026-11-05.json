@@ -1,0 +1,92 @@
+{
+  "version": "1.7.0+56",
+  "schema": 17,
+  "base_commit": "c21f0c2227772c690be806410a6a97eb48cbab12",
+  "source": {
+    "gesture": "original hold, slide up/right, release to transcribe; explicit editable draft; left cancel and plain release audio save",
+    "provider": "Tencent Flash recorded-file recognition; fixed HTTPS host, engine16k_zh_en; streamed binary body",
+    "credentials": "AppID/SecretId/SecretKey packed only inside system-vault speech slot; SQL and portable backups redacted",
+    "preferences": "common page plus separate advanced areas; lazy notification/LAN; transactional patch of language/appearance/send fields without vault I/O; stale editor and recovery rejection"
+  },
+  "automation": {
+    "targeted_passed": 134,
+    "flutter_passed": 2241,
+    "flutter_skipped": 20,
+    "python_run": 136,
+    "python_skipped": 6,
+    "analysis_issues": 0,
+    "local_flutter": "3.47.2",
+    "ci_baseline": "3.44.9",
+    "test_wait_changes": "Windows CI concurrency4 timeout2m; draft fixture real-time bound20s, functional assertions kept"
+  },
+  "artifact": {
+    "version": "1.7.0+56",
+    "package": "com.yarnway.dontforget.acceptance.p4720261102",
+    "type": "QA debug APK; not production identity or release signing",
+    "bytes": 97922126,
+    "sha256": "c05fefda5abbcd0d2feb0ab3fdbb92e59b14234b9314992934a7c4283bc99757",
+    "certificate_sha256": "4f8518351e90e3293ad293b74b009ad40949e871adf91614bb27ba1ba098eea9",
+    "signature_matches_55": true,
+    "source_sha256": "613e684475643a06bc45617bacd8c884c8da8f94a4bee302bfbf2687d5b20ebf",
+    "file": "DontForget_Android_QA_debug_v1.7.0+56.apk"
+  },
+  "sqlite_cache": {
+    "version": "sqlite3-3.5.2",
+    "asset": "libsqlite3.arm64.android.so",
+    "sha256": "0c2d3bfc8c87abceb21ed72a4bb49964121c5fe1a8ef3848d83ba907d01b6161",
+    "matches_dependency_declared_hash": true,
+    "reason": "fresh-build native download TLS handshake failed; reused verified prior cache without disabling TLS"
+  },
+  "device": {
+    "identity": "independent Pixel QA debug; production identity untouched",
+    "upgrade": {
+      "from_build": 55,
+      "to_build": 56,
+      "schema_before": 17,
+      "schema_after": 17,
+      "rows_unchanged": {
+        "Reminders": true,
+        "MediaRecords": true,
+        "Settings": true
+      },
+      "counts_before": {
+        "Reminders": 50,
+        "MediaRecords": 9,
+        "Settings": 1
+      },
+      "counts_after": {
+        "Reminders": 50,
+        "MediaRecords": 9,
+        "Settings": 1
+      },
+      "critical_files_unchanged": true,
+      "critical_files_count": 21
+    },
+    "settings_ui": "PASS: actual compact preferences, AI secondary page and Tencent credential page; original locale/appearance/credentials retained",
+    "original_gesture_with_tencent_live": "PENDING: user must configure Tencent credentials securely in app; currently awaiting reply",
+    "real_api": "NOT_CALLED; no credentials yet",
+    "historical_data": "50 current reminders include user-added items; none treated as disposable test fixtures"
+  },
+  "github": {
+    "commit_push": "pending",
+    "ci": "pending"
+  },
+  "stable_release": "NOT_CREATED: real Tencent/human/device and existing distribution-signing gates remain",
+  "logs": {
+    "flutter-final.log": {
+      "sha256": "4f4fd654ca80a8c9d9880d6866c899e984496ad9f9ab64522d7f26102f8cf89d"
+    },
+    "python-final.log": {
+      "sha256": "b13b13804cc195fce98909e533f1223ff2208a6a85b8c285b12d9273369f3a13"
+    },
+    "analyze-final.log": {
+      "sha256": "fa6592e731868996bcb522be1aff1858aa410e10e36ce76e0dd888323fa6f808"
+    },
+    "recheck.log": {
+      "sha256": "33c76d851c02bc89755af6c6cc335a08d5bcab245bbd0df62c11dc29f7dd4e97"
+    },
+    "android-build.log": {
+      "sha256": "925a69150e646e41ada7978ff31b4bb1053f8ca0abfb190d03a3a11d7c0706e4"
+    }
+  }
+}

@@ -15,9 +15,6 @@ import '../../models/settings.dart';
 import '../../l10n/app_localizations.dart';
 import 'editable_text_menu.dart';
 import 'voice_capture_feedback.dart';
-import '../../services/live_dictation_service.dart';
-import '../../l10n/dictation_strings.dart';
-import 'dictation_language_sheet.dart';
 
 class InputBottomBar extends ConsumerStatefulWidget {
   const InputBottomBar({super.key});
@@ -29,14 +26,6 @@ class InputBottomBar extends ConsumerStatefulWidget {
 class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   final _textController = TextEditingController();
   final _focusNode = FocusNode();
-  StreamSubscription<DictationEvent>? _dictationSubscription;
-  LiveDictationService? _dictationService;
-  String? _dictationSession;
-  String _dictationStatus = 'starting';
-  TextEditingValue? _dictationBase;
-  bool _dictationBaseVoice = false, _discardDictation = false;
-  bool get _dictating => _dictationSession != null;
-  bool get _android => Theme.of(context).platform == TargetPlatform.android;
   bool _isLongPressRecording = false;
   bool _desktopVoiceDraft = false;
   Future<bool>? _pendingRecordingStart;
@@ -63,8 +52,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   bool get _current => mounted && _inputRuntime.isCurrent(_inputBirth);
   bool get _voiceBusy {
     final state = ref.read(homeControllerProvider);
-    return _dictating ||
-        _isLongPressRecording ||
+    return _isLongPressRecording ||
         _pendingRecordingStart != null ||
         _isTranscribing ||
         state.isRecording ||
@@ -164,8 +152,6 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
             .catchError((Object _) {}),
       );
     }
-    _dictationSubscription?.cancel();
-    if (_dictationSession != null) unawaited(_dictationService!.cancel());
     _textController.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -440,8 +426,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     if (!_current) return;
     final composing = _textController.value.composing;
     if (editable && composing.isValid && !composing.isCollapsed) return;
-    if (_dictating ||
-        (!editable && !_voiceMode && _textController.text.isNotEmpty) ||
+    if ((!editable && !_voiceMode && _textController.text.isNotEmpty) ||
         _isTranscribing ||
         _pendingRecordingStart != null ||
         ref.read(homeControllerProvider).isRecording ||
@@ -506,9 +491,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
             await controller.stopRecordingAndProcess();
           case VoiceReleaseAction.text:
             final text = await controller.stopRecordingToText(
-              canAcceptDraft: () => mounted,
+              canAcceptDraft: () => _current,
             );
-            if (mounted && text != null) {
+            if (_current && text != null) {
               setState(() {
                 _voiceMode = false;
                 _voiceTextDraft = true;
@@ -541,12 +526,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     final selected = _voiceGesture.update(
       details.globalPosition - _voiceOrigin,
     );
-    final effective = _android && selected == VoiceReleaseAction.text
-        ? VoiceReleaseAction.save
-        : selected;
-    final action = _desktopVoiceDraft && effective == VoiceReleaseAction.save
+    final action = _desktopVoiceDraft && selected == VoiceReleaseAction.save
         ? VoiceReleaseAction.text
-        : effective;
+        : selected;
     if (action == _voiceAction) return;
     HapticFeedback.selectionClick();
     setState(() => _voiceAction = action);
@@ -591,93 +573,6 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     }
   }
 
-  Future<void> _toggleDictation() async {
-    if (!_current) return;
-    if (_dictating) {
-      await _dictationService!.stop();
-      return;
-    }
-    if (_voiceBusy || _submitting || _resolvingPending) return;
-    final base = _textController.value;
-    if (base.composing.isValid && !base.composing.isCollapsed) {
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(
-          content: Text(
-            dictationText(AppLocalizations.of(context), 'composing'),
-          ),
-        ),
-      );
-      return;
-    }
-    final LiveDictationService service =
-        _dictationService ??
-        ref.read<LiveDictationService>(liveDictationServiceProvider);
-    _dictationService = service;
-    _dictationSubscription ??= service.events.listen(_onDictation);
-    _focusNode.unfocus();
-    final id = const Uuid().v4();
-    setState(() {
-      _dictationSession = id;
-      _dictationStatus = 'starting';
-      _dictationBase = base;
-      _dictationBaseVoice = _voiceTextDraft;
-      _discardDictation = false;
-    });
-    try {
-      await service.start(id);
-    } on PlatformException catch (error) {
-      _onDictation(DictationEvent(id, 'error', '', error.code));
-    }
-  }
-
-  void _onDictation(DictationEvent event) {
-    if (!_current || event.session != _dictationSession) return;
-    final base = _dictationBase!;
-    if (!_discardDictation && event.text.isNotEmpty) {
-      final selection = base.selection;
-      final start = selection.isValid ? selection.start : base.text.length;
-      final end = selection.isValid ? selection.end : base.text.length;
-      _voiceTextDraft = true;
-      _textController.value = TextEditingValue(
-        text: base.text.replaceRange(start, end, event.text),
-        selection: TextSelection.collapsed(offset: start + event.text.length),
-      );
-    }
-    if (event.terminal) {
-      if (_discardDictation) {
-        _voiceTextDraft = _dictationBaseVoice;
-        _textController.value = base;
-        _persistDraft();
-      }
-      setState(() {
-        _dictationSession = null;
-        _dictationBase = null;
-      });
-      if (event.type == 'error' && !_discardDictation) {
-        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(
-            content: Text(
-              dictationText(
-                AppLocalizations.of(context),
-                event.code ?? 'dictation_unavailable',
-              ),
-            ),
-          ),
-        );
-      }
-      _persistDraft();
-      if (event.type == 'final') _focusTextAfterBuild();
-    } else {
-      setState(() => _dictationStatus = event.type);
-    }
-  }
-
-  Future<void> _discardLiveDictation() async {
-    if (!_dictating || _discardDictation) return;
-    _discardDictation = true;
-    await _dictationService!.cancel();
-  }
-
   void _toggleInputMode() {
     _focusNode.unfocus();
     setState(() => _voiceMode = !_voiceMode);
@@ -687,10 +582,8 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   void _showMediaOptionsSheet(BuildContext context) {
     final l10n = AppLocalizations.of(context);
 
-    _focusNode.unfocus();
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
       ),
@@ -698,99 +591,81 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         final controller = ref.read(homeControllerProvider.notifier);
 
         return SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 36,
-                      height: 3,
-                      margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade400,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 3,
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade400,
+                      borderRadius: BorderRadius.circular(2),
                     ),
                   ),
-                  Text(
-                    l10n.get('uploadMaterial'),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
+                ),
+                Text(
+                  l10n.get('uploadMaterial'),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    l10n.get('uploadMaterialDesc'),
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      // Desktop builds have no camera capture path, so the entry
-                      // would always fail; mobile keeps it.
-                      if (Platform.isAndroid || Platform.isIOS)
-                        _buildMediaOption(
-                          icon: Icons.camera_alt_outlined,
-                          color: Colors.blue.shade600,
-                          label: l10n.get('takePhoto'),
-                          onTap: () {
-                            Navigator.pop(sheetCtx);
-                            controller.processImageWithSource(
-                              ImageSource.camera,
-                            );
-                          },
-                        ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  l10n.get('uploadMaterialDesc'),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    // Desktop builds have no camera capture path, so the entry
+                    // would always fail; mobile keeps it.
+                    if (Platform.isAndroid || Platform.isIOS)
                       _buildMediaOption(
-                        icon: Icons.photo_library_outlined,
-                        color: Colors.purple.shade500,
-                        label: l10n.get('galleryPhoto'),
+                        icon: Icons.camera_alt_outlined,
+                        color: Colors.blue.shade600,
+                        label: l10n.get('takePhoto'),
                         onTap: () {
                           Navigator.pop(sheetCtx);
-                          controller.processImageWithSource(
-                            ImageSource.gallery,
-                          );
+                          controller.processImageWithSource(ImageSource.camera);
                         },
                       ),
-                      _buildMediaOption(
-                        icon: Icons.snippet_folder_outlined,
-                        color: Colors.amber.shade700,
-                        label: l10n.get('importFile'),
-                        onTap: () {
-                          Navigator.pop(sheetCtx);
-                          controller.processFile();
-                        },
-                      ),
-                      _buildMediaOption(
-                        icon: Icons.video_collection_outlined,
-                        color: Colors.redAccent,
-                        label: l10n.get('uploadVideo'),
-                        onTap: () {
-                          Navigator.pop(sheetCtx);
-                          controller.processVideo();
-                        },
-                      ),
-                    ],
-                  ),
-                  if (_android)
-                    ListTile(
-                      key: const ValueKey('composer-original-recording'),
-                      leading: const Icon(Icons.graphic_eq),
-                      title: Text(dictationText(l10n, 'record')),
-                      subtitle: Text(dictationText(l10n, 'recordHint')),
+                    _buildMediaOption(
+                      icon: Icons.photo_library_outlined,
+                      color: Colors.purple.shade500,
+                      label: l10n.get('galleryPhoto'),
                       onTap: () {
                         Navigator.pop(sheetCtx);
-                        _focusNode.unfocus();
-                        setState(() => _voiceMode = true);
+                        controller.processImageWithSource(ImageSource.gallery);
                       },
                     ),
-                  const SizedBox(height: 8),
-                ],
-              ),
+                    _buildMediaOption(
+                      icon: Icons.snippet_folder_outlined,
+                      color: Colors.amber.shade700,
+                      label: l10n.get('importFile'),
+                      onTap: () {
+                        Navigator.pop(sheetCtx);
+                        controller.processFile();
+                      },
+                    ),
+                    _buildMediaOption(
+                      icon: Icons.video_collection_outlined,
+                      color: Colors.redAccent,
+                      label: l10n.get('uploadVideo'),
+                      onTap: () {
+                        Navigator.pop(sheetCtx);
+                        controller.processVideo();
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
             ),
           ),
         );
@@ -868,10 +743,8 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         _quickTime ?? QuickReminderParser.parse(_textController.text);
     final idleVoiceTarget =
         (voiceMode || (_textController.text.isEmpty && !_focusNode.hasFocus)) &&
-        !_isTranscribing &&
-        !_dictating;
+        !_isTranscribing;
     final captureBusy =
-        _dictating ||
         isRecording ||
         homeState.isPreparingRecording ||
         _isTranscribing ||
@@ -965,52 +838,23 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
           PopupMenuItem(value: entry.key, child: Text(l10n.get(entry.value))),
       ],
     );
-    final mobileModeToggle = Semantics(
-      label: _dictating
-          ? dictationText(l10n, 'stop')
-          : _android && !voiceMode
-          ? dictationText(l10n, 'start')
-          : l10n.get('switchToText'),
-      child: GestureDetector(
-        onLongPress: _android && !captureBusy
-            ? () => showDictationLanguages(
-                context,
-                ref.read(liveDictationServiceProvider),
-              )
-            : null,
-        child: IconButton(
-          key: const ValueKey('composer-mode-toggle'),
-          icon: Icon(
-            _dictating ||
-                    (homeState.isRecording && _pendingRecordingStart == null)
-                ? Icons.stop_circle_rounded
-                : voiceMode
-                ? Icons.keyboard_outlined
-                : Icons.mic_none_rounded,
-          ),
-          tooltip: _android
-              ? null
-              : _dictating
-              ? dictationText(l10n, 'stop')
-              : _android && !voiceMode && !homeState.isRecording
-              ? dictationText(l10n, 'start')
-              : homeState.isRecording && _pendingRecordingStart == null
-              ? l10n.get('recordingClickStop')
-              : l10n.get(voiceMode ? 'switchToText' : 'switchToVoice'),
-          onPressed: _dictating
-              ? _dictationStatus == 'finishing'
-                    ? null
-                    : _toggleDictation
-              : homeState.isRecording && _pendingRecordingStart == null
-              ? () =>
-                    ref.read(homeControllerProvider.notifier).toggleRecording()
-              : captureBusy
-              ? null
-              : _android && !voiceMode
-              ? _toggleDictation
-              : _toggleInputMode,
-        ),
+    final mobileModeToggle = IconButton(
+      key: const ValueKey('composer-mode-toggle'),
+      icon: Icon(
+        homeState.isRecording && _pendingRecordingStart == null
+            ? Icons.stop_circle_rounded
+            : voiceMode
+            ? Icons.keyboard_outlined
+            : Icons.mic_none_rounded,
       ),
+      tooltip: homeState.isRecording && _pendingRecordingStart == null
+          ? l10n.get('recordingClickStop')
+          : l10n.get(voiceMode ? 'switchToText' : 'switchToVoice'),
+      onPressed: homeState.isRecording && _pendingRecordingStart == null
+          ? () => ref.read(homeControllerProvider.notifier).toggleRecording()
+          : captureBusy
+          ? null
+          : _toggleInputMode,
     );
     final inputSurface = GestureDetector(
       key: const ValueKey('composer-input-surface'),
@@ -1202,11 +1046,10 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                             focusNode: _focusNode,
                             contextMenuBuilder: buildEditableTextMenu,
                             readOnly:
-                                _dictating ||
                                 !isMobile &&
-                                    (isRecording ||
-                                        homeState.isPreparingRecording ||
-                                        _isTranscribing),
+                                (isRecording ||
+                                    homeState.isPreparingRecording ||
+                                    _isTranscribing),
                             minLines: isMobile
                                 ? 1
                                 : compact
@@ -1365,22 +1208,6 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                   '${l10n.get('failedInputTitle')} (${pending.length})',
                 ),
               ),
-            if (_dictating)
-              Semantics(
-                liveRegion: true,
-                child: Wrap(
-                  alignment: WrapAlignment.center,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Text(dictationText(l10n, _dictationStatus)),
-                    TextButton(
-                      key: const ValueKey('dictation-discard'),
-                      onPressed: _discardLiveDictation,
-                      child: Text(dictationText(l10n, 'discard')),
-                    ),
-                  ],
-                ),
-              ),
             if (isMobile &&
                 !isRecording &&
                 !voiceMode &&
@@ -1513,7 +1340,6 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
           child: AbsorbPointer(
             child: VoiceCaptureFeedback(
               action: _voiceAction,
-              allowText: !_android,
               fullScreen: true,
               preparing: !homeState.isRecording,
             ),

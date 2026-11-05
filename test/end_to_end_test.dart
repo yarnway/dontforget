@@ -67,7 +67,9 @@ void main() {
     final scheduleStatus = await NotificationScheduleReader(
       testDatabase,
     ).read();
-    final notificationHistory = await NotificationFailureHistory.read(testDatabase);
+    final notificationHistory = await NotificationFailureHistory.read(
+      testDatabase,
+    );
     container = ProviderContainer(
       overrides: [
         notificationFailureHistoryReaderProvider.overrideWithValue(
@@ -84,9 +86,9 @@ void main() {
     // Complete the file-backed notification epoch outside widget fake async.
     await container.read(notificationServiceProvider).init();
     // Complete language category registration before widget fake async.
-    await container.read(notificationServiceProvider).setNotificationLanguage(
-      container.read(settingsProvider).language,
-    );
+    await container
+        .read(notificationServiceProvider)
+        .setNotificationLanguage(container.read(settingsProvider).language);
   });
   tearDownAll(() async {
     container.dispose();
@@ -122,25 +124,29 @@ void main() {
     await Scrollable.ensureVisible(tester.element(language), alignment: 0.3);
     await tester.pump();
     expect(language.hitTestable(), findsOneWidget);
-    final model = find.byKey(const ValueKey('settings-model-name'));
-    await tester.scrollUntilVisible(
-      model,
-      350,
-      scrollable: find.byType(Scrollable).first,
-    );
+    final ai = find.byKey(const ValueKey('preferences-ai'));
+    await tester.ensureVisible(ai);
+    await tester.tap(ai);
     await tester.pump();
-    await Scrollable.ensureVisible(tester.element(model), alignment: 0.3);
-    await tester.pump();
-    expect(model.hitTestable(), findsOneWidget);
-    expect(
-      tester.widget<TextField>(model).controller!.text,
-      container.read(settingsProvider).modelName,
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    await tester.pump(const Duration(milliseconds: 600));
+    final connection = find.byKey(
+      const ValueKey('settings-advanced-connection'),
     );
+    expect(connection, findsOneWidget);
+    expect(find.byKey(const ValueKey('settings-speech')), findsOneWidget);
+    expect(find.byKey(const ValueKey('settings-model-name')), findsNothing);
     expect(
       notificationCalls.where((call) => call.startsWith('request')),
       isEmpty,
     );
-    Navigator.pop(tester.element(model));
+    Navigator.pop(tester.element(connection));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(find.byType(SettingsScreen), findsNothing);
+    Navigator.pop(
+      tester.element(find.byKey(const ValueKey('preferences-list'))),
+    );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 600));
     expect(find.byType(TextField), findsOneWidget);

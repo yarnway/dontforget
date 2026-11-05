@@ -40,6 +40,19 @@ class _Settings extends StateNotifier<AppSettings> implements SettingsNotifier {
   _Settings() : super(AppSettings.defaults());
   int writes = 0;
   @override
+  Future<void> updatePreferences({
+    required AppPreferences expected,
+    required AppPreferences value,
+  }) async {
+    writes++;
+    state = state.copyWith(
+      language: value.language,
+      appearance: value.appearance,
+      inputSendMode: value.send,
+    );
+  }
+
+  @override
   CredentialStatus credentialStatus = CredentialStatus.notConfigured;
   @override
   Future<void> reloadCredentials() async {}

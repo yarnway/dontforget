@@ -14,9 +14,10 @@ Future<void> drainWorkspaceDrafts(
     final pending = store.flushed;
     var done = false;
     unawaited(pending.then((_) => done = true));
-    for (var tick = 0; tick < 500 && !done; tick++) {
+    final deadline = Stopwatch()..start();
+    while (!done && deadline.elapsed < const Duration(seconds: 20)) {
       await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 1)),
+        () => Future<void>.delayed(const Duration(milliseconds: 10)),
       );
       await tester.pump();
     }

@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
-import '../../l10n/dictation_strings.dart';
 
 enum VoiceReleaseAction { save, cancel, text }
 
@@ -27,10 +26,9 @@ class VoiceCaptureFeedback extends StatelessWidget {
     required this.action,
     this.fullScreen = false,
     this.preparing = false,
-    this.allowText = true,
   });
   final VoiceReleaseAction action;
-  final bool fullScreen, preparing, allowText;
+  final bool fullScreen, preparing;
   static const _green = Color(0xFF3BB47B);
   static const _cancel = Color(0xFFC63C3C);
   static const _neutral = Color(0xFF252525);
@@ -63,13 +61,9 @@ class VoiceCaptureFeedback extends StatelessWidget {
             final cancelLabel = loc.get(
               shortLabels ? 'voiceShortCancelTarget' : 'cancel',
             );
-            final textLabel = !allowText
-                ? dictationText(loc, 'save')
-                : loc.get(
-                    shortLabels
-                        ? 'voiceShortTextTarget'
-                        : 'voiceSlideTextTarget',
-                  );
+            final textLabel = loc.get(
+              shortLabels ? 'voiceShortTextTarget' : 'voiceSlideTextTarget',
+            );
             const targetStyle = TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -209,11 +203,9 @@ class VoiceCaptureFeedback extends StatelessWidget {
                   angle: geometry.labelAngle(cancel),
                   child: Semantics(
                     selected: selected,
-                    label: !cancel && !allowText
-                        ? dictationText(loc, 'save')
-                        : loc.get(
-                            cancel ? 'voiceSlideCancel' : 'voiceSlideText',
-                          ),
+                    label: loc.get(
+                      cancel ? 'voiceSlideCancel' : 'voiceSlideText',
+                    ),
                     child: Container(
                       key: ValueKey('voice-target-${value.name}'),
                       alignment: Alignment.center,

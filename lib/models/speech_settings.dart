@@ -1,7 +1,7 @@
 import 'credential_reference.dart';
 
-/// Preserves settings from the already-installed +54 prototype.
-/// Realtime dictation uses the Android service, never these cloud credentials.
+/// Stored metadata remains compatible with the already-installed +54 prototype.
+/// Tencent credentials are encoded only in the encrypted speech credential slot.
 class SpeechSettings {
   const SpeechSettings({
     this.enabled = false,

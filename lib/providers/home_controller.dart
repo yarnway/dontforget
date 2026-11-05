@@ -20,6 +20,8 @@ import '../services/llm_service.dart';
 import '../services/local_media_store.dart';
 import '../services/recording_duration_reader.dart';
 import '../services/local_speech_service.dart';
+import '../services/speech_recognition_service.dart';
+import '../l10n/speech_recognition_strings.dart';
 import '../services/quick_reminder_parser.dart';
 import '../services/recovery/runtime_gate.dart';
 import 'providers.dart';
@@ -142,6 +144,7 @@ class HomeController extends StateNotifier<HomeState> {
   Future<void> _quiesce() async {
     _pending.clear();
     if (mounted) state = HomeState();
+    _ref.read(speechRecognitionServiceProvider).cancel();
     await _ref.read(localSpeechServiceProvider).cancel();
     await _serializeRecorder(_discardRecording);
   }
@@ -725,11 +728,28 @@ class HomeController extends StateNotifier<HomeState> {
   ) async {
     _check(generation);
     final settings = _ref.read(settingsProvider);
-    final local = _ref.read(localSpeechServiceProvider);
-    if (local.supported) {
-      final text = await local.transcribe(path, settings.language);
+    if (settings.speech.enabled) {
+      final text = await _ref
+          .read(speechRecognitionServiceProvider)
+          .transcribe(path, settings.speech);
       _check(generation);
       return text;
+    }
+    final local = _ref.read(localSpeechServiceProvider);
+    if (local.supported) {
+      try {
+        final text = await local.transcribe(path, settings.language);
+        _check(generation);
+        return text;
+      } on PlatformException catch (error) {
+        _check(generation);
+        if (local.android &&
+            error.code != 'speech_permission_denied' &&
+            error.code != 'speech_cancelled') {
+          throw const SpeechRecognitionException('not_configured');
+        }
+        rethrow;
+      }
     }
     return _ref.read(llmServiceProvider).transcribeAudio(path, settings);
   }
@@ -827,12 +847,16 @@ class HomeController extends StateNotifier<HomeState> {
         removeTemporary = true;
         _reportError(
           generation,
-          AppLocalizations(Locale(_ref.read(settingsProvider).language)).get(
-            error is PlatformException &&
-                    error.code == 'speech_permission_denied'
-                ? 'voiceSpeechPermissionSaved'
-                : 'voiceTextUnavailableSaved',
-          ),
+          error is SpeechRecognitionException
+              ? speechText(_ref.read(settingsProvider).language, error.code)
+              : AppLocalizations(
+                  Locale(_ref.read(settingsProvider).language),
+                ).get(
+                  error is PlatformException &&
+                          error.code == 'speech_permission_denied'
+                      ? 'voiceSpeechPermissionSaved'
+                      : 'voiceTextUnavailableSaved',
+                ),
         );
       } catch (_) {
         _reportError(
@@ -894,10 +918,10 @@ class HomeController extends StateNotifier<HomeState> {
           durableCapture: true,
         );
         _check(generation);
-        // Android's microphone button now performs live dictation. Holding the
-        // separate memo pad only saves original audio and never starts another
-        // recognizer or silently sends the recording to a chat endpoint.
-        if (_ref.read(localSpeechServiceProvider).android) {
+        // Plain release saves original audio. Only the explicit up/right
+        // gesture (stopRecordingToText) invokes Tencent file recognition.
+        if (_ref.read(localSpeechServiceProvider).android ||
+            settings.speech.enabled) {
           await _saveVoiceMemo(savedPath, generation, recordId: id);
           return;
         }

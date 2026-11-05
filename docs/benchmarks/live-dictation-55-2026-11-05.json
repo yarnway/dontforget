@@ -54,8 +54,20 @@
     "test_instrumentation_package": "uninstalled; QA app kept"
   },
   "github": {
-    "commit_push": "pending",
-    "ci": "pending"
+    "commit": "c21f0c2227772c690be806410a6a97eb48cbab12",
+    "pushed": true,
+    "run": 41958942674,
+    "url": "https://github.com/yarnway/dontforget/actions/runs/41958942674",
+    "conclusion": "failure",
+    "linux_flutter_passed": 2246,
+    "linux_flutter_skipped": 2,
+    "linux_python_run": 136,
+    "linux_python_skipped": 3,
+    "windows_flutter_passed": 2226,
+    "windows_flutter_skipped": 20,
+    "windows_flutter_failed": 2,
+    "windows_python": "not run",
+    "candidates": "skipped by quality gate"
   },
   "stable_release": "NOT_CREATED: live Chinese/human acceptance and existing native/signing gates remain",
   "next_scope": "User requested performance/stability/compatibility, simpler settings and overall visual polish; stable release authorized only after validation",
@@ -75,5 +87,6 @@
     "probe-final-zh.txt": {
       "sha256": "6f20d36a57cca9dd2350ce4635974183611306df1d7a097cff66820098cccb37"
     }
-  }
+  },
+  "status": "ARCHIVED: user clarified original hold/up/right recorded-file gesture; single-tap live dictation removed in +56"
 }
