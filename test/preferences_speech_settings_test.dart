@@ -133,6 +133,7 @@ void main() {
         findsNothing,
       );
       expect(find.byType(TextField), findsNothing);
+      expect(find.text('本地存储 · 自主选择 AI 服务商'), findsNothing);
       await tap(tester, 'settings-advanced-connection');
       final model = find.byKey(const ValueKey('settings-model-name'));
       await tester.ensureVisible(model);

@@ -629,6 +629,11 @@ class HomeController extends StateNotifier<HomeState> {
         );
         return false;
       }
+      if (_ref.read(localSpeechServiceProvider).android) {
+        // Cold startup may still be hydrating the speech preference from vault.
+        await _ref.read(settingsProvider.notifier).ready;
+        _check(generation);
+      }
       final tempDir = await _temporaryDirectory();
       _check(generation);
       return await _serializeRecorder(() async {
@@ -640,7 +645,18 @@ class HomeController extends StateNotifier<HomeState> {
         final path = '${tempDir.path}/audio_${const Uuid().v4()}.$ext';
         try {
           _nativeRecording = true;
-          await _audioRecorder.start(const RecordConfig(), path: path);
+          // Tencent's speech engines accept 8/16k input. Capture a 16k mono
+          // speech track when enabled so the recorded file is ready to upload.
+          final config =
+              _ref.read(localSpeechServiceProvider).android &&
+                  _ref.read(settingsProvider).speech.enabled
+              ? const RecordConfig(
+                  sampleRate: 16000,
+                  numChannels: 1,
+                  bitRate: 64000,
+                )
+              : const RecordConfig();
+          await _audioRecorder.start(config, path: path);
           _check(generation);
           _recordingGeneration = generation;
           state = state.copyWith(

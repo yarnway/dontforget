@@ -200,9 +200,11 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   }
 
   Future<void> _openNotificationSettings() async {
-    await Navigator.of(
-      context,
-    ).push(MaterialPageRoute<void>(builder: (_) => const SettingsScreen()));
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const SettingsScreen(area: SettingsArea.notifications),
+      ),
+    );
     if (mounted) _refreshReminderStatus();
   }
 

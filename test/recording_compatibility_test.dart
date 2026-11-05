@@ -70,6 +70,25 @@ class _Speech extends LocalSpeechService {
   }
 }
 
+class _DelayedSettings extends StateNotifier<AppSettings>
+    implements SettingsNotifier {
+  _DelayedSettings() : super(AppSettings.defaults());
+  final loaded = Completer<void>(), requested = Completer<void>();
+  @override
+  Future<void> get ready {
+    if (!requested.isCompleted) requested.complete();
+    return loaded.future;
+  }
+
+  void complete(AppSettings settings) {
+    state = settings;
+    loaded.complete();
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 class _TencentSpeech extends SpeechRecognitionService {
   int calls = 0, cancels = 0;
   Object? error;
@@ -577,6 +596,78 @@ void main() {
           ).encode(),
         ),
       ),
+    );
+  }
+
+  test(
+    'Android cold start waits for saved speech settings before opening the microphone',
+    () async {
+      container.dispose();
+      await disposed.future;
+      disposed = Completer<void>();
+      final delayed = _DelayedSettings();
+      speech.androidPlatform = true;
+      container = ProviderContainer(
+        overrides: [
+          databaseHelperProvider.overrideWithValue(database),
+          notificationServiceProvider.overrideWithValue(notifications),
+          localSpeechServiceProvider.overrideWithValue(speech),
+          speechRecognitionServiceProvider.overrideWithValue(tencent),
+          settingsProvider.overrideWith((_) => delayed),
+        ],
+      );
+      await container.read(remindersProvider.notifier).ready;
+      final home = container.read(homeControllerProvider.notifier);
+      final start = home.startRecording();
+      await delayed.requested.future.timeout(const Duration(seconds: 5));
+      expect(calls.where((c) => c.method == 'start'), isEmpty);
+      delayed.complete(
+        AppSettings.defaults().copyWith(
+          speech: const SpeechSettings(enabled: true),
+        ),
+      );
+      expect(await start, true);
+      expect(
+        (calls.singleWhere((c) => c.method == 'start').arguments
+            as Map)['sampleRate'],
+        16000,
+      );
+      await home.cancelRecording();
+    },
+  );
+
+  test(
+    'Tencent-enabled recordings use provider-compatible 16k mono capture',
+    () async {
+      await configureTencent();
+      speech.androidPlatform = true;
+      final home = container.read(homeControllerProvider.notifier);
+      expect(await home.startRecording(), true);
+      final request =
+          calls.singleWhere((c) => c.method == 'start').arguments as Map;
+      final config = request;
+      expect(config['sampleRate'], 16000);
+      expect(config['numChannels'], 1);
+      expect(config['bitRate'], 64000);
+      await home.cancelRecording();
+    },
+  );
+
+  for (final android in [false, true]) {
+    test(
+      'existing recorder profile remains for ${android ? "Android without Tencent" : "other platforms"}',
+      () async {
+        if (!android) await configureTencent();
+        speech.androidPlatform = android;
+        final home = container.read(homeControllerProvider.notifier);
+        expect(await home.startRecording(), true);
+        final request =
+            calls.singleWhere((c) => c.method == 'start').arguments as Map;
+        expect(request['sampleRate'], 44100);
+        expect(request['numChannels'], 2);
+        expect(request['bitRate'], 128000);
+        await home.cancelRecording();
+      },
     );
   }
 

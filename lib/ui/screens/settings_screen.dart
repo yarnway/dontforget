@@ -834,8 +834,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         widget.area == SettingsArea.ai) ...[
                       const SizedBox(height: 14),
                     ],
-                    if (widget.area == null ||
-                        widget.area == SettingsArea.ai) ...[
+                    if (widget.area == null) ...[
                       // Privacy Shield Guarantee
                       Container(
                         padding: const EdgeInsets.all(12),

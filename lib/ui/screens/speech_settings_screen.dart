@@ -251,9 +251,13 @@ class _SpeechSettingsScreenState extends ConsumerState<SpeechSettingsScreen> {
               Text(t('limit')),
               const SizedBox(height: 20),
               ExpansionTile(
-                title: Text(t('guide')),
-                children: const [
+                title: Text(t('help')),
+                children: [
                   Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(t('guide')),
+                  ),
+                  const Padding(
                     padding: EdgeInsets.all(16),
                     child: SelectableText(
                       'https://console.cloud.tencent.com/asr\nhttps://console.cloud.tencent.com/cam/capi',

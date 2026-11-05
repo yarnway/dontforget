@@ -52,6 +52,7 @@ String speechText(String language, String key) {
       'Up to 5 minutes / 10 MB per recording. Original audio is kept on failure.',
       '1件最大5分・10MBです。失敗時は元の録音を保持します。',
     ],
+    'help': ['腾讯云配置帮助', 'Tencent setup help', 'Tencent設定のヘルプ'],
     'guide': [
       '在腾讯云控制台开通“录音文件识别极速版”，并获取本人的 AppID、SecretId、SecretKey。请勿把凭据发到聊天或提交到仓库。',
       'Enable Flash recording recognition in Tencent Cloud and obtain your AppID, SecretId and SecretKey. Keep credentials out of chat and source control.',
@@ -91,6 +92,11 @@ String speechText(String language, String key) {
       '录音超过5分钟，原声已保存，请缩短后重试。',
       'Recording exceeds 5 minutes. Original audio was saved.',
       '録音が5分を超えています。元の録音は保存しました。',
+    ],
+    'format': [
+      '录音格式暂不支持识别，请重新录制。原声已保存。',
+      'This audio format could not be recognized. Record again. Original audio was saved.',
+      'この録音形式を認識できません。再録音してください。元の録音は保存しました。',
     ],
     'network': [
       '腾讯云语音连接失败，请检查网络后重试。原声已保存。',

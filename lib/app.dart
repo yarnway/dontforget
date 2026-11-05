@@ -30,7 +30,7 @@ import 'services/android_protocol_service.dart';
 import 'ui/screens/home_screen.dart';
 import 'ui/screens/recovery_outcome_screen.dart';
 import 'ui/screens/task_detail_screen.dart';
-import 'ui/screens/settings_screen.dart';
+import 'ui/screens/preferences_screen.dart';
 import 'l10n/app_localizations.dart';
 
 typedef _MacInputToken = ({DataGeneration data, RuntimeRecoveryToken runtime});
@@ -457,7 +457,7 @@ class _MyAppState extends ConsumerState<MyApp>
       return false;
     }
     final route = MaterialPageRoute<void>(
-      builder: (_) => const SettingsScreen(),
+      builder: (_) => const PreferencesScreen(),
     );
     _nativeSettingsRoute = route;
     unawaited(
