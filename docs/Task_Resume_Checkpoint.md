@@ -1,5 +1,12 @@
 # 手动续行检查点
 
+## 2026-11-06 +61：Windows紧凑输入与按内容展开（本轮进行中）
+
+- 阶段47／49录入体验：Windows默认单行，点击就地输入，超过两行或长粘贴才展开；内容减少／清空／成功发送收起，长内容内部滚动。固定同一编辑器，保留焦点／选区／中文组合态，三语短提示与工具栏适配窄窗口和大字；Android／Linux原布局保持。内部候选1.7.2+61，schema17和依赖锁不变。[本轮记录](Windows_Compact_Composer_61_2026-11-06.md)。
+- 自动化：输入／录音／发送专项79通过、全量2296通过／20跳过、最终分析0，发行工具14项通过。实际Flutter控件三张渲染图已检查，不是Windows原生实机截图。源码提交／推送、固定SDK CI和当前候选包分别补记；原生Windows验收仍缺Computer Use的node_repl运行时，不冒记通过。
+- 阶段46保全替换已收口，USB长期／跨主机对照继续；47原生输入法／通知／录音中断、Windows原生UI继续（腾讯云按用户决定暂缓）；48带附件跨设备及锁定／磁盘满／断电；49图片附件分享、LAN编辑删除附件冲突及学习排程；50已有v1.7.1三端正式版保持，+61候选验收和后续发布另记，不把本轮源码完成写成所有阶段完成。
+
+
 ## 2026-11-06 v1.7.1三平台已发布（阶段50本轮目标完成）
 
 - 已发布[Android／Windows／Linux v1.7.1](https://github.com/yarnway/dontforget/releases/tag/v1.7.1)，build60／schema17、固定源码559ab5a，五包及三平台清单／报告等16附件。发布前最终[CI 42143635895](https://github.com/yarnway/dontforget/actions/runs/42143635895)7项成功；Linux Flutter2306／2跳过，Windows2288／20跳过，Python各161运行（4／6跳过）。[发布工作流](https://github.com/yarnway/dontforget/actions/runs/42146680831)prepare／publish均成功，来源ZIP SHA／CRC、五包清单／证书、桌面报告、版本专用正文及发布后标签／完整16附件已独立读回。[发行记录](Platform_Release_60_2026-11-06.md)。

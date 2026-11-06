@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:io' show Platform;
 import '../../services/recovery/runtime_gate.dart';
 import 'package:uuid/uuid.dart';
@@ -16,6 +17,7 @@ import '../../models/settings.dart';
 import '../../l10n/app_localizations.dart';
 import 'editable_text_menu.dart';
 import 'voice_capture_feedback.dart';
+import 'windows_composer_layout.dart';
 
 class InputBottomBar extends ConsumerStatefulWidget {
   const InputBottomBar({super.key});
@@ -727,7 +729,11 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) => _buildComposer(context, constraints),
+  );
+
+  Widget _buildComposer(BuildContext context, BoxConstraints constraints) {
     final l10n = AppLocalizations.of(context);
     final homeState = ref.watch(homeControllerProvider);
     final rawPending = ref.watch(workspaceDraftsProvider)['pendingCaptures'];
@@ -755,6 +761,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     final platform = Theme.of(context).platform;
     final isMobile =
         platform == TargetPlatform.iOS || platform == TargetPlatform.android;
+    final isWindows = platform == TargetPlatform.windows;
     final voiceMode = isMobile && _voiceMode;
     final displayedTime =
         _quickTime ?? QuickReminderParser.parse(_textController.text);
@@ -789,13 +796,46 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         }
       });
     }
-    final inputStyle = TextStyle(
-      fontSize: isMobile ? 16 : 15,
-      height: 1.45,
-      leadingDistribution: TextLeadingDistribution.even,
-    );
+    final inputStyle =
+        (isWindows ? Theme.of(context).textTheme.bodyLarge! : const TextStyle())
+            .copyWith(
+              fontSize: isMobile ? 16 : 15,
+              height: 1.45,
+              leadingDistribution: TextLeadingDistribution.even,
+            );
+    final windowsLayout = isWindows
+        ? WindowsComposerLayout.measure(
+            text: _textController.text,
+            width: math.max(
+              1,
+              math.min(
+                    1040,
+                    constraints.hasBoundedWidth
+                        ? constraints.maxWidth
+                        : MediaQuery.sizeOf(context).width,
+                  ) -
+                  36,
+            ),
+            availableHeight: math.max(
+              0,
+              MediaQuery.sizeOf(context).height -
+                  math.max(
+                    MediaQuery.viewInsetsOf(context).bottom,
+                    View.of(context).viewInsets.bottom /
+                        View.of(context).devicePixelRatio,
+                  ),
+            ),
+            style: inputStyle,
+            textScaler: MediaQuery.textScalerOf(context),
+            direction: Directionality.of(context),
+            locale: Localizations.maybeLocaleOf(context),
+            showSummary: displayedTime != null || _memoOnly,
+          )
+        : null;
     final inputHint = l10n.get(
-      !isMobile
+      isWindows
+          ? 'desktopCompactInputHint'
+          : !isMobile
           ? 'desktopInputHint'
           : _focusNode.hasFocus
           ? 'inputTypingHint'
@@ -996,17 +1036,27 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                 },
                 child: Container(
                   key: const ValueKey('composer-text-frame'),
-                  alignment: isMobile ? Alignment.center : Alignment.topLeft,
+                  alignment: isMobile
+                      ? Alignment.center
+                      : isWindows && !windowsLayout!.expanded
+                      ? AlignmentDirectional.centerStart
+                      : AlignmentDirectional.topStart,
                   constraints: BoxConstraints(
                     minHeight: isMobile
                         ? 48
+                        : isWindows
+                        ? 44
                         : compact
                         ? 84
                         : 132,
                   ),
                   padding: EdgeInsets.symmetric(
                     horizontal: 12,
-                    vertical: compact ? 8 : 10,
+                    vertical: isWindows
+                        ? 10
+                        : compact
+                        ? 8
+                        : 10,
                   ),
                   decoration: BoxDecoration(
                     color: isMobile
@@ -1025,7 +1075,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                     label: _textController.text.isEmpty ? inputHint : null,
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
-                        minHeight: isMobile
+                        minHeight: isMobile || isWindows
                             ? 0
                             : compact
                             ? 68
@@ -1034,21 +1084,28 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                       child: Stack(
                         alignment: isMobile
                             ? Alignment.center
-                            : Alignment.topLeft,
+                            : isWindows && !windowsLayout!.expanded
+                            ? AlignmentDirectional.centerStart
+                            : AlignmentDirectional.topStart,
                         children: [
                           if (_textController.text.isEmpty &&
-                              (isMobile || !_focusNode.hasFocus))
+                              (isMobile || isWindows || !_focusNode.hasFocus))
                             Positioned.fill(
                               child: IgnorePointer(
                                 child: ExcludeSemantics(
-                                  child: Center(
+                                  child: Align(
+                                    alignment: isWindows
+                                        ? AlignmentDirectional.centerStart
+                                        : Alignment.center,
                                     child: Text(
                                       inputHint,
                                       key: const ValueKey(
                                         'composer-placeholder',
                                       ),
-                                      textAlign: TextAlign.center,
-                                      maxLines: isMobile ? 1 : 3,
+                                      textAlign: isWindows
+                                          ? TextAlign.start
+                                          : TextAlign.center,
+                                      maxLines: isMobile || isWindows ? 1 : 3,
                                       overflow: TextOverflow.ellipsis,
                                       style: inputStyle.copyWith(
                                         color: colors.onSurfaceVariant,
@@ -1069,18 +1126,24 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                                     _isTranscribing),
                             minLines: isMobile
                                 ? 1
+                                : isWindows
+                                ? windowsLayout!.minLines
                                 : compact
                                 ? 2
                                 : 4,
                             maxLines: isMobile
                                 ? 4
+                                : isWindows
+                                ? windowsLayout!.maxLines
                                 : compact
                                 ? 4
                                 : 8,
                             textAlign: isMobile
                                 ? TextAlign.center
                                 : TextAlign.start,
-                            textAlignVertical: isMobile
+                            textAlignVertical:
+                                isMobile ||
+                                    (isWindows && !windowsLayout!.expanded)
                                 ? TextAlignVertical.center
                                 : TextAlignVertical.top,
                             keyboardType: TextInputType.multiline,
@@ -1121,6 +1184,10 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                                           : 'desktopReleaseHint',
                                     ),
                                     textAlign: TextAlign.center,
+                                    maxLines: isWindows ? 1 : null,
+                                    overflow: isWindows
+                                        ? TextOverflow.ellipsis
+                                        : null,
                                     style: inputStyle.copyWith(
                                       color: colors.primary,
                                     ),
@@ -1157,7 +1224,17 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
               ? null
               : _submitText;
           if (!isMobile) {
-            return FilledButton(
+            if (isWindows && windowsLayout!.iconSend) {
+              return SizedBox.square(
+                dimension: 44,
+                child: IconButton.filled(
+                  onPressed: onSend,
+                  tooltip: l10n.get('send'),
+                  icon: const Icon(Icons.arrow_upward_rounded, size: 20),
+                ),
+              );
+            }
+            final button = FilledButton(
               onPressed: onSend,
               style: FilledButton.styleFrom(
                 backgroundColor: colors.primary,
@@ -1171,8 +1248,15 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: Text(l10n.get('send')),
+              child: Text(
+                l10n.get('send'),
+                maxLines: isWindows ? 1 : null,
+                overflow: isWindows ? TextOverflow.ellipsis : null,
+              ),
             );
+            return isWindows
+                ? SizedBox(width: 88, height: 44, child: button)
+                : button;
           }
           return IconButton(
             icon: const Icon(Icons.arrow_upward_rounded, size: 18),
@@ -1190,15 +1274,83 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         },
       ),
     );
+    final desktopVoice = _RecordingPulse(
+      active: isRecording,
+      child: IconButton(
+        key: const ValueKey('composer-desktop-voice'),
+        constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+        icon: Icon(
+          isRecording ? Icons.stop_circle_rounded : Icons.mic_none_rounded,
+        ),
+        tooltip: l10n.get(isRecording ? 'desktopVoiceStop' : 'recordingStart'),
+        onPressed:
+            homeState.isPreparingRecording ||
+                _isTranscribing ||
+                _submitting ||
+                _resolvingPending
+            ? null
+            : _toggleDesktopVoiceDraft,
+      ),
+    );
+    Widget desktopToolbar({bool below = true}) => Padding(
+      key: const ValueKey('composer-desktop-toolbar'),
+      padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
+      child: Row(
+        children: [
+          if (!below)
+            SizedBox(width: 44, height: 44, child: timeOptions)
+          else
+            Expanded(
+              child: Row(
+                children: [
+                  if (showTimeOptions || isWindows)
+                    SizedBox(width: 44, height: 44, child: timeOptions),
+                  if (displayedTime != null || _memoOnly)
+                    Expanded(
+                      child: Text(
+                        _memoOnly
+                            ? l10n.get('memoOnly')
+                            : formatLocalDateTime(displayedTime!),
+                        key: const ValueKey('composer-time-summary'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelMedium
+                            ?.copyWith(color: colors.onSurfaceVariant),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          if (isWindows)
+            SizedBox.square(dimension: 44, child: desktopVoice)
+          else
+            desktopVoice,
+          if (isWindows)
+            SizedBox.square(dimension: 44, child: attachment)
+          else
+            attachment,
+          send,
+        ],
+      ),
+    );
     final composer = SafeArea(
       top: false,
       child: Container(
         key: const ValueKey('composer-frame'),
         margin: const EdgeInsets.fromLTRB(10, 0, 10, 8),
-        padding: EdgeInsets.symmetric(horizontal: 8, vertical: compact ? 2 : 6),
+        padding: EdgeInsets.symmetric(
+          horizontal: 8,
+          vertical: isWindows
+              ? 6
+              : compact
+              ? 2
+              : 6,
+        ),
         decoration: BoxDecoration(
-          color: colors.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(20),
+          color: isWindows
+              ? colors.surfaceContainerLow
+              : colors.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(isWindows ? 16 : 20),
           border: Border.all(
             color: isRecording
                 ? Colors.red.withValues(alpha: 0.6)
@@ -1287,64 +1439,31 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                   if (!enterSends) send,
                 ],
               )
+            else if (windowsLayout case final layout?)
+              Stack(
+                key: const ValueKey('composer-windows-layout'),
+                children: [
+                  // Stable child ancestry preserves EditableText, its native
+                  // IME connection and selection when the footer moves.
+                  Padding(
+                    padding: EdgeInsets.only(
+                      right: layout.footerBelow ? 0 : layout.actionsWidth,
+                      bottom: layout.footerBelow ? 48 : 4,
+                    ),
+                    child: inputSurface,
+                  ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    left: layout.footerBelow ? 0 : null,
+                    width: layout.footerBelow ? null : layout.actionsWidth,
+                    child: desktopToolbar(below: layout.footerBelow),
+                  ),
+                ],
+              )
             else ...[
               inputSurface,
-              Padding(
-                key: const ValueKey('composer-desktop-toolbar'),
-                padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Row(
-                        children: [
-                          if (showTimeOptions)
-                            SizedBox(width: 44, height: 44, child: timeOptions),
-                          if (displayedTime != null || _memoOnly)
-                            Expanded(
-                              child: Text(
-                                _memoOnly
-                                    ? l10n.get('memoOnly')
-                                    : formatLocalDateTime(displayedTime!),
-                                key: const ValueKey('composer-time-summary'),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.labelMedium
-                                    ?.copyWith(color: colors.onSurfaceVariant),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    _RecordingPulse(
-                      active: isRecording,
-                      child: IconButton(
-                        key: const ValueKey('composer-desktop-voice'),
-                        constraints: const BoxConstraints.tightFor(
-                          width: 44,
-                          height: 44,
-                        ),
-                        icon: Icon(
-                          isRecording
-                              ? Icons.stop_circle_rounded
-                              : Icons.mic_none_rounded,
-                        ),
-                        tooltip: l10n.get(
-                          isRecording ? 'desktopVoiceStop' : 'recordingStart',
-                        ),
-                        onPressed:
-                            homeState.isPreparingRecording ||
-                                _isTranscribing ||
-                                _submitting ||
-                                _resolvingPending
-                            ? null
-                            : _toggleDesktopVoiceDraft,
-                      ),
-                    ),
-                    attachment,
-                    send,
-                  ],
-                ),
-              ),
+              desktopToolbar(),
             ],
           ],
         ),

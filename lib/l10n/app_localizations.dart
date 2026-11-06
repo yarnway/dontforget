@@ -591,6 +591,7 @@ class AppLocalizations {
       'desktopInputHint':
           'Click to type · hold the mouse or trackpad to dictate',
       'desktopVoiceStop': 'Stop and edit text',
+      'desktopCompactInputHint': 'Add a note or task…',
       'desktopReleaseHint': 'Release to edit text · Esc to cancel',
       'releaseToSend': 'Release to generate reminders...',
       'recordingClickStop': 'Recording, tap left to stop...',
@@ -1332,6 +1333,7 @@ class AppLocalizations {
       'inputHint': '单击输入文本，长按输入语音...',
       'desktopInputHint': '点击输入文字，长按鼠标或触控板说话',
       'desktopVoiceStop': '停止并转为文字',
+      'desktopCompactInputHint': '记录事项，点击输入…',
       'desktopReleaseHint': '松手转文字 · Esc 取消',
       'releaseToSend': '松手立即提交生成待办...',
       'recordingClickStop': '正在录音中，点击左侧停止...',
@@ -2075,6 +2077,7 @@ class AppLocalizations {
       'inputHint': 'タップで入力、長押しで音声...',
       'desktopInputHint': 'クリックで入力、マウスやトラックパッドの長押しで音声入力',
       'desktopVoiceStop': '停止して文字を編集',
+      'desktopCompactInputHint': 'メモ・タスクを入力…',
       'desktopReleaseHint': '離すと文字にして編集・Escで取消',
       'releaseToSend': '離してタスク生成...',
       'recordingClickStop': '録音中、左側をタップして停止...',
