@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:path/path.dart' as p;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
@@ -83,6 +84,7 @@ class HomeController extends StateNotifier<HomeState> {
   final Future<String> Function(String) _importFile;
   final Map<Object, DataGeneration> _pending = {};
   DataGeneration? _recordingGeneration;
+  String? _recordingOutputPath;
 
   HomeController(
     this._ref, {
@@ -134,6 +136,7 @@ class HomeController extends StateNotifier<HomeState> {
 
   Future<void> _discardRecording() async {
     _recordingGeneration = null;
+    _recordingOutputPath = null;
     if (_nativeRecording) {
       // cancel removes the unconfirmed temporary capture; it never imports it.
       await _audioRecorder.cancel();
@@ -658,6 +661,7 @@ class HomeController extends StateNotifier<HomeState> {
               : const RecordConfig();
           await _audioRecorder.start(config, path: path);
           _check(generation);
+          _recordingOutputPath = path;
           _recordingGeneration = generation;
           state = state.copyWith(
             isRecording: true,
@@ -682,9 +686,12 @@ class HomeController extends StateNotifier<HomeState> {
     }
   }
 
-  Future<({String path, DataGeneration generation})?> _stopCapture() async {
+  Future<({String path, DataGeneration generation, bool ownedTemporary})?>
+  _stopCapture() async {
     final generation = _recordingGeneration;
     if (generation == null) return null;
+    final expectedPath = _recordingOutputPath;
+    _recordingOutputPath = null;
     _recordingGeneration = null;
     try {
       final path = await _serializeRecorder(() async {
@@ -706,7 +713,14 @@ class HomeController extends StateNotifier<HomeState> {
       });
       if (_isCurrent(generation)) {
         state = state.copyWith(isRecording: false);
-        if (path != null) return (path: path, generation: generation);
+        if (path != null) {
+          return (
+            path: path,
+            generation: generation,
+            ownedTemporary:
+                expectedPath != null && p.equals(expectedPath, path),
+          );
+        }
       }
     } catch (error) {
       if (_isCurrent(generation)) state = state.copyWith(isRecording: false);
@@ -717,7 +731,13 @@ class HomeController extends StateNotifier<HomeState> {
 
   Future<void> stopRecordingAndProcess() async {
     final capture = await _stopCapture();
-    if (capture != null) _processAudio(capture.path, capture.generation);
+    if (capture != null) {
+      _processAudio(
+        capture.path,
+        capture.generation,
+        ownedTemporary: capture.ownedTemporary,
+      );
+    }
   }
 
   Future<bool> cancelRecording() async {
@@ -817,7 +837,7 @@ class HomeController extends StateNotifier<HomeState> {
   Future<String?> stopRecordingToText({bool Function()? canAcceptDraft}) async {
     final capture = await _stopCapture();
     if (capture == null) return null;
-    final (path: path, generation: generation) = capture;
+    final (path: path, generation: generation, ownedTemporary: _) = capture;
     if (!_isCurrent(generation)) {
       try {
         await File(path).delete();
@@ -903,7 +923,11 @@ class HomeController extends StateNotifier<HomeState> {
     }
   }
 
-  void _processAudio(String path, DataGeneration generation) {
+  void _processAudio(
+    String path,
+    DataGeneration generation, {
+    required bool ownedTemporary,
+  }) {
     _launch(
       generation,
       () async {
@@ -934,6 +958,17 @@ class HomeController extends StateNotifier<HomeState> {
           durableCapture: true,
         );
         _check(generation);
+        // Retire only the temporary path allocated for this capture, after
+        // the copied attachment and its durable capture record are committed.
+        // Failure to reclaim cache must not turn a saved recording into failure.
+        if (ownedTemporary && !p.equals(path, savedPath)) {
+          try {
+            await File(path).delete();
+          } on FileSystemException catch (_) {
+            // The OS can reclaim a busy cache file later; the durable copy stays.
+          }
+          _check(generation);
+        }
         // Plain release saves original audio. Only the explicit up/right
         // gesture (stopRecordingToText) invokes Tencent file recognition.
         if (_ref.read(localSpeechServiceProvider).android ||

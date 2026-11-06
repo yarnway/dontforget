@@ -41,6 +41,7 @@ class _ContentManagementPanelState
   final _query = TextEditingController();
   final _selected = <String>{};
   String _view = 'originals';
+  bool _onlyEligible = false;
   bool _prompting = false;
   bool _busy = false, _showArchive = true, _nativeFailed = false;
   String? _message;
@@ -258,7 +259,15 @@ class _ContentManagementPanelState
     );
   }
 
-  String _size(int bytes) => '${(bytes / 1024 / 1024).toStringAsFixed(2)} MiB';
+  String _size(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(2)} KiB';
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / 1024 / 1024).toStringAsFixed(2)} MiB';
+    }
+    return '${(bytes / 1024 / 1024 / 1024).toStringAsFixed(2)} GiB';
+  }
+
   @override
   Widget build(BuildContext context) {
     final all = ref.watch(remindersProvider),
@@ -269,9 +278,14 @@ class _ContentManagementPanelState
               (_view == 'restore'
                   ? e.kind == ContentEntryKind.restore
                   : e.kind != ContentEntryKind.restore) &&
-              e.label.toLowerCase().contains(query),
+              e.label.toLowerCase().contains(query) &&
+              (!_onlyEligible || e.eligible),
         )
         .toList();
+    final eligible = entries.where((e) => e.eligible).toList();
+    final selectedBytes = (_inventory?.entries ?? <ContentCleanupEntry>[])
+        .where((e) => _selected.contains(e.key))
+        .fold<int>(0, (n, e) => n + e.bytes);
     final roots =
         all
             .where(
@@ -354,15 +368,23 @@ class _ContentManagementPanelState
                       ),
                       const SizedBox(height: 16),
                       if (_view != 'archive') ...[
-                        Text(
-                          t('hint'),
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                                height: 1.5,
+                        ExpansionTile(
+                          key: const ValueKey('content-protection-help'),
+                          tilePadding: EdgeInsets.zero,
+                          title: Text(
+                            t('protectionHelp'),
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          leading: const Icon(Icons.shield_outlined),
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Text(
+                                t('hint'),
+                                style: Theme.of(context).textTheme.bodySmall,
                               ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 12),
                         Wrap(
@@ -386,6 +408,67 @@ class _ContentManagementPanelState
                             ),
                           ],
                         ),
+                        if (_inventory != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            t('spaceSummary')
+                                .replaceAll('{count}', '${eligible.length}')
+                                .replaceAll(
+                                  '{bytes}',
+                                  _size(
+                                    eligible.fold<int>(
+                                      0,
+                                      (n, e) => n + e.bytes,
+                                    ),
+                                  ),
+                                ),
+                            key: const ValueKey('content-space-summary'),
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          if (_selected.isNotEmpty)
+                            Text(
+                              t('selectionSummary')
+                                  .replaceAll('{count}', '${_selected.length}')
+                                  .replaceAll('{bytes}', _size(selectedBytes)),
+                            ),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              FilterChip(
+                                key: const ValueKey('content-eligible-only'),
+                                label: Text(t('eligibleOnly')),
+                                selected: _onlyEligible,
+                                onSelected: _busy
+                                    ? null
+                                    : (v) => setState(() => _onlyEligible = v),
+                              ),
+                              TextButton(
+                                key: const ValueKey('content-select-visible'),
+                                onPressed:
+                                    _busy ||
+                                        eligible.isEmpty ||
+                                        _selected.length >= 100
+                                    ? null
+                                    : () => setState(() {
+                                        for (final e in eligible) {
+                                          if (_selected.length >= 100) break;
+                                          _selected.add(e.key);
+                                        }
+                                      }),
+                                child: Text(t('selectVisible')),
+                              ),
+                              TextButton(
+                                key: const ValueKey('content-clear-selection'),
+                                onPressed: _busy || _selected.isEmpty
+                                    ? null
+                                    : () => setState(_selected.clear),
+                                child: Text(t('clearSelection')),
+                              ),
+                            ],
+                          ),
+                        ],
                         for (final job in _inventory?.pendingJobs ?? <String>[])
                           ListTile(
                             title: Text(t('pending')),

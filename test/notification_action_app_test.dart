@@ -1,3 +1,4 @@
+import 'support/real_io.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -204,14 +205,20 @@ void main() {
   }
 
   Future<void> settle(WidgetTester tester, {bool Function()? until}) async {
-    for (var tick = 0; tick < 80; tick++) {
+    if (until != null) {
+      await pumpUntilRealIo(
+        tester,
+        until,
+        reason: 'Notification action must finish real queue I/O',
+      );
+      return;
+    }
+    for (var tick = 0; tick < 5; tick++) {
       await tester.runAsync(
         () => Future<void>.delayed(const Duration(milliseconds: 5)),
       );
       await tester.pump();
-      if (until?.call() ?? tick >= 4) return;
     }
-    fail('Notification action did not settle');
   }
 
   Future<void> enqueue(WidgetTester tester) async {

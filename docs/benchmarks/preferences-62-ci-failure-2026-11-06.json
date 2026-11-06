@@ -1,0 +1,29 @@
+{
+  "source": "da8fe73fedc51b769c8614474884dde1e12bc229",
+  "id": 42180071046,
+  "url": "https://github.com/yarnway/dontforget/actions/runs/42180071046",
+  "conclusion": "failure",
+  "jobs": [
+    {
+      "name": "Windows analyze and test",
+      "conclusion": "failure"
+    },
+    {
+      "name": "Analyze and test",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build ${{ matrix.platform }} candidate",
+      "conclusion": "skipped"
+    },
+    {
+      "name": "Verify tag packages without publishing",
+      "conclusion": "skipped"
+    }
+  ],
+  "failed_tests": [
+    "notification_action_app_test: hot action reports foreground feedback and default click keeps navigation",
+    "recording_reminders_phase1_ui_test: restored unsent text can opt out of alarms and AI"
+  ],
+  "windows_log_sha256": "c822f3fb975ab695ac2e6dd043661e30a43d6ff32a75b0be5b6c76052da86024"
+}

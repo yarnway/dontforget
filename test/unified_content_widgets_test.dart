@@ -1,4 +1,7 @@
 import 'dart:io';
+import 'support/interaction_preview.dart';
+import 'package:dont_forget/ui/theme/app_theme.dart';
+import 'package:dont_forget/services/local_media_store.dart';
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/models/media_record.dart';
 import 'package:dont_forget/models/reminder.dart';
@@ -45,6 +48,7 @@ void main() {
   late Directory docs;
   late ContentCleanupService service;
   late _Files files;
+  setUpAll(loadInteractionPreviewFonts);
   setUp(() async {
     h = OfflineManagementHarness();
     await h.create();
@@ -97,24 +101,34 @@ void main() {
             ),
             taskTemplateFileServiceProvider.overrideWithValue(files),
           ],
-          child: MaterialApp(
-            locale: Locale(locale),
-            supportedLocales: const [Locale('zh'), Locale('en'), Locale('ja')],
-            localizationsDelegates: const [
-              AppLocalizationsDelegate(),
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            theme: ThemeData(brightness: Brightness.dark),
-            builder: (context, child) => MediaQuery(
-              data: MediaQuery.of(context).copyWith(
-                textScaler: TextScaler.linear(scale),
-                viewInsets: EdgeInsets.only(bottom: keyboard),
+          child: RepaintBoundary(
+            key: interactionPreviewKey,
+            child: MaterialApp(
+              debugShowCheckedModeBanner: false,
+              locale: Locale(locale),
+              supportedLocales: const [
+                Locale('zh'),
+                Locale('en'),
+                Locale('ja'),
+              ],
+              localizationsDelegates: const [
+                AppLocalizationsDelegate(),
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              theme: const bool.fromEnvironment('UI_PREVIEW')
+                  ? AppTheme.dark
+                  : ThemeData(brightness: Brightness.dark),
+              builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  textScaler: TextScaler.linear(scale),
+                  viewInsets: EdgeInsets.only(bottom: keyboard),
+                ),
+                child: InlineFeedback(child: child!),
               ),
-              child: InlineFeedback(child: child!),
+              home: Scaffold(body: child),
             ),
-            home: Scaffold(body: child),
           ),
         ),
       ),
@@ -143,6 +157,109 @@ void main() {
       child: const Text('Open'),
     ),
   );
+  testWidgets(
+    'storage summary filters referenced files and selects only visible eligible content',
+    (tester) async {
+      late File external;
+      late String owned;
+      await tester.runAsync(() async {
+        external = await File(
+          '${h.directory.path}/sample.bin',
+        ).writeAsBytes(List.filled(4096, 7));
+        owned = await LocalMediaStore(
+          documentsDirectory: () async => docs,
+        ).importFile(external.path);
+        await h.container
+            .read(mediaRecordsProvider.notifier)
+            .addRecord(
+              MediaRecord(
+                id: 'reclaim',
+                type: 'image',
+                contentOrPath: owned,
+                createdAt: DateTime(2020),
+              ),
+            );
+        await h.container
+            .read(mediaRecordsProvider.notifier)
+            .addRecord(
+              MediaRecord(
+                id: 'protected',
+                type: 'text',
+                contentOrPath: 'Referenced note',
+                createdAt: DateTime(2020),
+              ),
+            );
+        await h.container
+            .read(remindersProvider.notifier)
+            .addReminder(
+              Reminder(
+                id: 'retain-task',
+                recordId: 'protected',
+                taskTitle: 'Retain',
+                quadrantLevel: 2,
+              ),
+            );
+      });
+      await host(tester, const ContentManagementPanel());
+      await tap(tester, const ValueKey('content-scan'));
+      expect(find.text('当前可清理 1 项，约 4.00 KiB'), findsOneWidget);
+      await tap(tester, const ValueKey('content-eligible-only'));
+      expect(
+        find.byKey(const ValueKey('content-entry:record:protected')),
+        findsNothing,
+      );
+      await tap(tester, const ValueKey('content-select-visible'));
+      expect(find.text('已选 1 项，约可释放 4.00 KiB'), findsOneWidget);
+      await captureInteractionPreview(tester, 'content-space-63-selected');
+      await tap(tester, const ValueKey('content-clear-selection'));
+      expect(
+        tester
+            .widget<FilledButton>(find.byKey(const ValueKey('content-clean')))
+            .onPressed,
+        isNull,
+      );
+      expect(await tester.runAsync(() => File(owned).exists()), isTrue);
+      expect(await tester.runAsync(() => external.exists()), isTrue);
+      expect(h.container.read(mediaRecordsProvider), hasLength(2));
+      await finish(tester);
+    },
+  );
+
+  testWidgets(
+    'bulk eligible selection respects the 100 item limit without deleting',
+    (tester) async {
+      await tester.runAsync(() async {
+        await h.database.writeTransaction(h.database.captureGeneration(), (
+          db,
+        ) async {
+          for (var i = 0; i < 103; i++) {
+            await db.insert(
+              'MediaRecords',
+              MediaRecord(
+                id: 'unused-$i',
+                type: 'text',
+                contentOrPath: 'Synthetic note $i',
+                createdAt: DateTime(2020),
+              ).toJson(),
+            );
+          }
+        });
+      });
+      await host(tester, const ContentManagementPanel());
+      await tap(tester, const ValueKey('content-scan'));
+      await tap(tester, const ValueKey('content-select-visible'));
+      expect(find.text('已选 100 项，约可释放 0 B'), findsOneWidget);
+      final rows = await tester.runAsync(
+        () => h.database.read(
+          h.database.captureGeneration(),
+          (db) => db.query('MediaRecords'),
+        ),
+      );
+      expect(rows, hasLength(103));
+      await finish(tester);
+    },
+  );
+
   testWidgets(
     'cleanup requires a concrete selection and confirmation; cancelling retains the original record',
     (tester) async {

@@ -129,6 +129,7 @@ void main() {
   late _TestNotifications notifications;
   String? recordingPath;
   bool produceAudio = false;
+  String? stopOverride;
   int captureMillis = 2000;
   late _Speech speech;
   late _TencentSpeech tencent;
@@ -151,6 +152,7 @@ void main() {
     permitted = true;
     failStart = false;
     produceAudio = false;
+    stopOverride = null;
     captureMillis = 2000;
     recordingPath = null;
     speech = _Speech();
@@ -189,7 +191,7 @@ void main() {
             await File(
               recordingPath!,
             ).writeAsBytes(m4aMetadata(ticks: captureMillis));
-            return recordingPath;
+            return stopOverride ?? recordingPath;
           }
           return null; // No audio file or external AI request in this test.
         case 'cancel':
@@ -727,6 +729,83 @@ void main() {
       expect(tencent.cancels, greaterThan(0));
       expect(container.read(remindersProvider), isEmpty);
       gate.resume(paused);
+    },
+  );
+
+  Future<void> finishOriginal(HomeController home) async {
+    final done = Completer<void>();
+    var busy = false;
+    final stop = home.addListener((state) {
+      busy = busy || state.pendingTasksCount > 0;
+      if (busy && state.pendingTasksCount == 0 && !done.isCompleted) {
+        done.complete();
+      }
+    }, fireImmediately: false);
+    try {
+      await home.stopRecordingAndProcess();
+      await done.future.timeout(const Duration(seconds: 10));
+    } finally {
+      stop();
+    }
+  }
+
+  test(
+    'committed original audio releases only its allocated temporary copy',
+    () async {
+      speech.androidPlatform = true;
+      produceAudio = true;
+      final home = container.read(homeControllerProvider.notifier);
+      expect(await home.startRecording(), isTrue);
+      final source = recordingPath!;
+      await finishOriginal(home);
+      final saved = container.read(mediaRecordsProvider).single;
+      expect(saved.contentOrPath, isNot(source));
+      expect(
+        await File(saved.contentOrPath).readAsBytes(),
+        m4aMetadata(ticks: captureMillis),
+      );
+      expect(await File(source).exists(), isFalse);
+      expect(container.read(remindersProvider).single.recordId, saved.id);
+    },
+  );
+
+  test('database failure retains the temporary recording for recovery', () async {
+    speech.androidPlatform = true;
+    produceAudio = true;
+    await database.writeTransaction(
+      database.captureGeneration(),
+      (db) => db.execute(
+        "CREATE TRIGGER reject_synthetic_audio BEFORE INSERT ON MediaRecords BEGIN SELECT RAISE(ABORT, 'synthetic disk failure'); END",
+      ),
+    );
+    final home = container.read(homeControllerProvider.notifier);
+    expect(await home.startRecording(), isTrue);
+    final source = recordingPath!;
+    await finishOriginal(home);
+    expect(await File(source).readAsBytes(), m4aMetadata(ticks: captureMillis));
+    expect(container.read(mediaRecordsProvider), isEmpty);
+    expect(home.state.error, isNotNull);
+  });
+
+  test(
+    'a recorder result outside the allocated capture is never reclaimed',
+    () async {
+      speech.androidPlatform = true;
+      produceAudio = true;
+      final external = await File(
+        '${directory.path}/external-original.m4a',
+      ).writeAsBytes(m4aMetadata());
+      stopOverride = external.path;
+      final home = container.read(homeControllerProvider.notifier);
+      expect(await home.startRecording(), isTrue);
+      await finishOriginal(home);
+      expect(await external.exists(), isTrue);
+      expect(
+        await File(
+          container.read(mediaRecordsProvider).single.contentOrPath,
+        ).readAsBytes(),
+        await external.readAsBytes(),
+      );
     },
   );
 

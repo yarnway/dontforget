@@ -1,3 +1,4 @@
+import 'support/real_io.dart';
 import 'package:dont_forget/models/settings.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -232,12 +233,18 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('仅本地保存，不调用 AI、不设置提醒。'), findsOneWidget);
     await tester.tap(find.byTooltip('发送'));
-    for (var i = 0; i < 100 && container.read(remindersProvider).isEmpty; i++) {
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 2)),
-      );
-      await tester.pump();
-    }
+    await pumpUntilRealIo(
+      tester,
+      () =>
+          container.read(remindersProvider).isNotEmpty &&
+          container.read(workspaceDraftsProvider)['capture'] == null &&
+          tester
+              .widget<TextField>(find.byType(TextField))
+              .controller!
+              .text
+              .isEmpty,
+      reason: 'Wait for the saved reminder and durable draft clear to complete',
+    );
     await drainWorkspaceDrafts(tester, container);
     expect(container.read(remindersProvider).single.triggerTime, isNull);
     // Changing the saved draft's options creates a fresh idempotency key.

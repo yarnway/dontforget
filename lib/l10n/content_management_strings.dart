@@ -15,6 +15,24 @@ String contentText(BuildContext context, String key) {
 
 const _strings = <String, List<String>>{
   'title': ['内容管理', 'Content manager', 'コンテンツ管理'],
+  'protectionHelp': ['引用保护与清理范围', 'Protection and cleanup scope', '参照保護と削除範囲'],
+  'spaceSummary': [
+    '当前可清理 {count} 项，约 {bytes}',
+    '{count} eligible items, about {bytes}',
+    '削除可能 {count} 件、約 {bytes}',
+  ],
+  'selectionSummary': [
+    '已选 {count} 项，约可释放 {bytes}',
+    '{count} selected, about {bytes} reclaimable',
+    '選択 {count} 件、解放可能 約 {bytes}',
+  ],
+  'eligibleOnly': ['只看可清理', 'Eligible only', '削除可能のみ'],
+  'selectVisible': [
+    '选择当前可清理项（最多100项）',
+    'Select visible eligible items (up to 100)',
+    '表示中の削除可能項目を選択（最大100件）',
+  ],
+  'clearSelection': ['取消全选', 'Clear selection', '選択を解除'],
   'originals': ['原始资料', 'Original records', '元の資料'],
   'restore': ['恢复材料', 'Restore materials', '復元用ファイル'],
   'archive': ['统一归档', 'Archive', 'アーカイブ'],
