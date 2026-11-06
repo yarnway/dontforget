@@ -10,11 +10,11 @@
 
 最终分析0，设置／快捷记录／外观／发送方式专项72通过。新增三语宽屏→手机缩放保留未保存偏好并真实保存回归3项，以及三语宽屏大字号回退单列3项；另加实际控件渲染预览。旧保存冲突、嵌套编辑、凭据脱敏及服务懒加载断言保持。两项首次夹具在英文大字号下读取屏幕外懒构建控件失败，改为先滚动到实际控件，原断言保持后全部通过。
 
-本轮按小批UI改进做相关回归，没有重跑本地全量，不把72记为完整套件通过。本机SDK3.47.2，推送后的固定SDK CI单列。实际Flutter渲染图使用合成设置：`dist/interaction-preview/preferences-62-desktop.png`、`preferences-62-mobile.png`、`preferences-62-dark.png`，另保留修改前图；不是Windows原生截图。
+本轮按小批UI改进做相关回归，没有重跑本地全量，不把72记为完整套件通过。本机SDK3.47.2，推送后的固定SDK CI单列。实际Flutter渲染图使用合成设置：`dist/interaction-preview/preferences-62-desktop.png`、`preferences-62-mobile.png`、`preferences-62-dark.png`，另保留修改前图；375宽度预览来自Windows测试宿主的窄窗口，不是Android实机截图，三张均不是Windows原生截图。
 
 ## 安装包与设备
 
-Windows候选包待固定源码提交后构建／核对。本轮未覆盖安装用户应用。当前正式版仍为v1.7.2+61，不创建新的稳定Release；候选不替代已发布五包和16附件。
+源码da8fe73已提交推送，Windows Release／Setup／Portable已构建；清单源码、版本、SHA-256、ZIP CRC、38份payload与PE1.7.3.62核验通过。[分层机器记录](benchmarks/preferences-layout-62-2026-11-06.json)。固定SDK的[CI42180071046](https://github.com/yarnway/dontforget/actions/runs/42180071046)仍在运行，未记通过。本轮未覆盖安装用户应用。当前正式版仍为v1.7.2+61，不创建新的稳定Release；候选不替代已发布五包和16附件。
 
 新版Computer Use 26.1103.31037已读取，node_repl现已提供；初始化仍报`codex/sandbox-state-meta: sandboxCwd is not a local file URI: file:///mnt/d/gitspace/opensources/dontforget`，重置内核并按list_windows重新初始化仍复现。技能规定“Use `node_repl` JavaScript for all Computer Use actions”，本轮未改用自建Windows UI自动化，也未进行真实窗口／输入法／托盘／Toast验收。旧+61的“运行时缺失”保留历史归属，当前阻塞是工作目录URI错误。
 

@@ -1,0 +1,56 @@
+{
+  "source": "da8fe73fedc51b769c8614474884dde1e12bc229",
+  "version": "1.7.3+62",
+  "schema": 17,
+  "local_checks": {
+    "analyze_issues": 0,
+    "related_tests_passed": 72,
+    "full_suite_rerun": false
+  },
+  "windows_package": {
+    "version": "1.7.3",
+    "build_number": "62",
+    "revision": "da8fe73fedc51b769c8614474884dde1e12bc229",
+    "local_sdk": "Flutter3.47.2",
+    "payload_files": 38,
+    "crc": "PASS",
+    "payload_sha256": "PASS",
+    "manifest": {
+      "version": "1.7.3",
+      "build_number": "62",
+      "revision": "da8fe73fedc51b769c8614474884dde1e12bc229",
+      "platform": "windows",
+      "signing": "unsigned",
+      "runtime_acceptance": "NOT_PERFORMED",
+      "artifacts": [
+        {
+          "file": "DontForget_Setup_v1.7.3.exe",
+          "bytes": 14173292,
+          "sha256": "4774f83ef3fb1f8c9c21282a0875c8cd6ddd8817bf2b8f97fc40b27698deb273"
+        },
+        {
+          "file": "DontForget_Windows_Portable_v1.7.3.zip",
+          "bytes": 17242575,
+          "sha256": "567ca20db88c90281d14202d3934663165dc90fe41a69e9ec9d5209dec03609f"
+        }
+      ]
+    },
+    "installed": false,
+    "native_ui": "NOT_PERFORMED"
+  },
+  "pe": {
+    "numeric_version": "1.7.3.62",
+    "file_version": "1.7.3+62",
+    "product_version": "1.7.3+62",
+    "installed": false,
+    "ui_acceptance": "NOT_PERFORMED"
+  },
+  "ci_at_recording": {
+    "id": 42180071046,
+    "url": "https://github.com/yarnway/dontforget/actions/runs/42180071046",
+    "status": "in_progress",
+    "conclusion": null
+  },
+  "native_ui": "NOT_PERFORMED_COMPUTER_USE_CWD_URI_ERROR",
+  "tencent": "DEFERRED_NOT_CALLED"
+}
