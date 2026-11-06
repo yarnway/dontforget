@@ -1,4 +1,5 @@
 import 'support/real_io.dart';
+import 'support/interaction_preview.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:dont_forget/data/database_helper.dart';
@@ -23,6 +24,7 @@ void main() {
   late DatabaseHelper db;
   late ProviderContainer container;
   late MemoryCredentialStore vault;
+  setUpAll(loadInteractionPreviewFonts);
   setUp(() async {
     sqfliteFfiInit();
     root = await Directory.systemTemp.createTemp('preferences-speech-');
@@ -75,29 +77,35 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: MaterialApp(
-          locale: Locale(language),
-          theme: brightness == Brightness.dark ? AppTheme.dark : AppTheme.light,
-          supportedLocales: const [Locale('zh'), Locale('en'), Locale('ja')],
-          localizationsDelegates: const [
-            AppLocalizationsDelegate(),
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(
-              context,
-            ).copyWith(textScaler: TextScaler.linear(scale)),
-            child: child!,
-          ),
-          home: Builder(
-            builder: (context) => Scaffold(
-              body: TextButton(
-                onPressed: () => Navigator.of(
-                  context,
-                ).push(MaterialPageRoute<void>(builder: (_) => page)),
-                child: const Text('open'),
+        child: RepaintBoundary(
+          key: interactionPreviewKey,
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            locale: Locale(language),
+            theme: brightness == Brightness.dark
+                ? AppTheme.dark
+                : AppTheme.light,
+            supportedLocales: const [Locale('zh'), Locale('en'), Locale('ja')],
+            localizationsDelegates: const [
+              AppLocalizationsDelegate(),
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.linear(scale)),
+              child: child!,
+            ),
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: TextButton(
+                  onPressed: () => Navigator.of(
+                    context,
+                  ).push(MaterialPageRoute<void>(builder: (_) => page)),
+                  child: const Text('open'),
+                ),
               ),
             ),
           ),
@@ -116,6 +124,116 @@ void main() {
     await settle(tester);
   }
 
+  for (final language in ['zh', 'en', 'ja']) {
+    testWidgets('responsive preferences preserve unsaved edits $language', (
+      tester,
+    ) async {
+      await show(
+        tester,
+        const PreferencesScreen(),
+        width: 1200,
+        language: language,
+      );
+      Rect rect(String id) => tester.getRect(find.byKey(ValueKey(id)));
+      expect(
+        rect('preferences-language').top,
+        rect('preferences-appearance').top,
+      );
+      expect(rect('preferences-ai').top, rect('preferences-notifications').top);
+      expect(
+        rect('preferences-ai').left,
+        lessThan(rect('preferences-notifications').left),
+      );
+      final loc = AppLocalizations.of(
+        tester.element(find.byType(PreferencesScreen)),
+      );
+      await tap(tester, 'preferences-send-mode');
+      await tester.tap(find.text(loc.get('inputSend_button')).last);
+      await settle(tester);
+      expect(rect('preferences-save').width, lessThanOrEqualTo(960));
+      tester.view.physicalSize = const Size(375, 812);
+      await settle(tester);
+      final field = tester.widget<DropdownButtonFormField<InputSendMode>>(
+        find.byKey(const ValueKey('preferences-send-mode')),
+      );
+      expect(field.initialValue, InputSendMode.button);
+      expect(
+        container.read(settingsProvider).inputSendMode,
+        InputSendMode.enter,
+      );
+      expect(
+        rect('preferences-appearance').top,
+        greaterThan(rect('preferences-language').top),
+      );
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('preferences-ai')),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await settle(tester);
+      expect(
+        rect('preferences-notifications').top,
+        greaterThan(rect('preferences-ai').top),
+      );
+      await tap(tester, 'preferences-save');
+      expect(
+        container.read(settingsProvider).inputSendMode,
+        InputSendMode.button,
+      );
+      expect(find.byType(PreferencesScreen), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+    testWidgets(
+      'wide preferences use readable single column for large type $language',
+      (tester) async {
+        await show(
+          tester,
+          const PreferencesScreen(),
+          width: 1200,
+          language: language,
+          scale: 2,
+        );
+        await tester.scrollUntilVisible(
+          find.byKey(const ValueKey('preferences-ai')),
+          300,
+          scrollable: find.byType(Scrollable).first,
+        );
+        await settle(tester);
+        final ai = tester.getRect(find.byKey(const ValueKey('preferences-ai')));
+        final notifications = tester.getRect(
+          find.byKey(const ValueKey('preferences-notifications')),
+        );
+        expect(ai.left, notifications.left);
+        expect(notifications.top, greaterThan(ai.top));
+        await tester.ensureVisible(
+          find.byKey(const ValueKey('preferences-sync')),
+        );
+        await settle(tester);
+        expect(
+          find.byKey(const ValueKey('preferences-sync')).hitTestable(),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+  testWidgets('preferences visual preview', (tester) async {
+    await show(tester, const PreferencesScreen(), width: 1200);
+    await captureInteractionPreview(tester, 'preferences-62-desktop');
+    tester.view.physicalSize = const Size(375, 812);
+    await settle(tester);
+    await captureInteractionPreview(tester, 'preferences-62-mobile');
+    await tester.pumpWidget(const SizedBox());
+    await settle(tester);
+    await show(
+      tester,
+      const PreferencesScreen(),
+      width: 1200,
+      brightness: Brightness.dark,
+    );
+    await captureInteractionPreview(tester, 'preferences-62-dark');
+    expect(tester.takeException(), isNull);
+  });
   testWidgets(
     'everyday settings and AI page never mount notification diagnostics or LAN',
     (tester) async {

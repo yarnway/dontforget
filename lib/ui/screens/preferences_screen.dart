@@ -155,21 +155,39 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
     required String title,
     required String hint,
     required VoidCallback action,
-  }) => ListTile(
-    key: ValueKey(id),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-    leading: Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withValues(alpha: .09),
-        borderRadius: BorderRadius.circular(12),
+    required double minHeight,
+  }) => Card.outlined(
+    clipBehavior: Clip.antiAlias,
+    child: ConstrainedBox(
+      constraints: BoxConstraints(minHeight: minHeight),
+      child: ListTile(
+        key: ValueKey(id),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
+        leading: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: .09),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, color: Theme.of(context).colorScheme.primary),
+        ),
+        title: Text(title, style: Theme.of(context).textTheme.titleMedium),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            hint,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: !_ready || _saving ? null : action,
       ),
-      child: Icon(icon, color: Theme.of(context).colorScheme.primary),
     ),
-    title: Text(title),
-    subtitle: Text(hint),
-    trailing: const Icon(Icons.chevron_right),
-    onTap: !_ready || _saving ? null : action,
   );
   @override
   Widget build(BuildContext context) {
@@ -184,47 +202,67 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
         child: Column(
           children: [
             const SizedBox(height: 6),
-            _choice<String>(
-              id: 'preferences-language',
-              icon: Icons.language,
-              label: loc.get('language'),
-              value: _draft.language,
-              choices: const {'zh': '简体中文', 'en': 'English', 'ja': '日本語'},
-              change: (v) => _draft = (
-                language: v,
-                appearance: _draft.appearance,
-                send: _draft.send,
-              ),
-            ),
-            _choice<AppAppearance>(
-              id: 'preferences-appearance',
-              icon: Icons.palette_outlined,
-              label: loc.get('appearanceTitle'),
-              value: _draft.appearance,
-              choices: {
-                for (final v in AppAppearance.values)
-                  v: loc.get('appearance_${v.name}'),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final columns =
+                    constraints.maxWidth >= 840 &&
+                        MediaQuery.textScalerOf(context).scale(14) <= 18.2
+                    ? 3
+                    : 1;
+                final choices = <Widget>[
+                  _choice<String>(
+                    id: 'preferences-language',
+                    icon: Icons.language,
+                    label: loc.get('language'),
+                    value: _draft.language,
+                    choices: const {'zh': '简体中文', 'en': 'English', 'ja': '日本語'},
+                    change: (v) => _draft = (
+                      language: v,
+                      appearance: _draft.appearance,
+                      send: _draft.send,
+                    ),
+                  ),
+                  _choice<AppAppearance>(
+                    id: 'preferences-appearance',
+                    icon: Icons.palette_outlined,
+                    label: loc.get('appearanceTitle'),
+                    value: _draft.appearance,
+                    choices: {
+                      for (final v in AppAppearance.values)
+                        v: loc.get('appearance_${v.name}'),
+                    },
+                    change: (v) => _draft = (
+                      language: _draft.language,
+                      appearance: v,
+                      send: _draft.send,
+                    ),
+                  ),
+                  _choice<InputSendMode>(
+                    id: 'preferences-send-mode',
+                    icon: Icons.keyboard_return,
+                    label: loc.get('inputSendTitle'),
+                    value: _draft.send,
+                    choices: {
+                      for (final v in InputSendMode.values)
+                        v: loc.get('inputSend_${v.name}'),
+                    },
+                    change: (v) => _draft = (
+                      language: _draft.language,
+                      appearance: _draft.appearance,
+                      send: v,
+                    ),
+                  ),
+                ];
+                return Wrap(
+                  children: [
+                    for (final choice in choices)
+                      SizedBox(
+                        width: constraints.maxWidth / columns,
+                        child: choice,
+                      ),
+                  ],
+                );
               },
-              change: (v) => _draft = (
-                language: _draft.language,
-                appearance: v,
-                send: _draft.send,
-              ),
-            ),
-            _choice<InputSendMode>(
-              id: 'preferences-send-mode',
-              icon: Icons.keyboard_return,
-              label: loc.get('inputSendTitle'),
-              value: _draft.send,
-              choices: {
-                for (final v in InputSendMode.values)
-                  v: loc.get('inputSend_${v.name}'),
-              },
-              change: (v) => _draft = (
-                language: _draft.language,
-                appearance: _draft.appearance,
-                send: v,
-              ),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
@@ -236,7 +274,11 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
           ],
         ),
       ),
-      if (Platform.isWindows) const GlobalCaptureShortcutPanel(),
+      if (Platform.isWindows)
+        const Padding(
+          padding: EdgeInsets.only(top: 12),
+          child: GlobalCaptureShortcutPanel(),
+        ),
       Padding(
         padding: const EdgeInsets.fromLTRB(4, 24, 4, 10),
         child: Text(
@@ -244,28 +286,35 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
           style: Theme.of(context).textTheme.titleSmall,
         ),
       ),
-      Card.outlined(
-        child: Column(
-          children: [
+      LayoutBuilder(
+        builder: (context, constraints) {
+          final columns =
+              constraints.maxWidth >= 680 &&
+                  MediaQuery.textScalerOf(context).scale(14) <= 18.2
+              ? 2
+              : 1;
+          final width = (constraints.maxWidth - (columns - 1) * 12) / columns;
+          final entries = <Widget>[
             _entry(
               id: 'preferences-ai',
+              minHeight: columns == 2 ? 112 : 88,
               icon: Icons.auto_awesome_outlined,
               title: t('ai'),
               hint: t('aiHint'),
               action: () => _open(const SettingsScreen(area: SettingsArea.ai)),
             ),
-            const Divider(height: 1, indent: 70),
             _entry(
               id: 'preferences-notifications',
+              minHeight: columns == 2 ? 112 : 88,
               icon: Icons.notifications_none,
               title: t('notifications'),
               hint: t('notificationsHint'),
               action: () =>
                   _open(const SettingsScreen(area: SettingsArea.notifications)),
             ),
-            const Divider(height: 1, indent: 70),
             _entry(
               id: 'preferences-protection',
+              minHeight: columns == 2 ? 112 : 88,
               icon: Icons.shield_outlined,
               title: protectionText(context, 'title'),
               hint: t('protectionHint'),
@@ -277,9 +326,9 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
                 needsCleanDraft: true,
               ),
             ),
-            const Divider(height: 1, indent: 70),
             _entry(
               id: 'preferences-content',
+              minHeight: columns == 2 ? 112 : 88,
               icon: Icons.inventory_2_outlined,
               title: contentText(context, 'title'),
               hint: t('contentHint'),
@@ -290,17 +339,25 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
                 ),
               ),
             ),
-            const Divider(height: 1, indent: 70),
             _entry(
               id: 'preferences-sync',
+              minHeight: columns == 2 ? 112 : 88,
               icon: Icons.devices_outlined,
               title: t('sync'),
               hint: t('syncHint'),
               action: () =>
                   _open(const SettingsScreen(area: SettingsArea.sync)),
             ),
-          ],
-        ),
+          ];
+          return Wrap(
+            key: const ValueKey('preferences-feature-grid'),
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              for (final entry in entries) SizedBox(width: width, child: entry),
+            ],
+          );
+        },
       ),
       const SizedBox(height: 24),
     ];
@@ -316,19 +373,29 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
         bottomNavigationBar: !_dirty
             ? null
             : SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: FilledButton(
-                    key: const ValueKey('preferences-save'),
-                    onPressed: _ready && !_saving ? save : null,
-                    child: Text(loc.get('save')),
+                child: Center(
+                  heightFactor: 1,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 960),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 12,
+                      ),
+                      child: FilledButton.icon(
+                        key: const ValueKey('preferences-save'),
+                        icon: const Icon(Icons.check_rounded),
+                        onPressed: _ready && !_saving ? save : null,
+                        label: Text(loc.get('save')),
+                      ),
+                    ),
                   ),
                 ),
               ),
         body: Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 760),
+            constraints: const BoxConstraints(maxWidth: 960),
             child: ListView(
               key: const ValueKey('preferences-list'),
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
