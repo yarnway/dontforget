@@ -1,0 +1,176 @@
+{
+  "version": "1.7.3+63",
+  "schema": 17,
+  "source": "aadbeb1a07920ea197045627b501dd76dd7d6444",
+  "local_related_tests": 115,
+  "local_analyze_issues": 0,
+  "android": {
+    "version": "1.7.3+63",
+    "revision": "aadbeb1a07920ea197045627b501dd76dd7d6444",
+    "scope": "same-source local SDK arm64 versus universal; not installed or published",
+    "artifacts": [
+      {
+        "scope": "arm64",
+        "file": "DontForget_Android_arm64_v1.7.3+63.apk",
+        "abis": [
+          "arm64-v8a"
+        ],
+        "version_code": 63,
+        "version_name": "1.7.3",
+        "bytes": 26468820,
+        "sha256": "20578459f363ea3b97062e763a3fd7e5e495a42a5812c16a6433a1b79ce24ed1",
+        "certificate_sha256": "3db49656984fb848a73b1e8d056846b97e2a7caf47c9a9ae74f475cdbb79e9f1"
+      },
+      {
+        "scope": "universal",
+        "file": "DontForget_Android_universal_v1.7.3+63.apk",
+        "abis": [
+          "arm64-v8a",
+          "armeabi-v7a",
+          "x86_64"
+        ],
+        "version_code": 63,
+        "version_name": "1.7.3",
+        "bytes": 76630780,
+        "sha256": "2f4a9366c270af982d1864b015baf1f852d5be20e8e0dc960d7acf9bdcade45c",
+        "certificate_sha256": "3db49656984fb848a73b1e8d056846b97e2a7caf47c9a9ae74f475cdbb79e9f1"
+      }
+    ],
+    "saved_bytes": 50161960,
+    "reduction_percent": 65.46
+  },
+  "windows": {
+    "version": "1.7.3",
+    "build_number": "63",
+    "revision": "aadbeb1a07920ea197045627b501dd76dd7d6444",
+    "local_sdk": "Flutter3.47.2",
+    "payload_files": 38,
+    "crc": "PASS",
+    "payload_sha256": "PASS",
+    "manifest": {
+      "version": "1.7.3",
+      "build_number": "63",
+      "revision": "aadbeb1a07920ea197045627b501dd76dd7d6444",
+      "platform": "windows",
+      "signing": "unsigned",
+      "runtime_acceptance": "NOT_PERFORMED",
+      "artifacts": [
+        {
+          "file": "DontForget_Setup_v1.7.3.exe",
+          "bytes": 14175680,
+          "sha256": "5d21ef11301cb3d94060698310a0f06b7d0b3afbcdfb3d9fb20de5521bbdcd07"
+        },
+        {
+          "file": "DontForget_Windows_Portable_v1.7.3.zip",
+          "bytes": 17246974,
+          "sha256": "ed7c449d8e8739e8cd6fcbf744a9254f2929a6c9f58613494f3261ab0301e907"
+        }
+      ]
+    },
+    "installed": false,
+    "native_ui": "NOT_PERFORMED"
+  },
+  "ci_quality": {
+    "source": "aadbeb1a07920ea197045627b501dd76dd7d6444",
+    "id": 42182728769,
+    "url": "https://github.com/yarnway/dontforget/actions/runs/42182728769",
+    "status": "in_progress",
+    "conclusion": null,
+    "quality_complete": true,
+    "quality": [
+      {
+        "job": "Analyze and test",
+        "flutter_passed": 2326,
+        "flutter_skipped": 2,
+        "python_run": 161,
+        "python_skipped": 4,
+        "log_sha256": "8edf0b4f05f9890f9216a0a05f13523074e6c4574c20c867b75ed37d0758dec2"
+      },
+      {
+        "job": "Windows analyze and test",
+        "flutter_passed": 2308,
+        "flutter_skipped": 20,
+        "python_run": 161,
+        "python_skipped": 6,
+        "log_sha256": "1c53a77c83112154397d8ec54c6c61a93df84bf812c22d715c7c79c9871bcc56"
+      }
+    ],
+    "jobs": [
+      {
+        "name": "Analyze and test",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Windows analyze and test",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build android candidate",
+        "status": "in_progress",
+        "conclusion": null
+      },
+      {
+        "name": "Build windows candidate",
+        "status": "in_progress",
+        "conclusion": null
+      },
+      {
+        "name": "Build macos candidate",
+        "status": "in_progress",
+        "conclusion": null
+      },
+      {
+        "name": "Build linux candidate",
+        "status": "in_progress",
+        "conclusion": null
+      },
+      {
+        "name": "Build ios candidate",
+        "status": "in_progress",
+        "conclusion": null
+      }
+    ]
+  },
+  "ci_builds_at_recording": [
+    {
+      "name": "Analyze and test",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Windows analyze and test",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build android candidate",
+      "status": "in_progress",
+      "conclusion": null
+    },
+    {
+      "name": "Build windows candidate",
+      "status": "in_progress",
+      "conclusion": null
+    },
+    {
+      "name": "Build macos candidate",
+      "status": "in_progress",
+      "conclusion": null
+    },
+    {
+      "name": "Build linux candidate",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build ios candidate",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "device_installed": false,
+  "real_recording_or_speech_acceptance": false,
+  "release_published": false
+}

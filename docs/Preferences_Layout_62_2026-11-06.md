@@ -14,7 +14,7 @@
 
 ## 安装包与设备
 
-源码da8fe73已提交推送，Windows Release／Setup／Portable已构建；清单源码、版本、SHA-256、ZIP CRC、38份payload与PE1.7.3.62核验通过。[分层机器记录](benchmarks/preferences-layout-62-2026-11-06.json)。固定SDK的[CI42180071046](https://github.com/yarnway/dontforget/actions/runs/42180071046)仍在运行，未记通过。本轮未覆盖安装用户应用。当前正式版仍为v1.7.2+61，不创建新的稳定Release；候选不替代已发布五包和16附件。
+源码da8fe73已提交推送，Windows Release／Setup／Portable已构建；清单源码、版本、SHA-256、ZIP CRC、38份payload与PE1.7.3.62核验通过。[分层机器记录](benchmarks/preferences-layout-62-2026-11-06.json)。固定SDK的[CI42180071046](https://github.com/yarnway/dontforget/actions/runs/42180071046)后来确认Linux成功、Windows两项旧I/O夹具失败，构建未开始；失败与+63修正复验见[后续记录](Storage_And_Core_63_2026-11-06.md)，本轮+62不记云端通过。本轮未覆盖安装用户应用。当前正式版仍为v1.7.2+61，不创建新的稳定Release；候选不替代已发布五包和16附件。
 
 新版Computer Use 26.1103.31037已读取，node_repl现已提供；初始化仍报`codex/sandbox-state-meta: sandboxCwd is not a local file URI: file:///mnt/d/gitspace/opensources/dontforget`，重置内核并按list_windows重新初始化仍复现。技能规定“Use `node_repl` JavaScript for all Computer Use actions”，本轮未改用自建Windows UI自动化，也未进行真实窗口／输入法／托盘／Toast验收。旧+61的“运行时缺失”保留历史归属，当前阻塞是工作目录URI错误。
 
