@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from prepare_platform_release import (REPOSITORY, PLATFORMS, validate_run, select_artifacts,
                                       extract_archive, validate_files, verify_existing_tag)
 from verify_published_release import verify_release
-from prepare_platform_release import prepare
+from prepare_platform_release import prepare, read_release_notes
 
 REV = 'b' * 40
 CERT = 'a' * 64
@@ -69,6 +69,33 @@ class SourceGateTest(unittest.TestCase):
         with self.assertRaises(urllib.error.HTTPError): verify_existing_tag(Absent(), 'v1.7.0', REV, required=True)
 
 
+class ReleaseNotesTest(unittest.TestCase):
+    def test_new_version_selects_its_own_utf8_notes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'docs').mkdir()
+            for version in ['1.7.0', '1.7.1']:
+                (root / f'docs/Release_Notes_v{version}.md').write_text(
+                    f'# DontForget v{version} · Android / Windows / Linux\n版本{version}\n', encoding='utf-8')
+            notes = read_release_notes(root, '1.7.1')
+            self.assertIn('版本1.7.1', notes)
+            self.assertNotIn('1.7.0', notes)
+
+    def test_missing_or_wrong_version_notes_fail_without_using_old_body(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'docs').mkdir()
+            old = '# DontForget v1.7.0 · Android / Windows / Linux\n旧说明\n'
+            (root / 'docs/Release_Notes_v1.7.0.md').write_text(old, encoding='utf-8')
+            with self.assertRaises(FileNotFoundError):
+                read_release_notes(root, '1.7.1')
+            path = root / 'docs/Release_Notes_v1.7.1.md'
+            for body in [old, '', '# DontForget v1.7.1rc1 · Android / Windows / Linux\n']:
+                path.write_text(body, encoding='utf-8')
+                with self.assertRaises(ValueError):
+                    read_release_notes(root, '1.7.1')
+
+
 class ReleaseFilesTest(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
@@ -103,7 +130,7 @@ class ReleaseFilesTest(unittest.TestCase):
         (self.root / 'android').mkdir()
         (self.root / 'android/release-certificate.sha256').write_text(CERT)
         (self.root / 'docs').mkdir()
-        (self.root / 'docs/Release_Notes_v1.7.0.md').write_text('三平台发行说明\n', encoding='utf-8')
+        (self.root / 'docs/Release_Notes_v1.7.0.md').write_text('# DontForget v1.7.0 · Android / Windows / Linux\n三平台发行说明\n', encoding='utf-8')
         archives = {}
         artifacts = []
         for platform in PLATFORMS:

@@ -162,6 +162,16 @@ def validate_files(directory, revision, release_version, build_number, expected_
     return reports
 
 
+def read_release_notes(root, release_version):
+    # Never reuse an older release's body when preparing a new stable tag.
+    path = Path(root) / 'docs' / f'Release_Notes_v{release_version}.md'
+    notes = path.read_text(encoding='utf-8')
+    heading = f'# DontForget v{release_version} · Android / Windows / Linux'
+    if not notes.splitlines() or notes.splitlines()[0].strip() != heading:
+        raise ValueError('Release notes do not match the verified version')
+    return notes
+
+
 def prepare(run_id, directory, github):
     run = github.get('actions/runs/' + str(run_id))
     jobs = github.get('actions/runs/' + str(run_id) + '/jobs?per_page=100')['jobs']
@@ -171,6 +181,7 @@ def prepare(run_id, directory, github):
     release_version, build_number = version(ROOT)
     verify_tag('v' + release_version, release_version, build_number)
     verify_existing_tag(github, 'v' + release_version, revision)
+    notes = read_release_notes(ROOT, release_version)
     selected = select_artifacts(github.get('actions/runs/' + str(run_id) + '/artifacts?per_page=100')['artifacts'], run_id, revision)
     expected_certificate = certificate((ROOT / 'android/release-certificate.sha256').read_text())
     directory = Path(directory)
@@ -192,7 +203,6 @@ def prepare(run_id, directory, github):
                'files': [{'file': p.name, 'sha256': digest(p), 'bytes': p.stat().st_size} for p in sorted(directory.iterdir())]}
     (directory / 'release-provenance.json').write_text(json.dumps(receipt, indent=2) + '\n')
     (directory / 'SHA256SUMS.txt').write_text(''.join(f'{digest(p)}  {p.name}\n' for p in sorted(directory.iterdir())))
-    notes = (ROOT / 'docs/Release_Notes_v1.7.0.md').read_text(encoding='utf-8')
     Path('release-notes.md').write_text(notes + f'\n构建号：{build_number}；源码：`{revision}`；[完整CI]({run["html_url"]})。\n', encoding='utf-8')
     if os.environ.get('GITHUB_OUTPUT'):
         with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
