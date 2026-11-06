@@ -1,0 +1,296 @@
+{
+  "url": "https://github.com/yarnway/dontforget/releases/tag/v1.7.1",
+  "tag": "v1.7.1",
+  "revision": "559ab5a7540d01ae69f81a27dfd6e668238b23a5",
+  "published": true,
+  "prerelease": false,
+  "body_verified": true,
+  "assets": [
+    {
+      "file": "android-manifest.json",
+      "bytes": 650,
+      "sha256": "b1b83e596cda59daa0ce51beb62c36cbd4e132b378b87d4a13af69dab2e7d8c5"
+    },
+    {
+      "file": "android-SHA256SUMS.txt",
+      "bytes": 192,
+      "sha256": "9dd4c51062fc5373f5cca9f6caf934270e6b7ab23505b0106ccc54578143b8be"
+    },
+    {
+      "file": "DontForget_Android_v1.7.1.aab",
+      "bytes": 72799780,
+      "sha256": "03891c783ba158dac80204712d3e9876e73f841d95e71c40cb537c5747eb7c8f"
+    },
+    {
+      "file": "DontForget_Android_v1.7.1.apk",
+      "bytes": 75899600,
+      "sha256": "ac8abe0598dcbc238127167b8874f662cb89f1e686b154e86c6e842d79c7c46e"
+    },
+    {
+      "file": "DontForget_Linux_x64_v1.7.1.tar.gz",
+      "bytes": 14326373,
+      "sha256": "1165d1b2dcc3298f7914ef591795e7c498a89ce7e4cb43118afaf591fb9bed83"
+    },
+    {
+      "file": "DontForget_Setup_v1.7.1.exe",
+      "bytes": 14614217,
+      "sha256": "10be58c59f6a18b7d0240fbf0789cab3f0f0d17c6e102996bfbd335845400f4f"
+    },
+    {
+      "file": "DontForget_Windows_Portable_v1.7.1.zip",
+      "bytes": 17818979,
+      "sha256": "b369dc033b87f735d1da02fe08ff8259c3660d05e2c9a700faf345a12d9b9b3b"
+    },
+    {
+      "file": "linux-manifest.json",
+      "bytes": 401,
+      "sha256": "58f3e83d4b8cf3497175f34948fa25b8b2a3174ce5f71600b9303875b46312b9"
+    },
+    {
+      "file": "linux-SHA256SUMS.txt",
+      "bytes": 101,
+      "sha256": "35def000641ad4b34128a9e4453c95a4face40d8f9e236abb6384ee2d307b062"
+    },
+    {
+      "file": "linux-startup.json",
+      "bytes": 572,
+      "sha256": "2ad37097cb4d2b6ced4e844e50f0f7bb85c31dcb8fbccf78f2a68662c24dd061"
+    },
+    {
+      "file": "release-provenance.json",
+      "bytes": 3410,
+      "sha256": "0c0bb38a4b118189fb7a514116993b1ffe92a2d9ffbe25f5264f5a75b9fc044c"
+    },
+    {
+      "file": "SHA256SUMS.txt",
+      "bytes": 1373,
+      "sha256": "91712317bd7812dc2e130e549202246763232e0422e42f7b5b873b67edc39ef9"
+    },
+    {
+      "file": "windows-installation.json",
+      "bytes": 286,
+      "sha256": "62d173521f674142aa787143904757f022db57a64d23524c1443f43c600579ac"
+    },
+    {
+      "file": "windows-manifest.json",
+      "bytes": 657,
+      "sha256": "f4cb9b5980f6180e2c4f738b6282e38a0f606764b42d02d9c125660dc27de148"
+    },
+    {
+      "file": "windows-SHA256SUMS.txt",
+      "bytes": 201,
+      "sha256": "d427f3abb38238bff448b159cb09a11854996996efaff28ebddd9f14a68712d0"
+    },
+    {
+      "file": "windows-startup.json",
+      "bytes": 442,
+      "sha256": "3ee9035bd2613b7cc223e29230d8b0dc175114d63ad21cc154f209d03a9f6dda"
+    }
+  ],
+  "source_ci": {
+    "commit": "559ab5a7540d01ae69f81a27dfd6e668238b23a5",
+    "id": 42143635895,
+    "url": "https://github.com/yarnway/dontforget/actions/runs/42143635895",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "Analyze and test",
+        "conclusion": "success"
+      },
+      {
+        "name": "Windows analyze and test",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build linux candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build android candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build windows candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build ios candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Build macos candidate",
+        "conclusion": "success"
+      },
+      {
+        "name": "Verify tag packages without publishing",
+        "conclusion": "skipped"
+      }
+    ],
+    "quality": [
+      {
+        "job": "Analyze and test",
+        "flutter_passed": 2306,
+        "flutter_skipped": 2,
+        "python_run": 161,
+        "python_skipped": 4,
+        "log_sha256": "e7175fa9b1b1e245dd7ed6651489ddcef45cce9a54b89254a38f0f595fef2119"
+      },
+      {
+        "job": "Windows analyze and test",
+        "flutter_passed": 2288,
+        "flutter_skipped": 20,
+        "python_run": 161,
+        "python_skipped": 6,
+        "log_sha256": "e30dd617e9c67ad870f994614d980b47347a787f8b44a6363febe48e611d911a"
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 13470591342,
+        "name": "macos-deliverables",
+        "size_in_bytes": 26371804,
+        "digest": "sha256:dd80937af6b0d480aaf1554e40182d73f9f08a900faabd6894d554f242a61965",
+        "expired": false,
+        "workflow_run": {
+          "id": 42143635895,
+          "repository_id": 1362330634,
+          "head_repository_id": 1362330634,
+          "head_branch": "main",
+          "head_sha": "559ab5a7540d01ae69f81a27dfd6e668238b23a5"
+        }
+      },
+      {
+        "id": 13470215197,
+        "name": "ios-deliverables",
+        "size_in_bytes": 11099378,
+        "digest": "sha256:0ad4f7b716e01e47f005aae191e93656847679b0d5a26308206b98ba703f0373",
+        "expired": false,
+        "workflow_run": {
+          "id": 42143635895,
+          "repository_id": 1362330634,
+          "head_repository_id": 1362330634,
+          "head_branch": "main",
+          "head_sha": "559ab5a7540d01ae69f81a27dfd6e668238b23a5"
+        }
+      },
+      {
+        "id": 13469991947,
+        "name": "android-deliverables",
+        "size_in_bytes": 107436055,
+        "digest": "sha256:2fabf6cb8c2273976e70400b08f54c3c2ac626294e4e5a27af0627126cf37e8c",
+        "expired": false,
+        "workflow_run": {
+          "id": 42143635895,
+          "repository_id": 1362330634,
+          "head_repository_id": 1362330634,
+          "head_branch": "main",
+          "head_sha": "559ab5a7540d01ae69f81a27dfd6e668238b23a5"
+        }
+      },
+      {
+        "id": 13469143304,
+        "name": "windows-deliverables",
+        "size_in_bytes": 31880283,
+        "digest": "sha256:585e39917a290b3278c3c5e5dc4d11b4e1ffdb406e4dc7e60df2df454f4e5d6c",
+        "expired": false,
+        "workflow_run": {
+          "id": 42143635895,
+          "repository_id": 1362330634,
+          "head_repository_id": 1362330634,
+          "head_branch": "main",
+          "head_sha": "559ab5a7540d01ae69f81a27dfd6e668238b23a5"
+        }
+      },
+      {
+        "id": 13468664740,
+        "name": "linux-deliverables",
+        "size_in_bytes": 14290096,
+        "digest": "sha256:7b39308de033ad3917c7d16e7c5d576ef3fed61792e6272d575a048e7fea5735",
+        "expired": false,
+        "workflow_run": {
+          "id": 42143635895,
+          "repository_id": 1362330634,
+          "head_repository_id": 1362330634,
+          "head_branch": "main",
+          "head_sha": "559ab5a7540d01ae69f81a27dfd6e668238b23a5"
+        }
+      }
+    ]
+  },
+  "publication_ci": 42146680831,
+  "publication_url": "https://github.com/yarnway/dontforget/actions/runs/42146680831",
+  "downloaded_ready_archive_sha_crc_verified": true,
+  "android_apk_aab_certificates_verified": true,
+  "android_certificate_sha256": "3db49656984fb848a73b1e8d056846b97e2a7caf47c9a9ae74f475cdbb79e9f1",
+  "version": "1.7.1",
+  "build_number": 60,
+  "schema": 17,
+  "publication_workflow": {
+    "id": 42146680831,
+    "url": "https://github.com/yarnway/dontforget/actions/runs/42146680831",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "name": "prepare",
+        "conclusion": "success"
+      },
+      {
+        "name": "publish",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "android_device": {
+    "source": "559ab5a7540d01ae69f81a27dfd6e668238b23a5",
+    "scope": "CI universal distribution APK upgrade from local arm64 +60",
+    "apk_sha256": "ac8abe0598dcbc238127167b8874f662cb89f1e686b154e86c6e842d79c7c46e",
+    "all_three_tables_all_fields_preserved": true,
+    "schema": 17,
+    "integrity": "ok",
+    "counts": {
+      "Reminders": 2,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "backup_actual_SAF_decrypt_preview_confirm_restore": true,
+    "restore_cold_reopen": true,
+    "restored_reminder_media_all_fields_match_local_arm64_result": true,
+    "synthetic_records_soft_deleted": 2,
+    "cleanup_counts": {
+      "Reminders": 2,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "cleanup_integrity": "ok",
+    "original_ime_restored": true,
+    "tencent_credentials_accessed": false
+  },
+  "windows_local_install": {
+    "source": "559ab5a7540d01ae69f81a27dfd6e668238b23a5",
+    "installed_version": "1.7.1+60",
+    "installer_exit": 0,
+    "setup_sha256": "10be58c59f6a18b7d0240fbf0789cab3f0f0d17c6e102996bfbd335845400f4f",
+    "payload_files_identical": 37,
+    "uninstaller_present": true,
+    "business_files_unchanged_by_installer": true,
+    "native_cli_exit": 0,
+    "schema": 17,
+    "integrity": "ok",
+    "all_three_tables_all_fields_unchanged_after_cli": true,
+    "business_counts": {
+      "Reminders": 3,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "gui_or_toast_tested": false,
+    "signing_and_tencent_vault_untouched": true
+  },
+  "full_native_matrix_complete": false,
+  "tencent_status": "Deferred by user on 2026-11-06; no credentials accessed or configured",
+  "latest_and_previous_readback": {
+    "latest_stable": "v1.7.1",
+    "previous_v1_7_0_tag_and_16_asset_hashes_preserved": true
+  }
+}

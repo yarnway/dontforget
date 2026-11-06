@@ -1,5 +1,7 @@
 # v1.7 发布验收总表
 
+2026-11-06最新三平台稳定版为[v1.7.1](https://github.com/yarnway/dontforget/releases/tag/v1.7.1)／build60／schema17，固定源码559ab5a、16附件及真实Pixel／Windows安装范围已核验；[发行记录](Platform_Release_60_2026-11-06.md)。此前候选描述和v1.7.0表项保留历史归属，剩余原生门槛继续单列。
+
 2026-11-06内部候选为`1.7.1+60`／schema17：Windows全局快捷录入与Android TRUNCATE恢复修复的源码、测试、候选包和设备范围见[阶段台账](Next_Steps_2026-11-02.md)。已发布v1.7.0的tag／附件不改写；下一轮稳定发布仍是阶段50最后步骤。
 
 **v1.7.0三平台已发布（2026-11-05）**：build59／schema17，[Release](https://github.com/yarnway/dontforget/releases/tag/v1.7.0)固定源码`71602c8`，16附件及正文／标签／摘要已读回。源码`71602c8`的[CI42044381809](https://github.com/yarnway/dontforget/actions/runs/42044381809)双平台质量与五平台构建7项成功，标签专用检查跳过；Linux Flutter2289通过／2跳过、Windows2271通过／20跳过，Python各157运行（跳过3／6）。发布准备工具随后修正统计／UTF-8处理，新增完整流程回归，本地Windows最终158运行／6跳过、签名／发布专项22通过。 三平台完整归档、APK／AAB签名和桌面报告均已复验；Pixel后来断开，+59发行身份未装机，不把+58设备结果移记。首次云端发布工作流汇总失败，修正后通过本地完整核验发布；[分层记录](Platform_Release_59_2026-11-05.md)。其余原生、腾讯云与Apple等门槛继续列待验，不声明全部平台／功能完成。下列+58及历史快照保留各自归属。

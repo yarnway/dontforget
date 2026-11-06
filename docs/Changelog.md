@@ -4,6 +4,13 @@
 
 ---
 
+## Android／Windows／Linux v1.7.1（build60，已发布）- 2026-11-06
+
+- 修复Android TRUNCATE空日志导致完整备份恢复失败；新增正常关闭、中断重启、非空日志保留及WAL拒绝回归。最终通用签名APK在Pixel同包升级、加密恢复及冷重开通过，测试事项已软删除。
+- Windows增加默认关闭的Ctrl+Alt+Space全局快捷录入、设备独立偏好及恢复隔离；本机最终安装包升级及原3条提醒全部字段保持，物理快捷键／托盘／Toast仍待验。
+- 独立源码b981592的Windows／Linux完整2GiB加密容量、错误密码、取消和恢复后重开通过；本轮实际手机→桌面后端→手机样本0附件，保持范围区分。
+- 发布器改为按版本读取并校验说明；固定源码559ab5a的双平台质量及五平台构建、手动发布和16附件独立读回均通过。[v1.7.1](https://github.com/yarnway/dontforget/releases/tag/v1.7.1)及[完整发行记录](Platform_Release_60_2026-11-06.md)。腾讯云按用户要求暂缓，其余阶段任务保留。
+
 ## Android／Windows／Linux v1.7.0（build59，已发布）- 2026-11-05
 
 - Android加入固定发行签名、证书固定和APK／AAB独立验证；PR测试候选仍明确标记，部分配置拒绝静默降级。

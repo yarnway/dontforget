@@ -1,5 +1,7 @@
 # 发布与验证策略
 
+2026-11-06续行：本轮最新[v1.7.1](https://github.com/yarnway/dontforget/releases/tag/v1.7.1)已发布，build60／schema17、固定源码559ab5a、16附件，发布门禁和独立读回均通过；详见[发行记录](Platform_Release_60_2026-11-06.md)。旧v1.7.0及历史记录保留。
+
 更新：2026-11-05，按用户最新要求执行。
 
 用户本轮明确：完成Android、Windows、Linux新版后可发布GitHub Release。本轮[v1.7.0](https://github.com/yarnway/dontforget/releases/tag/v1.7.0)已发布，build59、源码71602c8，16附件已读回；发布工具初次错误与本地修正复验见[发行记录](Platform_Release_59_2026-11-05.md)。此指令替代此前等待macOS／iOS再发布的范围限制；旧验收结果与后续任务保留。
