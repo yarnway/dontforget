@@ -3,17 +3,17 @@
 本地优先的备忘与任务工作台。随手记录文字、录音和附件，按紧急提醒、重点跟进、常规待办与备忘便签管理事项；需要智能提取时，再连接自己配置的模型服务。
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.44.9-02569B?logo=flutter)](https://flutter.dev)
-[![Release](https://img.shields.io/badge/Release-v1.7.1-007F83)](https://github.com/yarnway/dontforget/releases/tag/v1.7.1)
+[![Release](https://img.shields.io/badge/Release-v1.7.2-007F83)](https://github.com/yarnway/dontforget/releases/tag/v1.7.2)
 
 [使用指南](docs/User_Guide.md) · [开发指南](docs/Developer_Guide.md) · [架构](docs/Architecture_Design.md) · [变更日志](docs/Changelog.md)
 
-后续工作按[2026-11-02 阶段与任务](docs/Next_Steps_2026-11-02.md)推进：先关闭候选缺陷与安装包差异，再做原生提醒、数据保护、学习与跨设备验收。当前三平台发行版为 `v1.7.1 / build60`，新增Android文字／链接分享草稿，编辑确认后保存本地备忘，保留主输入草稿，详见[+58验收](docs/Android_Shared_Text_58_2026-11-05.md)。按住录音上滑往右转文字改接腾讯云，并精简设置入口、减少低频原生加载及偏好保存时的凭据读写；腾讯云原手势与设置分层见[+56记录](docs/Tencent_Recording_Speech_56_2026-11-05.md)，Android16k音频兼容、冷启动和设置路由见[+57记录](docs/Tencent_Audio_Compatibility_57_2026-11-05.md)。Pixel +57同签名升级与输入／录音部分结果见[原生续验](docs/Android_Native_57_2026-11-05.md)，阶段48的2GiB普通／512MiB加密备份验收及显式脚本见[容量记录](docs/Backup_Capacity_57_2026-11-05.md)。腾讯云真实账号按用户要求暂缓，其他原生边界继续验收，已知限制见本轮发行说明。Windows旧目录迁移保护及分层验收见[迁移记录](docs/Legacy_Location_Storage_52_2026-11-04.md)；设备窗口偏好独立存储见[R1验收](docs/Desktop_Window_Storage_51_2026-11-04.md)；Android +50通知与录音证据保留在阶段台账。历史+48通知、录音与媒体入口见[原生验收](docs/Native_Media_Routing_48_2026-11-03.md)；Windows +47包与Pixel隔离升级见[构建升级验收](docs/Windows_Android_Build_47_2026-11-03.md)，Windows新动作与Pixel通知／USB结果见[11月3日验收](docs/Windows_Android_Validation_2026-11-03.md)。Android冻结 `+46` 深链及Pixel结果见[阶段47验收](docs/Android_Deep_Link_Acceptance_2026-11-02.md)；Windows `+45` 包保留[阶段46验收](docs/Stage46_Validation_2026-11-02.md)的独立归属。
+后续工作按[2026-11-02 阶段与任务](docs/Next_Steps_2026-11-02.md)推进：先关闭候选缺陷与安装包差异，再做原生提醒、数据保护、学习与跨设备验收。当前三平台发行版为 `v1.7.2 / build61`，Windows新增[默认紧凑、按内容展开的输入框](docs/Windows_Compact_Composer_61_2026-11-06.md)；此前新增Android文字／链接分享草稿，编辑确认后保存本地备忘，保留主输入草稿，详见[+58验收](docs/Android_Shared_Text_58_2026-11-05.md)。按住录音上滑往右转文字改接腾讯云，并精简设置入口、减少低频原生加载及偏好保存时的凭据读写；腾讯云原手势与设置分层见[+56记录](docs/Tencent_Recording_Speech_56_2026-11-05.md)，Android16k音频兼容、冷启动和设置路由见[+57记录](docs/Tencent_Audio_Compatibility_57_2026-11-05.md)。Pixel +57同签名升级与输入／录音部分结果见[原生续验](docs/Android_Native_57_2026-11-05.md)，阶段48的2GiB普通／512MiB加密备份验收及显式脚本见[容量记录](docs/Backup_Capacity_57_2026-11-05.md)。腾讯云真实账号按用户要求暂缓，其他原生边界继续验收，已知限制见本轮发行说明。Windows旧目录迁移保护及分层验收见[迁移记录](docs/Legacy_Location_Storage_52_2026-11-04.md)；设备窗口偏好独立存储见[R1验收](docs/Desktop_Window_Storage_51_2026-11-04.md)；Android +50通知与录音证据保留在阶段台账。历史+48通知、录音与媒体入口见[原生验收](docs/Native_Media_Routing_48_2026-11-03.md)；Windows +47包与Pixel隔离升级见[构建升级验收](docs/Windows_Android_Build_47_2026-11-03.md)，Windows新动作与Pixel通知／USB结果见[11月3日验收](docs/Windows_Android_Validation_2026-11-03.md)。Android冻结 `+46` 深链及Pixel结果见[阶段47验收](docs/Android_Deep_Link_Acceptance_2026-11-02.md)；Windows `+45` 包保留[阶段46验收](docs/Stage46_Validation_2026-11-02.md)的独立归属。
 
 当前工作区的“记录与提醒”优化及后续阶段见[分阶段功能清单](docs/Recording_Reminders_Phases.md)，其中开发中功能与公开候选分别记录。 本轮新增的用药计划、出门清单、附件备份和学习管理入口见[实现与验收索引](docs/Planning_Implementation.md)，尚未计入本轮安装包验收。
 
 ## v1.7：任务浏览与清晰复盘
 
-Android／Windows／Linux v1.7.1已发布，平台验收范围见[发布验收总表](docs/Release_Acceptance_v1.7.md)。当前三平台稳定版为`1.7.1+60`，新增[Windows全局快捷录入](docs/Windows_Global_Capture_60_2026-11-06.md)，并修复[Android备份恢复](docs/Encrypted_Total_And_Cross_Device_2026-11-06.md)的TRUNCATE日志兼容问题，[已发布并完成独立读回](docs/Platform_Release_60_2026-11-06.md)。当前工作区还包含[分阶段清单](docs/Recording_Reminders_Phases.md)中的未发布优化；既有版本记录见 [v1.7 迭代清单](docs/Iteration_v1.7.md)。
+Android／Windows／Linux [v1.7.2已发布](https://github.com/yarnway/dontforget/releases/tag/v1.7.2)，当前稳定版`1.7.2+61`。Windows默认单行，点击输入，多行或长文本自动展开，保留中文组合态与草稿；固定源码CI、三端五包和16附件独立读回见[发行记录](docs/Platform_Release_61_2026-11-06.md)。v1.7.1的[全局快捷记录](docs/Windows_Global_Capture_60_2026-11-06.md)及[Android恢复修复](docs/Encrypted_Total_And_Cross_Device_2026-11-06.md)继续保留，原生未验范围与剩余阶段见[台账](docs/Next_Steps_2026-11-02.md)。
 
 - **按状态找任务**：搜索页直接浏览全部、待办、今日提醒、提醒时间已过或已完成事项，无需先输入文字；提醒时间不是事件截止时间。
 - **组合关键词**：同时搜索标题、摘要和子任务；空格分隔的关键词可以出现在不同字段中。

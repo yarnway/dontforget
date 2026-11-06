@@ -1,0 +1,121 @@
+{
+  "url": "https://github.com/yarnway/dontforget/releases/tag/v1.7.2",
+  "tag": "v1.7.2",
+  "revision": "8514c8625aa1ae04efb63bf425f3fe99a7717bff",
+  "published": true,
+  "prerelease": false,
+  "body_verified": true,
+  "assets": [
+    {
+      "file": "android-manifest.json",
+      "bytes": 650,
+      "sha256": "7ad7a94c570fd7f6c608ee4d9ac52452a143fbe16c10157ca5ea842d1033851f"
+    },
+    {
+      "file": "android-SHA256SUMS.txt",
+      "bytes": 192,
+      "sha256": "4907efbf65250a70be08d1e9bab3fd39232a8260fe8601d32d0ef4c3b20af385"
+    },
+    {
+      "file": "DontForget_Android_v1.7.2.aab",
+      "bytes": 72814084,
+      "sha256": "d342c78bc189477d19660ed87a02924adfcdf9cb7e4a203e23e7bb157422d668"
+    },
+    {
+      "file": "DontForget_Android_v1.7.2.apk",
+      "bytes": 75915984,
+      "sha256": "957e1894e642118acb646f0703692be254f955e336e8125279d2d7f239e2acf5"
+    },
+    {
+      "file": "DontForget_Linux_x64_v1.7.2.tar.gz",
+      "bytes": 14329791,
+      "sha256": "758be2204df9205e2ef9ca9947d9aa75e329f2e4490c350f9be863c4f6a21f89"
+    },
+    {
+      "file": "DontForget_Setup_v1.7.2.exe",
+      "bytes": 14621947,
+      "sha256": "907f865402ff260944ddd20d2722de716297cde514598053e60a847473e0d77c"
+    },
+    {
+      "file": "DontForget_Windows_Portable_v1.7.2.zip",
+      "bytes": 17825907,
+      "sha256": "e5ccef2eac25b351329f1d3209eb4af7d376f112ea674c1e0a0ed608351ac8cb"
+    },
+    {
+      "file": "linux-manifest.json",
+      "bytes": 401,
+      "sha256": "85d52ff355bf1c795e48d9c6483ae30529e906f68f31c13ad39e4676aab459e3"
+    },
+    {
+      "file": "linux-SHA256SUMS.txt",
+      "bytes": 101,
+      "sha256": "0849d70409bec15598b019b9739e51cb596bea4914d5d11669ed296ffa478bd6"
+    },
+    {
+      "file": "linux-startup.json",
+      "bytes": 572,
+      "sha256": "64a37fd5a5bdaaccc456830ec955e2641dbb449bf2d3839ec0c24d5e2b3f3dc3"
+    },
+    {
+      "file": "release-provenance.json",
+      "bytes": 3410,
+      "sha256": "d1dcb4133d00c90fdcbffec4372e0a713b73e35d755f7d7d9b01c759734c8a27"
+    },
+    {
+      "file": "SHA256SUMS.txt",
+      "bytes": 1373,
+      "sha256": "b44e8b1b1a543aadf345bf2b1d06bf25035a55472fcb432dd49deda6389855c2"
+    },
+    {
+      "file": "windows-installation.json",
+      "bytes": 286,
+      "sha256": "f85058a2291b1c9181e3123542260dde3646c4dd8abab63c6fa5ca7e92c11829"
+    },
+    {
+      "file": "windows-manifest.json",
+      "bytes": 657,
+      "sha256": "a0e1f7dd0d220c532b1e334526b16977318909471e1c84054341b6c230388b1d"
+    },
+    {
+      "file": "windows-SHA256SUMS.txt",
+      "bytes": 201,
+      "sha256": "55011f79b9de2157b3750cbbdbdcfbf9dbe372ae28ffc6d7f09fd2ecde1f13a5"
+    },
+    {
+      "file": "windows-startup.json",
+      "bytes": 442,
+      "sha256": "45b5a14bd9396b58c438cf6f80a2559c30c8076edf7addcdc4debe3ecfa2e827"
+    }
+  ],
+  "source_ci": 42153031005,
+  "publication_ci": 42156389816,
+  "publication_url": "https://github.com/yarnway/dontforget/actions/runs/42156389816",
+  "downloaded_ready_archive_sha_crc_verified": true,
+  "android_apk_aab_certificates_verified": true,
+  "android_certificate_sha256": "3db49656984fb848a73b1e8d056846b97e2a7caf47c9a9ae74f475cdbb79e9f1",
+  "windows_cloud_payload_files": 37,
+  "local_only_payload_files": [
+    "native_assets.json"
+  ],
+  "latest_readback": true,
+  "previous_stable_assets_tag_preserved": true,
+  "version": "1.7.2",
+  "build_number": "61",
+  "schema": 17,
+  "local_windows_package": {
+    "sdk": "Flutter3.47.2",
+    "payload_files": 38,
+    "sha256_crc_verified": true,
+    "installed": false
+  },
+  "android_device": {
+    "installed": false,
+    "native_acceptance": "NOT_PERFORMED_FOR_BUILD61"
+  },
+  "windows_local_install": {
+    "installed": false,
+    "native_ui": "NOT_PERFORMED_FOR_BUILD61"
+  },
+  "full_native_matrix_complete": false,
+  "tencent_status": "DEFERRED_BY_USER_NOT_CONFIGURED_NOT_CALLED"
+}

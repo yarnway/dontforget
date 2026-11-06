@@ -1,6 +1,8 @@
 # 发布与验证策略
 
-2026-11-06续行：本轮最新[v1.7.1](https://github.com/yarnway/dontforget/releases/tag/v1.7.1)已发布，build60／schema17、固定源码559ab5a、16附件，发布门禁和独立读回均通过；详见[发行记录](Platform_Release_60_2026-11-06.md)。旧v1.7.0及历史记录保留。
+2026-11-06最新三端发行版为[v1.7.2](https://github.com/yarnway/dontforget/releases/tag/v1.7.2)，build61／schema17、固定源码8514c86；源码CI42153031005与发布工作流42156389816成功，16附件及标签／正文／摘要独立读回通过。+61未本机覆盖安装，原生UI与其余阶段仍待验；[分层发行记录](Platform_Release_61_2026-11-06.md)。下列历史记录保留各自归属。
+
+2026-11-06前轮续行：[v1.7.1](https://github.com/yarnway/dontforget/releases/tag/v1.7.1)已发布，build60／schema17、固定源码559ab5a、16附件，发布门禁和独立读回均通过；详见[发行记录](Platform_Release_60_2026-11-06.md)。旧v1.7.0及历史记录保留。
 
 更新：2026-11-05，按用户最新要求执行。
 
