@@ -231,7 +231,13 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('仅备忘'));
     await tester.pumpAndSettle();
-    expect(find.text('仅本地保存，不调用 AI、不设置提醒。'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('composer-save-hint')),
+        matching: find.text('仅备忘'),
+      ),
+      findsOneWidget,
+    );
     await tester.tap(find.byTooltip('发送'));
     await pumpUntilRealIo(
       tester,

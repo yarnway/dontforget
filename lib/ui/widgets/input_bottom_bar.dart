@@ -879,7 +879,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
           enabled: false,
           child: Text(
             _memoOnly
-                ? l10n.get('memoNoAlarm')
+                ? l10n.get('memoOnly')
                 : displayedTime == null
                 ? l10n.get('noTimeMemo')
                 : formatLocalDateTime(displayedTime),
@@ -1401,10 +1401,10 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                     ),
                     child: Text(
                       _memoOnly
-                          ? l10n.get('memoNoAlarm')
+                          ? l10n.get('memoOnly')
                           : displayedTime != null
                           ? '${l10n.get('reminderTimeShort')}: ${formatLocalDateTime(displayedTime)}'
-                          : l10n.get('noTimeMemo'),
+                          : l10n.get('captureNoTime'),
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         color: colors.onSurfaceVariant,

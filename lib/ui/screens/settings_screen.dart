@@ -834,67 +834,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         widget.area == SettingsArea.ai) ...[
                       const SizedBox(height: 14),
                     ],
-                    if (widget.area == null) ...[
-                      // Privacy Shield Guarantee
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.teal.shade900.withValues(alpha: 0.25)
-                              : Colors.teal.shade50.withValues(alpha: 0.75),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: isDark
-                                ? Colors.tealAccent.withValues(alpha: 0.3)
-                                : Colors.teal.shade300,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Icon(
-                              Icons.security_rounded,
-                              color: isDark
-                                  ? Colors.tealAccent
-                                  : Colors.teal.shade700,
-                              size: 22,
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    l10n.get('privacyShieldTitle'),
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      color: isDark
-                                          ? Colors.tealAccent
-                                          : Colors.teal.shade900,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    l10n.get('privacyShieldDesc'),
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: isDark
-                                          ? Colors.grey.shade300
-                                          : Colors.teal.shade900.withValues(
-                                              alpha: 0.8,
-                                            ),
-                                      height: 1.35,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
                     if (widget.area == null ||
                         widget.area == SettingsArea.ai) ...[
                       const SizedBox(height: 14),
@@ -907,7 +846,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           key: const ValueKey('settings-model-profiles'),
                           leading: const Icon(Icons.swap_vert),
                           title: Text(l10n.get('aiProfilesEntry')),
-                          subtitle: Text(l10n.get('aiProfilesEntryHint')),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: _isSaving ? null : _openModelProfiles,
                         ),
@@ -991,7 +929,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           key: const ValueKey('settings-backup-preview'),
                           leading: const Icon(Icons.fact_check_outlined),
                           title: Text(l10n.get('backupPreviewTitle')),
-                          subtitle: Text(l10n.get('backupPreviewReadOnly')),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => Navigator.of(context).push(
                             MaterialPageRoute<void>(
@@ -1644,7 +1581,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(6),
                                   ),
-                                  helperText: l10n.get('apiKeyHelper'),
                                   isDense: true,
                                   contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 12,
@@ -1723,7 +1659,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 onChanged: (_) => _apiKeyController.clear(),
                                 decoration: InputDecoration(
                                   labelText: l10n.get('baseUrl'),
-                                  helperText: l10n.get('aiProfilesUrlHint'),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(6),
                                   ),

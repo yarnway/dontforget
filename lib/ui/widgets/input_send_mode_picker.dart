@@ -56,20 +56,6 @@ class InputSendModePicker extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.get('inputSendHint_${value.name}'),
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.get('inputSendSaveHint'),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
           ],
         ),
       ),

@@ -21,7 +21,7 @@ class GlobalCaptureShortcutPanel extends ConsumerWidget {
           SwitchListTile.adaptive(
             key: const ValueKey('global-capture-enabled'),
             title: Text(t('title')),
-            subtitle: Text(t('hint')),
+            subtitle: const Text('Ctrl + Alt + Space'),
             value: service.enabled,
             onChanged: !service.ready || service.busy
                 ? null

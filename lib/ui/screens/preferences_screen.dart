@@ -153,7 +153,6 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
     required String id,
     required IconData icon,
     required String title,
-    required String hint,
     required VoidCallback action,
     required double minHeight,
   }) => Card.outlined(
@@ -175,15 +174,6 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
           child: Icon(icon, color: Theme.of(context).colorScheme.primary),
         ),
         title: Text(title, style: Theme.of(context).textTheme.titleMedium),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            hint,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-        ),
         trailing: const Icon(Icons.chevron_right),
         onTap: !_ready || _saving ? null : action,
       ),
@@ -264,13 +254,7 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
                 );
               },
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
-              child: Text(
-                loc.get('inputSendHint_${_draft.send.name}'),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ),
+            const SizedBox(height: 6),
           ],
         ),
       ),
@@ -297,27 +281,24 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
           final entries = <Widget>[
             _entry(
               id: 'preferences-ai',
-              minHeight: columns == 2 ? 112 : 88,
+              minHeight: 76,
               icon: Icons.auto_awesome_outlined,
               title: t('ai'),
-              hint: t('aiHint'),
               action: () => _open(const SettingsScreen(area: SettingsArea.ai)),
             ),
             _entry(
               id: 'preferences-notifications',
-              minHeight: columns == 2 ? 112 : 88,
+              minHeight: 76,
               icon: Icons.notifications_none,
               title: t('notifications'),
-              hint: t('notificationsHint'),
               action: () =>
                   _open(const SettingsScreen(area: SettingsArea.notifications)),
             ),
             _entry(
               id: 'preferences-protection',
-              minHeight: columns == 2 ? 112 : 88,
+              minHeight: 76,
               icon: Icons.shield_outlined,
               title: protectionText(context, 'title'),
-              hint: t('protectionHint'),
               action: () => _open(
                 Scaffold(
                   appBar: AppBar(title: Text(protectionText(context, 'title'))),
@@ -328,10 +309,9 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
             ),
             _entry(
               id: 'preferences-content',
-              minHeight: columns == 2 ? 112 : 88,
+              minHeight: 76,
               icon: Icons.inventory_2_outlined,
               title: contentText(context, 'title'),
-              hint: t('contentHint'),
               action: () => _open(
                 Scaffold(
                   appBar: AppBar(title: Text(contentText(context, 'title'))),
@@ -341,10 +321,9 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
             ),
             _entry(
               id: 'preferences-sync',
-              minHeight: columns == 2 ? 112 : 88,
+              minHeight: 76,
               icon: Icons.devices_outlined,
               title: t('sync'),
-              hint: t('syncHint'),
               action: () =>
                   _open(const SettingsScreen(area: SettingsArea.sync)),
             ),
