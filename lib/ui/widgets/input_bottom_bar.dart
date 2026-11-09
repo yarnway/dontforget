@@ -9,6 +9,7 @@ import '../../services/quick_reminder_parser.dart';
 import '../formatters/local_date_time.dart';
 import '../../providers/providers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -19,6 +20,13 @@ import 'editable_text_menu.dart';
 import 'voice_capture_feedback.dart';
 import 'live_voice_text_dialog.dart';
 import 'windows_composer_layout.dart';
+
+// A separate type lets RawGestureDetector replace the recognizer when changing
+// input mode; a recognizer's deadline cannot be changed after construction.
+class _QuickVoiceHoldRecognizer extends LongPressGestureRecognizer {
+  _QuickVoiceHoldRecognizer()
+    : super(duration: const Duration(milliseconds: 200));
+}
 
 class InputBottomBar extends ConsumerStatefulWidget {
   const InputBottomBar({super.key});
@@ -483,9 +491,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         }
       });
     } else if (_isLongPressRecording && !_isFinishingLongPress) {
-      if (editable || _voiceGesture.selectionOpen) {
-        controller.prepareRecordingTranscription();
-      }
+      controller.prepareRecordingTranscription();
       // The ready feedback must follow native start, never precede the mic.
       unawaited(HapticFeedback.heavyImpact());
     }
@@ -600,6 +606,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
 
   void _moveLongPress(LongPressMoveUpdateDetails details) {
     if (!_isLongPressRecording || _isFinishingLongPress) return;
+    final selectionWasOpen = _voiceGesture.selectionOpen;
     final selected = _voiceGesture.update(
       details.globalPosition - _voiceOrigin,
     );
@@ -612,7 +619,10 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                 selected == VoiceReleaseAction.send)
         ? VoiceReleaseAction.text
         : selected;
-    if (action == _voiceAction) return;
+    if (action == _voiceAction &&
+        selectionWasOpen == _voiceGesture.selectionOpen) {
+      return;
+    }
     HapticFeedback.selectionClick();
     setState(() => _voiceAction = action);
   }
@@ -967,28 +977,51 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
           ? null
           : _toggleInputMode,
     );
-    final inputSurface = GestureDetector(
+    final inputSurface = RawGestureDetector(
       key: const ValueKey('composer-input-surface'),
       behavior: HitTestBehavior.translucent,
-      onTap: () {
-        if (!voiceMode && !isRecording && !_isTranscribing) {
-          _requestTextKeyboard();
-        }
+      gestures: {
+        TapGestureRecognizer:
+            GestureRecognizerFactoryWithHandlers<TapGestureRecognizer>(
+              () => TapGestureRecognizer(),
+              (instance) => instance
+                ..onTap = () {
+                  if (!voiceMode && !isRecording && !_isTranscribing) {
+                    _requestTextKeyboard();
+                  }
+                }
+                ..onSecondaryTapDown = isMobile && idleVoiceTarget && !voiceMode
+                    ? (_) => _openEmptyEditMenu()
+                    : null,
+            ),
+        if (canHold && voiceMode)
+          _QuickVoiceHoldRecognizer:
+              GestureRecognizerFactoryWithHandlers<_QuickVoiceHoldRecognizer>(
+                () => _QuickVoiceHoldRecognizer(),
+                (instance) => instance
+                  ..onLongPressStart = _startLongPressRecording
+                  ..onLongPressMoveUpdate = _moveLongPress
+                  ..onLongPressEnd = (_) {
+                    unawaited(_finishLongPressRecording());
+                  }
+                  ..onLongPressCancel = _cancelLongPress,
+              ),
+        if (canHold && !voiceMode)
+          LongPressGestureRecognizer:
+              GestureRecognizerFactoryWithHandlers<LongPressGestureRecognizer>(
+                // The explicit voice target responds quickly, while the text
+                // field keeps the standard selection/hold timing. A short tap
+                // never starts recording or sends audio to the provider.
+                () => LongPressGestureRecognizer(),
+                (instance) => instance
+                  ..onLongPressStart = _startLongPressRecording
+                  ..onLongPressMoveUpdate = _moveLongPress
+                  ..onLongPressEnd = (_) {
+                    unawaited(_finishLongPressRecording());
+                  }
+                  ..onLongPressCancel = _cancelLongPress,
+              ),
       },
-      onLongPressStart: canHold ? _startLongPressRecording : null,
-      // In explicit voice mode begin mic startup while the hold
-      // recognizer waits. A tap, drag cancellation or
-      // permission-delayed release always discards this capture.
-      // Ordinary text taps never open the microphone.
-      onLongPressDown: idleVoiceTarget && voiceMode
-          ? (details) => _beginHeldRecording(details.globalPosition)
-          : null,
-      onLongPressMoveUpdate: canHold ? _moveLongPress : null,
-      onLongPressEnd: canHold ? (_) => _finishLongPressRecording() : null,
-      onLongPressCancel: canHold ? _cancelLongPress : null,
-      onSecondaryTapDown: isMobile && idleVoiceTarget && !voiceMode
-          ? (_) => _openEmptyEditMenu()
-          : null,
       child:
           isMobile &&
               (isRecording || homeState.isPreparingRecording || _isTranscribing)
@@ -1534,6 +1567,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
               action: _voiceAction,
               fullScreen: true,
               preparing: !homeState.isRecording,
+              selectionOpen: _voiceGesture.selectionOpen,
               transcript: homeState.voicePreview,
             ),
           ),

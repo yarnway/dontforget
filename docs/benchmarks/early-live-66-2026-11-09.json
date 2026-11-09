@@ -1,0 +1,146 @@
+{
+  "version": "1.8.0+66",
+  "schema": 17,
+  "windows": {
+    "platform": "windows",
+    "ordinary_gui_tested": false,
+    "credentials_persisted": false,
+    "human_accuracy_tested": false,
+    "synthetic_zh": {
+      "completed": true,
+      "keywords_match": true,
+      "first_text_ms": 911,
+      "source_end_ms": 3908,
+      "final_ms": 3990,
+      "partial_before_source_end": true,
+      "synthetic_duration_ms": 3700,
+      "text_available_at_selection_2s": true
+    },
+    "synthetic_en": {
+      "completed": true,
+      "keywords_match": true,
+      "first_text_ms": 925,
+      "source_end_ms": 3498,
+      "final_ms": 3576,
+      "partial_before_source_end": true,
+      "synthetic_duration_ms": 3295,
+      "text_available_at_selection_2s": true
+    },
+    "microphone_permitted": true,
+    "native_stream_recording": {
+      "pcm_readable": true,
+      "rate": 16000,
+      "channels": 1,
+      "duration_ms": 1998,
+      "ordinary_gui_tested": false
+    },
+    "native_microphone_asr": {
+      "completed": false,
+      "safe_error": "empty"
+    }
+  },
+  "android": {
+    "platform": "android",
+    "ordinary_gui_tested": false,
+    "credentials_persisted": false,
+    "human_accuracy_tested": false,
+    "synthetic_zh": {
+      "completed": true,
+      "keywords_match": true,
+      "first_text_ms": 1140,
+      "source_end_ms": 4131,
+      "final_ms": 4227,
+      "partial_before_source_end": true,
+      "synthetic_duration_ms": 3700,
+      "text_available_at_selection_2s": true
+    },
+    "synthetic_en": {
+      "completed": true,
+      "keywords_match": true,
+      "first_text_ms": 977,
+      "source_end_ms": 3599,
+      "final_ms": 3707,
+      "partial_before_source_end": true,
+      "synthetic_duration_ms": 3295,
+      "text_available_at_selection_2s": true
+    },
+    "microphone_permitted": true,
+    "native_stream_recording": {
+      "pcm_readable": true,
+      "rate": 16000,
+      "channels": 1,
+      "duration_ms": 2200,
+      "ordinary_gui_tested": false
+    },
+    "native_microphone_asr": {
+      "completed": false,
+      "safe_error": "empty"
+    }
+  },
+  "probe_is_private_temporary_entry": true,
+  "human_gesture_acceptance": {
+    "status": "SPEED_IMPROVED_UX_REFINEMENT_REQUESTED",
+    "version": "1.8.0+66",
+    "apk_sha256": "198cb287e8cf2d997171c29e941aacf6dcbcb1b6f4d3a799bb626f5d8bbe8d7a",
+    "user_feedback": "速度已明显提升，优化交互体验，提升易用性",
+    "speed_improved": true,
+    "edit_send_explicitly_confirmed": false,
+    "later_ui_polish_not_in_feedback_package": true
+  },
+  "ordinary_windows_gui_tested": false,
+  "temporary_android_cleanup": {
+    "temporary_package": "com.yarnway.dontforget.acceptance.live6620261109",
+    "uninstalled": true,
+    "loopback_reverse_removed": true,
+    "qa47_untouched": true,
+    "independent_state_readback": true
+  },
+  "personal_credentials_embedded": false,
+  "asr_source_sha256": {
+    "lib/providers/home_controller.dart": "77d98cd76d39dccdfd6e8d286adf4480f42ad0e8b2b99404a5d4b15f571c2a82",
+    "lib/services/live_pcm_recording.dart": "3710295f4a5bec7e916e4b09dabc88874f93578e841b2ce427a4e2650a7be234",
+    "lib/services/speech_recognition_service.dart": "d06f3679e1202a340ba7694fb4a9bb71d57debc70f5a23c9cee2b2a30e9bc909",
+    "lib/services/tencent_realtime_recognizer.dart": "7e429bee93d50af5f6ccf73caedbda607d7d06a57150caf36f504329bb607083"
+  },
+  "ui_native_acceptance_separate": true,
+  "ordinary_qa47_final_ui_install": {
+    "version": "1.8.0+66",
+    "package": "com.yarnway.dontforget.acceptance.p4720261102",
+    "ordinary_main_entry": true,
+    "installed": true,
+    "same_signature_upgrade_enforced_by_android": true,
+    "all_tables_all_fields_preserved": true,
+    "no_original_64_business_rows_missing": true,
+    "latest_counts": {
+      "Reminders": 55,
+      "MediaRecords": 9,
+      "Settings": 1
+    },
+    "unsent_draft_present": false,
+    "all_draft_fields_preserved": true,
+    "apk_sha256": "0e01fb220a5d2f0c40d592a1361d52ca096bc8d9123c359635b3787467bf8b22",
+    "credentials_embedded": false,
+    "shared_preferences_and_media_files_preserved": true,
+    "native_performance_test_is_separate": true,
+    "human_new_gesture_acceptance": "PENDING"
+  },
+  "final_ui_changes": [
+    "Show preview on upward gesture, before horizontal choice",
+    "Stable target label height with compact labels",
+    "Explicit release-edit and release-send labels"
+  ],
+  "native_probe_android_install": {
+    "temporary_package": "com.yarnway.dontforget.acceptance.live6620261109",
+    "version": "1.8.0+66",
+    "installed": true,
+    "microphone_permission_granted_for_requested_native_acceptance": true,
+    "apk_sha256": "0fbbadf7e31bd88001bb460b539a7e6a0b9b9b6aacfe9053075a0df218d0923b",
+    "credentials_embedded": false,
+    "qa47_identity_untouched": true
+  },
+  "native_recording_configuration": "1280 byte preferred buffer; cancel partially initialized recorder and retry hardware default once if startup fails",
+  "first_text_range_ms": [
+    911,
+    1140
+  ]
+}

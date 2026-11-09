@@ -1,0 +1,18 @@
+{
+  "version": "1.8.0+66",
+  "local_sdk": "3.47.2",
+  "flutter_passed": 2351,
+  "flutter_skipped": 20,
+  "python_run": 161,
+  "python_skipped": 6,
+  "analyze_issues": 0,
+  "related_passed": 106,
+  "ui_polish_passed": 74,
+  "source_test_snapshot_sha256": "1e4e1a84e00555575ac659ad9180fb9b52f20a75817d32c9b1c02d083de62dab",
+  "source_snapshot_unchanged_during_final_gates": true,
+  "native_and_packages_separate": true,
+  "flutter_log_sha256": "3d24b2bf5a767d9576a5294b271255eb5e2c374aa8957a928847aeb233d8d36f",
+  "python_log_sha256": "7bf44bf71945353929225b16acbe3d843d15f4e6380740e176794b1845ea7274",
+  "analyze_log_sha256": "64a067ddcfa15d07a86bc4da175741a6bc79ed2e6c830c358bb8605c0a3eec59",
+  "ui_polish_log_sha256": "a57d235e5827b2e40038d0129545abc58800cdf305beb30aeaca4086e2784b33"
+}

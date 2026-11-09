@@ -705,6 +705,10 @@ class HomeController extends StateNotifier<HomeState> {
             isPreparingRecording: false,
             error: null,
           );
+          // Recognize alongside capture so a later upward/right gesture can
+          // display existing text instead of replaying its recorded prefix.
+          // This is only available with an enabled, configured real-time service.
+          prepareRecordingTranscription();
           return true;
         } catch (_) {
           // Native start may have succeeded before the runtime was paused.
@@ -723,8 +727,8 @@ class HomeController extends StateNotifier<HomeState> {
     }
   }
 
-  /// Called when the held pointer moves upward. Recording before this gesture
-  /// stays local; coming back down does not undo audio already transmitted.
+  /// Idempotent for both recorder readiness and subsequent upward gestures.
+  /// With enabled real-time ASR, capture is sent before selecting text/save.
   void prepareRecordingTranscription() {
     final generation = _recordingGeneration;
     final pcm = _pcmRecording;

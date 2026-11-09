@@ -161,14 +161,14 @@ void main() {
     await root.delete(recursive: true);
   });
   test(
-    'recording stays local until upward preparation, then one session feeds previews',
+    'enabled realtime recognition starts with capture before the upward gesture',
     () async {
       expect(await home.startRecording(), isTrue);
       expect(recorder.config?.encoder, AudioEncoder.pcm16bits);
       expect(recorder.config?.sampleRate, 16000);
       expect(recorder.config?.numChannels, 1);
       recorder.audio!.add(Uint8List(16000));
-      expect(speech.starts, 0);
+      expect(speech.starts, 1);
       home.prepareRecordingTranscription();
       home.prepareRecordingTranscription();
       expect(speech.starts, 1);
@@ -194,10 +194,10 @@ void main() {
       await home.startRecording();
       callback('stale previous recording');
       expect(container.read(homeControllerProvider).voicePreview, isEmpty);
-      expect(speech.starts, 1);
+      expect(speech.starts, 2);
     },
   );
-  test('ordinary recording save never starts cloud recognition', () async {
+  test('ordinary save cancels the already prepared realtime session', () async {
     await home.startRecording();
     recorder.audio!.add(Uint8List(16000));
     await home.stopRecordingAndProcess();
@@ -207,7 +207,8 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 10));
     }
     expect(container.read(homeControllerProvider).pendingTasksCount, 0);
-    expect(speech.starts, 0);
+    expect(speech.starts, 1);
+    expect(speech.token!.isCancelled, isTrue);
     expect(speech.fallbacks, 0);
     expect(container.read(mediaRecordsProvider), hasLength(1));
     expect(container.read(remindersProvider), hasLength(1));

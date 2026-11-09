@@ -606,35 +606,33 @@ void main() {
     variant: TargetPlatformVariant.only(TargetPlatform.macOS),
   );
 
-  testWidgets(
-    'desktop hold does not interrupt an active IME composition',
-    (tester) async {
-      await show(tester, const InputBottomBar(), reducedMotion: true);
-      final field = tester.widget<TextField>(find.byType(TextField));
-      field.focusNode!.requestFocus();
-      field.controller!.value = const TextEditingValue(
-        text: 'ming',
-        selection: TextSelection.collapsed(offset: 4),
-        composing: TextRange(start: 0, end: 4),
-      );
-      await tester.pump();
-      final press = await tester.startGesture(
-        tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
-        kind: PointerDeviceKind.mouse,
-      );
-      await tester.pump(const Duration(milliseconds: 700));
-      await press.up();
-      await tester.pumpAndSettle();
-      expect(home.starts, 0);
-      expect(field.controller!.text, 'ming');
-      expect(
-        field.controller!.value.composing,
-        const TextRange(start: 0, end: 4),
-      );
-      expect(home.sent, isEmpty);
-    },
-    variant: TargetPlatformVariant.only(TargetPlatform.macOS),
-  );
+  testWidgets('desktop hold does not interrupt an active IME composition', (
+    tester,
+  ) async {
+    await show(tester, const InputBottomBar(), reducedMotion: true);
+    final field = tester.widget<TextField>(find.byType(TextField));
+    field.focusNode!.requestFocus();
+    field.controller!.value = const TextEditingValue(
+      text: 'ming',
+      selection: TextSelection.collapsed(offset: 4),
+      composing: TextRange(start: 0, end: 4),
+    );
+    await tester.pump();
+    final press = await tester.startGesture(
+      tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
+      kind: PointerDeviceKind.mouse,
+    );
+    await tester.pump(const Duration(milliseconds: 700));
+    await press.up();
+    await tester.pumpAndSettle();
+    expect(home.starts, 0);
+    expect(field.controller!.text, 'ming');
+    expect(
+      field.controller!.value.composing,
+      const TextRange(start: 0, end: 4),
+    );
+    expect(home.sent, isEmpty);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.macOS));
 
   testWidgets(
     'input has no idle ticks and reduced motion stops recording animation',
@@ -851,10 +849,10 @@ void main() {
       expect(home.starts, 0);
       final origin = tester.getCenter(surface);
       final press = await tester.startGesture(origin);
-      // The explicit voice pad requests mic startup before the long-press
-      // timeout; real audio onset still depends on native readiness.
+      // A short touch stays idle; a confirmed 200ms voice hold starts
+      // capture. Real audio onset still depends on native readiness.
       await tester.pump(const Duration(milliseconds: 100));
-      expect(home.starts, 1);
+      expect(home.starts, 0);
       await tester.pump(const Duration(milliseconds: 700));
       expect(home.starts, 1);
       expect(tester.widget<IconButton>(attachment).onPressed, isNull);
@@ -1144,62 +1142,58 @@ void main() {
     variant: TargetPlatformVariant.only(TargetPlatform.iOS),
   );
 
-  testWidgets(
-    'denied iOS hold can be retried with a new pointer gesture',
-    (tester) async {
-      home.pendingStart = Completer<bool>()..complete(false);
-      await show(tester, const InputBottomBar(), reducedMotion: true);
-      await tester.longPress(
-        find.byKey(const ValueKey('composer-input-surface')),
-      );
-      await tester.pumpAndSettle();
-      expect(home.stops, 0);
-      home.pendingStart = null;
-      await tester.longPress(
-        find.byKey(const ValueKey('composer-input-surface')),
-      );
-      await tester.pumpAndSettle();
-      expect(home.starts, 2);
-      expect(home.stops, 1);
-    },
-    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
-  );
+  testWidgets('denied iOS hold can be retried with a new pointer gesture', (
+    tester,
+  ) async {
+    home.pendingStart = Completer<bool>()..complete(false);
+    await show(tester, const InputBottomBar(), reducedMotion: true);
+    await tester.longPress(
+      find.byKey(const ValueKey('composer-input-surface')),
+    );
+    await tester.pumpAndSettle();
+    expect(home.stops, 0);
+    home.pendingStart = null;
+    await tester.longPress(
+      find.byKey(const ValueKey('composer-input-surface')),
+    );
+    await tester.pumpAndSettle();
+    expect(home.starts, 2);
+    expect(home.stops, 1);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 
-  testWidgets(
-    'iOS slide up then left cancels without processing or drafting',
-    (tester) async {
-      await show(tester, const InputBottomBar(), reducedMotion: true);
-      final origin = tester.getCenter(
-        find.byKey(const ValueKey('composer-input-surface')),
-      );
-      final press = await tester.startGesture(origin);
-      await tester.pump(const Duration(milliseconds: 700));
-      await press.moveTo(origin + const Offset(0, -100));
-      await tester.pump();
-      await press.moveTo(origin + const Offset(-80, -100));
-      await tester.pumpAndSettle();
-      expect(
-        tester
-            .widget<VoiceCaptureFeedback>(find.byType(VoiceCaptureFeedback))
-            .action,
-        VoiceReleaseAction.cancel,
-      );
-      expect(
-        find.descendant(
-          of: find.byType(VoiceCaptureFeedback),
-          matching: find.text('松手取消录音'),
-        ),
-        findsOneWidget,
-      );
-      await press.up();
-      await tester.pumpAndSettle();
-      expect(home.cancels, 1);
-      expect(home.stops, 0);
-      expect(home.drafts, 0);
-      expect(find.byType(VoiceCaptureFeedback), findsNothing);
-    },
-    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
-  );
+  testWidgets('iOS slide up then left cancels without processing or drafting', (
+    tester,
+  ) async {
+    await show(tester, const InputBottomBar(), reducedMotion: true);
+    final origin = tester.getCenter(
+      find.byKey(const ValueKey('composer-input-surface')),
+    );
+    final press = await tester.startGesture(origin);
+    await tester.pump(const Duration(milliseconds: 700));
+    await press.moveTo(origin + const Offset(0, -100));
+    await tester.pump();
+    await press.moveTo(origin + const Offset(-80, -100));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<VoiceCaptureFeedback>(find.byType(VoiceCaptureFeedback))
+          .action,
+      VoiceReleaseAction.cancel,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(VoiceCaptureFeedback),
+        matching: find.text('松手取消录音'),
+      ),
+      findsOneWidget,
+    );
+    await press.up();
+    await tester.pumpAndSettle();
+    expect(home.cancels, 1);
+    expect(home.stops, 0);
+    expect(home.drafts, 0);
+    expect(find.byType(VoiceCaptureFeedback), findsNothing);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 
   testWidgets(
     'iOS slide up then right fills an editable draft without sending',
@@ -1255,35 +1249,33 @@ void main() {
     variant: TargetPlatformVariant.only(TargetPlatform.iOS),
   );
 
-  testWidgets(
-    'iOS dragging back from cancel returns to voice save',
-    (tester) async {
-      await show(tester, const InputBottomBar(), reducedMotion: true);
-      final origin = tester.getCenter(
-        find.byKey(const ValueKey('composer-input-surface')),
-      );
-      final press = await tester.startGesture(origin);
-      await tester.pump(const Duration(milliseconds: 700));
-      await press.moveTo(origin + const Offset(0, -100));
-      await tester.pump();
-      await press.moveTo(origin + const Offset(-80, -100));
-      await tester.pump();
-      await press.moveTo(origin);
-      await tester.pump();
-      expect(
-        find.descendant(
-          of: find.byType(VoiceCaptureFeedback),
-          matching: find.text('松手 发语音'),
-        ),
-        findsOneWidget,
-      );
-      await press.up();
-      await tester.pumpAndSettle();
-      expect(home.stops, 1);
-      expect(home.cancels, 0);
-    },
-    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
-  );
+  testWidgets('iOS dragging back from cancel returns to voice save', (
+    tester,
+  ) async {
+    await show(tester, const InputBottomBar(), reducedMotion: true);
+    final origin = tester.getCenter(
+      find.byKey(const ValueKey('composer-input-surface')),
+    );
+    final press = await tester.startGesture(origin);
+    await tester.pump(const Duration(milliseconds: 700));
+    await press.moveTo(origin + const Offset(0, -100));
+    await tester.pump();
+    await press.moveTo(origin + const Offset(-80, -100));
+    await tester.pump();
+    await press.moveTo(origin);
+    await tester.pump();
+    expect(
+      find.descendant(
+        of: find.byType(VoiceCaptureFeedback),
+        matching: find.text('松手 发语音'),
+      ),
+      findsOneWidget,
+    );
+    await press.up();
+    await tester.pumpAndSettle();
+    expect(home.stops, 1);
+    expect(home.cancels, 0);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 
   testWidgets(
     'iOS unfocused empty input can record while its prior keyboard closes',
@@ -1478,7 +1470,7 @@ void main() {
   );
 
   testWidgets(
-    'explicit voice pad short tap discards the early capture',
+    'explicit voice pad short tap never starts capture or recognition',
     (tester) async {
       await show(tester, const InputBottomBar(), reducedMotion: true);
       await tester.tap(find.byKey(const ValueKey('composer-mode-toggle')));
@@ -1487,10 +1479,10 @@ void main() {
         tester.getCenter(find.byKey(const ValueKey('composer-voice-pad'))),
       );
       await tester.pump(const Duration(milliseconds: 80));
-      expect(home.starts, 1);
+      expect(home.starts, 0);
       await press.up();
       await tester.pumpAndSettle();
-      expect(home.cancels, 1);
+      expect(home.cancels, 0);
       expect(home.stops, 0);
       expect(home.drafts, 0);
       expect(home.sent, isEmpty);
@@ -1500,7 +1492,7 @@ void main() {
   );
 
   testWidgets(
-    'explicit voice tap released during permission discards a late start',
+    'explicit voice hold cancelled during permission discards a late start',
     (tester) async {
       home.pendingStart = Completer<bool>();
       await show(tester, const InputBottomBar(), reducedMotion: true);
@@ -1509,76 +1501,70 @@ void main() {
       final press = await tester.startGesture(
         tester.getCenter(find.byKey(const ValueKey('composer-voice-pad'))),
       );
-      await tester.pump(const Duration(milliseconds: 80));
+      await tester.pump(const Duration(milliseconds: 210));
       expect(home.starts, 1);
-      await press.up();
-      await tester.pump();
-      home.pendingStart!.complete(true);
-      await tester.pumpAndSettle();
-      expect(home.cancels, 1);
-      expect(home.stops, 0);
-      expect(home.drafts, 0);
-      expect(home.sent, isEmpty);
-      expect(home.state.isRecording, isFalse);
-    },
-    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
-  );
-
-  testWidgets(
-    'unmount during permission discards the late recording start',
-    (tester) async {
-      home.pendingStart = Completer<bool>();
-      await show(tester, const InputBottomBar(), reducedMotion: true);
-      final press = await tester.startGesture(
-        tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
-      );
-      await tester.pump(const Duration(milliseconds: 700));
-      addTearDown(() => drainWorkspaceDrafts(tester, container));
-      await tester.pumpWidget(const SizedBox());
-      home.pendingStart!.complete(true);
-      await tester.pumpAndSettle();
-      await press.up();
-      expect(home.cancels, 1);
-      expect(home.stops, 0);
-      expect(home.state.isRecording, isFalse);
-      expect(tester.takeException(), isNull);
-    },
-    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
-  );
-
-  testWidgets(
-    'iOS pointer cancellation discards a delayed native start',
-    (tester) async {
-      home.pendingStart = Completer<bool>();
-      await show(tester, const InputBottomBar(), reducedMotion: true);
-      final press = await tester.startGesture(
-        tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
-      );
-      await tester.pump(const Duration(milliseconds: 700));
       await press.cancel();
       await tester.pump();
       home.pendingStart!.complete(true);
       await tester.pumpAndSettle();
       expect(home.cancels, 1);
       expect(home.stops, 0);
+      expect(home.drafts, 0);
+      expect(home.sent, isEmpty);
+      expect(home.state.isRecording, isFalse);
     },
     variant: TargetPlatformVariant.only(TargetPlatform.iOS),
   );
+
+  testWidgets('unmount during permission discards the late recording start', (
+    tester,
+  ) async {
+    home.pendingStart = Completer<bool>();
+    await show(tester, const InputBottomBar(), reducedMotion: true);
+    final press = await tester.startGesture(
+      tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
+    );
+    await tester.pump(const Duration(milliseconds: 700));
+    addTearDown(() => drainWorkspaceDrafts(tester, container));
+    await tester.pumpWidget(const SizedBox());
+    home.pendingStart!.complete(true);
+    await tester.pumpAndSettle();
+    await press.up();
+    expect(home.cancels, 1);
+    expect(home.stops, 0);
+    expect(home.state.isRecording, isFalse);
+    expect(tester.takeException(), isNull);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+
+  testWidgets('iOS pointer cancellation discards a delayed native start', (
+    tester,
+  ) async {
+    home.pendingStart = Completer<bool>();
+    await show(tester, const InputBottomBar(), reducedMotion: true);
+    final press = await tester.startGesture(
+      tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
+    );
+    await tester.pump(const Duration(milliseconds: 700));
+    await press.cancel();
+    await tester.pump();
+    home.pendingStart!.complete(true);
+    await tester.pumpAndSettle();
+    expect(home.cancels, 1);
+    expect(home.stops, 0);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 
   testWidgets(
     'release during native recorder startup still stops that recording',
     (tester) async {
       home.pendingStart = Completer<bool>();
       await show(tester, const InputBottomBar(), reducedMotion: true);
-      final gestures = tester.widget<GestureDetector>(
-        find.byWidgetPredicate(
-          (widget) =>
-              widget is GestureDetector && widget.onLongPressStart != null,
-        ),
+      final press = await tester.startGesture(
+        tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
       );
-      gestures.onLongPressStart!(const LongPressStartDetails());
+      await tester.pump(const Duration(milliseconds: 700));
+      expect(home.starts, 1);
+      await press.up();
       await tester.pump();
-      gestures.onLongPressEnd!(const LongPressEndDetails());
       home.pendingStart!.complete(true);
       await tester.pumpAndSettle();
       expect(home.stops, 1);
@@ -1914,37 +1900,35 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     },
   );
-  testWidgets(
-    'restored voice transcript still requires explicit Send',
-    (tester) async {
-      final drafts = container.read(workspaceDraftsProvider.notifier);
-      await tester.runAsync(
-        () => drafts.put('capture', {
-          'text': '明日の単語を復習',
-          'voiceText': true,
-          'id': 'voice-reopen',
-        }),
-      );
-      await show(tester, const InputBottomBar(), reducedMotion: true);
-      await tester.pumpAndSettle();
-      var field = tester.widget<TextField>(find.byType(TextField));
-      expect(field.controller!.text, '明日の単語を復習');
-      final send = find.widgetWithIcon(IconButton, Icons.arrow_upward_rounded);
-      expect(send, findsOneWidget);
-      field.focusNode!.requestFocus();
-      await tester.pump();
-      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-      await tester.pump();
-      expect(home.sent, isEmpty);
-      expect(field.controller!.text, contains('\n'));
-      await tester.enterText(find.byType(TextField), '明日9時に単語を復習');
-      await tester.tap(send);
-      await drainWorkspaceDrafts(tester, container);
-      expect(home.sent, ['明日9時に単語を復習']);
-      expect(container.read(workspaceDraftsProvider)['capture'], isNull);
-    },
-    variant: TargetPlatformVariant.only(TargetPlatform.iOS),
-  );
+  testWidgets('restored voice transcript still requires explicit Send', (
+    tester,
+  ) async {
+    final drafts = container.read(workspaceDraftsProvider.notifier);
+    await tester.runAsync(
+      () => drafts.put('capture', {
+        'text': '明日の単語を復習',
+        'voiceText': true,
+        'id': 'voice-reopen',
+      }),
+    );
+    await show(tester, const InputBottomBar(), reducedMotion: true);
+    await tester.pumpAndSettle();
+    var field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.controller!.text, '明日の単語を復習');
+    final send = find.widgetWithIcon(IconButton, Icons.arrow_upward_rounded);
+    expect(send, findsOneWidget);
+    field.focusNode!.requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    expect(home.sent, isEmpty);
+    expect(field.controller!.text, contains('\n'));
+    await tester.enterText(find.byType(TextField), '明日9時に単語を復習');
+    await tester.tap(send);
+    await drainWorkspaceDrafts(tester, container);
+    expect(home.sent, ['明日9時に単語を復習']);
+    expect(container.read(workspaceDraftsProvider)['capture'], isNull);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 
   testWidgets(
     'arc overlay keeps the held input in place',

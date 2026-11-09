@@ -28,6 +28,7 @@ void main() {
   late Uri signed;
   late List<WebSocket> sockets;
   late List<int> received;
+  late List<int> packetSizes;
   late List<Duration> delays;
   late TencentRealtimeRecognizer realtime;
   late SpeechRecognitionService service;
@@ -50,6 +51,7 @@ void main() {
     audio = await File('${root.path}/voice.wav').writeAsBytes(pcmWave());
     sockets = [];
     received = [];
+    packetSizes = [];
     delays = [];
     connected = (socket, id) => event(socket, id, {});
     audioReceived = (_, _) {};
@@ -74,6 +76,7 @@ void main() {
       socket.listen((message) {
         if (message is List<int>) {
           received.addAll(message);
+          packetSizes.add(message.length);
           audioReceived(socket, id);
         } else if (message == '{"type":"end"}') {
           end(socket, id);
@@ -395,6 +398,8 @@ void main() {
       expect(complete, isFalse);
       await input.close();
       expect(await session.result, '明天 meeting at nine。');
+      expect(packetSizes, [1280, 1280, 640]);
+      expect(received.length, 3200);
     },
   );
   test(
@@ -404,7 +409,12 @@ void main() {
       addTearDown(() {
         unawaited(input.close());
       });
-      audioReceived = (socket, id) => event(socket, id, {'code': 4004});
+      audioReceived = (socket, id) {
+        // A service rejects the request once and then closes it; smaller live
+        // packets can already be queued when that rejection reaches the client.
+        audioReceived = (_, _) {};
+        event(socket, id, {'code': 4004});
+      };
       final session = service.startRealtime(
         (_) => input.stream,
         config,

@@ -6,8 +6,8 @@ import 'package:dio/dio.dart';
 import 'package:record/record.dart';
 import 'speech_recognition_exception.dart';
 
-/// Local PCM capture. No network is started here. A later explicit upward
-/// gesture may read the same file while recording continues, without a RAM copy.
+/// Local PCM capture, read concurrently by recognition without a full RAM copy.
+/// The controller owns when the configured network session starts.
 class LivePcmRecording {
   LivePcmRecording._(this.file, this._output);
   final File file;
@@ -33,13 +33,21 @@ class LivePcmRecording {
     final capture = LivePcmRecording._(file, output);
     try {
       await output.writeFrom(_header(0));
-      final audio = await recorder.startStream(
-        const RecordConfig(
-          encoder: AudioEncoder.pcm16bits,
-          sampleRate: 16000,
-          numChannels: 1,
-        ),
+      RecordConfig config([int? bufferSize]) => RecordConfig(
+        encoder: AudioEncoder.pcm16bits,
+        sampleRate: 16000,
+        numChannels: 1,
+        streamBufferSize: bufferSize,
       );
+      Stream<Uint8List> audio;
+      try {
+        audio = await recorder.startStream(config(1280));
+      } catch (_) {
+        // Some devices require a larger native buffer. Release a partially
+        // initialized recorder before retrying with the hardware default.
+        await recorder.cancel();
+        audio = await recorder.startStream(config());
+      }
       capture._subscription = audio.listen(
         capture._add,
         onError: (Object _) {

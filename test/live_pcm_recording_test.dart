@@ -11,10 +11,19 @@ import 'package:dont_forget/services/speech_recognition_service.dart';
 class PcmRecorder implements AudioRecorder {
   final audio = StreamController<Uint8List>.broadcast(sync: true);
   RecordConfig? config;
+  int failures = 0, cancels = 0;
+  final starts = <RecordConfig>[];
   @override
   Future<Stream<Uint8List>> startStream(RecordConfig config) async {
     this.config = config;
+    starts.add(config);
+    if (failures-- > 0) throw StateError('Unsupported native buffer');
     return audio.stream;
+  }
+
+  @override
+  Future<void> cancel() async {
+    cancels++;
   }
 
   @override
@@ -94,6 +103,46 @@ void main() {
     expect(await capture.file.exists(), isFalse);
     expect(await other.readAsString(), 'keep');
   });
+  test(
+    'unsupported small native buffer releases recorder then uses hardware default',
+    () async {
+      final fallback = PcmRecorder()..failures = 1;
+      final recording = await LivePcmRecording.start(
+        fallback,
+        '${root.path}/fallback.wav',
+      );
+      expect(fallback.starts.map((config) => config.streamBufferSize), [
+        1280,
+        null,
+      ]);
+      expect(fallback.cancels, 1);
+      expect(fallback.config?.sampleRate, 16000);
+      expect(fallback.config?.numChannels, 1);
+      fallback.audio.add(Uint8List(3200));
+      await fallback.audio.close();
+      await recording.finish();
+      expect((await PcmWaveInfo.read(recording.file.path))?.bytes, 3200);
+      await recording.discard();
+    },
+  );
+
+  test(
+    'failed default-buffer retry removes only its allocated output',
+    () async {
+      final fallback = PcmRecorder()..failures = 2;
+      final output = File('${root.path}/unsupported.wav');
+      await expectLater(
+        LivePcmRecording.start(fallback, output.path),
+        throwsA(isA<StateError>()),
+      );
+      expect(fallback.starts.length, 2);
+      expect(fallback.cancels, 1);
+      expect(await output.exists(), isFalse);
+      expect(await capture.file.exists(), isTrue);
+      await fallback.audio.close();
+    },
+  );
+
   test('existing target is never overwritten', () async {
     final other = await File('${root.path}/other.wav').writeAsString('keep');
     await expectLater(

@@ -112,7 +112,13 @@
     "qa47_untouched": true,
     "reverse_removed": true
   },
-  "human_gesture_acceptance": "PENDING",
+  "human_gesture_acceptance": {
+    "status": "failed",
+    "version": "1.8.0+65",
+    "apk_sha256": "9ae1594d628223f56a194ecc1a0c39f37f324ba6353736807686d466965f2dd6",
+    "user_feedback": "交互及响应，反应速度还是太慢，优化交互体验，提高响应性能实时翻译或者提前翻译",
+    "release_deferred": true
+  },
   "windows_ordinary_gui": "BLOCKED_COMPUTER_USE_CWD_URI",
   "source_automation_packages_native_recorded_separately": true
 }

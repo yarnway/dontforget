@@ -29,10 +29,11 @@ class VoiceCaptureFeedback extends StatelessWidget {
     required this.action,
     this.fullScreen = false,
     this.preparing = false,
+    this.selectionOpen = false,
     this.transcript = '',
   });
   final VoiceReleaseAction action;
-  final bool fullScreen, preparing;
+  final bool fullScreen, preparing, selectionOpen;
   final String transcript;
   static const _green = Color(0xFF3BB47B);
   static const _cancel = Color(0xFFC63C3C);
@@ -67,9 +68,14 @@ class VoiceCaptureFeedback extends StatelessWidget {
             final cancelLabel = loc.get(
               shortLabels ? 'voiceShortCancelTarget' : 'cancel',
             );
-            final textLabel = loc.get(
-              shortLabels ? 'voiceShortTextTarget' : 'voiceSlideTextTarget',
-            );
+            final textLabel = loc.get(switch (action) {
+              VoiceReleaseAction.text =>
+                shortLabels ? 'voiceShortTextTarget' : 'voiceEditOnRelease',
+              VoiceReleaseAction.send =>
+                shortLabels ? 'send' : 'voiceReleaseSend',
+              _ =>
+                shortLabels ? 'voiceShortTextTarget' : 'voiceSlideTextTarget',
+            });
             const targetStyle = TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -77,7 +83,18 @@ class VoiceCaptureFeedback extends StatelessWidget {
             );
             final labelWidth = width * .4;
             var labelHeight = 0.0;
-            for (final value in [cancelLabel, textLabel]) {
+            // Reserve every action's label height so sliding changes the
+            // action without moving the targets or transcript above them.
+            for (final value in [
+              cancelLabel,
+              loc.get(
+                shortLabels ? 'voiceShortTextTarget' : 'voiceSlideTextTarget',
+              ),
+              loc.get(
+                shortLabels ? 'voiceShortTextTarget' : 'voiceEditOnRelease',
+              ),
+              loc.get(shortLabels ? 'send' : 'voiceReleaseSend'),
+            ]) {
               final painter = TextPainter(
                 text: TextSpan(text: value, style: targetStyle),
                 textDirection: Directionality.of(context),
@@ -275,7 +292,8 @@ class VoiceCaptureFeedback extends StatelessWidget {
                     ),
                   ),
                 ),
-                if ((action == VoiceReleaseAction.text ||
+                if (((selectionOpen && action != VoiceReleaseAction.cancel) ||
+                        action == VoiceReleaseAction.text ||
                         action == VoiceReleaseAction.send) &&
                     feedbackTop - topInset > 80)
                   Positioned(

@@ -1,0 +1,16 @@
+{
+  "version": "1.8.0+66",
+  "status": "initial_full_failed",
+  "flutter_passed": 2344,
+  "flutter_skipped": 20,
+  "flutter_failed": 5,
+  "log_sha256": "f8425979da93063d95021a0030f3480fb56358b7c55dbb8fbeaaeac02ccc9cc8",
+  "reason": "Four old onset/short-tap assertions and one direct GestureDetector callback fixture no longer match confirmed 200ms hold and RawGestureDetector. Updated to actual pointer events, keeping delayed permission/cancel and draft checks. Final full rerun recorded separately.",
+  "ui_polish_failure": {
+    "test": "recording feedback stays above the arcs across text and screens",
+    "case": "568x320 / en / font2.0",
+    "problem": "long action labels overlap feedback",
+    "fix": "short action labels in compact/large text space; retain full central release caption",
+    "log_sha256": "03be5272da00a4a94241895d67a4d9a6b220ad8fc04087dc861fa2a98bb131ab"
+  }
+}

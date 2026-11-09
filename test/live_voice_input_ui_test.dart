@@ -26,7 +26,7 @@ class _Recorder implements AudioRecorder {
 
 class _Home extends HomeController {
   _Home(super.ref) : super(audioRecorder: _Recorder());
-  int prepares = 0, cancels = 0, saves = 0;
+  int starts = 0, prepares = 0, cancels = 0, saves = 0;
   final sent = <String>[];
   Completer<String?>? finalResult;
   bool failed = false;
@@ -36,6 +36,7 @@ class _Home extends HomeController {
 
   @override
   Future<bool> startRecording() async {
+    starts++;
     state = HomeState(isRecording: true);
     return true;
   }
@@ -159,16 +160,49 @@ void main() {
     await tester.pump();
   }
 
+  testWidgets('explicit voice mode starts after 200ms, not on a short tap', (
+    tester,
+  ) async {
+    await show(tester);
+    await tester.tap(find.byKey(const ValueKey('composer-mode-toggle')));
+    await tester.pumpAndSettle();
+    final origin = tester.getCenter(
+      find.byKey(const ValueKey('composer-input-surface')),
+    );
+    final tap = await tester.startGesture(origin);
+    await tester.pump(const Duration(milliseconds: 100));
+    await tap.up();
+    await tester.pumpAndSettle();
+    expect(home.starts, 0);
+    expect(home.prepares, 0);
+    final held = await tester.startGesture(origin);
+    await tester.pump(const Duration(milliseconds: 210));
+    await tester.pump();
+    expect(home.starts, 1);
+    expect(home.prepares, greaterThan(0));
+    await held.up();
+    await tester.pumpAndSettle();
+    expect(home.saves, 1);
+    expect(home.sent, isEmpty);
+    await finish(tester);
+  });
+
   testWidgets(
-    'up prepares before right preview, ordinary release edits without sending',
+    'recognition prepares before upward/right preview, ordinary release edits',
     (tester) async {
       await show(tester);
       final held = await hold(tester);
-      expect(home.prepares, 0);
+      expect(home.prepares, greaterThan(0));
       await held.gesture.moveTo(held.origin + const Offset(0, -70));
       await tester.pumpAndSettle();
       expect(home.prepares, greaterThan(0));
       expect(home.sent, isEmpty);
+      // The vertical gesture alone reveals already prepared text, even when
+      // it did not change the release action or trigger another partial.
+      expect(
+        find.byKey(const ValueKey('voice-transcript-preview')),
+        findsOneWidget,
+      );
       await held.gesture.moveTo(held.origin + const Offset(70, -70));
       await tester.pumpAndSettle();
       expect(

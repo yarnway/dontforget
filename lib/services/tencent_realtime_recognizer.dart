@@ -9,8 +9,8 @@ import '../models/tencent_speech_credentials.dart';
 import 'pcm_wave_reader.dart';
 import 'speech_recognition_exception.dart';
 
-/// Replays a user-approved recording through Tencent's real-time WebSocket API.
-/// Recording alone never opens a connection. PCM is paced at 1:1 after the gesture.
+/// Streams microphone audio or replays a recording at Tencent's required 1:1
+/// rate. Live frames use a smaller packet to expose partial text sooner.
 class TencentRealtimeRecognizer {
   TencentRealtimeRecognizer({
     Future<WebSocket> Function(Uri)? connect,
@@ -259,6 +259,7 @@ class TencentRealtimeRecognizer {
       final clock = Stopwatch()..start();
       var scheduledMicros = 0, sent = 0;
       inputIterator = StreamIterator(audio);
+      final packetBytes = live ? 1280 : 6400; // 40ms live, 200ms file replay.
       while (await Future.any([
         inputIterator.moveNext(),
         finished.future.then((_) {
@@ -271,9 +272,12 @@ class TencentRealtimeRecognizer {
         }),
       ])) {
         final input = inputIterator.current;
-        for (var offset = 0; offset < input.length; offset += 6400) {
+        for (var offset = 0; offset < input.length; offset += packetBytes) {
           check();
-          final chunk = input.sublist(offset, min(offset + 6400, input.length));
+          final chunk = input.sublist(
+            offset,
+            min(offset + packetBytes, input.length),
+          );
           if (chunk.length.isOdd) {
             throw const SpeechRecognitionException('format');
           }

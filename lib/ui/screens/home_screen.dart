@@ -1449,7 +1449,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         .where((r) => r.isWorkspaceItem)
         .toList();
     final l10n = AppLocalizations.of(context);
-    final homeState = ref.watch(homeControllerProvider);
+    // Streaming transcript updates belong to the composer. Avoid rebuilding
+    // the full task list and context digest for every partial result.
+    final isProcessing = ref.watch(
+      homeControllerProvider.select((state) => state.isProcessingInBackground),
+    );
     final spacedService = ref.watch(spacedRepetitionServiceProvider);
     final currentProfile = ref.watch(contextProfileProvider);
     final digest = _contextTriggers.activeDigest(
@@ -1485,7 +1489,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       }
     });
 
-    final isProcessing = homeState.isProcessingInBackground;
     final statusColor = isProcessing
         ? const Color(0xFF00E5FF)
         : const Color(0xFF00E676);
