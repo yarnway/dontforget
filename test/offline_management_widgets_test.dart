@@ -1,3 +1,4 @@
+import 'support/real_io.dart';
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/models/medication_plan.dart';
 import 'package:dont_forget/models/reminder.dart';
@@ -33,6 +34,14 @@ void main() {
       await tester.pump(const Duration(milliseconds: 20));
     }
     await drainWorkspaceDrafts(tester, h.container);
+    await pumpUntilRealIo(
+      tester,
+      () =>
+          find.byType(LinearProgressIndicator).evaluate().isEmpty &&
+          find.byType(CircularProgressIndicator).evaluate().isEmpty,
+      reason:
+          'Offline management must finish real database I/O before settling animations',
+    );
     await tester.pumpAndSettle(
       const Duration(milliseconds: 50),
       EnginePhase.sendSemanticsUpdate,
@@ -225,6 +234,12 @@ void main() {
         );
         expect(h.container.read(remindersProvider), hasLength(n));
         await tap(tester, const ValueKey('task-management-save'));
+        await pumpUntilRealIo(
+          tester,
+          () => find.byType(TaskManagementEditor).evaluate().isEmpty,
+          reason: 'The saved editor must close before creating the next task',
+        );
+        await tester.pumpAndSettle();
       }
       final rows = (await tester.runAsync(h.rows))!;
       expect(rows, hasLength(2));

@@ -1,0 +1,30 @@
+{
+  "source": "3ebf881c75978196090828e031075a9e20982588",
+  "id": 42554275061,
+  "url": "https://github.com/yarnway/dontforget/actions/runs/42554275061",
+  "status": "completed",
+  "conclusion": "failure",
+  "jobs": [
+    {
+      "name": "Analyze and test",
+      "conclusion": "success"
+    },
+    {
+      "name": "Windows analyze and test",
+      "conclusion": "failure"
+    },
+    {
+      "name": "Build ${{ matrix.platform }} candidate",
+      "conclusion": "skipped"
+    },
+    {
+      "name": "Verify tag packages without publishing",
+      "conclusion": "skipped"
+    }
+  ],
+  "windows_log_sha256": "f8b1e44e6ee190eb2b57a608f6aa998763ac51160bcd83df77031007b43fe77a",
+  "failed_tests": [
+    "template application previews fields before saving and creates fresh unchecked task items",
+    "bulk pause requires confirmation and excludes plans from matching selection"
+  ]
+}
