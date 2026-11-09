@@ -3,17 +3,17 @@
 本地优先的备忘与任务工作台。随手记录文字、录音和附件，按紧急提醒、重点跟进、常规待办与备忘便签管理事项；需要智能提取时，再连接自己配置的模型服务。
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.44.9-02569B?logo=flutter)](https://flutter.dev)
-[![Release](https://img.shields.io/badge/Release-v1.7.2-007F83)](https://github.com/yarnway/dontforget/releases/tag/v1.7.2)
+[![Release](https://img.shields.io/badge/Release-v1.8.0-007F83)](https://github.com/yarnway/dontforget/releases/tag/v1.8.0)
 
 [使用指南](docs/User_Guide.md) · [开发指南](docs/Developer_Guide.md) · [架构](docs/Architecture_Design.md) · [变更日志](docs/Changelog.md)
 
-后续工作按[2026-11-02 阶段与任务](docs/Next_Steps_2026-11-02.md)推进：先关闭候选缺陷与安装包差异，再做原生提醒、数据保护、学习与跨设备验收。当前三平台发行版为 `v1.7.2 / build61`，Windows新增[默认紧凑、按内容展开的输入框](docs/Windows_Compact_Composer_61_2026-11-06.md)；此前新增Android文字／链接分享草稿，编辑确认后保存本地备忘，保留主输入草稿，详见[+58验收](docs/Android_Shared_Text_58_2026-11-05.md)。按住录音上滑往右转文字改接腾讯云，并精简设置入口、减少低频原生加载及偏好保存时的凭据读写；腾讯云原手势与设置分层见[+56记录](docs/Tencent_Recording_Speech_56_2026-11-05.md)，Android16k音频兼容、冷启动和设置路由见[+57记录](docs/Tencent_Audio_Compatibility_57_2026-11-05.md)。Pixel +57同签名升级与输入／录音部分结果见[原生续验](docs/Android_Native_57_2026-11-05.md)，阶段48的2GiB普通／512MiB加密备份验收及显式脚本见[容量记录](docs/Backup_Capacity_57_2026-11-05.md)。腾讯云真实账号按用户要求暂缓，其他原生边界继续验收，已知限制见本轮发行说明。Windows旧目录迁移保护及分层验收见[迁移记录](docs/Legacy_Location_Storage_52_2026-11-04.md)；设备窗口偏好独立存储见[R1验收](docs/Desktop_Window_Storage_51_2026-11-04.md)；Android +50通知与录音证据保留在阶段台账。历史+48通知、录音与媒体入口见[原生验收](docs/Native_Media_Routing_48_2026-11-03.md)；Windows +47包与Pixel隔离升级见[构建升级验收](docs/Windows_Android_Build_47_2026-11-03.md)，Windows新动作与Pixel通知／USB结果见[11月3日验收](docs/Windows_Android_Validation_2026-11-03.md)。Android冻结 `+46` 深链及Pixel结果见[阶段47验收](docs/Android_Deep_Link_Acceptance_2026-11-02.md)；Windows `+45` 包保留[阶段46验收](docs/Stage46_Validation_2026-11-02.md)的独立归属。
+当前三平台正式版为 **v1.8.0 / build66**。精简输入与设置、提前流式语音、上滑预览和编辑、录音重复缓存回收及空间管理已交付。[分层验收](docs/Release_1.8_66_2026-11-09.md)和[剩余阶段](docs/Next_Steps_2026-11-02.md)分别维护。
 
-当前工作区的“记录与提醒”优化及后续阶段见[分阶段功能清单](docs/Recording_Reminders_Phases.md)，其中开发中功能与公开候选分别记录。 本轮新增的用药计划、出门清单、附件备份和学习管理入口见[实现与验收索引](docs/Planning_Implementation.md)，尚未计入本轮安装包验收。
+记录与提醒的阶段设计见[分阶段功能清单](docs/Recording_Reminders_Phases.md)，用药计划、出门清单、附件备份和学习管理见[实现索引](docs/Planning_Implementation.md)。1.8已交付的源码、自动化、安装包与实机范围以[本轮验收](docs/Release_1.8_66_2026-11-09.md)为准。
 
-## v1.7：任务浏览与清晰复盘
+## v1.8：流式语音与简洁录入
 
-Android／Windows／Linux [v1.7.2已发布](https://github.com/yarnway/dontforget/releases/tag/v1.7.2)，当前稳定版`1.7.2+61`。Windows默认单行，点击输入，多行或长文本自动展开，保留中文组合态与草稿；固定源码CI、三端五包和16附件独立读回见[发行记录](docs/Platform_Release_61_2026-11-06.md)。v1.7.1的[全局快捷记录](docs/Windows_Global_Capture_60_2026-11-06.md)及[Android恢复修复](docs/Encrypted_Total_And_Cross_Device_2026-11-06.md)继续保留，原生未验范围与剩余阶段见[台账](docs/Next_Steps_2026-11-02.md)。
+Android／Windows／Linux [v1.8.0已发布](https://github.com/yarnway/dontforget/releases/tag/v1.8.0)。录音就绪即提前识别，上滑预览，右滑编辑或到明确落点松手发送；个人凭据仅本地配置。Windows默认单行并按内容展开，响应式设置和空间管理适配手机与桌面。[发行记录](docs/Release_1.8_66_2026-11-09.md)。
 
 - **按状态找任务**：搜索页直接浏览全部、待办、今日提醒、提醒时间已过或已完成事项，无需先输入文字；提醒时间不是事件截止时间。
 - **组合关键词**：同时搜索标题、摘要和子任务；空格分隔的关键词可以出现在不同字段中。
@@ -26,7 +26,7 @@ Android／Windows／Linux [v1.7.2已发布](https://github.com/yarnway/dontforge
 - **摘要与导出**：情境摘要跟随任务与提醒轮次更新；CSV 支持选择保存位置、三语言字段和明确的取消/失败反馈。
 - **编辑与工具**：工具使用非遮挡工作区面板，底部输入独立可用；目标与学习计划草稿跨工具保留，放弃需确认。详情支持保存/退出快捷键，工具选择支持搜索、方向键及输入法保护。
 - **英语学习计划**：四级、六级、考研、雅思、托福，模型准备词汇与建议时刻，预览编辑后确认创建。按批次复习反馈推进默认 1/2/4/7/15 天间隔并更新提醒；入口为“更多功能 → 词汇学习计划”。
-- **外观与输入偏好**：跟随系统、明亮、暗黑独立保存；可选回车发送或仅发送按钮，Shift+Enter 换行。空输入区按住录音，上滑后向左取消、向右转为可编辑草稿，编辑后明确发送；直接松手保存语音。iOS 设备端识别及真实采集仍需对应设备验收。
+- **外观与输入偏好**：跟随系统、明亮、暗黑独立保存；可选回车发送或仅发送按钮，Shift+Enter 换行。空输入区按住录音，上滑预览文字、向左取消、向右松手编辑；继续右滑到明确落点可松手发送，普通松手保存语音。iOS语音及真实采集仍需对应设备验收。
 - **减少重复计算**：编辑一条任务时复用其余任务的搜索文本，列表继续按需创建卡片；统计按任务版本缓存汇总，报告操作不会重复扫描任务。
 - **P0 记录与提醒集成**：持久化草稿、事项截止时间、AI 提案预览确认，以及 schema 16 对两类历史 schema 14／15 的升级与备份兼容，详见 [P0 阶段记录](docs/UX_P0_Record_Reminder.md)。
 
