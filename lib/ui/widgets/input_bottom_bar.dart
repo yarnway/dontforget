@@ -875,16 +875,6 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         }
       },
       itemBuilder: (_) => [
-        PopupMenuItem<String>(
-          enabled: false,
-          child: Text(
-            _memoOnly
-                ? l10n.get('memoOnly')
-                : displayedTime == null
-                ? l10n.get('noTimeMemo')
-                : formatLocalDateTime(displayedTime),
-          ),
-        ),
         for (final entry in const {
           'evening': 'quickEvening',
           'morning': 'quickMorning',
