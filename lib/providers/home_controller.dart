@@ -22,6 +22,7 @@ import '../services/llm_service.dart';
 import '../services/local_media_store.dart';
 import '../services/recording_duration_reader.dart';
 import '../services/tencent_recording_profile.dart';
+import '../services/live_pcm_recording.dart';
 import '../services/local_speech_service.dart';
 import '../services/speech_recognition_service.dart';
 import '../l10n/speech_recognition_strings.dart';
@@ -36,6 +37,7 @@ class HomeState {
   final bool isPreparingRecording;
   final int pendingTasksCount;
   final String? error;
+  final String voicePreview;
 
   HomeState({
     this.isLoading = false,
@@ -43,6 +45,7 @@ class HomeState {
     this.isPreparingRecording = false,
     this.pendingTasksCount = 0,
     this.error,
+    this.voicePreview = '',
   });
 
   bool get isProcessingInBackground => pendingTasksCount > 0;
@@ -53,6 +56,7 @@ class HomeState {
     bool? isPreparingRecording,
     int? pendingTasksCount,
     Object? error = _unchanged,
+    String? voicePreview,
   }) {
     return HomeState(
       isLoading: isLoading ?? this.isLoading,
@@ -60,6 +64,7 @@ class HomeState {
       isPreparingRecording: isPreparingRecording ?? this.isPreparingRecording,
       pendingTasksCount: pendingTasksCount ?? this.pendingTasksCount,
       error: identical(error, _unchanged) ? this.error : error as String?,
+      voicePreview: voicePreview ?? this.voicePreview,
     );
   }
 }
@@ -87,6 +92,10 @@ class HomeController extends StateNotifier<HomeState> {
   final Map<Object, DataGeneration> _pending = {};
   DataGeneration? _recordingGeneration;
   String? _recordingOutputPath;
+  LivePcmRecording? _pcmRecording;
+  LiveSpeechSession? _liveSpeech;
+  LiveSpeechSession? _previewSpeech;
+  LivePcmRecording? _livePreviewOwner;
 
   HomeController(
     this._ref, {
@@ -137,6 +146,11 @@ class HomeController extends StateNotifier<HomeState> {
   }
 
   Future<void> _discardRecording() async {
+    _liveSpeech?.cancel();
+    _previewSpeech?.cancel();
+    _previewSpeech = null;
+    _liveSpeech = null;
+    _livePreviewOwner = null;
     _recordingGeneration = null;
     _recordingOutputPath = null;
     if (_nativeRecording) {
@@ -144,6 +158,9 @@ class HomeController extends StateNotifier<HomeState> {
       await _audioRecorder.cancel();
       _nativeRecording = false;
     }
+    final pcm = _pcmRecording;
+    _pcmRecording = null;
+    await pcm?.discard();
   }
 
   Future<void> _quiesce() async {
@@ -625,7 +642,12 @@ class HomeController extends StateNotifier<HomeState> {
   Future<bool> _startRecording() async {
     final generation = _beginInput();
     if (generation == null) return false;
-    state = state.copyWith(isPreparingRecording: true, error: null);
+    _livePreviewOwner = null;
+    state = state.copyWith(
+      isPreparingRecording: true,
+      error: null,
+      voicePreview: '',
+    );
     try {
       final permitted = await _audioRecorder.hasPermission();
       _check(generation);
@@ -668,7 +690,13 @@ class HomeController extends StateNotifier<HomeState> {
                   bitRate: 64000,
                 )
               : const RecordConfig();
-          await _audioRecorder.start(config, path: path);
+          if (realtime &&
+              speech.isConfigured &&
+              TencentSpeechCredentials.decode(speech.apiKey) != null) {
+            _pcmRecording = await LivePcmRecording.start(_audioRecorder, path);
+          } else {
+            await _audioRecorder.start(config, path: path);
+          }
           _check(generation);
           _recordingOutputPath = path;
           _recordingGeneration = generation;
@@ -695,11 +723,65 @@ class HomeController extends StateNotifier<HomeState> {
     }
   }
 
-  Future<({String path, DataGeneration generation, bool ownedTemporary})?>
-  _stopCapture() async {
+  /// Called when the held pointer moves upward. Recording before this gesture
+  /// stays local; coming back down does not undo audio already transmitted.
+  void prepareRecordingTranscription() {
+    final generation = _recordingGeneration;
+    final pcm = _pcmRecording;
+    if (generation == null ||
+        pcm == null ||
+        _liveSpeech != null ||
+        !_isCurrent(generation)) {
+      return;
+    }
+    final settings = _ref.read(settingsProvider).speech;
+    try {
+      _livePreviewOwner = pcm;
+      _liveSpeech = _ref
+          .read(speechRecognitionServiceProvider)
+          .startRealtime(
+            pcm.pcm,
+            settings,
+            onText: (text) {
+              if (_isCurrent(generation) &&
+                  identical(_livePreviewOwner, pcm) &&
+                  state.voicePreview != text) {
+                state = state.copyWith(voicePreview: text);
+              }
+            },
+          );
+      _previewSpeech = _liveSpeech;
+    } on SpeechRecognitionException {
+      /* Preserve local audio for explicit retry. */
+    }
+  }
+
+  void cancelLiveTranscription() {
+    _previewSpeech?.cancel();
+    _previewSpeech = null;
+    _livePreviewOwner = null;
+    if (mounted) state = state.copyWith(voicePreview: '');
+  }
+
+  Future<
+    ({
+      String path,
+      DataGeneration generation,
+      bool ownedTemporary,
+      Future<String>? liveText,
+    })?
+  >
+  _stopCapture({bool transcribe = false}) async {
     final generation = _recordingGeneration;
     if (generation == null) return null;
     final expectedPath = _recordingOutputPath;
+    final live = _liveSpeech;
+    _liveSpeech = null;
+    if (!transcribe) {
+      live?.cancel();
+      _livePreviewOwner = null;
+      if (identical(_previewSpeech, live)) _previewSpeech = null;
+    }
     _recordingOutputPath = null;
     _recordingGeneration = null;
     try {
@@ -708,7 +790,10 @@ class HomeController extends StateNotifier<HomeState> {
           await _discardRecording();
           return null;
         }
-        final path = await _audioRecorder.stop();
+        final nativePath = await _audioRecorder.stop();
+        final pcm = _pcmRecording;
+        _pcmRecording = null;
+        final path = pcm == null ? nativePath : await pcm.finish();
         _nativeRecording = false;
         if (!_isCurrent(generation)) {
           // Stop raced recovery. The result was never confirmed for import.
@@ -726,12 +811,14 @@ class HomeController extends StateNotifier<HomeState> {
           return (
             path: path,
             generation: generation,
+            liveText: transcribe ? live?.result : null,
             ownedTemporary:
                 expectedPath != null && p.equals(expectedPath, path),
           );
         }
       }
     } catch (error) {
+      live?.cancel();
       if (_isCurrent(generation)) state = state.copyWith(isRecording: false);
       _reportError(generation, '录音停止异常: $error');
     }
@@ -754,7 +841,9 @@ class HomeController extends StateNotifier<HomeState> {
     if (generation == null) return false;
     try {
       await _serializeRecorder(_discardRecording);
-      if (_isCurrent(generation)) state = state.copyWith(isRecording: false);
+      if (_isCurrent(generation)) {
+        state = state.copyWith(isRecording: false, voicePreview: '');
+      }
       return true;
     } catch (_) {
       _reportError(
@@ -844,9 +933,15 @@ class HomeController extends StateNotifier<HomeState> {
   /// This path returns a draft only. It never extracts or submits tasks from
   /// recognized text. On a genuine recognition failure, preserve an audio memo.
   Future<String?> stopRecordingToText({bool Function()? canAcceptDraft}) async {
-    final capture = await _stopCapture();
+    final previewOwner = _livePreviewOwner;
+    final capture = await _stopCapture(transcribe: true);
     if (capture == null) return null;
-    final (path: path, generation: generation, ownedTemporary: _) = capture;
+    final (
+      path: path,
+      generation: generation,
+      ownedTemporary: _,
+      liveText: liveText,
+    ) = capture;
     if (!_isCurrent(generation)) {
       try {
         await File(path).delete();
@@ -869,7 +964,7 @@ class HomeController extends StateNotifier<HomeState> {
         );
         return null;
       }
-      final text = await _transcribeCapture(path, generation);
+      final text = await (liveText ?? _transcribeCapture(path, generation));
       _check(generation);
       if (text.trim().isEmpty) {
         throw const FormatException('No recognized speech');
@@ -919,6 +1014,10 @@ class HomeController extends StateNotifier<HomeState> {
         } catch (_) {
           /* Only our new capture; cache cleanup may retry. */
         }
+      }
+      if (identical(_livePreviewOwner, previewOwner)) {
+        _livePreviewOwner = null;
+        _previewSpeech = null;
       }
       _finishPending(operation);
     }

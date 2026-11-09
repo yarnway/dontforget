@@ -12,9 +12,9 @@ String speechText(String language, String key) {
       '中文 · English',
     ],
     'privacy': [
-      '启用后，仅在你选择转文字或重试识别时，将录音发送到腾讯云，可能产生服务费用。凭据保存在系统安全存储，不写入数据库或可移植备份。',
-      'When enabled, choosing transcription or retry uploads audio to Tencent Cloud and may incur service charges. Credentials use system secure storage and are excluded from database rows and portable backups.',
-      '有効にすると、文字起こしまたは再試行を選んだ場合に録音をTencent Cloudへ送信します。料金が発生する場合があります。認証情報はシステムの安全な領域に保存され、DBや持ち運び用バックアップには含まれません。',
+      '启用后，上滑准备转文字或重试时，将录音发送到腾讯云；之后改选保存原声或取消，已发送的音频无法撤回，可能产生服务费用。凭据保存在系统安全存储，不写入数据库或可移植备份。',
+      'When enabled, sliding upward to prepare transcription or retrying sends audio to Tencent Cloud. Saving voice or cancelling later cannot recall audio already sent; service charges may apply. Credentials use system secure storage and are excluded from database rows and portable backups.',
+      '有効にすると、上へスライドして文字起こしを準備する時、または再試行時に録音をTencent Cloudへ送信します。その後取り消しても送信済みの音声は戻せず、料金が発生する場合があります。認証情報はシステムの安全な領域に保存され、DBや持ち運び用バックアップには含まれません。',
     ],
     'enabled': [
       '启用腾讯云录音转文字',

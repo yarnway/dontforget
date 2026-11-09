@@ -33,6 +33,7 @@ void main() {
   late SpeechRecognitionService service;
   late void Function(WebSocket, String) connected;
   late void Function(WebSocket, String) end;
+  late void Function(WebSocket, String) audioReceived;
   void event(WebSocket socket, String voiceId, Map<String, dynamic> data) {
     socket.add(jsonEncode({'code': 0, 'voice_id': voiceId, ...data}));
   }
@@ -51,6 +52,7 @@ void main() {
     received = [];
     delays = [];
     connected = (socket, id) => event(socket, id, {});
+    audioReceived = (_, _) {};
     end = (socket, id) {
       event(socket, id, {
         'result': {'slice_type': 1, 'index': 0, 'voice_text_str': 'unstable'},
@@ -72,6 +74,7 @@ void main() {
       socket.listen((message) {
         if (message is List<int>) {
           received.addAll(message);
+          audioReceived(socket, id);
         } else if (message == '{"type":"end"}') {
           end(socket, id);
         }
@@ -361,6 +364,59 @@ void main() {
       bytes[44] = 3;
       await audio.writeAsBytes(bytes);
       expect(await PcmWaveInfo.read(audio.path), isNull);
+    },
+  );
+  test(
+    'live speech publishes partial text before microphone stream ends',
+    () async {
+      final input = StreamController<List<int>>();
+      addTearDown(() {
+        unawaited(input.close());
+      });
+      final preview = Completer<String>();
+      audioReceived = (socket, id) => event(socket, id, {
+        'result': {'slice_type': 1, 'index': 0, 'voice_text_str': '正在识别'},
+      });
+      final session = service.startRealtime(
+        (_) => input.stream,
+        config,
+        onText: (text) {
+          if (!preview.isCompleted) preview.complete(text);
+        },
+      );
+      var complete = false;
+      unawaited(
+        session.result.then((_) {
+          complete = true;
+        }),
+      );
+      input.add(List.filled(3200, 1));
+      expect(await preview.future.timeout(const Duration(seconds: 5)), '正在识别');
+      expect(complete, isFalse);
+      await input.close();
+      expect(await session.result, '明天 meeting at nine。');
+    },
+  );
+  test(
+    'server failure interrupts a live source waiting for its next packet',
+    () async {
+      final input = StreamController<List<int>>();
+      addTearDown(() {
+        unawaited(input.close());
+      });
+      audioReceived = (socket, id) => event(socket, id, {'code': 4004});
+      final session = service.startRealtime(
+        (_) => input.stream,
+        config,
+        onText: (_) {},
+      );
+      final assertion = expectLater(
+        session.result.timeout(const Duration(seconds: 5)),
+        code('quota'),
+      );
+      input.add(List.filled(3200, 0));
+      await assertion;
+      expect(await audio.exists(), isTrue);
     },
   );
   test('only official secure WebSocket endpoint is admitted', () {

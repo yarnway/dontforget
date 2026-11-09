@@ -51,6 +51,47 @@ class TencentRealtimeRecognizer {
     if (wave.duration > const Duration(minutes: 5)) {
       throw const SpeechRecognitionException('too_long');
     }
+    Stream<List<int>> audio() async* {
+      final input = await file.open();
+      try {
+        await input.setPosition(wave.offset);
+        var remaining = wave.bytes;
+        while (remaining > 0) {
+          active();
+          final chunk = await input.read(min(6400, remaining));
+          if (chunk.isEmpty || chunk.length.isOdd) {
+            throw const SpeechRecognitionException('audio_changed');
+          }
+          remaining -= chunk.length;
+          yield chunk;
+        }
+      } finally {
+        await input.close();
+      }
+      final current = await file.stat();
+      if (initial.size != current.size ||
+          initial.modified != current.modified) {
+        throw const SpeechRecognitionException('audio_changed');
+      }
+    }
+
+    return recognizeStream(audio(), credentials, cancellation);
+  }
+
+  Future<String> recognizeStream(
+    Stream<List<int>> audio,
+    TencentSpeechCredentials credentials,
+    CancelToken cancellation, {
+    bool live = false,
+    void Function(String text)? onText,
+  }) async {
+    void active() {
+      if (cancellation.isCancelled) {
+        throw const SpeechRecognitionException('cancelled');
+      }
+    }
+
+    active();
     final voiceId = const Uuid().v4();
     final stamp = _now().toUtc().millisecondsSinceEpoch ~/ 1000;
     final params = <String, String>{
@@ -81,12 +122,19 @@ class TencentRealtimeRecognizer {
     );
     WebSocket? socket;
     StreamSubscription<dynamic>? subscription;
+    StreamIterator<List<int>>? inputIterator;
     var abandoned = false;
     final handshake = Completer<void>(), finished = Completer<void>();
     String? failure;
     var totalBytes = 0;
     var endSent = false;
     final stable = <int, String>{};
+    final partial = <int, String>{};
+    String assembled(Map<int, String> values) {
+      final keys = values.keys.toList()..sort();
+      return keys.map((key) => values[key]).join().trim();
+    }
+
     void fail(String code) {
       failure ??= code;
       if (!handshake.isCompleted) handshake.complete();
@@ -168,7 +216,12 @@ class TencentRealtimeRecognizer {
                 fail('invalid_response');
                 return;
               }
+              final index = result['index'] as int;
+              if (!stable.containsKey(index)) {
+                partial[index] = result['voice_text_str'] as String;
+              }
               if (result['slice_type'] == 2) {
+                partial.remove(index);
                 stable[result['index'] as int] =
                     result['voice_text_str'] as String;
                 if (stable.values.fold<int>(0, (n, s) => n + s.length) >
@@ -177,6 +230,14 @@ class TencentRealtimeRecognizer {
                   return;
                 }
               }
+            }
+            if (result != null && onText != null) {
+              final preview = assembled({...partial, ...stable});
+              if (preview.length > 32000) {
+                fail('invalid_response');
+                return;
+              }
+              onText(preview);
             }
             if (data['final'] == 1) {
               if (!endSent) {
@@ -195,37 +256,61 @@ class TencentRealtimeRecognizer {
         },
       );
       await wait(handshake.future, const Duration(seconds: 10));
-      final input = await file.open();
-      try {
-        await input.setPosition(wave.offset);
-        var remaining = wave.bytes;
-        while (remaining > 0) {
+      final clock = Stopwatch()..start();
+      var scheduledMicros = 0, sent = 0;
+      inputIterator = StreamIterator(audio);
+      while (await Future.any([
+        inputIterator.moveNext(),
+        finished.future.then((_) {
           check();
-          final chunk = await input.read(min(6400, remaining));
-          if (chunk.isEmpty || chunk.length.isOdd) {
-            throw const SpeechRecognitionException('audio_changed');
+          return false;
+        }),
+        cancellation.whenCancel.then((_) {
+          check();
+          return false;
+        }),
+      ])) {
+        final input = inputIterator.current;
+        for (var offset = 0; offset < input.length; offset += 6400) {
+          check();
+          final chunk = input.sublist(offset, min(offset + 6400, input.length));
+          if (chunk.length.isOdd) {
+            throw const SpeechRecognitionException('format');
           }
+          sent += chunk.length;
+          if (sent > 32000 * 300) {
+            throw const SpeechRecognitionException('too_long');
+          }
+          if (live) {
+            final waitMicros = scheduledMicros - clock.elapsedMicroseconds;
+            if (waitMicros > 0) {
+              await wait(
+                _delay(Duration(microseconds: waitMicros)),
+                const Duration(seconds: 5),
+              );
+            }
+          }
+          check();
           socket.add(chunk);
-          remaining -= chunk.length;
-          await wait(
-            _delay(
-              Duration(
-                microseconds:
-                    chunk.length * Duration.microsecondsPerSecond ~/ 32000,
-              ),
-            ),
-            const Duration(seconds: 5),
-          );
+          final micros = chunk.length * Duration.microsecondsPerSecond ~/ 32000;
+          scheduledMicros += micros;
+          if (!live) {
+            await wait(
+              _delay(Duration(microseconds: micros)),
+              const Duration(seconds: 5),
+            );
+          }
         }
-      } finally {
-        await input.close();
       }
-      final current = await file.stat();
+      if (live && scheduledMicros > clock.elapsedMicroseconds) {
+        await wait(
+          _delay(
+            Duration(microseconds: scheduledMicros - clock.elapsedMicroseconds),
+          ),
+          const Duration(seconds: 5),
+        );
+      }
       check();
-      if (initial.size != current.size ||
-          initial.modified != current.modified) {
-        throw const SpeechRecognitionException('audio_changed');
-      }
       endSent = true;
       socket.add('{"type":"end"}');
       await wait(finished.future, const Duration(seconds: 20));
@@ -243,6 +328,7 @@ class TencentRealtimeRecognizer {
       throw const SpeechRecognitionException('network');
     } finally {
       abandoned = true;
+      if (inputIterator != null) unawaited(inputIterator.cancel());
       await subscription?.cancel();
       if (socket != null) unawaited(socket.close());
     }

@@ -1,0 +1,14 @@
+{
+  "version": "1.8.0+65",
+  "sdk": "3.47.2",
+  "flutter_passed": 2343,
+  "skipped": 20,
+  "failed": 3,
+  "failures": [
+    "task_workspace_ux mobile preserved draft Android",
+    "task_workspace_ux mobile preserved draft iOS",
+    "task_workspace_ux iOS right-slide draft"
+  ],
+  "fix": "Assert the new upper editor and actual EditableText focus, retain draft/no-auto-send/explicit-send assertions. Follow-up exposed missing hardware Enter newline; fixed with IME composition protection. Workspace and live UI 66 passed; final full suite recorded separately.",
+  "log_sha256": "07dcf1331da7dedf552c97dc13d5db3ba1586b9d4a11cd12b3ec354d9fcd32db"
+}

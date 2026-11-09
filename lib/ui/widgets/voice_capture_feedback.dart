@@ -2,10 +2,11 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 
-enum VoiceReleaseAction { save, cancel, text }
+enum VoiceReleaseAction { save, cancel, text, send }
 
 class VoiceCaptureGesture {
   bool _selectionOpen = false;
+  bool get selectionOpen => _selectionOpen;
   void reset() => _selectionOpen = false;
   VoiceReleaseAction update(Offset movement) {
     if (movement.dy <= -48) _selectionOpen = true;
@@ -15,6 +16,8 @@ class VoiceCaptureGesture {
     }
     return movement.dx < 0
         ? VoiceReleaseAction.cancel
+        : movement.dx >= 96
+        ? VoiceReleaseAction.send
         : VoiceReleaseAction.text;
   }
 }
@@ -26,9 +29,11 @@ class VoiceCaptureFeedback extends StatelessWidget {
     required this.action,
     this.fullScreen = false,
     this.preparing = false,
+    this.transcript = '',
   });
   final VoiceReleaseAction action;
   final bool fullScreen, preparing;
+  final String transcript;
   static const _green = Color(0xFF3BB47B);
   static const _cancel = Color(0xFFC63C3C);
   static const _neutral = Color(0xFF252525);
@@ -43,6 +48,7 @@ class VoiceCaptureFeedback extends StatelessWidget {
             VoiceReleaseAction.save => 'voiceReleaseSave',
             VoiceReleaseAction.cancel => 'voiceReleaseCancel',
             VoiceReleaseAction.text => 'voiceReleaseText',
+            VoiceReleaseAction.send => 'voiceReleaseSend',
           };
     return Material(
       type: MaterialType.transparency,
@@ -109,6 +115,7 @@ class VoiceCaptureFeedback extends StatelessWidget {
               'voiceReleaseSave',
               'voiceReleaseCancel',
               'voiceReleaseText',
+              'voiceReleaseSend',
             ]) {
               final painter = TextPainter(
                 text: TextSpan(text: loc.get(key), style: captionStyle),
@@ -192,7 +199,9 @@ class VoiceCaptureFeedback extends StatelessWidget {
               final value = cancel
                   ? VoiceReleaseAction.cancel
                   : VoiceReleaseAction.text;
-              final selected = action == value;
+              final selected =
+                  action == value ||
+                  (!cancel && action == VoiceReleaseAction.send);
               final center = geometry.labelCenter(cancel);
               return Positioned(
                 left: left + center.dx - labelWidth / 2,
@@ -249,7 +258,9 @@ class VoiceCaptureFeedback extends StatelessWidget {
                     duration: duration,
                     builder: (_, leftFill, _) => TweenAnimationBuilder<Color?>(
                       tween: ColorTween(
-                        end: action == VoiceReleaseAction.text
+                        end:
+                            (action == VoiceReleaseAction.text ||
+                                action == VoiceReleaseAction.send)
                             ? _green
                             : _neutral,
                       ),
@@ -264,6 +275,41 @@ class VoiceCaptureFeedback extends StatelessWidget {
                     ),
                   ),
                 ),
+                if ((action == VoiceReleaseAction.text ||
+                        action == VoiceReleaseAction.send) &&
+                    feedbackTop - topInset > 80)
+                  Positioned(
+                    left: math.max(16, (bounds.maxWidth - 560) / 2),
+                    right: math.max(16, (bounds.maxWidth - 560) / 2),
+                    top: math.max(topInset + 16, feedbackTop - 260),
+                    bottom: math.max(0, bounds.maxHeight - feedbackTop + 16),
+                    child: Container(
+                      key: const ValueKey('voice-transcript-preview'),
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF3F8F5),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: SingleChildScrollView(
+                        reverse: true,
+                        child: Semantics(
+                          liveRegion: true,
+                          child: Text(
+                            transcript.isEmpty
+                                ? loc.get('voiceListeningText')
+                                : transcript,
+                            style: TextStyle(
+                              fontSize: 18,
+                              height: 1.45,
+                              color: transcript.isEmpty
+                                  ? const Color(0xFF75847B)
+                                  : const Color(0xFF173A28),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 target(true),
                 target(false),
                 Positioned(

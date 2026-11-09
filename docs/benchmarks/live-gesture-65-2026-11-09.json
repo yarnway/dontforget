@@ -1,0 +1,118 @@
+{
+  "version": "1.8.0+65",
+  "schema": 17,
+  "local_sdk": "3.47.2",
+  "credential_values_included": false,
+  "personal_credentials_distributed": false,
+  "network_starts_on": "explicit upward gesture, not hold start",
+  "native_source_components_sha256": {
+    "lib/services/live_pcm_recording.dart": "7deafce4e04f55450f43b77e7cd5b583a618d750312020b2024abc2c894fe103",
+    "lib/services/tencent_realtime_recognizer.dart": "84f1f9d84e6239acc0fd47f3787c01f1d76797b3ba7a01e28d8802c39480f6f9",
+    "lib/services/speech_recognition_service.dart": "d06f3679e1202a340ba7694fb4a9bb71d57debc70f5a23c9cee2b2a30e9bc909",
+    "lib/services/pcm_wave_reader.dart": "cdbdf3758e31afce79c0c704e7e2be0234f0115e940e7a1c762e1531779c2b9e",
+    "lib/models/speech_settings.dart": "009e6fe50c81f6832e14578eaa0b5a0186de531df89f3885c2bba184ba9a0ddb",
+    "lib/models/tencent_speech_credentials.dart": "cd7aba1013f5f4943bdd2748a21dba2b471bf6b9384eaa857e7cb682834f4f94"
+  },
+  "native": {
+    "windows": {
+      "platform": "windows",
+      "ordinary_gui_tested": false,
+      "credentials_persisted": false,
+      "human_accuracy_tested": false,
+      "synthetic_zh": {
+        "completed": true,
+        "keywords_match": true,
+        "first_text_ms": 975,
+        "source_end_ms": 3992,
+        "final_ms": 4072,
+        "partial_before_source_end": true,
+        "synthetic_duration_ms": 3700
+      },
+      "synthetic_en": {
+        "completed": true,
+        "keywords_match": true,
+        "first_text_ms": 941,
+        "source_end_ms": 3550,
+        "final_ms": 3634,
+        "partial_before_source_end": true,
+        "synthetic_duration_ms": 3295
+      },
+      "microphone_permitted": true,
+      "native_stream_recording": {
+        "pcm_readable": true,
+        "rate": 16000,
+        "channels": 1,
+        "duration_ms": 1958,
+        "ordinary_gui_tested": false
+      },
+      "native_microphone_asr": {
+        "completed": false,
+        "safe_error": "empty"
+      }
+    },
+    "android": {
+      "platform": "android",
+      "ordinary_gui_tested": false,
+      "credentials_persisted": false,
+      "human_accuracy_tested": false,
+      "synthetic_zh": {
+        "completed": true,
+        "keywords_match": true,
+        "first_text_ms": 1090,
+        "source_end_ms": 4057,
+        "final_ms": 4222,
+        "partial_before_source_end": true,
+        "synthetic_duration_ms": 3700
+      },
+      "synthetic_en": {
+        "completed": true,
+        "keywords_match": true,
+        "first_text_ms": 856,
+        "source_end_ms": 3696,
+        "final_ms": 3841,
+        "partial_before_source_end": true,
+        "synthetic_duration_ms": 3295
+      },
+      "microphone_permitted": true,
+      "native_stream_recording": {
+        "pcm_readable": true,
+        "rate": 16000,
+        "channels": 1,
+        "duration_ms": 2160,
+        "ordinary_gui_tested": false
+      },
+      "native_microphone_asr": {
+        "completed": false,
+        "safe_error": "empty"
+      }
+    }
+  },
+  "qa47_upgrade": {
+    "version": "1.8.0+65",
+    "package": "com.yarnway.dontforget.acceptance.p4720261102",
+    "ordinary_main_entry": true,
+    "installed": true,
+    "same_signature_upgrade_enforced_by_android": true,
+    "all_tables_all_fields_preserved": true,
+    "no_original_64_business_rows_missing": true,
+    "latest_counts": {
+      "Reminders": 53,
+      "MediaRecords": 9,
+      "Settings": 1
+    },
+    "unsent_draft_preserved": false,
+    "apk_sha256": "9ae1594d628223f56a194ecc1a0c39f37f324ba6353736807686d466965f2dd6",
+    "credentials_embedded": false,
+    "native_performance_test_is_separate": true,
+    "human_new_gesture_acceptance": "PENDING"
+  },
+  "temporary_probe_app_removed": {
+    "package": "com.yarnway.dontforget.acceptance.live6520261109",
+    "owned_temporary_app_removed": true,
+    "qa47_untouched": true,
+    "reverse_removed": true
+  },
+  "human_gesture_acceptance": "PENDING",
+  "windows_ordinary_gui": "BLOCKED_COMPUTER_USE_CWD_URI",
+  "source_automation_packages_native_recorded_separately": true
+}

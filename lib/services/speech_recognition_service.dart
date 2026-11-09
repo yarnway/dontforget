@@ -105,6 +105,52 @@ class SpeechRecognitionService {
     }
   }
 
+  LiveSpeechSession startRealtime(
+    Stream<List<int>> Function(CancelToken token) audio,
+    SpeechSettings settings, {
+    required void Function(String text) onText,
+  }) {
+    final token = CancelToken();
+    final epoch = _epoch;
+    _active(epoch, token);
+    final credentials = TencentSpeechCredentials.decode(settings.apiKey);
+    if (!settings.isConfigured ||
+        credentials == null ||
+        settings.endpoint != TencentSpeechCredentials.realtimeEndpoint ||
+        settings.model != TencentSpeechCredentials.engine) {
+      throw const SpeechRecognitionException('not_configured');
+    }
+    final id = Object();
+    _requests[id] = token;
+    final result = (() async {
+      try {
+        final text = await _realtime
+            .recognizeStream(
+              audio(token),
+              credentials,
+              token,
+              live: true,
+              onText: (text) {
+                _active(epoch, token);
+                onText(text);
+              },
+            )
+            .timeout(const Duration(minutes: 6));
+        _active(epoch, token);
+        return text;
+      } on TimeoutException {
+        throw const SpeechRecognitionException('timeout');
+      } finally {
+        _requests.remove(id);
+        token.cancel();
+      }
+    })();
+    // The user may ultimately save or cancel the voice memo instead of reading
+    // this result. Observe errors immediately, without replacing its outcome.
+    unawaited(result.then<void>((_) {}, onError: (Object _, StackTrace __) {}));
+    return LiveSpeechSession(result, () => token.cancel());
+  }
+
   Future<String> _recognize(
     String path,
     TencentSpeechCredentials credentials,
@@ -253,4 +299,10 @@ class SpeechRecognitionService {
     cancel();
     _dio.close(force: true);
   }
+}
+
+class LiveSpeechSession {
+  LiveSpeechSession(this.result, this.cancel);
+  final Future<String> result;
+  final void Function() cancel;
 }

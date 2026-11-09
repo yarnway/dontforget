@@ -1,0 +1,13 @@
+{
+  "version": "1.8.0+65",
+  "local_sdk": "3.47.2",
+  "flutter_passed": 2348,
+  "flutter_skipped": 20,
+  "python_run": 161,
+  "python_skipped": 6,
+  "analyze_issues": 0,
+  "flutter_log_sha256": "7a6f9dac7cd7959d80bea59bf3f4c73d3662941a2985743fa2a65275f0683c8e",
+  "python_log_sha256": "6a7d30d31ff21c514e026b7a649efc03e7771622f44a9b283d0589e45aeb67ab",
+  "analyze_log_sha256": "1228ceb7a6c380c628253c8a5ab5b1f3d4ceefd0fd277be1ded5c17201cbf036",
+  "native_and_packages_separate": true
+}

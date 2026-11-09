@@ -968,16 +968,31 @@ void main() {
       await press.up();
       await tester.pumpAndSettle();
       expect(home.drafts, 1);
-      final field = tester.widget<TextField>(find.byType(TextField));
+      final editor = find.byKey(const ValueKey('voice-text-editor'));
+      final field = tester.widget<TextField>(editor);
       expect(field.controller!.text, 'Existing draft\n明日の予定を確認');
-      expect(field.focusNode!.hasFocus, isTrue);
+      expect(
+        tester
+            .widget<EditableText>(
+              find.descendant(of: editor, matching: find.byType(EditableText)),
+            )
+            .focusNode
+            .hasFocus,
+        isTrue,
+      );
       expect(find.byKey(const ValueKey('composer-send')), findsOneWidget);
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pump();
       expect(home.sent, isEmpty);
       expect(field.controller!.text, endsWith('\n'));
-      await tester.enterText(find.byType(TextField), 'Edited transcript');
-      await tester.tap(find.byTooltip('发送'));
+      await tester.enterText(editor, 'Edited transcript');
+      await tester.tap(find.byKey(const ValueKey('voice-editor-send')));
+      await pumpUntilRealIo(
+        tester,
+        () => home.sent.isNotEmpty,
+        reason:
+            'Edited voice text is sent only after the explicit dialog action',
+      );
       await drainWorkspaceDrafts(tester, container);
       await tester.pumpAndSettle();
       expect(home.sent, ['Edited transcript']);
@@ -1203,22 +1218,37 @@ void main() {
       expect(
         find.descendant(
           of: find.byType(VoiceCaptureFeedback),
-          matching: find.text('松手转文字并编辑'),
+          matching: find.text('松手编辑文字'),
         ),
         findsOneWidget,
       );
       await press.up();
       await tester.pump();
-      expect(find.text('正在转为可编辑文字…'), findsOneWidget);
+      expect(find.byKey(const ValueKey('voice-text-editor')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('voice-editor-progress')),
+        findsOneWidget,
+      );
       home.pendingText!.complete('明日の予定を確認');
       await tester.pumpAndSettle();
       expect(home.drafts, 1);
       expect(home.stops, 0);
       expect(home.cancels, 0);
-      final field = tester.widget<TextField>(find.byType(TextField));
+      final editor = find.byKey(const ValueKey('voice-text-editor'));
+      final field = tester.widget<TextField>(editor);
       expect(field.controller!.text, '明日の予定を確認');
-      expect(field.focusNode!.hasFocus, isTrue);
-      await tester.enterText(find.byType(TextField), '明日9時に予定を確認');
+      expect(
+        tester
+            .widget<EditableText>(
+              find.descendant(of: editor, matching: find.byType(EditableText)),
+            )
+            .focusNode
+            .hasFocus,
+        isTrue,
+      );
+      await tester.enterText(editor, '明日9時に予定を確認');
+      await tester.tap(find.byKey(const ValueKey('voice-editor-keep')));
+      await tester.pumpAndSettle();
       expect(container.read(remindersProvider), isEmpty);
       expect(tester.takeException(), isNull);
     },

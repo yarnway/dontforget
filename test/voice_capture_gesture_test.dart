@@ -20,6 +20,20 @@ void main() {
     expect(gesture.update(const Offset(80, -30)), VoiceReleaseAction.save);
   });
 
+  test(
+    'up prepares recognition, near right edits and further right explicitly sends',
+    () {
+      final gesture = VoiceCaptureGesture();
+      expect(gesture.selectionOpen, isFalse);
+      gesture.update(const Offset(0, -60));
+      expect(gesture.selectionOpen, isTrue);
+      expect(gesture.update(const Offset(80, -60)), VoiceReleaseAction.text);
+      expect(gesture.update(const Offset(110, -60)), VoiceReleaseAction.send);
+      expect(gesture.update(const Offset(0, 0)), VoiceReleaseAction.save);
+      expect(gesture.selectionOpen, isFalse);
+    },
+  );
+
   test('a new recording does not inherit the previous selection area', () {
     final gesture = VoiceCaptureGesture();
     gesture.update(const Offset(80, -80));

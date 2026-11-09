@@ -17,6 +17,7 @@ import '../../models/settings.dart';
 import '../../l10n/app_localizations.dart';
 import 'editable_text_menu.dart';
 import 'voice_capture_feedback.dart';
+import 'live_voice_text_dialog.dart';
 import 'windows_composer_layout.dart';
 
 class InputBottomBar extends ConsumerStatefulWidget {
@@ -482,6 +483,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         }
       });
     } else if (_isLongPressRecording && !_isFinishingLongPress) {
+      if (editable || _voiceGesture.selectionOpen) {
+        controller.prepareRecordingTranscription();
+      }
       // The ready feedback must follow native start, never precede the mic.
       unawaited(HapticFeedback.heavyImpact());
     }
@@ -494,10 +498,16 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     _isFinishingLongPress = true;
     final controller = ref.read(homeControllerProvider.notifier);
     final action = _voiceAction;
+    var sendText = false;
+    final mobile =
+        Theme.of(context).platform == TargetPlatform.android ||
+        Theme.of(context).platform == TargetPlatform.iOS;
     HapticFeedback.mediumImpact();
     setState(() {
       _isLongPressRecording = false;
-      _isTranscribing = action == VoiceReleaseAction.text;
+      _isTranscribing =
+          action == VoiceReleaseAction.text ||
+          action == VoiceReleaseAction.send;
     });
     // Permission or native startup may finish after the user releases their press.
     // Wait for that same start before stopping, so a late start cannot keep recording.
@@ -509,9 +519,30 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
           case VoiceReleaseAction.save:
             await controller.stopRecordingAndProcess();
           case VoiceReleaseAction.text:
-            final text = await controller.stopRecordingToText(
+          case VoiceReleaseAction.send:
+            final result = controller.stopRecordingToText(
               canAcceptDraft: () => _current,
             );
+            if (mobile && action == VoiceReleaseAction.text) {
+              setState(() {
+                _voiceMode = false;
+                _voiceTextDraft = true;
+              });
+              sendText = await _editVoiceDraft(result) && _current;
+              break;
+            }
+            final text = await result;
+            if (_current &&
+                mobile &&
+                ref.read(homeControllerProvider).error != null &&
+                ref.read(homeControllerProvider).voicePreview.isNotEmpty) {
+              setState(() {
+                _voiceMode = false;
+                _voiceTextDraft = true;
+              });
+              sendText = await _editVoiceDraft(Future.value(text));
+              break;
+            }
             if (_current && text != null) {
               setState(() {
                 _voiceMode = false;
@@ -523,7 +554,10 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                 text: draft,
                 selection: TextSelection.collapsed(offset: draft.length),
               );
-              _focusTextAfterBuild();
+              sendText =
+                  action == VoiceReleaseAction.send &&
+                  ref.read(homeControllerProvider).error == null;
+              if (!sendText) _focusTextAfterBuild();
             }
         }
       }
@@ -538,6 +572,30 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         });
       }
     }
+    if (sendText && _current) await _submitText();
+  }
+
+  Future<bool> _editVoiceDraft(Future<String?> result) async {
+    final prefix = _textController.text;
+    final initial = ref.read(homeControllerProvider).voicePreview;
+    final send = await showDialog<bool>(
+      context: context,
+      builder: (_) => LiveVoiceTextDialog(
+        result: result,
+        prefix: prefix,
+        initial: initial,
+        onChanged: (text) {
+          if (_current) {
+            if (text.isNotEmpty) _voiceTextDraft = true;
+            _textController.value = TextEditingValue(
+              text: text,
+              selection: TextSelection.collapsed(offset: text.length),
+            );
+          }
+        },
+      ),
+    );
+    return send == true;
   }
 
   void _moveLongPress(LongPressMoveUpdateDetails details) {
@@ -545,7 +603,13 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     final selected = _voiceGesture.update(
       details.globalPosition - _voiceOrigin,
     );
-    final action = _desktopVoiceDraft && selected == VoiceReleaseAction.save
+    if (_voiceGesture.selectionOpen) {
+      ref.read(homeControllerProvider.notifier).prepareRecordingTranscription();
+    }
+    final action =
+        _desktopVoiceDraft &&
+            (selected == VoiceReleaseAction.save ||
+                selected == VoiceReleaseAction.send)
         ? VoiceReleaseAction.text
         : selected;
     if (action == _voiceAction) return;
@@ -958,6 +1022,8 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                                         'voiceReleaseCancel',
                                       VoiceReleaseAction.text =>
                                         'voiceReleaseText',
+                                      VoiceReleaseAction.send =>
+                                        'voiceReleaseSend',
                                     }
                             : 'recordingClickStop',
                       ),
@@ -1468,6 +1534,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
               action: _voiceAction,
               fullScreen: true,
               preparing: !homeState.isRecording,
+              transcript: homeState.voicePreview,
             ),
           ),
         ),
@@ -1477,7 +1544,56 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         alignment: Alignment.bottomCenter,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1040),
-          child: composer,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (((!isMobile && isRecording) || _isTranscribing) &&
+                  homeState.voicePreview.isNotEmpty)
+                Container(
+                  key: const ValueKey('desktop-voice-transcript-preview'),
+                  width: double.infinity,
+                  constraints: BoxConstraints(
+                    maxHeight: math.min(
+                      160,
+                      MediaQuery.sizeOf(context).height * .25,
+                    ),
+                  ),
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 8,
+                  ),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: colors.secondaryContainer,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: SingleChildScrollView(
+                          reverse: true,
+                          child: Text(
+                            homeState.voicePreview,
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(color: colors.onSecondaryContainer),
+                          ),
+                        ),
+                      ),
+                      if (_isTranscribing)
+                        IconButton(
+                          key: const ValueKey('cancel-pending-transcription'),
+                          tooltip: l10n.get('cancel'),
+                          onPressed: () => ref
+                              .read(homeControllerProvider.notifier)
+                              .cancelLiveTranscription(),
+                          icon: const Icon(Icons.close),
+                        ),
+                    ],
+                  ),
+                ),
+              composer,
+            ],
+          ),
         ),
       ),
     );
