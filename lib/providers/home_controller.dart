@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/services.dart';
 import '../l10n/app_localizations.dart';
+import '../models/tencent_speech_credentials.dart';
 import '../l10n/routine_policy_strings.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -20,6 +21,7 @@ import '../models/agent_models.dart';
 import '../services/llm_service.dart';
 import '../services/local_media_store.dart';
 import '../services/recording_duration_reader.dart';
+import '../services/tencent_recording_profile.dart';
 import '../services/local_speech_service.dart';
 import '../services/speech_recognition_service.dart';
 import '../l10n/speech_recognition_strings.dart';
@@ -611,7 +613,11 @@ class HomeController extends StateNotifier<HomeState> {
     return operation;
   }
 
-  static String recordingExtensionForPlatform([TargetPlatform? platform]) {
+  static String recordingExtensionForPlatform([
+    TargetPlatform? platform,
+    bool realtime = false,
+  ]) {
+    if (realtime) return 'wav';
     final target = platform ?? defaultTargetPlatform;
     return target == TargetPlatform.windows ? 'aac' : 'm4a';
   }
@@ -632,11 +638,9 @@ class HomeController extends StateNotifier<HomeState> {
         );
         return false;
       }
-      if (_ref.read(localSpeechServiceProvider).android) {
-        // Cold startup may still be hydrating the speech preference from vault.
-        await _ref.read(settingsProvider.notifier).ready;
-        _check(generation);
-      }
+      // Windows and mobile must both hydrate saved ASR settings before capture.
+      await _ref.read(settingsProvider.notifier).ready;
+      _check(generation);
       final tempDir = await _temporaryDirectory();
       _check(generation);
       return await _serializeRecorder(() async {
@@ -644,15 +648,20 @@ class HomeController extends StateNotifier<HomeState> {
         if (_nativeRecording) return true;
         await tempDir.create(recursive: true);
         _check(generation);
-        final ext = recordingExtensionForPlatform();
+        final speech = _ref.read(settingsProvider).speech;
+        final realtime =
+            speech.enabled &&
+            speech.endpoint == TencentSpeechCredentials.realtimeEndpoint;
+        final ext = recordingExtensionForPlatform(null, realtime);
         final path = '${tempDir.path}/audio_${const Uuid().v4()}.$ext';
         try {
           _nativeRecording = true;
           // Tencent's speech engines accept 8/16k input. Capture a 16k mono
           // speech track when enabled so the recorded file is ready to upload.
-          final config =
-              _ref.read(localSpeechServiceProvider).android &&
-                  _ref.read(settingsProvider).speech.enabled
+          final config = realtime
+              ? tencentRecordingProfile()
+              : _ref.read(localSpeechServiceProvider).android &&
+                    _ref.read(settingsProvider).speech.enabled
               ? const RecordConfig(
                   sampleRate: 16000,
                   numChannels: 1,

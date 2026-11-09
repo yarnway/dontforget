@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'package:dont_forget/models/speech_settings.dart';
 import 'package:dont_forget/models/tencent_speech_credentials.dart';
@@ -668,6 +669,37 @@ void main() {
         expect(request['sampleRate'], 44100);
         expect(request['numChannels'], 2);
         expect(request['bitRate'], 128000);
+        await home.cancelRecording();
+      },
+    );
+  }
+
+  for (final android in [false, true]) {
+    test(
+      'real-time Tencent uses 16k mono WAV on ${android ? "Android" : "desktop"}',
+      () async {
+        await configureTencent();
+        final notifier = container.read(settingsProvider.notifier);
+        await notifier.updateSettings(
+          notifier.state.copyWith(
+            speech: notifier.state.speech.copyWith(
+              endpoint: TencentSpeechCredentials.realtimeEndpoint,
+            ),
+          ),
+        );
+        speech.androidPlatform = android;
+        final home = container.read(homeControllerProvider.notifier);
+        expect(await home.startRecording(), true);
+        final request =
+            calls.singleWhere((c) => c.method == 'start').arguments as Map;
+        expect(request['sampleRate'], 16000);
+        expect(request['numChannels'], 1);
+        expect(
+          request['encoder'],
+          defaultTargetPlatform == TargetPlatform.windows ? 'pcm16bits' : 'wav',
+        );
+        expect(request['path'], endsWith('.wav'));
+        expect(tencent.calls, 0);
         await home.cancelRecording();
       },
     );

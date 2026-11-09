@@ -8,6 +8,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/speech_settings.dart';
 import '../models/tencent_speech_credentials.dart';
 import 'recording_duration_reader.dart';
+import 'speech_recognition_exception.dart';
+import 'tencent_realtime_recognizer.dart';
+export 'speech_recognition_exception.dart';
 
 final speechRecognitionServiceProvider = Provider<SpeechRecognitionService>((
   ref,
@@ -17,25 +20,20 @@ final speechRecognitionServiceProvider = Provider<SpeechRecognitionService>((
   return service;
 });
 
-/// Only safe codes cross the service boundary: transport errors may contain credentials.
-class SpeechRecognitionException implements Exception {
-  const SpeechRecognitionException(this.code);
-  final String code;
-  @override
-  String toString() => 'SpeechRecognitionException($code)';
-}
-
-/// Tencent Flash recorded-file ASR, shared by gesture and explicit attachment retry.
+/// Tencent ASR for explicit gesture/retry: real-time replay and legacy Flash.
 /// Upload is streamed, with no base64 expansion or public audio URL.
 class SpeechRecognitionService {
   SpeechRecognitionService({
     Dio? dio,
+    TencentRealtimeRecognizer? realtime,
     DateTime Function()? now,
     this.requestTimeout = const Duration(seconds: 90),
-  }) : _dio =
+  }) : _realtime = realtime ?? TencentRealtimeRecognizer(),
+       _dio =
            dio ?? Dio(BaseOptions(connectTimeout: const Duration(seconds: 10))),
        _now = now ?? DateTime.now;
   final Dio _dio;
+  final TencentRealtimeRecognizer _realtime;
   final DateTime Function() _now;
   final Duration requestTimeout;
   final _requests = <Object, CancelToken>{};
@@ -61,20 +59,30 @@ class SpeechRecognitionService {
     final credentials = TencentSpeechCredentials.decode(settings.apiKey);
     if (!settings.enabled ||
         credentials == null ||
-        settings.endpoint != TencentSpeechCredentials.endpoint ||
+        !const {
+          TencentSpeechCredentials.endpoint,
+          TencentSpeechCredentials.realtimeEndpoint,
+        }.contains(settings.endpoint) ||
         settings.model != TencentSpeechCredentials.engine) {
       throw const SpeechRecognitionException('not_configured');
     }
     final id = Object();
     _requests[id] = token;
     try {
-      return await _recognize(path, credentials, epoch, token).timeout(
-        requestTimeout,
+      final realtime =
+          settings.endpoint == TencentSpeechCredentials.realtimeEndpoint;
+      final work = realtime
+          ? _realtime.recognize(path, credentials, token)
+          : _recognize(path, credentials, epoch, token);
+      final text = await work.timeout(
+        realtime ? const Duration(minutes: 6) : requestTimeout,
         onTimeout: () {
           token.cancel();
           throw const SpeechRecognitionException('timeout');
         },
       );
+      _active(epoch, token);
+      return text;
     } on SpeechRecognitionException {
       rethrow;
     } on DioException catch (error) {

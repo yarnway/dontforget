@@ -19,6 +19,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'support/offline_management_harness.dart';
 import 'support/workspace_drafts.dart';
+import 'support/real_io.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -37,6 +38,14 @@ void main() {
       await tester.pump(const Duration(milliseconds: 20));
     }
     await drainWorkspaceDrafts(tester, h.container);
+    await pumpUntilRealIo(
+      tester,
+      () =>
+          find.byType(LinearProgressIndicator).evaluate().isEmpty &&
+          find.byType(CircularProgressIndicator).evaluate().isEmpty,
+      reason:
+          'Plan commit and draft clearing must finish before settling animations',
+    );
     await tester.pumpAndSettle(
       const Duration(milliseconds: 50),
       EnginePhase.sendSemanticsUpdate,

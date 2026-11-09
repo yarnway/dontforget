@@ -37,7 +37,7 @@ class _SpeechSettingsScreenState extends ConsumerState<SpeechSettingsScreen> {
       ? _saved.copyWith(enabled: _enabled)
       : SpeechSettings(
           enabled: _enabled,
-          endpoint: TencentSpeechCredentials.endpoint,
+          endpoint: TencentSpeechCredentials.realtimeEndpoint,
           model: TencentSpeechCredentials.engine,
           apiKey:
               _appId.text.isEmpty &&
@@ -187,7 +187,6 @@ class _SpeechSettingsScreenState extends ConsumerState<SpeechSettingsScreen> {
                             ? null
                             : (value) => setState(() => _enabled = value),
                       ),
-                      Text(t('credentials')),
                       const SizedBox(height: 16),
                       for (final field in [
                         (_appId, 'AppID', 'appid'),
@@ -246,13 +245,17 @@ class _SpeechSettingsScreenState extends ConsumerState<SpeechSettingsScreen> {
                   ),
                 ),
               const SizedBox(height: 16),
-              Text(t('privacy')),
-              const SizedBox(height: 12),
-              Text(t('limit')),
-              const SizedBox(height: 20),
               ExpansionTile(
                 title: Text(t('help')),
                 children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(t('privacy')),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Text(t('limit')),
+                  ),
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: Text(t('guide')),

@@ -9,6 +9,7 @@ class TencentSpeechCredentials {
     required this.secretKey,
   });
   static const endpoint = 'https://asr.cloud.tencent.com/asr/flash/v1';
+  static const realtimeEndpoint = 'wss://asr.cloud.tencent.com/asr/v2';
   static const engine = '16k_zh_en';
   final String appId, secretId, secretKey;
   bool get valid =>

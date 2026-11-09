@@ -384,6 +384,7 @@ void main() {
       );
       expect(state.apiKey, 'existing-model-private');
       expect(state.speech.enabled, true);
+      expect(state.speech.endpoint, TencentSpeechCredentials.realtimeEndpoint);
       final row = await tester.runAsync(
         () => db.read(db.captureGeneration(), (sql) => sql.query('Settings')),
       );

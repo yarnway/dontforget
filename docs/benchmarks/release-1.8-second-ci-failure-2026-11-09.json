@@ -1,0 +1,15 @@
+{
+  "source": "cc938afe1ed52d1db394b1160cbbc32553b62f33",
+  "run_id": 42555994518,
+  "url": "https://github.com/yarnway/dontforget/actions/runs/42555994518",
+  "conclusion": "failure",
+  "linux_quality": "success",
+  "windows_flutter_passed": 2307,
+  "windows_flutter_skipped": 20,
+  "windows_flutter_failed": 1,
+  "failing_test": "medication_calendar_widgets_test: conflicting source field blocks preview, choosing a fact updates form and enables finite plan",
+  "failure": "pumpAndSettle advanced fake clock before real SQLite plan commit and draft clearing finished; subsequent test timeout",
+  "log_sha256": "5c4ce5242e5a8e026ae64c92c52f175ac2586f8578a2fa4ab4be7f406c0c62fa",
+  "fix": "Wait for real I/O and busy indicators before settling animations; retain all task count and dosage assertions",
+  "builds": "skipped"
+}

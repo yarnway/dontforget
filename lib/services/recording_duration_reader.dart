@@ -1,7 +1,8 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'pcm_wave_reader.dart';
 
-/// Reads finalized capture metadata (M4A/MP4 or ADTS AAC) without decoding or loading
+/// Reads finalized capture metadata (PCM WAV, M4A/MP4 or ADTS AAC) without decoding or loading
 /// full audio data. Unknown formats return null and keep the existing import behavior.
 /// This is a short-capture guard, not a claim that the microphone recorded audible sound.
 class RecordingDurationReader {
@@ -10,8 +11,19 @@ class RecordingDurationReader {
   static const minimumCapture = Duration(milliseconds: 250);
 
   static const List<int> adtsSampleRates = <int>[
-    96000, 88200, 64000, 48000, 44100, 32000,
-    24000, 22050, 16000, 12000, 11025, 8000, 7350,
+    96000,
+    88200,
+    64000,
+    48000,
+    44100,
+    32000,
+    24000,
+    22050,
+    16000,
+    12000,
+    11025,
+    8000,
+    7350,
   ];
 
   Future<Duration?> read(String path) async {
@@ -20,6 +32,10 @@ class RecordingDurationReader {
       file = await File(path).open();
       final length = await file.length();
       if (length < 7) return null;
+
+      if (path.toLowerCase().endsWith('.wav')) {
+        return (await PcmWaveInfo.read(path))?.duration;
+      }
 
       // Check first two bytes for ADTS syncword (0xFFF) and layer == 00
       await file.setPosition(0);

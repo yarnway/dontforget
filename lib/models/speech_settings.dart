@@ -1,4 +1,5 @@
 import 'credential_reference.dart';
+import 'tencent_speech_credentials.dart';
 
 /// Stored metadata remains compatible with the already-installed +54 prototype.
 /// Tencent credentials are encoded only in the encrypted speech credential slot.
@@ -6,11 +7,10 @@ class SpeechSettings {
   const SpeechSettings({
     this.enabled = false,
     this.endpoint = defaultEndpoint,
-    this.model = 'qwen-audio-3.0-asr-flash',
+    this.model = TencentSpeechCredentials.engine,
     this.apiKey = '',
   });
-  static const defaultEndpoint =
-      'https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation';
+  static const defaultEndpoint = TencentSpeechCredentials.realtimeEndpoint;
   final bool enabled;
   final String endpoint, model, apiKey;
 
@@ -25,7 +25,8 @@ class SpeechSettings {
 
   static bool validEndpoint(Uri? uri) =>
       uri != null &&
-      uri.scheme == 'https' &&
+      (uri.scheme == 'https' ||
+          uri.toString() == TencentSpeechCredentials.realtimeEndpoint) &&
       uri.host.isNotEmpty &&
       uri.userInfo.isEmpty &&
       !uri.hasQuery &&

@@ -1,0 +1,143 @@
+{
+  "version": "1.8.0+64",
+  "schema": 17,
+  "credential_values_included": false,
+  "credentials_distributed": false,
+  "services_default_metadata_only": true,
+  "scope": "Tencent real-time recorded audio replay after explicit gesture; not automatic live microphone upload",
+  "local_sdk": "3.47.2",
+  "native": {
+    "windows": {
+      "platform": "windows",
+      "gesture_ui_tested": false,
+      "app_configured": true,
+      "vault_readback": true,
+      "no_plaintext_credentials_in_sql": true,
+      "business_rows_unchanged": true,
+      "speech_configured": true,
+      "deepseek_configured": true,
+      "deepseek_extraction": {
+        "completed": true,
+        "task_count": 1,
+        "milk_task": true,
+        "dated_task": false
+      },
+      "synthetic_asr_zh": {
+        "completed": true,
+        "nonempty": true,
+        "matched_keywords": true,
+        "synthetic_fixture": true
+      },
+      "synthetic_asr_en": {
+        "completed": true,
+        "nonempty": true,
+        "matched_keywords": true,
+        "synthetic_fixture": true
+      },
+      "microphone_permitted": true,
+      "native_recording": {
+        "readable_pcm": true,
+        "sample_rate": 16000,
+        "channels": 1,
+        "duration_ms": 1828,
+        "bytes": 58580
+      },
+      "native_asr": {
+        "completed": false,
+        "safe_error": "empty"
+      },
+      "human_speech_accuracy_tested": false,
+      "test_entry": "Private native Flutter acceptance entry; ordinary GUI is separate"
+    },
+    "android": {
+      "platform": "android",
+      "gesture_ui_tested": false,
+      "app_configured": true,
+      "vault_readback": true,
+      "no_plaintext_credentials_in_sql": true,
+      "business_rows_unchanged": true,
+      "speech_configured": true,
+      "deepseek_configured": true,
+      "deepseek_extraction": {
+        "completed": true,
+        "task_count": 1,
+        "milk_task": true,
+        "dated_task": true
+      },
+      "synthetic_asr_zh": {
+        "completed": true,
+        "nonempty": true,
+        "matched_keywords": true,
+        "synthetic_fixture": true
+      },
+      "synthetic_asr_en": {
+        "completed": true,
+        "nonempty": true,
+        "matched_keywords": true,
+        "synthetic_fixture": true
+      },
+      "microphone_permitted": true,
+      "native_recording": {
+        "readable_pcm": true,
+        "sample_rate": 16000,
+        "channels": 1,
+        "duration_ms": 2160,
+        "bytes": 69164
+      },
+      "native_asr": {
+        "completed": false,
+        "safe_error": "empty"
+      },
+      "human_speech_accuracy_tested": false,
+      "test_entry": "Private native Flutter acceptance entry; ordinary GUI is separate"
+    }
+  },
+  "initial_failures": {
+    "tencent_code": 4004,
+    "deepseek_http": 402,
+    "user_reported_account_fixed": true,
+    "windows_wav_encoder": "Malformed RIFF from record_windows 1.0.7; fixed by PCM profile with native WAV sink",
+    "simple_deepseek_json_probe": "HTTP 200 but invalid JSON; actual application task extraction recorded separately"
+  },
+  "tencent_engines": {
+    "16k_zh_en": {
+      "websocket_upgrade": true,
+      "handshake_code": 0,
+      "audio_sent": true,
+      "real_microphone": false,
+      "response_codes": [
+        0
+      ],
+      "final_received": true,
+      "engine": "16k_zh_en"
+    },
+    "16k_zh": {
+      "websocket_upgrade": true,
+      "handshake_code": 0,
+      "audio_sent": true,
+      "real_microphone": false,
+      "response_codes": [
+        0
+      ],
+      "final_received": true,
+      "engine": "16k_zh"
+    },
+    "16k_en": {
+      "websocket_upgrade": true,
+      "handshake_code": 0,
+      "audio_sent": true,
+      "real_microphone": false,
+      "response_codes": [
+        0
+      ],
+      "final_received": true,
+      "engine": "16k_en"
+    }
+  },
+  "remaining": [
+    "Human gesture, draft editing and input method acceptance",
+    "Windows native GUI / IME / tray / Toast / hotkey matrix",
+    "DeepSeek Windows extracted task had no suggested time; Android dated task passed; do not claim all model timing is accurate",
+    "Final CI, distribution packages and stable publication"
+  ]
+}

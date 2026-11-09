@@ -7,9 +7,9 @@ String speechText(String language, String key) {
       'Tencent Cloud 音声認識',
     ],
     'scope': [
-      '按住输入区录音，上滑往右转文字。支持中文和英文，结果进入草稿，编辑后再发送。',
-      'Hold the input to record, slide up and right to transcribe. Chinese and English results stay in an editable draft.',
-      '入力欄を長押しして録音し、上へスライドして右を選ぶと文字起こしします。中国語・英語の結果は編集可能な下書きに残ります。',
+      '中文 · English',
+      '中文 · English',
+      '中文 · English',
     ],
     'privacy': [
       '启用后，仅在你选择转文字或重试识别时，将录音发送到腾讯云，可能产生服务费用。凭据保存在系统安全存储，不写入数据库或可移植备份。',
@@ -54,9 +54,9 @@ String speechText(String language, String key) {
     ],
     'help': ['腾讯云配置帮助', 'Tencent setup help', 'Tencent設定のヘルプ'],
     'guide': [
-      '在腾讯云控制台开通“录音文件识别极速版”，并获取本人的 AppID、SecretId、SecretKey。请勿把凭据发到聊天或提交到仓库。',
-      'Enable Flash recording recognition in Tencent Cloud and obtain your AppID, SecretId and SecretKey. Keep credentials out of chat and source control.',
-      'Tencent Cloudで高速録音認識を有効にし、自分のAppID、SecretId、SecretKeyを取得してください。チャットやソース管理に貼り付けないでください。',
+      '在腾讯云控制台开通“实时语音识别”中英大模型服务，并获取本人的 AppID、SecretId、SecretKey。请勿把凭据发到聊天或提交到仓库。',
+      'Enable real-time Chinese/English speech recognition in Tencent Cloud and obtain your AppID, SecretId and SecretKey. Keep credentials out of chat and source control.',
+      'Tencent Cloudで中国語・英語のリアルタイム音声認識を有効にし、自分のAppID、SecretId、SecretKeyを取得してください。チャットやソース管理に貼り付けないでください。',
     ],
     'not_configured': [
       '腾讯云录音转文字尚未配置。请在设置中完成配置；原声已保存。',
