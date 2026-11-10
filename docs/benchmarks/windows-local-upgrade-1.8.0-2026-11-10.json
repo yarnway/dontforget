@@ -1,0 +1,58 @@
+{
+  "date": "2026-11-10",
+  "version": "1.8.0+66",
+  "first_overwrite": {
+    "version": "1.8.0+66",
+    "source": "b873b56468e0ea17713d891a45e255c7184f3869",
+    "setup_sha256": "1f989175fca231a633766949df02a424f2f05353e3c868a9e32e406e625a73b1",
+    "running_before_upgrade": false,
+    "backup_verified": true,
+    "installer_exit": 0,
+    "force_close_allowed": false,
+    "payload_files_identical": 37,
+    "native_cli_exit": 0,
+    "schema": 17,
+    "all_business_fields_preserved": true,
+    "business_counts": {
+      "Reminders": 3,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "credential_files_preserved": true,
+    "gui_tested": false
+  },
+  "running_same_version_repeat": {
+    "exit": 5,
+    "running_after": 1,
+    "force_close_allowed": false
+  },
+  "post_abort_payload_files_identical": 37,
+  "post_abort_all_business_fields_preserved": true,
+  "process_running_after": true,
+  "gui_verified": false,
+  "computer_use_error": "sandboxCwd is not a local file URI",
+  "original_version_not_captured": true,
+  "running_shutdown_log_evidence": "RestartManager found DontForget; normal shutdown timed out; installer aborted with exit 5 and rolled back",
+  "manual_exit_repeat": {
+    "version": "1.8.0+66",
+    "source": "b873b56468e0ea17713d891a45e255c7184f3869",
+    "setup_sha256": "1f989175fca231a633766949df02a424f2f05353e3c868a9e32e406e625a73b1",
+    "running_before_upgrade": false,
+    "acceptance_case": "manual_exit_same_version_overwrite",
+    "backup_verified": true,
+    "installer_exit": 0,
+    "force_close_allowed": false,
+    "payload_files_identical": 37,
+    "native_cli_exit": 0,
+    "schema": 17,
+    "all_business_fields_preserved": true,
+    "business_counts": {
+      "Reminders": 3,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "credential_files_preserved": true,
+    "gui_tested": false
+  },
+  "user_manual_exit_confirmed": true
+}
