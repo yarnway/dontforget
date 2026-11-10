@@ -1,0 +1,203 @@
+{
+  "version": "1.8.1+68",
+  "source": "4b5921ce26af2538775b856697e9f11a5ade7e39",
+  "windows": [
+    {
+      "version": "1.8.1+68",
+      "source": "4b5921ce26af2538775b856697e9f11a5ade7e39",
+      "setup_sha256": "6067a8045a3d446d002e58c9d0affae0e0d140b1ccd81c10268b6eeddabf6ec6",
+      "running_before_upgrade": true,
+      "acceptance_case": "fixed-running",
+      "version_before": [
+        1,
+        8,
+        1,
+        67
+      ],
+      "backup_verified": true,
+      "installer_exit": 0,
+      "force_close_allowed": false,
+      "payload_files_identical": 38,
+      "native_cli_exit": 0,
+      "schema": 17,
+      "all_business_fields_preserved": true,
+      "business_counts": {
+        "Reminders": 4,
+        "MediaRecords": 0,
+        "Settings": 1
+      },
+      "credential_files_preserved": true,
+      "gui_tested": false,
+      "package_origin": "local-candidate-sdk3.47.2"
+    },
+    {
+      "version": "1.8.1+68",
+      "source": "4b5921ce26af2538775b856697e9f11a5ade7e39",
+      "setup_sha256": "7118c86ca2e8cf2ffe1421afbd94abcb84f2f0192cc8a0de4629c638205e91e4",
+      "running_before_upgrade": true,
+      "acceptance_case": "ci-running",
+      "version_before": [
+        1,
+        8,
+        1,
+        68
+      ],
+      "backup_verified": true,
+      "installer_exit": 0,
+      "force_close_allowed": false,
+      "payload_files_identical": 37,
+      "native_cli_exit": 0,
+      "schema": 17,
+      "all_business_fields_preserved": true,
+      "business_counts": {
+        "Reminders": 4,
+        "MediaRecords": 0,
+        "Settings": 1
+      },
+      "credential_files_preserved": true,
+      "dpapi_credential_readback_equal": true,
+      "credential_count": 1,
+      "gui_tested": false,
+      "package_origin": "fixed-CI-candidate"
+    }
+  ],
+  "windows_dpapi_readback": {
+    "version": "1.8.1+68",
+    "source": "4b5921ce26af2538775b856697e9f11a5ade7e39",
+    "dpapi_readable": true,
+    "credential_count": 1,
+    "preupgrade_backup_and_postupgrade_values_equal": true,
+    "sql_references_resolve": true,
+    "plaintext_persisted": false
+  },
+  "android": [
+    {
+      "backup": {
+        "package": "com.yarnway.dontforget",
+        "original_version": 60,
+        "files_verified": 29,
+        "bytes_verified": 279580,
+        "schema": 17,
+        "counts": {
+          "Reminders": 2,
+          "MediaRecords": 0,
+          "Settings": 1
+        },
+        "credential_count": 0,
+        "referenced_media_files_verified": 0,
+        "referenced_credentials_recoverable": true,
+        "dpapi_roundtrip": true,
+        "backup_recoverable": true
+      },
+      "cycle": {
+        "package": "com.yarnway.dontforget",
+        "original_version_code": 60,
+        "latest_version": "1.8.1+68",
+        "fresh_install_passed": true,
+        "fresh_empty_database_verified": true,
+        "fresh_keyboard_and_unsent_draft_verified": true,
+        "original_data_restored": true,
+        "cross_version_upgrade_passed": true,
+        "cross_version_path": "60->68",
+        "all_original_business_fields_media_and_vault_preserved": true,
+        "final_entry": "ordinary lib/main.dart",
+        "final_cold_reopen_passed": true,
+        "package_origin": "local arm64 candidate SDK3.47.2, QA debug identity separate",
+        "formal_universal_package_tested": false,
+        "at": "2026-11-10T09:22:07.678143+00:00"
+      },
+      "input": {
+        "package": "com.yarnway.dontforget",
+        "version": "1.8.1+68",
+        "fresh_install": true,
+        "tap_composer_opens_keyboard": true,
+        "adb_ascii_text_enters_draft": true,
+        "unsent_draft_survives_cold_reopen": true,
+        "sent": false,
+        "software_ime_send_tested": false,
+        "chinese_composition_tested": false
+      }
+    },
+    {
+      "backup": {
+        "package": "com.yarnway.dontforget.acceptance.p4720261102",
+        "original_version": 66,
+        "files_verified": 38,
+        "bytes_verified": 70269756,
+        "schema": 17,
+        "counts": {
+          "Reminders": 55,
+          "MediaRecords": 9,
+          "Settings": 1
+        },
+        "credential_count": 1,
+        "referenced_media_files_verified": 9,
+        "referenced_credentials_recoverable": true,
+        "dpapi_roundtrip": true,
+        "backup_recoverable": true
+      },
+      "cycle": {
+        "package": "com.yarnway.dontforget.acceptance.p4720261102",
+        "original_version_code": 66,
+        "latest_version": "1.8.1+68",
+        "fresh_install_passed": true,
+        "fresh_empty_database_verified": true,
+        "fresh_keyboard_and_unsent_draft_verified": true,
+        "original_data_restored": true,
+        "cross_version_upgrade_passed": true,
+        "cross_version_path": "66->68",
+        "all_original_business_fields_media_and_vault_preserved": true,
+        "final_entry": "ordinary lib/main.dart",
+        "final_cold_reopen_passed": true,
+        "package_origin": "local arm64 candidate SDK3.47.2, QA debug identity separate",
+        "formal_universal_package_tested": false,
+        "at": "2026-11-10T09:40:24.703537+00:00"
+      },
+      "input": {
+        "package": "com.yarnway.dontforget.acceptance.p4720261102",
+        "version": "1.8.1+68",
+        "fresh_install": true,
+        "tap_composer_opens_keyboard": true,
+        "adb_ascii_text_enters_draft": true,
+        "unsent_draft_survives_cold_reopen": true,
+        "sent": false,
+        "software_ime_send_tested": false,
+        "chinese_composition_tested": false
+      }
+    }
+  ],
+  "android_ordinary_credential_status": {
+    "package": "com.yarnway.dontforget.acceptance.p4720261102",
+    "version": "1.8.1+68",
+    "ordinary_ui_secure_credentials_status": true,
+    "model_credential_card_reachable": true,
+    "no_settings_changed": true
+  },
+  "android_original_permissions": [
+    {
+      "package": "com.yarnway.dontforget",
+      "originally_granted_runtime_permissions_restored": [],
+      "new_permission_grants_added": false
+    },
+    {
+      "package": "com.yarnway.dontforget.acceptance.p4720261102",
+      "originally_granted_runtime_permissions_restored": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.POST_NOTIFICATIONS"
+      ],
+      "new_permission_grants_added": false
+    }
+  ],
+  "recovery_fixture_first_attempts_preserved": true,
+  "recovery_fixture_corrections": [
+    "Require namespace XML on disk and flush before private immediate exit",
+    "Exclude app_flutter/flutter_assets debug executable assets from business restore",
+    "Recheck full secure map in a new process"
+  ],
+  "adb_daemon_interruption_on_final_reopen": {
+    "restarted_owned_15037_server": true,
+    "resumed_checkpoint_cold_reopen_passed": true,
+    "permanent_usb_stability_claimed": false
+  },
+  "published": false
+}

@@ -172,6 +172,16 @@ void main() {
     tester,
   ) async {
     addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.runAsync(() async {
+      await reminders.addReminder(
+        Reminder(
+          id: 'missed-alignment',
+          taskTitle: 'Older missed task',
+          quadrantLevel: 2,
+          triggerTime: DateTime.now().subtract(const Duration(minutes: 20)),
+        ),
+      );
+    });
     await showHome(tester);
     await tester.tap(find.byKey(const ValueKey('workspace-view-board')));
     await tester.pump(const Duration(milliseconds: 100));
@@ -198,7 +208,10 @@ void main() {
           ValueKey(width < 640 ? 'compact-task-board' : 'expanded-task-board'),
         ),
       );
-      for (final rect in [notice, composer, board]) {
+      final missed = tester.getRect(
+        find.byKey(const ValueKey('missed-reminders-bar')),
+      );
+      for (final rect in [notice, missed, composer, board]) {
         expect(rect.left, closeTo(frame.left + 12, .01));
         expect(rect.right, closeTo(frame.right - 12, .01));
       }

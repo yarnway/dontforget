@@ -1,0 +1,16 @@
+{
+  "version": "1.8.1+69",
+  "schema": 17,
+  "sdk": "3.47.2",
+  "targeted_passed": 31,
+  "analyze_issues": 0,
+  "before_fix_narrow_zh_width": 289.4000015258789,
+  "expected_narrow_zh_width": 351,
+  "tests_cover": "375/768/1440 widths, 1x/2x font, zh/en/ja; Home 390/900/1440/1920 actual painted notice/missed/board/composer edges",
+  "full_fixed_sdk_ci": "pending",
+  "logs_sha256": {
+    "missed-width-before.log": "fa921b727b485fd6ee66627aca34cf211eea591921f6cc779ab0b9baa300df66",
+    "targeted.log": "daaf952973fb08fa9999ad2ef091ce9471d7e820796dfc6d3dab5f0ee06f36c9",
+    "analyze.log": "df62765271a34d4c6f0f221fd925380f2510209a21d3ad82f4d2c67119d52a11"
+  }
+}
