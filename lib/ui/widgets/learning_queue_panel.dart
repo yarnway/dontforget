@@ -1,3 +1,5 @@
+import '../../l10n/study_management_strings.dart';
+import '../screens/study_plans_screen.dart';
 import '../../data/database_helper.dart';
 import '../../services/recovery/runtime_gate.dart';
 import 'dart:async';
@@ -170,6 +172,23 @@ class _LearningQueuePanelState extends ConsumerState<LearningQueuePanel>
       onClose: widget.onClose,
       canClose: !_saving,
       embedded: widget.embedded,
+      actions: [
+        IconButton(
+          key: const ValueKey('manage-study-plans'),
+          tooltip: studyManagementText(loc.locale.languageCode, 'title'),
+          onPressed: _saving
+              ? null
+              : () {
+                  if (!_current) return;
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const StudyPlansScreen(),
+                    ),
+                  );
+                },
+          icon: const Icon(Icons.folder_outlined),
+        ),
+      ],
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

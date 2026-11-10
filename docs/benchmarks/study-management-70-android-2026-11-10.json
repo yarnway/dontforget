@@ -1,0 +1,22 @@
+{
+  "version": "1.8.2+70",
+  "private_fixture_package": "com.yarnway.dontforget.acceptance.study7020261110",
+  "synthetic_data_only": true,
+  "real_native_touch_pause_resume_trash": true,
+  "whole_plan_row_count_preserved": 3,
+  "unrelated_plan_unchanged": true,
+  "progress_and_dates_preserved": true,
+  "cold_reopen_persisted": true,
+  "temporary_identity_uninstalled": true,
+  "test_data_isolated_from_user_databases": true,
+  "paused_count_visible": true,
+  "historical_recurring_dates_preserved": true,
+  "overdue_resume_cancel_recorded": true,
+  "normal_user_apps_not_reinstalled_or_cleared": true,
+  "notification_transport": "recording substitute",
+  "real_os_notification_delivery_tested": false,
+  "apk_sha256": "c3c8482b620158e6d1d3f0eebb5e0d5d7a6808ee0995f54bbf1e170eba43c3f5",
+  "synthetic_screenshot_reviewed": true,
+  "success_banner_no_longer_covers_first_plan_controls": true,
+  "task_rows_retained": 3
+}

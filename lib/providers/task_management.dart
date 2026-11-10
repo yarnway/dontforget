@@ -650,6 +650,7 @@ extension TaskManagement on RemindersNotifier {
     DateTime? now,
     bool ordinaryOnly = false,
     Map<String, Reminder>? contentBaseline,
+    StudyPlanGroup? studyPlanBaseline,
   }) {
     if (!const {
       'pause',
@@ -668,6 +669,25 @@ extension TaskManagement on RemindersNotifier {
           final all = (await db.query(
             'Reminders',
           )).map(Reminder.fromJson).toList();
+          if (studyPlanBaseline != null) {
+            final baseline = {
+              for (final row in studyPlanBaseline.members) row.id: row,
+            };
+            final members = all
+                .where(
+                  (row) => StudyPlanGroup.identity(row) == studyPlanBaseline.id,
+                )
+                .toList();
+            if (members.length != baseline.length ||
+                members.any(
+                  (row) =>
+                      baseline[row.id] == null ||
+                      !mapEquals(row.toJson(), baseline[row.id]!.toJson()),
+                ) ||
+                all.any((row) => baseline.containsKey(row.details.planId))) {
+              throw const StaleReminderOccurrenceException();
+            }
+          }
           if (contentBaseline != null) {
             final root = expected.single;
             final members = all
@@ -773,6 +793,7 @@ extension TaskManagement on RemindersNotifier {
                 upcomingDismissedAt: null,
               );
               if (action == 'resume' &&
+                  studyPlanBaseline == null &&
                   next.isRecurring &&
                   next.triggerTime != null &&
                   !next.triggerTime!.isAfter(at)) {

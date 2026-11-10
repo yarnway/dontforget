@@ -1,3 +1,5 @@
+import '../../l10n/study_management_strings.dart';
+import '../screens/study_plans_screen.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -134,6 +136,23 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet>
       embedded: widget.embedded,
       onClose: widget.onClose,
       canClose: !_isSaving,
+      actions: [
+        IconButton(
+          key: const ValueKey('manage-study-plans'),
+          tooltip: studyManagementText(loc.locale.languageCode, 'title'),
+          onPressed: _isSaving
+              ? null
+              : () {
+                  if (!_isCurrent) return;
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const StudyPlansScreen(),
+                    ),
+                  );
+                },
+          icon: const Icon(Icons.folder_outlined),
+        ),
+      ],
       body: LayoutBuilder(
         builder: (context, constraints) => Column(
           children: [

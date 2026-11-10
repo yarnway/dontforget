@@ -1,3 +1,5 @@
+import '../../l10n/study_management_strings.dart';
+import '../screens/study_plans_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -331,6 +333,23 @@ class _StudyPlanPanelState extends ConsumerState<StudyPlanPanel> {
           embedded: true,
           onClose: widget.onClose,
           canClose: !locked,
+          actions: [
+            IconButton(
+              key: const ValueKey('manage-study-plans'),
+              tooltip: studyManagementText(loc.locale.languageCode, 'title'),
+              onPressed: locked
+                  ? null
+                  : () {
+                      if (!_current) return;
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => const StudyPlansScreen(),
+                        ),
+                      );
+                    },
+              icon: const Icon(Icons.folder_outlined),
+            ),
+          ],
           children: [
             Text(
               loc.get(

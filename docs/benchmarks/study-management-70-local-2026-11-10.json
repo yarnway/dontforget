@@ -1,0 +1,22 @@
+{
+  "version": "1.8.2+70",
+  "schema": 17,
+  "sdk": "3.47.2",
+  "full_before_final_refinements": {
+    "flutter_passed": 2384,
+    "flutter_skipped": 20,
+    "python_run": 161,
+    "python_skipped": 6,
+    "scope": "Before paused-count feedback refinement and historical recurring-study resume guard"
+  },
+  "final_related_passed": 86,
+  "final_analyze_issues": 0,
+  "final_fixed_sdk_full_ci": "pending",
+  "logs_sha256": {
+    "full-tests.log": "d0aff4c71f97fa122bc1ff162b9a2fa430ba73a20fce16c18cc9f069ff06d82c",
+    "python-tests.log": "790232bdf006a4a9cf27adb8f912d8ced7b5da55dbc16f1294eb8691ebdf4b91",
+    "related.log": "d97f97bf49b096bfe113e3032af150c50f6b023a72a2f9410b6b32db3532718d",
+    "analyze-final.log": "1b563fbd48a117482526db6801824d2794da90e2cc06541ba3030a5e920ecc38",
+    "recurring-before.log": "c33a7aa073e9bd127e66831d1f41aaad0390763c08c5942940d8e88b672d0b05"
+  }
+}
