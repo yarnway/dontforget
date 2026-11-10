@@ -95,6 +95,17 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  // Restart Manager must not fall through to the ordinary close-to-tray path.
+  // Query is consent only; another application can still cancel shutdown.
+  if ((lparam & ENDSESSION_CLOSEAPP) != 0) {
+    if (message == WM_QUERYENDSESSION) return TRUE;
+    if (message == WM_ENDSESSION) {
+      if (wparam && protocol_channel_) {
+        protocol_channel_->InvokeMethod("onUpgradeExit", nullptr);
+      }
+      return 0;
+    }
+  }
   if (message == WM_HOTKEY && capture_hotkey_ && capture_channel_ &&
       capture_hotkey_->Matches(wparam, lparam)) {
     capture_channel_->InvokeMethod("onCapture",

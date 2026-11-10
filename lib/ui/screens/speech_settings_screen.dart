@@ -175,7 +175,7 @@ class _SpeechSettingsScreenState extends ConsumerState<SpeechSettingsScreen> {
               const SizedBox(height: 16),
               Card.outlined(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
                       SwitchListTile(
@@ -194,7 +194,7 @@ class _SpeechSettingsScreenState extends ConsumerState<SpeechSettingsScreen> {
                         (_secretKey, 'SecretKey', 'secret-key'),
                       ])
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 14),
+                          padding: const EdgeInsets.only(bottom: 20),
                           child: TextField(
                             key: ValueKey('speech-${field.$3}'),
                             controller: field.$1,

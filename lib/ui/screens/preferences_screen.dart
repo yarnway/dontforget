@@ -127,7 +127,7 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
     required Map<T, String> choices,
     required void Function(T) change,
   }) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
     child: DropdownButtonFormField<T>(
       key: ValueKey(id),
       initialValue: value,
@@ -277,7 +277,7 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
                   MediaQuery.textScalerOf(context).scale(14) <= 18.2
               ? 2
               : 1;
-          final width = (constraints.maxWidth - (columns - 1) * 12) / columns;
+          final width = (constraints.maxWidth - (columns - 1) * 20) / columns;
           final entries = <Widget>[
             _entry(
               id: 'preferences-ai',
@@ -330,8 +330,8 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
           ];
           return Wrap(
             key: const ValueKey('preferences-feature-grid'),
-            spacing: 12,
-            runSpacing: 12,
+            spacing: 20,
+            runSpacing: 20,
             children: [
               for (final entry in entries) SizedBox(width: width, child: entry),
             ],
@@ -377,7 +377,7 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
             constraints: const BoxConstraints(maxWidth: 960),
             child: ListView(
               key: const ValueKey('preferences-list'),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
               children: [
                 if (!_ready && _error == null) const LinearProgressIndicator(),
                 if (_error != null)

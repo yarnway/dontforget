@@ -48,6 +48,7 @@ abstract final class AppTheme {
             : SystemUiOverlayStyle.dark,
       ),
       cardTheme: CardThemeData(
+        clipBehavior: Clip.antiAlias,
         elevation: 0,
         color: colors.surfaceContainerLow,
         margin: EdgeInsets.zero,

@@ -144,9 +144,16 @@ class WindowsProtocolService {
       _onRouteReceived;
 
   /// Initializes the protocol handler with a callback invoked on URI activation.
-  static void initialize({void Function(ProtocolRoute route)? onRoute}) {
+  static void initialize({
+    void Function(ProtocolRoute route)? onRoute,
+    Future<void> Function()? onUpgradeExit,
+  }) {
     _onRouteReceived = onRoute;
     channel.setMethodCallHandler((call) async {
+      if (call.method == 'onUpgradeExit') {
+        await onUpgradeExit?.call();
+        return;
+      }
       if (call.method == 'onProtocolUrl') {
         final raw = call.arguments?.toString();
         final route = ProtocolRoute.tryParse(raw);

@@ -85,6 +85,8 @@ class _MyAppState extends ConsumerState<MyApp>
   late final bool Function() _openSharedCommand;
   late final SharedTextInboxCommand _sharedCommand;
   GlobalCaptureShortcut? _globalCapture;
+  DesktopUpgradeExit? _upgradeExit;
+  Future<void>? _desktopExit;
   String? _openProtocolTaskId;
   String? _pendingLivePayload;
   String? _openLiveIdentity;
@@ -114,6 +116,36 @@ class _MyAppState extends ConsumerState<MyApp>
     _sharedCommand.open = _openSharedCommand;
     if (Platform.isWindows) {
       _globalCapture = ref.read(globalCaptureShortcutProvider);
+      _upgradeExit = DesktopUpgradeExit(
+        canExit: () =>
+            mounted &&
+            !_recovery.state.working &&
+            !_actionRuntimeGate.paused &&
+            !ref.read(homeControllerProvider).isProcessingInBackground &&
+            !(_navigatorKey.currentState?.canPop() ?? true) &&
+            !ref.read(homeControllerProvider).isRecording &&
+            !ref.read(homeControllerProvider).isPreparingRecording,
+        prepare: () async {
+          await _globalCapture?.pause();
+          final drafts = ref.read(workspaceDraftsProvider.notifier);
+          await drafts.ready;
+          // Flush before invalidating producer tokens: recovery pause rejects
+          // old queued writes, which must not discard the last typed draft.
+          await drainDesktopWrites(() => drafts.flushed, () => drafts.failed);
+          await Future.wait<Object?>([
+            _actionRuntimeGate.pause(),
+            ref.read(lanSyncServiceProvider).pauseForRecovery(),
+            _notifications.pauseForMaintenance(),
+          ]);
+          await drafts.flushed;
+          if (drafts.failed) {
+            throw StateError('Pending drafts could not be saved');
+          }
+          await DesktopWindowService.flush(DatabaseHelper.instance);
+        },
+        exitApp: _closeStorageAndExit,
+        onError: (_, __) => debugPrint('Upgrade exit preparation failed'),
+      );
     }
     _navigationEpoch = _recovery.navigationEpoch;
     _lastRecoveryPhase = _recovery.state.phase;
@@ -181,7 +213,12 @@ class _MyAppState extends ConsumerState<MyApp>
     if (_supportsAndroidProtocol) {
       unawaited(_androidProtocol.initialize(onRoute: _receiveProtocolRoute));
     } else if (_supportsProtocol) {
-      WindowsProtocolService.initialize(onRoute: _receiveProtocolRoute);
+      WindowsProtocolService.initialize(
+        onRoute: _receiveProtocolRoute,
+        onUpgradeExit: () async {
+          await _upgradeExit?.request();
+        },
+      );
     }
     _recovery.addListener(_onRecoveryChanged);
     _prepareNotificationRoutes();
@@ -941,6 +978,7 @@ class _MyAppState extends ConsumerState<MyApp>
   @override
   void onWindowClose() async {
     if (!_isDesktop) return;
+    if (_upgradeExit?.inProgress ?? false) return;
     if (ref.read(recoveryCoordinatorProvider).state.working) return;
     try {
       await DesktopWindowService.flush(DatabaseHelper.instance);
@@ -1033,6 +1071,7 @@ class _MyAppState extends ConsumerState<MyApp>
         windowManager.show();
         windowManager.focus();
       } else if (menuItem.key == 'exit_app') {
+        if (_upgradeExit?.inProgress ?? false) return;
         if (ref.read(recoveryCoordinatorProvider).state.working) {
           windowManager.show();
           windowManager.focus();
@@ -1050,7 +1089,7 @@ class _MyAppState extends ConsumerState<MyApp>
   /// first flushes the mirror backup and the notification journal, so a tray
   /// exit cannot leave a half-written store behind (the previous `exit(0)`
   /// skipped this).
-  Future<void> _closeStorageAndExit() => shutdownDesktopApp(
+  Future<void> _closeStorageAndExit() => _desktopExit ??= shutdownDesktopApp(
     saveState: () async {
       await _globalCapture?.pause();
       await DesktopWindowService.flush(DatabaseHelper.instance);

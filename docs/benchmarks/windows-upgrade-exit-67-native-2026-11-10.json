@@ -1,0 +1,16 @@
+{
+  "normal_restart_manager_shutdown": true,
+  "force_shutdown": false,
+  "private_process_only": true,
+  "shutdown_ms": 328,
+  "events": [
+    "ready",
+    "prepared",
+    "closed"
+  ],
+  "draft_flushed_before_close": true,
+  "native_exit": 0,
+  "real_user_database_tested": false,
+  "native_bridge_sha256": "10c1763d1ddacbe6455f9698bb88c2c3e1fc0142d6dcad7aebedfa58d6fafdf2",
+  "scope": "Isolated private native entry; actual Restart Manager; no user business database or ordinary MyApp UI acceptance"
+}

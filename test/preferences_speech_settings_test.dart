@@ -1,3 +1,6 @@
+import 'package:flutter/gestures.dart';
+import 'package:dont_forget/ui/screens/settings_screen.dart';
+import 'package:dont_forget/ui/widgets/credential_status_panel.dart';
 import 'support/real_io.dart';
 import 'support/interaction_preview.dart';
 import 'dart:convert';
@@ -123,6 +126,54 @@ void main() {
     await tester.tap(target);
     await settle(tester);
   }
+
+  testWidgets(
+    'AI settings separate speech, profiles and credentials without extra card layers',
+    (tester) async {
+      for (final brightness in [Brightness.light, Brightness.dark]) {
+        await show(
+          tester,
+          const SettingsScreen(area: SettingsArea.ai),
+          width: 1280,
+          brightness: brightness,
+        );
+        final speech = find
+            .ancestor(
+              of: find.byKey(const ValueKey('settings-speech')),
+              matching: find.byType(Card),
+            )
+            .first;
+        final profiles = find
+            .ancestor(
+              of: find.byKey(const ValueKey('settings-model-profiles')),
+              matching: find.byType(Card),
+            )
+            .first;
+        expect(
+          tester.getTopLeft(profiles).dy - tester.getBottomLeft(speech).dy,
+          greaterThanOrEqualTo(20),
+        );
+        expect(
+          tester.getTopLeft(find.byType(CredentialStatusPanel)).dy -
+              tester.getBottomLeft(profiles).dy,
+          greaterThanOrEqualTo(20),
+        );
+        final pointer = await tester.createGesture(
+          kind: PointerDeviceKind.mouse,
+        );
+        await pointer.addPointer(location: tester.getCenter(profiles));
+        await pointer.moveTo(tester.getCenter(profiles));
+        await tester.pumpAndSettle();
+        await captureInteractionPreview(
+          tester,
+          'settings-67-ai-${brightness.name}',
+        );
+        await pointer.removePointer();
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+      }
+    },
+  );
 
   for (final language in ['zh', 'en', 'ja']) {
     testWidgets('responsive preferences preserve unsaved edits $language', (

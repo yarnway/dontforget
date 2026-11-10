@@ -1,0 +1,56 @@
+{
+  "version": "1.8.1+67",
+  "sdk": "3.47.2",
+  "full_flutter_passed": 2358,
+  "full_flutter_skipped": 20,
+  "python_run": 161,
+  "python_skipped": 6,
+  "analyze_issues": 0,
+  "additional_cross_platform_tests": 5,
+  "cross_platform_layout_combinations": 40,
+  "cross_platform_test_added_after_full_discovery": true,
+  "settings_related_passed": 62,
+  "full_suite_existing_source_snapshot_unchanged": true,
+  "additional_test_sha256": "83f255bbd80aa417e1a2d45569aa69649877103ea469c283da7a67ee6ecea6d6",
+  "platforms": [
+    "windows",
+    "android",
+    "linux",
+    "ios",
+    "macos"
+  ],
+  "native_device_matrix_complete": false,
+  "ordinary_windows_upgrade": "PENDING",
+  "full_flutter_log_sha256": "bda482ab68faf7f2f414265b4fdee40d4ced34fe244fb3dac8a137983b888b74",
+  "python_log_sha256": "dc897e42deea822fb68e1013360e7c5b62f03ce94f30cccc14952bda81e76c61",
+  "analyze_log_sha256": "6553c04a88eb296ac4d3c8b8df886a46a12159bc4aaa19306a44b099fcf74eff",
+  "cross_platform_log_sha256": "701a12224193a2ac4b36186708225f088be4539c8bfae6473bace7c3b54adaf5",
+  "settings_log_sha256": "4f753f8d1701fe71ace3d7a6696957345f41b2447febe0afe330c58103e4c5ab",
+  "visual_preview": {
+    "scope": "Flutter widget render with synthetic settings; model-priority row hovered; not a native device screenshot",
+    "images": {
+      "docs/images/settings-ai-67-dark.png": {
+        "bytes": 28184,
+        "sha256": "b9c1ace4bc31edf7d2367e2decdeb848cf500bddcc315863e54196b73790143b"
+      },
+      "docs/images/settings-ai-67-light.png": {
+        "bytes": 28219,
+        "sha256": "7130c63a5fca312598acfe6eb0708937c1a9580b8fb3c50faaccc6fa50cd7474"
+      }
+    }
+  },
+  "native_restart_manager": {
+    "normal_restart_manager_shutdown": true,
+    "force_shutdown": false,
+    "private_process_only": true,
+    "shutdown_ms": 328,
+    "events": [
+      "ready",
+      "prepared",
+      "closed"
+    ],
+    "draft_flushed_before_close": true,
+    "native_exit": 0,
+    "real_user_database_tested": false
+  }
+}

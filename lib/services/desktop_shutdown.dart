@@ -1,3 +1,57 @@
+import 'dart:async';
+
+/// Wait for the latest local write, including writes queued while awaiting an
+/// earlier one. Callers freeze input synchronously after this returns.
+Future<void> drainDesktopWrites(
+  Future<void> Function() pending,
+  bool Function() failed,
+) async {
+  while (true) {
+    final work = pending();
+    await work;
+    if (failed()) throw StateError('Pending local writes could not be saved');
+    if (identical(work, pending())) return;
+  }
+}
+
+/// Serializes system upgrade requests. A failed preparation does not exit or
+/// close storage; a completed exit is never repeated by a duplicate request.
+class DesktopUpgradeExit {
+  DesktopUpgradeExit({
+    required this.canExit,
+    required this.prepare,
+    required this.exitApp,
+    this.onError,
+  });
+  final bool Function() canExit;
+  final AsyncVoid prepare, exitApp;
+  final void Function(Object, StackTrace)? onError;
+  Future<bool>? _pending;
+  bool get inProgress => _pending != null;
+
+  Future<bool> request() {
+    if (_pending != null) return _pending!;
+    if (!canExit()) return Future.value(false);
+    final work = Future<bool>.sync(() async {
+      try {
+        await prepare();
+        await exitApp();
+        return true;
+      } catch (error, stack) {
+        onError?.call(error, stack);
+        return false;
+      }
+    });
+    _pending = work;
+    unawaited(
+      work.then((ok) {
+        if (!ok && identical(_pending, work)) _pending = null;
+      }),
+    );
+    return work;
+  }
+}
+
 /// Desktop shutdown sequence shared by tray exit and tests.
 ///
 /// The desktop build previously called `exit(0)` directly, which skipped the

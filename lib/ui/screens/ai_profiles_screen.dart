@@ -233,7 +233,7 @@ class _AiProfilesScreenState extends ConsumerState<AiProfilesScreen> {
     final profile = profiles[index];
     return Card(
       key: ValueKey(profile.id),
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 20),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -330,7 +330,7 @@ class _AiProfilesScreenState extends ConsumerState<AiProfilesScreen> {
     ValueChanged<String> onChanged, {
     bool secret = false,
   }) => Padding(
-    padding: const EdgeInsets.only(top: 12),
+    padding: const EdgeInsets.only(top: 20),
     child: TextFormField(
       key: ValueKey(
         secret ? '$id/$kind/${keyRevisions[id] ?? 0}' : '$id/$kind',

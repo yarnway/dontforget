@@ -668,6 +668,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  Widget _section({required Widget child}) => Card.outlined(
+    child: Padding(padding: const EdgeInsets.all(20), child: child),
+  );
+
   Widget _advancedConnection(Widget child) => widget.area == null
       ? child
       : Card.outlined(
@@ -793,7 +797,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               },
                       ),
                     ],
-                    if (widget.area == null) ...[const SizedBox(height: 14)],
+                    if (widget.area == null) ...[const SizedBox(height: 20)],
                     if (widget.area == null) ...[
                       InputSendModePicker(
                         value: _selectedSendMode,
@@ -805,7 +809,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               },
                       ),
                     ],
-                    if (widget.area == null) ...[const SizedBox(height: 14)],
+                    if (widget.area == null) ...[const SizedBox(height: 20)],
                     if (widget.area == null ||
                         widget.area == SettingsArea.ai) ...[
                       Card.outlined(
@@ -832,11 +836,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ],
                     if (widget.area == null ||
                         widget.area == SettingsArea.ai) ...[
-                      const SizedBox(height: 14),
-                    ],
-                    if (widget.area == null ||
-                        widget.area == SettingsArea.ai) ...[
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 20),
                     ],
                     if (widget.area == null ||
                         widget.area == SettingsArea.ai) ...[
@@ -852,6 +852,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                     ],
                     if (widget.area == null) ...[
+                      const SizedBox(height: 20),
                       Card.outlined(
                         margin: EdgeInsets.zero,
                         child: ListTile(
@@ -878,12 +879,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ],
                     if (widget.area == null ||
                         widget.area == SettingsArea.ai) ...[
+                      const SizedBox(height: 20),
                       CredentialStatusPanel(
                         onRetry: _reloadCredentials,
                         allowRemove: false,
                       ),
                     ],
                     if (widget.area == null) ...[
+                      const SizedBox(height: 20),
                       Card.outlined(
                         margin: EdgeInsets.zero,
                         child: ListTile(
@@ -908,7 +911,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         builder: (context, status, _) => status == null
                             ? const SizedBox.shrink()
                             : Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.only(
+                                  top: 12,
+                                  bottom: 8,
+                                ),
                                 child: Text(
                                   status.label == null
                                       ? l10n.get('aiProfilesAllFailed')
@@ -920,9 +926,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ],
                     if (widget.area == null ||
                         widget.area == SettingsArea.ai) ...[
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 20),
                     ],
                     if (widget.area == null) ...[
+                      const SizedBox(height: 20),
                       Card.outlined(
                         margin: EdgeInsets.zero,
                         child: ListTile(
@@ -938,7 +945,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                       ),
                     ],
-                    if (widget.area == null) ...[const SizedBox(height: 14)],
+                    if (widget.area == null) ...[const SizedBox(height: 20)],
                     if (widget.area == null ||
                         widget.area == SettingsArea.notifications) ...[
                       NotificationPermissionPanel(
@@ -955,7 +962,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ],
                     if (widget.area == null ||
                         widget.area == SettingsArea.notifications) ...[
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 20),
                     ],
                     if (widget.area == null ||
                         widget.area == SettingsArea.notifications) ...[
@@ -965,22 +972,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ],
                     if (widget.area == null ||
                         widget.area == SettingsArea.notifications) ...[
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 20),
                     ],
                     if (widget.area == null) ...[
                       // Language Setting
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.black26
-                              : Colors.white.withValues(alpha: 0.6),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: Theme.of(context).colorScheme.outlineVariant,
-                            width: 1,
-                          ),
-                        ),
+                      _section(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -1042,22 +1038,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         ),
                       ),
                     ],
-                    if (widget.area == null) ...[const SizedBox(height: 14)],
+                    if (widget.area == null) ...[const SizedBox(height: 20)],
                     if (widget.area == null ||
                         widget.area == SettingsArea.sync) ...[
                       // Edge AI Inference Probe Card
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.black26
-                              : Colors.white.withValues(alpha: 0.6),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: Theme.of(context).colorScheme.outlineVariant,
-                            width: 1,
-                          ),
-                        ),
+                      _section(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -1220,23 +1205,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ],
                     if (widget.area == null ||
                         widget.area == SettingsArea.sync) ...[
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 20),
                     ],
                     if (widget.area == null ||
                         widget.area == SettingsArea.sync) ...[
                       // Decentralized LAN Sync Card
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.black26
-                              : Colors.white.withValues(alpha: 0.6),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: Theme.of(context).colorScheme.outlineVariant,
-                            width: 1,
-                          ),
-                        ),
+                      _section(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -1422,7 +1396,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ],
                     if (widget.area == null ||
                         widget.area == SettingsArea.sync) ...[
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 20),
                     ],
                     if (widget.area == null ||
                         widget.area == SettingsArea.ai) ...[
@@ -1430,18 +1404,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       _advancedConnection(
                         Container(
                           padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? Colors.black26
-                                : Colors.white.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.outlineVariant,
-                              width: 1,
-                            ),
-                          ),
+                          decoration: widget.area == null
+                              ? BoxDecoration(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.surfaceContainerLow,
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outlineVariant,
+                                  ),
+                                )
+                              : null,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -1466,7 +1441,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 14),
+                              const SizedBox(height: 20),
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
@@ -1572,7 +1547,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 ],
                                 onChanged: _onProviderChanged,
                               ),
-                              const SizedBox(height: 14),
+                              const SizedBox(height: 20),
                               TextField(
                                 key: const ValueKey('settings-api-key'),
                                 controller: _apiKeyController,
@@ -1669,7 +1644,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 14),
+                              const SizedBox(height: 20),
                               TextField(
                                 key: const ValueKey('settings-model-name'),
                                 contextMenuBuilder: buildEditableTextMenu,
