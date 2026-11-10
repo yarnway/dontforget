@@ -189,7 +189,6 @@ class _AiProfilesScreenState extends ConsumerState<AiProfilesScreen> {
             padding: const EdgeInsets.all(16),
             children: [
               if (!ready && error == null) const LinearProgressIndicator(),
-              Text(t('aiProfilesScope')),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(t('aiProfilesFallback')),

@@ -346,13 +346,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            l10n.get('dashboardCategoryScope'),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
           for (var i = 0; i < 4; i++) ...[
             const SizedBox(height: 20),
             Row(

@@ -119,9 +119,9 @@ void main() {
     // Finish identity file I/O before entering a widget fake-async zone.
     await container.read(notificationServiceProvider).init();
     // Complete language category registration before widget fake async.
-    await container.read(notificationServiceProvider).setNotificationLanguage(
-      container.read(settingsProvider).language,
-    );
+    await container
+        .read(notificationServiceProvider)
+        .setNotificationLanguage(container.read(settingsProvider).language);
   });
   tearDownAll(() async {
     await container.read(notificationServiceProvider).pauseForMaintenance();
@@ -373,7 +373,7 @@ void main() {
           });
         }
       }
-      await applyNoticeAction(tester, '我知道了');
+      await applyNoticeAction(tester, '知道了');
       expect(current(due.id).noticeAcknowledgedAt, isNotNull);
       await tester.runAsync(
         () => container
@@ -473,7 +473,7 @@ void main() {
       tester.widget<TextField>(find.byType(TextField)).focusNode!.hasFocus,
       isTrue,
     );
-    await applyNoticeAction(tester, '我知道了');
+    await applyNoticeAction(tester, '知道了');
     expect(current(task.id).noticeAcknowledgedAt, isNotNull);
     // Lifecycle callbacks enqueue database/notification work. Run them in the
     // real async zone just like writes, rather than suspending that queue in

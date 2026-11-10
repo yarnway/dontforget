@@ -124,13 +124,6 @@ class AppearancePicker extends StatelessWidget {
                 );
               },
             ),
-            const SizedBox(height: 12),
-            Text(
-              l10n.get('appearanceSaveHint'),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
           ],
         ),
       ),

@@ -159,7 +159,7 @@ void main() {
   Future<void> dismissNotice(WidgetTester tester) async {
     await tester.runAsync(() async {
       final previous = reminders.lastAction;
-      await tester.tap(find.widgetWithText(TextButton, '我知道了'));
+      await tester.tap(find.widgetWithText(TextButton, '知道了'));
       final action = reminders.lastAction;
       expect(action, isNotNull);
       expect(action, isNot(same(previous)));

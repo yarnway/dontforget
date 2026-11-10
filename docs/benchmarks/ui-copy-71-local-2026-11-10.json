@@ -1,0 +1,25 @@
+{
+  "version": "1.8.2+71",
+  "schema": 17,
+  "sdk": "3.47.2",
+  "related_passed": 155,
+  "analyze_issues": 0,
+  "preview_tests_passed": 1,
+  "languages": 3,
+  "localized_keys_simplified": 26,
+  "removed_unused_keys": 4,
+  "preview_scope": "Flutter rendered settings, desktop light/dark and narrow, not Windows native GUI",
+  "preview_images": {
+    "desktop": "e210d428ec03a837224d011de6aa4614f66029dabfb4a88cf90529d6b28ff264",
+    "mobile": "0c14e6abdc9d6a1395a20659fc87ae3fed7217538b70920833c0f603de4d28f1",
+    "dark": "d064f8fb99e2cd7229573a3a344ee4d83843f583f8029b0141653accfb36fd8e"
+  },
+  "logs_sha256": {
+    "related.log": "ca469eac0c9930ecd0232cfec499bf780ca64ee9549f3b78c1a82db6dc755e3e",
+    "analyze.log": "3e991b99537b0dd88b785aa7077bdf6ac3b100aaff9389add4d3da317141c97e",
+    "preview.log": "b132efdf123663aaedb8079b39933e14355f4e905cfcc895bdf752ac8e0ac535",
+    "related-before-copy-expectation.log": "67a259db5f4517352df08f2cad273d02295b0b153b0d947ebbe95f1e46cd3914"
+  },
+  "fixed_sdk_full_ci": "pending",
+  "ordinary_packages_and_upgrade": "pending"
+}

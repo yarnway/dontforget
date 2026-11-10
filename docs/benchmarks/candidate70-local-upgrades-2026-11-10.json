@@ -1,0 +1,66 @@
+{
+  "candidate_version": "1.8.2+70",
+  "source": "08009a7961fbb73ec021dc04bd2430ffc391866c",
+  "windows_local_running_upgrade": {
+    "version": "1.8.2+70",
+    "source": "08009a7961fbb73ec021dc04bd2430ffc391866c",
+    "setup_sha256": "cbffa14dc30399f6e36153f45b29df447fc4bf994ceca9de3dae702f308f9bf4",
+    "running_before_upgrade": true,
+    "acceptance_case": "fixed-running",
+    "version_before": [
+      1,
+      8,
+      1,
+      69
+    ],
+    "backup_verified": true,
+    "installer_exit": 0,
+    "force_close_allowed": false,
+    "payload_files_identical": 38,
+    "native_cli_exit": 0,
+    "schema": 17,
+    "all_business_fields_preserved": true,
+    "business_counts": {
+      "Reminders": 4,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "credential_files_preserved": true,
+    "dpapi_credential_readback_equal": true,
+    "credential_count": 1,
+    "gui_tested": false,
+    "package_origin": "local-candidate-sdk3.47.2"
+  },
+  "android_upgrades": [
+    {
+      "version": "1.8.2+70",
+      "source": "08009a7961fbb73ec021dc04bd2430ffc391866c",
+      "package": "com.yarnway.dontforget",
+      "upgrade_path": "69->70",
+      "ordinary_runtime_source": "08009a7961fbb73ec021dc04bd2430ffc391866c",
+      "same_signing_identity": true,
+      "latest_backup_verified": true,
+      "all_fields_media_and_secure_entries_preserved": true,
+      "final_ordinary_entry": true,
+      "cold_reopen_passed": true,
+      "fresh_install_this_build": false,
+      "fresh68_install_and_restore_tested_separately": true
+    },
+    {
+      "version": "1.8.2+70",
+      "source": "08009a7961fbb73ec021dc04bd2430ffc391866c",
+      "package": "com.yarnway.dontforget.acceptance.p4720261102",
+      "upgrade_path": "69->70",
+      "ordinary_runtime_source": "08009a7961fbb73ec021dc04bd2430ffc391866c",
+      "same_signing_identity": true,
+      "latest_backup_verified": true,
+      "all_fields_media_and_secure_entries_preserved": true,
+      "final_ordinary_entry": true,
+      "cold_reopen_passed": true,
+      "fresh_install_this_build": false,
+      "fresh68_install_and_restore_tested_separately": true
+    }
+  ],
+  "not_published": true,
+  "final_71_requires_separate_gates": true
+}

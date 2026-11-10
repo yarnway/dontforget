@@ -467,7 +467,7 @@ void main() {
           );
           expect(find.text('Task 3 Days Ago'), findsNothing);
 
-          // 4. Click "全部知道了"
+          // 4. Click "知道了"
           await tester.runAsync(() async {
             final previous = reminders.lastAction;
             await tester.tap(

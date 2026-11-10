@@ -581,7 +581,7 @@ class _StudyPlanPanelState extends ConsumerState<StudyPlanPanel> {
             if (d.saved) ...[
               Icon(Icons.check_circle_outline, size: 40, color: colors.primary),
               const SizedBox(height: 12),
-              Text('${d.edited.length} · ${loc.get('studySavedHint')}'),
+              Text('${d.edited.length} ${loc.get('studySavedHint')}'),
               Text(
                 loc.get(
                   d.syncFailures > 0

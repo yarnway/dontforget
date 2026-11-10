@@ -232,15 +232,6 @@ class _SpacedRepetitionSheetState extends ConsumerState<SpacedRepetitionSheet>
                                       context,
                                     ).textTheme.titleLarge,
                                   ),
-                                  if (task.reviewNotificationsEnabled) ...[
-                                    const SizedBox(height: 12),
-                                    Text(
-                                      loc.get('studyReviewPolicy'),
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodySmall,
-                                    ),
-                                  ],
                                   if (task.reviewNotificationsEnabled ||
                                       _hasDeck) ...[
                                     const SizedBox(height: 20),

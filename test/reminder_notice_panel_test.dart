@@ -280,7 +280,7 @@ void main() {
     expect(find.text('Due task'), findsOneWidget);
     expect(find.text('稍后 5 分钟提醒'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(TextButton, '我知道了'));
+    await tester.tap(find.widgetWithText(TextButton, '知道了'));
     await tester.pumpAndSettle();
     expect(find.text('即将提醒 · 2'), findsOneWidget);
     expect(find.text('Upcoming task 0'), findsOneWidget);

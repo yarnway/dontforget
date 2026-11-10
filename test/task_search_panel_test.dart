@@ -152,7 +152,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(TaskCard), findsNothing);
     expect(
-      find.text('Try fewer keywords or reset the filters.'),
+      find.text('Try fewer keywords or reset filters.'),
       findsOneWidget,
     );
     await tester.tap(find.byKey(const ValueKey('search-reset')));

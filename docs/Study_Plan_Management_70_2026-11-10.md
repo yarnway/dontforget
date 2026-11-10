@@ -24,3 +24,7 @@
 固定源码CI、普通Windows运行中覆盖及最新数据／凭据／文件核对、普通Android同签名更新和三端发行包门禁另行补记。独立夹具不替代普通App安装或真实系统通知验收。
 
 46 USB长期；47普通包、IME／通知休眠／录音中断及WindowsGUI；48真实带附件设备往返、凭据故障／磁盘满／断电／保留与原声压缩；49跨计划调整、负担预测、档案与词条身份迁移、图片分享、LAN编辑／删除／附件／冲突及更多学习排程；50候选门禁后发布1.8.2，Apple、独立ARM64、正式签名和商店继续。
+
+## +70候选收口
+
+固定源码`08009a7961fbb73ec021dc04bd2430ffc391866c`的[CI42835644410](https://github.com/yarnway/dontforget/actions/runs/42835644410)七项成功：Linux Flutter2403通过／2跳过、Windows2385通过／20跳过，Python两端161运行（4／6跳过），五份artifact归属核对完成。Windows运行中+69→本地+70及双Android各自新备份后+69→+70、全字段／附件／安全条目保持及普通入口冷重开完成。[CI](benchmarks/github-ci-candidate70-2026-11-10.json)与[安装证据](benchmarks/candidate70-local-upgrades-2026-11-10.json)分开记录。+70未发布；用户追加文案精简后推进[+71候选](UI_Copy_Polish_71_2026-11-10.md)，最终包及新源码门禁另验。
