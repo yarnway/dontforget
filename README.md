@@ -3,17 +3,17 @@
 本地优先的备忘与任务工作台。随手记录文字、录音和附件，按紧急提醒、重点跟进、常规待办与备忘便签管理事项；需要智能提取时，再连接自己配置的模型服务。
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.44.9-02569B?logo=flutter)](https://flutter.dev)
-[![Release](https://img.shields.io/badge/Release-v1.8.0-007F83)](https://github.com/yarnway/dontforget/releases/tag/v1.8.0)
+[![Release](https://img.shields.io/badge/Release-v1.8.1-007F83)](https://github.com/yarnway/dontforget/releases/tag/v1.8.1)
 
 [使用指南](docs/User_Guide.md) · [开发指南](docs/Developer_Guide.md) · [架构](docs/Architecture_Design.md) · [变更日志](docs/Changelog.md)
 
-当前三平台正式版为 **v1.8.0 / build66**。精简输入与设置、提前流式语音、上滑预览和编辑、录音重复缓存回收及空间管理已交付。[分层验收](docs/Release_1.8_66_2026-11-09.md)和[剩余阶段](docs/Next_Steps_2026-11-02.md)分别维护。
+当前三平台正式版为 **v1.8.1 / build69**。统一首页与错过提醒宽度、配置卡片与保存栏，修复Windows运行中升级退出。[分层验收](docs/Release_1.8.1_69_2026-11-10.md)和[剩余阶段](docs/Next_Steps_2026-11-02.md)分别维护。
 
-记录与提醒的阶段设计见[分阶段功能清单](docs/Recording_Reminders_Phases.md)，用药计划、出门清单、附件备份和学习管理见[实现索引](docs/Planning_Implementation.md)。1.8已交付的源码、自动化、安装包与实机范围以[本轮验收](docs/Release_1.8_66_2026-11-09.md)为准。
+记录与提醒的阶段设计见[分阶段功能清单](docs/Recording_Reminders_Phases.md)，用药计划、出门清单、附件备份和学习管理见[实现索引](docs/Planning_Implementation.md)。当前源码、自动化、安装包与实机范围以[本轮验收](docs/Release_1.8.1_69_2026-11-10.md)为准。
 
 ## v1.8：流式语音与简洁录入
 
-Android／Windows／Linux [v1.8.0已发布](https://github.com/yarnway/dontforget/releases/tag/v1.8.0)。录音就绪即提前识别，上滑预览，右滑编辑或到明确落点松手发送；个人凭据仅本地配置。Windows默认单行并按内容展开，响应式设置和空间管理适配手机与桌面。[发行记录](docs/Release_1.8_66_2026-11-09.md)。
+Android／Windows／Linux [v1.8.1已发布](https://github.com/yarnway/dontforget/releases/tag/v1.8.1)。录音就绪即提前识别，上滑预览，右滑编辑或到明确落点松手发送；个人凭据仅本地配置。Windows默认单行并按内容展开，响应式设置和空间管理适配手机与桌面。[发行记录](docs/Release_1.8.1_69_2026-11-10.md)。
 
 - **按状态找任务**：搜索页直接浏览全部、待办、今日提醒、提醒时间已过或已完成事项，无需先输入文字；提醒时间不是事件截止时间。
 - **组合关键词**：同时搜索标题、摘要和子任务；空格分隔的关键词可以出现在不同字段中。
@@ -51,11 +51,11 @@ AI 解析会将相关内容直接发送至您配置的服务商。应用不提�
 
 任务、附件索引和配置保存在本机 SQLite 数据库中。备份功能支持标准便携导出及**端到端流式加密备份（AES-256-GCM + Argon2id）**，可将全量数据与多媒体附件本体一体化打包归档，并具备防重放、抗篡改与原子安全恢复能力。
 
-v1.7.1已发布Android／Windows／Linux，Apple平台继续独立验收；当前源码、公开候选和剩余门槛见[发布验收总表](docs/Release_Acceptance_v1.7.md)。macOS 通知日志升级与安装旧程序前的回退步骤见[日志维护说明](docs/Notification_Storage_Upgrade.md)。
+v1.8.1已发布Android／Windows／Linux，Apple平台继续独立验收；当前已验范围和剩余门槛见[发行记录](docs/Release_1.8.1_69_2026-11-10.md)。macOS 通知日志升级与安装旧程序前的回退步骤见[日志维护说明](docs/Notification_Storage_Upgrade.md)。
 
-## v1.7.1三平台下载
+## v1.8.1三平台下载
 
-按用户2026-11-05更新的范围，本轮已发布Android、Windows、Linux，Apple平台留待后续；[下载v1.7.1](https://github.com/yarnway/dontforget/releases/tag/v1.7.1)，包含固定发行签名Android APK／AAB、Windows Setup／Portable和Linux x64包。验证与发布记录见[发行记录](docs/Platform_Release_60_2026-11-06.md)。腾讯云按用户要求暂缓，部分输入法及其他未验收项目明确列于[发行说明](docs/Release_Notes_v1.7.1.md)。
+[下载v1.8.1](https://github.com/yarnway/dontforget/releases/tag/v1.8.1)，包含固定发行签名Android APK／AAB、Windows Setup／Portable和Linux x64包（Ubuntu24.04基线）。[验收与剩余阶段](docs/Release_1.8.1_69_2026-11-10.md)单独记录；腾讯实时语音使用本地配置的个人凭据。
 
 ## 平台与下载
 

@@ -1,6 +1,6 @@
 # DontForget (别忘了) - 完整用户使用指南
 
-欢迎使用 **别忘了 (DontForget)**！这是一款以本地任务管理、录音回放和可选大模型解析为核心的个人备忘录。当前Android／Windows／Linux发行版为 [v1.8.0](https://github.com/yarnway/dontforget/releases/tag/v1.8.0)；Apple平台继续验收，平台支持与实测范围见 [v1.7 验收总表](Release_Acceptance_v1.7.md)。
+欢迎使用 **别忘了 (DontForget)**！这是一款以本地任务管理、录音回放和可选大模型解析为核心的个人备忘录。当前Android／Windows／Linux发行版为 [v1.8.1](https://github.com/yarnway/dontforget/releases/tag/v1.8.1)；Apple平台继续验收，平台支持与实测范围见 [v1.7 验收总表](Release_Acceptance_v1.7.md)。
 
 ---
 
