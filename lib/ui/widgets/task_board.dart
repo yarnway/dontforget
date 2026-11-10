@@ -286,7 +286,7 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
           );
         }
         return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
           child: Column(
             key: const ValueKey('expanded-task-board'),
             children: [

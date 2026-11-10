@@ -1729,143 +1729,155 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             color: Theme.of(context).colorScheme.surface,
             child: SafeArea(
               bottom: false,
-              child: Column(
-                children: [
-                  ValueListenableBuilder<DateTime>(
-                    valueListenable: _noticeClock,
-                    builder: (context, _, _) {
-                      final now = DateTime.now();
-                      final missed = _missedReminders(reminders, now);
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ReminderNoticePanel(
-                            reminders: _visibleNotices(reminders, now),
-                            now: now,
-                            busyIds: _noticeOperations,
-                            onDismiss: _dismissNotice,
-                            onSnooze: (r) => _actOnNotice(r, snooze: true),
-                            onSnoozeUntil: (r, until) {
-                              final at = DateTime.now();
-                              if (!until.isAfter(at)) return;
-                              _performNoticeAction(
-                                r,
-                                () => ref
-                                    .read(remindersProvider.notifier)
-                                    .snoozeOccurrence(
-                                      r,
-                                      now: at,
-                                      duration: until.difference(at),
-                                    ),
-                                snooze: true,
-                              );
-                            },
-                            onSkip: (r) => _performNoticeAction(
-                              r,
-                              () => ref
-                                  .read(remindersProvider.notifier)
-                                  .skipOccurrence(r),
-                              snooze: false,
-                            ),
-                            onComplete: (r) => _actOnNotice(r, snooze: false),
-                            onReview: _toolBlocked ? null : _openNoticeReview,
-                          ),
-                          MissedRemindersBar(
-                            reminders: missed,
-                            onOpenMissed: _openMissedFilter,
-                            onAcknowledgeAll: () =>
-                                _acknowledgeAllMissed(missed),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                  if (digest.isNotEmpty)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: _openContextDigest,
-                        icon: const Icon(Icons.summarize_outlined, size: 18),
-                        label: Text(l10n.get('contextDigestTitle')),
+              child: Center(
+                child: ConstrainedBox(
+                  key: const ValueKey('home-content-frame'),
+                  constraints: const BoxConstraints(maxWidth: 1040),
+                  child: Column(
+                    children: [
+                      ValueListenableBuilder<DateTime>(
+                        valueListenable: _noticeClock,
+                        builder: (context, _, _) {
+                          final now = DateTime.now();
+                          final missed = _missedReminders(reminders, now);
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ReminderNoticePanel(
+                                reminders: _visibleNotices(reminders, now),
+                                now: now,
+                                busyIds: _noticeOperations,
+                                onDismiss: _dismissNotice,
+                                onSnooze: (r) => _actOnNotice(r, snooze: true),
+                                onSnoozeUntil: (r, until) {
+                                  final at = DateTime.now();
+                                  if (!until.isAfter(at)) return;
+                                  _performNoticeAction(
+                                    r,
+                                    () => ref
+                                        .read(remindersProvider.notifier)
+                                        .snoozeOccurrence(
+                                          r,
+                                          now: at,
+                                          duration: until.difference(at),
+                                        ),
+                                    snooze: true,
+                                  );
+                                },
+                                onSkip: (r) => _performNoticeAction(
+                                  r,
+                                  () => ref
+                                      .read(remindersProvider.notifier)
+                                      .skipOccurrence(r),
+                                  snooze: false,
+                                ),
+                                onComplete: (r) =>
+                                    _actOnNotice(r, snooze: false),
+                                onReview: _toolBlocked
+                                    ? null
+                                    : _openNoticeReview,
+                              ),
+                              MissedRemindersBar(
+                                reminders: missed,
+                                onOpenMissed: _openMissedFilter,
+                                onAcknowledgeAll: () =>
+                                    _acknowledgeAllMissed(missed),
+                              ),
+                            ],
+                          );
+                        },
                       ),
-                    ),
-                  Expanded(
-                    child: WorkspaceToolArea(
-                      tool: switch (_activeTool) {
-                        _WorkspaceTool.focus => FocusModeSheet(
-                          key: const ValueKey('focus-tool'),
-                          embedded: true,
-                          onClose: _closeWorkspaceTool,
+                      if (digest.isNotEmpty)
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: _openContextDigest,
+                            icon: const Icon(
+                              Icons.summarize_outlined,
+                              size: 18,
+                            ),
+                            label: Text(l10n.get('contextDigestTitle')),
+                          ),
                         ),
-                        _WorkspaceTool.export => DataExportSheet(
-                          key: const ValueKey('export-tool'),
-                          embedded: true,
-                          onClose: _closeWorkspaceTool,
-                          onBusyChanged: _setExportBusy,
+                      Expanded(
+                        child: WorkspaceToolArea(
+                          tool: switch (_activeTool) {
+                            _WorkspaceTool.focus => FocusModeSheet(
+                              key: const ValueKey('focus-tool'),
+                              embedded: true,
+                              onClose: _closeWorkspaceTool,
+                            ),
+                            _WorkspaceTool.export => DataExportSheet(
+                              key: const ValueKey('export-tool'),
+                              embedded: true,
+                              onClose: _closeWorkspaceTool,
+                              onBusyChanged: _setExportBusy,
+                            ),
+                            _WorkspaceTool.review => SpacedRepetitionSheet(
+                              key: const ValueKey('review-tool'),
+                              embedded: true,
+                              initialReminderId: _preferredReviewId,
+                              onClose: _closeWorkspaceTool,
+                              onCreateStudyPlan: () =>
+                                  _selectTool(_WorkspaceTool.study),
+                              onBusyChanged: (value) =>
+                                  setState(() => _toolBusy = value),
+                            ),
+                            _WorkspaceTool.digest => ContextDigestSheet(
+                              key: const ValueKey('digest-tool'),
+                              embedded: true,
+                              onClose: _closeWorkspaceTool,
+                              digestReminders: digest,
+                            ),
+                            _WorkspaceTool.graph => KnowledgeGraphScreen(
+                              key: const ValueKey('graph-tool'),
+                              embedded: true,
+                              onClose: _closeWorkspaceTool,
+                            ),
+                            _WorkspaceTool.dashboard => DashboardScreen(
+                              key: const ValueKey('dashboard-tool'),
+                              embedded: true,
+                              onClose: _closeWorkspaceTool,
+                              onBusyChanged: (value) =>
+                                  setState(() => _toolBusy = value),
+                            ),
+                            _WorkspaceTool.agent => AgentGoalPanel(
+                              key: const ValueKey('agent-tool'),
+                              controller: _agentGoal,
+                              busy: _agentBusy,
+                              onClose: _closeWorkspaceTool,
+                              onSubmit: _submitAgentGoal,
+                              onDiscard: _discardAgentDraft,
+                            ),
+                            _WorkspaceTool.study => StudyPlanPanel(
+                              key: const ValueKey('study-tool'),
+                              draft: _studyDraft,
+                              onClose: _closeWorkspaceTool,
+                              onReview: _openSpacedRepetitionSheet,
+                              onBusyChanged: (value) =>
+                                  setState(() => _toolBusy = value),
+                            ),
+                            _WorkspaceTool.learning => LearningQueuePanel(
+                              onClose: _closeWorkspaceTool,
+                            ),
+                            _WorkspaceTool.planning => PlanningPanel(
+                              onClose: _closeWorkspaceTool,
+                            ),
+                            null => null,
+                          },
+                          child: _isSearchOpen
+                              ? TaskSearchPanel(
+                                  query: _searchQuery,
+                                  onClearQuery: _clearSearch,
+                                  onPlayMedia: _playMedia,
+                                )
+                              : _buildWorkspaceOverview(reminders),
                         ),
-                        _WorkspaceTool.review => SpacedRepetitionSheet(
-                          key: const ValueKey('review-tool'),
-                          embedded: true,
-                          initialReminderId: _preferredReviewId,
-                          onClose: _closeWorkspaceTool,
-                          onCreateStudyPlan: () =>
-                              _selectTool(_WorkspaceTool.study),
-                          onBusyChanged: (value) =>
-                              setState(() => _toolBusy = value),
-                        ),
-                        _WorkspaceTool.digest => ContextDigestSheet(
-                          key: const ValueKey('digest-tool'),
-                          embedded: true,
-                          onClose: _closeWorkspaceTool,
-                          digestReminders: digest,
-                        ),
-                        _WorkspaceTool.graph => KnowledgeGraphScreen(
-                          key: const ValueKey('graph-tool'),
-                          embedded: true,
-                          onClose: _closeWorkspaceTool,
-                        ),
-                        _WorkspaceTool.dashboard => DashboardScreen(
-                          key: const ValueKey('dashboard-tool'),
-                          embedded: true,
-                          onClose: _closeWorkspaceTool,
-                          onBusyChanged: (value) =>
-                              setState(() => _toolBusy = value),
-                        ),
-                        _WorkspaceTool.agent => AgentGoalPanel(
-                          key: const ValueKey('agent-tool'),
-                          controller: _agentGoal,
-                          busy: _agentBusy,
-                          onClose: _closeWorkspaceTool,
-                          onSubmit: _submitAgentGoal,
-                          onDiscard: _discardAgentDraft,
-                        ),
-                        _WorkspaceTool.study => StudyPlanPanel(
-                          key: const ValueKey('study-tool'),
-                          draft: _studyDraft,
-                          onClose: _closeWorkspaceTool,
-                          onReview: _openSpacedRepetitionSheet,
-                          onBusyChanged: (value) =>
-                              setState(() => _toolBusy = value),
-                        ),
-                        _WorkspaceTool.learning => LearningQueuePanel(
-                          onClose: _closeWorkspaceTool,
-                        ),
-                        _WorkspaceTool.planning => PlanningPanel(
-                          onClose: _closeWorkspaceTool,
-                        ),
-                        null => null,
-                      },
-                      child: _isSearchOpen
-                          ? TaskSearchPanel(
-                              query: _searchQuery,
-                              onClearQuery: _clearSearch,
-                              onPlayMedia: _playMedia,
-                            )
-                          : _buildWorkspaceOverview(reminders),
-                    ),
+                      ),
+                      const InputBottomBar(),
+                    ],
                   ),
-                  const InputBottomBar(),
-                ],
+                ),
               ),
             ),
           ),

@@ -1,0 +1,62 @@
+{
+  "version": "1.8.1+67",
+  "source": "f3766d3f4cbbca5116d107f8208d71575788bf11",
+  "cases": [
+    {
+      "version": "1.8.1+67",
+      "source": "f3766d3f4cbbca5116d107f8208d71575788bf11",
+      "setup_sha256": "1c0f38412ebc70205622e2c7e6a7c97123a774ec01d612dd6488c8080c54dc5e",
+      "running_before_upgrade": false,
+      "acceptance_case": "bootstrap",
+      "version_before": [
+        1,
+        8,
+        0,
+        66
+      ],
+      "backup_verified": true,
+      "installer_exit": 0,
+      "force_close_allowed": false,
+      "payload_files_identical": 38,
+      "native_cli_exit": 0,
+      "schema": 17,
+      "all_business_fields_preserved": true,
+      "business_counts": {
+        "Reminders": 4,
+        "MediaRecords": 0,
+        "Settings": 1
+      },
+      "credential_files_preserved": true,
+      "gui_tested": false,
+      "package_origin": "local-candidate-sdk3.47.2"
+    },
+    {
+      "version": "1.8.1+67",
+      "source": "f3766d3f4cbbca5116d107f8208d71575788bf11",
+      "setup_sha256": "1c0f38412ebc70205622e2c7e6a7c97123a774ec01d612dd6488c8080c54dc5e",
+      "running_before_upgrade": true,
+      "acceptance_case": "fixed-running",
+      "version_before": [
+        1,
+        8,
+        1,
+        67
+      ],
+      "backup_verified": true,
+      "installer_exit": 0,
+      "force_close_allowed": false,
+      "payload_files_identical": 38,
+      "native_cli_exit": 0,
+      "schema": 17,
+      "all_business_fields_preserved": true,
+      "business_counts": {
+        "Reminders": 4,
+        "MediaRecords": 0,
+        "Settings": 1
+      },
+      "credential_files_preserved": true,
+      "gui_tested": false,
+      "package_origin": "local-candidate-sdk3.47.2"
+    }
+  ]
+}

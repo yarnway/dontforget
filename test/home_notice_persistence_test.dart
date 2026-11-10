@@ -168,6 +168,45 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
   }
 
+  testWidgets('home notice, board and composer align across viewport widths', (
+    tester,
+  ) async {
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await showHome(tester);
+    await tester.tap(find.byKey(const ValueKey('workspace-view-board')));
+    await tester.pump(const Duration(milliseconds: 100));
+    for (final width in [1440.0, 1920.0, 900.0, 390.0]) {
+      await tester.binding.setSurfaceSize(Size(width, 1000));
+      await tester.pump(const Duration(milliseconds: 100));
+      final frame = tester.getRect(
+        find.byKey(const ValueKey('home-content-frame')),
+      );
+      expect(frame.width, closeTo(width > 1040 ? 1040 : width, .01));
+      expect(frame.center.dx, closeTo(width / 2, .01));
+      Rect surface(String key) => tester.getRect(
+        find
+            .descendant(
+              of: find.byKey(ValueKey(key)),
+              matching: find.byType(DecoratedBox),
+            )
+            .first,
+      );
+      final notice = surface('reminder-notice-panel');
+      final composer = surface('composer-frame');
+      final board = tester.getRect(
+        find.byKey(
+          ValueKey(width < 640 ? 'compact-task-board' : 'expanded-task-board'),
+        ),
+      );
+      for (final rect in [notice, composer, board]) {
+        expect(rect.left, closeTo(frame.left + 12, .01));
+        expect(rect.right, closeTo(frame.right - 12, .01));
+      }
+      expect(tester.takeException(), isNull, reason: 'viewport $width');
+    }
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('acknowledgement survives a new database and home session', (
     tester,
   ) async {

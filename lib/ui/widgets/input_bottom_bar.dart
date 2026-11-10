@@ -888,7 +888,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                         ? constraints.maxWidth
                         : MediaQuery.sizeOf(context).width,
                   ) -
-                  36,
+                  40,
             ),
             availableHeight: math.max(
               0,
@@ -1426,7 +1426,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
       top: false,
       child: Container(
         key: const ValueKey('composer-frame'),
-        margin: const EdgeInsets.fromLTRB(10, 0, 10, 8),
+        margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
         padding: EdgeInsets.symmetric(
           horizontal: 8,
           vertical: isWindows
@@ -1593,7 +1593,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                     ),
                   ),
                   margin: const EdgeInsets.symmetric(
-                    horizontal: 18,
+                    horizontal: 12,
                     vertical: 8,
                   ),
                   padding: const EdgeInsets.all(14),

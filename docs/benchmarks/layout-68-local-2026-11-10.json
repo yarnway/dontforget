@@ -1,0 +1,25 @@
+{
+  "version": "1.8.1+68",
+  "source_state": "pre-commit-final-working-tree",
+  "schema": 17,
+  "flutter_sdk": "3.47.2",
+  "analyze_issues": 0,
+  "suites": [
+    {
+      "log": "layout-tests.log",
+      "passed": 86
+    },
+    {
+      "log": "footer-tests.log",
+      "passed": 19
+    }
+  ],
+  "full_local_suite_rerun": false,
+  "full_fixed_sdk_ci": "pending",
+  "logs_sha256": {
+    "layout-tests-initial.log": "413d0e815044a9abd901f0163c9b9e37be4d49aa545da9d4bee83325b2540af8",
+    "layout-tests.log": "a0aaf0ee2ff741563b0d045b3b16d6b8e2b79dca62876f38d93754c475851a85",
+    "footer-tests.log": "9c08e02b1ebb27c4f0649621bbd9804b614cf78e675303a149a8fb3238e7f58e",
+    "analyze.log": "9be43520d072b549e99582e97d3e17f02a3111f21f5f362f7e7009838cbfae7f"
+  }
+}

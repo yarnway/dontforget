@@ -390,7 +390,15 @@ void main() {
             expect(attachment.center.dy, greaterThan(area.bottom));
             expect(send.center.dy, closeTo(attachment.center.dy, .5));
             expect(send.left, greaterThanOrEqualTo(attachment.right));
-            expect(frame.right - send.right, inInclusiveRange(8, 24));
+            final paintedFrame = tester.getRect(
+              find
+                  .descendant(
+                    of: find.byKey(const ValueKey('composer-frame')),
+                    matching: find.byType(DecoratedBox),
+                  )
+                  .first,
+            );
+            expect(paintedFrame.right - send.right, inInclusiveRange(8, 24));
             await tester.enterText(
               find.byType(TextField),
               'Editable draft\nSecond line',

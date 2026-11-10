@@ -159,16 +159,25 @@ class _AiProfilesScreenState extends ConsumerState<AiProfilesScreen> {
         title: Text(t('aiProfilesTitle')),
       ),
       bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            16,
-            16,
-            16,
-            16 + MediaQuery.viewInsetsOf(context).bottom,
-          ),
-          child: FilledButton(
-            onPressed: saving || !ready ? null : onSave,
-            child: Text(saving ? t('aiProfilesSaving') : t('aiProfilesSave')),
+        top: false,
+        child: Center(
+          heightFactor: 1,
+          child: SizedBox(
+            width: 760,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                16,
+                16,
+                16 + MediaQuery.viewInsetsOf(context).bottom,
+              ),
+              child: FilledButton(
+                onPressed: saving || !ready ? null : onSave,
+                child: Text(
+                  saving ? t('aiProfilesSaving') : t('aiProfilesSave'),
+                ),
+              ),
+            ),
           ),
         ),
       ),

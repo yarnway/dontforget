@@ -149,12 +149,19 @@ class _SpeechSettingsScreenState extends ConsumerState<SpeechSettingsScreen> {
         title: Text(t('title')),
       ),
       bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: FilledButton(
-            key: const ValueKey('speech-save'),
-            onPressed: _ready && !_saving ? save : null,
-            child: Text(AppLocalizations.of(context).get('save')),
+        top: false,
+        child: Center(
+          heightFactor: 1,
+          child: SizedBox(
+            width: 720,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: FilledButton(
+                key: const ValueKey('speech-save'),
+                onPressed: _ready && !_saving ? save : null,
+                child: Text(AppLocalizations.of(context).get('save')),
+              ),
+            ),
           ),
         ),
       ),

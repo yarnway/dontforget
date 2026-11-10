@@ -1,3 +1,4 @@
+import 'package:dont_forget/ui/screens/ai_profiles_screen.dart';
 import 'package:flutter/gestures.dart';
 import 'package:dont_forget/ui/screens/settings_screen.dart';
 import 'package:dont_forget/ui/widgets/credential_status_panel.dart';
@@ -126,6 +127,41 @@ void main() {
     await tester.tap(target);
     await settle(tester);
   }
+
+  testWidgets('configuration save bars align with their content columns', (
+    tester,
+  ) async {
+    for (final width in [390.0, 1440.0]) {
+      for (final page in <Widget>[
+        const SettingsScreen(area: SettingsArea.ai),
+        const AiProfilesScreen(),
+        const SpeechSettingsScreen(),
+      ]) {
+        await show(tester, page, width: width);
+        final list = find
+            .descendant(
+              of: find.byWidget(page),
+              matching: find.byType(ListView),
+            )
+            .first;
+        final viewport = tester.getRect(list);
+        final padding = tester.widget<ListView>(list).padding! as EdgeInsets;
+        final button = tester.getRect(
+          find
+              .descendant(
+                of: find.byWidget(page),
+                matching: find.byType(FilledButton),
+              )
+              .last,
+        );
+        expect(button.left, closeTo(viewport.left + padding.left, .01));
+        expect(button.right, closeTo(viewport.right - padding.right, .01));
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+        await tester.pump();
+      }
+    }
+  });
 
   testWidgets(
     'AI settings separate speech, profiles and credentials without extra card layers',

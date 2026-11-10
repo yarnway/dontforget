@@ -747,7 +747,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 ),
                               ),
                             ),
-                          const SizedBox(width: 12),
+                          if (widget.area == null) const SizedBox(width: 12),
                           Expanded(
                             child: FilledButton(
                               onPressed:
