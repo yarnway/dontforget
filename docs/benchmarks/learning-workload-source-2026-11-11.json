@@ -1,0 +1,30 @@
+{
+  "date": "2026-11-11",
+  "scope": "Unreleased seven-day known-word schedule projection, stage49 partial",
+  "local_flutter": "3.47.2",
+  "ci_flutter": "3.44.9",
+  "local_related_tests_passed": 28,
+  "local_analyze_issues": 0,
+  "schema": 17,
+  "new_dependencies": false,
+  "pubspec_changed": false,
+  "business_writes_added": false,
+  "ordinary_app_installed_this_work": false,
+  "windows_running_upgrade_tested_for_this_feature": false,
+  "native_device_ui_tested_for_this_feature": false,
+  "release_unchanged": "1.8.3+72",
+  "initial_failure": "Missing workspace drafts provider import; corrected. First log retained. Initial lint findings corrected before final validation.",
+  "files_sha256": {
+    "lib/services/learning_workload_service.dart": "d11cc55617368066afb94b2ec71c14eb33e05c32091868e1fd0d7267df196fd7",
+    "lib/ui/widgets/learning_workload_card.dart": "5a4ca945789092d6a3f2a14c8b7be596017eff0054ae1691708ad809af287646",
+    "lib/ui/screens/study_plans_screen.dart": "0365744a41d793ac0801a2197485ff352d9b41f4bd9fab0e891d630ef11ee89e",
+    "lib/l10n/study_management_strings.dart": "51936e6caa08d7797331bc722d25a1a9a44cc048b443bbf3b02e4dafdc35ef6a",
+    "test/learning_workload_test.dart": "64471243a34dcfb17da2bb6a7870c4ebf51f3ba82415453015da1fd6b43e8efa",
+    "test/study_plans_screen_test.dart": "1648bedda90027463841022580ef56ff8ceade70cfbcb4a079772b6388e8ef2a"
+  },
+  "logs_sha256": {
+    "tests.log": "49607d79dc86b49b08f0afd751b62af3f4854e4abca46ee3683428e12b3e8313",
+    "tests-first-failure.log": "16e2230d9c7a3efacb12e721325f46489dc6252115b8592f05882f99b077c5b4",
+    "analyze.log": "9df25ce75c5bebb6e407d07df54c40478dbeee73f20131cde5630c7ef52684bb"
+  }
+}

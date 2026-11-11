@@ -8,6 +8,7 @@ import '../../providers/providers.dart';
 import '../../services/recovery/runtime_gate.dart';
 import '../formatters/local_date_time.dart';
 import '../widgets/inline_feedback.dart';
+import '../widgets/learning_workload_card.dart';
 import 'notification_repair_screen.dart';
 
 class StudyPlansScreen extends ConsumerStatefulWidget {
@@ -144,9 +145,12 @@ class _StudyPlansScreenState extends ConsumerState<StudyPlansScreen> {
                         : ListView.builder(
                             key: const ValueKey('study-plan-list'),
                             padding: const EdgeInsets.all(16),
-                            itemCount: groups.length,
+                            itemCount: groups.length + 1,
                             itemBuilder: (context, index) {
-                              final group = groups[index];
+                              if (index == 0) {
+                                return const LearningWorkloadCard();
+                              }
+                              final group = groups[index - 1];
                               final paused = group.pending
                                   .where((row) => row.details.paused)
                                   .length;

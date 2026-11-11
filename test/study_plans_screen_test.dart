@@ -77,6 +77,22 @@ void main() {
     await tester.pump();
   }
 
+  testWidgets('workload is collapsed and refreshes after pausing a plan', (tester) async {
+    await tester.runAsync(() => h.seed(batch('p-0').copyWith(wordProgressJson: null, nextReviewAt: DateTime.now())));
+    await show(tester);
+    expect(find.text('未来7天'), findsOneWidget);
+    expect(find.text('1 词已排期'), findsOneWidget);
+    await tester.tap(find.byKey(const PageStorageKey('learning-workload')));
+    await tester.pumpAndSettle();
+    expect(find.text('按当前排期，未计后续复习'), findsOneWidget);
+    await tester.tap(find.byKey(const PageStorageKey('learning-workload')));
+    await tester.pumpAndSettle();
+    await menu(tester, '暂停计划');
+    await settle(tester);
+    expect(find.text('0 词已排期'), findsOneWidget);
+    await finish(tester);
+  });
+
   testWidgets('study editor opens plan management without losing its draft', (
     tester,
   ) async {
@@ -193,6 +209,8 @@ void main() {
         await tester.tap(
           find.byKey(const PageStorageKey('study-plan-members-p')),
         );
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const PageStorageKey('learning-workload')));
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
         await finish(tester);
