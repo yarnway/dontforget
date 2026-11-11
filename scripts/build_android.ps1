@@ -16,13 +16,9 @@ try {
     if (-not (Test-Path -LiteralPath $registrant -PathType Leaf)) {
         throw "Android plugin registration is missing. Run flutter pub get before building with -NoPub."
     }
-    $androidBuildArgs = if ($DisableKotlinIncremental) {
-        @('--android-project-arg=kotlin.incremental=false')
-    } else { @() }
-    & flutter --no-version-check build apk --release --no-pub @androidBuildArgs
-    if ($LASTEXITCODE -ne 0) { throw "APK build failed" }
-    & flutter --no-version-check build appbundle --release --no-pub @androidBuildArgs
-    if ($LASTEXITCODE -ne 0) { throw "AAB build failed" }
+    $variantArgs = if ($DisableKotlinIncremental) { @('--disable-kotlin-incremental') } else { @() }
+    & python scripts/build_android_variants.py @variantArgs
+    if ($LASTEXITCODE -ne 0) { throw "Android variants build failed" }
     & python scripts/package_artifacts.py --platform android
     if ($LASTEXITCODE -ne 0) { throw "Android packaging failed" }
 } finally { Pop-Location }

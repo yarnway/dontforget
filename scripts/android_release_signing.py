@@ -65,7 +65,7 @@ def tool(name, environment):
     return found
 
 
-def verify_android_signatures(apk, aab, expected, environment=None):
+def verify_android_signatures(apk, aab, expected, environment=None, *, additional_apks=()):
     env = dict(os.environ if environment is None else environment)
     expected = certificate(expected)
     sdk = env.get('ANDROID_SDK_ROOT') or env.get('ANDROID_HOME')
@@ -79,16 +79,17 @@ def verify_android_signatures(apk, aab, expected, environment=None):
     verifier = next((path for path in stable if path.parent.name == '36.0.0'), stable[-1])
     def run(args):
         return subprocess.run(args, env=env, capture_output=True, text=True, errors='replace', timeout=90)
-    checked = run([str(verifier), 'verify', '--verbose', '--print-certs', str(apk)])
-    apk_certificates = re.findall(r'Signer #\d+ certificate SHA-256 digest:\s*([a-fA-F0-9]+)', checked.stdout)
-    if checked.returncode:
-        # Verification has no password arguments. Tool errors and public
-        # certificate identities are useful diagnostics and contain no key.
-        raise ValueError(f'APK verifier {verifier.parent.name} exited {checked.returncode}: {checked.stderr[:2000]}')
-    if len(apk_certificates) != 1:
-        raise ValueError('APK verifier did not return exactly one certificate')
-    if certificate(apk_certificates[0]) != expected:
-        raise ValueError('APK signing certificate differs from pinned identity: ' + apk_certificates[0])
+    for package in (apk, *additional_apks):
+        checked = run([str(verifier), 'verify', '--verbose', '--print-certs', str(package)])
+        apk_certificates = re.findall(r'Signer #\d+ certificate SHA-256 digest:\s*([a-fA-F0-9]+)', checked.stdout)
+        if checked.returncode:
+            # Verification has no password arguments. Tool errors and public
+            # certificate identities are useful diagnostics and contain no key.
+            raise ValueError(f'APK verifier {verifier.parent.name} exited {checked.returncode}: {checked.stderr[:2000]}')
+        if len(apk_certificates) != 1:
+            raise ValueError('APK verifier did not return exactly one certificate')
+        if certificate(apk_certificates[0]) != expected:
+            raise ValueError('APK signing certificate differs from pinned identity: ' + apk_certificates[0])
     # A self-signed Android certificate has no public CA chain (strict code 4).
     # Other strict warnings, including unsigned entries (16), are rejected.
     checked = run([tool('jarsigner', env), '-J-Duser.language=en', '-J-Duser.country=US', '-verify', '-strict', str(aab)])

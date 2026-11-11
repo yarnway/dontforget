@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path, PurePosixPath
 from package_artifacts import ROOT, MACOS_ARCHITECTURES, digest, version
+from android_apk_variants import requires_arm64, verify_pair
 
 PLATFORMS = {'windows', 'android', 'linux', 'macos', 'ios'}
 
@@ -38,7 +39,8 @@ def verify(directory, expected_version, expected_build, revision, platform=None)
             if 'Contents/MacOS/dont_forget' not in binary_paths:
                 raise ValueError('Missing macOS universal binary evidence')
         entries = manifest.get('artifacts', [])
-        if len(entries) != (2 if name in {'android', 'windows'} else 1):
+        compact = name == 'android' and requires_arm64(expected_version)
+        if len(entries) != (3 if compact else 2 if name in {'android', 'windows'} else 1):
             raise ValueError(f'Incomplete artifact set: {name}')
         checksum_lines = []
         for entry in entries:
@@ -52,6 +54,15 @@ def verify(directory, expected_version, expected_build, revision, platform=None)
             if artifact.stat().st_size != entry['bytes'] or digest(artifact) != entry['sha256']:
                 raise ValueError(f'Artifact integrity mismatch: {filename}')
             checksum_lines.append(f"{entry['sha256']}  {filename}\n")
+        if compact:
+            label = '' if manifest.get('signing') == 'release-key' else '_test-signed'
+            universal = f'DontForget_Android{label}_v{expected_version}.apk'
+            arm64 = f'DontForget_Android_arm64{label}_v{expected_version}.apk'
+            required = {universal, arm64, f'DontForget_Android{label}_v{expected_version}.aab'}
+            if {entry['file'] for entry in entries} != required:
+                raise ValueError('Android variant filenames mismatch')
+            if manifest.get('android_variants') != verify_pair(directory / universal, directory / arm64):
+                raise ValueError('Android variant evidence mismatch')
         if (directory / f'{name}-SHA256SUMS.txt').read_text() != ''.join(checksum_lines):
             raise ValueError(f'Checksum manifest mismatch: {name}')
     return len(seen_files)

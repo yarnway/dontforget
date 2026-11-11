@@ -13,6 +13,7 @@ import tarfile
 import tempfile
 import zipfile
 from android_release_signing import verify_android_signatures
+from android_apk_variants import requires_arm64, verify_pair
 
 ROOT = Path(__file__).resolve().parents[1]
 MACOS_ARCHITECTURES = {'arm64', 'x86_64'}
@@ -126,6 +127,7 @@ def package(root, platform, revision=None):
     native_architectures = None
     native_extensions = None
     android_certificate = None
+    android_variants = None
     with tempfile.TemporaryDirectory(prefix=f'{platform}-', dir=dist) as work:
         staging = Path(work)
         if platform == 'windows':
@@ -142,19 +144,24 @@ def package(root, platform, revision=None):
             signing = 'unsigned'
         elif platform == 'android':
             distribution = os.environ.get('DONTFORGET_REQUIRE_RELEASE_SIGNING') == '1'
+            apk = require(root / 'build/app/outputs/flutter-apk/app-release.apk')
+            aab = require(root / 'build/app/outputs/bundle/release/app-release.aab')
+            arm64 = None
+            if requires_arm64(release_version):
+                arm64 = require(root / 'build/app/outputs/flutter-apk/app-arm64-v8a-release.apk')
+                android_variants = verify_pair(apk, arm64)
             if distribution:
                 android_certificate = verify_android_signatures(
-                    require(root / 'build/app/outputs/flutter-apk/app-release.apk'),
-                    require(root / 'build/app/outputs/bundle/release/app-release.aab'),
-                    os.environ.get('DONTFORGET_ANDROID_CERT_SHA256', ''),
+                    apk, aab, os.environ.get('DONTFORGET_ANDROID_CERT_SHA256', ''),
+                    **({'additional_apks': [arm64]} if arm64 else {}),
                 )
-            for extension, source in {
-                'apk': 'build/app/outputs/flutter-apk/app-release.apk',
-                'aab': 'build/app/outputs/bundle/release/app-release.aab',
-            }.items():
-                label = '' if distribution else '_test-signed'
-                name = f'DontForget_Android{label}_v{release_version}.{extension}'
-                shutil.copy2(require(root / source), staging / name)
+            label = '' if distribution else '_test-signed'
+            sources = {f'DontForget_Android{label}_v{release_version}.apk': apk,
+                       f'DontForget_Android{label}_v{release_version}.aab': aab}
+            if arm64:
+                sources[f'DontForget_Android_arm64{label}_v{release_version}.apk'] = arm64
+            for name, source in sources.items():
+                shutil.copy2(source, staging / name)
                 names.append(name)
             signing = 'release-key' if distribution else 'test-key'
         elif platform == 'linux':
@@ -208,6 +215,8 @@ def package(root, platform, revision=None):
         'revision': revision, 'platform': platform, 'signing': signing,
         'runtime_acceptance': 'NOT_PERFORMED', 'artifacts': entries,
     }
+    if android_variants is not None:
+        manifest['android_variants'] = android_variants
     if native_extensions is not None:
         manifest['native_extensions'] = native_extensions
     if android_certificate is not None:

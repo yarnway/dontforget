@@ -15,6 +15,7 @@ import urllib.request
 import urllib.error
 import zipfile
 from android_release_signing import certificate, verify_android_signatures
+from android_apk_variants import requires_arm64
 from package_artifacts import ROOT, digest, version
 from verify_artifacts import verify, verify_tag
 
@@ -141,7 +142,8 @@ def validate_files(directory, revision, release_version, build_number, expected_
             if (manifest.get('signing') != 'release-key' or
                     certificate(manifest.get('certificate_sha256', '')) != certificate(expected_certificate) or
                     {entry['file'] for entry in manifest['artifacts']} !=
-                    {f'DontForget_Android_v{release_version}.{ext}' for ext in ('apk', 'aab')}):
+                    ({f'DontForget_Android_v{release_version}.{ext}' for ext in ('apk', 'aab')} |
+                     ({f'DontForget_Android_arm64_v{release_version}.apk'} if requires_arm64(release_version) else set()))):
                 raise ValueError('A distribution-signed Android package is required')
         else:
             name = platform + '-startup.json'
@@ -193,7 +195,9 @@ def prepare(run_id, directory, github):
             extract_archive(archive, directory)
     reports = validate_files(directory, revision, release_version, build_number, expected_certificate)
     verify_android_signatures(directory / f'DontForget_Android_v{release_version}.apk',
-                              directory / f'DontForget_Android_v{release_version}.aab', expected_certificate)
+                              directory / f'DontForget_Android_v{release_version}.aab', expected_certificate,
+                              **({'additional_apks': [directory / f'DontForget_Android_arm64_v{release_version}.apk']}
+                                 if requires_arm64(release_version) else {}))
     receipt = {'version': release_version, 'build_number': build_number, 'revision': revision,
                'ci_run': run_id, 'ci_url': run['html_url'], 'platforms': list(PLATFORMS),
                'android_certificate_sha256': expected_certificate,
