@@ -1,8 +1,10 @@
 # DontForget 打包与发布验收
 
-当前候选版本和构建号以 `pubspec.yaml` 为准，Flutter 固定为 3.44.9。构建成功、打包成功、安装运行、系统通知和正式发布分别验收。当前执行状态见 [v1.7 发布验收总表](Release_Acceptance_v1.7.md)，历史结果见 [v1.6 阶段验收记录](Native_Acceptance_v1.6.md) 和 [v1.5.1 验收记录](Release_Acceptance_v1.5.1.md)。
+当前稳定版为v1.8.2／build71、schema17，Android固定发行签名APK／AAB、Windows和Linux已发布，见[本轮发行](Release_1.8.2_71_2026-11-11.md)。下列旧版本案例保留各自归属。
 
-本机当前 `+48` Windows产物与Android QA debug包保留于 `dist/candidate-1.7.0+48/`，旧+47包不覆盖；构建与Pixel数据保持升级结果见[本轮验收](Native_Media_Routing_48_2026-11-03.md)，前轮完整PE检查见[+47记录](Windows_Android_Build_47_2026-11-03.md)。安装验收逐项比较manifest的版本与构建号，不仅比较语义版本前缀。
+当前候选版本和构建号以 `pubspec.yaml` 为准，Flutter 固定为 3.44.9。构建成功、打包成功、安装运行、系统通知和正式发布分别验收。当前执行状态见[阶段台账](Next_Steps_2026-11-02.md)，v1.7历史范围见[验收总表](Release_Acceptance_v1.7.md)，历史结果见 [v1.6 阶段验收记录](Native_Acceptance_v1.6.md) 和 [v1.5.1 验收记录](Release_Acceptance_v1.5.1.md)。
+
+历史 `+48` Windows产物与Android QA debug包保留于 `dist/candidate-1.7.0+48/`，旧+47包不覆盖；构建与Pixel数据保持升级结果见[本轮验收](Native_Media_Routing_48_2026-11-03.md)，前轮完整PE检查见[+47记录](Windows_Android_Build_47_2026-11-03.md)。安装验收逐项比较manifest的版本与构建号，不仅比较语义版本前缀。
 
 ## 构建与产物
 
@@ -83,7 +85,7 @@ Linux 的编译开发库不等于媒体运行时插件。使用 `--no-install-re
 
 优先运行生成的 Inno 安装器。`scripts/Install.ps1` 会校验清单与当前源码提交后打开该安装器，不再递归删除安装目录内数据库。`scripts/Uninstall.ps1` 仅委托该目录的 `unins000.exe`；没有受管卸载程序的旧安装会停止，需先备份并迁移。Inno 只移除自己安装的文件，保留未知文件与历史数据库；不额外递归删除整个安装目录。
 
-升级前在独立测试账号备份原始数据库与附件。保留旧版安装件和数据副本。公开 v1.7.0-rc.33 使用 DB schema 14，本地主线当前使用 schema 16（源码见 `lib/data/database_helper.dart`），不能承诺直接用旧程序降级读取，回退应恢复完整的升级前副本。macOS 候选默认迁移增量通知日志，安装旧程序前须先[退出并导出最新 v1 日志](Notification_Storage_Upgrade.md)；旧程序不一定认识存储选择器门禁。不要在唯一一份真实用户数据上执行故障注入或卸载演练。
+升级前在独立测试账号备份原始数据库与附件。保留旧版安装件和数据副本。公开 v1.7.0-rc.33 使用 DB schema 14，本地主线当前使用 schema 17（源码见 `lib/data/database_helper.dart`），不能承诺直接用旧程序降级读取，回退应恢复完整的升级前副本。macOS 候选默认迁移增量通知日志，安装旧程序前须先[退出并导出最新 v1 日志](Notification_Storage_Upgrade.md)；旧程序不一定认识存储选择器门禁。不要在唯一一份真实用户数据上执行故障注入或卸载演练。
 
 ## P1 持续日期源码的本地构建（2026-10-27）
 

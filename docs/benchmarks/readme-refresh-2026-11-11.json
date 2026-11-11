@@ -1,0 +1,61 @@
+{
+  "runtime_version": "1.8.2+71",
+  "released_source": "de4bda47a8759c4bff634d115d65f8bd4ec7e14a",
+  "runtime_lib_tree": "a324cae5fdbbb5a9e3321525bbdbd32be111044e",
+  "matches_released_runtime_lib_tree": true,
+  "README_bytes": 6714,
+  "local_readme_links_and_images_valid": true,
+  "analyze_issues": 0,
+  "screenshot_scope": "Flutter rendered settings; not native Windows GUI",
+  "screenshots_sha256": {
+    "settings-desktop-dark.png": "d064f8fb99e2cd7229573a3a344ee4d83843f583f8029b0141653accfb36fd8e",
+    "settings-desktop-light.png": "e210d428ec03a837224d011de6aa4614f66029dabfb4a88cf90529d6b28ff264"
+  },
+  "github_render": {
+    "renderer": "GitHub Markdown API, gfm mode",
+    "h1": 1,
+    "sections": 6,
+    "tables": 3,
+    "theme_picture_preserved": true,
+    "details_preserved": true,
+    "all_images_have_alt": true,
+    "rendered_bytes": 10389
+  },
+  "release_links": {
+    "tag": "v1.8.2",
+    "latest_confirmed": true,
+    "release_url": "https://github.com/yarnway/dontforget/releases/tag/v1.8.2",
+    "download_links_checked": 5,
+    "files": [
+      {
+        "file": "DontForget_Setup_v1.8.2.exe",
+        "bytes": 14669662,
+        "digest": "sha256:96ecd3be12bc00bebb04f6a3ba5daab2a54f3abfc127caea4d28b2b1232492ef"
+      },
+      {
+        "file": "DontForget_Windows_Portable_v1.8.2.zip",
+        "bytes": 17894494,
+        "digest": "sha256:68a2fab3a58bc34d92efd0594ea6547603b51dbbab3529c7a97370f81df0d5b6"
+      },
+      {
+        "file": "DontForget_Android_v1.8.2.apk",
+        "bytes": 76473084,
+        "digest": "sha256:8e09e362cfce6835adcf1a9cb7ce217994886bd2a398c8db45d68eeab4e6d7d1"
+      },
+      {
+        "file": "DontForget_Linux_x64_v1.8.2.tar.gz",
+        "bytes": 14401974,
+        "digest": "sha256:e10c202379a4487fded953e28f3a34f3388808b637ef70630e8e870a5b94e615"
+      },
+      {
+        "file": "DontForget_Android_v1.8.2.aab",
+        "bytes": 73247117,
+        "digest": "sha256:e6bd8b6f2362332e64fe65c7d990b469edb1a19fcd6d1ba54e8f36da221bb8eb"
+      }
+    ]
+  },
+  "README_sha256": "c8bceecf101e829a6034cd5b1267609dec0d0d0732a45f722e9865ad2adf4c66",
+  "rendered_html_sha256": "a6effa30b397ac6764b5ddf5fe8dc0497a8bc160ba8c9be9797d9fd72a30a309",
+  "date": "2026-11-11",
+  "app_version_changed": false
+}

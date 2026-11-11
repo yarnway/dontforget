@@ -1,93 +1,99 @@
+<div align="center">
+
 # 别忘了 · DontForget
 
-本地优先的备忘与任务工作台。随手记录文字、录音和附件，按紧急提醒、重点跟进、常规待办与备忘便签管理事项；需要智能提取时，再连接自己配置的模型服务。
+**随手记录，有序跟进。**
 
-[![Flutter](https://img.shields.io/badge/Flutter-3.44.9-02569B?logo=flutter)](https://flutter.dev)
-[![Release](https://img.shields.io/badge/Release-v1.8.2-007F83)](https://github.com/yarnway/dontforget/releases/tag/v1.8.2)
+本地优先的备忘与任务工作台，让文字、录音、附件和学习计划各有归处。
 
-[使用指南](docs/User_Guide.md) · [开发指南](docs/Developer_Guide.md) · [架构](docs/Architecture_Design.md) · [变更日志](docs/Changelog.md)
+[![Release](https://img.shields.io/badge/release-v1.8.2-007F83)](https://github.com/yarnway/dontforget/releases/tag/v1.8.2)
+[![Build](https://github.com/yarnway/dontforget/actions/workflows/build_and_release.yml/badge.svg?branch=main)](https://github.com/yarnway/dontforget/actions/workflows/build_and_release.yml)
+[![Flutter](https://img.shields.io/badge/Flutter-3.44.9-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
+[![Platforms](https://img.shields.io/badge/Windows%20%C2%B7%20Android%20%C2%B7%20Linux-334155)](#下载)
 
-当前三平台正式版为 **v1.8.2 / build71**。精简提醒和配置文案，支持学习计划整组暂停、继续与回收站。[分层验收](docs/Release_1.8.2_71_2026-11-11.md)和[剩余阶段](docs/Next_Steps_2026-11-02.md)分别维护。
+[下载](#下载) · [功能](#功能) · [快速开始](#快速开始) · [开发](#开发) · [文档](#文档)
 
-记录与提醒的阶段设计见[分阶段功能清单](docs/Recording_Reminders_Phases.md)，用药计划、出门清单、附件备份和学习管理见[实现索引](docs/Planning_Implementation.md)。当前源码、自动化、安装包与实机范围以[本轮验收](docs/Release_1.8.2_71_2026-11-11.md)为准。
+</div>
 
-## v1.8：流式语音与简洁录入
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/settings-desktop-dark.png">
+  <img src="docs/images/settings-desktop-light.png" alt="宽屏设置页：语言、外观、输入方式及功能入口" width="1200">
+</picture>
 
-Android／Windows／Linux [v1.8.2已发布](https://github.com/yarnway/dontforget/releases/tag/v1.8.2)。录音就绪即提前识别，上滑预览，右滑编辑或到明确落点松手发送；个人凭据仅本地配置。Windows默认单行并按内容展开，响应式设置和空间管理适配手机与桌面。[发行记录](docs/Release_1.8.2_71_2026-11-11.md)。
+<p align="center"><sub>界面示例 · 合成数据 · 支持明亮、暗黑与跟随系统</sub></p>
 
-- **按状态找任务**：搜索页直接浏览全部、待办、今日提醒、提醒时间已过或已完成事项，无需先输入文字；提醒时间不是事件截止时间。
-- **组合关键词**：同时搜索标题、摘要和子任务；空格分隔的关键词可以出现在不同字段中。
-- **排序与重置**：支持提醒时间优先、最近创建优先，一次重置搜索、筛选和排序。
-- **阅读更舒适**：宽屏结果限制行宽，窄屏控件换行；支持深浅主题、大字体和键盘操作。
-- **明确报告来源**：统计复盘标明模型或本地结果，模型失败可重试；数据变化提示更新，复制失败会明确反馈。
-- **图谱与列表**：图谱稳定布局，每页最多显示 120 项及页内关联；完整结果可搜索、翻页或按列表浏览。
-- **编辑保护**：离开未保存详情时可继续编辑、放弃修改或保存并返回。
-- **复习与专注**：复习显示保存结果与下次日期；专注面板明确当前会话状态、提醒范围及失败重试，支持中文、English 和日本語。
-- **摘要与导出**：情境摘要跟随任务与提醒轮次更新；CSV 支持选择保存位置、三语言字段和明确的取消/失败反馈。
-- **编辑与工具**：工具使用非遮挡工作区面板，底部输入独立可用；目标与学习计划草稿跨工具保留，放弃需确认。详情支持保存/退出快捷键，工具选择支持搜索、方向键及输入法保护。
-- **计划整组管理**：从学习计划、复习或每日练习进入文件夹入口，集中暂停、继续或移至回收站；保留词条进度和附件。
-- **英语学习计划**：四级、六级、考研、雅思、托福，模型准备词汇与建议时刻，预览编辑后确认创建。按批次复习反馈推进默认 1/2/4/7/15 天间隔并更新提醒；入口为“更多功能 → 词汇学习计划”。
-- **外观与输入偏好**：跟随系统、明亮、暗黑独立保存；可选回车发送或仅发送按钮，Shift+Enter 换行。空输入区按住录音，上滑预览文字、向左取消、向右松手编辑；继续右滑到明确落点可松手发送，普通松手保存语音。iOS语音及真实采集仍需对应设备验收。
-- **减少重复计算**：编辑一条任务时复用其余任务的搜索文本，列表继续按需创建卡片；统计按任务版本缓存汇总，报告操作不会重复扫描任务。
-- **P0 记录与提醒集成**：持久化草稿、事项截止时间、AI 提案预览确认，以及 schema 16 对两类历史 schema 14／15 的升级与备份兼容，详见 [P0 阶段记录](docs/UX_P0_Record_Reminder.md)。
+## 下载
 
-恢复、提醒持久化与多模型配置沿用 v1.6 基础；真实 DST、跨供应商服务及各平台设备验收仍以 [v1.6 验收记录](docs/Iteration_v1.6.md)为准，版本号变化不代表这些验收完成。
+**当前稳定版：v1.8.2 · build71**　[发行说明与校验文件](https://github.com/yarnway/dontforget/releases/tag/v1.8.2)
 
-## 日常使用
+| 平台 | 下载 | 运行基线 |
+| :--- | :--- | :--- |
+| Windows x64 | [安装版 EXE](https://github.com/yarnway/dontforget/releases/download/v1.8.2/DontForget_Setup_v1.8.2.exe) · [便携版 ZIP](https://github.com/yarnway/dontforget/releases/download/v1.8.2/DontForget_Windows_Portable_v1.8.2.zip) | Windows 10 / 11 |
+| Android | [通用 APK](https://github.com/yarnway/dontforget/releases/download/v1.8.2/DontForget_Android_v1.8.2.apk) | Android 7.0 / API 24 起 |
+| Linux x64 | [归档 TAR.GZ](https://github.com/yarnway/dontforget/releases/download/v1.8.2/DontForget_Linux_x64_v1.8.2.tar.gz) | Ubuntu 24.04 基线 |
 
-1. 直接输入事项，先保存到本机；无明确时间时保留为备忘，可从时间菜单或详情设置提醒。已配置模型时，等待卡片中的 AI 建议并预览确认。
-2. 点击录音按钮或长按输入区记录语音，也可从 `+` 导入图片、文件或视频。
-3. 在任务卡标记完成、打开详情，或通过操作菜单管理任务。桌面可长按拖动到其他分类。
-4. 打开搜索，按状态浏览或组合关键词查找任务。`Ctrl/Cmd+F` 打开搜索，`Esc` 关闭；`Ctrl/Cmd+K` 打开更多功能。
-5. 设置页可配置模型、选择语言和外观、设置发送方式，并备份已保存的数据。
-6. 从“更多功能 → 词汇学习计划”选择考试、每日词量和本次天数；检查模型给出的词汇与提醒时间后确认，在“复习卡片”中反馈掌握情况。完整步骤见[词汇学习引导](docs/User_Guide.md#v17-词汇学习引导)。
+Android [AAB](https://github.com/yarnway/dontforget/releases/download/v1.8.2/DontForget_Android_v1.8.2.aab) 供分发使用，不能直接安装。macOS、iOS 工程保留，签名与设备验收继续推进。Windows 当前未做 Authenticode 签名；Linux 运行依赖见[安装指南](docs/Packaging_and_Deployment.md)。
 
-提醒在应用内集中展示，延后、完成与关闭提示均不抢走输入焦点。系统通知能力与权限、平台和应用运行状态有关；已验证范围与未完成项分别记录在版本验收文档中。
+下载后可用 Release 中的 `SHA256SUMS.txt` 核对文件。便携版指免安装启动，业务数据仍存放在平台应用目录；迁移数据请使用备份功能。[已验范围与已知限制](docs/Release_1.8.2_71_2026-11-11.md)单独记录。
 
-## 数据与模型
+## 功能
 
-任务、附件索引和配置使用本机 SQLite 保存；导入的附件另存于本机文件目录。未配置模型也可以保存文字与原声记录。
+| 记录与整理 | 提醒与跟进 | 学习与复盘 |
+| :--- | :--- | :--- |
+| 文字、原声录音、图片和文件 | 紧急提醒、重点跟进、常规待办、备忘便签 | 词汇学习计划与批次管理 |
+| 草稿保留、关键词搜索与状态筛选 | 提醒、延后、错过提醒与回收站 | 分组暂停、继续与复习反馈 |
+| 可编辑的 AI 提取建议，确认后应用 | 子任务、归档与关联事项 | 专注计时、统计复盘与 CSV 导出 |
 
-AI 解析会将相关内容直接发送至您配置的服务商。应用不提供内置 API Key；请在设置中填入自己的服务地址、模型标识与密钥，敏感凭据由操作系统底层安全存储（Windows DPAPI、macOS/iOS Keychain、Android KeyStore）托管保护，需要本机推理时可接入本地大模型。
+- **轻量录入**：Windows 默认紧凑输入，内容变长后展开；支持键盘快捷键、中文输入、三种外观及中英日文界面。
+- **流式转写**：配置腾讯云后，录音时提前识别中英文；上滑预览，右滑编辑，或滑到发送区域后松手发送文字。
+- **按需接入 AI**：自行配置模型服务或本地模型，支持提取模型排序与失败切换。未配置模型也能保存文字、附件和原声。
+- **带附件备份**：导出事项、配置和附件，可选密码加密；恢复前预览，确认后执行。
 
-任务、附件索引和配置保存在本机 SQLite 数据库中。备份功能支持标准便携导出及**端到端流式加密备份（AES-256-GCM + Argon2id）**，可将全量数据与多媒体附件本体一体化打包归档，并具备防重放、抗篡改与原子安全恢复能力。
+<details>
+<summary>查看学习计划管理示例</summary>
 
-v1.8.2已发布Android／Windows／Linux，Apple平台继续独立验收；当前已验范围和剩余门槛见[发行记录](docs/Release_1.8.2_71_2026-11-11.md)。macOS 通知日志升级与安装旧程序前的回退步骤见[日志维护说明](docs/Notification_Storage_Upgrade.md)。
+<p align="center"><img src="docs/images/study-plans-70-android.png" alt="合成学习计划的暂停状态、批次数量及管理菜单" width="360"></p>
 
-## v1.8.2三平台下载
+学习计划、复习和每日练习均可进入分组管理，暂停或继续时保留词条进度与附件。示例来自独立 Android 验收身份。
 
-[下载v1.8.2](https://github.com/yarnway/dontforget/releases/tag/v1.8.2)，包含固定发行签名Android APK／AAB、Windows Setup／Portable和Linux x64包（Ubuntu24.04基线）。[验收与剩余阶段](docs/Release_1.8.2_71_2026-11-11.md)单独记录；腾讯实时语音使用本地配置的个人凭据。
+</details>
 
-## 平台与下载
+## 快速开始
 
-从 [GitHub Releases](https://github.com/yarnway/dontforget/releases) 查看实际可用的版本。本轮v1.8.2已发布Android／Windows／Linux；后续内部验证包保留在GitHub Actions artifacts，正式发布单独手动执行。macOS／iOS完成验收后另行纳入。源码、构建与真机结果分别记录，详见[发布策略](docs/Release_Policy.md)。
+1. **添加事项**：在底部输入内容并保存；没有提醒时间时，先作为备忘保存。
+2. **补充资料**：通过 `+` 导入附件，或按住输入区录音。需要转写时，在“设置 → AI 服务 → 录音转文字”配置个人服务。
+3. **整理跟进**：按状态筛选、搜索关键词，或在事项菜单中完成、归档及移至回收站。
+4. **开始学习**：从“更多功能 → 词汇学习计划”选择目标与学习量，检查生成内容后创建，在复习中反馈掌握情况。
 
-| 平台 | 工程要求 | 交付说明 |
-| --- | --- | --- |
-| Windows | Windows 10/11 x64 | 独立安装包（Setup.exe）与便携归档（Portable.zip）；支持开箱即用运行、WinRT Toast 原生动作与协议唤醒、托盘常驻与优雅退出、单实例守护、窗口位置记忆、错过的提醒聚合及数据平滑迁移 |
-| macOS | macOS 12.0+ | 候选归档未公证 |
-| Linux | GTK 3、GStreamer base/good 插件及 AppIndicator 运行时，x64 | 归档包；发行版兼容性需验证 |
-| Android | Android 7.0 / API 24+ | 固定发行证书APK／AAB；商店分发另行处理 |
-| iOS | iOS 15.0+ | CI 产物未签名，安装需有效签名 |
+桌面快捷键：`Ctrl/Cmd + F` 搜索，`Ctrl/Cmd + K` 更多功能，`Shift + Enter` 换行。发送方式可在设置中调整。[完整使用指南](docs/User_Guide.md)
 
-## 本地开发
+## 数据与隐私
 
-使用 Flutter 3.44.9 / Dart 3.12.2 和仓库 lockfile（可运行 `python scripts/check_flutter_version.py` 检查）：
+- **本地保存**：事项和配置保存在 SQLite，附件另存于本机文件目录。
+- **自主选择服务**：AI 解析会向所选服务发送相关内容；应用不内置个人 API Key。模型与语音凭据由平台安全存储保管，新备份排除密钥。
+- **转写范围明确**：启用腾讯实时识别后，从录音开始上传音频；之后取消也无法撤回已发送部分，可能产生服务费用。
+- **可选加密导出**：当前备份使用 AES-256-GCM 与 PBKDF2-HMAC-SHA256。支持单附件最多 512 MiB、总附件 2 GiB；本机数据库和自动恢复副本不因导出加密而加密。
+
+备份、恢复及清理的保护范围见[数据保护说明](docs/P1_Data_Protection_2026-10-28.md)。系统通知的可用性取决于平台、权限与运行状态；[阶段台账](docs/Next_Steps_2026-11-02.md)区分源码、自动化、安装包与设备验收。
+
+## 开发
+
+CI 固定 **Flutter 3.44.9 / Dart 3.12.2**，依赖以 `pubspec.lock` 为准。
 
 ```bash
-python scripts/check_flutter_version.py         # 检查是否与 CI 基线 3.44.9 一致
-flutter pub get --enforce-lockfile              # 3.44.9 下强校验锁文件；本地高版本使用普通 pub get
+python scripts/check_flutter_version.py --strict
+flutter pub get --enforce-lockfile
 flutter analyze --no-pub
 flutter test --no-pub
-python scripts/report_windows_skipped_tests.py # 查看 Windows 下 POSIX 约束跳过的测试清单
-python3 -m unittest discover -s scripts/tests -v
-flutter run -d macos # 或 windows / linux / 已连接移动设备
+python -m unittest discover -s scripts/tests -v
 ```
 
-搜索计算基准使用隔离合成数据，不读取用户数据库：
+使用与 CI 一致的 SDK 执行以上命令。本机较高版本 SDK 的结果需单独记录；平台构建、签名与运行依赖见[打包与部署](docs/Packaging_and_Deployment.md)。
 
-```bash
-dart run scripts/benchmark_task_search.dart
-```
+## 文档
 
-构建脚本和签名限制见[打包与部署指南](docs/Packaging_and_Deployment.md)。
+| 使用 | 开发 | 进度与质量 |
+| :--- | :--- | :--- |
+| [用户指南](docs/User_Guide.md) | [开发指南](docs/Developer_Guide.md) | [变更日志](docs/Changelog.md) |
+| [功能实现索引](docs/Planning_Implementation.md) | [架构设计](docs/Architecture_Design.md) | [v1.8.2 验收记录](docs/Release_1.8.2_71_2026-11-11.md) |
+| [记录与提醒设计](docs/Recording_Reminders_Phases.md) | [打包与部署](docs/Packaging_and_Deployment.md) | [剩余阶段](docs/Next_Steps_2026-11-02.md) · [发布策略](docs/Release_Policy.md) |

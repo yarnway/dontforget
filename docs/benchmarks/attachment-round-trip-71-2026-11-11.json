@@ -1,0 +1,294 @@
+{
+  "fixture": "dontforget.synthetic.attachments.v1",
+  "runtime_version": "1.8.2+71",
+  "runtime_lib_tree": "a324cae5fdbbb5a9e3321525bbdbd32be111044e",
+  "fixture_apk_sha256": "fcddfebe052c2428e07d91afed9dbc1f29fdcd04f41d8e3cd136fa6a979cd92a",
+  "formats": [
+    "plain",
+    "encrypted"
+  ],
+  "source": {
+    "fixture": "dontforget.synthetic.attachments.v1",
+    "pid": 21230,
+    "reminders": 4,
+    "media": 3,
+    "all_reminder_fields_equal": true,
+    "attachment_hashes": {
+      "fixture-audio": "6a8b4a7ccc02993d2aceb63d03b6b3b74b5994bec725f26f01c520c1d65b7c70",
+      "fixture-file": "bfd8421fedfa7c540773dc7c6b3c04148b4492af320cf6976ad8eb1d0e1b2a88",
+      "fixture-image": "cb89ed82b152b8315f1998b6ee804eae7382ec3820cc22e81495cf49ccc757b0"
+    },
+    "attachment_bytes": {
+      "fixture-audio": 64044,
+      "fixture-image": 68,
+      "fixture-file": 5888
+    },
+    "lifecycle_and_word_progress_preserved": true,
+    "restored_filename_policy": "Generated safe name; extension retained; original display name not preserved",
+    "schema": 17
+  },
+  "windows": {
+    "plain": {
+      "fixture": "dontforget.synthetic.attachments.v1",
+      "platform": "windows",
+      "format": "plain",
+      "source_sha256": "9183b6d5e8a0ae86f990f873ff389bb781d965ecf2060f21114220f2f79f5649",
+      "return_sha256": "0aac364de63b004297127c8190f037a020ebe5db8940d94bed3cbf55a34a52f7",
+      "restored": {
+        "reminders": 4,
+        "media": 3,
+        "all_reminder_fields_equal": true,
+        "attachment_hashes": {
+          "fixture-audio": "6a8b4a7ccc02993d2aceb63d03b6b3b74b5994bec725f26f01c520c1d65b7c70",
+          "fixture-file": "bfd8421fedfa7c540773dc7c6b3c04148b4492af320cf6976ad8eb1d0e1b2a88",
+          "fixture-image": "cb89ed82b152b8315f1998b6ee804eae7382ec3820cc22e81495cf49ccc757b0"
+        },
+        "attachment_bytes": {
+          "fixture-audio": 64044,
+          "fixture-image": 68,
+          "fixture-file": 5888
+        },
+        "lifecycle_and_word_progress_preserved": true,
+        "restored_filename_policy": "Generated safe name; extension retained; original display name not preserved",
+        "schema": 17
+      },
+      "appended": {
+        "reminders": 5,
+        "media": 4,
+        "all_reminder_fields_equal": true,
+        "attachment_hashes": {
+          "fixture-audio": "6a8b4a7ccc02993d2aceb63d03b6b3b74b5994bec725f26f01c520c1d65b7c70",
+          "fixture-desktop": "6cbe5cabb3ce96f59e0ff24cb7eee1e81340094cd4e9e40f4476efb69cc39eb8",
+          "fixture-file": "bfd8421fedfa7c540773dc7c6b3c04148b4492af320cf6976ad8eb1d0e1b2a88",
+          "fixture-image": "cb89ed82b152b8315f1998b6ee804eae7382ec3820cc22e81495cf49ccc757b0"
+        },
+        "attachment_bytes": {
+          "fixture-audio": 64044,
+          "fixture-image": 68,
+          "fixture-file": 5888,
+          "fixture-desktop": 82
+        },
+        "lifecycle_and_word_progress_preserved": true,
+        "restored_filename_policy": "Generated safe name; extension retained; original display name not preserved",
+        "schema": 17
+      },
+      "database_close_reopen_passed": true,
+      "device_preference_preserved": true,
+      "wrong_password_no_output": null,
+      "desktop_gui_tested": false,
+      "notification_transport": "substitute",
+      "outcome": "PASS"
+    },
+    "encrypted": {
+      "fixture": "dontforget.synthetic.attachments.v1",
+      "platform": "windows",
+      "format": "encrypted",
+      "source_sha256": "4454ce11b3cb4b32f329e5f0f26582f0c3a6c1df348279c624bd7bf5c9d3ebca",
+      "return_sha256": "c4f58f31cc1e249a7ab00787aea6f514065cf47838e93013568b224742611edc",
+      "restored": {
+        "reminders": 4,
+        "media": 3,
+        "all_reminder_fields_equal": true,
+        "attachment_hashes": {
+          "fixture-audio": "6a8b4a7ccc02993d2aceb63d03b6b3b74b5994bec725f26f01c520c1d65b7c70",
+          "fixture-file": "bfd8421fedfa7c540773dc7c6b3c04148b4492af320cf6976ad8eb1d0e1b2a88",
+          "fixture-image": "cb89ed82b152b8315f1998b6ee804eae7382ec3820cc22e81495cf49ccc757b0"
+        },
+        "attachment_bytes": {
+          "fixture-audio": 64044,
+          "fixture-image": 68,
+          "fixture-file": 5888
+        },
+        "lifecycle_and_word_progress_preserved": true,
+        "restored_filename_policy": "Generated safe name; extension retained; original display name not preserved",
+        "schema": 17
+      },
+      "appended": {
+        "reminders": 5,
+        "media": 4,
+        "all_reminder_fields_equal": true,
+        "attachment_hashes": {
+          "fixture-audio": "6a8b4a7ccc02993d2aceb63d03b6b3b74b5994bec725f26f01c520c1d65b7c70",
+          "fixture-desktop": "6cbe5cabb3ce96f59e0ff24cb7eee1e81340094cd4e9e40f4476efb69cc39eb8",
+          "fixture-file": "bfd8421fedfa7c540773dc7c6b3c04148b4492af320cf6976ad8eb1d0e1b2a88",
+          "fixture-image": "cb89ed82b152b8315f1998b6ee804eae7382ec3820cc22e81495cf49ccc757b0"
+        },
+        "attachment_bytes": {
+          "fixture-audio": 64044,
+          "fixture-image": 68,
+          "fixture-file": 5888,
+          "fixture-desktop": 82
+        },
+        "lifecycle_and_word_progress_preserved": true,
+        "restored_filename_policy": "Generated safe name; extension retained; original display name not preserved",
+        "schema": 17
+      },
+      "database_close_reopen_passed": true,
+      "device_preference_preserved": true,
+      "wrong_password_no_output": true,
+      "desktop_gui_tested": false,
+      "notification_transport": "substitute",
+      "outcome": "PASS"
+    }
+  },
+  "android_restored": {
+    "plain": {
+      "pid": 21230,
+      "format": "plain",
+      "database_reopened": true,
+      "reminders": 5,
+      "media": 4,
+      "all_reminder_fields_equal": true,
+      "attachment_hashes": {
+        "fixture-audio": "6a8b4a7ccc02993d2aceb63d03b6b3b74b5994bec725f26f01c520c1d65b7c70",
+        "fixture-desktop": "6cbe5cabb3ce96f59e0ff24cb7eee1e81340094cd4e9e40f4476efb69cc39eb8",
+        "fixture-file": "bfd8421fedfa7c540773dc7c6b3c04148b4492af320cf6976ad8eb1d0e1b2a88",
+        "fixture-image": "cb89ed82b152b8315f1998b6ee804eae7382ec3820cc22e81495cf49ccc757b0"
+      },
+      "attachment_bytes": {
+        "fixture-audio": 64044,
+        "fixture-image": 68,
+        "fixture-file": 5888,
+        "fixture-desktop": 82
+      },
+      "lifecycle_and_word_progress_preserved": true,
+      "restored_filename_policy": "Generated safe name; extension retained; original display name not preserved",
+      "schema": 17
+    },
+    "encrypted": {
+      "pid": 21230,
+      "format": "encrypted",
+      "database_reopened": true,
+      "reminders": 5,
+      "media": 4,
+      "all_reminder_fields_equal": true,
+      "attachment_hashes": {
+        "fixture-audio": "6a8b4a7ccc02993d2aceb63d03b6b3b74b5994bec725f26f01c520c1d65b7c70",
+        "fixture-desktop": "6cbe5cabb3ce96f59e0ff24cb7eee1e81340094cd4e9e40f4476efb69cc39eb8",
+        "fixture-file": "bfd8421fedfa7c540773dc7c6b3c04148b4492af320cf6976ad8eb1d0e1b2a88",
+        "fixture-image": "cb89ed82b152b8315f1998b6ee804eae7382ec3820cc22e81495cf49ccc757b0"
+      },
+      "attachment_bytes": {
+        "fixture-audio": 64044,
+        "fixture-image": 68,
+        "fixture-file": 5888,
+        "fixture-desktop": 82
+      },
+      "lifecycle_and_word_progress_preserved": true,
+      "restored_filename_policy": "Generated safe name; extension retained; original display name not preserved",
+      "schema": 17
+    }
+  },
+  "android_cold_reopen": {
+    "fixture": "dontforget.synthetic.attachments.v1",
+    "pid": 21410,
+    "formats": {
+      "plain": {
+        "reminders": 5,
+        "media": 4,
+        "all_reminder_fields_equal": true,
+        "attachment_hashes": {
+          "fixture-audio": "6a8b4a7ccc02993d2aceb63d03b6b3b74b5994bec725f26f01c520c1d65b7c70",
+          "fixture-desktop": "6cbe5cabb3ce96f59e0ff24cb7eee1e81340094cd4e9e40f4476efb69cc39eb8",
+          "fixture-file": "bfd8421fedfa7c540773dc7c6b3c04148b4492af320cf6976ad8eb1d0e1b2a88",
+          "fixture-image": "cb89ed82b152b8315f1998b6ee804eae7382ec3820cc22e81495cf49ccc757b0"
+        },
+        "attachment_bytes": {
+          "fixture-audio": 64044,
+          "fixture-image": 68,
+          "fixture-file": 5888,
+          "fixture-desktop": 82
+        },
+        "lifecycle_and_word_progress_preserved": true,
+        "restored_filename_policy": "Generated safe name; extension retained; original display name not preserved",
+        "schema": 17
+      },
+      "encrypted": {
+        "reminders": 5,
+        "media": 4,
+        "all_reminder_fields_equal": true,
+        "attachment_hashes": {
+          "fixture-audio": "6a8b4a7ccc02993d2aceb63d03b6b3b74b5994bec725f26f01c520c1d65b7c70",
+          "fixture-desktop": "6cbe5cabb3ce96f59e0ff24cb7eee1e81340094cd4e9e40f4476efb69cc39eb8",
+          "fixture-file": "bfd8421fedfa7c540773dc7c6b3c04148b4492af320cf6976ad8eb1d0e1b2a88",
+          "fixture-image": "cb89ed82b152b8315f1998b6ee804eae7382ec3820cc22e81495cf49ccc757b0"
+        },
+        "attachment_bytes": {
+          "fixture-audio": 64044,
+          "fixture-image": 68,
+          "fixture-file": 5888,
+          "fixture-desktop": 82
+        },
+        "lifecycle_and_word_progress_preserved": true,
+        "restored_filename_policy": "Generated safe name; extension retained; original display name not preserved",
+        "schema": 17
+      }
+    },
+    "originals": {
+      "reminders": 4,
+      "media": 3,
+      "all_reminder_fields_equal": true,
+      "attachment_hashes": {
+        "fixture-audio": "6a8b4a7ccc02993d2aceb63d03b6b3b74b5994bec725f26f01c520c1d65b7c70",
+        "fixture-file": "bfd8421fedfa7c540773dc7c6b3c04148b4492af320cf6976ad8eb1d0e1b2a88",
+        "fixture-image": "cb89ed82b152b8315f1998b6ee804eae7382ec3820cc22e81495cf49ccc757b0"
+      },
+      "attachment_bytes": {
+        "fixture-audio": 64044,
+        "fixture-image": 68,
+        "fixture-file": 5888
+      },
+      "lifecycle_and_word_progress_preserved": true,
+      "restored_filename_policy": "Generated safe name; extension retained; original display name not preserved",
+      "schema": 17
+    },
+    "originals_unchanged": true
+  },
+  "new_native_process_verified": true,
+  "temporary_identity_uninstalled": true,
+  "user_apps_reinstalled_or_cleared": false,
+  "user_app_versions_unchanged": true,
+  "synthetic_files_only": true,
+  "saf_file_picker_tested": false,
+  "desktop_gui_tested": false,
+  "real_os_notification_delivery_tested": false,
+  "media_playback_or_display_tested": false,
+  "outcome": "PASS",
+  "date": "2026-11-11",
+  "acceptance_source_state": "New opt-in acceptance files in working tree; production runtime lib tree unchanged",
+  "released_source": "de4bda47a8759c4bff634d115d65f8bd4ec7e14a",
+  "native_sdk": "3.47.2",
+  "desktop_sdk": "3.47.2",
+  "fixture_package": {
+    "package": "com.yarnway.dontforget.acceptance.attachments20261111",
+    "version": "1.8.2+71",
+    "private_fixture": true,
+    "runtime_lib_tree": "a324cae5fdbbb5a9e3321525bbdbd32be111044e",
+    "fixture_sources": {
+      "scripts/acceptance/android_attachment_round_trip.dart": "de88eec792f42e6f4c0426b77c198ec4d3d87339f6e903eb1810f75f13112710",
+      "scripts/acceptance/attachment_round_trip_test.dart": "3294512b85f7b8abe839ed8a3e83bdf47f9355e7d03db7443dc19cb7db77913a",
+      "scripts/acceptance/support/attachment_round_trip_fixture.dart": "7d2a3a9431c88dff27cd2ce63fd5e3e8094e02a204f928fad318e136e0fe382c"
+    },
+    "synthetic_data_only": true,
+    "real_os_notification_delivery_tested": false,
+    "sha256": "fcddfebe052c2428e07d91afed9dbc1f29fdcd04f41d8e3cd136fa6a979cd92a",
+    "bytes": 120247149
+  },
+  "analyze_issues": 0,
+  "desktop_cases_passed": 2,
+  "full_capacity_boundary": false,
+  "real_os_credential_lock_tested": false,
+  "source_credential_sentinel_redacted": true,
+  "first_attempt": {
+    "outcome": "FAIL",
+    "reason": "Acceptance incorrectly required original filenames; streaming format intentionally generates safe attachment names",
+    "product_runtime_changed": false,
+    "desktop_original_log_superseded_by_retry": true
+  },
+  "logs_sha256": {
+    "analyze.log": "5cfe0d9f072cbc614333274b42cd79bc2a24e5992eadfd06c9f9b3859b400126",
+    "run-1.log": "73fbf54a297c9f7e50e45d223dcc3749711c68cc7e621d701e726f73a1d36959",
+    "run-2.log": "e1b45b9f045b08c543faaeeae40780b2d0a45fdd1677b720dff3ba19be092eeb",
+    "run2/desktop.log": "b145551c867aecc7261d1c33977f6d3348f78771a9e75dbff45008f2b8ab8a5e"
+  }
+}
