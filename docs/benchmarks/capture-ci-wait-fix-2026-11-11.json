@@ -1,0 +1,26 @@
+{
+  "date": "2026-11-11",
+  "first_ci_source": "511ba9cd5f071a07a9f9ff26f32a9f6180371b68",
+  "first_ci_run": 42955002071,
+  "first_ci_url": "https://github.com/yarnway/dontforget/actions/runs/42955002071",
+  "failed_windows_job": 130307888069,
+  "failure": "raw capture is durable before model returns; retry does not duplicate: polling condition false",
+  "first_windows_flutter_passed": 2384,
+  "first_windows_flutter_skipped": 20,
+  "first_windows_flutter_failed": 1,
+  "first_ci_log_sha256": "cffe0d4e25439ec8e97a3751dc1c598202001b885b0a773a7f94c359b2c6b46b",
+  "old_wait": "300 polls, nominal 2 ms delay each",
+  "new_wait": "Explicit model request events and Riverpod capture-idle state subscription",
+  "bounded_wait_seconds": 30,
+  "raw_db_read_before_model_gate_release": true,
+  "exact_model_request_counts_asserted": true,
+  "local_related_passed": 46,
+  "local_analyze_issues": 0,
+  "local_sdk": "3.47.2",
+  "runtime_lib_changed": false,
+  "new_fixed_sdk_ci": "pending",
+  "local_logs_sha256": {
+    "capture-tests.log": "ebfe54b49a951dab9343ac8c39a4641c3472fb74739f4873e8e1fbe5a3a8839d",
+    "capture-analyze.log": "7919b3fd0d481561d3a8ad1bcffc376e2f69f9a96b5e740b9c5a23c2d4756538"
+  }
+}

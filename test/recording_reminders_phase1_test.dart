@@ -37,11 +37,40 @@ class _Notifications implements NotificationService {
 
 class _Model extends LLMService {
   final requests = <Completer<List<Reminder>>>[];
+  final _started = StreamController<int>.broadcast(sync: true);
+  Completer<void>? dispatchGate;
+
+  Future<void> waitForRequests(int count) async {
+    if (requests.length < count) {
+      await _started.stream
+          .firstWhere((length) => length >= count)
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () =>
+                throw TimeoutException('Model request $count did not start'),
+          );
+    }
+    expect(
+      requests,
+      hasLength(count),
+      reason: 'Unexpected model request count',
+    );
+  }
+
   @override
-  Future<List<Reminder>> extractTasks(String text, settings) {
+  Future<List<Reminder>> extractTasks(String text, settings) async {
+    final gate = dispatchGate;
+    if (gate != null) await gate.future;
     final request = Completer<List<Reminder>>();
     requests.add(request);
+    _started.add(requests.length);
     return request.future;
+  }
+
+  @override
+  void dispose() {
+    unawaited(_started.close());
+    super.dispose();
   }
 }
 
@@ -83,11 +112,22 @@ void main() {
     await database.close(createBackup: false);
   }
 
-  Future<void> until(bool Function() condition) async {
-    for (var i = 0; i < 300 && !condition(); i++) {
-      await Future<void>.delayed(const Duration(milliseconds: 2));
+  Future<void> waitForCaptureIdle() async {
+    if (!container.read(homeControllerProvider).isProcessingInBackground) {
+      return;
     }
-    expect(condition(), isTrue);
+    final idle = Completer<void>();
+    final listener = container.listen(homeControllerProvider, (_, next) {
+      if (!next.isProcessingInBackground && !idle.isCompleted) idle.complete();
+    });
+    try {
+      await idle.future.timeout(
+        const Duration(seconds: 30),
+        onTimeout: () => throw TimeoutException('Capture did not become idle'),
+      );
+    } finally {
+      listener.close();
+    }
   }
 
   setUp(() async {
@@ -161,20 +201,25 @@ void main() {
                 .read(settingsProvider)
                 .copyWith(apiKey: 'synthetic-fixture'),
           );
+      final dispatchGate = Completer<void>();
+      model.dispatchGate = dispatchGate;
       final home = container.read(homeControllerProvider.notifier);
       expect(
         await home.processText('明天9点开会；会后整理纪要', captureId: 'stable-capture'),
         isTrue,
       );
-      await until(() => model.requests.isNotEmpty);
       final raw = (await database.read(
         database.captureGeneration(),
         (db) => db.query('Reminders'),
       )).single;
       expect(raw['source_text'], '明天9点开会；会后整理纪要');
       expect(raw['capture_pending'], 1);
+      expect(model.requests, isEmpty);
+      dispatchGate.complete();
+      await model.waitForRequests(1);
+      model.dispatchGate = null;
       model.requests.single.completeError(StateError('Synthetic timeout'));
-      await until(() => !home.state.isProcessingInBackground);
+      await waitForCaptureIdle();
       expect(container.read(remindersProvider).length, 1);
       expect(
         await home.processText('明天9点开会；会后整理纪要', captureId: 'stable-capture'),
@@ -182,7 +227,7 @@ void main() {
       );
       expect(container.read(remindersProvider).length, 1);
       home.retryCapture(container.read(remindersProvider).single);
-      await until(() => model.requests.length == 2);
+      await model.waitForRequests(2);
       final event = container.read(remindersProvider).single.eventTime!;
       model.requests.last.complete([
         Reminder(
@@ -193,7 +238,8 @@ void main() {
           triggerTime: event.subtract(const Duration(minutes: 15)),
         ),
       ]);
-      await until(() => !home.state.isProcessingInBackground);
+      await waitForCaptureIdle();
+      expect(model.requests, hasLength(2));
       final saved = container.read(remindersProvider).single;
       expect(saved.id, 'stable-capture');
       expect(saved.taskTitle, '明天9点开会；会后整理纪要');
@@ -237,7 +283,7 @@ void main() {
         );
     final home = container.read(homeControllerProvider.notifier);
     await home.processText('original');
-    await until(() => model.requests.isNotEmpty);
+    await model.waitForRequests(1);
     final raw = container.read(remindersProvider).single;
     await container
         .read(remindersProvider.notifier)
@@ -245,20 +291,20 @@ void main() {
     model.requests.single.complete([
       Reminder(id: 'model', taskTitle: 'Late title', quadrantLevel: 1),
     ]);
-    await until(() => !home.state.isProcessingInBackground);
+    await waitForCaptureIdle();
     expect(container.read(remindersProvider).single.taskTitle, 'User title');
     expect(
       container.read(remindersProvider).single.captureProposalJson,
       isNotNull,
     );
     await home.processText('second');
-    await until(() => model.requests.length == 2);
+    await model.waitForRequests(2);
     final second = container.read(remindersProvider).last;
     await container.read(remindersProvider.notifier).deleteReminder(second.id);
     model.requests.last.complete([
       Reminder(id: 'model', taskTitle: 'Resurrection', quadrantLevel: 1),
     ]);
-    await until(() => !home.state.isProcessingInBackground);
+    await waitForCaptureIdle();
     expect(container.read(remindersProvider).length, 1);
   });
 
@@ -277,7 +323,7 @@ void main() {
         await home.processText('  source text  ', captureId: 'guarded'),
         isTrue,
       );
-      await until(() => model.requests.isNotEmpty);
+      await model.waitForRequests(1);
       final when = DateTime.now().add(const Duration(hours: 3));
       model.requests.single.complete([
         Reminder(
@@ -293,7 +339,7 @@ void main() {
           triggerTime: when,
         ),
       ]);
-      await until(() => !home.state.isProcessingInBackground);
+      await waitForCaptureIdle();
       final pending = container.read(remindersProvider).single;
       expect(pending.sourceText, '  source text  ');
       expect(pending.triggerTime, isNull);

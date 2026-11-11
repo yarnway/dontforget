@@ -11,3 +11,5 @@
 通过GitHub Markdown API的GFM模式实际渲染：1主标题、6区块、3表格、主题picture和details均保留，所有图有替代文本；本地链接与图片存在，5下载链接与GitHub当前稳定版附件匹配。此为渲染结构检查，不宣称浏览器逐像素或手机GitHub界面测试。[机器记录](benchmarks/readme-refresh-2026-11-11.json)。
 
 本轮另推进[阶段48带附件往返](Attachment_Round_Trip_2026-11-11.md)；完整待办继续由[阶段台账](Next_Steps_2026-11-02.md)维护。
+
+首轮完整CI出现一项既有录入测试轮询等待失败，已修正等待方式并保留业务断言，新源码CI另验；见[修正记录](Capture_Test_Stability_2026-11-11.md)。
