@@ -132,7 +132,11 @@ class AndroidVariantsTest(unittest.TestCase):
         self.assertEqual([args[3] for args in calls], ['apk', 'apk', 'appbundle'])
         self.assertTrue(all('--no-pub' in args and '--android-project-arg=kotlin.incremental=false' in args for args in calls))
         self.assertIn('--target-platform=android-arm64', calls[1])
-        self.assertNotIn('--target-platform=android-arm64', calls[2])
+        for flag in ['--target-platform=android-arm64', '--android-project-arg=disable-abi-filtering=true',
+                     '--android-project-arg=dontforget.androidAbi=arm64-v8a']:
+            self.assertIn(flag, calls[1])
+            self.assertNotIn(flag, calls[0])
+            self.assertNotIn(flag, calls[2])
 
     def test_failed_build_restores_universal_and_removes_stale_compact(self):
         for failure in [2, 3]:

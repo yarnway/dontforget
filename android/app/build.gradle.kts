@@ -19,6 +19,13 @@ if ((signingEnvironment.values.any { it.isNotEmpty() } ||
     throw GradleException("Complete Android distribution signing configuration is required")
 }
 
+// The opt-in standalone APK must filter dependency AARs as well as Flutter's engine.
+// Keep this per invocation so the universal APK and AAB retain all supported ABIs.
+val distributionAbi = providers.gradleProperty("dontforget.androidAbi").orNull
+if (distributionAbi != null && distributionAbi != "arm64-v8a") {
+    throw GradleException("Unsupported standalone distribution ABI")
+}
+
 android {
     namespace = "com.yarnway.dontforget"
     compileSdk = flutter.compileSdkVersion
@@ -39,6 +46,9 @@ android {
         multiDexEnabled = true
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        if (distributionAbi != null) {
+            ndk { abiFilters.add(distributionAbi) }
+        }
     }
 
     signingConfigs {

@@ -49,7 +49,9 @@ def build(root=ROOT, disable_kotlin_incremental=False):
         run('apk')
         shutil.copy2(output / 'app-release.apk', staging / 'universal.apk')
         try:
-            run('apk', ['--target-platform=android-arm64'])
+            run('apk', ['--target-platform=android-arm64',
+                        '--android-project-arg=disable-abi-filtering=true',
+                        '--android-project-arg=dontforget.androidAbi=arm64-v8a'])
             shutil.copy2(output / 'app-release.apk', staging / 'arm64.apk')
             verify_pair(staging / 'universal.apk', staging / 'arm64.apk')
             expected = ('com.yarnway.dontforget', number, release, '24')
