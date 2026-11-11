@@ -385,23 +385,34 @@ void main() {
       final confirm = find.byKey(const ValueKey('confirm-capture-proposal'));
       await tester.ensureVisible(confirm);
       await tester.tap(confirm);
-      for (
-        var i = 0;
-        i < 100 &&
-            container.read(remindersProvider).single.captureProposalJson !=
-                null;
-        i++
-      ) {
-        await tester.runAsync(
-          () => Future<void>.delayed(const Duration(milliseconds: 2)),
-        );
-        await tester.pump();
-      }
+      await pumpUntilRealIo(
+        tester,
+        () =>
+            container.read(remindersProvider).single.captureProposalJson ==
+                null &&
+            find.byType(CapturePreviewDialog).evaluate().isEmpty,
+        reason:
+            'AI proposal commit and dialog close must finish before readback',
+      );
       final saved = container.read(remindersProvider).single;
       expect(saved.triggerTime, manual);
       expect(saved.timeOrigin, ReminderTimeOrigin.manual);
       expect(saved.eventTime, proposal.eventTime);
       expect(saved.captureProposalJson, isNull);
+      final persisted = await tester.runAsync(
+        () => database.read(
+          database.captureGeneration(),
+          (sql) async => (await sql.query(
+            'Reminders',
+            where: 'id = ?',
+            whereArgs: [original.id],
+          )).single,
+        ),
+      );
+      expect(persisted!['event_time'], proposal.eventTime!.toIso8601String());
+      expect(persisted['capture_proposal_json'], isNull);
+      await tester.runAsync(notifications.pauseForMaintenance);
+      await tester.pumpAndSettle();
     },
   );
 

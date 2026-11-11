@@ -1,0 +1,43 @@
+{
+  "date": "2026-11-12",
+  "failed_source": "47f8930b6dff31850c85b290b830ba271eeaae45",
+  "failed_ci": 43013016535,
+  "failed_windows_tests": [
+    "responsive preferences preserve unsaved edits zh",
+    "AI review preserves explicit time and accepts far future date editing"
+  ],
+  "cause": "Fixed short I/O waits; then a test-owned notification timer required explicit cleanup",
+  "runtime_saving_logic_changed": false,
+  "local_related_tests_passed": 78,
+  "local_analyze_issues": 0,
+  "native_workload": {
+    "runtime_source": "47f8930b6dff31850c85b290b830ba271eeaae45",
+    "version": "1.8.3+72 private fixture",
+    "package": "com.yarnway.dontforget.acceptance.workload20261112",
+    "synthetic_data_only": true,
+    "native_touch_expand_pause_resume": true,
+    "summary_counts": [
+      3,
+      1,
+      3
+    ],
+    "readonly_expand_all_reminder_fields_equal": true,
+    "dates_and_other_plan_preserved": true,
+    "cold_new_pid_readback_equal": true,
+    "temporary_identity_uninstalled": true,
+    "user_apps_not_reinstalled_or_cleared": true,
+    "notification_transport": "recording substitute; no OS delivery claimed",
+    "apk_sha256": "92436c16905fd6d14badf42e411395ade4abad8ca31bcef09958dbe5f6aaeb29"
+  },
+  "native_runtime_lib_tree": "959c0c3bb9e6cc3853a2cf2f04cc1fcda02b82f3",
+  "local_readback_retry": "Initial reload readback awaited a fake-clock future inside runAsync; stopped only the owned test process tree and corrected to bounded real-I/O/widget pumping. User app untouched.",
+  "windows_gui_retry": "Updated computer-use26.1106.51428 initialization still rejected sandboxCwd file:///mnt/d/gitspace/opensources/dontforget before any window discovery",
+  "logs_sha256": {
+    "initial-windows-ci.log": "b8cf43b4f26b763d42007335be103c897eeb8eca92c9bb009323eacca29240c9",
+    "local-timer-failure.log": "948c78efa8f00cb8e22e4416d3eabc7e6fb728a6bf81fcbac79d8cb501805e45",
+    "local-readback-stalled.log": "f9c0393211e727d2f8f10c31a5d090f9f7db075d993479db2583807490cfbaae",
+    "tests.log": "67747c17fafda25eec958be82b174ba63a4ed9741cc4b37fdcc13c911a47b656",
+    "analyze.log": "6bcd4adeaa05da48a53fde543907057558f2587fc5d809483ecad2e9bc5011ff",
+    "native-run.log": "b4764aae4c1f9c4e0bd277c662eecc8018e614174af08e64a0f9d11aa7da77cc"
+  }
+}

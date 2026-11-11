@@ -263,6 +263,30 @@ void main() {
         greaterThan(rect('preferences-ai').top),
       );
       await tap(tester, 'preferences-save');
+      await pumpUntilRealIo(
+        tester,
+        () =>
+            container.read(settingsProvider).inputSendMode ==
+                InputSendMode.button &&
+            find.byType(PreferencesScreen).evaluate().isEmpty,
+        reason: 'Preference commit and route close must finish before readback',
+      );
+      expect(
+        container.read(settingsProvider).inputSendMode,
+        InputSendMode.button,
+      );
+      var reloaded = false;
+      final reload = container
+          .read(settingsProvider.notifier)
+          .reloadCredentials()
+          .then((_) => reloaded = true);
+      await pumpUntilRealIo(
+        tester,
+        () => reloaded,
+        reason:
+            'Preference readback must complete on real I/O and widget clocks',
+      );
+      await reload;
       expect(
         container.read(settingsProvider).inputSendMode,
         InputSendMode.button,
