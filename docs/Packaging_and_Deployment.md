@@ -1,6 +1,6 @@
 # DontForget 打包与发布验收
 
-当前稳定版为v1.8.2／build71、schema17，Android固定发行签名APK／AAB、Windows和Linux已发布，见[本轮发行](Release_1.8.2_71_2026-11-11.md)。下列旧版本案例保留各自归属。
+当前稳定版为v1.8.3／build72、schema17，Android固定发行签名ARM64 APK／通用APK／AAB、Windows和Linux已发布，见[本轮发行](Release_1.8.3_72_2026-11-11.md)。下列旧版本案例保留各自归属。
 
 当前候选版本和构建号以 `pubspec.yaml` 为准，Flutter 固定为 3.44.9。构建成功、打包成功、安装运行、系统通知和正式发布分别验收。当前执行状态见[阶段台账](Next_Steps_2026-11-02.md)，v1.7历史范围见[验收总表](Release_Acceptance_v1.7.md)，历史结果见 [v1.6 阶段验收记录](Native_Acceptance_v1.6.md) 和 [v1.5.1 验收记录](Release_Acceptance_v1.5.1.md)。
 
@@ -13,10 +13,14 @@
 | 平台 | 命令 | dist 产物 | 交付边界 |
 | --- | --- | --- | --- |
 | Windows 10/11 x64 | `pwsh -File scripts/package_windows.ps1` | `DontForget_Setup_v<version>.exe`、`DontForget_Windows_Portable_v<version>.zip` | 需要 Visual Studio C++ 与 Inno Setup 6；未签名 |
-| Android | `bash scripts/build_android.sh` 或 `pwsh -File scripts/build_android.ps1` | `DontForget_Android_test-signed_v<version>.apk` / `.aab` | 测试密钥签名；不是商店交付件 |
+| Android | `bash scripts/build_android.sh` 或 `pwsh -File scripts/build_android.ps1` | `DontForget_Android_test-signed_v<version>.apk` / `.aab`、`DontForget_Android_arm64_test-signed_v<version>.apk` | 测试密钥签名；不是商店交付件 |
 | Linux x64 | `bash scripts/build_linux.sh` | `DontForget_Linux_x64_v<version>.tar.gz` | 需要 GTK、GStreamer base/good 运行时插件、ALSA、Ayatana AppIndicator；录音运行时另需 pulseaudio-utils 和 ffmpeg |
 | macOS 12+ | `bash scripts/build_macos.sh` | `DontForget_macOS_unnotarized_v<version>.zip` | 完整 Xcode、CocoaPods；未公证 |
 | iOS 15+ | `bash scripts/build_ios.sh` | `DontForget_iOS_unsigned_v<version>.ipa` | 完整 Xcode、CocoaPods；未签名，不能直接真机安装 |
+
+1.8.3起Android默认依次构建通用APK、独立ARM64 APK、三ABI AAB。`scripts/build_android_variants.py`暂存通用包，单架构构建仅本次启用NDK过滤并关闭Flutter默认ABI覆盖，避免插件AAR混入其他架构；不用ABI split，以保持APK相同versionCode。失败恢复通用包，打包／发布门禁校验真实ELF、插件集合、版本／最低SDK及三份产物的固定签名证书。无发行凭据时文件名标记test-signed；正式签名包去除此标记。
+
+Windows SDK请从Windows原生终端调用；不要在WSL中运行同目录Flutter shell脚本，以免bootstrap切换其Dart SDK。不同系统应使用独立SDK目录。
 
 每个平台还生成 `<platform>-manifest.json` 和 `<platform>-SHA256SUMS.txt`，包含版本、构建号、提交号、签名状态、文件大小与 SHA-256。桌面 CI 另有 `<platform>-startup.json`。便携包只表示免安装解压，应用数据仍按平台应用支持目录存放，不能当作包含用户数据的可迁移备份。
 

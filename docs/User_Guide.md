@@ -1,6 +1,6 @@
 # DontForget (别忘了) - 完整用户使用指南
 
-欢迎使用 **别忘了 (DontForget)**！这是一款以本地任务管理、录音回放和可选大模型解析为核心的个人备忘录。当前Android／Windows／Linux发行版为 [v1.8.2](https://github.com/yarnway/dontforget/releases/tag/v1.8.2)；Apple平台继续验收，平台支持与实测范围见 [本轮分层验收](Release_1.8.2_71_2026-11-11.md)。
+欢迎使用 **别忘了 (DontForget)**！这是一款以本地任务管理、录音回放和可选大模型解析为核心的个人备忘录。当前Android／Windows／Linux发行版为 [v1.8.3](https://github.com/yarnway/dontforget/releases/tag/v1.8.3)；Apple平台继续验收，平台支持与实测范围见 [本轮分层验收](Release_1.8.3_72_2026-11-11.md)。
 
 ---
 
@@ -11,7 +11,7 @@
 从上述GitHub Release获取对应平台附件，并用SHA256SUMS核对。版本、已知限制和签名状态以发布说明为准。
 
 - Windows：Setup EXE 为安装包，Windows Portable ZIP 为解压启动包。“便携”指启动方式，不能据此假定数据库跟随程序目录或 U 盘迁移。
-- Android：APK采用固定发行证书；AAB不能直接安装，商店分发另行处理。旧测试签名可能冲突，保留原App及备份，勿直接卸载含数据版本。
+- Android：64位系统推荐ARM64 APK，其他机型用通用APK；两包同身份、同版本和固定发行证书，可直接覆盖升级。AAB不能直接安装，商店分发另行处理。旧测试签名可能冲突，保留原App及备份，勿直接卸载含数据版本。
 - macOS：本轮Release未包含；历史候选unnotarized ZIP尚未公证。
 - iOS：本轮Release未包含；历史unsigned IPA未签名，不能直接安装到iPhone。
 - Linux：提供 x64 tar.gz，真实桌面功能仍需验收。

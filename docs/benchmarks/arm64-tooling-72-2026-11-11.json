@@ -1,0 +1,111 @@
+{
+  "date": "2026-11-11",
+  "source": "8456342a66b3880c72ff27d2d513ea4886d7aff5",
+  "runtime_lib_tree": "a324cae5fdbbb5a9e3321525bbdbd32be111044e",
+  "runtime_unchanged_from_stable71": true,
+  "schema": 17,
+  "dependency_lock_changed": false,
+  "new_tests": 9,
+  "final_native_windows_python_run": 170,
+  "final_native_windows_python_skipped": 6,
+  "final_native_windows_python_result": "PASS",
+  "pre_recovery_wsl_python_run": 169,
+  "pre_recovery_wsl_python_failures": 1,
+  "pre_recovery_wsl_python_skipped": 4,
+  "pre_recovery_windows_python_run": 169,
+  "pre_recovery_windows_python_failures": 1,
+  "pre_recovery_windows_python_skipped": 6,
+  "failure": "SDK availability after WSL Flutter bootstrap attempted SDK switch",
+  "sdk_recovery": {
+    "trigger": "WSL Flutter bootstrap attempted Linux SDK switch",
+    "original_windows_dart_retained_in_old": true,
+    "empty_current_sdk_restored_from_old": true,
+    "original_backup_preserved": true,
+    "restored_windows_binaries_identical_to_retained_original": true,
+    "checked_files": [
+      {
+        "file": "bin/dart.exe",
+        "sha256": "e9ea92878d7e58137f52609dda826521d7ea625c8f2387a39644bcbc398b0593"
+      },
+      {
+        "file": "bin/dartaotruntime.exe",
+        "sha256": "812f9691c4c5c300a47725a899c9f105ec3d8ef40c783a2d8585074af2f7cea9"
+      },
+      {
+        "file": "bin/dartvm.exe",
+        "sha256": "5cb13e026281f4c0edba07a254912383ae4894484bf8b02530f037b9df129dc1"
+      },
+      {
+        "file": "version",
+        "sha256": "8792db28987e284812a43312acdd7fa9bd111f476cbf9a0457d723ffadd8ac13"
+      }
+    ],
+    "post_recovery_native_python_result": "170 run / 6 skipped / PASS",
+    "post_recovery_private_android_builds": "production backup72 + QA backup72 + QA ordinary72"
+  },
+  "logs": {
+    "python-tests.log": "ee43393cf06a2891a7f5cef000623a221ae0de3aa1001731d1a525be640e615e",
+    "python-windows.log": "a92289b8c60d2dbf52cc63ad4b6e74dcaf6b432cebbf3249bfa885b845481d76",
+    "variants-tests-final.log": "10432ef5c779d792d5816bf64e1c0108ef000f368b816a94d933ed3de2c9cb66"
+  },
+  "first_fixed_sdk_ci_failure": {
+    "source": "8456342a66b3880c72ff27d2d513ea4886d7aff5",
+    "run": 42970303510,
+    "conclusion": "failure",
+    "quality_jobs_both_passed": true,
+    "failed_job": "Build android candidate",
+    "log_sha256": "28540d2fc78a603e812e77c006c64d4b9dff6b09c46559a8a62dc97c9bb5e4e3",
+    "diagnostic": [
+      "2026-11-11T06:31:42.1814208Z Traceback (most recent call last):",
+      "2026-11-11T06:31:42.2652614Z ##[error]    raise ValueError('APK ABI inventory mismatch')",
+      "2026-11-11T06:31:42.2667123Z ValueError: APK ABI inventory mismatch"
+    ]
+  },
+  "native_abi_filter_proof": {
+    "universal_reference": "published CI1.8.2+71 (library inventory reference only)",
+    "arm64_candidate": "local SDK3.47.2 ordinary72",
+    "libraries": {
+      "universal": {
+        "arm64-v8a": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ],
+        "armeabi-v7a": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ],
+        "x86_64": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ]
+      },
+      "arm64": {
+        "arm64-v8a": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ]
+      }
+    },
+    "reference_is_not_same_source_size_comparison": true,
+    "compiled_before_fix_commit": true,
+    "compiled_dirty_gradle_fix_committed_as": "ee5a675a10a9a573b0568796be73e5103ac5b6da",
+    "local_candidate_is_not_release_package": true
+  },
+  "post_filter_targeted_tests": 9,
+  "post_filter_targeted_log_sha256": "2ddf8c8a357b13c9bf8f6bf4e2b4590f56e417269b30f8feee550f25bdcf66a5",
+  "first_windows_failure_log_overwritten_by_successful_rerun": true,
+  "original_wsl_failure_log_retained": true,
+  "android_storage_read_retries": "First Settings intent reused the previous QA detail screen; label guard rejected it. An unsupported named new-task flag was then refused. Retried using numeric NEW_TASK|CLEAR_TASK for the Settings navigation stack, with formal app label verified; app data/cache were never cleared.",
+  "qa_export_retry": "Final QA export first refused the existing earlier snapshot name; resumed under a new name without overwriting the protected backup",
+  "final_verified_distribution_source": "ee5a675a10a9a573b0568796be73e5103ac5b6da",
+  "initial_local_tooling_source": "8456342a66b3880c72ff27d2d513ea4886d7aff5",
+  "final_source_full_suite": "See github-ci-arm64-2026-11-11.json; local full suite belongs to initial source and filtered-build targeted tests are separate"
+}

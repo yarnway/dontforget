@@ -1,0 +1,131 @@
+{
+  "commit": "ee5a675a10a9a573b0568796be73e5103ac5b6da",
+  "id": 42987767822,
+  "url": "https://github.com/yarnway/dontforget/actions/runs/42987767822",
+  "status": "completed",
+  "conclusion": "success",
+  "jobs": [
+    {
+      "name": "Analyze and test",
+      "conclusion": "success"
+    },
+    {
+      "name": "Windows analyze and test",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build linux candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build android candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build windows candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build macos candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Build ios candidate",
+      "conclusion": "success"
+    },
+    {
+      "name": "Verify tag packages without publishing",
+      "conclusion": "skipped"
+    }
+  ],
+  "quality": [
+    {
+      "job": "Analyze and test",
+      "flutter_passed": 2403,
+      "flutter_skipped": 2,
+      "python_run": 170,
+      "python_skipped": 4,
+      "log_sha256": "8f791134d4ba99b4c916900d32696df349f4f45fc19c80cfd3886573bc6149d2"
+    },
+    {
+      "job": "Windows analyze and test",
+      "flutter_passed": 2385,
+      "flutter_skipped": 20,
+      "python_run": 170,
+      "python_skipped": 6,
+      "log_sha256": "dff0b296f98e4857fb2588ffe0fe4aba9a3d8a64697c65cf620c8960d83b4a2c"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 13841850542,
+      "name": "linux-deliverables",
+      "size_in_bytes": 14365714,
+      "digest": "sha256:bedf7a56d97fbd905010bdcb5fa77603c0810743e903bd2501038b314ff2d95a",
+      "expired": false,
+      "workflow_run": {
+        "id": 42987767822,
+        "repository_id": 1362330634,
+        "head_repository_id": 1362330634,
+        "head_branch": "main",
+        "head_sha": "ee5a675a10a9a573b0568796be73e5103ac5b6da"
+      }
+    },
+    {
+      "id": 13841617816,
+      "name": "android-deliverables",
+      "size_in_bytes": 120657981,
+      "digest": "sha256:64721018e350f6aed2ed82016ca953af4a32df81d6bedd3c481ce7c89c5e4556",
+      "expired": false,
+      "workflow_run": {
+        "id": 42987767822,
+        "repository_id": 1362330634,
+        "head_repository_id": 1362330634,
+        "head_branch": "main",
+        "head_sha": "ee5a675a10a9a573b0568796be73e5103ac5b6da"
+      }
+    },
+    {
+      "id": 13841482610,
+      "name": "ios-deliverables",
+      "size_in_bytes": 11178998,
+      "digest": "sha256:fc870cee76853edee4680c4bcd9e5e0913edf46cac4469d78b14d421de8ea5b3",
+      "expired": false,
+      "workflow_run": {
+        "id": 42987767822,
+        "repository_id": 1362330634,
+        "head_repository_id": 1362330634,
+        "head_branch": "main",
+        "head_sha": "ee5a675a10a9a573b0568796be73e5103ac5b6da"
+      }
+    },
+    {
+      "id": 13841479797,
+      "name": "macos-deliverables",
+      "size_in_bytes": 26531727,
+      "digest": "sha256:aa696e0af0b1520ee0ba1e1d248f6f426cd41d2ef8fc4bb2c6e6d2f71b46b168",
+      "expired": false,
+      "workflow_run": {
+        "id": 42987767822,
+        "repository_id": 1362330634,
+        "head_repository_id": 1362330634,
+        "head_branch": "main",
+        "head_sha": "ee5a675a10a9a573b0568796be73e5103ac5b6da"
+      }
+    },
+    {
+      "id": 13841273129,
+      "name": "windows-deliverables",
+      "size_in_bytes": 32008108,
+      "digest": "sha256:ff53a5fc2df03fb45c69bc03e6726796e0c347f5120d0249a5000b458c05b2e4",
+      "expired": false,
+      "workflow_run": {
+        "id": 42987767822,
+        "repository_id": 1362330634,
+        "head_repository_id": 1362330634,
+        "head_branch": "main",
+        "head_sha": "ee5a675a10a9a573b0568796be73e5103ac5b6da"
+      }
+    }
+  ]
+}
