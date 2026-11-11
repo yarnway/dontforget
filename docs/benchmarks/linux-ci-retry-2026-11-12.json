@@ -1,0 +1,7 @@
+{
+  "source": "c9bff3be1dcf21ee800f1a4c513b3f9fc8877abb",
+  "run": 43055806919,
+  "requested_at": "2026-11-11T17:01:08.625625+00:00",
+  "reason": "Ubuntu archive DNS resolution failure / dependency timeout",
+  "first_failed_log_sha256": "f7772b6732ccb02682358f9974cfb26ffbc9e0c1d87c9b125cf01cc885f72a45"
+}

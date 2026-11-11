@@ -1,0 +1,33 @@
+{
+  "version": "1.8.4+73",
+  "source": "c9bff3be1dcf21ee800f1a4c513b3f9fc8877abb",
+  "setup_sha256": "a9c6982aa369224f838f071b2f6d4d54a32139d9ee6a5a6d3c8e729054a41bd9",
+  "running_before_upgrade": true,
+  "acceptance_case": "ci-running",
+  "version_before": [
+    1,
+    8,
+    3,
+    72
+  ],
+  "backup_verified": true,
+  "installer_exit": 0,
+  "force_close_allowed": false,
+  "payload_files_identical": 37,
+  "native_cli_exit": 0,
+  "schema": 17,
+  "all_business_fields_preserved": true,
+  "business_counts": {
+    "Reminders": 4,
+    "MediaRecords": 0,
+    "Settings": 1
+  },
+  "credential_files_preserved": true,
+  "dpapi_credential_readback_equal": true,
+  "credential_count": 1,
+  "gui_tested": false,
+  "package_origin": "fixed-CI-candidate",
+  "normal_app_reopen_process_verified": true,
+  "normal_app_reopen_business_fields_equal": true,
+  "normal_app_reopen_dpapi_equal": true
+}
