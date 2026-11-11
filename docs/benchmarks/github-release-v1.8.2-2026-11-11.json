@@ -1,0 +1,268 @@
+{
+  "url": "https://github.com/yarnway/dontforget/releases/tag/v1.8.2",
+  "tag": "v1.8.2",
+  "revision": "de4bda47a8759c4bff634d115d65f8bd4ec7e14a",
+  "published": true,
+  "prerelease": false,
+  "body_verified": true,
+  "assets": [
+    {
+      "file": "android-manifest.json",
+      "bytes": 650,
+      "sha256": "7bdf640e7235858f08aa87ed969687325fa105bfdbdf446123663e425e4b6bf7"
+    },
+    {
+      "file": "android-SHA256SUMS.txt",
+      "bytes": 192,
+      "sha256": "c4687a3fa90e8d02bf6632d1dfbb7a8e89b0171b21c6a54f07d51d2369253574"
+    },
+    {
+      "file": "DontForget_Android_v1.8.2.aab",
+      "bytes": 73247117,
+      "sha256": "e6bd8b6f2362332e64fe65c7d990b469edb1a19fcd6d1ba54e8f36da221bb8eb"
+    },
+    {
+      "file": "DontForget_Android_v1.8.2.apk",
+      "bytes": 76473084,
+      "sha256": "8e09e362cfce6835adcf1a9cb7ce217994886bd2a398c8db45d68eeab4e6d7d1"
+    },
+    {
+      "file": "DontForget_Linux_x64_v1.8.2.tar.gz",
+      "bytes": 14401974,
+      "sha256": "e10c202379a4487fded953e28f3a34f3388808b637ef70630e8e870a5b94e615"
+    },
+    {
+      "file": "DontForget_Setup_v1.8.2.exe",
+      "bytes": 14669662,
+      "sha256": "96ecd3be12bc00bebb04f6a3ba5daab2a54f3abfc127caea4d28b2b1232492ef"
+    },
+    {
+      "file": "DontForget_Windows_Portable_v1.8.2.zip",
+      "bytes": 17894494,
+      "sha256": "68a2fab3a58bc34d92efd0594ea6547603b51dbbab3529c7a97370f81df0d5b6"
+    },
+    {
+      "file": "linux-manifest.json",
+      "bytes": 401,
+      "sha256": "a9272c48a736f501af2697b0ad848d2932ae3be9ca1a12a07ca9a2c22f03c550"
+    },
+    {
+      "file": "linux-SHA256SUMS.txt",
+      "bytes": 101,
+      "sha256": "b770b7e4bebc1e0c269ee1a375b54b05863b1692d004650d939842c02a58ed91"
+    },
+    {
+      "file": "linux-startup.json",
+      "bytes": 572,
+      "sha256": "3ae786b9db8b0486e0cbf168041dcffbcefac8e5c865162da34ae1c4c3b95cb5"
+    },
+    {
+      "file": "release-provenance.json",
+      "bytes": 3410,
+      "sha256": "2d0901b692c66d184ef8b04932a20a0819420a2d2423331ddd73e56cc39840da"
+    },
+    {
+      "file": "SHA256SUMS.txt",
+      "bytes": 1373,
+      "sha256": "2f2b7fdea01daa9194b6c6fcc4ae14914e342344885cc870448948422fd1a5d6"
+    },
+    {
+      "file": "windows-installation.json",
+      "bytes": 286,
+      "sha256": "184d08a26536537e5a0e7f479ab5d33d003245b4460fb6ba1c05f77ae6d94386"
+    },
+    {
+      "file": "windows-manifest.json",
+      "bytes": 657,
+      "sha256": "76904eaafd6bad1c304b54e6d23d6b76f7894ca63adca2402ed4f105d5f5e5ad"
+    },
+    {
+      "file": "windows-SHA256SUMS.txt",
+      "bytes": 201,
+      "sha256": "8fc5c4114adff112699b8d97ecd5b36d8e15dd12c5ae3196d17fd077674bd6af"
+    },
+    {
+      "file": "windows-startup.json",
+      "bytes": 442,
+      "sha256": "01b85d037a3769ef34ca07e4dc6f47ad4c3cfddc95e88ac1124e30198adec021"
+    }
+  ],
+  "source_ci": 42841722705,
+  "publication_ci": 42949696021,
+  "publication_url": "https://github.com/yarnway/dontforget/actions/runs/42949696021",
+  "source_archives_sha_crc_verified": true,
+  "downloaded_ready_archive_sha_crc_verified": false,
+  "published_receipt_archive_sha_crc_verified": true,
+  "published_provenance_checksums_downloaded_verified": true,
+  "all_16_published_file_bytes_verified": true,
+  "provenance_file_entries_compared_by_filename": true,
+  "android_apk_aab_certificates_verified": true,
+  "android_certificate_sha256": "3db49656984fb848a73b1e8d056846b97e2a7caf47c9a9ae74f475cdbb79e9f1",
+  "latest_readback": true,
+  "previous_stable_assets_tag_preserved": true,
+  "version": "1.8.2",
+  "build_number": "71",
+  "schema": 17,
+  "local_related": {
+    "version": "1.8.2+71",
+    "schema": 17,
+    "sdk": "3.47.2",
+    "related_passed": 155,
+    "analyze_issues": 0,
+    "preview_tests_passed": 1,
+    "languages": 3,
+    "localized_keys_simplified": 26,
+    "removed_unused_keys": 4,
+    "preview_scope": "Flutter rendered settings, desktop light/dark and narrow, not Windows native GUI",
+    "preview_images": {
+      "desktop": "e210d428ec03a837224d011de6aa4614f66029dabfb4a88cf90529d6b28ff264",
+      "mobile": "0c14e6abdc9d6a1395a20659fc87ae3fed7217538b70920833c0f603de4d28f1",
+      "dark": "d064f8fb99e2cd7229573a3a344ee4d83843f583f8029b0141653accfb36fd8e"
+    },
+    "logs_sha256": {
+      "related.log": "ca469eac0c9930ecd0232cfec499bf780ca64ee9549f3b78c1a82db6dc755e3e",
+      "analyze.log": "3e991b99537b0dd88b785aa7077bdf6ac3b100aaff9389add4d3da317141c97e",
+      "preview.log": "b132efdf123663aaedb8079b39933e14355f4e905cfcc895bdf752ac8e0ac535",
+      "related-before-copy-expectation.log": "67a259db5f4517352df08f2cad273d02295b0b153b0d947ebbe95f1e46cd3914"
+    },
+    "fixed_sdk_full_ci": "pending",
+    "ordinary_packages_and_upgrade": "pending"
+  },
+  "windows_local_installations": [
+    {
+      "version": "1.8.2+71",
+      "source": "de4bda47a8759c4bff634d115d65f8bd4ec7e14a",
+      "setup_sha256": "97071216b2031149ff9d32e7eef6e274f362c921194116f257f9f345d6c6471a",
+      "running_before_upgrade": true,
+      "acceptance_case": "fixed-running",
+      "version_before": [
+        1,
+        8,
+        2,
+        70
+      ],
+      "backup_verified": true,
+      "installer_exit": 0,
+      "force_close_allowed": false,
+      "payload_files_identical": 38,
+      "native_cli_exit": 0,
+      "schema": 17,
+      "all_business_fields_preserved": true,
+      "business_counts": {
+        "Reminders": 4,
+        "MediaRecords": 0,
+        "Settings": 1
+      },
+      "credential_files_preserved": true,
+      "dpapi_credential_readback_equal": true,
+      "credential_count": 1,
+      "gui_tested": false,
+      "package_origin": "local-candidate-sdk3.47.2"
+    },
+    {
+      "version": "1.8.2+71",
+      "source": "de4bda47a8759c4bff634d115d65f8bd4ec7e14a",
+      "setup_sha256": "96ecd3be12bc00bebb04f6a3ba5daab2a54f3abfc127caea4d28b2b1232492ef",
+      "running_before_upgrade": true,
+      "acceptance_case": "ci-running",
+      "version_before": [
+        1,
+        8,
+        2,
+        71
+      ],
+      "backup_verified": true,
+      "installer_exit": 0,
+      "force_close_allowed": false,
+      "payload_files_identical": 37,
+      "native_cli_exit": 0,
+      "schema": 17,
+      "all_business_fields_preserved": true,
+      "business_counts": {
+        "Reminders": 4,
+        "MediaRecords": 0,
+        "Settings": 1
+      },
+      "credential_files_preserved": true,
+      "dpapi_credential_readback_equal": true,
+      "credential_count": 1,
+      "gui_tested": false,
+      "package_origin": "fixed-CI-candidate",
+      "normal_app_reopen_process_verified": true,
+      "normal_app_reopen_business_fields_equal": true,
+      "normal_app_reopen_dpapi_equal": true
+    }
+  ],
+  "android_local_upgrades": [
+    {
+      "version": "1.8.2+71",
+      "source": "de4bda47a8759c4bff634d115d65f8bd4ec7e14a",
+      "package": "com.yarnway.dontforget",
+      "upgrade_path": "70->71",
+      "ordinary_runtime_source": "de4bda47a8759c4bff634d115d65f8bd4ec7e14a",
+      "same_signing_identity": true,
+      "latest_backup_verified": true,
+      "all_fields_media_and_secure_entries_preserved": true,
+      "final_ordinary_entry": true,
+      "cold_reopen_passed": true,
+      "fresh_install_this_build": false,
+      "fresh68_install_and_restore_tested_separately": true
+    },
+    {
+      "version": "1.8.2+71",
+      "source": "de4bda47a8759c4bff634d115d65f8bd4ec7e14a",
+      "package": "com.yarnway.dontforget.acceptance.p4720261102",
+      "upgrade_path": "70->71",
+      "ordinary_runtime_source": "de4bda47a8759c4bff634d115d65f8bd4ec7e14a",
+      "same_signing_identity": true,
+      "latest_backup_verified": true,
+      "all_fields_media_and_secure_entries_preserved": true,
+      "final_ordinary_entry": true,
+      "cold_reopen_passed": true,
+      "fresh_install_this_build": false,
+      "fresh68_install_and_restore_tested_separately": true
+    }
+  ],
+  "android_final_ci_installation": {
+    "version": "1.8.2+71",
+    "source": "de4bda47a8759c4bff634d115d65f8bd4ec7e14a",
+    "package": "com.yarnway.dontforget",
+    "package_origin": "Fixed CI3.44.9 universal distribution APK",
+    "apk_sha256": "8e09e362cfce6835adcf1a9cb7ce217994886bd2a398c8db45d68eeab4e6d7d1",
+    "apk_bytes": 76473084,
+    "pinned_distribution_signature_enforced": true,
+    "updated_from_local71": true,
+    "backup_verified": true,
+    "all_business_fields_media_and_secure_entries_preserved": true,
+    "final_ordinary_entry": true,
+    "final_cold_reopen_passed": true,
+    "business_counts": {
+      "Reminders": 2,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "fresh_install_this_build": false,
+    "fresh68_uninstall_restore_test_separate": true,
+    "device_package_version_code_verified": 71,
+    "legacy_operation_label_69_is_not_package_version": true
+  },
+  "native_copy_observation": {
+    "version": "1.8.2+71",
+    "source": "de4bda47a8759c4bff634d115d65f8bd4ec7e14a",
+    "package": "com.yarnway.dontforget.acceptance.p4720261102",
+    "ordinary_qa_ui_screenshot_reviewed": true,
+    "missed_confirmation_label": "知道了",
+    "obsolete_confirmation_labels_absent": true,
+    "missed_banner_task_cards_composer_edges_visually_aligned": true,
+    "user_reminders_not_acknowledged_or_edited": true,
+    "private_screenshot_sha256": "b198d1ddd50f534345302fdad162a52e068dccdb9a6a9319c4e2d2bf3a746d23",
+    "personal_screenshot_published": false,
+    "windows_native_gui_tested": false,
+    "real_os_notification_delivery_tested": false
+  },
+  "source70_group_fixture": "study-management-70-android-2026-11-10.json",
+  "source68_fresh_install_evidence": "dual-android-windows-68-2026-11-10.json",
+  "full_native_matrix_complete": false,
+  "personal_credentials_distributed": false,
+  "prepublication_installed_package_hashes_match_published": true
+}

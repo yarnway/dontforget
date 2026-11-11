@@ -3,17 +3,17 @@
 本地优先的备忘与任务工作台。随手记录文字、录音和附件，按紧急提醒、重点跟进、常规待办与备忘便签管理事项；需要智能提取时，再连接自己配置的模型服务。
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.44.9-02569B?logo=flutter)](https://flutter.dev)
-[![Release](https://img.shields.io/badge/Release-v1.8.1-007F83)](https://github.com/yarnway/dontforget/releases/tag/v1.8.1)
+[![Release](https://img.shields.io/badge/Release-v1.8.2-007F83)](https://github.com/yarnway/dontforget/releases/tag/v1.8.2)
 
 [使用指南](docs/User_Guide.md) · [开发指南](docs/Developer_Guide.md) · [架构](docs/Architecture_Design.md) · [变更日志](docs/Changelog.md)
 
-当前三平台正式版为 **v1.8.1 / build69**。统一首页与错过提醒宽度、配置卡片与保存栏，修复Windows运行中升级退出。[分层验收](docs/Release_1.8.1_69_2026-11-10.md)和[剩余阶段](docs/Next_Steps_2026-11-02.md)分别维护。
+当前三平台正式版为 **v1.8.2 / build71**。精简提醒和配置文案，支持学习计划整组暂停、继续与回收站。[分层验收](docs/Release_1.8.2_71_2026-11-11.md)和[剩余阶段](docs/Next_Steps_2026-11-02.md)分别维护。
 
-记录与提醒的阶段设计见[分阶段功能清单](docs/Recording_Reminders_Phases.md)，用药计划、出门清单、附件备份和学习管理见[实现索引](docs/Planning_Implementation.md)。当前源码、自动化、安装包与实机范围以[本轮验收](docs/Release_1.8.1_69_2026-11-10.md)为准。
+记录与提醒的阶段设计见[分阶段功能清单](docs/Recording_Reminders_Phases.md)，用药计划、出门清单、附件备份和学习管理见[实现索引](docs/Planning_Implementation.md)。当前源码、自动化、安装包与实机范围以[本轮验收](docs/Release_1.8.2_71_2026-11-11.md)为准。
 
 ## v1.8：流式语音与简洁录入
 
-Android／Windows／Linux [v1.8.1已发布](https://github.com/yarnway/dontforget/releases/tag/v1.8.1)。录音就绪即提前识别，上滑预览，右滑编辑或到明确落点松手发送；个人凭据仅本地配置。Windows默认单行并按内容展开，响应式设置和空间管理适配手机与桌面。[发行记录](docs/Release_1.8.1_69_2026-11-10.md)。
+Android／Windows／Linux [v1.8.2已发布](https://github.com/yarnway/dontforget/releases/tag/v1.8.2)。录音就绪即提前识别，上滑预览，右滑编辑或到明确落点松手发送；个人凭据仅本地配置。Windows默认单行并按内容展开，响应式设置和空间管理适配手机与桌面。[发行记录](docs/Release_1.8.2_71_2026-11-11.md)。
 
 - **按状态找任务**：搜索页直接浏览全部、待办、今日提醒、提醒时间已过或已完成事项，无需先输入文字；提醒时间不是事件截止时间。
 - **组合关键词**：同时搜索标题、摘要和子任务；空格分隔的关键词可以出现在不同字段中。
@@ -25,6 +25,7 @@ Android／Windows／Linux [v1.8.1已发布](https://github.com/yarnway/dontforge
 - **复习与专注**：复习显示保存结果与下次日期；专注面板明确当前会话状态、提醒范围及失败重试，支持中文、English 和日本語。
 - **摘要与导出**：情境摘要跟随任务与提醒轮次更新；CSV 支持选择保存位置、三语言字段和明确的取消/失败反馈。
 - **编辑与工具**：工具使用非遮挡工作区面板，底部输入独立可用；目标与学习计划草稿跨工具保留，放弃需确认。详情支持保存/退出快捷键，工具选择支持搜索、方向键及输入法保护。
+- **计划整组管理**：从学习计划、复习或每日练习进入文件夹入口，集中暂停、继续或移至回收站；保留词条进度和附件。
 - **英语学习计划**：四级、六级、考研、雅思、托福，模型准备词汇与建议时刻，预览编辑后确认创建。按批次复习反馈推进默认 1/2/4/7/15 天间隔并更新提醒；入口为“更多功能 → 词汇学习计划”。
 - **外观与输入偏好**：跟随系统、明亮、暗黑独立保存；可选回车发送或仅发送按钮，Shift+Enter 换行。空输入区按住录音，上滑预览文字、向左取消、向右松手编辑；继续右滑到明确落点可松手发送，普通松手保存语音。iOS语音及真实采集仍需对应设备验收。
 - **减少重复计算**：编辑一条任务时复用其余任务的搜索文本，列表继续按需创建卡片；统计按任务版本缓存汇总，报告操作不会重复扫描任务。
@@ -51,15 +52,15 @@ AI 解析会将相关内容直接发送至您配置的服务商。应用不提�
 
 任务、附件索引和配置保存在本机 SQLite 数据库中。备份功能支持标准便携导出及**端到端流式加密备份（AES-256-GCM + Argon2id）**，可将全量数据与多媒体附件本体一体化打包归档，并具备防重放、抗篡改与原子安全恢复能力。
 
-v1.8.1已发布Android／Windows／Linux，Apple平台继续独立验收；当前已验范围和剩余门槛见[发行记录](docs/Release_1.8.1_69_2026-11-10.md)。macOS 通知日志升级与安装旧程序前的回退步骤见[日志维护说明](docs/Notification_Storage_Upgrade.md)。
+v1.8.2已发布Android／Windows／Linux，Apple平台继续独立验收；当前已验范围和剩余门槛见[发行记录](docs/Release_1.8.2_71_2026-11-11.md)。macOS 通知日志升级与安装旧程序前的回退步骤见[日志维护说明](docs/Notification_Storage_Upgrade.md)。
 
-## v1.8.1三平台下载
+## v1.8.2三平台下载
 
-[下载v1.8.1](https://github.com/yarnway/dontforget/releases/tag/v1.8.1)，包含固定发行签名Android APK／AAB、Windows Setup／Portable和Linux x64包（Ubuntu24.04基线）。[验收与剩余阶段](docs/Release_1.8.1_69_2026-11-10.md)单独记录；腾讯实时语音使用本地配置的个人凭据。
+[下载v1.8.2](https://github.com/yarnway/dontforget/releases/tag/v1.8.2)，包含固定发行签名Android APK／AAB、Windows Setup／Portable和Linux x64包（Ubuntu24.04基线）。[验收与剩余阶段](docs/Release_1.8.2_71_2026-11-11.md)单独记录；腾讯实时语音使用本地配置的个人凭据。
 
 ## 平台与下载
 
-从 [GitHub Releases](https://github.com/yarnway/dontforget/releases) 查看实际可用的版本。本轮v1.7.1已发布Android／Windows／Linux；后续内部验证包保留在GitHub Actions artifacts，正式发布单独手动执行。macOS／iOS完成验收后另行纳入。源码、构建与真机结果分别记录，详见[发布策略](docs/Release_Policy.md)。
+从 [GitHub Releases](https://github.com/yarnway/dontforget/releases) 查看实际可用的版本。本轮v1.8.2已发布Android／Windows／Linux；后续内部验证包保留在GitHub Actions artifacts，正式发布单独手动执行。macOS／iOS完成验收后另行纳入。源码、构建与真机结果分别记录，详见[发布策略](docs/Release_Policy.md)。
 
 | 平台 | 工程要求 | 交付说明 |
 | --- | --- | --- |
