@@ -57,5 +57,31 @@
   "README_sha256": "c8bceecf101e829a6034cd5b1267609dec0d0d0732a45f722e9865ad2adf4c66",
   "rendered_html_sha256": "a6effa30b397ac6764b5ddf5fe8dc0497a8bc160ba8c9be9797d9fd72a30a309",
   "date": "2026-11-11",
-  "app_version_changed": false
+  "app_version_changed": false,
+  "source": "bda32770ba73164446b5ca1499465db0b87c9728",
+  "remote_readback": {
+    "source": "bda32770ba73164446b5ca1499465db0b87c9728",
+    "files": [
+      {
+        "file": "README.md",
+        "bytes": 6714,
+        "sha256": "c8bceecf101e829a6034cd5b1267609dec0d0d0732a45f722e9865ad2adf4c66"
+      },
+      {
+        "file": "docs/images/settings-desktop-light.png",
+        "bytes": 36543,
+        "sha256": "e210d428ec03a837224d011de6aa4614f66029dabfb4a88cf90529d6b28ff264"
+      },
+      {
+        "file": "docs/images/settings-desktop-dark.png",
+        "bytes": 36166,
+        "sha256": "d064f8fb99e2cd7229573a3a344ee4d83843f583f8029b0141653accfb36fd8e"
+      }
+    ],
+    "remote_file_bytes_match": true,
+    "existing_release_tag_unchanged": true,
+    "stable_release_unchanged": "v1.8.2+71"
+  },
+  "ci_run": 42957739486,
+  "ci_url": "https://github.com/yarnway/dontforget/actions/runs/42957739486"
 }

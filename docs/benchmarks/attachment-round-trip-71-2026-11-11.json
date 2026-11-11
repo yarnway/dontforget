@@ -255,7 +255,7 @@
   "media_playback_or_display_tested": false,
   "outcome": "PASS",
   "date": "2026-11-11",
-  "acceptance_source_state": "New opt-in acceptance files in working tree; production runtime lib tree unchanged",
+  "acceptance_source_state": "Native and desktop acceptance ran before commit; all three executed fixture file hashes exactly match the committed files",
   "released_source": "de4bda47a8759c4bff634d115d65f8bd4ec7e14a",
   "native_sdk": "3.47.2",
   "desktop_sdk": "3.47.2",
@@ -290,5 +290,10 @@
     "run-1.log": "73fbf54a297c9f7e50e45d223dcc3749711c68cc7e621d701e726f73a1d36959",
     "run-2.log": "e1b45b9f045b08c543faaeeae40780b2d0a45fdd1677b720dff3ba19be092eeb",
     "run2/desktop.log": "b145551c867aecc7261d1c33977f6d3348f78771a9e75dbff45008f2b8ab8a5e"
-  }
+  },
+  "acceptance_source_commit": "bda32770ba73164446b5ca1499465db0b87c9728",
+  "ci_run": 42957739486,
+  "ci_url": "https://github.com/yarnway/dontforget/actions/runs/42957739486",
+  "ci_scope": "Full normal regression and candidate builds; two explicit physical round-trip cases are local, not auto-discovered CI tests",
+  "new_app_version_created": false
 }

@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-11",
+  "stage": 47,
+  "skill": "computer-use",
+  "attempts": 2,
+  "kernel_reset_between_attempts": true,
+  "error_code": -32602,
+  "error": "sandboxCwd is not a local file URI",
+  "failure_phase": "tool initialization before app discovery",
+  "windows_discovered": false,
+  "app_input_sent": false,
+  "native_gui_tested": false,
+  "product_failure_observed": false,
+  "state": "TOOL_INITIALIZATION_BLOCKED"
+}

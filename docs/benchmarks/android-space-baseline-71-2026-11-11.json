@@ -1,0 +1,82 @@
+{
+  "date": "2026-11-11",
+  "scope": "Read-only current Android APK bytes and debug-QA private directory allocated KiB",
+  "synthetic_test_identity_uninstalled": true,
+  "user_files_deleted_or_reencoded": false,
+  "formal_data_directory_measured": false,
+  "apk_bytes_do_not_equal_total_installed_space": true,
+  "packages": {
+    "production": {
+      "version_code": 71,
+      "apk_files": 1,
+      "apk_bytes": 76473084
+    },
+    "qa": {
+      "version_code": 71,
+      "apk_files": 1,
+      "apk_bytes": 98045990,
+      "allocated_kib": {
+        "databases": 167,
+        "files": 16,
+        "cache": 4,
+        "code_cache": 21,
+        "app_flutter": 102310,
+        "shared_prefs": 32,
+        "app_flutter/media": 731
+      }
+    }
+  },
+  "qa_parent_and_child_directory_counts_overlap": true,
+  "qa_app_flutter_child_directory_categories": {
+    "flutter_assets": {
+      "count": 1,
+      "allocated_kib": 101576
+    },
+    "media": {
+      "count": 1,
+      "allocated_kib": 731
+    }
+  },
+  "qa_app_flutter_parent_minus_child_kib": 3,
+  "directory_names_and_user_filenames_published": false,
+  "android_system_storage_page": {
+    "production": {
+      "应用大小": "77.84 MB",
+      "用户数据": "352 kB",
+      "缓存": "328 kB",
+      "总计": "78.52 MB",
+      "version_displayed": "1.8.2",
+      "screenshot_sha256": "d0f4de6d609d0029eaa325a2923c1b2e7df06e1ad820992f49b1fb2bb8353534"
+    },
+    "qa": {
+      "应用大小": "98.14 MB",
+      "用户数据": "105 MB",
+      "缓存": "4.10 kB",
+      "总计": "203 MB",
+      "version_displayed": "1.8.2",
+      "screenshot_sha256": "8466a32330a0156ca352c6088a97e74c971323e1cef16f517948a84e745a4818"
+    }
+  },
+  "storage_or_cache_clear_button_pressed": false,
+  "screenshots_published": false,
+  "published_apk_native_libraries": {
+    "arm64-v8a": {
+      "files": 4,
+      "compressed_bytes": 25242856,
+      "uncompressed_bytes": 25242856
+    },
+    "armeabi-v7a": {
+      "files": 4,
+      "compressed_bytes": 23176548,
+      "uncompressed_bytes": 23176548
+    },
+    "x86_64": {
+      "files": 4,
+      "compressed_bytes": 26810720,
+      "uncompressed_bytes": 26810720
+    }
+  },
+  "published_apk_sha256": "8e09e362cfce6835adcf1a9cb7ce217994886bd2a398c8db45d68eeab4e6d7d1",
+  "device_primary_abi": "arm64-v8a",
+  "measurement_note": "Android Settings labels retain displayed MB/kB units; du figures use allocated KiB. Parent and child directory figures overlap; this is a point-in-time sample, not a cross-device size guarantee."
+}

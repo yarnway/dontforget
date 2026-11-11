@@ -12,4 +12,6 @@
 
 本轮另推进[阶段48带附件往返](Attachment_Round_Trip_2026-11-11.md)；完整待办继续由[阶段台账](Next_Steps_2026-11-02.md)维护。
 
-首轮完整CI出现一项既有录入测试轮询等待失败，已修正等待方式并保留业务断言，新源码CI另验；见[修正记录](Capture_Test_Stability_2026-11-11.md)。
+首轮完整CI出现一项既有录入测试轮询等待失败，已修正等待方式并保留业务断言，新源码CI结果见下方收口；见[修正记录](Capture_Test_Stability_2026-11-11.md)。
+
+GitHub提交`bda3277`的README及两张主题图片已逐字节读回一致，原v1.8.2标签保持。新源码[固定SDK CI](https://github.com/yarnway/dontforget/actions/runs/42957739486)七项成功；本轮不新增应用版本。
