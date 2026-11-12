@@ -143,7 +143,7 @@ extension TaskManagement on RemindersNotifier {
           ? null
           : LearningQueueService.decode(old.wordProgressJson)[entry.key];
       if (oldProgress != null &&
-          oldProgress.reviewed.isAfter(entry.value.reviewed)) {
+          LearningQueueService.isNewerProgress(oldProgress, entry.value)) {
         continue;
       }
       final events = <String, TaskEvent>{};
@@ -669,25 +669,9 @@ extension TaskManagement on RemindersNotifier {
           final all = (await db.query(
             'Reminders',
           )).map(Reminder.fromJson).toList();
-          for (final studyPlanBaseline
-              in studyPlanBaselines ?? const <StudyPlanGroup>[]) {
-            final baseline = {
-              for (final row in studyPlanBaseline.members) row.id: row,
-            };
-            final members = all
-                .where(
-                  (row) => StudyPlanGroup.identity(row) == studyPlanBaseline.id,
-                )
-                .toList();
-            if (members.length != baseline.length ||
-                members.any(
-                  (row) =>
-                      baseline[row.id] == null ||
-                      !mapEquals(row.toJson(), baseline[row.id]!.toJson()),
-                ) ||
-                all.any((row) => baseline.containsKey(row.details.planId))) {
-              throw const StaleReminderOccurrenceException();
-            }
+          if (studyPlanBaselines != null &&
+              !StudyPlanGroup.matchesSnapshots(all, studyPlanBaselines)) {
+            throw const StaleReminderOccurrenceException();
           }
           if (contentBaseline != null) {
             final root = expected.single;

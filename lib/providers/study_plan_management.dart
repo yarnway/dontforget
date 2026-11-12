@@ -27,27 +27,11 @@ extension StudyPlanManagement on RemindersNotifier {
     DataGeneration generation, {
     DateTime? now,
   }) {
-    final groups = [
-      for (final group in expected)
-        StudyPlanGroup(
-          group.id,
-          group.members.map((r) => Reminder.fromJson(r.toJson())),
-        ),
-    ];
-    final rows = [for (final group in groups) ...group.members];
-    if (!const {'pause', 'resume', 'trash'}.contains(action) ||
-        groups.isEmpty ||
-        groups.length > 20 ||
-        groups.map((g) => g.id).toSet().length != groups.length ||
-        rows.length > 50 ||
-        rows.map((r) => r.id).toSet().length != rows.length ||
-        groups.any(
-          (g) =>
-              g.members.isEmpty ||
-              g.members.any((r) => StudyPlanGroup.identity(r) != g.id),
-        )) {
-      throw const FormatException('Invalid study plan selection');
+    if (!const {'pause', 'resume', 'trash'}.contains(action)) {
+      throw const FormatException('Invalid study plan action');
     }
+    final groups = StudyPlanGroup.freezeSelection(expected);
+    final rows = [for (final group in groups) ...group.members];
     final targets = rows
         .where(
           (row) => switch (action) {
@@ -65,4 +49,57 @@ extension StudyPlanManagement on RemindersNotifier {
       studyPlanBaselines: groups,
     );
   }
+
+  Future<ReminderBatchResult> shiftStudyPlanDates(
+    StudySchedulePreview preview,
+    DataGeneration generation,
+  ) => _enqueue(
+    (ticket) => _dbHelper.runOperation(ticket, () async {
+      final saved = await _dbHelper.writeTransaction(ticket, (db) async {
+        final all = (await db.query(
+          'Reminders',
+        )).map(Reminder.fromJson).toList();
+        final StudySchedulePreview current;
+        try {
+          current = StudyScheduleService.preview(
+            all,
+            preview.groups,
+            preview.days,
+            now: preview.at,
+          );
+        } on StudyScheduleStale {
+          throw const StaleReminderOccurrenceException();
+        }
+        if (current.progressFingerprint != preview.progressFingerprint ||
+            !listEquals(
+              current.changes.map((r) => jsonEncode(r.toJson())).toList(),
+              preview.changes.map((r) => jsonEncode(r.toJson())).toList(),
+            )) {
+          throw const StaleReminderOccurrenceException();
+        }
+        for (final row in current.changes) {
+          await db.update(
+            'Reminders',
+            row.toJson(),
+            where: 'id = ?',
+            whereArgs: [row.id],
+          );
+        }
+        return current.changes;
+      });
+      _dbHelper.checkGeneration(ticket);
+      _publishManaged(saved);
+      var failures = 0;
+      for (final row in saved) {
+        if (await _synchronizeReminder(row, ticket, cancelOverdue: true)) {
+          failures++;
+        }
+      }
+      return ReminderBatchResult(
+        changed: saved.length,
+        nativeSyncFailures: failures,
+      );
+    }),
+    generation: generation,
+  );
 }

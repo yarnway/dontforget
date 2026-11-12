@@ -6,9 +6,11 @@ import '../../l10n/study_management_strings.dart';
 import '../../models/study_plan_group.dart';
 import '../../providers/providers.dart';
 import '../../services/recovery/runtime_gate.dart';
+import '../../services/study_schedule_service.dart';
 import '../formatters/local_date_time.dart';
 import '../widgets/inline_feedback.dart';
 import '../widgets/learning_workload_card.dart';
+import '../widgets/study_schedule_dialog.dart';
 import 'notification_repair_screen.dart';
 
 class StudyPlansScreen extends ConsumerStatefulWidget {
@@ -23,6 +25,7 @@ class _StudyPlansScreenState extends ConsumerState<StudyPlansScreen> {
   RuntimeRecoveryToken? _birth;
   DataGeneration? _generation;
   bool _busy = false, _selecting = false;
+  bool _previewingDates = false;
   final _selected = <String, StudyPlanGroup>{};
   bool get _current =>
       mounted &&
@@ -75,7 +78,71 @@ class _StudyPlansScreenState extends ConsumerState<StudyPlansScreen> {
     _selected.clear();
   });
   Future<void> _change(StudyPlanGroup group, String action) =>
-      _apply([group], action);
+      action == 'shift' ? _shift([group]) : _apply([group], action);
+
+  Future<void> _shift(List<StudyPlanGroup> groups) async {
+    if (_busy || !_current) return;
+    setState(() {
+      _busy = true;
+      _previewingDates = true;
+    });
+    try {
+      final preview = await showDialog<StudySchedulePreview>(
+        context: context,
+        builder: (_) => StudyScheduleDialog(
+          rows: ref.read(remindersProvider),
+          groups: groups,
+        ),
+      );
+      if (preview == null || !mounted || !_current) return;
+      setState(() => _previewingDates = false);
+      final result = await ref
+          .read(remindersProvider.notifier)
+          .shiftStudyPlanDates(preview, _generation!);
+      if (!mounted || !_current) return;
+      _cancelSelection();
+      if (result.nativeSyncFailures > 0) {
+        InlineFeedback.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).get('reminderNativeSyncFailed'),
+            ),
+            action: notificationRepairAction(context),
+          ),
+        );
+      }
+    } catch (error) {
+      if (mounted && _current) {
+        final stale =
+            error is StaleReminderOccurrenceException ||
+            error is StudyScheduleStale;
+        if (stale) _cancelSelection();
+        InlineFeedback.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              t(
+                stale
+                    ? 'stale'
+                    : error is StudyScheduleConflict
+                    ? 'sharedDates'
+                    : error is StudyScheduleRecurring
+                    ? 'recurringDates'
+                    : 'failed',
+              ),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _previewingDates = false;
+        });
+      }
+    }
+  }
+
   Future<void> _apply(List<StudyPlanGroup> groups, String action) async {
     if (_busy || !_current) return;
     if (action == 'trash') {
@@ -193,7 +260,8 @@ class _StudyPlansScreenState extends ConsumerState<StudyPlansScreen> {
               constraints: const BoxConstraints(maxWidth: 840),
               child: Column(
                 children: [
-                  if (_busy) const LinearProgressIndicator(),
+                  if (_busy && !_previewingDates)
+                    const LinearProgressIndicator(),
                   Expanded(
                     child: groups.isEmpty
                         ? Center(child: Text(t('empty')))
@@ -255,6 +323,11 @@ class _StudyPlansScreenState extends ConsumerState<StudyPlansScreen> {
                                         onSelected: (action) =>
                                             _change(group, action),
                                         itemBuilder: (_) => [
+                                          if (group.pending.isNotEmpty)
+                                            PopupMenuItem(
+                                              value: 'shift',
+                                              child: Text(t('shiftDates')),
+                                            ),
                                           if (group.canPause)
                                             PopupMenuItem(
                                               value: 'pause',
@@ -315,6 +388,13 @@ class _StudyPlansScreenState extends ConsumerState<StudyPlansScreen> {
                           crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             Text('${t('selectedPlans')} ${_selected.length}'),
+                            FilledButton.tonal(
+                              key: const ValueKey('study-plans-shift'),
+                              onPressed: _busy || !_current || _selected.isEmpty
+                                  ? null
+                                  : () => _shift(_selected.values.toList()),
+                              child: Text(t('shiftDates')),
+                            ),
                             FilledButton.tonal(
                               key: const ValueKey('study-plans-pause'),
                               onPressed:

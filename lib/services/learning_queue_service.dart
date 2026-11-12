@@ -11,9 +11,11 @@ class WordProgress {
     required this.firstReviewed,
     required this.reviews,
     required this.grade,
+    this.rescheduledAt,
   });
   final int level, reviews, grade;
   final DateTime due, reviewed, firstReviewed;
+  final DateTime? rescheduledAt;
   Map<String, dynamic> toJson() => {
     'level': level,
     'due': due.toIso8601String(),
@@ -21,6 +23,7 @@ class WordProgress {
     'first': firstReviewed.toIso8601String(),
     'reviews': reviews,
     'grade': grade,
+    if (rescheduledAt != null) 'rescheduled': rescheduledAt!.toIso8601String(),
   };
   factory WordProgress.fromJson(Map data) {
     final level = data['level'],
@@ -36,6 +39,10 @@ class WordProgress {
         grade > 2) {
       throw const FormatException('Invalid word progress');
     }
+    final rescheduled = data['rescheduled'];
+    if (rescheduled != null && tryParseStoredDateTime(rescheduled) == null) {
+      throw const FormatException('Invalid reschedule date');
+    }
     final due = tryParseStoredDateTime(data['due']),
         reviewed = tryParseStoredDateTime(data['reviewed']),
         first = tryParseStoredDateTime(data['first']);
@@ -50,6 +57,9 @@ class WordProgress {
       due: due,
       reviewed: reviewed,
       firstReviewed: first,
+      rescheduledAt: rescheduled == null
+          ? null
+          : parseStoredDateTime(rescheduled),
       reviews: reviews,
       grade: grade,
     );
@@ -104,13 +114,21 @@ class LearningQueueService {
     for (final task in tasks) {
       for (final entry in decode(task.wordProgressJson).entries) {
         if (all[entry.key] == null ||
-            entry.value.reviewed.isAfter(all[entry.key]!.reviewed)) {
+            isNewerProgress(entry.value, all[entry.key]!)) {
           all[entry.key] = entry.value;
         }
       }
     }
     return all;
   }
+
+  /// A review supersedes a manual date edit; tied reviews use the latest edit.
+  static bool isNewerProgress(WordProgress candidate, WordProgress previous) =>
+      candidate.reviewed.isAfter(previous.reviewed) ||
+      (candidate.reviewed.isAtSameMomentAs(previous.reviewed) &&
+          (candidate.rescheduledAt ?? candidate.reviewed).isAfter(
+            previous.rescheduledAt ?? previous.reviewed,
+          ));
 
   static LearningSnapshot queue(
     List<Reminder> tasks, {

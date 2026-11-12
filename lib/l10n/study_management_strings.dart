@@ -1,5 +1,36 @@
 String studyManagementText(String language, String key) {
   const labels = {
+    'shiftDates': ['调整日期', 'Adjust dates', '日程を調整'],
+    'shiftDays': ['调整天数', 'Days to shift', '調整日数'],
+    'daysHint': [
+      '正数顺延，负数提前（1–365天）',
+      'Positive: later; negative: earlier (1–365 days)',
+      '正数は延期、負数は前倒し（1～365日）',
+    ],
+    'earlierDay': ['提前1天', '1 day earlier', '1日前倒し'],
+    'laterDay': ['顺延1天', '1 day later', '1日延期'],
+    'laterWeek': ['顺延7天', '7 days later', '7日延期'],
+    'applyDates': ['应用', 'Apply', '適用'],
+    'invalidDays': [
+      '请输入有效天数（±1–365）并检查批次日期',
+      'Enter ±1–365 days and check batch dates',
+      '±1～365日を入力し、セットの日程を確認してください',
+    ],
+    'sharedDates': [
+      '请同时选择共享已学词条的其他计划',
+      'Also select other plans sharing reviewed words',
+      '学習済みの単語を共有する他のプランも選択してください',
+    ],
+    'recurringDates': [
+      '暂不支持调整重复批次',
+      'Repeating batches cannot be shifted yet',
+      '繰り返しセットの日程調整には未対応です',
+    ],
+    'datesExcluded': [
+      '未调整的完成／归档／回收站批次：',
+      'Completed / archived / trashed batches excluded:',
+      '完了・アーカイブ・ゴミ箱の除外セット：',
+    ],
     'workload': ['未来7天', 'Next 7 days', '今後7日間'],
     'scheduledWords': ['词已排期', 'words scheduled', '語が予定済み'],
     'dailyLimit': ['每日上限', 'Daily limit', '1日の上限'],

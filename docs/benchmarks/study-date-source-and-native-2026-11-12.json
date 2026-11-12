@@ -1,0 +1,118 @@
+{
+  "date": "2026-11-12",
+  "scope": "unreleased study-date source candidate",
+  "base_source": "1a778589604fab00c5a09e9fc3639a42f0b69450",
+  "runtime_lib_tree": "863dc77306b16ab79f2739ff8309845ac1d3e5b2",
+  "schema": 17,
+  "version_and_dependencies_changed": false,
+  "local_flutter": "3.47.2",
+  "fixed_ci_flutter": "3.44.9",
+  "automation": {
+    "initial_related_suite_passed": 117,
+    "final_date_and_ui_suite_passed": 38,
+    "date_domain_tests_passed": 19,
+    "plan_screen_tests_passed": 19,
+    "suites_overlap_do_not_sum": true,
+    "analyze_issues": 0,
+    "covered": [
+      "read-only preview and cancel",
+      "cross-plan shared-progress conflict including paused batches",
+      "reviewed word due ordering and backward clock edits",
+      "queue and seven-day workload follow manual due dates",
+      "archive protection when deleting older completed batches",
+      "atomic concurrent edit/add/move/remove/history/duplicate rejection",
+      "second SQL write rollback without native side effects",
+      "recovery generation invalidation",
+      "durable commit with native reconciliation failure",
+      "overdue notification cancellation and acknowledgement clearing",
+      "attached original bytes and media metadata retained",
+      "portable backup inspect and restore preparation preserves reschedule marker",
+      "month/leap/year and local/UTC calendar arithmetic",
+      "invalid offsets, recurring, undated, partial and malformed inputs",
+      "three locales at 375/1280 with 200 percent text",
+      "50-row scrollable preview above simulated keyboard"
+    ]
+  },
+  "native": {
+    "base_source": "1a778589604fab00c5a09e9fc3639a42f0b69450",
+    "status": "unreleased source candidate; isolated debug fixture versionCode74",
+    "package": "com.yarnway.dontforget.acceptance.shift20261112",
+    "model": "Pixel 8 Pro",
+    "synthetic_rows": 4,
+    "selected_plans": 2,
+    "selected_rows": 3,
+    "unselected_control_rows": 1,
+    "actual_touch_multi_select_and_date_preview": true,
+    "cancel_preserves_all_fields": true,
+    "actual_touch_later_seven_then_earlier_one": true,
+    "calendar_dates_and_reviewed_word_due_shifted_six_days": true,
+    "mastery_and_unselected_plan_preserved": true,
+    "workload_word_counts": [
+      4,
+      1,
+      2
+    ],
+    "cold_new_pid_readback_equal": true,
+    "temporary_identity_uninstalled": true,
+    "user_apps_not_reinstalled_or_cleared": true,
+    "notification_transport": "recording substitute; no OS delivery claimed",
+    "notification_intents": [
+      {
+        "action": "schedule",
+        "id": "plan-0"
+      },
+      {
+        "action": "schedule",
+        "id": "plan-1"
+      },
+      {
+        "action": "schedule",
+        "id": "other-0"
+      },
+      {
+        "action": "schedule",
+        "id": "plan-0"
+      },
+      {
+        "action": "schedule",
+        "id": "plan-1"
+      },
+      {
+        "action": "schedule",
+        "id": "other-0"
+      }
+    ],
+    "apk_sha256": "e3fba62d30c7bffd707912fa152aa50e57317dbf95b9b823337198064898fe07",
+    "build_sdk": "3.47.2",
+    "public_fixed_sdk_apk_tested": false,
+    "runtime_lib_tree": "863dc77306b16ab79f2739ff8309845ac1d3e5b2",
+    "first_attempt_note": "Initial acceptance script used time_origin instead of the persisted trigger_time_origin column. Failure preserved; allowlist corrected and resumed. The final guarded source was then rebuilt and the full scenario rerun from a fresh isolated identity."
+  },
+  "limits": {
+    "plans": 20,
+    "snapshot_rows": 50,
+    "days": [
+      -365,
+      365
+    ],
+    "zero_days_allowed": false,
+    "recurring_batches_supported": false,
+    "completed_archived_trashed_dates_shifted": false,
+    "shared_reviewed_word_requires_all_live_plans": true,
+    "real_DST_transition_host_tested": false,
+    "ordinary_windows_upgrade_this_round": false,
+    "ordinary_production_and_qa_android_upgrade_this_round": false,
+    "new_public_release": false
+  },
+  "logs_sha256": {
+    "related.log": "8cc33b1465ffc89c29c04059f2fcbecd0de93e6179fb87a5c4efcb6070dd768c",
+    "new-ui-and-domain.log": "b9dc759db7e7a46e840d0d6242fc155ed7ff7e6bfc14bb96fcc2f202eb80dfb0",
+    "domain-final.log": "d8cbf269b7c369872a67fd799ee958ef4db1adc7b9b670f1d1646bba67ef94d2",
+    "final-verified.log": "1bc5ac82426119e20841e7b3d966fd5f59b53b128cb3fa1e60d728af4d1a6342",
+    "analyze-verified.log": "a1ee97747a903c5abf23245c46c966240bade0bd63dba31ff540fbfee4dc5825",
+    "native-final.log": "3385647ac51e255d14d2f0506b30abdf981e71a61d112fe9be39c6e9ef9314c6",
+    "native-fixture-build.log": "0014bd8045df97487bb0c017abae2c56f8ab2a90be3d385178995f29b5936f90",
+    "native-first-failure.json": "fb763dd8d54926c93e8630b7ae0d6484eb133c9015ec6cd71e2eac64f2745238"
+  },
+  "fixed_ci_status": "pending source push; recorded independently"
+}

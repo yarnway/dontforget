@@ -113,6 +113,175 @@ void main() {
   }
 
   testWidgets(
+    'date preview cancels without writes, validates days, and commits selected plans',
+    (tester) async {
+      await tester.runAsync(() async {
+        await h.seed(batch('p-0'));
+        await h.seed(batch('q-0', plan: 'q', paused: true));
+      });
+      await show(tester);
+      await selectPlans(tester);
+      final before = h.notifier.state.map((r) => r.toJson()).toList();
+      await tester.tap(find.byKey(const ValueKey('study-plans-shift')));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('→ '), findsNWidgets(2));
+      await tester.enterText(
+        find.byKey(const ValueKey('study-shift-days')),
+        '0',
+      );
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.byKey(const ValueKey('study-shift-confirm')),
+            )
+            .onPressed,
+        isNull,
+      );
+      await tester.tap(find.text('取消'));
+      await tester.pumpAndSettle();
+      expect(h.notifier.state.map((r) => r.toJson()).toList(), before);
+      expect(find.byKey(const ValueKey('study-plans-shift')), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('study-plans-shift')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('顺延7天'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('study-shift-confirm')));
+      await tester.pump();
+      await settle(tester);
+      await tester.runAsync(() async {
+        expect((await h.row('p-0')).nextReviewAt, DateTime(2030, 1, 15, 8));
+        expect((await h.row('q-0')).nextReviewAt, DateTime(2030, 1, 15, 8));
+        expect((await h.row('q-0')).details.paused, true);
+      });
+      expect(find.byKey(const ValueKey('study-plans-shift')), findsNothing);
+      expect(tester.takeException(), isNull);
+      await finish(tester);
+    },
+  );
+
+  testWidgets(
+    'single-plan preview explains shared progress without an enabled commit',
+    (tester) async {
+      await tester.runAsync(() async {
+        await h.seed(batch('p-0'));
+        await h.seed(batch('q-0', plan: 'q'));
+      });
+      await show(tester);
+      await menu(tester, '调整日期');
+      await tester.pumpAndSettle();
+      expect(find.text('请同时选择共享已学词条的其他计划'), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.byKey(const ValueKey('study-shift-confirm')),
+            )
+            .onPressed,
+        isNull,
+      );
+      await tester.tap(find.text('取消'));
+      await tester.pumpAndSettle();
+      await finish(tester);
+    },
+  );
+
+  testWidgets('a date preview cannot overwrite a concurrent edit', (
+    tester,
+  ) async {
+    await tester.runAsync(() => h.seed(batch('p-0')));
+    await show(tester);
+    await menu(tester, '调整日期');
+    await tester.pumpAndSettle();
+    await tester.runAsync(() async {
+      final row = await h.row('p-0');
+      await h.notifier.updateReminder(
+        row.copyWith(taskTitle: 'Changed'),
+        baseline: row,
+      );
+    });
+    await tester.tap(find.byKey(const ValueKey('study-shift-confirm')));
+    await tester.pump();
+    await settle(tester);
+    expect(find.text('计划已变更，请重新操作'), findsOneWidget);
+    await tester.runAsync(
+      () async =>
+          expect((await h.row('p-0')).nextReviewAt, DateTime(2030, 1, 8, 8)),
+    );
+    await finish(tester);
+  });
+
+  for (final locale in ['zh', 'en', 'ja']) {
+    for (final width in [375.0, 1280.0]) {
+      testWidgets('$locale date preview fits $width at 200% text', (
+        tester,
+      ) async {
+        await tester.runAsync(() => h.seed(batch('p-0')));
+        await show(tester, locale: locale, width: width, scale: 2);
+        await tester.tap(find.byKey(const ValueKey('study-plan-actions-p')));
+        await tester.pumpAndSettle();
+        await tester.tap(
+          find.text(switch (locale) {
+            'zh' => '调整日期',
+            'ja' => '日程を調整',
+            _ => 'Adjust dates',
+          }),
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.byKey(const ValueKey('study-shift-confirm')),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+        await tester.tap(find.byKey(const ValueKey('study-shift-confirm')));
+        await tester.pump();
+        await settle(tester);
+        expect(h.notifier.state.single.nextReviewAt, DateTime(2030, 1, 9, 8));
+        expect(tester.takeException(), isNull);
+        await finish(tester);
+      });
+    }
+  }
+
+  testWidgets(
+    '50-batch preview stays scrollable above a small-screen keyboard',
+    (tester) async {
+      await tester.runAsync(() async {
+        for (var i = 0; i < 50; i++) {
+          await h.seed(batch('p-$i'));
+        }
+      });
+      await show(tester, width: 375, scale: 2);
+      tester.view.physicalSize = const Size(375, 600);
+      await tester.pumpAndSettle();
+      await menu(tester, '调整日期');
+      await tester.pumpAndSettle();
+      tester.view.viewInsets = const FakeViewPadding(bottom: 280);
+      addTearDown(tester.view.resetViewInsets);
+      await tester.enterText(
+        find.byKey(const ValueKey('study-shift-days')),
+        '-2',
+      );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Batch p-49'));
+      await tester.pumpAndSettle();
+      final apply = find.byKey(const ValueKey('study-shift-confirm'));
+      expect(tester.getRect(apply).bottom, lessThanOrEqualTo(320));
+      expect(tester.takeException(), isNull);
+      await tester.tap(apply);
+      await tester.pump();
+      await settle(tester);
+      expect(h.notifier.state.length, 50);
+      expect(
+        h.notifier.state.every(
+          (r) => r.nextReviewAt == DateTime(2030, 1, 6, 8),
+        ),
+        true,
+      );
+      await finish(tester);
+    },
+  );
+
+  testWidgets(
     'selected plans pause together and clear selection after commit',
     (tester) async {
       await tester.runAsync(() async {
