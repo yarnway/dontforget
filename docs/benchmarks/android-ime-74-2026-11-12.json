@@ -1,0 +1,191 @@
+{
+  "date": "2026-11-12",
+  "source_checkout": "9f0fb48b234de954e7d9b4540c2fb230a9eb31f4",
+  "released_runtime_source": "26c90e0e56636f925f6394ca569713367db00c87",
+  "lib_tree": "0f27251030aceca4c34472cb3460b2e986c8ade4",
+  "version": "1.8.5+74",
+  "new_public_release": false,
+  "runtime_changed": false,
+  "native_sdk": "Flutter 3.47.2",
+  "release_sdk": "Flutter 3.44.9 (existing release CI; not rebuilt this round)",
+  "device": {
+    "model": "Pixel 8 Pro",
+    "android": "17",
+    "api": 37,
+    "model_read_from_getprop": true
+  },
+  "input_methods": {
+    "wetype": "3.5.2 (55206)",
+    "gboard": "18.5.6.993608717-release-arm64-v8a (176049814)"
+  },
+  "packages": [
+    {
+      "file": "ime-native.apk",
+      "bytes": 98063750,
+      "sha256": "67d61704052a32ee30926339053e0ee91fc5166cf9ef6421e8293fa631914eea",
+      "certificate_sha256": "4f8518351e90e3293ad293b74b009ad40949e871adf91614bb27ba1ba098eea9",
+      "package_version_verified": true
+    },
+    {
+      "file": "ime-native-control.apk",
+      "bytes": 98086990,
+      "sha256": "d89faef4f4161cd26a6cca234bd11bf8efb6134c0e44a0a85a799c59a5cb5992",
+      "certificate_sha256": "4f8518351e90e3293ad293b74b009ad40949e871adf91614bb27ba1ba098eea9",
+      "package_version_verified": true
+    }
+  ],
+  "gboard_chinese": {
+    "pure_screen_key_pinyin": "ceshi",
+    "candidate_committed": "测试",
+    "composition_created_reminders": 0,
+    "hide_reopen_draft_equal": true,
+    "voice_text_mode_draft_equal": true,
+    "native_software_send_created_once": true,
+    "second_empty_send_did_not_duplicate": true,
+    "cold_new_pid_reminder_equal": true,
+    "memo_without_alarm": true,
+    "no_audio_or_ai_service_configured": true
+  },
+  "gboard_english": {
+    "pure_screen_keys": "hello + space",
+    "committed_text": "hello ",
+    "existing_chinese_row_all_fields_preserved": true,
+    "native_ime_picker_english_uk": true,
+    "wetype_and_back_committed_draft_preserved": true,
+    "software_send_created_once": true,
+    "cold_new_pid_rows_equal": true,
+    "no_alarm_or_media_created": true
+  },
+  "button_mode": {
+    "english_soft_enter_inserts_newline": true,
+    "software_enter_does_not_send": true,
+    "unsent_multiline_draft_persisted_exactly": true,
+    "cold_new_pid_draft_restored_exactly": true,
+    "app_send_created_once": true,
+    "previous_rows_all_fields_equal": true,
+    "memo_no_alarm_or_media": true,
+    "settings_changed_via_actual_product_ui": true
+  },
+  "wetype_after_service_rebind": {
+    "after_idle_ime_service_restart_only": true,
+    "pure_screen_qwerty_taps": "ceshi",
+    "candidate_selected_visually": "测试",
+    "composing_app_send_blocked_without_rows_or_text_loss": true,
+    "hide_reopen_draft_equal": true,
+    "voice_text_mode_draft_equal": true,
+    "app_send_created_once": true,
+    "prior_rows_fields_preserved_except_expected_reciprocal_link": true,
+    "expected_existing_chinese_row_reciprocal_link_count": 1,
+    "cold_new_pid_rows_equal": true,
+    "no_alarm_or_media_created": true,
+    "permanent_ime_blank_fix_claimed": false
+  },
+  "wetype_native_comparison": {
+    "cases": [
+      {
+        "case": "wetype-native-exact-original",
+        "input_type_and_action_seen": true,
+        "q_key_present": false,
+        "show_ime_with_hardware_keyboard": "0",
+        "keyboard_body_visually_confirmed": false,
+        "last_editor_flags": [
+          "0x28001",
+          "0x2000004"
+        ],
+        "q_key_semantics_absence_is_not_keyboard_visibility": true
+      },
+      {
+        "case": "wetype-native-exact-hardware-on",
+        "input_type_and_action_seen": true,
+        "q_key_present": false,
+        "show_ime_with_hardware_keyboard": "1",
+        "keyboard_body_visually_confirmed": false,
+        "last_editor_flags": [
+          "0x28001",
+          "0x2000004"
+        ],
+        "q_key_semantics_absence_is_not_keyboard_visibility": true
+      },
+      {
+        "case": "wetype-native-exact-rebound",
+        "input_type_and_action_seen": true,
+        "q_key_present": false,
+        "show_ime_with_hardware_keyboard": "0",
+        "keyboard_body_visually_confirmed": true,
+        "last_editor_flags": [
+          "0x28001",
+          "0x2000004"
+        ],
+        "q_key_semantics_absence_is_not_keyboard_visibility": true
+      },
+      {
+        "case": "wetype-flutter-after-rebind",
+        "input_type_and_action_seen": true,
+        "q_key_present": false,
+        "show_ime_with_hardware_keyboard": "0",
+        "keyboard_body_visually_confirmed": true,
+        "last_editor_flags": [
+          "0x28001",
+          "0x2000001"
+        ],
+        "q_key_semantics_absence_is_not_keyboard_visibility": true
+      }
+    ],
+    "native_control_apk": {
+      "package": "com.yarnway.dontforget.acceptance.ime20261112",
+      "version": "1.8.5+74",
+      "private_native_edittext_control_added": true,
+      "lib_unchanged": true,
+      "bytes": 98086990,
+      "sha256": "d89faef4f4161cd26a6cca234bd11bf8efb6134c0e44a0a85a799c59a5cb5992"
+    },
+    "user_ime_data_cleared": false,
+    "only_idle_wetype_service_restarted": true,
+    "synthetic_business_rows_preserved": true,
+    "observation": "WeType keys are drawn in a custom view and lack individual key semantics. Screenshots show blank before restart and a full keyboard after restarting/rebinding the idle IME service. This recovery is not a permanent application fix."
+  },
+  "fixture_java_sha256": "a16775b2bd530ed2c26c76c7df868426c517c9fb79946eb1072030065450c0b0",
+  "screenshot_sha256": {
+    "wetype-initial-focus": "b6ab8405301eb709f7d254c70bd808d72d5537fe22460100e68e0995ab1cc8db",
+    "wetype-native-exact-original": "8cd37a654b9b28a8e145a46547aa6770b0d668102fe7daa98fd5822a8d367fa1",
+    "wetype-native-exact-hardware-on": "9a56101511a1400ac08631fdcb02ab4e282bd7cdf6813cb580683935b1b47985",
+    "wetype-native-exact-rebound": "62dd71ddab5ce2bc7b0b6e16b1a17de798e94f3ba07bf9f73ac3a14188822e0d",
+    "wetype-flutter-after-rebind": "a90de04c7ad4d08af3d33e41f3faf9cef86fd6f9435097d754f25f8a05099659",
+    "gboard-chinese-composing": "97d53fce5154411952c9b1dc9564fb637029cc06e17c672339f450e38dc8cdd5",
+    "gboard-chinese-committed": "29bd98497d4075ee73b2fc3b33e46ce95492649d86b11b5cc7dba423cad5b2a3",
+    "gboard-mode-return": "e38604fb20f7952f7e1643a3b76b51929957e42148b81569002730ec1a9a9643",
+    "wetype-preserved-english-draft": "cb6867dc65a4bbbda20cbf8a9c35209dd28ccb30594e51f1f80683d68b0c9c53",
+    "button-mode-multiline": "02d7f74ae7e15e6274d54274148d640ea6bf0b7b3fda7aa29d3a570667be00df",
+    "wetype-composition-send-blocked": "d76ede4656321020546600a6f01269eea604686545642b85217bf27cf5a73347",
+    "wetype-chinese-committed": "dfdd8694814b9864d5df6076484f39cd07a08f961011f06db4ef71ee0ff6e48d"
+  },
+  "cleanup": {
+    "temporary_identity_uninstalled": true,
+    "final_synthetic_counts": {
+      "Reminders": 4,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "all_synthetic_reminders_without_alarm": true,
+    "original_default_ime_subtype_hardware_setting_restored": true,
+    "gboard_chinese_subtype_restored": true,
+    "temporary_adb_xml_removed": true,
+    "temporary_native_activity_removed_from_private_build_tree": true,
+    "production_and_qa_apps_not_reinstalled_or_cleared": true,
+    "ordinary_production_app_returned_to_foreground": true,
+    "input_method_user_data_cleared": false
+  },
+  "hardware_alphabet_or_editor_text_injection_used": false,
+  "screen_taps_and_swipes_used": true,
+  "real_human_speech_or_tencent_asr_tested": false,
+  "ordinary_fixed_ci_apk_ime_matrix_tested": false,
+  "permanent_wetype_blank_fix_claimed": false,
+  "harness_corrections": [
+    "Initial snapshot looked under files instead of Android databases; preserved and corrected.",
+    "Gboard candidate uses content-desc, English keys use Space/Send, picker requires explicit refocus.",
+    "Navigation IME tap cycles subtypes; long press opens the explicit language/IME selector.",
+    "Settings change requires Save and return; saved through the actual dialog.",
+    "New same-title memo creates an expected reciprocal task link; verified precisely instead of claiming previous rows wholly unchanged.",
+    "WeType custom-drawn keyboard has no individual Q key semantics; visibility confirmed from screenshots and keyboard view bounds, not semantics absence."
+  ]
+}
