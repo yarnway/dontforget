@@ -22,7 +22,8 @@ class _StudyPlansScreenState extends ConsumerState<StudyPlansScreen> {
   late final RuntimeRecoveryGate _runtime;
   RuntimeRecoveryToken? _birth;
   DataGeneration? _generation;
-  bool _busy = false;
+  bool _busy = false, _selecting = false;
+  final _selected = <String, StudyPlanGroup>{};
   bool get _current =>
       mounted &&
       _runtime.isCurrent(_birth) &&
@@ -48,7 +49,34 @@ class _StudyPlansScreenState extends ConsumerState<StudyPlansScreen> {
     }
   }
 
-  Future<void> _change(StudyPlanGroup group, String action) async {
+  void _select(StudyPlanGroup group, bool selected) {
+    if (_busy || !_current) return;
+    if (selected &&
+        (_selected.length >= 20 ||
+            _selected.values.fold(0, (n, g) => n + g.members.length) +
+                    group.members.length >
+                50)) {
+      InlineFeedback.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(t('selectionLimit'))));
+      return;
+    }
+    setState(() {
+      if (selected) {
+        _selected[group.id] = group;
+      } else {
+        _selected.remove(group.id);
+      }
+    });
+  }
+
+  void _cancelSelection() => setState(() {
+    _selecting = false;
+    _selected.clear();
+  });
+  Future<void> _change(StudyPlanGroup group, String action) =>
+      _apply([group], action);
+  Future<void> _apply(List<StudyPlanGroup> groups, String action) async {
     if (_busy || !_current) return;
     if (action == 'trash') {
       final confirmed = await showDialog<bool>(
@@ -62,7 +90,7 @@ class _StudyPlansScreenState extends ConsumerState<StudyPlansScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  for (final row in group.retained)
+                  for (final row in groups.single.retained)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Text(row.taskTitle),
@@ -88,10 +116,12 @@ class _StudyPlansScreenState extends ConsumerState<StudyPlansScreen> {
     }
     setState(() => _busy = true);
     try {
-      final result = await ref
-          .read(remindersProvider.notifier)
-          .changeStudyPlan(group, action, _generation!);
+      final notifier = ref.read(remindersProvider.notifier);
+      final result = groups.length == 1
+          ? await notifier.changeStudyPlan(groups.single, action, _generation!)
+          : await notifier.changeStudyPlans(groups, action, _generation!);
       if (!mounted || !_current) return;
+      _cancelSelection();
       if (result.nativeSyncFailures > 0) {
         InlineFeedback.of(context).showSnackBar(
           SnackBar(
@@ -104,6 +134,7 @@ class _StudyPlansScreenState extends ConsumerState<StudyPlansScreen> {
       }
     } catch (error) {
       if (mounted && _current) {
+        if (error is StaleReminderOccurrenceException) _cancelSelection();
         InlineFeedback.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -121,14 +152,38 @@ class _StudyPlansScreenState extends ConsumerState<StudyPlansScreen> {
   Widget build(BuildContext context) {
     final groups = StudyPlanGroup.project(ref.watch(remindersProvider));
     return PopScope(
-      canPop: !_busy,
+      canPop: !_busy && !_selecting,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && !_busy && _selecting) _cancelSelection();
+      },
       child: Scaffold(
         appBar: AppBar(
           title: Text(t('title')),
+          actions: [
+            if (groups.isNotEmpty)
+              IconButton(
+                key: const ValueKey('study-plan-select'),
+                tooltip: t(_selecting ? 'cancelSelection' : 'selectPlans'),
+                icon: Icon(_selecting ? Icons.close : Icons.checklist),
+                onPressed: !_current || _busy
+                    ? null
+                    : () {
+                        if (_selecting) {
+                          _cancelSelection();
+                        } else {
+                          setState(() => _selecting = true);
+                        }
+                      },
+              ),
+          ],
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-            onPressed: _busy ? null : () => Navigator.maybePop(context),
+            onPressed: _busy
+                ? null
+                : _selecting
+                ? _cancelSelection
+                : () => Navigator.maybePop(context),
           ),
         ),
         body: SafeArea(
@@ -158,9 +213,31 @@ class _StudyPlansScreenState extends ConsumerState<StudyPlansScreen> {
                               return Card.outlined(
                                 key: ValueKey('study-plan-${group.id}'),
                                 margin: const EdgeInsets.only(bottom: 16),
+                                clipBehavior: Clip.antiAlias,
                                 child: Column(
                                   children: [
                                     ListTile(
+                                      leading: _selecting
+                                          ? Checkbox(
+                                              key: ValueKey(
+                                                'study-plan-check-${group.id}',
+                                              ),
+                                              semanticLabel:
+                                                  '${t('selectPlans')} · ${group.title}',
+                                              value: _selected.containsKey(
+                                                group.id,
+                                              ),
+                                              onChanged:
+                                                  _busy ||
+                                                      !_current ||
+                                                      group.pending.isEmpty
+                                                  ? null
+                                                  : (value) => _select(
+                                                      group,
+                                                      value == true,
+                                                    ),
+                                            )
+                                          : null,
                                       title: Text(group.title),
                                       subtitle: Text(
                                         '${group.createdAt == null ? '' : '${formatLocalDateTime(group.createdAt!)}\n'}'
@@ -173,7 +250,8 @@ class _StudyPlansScreenState extends ConsumerState<StudyPlansScreen> {
                                         key: ValueKey(
                                           'study-plan-actions-${group.id}',
                                         ),
-                                        enabled: !_busy && _current,
+                                        enabled:
+                                            !_busy && !_selecting && _current,
                                         onSelected: (action) =>
                                             _change(group, action),
                                         itemBuilder: (_) => [
@@ -226,6 +304,47 @@ class _StudyPlansScreenState extends ConsumerState<StudyPlansScreen> {
                             },
                           ),
                   ),
+                  if (_selecting)
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: Wrap(
+                          spacing: 12,
+                          runSpacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text('${t('selectedPlans')} ${_selected.length}'),
+                            FilledButton.tonal(
+                              key: const ValueKey('study-plans-pause'),
+                              onPressed:
+                                  _busy ||
+                                      !_current ||
+                                      !_selected.values.any((g) => g.canPause)
+                                  ? null
+                                  : () => _apply(
+                                      _selected.values.toList(),
+                                      'pause',
+                                    ),
+                              child: Text(t('pause')),
+                            ),
+                            FilledButton.tonal(
+                              key: const ValueKey('study-plans-resume'),
+                              onPressed:
+                                  _busy ||
+                                      !_current ||
+                                      !_selected.values.any((g) => g.canResume)
+                                  ? null
+                                  : () => _apply(
+                                      _selected.values.toList(),
+                                      'resume',
+                                    ),
+                              child: Text(t('resume')),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),

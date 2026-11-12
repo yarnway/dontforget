@@ -77,8 +77,16 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('workload is collapsed and refreshes after pausing a plan', (tester) async {
-    await tester.runAsync(() => h.seed(batch('p-0').copyWith(wordProgressJson: null, nextReviewAt: DateTime.now())));
+  testWidgets('workload is collapsed and refreshes after pausing a plan', (
+    tester,
+  ) async {
+    await tester.runAsync(
+      () => h.seed(
+        batch(
+          'p-0',
+        ).copyWith(wordProgressJson: null, nextReviewAt: DateTime.now()),
+      ),
+    );
     await show(tester);
     expect(find.text('未来7天'), findsOneWidget);
     expect(find.text('1 词已排期'), findsOneWidget);
@@ -90,6 +98,68 @@ void main() {
     await menu(tester, '暂停计划');
     await settle(tester);
     expect(find.text('0 词已排期'), findsOneWidget);
+    await finish(tester);
+  });
+
+  Future<void> selectPlans(WidgetTester tester) async {
+    await tester.tap(find.byKey(const ValueKey('study-plan-select')));
+    await tester.pumpAndSettle();
+    for (final id in ['p', 'q']) {
+      final check = find.byKey(ValueKey('study-plan-check-$id'));
+      await tester.ensureVisible(check);
+      await tester.tap(check);
+      await tester.pumpAndSettle();
+    }
+  }
+
+  testWidgets(
+    'selected plans pause together and clear selection after commit',
+    (tester) async {
+      await tester.runAsync(() async {
+        await h.seed(batch('p-0'));
+        await h.seed(batch('q-0', plan: 'q'));
+      });
+      await show(tester);
+      await selectPlans(tester);
+      expect(find.text('已选计划 2'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('study-plans-pause')));
+      await tester.pump();
+      await settle(tester);
+      expect(h.notifier.state.every((r) => r.details.paused), true);
+      expect(find.byKey(const ValueKey('study-plans-pause')), findsNothing);
+      await selectPlans(tester);
+      await tester.tap(find.byKey(const ValueKey('study-plans-resume')));
+      await tester.pump();
+      await settle(tester);
+      expect(h.notifier.state.any((r) => r.details.paused), false);
+      expect(tester.takeException(), isNull);
+      await finish(tester);
+    },
+  );
+
+  testWidgets('selected snapshots stay frozen when another plan changes', (
+    tester,
+  ) async {
+    await tester.runAsync(() async {
+      await h.seed(batch('p-0'));
+      await h.seed(batch('q-0', plan: 'q'));
+    });
+    await show(tester);
+    await selectPlans(tester);
+    await tester.runAsync(() async {
+      final old = await h.row('q-0');
+      await h.notifier.updateReminder(
+        old.copyWith(taskTitle: 'Changed later'),
+        baseline: old,
+      );
+    });
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('study-plans-pause')));
+    await tester.pump();
+    await settle(tester);
+    expect(h.notifier.state.any((r) => r.details.paused), false);
+    expect(find.text('计划已变更，请重新操作'), findsOneWidget);
+    expect(find.byKey(const ValueKey('study-plans-pause')), findsNothing);
     await finish(tester);
   });
 
@@ -212,6 +282,9 @@ void main() {
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const PageStorageKey('learning-workload')));
         await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const ValueKey('study-plan-select')));
+        await tester.pumpAndSettle();
+        expect(find.byKey(const ValueKey('study-plans-pause')), findsOneWidget);
         expect(tester.takeException(), isNull);
         await finish(tester);
       }

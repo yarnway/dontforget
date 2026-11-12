@@ -393,4 +393,141 @@ void main() {
       expect(await saved(), before);
     },
   );
+  Future<List<StudyPlanGroup>> selected() async => StudyPlanGroup.project(
+    await h.rows(),
+  ).where((g) => const {'p', 'q'}.contains(g.id)).toList();
+
+  test(
+    'multiple plans pause and resume atomically without changing dates or history',
+    () async {
+      await seed();
+      await h.seed(batch('r-0', plan: 'r'));
+      final originals = {
+        for (final row in await h.rows()) row.id: row.toJson(),
+      };
+      for (final action in ['pause', 'resume']) {
+        final result = await h.notifier.changeStudyPlans(
+          await selected(),
+          action,
+          h.database.captureGeneration(),
+        );
+        expect(result.changed, 3);
+        final rows = await h.rows();
+        for (final row in rows) {
+          if (row.id == 'r-0') {
+            expect(row.toJson(), originals[row.id]);
+            continue;
+          }
+          expect(row.details.paused, action == 'pause');
+          for (final key in [
+            'word_progress_json',
+            'next_review_at',
+            'trigger_time',
+            'task_summary',
+          ]) {
+            expect(row.toJson()[key], originals[row.id]![key]);
+          }
+        }
+      }
+    },
+  );
+
+  test('a changed no-op plan invalidates all selected plans', () async {
+    await h.seed(batch('p-0'));
+    await h.seed(batch('q-0', plan: 'q', paused: true));
+    final preview = await selected();
+    h.notifications.cancelled.clear();
+    final gen = h.database.captureGeneration();
+    await h.database.writeTransaction(
+      gen,
+      (db) => db.update(
+        'Reminders',
+        {'task_title': 'Edited paused plan'},
+        where: 'id = ?',
+        whereArgs: ['q-0'],
+      ),
+    );
+    final before = await saved();
+    await expectLater(
+      h.notifier.changeStudyPlans(preview, 'pause', gen),
+      throwsA(isA<StaleReminderOccurrenceException>()),
+    );
+    expect(await saved(), before);
+    expect(h.notifications.cancelled, isEmpty);
+  });
+
+  test(
+    'second plan write failure rolls back every plan and native effect',
+    () async {
+      await seed();
+      final before = await saved();
+      await (await h.database.database).execute(
+        "CREATE TRIGGER fail_other_plan BEFORE UPDATE ON Reminders WHEN NEW.id = 'q-0' BEGIN SELECT RAISE(ABORT, 'Synthetic cross-plan failure'); END",
+      );
+      await expectLater(
+        h.notifier.changeStudyPlans(
+          await selected(),
+          'pause',
+          h.database.captureGeneration(),
+        ),
+        throwsA(isA<Exception>()),
+      );
+      expect(await saved(), before);
+      expect(h.notifications.cancelled, isEmpty);
+      expect(h.notifier.state.any((r) => r.details.paused), false);
+    },
+  );
+
+  test(
+    'cross-plan API rejects duplicates, excessive members and destructive actions',
+    () async {
+      await seed();
+      final plans = await selected();
+      for (final invalid in <List<StudyPlanGroup>>[
+        [],
+        [plans.first, plans.first],
+        [StudyPlanGroup('p', List.generate(51, (i) => batch('p-$i')))],
+      ]) {
+        expect(
+          () => h.notifier.changeStudyPlans(
+            invalid,
+            'pause',
+            h.database.captureGeneration(),
+          ),
+          throwsFormatException,
+        );
+      }
+      expect(
+        () => h.notifier.changeStudyPlans(
+          plans,
+          'trash',
+          h.database.captureGeneration(),
+        ),
+        throwsFormatException,
+      );
+    },
+  );
+  test('cross-plan resume preserves overdue recurring dates', () async {
+    final date = DateTime(2026, 1, 8, 8);
+    for (final id in ['p', 'q']) {
+      await h.seed(
+        batch('$id-0', plan: id, paused: true).copyWith(
+          triggerTime: date,
+          nextReviewAt: date,
+          isRecurring: true,
+          recurrenceRule: 'daily',
+        ),
+      );
+    }
+    await h.notifier.changeStudyPlans(
+      await selected(),
+      'resume',
+      h.database.captureGeneration(),
+      now: DateTime(2030, 1, 1),
+    );
+    for (final row in await h.rows()) {
+      expect(row.triggerTime, date);
+      expect(row.nextReviewAt, date);
+    }
+  });
 }

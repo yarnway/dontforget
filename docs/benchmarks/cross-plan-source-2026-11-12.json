@@ -1,0 +1,21 @@
+{
+  "date": "2026-11-12",
+  "scope": "Cross-plan pause/resume source candidate",
+  "local_flutter": "3.47.2",
+  "ci_flutter": "3.44.9",
+  "related_tests_passed": 102,
+  "analyze_issues": 0,
+  "max_plans": 20,
+  "max_snapshot_rows": 50,
+  "cross_plan_trash_supported": false,
+  "schema": 17,
+  "dependencies_changed": false,
+  "atomic_snapshot_validation": true,
+  "initial_failures": "Bulk toolbar was inserted in the trash dialog instead of the screen; a no-op test included a seed notification; UI action test omitted the first busy frame. Corrected before final validation. Owned stalled test process trees stopped, user App untouched.",
+  "logs_sha256": {
+    "initial-failures.log": "573127f3e8b3edd4cff708f3009881e2659718906ab8958178b0a68fd3377b99",
+    "ui-await-failure.log": "5267e43573c4f13287a57014ad83c51ef5eca544c212000cb42409bc9f5a22dd",
+    "related.log": "c3c6f48b2ccfa9ad1936a2d017dbaa321eab4edadc0fe0c21d6b4c8cff4ba198",
+    "analyze-final.log": "b55ec077bba62f93473f570303a71f6d0eba684acfe7b47704daf997147cbd9d"
+  }
+}
