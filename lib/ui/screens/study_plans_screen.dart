@@ -12,6 +12,7 @@ import '../widgets/inline_feedback.dart';
 import '../widgets/learning_workload_card.dart';
 import '../widgets/study_schedule_dialog.dart';
 import 'notification_repair_screen.dart';
+import 'word_archive_screen.dart';
 
 class StudyPlansScreen extends ConsumerStatefulWidget {
   const StudyPlansScreen({super.key});
@@ -227,6 +228,18 @@ class _StudyPlansScreenState extends ConsumerState<StudyPlansScreen> {
         appBar: AppBar(
           title: Text(t('title')),
           actions: [
+            IconButton(
+              key: const ValueKey('study-word-archive'),
+              tooltip: t('wordArchive'),
+              icon: const Icon(Icons.history_rounded),
+              onPressed: !_current || _busy
+                  ? null
+                  : () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const WordArchiveScreen(),
+                      ),
+                    ),
+            ),
             if (groups.isNotEmpty)
               IconButton(
                 key: const ValueKey('study-plan-select'),

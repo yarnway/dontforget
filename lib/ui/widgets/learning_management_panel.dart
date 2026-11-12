@@ -10,10 +10,14 @@ import '../../models/vocabulary_entry.dart';
 import '../../providers/providers.dart';
 import '../../providers/workspace_drafts_provider.dart';
 import '../../services/learning_queue_service.dart';
+import '../../services/word_archive_service.dart';
+import '../../l10n/study_management_strings.dart';
 import '../../services/recovery/runtime_gate.dart';
 import '../formatters/local_date_time.dart';
 import '../screens/notification_repair_screen.dart';
+import '../screens/word_archive_screen.dart';
 import 'inline_feedback.dart';
+import 'learning_workload_card.dart';
 
 class LearningManagementPanel extends ConsumerStatefulWidget {
   const LearningManagementPanel({super.key});
@@ -256,8 +260,13 @@ class _LearningManagementPanelState
   @override
   Widget build(BuildContext context) {
     if (!_ready) return const Center(child: CircularProgressIndicator());
-    final tasks = ref.watch(remindersProvider),
-        progress = LearningQueueService.progress(tasks);
+    final tasks = ref.watch(remindersProvider);
+    int? archiveCount;
+    try {
+      archiveCount = WordArchiveService.project(tasks).length;
+    } on FormatException {
+      archiveCount = null;
+    }
     final batches = tasks
         .where((r) => r.isVisible && r.spacedRepetitionLevel > 0)
         .toList();
@@ -290,16 +299,32 @@ class _LearningManagementPanelState
           t('learningOverview'),
           style: Theme.of(context).textTheme.titleMedium,
         ),
-        Text('${t('wordArchive')}: ${progress.length}'),
-        Wrap(
-          spacing: 12,
-          runSpacing: 5,
-          children: [
-            for (var level = 0; level <= 5; level++)
-              Text(
-                '$level: ${progress.values.where((p) => p.level == level).length}',
+        Card.outlined(
+          clipBehavior: Clip.antiAlias,
+          margin: const EdgeInsets.symmetric(vertical: 16),
+          child: ListTile(
+            key: const ValueKey('learning-word-archive'),
+            leading: const Icon(Icons.history_rounded),
+            title: Text(
+              studyManagementText(
+                AppLocalizations.of(context).locale.languageCode,
+                'wordArchive',
               ),
-          ],
+            ),
+            subtitle: Text(
+              archiveCount == null
+                  ? AppLocalizations.of(context).get('learningProgressInvalid')
+                  : '${t('wordArchive')}: $archiveCount',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: _busy || !_current
+                ? null
+                : () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const WordArchiveScreen(),
+                    ),
+                  ),
+          ),
         ),
         Text(t('learningEvidence')),
         for (var i = 6; i >= 0; i--)
@@ -310,30 +335,7 @@ class _LearningManagementPanelState
             );
           })(),
         const Divider(),
-        Text(t('loadForecast')),
-        for (var i = 0; i < 7; i++)
-          (() {
-            final day = DateTime(today.year, today.month, today.day + i);
-            final keys = <String>{};
-            for (final task in batches.where(
-              (r) => !r.details.paused && !r.isCompleted,
-            )) {
-              for (final word in VocabularyEntry.parseNotes(
-                task.taskSummary ?? '',
-              )) {
-                final key = LearningQueueService.wordKey(word.word),
-                    due =
-                        progress[key]?.due ??
-                        task.nextReviewAt ??
-                        task.triggerTime ??
-                        today;
-                if (LearningQueueService.sameDay(due, day)) keys.add(key);
-              }
-            }
-            return Text(
-              '${formatLocalDateTime(day, pattern: 'MM-dd')} · ${keys.length}',
-            );
-          })(),
+        const LearningWorkloadCard(),
         const Divider(),
         Text(t('studyPlans')),
         for (final task in batches)

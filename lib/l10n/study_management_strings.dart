@@ -1,5 +1,15 @@
 String studyManagementText(String language, String key) {
   const labels = {
+    'wordArchive': ['词条档案', 'Word history', '単語の学習記録'],
+    'archiveSearch': ['搜索词条或释义', 'Search words or meanings', '単語・意味を検索'],
+    'archiveEmpty': ['暂无学习记录', 'No learning history yet', '学習記録はありません'],
+    'archiveNoMatches': ['未找到匹配词条', 'No matching words', '一致する単語はありません'],
+    'archiveCount': ['个词条', 'words', '語'],
+    'archiveReviews': ['复习次数', 'Reviews', '復習回数'],
+    'archiveLevel': ['学习阶段', 'Learning stage', '学習段階'],
+    'archiveFirst': ['首次学习', 'First studied', '初回学習'],
+    'archiveLast': ['最近复习', 'Last reviewed', '前回の復習'],
+    'archiveDue': ['记录的复习日期', 'Recorded review date', '記録された復習日'],
     'shiftDates': ['调整日期', 'Adjust dates', '日程を調整'],
     'shiftDays': ['调整天数', 'Days to shift', '調整日数'],
     'daysHint': [

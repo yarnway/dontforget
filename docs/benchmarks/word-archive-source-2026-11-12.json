@@ -1,0 +1,37 @@
+{
+  "date": "2026-11-12",
+  "source_iteration_only": true,
+  "published_version_unchanged": "1.8.6+75",
+  "schema": 17,
+  "local_flutter": "3.47.2",
+  "fixed_ci_flutter": "3.44.9",
+  "related_passed": 98,
+  "archive_domain_cases": 8,
+  "archive_widget_cases": 13,
+  "suites_overlap_do_not_sum": true,
+  "analyze_issues": 0,
+  "data_writes_by_archive_screen": false,
+  "native_notification_actions_by_archive_screen": false,
+  "dependencies_changed": false,
+  "source_files_sha256": {
+    "lib/services/word_archive_service.dart": "6fe9748b11aee6a1dca61c43a035533deaae74394294bb08074b6c0a900ec2e9",
+    "lib/ui/screens/word_archive_screen.dart": "9dfe3ddc31e77640852e0769465812de2816703c9bb7dc9d56bfe2ea86dc498d",
+    "lib/ui/screens/study_plans_screen.dart": "8a468008a69dd75dc759a4d0216d0e2706ae9af99dad86da8c1a84403052d14a",
+    "lib/ui/widgets/learning_management_panel.dart": "775481bad83d328d45b24cd923794b03f0a979aad59ca335961d9325b5bfd689",
+    "lib/l10n/study_management_strings.dart": "85e25f630f30912b267e949da267f700d7213f00be4b13dffc8ca94d6d2733ff",
+    "test/word_archive_test.dart": "f7eeefc9afa67617d317f2fc63bff9a369582623b2d06374f01f69955daf6745",
+    "test/word_archive_screen_test.dart": "59bc4e44b79ae2b2c4afed9a0451fff73914a3ea43709b8b23cf246d822bd671"
+  },
+  "logs_sha256": {
+    "related.log": "66baee3c9bb25d534b9db3d770ed11b95447eb298675df8620bb4cc653ab9e4c",
+    "analyze.log": "a1ee97747a903c5abf23245c46c966240bade0bd63dba31ff540fbfee4dc5825",
+    "related-initial-failure.log": "6c28dcb2dc210dbb29d85f77fa5c360616e3c2104b464111f04ee2d04084ea5d",
+    "analyze-initial-warning.log": "a006759555ffe80ef285309596e6c8d2c05d69294bd6995c5a9a5ced42af4515"
+  },
+  "initial_failures": "Learning panel test waited for animations before async draft restoration completed; corrected to wait for actual restoration. Unused test import warning removed. Final related suite and analyze passed.",
+  "fixed_ci": "pending source push",
+  "native_fixture": "building separate identity with synthetic data",
+  "ordinary_windows_upgrade_this_iteration": false,
+  "ordinary_android_upgrade_this_iteration": false,
+  "release_published_this_iteration": false
+}
