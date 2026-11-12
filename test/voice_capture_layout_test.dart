@@ -193,6 +193,11 @@ void main() {
             );
             expect(tester.getSize(viewport).height, greaterThan(20));
             expect(
+              rect(tester, 'voice-preview-content').bottom,
+              closeTo(tester.getRect(viewport).bottom, .5),
+              reason: 'Long transcripts continue to reveal the latest words',
+            );
+            expect(
               tester.getRect(preview).bottom,
               lessThan(rect(tester, 'voice-recording-feedback').top),
             );
@@ -218,6 +223,15 @@ void main() {
           transcript: '明天九点买牛奶',
         );
         final preview = rect(tester, 'voice-transcript-preview');
+        final viewport = find.descendant(
+          of: find.byKey(const ValueKey('voice-transcript-preview')),
+          matching: find.byType(SingleChildScrollView),
+        );
+        expect(
+          rect(tester, 'voice-preview-content').top,
+          closeTo(tester.getRect(viewport).top, .5),
+          reason: 'Short text starts below the choices without a blank gap',
+        );
         if (before != null) expect(preview, before);
         before = preview;
         final edit = find.byKey(const ValueKey('voice-preview-edit-mode'));

@@ -454,25 +454,35 @@ class VoiceTranscriptPreview extends StatelessWidget {
                   const SizedBox(height: 12),
                 ],
                 Expanded(
-                  child: SingleChildScrollView(
-                    reverse: true,
-                    child: Semantics(
-                      liveRegion: true,
-                      child: Text(
-                        transcript.isEmpty
-                            ? loc.get(
-                                liveTranscription
-                                    ? 'voiceListeningText'
-                                    : 'voiceTranscribeAfterRelease',
-                              )
-                            : transcript,
-                        key: const ValueKey('voice-preview-content'),
-                        style: TextStyle(
-                          fontSize: compact ? 16 : 18,
-                          height: 1.45,
-                          color: transcript.isEmpty
-                              ? colors.onSurfaceVariant
-                              : colors.onSurface,
+                  child: LayoutBuilder(
+                    builder: (context, viewport) => SingleChildScrollView(
+                      reverse: true,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: viewport.maxHeight,
+                        ),
+                        child: Align(
+                          alignment: Alignment.topLeft,
+                          child: Semantics(
+                            liveRegion: true,
+                            child: Text(
+                              transcript.isEmpty
+                                  ? loc.get(
+                                      liveTranscription
+                                          ? 'voiceListeningText'
+                                          : 'voiceTranscribeAfterRelease',
+                                    )
+                                  : transcript,
+                              key: const ValueKey('voice-preview-content'),
+                              style: TextStyle(
+                                fontSize: compact ? 16 : 18,
+                                height: 1.45,
+                                color: transcript.isEmpty
+                                    ? colors.onSurfaceVariant
+                                    : colors.onSurface,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),

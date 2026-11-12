@@ -1590,14 +1590,18 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
       controller: _capturePortal,
       overlayChildBuilder: (_) => Positioned.fill(
         child: BlockSemantics(
-          child: AbsorbPointer(
-            child: VoiceCaptureFeedback(
-              action: _voiceAction,
-              fullScreen: true,
-              preparing: !homeState.isRecording,
-              selectionOpen: _voiceGesture.selectionOpen,
-              transcript: homeState.voicePreview,
-              liveTranscription: liveTranscription,
+          child: Semantics(
+            container: true,
+            explicitChildNodes: true,
+            child: AbsorbPointer(
+              child: VoiceCaptureFeedback(
+                action: _voiceAction,
+                fullScreen: true,
+                preparing: !homeState.isRecording,
+                selectionOpen: _voiceGesture.selectionOpen,
+                transcript: homeState.voicePreview,
+                liveTranscription: liveTranscription,
+              ),
             ),
           ),
         ),
