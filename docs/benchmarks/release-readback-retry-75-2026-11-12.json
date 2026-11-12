@@ -1,0 +1,7 @@
+{
+  "publication_workflow": 43236141271,
+  "published_workflow_success": true,
+  "failure_stage": "receipt artifact download initial redirect",
+  "error": "Verified TLS artifact request failed; private request details withheld",
+  "action": "Retry read-only verification; do not republish or weaken digest checks"
+}

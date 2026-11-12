@@ -1,0 +1,78 @@
+{
+  "read_only_default": true,
+  "reader_no_keyboard": true,
+  "reader_sql_and_original_unchanged": true,
+  "explicit_edit_draft_not_persisted_until_save": true,
+  "edit_save_changes_only_intended_title_and_audit": true,
+  "no_change_save_has_no_native_or_sql_work": true,
+  "discard_preserves_saved_values": true,
+  "linked_navigation_remains_read_only": true,
+  "text_input_method": "ADB hardware-text injection; not software IME acceptance",
+  "business_counts": {
+    "Reminders": 6,
+    "MediaRecords": 1,
+    "Settings": 1
+  },
+  "default_card_tap_opens_reader": true,
+  "explicit_card_menu_opens_editor_directly": true,
+  "explicit_card_menu_uses_latest_values": true,
+  "explicit_menu_unchanged_save_preserves_sql_and_native": true,
+  "runtime_source": "e44e124c817e2f801ee2d35e56e759648d558292",
+  "runtime_lib_tree": "219208648ffad8b149483f98dc899b93983e6545",
+  "version": "1.8.6+75 private fixture",
+  "package": "com.yarnway.dontforget.acceptance.readerdatefinal20261112",
+  "sdk": "3.47.2",
+  "synthetic_fixture_only": true,
+  "reminders": 6,
+  "media": 1,
+  "settings": 1,
+  "readonly_attachment_controls_and_original_preserved": true,
+  "native_touch_dates_cancel_forward_backward": true,
+  "date_selected_plans": 2,
+  "date_selected_rows": 3,
+  "date_unselected_control_rows": 3,
+  "date_progress_mastery_and_controls_preserved": true,
+  "workload_word_counts": [
+    4,
+    1,
+    2
+  ],
+  "cold_new_pid_readback_equal": true,
+  "input_settings_unchanged": true,
+  "temporary_identity_uninstalled": true,
+  "ordinary_user_apps_not_reinstalled_or_cleared_by_fixture": true,
+  "notification_transport": "recording substitute; no OS delivery claimed",
+  "notification_intents": [
+    {
+      "action": "schedule",
+      "id": "reader-root"
+    },
+    {
+      "action": "schedule",
+      "id": "plan-0"
+    },
+    {
+      "action": "schedule",
+      "id": "plan-1"
+    },
+    {
+      "action": "schedule",
+      "id": "other-0"
+    },
+    {
+      "action": "schedule",
+      "id": "plan-0"
+    },
+    {
+      "action": "schedule",
+      "id": "plan-1"
+    },
+    {
+      "action": "schedule",
+      "id": "other-0"
+    }
+  ],
+  "fixture_apk_sha256": "99bf523baffd6ff68ab87e3d02bf7108219cc45d8cb0c2a716fed5a13ada72bd",
+  "fixture_source_sha256": "dece53e889383099653b47a96115a98e49aae20b6c60b1a8465869019821fc89",
+  "ordinary_fixed_sdk_public_apk_interaction_tested": false
+}

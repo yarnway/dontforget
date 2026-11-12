@@ -1,0 +1,49 @@
+{
+  "final_source": "e44e124c817e2f801ee2d35e56e759648d558292",
+  "initial_running_74_to_75": "readonly-detail-initial-75-2026-11-12.json",
+  "final_same_build_running_replacement": {
+    "version": "1.8.6+75",
+    "source": "e44e124c817e2f801ee2d35e56e759648d558292",
+    "setup_sha256": "122947a7e6f2f8e61f10d7df65c77d38be9ce54b217eff7a8879b1126146725b",
+    "running_before_upgrade": true,
+    "acceptance_case": "ci-running",
+    "version_before": [
+      1,
+      8,
+      6,
+      75
+    ],
+    "source_before": "6ee06f205c4ab5fe8090b936a9c5ca061de45944",
+    "replaces_unreleased_initial_candidate_same_build": true,
+    "backup_verified": true,
+    "installer_exit": 0,
+    "force_close_allowed": false,
+    "payload_files_identical": 37,
+    "native_cli_exit": 0,
+    "schema": 17,
+    "all_business_fields_preserved": true,
+    "business_counts": {
+      "Reminders": 5,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "credential_files_preserved": true,
+    "dpapi_credential_readback_equal": true,
+    "credential_count": 1,
+    "gui_tested": false,
+    "package_origin": "fixed-CI-candidate",
+    "normal_app_reopen_process_verified": true,
+    "normal_app_reopen_business_fields_equal": true,
+    "normal_app_reopen_dpapi_equal": true
+  },
+  "gui": {
+    "source": "e44e124c817e2f801ee2d35e56e759648d558292",
+    "stage": "after final CI running overwrite and ordinary reopen",
+    "skill": "computer-use:computer-use",
+    "api": "node_repl/js import @oai/sky",
+    "error": "codex/sandbox-state-meta: sandboxCwd is not a local file URI: file:///mnt/d/gitspace/opensources/dontforget",
+    "failed_before_window_discovery": true,
+    "gui_tested": false,
+    "fallback_used": false
+  }
+}

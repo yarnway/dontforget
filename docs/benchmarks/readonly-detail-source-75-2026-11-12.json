@@ -43,13 +43,20 @@
     "final-menu-analyze.log": "8b158f1ab9d5ea18088a027ff56ebf2af1e3e7498e444d2e1ec5ef1abcde5670",
     "origin-frame-verified.log": "65a9b797df2c4717ab168c41acb2276195bd342f0beb462eae3ddc3c2712bd3b"
   },
-  "native_current_candidate": "private fixture built; touch acceptance pending",
-  "fixed_ci": "pending source push",
-  "ordinary_production_and_qa_android_upgrade_this_version": false,
-  "new_release_published": false,
+  "native_current_candidate": "final-source private Pixel fixture passed; ordinary CI APK touch matrix separate",
+  "fixed_ci": "github-ci-readonly-detail-75-2026-11-12.json",
+  "ordinary_production_and_qa_android_upgrade_this_version": true,
+  "new_release_published": true,
   "initial_candidate_evidence": "readonly-detail-initial-75-2026-11-12.json",
   "initial_candidate_source": "6ee06f205c4ab5fe8090b936a9c5ca061de45944",
   "initial_candidate_status": "Full CI, initial 74-to-75 running Windows upgrade and initial isolated native proof passed. Explicit card Edit route then refined; these are historical, not final-source gates.",
-  "ordinary_windows_upgrade_current_source": false,
-  "final_windows_upgrade_plan": "Fresh backup; running same-build +75 initial-source to +75 final-source overlay, with exact previous and new payload proofs."
+  "ordinary_windows_upgrade_current_source": true,
+  "final_windows_upgrade_plan": "Completed: fresh backup, running same-build initial +75 to final +75, exact old and new payload checks",
+  "release_source": "e44e124c817e2f801ee2d35e56e759648d558292",
+  "release_version": "1.8.6+75",
+  "final_source_ci": "github-ci-readonly-detail-75-2026-11-12.json",
+  "final_source_native": "readonly-and-study-native-75-2026-11-12.json",
+  "final_source_windows": "windows-local-upgrade-75-2026-11-12.json",
+  "final_source_android": "android-upgrade-75-2026-11-12.json",
+  "published_release": "github-release-v1.8.6-2026-11-12.json"
 }

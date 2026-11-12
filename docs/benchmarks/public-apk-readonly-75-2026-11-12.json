@@ -1,0 +1,22 @@
+{
+  "source": "e44e124c817e2f801ee2d35e56e759648d558292",
+  "version": "1.8.6+75",
+  "origin": "fixed CI SDK3.44.9 public ARM64 APK",
+  "touch_tested": false,
+  "reason": "All existing production reminders are already in trash; no visible task card. No data created or restored solely for this extra acceptance. Initial script expected an empty current-day view to contain a card; corrected label before classifying unavailable data.",
+  "reader_or_editor_opened": false,
+  "business_fields_media_and_vault_equal": {
+    "schema": 17,
+    "counts": {
+      "Reminders": 2,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "all_business_fields_equal": true,
+    "all_original_media_hashes_equal": true,
+    "all_secure_entries_equal": true
+  },
+  "saved_view_preference_preserved": true,
+  "final_ci_arm64_restored_and_verified": true,
+  "complete_readonly_and_dates_gesture_matrix_tested": false
+}
