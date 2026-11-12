@@ -126,7 +126,6 @@ extension TaskManagement on RemindersNotifier {
       final word = words
           .where((w) => LearningQueueService.wordKey(w.word) == entry.key)
           .firstOrNull;
-      if (word == null) continue;
       final id = 'word-history:${sha256.convert(utf8.encode(entry.key))}';
       final previous = await db.query(
         'Reminders',
@@ -162,8 +161,8 @@ extension TaskManagement on RemindersNotifier {
       final at = DateTime.now();
       final archived = Reminder(
         id: id,
-        taskTitle: word.word,
-        taskSummary: word.toNotes(),
+        taskTitle: word?.word ?? old?.taskTitle ?? entry.key,
+        taskSummary: word?.toNotes() ?? old?.taskSummary,
         quadrantLevel: 2,
         isCompleted: true,
         wordProgressJson: jsonEncode({entry.key: entry.value.toJson()}),

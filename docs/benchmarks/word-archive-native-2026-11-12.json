@@ -1,0 +1,30 @@
+{
+  "runtime_source": "e46c5d41d3e7c587f8a30c25dcf3b03ca9197c82",
+  "runtime_lib_tree": "0195a37f3a617c3660fbd4759f793991345e16be",
+  "private_fixture_version": "1.8.6+75",
+  "sdk": "3.47.2",
+  "fixture_apk_sha256": "10404b369959d23d4b824bd36e93e538140db06a45efc8c86177d13b00c6a132",
+  "fixture_source_sha256": "c3979f5bb392a08d07208c880c8980f2808d51b60fb9f843702cd8ccc35061ce",
+  "synthetic_fixture_only": true,
+  "counts": {
+    "Reminders": 5,
+    "MediaRecords": 1,
+    "Settings": 1
+  },
+  "distinct_history_words": 3,
+  "latest_global_progress_and_retained_notes_visible": true,
+  "orphan_record_visible_without_invented_notes": true,
+  "search_and_clear_passed": true,
+  "text_input_method": "ADB hardware-text injection, not software IME acceptance",
+  "study_plans_and_learning_management_routes_passed": true,
+  "shared_workload_visible": true,
+  "all_business_sql_fields_and_original_media_unchanged": true,
+  "native_notification_intents": 0,
+  "cold_new_pid_readback_equal": true,
+  "search_not_persisted": true,
+  "input_settings_unchanged": true,
+  "temporary_identity_uninstalled": true,
+  "ordinary_user_apps_not_reinstalled_or_cleared": true,
+  "fixed_sdk_public_apk_interaction_tested": false,
+  "real_os_notification_delivery_tested": false
+}

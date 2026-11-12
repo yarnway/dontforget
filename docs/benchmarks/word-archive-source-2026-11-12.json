@@ -5,7 +5,7 @@
   "schema": 17,
   "local_flutter": "3.47.2",
   "fixed_ci_flutter": "3.44.9",
-  "related_passed": 98,
+  "related_passed": 103,
   "archive_domain_cases": 8,
   "archive_widget_cases": 13,
   "suites_overlap_do_not_sum": true,
@@ -20,18 +20,21 @@
     "lib/ui/widgets/learning_management_panel.dart": "775481bad83d328d45b24cd923794b03f0a979aad59ca335961d9325b5bfd689",
     "lib/l10n/study_management_strings.dart": "85e25f630f30912b267e949da267f700d7213f00be4b13dffc8ca94d6d2733ff",
     "test/word_archive_test.dart": "f7eeefc9afa67617d317f2fc63bff9a369582623b2d06374f01f69955daf6745",
-    "test/word_archive_screen_test.dart": "59bc4e44b79ae2b2c4afed9a0451fff73914a3ea43709b8b23cf246d822bd671"
+    "test/word_archive_screen_test.dart": "59bc4e44b79ae2b2c4afed9a0451fff73914a3ea43709b8b23cf246d822bd671",
+    "lib/providers/task_management.dart": "6aab6805aa7e7870c6a53f6170aab7b58d4a6eaff618c46db41ba42e44fb1b59",
+    "test/word_archive_retention_test.dart": "80eb479d5e36f6bd564ab20d428defd357e21520d591183b2af85182955aca66"
   },
   "logs_sha256": {
-    "related.log": "66baee3c9bb25d534b9db3d770ed11b95447eb298675df8620bb4cc653ab9e4c",
+    "related.log": "cae3e0d2c93598a1dc0da94c9abc12b83c3113869b96c8230b7468b32eea015f",
     "analyze.log": "a1ee97747a903c5abf23245c46c966240bade0bd63dba31ff540fbfee4dc5825",
     "related-initial-failure.log": "6c28dcb2dc210dbb29d85f77fa5c360616e3c2104b464111f04ee2d04084ea5d",
     "analyze-initial-warning.log": "a006759555ffe80ef285309596e6c8d2c05d69294bd6995c5a9a5ced42af4515"
   },
   "initial_failures": "Learning panel test waited for animations before async draft restoration completed; corrected to wait for actual restoration. Unused test import warning removed. Final related suite and analyze passed.",
-  "fixed_ci": "pending source push",
-  "native_fixture": "building separate identity with synthetic data",
+  "fixed_ci": "New exact-source CI follows the orphan-retention correction; initial run not a final gate",
+  "native_fixture": "Initial read-only fixture passed; final retention-source fixture rebuilt, acceptance pending",
   "ordinary_windows_upgrade_this_iteration": false,
   "ordinary_android_upgrade_this_iteration": false,
-  "release_published_this_iteration": false
+  "release_published_this_iteration": false,
+  "retention_cases": 5
 }
