@@ -138,6 +138,12 @@ class StudyScheduleService {
       if (row.nextReviewAt == null && row.triggerTime == null) {
         throw const FormatException('Batch has no date');
       }
+      final encodedProgress = progressChanged
+          ? jsonEncode({for (final e in local.entries) e.key: e.value.toJson()})
+          : row.wordProgressJson;
+      if (encodedProgress != null && encodedProgress.length > 100000) {
+        throw const FormatException('Word progress too large');
+      }
       changes.add(
         row.copyWith(
           nextReviewAt: row.nextReviewAt == null
@@ -152,11 +158,7 @@ class StudyScheduleService {
           timeOrigin: row.triggerTime == null
               ? row.timeOrigin
               : ReminderTimeOrigin.manual,
-          wordProgressJson: progressChanged
-              ? jsonEncode({
-                  for (final e in local.entries) e.key: e.value.toJson(),
-                })
-              : row.wordProgressJson,
+          wordProgressJson: encodedProgress,
           noticeRevision: row.noticeRevision + 1,
           noticeAcknowledgedAt: null,
           upcomingDismissedAt: null,

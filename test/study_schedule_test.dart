@@ -469,6 +469,27 @@ void main() {
   );
 
   test(
+    'date editing cannot save progress beyond the decoder size limit',
+    () async {
+      final progress =
+          jsonDecode(batch('p-0').wordProgressJson!) as Map<String, dynamic>;
+      final value = progress['apple'];
+      var source = jsonEncode({...progress, 'orphan': value});
+      final key = List.filled(
+        99999 - source.length + 'orphan'.length,
+        'x',
+      ).join();
+      source = jsonEncode({...progress, key: value});
+      expect(source.length, 99999);
+      expect(LearningQueueService.decode(source).length, 2);
+      await h.seed(batch('p-0').copyWith(wordProgressJson: source));
+      final before = await saved();
+      await expectLater(preview(1), throwsFormatException);
+      expect(await saved(), before);
+    },
+  );
+
+  test(
     'invalid offsets, missing dates, recurring batches and partial snapshots are rejected',
     () async {
       await seed();
