@@ -1,0 +1,30 @@
+{
+  "source": "e46c5d41d3e7c587f8a30c25dcf3b03ca9197c82",
+  "id": 43242223721,
+  "status": "completed",
+  "conclusion": "cancelled",
+  "jobs": [
+    {
+      "name": "Analyze and test",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "name": "Windows analyze and test",
+      "status": "completed",
+      "conclusion": "cancelled"
+    },
+    {
+      "name": "Verify tag packages without publishing",
+      "status": "completed",
+      "conclusion": "cancelled"
+    },
+    {
+      "name": "Build ${{ matrix.platform }} candidate",
+      "status": "completed",
+      "conclusion": "cancelled"
+    }
+  ],
+  "superseded_by": "a4e78c78a6bc4682e456823faf6a0261504e8c54",
+  "reason": "orphan retention correction; initial run not a final gate"
+}

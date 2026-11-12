@@ -1,10 +1,10 @@
 {
-  "runtime_source": "e46c5d41d3e7c587f8a30c25dcf3b03ca9197c82",
-  "runtime_lib_tree": "0195a37f3a617c3660fbd4759f793991345e16be",
+  "runtime_source": "a4e78c78a6bc4682e456823faf6a0261504e8c54",
+  "runtime_lib_tree": "a949305fc5ca53bf16c376eedaab43416bf225f4",
   "private_fixture_version": "1.8.6+75",
   "sdk": "3.47.2",
-  "fixture_apk_sha256": "10404b369959d23d4b824bd36e93e538140db06a45efc8c86177d13b00c6a132",
-  "fixture_source_sha256": "c3979f5bb392a08d07208c880c8980f2808d51b60fb9f843702cd8ccc35061ce",
+  "fixture_apk_sha256": "1c4179d04e0757fa6fbe3589bc3f411d459dcb77164f82d37dca398ef5747b2c",
+  "fixture_source_sha256": "65d6760fa5eb06f7c9a11f437b8c9fb8134ad22cab7b25e96e9b4b5f48021976",
   "synthetic_fixture_only": true,
   "counts": {
     "Reminders": 5,
@@ -18,8 +18,16 @@
   "text_input_method": "ADB hardware-text injection, not software IME acceptance",
   "study_plans_and_learning_management_routes_passed": true,
   "shared_workload_visible": true,
-  "all_business_sql_fields_and_original_media_unchanged": true,
-  "native_notification_intents": 0,
+  "readonly_operations_preserve_all_business_sql_fields_and_original_media": true,
+  "explicit_synthetic_source_deletion_preserves_orphan_progress": true,
+  "other_four_rows_media_settings_preserved_by_deletion": true,
+  "readonly_notification_intents": 0,
+  "explicit_delete_notification_intents": [
+    {
+      "action": "cancel",
+      "id": "orphan"
+    }
+  ],
   "cold_new_pid_readback_equal": true,
   "search_not_persisted": true,
   "input_settings_unchanged": true,

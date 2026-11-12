@@ -31,10 +31,16 @@
     "analyze-initial-warning.log": "a006759555ffe80ef285309596e6c8d2c05d69294bd6995c5a9a5ced42af4515"
   },
   "initial_failures": "Learning panel test waited for animations before async draft restoration completed; corrected to wait for actual restoration. Unused test import warning removed. Final related suite and analyze passed.",
-  "fixed_ci": "New exact-source CI follows the orphan-retention correction; initial run not a final gate",
-  "native_fixture": "Initial read-only fixture passed; final retention-source fixture rebuilt, acceptance pending",
+  "fixed_ci": "word-archive-ci-2026-11-12.json",
+  "native_fixture": "word-archive-native-2026-11-12.json",
   "ordinary_windows_upgrade_this_iteration": false,
   "ordinary_android_upgrade_this_iteration": false,
   "release_published_this_iteration": false,
-  "retention_cases": 5
+  "retention_cases": 5,
+  "source_commit": "a4e78c78a6bc4682e456823faf6a0261504e8c54",
+  "runtime_lib_tree": "a949305fc5ca53bf16c376eedaab43416bf225f4",
+  "orphan_retention_on_source_delete_and_completed_cleanup": true,
+  "archive_write_failure_rolls_back_source_delete": true,
+  "identity_migration_implemented": false,
+  "ci_artifact_scope": "Five current-source artifacts metadata checked; no new full local archive-byte acceptance, ordinary installation or release"
 }
