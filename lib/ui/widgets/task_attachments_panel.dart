@@ -51,10 +51,12 @@ class TaskAttachmentsPanel extends ConsumerStatefulWidget {
     super.key,
     required this.task,
     this.enabled = true,
+    this.readOnly = false,
     this.onBusyChanged,
   });
   final Reminder task;
   final bool enabled;
+  final bool readOnly;
   final ValueChanged<bool>? onBusyChanged;
 
   @override
@@ -95,7 +97,7 @@ class _TaskAttachmentsPanelState extends ConsumerState<TaskAttachmentsPanel> {
   }
 
   Future<void> _add(bool image) async {
-    if (_busy || !widget.enabled) return;
+    if (_busy || !widget.enabled || widget.readOnly) return;
     final task = _current;
     if (task == null ||
         task.details.attachmentIds.length >= TaskDetails.maxAttachments) {
@@ -136,7 +138,7 @@ class _TaskAttachmentsPanelState extends ConsumerState<TaskAttachmentsPanel> {
     bool linked, {
     DataGeneration? generation,
   }) async {
-    if (_busy || !widget.enabled) return;
+    if (_busy || !widget.enabled || widget.readOnly) return;
     final task = _current;
     if (task == null) return;
     _setBusy(true);
@@ -184,7 +186,8 @@ class _TaskAttachmentsPanelState extends ConsumerState<TaskAttachmentsPanel> {
     }
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
-    final enabled = current != null && widget.enabled && !_busy;
+    final enabled =
+        current != null && widget.enabled && !widget.readOnly && !_busy;
     return Container(
       key: const ValueKey('task-attachments'),
       padding: const EdgeInsets.all(16),
@@ -215,10 +218,11 @@ class _TaskAttachmentsPanelState extends ConsumerState<TaskAttachmentsPanel> {
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            l10n.get('taskAttachmentsHint'),
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          if (!widget.readOnly)
+            Text(
+              l10n.get('taskAttachmentsHint'),
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           FutureBuilder<Map<String, MediaRecord>>(
             future: _records,
             builder: (context, snapshot) {
@@ -252,41 +256,43 @@ class _TaskAttachmentsPanelState extends ConsumerState<TaskAttachmentsPanel> {
             },
           ),
           const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              OutlinedButton.icon(
-                key: const ValueKey('attach-photo'),
-                onPressed:
-                    enabled &&
-                        task.details.attachmentIds.length <
-                            TaskDetails.maxAttachments
-                    ? () => _add(true)
-                    : null,
-                icon: const Icon(Icons.add_photo_alternate_outlined),
-                label: Text(l10n.get('taskAttachmentPhoto')),
-              ),
-              OutlinedButton.icon(
-                key: const ValueKey('attach-file'),
-                onPressed:
-                    enabled &&
-                        task.details.attachmentIds.length <
-                            TaskDetails.maxAttachments
-                    ? () => _add(false)
-                    : null,
-                icon: const Icon(Icons.note_add_outlined),
-                label: Text(l10n.get('taskAttachmentFile')),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            l10n.get('taskAttachmentLimit'),
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
-          ),
+          if (!widget.readOnly)
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  key: const ValueKey('attach-photo'),
+                  onPressed:
+                      enabled &&
+                          task.details.attachmentIds.length <
+                              TaskDetails.maxAttachments
+                      ? () => _add(true)
+                      : null,
+                  icon: const Icon(Icons.add_photo_alternate_outlined),
+                  label: Text(l10n.get('taskAttachmentPhoto')),
+                ),
+                OutlinedButton.icon(
+                  key: const ValueKey('attach-file'),
+                  onPressed:
+                      enabled &&
+                          task.details.attachmentIds.length <
+                              TaskDetails.maxAttachments
+                      ? () => _add(false)
+                      : null,
+                  icon: const Icon(Icons.note_add_outlined),
+                  label: Text(l10n.get('taskAttachmentFile')),
+                ),
+              ],
+            ),
+          if (!widget.readOnly) const SizedBox(height: 8),
+          if (!widget.readOnly)
+            Text(
+              l10n.get('taskAttachmentLimit'),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
         ],
       ),
     );

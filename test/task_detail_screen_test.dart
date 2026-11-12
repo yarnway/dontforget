@@ -189,8 +189,8 @@ void main() {
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => dialog
-                        ? Scaffold(body: TaskDetailsDialog(task: task))
-                        : TaskDetailScreen(task: task),
+                        ? Scaffold(body: TaskEditDialog(task: task))
+                        : TaskEditScreen(task: task),
                   ),
                 ),
                 child: const Text('Open QA'),
@@ -240,7 +240,7 @@ void main() {
   );
 
   testWidgets(
-    'TaskDetailScreen renders task title, summary, reminder time, and professional categories',
+    'TaskEditScreen renders task title, summary, reminder time, and professional categories',
     (WidgetTester tester) async {
       final task = Reminder(
         id: 'test-123',
@@ -263,7 +263,7 @@ void main() {
               GlobalCupertinoLocalizations.delegate,
             ],
             builder: (context, child) => InlineFeedback(child: child!),
-            home: TaskDetailScreen(task: task),
+            home: TaskEditScreen(task: task),
           ),
         ),
       );
@@ -271,7 +271,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify Title and Summary fields
-      expect(find.text('事项详情'), findsOneWidget);
+      expect(find.text('修改事项'), findsOneWidget);
       expect(find.text('参加周三技术评审会'), findsOneWidget);
       expect(find.text('需要准备PPT架构图与云原生评估报告'), findsOneWidget);
 
@@ -322,7 +322,7 @@ void main() {
       expect(find.text('事项已删除或不可用'), findsOneWidget);
       await tester.tap(find.text('事项已删除或不可用'));
       await tester.pumpAndSettle();
-      expect(find.byType(TaskDetailScreen), findsOneWidget);
+      expect(find.byType(TaskEditScreen), findsOneWidget);
 
       await tester.runAsync(
         () => notifier.restoreDeletedReminder(deleted!.reminder!, generation),
@@ -455,7 +455,7 @@ void main() {
     try {
       await openDetail(tester, task);
       await performWrite(tester, find.byIcon(Icons.delete_outline_rounded));
-      expect(find.byType(TaskDetailScreen), findsOneWidget);
+      expect(find.byType(TaskEditScreen), findsOneWidget);
       expect(
         container
             .read(remindersProvider)
@@ -500,7 +500,7 @@ void main() {
       );
       await tester.ensureVisible(find.text('保存修改'));
       await performWrite(tester, find.text('保存修改'));
-      expect(find.byType(TaskDetailScreen), findsOneWidget);
+      expect(find.byType(TaskEditScreen), findsOneWidget);
       expect(find.text('Unsaved draft'), findsOneWidget);
       expect(
         container
@@ -562,7 +562,7 @@ void main() {
           await tester.ensureVisible(save);
           await performWrite(tester, save);
           expect(
-            find.byType(dialog ? TaskDetailsDialog : TaskDetailScreen),
+            find.byType(dialog ? TaskEditDialog : TaskEditScreen),
             findsOneWidget,
           );
           const warning = '已保存，但系统提醒未能更新。请检查通知权限并重新保存任务。';
@@ -591,7 +591,7 @@ void main() {
           await tester.ensureVisible(save);
           await performWrite(tester, save);
           expect(
-            find.byType(dialog ? TaskDetailsDialog : TaskDetailScreen),
+            find.byType(dialog ? TaskEditDialog : TaskEditScreen),
             findsNothing,
           );
           expect(find.text(warning), findsNothing);
@@ -630,7 +630,7 @@ void main() {
     );
     await tester.ensureVisible(find.text('保存修改'));
     await performWrite(tester, find.text('保存修改'));
-    expect(find.byType(TaskDetailScreen), findsNothing);
+    expect(find.byType(TaskEditScreen), findsNothing);
     expect(
       container
           .read(remindersProvider)
@@ -696,7 +696,7 @@ void main() {
     expect(saved.contextTrigger, background.contextTrigger);
     expect(saved.linkedTaskIds, contains('background-link'));
     expect(notifications.scheduled.last.toJson(), saved.toJson());
-    expect(find.byType(TaskDetailScreen), findsNothing);
+    expect(find.byType(TaskEditScreen), findsNothing);
     await tester.pumpWidget(const SizedBox());
   });
 
@@ -758,7 +758,7 @@ void main() {
       await tester.ensureVisible(find.text('保存修改'));
       await tester.tap(find.text('保存修改'));
       await tester.pumpAndSettle();
-      expect(find.byType(TaskDetailScreen), findsOneWidget);
+      expect(find.byType(TaskEditScreen), findsOneWidget);
       expect(find.text('提醒更新失败，请重试。'), findsOneWidget);
       expect(
         container.read(remindersProvider).where((r) => r.id == task.id),
@@ -859,7 +859,7 @@ void main() {
         await notifier.lastWrite;
       });
       await tester.pumpAndSettle();
-      expect(find.byType(TaskDetailScreen), findsNothing);
+      expect(find.byType(TaskEditScreen), findsNothing);
       expect(
         container
             .read(remindersProvider)
@@ -889,7 +889,7 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.escape);
       await tester.pumpAndSettle();
       expect(find.byType(AlertDialog), findsNothing);
-      expect(find.byType(TaskDetailScreen), findsOneWidget);
+      expect(find.byType(TaskEditScreen), findsOneWidget);
       await tester.tap(title);
       tester.testTextInput.updateEditingValue(
         const TextEditingValue(
@@ -910,7 +910,7 @@ void main() {
         await notifier.lastWrite;
       });
       await tester.pumpAndSettle();
-      expect(find.byType(TaskDetailScreen), findsNothing);
+      expect(find.byType(TaskEditScreen), findsNothing);
       expect(
         container
             .read(remindersProvider)
@@ -948,7 +948,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('放弃修改'));
       await tester.pumpAndSettle();
-      expect(find.byType(TaskDetailScreen), findsNothing);
+      expect(find.byType(TaskEditScreen), findsNothing);
       expect(
         container
             .read(remindersProvider)
@@ -988,7 +988,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('保存并返回'));
       await tester.pumpAndSettle();
-      expect(find.byType(TaskDetailScreen), findsOneWidget);
+      expect(find.byType(TaskEditScreen), findsOneWidget);
       expect(
         container
             .read(remindersProvider)
@@ -1017,7 +1017,7 @@ void main() {
             .taskTitle,
         'Saved by exit',
       );
-      expect(find.byType(TaskDetailScreen), findsNothing);
+      expect(find.byType(TaskEditScreen), findsNothing);
     },
   );
 
@@ -1039,11 +1039,11 @@ void main() {
     try {
       await tester.ensureVisible(find.text('保存修改'));
       await performWrite(tester, find.text('保存修改'));
-      expect(find.byType(TaskDetailScreen), findsOneWidget);
+      expect(find.byType(TaskEditScreen), findsOneWidget);
       await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
       await tester.pumpAndSettle();
       expect(find.byType(AlertDialog), findsNothing);
-      expect(find.byType(TaskDetailScreen), findsNothing);
+      expect(find.byType(TaskEditScreen), findsNothing);
       expect(
         container
             .read(remindersProvider)
@@ -1089,7 +1089,7 @@ void main() {
         await write;
       });
       await tester.pumpAndSettle();
-      expect(find.byType(TaskDetailScreen), findsOneWidget);
+      expect(find.byType(TaskEditScreen), findsOneWidget);
       expect(find.text('Newer draft'), findsOneWidget);
       expect(
         container

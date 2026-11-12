@@ -106,7 +106,7 @@ void main() {
               GlobalCupertinoLocalizations.delegate,
             ],
             builder: (_, child) => InlineFeedback(child: child!),
-            home: TaskDetailScreen(task: task),
+            home: TaskEditScreen(task: task),
           ),
         ),
       );

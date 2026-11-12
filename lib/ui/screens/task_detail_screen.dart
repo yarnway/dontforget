@@ -29,15 +29,17 @@ import 'knowledge_graph_screen.dart';
 import 'settings_screen.dart';
 import 'notification_repair_screen.dart';
 
-/// Dedicated Full-Page Task Detail & Editing Screen
-class TaskDetailScreen extends ConsumerStatefulWidget {
+part 'task_reader_screen.dart';
+
+/// An explicit editor, opened by the detail reader’s Edit action.
+class TaskEditScreen extends ConsumerStatefulWidget {
   final Reminder task;
   final VoidCallback? onPlayMedia;
 
-  const TaskDetailScreen({super.key, required this.task, this.onPlayMedia});
+  const TaskEditScreen({super.key, required this.task, this.onPlayMedia});
 
   @override
-  ConsumerState<TaskDetailScreen> createState() => _TaskDetailScreenState();
+  ConsumerState<TaskEditScreen> createState() => _TaskEditScreenState();
 }
 
 typedef _DetailDraft = ({
@@ -59,7 +61,7 @@ typedef _DetailDraft = ({
   String profile,
 });
 
-class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
+class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
   late Reminder _statusReference;
   Future<
     ({ReminderSchedulePhase phase, NotificationPermissionStatus permission})
@@ -97,6 +99,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   String _metadataIdentity(TaskDetails details) =>
       jsonEncode(_metadataFields(details));
   bool _isSaving = false;
+  bool _nativeSavePending = false;
   bool _editingVocabulary = false;
   String? _parsedVocabularySource;
   bool _hasVocabulary = false;
@@ -387,6 +390,10 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
   Future<void> _save() async {
     if (_isMutating) return;
     final submittedDraft = _captureDraft();
+    if (submittedDraft == _savedDraft && !_nativeSavePending) {
+      _finishPop();
+      return;
+    }
     final submittedDetails = _detailsDraft;
     final l10n = AppLocalizations.of(context);
     final title = _titleController.text.trim();
@@ -415,6 +422,9 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         break;
       case 'monthly':
         recurrenceDesc = l10n.get('repeatMonthly');
+        break;
+      case 'yearly':
+        recurrenceDesc = l10n.get('repeatYearly');
         break;
       default:
         recurrenceDesc = null;
@@ -559,6 +569,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
         _statusRead = null;
       }
       _savedDraft = submittedDraft;
+      _nativeSavePending = result.nativeSyncFailed;
       _reportedDirty = _captureDraft() != _savedDraft;
       if (result.nativeSyncFailed) {
         feedback.showSnackBar(
@@ -957,7 +968,7 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
-          l10n.get('taskDetailTitle'),
+          l10n.get('editTask'),
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
         ),
         centerTitle: false,
@@ -1017,35 +1028,47 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
             heightFactor: 1,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1008),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  icon: _isSaving
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.save_outlined, size: 18),
-                  label: Text(
-                    l10n.get('saveChanges'),
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+              child: Row(
+                children: [
+                  OutlinedButton(
+                    key: const ValueKey('detail-editor-back'),
+                    onPressed: _isMutating ? null : _requestExit,
+                    child: Text(
+                      MaterialLocalizations.of(context).backButtonTooltip,
                     ),
                   ),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 14,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton.icon(
+                      icon: _isSaving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.save_outlined, size: 18),
+                      label: Text(
+                        l10n.get('saveChanges'),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 14,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      key: const ValueKey('detail-save'),
+                      onPressed: _isMutating ? null : _save,
                     ),
                   ),
-                  onPressed: _isMutating ? null : _save,
-                ),
+                ],
               ),
             ),
           ),
@@ -1905,6 +1928,13 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                                   style: const TextStyle(fontSize: 13),
                                 ),
                               ),
+                              DropdownMenuItem(
+                                value: 'yearly',
+                                child: Text(
+                                  l10n.get('repeatYearly'),
+                                  style: const TextStyle(fontSize: 13),
+                                ),
+                              ),
                             ],
                             onChanged: (val) {
                               if (val != null) {
@@ -2128,6 +2158,25 @@ class _TaskDetailScreenState extends ConsumerState<TaskDetailScreen> {
                                 ),
                               ),
                               items: [
+                                DropdownMenuItem(
+                                  value: 'general',
+                                  child: Text(l10n.get('profileGeneral')),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'commute',
+                                  child: Text(l10n.get('profileCommute')),
+                                ),
+                                if (!{
+                                  'general',
+                                  'office',
+                                  'deepWork',
+                                  'home',
+                                  'commute',
+                                }.contains(_contextProfileValue))
+                                  DropdownMenuItem(
+                                    value: _contextProfileValue,
+                                    child: Text(_contextProfileValue),
+                                  ),
                                 DropdownMenuItem(
                                   value: 'office',
                                   child: Text(

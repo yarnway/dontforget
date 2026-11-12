@@ -258,7 +258,7 @@ void main() {
             body: TextButton(
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (_) => TaskDetailScreen(task: task),
+                  builder: (_) => TaskEditScreen(task: task),
                 ),
               ),
               child: const Text('Open'),
@@ -310,7 +310,7 @@ void main() {
       expect(stored.details.checklist.first.id, 'second');
       expect(stored.details.checklist.first.done, isTrue);
       expect(stored.subTasks, task.subTasks);
-      expect(find.byType(TaskDetailScreen), findsNothing);
+      expect(find.byType(TaskEditScreen), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );
@@ -353,7 +353,7 @@ void main() {
     (tester) async {
       final task = sample();
       await tester.runAsync(() => tasks.addReminder(task));
-      await host(tester, TaskDetailScreen(task: task));
+      await host(tester, TaskEditScreen(task: task));
       final title = find.byKey(const ValueKey('detail-title'));
       await tester.ensureVisible(title);
       await tester.enterText(title, 'Retry title');
@@ -379,7 +379,7 @@ void main() {
       ))!;
       expect(stored.details.project, 'Saved metadata');
       expect(stored.taskTitle, task.taskTitle);
-      expect(find.byType(TaskDetailScreen), findsOneWidget);
+      expect(find.byType(TaskEditScreen), findsOneWidget);
       await save();
       stored = (await tester.runAsync(
         () async => Reminder.fromJson(
@@ -441,7 +441,7 @@ void main() {
   testWidgets('specialized detail never exposes the generic checklist editor', (
     tester,
   ) async {
-    await host(tester, TaskDetailScreen(task: sample(kind: 'study')));
+    await host(tester, TaskEditScreen(task: sample(kind: 'study')));
     expect(find.byType(TaskMetadataEditor), findsNothing);
     expect(find.textContaining('1/2'), findsOneWidget);
     expect(

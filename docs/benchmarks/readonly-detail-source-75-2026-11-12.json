@@ -1,0 +1,42 @@
+{
+  "date": "2026-11-12",
+  "version": "1.8.6+75",
+  "schema": 17,
+  "runtime_lib_tree": "39c6cfea83f9f6ab621372efa5089ddbd4257ca1",
+  "local_flutter": "3.47.2",
+  "fixed_ci_flutter": "3.44.9",
+  "related_final_passed": 175,
+  "readonly_final_passed": 23,
+  "suites_overlap_do_not_sum": true,
+  "analyze_issues": 0,
+  "dependencies_changed": false,
+  "semantics": {
+    "all_existing_detail_routes_default_to_reader": true,
+    "edit_requires_explicit_action": true,
+    "edit_uses_latest_saved_values": true,
+    "recovery_and_deleted_task_edit_guard": true,
+    "reader_has_no_form_or_editor_keyboard_actions": true,
+    "reader_attachments_and_checklist_do_not_mutate": true,
+    "no_change_save_has_no_sql_or_native_work": true,
+    "save_returns_to_reader": true,
+    "draft_discard_and_newer_ime_updates_preserved": true,
+    "attachments_and_links_remain_individually_saved_in_editor": true,
+    "yearly_and_saved_context_profiles_supported": true,
+    "locale_theme_large_text_safe_insets_tested": true
+  },
+  "initial_failures": "Old editor type/title assertions, audit-history expectation and lazy attachment lookup fixed; failed fake-zone fixture left an owned test tree pending and a retry DLL lock. Only that tree stopped. A duplicate isExpanded compile parameter was removed, final suite and fixture rebuilt. Ordinary Windows app untouched.",
+  "logs_sha256": {
+    "related.log": "906acfa39a65073c177689a56cf44a11522280393840f91bb4de98df1d74f9b6",
+    "related-final.log": "2c411d7a3a0cf630a56722f980b0b5bd1b9b6a22f406077f1a9dbe8633c5b9f3",
+    "duplicate-parameter-failure.log": "91a0204abe11ae26e413ce782195db62b280ffae7c5b2360d6a47d334bb92d8a",
+    "stopped-test-evidence.json": "953ada3f95a34ce8dca9aa683cac4597fa07216b10a8303c9286b662b924bf03",
+    "new-reader.log": "5b3ef02fabb6cd0daa84422ccf1b11cd111217a208a115cd80c5fa667ee24f3f",
+    "final-all.log": "3e148ff6a44a044a8af15f27f5c5da6b847ef53fd2dfae1758ef5ca6ec031a6c",
+    "analyze-final.log": "a49085b676b7c1438338d55315ac9ceaa9881bf0622ff5f6a6a905a6b887fd5c"
+  },
+  "native_current_candidate": "private fixture built; touch acceptance pending",
+  "fixed_ci": "pending source push",
+  "ordinary_windows_upgrade_this_version": false,
+  "ordinary_production_and_qa_android_upgrade_this_version": false,
+  "new_release_published": false
+}

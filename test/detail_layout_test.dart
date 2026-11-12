@@ -98,7 +98,7 @@ void main() {
             ).copyWith(textScaler: TextScaler.linear(scale)),
             child: RepaintBoundary(key: interactionPreviewKey, child: child!),
           ),
-          home: TaskDetailScreen(task: task),
+          home: TaskEditScreen(task: task),
         ),
       ),
     );

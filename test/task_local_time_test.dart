@@ -158,8 +158,8 @@ void main() {
         await show(
           tester,
           fullPage
-              ? TaskDetailScreen(task: task)
-              : TaskDetailsDialog(task: task),
+              ? TaskEditScreen(task: task)
+              : TaskEditDialog(task: task),
         );
         final label = find.textContaining(_label(local));
         expect(label, findsOneWidget);

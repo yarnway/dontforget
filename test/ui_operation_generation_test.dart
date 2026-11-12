@@ -166,7 +166,7 @@ void main() {
   testWidgets(
     'dialog waits for notification reconciliation and maintenance drains it',
     (tester) async {
-      await show(tester, TaskDetailsDialog(task: task));
+      await show(tester, TaskEditDialog(task: task));
       await tester.enterText(find.byType(TextField), 'Saved task');
       final save = command(tester, 'Save');
       late Future<void> pending;
@@ -179,7 +179,7 @@ void main() {
         );
       });
       await tester.pump();
-      expect(find.byType(TaskDetailsDialog), findsOneWidget);
+      expect(find.byType(TaskEditDialog), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       var drained = false;
       await tester.runAsync(() async {
@@ -197,7 +197,7 @@ void main() {
       expect(drained, isTrue);
       expect(container.read(remindersProvider).single.taskTitle, 'Saved task');
       // Maintenance invalidated this route before it could report success.
-      expect(find.byType(TaskDetailsDialog), findsOneWidget);
+      expect(find.byType(TaskEditDialog), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsNothing);
       await tester.pumpWidget(const SizedBox());
     },
@@ -209,7 +209,7 @@ void main() {
       (tester) async {
         await show(
           tester,
-          detail ? TaskDetailScreen(task: task) : TaskDetailsDialog(task: task),
+          detail ? TaskEditScreen(task: task) : TaskEditDialog(task: task),
         );
         await tester.enterText(find.byType(TextField).first, 'Stale draft');
         await tester.runAsync(() async {
@@ -255,14 +255,14 @@ void main() {
           }
         });
       });
-      await show(tester, TaskDetailsDialog(task: task));
+      await show(tester, TaskEditDialog(task: task));
       await tester.enterText(find.byType(TextField), 'Keep draft');
       await tester.runAsync(command(tester, 'Save'));
       await tester.pumpAndSettle();
       expect(find.text('Keep draft'), findsOneWidget);
       await tester.runAsync(command(tester, 'Delete Task'));
       await tester.pumpAndSettle();
-      expect(find.byType(TaskDetailsDialog), findsOneWidget);
+      expect(find.byType(TaskEditDialog), findsOneWidget);
       expect(
         find.text('Could not delete this task. Please try again.'),
         findsOneWidget,
@@ -280,7 +280,7 @@ void main() {
   testWidgets(
     'Undo cannot restore a deleted task after maintenance advances the generation',
     (tester) async {
-      await show(tester, TaskDetailsDialog(task: task));
+      await show(tester, TaskEditDialog(task: task));
       await tester.runAsync(command(tester, 'Delete Task'));
       await tester.pumpAndSettle();
       expect(

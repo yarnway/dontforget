@@ -1,4 +1,5 @@
 import 'inline_feedback.dart';
+import '../screens/task_detail_screen.dart';
 import '../formatters/local_date_time.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,16 +8,16 @@ import '../../providers/providers.dart';
 import '../../data/database_helper.dart';
 import '../../l10n/app_localizations.dart';
 
-class TaskDetailsDialog extends ConsumerStatefulWidget {
+class TaskEditDialog extends ConsumerStatefulWidget {
   final Reminder task;
 
-  const TaskDetailsDialog({super.key, required this.task});
+  const TaskEditDialog({super.key, required this.task});
 
   @override
-  ConsumerState<TaskDetailsDialog> createState() => _TaskDetailsDialogState();
+  ConsumerState<TaskEditDialog> createState() => _TaskEditDialogState();
 }
 
-class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
+class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
   late TextEditingController _titleController;
   late int _selectedQuadrant;
   late DateTime? _selectedTime;
@@ -363,6 +364,7 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
               ),
               const SizedBox(height: 14),
               DropdownButtonFormField<String>(
+                isExpanded: true,
                 initialValue: _selectedRecurrenceRule,
                 decoration: InputDecoration(
                   labelText: l10n.get('recurrenceLabel'),
@@ -408,6 +410,13 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
                     value: 'monthly',
                     child: Text(
                       l10n.get('repeatMonthly'),
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                  ),
+                  DropdownMenuItem(
+                    value: 'yearly',
+                    child: Text(
+                      l10n.get('repeatYearly'),
                       style: const TextStyle(fontSize: 13),
                     ),
                   ),
@@ -540,4 +549,12 @@ class _TaskDetailsDialogState extends ConsumerState<TaskDetailsDialog> {
       ),
     );
   }
+}
+
+/// Compatibility entry point: viewing details never opens an editor.
+class TaskDetailsDialog extends StatelessWidget {
+  const TaskDetailsDialog({super.key, required this.task});
+  final Reminder task;
+  @override
+  Widget build(BuildContext context) => TaskDetailScreen(task: task);
 }
