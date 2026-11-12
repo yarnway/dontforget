@@ -25,7 +25,8 @@
     "locale_theme_large_text_safe_insets_tested": true,
     "explicit_card_menu_opens_editor_directly": true,
     "explicit_card_menu_reads_latest_values": true,
-    "edit_intent_generation_preserved_until_editor_mount": true
+    "edit_intent_generation_preserved_until_editor_mount": true,
+    "recovery_precedes_first_editor_mount_in_race_test": true
   },
   "initial_failures": "Old editor type/title assertions, audit-history expectation and lazy attachment lookup fixed; failed fake-zone fixture left an owned test tree pending and a retry DLL lock. Only that tree stopped. A duplicate isExpanded compile parameter was removed, final suite and fixture rebuilt. Ordinary Windows app untouched.",
   "logs_sha256": {
@@ -39,7 +40,8 @@
     "menu-verified.log": "3b1296d33d34f0e845720f8b98a5aa9cd1f3b7c53aa5261290682ae174197f64",
     "menu-analyze.log": "b2088df9dac9127bcc1f11ebfe4d1618de68d42ef4fb56386876995743def600",
     "final-menu-all.log": "f292e9ac90a3dfe34ba290a289d876af8cf9d19c98856784160862def3fc71fc",
-    "final-menu-analyze.log": "8b158f1ab9d5ea18088a027ff56ebf2af1e3e7498e444d2e1ec5ef1abcde5670"
+    "final-menu-analyze.log": "8b158f1ab9d5ea18088a027ff56ebf2af1e3e7498e444d2e1ec5ef1abcde5670",
+    "origin-frame-verified.log": "65a9b797df2c4717ab168c41acb2276195bd342f0beb462eae3ddc3c2712bd3b"
   },
   "native_current_candidate": "private fixture built; touch acceptance pending",
   "fixed_ci": "pending source push",

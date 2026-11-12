@@ -476,6 +476,7 @@ void main() {
     (tester) async {
       await open(tester);
       await tester.tap(find.byKey(const ValueKey('task-detail-modify')));
+      expect(find.byType(TaskEditScreen), findsNothing);
       await tester.runAsync(() async {
         await (await h.database.beginMaintenance()).resume();
         await h.notifier.refreshReminders();
