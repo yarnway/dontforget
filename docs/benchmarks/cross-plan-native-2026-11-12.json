@@ -1,0 +1,52 @@
+{
+  "runtime_source": "26c90e0e56636f925f6394ca569713367db00c87",
+  "version": "1.8.5+74 private fixture",
+  "package": "com.yarnway.dontforget.acceptance.multiplan20261112",
+  "synthetic_data_only": true,
+  "native_touch_multi_select_pause_resume": true,
+  "selected_plans": 2,
+  "selected_rows": 3,
+  "unselected_control_rows": 1,
+  "dates_progress_and_control_plan_preserved": true,
+  "cold_new_pid_readback_equal": true,
+  "temporary_identity_uninstalled": true,
+  "user_apps_not_reinstalled_or_cleared": true,
+  "notification_transport": "recording substitute; no OS delivery claimed",
+  "notification_intents": [
+    {
+      "action": "cancel",
+      "id": "plan-0"
+    },
+    {
+      "action": "cancel",
+      "id": "plan-1"
+    },
+    {
+      "action": "cancel",
+      "id": "other-0"
+    },
+    {
+      "action": "cancel",
+      "id": "plan-0"
+    },
+    {
+      "action": "schedule",
+      "id": "plan-1"
+    },
+    {
+      "action": "schedule",
+      "id": "other-0"
+    }
+  ],
+  "apk_sha256": "42b87980775f4d5a37b7084d476d3abbfcfb265f82c15404c5fc7e6f63a51776",
+  "local_flutter_sdk": "3.47.2",
+  "database_backend": "native Android SQLite",
+  "fixture_row_count": 4,
+  "real_os_notification_delivery_tested": false,
+  "initial_harness_failure": {
+    "reason": "Harness read nested data.paused instead of top-level paused; application transaction had completed",
+    "source_changed": false,
+    "preserved_first_pause_snapshot_sha256": "32eb38eb9d4ba112dd9ff0a54bd9cba64597e822b27f92d5e57b6b1f88ac4dfd"
+  },
+  "screenshot_sha256": "2948dfa1c366e18eafb4fcccb23398a08be4c8676a51a8bada583ea9f8908ab7"
+}

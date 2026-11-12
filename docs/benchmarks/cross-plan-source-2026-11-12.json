@@ -17,5 +17,8 @@
     "ui-await-failure.log": "5267e43573c4f13287a57014ad83c51ef5eca544c212000cb42409bc9f5a22dd",
     "related.log": "c3c6f48b2ccfa9ad1936a2d017dbaa321eab4edadc0fe0c21d6b4c8cff4ba198",
     "analyze-final.log": "b55ec077bba62f93473f570303a71f6d0eba684acfe7b47704daf997147cbd9d"
-  }
+  },
+  "release_source": "26c90e0e56636f925f6394ca569713367db00c87",
+  "release_version": "1.8.5+74",
+  "source_validation_scope": "local Windows SDK3.47.2; exact-source fixed SDK CI recorded separately"
 }

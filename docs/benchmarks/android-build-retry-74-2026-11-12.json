@@ -1,0 +1,10 @@
+{
+  "source": "26c90e0e56636f925f6394ca569713367db00c87",
+  "run_id": 43139314852,
+  "failed_job": 130927922272,
+  "reason": "Android SDK NDK download is not a ZIP archive",
+  "failed_log_sha256": "f27e5d738169ae25f0d4c1fa66a0449f703c014f29f18a9e7752a8bb590885ed",
+  "only_failed_jobs": true,
+  "no_source_or_gate_change": true,
+  "at": "2026-11-12T05:31:29.635190+00:00"
+}

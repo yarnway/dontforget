@@ -1,0 +1,144 @@
+{
+  "source": "26c90e0e56636f925f6394ca569713367db00c87",
+  "production": {
+    "source": "26c90e0e56636f925f6394ca569713367db00c87",
+    "version": "1.8.5+74",
+    "package": "com.yarnway.dontforget",
+    "origin": "fixed-CI distribution ARM64 and universal APKs",
+    "latest_backup_before_upgrade": true,
+    "same_signing_identity": true,
+    "all_business_fields_media_and_secure_entries_preserved": true,
+    "counts": {
+      "Reminders": 2,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "secure_entry_count": 0,
+    "cold_reopen_passed": true,
+    "final_ordinary_entry": true,
+    "fresh_install_this_build": false,
+    "published_arm64_73_to_arm64_74": true,
+    "both_ci_apk_variants_installed": true,
+    "same_version_variant_exchange_data_preserved": true,
+    "final_variant": "arm64"
+  },
+  "qa": {
+    "source": "26c90e0e56636f925f6394ca569713367db00c87",
+    "version": "1.8.5+74",
+    "package": "com.yarnway.dontforget.acceptance.p4720261102",
+    "origin": "local SDK3.47.2 independent debug identity",
+    "latest_backup_before_upgrade": true,
+    "same_signing_identity": true,
+    "all_business_fields_media_and_secure_entries_preserved": true,
+    "counts": {
+      "Reminders": 55,
+      "MediaRecords": 9,
+      "Settings": 1
+    },
+    "secure_entry_count": 1,
+    "cold_reopen_passed": true,
+    "final_ordinary_entry": true,
+    "fresh_install_this_build": false,
+    "published_arm64_73_to_arm64_74": false,
+    "both_ci_apk_variants_installed": false,
+    "same_version_variant_exchange_data_preserved": false,
+    "final_variant": "debug"
+  },
+  "installed_package": {
+    "source": "26c90e0e56636f925f6394ca569713367db00c87",
+    "version": "1.8.5+74",
+    "package": "com.yarnway.dontforget",
+    "installed_apk_matches_fixed_ci_arm64": true,
+    "apk_sha256": "a2fe9057de4194111def85b1febb386ee7fc8db7ff2dcbbab469ea9139582954",
+    "bytes": 26425812,
+    "primary_cpu_abi": "arm64-v8a",
+    "ordinary_process_running": true
+  },
+  "apk_aab_inspection": {
+    "source": "26c90e0e56636f925f6394ca569713367db00c87",
+    "apk_identity": [
+      "com.yarnway.dontforget",
+      "74",
+      "1.8.5",
+      "24"
+    ],
+    "apk_variants": {
+      "universal": {
+        "arm64-v8a": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ],
+        "armeabi-v7a": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ],
+        "x86_64": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ]
+      },
+      "arm64": {
+        "arm64-v8a": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ]
+      }
+    },
+    "aab_library_inventory": {
+      "arm64-v8a": [
+        "libapp.so",
+        "libdartjni.so",
+        "libflutter.so",
+        "libsqlite3.so"
+      ],
+      "armeabi-v7a": [
+        "libapp.so",
+        "libdartjni.so",
+        "libflutter.so",
+        "libsqlite3.so"
+      ],
+      "x86_64": [
+        "libapp.so",
+        "libdartjni.so",
+        "libflutter.so",
+        "libsqlite3.so"
+      ]
+    },
+    "aab_retains_three_abis": true,
+    "same_source_ci_apk_size_comparison": true,
+    "universal_bytes": 76505852,
+    "arm64_bytes": 26425812,
+    "signatures_verified_by_preparation": true,
+    "candidate_signature_verification": true
+  },
+  "user_files_deleted_or_reencoded": false,
+  "fresh_install_this_build": false,
+  "system_storage_readonly": {
+    "universal": {
+      "应用大小": "77.90 MB",
+      "用户数据": "352 kB",
+      "缓存": "127 kB",
+      "总计": "78.37 MB",
+      "version_displayed": "1.8.5",
+      "screenshot_sha256": "0e63012e56e06f7584328fa75a72fe08ccc89f2a3e4a5221487acf94798ebe7f",
+      "storage_or_cache_cleared": false
+    },
+    "arm64": {
+      "应用大小": "27.76 MB",
+      "用户数据": "352 kB",
+      "缓存": "127 kB",
+      "总计": "28.24 MB",
+      "version_displayed": "1.8.5",
+      "screenshot_sha256": "c2343d37981c7ce4ce1ba3a06460e61db4dc6a34995c52405f8e568cc8131eb3",
+      "storage_or_cache_cleared": false
+    }
+  }
+}
