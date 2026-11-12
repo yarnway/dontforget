@@ -15,6 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../providers/home_controller.dart';
 import '../../models/settings.dart';
+import '../../models/tencent_speech_credentials.dart';
 import '../../l10n/app_localizations.dart';
 import 'editable_text_menu.dart';
 import 'voice_capture_feedback.dart';
@@ -48,6 +49,8 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   final _voiceGesture = VoiceCaptureGesture();
   VoiceReleaseAction _voiceAction = VoiceReleaseAction.save;
   bool _isTranscribing = false;
+  bool _voiceEditorOpen = false;
+  bool _voiceEditorClosing = false;
   bool _voiceMode = false;
   bool _voiceTextDraft = false;
   final _capturePortal = OverlayPortalController();
@@ -584,24 +587,37 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   Future<bool> _editVoiceDraft(Future<String?> result) async {
     final prefix = _textController.text;
     final initial = ref.read(homeControllerProvider).voicePreview;
-    final send = await showDialog<bool>(
-      context: context,
-      builder: (_) => LiveVoiceTextDialog(
-        result: result,
-        prefix: prefix,
-        initial: initial,
-        onChanged: (text) {
-          if (_current) {
-            if (text.isNotEmpty) _voiceTextDraft = true;
-            _textController.value = TextEditingValue(
-              text: text,
-              selection: TextSelection.collapsed(offset: text.length),
-            );
-          }
-        },
-      ),
-    );
-    return send == true;
+    setState(() => _voiceEditorOpen = true);
+    try {
+      final send = await showDialog<bool>(
+        context: context,
+        builder: (_) => LiveVoiceTextDialog(
+          result: result,
+          prefix: prefix,
+          initial: initial,
+          onChanged: (text) {
+            if (_current) {
+              if (text.isNotEmpty) _voiceTextDraft = true;
+              _textController.value = TextEditingValue(
+                text: text,
+                selection: TextSelection.collapsed(offset: text.length),
+              );
+            }
+          },
+        ),
+      );
+      return send == true;
+    } finally {
+      if (mounted) {
+        if (ModalRoute.of(context)?.isCurrent != false) {
+          FocusScope.of(context).unfocus();
+        }
+        setState(() {
+          _voiceEditorOpen = false;
+          _voiceEditorClosing = true;
+        });
+      }
+    }
   }
 
   void _moveLongPress(LongPressMoveUpdateDetails details) {
@@ -810,6 +826,14 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   Widget _buildComposer(BuildContext context, BoxConstraints constraints) {
     final l10n = AppLocalizations.of(context);
     final homeState = ref.watch(homeControllerProvider);
+    final liveTranscription = ref.watch(
+      settingsProvider.select(
+        (settings) =>
+            settings.speech.isConfigured &&
+            settings.speech.endpoint ==
+                TencentSpeechCredentials.realtimeEndpoint,
+      ),
+    );
     final rawPending = ref.watch(workspaceDraftsProvider)['pendingCaptures'];
     final pending = rawPending is Map
         ? rawPending.entries
@@ -865,11 +889,15 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         if (!mounted) return;
         if (_captureOverlayWanted && _isLongPressRecording) {
           _capturePortal.show();
-        } else {
+        } else if (_capturePortal.isShowing) {
           _capturePortal.hide();
         }
       });
     }
+    // Keep the composer state and draft alive behind its modal editor. Showing
+    // a second editor/preview in a keyboard-height background can overflow.
+    if (!keyboardVisible) _voiceEditorClosing = false;
+    final hideComposer = isMobile && (_voiceEditorOpen || _voiceEditorClosing);
     final inputStyle =
         (isWindows ? Theme.of(context).textTheme.bodyLarge! : const TextStyle())
             .copyWith(
@@ -1569,67 +1597,75 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
               preparing: !homeState.isRecording,
               selectionOpen: _voiceGesture.selectionOpen,
               transcript: homeState.voicePreview,
+              liveTranscription: liveTranscription,
             ),
           ),
         ),
       ),
-      child: Align(
-        heightFactor: 1,
-        alignment: Alignment.bottomCenter,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1040),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (((!isMobile && isRecording) || _isTranscribing) &&
-                  homeState.voicePreview.isNotEmpty)
-                Container(
-                  key: const ValueKey('desktop-voice-transcript-preview'),
-                  width: double.infinity,
-                  constraints: BoxConstraints(
-                    maxHeight: math.min(
-                      160,
-                      MediaQuery.sizeOf(context).height * .25,
-                    ),
-                  ),
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: colors.secondaryContainer,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: SingleChildScrollView(
-                          reverse: true,
-                          child: Text(
-                            homeState.voicePreview,
-                            style: Theme.of(context).textTheme.bodyLarge
-                                ?.copyWith(color: colors.onSecondaryContainer),
+      child: hideComposer
+          ? const SizedBox.shrink()
+          : Align(
+              heightFactor: 1,
+              alignment: Alignment.bottomCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1040),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (((!isMobile && isRecording) ||
+                            (_isTranscribing && !_voiceEditorOpen)) &&
+                        homeState.voicePreview.isNotEmpty)
+                      Container(
+                        key: const ValueKey('desktop-voice-transcript-preview'),
+                        width: double.infinity,
+                        constraints: BoxConstraints(
+                          maxHeight: math.min(
+                            160,
+                            MediaQuery.sizeOf(context).height * .25,
                           ),
                         ),
-                      ),
-                      if (_isTranscribing)
-                        IconButton(
-                          key: const ValueKey('cancel-pending-transcription'),
-                          tooltip: l10n.get('cancel'),
-                          onPressed: () => ref
-                              .read(homeControllerProvider.notifier)
-                              .cancelLiveTranscription(),
-                          icon: const Icon(Icons.close),
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
                         ),
-                    ],
-                  ),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: colors.secondaryContainer,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: SingleChildScrollView(
+                                reverse: true,
+                                child: Text(
+                                  homeState.voicePreview,
+                                  style: Theme.of(context).textTheme.bodyLarge
+                                      ?.copyWith(
+                                        color: colors.onSecondaryContainer,
+                                      ),
+                                ),
+                              ),
+                            ),
+                            if (_isTranscribing)
+                              IconButton(
+                                key: const ValueKey(
+                                  'cancel-pending-transcription',
+                                ),
+                                tooltip: l10n.get('cancel'),
+                                onPressed: () => ref
+                                    .read(homeControllerProvider.notifier)
+                                    .cancelLiveTranscription(),
+                                icon: const Icon(Icons.close),
+                              ),
+                          ],
+                        ),
+                      ),
+                    composer,
+                  ],
                 ),
-              composer,
-            ],
-          ),
-        ),
-      ),
+              ),
+            ),
     );
   }
 }

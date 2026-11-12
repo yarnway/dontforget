@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -25,16 +26,22 @@ class LiveVoiceTextDialog extends ConsumerStatefulWidget {
 
 class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
   late final TextEditingController _editor;
+  final _editorHost = GlobalKey();
   bool _edited = false, _complete = false, _failed = false, _closing = false;
   String combine(String text) => widget.prefix.isEmpty
       ? text
       : text.isEmpty
       ? widget.prefix
       : '${widget.prefix}\n$text';
+  void _refreshEditorState() {
+    if (mounted && !_closing) setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
     _editor = TextEditingController(text: combine(widget.initial));
+    _editor.addListener(_refreshEditorState);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) widget.onChanged(_editor.text);
     });
@@ -117,6 +124,7 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
 
   @override
   void dispose() {
+    _editor.removeListener(_refreshEditorState);
     _editor.dispose();
     super.dispose();
   }
@@ -139,65 +147,208 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
         _failed ||
         ref.watch(homeControllerProvider.select((state) => state.error)) !=
             null;
-    return AlertDialog(
-      scrollable: true,
-      title: Text(l10n.get('voiceEditTitle')),
-      content: SizedBox(
-        width: 520,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (!_complete)
-              LinearProgressIndicator(
-                key: const ValueKey('voice-editor-progress'),
-                value: MediaQuery.disableAnimationsOf(context) ? 0.5 : null,
+    final composing = _editor.value.composing;
+    final canSend =
+        _editor.text.trim().isNotEmpty &&
+        (_complete || _edited) &&
+        (!composing.isValid || composing.isCollapsed);
+    final colors = Theme.of(context).colorScheme;
+    final mobile = switch (Theme.of(context).platform) {
+      TargetPlatform.android || TargetPlatform.iOS => true,
+      _ => false,
+    };
+    final actionHeight = math.max(
+      48.0,
+      MediaQuery.textScalerOf(context).scale(14) * 2.4 + 16,
+    );
+    const actionText = TextStyle(fontSize: 14, height: 1.2);
+    Widget field(bool compact) => Focus(
+      key: _editorHost,
+      onKeyEvent: _key,
+      child: TextField(
+        key: const ValueKey('voice-text-editor'),
+        controller: _editor,
+        autofocus: true,
+        maxLines: null,
+        expands: true,
+        textAlignVertical: TextAlignVertical.top,
+        keyboardType: TextInputType.multiline,
+        textInputAction: TextInputAction.newline,
+        style: TextStyle(
+          fontSize: compact ? 14 : 18,
+          height: compact ? 1.2 : 1.45,
+        ),
+        decoration: InputDecoration(
+          hintText: l10n.get('voiceEditorPlaceholder'),
+          contentPadding: EdgeInsets.all(compact ? 4 : 12),
+        ),
+        onChanged: (text) {
+          setState(() => _edited = true);
+          widget.onChanged(text);
+        },
+      ),
+    );
+    return Dialog(
+      key: const ValueKey('voice-text-sheet'),
+      alignment: mobile ? Alignment.bottomCenter : Alignment.center,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      clipBehavior: Clip.antiAlias,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: LayoutBuilder(
+          builder: (context, bounds) {
+            final height = math.min(520.0, bounds.maxHeight);
+            final compact =
+                height <
+                math.max(
+                  180.0,
+                  MediaQuery.textScalerOf(context).scale(18) * 2.85 +
+                      actionHeight +
+                      72,
+                );
+            Widget keep(bool iconOnly) => iconOnly
+                ? IconButton(
+                    key: const ValueKey('voice-editor-keep'),
+                    tooltip: l10n.get('voiceKeepDraft'),
+                    icon: const Icon(Icons.close),
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () {
+                      _closing = true;
+                      Navigator.pop(context, false);
+                    },
+                  )
+                : TextButton(
+                    key: const ValueKey('voice-editor-keep'),
+                    onPressed: () {
+                      _closing = true;
+                      Navigator.pop(context, false);
+                    },
+                    child: Text(
+                      l10n.get('voiceKeepDraft'),
+                      style: actionText,
+                      maxLines: 2,
+                      textAlign: TextAlign.center,
+                    ),
+                  );
+            Widget send(bool iconOnly) => iconOnly
+                ? IconButton(
+                    key: const ValueKey('voice-editor-send'),
+                    tooltip: l10n.get('send'),
+                    icon: const Icon(Icons.send_rounded),
+                    visualDensity: VisualDensity.compact,
+                    onPressed: canSend ? _send : null,
+                  )
+                : FilledButton(
+                    key: const ValueKey('voice-editor-send'),
+                    onPressed: canSend ? _send : null,
+                    child: Text(
+                      l10n.get('send'),
+                      style: actionText,
+                      maxLines: 2,
+                      textAlign: TextAlign.center,
+                    ),
+                  );
+            return SizedBox(
+              width: 560,
+              height: height,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (!compact)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+                      child: Row(
+                        children: [
+                          Icon(
+                            failed
+                                ? Icons.warning_amber_rounded
+                                : Icons.edit_note_rounded,
+                            color: failed ? colors.error : colors.primary,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              l10n.get(
+                                failed ? 'voiceReviewTitle' : 'voiceEditTitle',
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.titleMedium,
+                            ),
+                          ),
+                          if (!_complete) ...[
+                            const SizedBox(width: 12),
+                            Semantics(
+                              label: l10n.get('voiceListeningText'),
+                              child: SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  key: const ValueKey('voice-editor-progress'),
+                                  strokeWidth: 2,
+                                  value: MediaQuery.disableAnimationsOf(context)
+                                      ? .5
+                                      : null,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  if (!compact &&
+                      failed &&
+                      height >= 360 &&
+                      MediaQuery.textScalerOf(context).scale(14) <= 22)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                      child: Text(
+                        l10n.get('voicePartialReview'),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: colors.error),
+                      ),
+                    ),
+                  // This keyed slot and its editor never change parents when the
+                  // keyboard opens or the device rotates: keep the IME client.
+                  Expanded(
+                    key: const ValueKey('voice-sheet-field-slot'),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SizedBox(
+                          width: compact ? 44 : 16,
+                          child: compact ? Center(child: keep(true)) : null,
+                        ),
+                        Expanded(child: field(compact)),
+                        SizedBox(
+                          width: compact ? 44 : 16,
+                          child: compact ? Center(child: send(true)) : null,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (!compact)
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: SizedBox(
+                        height: actionHeight,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(child: keep(false)),
+                            const SizedBox(width: 12),
+                            Expanded(child: send(false)),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
               ),
-            if (failed)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  l10n.get('voicePartialReview'),
-                  style: TextStyle(color: Theme.of(context).colorScheme.error),
-                ),
-              ),
-            SizedBox(
-              height: (MediaQuery.sizeOf(context).height * .25).clamp(100, 240),
-              child: Focus(
-                onKeyEvent: _key,
-                child: TextField(
-                  key: const ValueKey('voice-text-editor'),
-                  controller: _editor,
-                  autofocus: true,
-                  maxLines: null,
-                  expands: true,
-                  textAlignVertical: TextAlignVertical.top,
-                  onChanged: (text) {
-                    setState(() => _edited = true);
-                    widget.onChanged(text);
-                  },
-                ),
-              ),
-            ),
-          ],
+            );
+          },
         ),
       ),
-      actions: [
-        TextButton(
-          key: const ValueKey('voice-editor-keep'),
-          onPressed: () {
-            _closing = true;
-            Navigator.pop(context, false);
-          },
-          child: Text(l10n.get('voiceKeepDraft')),
-        ),
-        FilledButton(
-          key: const ValueKey('voice-editor-send'),
-          onPressed: _editor.text.trim().isNotEmpty && (_complete || _edited)
-              ? _send
-              : null,
-          child: Text(l10n.get('send')),
-        ),
-      ],
     );
   }
 }

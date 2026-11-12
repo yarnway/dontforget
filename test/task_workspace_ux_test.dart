@@ -986,7 +986,7 @@ void main() {
             .hasFocus,
         isTrue,
       );
-      expect(find.byKey(const ValueKey('composer-send')), findsOneWidget);
+      expect(find.byKey(const ValueKey('composer-send')), findsNothing);
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pump();
       expect(home.sent, isEmpty);

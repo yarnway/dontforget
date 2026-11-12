@@ -1,0 +1,50 @@
+{
+  "date": "2026-11-13",
+  "version": "1.8.7+76",
+  "schema": 17,
+  "local_flutter": "3.47.2",
+  "fixed_ci_flutter": "3.44.9",
+  "related_passed": 100,
+  "analyze_issues": 0,
+  "dependencies_changed": false,
+  "speech_upload_timing_changed": false,
+  "speech_recognition_provider_changed": false,
+  "semantics": {
+    "upward_preview_edit_send_choices": true,
+    "send_boundary_hysteresis": true,
+    "compact_landscape_preview": true,
+    "editor_and_actions_stay_above_keyboard": true,
+    "same_editable_client_and_valid_ime_composition_on_resize": true,
+    "manual_text_not_overwritten_by_late_recognition": true,
+    "background_composer_state_retained_while_hidden": true,
+    "file_transcription_placeholder_distinct_from_live": true
+  },
+  "initial_failures": "Landscape labels squeezed the preview; duplicate background preview overflowed; early hiding detached the overlay host; corrected to keep OverlayPortal mounted. Editor-closing rendering guard initially blocked explicit Send; removed from the business-busy gate. Resizing preserves the same editor; IME fixture corrected to place the caret within its active composing range. Obsolete background-send assertion updated. Unused const lint fixed. Failed local tests left teardown pending; only owned test trees stopped.",
+  "source_files_sha256": {
+    "lib/ui/widgets/voice_capture_feedback.dart": "9c5614b3d632f1394695962e7a1367d37febb977db1b5c589684f8dc086b04cb",
+    "lib/ui/widgets/live_voice_text_dialog.dart": "7972eb80841ae28b8bffe6f1b16e46352a7469ade72eb13a323e7d796064f114",
+    "lib/ui/widgets/input_bottom_bar.dart": "fda976e11618227b7bfbde47f6ff6b4310baadb45699905b43c5024d4591be8a",
+    "lib/l10n/app_localizations.dart": "e55b20d0b50f47f984551e34b1b323149bdc1fa3b0bb55eb56d24df1b928bb88",
+    "test/live_voice_input_ui_test.dart": "5dc1ef89bf4e6bae59340dc7b9a23adedf8982aaa5dd774e34b4655525b6f69f",
+    "test/task_workspace_ux_test.dart": "fc61798d28e675b7dfa33130883a437f88da6c2c8233e88d0b49786e19e8a5d5",
+    "test/voice_capture_gesture_test.dart": "55585a747b3b31d1c7c3e19cdafef5d2d422798e0562ee2485c0cbbf6d5b577b",
+    "test/voice_capture_layout_test.dart": "c0f04fd89fc0e04c2a4b3e85512dcdd75f4bb4fb133062f626e676031d72e18a",
+    "pubspec.yaml": "d4ffe2dd38fa2e84f328afcda001124b569c4c73c090d54f7ae6539c6e25a20c"
+  },
+  "logs_sha256": {
+    "related.log": "311f63784a415c75ed07be36c1e2f1c97f0fac8ae81573d0877e7a5b7b576e3c",
+    "analyze.log": "c1b00fc33eeba4dc2f7832611aad0de0d5c6159d94262372916ecadc4961c5ac",
+    "layout-and-resize-failure.log": "4764ae15ca2893938cff4fa5b27759fea36abf5dd34e9a4fdb95e629219096e1",
+    "short-landscape-label-failure.log": "64c3620bb0127de701dfb6837f28b62274611cc5386d294358dbe629e8f3a6b9",
+    "portal-lifecycle-failure.log": "696e92e44df3f1af15b45de2e0af254d4ce4eeda8521d827fc404ff85088ca0d",
+    "editor-reparent-failure.log": "e603510414264ff77b595ba49060bb998b5a375e1acd3767fa100d44fec74468",
+    "editor-closing-send-failure.log": "98a4e0c9e41f1c198226960bc747da3b6e09450bc86dd8862d938311ab98ca6d",
+    "resize-valid-ime-proof.log": "78a6948eaf092f9c70bd5efd77cbbee235de34586af22e17adf3e4d5a407ab87",
+    "stopped-test-evidence.json": "5f99d9f02c191482ef91bd62fac134f712d144fd6e863ca911b630c842430460"
+  },
+  "native_fixture": "private +76 synthetic voice UI fixture built; native gesture acceptance pending",
+  "fixed_ci": "pending source push",
+  "ordinary_windows_upgrade": false,
+  "ordinary_android_upgrade": false,
+  "release_published": false
+}

@@ -308,6 +308,14 @@ void main() {
         ),
       );
       await tester.pump();
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.byKey(const ValueKey('voice-editor-send')),
+            )
+            .onPressed,
+        isNull,
+      );
       home.preview('不能覆盖中文候选');
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       home.finalResult!.complete('最终识别也不能覆盖');
@@ -393,6 +401,141 @@ void main() {
         }
       }
       await finish(tester);
+    },
+  );
+
+  testWidgets(
+    'landscape keyboard keeps editor and both actions visible in every language',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(568, 320);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      for (final language in ['zh', 'en', 'ja']) {
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: MaterialApp(
+              locale: Locale(language),
+              supportedLocales: const [
+                Locale('zh'),
+                Locale('en'),
+                Locale('ja'),
+              ],
+              localizationsDelegates: const [
+                AppLocalizationsDelegate(),
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              theme: ThemeData(platform: TargetPlatform.android),
+              builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  viewInsets: const EdgeInsets.only(bottom: 220),
+                  textScaler: const TextScaler.linear(2),
+                  disableAnimations: true,
+                ),
+                child: child!,
+              ),
+              home: Builder(
+                builder: (context) => Scaffold(
+                  body: TextButton(
+                    onPressed: () => showDialog<bool>(
+                      context: context,
+                      builder: (_) => LiveVoiceTextDialog(
+                        result: Future.value('长文字 English ' * 30),
+                        prefix: '',
+                        initial: '已有文字',
+                        onChanged: (_) {},
+                      ),
+                    ),
+                    child: const Text('open'),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('open'));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        for (final key in [
+          'voice-text-editor',
+          'voice-editor-keep',
+          'voice-editor-send',
+        ]) {
+          final rect = tester.getRect(find.byKey(ValueKey(key)));
+          expect(rect.bottom, lessThanOrEqualTo(100));
+          expect(rect.height, greaterThanOrEqualTo(40));
+        }
+        final field = find.byKey(const ValueKey('voice-text-editor'));
+        await tester.enterText(field, '调整后的文字');
+        await tester.pumpAndSettle();
+        expect(tester.widget<TextField>(field).controller!.text, '调整后的文字');
+        await tester.tap(find.byKey(const ValueKey('voice-editor-keep')));
+        await tester.pumpAndSettle();
+      }
+      await finish(tester);
+    },
+  );
+  testWidgets(
+    'keyboard resize keeps manual text and IME composition while final recognition arrives',
+    (tester) async {
+      await show(tester);
+      home.finalResult = Completer<String?>();
+      final held = await hold(tester);
+      await held.gesture.moveTo(held.origin + const Offset(70, -70));
+      await tester.pumpAndSettle();
+      await held.gesture.up();
+      await tester.pumpAndSettle();
+      final field = find.byKey(const ValueKey('voice-text-editor'));
+      final editState = tester.state<EditableTextState>(
+        find.descendant(of: field, matching: find.byType(EditableText)),
+      );
+      try {
+        final draft = '保留中文候选' * 20;
+        tester.testTextInput.updateEditingValue(
+          TextEditingValue(
+            text: draft,
+            selection: TextSelection.collapsed(offset: draft.length),
+            composing: TextRange(start: draft.length - 6, end: draft.length),
+          ),
+        );
+        await tester.pump();
+        expect(
+          tester.widget<TextField>(field).controller!.value.composing,
+          TextRange(start: draft.length - 6, end: draft.length),
+        );
+        tester.view.physicalSize = const Size(568, 320);
+        tester.view.viewInsets = const FakeViewPadding(bottom: 220);
+        addTearDown(tester.view.resetViewInsets);
+        await tester.pumpAndSettle();
+        expect(
+          tester.state<EditableTextState>(
+            find.descendant(of: field, matching: find.byType(EditableText)),
+          ),
+          same(editState),
+        );
+        expect(editState.widget.focusNode.hasFocus, isTrue);
+        home.preview('较晚的中间结果');
+        home.finalResult!.complete('最终识别结果');
+        await tester.pumpAndSettle();
+        expect(tester.widget<TextField>(field).controller!.text, draft);
+        expect(
+          tester.widget<TextField>(field).controller!.value.composing,
+          TextRange(start: draft.length - 6, end: draft.length),
+        );
+        expect(home.sent, isEmpty);
+        expect(tester.takeException(), isNull);
+      } finally {
+        final keep = find.byKey(const ValueKey('voice-editor-keep'));
+        if (keep.evaluate().isNotEmpty) {
+          await tester.tap(keep);
+          await tester.pumpAndSettle();
+        }
+        await finish(tester);
+      }
     },
   );
 

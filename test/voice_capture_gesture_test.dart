@@ -41,4 +41,35 @@ void main() {
     expect(gesture.update(const Offset(80, -30)), VoiceReleaseAction.save);
     expect(gesture.update(const Offset(80, -80)), VoiceReleaseAction.text);
   });
+  test('small send-boundary tremors retain one clearly selected action', () {
+    final gesture = VoiceCaptureGesture();
+    expect(gesture.update(const Offset(97, -70)), VoiceReleaseAction.send);
+    for (final x in [95.0, 91.0, 85.0, 96.0]) {
+      expect(gesture.update(Offset(x, -70)), VoiceReleaseAction.send);
+    }
+    expect(gesture.update(const Offset(70, -70)), VoiceReleaseAction.text);
+    expect(gesture.update(const Offset(95, -70)), VoiceReleaseAction.text);
+    expect(gesture.update(const Offset(97, -70)), VoiceReleaseAction.send);
+  });
+  test('returning down or resetting always disarms a selected send action', () {
+    final gesture = VoiceCaptureGesture();
+    gesture.update(const Offset(110, -70));
+    expect(gesture.update(const Offset(110, 0)), VoiceReleaseAction.save);
+    expect(gesture.update(const Offset(85, -70)), VoiceReleaseAction.text);
+    gesture.update(const Offset(110, -70));
+    gesture.reset();
+    expect(gesture.update(const Offset(85, -70)), VoiceReleaseAction.text);
+  });
+  test(
+    'edit and cancel targets tolerate drift but can return to the neutral area',
+    () {
+      final gesture = VoiceCaptureGesture();
+      expect(gesture.update(const Offset(-25, -70)), VoiceReleaseAction.cancel);
+      expect(gesture.update(const Offset(-20, -70)), VoiceReleaseAction.cancel);
+      expect(gesture.update(const Offset(0, -70)), VoiceReleaseAction.save);
+      expect(gesture.update(const Offset(25, -70)), VoiceReleaseAction.text);
+      expect(gesture.update(const Offset(20, -70)), VoiceReleaseAction.text);
+      expect(gesture.update(const Offset(0, -70)), VoiceReleaseAction.save);
+    },
+  );
 }

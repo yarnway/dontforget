@@ -12,6 +12,9 @@ void main() {
     double scale = 1,
     VoiceReleaseAction action = VoiceReleaseAction.save,
     bool preparing = false,
+    bool selectionOpen = false,
+    String transcript = '',
+    bool liveTranscription = true,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = size;
@@ -37,6 +40,9 @@ void main() {
               action: action,
               fullScreen: true,
               preparing: preparing,
+              selectionOpen: selectionOpen,
+              transcript: transcript,
+              liveTranscription: liveTranscription,
             ),
           ),
         ),
@@ -155,4 +161,91 @@ void main() {
       }
     }
   });
+  testWidgets(
+    'upward preview stays readable above actions on short and large-text screens',
+    (tester) async {
+      for (final size in [
+        const Size(320, 568),
+        const Size(375, 812),
+        const Size(568, 320),
+      ]) {
+        for (final language in ['zh', 'en', 'ja']) {
+          for (final scale in [1.0, 2.0]) {
+            await show(
+              tester,
+              size,
+              language: language,
+              scale: scale,
+              selectionOpen: true,
+              transcript: '明天九点 Buy milk tomorrow.\n' * 25,
+            );
+            final preview = find.byKey(
+              const ValueKey('voice-transcript-preview'),
+            );
+            expect(
+              preview,
+              findsOneWidget,
+              reason: '$size / $language / $scale',
+            );
+            final viewport = find.descendant(
+              of: preview,
+              matching: find.byType(SingleChildScrollView),
+            );
+            expect(tester.getSize(viewport).height, greaterThan(20));
+            expect(
+              tester.getRect(preview).bottom,
+              lessThan(rect(tester, 'voice-recording-feedback').top),
+            );
+            expect(
+              tester.getRect(preview).top,
+              greaterThanOrEqualTo(size.height >= 568 ? 59 : 0),
+            );
+          }
+        }
+      }
+    },
+  );
+  testWidgets(
+    'preview distinguishes editing and sending without moving text or action targets',
+    (tester) async {
+      Rect? before;
+      for (final action in [VoiceReleaseAction.text, VoiceReleaseAction.send]) {
+        await show(
+          tester,
+          const Size(375, 812),
+          action: action,
+          selectionOpen: true,
+          transcript: '明天九点买牛奶',
+        );
+        final preview = rect(tester, 'voice-transcript-preview');
+        if (before != null) expect(preview, before);
+        before = preview;
+        final edit = find.byKey(const ValueKey('voice-preview-edit-mode'));
+        final send = find.byKey(const ValueKey('voice-preview-send-mode'));
+        expect(edit, findsOneWidget);
+        expect(send, findsOneWidget);
+        final theme = Theme.of(tester.element(edit));
+        final selected = tester.widget<Container>(
+          action == VoiceReleaseAction.text ? edit : send,
+        );
+        expect(
+          (selected.decoration as BoxDecoration).color,
+          theme.colorScheme.primary,
+        );
+      }
+    },
+  );
+  testWidgets(
+    'record-after-release fallback is explicit before any live text exists',
+    (tester) async {
+      await show(
+        tester,
+        const Size(375, 812),
+        selectionOpen: true,
+        liveTranscription: false,
+      );
+      expect(find.text('松手后转写'), findsOneWidget);
+      expect(find.text('正在识别…'), findsNothing);
+    },
+  );
 }

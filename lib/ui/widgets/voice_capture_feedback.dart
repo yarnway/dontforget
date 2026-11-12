@@ -6,19 +6,29 @@ enum VoiceReleaseAction { save, cancel, text, send }
 
 class VoiceCaptureGesture {
   bool _selectionOpen = false;
+  VoiceReleaseAction _last = VoiceReleaseAction.save;
   bool get selectionOpen => _selectionOpen;
-  void reset() => _selectionOpen = false;
+  void reset() {
+    _selectionOpen = false;
+    _last = VoiceReleaseAction.save;
+  }
+
   VoiceReleaseAction update(Offset movement) {
     if (movement.dy <= -48) _selectionOpen = true;
     if (movement.dy >= -16) _selectionOpen = false;
-    if (!_selectionOpen || movement.dx.abs() < 24) {
-      return VoiceReleaseAction.save;
+    if (!_selectionOpen) return _last = VoiceReleaseAction.save;
+    final x = movement.dx;
+    // Keep the selected release action stable through small finger tremors.
+    if (x >= 96 || (_last == VoiceReleaseAction.send && x >= 80)) {
+      return _last = VoiceReleaseAction.send;
     }
-    return movement.dx < 0
-        ? VoiceReleaseAction.cancel
-        : movement.dx >= 96
-        ? VoiceReleaseAction.send
-        : VoiceReleaseAction.text;
+    if (x <= -24 || (_last == VoiceReleaseAction.cancel && x <= -12)) {
+      return _last = VoiceReleaseAction.cancel;
+    }
+    if (x >= 24 || (_last == VoiceReleaseAction.text && x >= 12)) {
+      return _last = VoiceReleaseAction.text;
+    }
+    return _last = VoiceReleaseAction.save;
   }
 }
 
@@ -31,10 +41,12 @@ class VoiceCaptureFeedback extends StatelessWidget {
     this.preparing = false,
     this.selectionOpen = false,
     this.transcript = '',
+    this.liveTranscription = true,
   });
   final VoiceReleaseAction action;
   final bool fullScreen, preparing, selectionOpen;
   final String transcript;
+  final bool liveTranscription;
   static const _green = Color(0xFF3BB47B);
   static const _cancel = Color(0xFFC63C3C);
   static const _neutral = Color(0xFF252525);
@@ -70,29 +82,24 @@ class VoiceCaptureFeedback extends StatelessWidget {
             );
             final textLabel = loc.get(switch (action) {
               VoiceReleaseAction.text =>
-                shortLabels ? 'voiceShortTextTarget' : 'voiceEditOnRelease',
+                shortLabels ? 'voiceEditChoice' : 'voiceEditOnRelease',
               VoiceReleaseAction.send =>
                 shortLabels ? 'send' : 'voiceReleaseSend',
-              _ =>
-                shortLabels ? 'voiceShortTextTarget' : 'voiceSlideTextTarget',
+              _ => shortLabels ? 'voiceEditChoice' : 'voiceSlideTextTarget',
             });
-            const targetStyle = TextStyle(
-              fontSize: 14,
+            final targetStyle = TextStyle(
+              fontSize: compact ? 12 : 14,
               fontWeight: FontWeight.w600,
               height: 1.15,
             );
-            final labelWidth = width * .4;
+            final labelWidth = width * (compact ? .42 : .4);
             var labelHeight = 0.0;
             // Reserve every action's label height so sliding changes the
             // action without moving the targets or transcript above them.
             for (final value in [
               cancelLabel,
-              loc.get(
-                shortLabels ? 'voiceShortTextTarget' : 'voiceSlideTextTarget',
-              ),
-              loc.get(
-                shortLabels ? 'voiceShortTextTarget' : 'voiceEditOnRelease',
-              ),
+              loc.get(shortLabels ? 'voiceEditChoice' : 'voiceSlideTextTarget'),
+              loc.get(shortLabels ? 'voiceEditChoice' : 'voiceEditOnRelease'),
               loc.get(shortLabels ? 'send' : 'voiceReleaseSend'),
             ]) {
               final painter = TextPainter(
@@ -120,7 +127,15 @@ class VoiceCaptureFeedback extends StatelessWidget {
               color: Color(0xFFAAAAAA),
               fontWeight: FontWeight.w500,
             );
-            final feedbackWidth = math.min(bounds.maxWidth - 48, 640.0);
+            final safe = MediaQuery.paddingOf(context);
+            final sideInset = math.max(
+              24.0,
+              math.max(safe.left, safe.right) + 12,
+            );
+            final feedbackWidth = math.min(
+              bounds.maxWidth - sideInset * 2,
+              640.0,
+            );
             final captionWidth = compact
                 ? feedbackWidth - bubbleWidth - 12
                 : feedbackWidth;
@@ -138,7 +153,7 @@ class VoiceCaptureFeedback extends StatelessWidget {
                 text: TextSpan(text: loc.get(key), style: captionStyle),
                 textDirection: Directionality.of(context),
                 textScaler: scaler,
-                maxLines: 3,
+                maxLines: compact ? 1 : 3,
               )..layout(maxWidth: math.max(1, captionWidth));
               captionHeight = math.max(captionHeight, painter.height);
               painter.dispose();
@@ -202,7 +217,7 @@ class VoiceCaptureFeedback extends StatelessWidget {
                     loc.get(status),
                     key: const ValueKey('voice-release-caption'),
                     textAlign: TextAlign.center,
-                    maxLines: 3,
+                    maxLines: compact ? 1 : 3,
                     overflow: TextOverflow.ellipsis,
                     style: captionStyle,
                   ),
@@ -295,37 +310,23 @@ class VoiceCaptureFeedback extends StatelessWidget {
                 if (((selectionOpen && action != VoiceReleaseAction.cancel) ||
                         action == VoiceReleaseAction.text ||
                         action == VoiceReleaseAction.send) &&
-                    feedbackTop - topInset > 80)
+                    feedbackTop - topInset > 56)
                   Positioned(
-                    left: math.max(16, (bounds.maxWidth - 560) / 2),
-                    right: math.max(16, (bounds.maxWidth - 560) / 2),
-                    top: math.max(topInset + 16, feedbackTop - 260),
-                    bottom: math.max(0, bounds.maxHeight - feedbackTop + 16),
-                    child: Container(
+                    left: math.max(
+                      safe.left + 12,
+                      math.max(16, (bounds.maxWidth - 560) / 2),
+                    ),
+                    right: math.max(
+                      safe.right + 12,
+                      math.max(16, (bounds.maxWidth - 560) / 2),
+                    ),
+                    top: math.max(topInset + 8, feedbackTop - 260),
+                    bottom: math.max(0, bounds.maxHeight - feedbackTop + 12),
+                    child: VoiceTranscriptPreview(
                       key: const ValueKey('voice-transcript-preview'),
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF3F8F5),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: SingleChildScrollView(
-                        reverse: true,
-                        child: Semantics(
-                          liveRegion: true,
-                          child: Text(
-                            transcript.isEmpty
-                                ? loc.get('voiceListeningText')
-                                : transcript,
-                            style: TextStyle(
-                              fontSize: 18,
-                              height: 1.45,
-                              color: transcript.isEmpty
-                                  ? const Color(0xFF75847B)
-                                  : const Color(0xFF173A28),
-                            ),
-                          ),
-                        ),
-                      ),
+                      action: action,
+                      transcript: transcript,
+                      liveTranscription: liveTranscription,
                     ),
                   ),
                 target(true),
@@ -357,6 +358,143 @@ class VoiceCaptureFeedback extends StatelessWidget {
             );
           },
         ),
+      ),
+    );
+  }
+}
+
+/// The release choices are indicators: the held input still owns the pointer.
+class VoiceTranscriptPreview extends StatelessWidget {
+  const VoiceTranscriptPreview({
+    super.key,
+    required this.action,
+    required this.transcript,
+    this.liveTranscription = true,
+  });
+  final VoiceReleaseAction action;
+  final String transcript;
+  final bool liveTranscription;
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.primary.withValues(alpha: .65)),
+      ),
+      child: LayoutBuilder(
+        builder: (context, bounds) {
+          final compact = bounds.maxHeight < 160;
+          Widget choice(bool send) {
+            final selected = send
+                ? action == VoiceReleaseAction.send
+                : action == VoiceReleaseAction.text;
+            return Expanded(
+              child: Semantics(
+                selected: selected,
+                label: loc.get(send ? 'voiceReleaseSend' : 'voiceReleaseText'),
+                child: Container(
+                  key: ValueKey(
+                    send
+                        ? 'voice-preview-send-mode'
+                        : 'voice-preview-edit-mode',
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? colors.primary
+                        : colors.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    loc.get(send ? 'send' : 'voiceEditChoice'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      height: 1.2,
+                      fontWeight: FontWeight.w600,
+                      color: selected
+                          ? colors.onPrimary
+                          : colors.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return Padding(
+            padding: EdgeInsets.all(compact ? 8 : 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (!compact) ...[
+                  Row(
+                    children: [
+                      choice(false),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 18,
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                      choice(true),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                Expanded(
+                  child: SingleChildScrollView(
+                    reverse: true,
+                    child: Semantics(
+                      liveRegion: true,
+                      child: Text(
+                        transcript.isEmpty
+                            ? loc.get(
+                                liveTranscription
+                                    ? 'voiceListeningText'
+                                    : 'voiceTranscribeAfterRelease',
+                              )
+                            : transcript,
+                        key: const ValueKey('voice-preview-content'),
+                        style: TextStyle(
+                          fontSize: compact ? 16 : 18,
+                          height: 1.45,
+                          color: transcript.isEmpty
+                              ? colors.onSurfaceVariant
+                              : colors.onSurface,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                if (!compact &&
+                    bounds.maxHeight >= 220 &&
+                    MediaQuery.textScalerOf(context).scale(13) <= 20) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    loc.get('voiceSendOnRelease'),
+                    maxLines: 2,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          );
+        },
       ),
     );
   }
