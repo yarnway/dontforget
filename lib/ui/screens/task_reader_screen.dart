@@ -44,6 +44,8 @@ class _TaskReaderState extends ConsumerState<TaskDetailScreen> {
         MaterialPageRoute<void>(
           builder: (_) => TaskEditScreen(
             task: Reminder.fromJson(latest.toJson()),
+            originGeneration: _generation,
+            originToken: _token,
             onPlayMedia: latest.recordId == widget.task.recordId
                 ? widget.onPlayMedia
                 : null,

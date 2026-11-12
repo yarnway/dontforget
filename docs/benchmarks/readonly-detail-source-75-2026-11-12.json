@@ -2,11 +2,11 @@
   "date": "2026-11-12",
   "version": "1.8.6+75",
   "schema": 17,
-  "runtime_lib_tree": "39c6cfea83f9f6ab621372efa5089ddbd4257ca1",
+  "runtime_lib_tree": "219208648ffad8b149483f98dc899b93983e6545",
   "local_flutter": "3.47.2",
   "fixed_ci_flutter": "3.44.9",
-  "related_final_passed": 175,
-  "readonly_final_passed": 23,
+  "related_final_passed": 178,
+  "readonly_final_passed": 26,
   "suites_overlap_do_not_sum": true,
   "analyze_issues": 0,
   "dependencies_changed": false,
@@ -22,7 +22,10 @@
     "draft_discard_and_newer_ime_updates_preserved": true,
     "attachments_and_links_remain_individually_saved_in_editor": true,
     "yearly_and_saved_context_profiles_supported": true,
-    "locale_theme_large_text_safe_insets_tested": true
+    "locale_theme_large_text_safe_insets_tested": true,
+    "explicit_card_menu_opens_editor_directly": true,
+    "explicit_card_menu_reads_latest_values": true,
+    "edit_intent_generation_preserved_until_editor_mount": true
   },
   "initial_failures": "Old editor type/title assertions, audit-history expectation and lazy attachment lookup fixed; failed fake-zone fixture left an owned test tree pending and a retry DLL lock. Only that tree stopped. A duplicate isExpanded compile parameter was removed, final suite and fixture rebuilt. Ordinary Windows app untouched.",
   "logs_sha256": {
@@ -32,11 +35,19 @@
     "stopped-test-evidence.json": "953ada3f95a34ce8dca9aa683cac4597fa07216b10a8303c9286b662b924bf03",
     "new-reader.log": "5b3ef02fabb6cd0daa84422ccf1b11cd111217a208a115cd80c5fa667ee24f3f",
     "final-all.log": "3e148ff6a44a044a8af15f27f5c5da6b847ef53fd2dfae1758ef5ca6ec031a6c",
-    "analyze-final.log": "a49085b676b7c1438338d55315ac9ceaa9881bf0622ff5f6a6a905a6b887fd5c"
+    "analyze-final.log": "a49085b676b7c1438338d55315ac9ceaa9881bf0622ff5f6a6a905a6b887fd5c",
+    "menu-verified.log": "3b1296d33d34f0e845720f8b98a5aa9cd1f3b7c53aa5261290682ae174197f64",
+    "menu-analyze.log": "b2088df9dac9127bcc1f11ebfe4d1618de68d42ef4fb56386876995743def600",
+    "final-menu-all.log": "f292e9ac90a3dfe34ba290a289d876af8cf9d19c98856784160862def3fc71fc",
+    "final-menu-analyze.log": "8b158f1ab9d5ea18088a027ff56ebf2af1e3e7498e444d2e1ec5ef1abcde5670"
   },
   "native_current_candidate": "private fixture built; touch acceptance pending",
   "fixed_ci": "pending source push",
-  "ordinary_windows_upgrade_this_version": false,
   "ordinary_production_and_qa_android_upgrade_this_version": false,
-  "new_release_published": false
+  "new_release_published": false,
+  "initial_candidate_evidence": "readonly-detail-initial-75-2026-11-12.json",
+  "initial_candidate_source": "6ee06f205c4ab5fe8090b936a9c5ca061de45944",
+  "initial_candidate_status": "Full CI, initial 74-to-75 running Windows upgrade and initial isolated native proof passed. Explicit card Edit route then refined; these are historical, not final-source gates.",
+  "ordinary_windows_upgrade_current_source": false,
+  "final_windows_upgrade_plan": "Fresh backup; running same-build +75 initial-source to +75 final-source overlay, with exact previous and new payload proofs."
 }

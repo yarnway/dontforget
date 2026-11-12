@@ -265,6 +265,42 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     );
   }
 
+  void _openEditor() {
+    final database = ref.read(databaseHelperProvider);
+    final gate = ref.read(runtimeRecoveryGateProvider);
+    if (_checklistGeneration == null ||
+        !database.isCurrent(_checklistGeneration!) ||
+        !gate.isCurrent(_checklistToken)) {
+      _showMessage(
+        AppLocalizations.of(context).get('reminderOccurrenceChanged'),
+      );
+      return;
+    }
+    final latest = ref
+        .read(remindersProvider)
+        .where((row) => row.id == widget.task.id && row.isVisible)
+        .firstOrNull;
+    if (latest == null) {
+      _showMessage(
+        AppLocalizations.of(context).get('reminderOccurrenceChanged'),
+      );
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute<void>(
+        builder: (_) => TaskEditScreen(
+          task: Reminder.fromJson(latest.toJson()),
+          originGeneration: _checklistGeneration,
+          originToken: _checklistToken,
+          onPlayMedia: latest.recordId == widget.task.recordId
+              ? widget.onPlayMedia
+              : null,
+        ),
+      ),
+    );
+  }
+
   PopupMenuItem<String> _menuItem(
     String value,
     IconData icon,
@@ -349,7 +385,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
   Future<void> _onAction(String action) async {
     if (_isBusy) return;
     if (action == 'edit') {
-      _openDetails();
+      _openEditor();
     } else if (action == 'source') {
       await showDialog<void>(
         context: context,

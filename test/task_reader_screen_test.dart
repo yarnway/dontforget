@@ -9,6 +9,7 @@ import 'package:dont_forget/ui/theme/app_theme.dart';
 import 'package:dont_forget/ui/widgets/editor_keyboard_actions.dart';
 import 'package:dont_forget/ui/widgets/inline_feedback.dart';
 import 'package:dont_forget/ui/widgets/task_details_dialog.dart';
+import 'package:dont_forget/ui/widgets/task_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -58,6 +59,7 @@ void main() {
     double width = 390,
     double scale = 1,
     bool dark = false,
+    Widget? content,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = Size(width, 800);
@@ -88,7 +90,9 @@ void main() {
                 onPressed: () => Navigator.push(
                   c,
                   MaterialPageRoute<void>(
-                    builder: (_) => dialog
+                    builder: (_) => content != null
+                        ? Scaffold(body: content)
+                        : dialog
                         ? TaskDetailsDialog(task: task)
                         : TaskDetailScreen(task: task),
                   ),
@@ -397,6 +401,101 @@ void main() {
       await tester.tap(find.byKey(const ValueKey('detail-save')));
       await tester.pumpAndSettle();
       expect(await tester.runAsync(saved), before);
+      await finish(tester);
+    },
+  );
+
+  testWidgets(
+    'card click reads, while explicit menu Edit opens current saved values directly',
+    (tester) async {
+      await open(
+        tester,
+        content: TaskCard(task: task, onPlayMedia: () {}),
+      );
+      await tester.tap(find.text(task.taskTitle));
+      await tester.pumpAndSettle();
+      expect(find.byType(TaskDetailScreen), findsOneWidget);
+      expect(find.byType(TaskEditScreen), findsNothing);
+      expect(find.byType(TextField), findsNothing);
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      await tester.runAsync(
+        () => h.notifier.updateReminder(
+          task.copyWith(taskTitle: '菜单读取最新值'),
+          baseline: task,
+        ),
+      );
+      await tester.pumpAndSettle();
+      final before = await tester.runAsync(saved);
+      final menu = tester.widget<PopupMenuButton<String>>(
+        find.byKey(ValueKey('actions-${task.id}')),
+      );
+      await tester.runAsync(
+        () => (menu.onSelected! as Future<void> Function(String))('edit'),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(TaskDetailScreen), findsNothing);
+      expect(find.byType(TaskEditScreen), findsOneWidget);
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const ValueKey('detail-title')))
+            .controller!
+            .text,
+        '菜单读取最新值',
+      );
+      expect(await tester.runAsync(saved), before);
+      await finish(tester);
+    },
+  );
+
+  testWidgets('an old card menu cannot start editing after recovery', (
+    tester,
+  ) async {
+    await open(
+      tester,
+      content: TaskCard(task: task, onPlayMedia: () {}),
+    );
+    final menu = tester.widget<PopupMenuButton<String>>(
+      find.byKey(ValueKey('actions-${task.id}')),
+    );
+    await tester.runAsync(
+      () async => (await h.database.beginMaintenance()).resume(),
+    );
+    final before = await tester.runAsync(saved);
+    await tester.runAsync(
+      () => (menu.onSelected! as Future<void> Function(String))('edit'),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(TaskEditScreen), findsNothing);
+    expect(await tester.runAsync(saved), before);
+    await finish(tester);
+  });
+
+  testWidgets(
+    'recovery between Edit intent and first editor frame cannot save into the new dataset',
+    (tester) async {
+      await open(tester);
+      await tester.tap(find.byKey(const ValueKey('task-detail-modify')));
+      await tester.runAsync(() async {
+        await (await h.database.beginMaintenance()).resume();
+        await h.notifier.refreshReminders();
+        await h.notifier.updateReminder(task.copyWith(taskTitle: '恢复后的事项'));
+      });
+      final before = await tester.runAsync(saved);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('detail-title')),
+        '旧页面的新输入',
+      );
+      await tester.tap(find.byKey(const ValueKey('detail-save')));
+      await tester.pump();
+      await pumpUntilRealIo(
+        tester,
+        () => find.text('提醒更新失败，请重试。').evaluate().isNotEmpty,
+        reason: 'Old edit intent must be rejected',
+      );
+      expect(await tester.runAsync(saved), before);
+      expect(find.byType(TaskEditScreen), findsOneWidget);
       await finish(tester);
     },
   );

@@ -35,8 +35,16 @@ part 'task_reader_screen.dart';
 class TaskEditScreen extends ConsumerStatefulWidget {
   final Reminder task;
   final VoidCallback? onPlayMedia;
+  final DataGeneration? originGeneration;
+  final RuntimeRecoveryToken? originToken;
 
-  const TaskEditScreen({super.key, required this.task, this.onPlayMedia});
+  const TaskEditScreen({
+    super.key,
+    required this.task,
+    this.onPlayMedia,
+    this.originGeneration,
+    this.originToken,
+  });
 
   @override
   ConsumerState<TaskEditScreen> createState() => _TaskEditScreenState();
@@ -127,8 +135,11 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
   void initState() {
     super.initState();
     try {
-      _editorGeneration = ref.read(databaseHelperProvider).captureGeneration();
-      _editorToken = ref.read(runtimeRecoveryGateProvider).capture();
+      _editorGeneration =
+          widget.originGeneration ??
+          ref.read(databaseHelperProvider).captureGeneration();
+      _editorToken =
+          widget.originToken ?? ref.read(runtimeRecoveryGateProvider).capture();
     } catch (_) {
       // Opening during maintenance leaves the form readable but unable to save.
     }

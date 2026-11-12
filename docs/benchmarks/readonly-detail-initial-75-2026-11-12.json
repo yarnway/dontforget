@@ -1,0 +1,261 @@
+{
+  "scope": "Unpublished initial +75 source; final source must independently pass its gates",
+  "source": "6ee06f205c4ab5fe8090b936a9c5ca061de45944",
+  "ci": {
+    "commit": "6ee06f205c4ab5fe8090b936a9c5ca061de45944",
+    "id": 43214587638,
+    "run_attempt": 1,
+    "url": "https://github.com/yarnway/dontforget/actions/runs/43214587638",
+    "status": "completed",
+    "conclusion": "success",
+    "jobs": [
+      {
+        "id": 131170470190,
+        "name": "Windows analyze and test",
+        "conclusion": "success",
+        "run_attempt": 1
+      },
+      {
+        "id": 131170470746,
+        "name": "Analyze and test",
+        "conclusion": "success",
+        "run_attempt": 1
+      },
+      {
+        "id": 131178300553,
+        "name": "Build windows candidate",
+        "conclusion": "success",
+        "run_attempt": 1
+      },
+      {
+        "id": 131178300628,
+        "name": "Build ios candidate",
+        "conclusion": "success",
+        "run_attempt": 1
+      },
+      {
+        "id": 131178300654,
+        "name": "Build android candidate",
+        "conclusion": "success",
+        "run_attempt": 1
+      },
+      {
+        "id": 131178301274,
+        "name": "Build macos candidate",
+        "conclusion": "success",
+        "run_attempt": 1
+      },
+      {
+        "id": 131178301335,
+        "name": "Build linux candidate",
+        "conclusion": "success",
+        "run_attempt": 1
+      },
+      {
+        "id": 131186439887,
+        "name": "Verify tag packages without publishing",
+        "conclusion": "skipped",
+        "run_attempt": 1
+      }
+    ],
+    "quality": [
+      {
+        "job": "Windows analyze and test",
+        "flutter_passed": 2453,
+        "flutter_skipped": 20,
+        "python_run": 170,
+        "python_skipped": 6,
+        "log_sha256": "9158e62a5bbe356855aade247f3d6f504317bad91baedb8d69d3215509fbe1f8"
+      },
+      {
+        "job": "Analyze and test",
+        "flutter_passed": 2471,
+        "flutter_skipped": 2,
+        "python_run": 170,
+        "python_skipped": 4,
+        "log_sha256": "ebc56ca1cb4473f6b85ad2a0c835a437149a75e4b49039c72d91d5b407edbee4"
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 13944946343,
+        "name": "ios-deliverables",
+        "size_in_bytes": 11209143,
+        "digest": "sha256:9679358bf633cf3b31e02d2274e948f0eb657085354efcb36e37e5bc06c01c82",
+        "expired": false,
+        "workflow_run": {
+          "id": 43214587638,
+          "repository_id": 1362330634,
+          "head_repository_id": 1362330634,
+          "head_branch": "main",
+          "head_sha": "6ee06f205c4ab5fe8090b936a9c5ca061de45944"
+        }
+      },
+      {
+        "id": 13943962471,
+        "name": "linux-deliverables",
+        "size_in_bytes": 14397676,
+        "digest": "sha256:8a797b3dcc35b1d684879e3b15639c660c5816e9af70d763264037fec8c40552",
+        "expired": false,
+        "workflow_run": {
+          "id": 43214587638,
+          "repository_id": 1362330634,
+          "head_repository_id": 1362330634,
+          "head_branch": "main",
+          "head_sha": "6ee06f205c4ab5fe8090b936a9c5ca061de45944"
+        }
+      },
+      {
+        "id": 13943874303,
+        "name": "android-deliverables",
+        "size_in_bytes": 120971802,
+        "digest": "sha256:ec3ba4b5d7f12476eb131d5af85b12e2594c0deeb4ca30ba32b71f79f702b820",
+        "expired": false,
+        "workflow_run": {
+          "id": 43214587638,
+          "repository_id": 1362330634,
+          "head_repository_id": 1362330634,
+          "head_branch": "main",
+          "head_sha": "6ee06f205c4ab5fe8090b936a9c5ca061de45944"
+        }
+      },
+      {
+        "id": 13943554908,
+        "name": "macos-deliverables",
+        "size_in_bytes": 26594491,
+        "digest": "sha256:dd0a3cd9c6985f46ad201ecad6be8b87cd7e2d9a06a9e6ed7c97dbf2800458c1",
+        "expired": false,
+        "workflow_run": {
+          "id": 43214587638,
+          "repository_id": 1362330634,
+          "head_repository_id": 1362330634,
+          "head_branch": "main",
+          "head_sha": "6ee06f205c4ab5fe8090b936a9c5ca061de45944"
+        }
+      },
+      {
+        "id": 13943473991,
+        "name": "windows-deliverables",
+        "size_in_bytes": 32067552,
+        "digest": "sha256:79453fee373f2b8093f24e09c2485ddd7af20b405a12b3b91711bf16e689743e",
+        "expired": false,
+        "workflow_run": {
+          "id": 43214587638,
+          "repository_id": 1362330634,
+          "head_repository_id": 1362330634,
+          "head_branch": "main",
+          "head_sha": "6ee06f205c4ab5fe8090b936a9c5ca061de45944"
+        }
+      }
+    ]
+  },
+  "windows_upgrade": {
+    "version": "1.8.6+75",
+    "source": "6ee06f205c4ab5fe8090b936a9c5ca061de45944",
+    "setup_sha256": "778418deb2b862e1e79895ab6af2421dad478ecfe64fc18bb31de55ce2f34b78",
+    "running_before_upgrade": true,
+    "acceptance_case": "ci-running",
+    "version_before": [
+      1,
+      8,
+      5,
+      74
+    ],
+    "backup_verified": true,
+    "installer_exit": 0,
+    "force_close_allowed": false,
+    "payload_files_identical": 37,
+    "native_cli_exit": 0,
+    "schema": 17,
+    "all_business_fields_preserved": true,
+    "business_counts": {
+      "Reminders": 5,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "credential_files_preserved": true,
+    "dpapi_credential_readback_equal": true,
+    "credential_count": 1,
+    "gui_tested": false,
+    "package_origin": "fixed-CI-candidate",
+    "normal_app_reopen_process_verified": true,
+    "normal_app_reopen_business_fields_equal": true,
+    "normal_app_reopen_dpapi_equal": true
+  },
+  "native_fixture": {
+    "read_only_default": true,
+    "reader_no_keyboard": true,
+    "reader_sql_and_original_unchanged": true,
+    "explicit_edit_draft_not_persisted_until_save": true,
+    "edit_save_changes_only_intended_title_and_audit": true,
+    "no_change_save_has_no_native_or_sql_work": true,
+    "discard_preserves_saved_values": true,
+    "linked_navigation_remains_read_only": true,
+    "text_input_method": "ADB hardware-text injection; not software IME acceptance",
+    "business_counts": {
+      "Reminders": 6,
+      "MediaRecords": 1,
+      "Settings": 1
+    },
+    "runtime_source": "6ee06f205c4ab5fe8090b936a9c5ca061de45944",
+    "runtime_lib_tree": "39c6cfea83f9f6ab621372efa5089ddbd4257ca1",
+    "version": "1.8.6+75 private fixture",
+    "package": "com.yarnway.dontforget.acceptance.readerdate20261112",
+    "sdk": "3.47.2",
+    "synthetic_fixture_only": true,
+    "reminders": 6,
+    "media": 1,
+    "settings": 1,
+    "readonly_attachment_controls_and_original_preserved": true,
+    "native_touch_dates_cancel_forward_backward": true,
+    "date_selected_plans": 2,
+    "date_selected_rows": 3,
+    "date_unselected_control_rows": 3,
+    "date_progress_mastery_and_controls_preserved": true,
+    "workload_word_counts": [
+      4,
+      1,
+      2
+    ],
+    "cold_new_pid_readback_equal": true,
+    "input_settings_unchanged": true,
+    "temporary_identity_uninstalled": true,
+    "ordinary_user_apps_not_reinstalled_or_cleared_by_fixture": true,
+    "notification_transport": "recording substitute; no OS delivery claimed",
+    "notification_intents": [
+      {
+        "action": "schedule",
+        "id": "reader-root"
+      },
+      {
+        "action": "schedule",
+        "id": "plan-0"
+      },
+      {
+        "action": "schedule",
+        "id": "plan-1"
+      },
+      {
+        "action": "schedule",
+        "id": "other-0"
+      },
+      {
+        "action": "schedule",
+        "id": "plan-0"
+      },
+      {
+        "action": "schedule",
+        "id": "plan-1"
+      },
+      {
+        "action": "schedule",
+        "id": "other-0"
+      }
+    ],
+    "fixture_apk_sha256": "f503cda2a4f78da4aa5e34d3fd312e38d1ef4ba0ddecd6e3de402cbfc4fb7554",
+    "fixture_source_sha256": "d7de8fbff94b149fa0985fa932c902f58ce530c356503a059b3beceac137401b",
+    "ordinary_fixed_sdk_public_apk_interaction_tested": false
+  },
+  "new_release_published": false,
+  "final_source_gate_reused": false
+}
