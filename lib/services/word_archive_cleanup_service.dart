@@ -42,6 +42,7 @@ class WordArchiveCleanupService {
     final rows = source.toList(), at = now ?? DateTime.now();
     final protectedWords = <String>{};
     final referencedIds = <String>{};
+    final generatedIds = <String>{};
     final decoded = <String, Map<String, WordProgress>>{};
     try {
       for (final row in rows) {
@@ -52,7 +53,15 @@ class WordArchiveCleanupService {
         decoded[row.id] = progress;
         referencedIds.addAll(row.linkedTaskIds);
         if (row.details.planId != null) referencedIds.add(row.details.planId!);
-        if (row.details.data['learning_archive'] != true) {
+        if (row.details.data['learning_archive'] == true &&
+            progress.length == 1 &&
+            progress.keys.single ==
+                LearningQueueService.wordKey(progress.keys.single) &&
+            _generated(row, progress.keys.single)) {
+          generatedIds.add(row.id);
+        }
+        // Imported or edited marker rows can still be ordinary study sources.
+        if (!generatedIds.contains(row.id)) {
           protectedWords.addAll(
             progress.keys.map(LearningQueueService.wordKey),
           );
@@ -69,18 +78,15 @@ class WordArchiveCleanupService {
     final eligible = <Reminder>[];
     for (final row in rows) {
       final progress = decoded[row.id]!;
-      if (row.details.data['learning_archive'] != true ||
-          progress.length != 1) {
+      if (!generatedIds.contains(row.id)) {
         continue;
       }
       final key = progress.keys.single, p = progress.values.single;
-      if (key != LearningQueueService.wordKey(key) ||
-          protectedWords.contains(key) ||
+      if (protectedWords.contains(key) ||
           referencedIds.contains(row.id) ||
           p.reviewed.isAfter(at) ||
           LearningQueueService.sameDay(p.reviewed, at) ||
-          LearningQueueService.sameDay(p.firstReviewed, at) ||
-          !_generated(row, key)) {
+          LearningQueueService.sameDay(p.firstReviewed, at)) {
         continue;
       }
       eligible.add(row);
@@ -101,6 +107,14 @@ class WordArchiveCleanupService {
 
   static bool _generated(Reminder row, String key) {
     final d = row.details;
+    final notes = row.taskSummary;
+    if (notes != null && notes.trim().isNotEmpty) {
+      final words = VocabularyEntry.parseNotes(notes);
+      if (words.length != 1 ||
+          LearningQueueService.wordKey(words.single.word) != key) {
+        return false;
+      }
+    }
     if (row.id != 'word-history:${sha256.convert(utf8.encode(key))}' ||
         d.archivedAt == null ||
         d.history.any(

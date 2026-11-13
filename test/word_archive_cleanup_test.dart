@@ -103,6 +103,46 @@ void main() {
     },
   );
   test(
+    'a nonstandard archive marker cannot hide an active vocabulary reference',
+    () {
+      final source = Reminder(
+        id: 'nonstandard-active',
+        taskTitle: 'Imported study item',
+        quadrantLevel: 2,
+        spacedRepetitionLevel: 1,
+        taskSummary: 'pear — fruit\nAn example.',
+        detailsJson: const TaskDetails(
+          kind: 'study',
+          data: {'learning_archive': true},
+        ).encode(),
+      );
+      final rows = [source, retainedWord('pear')];
+      expect(
+        LearningQueueService.queue(rows, now: now).items.single.progress,
+        isNotNull,
+      );
+      expect(
+        WordArchiveCleanupService.preview(rows, now: now).candidates,
+        isEmpty,
+      );
+    },
+  );
+  test(
+    'canonical history without a definition can be cleared; edited mixed notes stay protected',
+    () {
+      final orphan = retainedWord('orphan').copyWith(taskSummary: null);
+      final edited = retainedWord(
+        'apple',
+      ).copyWith(taskSummary: 'pear — fruit\nAn example.');
+      final p = WordArchiveCleanupService.preview([
+        orphan,
+        edited,
+        retainedWord('pear'),
+      ], now: now);
+      expect(p.candidates.map((r) => r.id), [orphan.id]);
+    },
+  );
+  test(
     'bounded preview exposes only the records that this batch will remove',
     () {
       final rows = [for (var i = 0; i < 201; i++) retainedWord('word $i')];

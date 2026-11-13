@@ -5,31 +5,34 @@
   "published_release_source": "1d37ace4030933535c117a73b59883bdb51a6d8c",
   "local_flutter": "3.47.2",
   "fixed_ci_flutter": "3.44.9",
-  "related_passed": 80,
+  "related_passed": 82,
   "analyze_issues": 0,
   "dependencies_changed": false,
   "max_batch_size": 200,
   "scope": "Canonical generated retention rows only; no ordinary source/plan progress, references, media or settings are cleared. Today allowance and future dates protected. Full snapshot/date/generation validation and atomic rollback.",
   "source_files_sha256": {
-    "lib/services/word_archive_cleanup_service.dart": "cb1f9a90e48dc93ae76ada23c4c74ee05ef84d80888a33c3557b7db1b441c9f3",
+    "lib/services/word_archive_cleanup_service.dart": "611dca1b8537dbb8a23cbf2e611325a5136295629760f97ca9f3984785f54e80",
     "lib/providers/providers.dart": "72b0a320d1534137a2cc5cfed28c464920f458188a690386fe72b51fabdfdd86",
     "lib/providers/task_management.dart": "e42867c03885284e02ec58de0630b215f86ed61014ec1af7a9e5e1ebfb4dbc39",
     "lib/ui/screens/word_archive_screen.dart": "408a68af2bfa8294bcb344e4cb198ba49d4f721f8eca7571e27e1e7439048dc5",
     "lib/l10n/study_management_strings.dart": "5772730c2408cea66072280cea938dbd201b32516b17d8050eb458fd7dd10f18",
-    "test/word_archive_cleanup_test.dart": "3e051a776328e834a5e5350c35dffac2c87fc93cb476dfdee8b48c2df0e2b9ef",
+    "test/word_archive_cleanup_test.dart": "4868c4544bb9bdcc0add5ddd82041b7def5c466899b29bed69ba7692b25a3880",
     "test/word_archive_cleanup_screen_test.dart": "f6afe258de30d286d3feab83db61ce406ba7938e18eb2ec080b577aa219b833b"
   },
   "logs_sha256": {
-    "related.log": "27fbe8f926cd40a6ea74c2e9c768da72dcc163387c861be7ce84b2a33fdebdc2",
+    "related.log": "002cd97f7801673b479ac3621ff430a0ac7b5db21db1d6fea960fd417868a4be",
     "analyze.log": "cff2963c38136319513d185c9da62b8fb0af03f1ec697ffb7e64d6b8c73772ce",
     "initial-test-compile-failure.log": "0ae73cb34087b041573c863d3fc2acffa49e545f87a69fa531e0c4e3aa368334",
     "initial-layout-and-fixture-failure.log": "e370bfa5d01a99b88067f8707458de522e687ce7dc882c940a721747ca398176",
-    "initial-context-lint.log": "560c25c049d85649acb57fcd5cb34eec4e609257a5199b5fd6b44f00f56c6ded"
+    "initial-context-lint.log": "560c25c049d85649acb57fcd5cb34eec4e609257a5199b5fd6b44f00f56c6ded",
+    "nonstandard-reference-regression-before-fix.log": "29720862d1458ec271dfe3ff5e05138b71a679946815ad24aa5d27977b3b0b5f",
+    "initial-braces-lint.log": "3df9ad45a6505a61c1bcb8ce70ffcedc1229d458d0ce4c40b44db98b1cd962fc"
   },
-  "initial_failures": "Fixture extension import and immutable identity construction corrected. Vocabulary reference fixture needed a valid two-line document. AlertDialog intrinsic measurement required a bounded list height. Async context guard made explicit.",
-  "native": "pending final-source private Pixel fixture",
-  "fixed_ci": "pending source push",
+  "initial_failures": "Fixture extension import and immutable identity construction corrected. Vocabulary reference fixture needed a valid two-line document. AlertDialog intrinsic measurement required a bounded list height. Async context guard made explicit. Nonstandard rows carrying a retention marker could hide ordinary vocabulary references. Regression reproduced before the fix; only strictly canonical generated rows are now classified as retention. Mixed or edited notes preserve references.",
+  "native": "pending final-source fixture including a nonstandard marked current study batch",
+  "fixed_ci": "pending final source push",
   "ordinary_windows_updated_this_iteration": false,
   "ordinary_android_updated_this_iteration": false,
-  "new_release_this_iteration": false
+  "new_release_this_iteration": false,
+  "initial_candidate_source": "1b7674f74df184553cdefe59201a61a1d5c3b5b0"
 }
