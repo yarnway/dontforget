@@ -1,0 +1,111 @@
+{
+  "source": "1d37ace4030933535c117a73b59883bdb51a6d8c",
+  "lib_tree": "d5995982b685ad406fbe73b96dc9290a8fbaf1d5",
+  "version": "1.8.7+76",
+  "fixture_apk": {
+    "package": "com.yarnway.dontforget.acceptance.voiceux20261113",
+    "version": "1.8.7+76",
+    "private_fixture": true,
+    "synthetic_data_only": true,
+    "real_os_notification_delivery_tested": false,
+    "sha256": "e82d9f75a0faf8378b1daf686b682a1e4498c627980fba4a234b2c7a75f9ab12",
+    "bytes": 96255206
+  },
+  "native_touch_preview_edit_send_cancel": true,
+  "short_text_top_aligned": true,
+  "manual_edit_preserved_after_final": true,
+  "keep_draft_no_real_send": true,
+  "fake_send_exactly_once": true,
+  "cancel_no_send": true,
+  "control_rows_media_unchanged": true,
+  "control_counts": {
+    "Reminders": 1,
+    "MediaRecords": 1,
+    "Settings": 1
+  },
+  "cold_new_pid_draft_readback": true,
+  "input_settings_unchanged": true,
+  "real_microphone_or_cloud_tested": false,
+  "hardware_text_injection": true,
+  "software_ime_candidate_tested": false,
+  "native_keyboard_visible": false,
+  "held_overlay_native_accessibility_labels_verified": false,
+  "accessibility_followup": "UIAutomator exposes no held-overlay labels; editor labels readable. Native assistive interaction remains pending.",
+  "voice_events": [
+    {
+      "action": "start"
+    },
+    {
+      "action": "prepare"
+    },
+    {
+      "action": "partial"
+    },
+    {
+      "action": "stop-text"
+    },
+    {
+      "action": "final",
+      "text": "明天上午九点，复习英语单词。"
+    },
+    {
+      "action": "reset"
+    },
+    {
+      "action": "start"
+    },
+    {
+      "action": "prepare"
+    },
+    {
+      "action": "partial"
+    },
+    {
+      "action": "stop-text"
+    },
+    {
+      "action": "final",
+      "text": "明天上午九点，复习英语单词。"
+    },
+    {
+      "action": "send",
+      "text": "明天上午九点，复习英语单词。"
+    },
+    {
+      "action": "reset"
+    },
+    {
+      "action": "start"
+    },
+    {
+      "action": "prepare"
+    },
+    {
+      "action": "partial"
+    },
+    {
+      "action": "cancel"
+    },
+    {
+      "action": "reset"
+    },
+    {
+      "action": "start"
+    },
+    {
+      "action": "prepare"
+    },
+    {
+      "action": "partial"
+    },
+    {
+      "action": "stop-text"
+    },
+    {
+      "action": "final",
+      "text": "明天上午九点，复习英语单词。"
+    }
+  ],
+  "data_or_credentials_in_ordinary_apps_touched": false,
+  "temporary_identity_uninstalled": true
+}

@@ -42,10 +42,11 @@
     "resize-valid-ime-proof.log": "78a6948eaf092f9c70bd5efd77cbbee235de34586af22e17adf3e4d5a407ab87",
     "stopped-test-evidence.json": "5f99d9f02c191482ef91bd62fac134f712d144fd6e863ca911b630c842430460"
   },
-  "native_fixture": "private +76 synthetic voice UI fixture built; native gesture acceptance pending",
-  "fixed_ci": "pending source push",
-  "ordinary_windows_upgrade": false,
-  "ordinary_android_upgrade": false,
-  "release_published": false,
-  "native_followup": "First candidate native preview showed short text bottom-aligned; corrected top alignment while keeping long-tail scroll, with assertions. Overlay receives an explicit semantic container; final native readback pending."
+  "native_fixture": "mobile-voice-ux-native-76-2026-11-13.json",
+  "fixed_ci": "github-ci-voice-76-2026-11-13.json",
+  "ordinary_windows_upgrade": true,
+  "ordinary_android_upgrade": true,
+  "release_published": true,
+  "native_followup": "Native short-text top alignment reviewed and long-tail scroll asserted; editor, draft, send/cancel and cold reopen passed in synthetic fixture. Held-overlay accessibility labels remain unverified; see native evidence.",
+  "release_source": "1d37ace4030933535c117a73b59883bdb51a6d8c"
 }
