@@ -120,6 +120,8 @@ class _CredentialStatusPanelState extends ConsumerState<CredentialStatusPanel> {
     String t(String k) => protectionText(context, k);
     final status = notifier.credentialStatus;
     return Card.outlined(
+      clipBehavior: Clip.antiAlias,
+      margin: EdgeInsets.zero,
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(

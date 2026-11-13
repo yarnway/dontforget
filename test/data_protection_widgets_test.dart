@@ -59,10 +59,13 @@ class _Backup extends StreamingBackupService {
 class _Exporter extends BackupFileExporter {
   int calls = 0;
   bool cancel = false;
+  final filenames = <String>[];
+  String? chosenLocation;
   @override
   Future<String?> save(File source, String filename) async {
     calls++;
-    return cancel ? null : 'synthetic-export/$filename';
+    filenames.add(filename);
+    return cancel ? null : chosenLocation ?? 'synthetic-export/$filename';
   }
 }
 
@@ -209,6 +212,119 @@ void main() {
         isEmpty,
       );
       expect(await tester.runAsync(() => cache.list().toList()), isEmpty);
+      await finish(tester);
+    },
+  );
+  testWidgets(
+    'custom backup names are exported and shown without exposing the full location',
+    (tester) async {
+      exporter.chosenLocation = 'content://documents/document/opaque-123';
+      await host(tester);
+      await tap(tester, const ValueKey('backup-encryption'));
+      await tester.enterText(
+        find.byKey(const ValueKey('backup-name')),
+        '会议资料.DFBACKUP',
+      );
+      await tap(tester, const ValueKey('backup-export'));
+      expect(exporter.filenames, ['会议资料.dfbackup']);
+      expect(
+        h.container.read(workspaceDraftsProvider)['lastPortableBackup']['name'],
+        '会议资料.dfbackup',
+      );
+      expect(find.text('备份已导出'), findsOneWidget);
+      expect(find.text('缺失附件: 0'), findsNothing);
+      await tap(tester, const ValueKey('backup-location'));
+      expect(
+        find.textContaining('content://documents/document/opaque-123'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('关闭'));
+      await settle(tester);
+      expect(
+        find.textContaining('content://documents/document/opaque-123'),
+        findsNothing,
+      );
+      await finish(tester);
+    },
+  );
+  testWidgets('invalid or unconfirmed IME names never start a backup', (
+    tester,
+  ) async {
+    await host(tester);
+    await tap(tester, const ValueKey('backup-encryption'));
+    final name = find.byKey(const ValueKey('backup-name'));
+    await tester.enterText(name, '../bad');
+    await tap(tester, const ValueKey('backup-export'));
+    expect(backup.calls, 0);
+    expect(exporter.calls, 0);
+    expect(find.text('请使用有效名称，不含路径或系统保留字'), findsOneWidget);
+    await tester.enterText(name, 'ming');
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'ming',
+        selection: TextSelection.collapsed(offset: 4),
+        composing: TextRange(start: 0, end: 4),
+      ),
+    );
+    await tester.pump();
+    await tap(tester, const ValueKey('backup-export'));
+    expect(backup.calls, 0);
+    expect(find.text('请先确认输入'), findsOneWidget);
+    await finish(tester);
+  });
+  testWidgets(
+    'an exported file is reported successful even if recording metadata fails',
+    (tester) async {
+      await host(tester);
+      await tap(tester, const ValueKey('backup-encryption'));
+      await tester.runAsync(
+        () => h.database.writeTransaction(
+          h.database.captureGeneration(),
+          (db) => db.execute(
+            "CREATE TRIGGER deny_backup_record BEFORE UPDATE OF workspace_drafts_json ON Settings BEGIN SELECT RAISE(ABORT,'fixture'); END",
+          ),
+        ),
+      );
+      await tap(tester, const ValueKey('backup-export'));
+      expect(exporter.calls, 1);
+      expect(find.text('备份已导出，导出记录未保存'), findsOneWidget);
+      expect(
+        h.container.read(workspaceDraftsProvider)['lastPortableBackup'],
+        isNull,
+      );
+      expect(await tester.runAsync(() => cache.list().toList()), isEmpty);
+      await tester.runAsync(
+        () => h.database.writeTransaction(
+          h.database.captureGeneration(),
+          (db) => db.execute('DROP TRIGGER deny_backup_record'),
+        ),
+      );
+      await finish(tester);
+    },
+  );
+  testWidgets(
+    'legacy locations remain viewable and help is available on demand',
+    (tester) async {
+      await tester.runAsync(
+        () => h.container
+            .read(workspaceDraftsProvider.notifier)
+            .put('lastPortableBackup', {
+              'at': '2030-01-01T10:00:00',
+              'location': r'C:\backup\legacy.dfbackup',
+              'media': 1,
+              'missing': 0,
+              'encrypted': true,
+            }),
+      );
+      await host(tester);
+      await tap(tester, const ValueKey('backup-location'));
+      expect(find.textContaining('legacy.dfbackup'), findsWidgets);
+      await tester.tap(find.text('关闭'));
+      await settle(tester);
+      await tap(tester, const ValueKey('backup-help'));
+      expect(find.textContaining('单附件最多 512 MiB'), findsOneWidget);
+      await tester.tap(find.text('关闭'));
+      await settle(tester);
       await finish(tester);
     },
   );

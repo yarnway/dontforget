@@ -3,13 +3,17 @@ import 'package:file_picker/file_picker.dart';
 import 'package:file_saver/file_saver.dart';
 import 'package:path/path.dart' as p;
 import 'package:uuid/uuid.dart';
+import 'backup_export_name.dart';
 
 class BackupFileExporter {
   const BackupFileExporter({this.useDirectoryPicker, this.pickDirectory});
   final bool? useDirectoryPicker;
   final Future<String?> Function()? pickDirectory;
-  Future<String?> save(File source, String filename) =>
-      saveWithExtension(source, filename, extension: 'dfbackup');
+  Future<String?> save(File source, String filename) async => saveWithExtension(
+    source,
+    BackupExportName.resolve(filename),
+    extension: 'dfbackup',
+  );
   Future<String?> saveWithExtension(
     File source,
     String filename, {
