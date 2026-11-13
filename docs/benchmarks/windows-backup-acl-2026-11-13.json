@@ -1,0 +1,48 @@
+{
+  "platform": "Windows NTFS",
+  "source": "38587edb17e674aee80470fcb4e5e71bc769cc62",
+  "runtime_lib_tree": "ecd439dcfc8ecce28a0d7bb5fb4e2793948f14fc",
+  "only_fresh_owned_temporary_directories_modified": true,
+  "cases": [
+    {
+      "encrypted": false,
+      "cache_create_actual_os_error": 5,
+      "destination_copy_actual_os_error": 5,
+      "failure_creates_no_partial_file": true,
+      "source_backup_bytes_preserved": true,
+      "business_rows_and_original_preserved": true,
+      "acl_sddl_restored": true,
+      "retry_export_bytes_and_inspection_equal": true,
+      "media_count": 1,
+      "attachment_bytes": 1048576
+    },
+    {
+      "encrypted": true,
+      "cache_create_actual_os_error": 5,
+      "destination_copy_actual_os_error": 5,
+      "failure_creates_no_partial_file": true,
+      "source_backup_bytes_preserved": true,
+      "business_rows_and_original_preserved": true,
+      "acl_sddl_restored": true,
+      "retry_export_bytes_and_inspection_equal": true,
+      "media_count": 1,
+      "attachment_bytes": 1048576
+    }
+  ],
+  "native_file_picker_or_file_saver_tested": false,
+  "export_route": "shared directory exporter forced on Windows; native saveAs picker not invoked",
+  "real_disk_full_or_power_loss_tested": false,
+  "real_user_credentials_tested": false,
+  "local_sdk": "3.47.2",
+  "acceptance_test_exit": 0,
+  "acceptance_tests_passed": 1,
+  "actual_acl_failure_and_retry_tested": true,
+  "temporary_acl_sddl_restored_and_owned_directories_removed": true,
+  "prior_fixture_failures": [
+    "Generic W denied directory enumeration through SYNCHRONIZE; narrowed deny to WD/AD",
+    "Encrypted case initially compared against an empty destination instead of preserving the prior successful plain export"
+  ],
+  "script_sha256": "398f81a40fd136fe03f716d75a8f02c8454be634666635c526748da00a6432d0",
+  "log_sha256": "f18718f7ff12f9c5e267d56a344338bae474069b048a07e1a61cfa285a0eb24b",
+  "temporary_volume_filesystem_verified": "NTFS"
+}

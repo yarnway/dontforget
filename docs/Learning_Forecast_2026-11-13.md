@@ -16,8 +16,10 @@ Windows原生SDK3.47.2相关97项通过、分析0，包含学习队列、计划�
 
 页面覆盖三语、320／1280宽度、两倍字号、明暗主题；切换模式／情境后全SQL快照和通知记录保持。真实反馈及暂停、额度和间隔变化会使可见预测重算。初轮两个测试循环的花括号分析提示已修正，复验无告警；初轮独立Pixel验证了三种情境与只读／冷重开；随后把待排提示移至数量下方，统一各行统计右边缘，源码及相关97项再次复验。日志分别保留在本地build/stage98、build/stage99。
 
-## 后续验收
+<p align="center"><img src="images/learning-forecast-dark.png" alt="独立合成数据的七天认识情境预测，统计右侧对齐" width="300"> <img src="images/learning-forecast-light.png" alt="明亮主题下的不认识情境预测" width="300"></p>
 
-最终来源的固定SDK完整CI和独立Pixel触控、明暗布局、SQLite／原件只读与新PID冷重开待本轮续验。未为本轮新建公开版本或覆盖普通Windows／Android应用；既有v1.8.8的升级与发布证据保持原归属。下一发行仍需新备份、Windows运行中覆盖、双Android及公开附件门禁。
+## 独立实机与后续验收
+
+最终源码38587ed的独立Pixel身份6事项／1原件／1设置：三种反馈的七天新词／复习／待排读回一致，统计右边缘统一；明暗切换、已排期返回与收起、新PID重开完成，SQLite全业务字段、设置、媒体、原件及通知记录保持，输入法配置未变，临时身份卸载。[实机证据](benchmarks/learning-forecast-native-2026-11-13.json)。最终[固定SDK CI](https://github.com/yarnway/dontforget/actions/runs/43427823053)七项成功：Analyze and test：Flutter2561通过／2跳过，Python170运行／4跳过；Windows analyze and test：Flutter2543通过／20跳过，Python170运行／6跳过。5份候选artifact来源与摘要元数据核对；本轮未下载普通候选包做完整字节或覆盖升级验收。[CI证据](benchmarks/learning-forecast-ci-2026-11-13.json)。初始c9cf213的CI因布局收口被取消，未挪用为最终通过。未为本轮新建公开版本或覆盖普通Windows／Android应用；既有v1.8.8的升级与发布证据保持原归属。下一发行仍需新备份、Windows运行中覆盖、双Android及公开附件门禁。
 
 剩余：46 USB长期／跨主机；47 真人输入、录音与时延／中断、通知、无障碍和Windows GUI；48 带附件GUI恢复、真实故障、保留与压缩；49 受保护词条重置／迁移、个性化预测、更多排程、图片分享／LAN冲突；50 下一版升级发布及Apple／正式签名／商店。
