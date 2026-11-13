@@ -22,5 +22,12 @@
   },
   "regression_log_sha256": "29720862d1458ec271dfe3ff5e05138b71a679946815ad24aa5d27977b3b0b5f",
   "ordinary_apps_affected": false,
-  "published_as_new_release": false
+  "published_as_new_release": false,
+  "first_ci_final": {
+    "source": "1b7674f74df184553cdefe59201a61a1d5c3b5b0",
+    "id": 43362309752,
+    "url": "https://github.com/yarnway/dontforget/actions/runs/43362309752",
+    "status": "completed",
+    "conclusion": "cancelled"
+  }
 }

@@ -29,10 +29,12 @@
     "initial-braces-lint.log": "3df9ad45a6505a61c1bcb8ce70ffcedc1229d458d0ce4c40b44db98b1cd962fc"
   },
   "initial_failures": "Fixture extension import and immutable identity construction corrected. Vocabulary reference fixture needed a valid two-line document. AlertDialog intrinsic measurement required a bounded list height. Async context guard made explicit. Nonstandard rows carrying a retention marker could hide ordinary vocabulary references. Regression reproduced before the fix; only strictly canonical generated rows are now classified as retention. Mixed or edited notes preserve references.",
-  "native": "pending final-source fixture including a nonstandard marked current study batch",
-  "fixed_ci": "pending final source push",
+  "native": "word-archive-cleanup-native-2026-11-13.json",
+  "fixed_ci": "word-archive-cleanup-ci-2026-11-13.json",
   "ordinary_windows_updated_this_iteration": false,
   "ordinary_android_updated_this_iteration": false,
   "new_release_this_iteration": false,
-  "initial_candidate_source": "1b7674f74df184553cdefe59201a61a1d5c3b5b0"
+  "initial_candidate_source": "1b7674f74df184553cdefe59201a61a1d5c3b5b0",
+  "final_source": "cd04418de212a6fe6a67674b36d5d2344c3b87cc",
+  "lib_tree": "978d43f1185bc75a19f24f21b43eb24222f5c730"
 }

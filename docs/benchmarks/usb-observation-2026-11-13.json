@@ -1,0 +1,223 @@
+{
+  "adb_server_port": 15037,
+  "sample_interval_seconds": 30,
+  "planned_samples": 31,
+  "bytes_per_round": 134217728,
+  "samples": [
+    {
+      "at": "2026-11-13T04:03:54.286585+00:00",
+      "elapsed_seconds": 0.406,
+      "state": "device",
+      "round_trip_ms": 31.0
+    },
+    {
+      "at": "2026-11-13T04:04:23.923705+00:00",
+      "elapsed_seconds": 30.047,
+      "state": "device",
+      "round_trip_ms": 31.0
+    },
+    {
+      "at": "2026-11-13T04:04:53.906579+00:00",
+      "elapsed_seconds": 60.016,
+      "state": "device",
+      "round_trip_ms": 16.0
+    },
+    {
+      "at": "2026-11-13T04:05:23.909522+00:00",
+      "elapsed_seconds": 90.031,
+      "state": "device",
+      "round_trip_ms": 31.0
+    },
+    {
+      "at": "2026-11-13T04:05:53.916698+00:00",
+      "elapsed_seconds": 120.031,
+      "state": "device",
+      "round_trip_ms": 31.0
+    },
+    {
+      "at": "2026-11-13T04:06:23.926317+00:00",
+      "elapsed_seconds": 150.047,
+      "state": "device",
+      "round_trip_ms": 31.0
+    },
+    {
+      "at": "2026-11-13T04:06:53.915371+00:00",
+      "elapsed_seconds": 180.031,
+      "state": "device",
+      "round_trip_ms": 31.0
+    },
+    {
+      "at": "2026-11-13T04:07:23.911317+00:00",
+      "elapsed_seconds": 210.031,
+      "state": "device",
+      "round_trip_ms": 31.0
+    },
+    {
+      "at": "2026-11-13T04:07:53.911575+00:00",
+      "elapsed_seconds": 240.031,
+      "state": "device",
+      "round_trip_ms": 31.0
+    },
+    {
+      "at": "2026-11-13T04:08:23.922113+00:00",
+      "elapsed_seconds": 270.031,
+      "state": "device",
+      "round_trip_ms": 15.0
+    },
+    {
+      "at": "2026-11-13T04:08:53.919363+00:00",
+      "elapsed_seconds": 300.031,
+      "state": "device",
+      "round_trip_ms": 15.0
+    },
+    {
+      "at": "2026-11-13T04:09:23.914106+00:00",
+      "elapsed_seconds": 330.031,
+      "state": "device",
+      "round_trip_ms": 31.0
+    },
+    {
+      "at": "2026-11-13T04:09:53.918472+00:00",
+      "elapsed_seconds": 360.031,
+      "state": "device",
+      "round_trip_ms": 15.0
+    },
+    {
+      "at": "2026-11-13T04:10:23.921593+00:00",
+      "elapsed_seconds": 390.031,
+      "state": "device",
+      "round_trip_ms": 15.0
+    },
+    {
+      "at": "2026-11-13T04:10:53.926908+00:00",
+      "elapsed_seconds": 420.047,
+      "state": "device",
+      "round_trip_ms": 31.0
+    },
+    {
+      "at": "2026-11-13T04:11:23.917477+00:00",
+      "elapsed_seconds": 450.031,
+      "state": "device",
+      "round_trip_ms": 15.0
+    },
+    {
+      "at": "2026-11-13T04:11:53.932129+00:00",
+      "elapsed_seconds": 480.047,
+      "state": "device",
+      "round_trip_ms": 31.0
+    },
+    {
+      "at": "2026-11-13T04:12:23.922568+00:00",
+      "elapsed_seconds": 510.031,
+      "state": "device",
+      "round_trip_ms": 15.0
+    },
+    {
+      "at": "2026-11-13T04:12:53.915491+00:00",
+      "elapsed_seconds": 540.031,
+      "state": "device",
+      "round_trip_ms": 15.0
+    },
+    {
+      "at": "2026-11-13T04:13:23.914868+00:00",
+      "elapsed_seconds": 570.031,
+      "state": "device",
+      "round_trip_ms": 31.0
+    },
+    {
+      "at": "2026-11-13T04:13:53.911542+00:00",
+      "elapsed_seconds": 600.031,
+      "state": "device",
+      "round_trip_ms": 31.0
+    },
+    {
+      "at": "2026-11-13T04:14:23.918114+00:00",
+      "elapsed_seconds": 630.031,
+      "state": "device",
+      "round_trip_ms": 15.0
+    },
+    {
+      "at": "2026-11-13T04:14:53.912859+00:00",
+      "elapsed_seconds": 660.031,
+      "state": "device",
+      "round_trip_ms": 31.0
+    },
+    {
+      "at": "2026-11-13T04:15:23.916408+00:00",
+      "elapsed_seconds": 690.031,
+      "state": "device",
+      "round_trip_ms": 15.0
+    },
+    {
+      "at": "2026-11-13T04:15:53.923439+00:00",
+      "elapsed_seconds": 720.047,
+      "state": "device",
+      "round_trip_ms": 31.0
+    },
+    {
+      "at": "2026-11-13T04:16:23.908582+00:00",
+      "elapsed_seconds": 750.031,
+      "state": "device",
+      "round_trip_ms": 31.0
+    },
+    {
+      "at": "2026-11-13T04:16:53.912222+00:00",
+      "elapsed_seconds": 780.031,
+      "state": "device",
+      "round_trip_ms": 31.0
+    },
+    {
+      "at": "2026-11-13T04:17:23.909930+00:00",
+      "elapsed_seconds": 810.031,
+      "state": "device",
+      "round_trip_ms": 31.0
+    },
+    {
+      "at": "2026-11-13T04:17:53.915385+00:00",
+      "elapsed_seconds": 840.031,
+      "state": "device",
+      "round_trip_ms": 15.0
+    },
+    {
+      "at": "2026-11-13T04:18:23.914671+00:00",
+      "elapsed_seconds": 870.031,
+      "state": "device",
+      "round_trip_ms": 31.0
+    },
+    {
+      "at": "2026-11-13T04:18:53.920412+00:00",
+      "elapsed_seconds": 900.031,
+      "state": "device",
+      "round_trip_ms": 15.0
+    }
+  ],
+  "transfers": [
+    {
+      "sample": 0,
+      "bytes": 134217728,
+      "device_and_returned_sha256_equal": true,
+      "elapsed_seconds": 12.297
+    },
+    {
+      "sample": 15,
+      "bytes": 134217728,
+      "device_and_returned_sha256_equal": true,
+      "elapsed_seconds": 11.985
+    },
+    {
+      "sample": 30,
+      "bytes": 134217728,
+      "device_and_returned_sha256_equal": true,
+      "elapsed_seconds": 12.735
+    }
+  ],
+  "sleep_wake_or_cross_host_tested": false,
+  "user_app_data_touched": false,
+  "owned_temporary_device_file_removed": true,
+  "probe_sha256": "d7eda5538733523e9c1f85a0c19d804246a35d1ed00fcc862dd189a4cb3703ee",
+  "started_at": "2026-11-13T04:03:54.260894+00:00",
+  "online_samples_passed": true,
+  "all_three_transfers_verified": true,
+  "finished_at": "2026-11-13T04:19:06.958498+00:00",
+  "elapsed_seconds": 913.078
+}
