@@ -1,5 +1,24 @@
 String studyManagementText(String language, String key) {
   const labels = {
+    'archiveCleanup': ['清理保留记录', 'Clear retained history', '保管記録を削除'],
+    'archiveCleanupScope': [
+      '仅清理未被事项引用的过往记录，无法撤销。',
+      'Only unused records from previous days. This cannot be undone.',
+      '項目から参照されていない過去の記録のみ削除します。取り消せません。',
+    ],
+    'archiveCleanupCount': ['条保留记录', 'retained records', '件の保管記録'],
+    'archiveCleanupEmpty': ['暂无可清理的记录', 'No records to clear', '削除できる記録はありません'],
+    'archiveCleanupApply': ['清理', 'Clear', '削除'],
+    'archiveCleanupStale': [
+      '档案已变更，请重新预览',
+      'History changed. Preview again.',
+      '記録が変更されました。再確認してください。',
+    ],
+    'archiveCleanupFailed': [
+      '暂时无法清理档案',
+      'Could not clear history',
+      '記録を削除できませんでした',
+    ],
     'wordArchive': ['词条档案', 'Word history', '単語の学習記録'],
     'archiveSearch': ['搜索词条或释义', 'Search words or meanings', '単語・意味を検索'],
     'archiveEmpty': ['暂无学习记录', 'No learning history yet', '学習記録はありません'],

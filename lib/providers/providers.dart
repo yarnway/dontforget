@@ -34,6 +34,7 @@ import '../models/study_plan_group.dart';
 import '../services/study_plan_service.dart';
 import '../services/study_schedule_service.dart';
 import '../services/learning_queue_service.dart';
+import '../services/word_archive_cleanup_service.dart';
 import '../models/vocabulary_entry.dart';
 import '../services/data_export_service.dart';
 import '../services/dynamic_urgency_service.dart';

@@ -2,6 +2,38 @@ part of 'providers.dart';
 
 /// Mutations share the reminder queue, recovery admission and notification journal.
 extension TaskManagement on RemindersNotifier {
+  Future<int> clearWordArchives(
+    WordArchiveCleanupPreview preview,
+    DataGeneration generation, {
+    DateTime? now,
+  }) => _enqueue(
+    (ticket) => _dbHelper.runOperation(ticket, () async {
+      final deleted = await _dbHelper.writeTransaction(ticket, (db) async {
+        final rows = (await db.query(
+          'Reminders',
+        )).map(Reminder.fromJson).toList();
+        final at = now ?? DateTime.now();
+        if (!LearningQueueService.sameDay(preview.preparedAt, at)) {
+          throw const WordArchiveCleanupStale();
+        }
+        final current = WordArchiveCleanupService.preview(rows, now: at);
+        final ids = preview.candidates.map((r) => r.id).toSet();
+        if (current.snapshot != preview.snapshot ||
+            !setEquals(ids, current.candidates.map((r) => r.id).toSet())) {
+          throw const WordArchiveCleanupStale();
+        }
+        for (final id in ids) {
+          await db.delete('Reminders', where: 'id = ?', whereArgs: [id]);
+        }
+        return ids.length;
+      });
+      _dbHelper.checkGeneration(ticket);
+      if (deleted > 0) await _loadReminders(ticket, runEffects: false);
+      return deleted;
+    }),
+    generation: generation,
+  );
+
   String? _editDetails(Reminder row) {
     if (row.details.kind != 'departure' ||
         row.details.planId != null ||
