@@ -23,6 +23,7 @@ import '../services/local_media_store.dart';
 import '../services/recording_duration_reader.dart';
 import '../services/tencent_recording_profile.dart';
 import '../services/live_pcm_recording.dart';
+import '../services/voice_text_draft.dart';
 import '../services/local_speech_service.dart';
 import '../services/speech_recognition_service.dart';
 import '../l10n/speech_recognition_strings.dart';
@@ -342,20 +343,25 @@ class HomeController extends StateNotifier<HomeState> {
     String path,
     DataGeneration generation, {
     bool durableCapture = false,
+    String? recordId,
   }) async {
     _check(generation);
-    final id = const Uuid().v4();
-    await _ref
-        .read(mediaRecordsProvider.notifier)
-        .addRecordForGeneration(
-          MediaRecord(
-            id: id,
-            type: type,
-            contentOrPath: path,
-            createdAt: DateTime.now(),
-          ),
-          generation,
-        );
+    final id = recordId ?? const Uuid().v4();
+    final media = _ref.read(mediaRecordsProvider.notifier);
+    await media.ready;
+    _check(generation);
+    if (recordId == null ||
+        !_ref.read(mediaRecordsProvider).any((record) => record.id == id)) {
+      await media.addRecordForGeneration(
+        MediaRecord(
+          id: id,
+          type: type,
+          contentOrPath: path,
+          createdAt: DateTime.now(),
+        ),
+        generation,
+      );
+    }
     _check(generation);
     if (durableCapture) {
       final language = _ref.read(settingsProvider).language;
@@ -896,6 +902,7 @@ class HomeController extends StateNotifier<HomeState> {
     String path,
     DataGeneration generation, {
     String? recordId,
+    String? memoId,
   }) async {
     final l10n = AppLocalizations(Locale(_ref.read(settingsProvider).language));
     final id = recordId ?? await _saveMedia('audio', path, generation);
@@ -922,7 +929,7 @@ class HomeController extends StateNotifier<HomeState> {
         .read(remindersProvider.notifier)
         .addReminderForGeneration(
           Reminder(
-            id: const Uuid().v4(),
+            id: memoId ?? const Uuid().v4(),
             recordId: id,
             taskTitle: l10n.get('voiceMemoTitle'),
             taskSummary: l10n.get('voiceMemoSummary'),
@@ -932,6 +939,150 @@ class HomeController extends StateNotifier<HomeState> {
           ),
           generation,
         );
+  }
+
+  /// The editor can send this exact capture without recording or recognizing it
+  /// again. Recognition and saving share a lease; neither deletes the other's file.
+  VoiceTextDraft createVoiceTextDraft() {
+    final previewOwner = _livePreviewOwner;
+    final captureFuture = _stopCapture(transcribe: true);
+    var valid = false,
+        saved = false,
+        originalRequested = false,
+        released = false;
+    String? savedPath;
+    final recordId = const Uuid().v4();
+
+    void detachPreview({bool cancel = true}) {
+      if (identical(_livePreviewOwner, previewOwner)) {
+        if (cancel) _previewSpeech?.cancel();
+        _livePreviewOwner = null;
+        _previewSpeech = null;
+      }
+    }
+
+    final ready = captureFuture.then((capture) async {
+      if (capture == null || !_isCurrent(capture.generation)) return null;
+      final duration = await const RecordingDurationReader().read(capture.path);
+      if (!_isCurrent(capture.generation)) return null;
+      if (duration != null &&
+          duration < RecordingDurationReader.minimumCapture) {
+        _reportError(
+          capture.generation,
+          AppLocalizations(
+            Locale(_ref.read(settingsProvider).language),
+          ).get('recordingTooShort'),
+        );
+        detachPreview();
+        return null;
+      }
+      valid = true;
+      return capture;
+    });
+    final result = () async {
+      final capture = await ready;
+      if (capture == null) return null;
+      final operation = _startPending(capture.generation);
+      try {
+        final text =
+            await (capture.liveText ??
+                _transcribeCapture(capture.path, capture.generation));
+        _check(capture.generation);
+        if (text.trim().isEmpty) throw const FormatException('Empty speech');
+        return originalRequested ? null : text.trim();
+      } catch (_) {
+        if (_isCurrent(capture.generation) && !originalRequested && !released) {
+          _reportError(
+            capture.generation,
+            AppLocalizations(
+              Locale(_ref.read(settingsProvider).language),
+            ).get('voiceTextReview'),
+          );
+        }
+        return null;
+      } finally {
+        _finishPending(operation);
+      }
+    }();
+
+    Future<bool> saveOriginal() async {
+      final capture = await ready;
+      if (capture == null || !_isCurrent(capture.generation)) return false;
+      originalRequested = true;
+      detachPreview();
+      final operation = _startPending(capture.generation);
+      try {
+        savedPath ??= await _saveFileToLocal(capture.path, capture.generation);
+        _check(capture.generation);
+        await _saveMedia(
+          'audio',
+          savedPath!,
+          capture.generation,
+          recordId: recordId,
+        );
+        _check(capture.generation);
+        await _saveVoiceMemo(
+          savedPath!,
+          capture.generation,
+          recordId: recordId,
+          memoId: 'capture:$recordId',
+        );
+        _check(capture.generation);
+        saved = true;
+        state = state.copyWith(error: null);
+        return true;
+      } catch (_) {
+        if (_isCurrent(capture.generation)) {
+          _reportError(
+            capture.generation,
+            AppLocalizations(
+              Locale(_ref.read(settingsProvider).language),
+            ).get('voiceMemoSaveFailed'),
+          );
+        }
+        return false;
+      } finally {
+        _finishPending(operation);
+      }
+    }
+
+    return VoiceTextDraft(
+      result: result,
+      saveOriginal: saveOriginal,
+      releaseCapture: (sentText) async {
+        released = true;
+        detachPreview(cancel: false);
+        // Do not make sending edited text wait for a slow final ASR response.
+        // The lease keeps the file until that reader has actually completed.
+        unawaited(
+          () async {
+            final text = await result;
+            final capture = await captureFuture;
+            if (capture == null) return;
+            if (!sentText &&
+                text == null &&
+                valid &&
+                !saved &&
+                _isCurrent(capture.generation)) {
+              await saveOriginal();
+            }
+            if ((!valid ||
+                    saved ||
+                    sentText ||
+                    text != null ||
+                    !_isCurrent(capture.generation)) &&
+                capture.ownedTemporary) {
+              try {
+                await File(capture.path).delete();
+              } on FileSystemException catch (_) {
+                // A failed memo save retains its capture for cache recovery.
+              }
+            }
+            detachPreview();
+          }().catchError((Object _) {}),
+        );
+      },
+    );
   }
 
   /// This path returns a draft only. It never extracts or submits tasks from

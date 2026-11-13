@@ -1,3 +1,4 @@
+import 'package:dont_forget/services/voice_text_draft.dart';
 import 'package:dont_forget/providers/global_capture_provider.dart';
 import 'support/real_io.dart';
 import 'support/workspace_drafts.dart';
@@ -53,6 +54,16 @@ class _ControlledHomeController extends HomeController {
     setRecording(false);
     return true;
   }
+
+  @override
+  VoiceTextDraft createVoiceTextDraft() => VoiceTextDraft(
+    result: stopRecordingToText(),
+    saveOriginal: () async {
+      await stopRecordingAndProcess();
+      return true;
+    },
+    releaseCapture: (_) async {},
+  );
 
   @override
   Future<String?> stopRecordingToText({bool Function()? canAcceptDraft}) async {

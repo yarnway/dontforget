@@ -1,3 +1,4 @@
+import 'package:dont_forget/services/voice_text_draft.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -46,6 +47,16 @@ class _Home extends HomeController {
     prepares++;
     state = state.copyWith(voicePreview: '明天买牛奶');
   }
+
+  @override
+  VoiceTextDraft createVoiceTextDraft() => VoiceTextDraft(
+    result: stopRecordingToText(),
+    saveOriginal: () async {
+      await stopRecordingAndProcess();
+      return true;
+    },
+    releaseCapture: (_) async {},
+  );
 
   @override
   Future<String?> stopRecordingToText({bool Function()? canAcceptDraft}) async {
@@ -463,6 +474,7 @@ void main() {
         for (final key in [
           'voice-text-editor',
           'voice-editor-keep',
+          'voice-editor-original',
           'voice-editor-send',
         ]) {
           final rect = tester.getRect(find.byKey(ValueKey(key)));
@@ -536,6 +548,202 @@ void main() {
         }
         await finish(tester);
       }
+    },
+  );
+
+  testWidgets(
+    'editor grows with text, shrinks after deletion and caps above the keyboard',
+    (tester) async {
+      await show(tester);
+      final held = await hold(tester);
+      await held.gesture.moveTo(held.origin + const Offset(70, -70));
+      await tester.pumpAndSettle();
+      await held.gesture.up();
+      await tester.pumpAndSettle();
+      final field = find.byKey(const ValueKey('voice-text-editor'));
+      final short = tester.getSize(field).height;
+      expect(short, lessThan(140));
+      expect(find.text('发送原语音'), findsOneWidget);
+      expect(
+        tester.getRect(find.byKey(const ValueKey('voice-editor-original'))).top,
+        greaterThanOrEqualTo(tester.getRect(field).bottom),
+      );
+      final editorState = tester.state<EditableTextState>(
+        find.descendant(of: field, matching: find.byType(EditableText)),
+      );
+      await tester.enterText(field, '中文 English\n' * 5);
+      await tester.pumpAndSettle();
+      final medium = tester.getSize(field).height;
+      expect(medium, greaterThan(short));
+      await tester.enterText(field, '中文 English\n' * 100);
+      await tester.pumpAndSettle();
+      expect(tester.getSize(field).height, greaterThan(medium));
+      expect(tester.getSize(field).height, lessThan(520));
+      tester.view.viewInsets = const FakeViewPadding(bottom: 300);
+      addTearDown(tester.view.resetViewInsets);
+      await tester.pumpAndSettle();
+      expect(
+        tester.getRect(find.byKey(const ValueKey('voice-editor-send'))).bottom,
+        lessThanOrEqualTo(512),
+      );
+      expect(
+        tester.state<EditableTextState>(
+          find.descendant(of: field, matching: find.byType(EditableText)),
+        ),
+        same(editorState),
+      );
+      await tester.enterText(field, '短文字');
+      await tester.pumpAndSettle();
+      expect(tester.getSize(field).height, short);
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.byKey(const ValueKey('voice-editor-keep')));
+      await tester.pumpAndSettle();
+      await finish(tester);
+    },
+  );
+
+  testWidgets(
+    'send original uses this capture once and restores the prior typed draft',
+    (tester) async {
+      await show(tester);
+      await tester.enterText(find.byType(TextField), '已有草稿');
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('composer-mode-toggle')));
+      await tester.pumpAndSettle();
+      home.finalResult = Completer<String?>();
+      final held = await hold(tester);
+      await held.gesture.moveTo(held.origin + const Offset(70, -70));
+      await tester.pumpAndSettle();
+      await held.gesture.up();
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('voice-editor-original')));
+      await tester.pumpAndSettle();
+      expect(home.starts, 1);
+      expect(home.saves, 1);
+      expect(home.sent, isEmpty);
+      expect(find.byKey(const ValueKey('voice-text-editor')), findsNothing);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        '已有草稿',
+      );
+      home.finalResult!.complete('不应再添加的识别文字');
+      home.preview('迟到的预览');
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).controller!.text,
+        '已有草稿',
+      );
+      expect(home.sent, isEmpty);
+      await finish(tester);
+    },
+  );
+
+  testWidgets(
+    'original save is exclusive, preserves edits on failure and can retry',
+    (tester) async {
+      await show(tester);
+      final result = Completer<String?>();
+      var attempts = 0;
+      var saving = Completer<bool>();
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            locale: const Locale('zh'),
+            supportedLocales: const [Locale('zh'), Locale('en'), Locale('ja')],
+            localizationsDelegates: const [
+              AppLocalizationsDelegate(),
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(context).copyWith(disableAnimations: true),
+              child: child!,
+            ),
+            home: Builder(
+              builder: (context) => Scaffold(
+                body: TextButton(
+                  onPressed: () => showDialog<bool>(
+                    context: context,
+                    builder: (_) => LiveVoiceTextDialog(
+                      result: result.future,
+                      prefix: '',
+                      initial: '已有文字',
+                      onChanged: (_) {},
+                      onSendOriginal: () {
+                        attempts++;
+                        return saving.future;
+                      },
+                    ),
+                  ),
+                  child: const Text('open'),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      final field = find.byKey(const ValueKey('voice-text-editor'));
+      await tester.enterText(field, '保留修改后的文字');
+      final original = find.byKey(const ValueKey('voice-editor-original'));
+      await tester.tap(original);
+      await tester.tap(original);
+      await tester.pump();
+      expect(attempts, 1);
+      expect(tester.widget<TextField>(field).readOnly, isTrue);
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.byKey(const ValueKey('voice-editor-send')),
+            )
+            .onPressed,
+        isNull,
+      );
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+      expect(field, findsOneWidget);
+      result.complete('迟到的转写');
+      saving.complete(false);
+      await tester.pumpAndSettle();
+      expect(tester.widget<TextField>(field).controller!.text, '保留修改后的文字');
+      expect(tester.widget<TextField>(field).readOnly, isFalse);
+      saving = Completer<bool>();
+      await tester.tap(original);
+      await tester.pump();
+      expect(attempts, 2);
+      saving.complete(true);
+      await tester.pumpAndSettle();
+      expect(field, findsNothing);
+      await finish(tester);
+    },
+  );
+
+  testWidgets(
+    'Send submits visible partial text without waiting for final recognition',
+    (tester) async {
+      await show(tester);
+      home.finalResult = Completer<String?>();
+      final held = await hold(tester);
+      await held.gesture.moveTo(held.origin + const Offset(70, -70));
+      await tester.pumpAndSettle();
+      await held.gesture.up();
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('voice-editor-send')));
+      await pumpUntilRealIo(
+        tester,
+        () => home.sent.isNotEmpty,
+        reason: 'Explicit Send commits the visible transcript',
+      );
+      expect(home.sent, ['明天买牛奶']);
+      expect(home.finalResult!.isCompleted, isFalse);
+      home.finalResult!.complete('late final');
+      await tester.pumpAndSettle();
+      expect(home.sent, ['明天买牛奶']);
+      expect(home.saves, 0);
+      await finish(tester);
     },
   );
 

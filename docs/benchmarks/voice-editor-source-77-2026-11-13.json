@@ -1,0 +1,15 @@
+{
+  "version": "1.8.8+77",
+  "local_sdk": "3.47.2",
+  "related_tests_passed": 228,
+  "analysis_issues": 0,
+  "simulated_layout_and_ime": true,
+  "real_pcm_file_and_sqlite": true,
+  "real_microphone_or_cloud_latency": false,
+  "fixed_sdk_ci": "pending_for_this_source",
+  "ordinary_upgrades": "pending_for_this_source",
+  "logs": {
+    "related": "7f13ad4dc5c0fe0cf2ac1bfe22e2efd7776ff7e92e5f8fb41e1bc0eb236a54e2",
+    "analysis": "c80cb7041ebecef9ccebf0c8a716977b19c4614e6e0bccb7598ecf4052a6dd29"
+  }
+}

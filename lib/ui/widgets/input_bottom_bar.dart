@@ -20,6 +20,7 @@ import '../../l10n/app_localizations.dart';
 import 'editable_text_menu.dart';
 import 'voice_capture_feedback.dart';
 import 'live_voice_text_dialog.dart';
+import '../../services/voice_text_draft.dart';
 import 'windows_composer_layout.dart';
 
 // A separate type lets RawGestureDetector replace the recognizer when changing
@@ -596,6 +597,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     final controller = ref.read(homeControllerProvider.notifier);
     final action = _voiceAction;
     var sendText = false;
+    VoiceTextDraft? voiceDraft;
     final mobile =
         Theme.of(context).platform == TargetPlatform.android ||
         Theme.of(context).platform == TargetPlatform.iOS;
@@ -618,15 +620,17 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
             await controller.stopRecordingAndProcess();
           case VoiceReleaseAction.text:
           case VoiceReleaseAction.send:
-            final result = controller.stopRecordingToText(
-              canAcceptDraft: () => _current,
-            );
+            voiceDraft = mobile ? controller.createVoiceTextDraft() : null;
+            final result =
+                voiceDraft?.result ??
+                controller.stopRecordingToText(canAcceptDraft: () => _current);
             if (mobile && action == VoiceReleaseAction.text) {
               setState(() {
                 _voiceMode = false;
                 _voiceTextDraft = true;
               });
-              sendText = await _editVoiceDraft(result) && _current;
+              sendText =
+                  await _editVoiceDraft(result, draft: voiceDraft) && _current;
               break;
             }
             final text = await result;
@@ -638,7 +642,10 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                 _voiceMode = false;
                 _voiceTextDraft = true;
               });
-              sendText = await _editVoiceDraft(Future.value(text));
+              sendText = await _editVoiceDraft(
+                Future.value(text),
+                draft: voiceDraft,
+              );
               break;
             }
             if (_current && text != null) {
@@ -660,6 +667,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         }
       }
     } finally {
+      await voiceDraft?.release(sentText: sendText);
       if (mounted && identical(_pendingRecordingStart, operation)) {
         setState(() {
           _pendingRecordingStart = null;
@@ -673,7 +681,10 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     if (sendText && _current) await _submitText();
   }
 
-  Future<bool> _editVoiceDraft(Future<String?> result) async {
+  Future<bool> _editVoiceDraft(
+    Future<String?> result, {
+    VoiceTextDraft? draft,
+  }) async {
     final prefix = _textController.text;
     final initial = ref.read(homeControllerProvider).voicePreview;
     setState(() => _voiceEditorOpen = true);
@@ -684,6 +695,19 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
           result: result,
           prefix: prefix,
           initial: initial,
+          onSendOriginal: draft == null
+              ? null
+              : () async {
+                  final sent = await draft.sendOriginal();
+                  if (sent && mounted) {
+                    _voiceTextDraft = prefix.isNotEmpty;
+                    _textController.value = TextEditingValue(
+                      text: prefix,
+                      selection: TextSelection.collapsed(offset: prefix.length),
+                    );
+                  }
+                  return sent;
+                },
           onChanged: (text) {
             if (_current) {
               if (text.isNotEmpty) _voiceTextDraft = true;
