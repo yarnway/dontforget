@@ -53,7 +53,12 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   bool _voiceEditorClosing = false;
   bool _voiceMode = false;
   bool _voiceTextDraft = false;
-  final _capturePortal = OverlayPortalController();
+  // Keep the modal semantics in the overlay, independent of the input anchor.
+  OverlayEntry? _captureOverlay;
+  MediaQueryData? _captureMedia;
+  ThemeData? _captureTheme;
+  Locale? _captureLocale;
+  bool _captureOverlaySyncScheduled = false;
   bool _captureOverlayWanted = false;
   HomeController? _heldRecorder;
   DateTime? _quickTime;
@@ -77,6 +82,87 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   }
 
   bool _lastFocused = false;
+
+  void _removeCaptureOverlay() {
+    final entry = _captureOverlay;
+    _captureOverlay = null;
+    entry?.remove();
+    entry?.dispose();
+  }
+
+  void _scheduleCaptureOverlay() {
+    if (_captureOverlaySyncScheduled) return;
+    _captureOverlaySyncScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _captureOverlaySyncScheduled = false;
+      if (!mounted) return;
+      if (!_captureOverlayWanted || !_isLongPressRecording || !_current) {
+        _removeCaptureOverlay();
+        return;
+      }
+      if (_captureOverlay != null) {
+        _captureOverlay!.markNeedsBuild();
+        return;
+      }
+      final overlay = Overlay.of(context);
+      final container = ProviderScope.containerOf(context, listen: false);
+      final entry = OverlayEntry(
+        builder: (overlayContext) {
+          if (!mounted) {
+            return const SizedBox.shrink();
+          }
+          final rootMedia = MediaQuery.of(overlayContext);
+          return Positioned.fill(
+            child: BlockSemantics(
+              child: MediaQuery(
+                data: _captureMedia!.copyWith(
+                  padding: rootMedia.padding,
+                  viewPadding: rootMedia.viewPadding,
+                  viewInsets: rootMedia.viewInsets,
+                ),
+                child: InheritedTheme.captureAll(
+                  context,
+                  UncontrolledProviderScope(
+                    container: container,
+                    child: Semantics(
+                      container: true,
+                      explicitChildNodes: true,
+                      child: AbsorbPointer(
+                        child: Consumer(
+                          builder: (_, ref, _) {
+                            final state = ref.watch(homeControllerProvider);
+                            final live = ref.watch(
+                              settingsProvider.select(
+                                (s) =>
+                                    s.speech.isConfigured &&
+                                    s.speech.endpoint ==
+                                        TencentSpeechCredentials
+                                            .realtimeEndpoint,
+                              ),
+                            );
+                            return VoiceCaptureFeedback(
+                              action: _voiceAction,
+                              fullScreen: true,
+                              preparing: !state.isRecording,
+                              selectionOpen: _voiceGesture.selectionOpen,
+                              transcript: state.voicePreview,
+                              liveTranscription: live,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      );
+      _captureOverlay = entry;
+      overlay.insert(entry);
+    });
+  }
 
   @override
   void initState() {
@@ -168,6 +254,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
 
   @override
   void dispose() {
+    _removeCaptureOverlay();
     if (identical(_captureCommand.focus, _focusCapture)) {
       _captureCommand.focus = null;
     }
@@ -485,6 +572,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     final started = await operation;
     if (!mounted || !identical(_pendingRecordingStart, operation)) return;
     if (!started) {
+      _removeCaptureOverlay();
       setState(() {
         _isLongPressRecording = false;
         if (!_isFinishingLongPress) {
@@ -512,6 +600,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         Theme.of(context).platform == TargetPlatform.android ||
         Theme.of(context).platform == TargetPlatform.iOS;
     HapticFeedback.mediumImpact();
+    _removeCaptureOverlay();
     setState(() {
       _isLongPressRecording = false;
       _isTranscribing =
@@ -641,6 +730,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     }
     HapticFeedback.selectionClick();
     setState(() => _voiceAction = action);
+    _captureOverlay?.markNeedsBuild();
   }
 
   void _cancelLongPress() {
@@ -826,14 +916,6 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   Widget _buildComposer(BuildContext context, BoxConstraints constraints) {
     final l10n = AppLocalizations.of(context);
     final homeState = ref.watch(homeControllerProvider);
-    final liveTranscription = ref.watch(
-      settingsProvider.select(
-        (settings) =>
-            settings.speech.isConfigured &&
-            settings.speech.endpoint ==
-                TencentSpeechCredentials.realtimeEndpoint,
-      ),
-    );
     final rawPending = ref.watch(workspaceDraftsProvider)['pendingCaptures'];
     final pending = rawPending is Map
         ? rawPending.entries
@@ -883,16 +965,26 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         (keyboardVisible || MediaQuery.sizeOf(context).height < 600);
 
     _captureOverlayWanted =
-        isMobile && _isLongPressRecording && !keyboardVisible;
-    if (_captureOverlayWanted != _capturePortal.isShowing) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        if (_captureOverlayWanted && _isLongPressRecording) {
-          _capturePortal.show();
-        } else if (_capturePortal.isShowing) {
-          _capturePortal.hide();
-        }
-      });
+        isMobile &&
+        _isLongPressRecording &&
+        !keyboardVisible &&
+        _current &&
+        ModalRoute.of(context)?.isCurrent != false;
+    var overlayStyleChanged = false;
+    if (_captureOverlayWanted) {
+      final media = MediaQuery.of(context), theme = Theme.of(context);
+      final locale = Localizations.localeOf(context);
+      overlayStyleChanged =
+          _captureMedia != media ||
+          _captureTheme != theme ||
+          _captureLocale != locale;
+      _captureMedia = media;
+      _captureTheme = theme;
+      _captureLocale = locale;
+    }
+    if (_captureOverlayWanted != (_captureOverlay != null) ||
+        (_captureOverlayWanted && overlayStyleChanged)) {
+      _scheduleCaptureOverlay();
     }
     // Keep the composer state and draft alive behind its modal editor. Showing
     // a second editor/preview in a keyboard-height background can overflow.
@@ -1586,91 +1678,70 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         ),
       ),
     );
-    return OverlayPortal(
-      controller: _capturePortal,
-      overlayChildBuilder: (_) => Positioned.fill(
-        child: BlockSemantics(
-          child: Semantics(
-            container: true,
-            explicitChildNodes: true,
-            child: AbsorbPointer(
-              child: VoiceCaptureFeedback(
-                action: _voiceAction,
-                fullScreen: true,
-                preparing: !homeState.isRecording,
-                selectionOpen: _voiceGesture.selectionOpen,
-                transcript: homeState.voicePreview,
-                liveTranscription: liveTranscription,
-              ),
-            ),
-          ),
-        ),
-      ),
-      child: hideComposer
-          ? const SizedBox.shrink()
-          : Align(
-              heightFactor: 1,
-              alignment: Alignment.bottomCenter,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1040),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (((!isMobile && isRecording) ||
-                            (_isTranscribing && !_voiceEditorOpen)) &&
-                        homeState.voicePreview.isNotEmpty)
-                      Container(
-                        key: const ValueKey('desktop-voice-transcript-preview'),
-                        width: double.infinity,
-                        constraints: BoxConstraints(
-                          maxHeight: math.min(
-                            160,
-                            MediaQuery.sizeOf(context).height * .25,
-                          ),
-                        ),
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: colors.secondaryContainer,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: SingleChildScrollView(
-                                reverse: true,
-                                child: Text(
-                                  homeState.voicePreview,
-                                  style: Theme.of(context).textTheme.bodyLarge
-                                      ?.copyWith(
-                                        color: colors.onSecondaryContainer,
-                                      ),
-                                ),
-                              ),
-                            ),
-                            if (_isTranscribing)
-                              IconButton(
-                                key: const ValueKey(
-                                  'cancel-pending-transcription',
-                                ),
-                                tooltip: l10n.get('cancel'),
-                                onPressed: () => ref
-                                    .read(homeControllerProvider.notifier)
-                                    .cancelLiveTranscription(),
-                                icon: const Icon(Icons.close),
-                              ),
-                          ],
+    return hideComposer
+        ? const SizedBox.shrink()
+        : Align(
+            heightFactor: 1,
+            alignment: Alignment.bottomCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1040),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (((!isMobile && isRecording) ||
+                          (_isTranscribing && !_voiceEditorOpen)) &&
+                      homeState.voicePreview.isNotEmpty)
+                    Container(
+                      key: const ValueKey('desktop-voice-transcript-preview'),
+                      width: double.infinity,
+                      constraints: BoxConstraints(
+                        maxHeight: math.min(
+                          160,
+                          MediaQuery.sizeOf(context).height * .25,
                         ),
                       ),
-                    composer,
-                  ],
-                ),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: colors.secondaryContainer,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: SingleChildScrollView(
+                              reverse: true,
+                              child: Text(
+                                homeState.voicePreview,
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.copyWith(
+                                      color: colors.onSecondaryContainer,
+                                    ),
+                              ),
+                            ),
+                          ),
+                          if (_isTranscribing)
+                            IconButton(
+                              key: const ValueKey(
+                                'cancel-pending-transcription',
+                              ),
+                              tooltip: l10n.get('cancel'),
+                              onPressed: () => ref
+                                  .read(homeControllerProvider.notifier)
+                                  .cancelLiveTranscription(),
+                              icon: const Icon(Icons.close),
+                            ),
+                        ],
+                      ),
+                    ),
+                  composer,
+                ],
               ),
             ),
-    );
+          );
   }
 }
 

@@ -2028,4 +2028,128 @@ void main() {
       TargetPlatform.android,
     }),
   );
+  testWidgets(
+    'held voice preview exposes its semantics and hides background actions',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      try {
+        await show(
+          tester,
+          Column(
+            children: [
+              TextButton(
+                onPressed: () {},
+                child: const Text('Underlying action'),
+              ),
+              const InputBottomBar(),
+            ],
+          ),
+          reducedMotion: true,
+        );
+        final origin = tester.getCenter(
+          find.byKey(const ValueKey('composer-input-surface')),
+        );
+        final press = await tester.startGesture(origin);
+        await tester.pump(const Duration(milliseconds: 700));
+        await press.moveTo(origin + const Offset(70, -80));
+        await tester.pumpAndSettle();
+        try {
+          final tree = tester
+              .binding
+              .renderViews
+              .single
+              .owner!
+              .semanticsOwner!
+              .rootSemanticsNode!
+              .toStringDeep();
+          expect(tree, contains('松手编辑文字'));
+          expect(tree, isNot(contains('Underlying action')));
+        } finally {
+          await press.moveTo(origin + const Offset(-80, -80));
+          await press.up();
+          await tester.pumpAndSettle();
+        }
+        expect(
+          tester
+              .binding
+              .renderViews
+              .single
+              .owner!
+              .semanticsOwner!
+              .rootSemanticsNode!
+              .toStringDeep(),
+          contains('Underlying action'),
+        );
+      } finally {
+        semantics.dispose();
+      }
+    },
+    variant: const TargetPlatformVariant({
+      TargetPlatform.android,
+      TargetPlatform.iOS,
+    }),
+  );
+  testWidgets(
+    'removing a held composer releases its overlay and recorder',
+    (tester) async {
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      final press = await tester.startGesture(
+        tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
+      );
+      await tester.pump(const Duration(milliseconds: 700));
+      await tester.pumpAndSettle();
+      expect(find.byType(VoiceCaptureFeedback), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+      await press.up();
+      await tester.pumpAndSettle();
+      expect(find.byType(VoiceCaptureFeedback), findsNothing);
+      expect(home.cancels, 1);
+      expect(home.sent, isEmpty);
+      expect(tester.takeException(), isNull);
+    },
+    variant: const TargetPlatformVariant({
+      TargetPlatform.android,
+      TargetPlatform.iOS,
+    }),
+  );
+  testWidgets(
+    'navigation clears the held voice overlay before exposing another route',
+    (tester) async {
+      var taps = 0;
+      await show(tester, const InputBottomBar(), reducedMotion: true);
+      final press = await tester.startGesture(
+        tester.getCenter(find.byKey(const ValueKey('composer-input-surface'))),
+      );
+      await tester.pump(const Duration(milliseconds: 700));
+      await tester.pumpAndSettle();
+      final navigator = Navigator.of(
+        tester.element(find.byType(InputBottomBar)),
+      );
+      unawaited(
+        navigator.push(
+          MaterialPageRoute<void>(
+            builder: (_) => Scaffold(
+              body: TextButton(
+                onPressed: () => taps++,
+                child: const Text('New route action'),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await press.up();
+      await tester.pumpAndSettle();
+      expect(find.byType(VoiceCaptureFeedback), findsNothing);
+      await tester.tap(find.text('New route action'));
+      await tester.pump();
+      expect(taps, 1);
+      expect(home.sent, isEmpty);
+      expect(tester.takeException(), isNull);
+    },
+    variant: const TargetPlatformVariant({
+      TargetPlatform.android,
+      TargetPlatform.iOS,
+    }),
+  );
 }

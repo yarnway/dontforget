@@ -1,0 +1,34 @@
+{
+  "date": "2026-11-13",
+  "version": "1.8.8+77",
+  "schema": 17,
+  "local_flutter": "3.47.2",
+  "fixed_ci_flutter": "3.44.9",
+  "related_passed": 188,
+  "analyze_issues": 0,
+  "dependencies_changed": false,
+  "upload_timing_changed": false,
+  "gesture_caption_same_frame_tested": true,
+  "actual_semantics_tree_and_background_exclusion_tested": true,
+  "composer_unmount_and_navigation_cleanup_tested": true,
+  "source_files_sha256": {
+    "lib/ui/widgets/input_bottom_bar.dart": "a68566034f8f3d254c544703642b4958a4c462a1983af2a53c9b6a464ff646b5",
+    "lib/ui/widgets/voice_capture_feedback.dart": "7140cfbf8bce1dde3e7773f3474b4204d5481e4c03c8663fa8322f34dc0345ec",
+    "test/task_workspace_ux_test.dart": "3ed76679da736480a93e9de22cfc52318332367ede66603d71466decafe607bf",
+    "pubspec.yaml": "99654a9ca51ec921c71c0231bed46d1493ccfe052ee00fa76c4b00cacdca188d"
+  },
+  "logs_sha256": {
+    "related.log": "2a5f42d710d536be29f1bf8c2543b94f82331fe1a5be434373b19448437fb490",
+    "analyze.log": "e5aaa428149b32690c61418f2d7853941ca37c768d08da04a71e95cf7d5ce23c",
+    "actual-tree-before.log": "a00b94d45d7b5be2063d76ba084219cb1dd859bc1684b3a6100bc9fa057973f1",
+    "portal-boundary-background-leak.log": "f49901093eb3329158c05de2ba3cecfb4f64ba26e680d9814950cca0cccdf242",
+    "semantics-handle-fixture-failure.log": "ffcf8bc73697798cbbe77afc5672f14104b21823603b88d44e4ccdde78030299",
+    "extra-frame-regression.log": "298b4245638e1ad1d3a51e192288b395a82a8234b05e00550216464d173e8836",
+    "localizations-boundary-and-first-frame-failure.log": "c6f0717a8b2e7ea65b38891bd726818d41688590a10133808613af142e8a6683"
+  },
+  "native": "pending final source private Pixel voice and cleanup fixtures",
+  "fixed_ci": "pending source push",
+  "ordinary_windows_upgrade": false,
+  "ordinary_android_upgrade": false,
+  "new_release_published": false
+}

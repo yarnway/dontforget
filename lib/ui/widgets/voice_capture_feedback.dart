@@ -244,8 +244,15 @@ class VoiceCaptureFeedback extends StatelessWidget {
                   angle: geometry.labelAngle(cancel),
                   child: Semantics(
                     selected: selected,
+                    excludeSemantics: true,
                     label: loc.get(
-                      cancel ? 'voiceSlideCancel' : 'voiceSlideText',
+                      cancel
+                          ? 'voiceSlideCancel'
+                          : switch (action) {
+                              VoiceReleaseAction.text => 'voiceReleaseText',
+                              VoiceReleaseAction.send => 'voiceReleaseSend',
+                              _ => 'voiceSlideText',
+                            },
                     ),
                     child: Container(
                       key: ValueKey('voice-target-${value.name}'),
@@ -395,6 +402,7 @@ class VoiceTranscriptPreview extends StatelessWidget {
             return Expanded(
               child: Semantics(
                 selected: selected,
+                excludeSemantics: true,
                 label: loc.get(send ? 'voiceReleaseSend' : 'voiceReleaseText'),
                 child: Container(
                   key: ValueKey(
