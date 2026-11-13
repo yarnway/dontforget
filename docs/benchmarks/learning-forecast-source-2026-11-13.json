@@ -15,11 +15,14 @@
   "private_native_acceptance": "pending",
   "application_files": {
     "lib/services/learning_forecast_service.dart": "d1a824daecf8e0600867c37d01e470e00b0da454de7bb16b07ebe11d08aaa0b0",
-    "lib/ui/widgets/learning_workload_card.dart": "bace1921748472c5ab5edead781d947587e4193365638b530e3c5ace09c1dab0",
+    "lib/ui/widgets/learning_workload_card.dart": "e18977900ca7d96af1a8733ca9f606e6cb3869c35b6d681e50c5680d2ef471e3",
     "lib/l10n/study_management_strings.dart": "cb5cd2f72b3b9bd477d2b23adeb4c06a2e89c59bf3561a7b733edbfc8f1efa98"
   },
   "logs": {
-    "related": "dfc1b37b9ba452678e899ef0e0ee7e7ec92f3f7687616e4ae4ee54bcd0adf163",
-    "analysis": "533f8e0923670a647612d3387c882c6357053feffc8ac1afd37403593fabbae6"
-  }
+    "related": "6cbf4ac21c40b1ca01484090e77adfe420e4057501a1f415446314037688b0e3",
+    "analysis": "4cdf315dfd5abd3fea5c3e27171397b93ebd6521608f36c5938affe94d833d07"
+  },
+  "initial_native_source": "c9cf213b94c2857a450c7bc645bb0d4c3ce6d251",
+  "initial_native_read_only_and_cold_passed": true,
+  "final_statistics_alignment_native_acceptance": "pending"
 }

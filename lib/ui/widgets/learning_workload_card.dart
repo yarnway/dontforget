@@ -236,18 +236,27 @@ class _LearningWorkloadCardState extends ConsumerState<LearningWorkloadCard>
                           context,
                         ).formatShortMonthDay(rows[i].date),
                       ),
-                      Text(
-                        '${t('newWords')} ${rows[i].fresh} · ${t('reviewWords')} ${rows[i].review}',
-                      ),
-                      if (rows[i].waiting > 0)
-                        Text(
-                          '${t(_forecast ? 'forecastDeferred' : 'overLimit')} ${rows[i].waiting}',
-                          style: TextStyle(
-                            color: _forecast
-                                ? Theme.of(context).colorScheme.onSurfaceVariant
-                                : Theme.of(context).colorScheme.error,
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            '${t('newWords')} ${rows[i].fresh} · ${t('reviewWords')} ${rows[i].review}',
                           ),
-                        ),
+                          if (rows[i].waiting > 0)
+                            Text(
+                              '${t(_forecast ? 'forecastDeferred' : 'overLimit')} ${rows[i].waiting}',
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: _forecast
+                                        ? Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant
+                                        : Theme.of(context).colorScheme.error,
+                                  ),
+                            ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
