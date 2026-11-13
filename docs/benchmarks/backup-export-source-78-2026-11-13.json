@@ -1,0 +1,27 @@
+{
+  "source": "0e14c783cb5370a2154c51a97b8f9e1e43014243",
+  "lib_tree": "ecd624edf439ce06c60c6fa80ef63d60f35a1c23",
+  "version": "1.8.9+78",
+  "schema": 17,
+  "local_sdk": "3.47.2",
+  "related_passed": 127,
+  "related_files": 11,
+  "analyze_issues": 0,
+  "logs_sha256": {
+    "format.log": "76058124c18f8e86477b45f27761ce404f446ca3c08e1ebee878daaa42ebc9b7",
+    "related.log": "89c3ce2a1b06a8017ca09b5829d43dd3d4cd450e64ccc19c6ae971f44e005962",
+    "analyze.log": "d51de071b4a98a8320a21d64d91b88ebcd9b7c14b7720859346cdd27ba17777c"
+  },
+  "fixed_ci": "github-ci-backup-78-2026-11-14.json",
+  "native_fixture": "backup-export-native-78-2026-11-13.json",
+  "native_sqlite_and_actual_owned_directory_files": true,
+  "native_save_as_picker_tested": false,
+  "native_encrypted_export_tested": false,
+  "software_ime_real_input_tested_in_fixture": false,
+  "windows_real_ntfs_acl": "windows-backup-acl-78-2026-11-13.json",
+  "ordinary_windows_running_upgrade": true,
+  "ordinary_android_upgrade": true,
+  "release_published": true,
+  "dependencies_changed": false,
+  "credentials_in_public_source_or_artifacts": false
+}

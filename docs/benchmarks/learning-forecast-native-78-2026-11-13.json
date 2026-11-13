@@ -1,0 +1,35 @@
+{
+  "source": "0e14c783cb5370a2154c51a97b8f9e1e43014243",
+  "lib_tree": "ecd624edf439ce06c60c6fa80ef63d60f35a1c23",
+  "version": "1.8.9+78 unreleased source iteration",
+  "apk": {
+    "package": "com.yarnway.dontforget.acceptance.learningforecast78x20261113",
+    "version": "1.8.9+78",
+    "private_fixture": true,
+    "synthetic_data_only": true,
+    "real_os_notification_delivery_tested": false,
+    "sha256": "f191b81fda47d4dbde5c37b5ce6b19ec9049063ac2c33ac5d0413926d4065086",
+    "bytes": 96037498
+  },
+  "synthetic_data_only": true,
+  "native_all_seven_days_and_deferred_readback_grades": [
+    0,
+    1,
+    2
+  ],
+  "initial_counts": {
+    "Reminders": 6,
+    "MediaRecords": 1,
+    "Settings": 1
+  },
+  "all_business_fields_settings_media_original_unchanged": true,
+  "switches_emit_no_native_notification_intents": true,
+  "scheduled_view_preserved_and_collapsible": true,
+  "light_dark_ui_captured": true,
+  "cold_new_pid_readback_equal": true,
+  "input_settings_unchanged": true,
+  "ordinary_apps_not_upgraded_this_iteration": true,
+  "real_feedback_or_notifications_on_device_tested": false,
+  "model_sqlite_feedback_oracle_tested_separately": true,
+  "temporary_identity_uninstalled": true
+}

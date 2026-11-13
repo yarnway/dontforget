@@ -1,0 +1,36 @@
+{
+  "platform": "Windows NTFS",
+  "source": "0e14c783cb5370a2154c51a97b8f9e1e43014243",
+  "runtime_lib_tree": "ecd624edf439ce06c60c6fa80ef63d60f35a1c23",
+  "only_fresh_owned_temporary_directories_modified": true,
+  "cases": [
+    {
+      "encrypted": false,
+      "cache_create_actual_os_error": 5,
+      "destination_copy_actual_os_error": 5,
+      "failure_creates_no_partial_file": true,
+      "source_backup_bytes_preserved": true,
+      "business_rows_and_original_preserved": true,
+      "acl_sddl_restored": true,
+      "retry_export_bytes_and_inspection_equal": true,
+      "media_count": 1,
+      "attachment_bytes": 1048576
+    },
+    {
+      "encrypted": true,
+      "cache_create_actual_os_error": 5,
+      "destination_copy_actual_os_error": 5,
+      "failure_creates_no_partial_file": true,
+      "source_backup_bytes_preserved": true,
+      "business_rows_and_original_preserved": true,
+      "acl_sddl_restored": true,
+      "retry_export_bytes_and_inspection_equal": true,
+      "media_count": 1,
+      "attachment_bytes": 1048576
+    }
+  ],
+  "native_file_picker_or_file_saver_tested": false,
+  "export_route": "shared directory exporter forced on Windows; native saveAs picker not invoked",
+  "real_disk_full_or_power_loss_tested": false,
+  "real_user_credentials_tested": false
+}

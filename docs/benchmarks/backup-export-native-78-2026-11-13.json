@@ -1,0 +1,36 @@
+{
+  "source": "0e14c783cb5370a2154c51a97b8f9e1e43014243",
+  "lib_tree": "ecd624edf439ce06c60c6fa80ef63d60f35a1c23",
+  "version": "1.8.9+78",
+  "apk": {
+    "package": "com.yarnway.dontforget.acceptance.backupnames78x20261113",
+    "version": "1.8.9+78",
+    "private_fixture": true,
+    "synthetic_data_only": true,
+    "real_os_notification_delivery_tested": false,
+    "sha256": "e2792aff7beef02ae84faf3ac2a57215b239237d2c398505969d9b6d55e81030",
+    "bytes": 96779598
+  },
+  "synthetic_data_only": true,
+  "native_panel_taps": true,
+  "text_values_controller_injected_not_software_ime": true,
+  "real_sqlite_and_streaming_backup_and_file_inspect": true,
+  "forced_owned_directory_export_not_native_file_picker": true,
+  "invalid_name_blocks_export": true,
+  "custom_logical_name_and_saved_metadata_equal": true,
+  "cancel_preserves_prior_record_and_files": true,
+  "real_sql_trigger_after_copy_preserves_success_and_prior_record": true,
+  "no_duplicate_copy_after_metadata_failure": true,
+  "source_rows_media_original_preserved": true,
+  "backup_cache_released": true,
+  "light_dark_captured": true,
+  "cold_new_pid_record_and_file_readback": true,
+  "input_settings_unchanged": true,
+  "encrypted_native_export_tested": false,
+  "source_counts": {
+    "Reminders": 6,
+    "MediaRecords": 1,
+    "Settings": 1
+  },
+  "temporary_identity_uninstalled": true
+}

@@ -1,0 +1,175 @@
+{
+  "source": "0e14c783cb5370a2154c51a97b8f9e1e43014243",
+  "production": {
+    "source": "0e14c783cb5370a2154c51a97b8f9e1e43014243",
+    "version": "1.8.9+78",
+    "package": "com.yarnway.dontforget",
+    "origin": "fixed-CI distribution ARM64 and universal APKs",
+    "latest_backup_before_upgrade": true,
+    "same_signing_identity": true,
+    "all_business_fields_media_and_secure_entries_preserved": true,
+    "counts": {
+      "Reminders": 2,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "secure_entry_count": 0,
+    "cold_reopen_passed": true,
+    "final_ordinary_entry": true,
+    "fresh_install_this_build": false,
+    "published_arm64_77_to_arm64_78": true,
+    "both_ci_apk_variants_installed": true,
+    "same_version_variant_exchange_data_preserved": true,
+    "final_variant": "arm64"
+  },
+  "qa": {
+    "source": "0e14c783cb5370a2154c51a97b8f9e1e43014243",
+    "version": "1.8.9+78",
+    "package": "com.yarnway.dontforget.acceptance.p4720261102",
+    "origin": "local SDK3.47.2 independent debug identity",
+    "latest_backup_before_upgrade": true,
+    "same_signing_identity": true,
+    "all_business_fields_media_and_secure_entries_preserved": true,
+    "counts": {
+      "Reminders": 56,
+      "MediaRecords": 9,
+      "Settings": 1
+    },
+    "secure_entry_count": 1,
+    "cold_reopen_passed": true,
+    "final_ordinary_entry": true,
+    "fresh_install_this_build": false,
+    "published_arm64_77_to_arm64_78": false,
+    "both_ci_apk_variants_installed": false,
+    "same_version_variant_exchange_data_preserved": false,
+    "final_variant": "debug"
+  },
+  "installed_package": {
+    "source": "0e14c783cb5370a2154c51a97b8f9e1e43014243",
+    "version": "1.8.9+78",
+    "package": "com.yarnway.dontforget",
+    "installed_apk_matches_fixed_ci_arm64": true,
+    "apk_sha256": "c99c8a815e81cb16a65ec4040bb954858c034e4547b550ed3d3ccf0ef856d847",
+    "bytes": 26492048,
+    "primary_cpu_abi": "arm64-v8a",
+    "ordinary_process_running": true
+  },
+  "apk_aab_inspection": {
+    "source": "0e14c783cb5370a2154c51a97b8f9e1e43014243",
+    "apk_identity": [
+      "com.yarnway.dontforget",
+      "78",
+      "1.8.9",
+      "24"
+    ],
+    "apk_variants": {
+      "universal": {
+        "arm64-v8a": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ],
+        "armeabi-v7a": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ],
+        "x86_64": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ]
+      },
+      "arm64": {
+        "arm64-v8a": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ]
+      }
+    },
+    "aab_library_inventory": {
+      "arm64-v8a": [
+        "libapp.so",
+        "libdartjni.so",
+        "libflutter.so",
+        "libsqlite3.so"
+      ],
+      "armeabi-v7a": [
+        "libapp.so",
+        "libdartjni.so",
+        "libflutter.so",
+        "libsqlite3.so"
+      ],
+      "x86_64": [
+        "libapp.so",
+        "libdartjni.so",
+        "libflutter.so",
+        "libsqlite3.so"
+      ]
+    },
+    "aab_retains_three_abis": true,
+    "same_source_ci_apk_size_comparison": true,
+    "universal_bytes": 76768696,
+    "arm64_bytes": 26492048,
+    "signatures_verified_by_preparation": true,
+    "candidate_signature_verification": true
+  },
+  "user_files_deleted_or_reencoded": false,
+  "fresh_install_this_build": false,
+  "ordinary_qa_backup_page": {
+    "source": "0e14c783cb5370a2154c51a97b8f9e1e43014243",
+    "version": "1.8.9+78",
+    "package": "com.yarnway.dontforget.acceptance.p4720261102",
+    "ordinary_qa_page_native_navigation": true,
+    "backup_name_and_native_export_import_controls_visible": true,
+    "encryption_default_enabled": true,
+    "no_edit_export_import_cache_or_save_action": true,
+    "returned_to_ordinary_home": true,
+    "business_readback_pending": false,
+    "all_business_fields_media_original_and_actual_secure_values_preserved": true,
+    "comparison": {
+      "schema": 17,
+      "counts": {
+        "Reminders": 56,
+        "MediaRecords": 9,
+        "Settings": 1
+      },
+      "all_business_fields_equal": true,
+      "all_original_media_hashes_equal": true,
+      "all_secure_entries_equal": true
+    },
+    "final_ordinary_entry_restored": true
+  },
+  "cleanup": {
+    "version": "1.8.9+78",
+    "both_ordinary_apps_final_version": true,
+    "temporary_fixture_absent": true,
+    "owned_device_ui_xml_removed": true,
+    "user_apps_or_data_not_uninstalled_by_cleanup": true
+  },
+  "system_storage_readonly": {
+    "universal": {
+      "应用大小": "78.22 MB",
+      "用户数据": "352 kB",
+      "缓存": "127 kB",
+      "总计": "78.70 MB",
+      "version_displayed": "1.8.9",
+      "screenshot_sha256": "6030166f0858b4f1c10aee9cdbd5e64299801b0c1d381a947f661fef1d14f56b",
+      "storage_or_cache_cleared": false
+    },
+    "arm64": {
+      "应用大小": "27.89 MB",
+      "用户数据": "352 kB",
+      "缓存": "127 kB",
+      "总计": "28.37 MB",
+      "version_displayed": "1.8.9",
+      "screenshot_sha256": "e1bb22bdb6c825f13619ee53d144176a7d22cb07b5667692190bc5e38d7ce669",
+      "storage_or_cache_cleared": false
+    }
+  }
+}

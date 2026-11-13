@@ -6,7 +6,7 @@
 
 本地优先的备忘与任务工作台，让文字、录音、附件和学习计划各有归处。
 
-[![Release](https://img.shields.io/badge/release-v1.8.8-007F83)](https://github.com/yarnway/dontforget/releases/tag/v1.8.8)
+[![Release](https://img.shields.io/badge/release-v1.8.9-007F83)](https://github.com/yarnway/dontforget/releases/tag/v1.8.9)
 [![Build](https://github.com/yarnway/dontforget/actions/workflows/build_and_release.yml/badge.svg?branch=main)](https://github.com/yarnway/dontforget/actions/workflows/build_and_release.yml)
 [![Flutter](https://img.shields.io/badge/Flutter-3.44.9-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Platforms](https://img.shields.io/badge/Windows%20%C2%B7%20Android%20%C2%B7%20Linux-334155)](#下载)
@@ -24,24 +24,24 @@
 
 ## 下载
 
-**当前稳定版：v1.8.8 · build77**　[发行说明与校验文件](https://github.com/yarnway/dontforget/releases/tag/v1.8.8)
+**当前稳定版：v1.8.9 · build78**　[发行说明与校验文件](https://github.com/yarnway/dontforget/releases/tag/v1.8.9)
 
 | 平台 | 下载 | 运行基线 |
 | :--- | :--- | :--- |
-| Windows x64 | [安装版 EXE](https://github.com/yarnway/dontforget/releases/download/v1.8.8/DontForget_Setup_v1.8.8.exe) · [便携版 ZIP](https://github.com/yarnway/dontforget/releases/download/v1.8.8/DontForget_Windows_Portable_v1.8.8.zip) | Windows 10 / 11 |
-| Android | [ARM64 APK（推荐）](https://github.com/yarnway/dontforget/releases/download/v1.8.8/DontForget_Android_arm64_v1.8.8.apk) · [通用 APK](https://github.com/yarnway/dontforget/releases/download/v1.8.8/DontForget_Android_v1.8.8.apk) | Android 7.0 / API 24 起 |
-| Linux x64 | [归档 TAR.GZ](https://github.com/yarnway/dontforget/releases/download/v1.8.8/DontForget_Linux_x64_v1.8.8.tar.gz) | Ubuntu 24.04 基线 |
+| Windows x64 | [安装版 EXE](https://github.com/yarnway/dontforget/releases/download/v1.8.9/DontForget_Setup_v1.8.9.exe) · [便携版 ZIP](https://github.com/yarnway/dontforget/releases/download/v1.8.9/DontForget_Windows_Portable_v1.8.9.zip) | Windows 10 / 11 |
+| Android | [ARM64 APK（推荐）](https://github.com/yarnway/dontforget/releases/download/v1.8.9/DontForget_Android_arm64_v1.8.9.apk) · [通用 APK](https://github.com/yarnway/dontforget/releases/download/v1.8.9/DontForget_Android_v1.8.9.apk) | Android 7.0 / API 24 起 |
+| Linux x64 | [归档 TAR.GZ](https://github.com/yarnway/dontforget/releases/download/v1.8.9/DontForget_Linux_x64_v1.8.9.tar.gz) | Ubuntu 24.04 基线 |
 
-常见64位安卓手机推荐 ARM64 APK，较同版通用包缩小约65%；其他架构使用通用包。Android [AAB](https://github.com/yarnway/dontforget/releases/download/v1.8.8/DontForget_Android_v1.8.8.aab) 供分发使用，不能直接安装。macOS、iOS 工程保留，签名与设备验收继续推进。Windows 当前未做 Authenticode 签名；Linux 运行依赖见[安装指南](docs/Packaging_and_Deployment.md)。
+常见64位安卓手机推荐 ARM64 APK，较同版通用包缩小约65%；其他架构使用通用包。Android [AAB](https://github.com/yarnway/dontforget/releases/download/v1.8.9/DontForget_Android_v1.8.9.aab) 供分发使用，不能直接安装。macOS、iOS 工程保留，签名与设备验收继续推进。Windows 当前未做 Authenticode 签名；Linux 运行依赖见[安装指南](docs/Packaging_and_Deployment.md)。
 
-下载后可用 Release 中的 `SHA256SUMS.txt` 核对文件。便携版指免安装启动，业务数据仍存放在平台应用目录；迁移数据请使用备份功能。[已验范围与已知限制](docs/Release_1.8.8_77_2026-11-13.md)单独记录。
+下载后可用 Release 中的 `SHA256SUMS.txt` 核对文件。便携版指免安装启动，业务数据仍存放在平台应用目录；迁移数据请使用备份功能。[已验范围与已知限制](docs/Release_1.8.9_78_2026-11-14.md)单独记录。
 
 ## 功能
 
 | 记录与整理 | 提醒与跟进 | 学习与复盘 |
 | :--- | :--- | :--- |
 | 文字、原声录音、图片和文件 | 紧急提醒、重点跟进、常规待办、备忘便签 | 词汇学习计划与批次管理 |
-| 草稿保留、关键词搜索与状态筛选 | 提醒、延后、错过提醒与回收站 | 多选改期、暂停与七天排期概览 |
+| 草稿保留、关键词搜索与状态筛选 | 提醒、延后、错过提醒与回收站 | 多选改期、暂停与七天学习预测 |
 | 可编辑的 AI 提取建议，确认后应用 | 子任务、归档与关联事项 | 专注计时、统计复盘与 CSV 导出 |
 
 - **先查看，再修改**：点击事项阅读内容；需要调整时点“修改”，保存后回到原页面。
@@ -49,7 +49,7 @@
 - **流式转写**：配置腾讯云后，录音时提前识别中英文；上滑预览、松手编辑，继续右滑可选择松手发送。转写框随文字展开，可发送原语音或文字，关闭保留草稿。
 - **按需接入 AI**：自行配置模型服务或本地模型，支持提取模型排序与失败切换。未配置模型也能保存文字、附件和原声。
 - **词条档案**：检索词条、释义与例句，查看已有复习记录。
-- **带附件备份**：导出事项、配置和附件，可选密码加密；恢复前预览，确认后执行。
+- **带附件备份**：导出事项、配置与附件，支持自定义名称和密码加密；恢复前预览确认。
 
 <details>
 <summary>查看语音预览与编辑示例</summary>
@@ -75,6 +75,15 @@
 <p align="center"><img src="docs/images/workload-android.png" alt="七天已排新词、复习词及每日上限概览" width="360"></p>
 
 <p align="center"><img src="docs/images/study-dates-preview-75.png" alt="学习计划批量调整日期预览" width="360"></p>
+
+</details>
+
+<details>
+<summary>查看七天学习预测示例</summary>
+
+<p align="center"><img src="docs/images/learning-forecast-light.png" alt="七天预计新词、复习与待排" width="360"></p>
+
+学习预测可切换反馈情境，只读估算，不修改排期；示例使用独立 Android 合成数据。
 
 </details>
 
@@ -115,5 +124,5 @@ python -m unittest discover -s scripts/tests -v
 | 使用 | 开发 | 进度与质量 |
 | :--- | :--- | :--- |
 | [用户指南](docs/User_Guide.md) | [开发指南](docs/Developer_Guide.md) | [变更日志](docs/Changelog.md) |
-| [功能实现索引](docs/Planning_Implementation.md) | [架构设计](docs/Architecture_Design.md) | [v1.8.8 验收记录](docs/Release_1.8.8_77_2026-11-13.md) |
+| [功能实现索引](docs/Planning_Implementation.md) | [架构设计](docs/Architecture_Design.md) | [v1.8.9 验收记录](docs/Release_1.8.9_78_2026-11-14.md) |
 | [记录与提醒设计](docs/Recording_Reminders_Phases.md) | [打包与部署](docs/Packaging_and_Deployment.md) | [剩余阶段](docs/Next_Steps_2026-11-02.md) · [发布策略](docs/Release_Policy.md) |

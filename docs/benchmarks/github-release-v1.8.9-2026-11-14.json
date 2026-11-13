@@ -1,0 +1,108 @@
+{
+  "url": "https://github.com/yarnway/dontforget/releases/tag/v1.8.9",
+  "tag": "v1.8.9",
+  "revision": "0e14c783cb5370a2154c51a97b8f9e1e43014243",
+  "published": true,
+  "prerelease": false,
+  "body_verified": true,
+  "assets": [
+    {
+      "file": "android-manifest.json",
+      "bytes": 1397,
+      "sha256": "4fe23b4ab0bc03541b17b42bad016f72e97f0aae9146144f2044ff07cfc60422"
+    },
+    {
+      "file": "android-SHA256SUMS.txt",
+      "bytes": 294,
+      "sha256": "b13f5e24fe5dc9b668c28b8231cb0620db5b1b0073559491c96c742cb06dd276"
+    },
+    {
+      "file": "DontForget_Android_arm64_v1.8.9.apk",
+      "bytes": 26492048,
+      "sha256": "c99c8a815e81cb16a65ec4040bb954858c034e4547b550ed3d3ccf0ef856d847"
+    },
+    {
+      "file": "DontForget_Android_v1.8.9.aab",
+      "bytes": 73665680,
+      "sha256": "513bc559fe8030dd0e771d1a598e68059f59d96e718a87485885c5edad2f9f37"
+    },
+    {
+      "file": "DontForget_Android_v1.8.9.apk",
+      "bytes": 76768696,
+      "sha256": "6d5f4268d57520b9c28f2b18aef96363f7f340bccd8d54ecd7ee57c49ad3b0b8"
+    },
+    {
+      "file": "DontForget_Linux_x64_v1.8.9.tar.gz",
+      "bytes": 14471832,
+      "sha256": "598b9ee4ab1f8a592cbe068cf79771a6ce0a7dba28fe441283226e091e89d0c8"
+    },
+    {
+      "file": "DontForget_Setup_v1.8.9.exe",
+      "bytes": 14725063,
+      "sha256": "90dd1c90ea7b88e78ea08c433316bcc54364a39ccf4bb4792e833379ed480f4e"
+    },
+    {
+      "file": "DontForget_Windows_Portable_v1.8.9.zip",
+      "bytes": 17969690,
+      "sha256": "af0ca4c64e337ff93b3729e25e833c79824500620f4ad1480f86c5d14669289c"
+    },
+    {
+      "file": "linux-manifest.json",
+      "bytes": 401,
+      "sha256": "950d125286b87a4e0435f2d9516848fa72f03ea81916f41bc2c14383a2014c43"
+    },
+    {
+      "file": "linux-SHA256SUMS.txt",
+      "bytes": 101,
+      "sha256": "3f877941a02439ee4951ac4da31d98e46896f01297ff8071e640619ca9dd1518"
+    },
+    {
+      "file": "linux-startup.json",
+      "bytes": 572,
+      "sha256": "f258b749a1d7d8dca55bec0933305d2eeb3f02947aaa4ded89e859e3a0021c86"
+    },
+    {
+      "file": "release-provenance.json",
+      "bytes": 3585,
+      "sha256": "f6eb3e77b6464b84bf124c3469b517099d9ec92f72a9122555aebac9505ff47b"
+    },
+    {
+      "file": "SHA256SUMS.txt",
+      "bytes": 1475,
+      "sha256": "b5f1e596e2f2bf86e4dae281eb7b0dbb2a2165555d5a9e87242324c1c5da43b6"
+    },
+    {
+      "file": "windows-installation.json",
+      "bytes": 286,
+      "sha256": "57815b68d298e4285c4d3938df37089b1c342c7ea652ff99e82835da4de92575"
+    },
+    {
+      "file": "windows-manifest.json",
+      "bytes": 657,
+      "sha256": "c2245495593f92c474353f929eee241a50523a363911d651036e8167d34ace46"
+    },
+    {
+      "file": "windows-SHA256SUMS.txt",
+      "bytes": 201,
+      "sha256": "374c38d786ee7c674342894c67a366fb205d59249c524dc3ad67f3ff2eb7a33e"
+    },
+    {
+      "file": "windows-startup.json",
+      "bytes": 442,
+      "sha256": "da79fd673cb448f5832e545afe60f7ac11f95801e33b267afdc6a8509e23d10c"
+    }
+  ],
+  "source_ci": 43452984590,
+  "publication_ci": 43458984243,
+  "publication_url": "https://github.com/yarnway/dontforget/actions/runs/43458984243",
+  "source_archives_sha_crc_verified": true,
+  "downloaded_ready_archive_sha_crc_verified": false,
+  "published_receipt_archive_sha_crc_verified": true,
+  "published_provenance_checksums_downloaded_verified": true,
+  "all_17_published_file_bytes_verified": true,
+  "provenance_file_entries_compared_by_filename": true,
+  "android_apk_aab_certificates_verified": true,
+  "android_certificate_sha256": "3db49656984fb848a73b1e8d056846b97e2a7caf47c9a9ae74f475cdbb79e9f1",
+  "latest_readback": true,
+  "previous_stable_assets_tag_preserved": true
+}
