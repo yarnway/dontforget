@@ -1,0 +1,108 @@
+{
+  "source": "ef6d6a0b03b52e9c52635664ac29f0c8695b2296",
+  "lib_tree": "0f08db60df749e8d4f951b46d621fcdc2d4f37ef",
+  "version": "1.8.8+77 private fixture; final-source private acceptance",
+  "apk": {
+    "package": "com.yarnway.dontforget.acceptance.archivecleanup77finalx20261113",
+    "version": "1.8.8+77",
+    "private_fixture": true,
+    "synthetic_data_only": true,
+    "real_os_notification_delivery_tested": false,
+    "sha256": "3a0c3e0f408949a030c79bbc435330dbc90fa9bf25ad5053f74f89b2605b5aea",
+    "bytes": 96053298
+  },
+  "initial_counts": {
+    "Reminders": 7,
+    "MediaRecords": 1,
+    "Settings": 1
+  },
+  "final_counts": {
+    "Reminders": 5,
+    "MediaRecords": 1,
+    "Settings": 1
+  },
+  "native_preview_and_cancel_sql_unchanged": true,
+  "explicit_confirmation_deletes_exact_previewed_two_rows": true,
+  "nonstandard_marked_current_batch_reference_covered": true,
+  "current_plan_batch_and_control_all_fields_unchanged": true,
+  "active_and_today_word_progress_unchanged": true,
+  "queue_and_today_allowance_unchanged": true,
+  "media_settings_and_original_unchanged": true,
+  "cleanup_emits_no_native_notification_intents": true,
+  "initial_synthetic_source_deletion_cancellations": 4,
+  "empty_preview_disables_apply": true,
+  "cold_new_pid_readback_equal": true,
+  "input_settings_unchanged": true,
+  "ordinary_user_apps_untouched": true,
+  "os_notification_delivery_tested": false,
+  "software_ime_tested": false,
+  "projection_before": {
+    "words": {
+      "today": {
+        "level": 2,
+        "due": "2026-11-17T14:56:25.423262",
+        "reviewed": "2026-11-13T14:56:25.423262",
+        "first": "2026-11-13T14:56:25.423262",
+        "reviews": 3,
+        "grade": 2
+      },
+      "apple": {
+        "level": 2,
+        "due": "2026-11-07T14:56:25.423262",
+        "reviewed": "2026-11-03T14:56:25.423262",
+        "first": "2026-11-03T14:56:25.423262",
+        "reviews": 3,
+        "grade": 2
+      },
+      "pear": {
+        "level": 2,
+        "due": "2026-11-07T14:56:25.423262",
+        "reviewed": "2026-11-03T14:56:25.423262",
+        "first": "2026-11-03T14:56:25.423262",
+        "reviews": 3,
+        "grade": 2
+      },
+      "plum": {
+        "level": 2,
+        "due": "2026-11-07T14:56:25.423262",
+        "reviewed": "2026-11-03T14:56:25.423262",
+        "first": "2026-11-03T14:56:25.423262",
+        "reviews": 3,
+        "grade": 2
+      }
+    },
+    "queue": [
+      "apple"
+    ],
+    "due": 1,
+    "completedToday": 1,
+    "newToday": 1
+  },
+  "projection_after": {
+    "words": {
+      "today": {
+        "level": 2,
+        "due": "2026-11-17T14:56:25.423262",
+        "reviewed": "2026-11-13T14:56:25.423262",
+        "first": "2026-11-13T14:56:25.423262",
+        "reviews": 3,
+        "grade": 2
+      },
+      "apple": {
+        "level": 2,
+        "due": "2026-11-07T14:56:25.423262",
+        "reviewed": "2026-11-03T14:56:25.423262",
+        "first": "2026-11-03T14:56:25.423262",
+        "reviews": 3,
+        "grade": 2
+      }
+    },
+    "queue": [
+      "apple"
+    ],
+    "due": 1,
+    "completedToday": 1,
+    "newToday": 1
+  },
+  "temporary_identity_uninstalled": true
+}

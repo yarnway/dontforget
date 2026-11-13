@@ -1,0 +1,47 @@
+{
+  "source": "ef6d6a0b03b52e9c52635664ac29f0c8695b2296",
+  "running_76_to_77": {
+    "version": "1.8.8+77",
+    "source": "ef6d6a0b03b52e9c52635664ac29f0c8695b2296",
+    "setup_sha256": "de4c971ee6b1a2bfaea2651397423b53ae97a2a8aae5894ded22e9f112985b7e",
+    "running_before_upgrade": true,
+    "acceptance_case": "ci-running",
+    "version_before": [
+      1,
+      8,
+      7,
+      76
+    ],
+    "source_before": "1d37ace4030933535c117a73b59883bdb51a6d8c",
+    "replaces_unreleased_initial_candidate_same_build": false,
+    "backup_verified": true,
+    "installer_exit": 0,
+    "force_close_allowed": false,
+    "payload_files_identical": 37,
+    "native_cli_exit": 0,
+    "schema": 17,
+    "all_business_fields_preserved": true,
+    "business_counts": {
+      "Reminders": 5,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "credential_files_preserved": true,
+    "dpapi_credential_readback_equal": true,
+    "credential_count": 1,
+    "gui_tested": false,
+    "package_origin": "fixed-CI-candidate",
+    "normal_app_reopen_process_verified": true,
+    "normal_app_reopen_business_fields_equal": true,
+    "normal_app_reopen_dpapi_equal": true
+  },
+  "gui": {
+    "date": "2026-11-13",
+    "skill": "computer-use",
+    "api": "@oai/sky via node_repl",
+    "failure_before_window_discovery": true,
+    "error": "codex/sandbox-state-meta: sandboxCwd is not a local file URI: file:///mnt/d/gitspace/opensources/dontforget",
+    "gui_tested": false,
+    "no_alternate_windows_gui_automation_used": true
+  }
+}

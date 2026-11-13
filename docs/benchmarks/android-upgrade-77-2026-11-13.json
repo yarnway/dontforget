@@ -1,0 +1,160 @@
+{
+  "source": "ef6d6a0b03b52e9c52635664ac29f0c8695b2296",
+  "production": {
+    "source": "ef6d6a0b03b52e9c52635664ac29f0c8695b2296",
+    "version": "1.8.8+77",
+    "package": "com.yarnway.dontforget",
+    "origin": "fixed-CI distribution ARM64 and universal APKs",
+    "latest_backup_before_upgrade": true,
+    "same_signing_identity": true,
+    "all_business_fields_media_and_secure_entries_preserved": true,
+    "counts": {
+      "Reminders": 2,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "secure_entry_count": 0,
+    "cold_reopen_passed": true,
+    "final_ordinary_entry": true,
+    "fresh_install_this_build": false,
+    "published_arm64_76_to_arm64_77": true,
+    "both_ci_apk_variants_installed": true,
+    "same_version_variant_exchange_data_preserved": true,
+    "final_variant": "arm64"
+  },
+  "qa": {
+    "source": "ef6d6a0b03b52e9c52635664ac29f0c8695b2296",
+    "version": "1.8.8+77",
+    "package": "com.yarnway.dontforget.acceptance.p4720261102",
+    "origin": "local SDK3.47.2 independent debug identity",
+    "latest_backup_before_upgrade": true,
+    "same_signing_identity": true,
+    "all_business_fields_media_and_secure_entries_preserved": true,
+    "counts": {
+      "Reminders": 56,
+      "MediaRecords": 9,
+      "Settings": 1
+    },
+    "secure_entry_count": 1,
+    "cold_reopen_passed": true,
+    "final_ordinary_entry": true,
+    "fresh_install_this_build": false,
+    "published_arm64_76_to_arm64_77": false,
+    "both_ci_apk_variants_installed": false,
+    "same_version_variant_exchange_data_preserved": false,
+    "final_variant": "debug"
+  },
+  "installed_package": {
+    "source": "ef6d6a0b03b52e9c52635664ac29f0c8695b2296",
+    "version": "1.8.8+77",
+    "package": "com.yarnway.dontforget",
+    "installed_apk_matches_fixed_ci_arm64": true,
+    "apk_sha256": "0e7016dee80358d1f54c13ad70d34b3f3291c9bd8f9bbcbd8bbabf463e517690",
+    "bytes": 26492048,
+    "primary_cpu_abi": "arm64-v8a",
+    "ordinary_process_running": true
+  },
+  "apk_aab_inspection": {
+    "source": "ef6d6a0b03b52e9c52635664ac29f0c8695b2296",
+    "apk_identity": [
+      "com.yarnway.dontforget",
+      "77",
+      "1.8.8",
+      "24"
+    ],
+    "apk_variants": {
+      "universal": {
+        "arm64-v8a": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ],
+        "armeabi-v7a": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ],
+        "x86_64": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ]
+      },
+      "arm64": {
+        "arm64-v8a": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ]
+      }
+    },
+    "aab_library_inventory": {
+      "arm64-v8a": [
+        "libapp.so",
+        "libdartjni.so",
+        "libflutter.so",
+        "libsqlite3.so"
+      ],
+      "armeabi-v7a": [
+        "libapp.so",
+        "libdartjni.so",
+        "libflutter.so",
+        "libsqlite3.so"
+      ],
+      "x86_64": [
+        "libapp.so",
+        "libdartjni.so",
+        "libflutter.so",
+        "libsqlite3.so"
+      ]
+    },
+    "aab_retains_three_abis": true,
+    "same_source_ci_apk_size_comparison": true,
+    "universal_bytes": 76735928,
+    "arm64_bytes": 26492048,
+    "signatures_verified_by_preparation": true,
+    "candidate_signature_verification": true
+  },
+  "user_files_deleted_or_reencoded": false,
+  "fresh_install_this_build": false,
+  "cleanup": {
+    "version": "1.8.8+77",
+    "both_ordinary_apps_final_version": true,
+    "temporary_fixture_absent": true,
+    "owned_device_ui_xml_removed": true,
+    "user_apps_or_data_not_uninstalled_by_cleanup": true
+  },
+  "system_storage_readonly": {
+    "universal": {
+      "应用大小": "78.15 MB",
+      "用户数据": "352 kB",
+      "缓存": "127 kB",
+      "总计": "78.63 MB",
+      "version_displayed": "1.8.8",
+      "screenshot_sha256": "72c3782a28e4202ac7219287dded248e447a26b365bf506e85f7aa5082e297f0",
+      "storage_or_cache_cleared": false
+    },
+    "arm64": {
+      "应用大小": "27.86 MB",
+      "用户数据": "352 kB",
+      "缓存": "127 kB",
+      "总计": "28.34 MB",
+      "version_displayed": "1.8.8",
+      "screenshot_sha256": "a59ad3930357c314d14fbf4efee70a03b4438f3e9015a28f0da4264d659db7e3",
+      "storage_or_cache_cleared": false
+    }
+  },
+  "initial_ui_smoke_interruption": {
+    "version": "1.8.8+77",
+    "stage": "production step 1 ordinary ARM64 UI smoke",
+    "first_attempt_passed": false,
+    "error": "ADB 15037 daemon could not be reached while dumping UI; installation step 0 had succeeded",
+    "device_reconnected_online": true,
+    "retry_resumes_at_step": 1,
+    "data_clear_or_reinstall_to_retry": false
+  }
+}

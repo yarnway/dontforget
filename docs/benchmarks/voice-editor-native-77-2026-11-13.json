@@ -1,0 +1,145 @@
+{
+  "source": "ef6d6a0b03b52e9c52635664ac29f0c8695b2296",
+  "lib_tree": "0f08db60df749e8d4f951b46d621fcdc2d4f37ef",
+  "version": "1.8.8+77",
+  "apk": {
+    "package": "com.yarnway.dontforget.acceptance.voiceeditor77x20261113",
+    "version": "1.8.8+77",
+    "private_fixture": true,
+    "synthetic_data_only": true,
+    "real_os_notification_delivery_tested": false,
+    "sha256": "c6705f98fa78ceff9ba1d070cfa70ccb9a7ba8bd2634d0b11b499700c4a1d7d5",
+    "bytes": 96279474
+  },
+  "native_held_labels_and_transcript_readback": true,
+  "selected_edit_and_send_states_readback": true,
+  "background_semantics_excluded": true,
+  "native_gestures_edit_send_cancel": true,
+  "manual_edit_preserved_after_final": true,
+  "keep_draft_no_send": true,
+  "fake_send_once_after_final": true,
+  "cancel_no_additional_send": true,
+  "cold_new_pid_draft_readback": true,
+  "control_rows_media_and_original_unchanged": true,
+  "input_settings_unchanged": true,
+  "real_microphone_or_cloud_tested": false,
+  "software_ime_tested": false,
+  "talkback_gestures_tested": false,
+  "hardware_text_injection": true,
+  "dynamic_editor_native_bounds": {
+    "short": [
+      63,
+      1772,
+      945,
+      1943
+    ],
+    "long": [
+      63,
+      1083,
+      945,
+      1943
+    ]
+  },
+  "growth_from_synthetic_asr_result": true,
+  "initial_hardware_growth_attempt_failed": true,
+  "both_footer_actions_below_long_text": true,
+  "fake_original_once_no_text_submission": true,
+  "voice_events": [
+    {
+      "action": "start"
+    },
+    {
+      "action": "prepare"
+    },
+    {
+      "action": "partial"
+    },
+    {
+      "action": "stop-text"
+    },
+    {
+      "action": "final",
+      "text": "明天上午九点，复习英语单词。"
+    },
+    {
+      "action": "reset"
+    },
+    {
+      "action": "start"
+    },
+    {
+      "action": "prepare"
+    },
+    {
+      "action": "partial"
+    },
+    {
+      "action": "stop-text"
+    },
+    {
+      "action": "final",
+      "text": "明天上午九点，复习英语单词。"
+    },
+    {
+      "action": "send",
+      "text": "明天上午九点，复习英语单词。"
+    },
+    {
+      "action": "reset"
+    },
+    {
+      "action": "start"
+    },
+    {
+      "action": "prepare"
+    },
+    {
+      "action": "partial"
+    },
+    {
+      "action": "cancel"
+    },
+    {
+      "action": "reset"
+    },
+    {
+      "action": "start"
+    },
+    {
+      "action": "prepare"
+    },
+    {
+      "action": "partial"
+    },
+    {
+      "action": "stop-text"
+    },
+    {
+      "action": "final",
+      "text": "明天上午九点，复习英语单词。"
+    },
+    {
+      "action": "reset"
+    },
+    {
+      "action": "start"
+    },
+    {
+      "action": "prepare"
+    },
+    {
+      "action": "partial"
+    },
+    {
+      "action": "stop-text"
+    },
+    {
+      "action": "final",
+      "text": "中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n中文 English 转写内容。\n"
+    },
+    {
+      "action": "save-voice"
+    }
+  ],
+  "temporary_identity_uninstalled": true
+}

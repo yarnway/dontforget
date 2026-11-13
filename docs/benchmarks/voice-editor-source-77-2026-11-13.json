@@ -6,10 +6,16 @@
   "simulated_layout_and_ime": true,
   "real_pcm_file_and_sqlite": true,
   "real_microphone_or_cloud_latency": false,
-  "fixed_sdk_ci": "pending_for_this_source",
-  "ordinary_upgrades": "pending_for_this_source",
+  "fixed_sdk_ci": "github-ci-voice-77-2026-11-13.json",
+  "ordinary_upgrades": "completed; Windows running overwrite and independent Android backups; fresh install not tested this build",
   "logs": {
     "related": "7f13ad4dc5c0fe0cf2ac1bfe22e2efd7776ff7e92e5f8fb41e1bc0eb236a54e2",
     "analysis": "c80cb7041ebecef9ccebf0c8a716977b19c4614e6e0bccb7598ecf4052a6dd29"
-  }
+  },
+  "release_source": "ef6d6a0b03b52e9c52635664ac29f0c8695b2296",
+  "native_fixture": "voice-editor-native-77-2026-11-13.json",
+  "fixed_ci": "github-ci-voice-77-2026-11-13.json",
+  "ordinary_windows_upgrade": true,
+  "ordinary_android_upgrade": true,
+  "release_published": true
 }
