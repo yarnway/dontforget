@@ -93,6 +93,8 @@ void main() {
     WidgetTester tester,
     _Inspector inspector, {
     Future<String?> Function()? picker,
+    bool inspectOnOpen = false,
+    String? sourceDisplayName,
     double textScale = 1,
     Locale locale = const Locale('en'),
   }) async {
@@ -109,6 +111,8 @@ void main() {
         ),
         home: BackupPreviewScreen(
           inspector: inspector,
+          inspectOnOpen: inspectOnOpen,
+          sourceDisplayName: sourceDisplayName,
           pickPath: picker ?? () async => '/private/qa/backup.json',
         ),
       ),
@@ -120,6 +124,114 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('backup-preview-select')));
     await tester.pump();
   }
+
+  testWidgets(
+    'preselected snapshot checks once on open and rechecks the same source',
+    (tester) async {
+      final pending = Completer<BackupPreview>();
+      final inspector = _Inspector()..handler = (_) => pending.future;
+      var picks = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('en'),
+          localizationsDelegates: delegates,
+          home: BackupPreviewScreen(
+            inspector: inspector,
+            inspectOnOpen: true,
+            sourceDisplayName: r'C:\private\中文备份.dfbackup',
+            pickPath: () async {
+              picks++;
+              return '/private/prepared/snapshot.json';
+            },
+            prepareRestore: (_, _) async =>
+                throw StateError('Inspection must not prepare replacement'),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(inspector.calls, 1);
+      expect(picks, 1);
+      await tester.pump();
+      expect(find.text('中文备份.dfbackup'), findsOneWidget);
+      expect(find.textContaining('snapshot.json'), findsNothing);
+      expect(find.text(l10n.get('backupPreviewSupport')), findsNothing);
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.byKey(const ValueKey('backup-preview-select')),
+            )
+            .onPressed,
+        isNull,
+      );
+      pending.complete(_preview(issues: false));
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('backup-preview-result')),
+        findsOneWidget,
+      );
+      expect(find.text('Check again'), findsOneWidget);
+      expect(inspector.calls, 1);
+      inspector.handler = (_) async => _preview(issues: false);
+      await choose(tester);
+      await tester.pumpAndSettle();
+      expect(inspector.calls, 2);
+      expect(picks, 2);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'automatic inspection failure remains retryable and cannot auto restore',
+    (tester) async {
+      final inspector = _Inspector()
+        ..handler = (_) async => throw const BackupInspectionException(
+          BackupInspectionError.invalidFormat,
+        );
+      await showPreview(
+        tester,
+        inspector,
+        inspectOnOpen: true,
+        sourceDisplayName: 'bad\nname.dfbackup',
+      );
+      expect(find.text(l10n.get('backupPreviewInvalid')), findsOneWidget);
+      expect(find.text('Selected backup'), findsOneWidget);
+      expect(find.byKey(const ValueKey('backup-restore-review')), findsNothing);
+      inspector.handler = (_) async => _preview(issues: false);
+      await choose(tester);
+      await tester.pumpAndSettle();
+      expect(inspector.calls, 2);
+      expect(
+        find.byKey(const ValueKey('backup-restore-review')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('leaving automatic inspection cancels and ignores late results', (
+    tester,
+  ) async {
+    final pending = Completer<BackupPreview>();
+    final inspector = _Inspector()..handler = (_) => pending.future;
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        localizationsDelegates: delegates,
+        home: BackupPreviewScreen(
+          inspector: inspector,
+          inspectOnOpen: true,
+          pickPath: () async => '/private/prepared/snapshot.json',
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(inspector.calls, 1);
+    await tester.pumpWidget(const SizedBox());
+    expect(inspector.cancellation!.isCancelled, isTrue);
+    pending.complete(_preview());
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets('settings opens a read-only preview without saving settings', (
     tester,

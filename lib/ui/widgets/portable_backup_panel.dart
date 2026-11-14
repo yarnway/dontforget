@@ -273,8 +273,11 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
       password = null;
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
-          builder: (_) =>
-              BackupPreviewScreen(pickPath: () => Future.value(snapshot.path)),
+          builder: (_) => BackupPreviewScreen(
+            pickPath: () => Future.value(snapshot.path),
+            inspectOnOpen: true,
+            sourceDisplayName: chosen.name,
+          ),
         ),
       );
     } catch (error) {

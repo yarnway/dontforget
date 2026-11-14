@@ -19,8 +19,13 @@ class BackupPreviewScreen extends StatefulWidget {
     this.pickPath,
     this.prepareRestore,
     this.executeRestore,
-  });
+    this.inspectOnOpen = false,
+    this.sourceDisplayName,
+  }) : assert(!inspectOnOpen || pickPath != null);
 
+  /// Only a preselected private snapshot may be inspected automatically.
+  final bool inspectOnOpen;
+  final String? sourceDisplayName;
   final BackupInspector? inspector;
   final Future<String?> Function()? pickPath;
   final Future<RecoveryPlan> Function(File source, BackupPreview preview)?
@@ -43,6 +48,30 @@ class _BackupPreviewScreenState extends State<BackupPreviewScreen> {
   bool _cancelling = false;
   bool _reviewingRestore = false;
   int _request = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.inspectOnOpen) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _check();
+      });
+    }
+  }
+
+  String _displayName(String selected) {
+    final supplied = widget.sourceDisplayName;
+    final raw = supplied ?? (widget.inspectOnOpen ? '' : selected);
+    final name = paths.posix.basename(paths.windows.basename(raw)).trim();
+    if (name.isEmpty ||
+        name == '.' ||
+        name == '..' ||
+        name.runes.length > 200 ||
+        RegExp(r'[\x00-\x1f\x7f-\x9f\u2028\u2029]').hasMatch(name)) {
+      return AppLocalizations.of(context).get('backupPreviewPrepared');
+    }
+    return name;
+  }
 
   @override
   void dispose() {
@@ -76,7 +105,7 @@ class _BackupPreviewScreenState extends State<BackupPreviewScreen> {
         setState(() => _messageKey = 'backupPreviewCancelled');
         return;
       }
-      setState(() => _fileName = paths.basename(selected));
+      setState(() => _fileName = _displayName(selected));
       final result = await (widget.inspector ?? BackupInspector.platform())
           .inspect(File(selected), cancellation: cancellation);
       if (!mounted || request != _request) return;
@@ -376,12 +405,14 @@ class _BackupPreviewScreenState extends State<BackupPreviewScreen> {
                   style: theme.textTheme.titleLarge,
                 ),
                 const SizedBox(height: 8),
-                Text(l10n.get('backupPreviewIntro')),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.get('backupPreviewSupport'),
-                  style: theme.textTheme.bodySmall,
-                ),
+                if (!widget.inspectOnOpen) ...[
+                  Text(l10n.get('backupPreviewIntro')),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.get('backupPreviewSupport'),
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ],
                 const SizedBox(height: 20),
                 Wrap(
                   spacing: 8,
@@ -390,11 +421,17 @@ class _BackupPreviewScreenState extends State<BackupPreviewScreen> {
                     FilledButton.icon(
                       key: const ValueKey('backup-preview-select'),
                       onPressed: _busy || _reviewingRestore ? null : _check,
-                      icon: const Icon(Icons.folder_open_outlined),
+                      icon: Icon(
+                        widget.inspectOnOpen
+                            ? Icons.refresh
+                            : Icons.folder_open_outlined,
+                      ),
                       label: Text(
                         l10n.get(
                           _busy
                               ? 'backupPreviewChecking'
+                              : widget.inspectOnOpen
+                              ? 'backupPreviewRecheck'
                               : 'backupPreviewSelect',
                         ),
                       ),
@@ -429,7 +466,13 @@ class _BackupPreviewScreenState extends State<BackupPreviewScreen> {
                 if (_fileName != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 16),
-                    child: Text(_fileName!, style: theme.textTheme.bodySmall),
+                    child: Text(
+                      _fileName!,
+                      key: const ValueKey('backup-preview-name'),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall,
+                    ),
                   ),
                 if (_messageKey != null)
                   Padding(
