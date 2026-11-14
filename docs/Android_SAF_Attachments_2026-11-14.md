@@ -1,6 +1,8 @@
 # Android 系统文件选择器与附件恢复
 
-阶段48，本轮以独立身份和合成数据补齐本地 SAF 路径。正式版仍为v1.8.9+78；本轮没有安装或发布普通应用新版本。
+已随v1.8.10+79发布，普通新包与升级范围见[本轮发行](Release_1.8.10_79_2026-11-15.md)。以下保留原源码迭代的版本、测试和合成设备归属。
+
+原阶段48轮次以独立身份和合成数据补齐本地 SAF 路径。当时正式版为v1.8.9+78；该轮没有安装或发布普通应用新版本。
 
 ## 运行时代码与范围
 
@@ -37,7 +39,7 @@
 
 该修改在上述设备矩阵之后进行。本机相关4文件41项通过、分析0；源码`1ee54c4425615c3cc3df4ae4dd4bb150228f977c`／lib树`508c32b74fc64d9a6c6c4dd2d122499a0dcc42a3`的另一轮独立Pixel实际读回中文预检及确认新文案，原“备份不含附件”文字均不存在。原生保存／打开文件、检查不改库、勾选确认后实际恢复4／3／1、附件重新定位与新PID全字段／摘要读回完成，旧数据和运行时令牌作废；临时身份／自有文件／转发清理，输入法设置保持。[本次源码设备证据](benchmarks/android-saf-copy-native-2026-11-14.json)。仅此轮普通路径／中文原生提示；加密跨端完整矩阵保持前述已发布运行时归属，中英日布局由组件回归覆盖，不冒记英日原生触控通过。
 
-最终[固定SDK CI](https://github.com/yarnway/dontforget/actions/runs/43557412492)七项成功：Analyze and test：Flutter2571通过／2跳过，Python170运行／4跳过；Windows analyze and test：Flutter2553通过／20跳过，Python170运行／6跳过。5份候选artifact来源／摘要元数据核对，未新下载普通候选做完整字节或覆盖安装验收。[CI证据](benchmarks/github-ci-saf-2026-11-14.json)。没有改依赖、schema或版本号，尚未进入公开v1.8.9安装包；本轮未发布普通新版本，Windows运行中及双Android新版保全覆盖留待下一候选。
+最终[固定SDK CI](https://github.com/yarnway/dontforget/actions/runs/43557412492)七项成功：Analyze and test：Flutter2571通过／2跳过，Python170运行／4跳过；Windows analyze and test：Flutter2553通过／20跳过，Python170运行／6跳过。5份候选artifact来源／摘要元数据核对，未新下载普通候选做完整字节或覆盖安装验收。[CI证据](benchmarks/github-ci-saf-2026-11-14.json)。该原源码轮次未改依赖、schema或版本号，也未进入公开v1.8.9安装包；后续普通新版本覆盖及发行已纳入v1.8.10，范围见上方记录。
 
 <p align="center"><img src="images/backup-preview-copy-2026-11-14.png" alt="独立合成身份下的新预检提示，附件与引用核对" width="300"> <img src="images/backup-confirm-copy-2026-11-14.png" alt="新恢复确认提示及明确勾选，使用合成数据" width="300"></p>
 

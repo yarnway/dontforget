@@ -1,0 +1,44 @@
+{
+  "source": "e47495cd3c5ab5413ab0fa9f462c25c1e88d9ffa",
+  "runtime_lib_tree": "5001db8137b60bb4660617f1d7cb65348cb9fae4",
+  "version": "1.8.10+79",
+  "schema": 17,
+  "dependencies_changed": false,
+  "fixed_ci": "github-ci-release-79-2026-11-15.json",
+  "same_lib_tree_functional_evidence_source": "9f07c05b8c57a09c682fbb6b0f53259d97bce41e",
+  "same_lib_tree_native_receipt": "backup-export-history-native-2026-11-14.json",
+  "prior_source_related_tests": {
+    "source": "9f07c05b8c57a09c682fbb6b0f53259d97bce41e",
+    "local_sdk": "3.47.2",
+    "passed": 55,
+    "analyze_issues": 0
+  },
+  "current_source_full_ci_repeated": true,
+  "ordinary_windows_running_upgrade": true,
+  "ordinary_android_upgrade": true,
+  "release_published": true,
+  "credentials_in_public_source_or_artifacts": false,
+  "qa_ordinary_package": {
+    "source": "e47495cd3c5ab5413ab0fa9f462c25c1e88d9ffa",
+    "package": "com.yarnway.dontforget.acceptance.p4720261102",
+    "version": "1.8.10+79",
+    "private_entry": false,
+    "sha256": "2c214b36816bd580cdd1a173eed3841fe2de77d8147aaa8970c3e39378c2922d",
+    "bytes": 116472590,
+    "certificate_sha256": "4f8518351e90e3293ad293b74b009ad40949e871adf91614bb27ba1ba098eea9"
+  },
+  "production_aot_marker_readback": {
+    "1.8.9": {
+      "libapp_sha256": "815db52f8ef098bafc50f08f101458d3a0f7795f1bfc3237d5be8cd9f5f55806",
+      "history_storage_marker_present": false,
+      "history_dialog_key_present": false,
+      "automatic_precheck_label_present": false
+    },
+    "1.8.10": {
+      "libapp_sha256": "2bfae75d0649634b5d114810e7b55cc5d4478e7f8ceb2828ea74a4b5e9fd64d8",
+      "history_storage_marker_present": true,
+      "history_dialog_key_present": true,
+      "automatic_precheck_label_present": true
+    }
+  }
+}

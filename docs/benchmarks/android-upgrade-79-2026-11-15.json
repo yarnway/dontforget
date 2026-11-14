@@ -1,0 +1,254 @@
+{
+  "source": "e47495cd3c5ab5413ab0fa9f462c25c1e88d9ffa",
+  "production": {
+    "source": "e47495cd3c5ab5413ab0fa9f462c25c1e88d9ffa",
+    "version": "1.8.10+79",
+    "package": "com.yarnway.dontforget",
+    "origin": "fixed-CI distribution ARM64 and universal APKs",
+    "latest_backup_before_upgrade": true,
+    "same_signing_identity": true,
+    "all_business_fields_media_and_secure_entries_preserved": true,
+    "counts": {
+      "Reminders": 2,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "secure_entry_count": 0,
+    "cold_reopen_passed": true,
+    "final_ordinary_entry": true,
+    "fresh_install_this_build": false,
+    "published_arm64_78_to_arm64_79": true,
+    "both_ci_apk_variants_installed": true,
+    "same_version_variant_exchange_data_preserved": true,
+    "final_variant": "arm64"
+  },
+  "qa": {
+    "source": "e47495cd3c5ab5413ab0fa9f462c25c1e88d9ffa",
+    "version": "1.8.10+79",
+    "package": "com.yarnway.dontforget.acceptance.p4720261102",
+    "origin": "local SDK3.47.2 independent debug identity",
+    "latest_backup_before_upgrade": true,
+    "same_signing_identity": true,
+    "all_business_fields_media_and_secure_entries_preserved": true,
+    "counts": {
+      "Reminders": 56,
+      "MediaRecords": 9,
+      "Settings": 1
+    },
+    "secure_entry_count": 1,
+    "cold_reopen_passed": true,
+    "final_ordinary_entry": true,
+    "fresh_install_this_build": false,
+    "published_arm64_78_to_arm64_79": false,
+    "both_ci_apk_variants_installed": false,
+    "same_version_variant_exchange_data_preserved": false,
+    "final_variant": "debug"
+  },
+  "installed_package": {
+    "source": "e47495cd3c5ab5413ab0fa9f462c25c1e88d9ffa",
+    "version": "1.8.10+79",
+    "package": "com.yarnway.dontforget",
+    "installed_apk_matches_fixed_ci_arm64": true,
+    "apk_sha256": "0d1ced218dfe7ef153cf7a2e686d2f26ba9076fbea05ab8c8f4c0e9580deb6ce",
+    "bytes": 26492096,
+    "primary_cpu_abi": "arm64-v8a",
+    "ordinary_process_running": true,
+    "qa_installed_ordinary_package_bytes_equal": true,
+    "qa_apk_sha256": "2c214b36816bd580cdd1a173eed3841fe2de77d8147aaa8970c3e39378c2922d"
+  },
+  "apk_aab_inspection": {
+    "source": "e47495cd3c5ab5413ab0fa9f462c25c1e88d9ffa",
+    "apk_identity": [
+      "com.yarnway.dontforget",
+      "79",
+      "1.8.10",
+      "24"
+    ],
+    "apk_variants": {
+      "universal": {
+        "arm64-v8a": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ],
+        "armeabi-v7a": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ],
+        "x86_64": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ]
+      },
+      "arm64": {
+        "arm64-v8a": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ]
+      }
+    },
+    "aab_library_inventory": {
+      "arm64-v8a": [
+        "libapp.so",
+        "libdartjni.so",
+        "libflutter.so",
+        "libsqlite3.so"
+      ],
+      "armeabi-v7a": [
+        "libapp.so",
+        "libdartjni.so",
+        "libflutter.so",
+        "libsqlite3.so"
+      ],
+      "x86_64": [
+        "libapp.so",
+        "libdartjni.so",
+        "libflutter.so",
+        "libsqlite3.so"
+      ]
+    },
+    "aab_retains_three_abis": true,
+    "same_source_ci_apk_size_comparison": true,
+    "universal_bytes": 76768744,
+    "arm64_bytes": 26492096,
+    "signatures_verified_by_preparation": true,
+    "candidate_signature_verification": true
+  },
+  "before_upgrade_backups": {
+    "version_before": "1.8.9+78",
+    "both_installed_original_apks_verified_before_backup": true,
+    "production_latest_backup": true,
+    "qa_independent_backup": true,
+    "actual_original_ordinary_entries_restored": true,
+    "protected_historical_pointers_preserved": true
+  },
+  "old_installed_apk_baselines": {
+    "production": {
+      "version": "1.8.9+78",
+      "source": "0e14c783cb5370a2154c51a97b8f9e1e43014243",
+      "sha256": "c99c8a815e81cb16a65ec4040bb954858c034e4547b550ed3d3ccf0ef856d847",
+      "installed_original_bytes_verified": true,
+      "captured_utc": "2026-11-14T18:00:29.308914+00:00"
+    },
+    "qa": {
+      "version": "1.8.9+78",
+      "source": "0e14c783cb5370a2154c51a97b8f9e1e43014243",
+      "sha256": "dcf59686569dd66eba0415003dca205b622c9d997c98abfaec15e73356371ed1",
+      "installed_original_bytes_verified": true,
+      "captured_utc": "2026-11-14T18:00:52.959956+00:00"
+    }
+  },
+  "referenced_media_readback": {
+    "production_arm64": {
+      "schema": 17,
+      "counts": {
+        "Reminders": 2,
+        "MediaRecords": 0,
+        "Settings": 1
+      },
+      "all_business_fields_equal": true,
+      "all_original_media_hashes_equal": true,
+      "all_secure_entries_equal": true,
+      "all_referenced_media_hashes_equal": true,
+      "referenced_media_files_compared": 0
+    },
+    "production_universal": {
+      "schema": 17,
+      "counts": {
+        "Reminders": 2,
+        "MediaRecords": 0,
+        "Settings": 1
+      },
+      "all_business_fields_equal": true,
+      "all_original_media_hashes_equal": true,
+      "all_secure_entries_equal": true,
+      "all_referenced_media_hashes_equal": true,
+      "referenced_media_files_compared": 0
+    },
+    "qa": {
+      "schema": 17,
+      "counts": {
+        "Reminders": 56,
+        "MediaRecords": 9,
+        "Settings": 1
+      },
+      "all_business_fields_equal": true,
+      "all_original_media_hashes_equal": true,
+      "all_secure_entries_equal": true,
+      "all_referenced_media_hashes_equal": true,
+      "referenced_media_files_compared": 9
+    }
+  },
+  "guarded_driver_pause": {
+    "next_step": 13,
+    "owned_app_info_confirmed_after_package_replacement": true,
+    "resumed_from_recorded_step": 13,
+    "runtime_source_changed": false,
+    "private_log_sha256": {
+      "phone_when_ready.log": "8467ec6906de623d1ba614d9fce1c427eb941d3c8892a81a5236344fbff1fa15",
+      "resume_phone.log": "5c316b01ca28faa5ef08edd2344d2447bf5a8da59a1856ef2d41925ce4eb575f"
+    }
+  },
+  "user_files_deleted_or_reencoded": false,
+  "fresh_install_this_build": false,
+  "ordinary_qa_backup_page": {
+    "source": "e47495cd3c5ab5413ab0fa9f462c25c1e88d9ffa",
+    "version": "1.8.10+79",
+    "package": "com.yarnway.dontforget.acceptance.p4720261102",
+    "ordinary_qa_page_native_navigation": true,
+    "backup_name_and_native_export_import_controls_visible": true,
+    "encryption_default_enabled": true,
+    "no_edit_export_import_cache_or_save_action": true,
+    "returned_to_ordinary_home": true,
+    "business_readback_pending": false,
+    "all_business_fields_media_original_and_actual_secure_values_preserved": true,
+    "comparison": {
+      "schema": 17,
+      "counts": {
+        "Reminders": 56,
+        "MediaRecords": 9,
+        "Settings": 1
+      },
+      "all_business_fields_equal": true,
+      "all_original_media_hashes_equal": true,
+      "all_secure_entries_equal": true,
+      "all_referenced_media_hashes_equal": true,
+      "referenced_media_files_compared": 9
+    },
+    "final_ordinary_entry_restored": true
+  },
+  "cleanup": {
+    "version": "1.8.10+79",
+    "both_ordinary_apps_final_version": true,
+    "prior_temporary_fixture_absent": true,
+    "owned_device_ui_xml_removed": true,
+    "user_apps_or_data_not_uninstalled_by_cleanup": true
+  },
+  "system_storage_readonly": {
+    "universal": {
+      "\u5e94\u7528\u5927\u5c0f": "78.23 MB",
+      "\u7528\u6237\u6570\u636e": "352 kB",
+      "\u7f13\u5b58": "127 kB",
+      "\u603b\u8ba1": "78.71 MB",
+      "version_displayed": "1.8.10",
+      "screenshot_sha256": "3b6abd17f15c4d9a228ff65ae852e61edb5fb3928c74ad0fc198da2bcaad37fb",
+      "storage_or_cache_cleared": false
+    },
+    "arm64": {
+      "\u5e94\u7528\u5927\u5c0f": "27.90 MB",
+      "\u7528\u6237\u6570\u636e": "352 kB",
+      "\u7f13\u5b58": "127 kB",
+      "\u603b\u8ba1": "28.38 MB",
+      "version_displayed": "1.8.10",
+      "screenshot_sha256": "a760e50778c088a4f45becccebba6d38eb7a58d323e79ffb1b225d4b1acd8283",
+      "storage_or_cache_cleared": false
+    }
+  }
+}
