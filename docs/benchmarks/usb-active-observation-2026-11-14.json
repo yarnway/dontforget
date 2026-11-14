@@ -1,0 +1,19 @@
+{
+  "started_utc": "2026-11-14T12:46:16.279260+00:00",
+  "finished_utc": "2026-11-14T13:06:16.297383+00:00",
+  "scope": "20-minute active get-state polling; no suspend, idle-power or cross-host acceptance",
+  "adb_port": 15037,
+  "read_only": true,
+  "requested_duration_seconds": 1200,
+  "observed_seconds": 1200.016,
+  "interval_seconds": 15,
+  "samples": 81,
+  "successful": 81,
+  "failed": 0,
+  "max_command_seconds": 0.032,
+  "median_command_seconds": 0.016,
+  "sample_log_sha256": "bb83a0e2507f3a9e816800a658659b276d950014059fe7ea1d5bbf7231b24d36",
+  "app_ui_or_data_changed_by_observation": false,
+  "explicit_adb_restart_or_reconnect_requested": false,
+  "between_sample_disconnects_monitored": false
+}

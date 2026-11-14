@@ -1,0 +1,17 @@
+{
+  "source": "9f07c05b8c57a09c682fbb6b0f53259d97bce41e",
+  "runtime_lib_tree": "5001db8137b60bb4660617f1d7cb65348cb9fae4",
+  "local_sdk": "3.47.2",
+  "related_files": 5,
+  "related_passed": 55,
+  "analyze_issues": 0,
+  "log_hashes": {
+    "related-verified.log": "123d9bbf52edc7850a3791b66027615478fafc4e17d765d1671007308e1d827b",
+    "analyze-verified.log": "6bb1fd83b93d3e236f831f9f36472ef457ce1a490ad6a43bd0330b092fbb233d"
+  },
+  "native_receipt": "backup-export-history-native-2026-11-14.json",
+  "fixed_ci": "github-ci-backup-export-history-2026-11-14.json",
+  "new_release_published": false,
+  "ordinary_new_version_upgrade_performed": false,
+  "fixed_ci_success": true
+}

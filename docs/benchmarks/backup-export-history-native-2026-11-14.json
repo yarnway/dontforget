@@ -1,0 +1,55 @@
+{
+  "source": "9f07c05b8c57a09c682fbb6b0f53259d97bce41e",
+  "runtime_lib_tree": "5001db8137b60bb4660617f1d7cb65348cb9fae4",
+  "version": "1.8.9+78 unreleased history iteration",
+  "apk": {
+    "package": "com.yarnway.dontforget.acceptance.saf20261114",
+    "version": "1.8.9+78",
+    "private_fixture": true,
+    "synthetic_data_only": true,
+    "real_os_notification_delivery_tested": false,
+    "sha256": "4c0587035d67ed8fdaad7dbc6cee61abd7574239b0711ab763e61615c21587f2",
+    "bytes": 128295920
+  },
+  "synthetic_data_only": true,
+  "native_saf_plain_and_encrypted_exports_hash_equal": true,
+  "history_records": 2,
+  "history_names_order_and_locations_read_back": true,
+  "history_default_hides_locations": true,
+  "history_and_details_read_only": true,
+  "cancelled_export_keeps_history_and_external_files": true,
+  "business_tables_media_originals_other_drafts_unchanged": true,
+  "baseline_counts": {
+    "Reminders": 4,
+    "MediaRecords": 3,
+    "Settings": 1
+  },
+  "new_pid_all_fields_and_hashes_equal": true,
+  "cold_ui_history_readback": true,
+  "input_settings_unchanged": true,
+  "ordinary_app_install_or_business_restore_performed": false,
+  "temporary_identity_uninstalled": true,
+  "owned_external_files_forward_xml_cleaned": true,
+  "notification_transport": "substitute",
+  "controller_injected_not_software_ime": true,
+  "english_japanese_native_tested": false,
+  "driver_notes": [
+    "Initial assertion did not normalize literal escaped newlines in Android content descriptions; evidence retained and driver corrected.",
+    "Save picker back navigation first entered its parent directory; post-return guard then rejected the app after cancellation. Continued only after prior driver exited and foreground was verified.",
+    "No runtime source change was needed for either driver correction."
+  ],
+  "saved_file_header_readback": [
+    {
+      "file": "actual-saf-1.dfbackup",
+      "cipher": "AES-256-GCM",
+      "bytes": 77076,
+      "sha256": "76ba4bde5d889e3823e6ffb2dabaa5595f3740bc21816913768e4f10f9fce338"
+    },
+    {
+      "file": "actual-saf-2.dfbackup",
+      "cipher": "none",
+      "bytes": 77404,
+      "sha256": "40b0a5db4b15c474b408269996da29c5b5cc652c15edc871b2ba1f75d0f47669"
+    }
+  ]
+}
