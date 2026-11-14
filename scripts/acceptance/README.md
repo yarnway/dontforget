@@ -37,3 +37,29 @@ C:\src\flutter\bin\flutter.bat --no-version-check test --no-pub scripts/acceptan
 ```
 
 不可用于个人备份或真实凭据，不与另一组共享SQLite DLL的测试并行。
+
+## Android 系统文件选择器与附件恢复
+
+`android_saf_backup.dart` 是独立设备验收入口，不由普通应用导入。它运行原有 `MyApp`、备份页面、系统保存／打开选择器、预检、确认弹窗和恢复协调器，使用原生 SQLite 及4条事项、录音／图片／文本3份合成附件。通知使用替身，外部 HTTP 客户端禁用；不验收真实系统通知、录音、云服务或真实凭据锁定。
+
+只在隔离的 Android 构建树中，将 `applicationId` 改为 `com.yarnway.dontforget.acceptance.saf20261114`，保留原有 activity namespace。先确认手机上不存在此身份；不要修改正式构建树或覆盖已有身份。入口还会在打开数据库前核对应用私有目录和至少32字符的随机令牌。
+
+在本机生成随机令牌，设置临时环境变量 `DF_SAF_TOKEN`，不要提交或打印令牌。Windows 独立构建树使用：
+
+```bat
+C:\src\flutter\bin\flutter.bat --no-version-check build apk --debug --no-pub --target-platform android-arm64 --target scripts/acceptance/android_saf_backup.dart --dart-define=DF_SAF_TOKEN=%DF_SAF_TOKEN%
+```
+
+安装前用 `aapt dump badging` 核对**实际 APK**的身份、版本和签名，不能只信构建脚本的报告。安装临时身份前确认手机已解锁、普通应用没有待处理编辑且麦克风空闲。为本轮合成导出新建空目录，所有保存和打开都只选择此目录中的合成文件，不覆盖既有文件。
+
+入口仅监听 `127.0.0.1:17786`；用未占用的 ADB 转发端口连接，所有请求均需 `Authorization: Bearer` 携带该令牌。控制端只在测试应用回到前台后读回，选择器打开期间仅操作选择器。
+
+- `GET /state`：当前 PID、恢复阶段、真实业务行、附件摘要与验收事件。
+- `POST /fill?mode=plain`、`encrypted`：给当前备份表单注入固定合成名称／密码。`wrong`、`unlock` 给当前恢复密码弹窗注入错误／正确的合成密码；不代表真实软件输入法验收。
+- `POST /mutate?mode=plain`、`encrypted`：在已导出之后追加一条合成记录并改写对照事项，用来核对明确恢复确实替换数据。只在恢复空闲时执行，不重复执行同一模式。
+
+用原生控件导出／取消、打开文件／取消、核对恢复内容、取消确认、勾选确认并恢复；加密另验错误密码。实际选择文件的摘要须与导出源或 Windows 返回文件一致，确认恢复后需核对全部事项字段、附件重新定位及摘要、新 PID 冷重开。`GET /state` 的事件只记录文件摘要、格式和错误类型，不记录密码。
+
+需要 Windows 后端往返时，将原生导出的审计副本分别保存为 `android-plain.dfbackup`、`android-encrypted.dfbackup`，在新的交换目录显式执行 `attachment_round_trip_test.dart`，通过 `DF_ATTACHMENT_EXCHANGE` 指定目录。它在隔离 FFI 数据库中恢复、重开、追加第4份合成附件并返回导出；桌面 GUI 未参与。将返回文件复制到本轮手机合成目录，再通过系统打开选择器实际恢复并读回，不能把文件传输本身记作恢复通过。
+
+结束后先核对并保全报告，只删除本轮明确创建且摘要已保全的合成文件／空目录；卸载临时身份、移除自有转发和界面 XML，恢复原前台并核对输入法设置。保持普通应用的安装、数据与凭据隔离。实际验收及失败修正归属见[阶段台账](../../docs/Next_Steps_2026-11-02.md)。

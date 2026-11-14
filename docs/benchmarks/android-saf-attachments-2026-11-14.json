@@ -1,0 +1,185 @@
+{
+  "native": {
+    "source": "f8a7c916ef79865549b4e530a0fc0af848b5c890",
+    "runtime_lib_tree": "ecd624edf439ce06c60c6fa80ef63d60f35a1c23",
+    "version": "1.8.9+78",
+    "local_sdk": "3.47.2",
+    "private_package": "com.yarnway.dontforget.acceptance.saf20261114",
+    "apk": {
+      "package": "com.yarnway.dontforget.acceptance.saf20261114",
+      "version": "1.8.9+78",
+      "private_fixture": true,
+      "synthetic_data_only": true,
+      "real_os_notification_delivery_tested": false,
+      "sha256": "32bb72612f9de66f67be5e0b2722a0e25f7a5d06f67a1b3294c11bb7a9eac953",
+      "bytes": 128274936
+    },
+    "synthetic_data_only": true,
+    "production_app_backup_widgets_preview_confirmation_and_coordinator": true,
+    "local_android_documents_provider": "com.android.providers.downloads.documents",
+    "actual_native_save_open_dialogs": true,
+    "controller_values_injected_not_software_ime": true,
+    "plain_chinese_name_and_encrypted_english_name_saved": true,
+    "saf_outputs_match_streaming_source_hashes": true,
+    "actual_opened_files_hashes_match_export_or_windows_return": true,
+    "native_save_cancel_preserves_all_fields_and_originals": true,
+    "native_open_cancel_preserves_all_fields_and_originals": true,
+    "plain_confirmation_cancel_preserves_all_fields_and_originals": true,
+    "confirmation_requires_explicit_acknowledgement": true,
+    "plain_restore_counts": {
+      "Reminders": 4,
+      "MediaRecords": 3,
+      "Settings": 1
+    },
+    "encrypted_windows_return_restore_counts": {
+      "Reminders": 5,
+      "MediaRecords": 4,
+      "Settings": 1
+    },
+    "plain_and_encrypted_new_pid_all_fields_and_hash_readback": true,
+    "restored_media_paths_rebased_into_owned_android_directory": true,
+    "all_three_initial_originals_unchanged": true,
+    "windows_added_attachment_hash_preserved": true,
+    "wrong_password_preserves_all_fields_media_and_originals": true,
+    "old_data_and_runtime_tokens_invalidated_on_actual_recovery": true,
+    "export_cache_released": true,
+    "fixture_passwords_not_persisted_in_business_tables": true,
+    "no_framework_errors": true,
+    "notification_transport": "testing substitute; no native delivery or permissions tested",
+    "outbound_http_clients_disabled": true,
+    "ordinary_app_install_update_restore_or_clear_performed": false,
+    "ordinary_business_sql_or_real_vault_readback_performed": false,
+    "ordinary_installed_package_paths_versions_unchanged": true,
+    "ordinary_mics_idle_at_entry_and_exit": true,
+    "input_settings_unchanged": true,
+    "temporary_identity_uninstalled": true,
+    "owned_external_files_and_empty_directory_removed_after_local_hash_verified_copy": true,
+    "owned_adb_forward_and_xml_removed": true,
+    "initial_fixture_provider_guard_and_driver_wait_failures_preserved": true,
+    "scope_excludes": [
+      "large-capacity real device SAF",
+      "Windows native file picker or desktop GUI",
+      "third-party or cloud document providers",
+      "real user credential locking",
+      "physical disk-full or power loss",
+      "real microphone or speech recognition",
+      "ordinary distribution APK feature interaction"
+    ]
+  },
+  "windows_backend": {
+    "plain": {
+      "fixture": "dontforget.synthetic.attachments.v1",
+      "platform": "windows",
+      "format": "plain",
+      "source_sha256": "9cb07e134b385dc687d1f44780963f5d64e8057a40e90a4f6f46309d5a607b0b",
+      "return_sha256": "3474aad6627d246ca39b79b261676c30d5c02b0fd531f40de04cf88a67113a12",
+      "restored": {
+        "reminders": 4,
+        "media": 3,
+        "all_reminder_fields_equal": true,
+        "attachment_hashes": {
+          "fixture-audio": "6a8b4a7ccc02993d2aceb63d03b6b3b74b5994bec725f26f01c520c1d65b7c70",
+          "fixture-file": "bfd8421fedfa7c540773dc7c6b3c04148b4492af320cf6976ad8eb1d0e1b2a88",
+          "fixture-image": "cb89ed82b152b8315f1998b6ee804eae7382ec3820cc22e81495cf49ccc757b0"
+        },
+        "attachment_bytes": {
+          "fixture-audio": 64044,
+          "fixture-image": 68,
+          "fixture-file": 5888
+        },
+        "lifecycle_and_word_progress_preserved": true,
+        "restored_filename_policy": "Generated safe name; extension retained; original display name not preserved",
+        "schema": 17
+      },
+      "appended": {
+        "reminders": 5,
+        "media": 4,
+        "all_reminder_fields_equal": true,
+        "attachment_hashes": {
+          "fixture-audio": "6a8b4a7ccc02993d2aceb63d03b6b3b74b5994bec725f26f01c520c1d65b7c70",
+          "fixture-desktop": "6cbe5cabb3ce96f59e0ff24cb7eee1e81340094cd4e9e40f4476efb69cc39eb8",
+          "fixture-file": "bfd8421fedfa7c540773dc7c6b3c04148b4492af320cf6976ad8eb1d0e1b2a88",
+          "fixture-image": "cb89ed82b152b8315f1998b6ee804eae7382ec3820cc22e81495cf49ccc757b0"
+        },
+        "attachment_bytes": {
+          "fixture-audio": 64044,
+          "fixture-image": 68,
+          "fixture-file": 5888,
+          "fixture-desktop": 82
+        },
+        "lifecycle_and_word_progress_preserved": true,
+        "restored_filename_policy": "Generated safe name; extension retained; original display name not preserved",
+        "schema": 17
+      },
+      "database_close_reopen_passed": true,
+      "device_preference_preserved": true,
+      "wrong_password_no_output": null,
+      "desktop_gui_tested": false,
+      "notification_transport": "substitute",
+      "outcome": "PASS"
+    },
+    "encrypted": {
+      "fixture": "dontforget.synthetic.attachments.v1",
+      "platform": "windows",
+      "format": "encrypted",
+      "source_sha256": "51f0ceb2be6cc9d9e71c4ba1e332dd35fbfb2e9785b87b48cf74242df71521d2",
+      "return_sha256": "952d9ea8d111e0d8cd3a57f3c7b0455cf607ebd2e32d2633b37506476fd2cfa3",
+      "restored": {
+        "reminders": 4,
+        "media": 3,
+        "all_reminder_fields_equal": true,
+        "attachment_hashes": {
+          "fixture-audio": "6a8b4a7ccc02993d2aceb63d03b6b3b74b5994bec725f26f01c520c1d65b7c70",
+          "fixture-file": "bfd8421fedfa7c540773dc7c6b3c04148b4492af320cf6976ad8eb1d0e1b2a88",
+          "fixture-image": "cb89ed82b152b8315f1998b6ee804eae7382ec3820cc22e81495cf49ccc757b0"
+        },
+        "attachment_bytes": {
+          "fixture-audio": 64044,
+          "fixture-image": 68,
+          "fixture-file": 5888
+        },
+        "lifecycle_and_word_progress_preserved": true,
+        "restored_filename_policy": "Generated safe name; extension retained; original display name not preserved",
+        "schema": 17
+      },
+      "appended": {
+        "reminders": 5,
+        "media": 4,
+        "all_reminder_fields_equal": true,
+        "attachment_hashes": {
+          "fixture-audio": "6a8b4a7ccc02993d2aceb63d03b6b3b74b5994bec725f26f01c520c1d65b7c70",
+          "fixture-desktop": "6cbe5cabb3ce96f59e0ff24cb7eee1e81340094cd4e9e40f4476efb69cc39eb8",
+          "fixture-file": "bfd8421fedfa7c540773dc7c6b3c04148b4492af320cf6976ad8eb1d0e1b2a88",
+          "fixture-image": "cb89ed82b152b8315f1998b6ee804eae7382ec3820cc22e81495cf49ccc757b0"
+        },
+        "attachment_bytes": {
+          "fixture-audio": 64044,
+          "fixture-image": 68,
+          "fixture-file": 5888,
+          "fixture-desktop": 82
+        },
+        "lifecycle_and_word_progress_preserved": true,
+        "restored_filename_policy": "Generated safe name; extension retained; original display name not preserved",
+        "schema": 17
+      },
+      "database_close_reopen_passed": true,
+      "device_preference_preserved": true,
+      "wrong_password_no_output": true,
+      "desktop_gui_tested": false,
+      "notification_transport": "substitute",
+      "outcome": "PASS"
+    }
+  },
+  "local_related_test_files": 4,
+  "local_related_passed": 41,
+  "analyze_issues": 0,
+  "local_logs_sha256": {
+    "analyze-copy.log": "fa156f9580f4d6615fb5032f2d454c93ecd22f3ae6b031a2d0c622eb51455076",
+    "related-copy.log": "b4585490be0d81a3e744cc2ca92b2ebd6038c52ac8b37b9d9bc1211cdddf8ef6",
+    "windows-backend.log": "b145551c867aecc7261d1c33977f6d3348f78771a9e75dbff45008f2b8ab8a5e"
+  },
+  "copy_fix": "source and local widget regression complete; new native text readback and fixed CI pending",
+  "ordinary_windows_or_android_upgraded_this_iteration": false,
+  "new_release_published": false,
+  "latest_release_remains": "v1.8.9"
+}

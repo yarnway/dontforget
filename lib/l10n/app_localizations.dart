@@ -400,7 +400,7 @@ class AppLocalizations {
           'Contains API keys. This backup is not encrypted; keep it private.',
       'backupPreviewNoCredentials': 'No API keys detected.',
       'backupPreviewFilesNotice':
-          'Backups contain attachment paths, not the recordings, images or files themselves. A valid structure does not confirm that attachments are available. Recovery has not been performed.',
+          'Check attachments and references. Recovery requires a separate confirmation.',
       'backupPreviewDigest': 'File checksum',
       'backupPreviewFailed':
           'Could not check this backup. Choose a valid JSON snapshot or standalone SQLite backup and check file access.',
@@ -426,7 +426,7 @@ class AppLocalizations {
       'backupRestoreLan':
           'LAN sync will stop. Restart it manually after recovery if needed.',
       'backupRestoreFiles':
-          'Attachment files are not included. Missing files and unresolved references will remain unavailable after recovery.',
+          'Missing attachments and unresolved references will not be filled in automatically.',
       'backupRestoreRollback': 'Planned rollback location',
       'backupRestoreOperationDirectory': 'Recovery files location',
       'backupRestoreOperationNotice':
@@ -1188,8 +1188,7 @@ class AppLocalizations {
       'backupPreviewUnresolved': '未解析引用',
       'backupPreviewCredentials': '包含 API 密钥。此备份未加密，请妥善保管。',
       'backupPreviewNoCredentials': '未检测到 API 密钥。',
-      'backupPreviewFilesNotice':
-          '备份只包含附件路径，不包含录音、图片或文件本体。结构通过不代表附件齐全，也不代表已完成恢复。',
+      'backupPreviewFilesNotice': '请核对附件和引用。恢复需另行确认。',
       'backupPreviewDigest': '文件校验摘要',
       'backupPreviewFailed': '未能检查此备份。请选择有效的 JSON 快照或独立 SQLite 镜像，并检查文件访问权限。',
       'backupPreviewInvalid': '备份已损坏或结构不受支持，请选择其他备份。',
@@ -1205,7 +1204,7 @@ class AppLocalizations {
       'backupRestoreCandidate': '备份',
       'backupRestoreDrafts': '未保存的草稿和进行中的 AI 结果将作废。请先完成或保存需要保留的内容。',
       'backupRestoreLan': '局域网同步将停止；恢复完成后如需同步，请手动重启。',
-      'backupRestoreFiles': '备份不包含附件文件。缺失的文件和未解析引用在恢复后仍不可用。',
+      'backupRestoreFiles': '缺失的附件和未解析引用不会自动补齐。',
       'backupRestoreRollback': '预定回退位置',
       'backupRestoreOperationDirectory': '本次恢复记录位置',
       'backupRestoreOperationNotice': '此位置可能尚未创建；若已有文件，请保留以便恢复或排查。',
@@ -1933,8 +1932,7 @@ class AppLocalizations {
       'backupPreviewUnresolved': '未解決の参照',
       'backupPreviewCredentials': 'APIキーを含みます。暗号化されていないため、安全に保管してください。',
       'backupPreviewNoCredentials': 'APIキーは検出されませんでした。',
-      'backupPreviewFilesNotice':
-          'バックアップには添付ファイルのパスのみが含まれ、録音・画像・ファイル本体は含まれません。構造の確認は添付ファイルの存在や復元の完了を意味しません。',
+      'backupPreviewFilesNotice': '添付と参照を確認してください。復元には別途確認が必要です。',
       'backupPreviewDigest': 'ファイルのチェックサム',
       'backupPreviewFailed':
           '確認できませんでした。有効なJSONまたは独立したSQLiteバックアップを選択し、アクセス権を確認してください。',
@@ -1952,7 +1950,7 @@ class AppLocalizations {
       'backupRestoreCandidate': 'バックアップ',
       'backupRestoreDrafts': '未保存の下書きと処理中のAIの結果は破棄されます。残したい内容は先に完了または保存してください。',
       'backupRestoreLan': 'LAN同期は停止します。復元後、必要に応じて手動で再開してください。',
-      'backupRestoreFiles': '添付ファイル本体は含まれません。見つからないファイルや未解決の参照は、復元後も利用できません。',
+      'backupRestoreFiles': '不足している添付と未解決の参照は自動では補完されません。',
       'backupRestoreRollback': '復元前のコピーの保存予定先',
       'backupRestoreOperationDirectory': '復元用ファイルの保存先',
       'backupRestoreOperationNotice':
