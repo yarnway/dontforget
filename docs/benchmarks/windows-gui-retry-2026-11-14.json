@@ -1,0 +1,8 @@
+{
+  "tool": "computer-use 26.1111.21308 via node_repl @oai/sky",
+  "attempted": "list_apps",
+  "window_discovery_succeeded": false,
+  "ui_action_performed": false,
+  "error": "codex/sandbox-state-meta: sandboxCwd is not a local file URI: file:///mnt/d/gitspace/opensources/dontforget",
+  "powershell_uia_fallback_used": false
+}

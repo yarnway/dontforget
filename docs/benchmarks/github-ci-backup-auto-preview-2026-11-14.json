@@ -1,0 +1,148 @@
+{
+  "commit": "7f7d1c7cd42449650234dc3feebbce41022982f9",
+  "id": 43587785394,
+  "run_attempt": 1,
+  "url": "https://github.com/yarnway/dontforget/actions/runs/43587785394",
+  "status": "completed",
+  "conclusion": "success",
+  "jobs": [
+    {
+      "id": 132425909046,
+      "name": "Analyze and test",
+      "conclusion": "success",
+      "run_attempt": 1
+    },
+    {
+      "id": 132425909232,
+      "name": "Windows analyze and test",
+      "conclusion": "success",
+      "run_attempt": 1
+    },
+    {
+      "id": 132429857903,
+      "name": "Build linux candidate",
+      "conclusion": "success",
+      "run_attempt": 1
+    },
+    {
+      "id": 132429857936,
+      "name": "Build macos candidate",
+      "conclusion": "success",
+      "run_attempt": 1
+    },
+    {
+      "id": 132429857940,
+      "name": "Build android candidate",
+      "conclusion": "success",
+      "run_attempt": 1
+    },
+    {
+      "id": 132429857954,
+      "name": "Build windows candidate",
+      "conclusion": "success",
+      "run_attempt": 1
+    },
+    {
+      "id": 132429857958,
+      "name": "Build ios candidate",
+      "conclusion": "success",
+      "run_attempt": 1
+    },
+    {
+      "id": 132432809871,
+      "name": "Verify tag packages without publishing",
+      "conclusion": "skipped",
+      "run_attempt": 1
+    }
+  ],
+  "quality": [
+    {
+      "job": "Analyze and test",
+      "flutter_passed": 2574,
+      "flutter_skipped": 2,
+      "python_run": 170,
+      "python_skipped": 4,
+      "log_sha256": "37259a85187ca8a8e09568df78a63ff7d5636ce72b922e47dd7b9c021fb59895"
+    },
+    {
+      "job": "Windows analyze and test",
+      "flutter_passed": 2556,
+      "flutter_skipped": 20,
+      "python_run": 170,
+      "python_skipped": 6,
+      "log_sha256": "c71d2082fb87786303f1acb3a95adf013efbf8c30236988c76a6f2614029d77f"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 14112037797,
+      "name": "android-deliverables",
+      "size_in_bytes": 121348843,
+      "digest": "sha256:8198c4a05a0e6207c98df4a8e550fe45d8d9637f4f6b84c3a10fa86c51b51088",
+      "expired": false,
+      "workflow_run": {
+        "id": 43587785394,
+        "repository_id": 1362330634,
+        "head_repository_id": 1362330634,
+        "head_branch": "main",
+        "head_sha": "7f7d1c7cd42449650234dc3feebbce41022982f9"
+      }
+    },
+    {
+      "id": 14111921702,
+      "name": "ios-deliverables",
+      "size_in_bytes": 11251602,
+      "digest": "sha256:2e7980251bc97600c71fa30c3caf34a6f2b7e1ab9549c4343ab1f4e0fe36ca1f",
+      "expired": false,
+      "workflow_run": {
+        "id": 43587785394,
+        "repository_id": 1362330634,
+        "head_repository_id": 1362330634,
+        "head_branch": "main",
+        "head_sha": "7f7d1c7cd42449650234dc3feebbce41022982f9"
+      }
+    },
+    {
+      "id": 14111628483,
+      "name": "windows-deliverables",
+      "size_in_bytes": 32146402,
+      "digest": "sha256:787862282e43e8856d4914607a00c9c3b93ba136010b4d7adada84e41e4e5aef",
+      "expired": false,
+      "workflow_run": {
+        "id": 43587785394,
+        "repository_id": 1362330634,
+        "head_repository_id": 1362330634,
+        "head_branch": "main",
+        "head_sha": "7f7d1c7cd42449650234dc3feebbce41022982f9"
+      }
+    },
+    {
+      "id": 14111514540,
+      "name": "macos-deliverables",
+      "size_in_bytes": 26687510,
+      "digest": "sha256:4ea3e01557d169313c41f71a38918c6b3b6731e89b8ded68460c0361b6720e2d",
+      "expired": false,
+      "workflow_run": {
+        "id": 43587785394,
+        "repository_id": 1362330634,
+        "head_repository_id": 1362330634,
+        "head_branch": "main",
+        "head_sha": "7f7d1c7cd42449650234dc3feebbce41022982f9"
+      }
+    },
+    {
+      "id": 14111348335,
+      "name": "linux-deliverables",
+      "size_in_bytes": 14436828,
+      "digest": "sha256:e89fd536ba7dfc50139821b8699c97c32848e5c412ba5fd2a9cbe0d38a25b9ce",
+      "expired": false,
+      "workflow_run": {
+        "id": 43587785394,
+        "repository_id": 1362330634,
+        "head_repository_id": 1362330634,
+        "head_branch": "main",
+        "head_sha": "7f7d1c7cd42449650234dc3feebbce41022982f9"
+      }
+    }
+  ]
+}

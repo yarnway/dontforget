@@ -1,0 +1,54 @@
+{
+  "captured_utc": "2026-11-14T11:01:35.120246+00:00",
+  "platform": "Windows",
+  "read_only": true,
+  "file_contents_or_credentials_read": false,
+  "no_file_deleted_modified_or_permission_changed": true,
+  "app_roots_separate_from_protected_test_upgrade_backups": true,
+  "totals": {
+    "current_app": {
+      "exists": true,
+      "groups": {
+        "root-files": {
+          "files": 2,
+          "bytes": 742
+        },
+        "databases": {
+          "files": 9,
+          "bytes": 60318
+        }
+      },
+      "total_files": 11,
+      "total_bytes": 61060,
+      "reparse_entries_skipped": 0,
+      "read_errors": 0
+    },
+    "legacy_local_database": {
+      "exists": true,
+      "groups": {
+        "root-files": {
+          "files": 4,
+          "bytes": 24859
+        }
+      },
+      "total_files": 4,
+      "total_bytes": 24859,
+      "reparse_entries_skipped": 0,
+      "read_errors": 0
+    },
+    "protected_upgrade_backups": {
+      "exists": true,
+      "groups": {
+        "all-protected-copies": {
+          "files": 3271,
+          "bytes": 2394419558
+        }
+      },
+      "total_files": 3271,
+      "total_bytes": 2394419558,
+      "reparse_entries_skipped": 0,
+      "read_errors": 0
+    }
+  },
+  "scope": "Only specified data directories; installed binaries and other media roots are not included"
+}

@@ -1,0 +1,38 @@
+{
+  "source": "7f7d1c7cd42449650234dc3feebbce41022982f9",
+  "runtime_lib_tree": "e8109b242e1138ccf102f949be7d33bf15fd802e",
+  "version": "1.8.9+78 unreleased auto-preview iteration",
+  "apk": {
+    "package": "com.yarnway.dontforget.acceptance.saf20261114",
+    "version": "1.8.9+78",
+    "private_fixture": true,
+    "synthetic_data_only": true,
+    "real_os_notification_delivery_tested": false,
+    "sha256": "a7dc5bcac97ef81a5a8e1e2faf475837d2803a31bc57e1a68ff4f3603c59653a",
+    "bytes": 128279212
+  },
+  "synthetic_data_only": true,
+  "automatic_inspection_no_second_select_tap": true,
+  "native_original_filename_visible_internal_snapshot_hidden": true,
+  "new_zh_preview_and_confirmation_copy_native_readback": true,
+  "old_no_attachments_claim_absent": true,
+  "actual_saf_save_open_and_source_hash_equal": true,
+  "precheck_keeps_sql_media_and_originals": true,
+  "acknowledgement_required": true,
+  "actual_coordinator_restore_counts": {
+    "Reminders": 4,
+    "MediaRecords": 3,
+    "Settings": 1
+  },
+  "restored_fields_and_rebased_attachment_hashes_equal": true,
+  "old_data_and_runtime_tokens_invalidated": true,
+  "new_pid_all_fields_and_hashes_equal": true,
+  "input_settings_unchanged": true,
+  "ordinary_app_install_or_business_restore_performed": false,
+  "temporary_identity_uninstalled": true,
+  "owned_external_file_forward_and_xml_cleaned": true,
+  "source_ui_encrypted_matrix_repeated": false,
+  "source_ui_english_and_japanese_native_tested": false,
+  "notification_transport": "substitute",
+  "controller_injected_not_software_ime": true
+}
