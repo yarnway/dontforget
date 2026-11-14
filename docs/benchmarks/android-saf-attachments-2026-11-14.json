@@ -178,7 +178,19 @@
     "related-copy.log": "b4585490be0d81a3e744cc2ca92b2ebd6038c52ac8b37b9d9bc1211cdddf8ef6",
     "windows-backend.log": "b145551c867aecc7261d1c33977f6d3348f78771a9e75dbff45008f2b8ab8a5e"
   },
-  "copy_fix": "source and local widget regression complete; new native text readback and fixed CI pending",
+  "copy_fix": {
+    "source": "1ee54c4425615c3cc3df4ae4dd4bb150228f977c",
+    "lib_tree": "508c32b74fc64d9a6c6c4dd2d122499a0dcc42a3",
+    "local_related_passed": 41,
+    "analyze_issues": 0,
+    "native": "android-saf-copy-native-2026-11-14.json",
+    "fixed_ci": "github-ci-saf-2026-11-14.json",
+    "zh_native_copy_and_plain_restore_new_pid": true,
+    "english_japanese_native_copy_tested": false,
+    "encrypted_matrix_repeated_for_copy_fix": false,
+    "ordinary_new_version_upgrades_tested": false,
+    "public_release_contains_copy_fix": false
+  },
   "ordinary_windows_or_android_upgraded_this_iteration": false,
   "new_release_published": false,
   "latest_release_remains": "v1.8.9"

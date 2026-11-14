@@ -35,7 +35,11 @@
 
 实机流程发现，通用预检和恢复确认沿用“备份不包含附件”的旧说明，与完整备份含附件的行为矛盾。中、英、日文已改为简洁的附件／引用核对和缺失提示，保留独立确认要求。
 
-该修改在上述设备矩阵之后进行。当前本机相关4文件41项通过、分析0；上述功能矩阵保持原运行时归属，新提示的独立原生读回和固定SDK CI继续验证。尚未进入公开v1.8.9安装包，普通Windows与双Android新版覆盖升级留待下一候选。
+该修改在上述设备矩阵之后进行。本机相关4文件41项通过、分析0；源码`1ee54c4425615c3cc3df4ae4dd4bb150228f977c`／lib树`508c32b74fc64d9a6c6c4dd2d122499a0dcc42a3`的另一轮独立Pixel实际读回中文预检及确认新文案，原“备份不含附件”文字均不存在。原生保存／打开文件、检查不改库、勾选确认后实际恢复4／3／1、附件重新定位与新PID全字段／摘要读回完成，旧数据和运行时令牌作废；临时身份／自有文件／转发清理，输入法设置保持。[本次源码设备证据](benchmarks/android-saf-copy-native-2026-11-14.json)。仅此轮普通路径／中文原生提示；加密跨端完整矩阵保持前述已发布运行时归属，中英日布局由组件回归覆盖，不冒记英日原生触控通过。
+
+最终[固定SDK CI](https://github.com/yarnway/dontforget/actions/runs/43557412492)七项成功：Analyze and test：Flutter2571通过／2跳过，Python170运行／4跳过；Windows analyze and test：Flutter2553通过／20跳过，Python170运行／6跳过。5份候选artifact来源／摘要元数据核对，未新下载普通候选做完整字节或覆盖安装验收。[CI证据](benchmarks/github-ci-saf-2026-11-14.json)。没有改依赖、schema或版本号，尚未进入公开v1.8.9安装包；本轮未发布普通新版本，Windows运行中及双Android新版保全覆盖留待下一候选。
+
+<p align="center"><img src="images/backup-preview-copy-2026-11-14.png" alt="独立合成身份下的新预检提示，附件与引用核对" width="300"> <img src="images/backup-confirm-copy-2026-11-14.png" alt="新恢复确认提示及明确勾选，使用合成数据" width="300"></p>
 
 ## 剩余
 
