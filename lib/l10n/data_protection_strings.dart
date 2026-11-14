@@ -77,6 +77,7 @@ const _strings = <String, List<String>>{
   'backupNameTooLong': ['名称过长，请缩短', 'Shorten the backup name', '名前を短くしてください'],
   'confirmInput': ['请先确认输入', 'Confirm the input first', '入力を確定してください'],
   'backupLocation': ['查看保存位置', 'View saved location', '保存先を表示'],
+  'backupHistory': ['导出记录', 'Export history', '保存履歴'],
   'savedUnrecorded': [
     '备份已导出，导出记录未保存',
     'Backup exported; export record could not be saved',

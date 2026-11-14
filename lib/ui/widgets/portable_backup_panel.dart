@@ -15,6 +15,7 @@ import '../../services/streaming_backup_service.dart';
 import '../../services/backup_file_exporter.dart';
 import '../../services/backup_cache_service.dart';
 import '../../services/backup_export_name.dart';
+import '../../services/backup_export_history.dart';
 import '../../services/recovery/runtime_gate.dart';
 import '../formatters/local_date_time.dart';
 import '../screens/backup_preview_screen.dart';
@@ -197,9 +198,14 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
       };
       var recorded = true;
       try {
-        await ref
-            .read(workspaceDraftsProvider.notifier)
-            .put('lastPortableBackup', details);
+        final store = ref.read(workspaceDraftsProvider.notifier);
+        final previous = await store.readPersistedKey('lastPortableBackup');
+        if (!_current) return;
+        await store.compareAndPut(
+          'lastPortableBackup',
+          previous,
+          BackupExportHistory.prepend(details, previous),
+        );
       } catch (_) {
         recorded = false;
       }
@@ -363,21 +369,60 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
     ),
   );
 
+  Future<void> _showHistory(
+    List<Map<String, dynamic>> entries,
+  ) => showDialog<void>(
+    context: context,
+    builder: (context) => AlertDialog(
+      key: const ValueKey('backup-history-dialog'),
+      title: Text(t('backupHistory')),
+      content: SizedBox(
+        width: 560,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * .6,
+          ),
+          child: ListView.separated(
+            shrinkWrap: true,
+            itemCount: entries.length,
+            separatorBuilder: (_, _) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final entry = entries[index];
+              final name = entry['name'] as String? ?? t('backupTitle');
+              return ListTile(
+                key: ValueKey('backup-history-entry-$index'),
+                contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                title: Text(name, maxLines: 2, overflow: TextOverflow.ellipsis),
+                subtitle: Text(
+                  formatLocalDateTime(DateTime.parse(entry['at'] as String)),
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => _showDetails(
+                  t('backupLocation'),
+                  '$name\n${entry['location']}',
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(t('close')),
+        ),
+      ],
+    ),
+  );
+
   static String _size(int value) => value >= 1024 * 1024
       ? '${(value / (1024 * 1024)).toStringAsFixed(1)} MiB'
       : '${(value / 1024).toStringAsFixed(1)} KiB';
   @override
   Widget build(BuildContext context) {
     final raw = ref.watch(workspaceDraftsProvider)['lastPortableBackup'];
-    final last =
-        raw is Map &&
-            raw['at'] is String &&
-            (raw['at'] as String).length <= 64 &&
-            DateTime.tryParse(raw['at']) != null &&
-            raw['location'] is String &&
-            (raw['location'] as String).length <= 8192
-        ? raw
-        : null;
+    final history = BackupExportHistory.read(raw);
+    final last = history.firstOrNull;
     final colors = Theme.of(context).colorScheme;
     Widget card(Key key, List<Widget> children) => Card.outlined(
       key: key,
@@ -574,6 +619,18 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
                   ),
               ],
             ),
+            if (history.length > 1) ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  key: const ValueKey('backup-history'),
+                  onPressed: _busy ? null : () => _showHistory(history),
+                  icon: const Icon(Icons.history_rounded),
+                  label: Text('${t('backupHistory')} (${history.length})'),
+                ),
+              ),
+            ],
           ]),
         ],
         const SizedBox(height: 16),

@@ -12,6 +12,7 @@ import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'package:dont_forget/services/streaming_backup_service.dart';
 import 'package:dont_forget/services/backup_file_exporter.dart';
 import 'package:dont_forget/services/backup_cache_service.dart';
+import 'package:dont_forget/services/backup_export_history.dart';
 import 'package:dont_forget/ui/widgets/portable_backup_panel.dart';
 import 'package:dont_forget/ui/widgets/inline_feedback.dart';
 import 'package:dont_forget/ui/widgets/credential_status_panel.dart';
@@ -273,6 +274,76 @@ void main() {
     await finish(tester);
   });
   testWidgets(
+    'history preserves legacy exports, stays read-only, survives reopen and ignores cancelled exports',
+    (tester) async {
+      await tester.runAsync(
+        () => h.container.read(workspaceDraftsProvider.notifier).put(
+          'lastPortableBackup',
+          {'at': '2029-01-01T10:00:00', 'location': r'C:\backups\旧备份.dfbackup'},
+        ),
+      );
+      await host(tester);
+      await tap(tester, const ValueKey('backup-encryption'));
+      await tester.enterText(find.byKey(const ValueKey('backup-name')), '新备份');
+      await tap(tester, const ValueKey('backup-export'));
+      final persisted = await tester.runAsync(h.drafts);
+      final history = BackupExportHistory.read(
+        h.container.read(workspaceDraftsProvider)['lastPortableBackup'],
+      );
+      expect(history.map((e) => e['name']), ['新备份.dfbackup', '旧备份.dfbackup']);
+      expect(find.text('旧备份.dfbackup'), findsNothing);
+      await tap(tester, const ValueKey('backup-history'));
+      expect(find.text('旧备份.dfbackup'), findsOneWidget);
+      expect(find.textContaining(r'C:\backups'), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('backup-history-entry-1')));
+      await settle(tester);
+      expect(find.textContaining(r'C:\backups\旧备份.dfbackup'), findsOneWidget);
+      await tester.tap(find.text('关闭').last);
+      await settle(tester);
+      await tester.tap(find.text('关闭'));
+      await settle(tester);
+      expect(await tester.runAsync(h.drafts), persisted);
+      exporter.cancel = true;
+      await tap(tester, const ValueKey('backup-export'));
+      expect(await tester.runAsync(h.drafts), persisted);
+      await finish(tester);
+      await tester.runAsync(() async {
+        await h.close();
+        await h.open();
+      });
+      await host(tester);
+      await tap(tester, const ValueKey('backup-history'));
+      expect(find.text('旧备份.dfbackup'), findsOneWidget);
+      expect(await tester.runAsync(h.drafts), persisted);
+      await finish(tester);
+    },
+  );
+  testWidgets(
+    'future history is preserved when a new export record cannot be merged',
+    (tester) async {
+      final future = {
+        'at': '2029-01-01T10:00:00',
+        'location': '/synthetic/future.dfbackup',
+        'history_version': 2,
+        'previous_exports': ['future-format'],
+      };
+      await tester.runAsync(
+        () => h.container
+            .read(workspaceDraftsProvider.notifier)
+            .put('lastPortableBackup', future),
+      );
+      final persisted = await tester.runAsync(h.drafts);
+      await host(tester);
+      await tap(tester, const ValueKey('backup-encryption'));
+      await tap(tester, const ValueKey('backup-export'));
+      expect(exporter.calls, 1);
+      expect(find.text('备份已导出，导出记录未保存'), findsOneWidget);
+      expect(await tester.runAsync(h.drafts), persisted);
+      expect(await tester.runAsync(() => cache.list().toList()), isEmpty);
+      await finish(tester);
+    },
+  );
+  testWidgets(
     'an exported file is reported successful even if recording metadata fails',
     (tester) async {
       await host(tester);
@@ -520,6 +591,63 @@ void main() {
           expect(tester.takeException(), isNull);
           await tap(tester, const ValueKey('backup-cache-inspect'));
           expect(tester.takeException(), isNull);
+          await finish(tester);
+        },
+      );
+    }
+  }
+  for (final locale in ['zh', 'en', 'ja']) {
+    for (final brightness in [Brightness.light, Brightness.dark]) {
+      testWidgets(
+        'history fits $locale $brightness large text and scrolls to oldest export',
+        (tester) async {
+          Object? history;
+          for (var day = 1; day <= 20; day++) {
+            history = BackupExportHistory.prepend({
+              'name': '${'较长的备份名称' * 8}-$day.dfbackup',
+              'at': DateTime(2030, 1, day).toIso8601String(),
+              'location': '/synthetic/export-$day.dfbackup',
+            }, history);
+          }
+          await tester.runAsync(
+            () => h.container
+                .read(workspaceDraftsProvider.notifier)
+                .put('lastPortableBackup', history),
+          );
+          final before = await tester.runAsync(h.drafts);
+          await host(
+            tester,
+            width: brightness == Brightness.dark ? 320 : 768,
+            locale: locale,
+            scale: 2,
+            brightness: brightness,
+          );
+          await tap(tester, const ValueKey('backup-history'));
+          expect(tester.takeException(), isNull);
+          final dialog = find.byKey(const ValueKey('backup-history-dialog'));
+          await tester.scrollUntilVisible(
+            find.byKey(const ValueKey('backup-history-entry-19')),
+            300,
+            scrollable: find
+                .descendant(of: dialog, matching: find.byType(Scrollable))
+                .first,
+            maxScrolls: 60,
+          );
+          await tester.pumpAndSettle();
+          expect(
+            find.byKey(const ValueKey('backup-history-entry-19')).hitTestable(),
+            findsOneWidget,
+          );
+          await tester.tap(
+            find.byKey(const ValueKey('backup-history-entry-19')),
+          );
+          await settle(tester);
+          expect(
+            find.textContaining('/synthetic/export-1.dfbackup'),
+            findsOneWidget,
+          );
+          expect(tester.takeException(), isNull);
+          expect(await tester.runAsync(h.drafts), before);
           await finish(tester);
         },
       );
