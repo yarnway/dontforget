@@ -1,0 +1,93 @@
+{
+  "host": "Windows",
+  "user_target": "iPhone 15 Pro Max",
+  "apple_account": "free_personal_team",
+  "usb_observation": {
+    "schema": 1,
+    "checkedAt": "2026-11-15T03:17:57.878589+00:00",
+    "readOnly": true,
+    "collectionStatus": "COLLECTED",
+    "hostSystem": "Windows",
+    "installationStatus": "BLOCKED",
+    "runtimeAcceptance": "NOT_PERFORMED",
+    "pairing": "NOT_VERIFIED",
+    "developerMode": "NOT_VERIFIED",
+    "boundary": "USB device metadata does not prove pairing, Developer Mode, a matching provisioning profile or an installed runnable app.",
+    "toolchain": {
+      "xcodeVersion": null,
+      "xcodeBuild": null,
+      "iPhoneOSSDK": null,
+      "devicectlAvailable": false
+    },
+    "signing": {
+      "identityQuery": "UNAVAILABLE",
+      "validDevelopmentIdentities": null,
+      "matchingProvisioningProfile": "NOT_VERIFIED"
+    },
+    "usbDevices": [
+      {
+        "connection": "USB",
+        "details": "READ",
+        "ProductType": "iPhone16,2",
+        "ProductVersion": "27.2.1",
+        "BuildVersion": "24B156"
+      }
+    ],
+    "blockers": [
+      "MACOS_BUILD_HOST_REQUIRED",
+      "FULL_XCODE_UNAVAILABLE",
+      "IPHONEOS_SDK_UNAVAILABLE",
+      "DEVICECTL_UNAVAILABLE",
+      "SIGNING_QUERY_UNAVAILABLE"
+    ]
+  },
+  "script_sha256": "83349bcceeb4f295b0bbec27abcb1ad4b88f1548347a4c9a44effc4f68db41c0",
+  "local_python_tests": {
+    "linux": {
+      "run": 175,
+      "skipped": 4,
+      "log_sha256": "3d3e39ff7750e6d24a4fc682e430ae6524dcd582a924fc761237db4fac8c9db8"
+    },
+    "windows": {
+      "run": 175,
+      "skipped": 6,
+      "log_sha256": "983695cd3e62de3162b666019ac72b21bd1bf7c5d773f32a64fa83043e40a974"
+    }
+  },
+  "app_fixed_ci_source": "72a7080d39adcf3ade2319c2c3ee56b302f54c86",
+  "app_fixed_ci": 43669528199,
+  "preflight_changes_fixed_ci": "not_yet_run",
+  "source_ipa": {
+    "source": "72a7080d39adcf3ade2319c2c3ee56b302f54c86",
+    "run_id": 43669528199,
+    "artifact_id": 14144296945,
+    "artifact_sha256": "sha256:5c4e81499b7fdbeca898890a99d19689ac8554d4905bd4baac54099f0e0b79a8",
+    "ipa": "build\\stage117\\ios-candidate\\DontForget_iOS_unsigned_v1.8.10.ipa",
+    "ipa_sha256": "3a7202552fd078292412e594cb57ba4fc59e70b3db46c80a12c966dc90661d00",
+    "ipa_bytes": 11314521,
+    "unsigned": true,
+    "host_bundle": "com.yarnway.dontforget",
+    "extension_bundle": "com.yarnway.dontforget.ReminderActivity",
+    "version": "1.8.10+79",
+    "minimum_ios": "15.0",
+    "embedded_profiles": 0,
+    "installed": false,
+    "signing_performed": false,
+    "crc_and_source_manifest_verified": true
+  },
+  "sdk_recovery": {
+    "caused_by_this_task": true,
+    "original_windows_dart_restored": true,
+    "file_digests_verified": 1040,
+    "flutter": "3.47.2",
+    "dart": "3.13.2",
+    "new_sdk_downloaded_for_recovery": false,
+    "project_dependencies_changed": false,
+    "lockfile_changed": false,
+    "restored_version_log_sha256": "92c2eedebd79cd1f66f0824df801faf78dd1fab0f95d74fe502d623007a79748"
+  },
+  "third_party_installer_used": false,
+  "apple_login_performed": false,
+  "iphone_app_installed": false,
+  "runtime_acceptance": "NOT_PERFORMED"
+}

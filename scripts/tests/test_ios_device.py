@@ -66,7 +66,66 @@ def runner(outputs=None):
     return run
 
 
+@patch.object(ios.platform, 'system', lambda: 'Darwin')
 class IOSPreflightTest(unittest.TestCase):
+    def test_windows_transport_is_bounded_loopback_only(self):
+        connection = object()
+        with patch.object(ios.platform, 'system', return_value='Windows'), \
+                patch.object(ios.socket, 'create_connection', return_value=connection) as connect, \
+                patch.object(ios.socket, 'socket') as unix:
+            self.assertIs(ios.connect_mux(), connection)
+        connect.assert_called_once_with(('127.0.0.1', 27015), timeout=5)
+        unix.assert_not_called()
+
+    def test_mac_transport_closes_after_connection_failure(self):
+        with patch.object(ios.socket, 'AF_UNIX', 1, create=True), \
+                patch.object(ios.socket, 'socket') as factory:
+            connection = factory.return_value
+            connection.connect.side_effect = OSError(SECRET)
+            with self.assertRaises(OSError):
+                ios.connect_mux()
+        connection.settimeout.assert_called_once_with(5)
+        connection.connect.assert_called_once_with('/var/run/usbmuxd')
+        connection.close.assert_called_once()
+
+    def test_windows_usb_details_never_satisfy_the_build_gate(self):
+        def forbidden(*args, **kwargs):
+            self.fail('Windows must not launch macOS tool commands')
+        with patch.object(ios.platform, 'system', return_value='Windows'):
+            result = ios.collect(forbidden, lambda: [DEVICE])
+        self.assertEqual(result['hostSystem'], 'Windows')
+        self.assertEqual(result['usbDevices'], [DEVICE])
+        self.assertEqual(result['installationStatus'], 'BLOCKED')
+        self.assertEqual(result['runtimeAcceptance'], 'NOT_PERFORMED')
+        self.assertIn('MACOS_BUILD_HOST_REQUIRED', result['blockers'])
+        self.assertEqual(result['pairing'], 'NOT_VERIFIED')
+        self.assertEqual(result['developerMode'], 'NOT_VERIFIED')
+        self.assertNotIn(SECRET, json.dumps(result))
+
+    def test_windows_cli_writes_metadata_but_returns_blocked(self):
+        original_collect = ios.collect
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / 'windows.json'
+            with patch.object(ios.platform, 'system', return_value='Windows'), \
+                    patch.object(ios, 'collect', side_effect=lambda: original_collect(
+                        devices=lambda: [DEVICE])), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(ios.main(['--output', str(target)]), 2)
+            result = json.loads(target.read_text())
+            self.assertEqual(result['usbDevices'], [DEVICE])
+            self.assertEqual(result['hostSystem'], 'Windows')
+            self.assertEqual(result['installationStatus'], 'BLOCKED')
+
+    def test_unsupported_host_cannot_write_a_report(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / 'unsupported.json'
+            with patch.object(ios.platform, 'system', return_value='Linux'), \
+                    patch.object(ios, 'collect') as collect, \
+                    contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+                ios.main(['--output', str(target)])
+            collect.assert_not_called()
+            self.assertFalse(target.exists())
+
     def test_fragmented_usb_frames_and_only_allowlisted_read_requests(self):
         initial = Connection(mux_frame(inventory()))
         detail = Connection(mux_frame({'Number': 0}) + b''.join(

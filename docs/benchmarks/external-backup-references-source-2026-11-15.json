@@ -1,0 +1,21 @@
+{
+  "source_commit": "72a7080d39adcf3ade2319c2c3ee56b302f54c86",
+  "feature_commit": "79e07b9",
+  "runtime_lib_tree": "0b85d48fbffc38d4f8f2230e25520a524953ac87",
+  "local_sdk": "3.47.2",
+  "related_files": 5,
+  "related_passed": 140,
+  "related_skipped": 3,
+  "analyze_issues": 0,
+  "log_hashes": {
+    "final-tests-rerun.log": "f48f8a5f33076ce068d167b1ad647e688a7014095be3e32e3926033cb5627477",
+    "analyze-final.log": "e1cef5276576c5939cc1866a799779cfa3ad749d98d658acdd232ce0ee147a32",
+    "analyze-fixture-final.log": "1eebfa818623bd7e2309111e248304afce9bf0f4b1b980ecc12a745b1358a560"
+  },
+  "fixed_ci": "github-ci-external-backup-references-2026-11-15.json",
+  "native_receipt": "external-backup-references-native-2026-11-15.json",
+  "new_release_published": false,
+  "ordinary_new_version_upgrade_performed": false,
+  "schema": 17,
+  "new_dependencies": false
+}

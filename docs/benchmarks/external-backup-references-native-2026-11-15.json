@@ -1,0 +1,48 @@
+{
+  "passed": true,
+  "package": "com.yarnway.dontforget.acceptance.refs20261115",
+  "synthetic_data_only": true,
+  "native_saf_json": true,
+  "cancel_and_confirmation": true,
+  "cold_reopen": true,
+  "external_copy_moved": true,
+  "protected_original_bytes": true,
+  "explicit_removal_only_changes_registry": true,
+  "ordinary_installations_untouched": true,
+  "input_settings_unchanged": true,
+  "cleanup_complete": true,
+  "real_notifications_tested": false,
+  "desktop_gui_tested": false,
+  "framework_errors": [],
+  "source_commit": "72a7080d39adcf3ade2319c2c3ee56b302f54c86",
+  "runtime_lib_tree": "0b85d48fbffc38d4f8f2230e25520a524953ac87",
+  "local_flutter": "3.47.2",
+  "device": "Pixel 8 Pro",
+  "android": "17 / API37",
+  "fixture_package": {
+    "package": "com.yarnway.dontforget.acceptance.refs20261115",
+    "version": "1.8.10+79",
+    "private_fixture": true,
+    "synthetic_only": true,
+    "sha256": "44411a3b662f690c4b41cf156651eac0592a8e2ff3dee7a882f7b3461bd0be70",
+    "bytes": 98184990
+  },
+  "initial_counts": {
+    "reminders": 1,
+    "media_records": 1,
+    "settings": 1
+  },
+  "final_counts": {
+    "reminders": 1,
+    "media_records": 1,
+    "settings": 1
+  },
+  "new_ordinary_version_installed": false,
+  "fixture_missing_timestamp_rejection_preserved": true,
+  "driver_navigation_and_indexing_failures_preserved": true,
+  "fixture_source_sha256": "586e9de50d9581ee2d587a8394e8a909c7894d5adade9cacb41fce725ada6e57",
+  "log_hashes": {
+    "native-acceptance-final.log": "307e7b87a120425b156f4e226bf77c43ecb78ca50986ebfd38cd0026df47d35a",
+    "native-acceptance-final-resume.log": "3f699dc36f671bf701a4ad9f735445b69408c298e5778a1a9a0c4843ca6a87d1"
+  }
+}

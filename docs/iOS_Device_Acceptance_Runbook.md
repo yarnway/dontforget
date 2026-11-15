@@ -1,8 +1,23 @@
 # iOS 真机验收 Runbook（iPhone 15 Pro Max）
 
-> 本文件给出 iOS 真机验收的可执行步骤。**iOS 构建与安装只能在 macOS + Xcode 上完成**；当前开发机为 Windows，Flutter 无法把应用安装到已连接的 iPhone，因此本文是"待 Mac 可用时一次跑完"的清单，不代表已执行。
+> 本文件给出 iOS 真机验收的可执行步骤。原生编译需要 macOS + Xcode，可使用仓库现有云端Mac；当前Windows可继续开发共用源码、取得CI未签名候选并只读识别USB手机。免费账号的Windows个人重签侧载另行验证，不能据此宣称已安装或运行通过。工具链要求见 [Apple Xcode 支持表](https://developer.apple.com/xcode/system-requirements/)。
 >
 > 数据与证据口径沿用[发布验收总表](Release_Acceptance_v1.7.md)、[发布策略](Release_Policy.md)与[手动续行检查点](Task_Resume_Checkpoint.md)。
+
+## 2026-11-15 当前 Windows／iPhone 状态
+
+用户已连接 iPhone 15 Pro Max，并确认当前只有 Windows、免费Apple开发者账号。Windows 设备枚举状态正常；只读 USB 协议读回 `iPhone16,2`／iOS `27.2.1`／`24B156`。只查询型号、系统版本与构建号，不读取序列号、设备名称或配对密钥，不发起配对、不安装应用、不访问业务数据。
+
+已补 Windows 原生 Python 入口，使用本机 Apple USB 服务。输出中设备识别与Xcode开发门槛分别记录：Windows 始终保留 `MACOS_BUILD_HOST_REQUIRED`，配对／开发者模式及匹配描述文件仍未验证，运行验收为 `NOT_PERFORMED`。此状态不认证第三方重签方式。
+
+```powershell
+# 在仓库根目录用 Windows Python；输出必须是新的私有文件。
+py -3 scripts/check_ios_device.py --output build/ios-preflight-windows-private.json
+# 当前退出码2表示构建条件未满足；同时查看 usbDevices 与 blockers。
+# 不覆盖已有报告，不读取／更改配对记录。
+```
+
+若 USB 元数据不可用，报告为不完整，不能当作“未连接”。先按 [Apple 的 Windows 识别说明](https://support.apple.com/en-gb/108643)核对 USB、Apple Devices 与手机信任提示；脚本不自动安装驱动或更改信任。当前实测与脚本回归见[记录](iOS_Windows_Preflight_2026-11-15.md)。
 
 ## 1. 前置条件
 
@@ -19,7 +34,8 @@
 
 ```bash
 # 1) 只读预检：设备可见、签名条件
-python3 scripts/check_ios_device.py            # 退出码 0 仅表示 REQUIRES_SIGNED_INSTALL
+python3 scripts/check_ios_device.py --output build/ios-preflight-macos-private.json
+# 退出码0仅表示REQUIRES_SIGNED_INSTALL，不代表已安装或运行。
 
 # 2) 从固定提交导出干净副本
 git archive <commit> | tar -x -C <clean-dir>
@@ -56,7 +72,7 @@ CI 复用：`gh run download <run-id> -n ios-deliverables`，用 `scripts/verify
 | # | 项目 | 判定标准 | 证据 |
 | --- | --- | --- | --- |
 | 1 | 安装与首启 | 独立身份安装成功，首启进入空工作台 | 截图 + `devicectl` 元数据 |
-| 2 | 同身份升级 | 安装前后 Documents 逐字节一致，schema 16、integrity ok | 前后快照摘要 |
+| 2 | 同身份升级 | 升级前先保全最新数据；核对全部业务字段、原件、实际凭据、当前schema17及integrity，再冷重开读回；设备偏好与迁移引起的预期差异单列 | 前后快照摘要与逐字段比较 |
 | 3 | 通知热点击 | 应用在前台时点击通知，打开对应事项 | 截图 + 系统日志 `Received response` |
 | 4 | 通知冷点击 | 终止进程后点击通知，新进程打开对应事项 | 进程/PID + 截图 |
 | 5 | 动作菜单 | 周期 4 项（完成本次/15 分钟/1 小时/跳过本次）、非周期 3 项 | 截图（中英日各一次） |

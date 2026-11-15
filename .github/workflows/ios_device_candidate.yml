@@ -1,0 +1,130 @@
+name: iPhone isolated unsigned candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_revision:
+        description: Full SHA with a successful Multi-Platform Build & Verify run
+        required: true
+        default: 72a7080d39adcf3ade2319c2c3ee56b302f54c86
+        type: string
+      run_id:
+        description: Independent lowercase acceptance identity (1-48 characters)
+        required: true
+        default: iphone15-20261115
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  candidate:
+    runs-on: macos-15
+    timeout-minutes: 35
+    env:
+      FLUTTER_VERSION: '3.44.9'
+      DF_SOURCE_REVISION: ${{ inputs.source_revision }}
+      DF_IOS_RUN_ID: ${{ inputs.run_id }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.source_revision }}
+          persist-credentials: false
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+      - name: Require the exact source and successful fixed-SDK CI
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPOSITORY: ${{ github.repository }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re, subprocess, urllib.request
+          revision = os.environ['DF_SOURCE_REVISION']
+          run_id = os.environ['DF_IOS_RUN_ID']
+          if not re.fullmatch(r'[0-9a-f]{40}', revision):
+              raise SystemExit('A full lowercase source SHA is required')
+          if not re.fullmatch(r'[a-z0-9][a-z0-9-]{0,47}', run_id):
+              raise SystemExit('Invalid acceptance run ID')
+          actual = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          if actual != revision:
+              raise SystemExit('Checkout does not match the requested source')
+          url = ('https://api.github.com/repos/' + os.environ['GH_REPOSITORY'] +
+                 '/actions/workflows/build_and_release.yml/runs?head_sha=' + revision +
+                 '&status=completed&per_page=100')
+          request = urllib.request.Request(url, headers={
+              'Authorization': 'Bearer ' + os.environ['GH_TOKEN'],
+              'Accept': 'application/vnd.github+json',
+              'User-Agent': 'DontForget-iPhone-candidate',
+          })
+          try:
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  runs = json.load(response)['workflow_runs']
+          except Exception:
+              raise SystemExit('Unable to verify source CI; no candidate built') from None
+          if not any(r['head_sha'] == revision and r['conclusion'] == 'success' for r in runs):
+              raise SystemExit('The requested source has no successful fixed-SDK CI run')
+          print('Source CI verified; no Apple credentials used')
+          PY
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: Prepare a separate host and Live Activity identity
+        run: |
+          mkdir -p build
+          python3 - <<'PY'
+          import json, os, sys
+          from pathlib import Path
+          sys.path.insert(0, 'scripts')
+          from prepare_ios_acceptance import prepare
+          result = prepare(Path.cwd(), os.environ['DF_IOS_RUN_ID'])
+          Path('build/ios-device-preparation.json').write_text(json.dumps(result, indent=2) + '\n')
+          PY
+          python3 scripts/check_flutter_version.py --strict
+      - name: Build and verify the unsigned IPA
+        run: |
+          bash scripts/build_ios.sh
+          python3 scripts/verify_artifacts.py dist --platform ios --revision "$DF_SOURCE_REVISION"
+      - name: Verify the actual IPA identities and write the receipt
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os, plistlib, zipfile
+          from pathlib import Path
+          manifest = json.loads(Path('dist/ios-manifest.json').read_text())
+          if manifest['revision'] != os.environ['DF_SOURCE_REVISION'] or manifest['signing'] != 'unsigned':
+              raise SystemExit('Candidate provenance mismatch')
+          ipa = Path('dist') / manifest['artifacts'][0]['file']
+          identity = 'com.yarnway.dontforget.acceptance.' + os.environ['DF_IOS_RUN_ID']
+          with zipfile.ZipFile(ipa) as archive:
+              if archive.testzip() is not None:
+                  raise SystemExit('IPA CRC failure')
+              host = plistlib.loads(archive.read('Payload/Runner.app/Info.plist'))
+              extension = plistlib.loads(archive.read('Payload/Runner.app/PlugIns/ReminderActivity.appex/Info.plist'))
+              if host['CFBundleIdentifier'] != identity or extension['CFBundleIdentifier'] != identity + '.ReminderActivity':
+                  raise SystemExit('Candidate is not isolated')
+              if host['CFBundleVersion'] != extension['CFBundleVersion'] or host['CFBundleShortVersionString'] != extension['CFBundleShortVersionString']:
+                  raise SystemExit('Host and extension versions differ')
+              if any(n.endswith('embedded.mobileprovision') for n in archive.namelist()):
+                  raise SystemExit('Unexpected provisioning profile in unsigned candidate')
+          receipt = {
+              'source_revision': os.environ['DF_SOURCE_REVISION'],
+              'run_id': os.environ['DF_IOS_RUN_ID'],
+              'host_bundle': identity,
+              'extension_bundle': identity + '.ReminderActivity',
+              'version': host['CFBundleShortVersionString'] + '+' + host['CFBundleVersion'],
+              'ipa_sha256': hashlib.sha256(ipa.read_bytes()).hexdigest(),
+              'signing': 'unsigned', 'installed': False, 'runtime_acceptance': 'NOT_PERFORMED',
+              'apple_credentials_used': False,
+              'prepared_files': json.loads(Path('build/ios-device-preparation.json').read_text()),
+          }
+          Path('dist/ios-device-receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
+          print(json.dumps({k: v for k, v in receipt.items() if k != 'prepared_files'}))
+          PY
+      - uses: actions/upload-artifact@v6
+        with:
+          name: ios-device-${{ inputs.run_id }}
+          path: dist/*
+          if-no-files-found: error

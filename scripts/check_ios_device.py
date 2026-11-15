@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Read-only iOS installation prerequisites; never pair, sign, install or certify a device."""
+"""Read-only iPhone USB metadata and iOS prerequisites on macOS or Windows.
+
+Never pair, sign, install or certify a device. Windows can observe an attached
+iPhone through Apple's local USB service, but cannot satisfy the Xcode gate.
+"""
 
 import argparse
 from datetime import datetime, timezone
@@ -48,6 +52,10 @@ def mux_request(connection, message):
 
 
 def connect_mux():
+    if platform.system() == 'Windows':
+        # Apple's Windows USB service exposes the same protocol on loopback.
+        # Do not follow environment overrides to remote hosts or pairing stores.
+        return socket.create_connection(('127.0.0.1', 27015), timeout=5)
     connection = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     try:
         connection.settimeout(5)
@@ -118,20 +126,25 @@ def command_output(arguments, run):
 
 
 def collect(run=subprocess.run, devices=usb_devices):
+    host = platform.system()
     result = {
         'schema': 1, 'checkedAt': datetime.now(timezone.utc).isoformat(),
         'readOnly': True, 'collectionStatus': 'COLLECTED',
+        'hostSystem': host,
         'installationStatus': 'BLOCKED', 'runtimeAcceptance': 'NOT_PERFORMED',
         'pairing': 'NOT_VERIFIED', 'developerMode': 'NOT_VERIFIED',
         'boundary': ('USB device metadata does not prove pairing, Developer Mode, '
                      'a matching provisioning profile or an installed runnable app.'),
     }
-    xcode = command_output(['/usr/bin/xcodebuild', '-version'], run)
+    def mac_command(arguments):
+        return command_output(arguments, run) if host == 'Darwin' else None
+
+    xcode = mac_command(['/usr/bin/xcodebuild', '-version'])
     match = re.fullmatch(r'Xcode ([0-9.]+)\nBuild version ([A-Za-z0-9]+)\s*', xcode or '')
-    sdk = command_output(['/usr/bin/xcrun', '--sdk', 'iphoneos', '--show-sdk-version'], run)
+    sdk = mac_command(['/usr/bin/xcrun', '--sdk', 'iphoneos', '--show-sdk-version'])
     sdk_version = sdk.strip() if sdk and re.fullmatch(r'[0-9.]+\s*', sdk) else None
-    devicectl = command_output(['/usr/bin/xcrun', '--find', 'devicectl'], run)
-    identities = command_output(['/usr/bin/security', 'find-identity', '-v', '-p', 'codesigning'], run)
+    devicectl = mac_command(['/usr/bin/xcrun', '--find', 'devicectl'])
+    identities = mac_command(['/usr/bin/security', 'find-identity', '-v', '-p', 'codesigning'])
     identity_names = re.findall(r'^\s*\d+\)\s+[A-Fa-f0-9]{40}\s+"([^"]+)"',
                                 identities or '', re.M)
     development_count = sum(name.startswith(('Apple Development:', 'iPhone Developer:'))
@@ -149,6 +162,8 @@ def collect(run=subprocess.run, devices=usb_devices):
         'matchingProvisioningProfile': 'NOT_VERIFIED',
     }
     blockers = []
+    if host != 'Darwin':
+        blockers.append('MACOS_BUILD_HOST_REQUIRED')
     if not match:
         blockers.append('FULL_XCODE_UNAVAILABLE')
     if not sdk_version:
@@ -179,8 +194,8 @@ def main(argv=None):
     parser.add_argument('--output', type=Path, required=True,
                         help='New private JSON report; never overwrite existing evidence')
     args = parser.parse_args(argv)
-    if platform.system() != 'Darwin':
-        parser.error('This read-only preflight requires macOS')
+    if platform.system() not in ('Darwin', 'Windows'):
+        parser.error('This read-only preflight requires macOS or native Windows Python')
     try:
         fd = os.open(args.output, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     except OSError as error:
