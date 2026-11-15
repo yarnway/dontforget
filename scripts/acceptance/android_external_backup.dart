@@ -103,6 +103,7 @@ Future<void> main() async {
       database.captureGeneration(),
       (db) async => {
         'version': DatabaseHelper.schemaVersion,
+        'timestamp': null,
         'settings': await db.query('Settings'),
         'reminders': await db.query('Reminders'),
         'media_records': await db.query('MediaRecords'),
