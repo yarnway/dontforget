@@ -12,16 +12,22 @@
 
 全量脚本首次误触共享SDK的Linux入口，造成Dart缓存平台替换，失败日志与Linux缓存已保全。随后从保留的Windows目录恢复，1040文件摘要前后相同；原生读回Flutter3.47.2／Dart3.13.2，未升级SDK、修改项目依赖或锁文件。恢复后的双平台全量175项结果与iPhone只读预检分别记录，不用前一失败轮次冒充通过。
 
+本轮工具／工作流源码50d32b1的[最终固定SDK CI43673926065](https://github.com/yarnway/dontforget/actions/runs/43673926065)七项成功：Linux Flutter2609通过／2跳过、Python175运行／4跳过；Windows Flutter2591通过／20跳过、Python175运行／6跳过。五份普通候选artifact来源与摘要元数据已核对，未新做普通候选完整字节／本机覆盖升级或发行；iOS独立IPA另按下一节核对。[CI记录](benchmarks/github-ci-ios-windows-preflight-2026-11-15.json)。恢复后另用Windows Flutter实际运行4项模型测试通过。
+
 ## 编译、签名与安装分别记录
 
 应用运行时代码仍为72a7080／lib树0b85d48；[固定SDK CI](https://github.com/yarnway/dontforget/actions/runs/43669528199)七项成功，其中iOS为未签名IPA。其11,314,521字节IPA已下载，artifact SHA／CRC、源码清单、IPA摘要、主应用及ReminderActivity扩展版本／身份均核对，最低iOS15，未嵌入描述文件。原始身份`com.yarnway.dontforget`，不直接作为覆盖手机既有应用的依据。
 
-增加手动工作流`ios_device_candidate.yml`：仅接受完整源码SHA及独立run-id，先要求该源码固定SDK CI成功，再在云端Mac中使用既有准备脚本改写主应用／扩展身份，固定Flutter3.44.9构建。校验实际IPA内身份、版本、CRC及无描述文件，输出准备文件摘要与独立回执。只读GitHub权限、不使用Apple凭据、不发布Release。独立候选构建／下载结果继续补充；不等同于签名安装或真机运行。
+增加手动工作流`ios_device_candidate.yml`：仅接受完整源码SHA及独立run-id，先要求该源码固定SDK CI成功，再在云端Mac中使用既有准备脚本改写主应用／扩展身份，固定Flutter3.44.9构建。校验实际IPA内身份、版本、CRC及无描述文件，输出准备文件摘要与独立回执。只读GitHub权限、不使用Apple凭据、不发布Release。
+
+独立[云端构建43673964163](https://github.com/yarnway/dontforget/actions/runs/43673964163)成功：工作流源码50d32b1、应用源72a7080，主应用为`com.yarnway.dontforget.acceptance.iphone15-20261115`，扩展为其`.ReminderActivity`。11,314,833字节IPA已下载，artifact SHA、外层ZIP／IPA CRC、来源清单、准备文件哈希、实际主／扩展身份与79版本及无描述文件核对通过；保留原包并提供带身份名称的本机副本。[候选证据](benchmarks/ios-isolated-candidate-2026-11-15.json)。仍为未签名候选，不等同于签名安装或真机运行。
 
 ## 免费账号与后续安装
 
 [Apple官方说明](https://developer.apple.com/help/account/basics/about-your-developer-account)允许免费Personal Team在个人设备测试，但描述文件7天到期，另有设备／App ID／应用数量限制；当前免费账号不能据此当作已具备TestFlight分发条件。
 
-[AltServer官方说明](https://github.com/altstoreio/FAQ/blob/main/release-notes/altserver.md)提供Windows直接侧载IPA的入口，需本机账号认证并定期重签；官方安装说明见[Windows指南](https://github.com/altstoreio/FAQ/blob/main/altstore-world/how-to-install-altstore-windows.md)。本轮未安装第三方签名软件、未登录Apple账号，也未验证其在iOS27.2.1上的兼容性。不会把Apple密码、验证码或签名私钥写入聊天、日志、仓库或CI。
+[AltServer官方说明](https://github.com/altstoreio/FAQ/blob/main/release-notes/altserver.md)提供Windows直接侧载IPA的入口，需本机账号认证并定期重签；官方安装说明见[Windows指南](https://github.com/altstoreio/FAQ/blob/main/altstore-world/how-to-install-altstore-windows.md)。用户已明确选择继续采用AltServer，随后从官方CDN取得安装包，MSI版本1.8.04／主程序1.8.4.0。安装器及主程序Authenticode均为NotSigned，不把制造商文本当作签名认证；官方来源与完整摘要已保全。非交互安装至本机`LOCALAPPDATA/Programs/AltServer`返回0、不重启，MSI清单31项／27个唯一文件与源字节一致，程序已启动。未修改现有Apple组件或Windows安全设置。
 
-接下来核对独立IPA与本机侧载工具／手机已有身份，用户在本机完成账号登录和授权后，才能尝试签名及独立安装。先做首启、正常重开、基础输入／附件／备份，再做通知热冷点击、录音与灵动岛；数据保全与未知现有身份保护沿用[Runbook](iOS_Device_Acceptance_Runbook.md)。现阶段没有iPhone安装、升级或运行通过证据。
+computer-use按技能读取并初始化后仍在窗口发现前报`sandboxCwd is not a local file URI: file:///mnt/d/gitspace/opensources/dontforget`，未用PowerShell UIA替代。进程启动不计为GUI通过；账号认证必须由用户本人在本机完成，目前未登录Apple账号、未签名／安装手机应用，也未验证其在iOS27.2.1上的侧载兼容性。安装后只读USB元数据仍保持。不会把Apple密码、验证码或签名私钥写入聊天、日志、仓库或CI。[本机分层证据](benchmarks/ios-windows-preflight-2026-11-15.json)。
+
+接下来由用户确认托盘／依赖提示并在本机完成账号认证，再核对手机已有身份后尝试签名及独立安装。先做首启、正常重开、基础输入／附件／备份，再做通知热冷点击、录音与灵动岛；数据保全与未知现有身份保护沿用[Runbook](iOS_Device_Acceptance_Runbook.md)。现阶段没有iPhone安装、升级或运行通过证据。

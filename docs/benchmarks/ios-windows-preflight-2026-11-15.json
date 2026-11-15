@@ -56,7 +56,12 @@
   },
   "app_fixed_ci_source": "72a7080d39adcf3ade2319c2c3ee56b302f54c86",
   "app_fixed_ci": 43669528199,
-  "preflight_changes_fixed_ci": "not_yet_run",
+  "preflight_changes_fixed_ci": {
+    "source": "50d32b19acd1649fd8a72cd2c193b6899edca34b",
+    "id": 43673926065,
+    "conclusion": "success",
+    "receipt": "github-ci-ios-windows-preflight-2026-11-15.json"
+  },
   "source_ipa": {
     "source": "72a7080d39adcf3ade2319c2c3ee56b302f54c86",
     "run_id": 43669528199,
@@ -84,10 +89,117 @@
     "new_sdk_downloaded_for_recovery": false,
     "project_dependencies_changed": false,
     "lockfile_changed": false,
-    "restored_version_log_sha256": "92c2eedebd79cd1f66f0824df801faf78dd1fab0f95d74fe502d623007a79748"
+    "restored_version_log_sha256": "92c2eedebd79cd1f66f0824df801faf78dd1fab0f95d74fe502d623007a79748",
+    "flutter_smoke_passed": 4,
+    "flutter_smoke_log_sha256": "ba8012ac3e9b89f9ef551dc55b5284cbca2f9b3cf6450bcd4243e19623c18560"
   },
-  "third_party_installer_used": false,
+  "third_party_installer_used": true,
   "apple_login_performed": false,
   "iphone_app_installed": false,
-  "runtime_acceptance": "NOT_PERFORMED"
+  "runtime_acceptance": "NOT_PERFORMED",
+  "isolated_candidate": {
+    "workflow_revision": "50d32b19acd1649fd8a72cd2c193b6899edca34b",
+    "source_revision": "72a7080d39adcf3ade2319c2c3ee56b302f54c86",
+    "id": 43673964163,
+    "url": "https://github.com/yarnway/dontforget/actions/runs/43673964163",
+    "conclusion": "success",
+    "artifact": {
+      "id": 14145601480,
+      "name": "ios-device-iphone15-20261115",
+      "size_in_bytes": 11269732,
+      "digest": "sha256:053607e3533a96d5757d99adda57f6b85b52d16ae48ebed7115b35029fe50f66"
+    },
+    "receipt": {
+      "source_revision": "72a7080d39adcf3ade2319c2c3ee56b302f54c86",
+      "run_id": "iphone15-20261115",
+      "host_bundle": "com.yarnway.dontforget.acceptance.iphone15-20261115",
+      "extension_bundle": "com.yarnway.dontforget.acceptance.iphone15-20261115.ReminderActivity",
+      "version": "1.8.10+79",
+      "ipa_sha256": "ef56432557aefa7a8b9dcd01f03f91651eb4213bdbd8a9c9c040aa68e771c3d3",
+      "signing": "unsigned",
+      "installed": false,
+      "runtime_acceptance": "NOT_PERFORMED",
+      "apple_credentials_used": false,
+      "prepared_files": {
+        "schema": 1,
+        "action": "prepare",
+        "run_id": "iphone15-20261115",
+        "host_bundle_id": "com.yarnway.dontforget.acceptance.iphone15-20261115",
+        "widget_bundle_id": "com.yarnway.dontforget.acceptance.iphone15-20261115.ReminderActivity",
+        "dry_run": false,
+        "files": {
+          "project.pbxproj": {
+            "original_sha256": "082d90f4e4d4f4a8d4565d4f31d588160bc485348a9923647221497adbc1a75c",
+            "prepared_sha256": "8944851cad3194c931c4a32ee14f56d067c73864b104aeae6a56234db4804afa",
+            "changed": true
+          },
+          "Info.plist": {
+            "original_sha256": "fb61ce9bec7d804dd7967fd86e733c08db2305eb3361cd0feace839a4e3dca85",
+            "prepared_sha256": "623bca8053e82238a9b0ea5c9013c4251cd2ce9c18aee2568e59be0b2ce95190",
+            "changed": true
+          }
+        }
+      }
+    },
+    "local_ipa": "build\\stage117\\ios-device-candidate\\DontForget_iOS_iphone15-20261115_unsigned_v1.8.10+79.ipa",
+    "bytes": 11314833,
+    "source_archive_and_ipa_digest_verified": true,
+    "zip_crc_verified": true,
+    "host_and_extension_ids_verified": true,
+    "installed": false,
+    "signed": false
+  },
+  "altserver_preparation": {
+    "user_authorized": true,
+    "source_url": "https://cdn.altstore.io/file/altstore/altinstaller.zip",
+    "version": "1.8.04",
+    "exe_version": "1.8.4.0",
+    "installer_sha256": "882df794d5d718f4ac75f741cd63acf61915b2266a27c2fc3a9767be8fc984e2",
+    "installer_zip_sha256": "8fb13d744447a04225f96534f6c0e73a8e4b6e03b9b23fb9c5927689893b3a4d",
+    "installer_authenticode": "NotSigned",
+    "main_executable_authenticode": "NotSigned",
+    "installation_exit_code": 0,
+    "install_location": "LOCALAPPDATA/Programs/AltServer",
+    "verified_msi_entries": 31,
+    "verified_unique_files": 27,
+    "installed_executable_sha256": "6470ca53d09718593b2e6bda9f7d24dd0fe2d2315a34caf6fb5989565595f44c",
+    "launched": true,
+    "gui_verified": false,
+    "computer_use_error": "sandboxCwd is not a local file URI: file:///mnt/d/gitspace/opensources/dontforget",
+    "apple_account_login_by_agent": false,
+    "ios_app_signed": false,
+    "ios_app_installed": false
+  },
+  "usb_after_altserver": {
+    "schema": 1,
+    "checkedAt": "2026-11-15T04:09:45.552814+00:00",
+    "readOnly": true,
+    "collectionStatus": "INCOMPLETE",
+    "hostSystem": "Windows",
+    "installationStatus": "BLOCKED",
+    "runtimeAcceptance": "NOT_PERFORMED",
+    "pairing": "NOT_VERIFIED",
+    "developerMode": "NOT_VERIFIED",
+    "boundary": "USB device metadata does not prove pairing, Developer Mode, a matching provisioning profile or an installed runnable app.",
+    "toolchain": {
+      "xcodeVersion": null,
+      "xcodeBuild": null,
+      "iPhoneOSSDK": null,
+      "devicectlAvailable": false
+    },
+    "signing": {
+      "identityQuery": "UNAVAILABLE",
+      "validDevelopmentIdentities": null,
+      "matchingProvisioningProfile": "NOT_VERIFIED"
+    },
+    "blockers": [
+      "MACOS_BUILD_HOST_REQUIRED",
+      "FULL_XCODE_UNAVAILABLE",
+      "IPHONEOS_SDK_UNAVAILABLE",
+      "DEVICECTL_UNAVAILABLE",
+      "SIGNING_QUERY_UNAVAILABLE",
+      "USB_INVENTORY_UNAVAILABLE"
+    ]
+  },
+  "user_interaction_pending": "Confirm AltServer tray/dependency prompts and personally authenticate on the local PC"
 }

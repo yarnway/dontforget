@@ -1,0 +1,52 @@
+{
+  "workflow_revision": "50d32b19acd1649fd8a72cd2c193b6899edca34b",
+  "source_revision": "72a7080d39adcf3ade2319c2c3ee56b302f54c86",
+  "id": 43673964163,
+  "url": "https://github.com/yarnway/dontforget/actions/runs/43673964163",
+  "conclusion": "success",
+  "artifact": {
+    "id": 14145601480,
+    "name": "ios-device-iphone15-20261115",
+    "size_in_bytes": 11269732,
+    "digest": "sha256:053607e3533a96d5757d99adda57f6b85b52d16ae48ebed7115b35029fe50f66"
+  },
+  "receipt": {
+    "source_revision": "72a7080d39adcf3ade2319c2c3ee56b302f54c86",
+    "run_id": "iphone15-20261115",
+    "host_bundle": "com.yarnway.dontforget.acceptance.iphone15-20261115",
+    "extension_bundle": "com.yarnway.dontforget.acceptance.iphone15-20261115.ReminderActivity",
+    "version": "1.8.10+79",
+    "ipa_sha256": "ef56432557aefa7a8b9dcd01f03f91651eb4213bdbd8a9c9c040aa68e771c3d3",
+    "signing": "unsigned",
+    "installed": false,
+    "runtime_acceptance": "NOT_PERFORMED",
+    "apple_credentials_used": false,
+    "prepared_files": {
+      "schema": 1,
+      "action": "prepare",
+      "run_id": "iphone15-20261115",
+      "host_bundle_id": "com.yarnway.dontforget.acceptance.iphone15-20261115",
+      "widget_bundle_id": "com.yarnway.dontforget.acceptance.iphone15-20261115.ReminderActivity",
+      "dry_run": false,
+      "files": {
+        "project.pbxproj": {
+          "original_sha256": "082d90f4e4d4f4a8d4565d4f31d588160bc485348a9923647221497adbc1a75c",
+          "prepared_sha256": "8944851cad3194c931c4a32ee14f56d067c73864b104aeae6a56234db4804afa",
+          "changed": true
+        },
+        "Info.plist": {
+          "original_sha256": "fb61ce9bec7d804dd7967fd86e733c08db2305eb3361cd0feace839a4e3dca85",
+          "prepared_sha256": "623bca8053e82238a9b0ea5c9013c4251cd2ce9c18aee2568e59be0b2ce95190",
+          "changed": true
+        }
+      }
+    }
+  },
+  "local_ipa": "build\\stage117\\ios-device-candidate\\DontForget_iOS_iphone15-20261115_unsigned_v1.8.10+79.ipa",
+  "bytes": 11314833,
+  "source_archive_and_ipa_digest_verified": true,
+  "zip_crc_verified": true,
+  "host_and_extension_ids_verified": true,
+  "installed": false,
+  "signed": false
+}

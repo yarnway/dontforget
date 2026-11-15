@@ -112,4 +112,4 @@ CI 复用：`gh run download <run-id> -n ios-deliverables`，用 `scripts/verify
 
 ## 7. 与 Windows 的分工
 
-Windows 侧可验证：构建、UI、快速录入、应用内到期、Windows Toast、托盘、录音、文件对话框、本地数据与备份。iOS 侧必须在 Mac 上验证：签名安装、系统通知与动作、灵动岛、软键盘、麦克风、跨日与 DST。两侧结论分别记录，不互相替代。
+Windows客户端继续验证：构建、UI、快速录入、应用内到期、Toast、托盘、录音、文件对话框、本地数据与备份。Windows主机还可只读识别USB iPhone、取回云端Mac编译的IPA；个人重签侧载按独立流程验证。iOS原生编译及Xcode签名使用Mac（可为云端）；通知与动作、灵动岛、软键盘、麦克风、跨日与DST须在真实iPhone上验收。各主机的工具、包、签名、手机实际运行与数据读回分别记录，不互相替代。
