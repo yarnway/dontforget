@@ -10,6 +10,7 @@ import '../../models/stored_json.dart';
 import '../local_media_store.dart';
 import 'owned_material_activity.dart';
 import 'retained_media_references.dart';
+import 'external_backup_references.dart';
 
 enum ContentEntryKind { record, original, restore }
 
@@ -170,7 +171,11 @@ class ContentCleanupService {
     if (drafts is! Map<String, dynamic>) {
       throw const FormatException('Invalid workspace references');
     }
-    collect(drafts);
+    collect({
+      for (final entry in drafts.entries)
+        if (entry.key != ExternalBackupReferences.storageKey)
+          entry.key: entry.value,
+    });
     final directReferences = Set<String>.of(pathReferences);
     final owned = <String, String>{}, owners = <String, Set<String>>{};
     final resolver = LocalMediaStore(documentsDirectory: () async => documents);
@@ -194,8 +199,19 @@ class ContentCleanupService {
       }
     }
     final retained = await RetainedMediaReferences.read(database);
+    var externalUncertain = false;
+    final externalPaths = <String>{};
+    try {
+      for (final entry in ExternalBackupReferences.read(
+        drafts[ExternalBackupReferences.storageKey],
+      )) {
+        externalPaths.addAll((entry['paths'] as List).cast<String>());
+      }
+    } catch (_) {
+      externalUncertain = true;
+    }
     final backupPaths = <String>{};
-    for (final path in retained.paths) {
+    for (final path in {...retained.paths, ...externalPaths}) {
       backupPaths.add(p.normalize(path));
       final safe = await _owned(await resolver.resolvePath(path), root);
       if (safe != null) backupPaths.add(safe);
@@ -209,7 +225,7 @@ class ContentCleanupService {
       drafts,
       directReferences,
       backupPaths,
-      retained.uncertain,
+      retained.uncertain || externalUncertain,
     );
   }
 
@@ -535,8 +551,9 @@ class ContentCleanupService {
     for (final move in moves.reversed) {
       final from = File(p.join(quarantine.path, move['to'] as String));
       if (!await from.exists()) continue;
-      final relativeFrom =
-          p.joinAll(p.posix.split((move['from'] as String).replaceAll('\\', '/')));
+      final relativeFrom = p.joinAll(
+        p.posix.split((move['from'] as String).replaceAll('\\', '/')),
+      );
       final destination = File(p.join(root, relativeFrom));
       if (await FileSystemEntity.type(destination.path, followLinks: false) !=
           FileSystemEntityType.notFound) {
@@ -614,8 +631,7 @@ class ContentCleanupService {
         ).writeAsString(journalData, flush: true);
         for (final move in moves) {
           check();
-          final relativeFrom =
-              p.joinAll(p.posix.split(move['from'] as String));
+          final relativeFrom = p.joinAll(p.posix.split(move['from'] as String));
           await File(
             p.join(root, relativeFrom),
           ).rename(p.join(quarantine.path, move['to'] as String));
@@ -745,17 +761,14 @@ class ContentCleanupService {
       };
       final protected =
           graph.backupUncertain ||
-          moves.any(
-            (m) {
-              final relativeFrom =
-                  p.joinAll(p.posix.split(m['from'] as String));
-              final diskFrom = p.join(root, relativeFrom);
-              final diskTo = p.join(quarantine.path, m['to'] as String);
-              return currentPaths.any(
-                (cp) => p.equals(cp, diskFrom) || p.equals(cp, diskTo),
-              );
-            },
-          );
+          moves.any((m) {
+            final relativeFrom = p.joinAll(p.posix.split(m['from'] as String));
+            final diskFrom = p.join(root, relativeFrom);
+            final diskTo = p.join(quarantine.path, m['to'] as String);
+            return currentPaths.any(
+              (cp) => p.equals(cp, diskFrom) || p.equals(cp, diskTo),
+            );
+          });
       if (!committed || protected) {
         await _restoreMoves(root, quarantine, moves);
       } else {
@@ -780,9 +793,7 @@ class ContentCleanupService {
     await _removeJournal(quarantine);
     for (final move in moves) {
       final relativeFrom = p.joinAll(p.posix.split(move['from'] as String));
-      final directory = Directory(
-        p.dirname(p.join(root, relativeFrom)),
-      );
+      final directory = Directory(p.dirname(p.join(root, relativeFrom)));
       if (await FileSystemEntity.type(directory.path, followLinks: false) ==
               FileSystemEntityType.directory &&
           (await directory.list(followLinks: false).toList()).isEmpty) {

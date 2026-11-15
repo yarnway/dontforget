@@ -73,6 +73,7 @@ class BackupPreview {
     required this.missingMedia,
     required this.unresolvedReferences,
     this.timestamp,
+    this.referencedMediaPaths = const {},
   });
 
   final int version;
@@ -82,6 +83,9 @@ class BackupPreview {
   final int missingMedia;
   final int unresolvedReferences;
   final DateTime? timestamp;
+
+  /// Validated file references only; never text records or credential values.
+  final Set<String> referencedMediaPaths;
 }
 
 /// Inspects a bounded private copy of one standalone v7–v17 export.
@@ -260,6 +264,7 @@ class BackupInspector {
         missingMedia: missing,
         unresolvedReferences: validated.unresolved,
         timestamp: validated.timestamp,
+        referencedMediaPaths: Set.unmodifiable(validated.paths),
       );
     } on BackupInspectionException {
       rethrow;

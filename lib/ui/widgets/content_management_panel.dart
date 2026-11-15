@@ -13,6 +13,7 @@ import '../../services/recovery/runtime_gate.dart';
 import '../screens/notification_repair_screen.dart';
 import '../screens/shared_text_inbox_screen.dart';
 import '../../l10n/shared_text_strings.dart';
+import 'external_backup_references_dialog.dart';
 
 final contentCleanupServiceProvider = Provider<Future<ContentCleanupService>>((
   ref,
@@ -368,6 +369,25 @@ class _ContentManagementPanelState
                       ),
                       const SizedBox(height: 16),
                       if (_view != 'archive') ...[
+                        ListTile(
+                          key: const ValueKey('content-external-backups'),
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.shield_outlined),
+                          title: Text(t('externalBackups')),
+                          trailing: const Icon(Icons.chevron_right_rounded),
+                          onTap: _busy
+                              ? null
+                              : () async {
+                                  await showDialog<void>(
+                                    context: context,
+                                    builder: (_) =>
+                                        const ExternalBackupReferencesDialog(),
+                                  );
+                                  if (_current && _inventory != null) {
+                                    await _load();
+                                  }
+                                },
+                        ),
                         ExpansionTile(
                           key: const ValueKey('content-protection-help'),
                           tilePadding: EdgeInsets.zero,

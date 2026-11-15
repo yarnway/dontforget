@@ -224,6 +224,30 @@ void main() {
   });
 
   test(
+    'validated reference snapshots exclude text and do not expose settings',
+    () async {
+      fixture['media_records'].add({
+        'id': 'text',
+        'type': 'text',
+        'content_or_path': 'private text fixture',
+        'created_at': '2024-02-29T10:00:00Z',
+      });
+      for (final source in [await jsonFile(), await sqliteFile()]) {
+        final result = await inspector.inspect(source);
+        expect(result.referencedMediaPaths, {
+          paths.join(directory.path, 'present.png'),
+          paths.join(directory.path, 'missing.txt'),
+        });
+        expect(
+          () => result.referencedMediaPaths.clear(),
+          throwsUnsupportedError,
+        );
+        expect(result.containsCredentials, isTrue);
+      }
+    },
+  );
+
+  test(
     'relocated owned media is available without rewriting a backup',
     () async {
       final documents = await Directory(

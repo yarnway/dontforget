@@ -14,6 +14,35 @@ String contentText(BuildContext context, String key) {
 }
 
 const _strings = <String, List<String>>{
+  'close': ['关闭', 'Close', '閉じる'],
+  'externalBackups': ['外部备份引用', 'External backup references', '外部バックアップの参照'],
+  'externalRegister': ['登记旧备份', 'Register old backup', '旧バックアップを登録'],
+  'externalRemove': ['移除登记', 'Remove registration', '登録を解除'],
+  'externalHint': [
+    '登记仍依赖本地附件的数据库或 JSON 备份，清理时保护其原件。',
+    'Register database or JSON backups that still rely on local attachments to protect their originals during cleanup.',
+    'ローカル添付に依存するデータベース・JSONバックアップを登録すると、削除時に元ファイルを保護します。',
+  ],
+  'externalPathCount': [
+    '{count} 个附件路径',
+    '{count} attachment paths',
+    '添付パス {count} 件',
+  ],
+  'externalRegisterHint': [
+    '保存引用快照；备份移走后仍保护这些原件。最多20份，不自动移除。',
+    'Save a reference snapshot. Originals stay protected if the backup moves. Up to 20 registrations; none expire automatically.',
+    '参照のスナップショットを保存します。バックアップ移動後も保護を継続。最大20件、自動解除はしません。',
+  ],
+  'externalRemoveHint': [
+    '将解除这份备份的引用保护。备份与原件不删除；后续清理可能移除不再被引用的原件。',
+    'Release this backup’s protection. The backup and originals stay; later cleanup may remove originals with no remaining references.',
+    'このバックアップの参照保護を解除します。ファイルは削除しませんが、後の削除操作で参照のない元ファイルが対象になる場合があります。',
+  ],
+  'externalFailed': [
+    '未完成登记变更。请检查备份格式、引用容量或重开后重试。',
+    'Registration unchanged. Check backup format and reference limits, or reopen and retry.',
+    '登録は変更されていません。形式・参照数を確認するか、開き直して再試行してください。',
+  ],
   'title': ['内容管理', 'Content manager', 'コンテンツ管理'],
   'protectionHelp': ['引用保护与清理范围', 'Protection and cleanup scope', '参照保護と削除範囲'],
   'spaceSummary': [

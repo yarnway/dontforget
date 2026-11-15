@@ -6,6 +6,8 @@ import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/models/task_details.dart';
 import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'package:dont_forget/services/content/content_cleanup_service.dart';
+import 'package:dont_forget/services/content/external_backup_references.dart';
+import 'package:dont_forget/services/recovery/backup_inspector.dart';
 import 'package:dont_forget/services/content/owned_material_activity.dart';
 import 'package:dont_forget/services/local_media_store.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -95,6 +97,129 @@ void main() {
   );
   Future<ContentCleanupResult> clean(ContentCleanupPlan p) async =>
       service.clean(p, h.database.captureGeneration(), isCurrent: () => true);
+  Future<Object?> register(String path) async {
+    final store = h.container.read(workspaceDraftsProvider.notifier);
+    final previous = await store.readPersistedKey(
+      ExternalBackupReferences.storageKey,
+    );
+    final value = ExternalBackupReferences.add(
+      previous,
+      BackupPreview(
+        version: 17,
+        digest: 'a' * 64,
+        counts: const {},
+        containsCredentials: false,
+        missingMedia: 0,
+        unresolvedReferences: 0,
+        referencedMediaPaths: {path},
+      ),
+      'external.json',
+      at: now,
+    );
+    await store.compareAndPut(
+      ExternalBackupReferences.storageKey,
+      previous,
+      value,
+    );
+    return value;
+  }
+
+  test(
+    'external references survive reopen and protect bytes until explicitly removed',
+    () async {
+      final file = await owned('external-snapshot');
+      await record('external-snapshot', file.path);
+      final value = await register(file.path);
+      expect((await plan({'record:external-snapshot'})).bytes, 0);
+      await clean(await plan({'record:external-snapshot'}));
+      await h.close();
+      await h.open();
+      service = ContentCleanupService(h.database, documents, clock: () => now);
+      final inventory = await service.inspect(h.database.captureGeneration());
+      expect(
+        inventory.entries
+            .singleWhere((e) => e.label == 'import-external-snapshot')
+            .reason,
+        'backupProtected',
+      );
+      expect(await file.readAsString(), 'Public synthetic external-snapshot');
+      final store = h.container.read(workspaceDraftsProvider.notifier);
+      await store.compareAndPut(
+        ExternalBackupReferences.storageKey,
+        value,
+        ExternalBackupReferences.remove(value, 'a' * 64),
+      );
+      // Removing a registration itself never deletes an original.
+      expect(await file.exists(), isTrue);
+      await clean(await plan({'directory:import-external-snapshot'}));
+      expect(await file.exists(), isFalse);
+    },
+  );
+  test(
+    'registration after cleanup preview rejects stale deletion plans',
+    () async {
+      final file = await owned('late-registration');
+      await record('late-registration', file.path);
+      final prepared = await plan({'record:late-registration'});
+      await register(file.path);
+      await expectLater(clean(prepared), throwsStateError);
+      expect(await file.exists(), isTrue);
+      expect(
+        await (await h.database.database).query('MediaRecords'),
+        hasLength(1),
+      );
+    },
+  );
+  test(
+    'unknown and corrupt external registries block all physical deletion',
+    () async {
+      final file = await owned('uncertain-external');
+      await record('uncertain-external', file.path);
+      for (final value in [
+        {'version': 2, 'entries': []},
+        {
+          'version': 1,
+          'entries': [{}],
+        },
+      ]) {
+        await h.container
+            .read(workspaceDraftsProvider.notifier)
+            .put(ExternalBackupReferences.storageKey, value);
+        expect((await plan({'record:uncertain-external'})).bytes, 0);
+      }
+      await clean(await plan({'record:uncertain-external'}));
+      expect(await file.exists(), isTrue);
+    },
+  );
+  test(
+    'external registration before interrupted purge restores staged originals',
+    () async {
+      final file = await owned('external-repair');
+      await record('external-repair', file.path);
+      final failing = ContentCleanupService(
+        h.database,
+        documents,
+        clock: () => now,
+        beforePurge: () async => throw StateError('Synthetic interruption'),
+      );
+      final prepared = await plan({'record:external-repair'});
+      await failing.clean(
+        prepared,
+        h.database.captureGeneration(),
+        isCurrent: () => true,
+      );
+      await register(file.path);
+      final job = (await service.inspect(
+        h.database.captureGeneration(),
+      )).pendingJobs.single;
+      await service.repair(
+        job,
+        h.database.captureGeneration(),
+        isCurrent: () => true,
+      );
+      expect(await file.readAsString(), 'Public synthetic external-repair');
+    },
+  );
   test(
     'all task sources, attachments, medication evidence, trash, archive and drafts protect original records',
     () async {
