@@ -3,6 +3,11 @@ String preferencesText(String language, String key) {
     'connection': ['高级连接配置', 'Advanced connection settings', '詳細な接続設定'],
     'common': ['常用偏好', 'Everyday preferences', '基本設定'],
     'features': ['功能与数据', 'Features and data', '機能とデータ'],
+    'aboutHint': [
+      '版本信息、检查更新与开源许可',
+      'Version, updates and open-source licenses',
+      'バージョン・更新・オープンソースライセンス',
+    ],
     'ai': ['AI 服务', 'AI services', 'AIサービス'],
     'aiHint': [
       '模型与录音转文字，按需配置',

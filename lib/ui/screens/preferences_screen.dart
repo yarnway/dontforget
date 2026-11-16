@@ -129,7 +129,7 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
     required Map<T, String> choices,
     required void Function(T) change,
   }) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     child: DropdownButtonFormField<T>(
       key: ValueKey(id),
       initialValue: value,
@@ -155,30 +155,54 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
     required String id,
     required IconData icon,
     required String title,
+    required String description,
     required VoidCallback action,
-    required double minHeight,
-  }) => Card.outlined(
-    clipBehavior: Clip.antiAlias,
-    child: ConstrainedBox(
-      constraints: BoxConstraints(minHeight: minHeight),
-      child: ListTile(
-        key: ValueKey(id),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary.withValues(alpha: .09),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: Theme.of(context).colorScheme.primary),
-        ),
-        title: Text(title, style: Theme.of(context).textTheme.titleMedium),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: !_ready || _saving ? null : action,
+  }) => ConstrainedBox(
+    constraints: const BoxConstraints(minHeight: 88),
+    child: ListTile(
+      key: ValueKey(id),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      horizontalTitleGap: 12,
+      leading: MediaQuery.textScalerOf(context).scale(14) > 18.2
+          ? null
+          : ExcludeSemantics(
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: .09),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ),
+      title: Text(
+        title,
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
       ),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Text(
+          description,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ),
+      trailing: ExcludeSemantics(
+        child: Icon(
+          Icons.chevron_right,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+      onTap: !_ready || _saving ? null : action,
     ),
   );
   @override
@@ -283,24 +307,24 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
           final entries = <Widget>[
             _entry(
               id: 'preferences-ai',
-              minHeight: 76,
               icon: Icons.auto_awesome_outlined,
               title: t('ai'),
+              description: t('aiHint'),
               action: () => _open(const SettingsScreen(area: SettingsArea.ai)),
             ),
             _entry(
               id: 'preferences-notifications',
-              minHeight: 76,
               icon: Icons.notifications_none,
               title: t('notifications'),
+              description: t('notificationsHint'),
               action: () =>
                   _open(const SettingsScreen(area: SettingsArea.notifications)),
             ),
             _entry(
               id: 'preferences-protection',
-              minHeight: 76,
               icon: Icons.shield_outlined,
               title: protectionText(context, 'title'),
+              description: t('protectionHint'),
               action: () => _open(
                 Scaffold(
                   appBar: AppBar(title: Text(protectionText(context, 'title'))),
@@ -311,9 +335,9 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
             ),
             _entry(
               id: 'preferences-content',
-              minHeight: 76,
               icon: Icons.inventory_2_outlined,
               title: contentText(context, 'title'),
+              description: t('contentHint'),
               action: () => _open(
                 Scaffold(
                   appBar: AppBar(title: Text(contentText(context, 'title'))),
@@ -323,26 +347,47 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
             ),
             _entry(
               id: 'preferences-sync',
-              minHeight: 76,
               icon: Icons.devices_outlined,
               title: t('sync'),
+              description: t('syncHint'),
               action: () =>
                   _open(const SettingsScreen(area: SettingsArea.sync)),
             ),
             _entry(
               id: 'preferences-about',
-              minHeight: 76,
               icon: Icons.info_outline,
               title: aboutText(loc.locale.languageCode, 'title'),
+              description: t('aboutHint'),
               action: () => _open(const AboutScreen()),
             ),
           ];
+          if (columns == 1) {
+            return Card.outlined(
+              key: const ValueKey('preferences-feature-grid'),
+              child: Column(
+                children: [
+                  for (var i = 0; i < entries.length; i++) ...[
+                    if (i > 0)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Divider(height: 1),
+                      ),
+                    entries[i],
+                  ],
+                ],
+              ),
+            );
+          }
           return Wrap(
             key: const ValueKey('preferences-feature-grid'),
             spacing: 20,
             runSpacing: 20,
             children: [
-              for (final entry in entries) SizedBox(width: width, child: entry),
+              for (final entry in entries)
+                SizedBox(
+                  width: width,
+                  child: Card.outlined(child: entry),
+                ),
             ],
           );
         },

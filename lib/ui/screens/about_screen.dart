@@ -188,9 +188,13 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              t(result.comparison.name),
-              style: Theme.of(context).textTheme.titleLarge,
+            Semantics(
+              header: true,
+              liveRegion: true,
+              child: Text(
+                t(result.comparison.name),
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
             ),
             const SizedBox(height: 10),
             SelectableText('${t('publicVersion')} ${release.displayVersion}'),
@@ -290,36 +294,29 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                         ),
                       ],
                       if (_info case final info?) ...[
-                        SelectableText(
-                          '${t('version')} ${info.displayVersion}',
-                          key: const ValueKey('about-installed-version'),
-                        ),
-                        const SizedBox(height: 10),
-                        OutlinedButton.icon(
-                          key: const ValueKey('about-copy-version'),
-                          onPressed: () =>
-                              _copy('${info.name} ${info.displayVersion}'),
-                          icon: const Icon(Icons.copy_outlined),
-                          label: Text(t('copyVersion')),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: SelectableText(
+                                '${t('version')} ${info.displayVersion}',
+                                key: const ValueKey('about-installed-version'),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              key: const ValueKey('about-copy-version'),
+                              tooltip: t('copyVersion'),
+                              constraints: const BoxConstraints(
+                                minWidth: 48,
+                                minHeight: 48,
+                              ),
+                              onPressed: () =>
+                                  _copy('${info.name} ${info.displayVersion}'),
+                              icon: const Icon(Icons.copy_outlined),
+                            ),
+                          ],
                         ),
                       ],
-                      const SizedBox(height: 10),
-                      _link(
-                        'project',
-                        Uri.parse(appRepositoryUrl),
-                        icon: Icons.code,
-                      ),
-                      const SizedBox(height: 10),
-                      OutlinedButton.icon(
-                        key: const ValueKey('about-licenses'),
-                        onPressed: () => showLicensePage(
-                          context: context,
-                          applicationName: _info?.name ?? 'DontForget',
-                          applicationVersion: _info?.displayVersion,
-                        ),
-                        icon: const Icon(Icons.description_outlined),
-                        label: Text(t('licenses')),
-                      ),
                     ],
                   ),
                 ),
@@ -352,9 +349,12 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                       if (_failure case final failure?)
                         Padding(
                           padding: const EdgeInsets.only(top: 14),
-                          child: Text(
-                            t(failure.name),
-                            key: const ValueKey('about-update-error'),
+                          child: Semantics(
+                            liveRegion: true,
+                            child: Text(
+                              t(failure.name),
+                              key: const ValueKey('about-update-error'),
+                            ),
                           ),
                         ),
                       if (_checkedAt case final time?)
@@ -374,6 +374,35 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                 const SizedBox(height: 18),
                 _release(result),
               ],
+              const SizedBox(height: 18),
+              Card.outlined(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(t('resources'), style: theme.textTheme.titleMedium),
+                      const SizedBox(height: 14),
+                      _link(
+                        'project',
+                        Uri.parse(appRepositoryUrl),
+                        icon: Icons.code,
+                      ),
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        key: const ValueKey('about-licenses'),
+                        onPressed: () => showLicensePage(
+                          context: context,
+                          applicationName: _info?.name ?? 'DontForget',
+                          applicationVersion: _info?.displayVersion,
+                        ),
+                        icon: const Icon(Icons.description_outlined),
+                        label: Text(t('licenses')),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               const SizedBox(height: 18),
             ],
           ),

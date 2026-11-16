@@ -29,6 +29,7 @@ String aboutText(String language, String key) {
     'project': ['项目主页', 'Project home', 'プロジェクトのホーム'],
     'licenses': ['第三方开源许可', 'Third-party licenses', 'サードパーティのライセンス'],
     'updates': ['应用更新', 'App updates', 'アプリの更新'],
+    'resources': ['项目与许可', 'Project and licenses', 'プロジェクトとライセンス'],
     'check': ['检查更新', 'Check for updates', '更新を確認'],
     'checking': ['正在检查…', 'Checking…', '確認中…'],
     'hint': [

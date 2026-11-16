@@ -1,0 +1,109 @@
+{
+  "baseline_commit": "75b3e76fd43484af9a8c81cbdedcbee404a012e2",
+  "scope": "source iteration; Settings and About only",
+  "source_file_sha256": {
+    "lib/l10n/about_strings.dart": "5118227363d5a7b3026ee55ad94695a73ceee2778079b263598d0f8ecbaddd64",
+    "lib/l10n/preferences_strings.dart": "5ab73d4525769719edbacb832c47bb31c66a2247a2d8e6e9af94ddd4e93312f4",
+    "lib/ui/screens/about_screen.dart": "18f54467552022b85f6656824711ecd34a71431a8940b5d7d2e55a3b90f23627",
+    "lib/ui/screens/preferences_screen.dart": "07cbfcc25e472e3b0aa2fb8bc6a4d5394a664a62b64236f29f2034151f4d3cc5",
+    "test/about_screen_test.dart": "3e9eaf65b1d264ef9ad4f3eee9653aaf0572af1e864b9fd0395701e3e8bd8a0c"
+  },
+  "sdk": {
+    "flutter": "3.44.9",
+    "dart": "3.12.2",
+    "isolated_sdk": true,
+    "original_sdk_changed": false
+  },
+  "local_related_flutter": {
+    "passed": 106,
+    "skipped": 0,
+    "files": 7
+  },
+  "source_preview_flutter": {
+    "passed": 2,
+    "skipped": 0
+  },
+  "static_analysis": "PASS_ZERO_ISSUES",
+  "three_language_short_viewport": {
+    "width": 375,
+    "height": 568,
+    "primary_update_button_visible_without_scroll": true
+  },
+  "copy_version_tap_target_minimum": [
+    48,
+    48
+  ],
+  "three_languages": [
+    "zh",
+    "en",
+    "ja"
+  ],
+  "themes": [
+    "light",
+    "dark"
+  ],
+  "large_text_scroll_matrix_preserved": true,
+  "native_windows_capture": "BLOCKED_SANDBOX_CWD_URI",
+  "native_iphone_capture": "NOT_PERFORMED",
+  "native_accessibility_reader_tested": false,
+  "preview_source": "Flutter test engine, Windows, synthetic temporary databases and mocked app metadata; not screenshots of installed apps",
+  "preview_font": "Microsoft YaHei",
+  "preview_asset_wait_corrected": true,
+  "native_windows_upgrade_performed": false,
+  "native_iphone_upgrade_performed": false,
+  "new_version_or_release_published": false,
+  "current_public_release": "v1.8.11+81; previous source ae11fd6",
+  "dependency_or_schema_change": false,
+  "release_packages": "NOT_PREPARED_FOR_THIS_SOURCE_ITERATION",
+  "fixed_ci": "PENDING",
+  "initial_fixture_failures_preserved": [
+    "semantic tooltip queried as exact label",
+    "SemanticsHandle teardown after test verification",
+    "lazy offscreen resource link queried before built",
+    "dark preview captured before asset decoded"
+  ],
+  "log_sha256": {
+    "build/stage122/related-final.log": "e42c333e3a669c2ff5ac8757c103a0f9141aacb9d2219e06d5313562e9134bfd",
+    "build/stage122/analyze.log": "ded0606d3e1e425c0dedcba0fb4b8728abfd9e74513dd11f60174cc2202b313e",
+    "build/stage122/preview-before.log": "b132efdf123663aaedb8079b39933e14355f4e905cfcc895bdf752ac8e0ac535",
+    "build/stage122/preview-about-before.log": "9c90cb7d8adacd3ade612a630e864257748b07fc4713e71423422b2e9ab748be",
+    "build/stage122/preview-final.log": "48c3f58ce139957e12e9faa98458d709f8feb7bffc7ab996acb7d0ff61a2b707",
+    "build/stage122/about-first-accessibility-failure.log": "1a61ae0280d1ef7c235c55c3b1222c235be2b223eb3c40de15c71308b81b3aa3",
+    "build/stage122/about-semantics-disposal-failure.log": "59263e6726a0d9eb7e5197abb0b11f2aad58dbc4dc21f348f5bf0dc0316a93d8",
+    "build/stage122/related-first-fixture-failures.log": "c623f2b166716081abaa8e6b6a3d59ac81eb1b0ace7d09998dc96ce2968c80de",
+    "build/stage122/windows-capture-blocker.json": "3ed9611f25779bfc57ab47d41145d7ee7038204b1d7c5210691ff42b7b5223dc",
+    "build/stage122/analyze-final.log": "40fcfdd02b6ac3e4602dde18e324790b2d3f7759ff58e96b9b5b3e907a4530ae"
+  },
+  "screenshots": {
+    "ux-settings-desktop-before-20261116.png": {
+      "sha256": "0aedee54e12bae5d2a94f7d545ce66bfc72688b08e6fd9df63b040a153ac8e30",
+      "synthetic": true,
+      "capture": "Flutter widget rendering"
+    },
+    "ux-settings-desktop-after-20261116.png": {
+      "sha256": "f825d1039417440feee533b29af479d25feaf935229c746949d64e98ff19b732",
+      "synthetic": true,
+      "capture": "Flutter widget rendering"
+    },
+    "ux-settings-narrow-after-20261116.png": {
+      "sha256": "c00008b1453f194b4289d8932a6b88b644f91d21b3c371fa3389c981c1ca140e",
+      "synthetic": true,
+      "capture": "Flutter widget rendering"
+    },
+    "ux-about-mobile-before-20261116.png": {
+      "sha256": "424f4aa1f39d304321f3d9c3036fdd38753a569ad1217a1fe8787503473c7ab1",
+      "synthetic": true,
+      "capture": "Flutter widget rendering"
+    },
+    "ux-about-mobile-after-20261116.png": {
+      "sha256": "a152338e470849302fe098c55df920b8a00862460d67a4b0020e9aef352b8479",
+      "synthetic": true,
+      "capture": "Flutter widget rendering"
+    },
+    "ux-about-mobile-dark-after-20261116.png": {
+      "sha256": "491a4ca3e190bd14649957fc547f6404be028f2acb01c6e1123094b823640d1e",
+      "synthetic": true,
+      "capture": "Flutter widget rendering"
+    }
+  }
+}

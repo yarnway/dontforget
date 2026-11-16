@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' show SemanticsAction;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,6 +9,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'support/interaction_preview.dart';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/l10n/about_strings.dart';
 import 'package:dont_forget/l10n/app_localizations.dart';
@@ -60,14 +62,20 @@ Widget material(
     GlobalCupertinoLocalizations.delegate,
   ],
   theme: brightness == Brightness.dark ? AppTheme.dark : AppTheme.light,
-  builder: (context, child) => MediaQuery(
-    data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(scale)),
-    child: child!,
+  builder: (context, child) => RepaintBoundary(
+    key: interactionPreviewKey,
+    child: MediaQuery(
+      data: MediaQuery.of(
+        context,
+      ).copyWith(textScaler: TextScaler.linear(scale)),
+      child: child!,
+    ),
   ),
   home: home,
 );
 
 void main() {
+  setUpAll(loadInteractionPreviewFonts);
   Future<void> show(
     WidgetTester tester, {
     AppUpdateService? service,
@@ -75,12 +83,13 @@ void main() {
     Future<bool> Function(Uri)? open,
     String language = 'zh',
     double width = 390,
+    double height = 950,
     double scale = 1,
     Brightness brightness = Brightness.light,
     UpdatePlatform platform = UpdatePlatform.windows,
   }) async {
     tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = Size(width, 950);
+    tester.view.physicalSize = Size(width, height);
     addTearDown(tester.view.resetDevicePixelRatio);
     addTearDown(tester.view.resetPhysicalSize);
     await tester.pumpWidget(
@@ -130,6 +139,90 @@ void main() {
       await tester.pump();
     }
   }
+
+  testWidgets('about visual preview', (tester) async {
+    for (final width in [390.0, 1200.0]) {
+      for (final brightness in Brightness.values) {
+        await show(tester, width: width, brightness: brightness);
+        if (const bool.fromEnvironment('UI_PREVIEW')) {
+          await tester.runAsync(
+            () => precacheImage(
+              const AssetImage('assets/app_icon.png'),
+              tester.element(find.byType(AboutScreen)),
+            ),
+          );
+          await tester.pumpAndSettle();
+        }
+        await captureInteractionPreview(
+          tester,
+          'about-ux-${width.toInt()}-${brightness.name}',
+        );
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+      }
+    }
+  });
+
+  testWidgets(
+    'update action fits a short phone viewport before resource links',
+    (tester) async {
+      for (final language in ['zh', 'en', 'ja']) {
+        await show(tester, width: 375, height: 568, language: language);
+        final action = find.byKey(const ValueKey('about-check-updates'));
+        expect(action.hitTestable(), findsOneWidget);
+        expect(tester.getRect(action).bottom, lessThanOrEqualTo(568));
+        expect(
+          find.byKey(const ValueKey('about-project')).hitTestable(),
+          findsNothing,
+        );
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+      }
+    },
+  );
+
+  testWidgets(
+    'version copy is labeled, has a full tap target and copies actual metadata',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      try {
+        String? copied;
+        tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+          SystemChannels.platform,
+          (call) async {
+            if (call.method == 'Clipboard.setData') {
+              copied = (call.arguments as Map)['text'] as String;
+            }
+            return null;
+          },
+        );
+        addTearDown(
+          () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+            SystemChannels.platform,
+            null,
+          ),
+        );
+        await show(tester);
+        final copy = find.byKey(const ValueKey('about-copy-version'));
+        final data = tester.getSemantics(copy).getSemanticsData();
+        expect(data.tooltip, aboutText('zh', 'copyVersion'));
+        expect(data.hasAction(SemanticsAction.tap), isTrue);
+        expect(tester.getSize(copy).width, greaterThanOrEqualTo(48));
+        expect(tester.getSize(copy).height, greaterThanOrEqualTo(48));
+        await tester.tap(copy);
+        await tester.pumpAndSettle();
+        expect(copied, 'DontForget 1.8.11 (81)');
+        expect(find.text(aboutText('zh', 'copied')), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('about-installed-version')),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+      } finally {
+        semantics.dispose();
+      }
+    },
+  );
 
   testWidgets(
     'opening About reads the actual version but checks only on request',
