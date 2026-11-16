@@ -1,0 +1,72 @@
+{
+  "version": "1.8.11+81",
+  "flutter": "3.44.9",
+  "dart": "3.12.2",
+  "fixed_sdk_source_commit": "6b182d2c7585eba26d4edce0f97630effd256c33",
+  "isolated_sdk": true,
+  "existing_sdk_checkout_changed": false,
+  "new_flutter_tests": 20,
+  "related_settings_flutter_tests": 45,
+  "flutter_skipped": 0,
+  "python": {
+    "linux": {
+      "run": 180,
+      "skipped": 4,
+      "passed": true
+    },
+    "windows": {
+      "run": 180,
+      "skipped": 6,
+      "passed": true
+    }
+  },
+  "static_analysis": "PASS_ZERO_ISSUES",
+  "real_public_network": {
+    "public_request_only": true,
+    "credentials_supplied": false,
+    "result": "READ",
+    "published_version": "1.8.10",
+    "comparison": "ahead",
+    "download_entries": 5
+  },
+  "observed_anonymous_api_rate_remaining": 0,
+  "public_provenance_download_status": 200,
+  "project_credentials_sent": false,
+  "business_rows_written_by_update_check": false,
+  "new_dependency": "url_launcher 6.3.3 with platform implementations",
+  "existing_package_info_plus_promoted_to_direct": "10.2.2",
+  "schema": 17,
+  "fixed_ci": "PENDING",
+  "new_build81_installed_on_windows_or_phone": false,
+  "published": false,
+  "initial_fixture_failures_preserved": [
+    "global debug platform invariant",
+    "large text scroll frame timing",
+    "localized Back button finder"
+  ],
+  "local_log_sha256": {
+    "build/stage120/about-tests.log": "cb2b7e9676a8366eab714ab5de22b4da1a37430566484563046086eb583c3449",
+    "build/stage120/about-tests-second.log": "0ed4c7352fc8da6deeeed77dbae5bb0ee5bd7f25e1a52ff91501cc93a715cd00",
+    "build/stage120/about-tests-third.log": "c208d48a945ddc8187a480620762e054339a50806f9e2eeef3405eef07003e23",
+    "build/stage120/settings-related-tests.log": "4e5951b825e751c18adb30876299bba4490593f003908a1475d7a86e9c0cd0dd",
+    "build/stage120/python-linux.log": "df55045a09347280cde55bd80af6855cb6f86a1165a214f86464b740d4245b9f",
+    "build/stage120/python-windows.log": "8268ddfa7a61706fd4c3fa231615b88c8bc252dd3fe50bdacd2136ebec9b92a0",
+    "build/stage120/public-update-diagnostic.log": "a26ead6c5bdef1b979bc357be07a4fca5e4b7d2bec3a78108449e6ec2b814704",
+    "build/stage120/real-update-check.log": "cb02e024afa3a9270b3f80ae0e70f8a54431af63b5bff618d92027c7276883bf",
+    "build/stage120/real-update-check-fallback.log": "886a9cebbd37918bc1fa7943a5a89fab890e81095cfb4a3c14f9960b6ff5ecc8",
+    "build/stage120/prepare_sdk.log": "83b996e5d5645dd13895938357ac66adcc9081956d310e33ee74fe06c6a205ba",
+    "build/stage120/pub-get.log": "f8f2f82821aab18c2d3ef3d9af431298a0ae7c9b9229c878e57a602d10ca9931",
+    "build/stage120/about-tests-final.log": "4bddebc51401352781b4ad505e527b39cfe9510ab4c54d574276efaf5de09d99",
+    "build/stage120/analyze-clean.log": "e009e04f530c09fe71bd61fb88e8b072964ee6386b1522378d1997fb4b6b6f3d",
+    "build/stage120/analyze-release-source.log": "52589aa0742fa3af355f0c65a1dccfcf9f8222dadbd64ffa2607e9dcaf8c73d6"
+  },
+  "layout_variants": 48,
+  "layout_platforms": [
+    "windows",
+    "android",
+    "ios",
+    "linux"
+  ],
+  "layout_text_scale": 2,
+  "long_acceptance_app_name_tested": true
+}

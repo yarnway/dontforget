@@ -14,6 +14,8 @@ import '../widgets/global_capture_shortcut_panel.dart';
 import '../widgets/portable_backup_panel.dart';
 import '../widgets/unsaved_editor_scope.dart';
 import 'settings_screen.dart';
+import 'about_screen.dart';
+import '../../l10n/about_strings.dart';
 
 typedef _Preferences = AppPreferences;
 
@@ -326,6 +328,13 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
               title: t('sync'),
               action: () =>
                   _open(const SettingsScreen(area: SettingsArea.sync)),
+            ),
+            _entry(
+              id: 'preferences-about',
+              minHeight: 76,
+              icon: Icons.info_outline,
+              title: aboutText(loc.locale.languageCode, 'title'),
+              action: () => _open(const AboutScreen()),
             ),
           ];
           return Wrap(

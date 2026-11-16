@@ -1,7 +1,7 @@
 name: dont_forget
 description: "Local-first reminders, task scheduling and AI-assisted capture."
 publish_to: 'none'
-version: 1.8.11+80
+version: 1.8.11+81
 
 environment:
   sdk: '>=3.12.0 <4.0.0'
@@ -35,6 +35,8 @@ dependencies:
   file_picker: ^12.2.0
   file_saver: 0.4.0
   geolocator: 14.1.2
+  package_info_plus: 10.2.2
+  url_launcher: 6.3.3
 
 dev_dependencies:
   flutter_test:

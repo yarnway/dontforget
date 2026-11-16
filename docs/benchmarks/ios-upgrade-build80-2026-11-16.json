@@ -1,0 +1,47 @@
+{
+  "source": "c228cae7e25eb49e1262d1eac7cdc17bac963a62",
+  "version": "1.8.11+80",
+  "checked_at_utc": "2026-11-16T04:00:37.159885+00:00",
+  "version_independently_verified": true,
+  "same_bundle_identity_verified": true,
+  "same_signed_preference_domain_and_metadata_identity_hash": true,
+  "latest_backup_before_upgrade": true,
+  "schema": 17,
+  "integrity": "ok",
+  "before_counts": {
+    "Reminders": 2,
+    "MediaRecords": 1,
+    "Settings": 1
+  },
+  "after_counts": {
+    "Reminders": 2,
+    "MediaRecords": 1,
+    "Settings": 1
+  },
+  "business_fields_equal_by_table": {
+    "Reminders": true,
+    "MediaRecords": true,
+    "Settings": true
+  },
+  "all_existing_business_fields_preserved": true,
+  "all_original_media_preserved": true,
+  "original_media_files_compared": 2,
+  "preferences_file_equal": true,
+  "user_reports_opened_after_upgrade": true,
+  "user_reports_qa_record_retained": true,
+  "first_read_still_build79": true,
+  "second_read_build80": true,
+  "physical_interactions_automated": false,
+  "keychain_read_or_backed_up": false,
+  "full_runtime_matrix": "NOT_PERFORMED",
+  "scope": "Independent acceptance identity only; phone installation and launch reported by user, readback performed over USB",
+  "local_evidence_sha256": {
+    "build/stage119/iphone-before80-latest-snapshot-private.json": "8c44f9325bc82ab1899a6ca33226dd14ada0925cab68d2e7cfc3b7d1c42a9c5c",
+    "build/stage119/iphone-before80-backup-verification-private.json": "ee0e077bc2d5f29e89eaf275e4437063000cab9b553a40e882d237904ba7d830",
+    "build/stage119/iphone-before80-consistent-private.db": "26da5b8e5972faf94d43a5c4bdf5e5cba95d0bc21004ab90e7ea653facf8dd8e",
+    "build/stage119/iphone-after80-snapshot-private.json": "7e087e9d5a755d2aec3509932b5abc83308b8ab0ee4ab211255009d633e09b5b",
+    "build/stage119/iphone-after80-second-snapshot-private.json": "b7d6f5f00e980bc9231ad7c825798faf40f9e9b22f1952594926e5a31525ca44",
+    "build/stage119/iphone-upgrade80-readback-private.json": "b676a8d42ec59fab45632c4f9c4d092ea5e842f451363765a476f83538009193",
+    "build/stage119/ios-isolated-candidate-evidence.json": "e42e544dcc414fd75bbb287be29c04e0f5831a731edc00825680b8368dc32796"
+  }
+}

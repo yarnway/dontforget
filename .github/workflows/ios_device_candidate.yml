@@ -89,6 +89,7 @@ jobs:
           bash scripts/build_ios.sh
           python3 scripts/verify_artifacts.py dist --platform ios --revision "$DF_SOURCE_REVISION"
       - name: Verify the actual IPA identities and write the receipt
+        id: receipt
         run: |
           python3 - <<'PY'
           import hashlib, json, os, plistlib, zipfile
@@ -97,6 +98,16 @@ jobs:
           if manifest['revision'] != os.environ['DF_SOURCE_REVISION'] or manifest['signing'] != 'unsigned':
               raise SystemExit('Candidate provenance mismatch')
           ipa = Path('dist') / manifest['artifacts'][0]['file']
+          # Include the build in phone-facing filenames so same-version candidates
+          # remain distinguishable in Files and AltStore's document picker.
+          labelled = ipa.with_name('DontForget_iOS_unsigned_v' + manifest['version'] + '+' + manifest['build_number'] + '.ipa')
+          if labelled.exists():
+              raise SystemExit('Refuse to replace an existing labelled IPA')
+          ipa.rename(labelled)
+          ipa = labelled
+          manifest['artifacts'][0]['file'] = ipa.name
+          Path('dist/ios-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
+          Path('dist/ios-SHA256SUMS.txt').write_text(manifest['artifacts'][0]['sha256'] + '  ' + ipa.name + '\n')
           identity = 'com.yarnway.dontforget.acceptance.' + os.environ['DF_IOS_RUN_ID']
           with zipfile.ZipFile(ipa) as archive:
               if archive.testzip() is not None:
@@ -107,6 +118,8 @@ jobs:
                   raise SystemExit('Candidate is not isolated')
               if host['CFBundleVersion'] != extension['CFBundleVersion'] or host['CFBundleShortVersionString'] != extension['CFBundleShortVersionString']:
                   raise SystemExit('Host and extension versions differ')
+              if host['CFBundleVersion'] != manifest['build_number'] or host['CFBundleShortVersionString'] != manifest['version']:
+                  raise SystemExit('Actual IPA does not match its version label')
               if any(n.endswith('embedded.mobileprovision') for n in archive.namelist()):
                   raise SystemExit('Unexpected provisioning profile in unsigned candidate')
           receipt = {
@@ -116,15 +129,19 @@ jobs:
               'extension_bundle': identity + '.ReminderActivity',
               'version': host['CFBundleShortVersionString'] + '+' + host['CFBundleVersion'],
               'ipa_sha256': hashlib.sha256(ipa.read_bytes()).hexdigest(),
+              'ipa_filename': ipa.name,
               'signing': 'unsigned', 'installed': False, 'runtime_acceptance': 'NOT_PERFORMED',
               'apple_credentials_used': False,
               'prepared_files': json.loads(Path('build/ios-device-preparation.json').read_text()),
           }
           Path('dist/ios-device-receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              output.write('build_number=' + host['CFBundleVersion'] + '\n')
           print(json.dumps({k: v for k, v in receipt.items() if k != 'prepared_files'}))
           PY
+          python3 scripts/verify_artifacts.py dist --platform ios --revision "$DF_SOURCE_REVISION"
       - uses: actions/upload-artifact@v6
         with:
-          name: ios-device-${{ inputs.run_id }}
+          name: ios-device-${{ inputs.run_id }}-build${{ steps.receipt.outputs.build_number }}
           path: dist/*
           if-no-files-found: error

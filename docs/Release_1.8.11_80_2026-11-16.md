@@ -1,5 +1,12 @@
 # v1.8.11／build80：外部备份引用登记与四平台发行
 
+本候选未发布，已由用户追加的关于／更新需求转入[build81最终候选](Release_1.8.11_81_2026-11-16.md)。build80实际已完成下列独立验证，原文“待验”保留准备时点，不代表当前候选最新状态：
+
+- [固定CI](benchmarks/github-ci-release-80-2026-11-16.json)七项成功；Linux Flutter2609／2跳过、Python180／4跳过，Windows Flutter2591／20跳过、Python180／6跳过。
+- 四平台七包／18来源文件，四份来源ZIP完整摘要、版本／来源／实际IPA身份扩展及Android固定签名核对通过，准备20个发行附件但未上传Release。[包回执](benchmarks/release-80-packages-2026-11-16.json)。Android Pixel未连接，没有新备份、安装或+80真机升级结论。
+- [Windows本机](benchmarks/windows-local-upgrade-80-2026-11-16.json)最新保全后运行中79→80正常关闭覆盖，37payload、5／0／1全字段、DPAPI实际值及普通重开保持；无GUI操作通过结论。
+- [iPhone](benchmarks/ios-upgrade-build80-2026-11-16.json)独立包云端构建43799810618，用户AltStore覆盖并打开；首轮读取仍79，复读确认为80后才核对。原签名偏好域／身份摘要、schema17／integrity ok、2／1／1全字段、音频及偏好均保持。数据读取不含Keychain；用户真实打开与只读USB证据分别记录，不称全部矩阵通过。
+
 当前为发行准备，尚未发布。用户2026-11-16明确要求最新迭代稳定后发布Windows、Linux、Android、iOS新版，并授权继续开发与验收；正式latest暂仍v1.8.10+79。
 
 ## 源码与自动化
