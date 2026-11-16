@@ -54,9 +54,10 @@ class InlineFeedbackState extends State<InlineFeedback> {
     // Actionable results (for example Undo) remain until explicitly handled.
     if (message.action == null &&
         !MediaQuery.of(context).accessibleNavigation) {
-      final duration = message.duration < const Duration(seconds: 8)
-          ? const Duration(seconds: 8)
-          : message.duration;
+      final minimum = tone == FeedbackTone.success
+          ? const Duration(seconds: 4)
+          : const Duration(seconds: 8);
+      final duration = message.duration < minimum ? minimum : message.duration;
       _expiry = Timer(duration, hideCurrentSnackBar);
     }
   }

@@ -289,6 +289,44 @@ void main() {
     }
   });
   testWidgets(
+    'success feedback clears above filters while preserving composer geometry and focus',
+    (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(375, 900);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(() => drainWorkspaceDrafts(tester, container));
+      await tester.pumpWidget(
+        UncontrolledProviderScope(container: container, child: const MyApp()),
+      );
+      await tester.pump(const Duration(milliseconds: 400));
+      final input = find.byKey(const ValueKey('composer-input-surface'));
+      await tester.tap(input);
+      await tester.pump();
+      final bounds = tester.getRect(input);
+      final focus = tester
+          .widget<EditableText>(find.byType(EditableText))
+          .focusNode;
+      final context = tester.element(find.byType(TaskBoard));
+      final loc = AppLocalizations.of(context);
+      InlineFeedback.of(context).showSnackBar(
+        SnackBar(content: Text(loc.get('changesSaved'))),
+        tone: FeedbackTone.success,
+      );
+      await tester.pump(const Duration(seconds: 3));
+      expect(find.byKey(const ValueKey('inline-feedback')), findsOneWidget);
+      expect(focus.hasFocus, isTrue);
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.byKey(const ValueKey('inline-feedback')), findsNothing);
+      expect(find.text(loc.get('viewToday')).hitTestable(), findsOneWidget);
+      expect(tester.getRect(input), bounds);
+      expect(focus.hasFocus, isTrue);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets(
     'upcoming and repeated due events stay inline without stealing input focus',
     (tester) async {
       tester.view.devicePixelRatio = 1;

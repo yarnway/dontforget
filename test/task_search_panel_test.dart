@@ -151,10 +151,7 @@ void main() {
     ]);
     await tester.pumpAndSettle();
     expect(find.byType(TaskCard), findsNothing);
-    expect(
-      find.text('Try fewer keywords or reset filters.'),
-      findsOneWidget,
-    );
+    expect(find.text('Try fewer keywords or reset filters.'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('search-reset')));
     await tester.pumpAndSettle();
     expect(query, '');
@@ -176,7 +173,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('search-reset')));
     await tester.pumpAndSettle();
-    expect(find.text('Your task list is empty'), findsOneWidget);
+    expect(
+      find.text(AppLocalizations(const Locale('en')).get('searchEmptyTitle')),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });

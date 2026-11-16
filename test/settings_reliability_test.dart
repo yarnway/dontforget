@@ -372,9 +372,17 @@ void main() {
         () => Future<void>.delayed(const Duration(milliseconds: 20)),
       );
       await tester.pump();
-      if (find.text('本地备份已生成。').evaluate().isNotEmpty) break;
+      if (find
+          .text(AppLocalizations(const Locale('zh')).get('backupSuccess'))
+          .evaluate()
+          .isNotEmpty) {
+        break;
+      }
     }
-    expect(find.text('本地备份已生成。'), findsOneWidget);
+    expect(
+      find.text(AppLocalizations(const Locale('zh')).get('backupSuccess')),
+      findsOneWidget,
+    );
     expect(
       File('${directory.path}/dont_forget_v3.mirror.db').existsSync(),
       isTrue,
@@ -422,10 +430,22 @@ void main() {
           () => Future<void>.delayed(const Duration(milliseconds: 20)),
         );
         await tester.pump();
-        if (find.text('设置保存失败，请检查本地存储后重试。').evaluate().isNotEmpty) break;
+        if (find
+            .text(
+              AppLocalizations(const Locale('zh')).get('settingsSaveFailed'),
+            )
+            .evaluate()
+            .isNotEmpty) {
+          break;
+        }
       }
       expect(find.byType(SettingsScreen), findsOneWidget);
-      expect(find.text('设置保存失败，请检查本地存储后重试。'), findsOneWidget);
+      expect(
+        find.text(
+          AppLocalizations(const Locale('zh')).get('settingsSaveFailed'),
+        ),
+        findsOneWidget,
+      );
       expect(container.read(settingsProvider).apiKey, 'user-test-key');
       await tester.runAsync(() => db!.execute('DROP TRIGGER reject_settings'));
       await tester.pumpWidget(const SizedBox());

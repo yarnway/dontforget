@@ -8,6 +8,130 @@ import 'support/interaction_preview.dart';
 
 void main() {
   setUpAll(loadInteractionPreviewFonts);
+  Future<InlineFeedbackState> showFeedbackHost(
+    WidgetTester tester, {
+    bool accessibleNavigation = false,
+  }) async {
+    late BuildContext page;
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(accessibleNavigation: accessibleNavigation),
+          child: InlineFeedback(child: child!),
+        ),
+        home: Builder(
+          builder: (context) {
+            page = context;
+            return const Scaffold(body: TextField());
+          },
+        ),
+      ),
+    );
+    await tester.tap(find.byType(TextField));
+    return InlineFeedback.of(page);
+  }
+
+  testWidgets(
+    'success clears promptly without moving input or taking focus and honors longer durations',
+    (tester) async {
+      final feedback = await showFeedbackHost(tester);
+      final input = tester.getRect(find.byType(TextField));
+      final focus = tester
+          .widget<EditableText>(find.byType(EditableText))
+          .focusNode;
+      feedback.showSnackBar(
+        const SnackBar(content: Text('Saved')),
+        tone: FeedbackTone.success,
+      );
+      await tester.pump(const Duration(seconds: 3));
+      expect(find.text('Saved'), findsOneWidget);
+      expect(focus.hasFocus, isTrue);
+      expect(tester.getRect(find.byType(TextField)), input);
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.byKey(const ValueKey('inline-feedback')), findsNothing);
+      expect(focus.hasFocus, isTrue);
+      feedback.showSnackBar(
+        const SnackBar(
+          content: Text('Long confirmation'),
+          duration: Duration(seconds: 12),
+        ),
+        tone: FeedbackTone.success,
+      );
+      await tester.pump(const Duration(seconds: 8));
+      expect(find.text('Long confirmation'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 4));
+      expect(find.byKey(const ValueKey('inline-feedback')), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets(
+    'warnings and failures retain reading time and replacement cancels the old expiry',
+    (tester) async {
+      final feedback = await showFeedbackHost(tester);
+      for (final tone in [
+        FeedbackTone.info,
+        FeedbackTone.warning,
+        FeedbackTone.error,
+      ]) {
+        feedback.showSnackBar(
+          const SnackBar(content: Text('Check before retrying')),
+          tone: tone,
+        );
+        await tester.pump(const Duration(seconds: 7));
+        expect(find.text('Check before retrying'), findsOneWidget);
+        await tester.pump(const Duration(seconds: 1));
+        expect(find.byKey(const ValueKey('inline-feedback')), findsNothing);
+      }
+      feedback.showSnackBar(
+        const SnackBar(content: Text('First')),
+        tone: FeedbackTone.success,
+      );
+      await tester.pump(const Duration(seconds: 3));
+      feedback.showSnackBar(
+        const SnackBar(content: Text('Replacement')),
+        tone: FeedbackTone.success,
+      );
+      await tester.pump(const Duration(seconds: 2));
+      expect(find.text('Replacement'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 2));
+      expect(find.byKey(const ValueKey('inline-feedback')), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets(
+    'accessible navigation keeps success and actionable feedback until dismissed',
+    (tester) async {
+      final feedback = await showFeedbackHost(
+        tester,
+        accessibleNavigation: true,
+      );
+      feedback.showSnackBar(
+        const SnackBar(content: Text('Saved')),
+        tone: FeedbackTone.success,
+      );
+      await tester.pump(const Duration(seconds: 30));
+      expect(find.text('Saved'), findsOneWidget);
+      var undone = false;
+      feedback.showSnackBar(
+        SnackBar(
+          content: const Text('Moved to trash'),
+          action: SnackBarAction(label: 'Undo', onPressed: () => undone = true),
+        ),
+        tone: FeedbackTone.success,
+      );
+      await tester.pump(const Duration(seconds: 30));
+      expect(find.text('Undo').hitTestable(), findsOneWidget);
+      await tester.tap(find.text('Undo'));
+      await tester.pump();
+      expect(undone, isTrue);
+      expect(find.byKey(const ValueKey('inline-feedback')), findsNothing);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
   for (final language in ['zh', 'en', 'ja']) {
     for (final scale in [1.0, 2.0]) {
       testWidgets(

@@ -294,7 +294,10 @@ void main() {
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
       await tester.pump();
       expect(find.byKey(const ValueKey('quadrant-4')), findsOneWidget);
-      expect(find.text('No memos or notes'), findsOneWidget);
+      expect(
+        find.text(AppLocalizations(const Locale('en')).get('emptyQ4')),
+        findsOneWidget,
+      );
       expect(
         tester
             .widget<TextButton>(find.byKey(const ValueKey('category-4')))
@@ -367,7 +370,10 @@ void main() {
       find.byKey(const ValueKey('category-4')).hitTestable(),
       findsOneWidget,
     );
-    expect(find.text('No memos or notes'), findsOneWidget);
+    expect(
+      find.text(AppLocalizations(const Locale('en')).get('emptyQ4')),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox());
   });

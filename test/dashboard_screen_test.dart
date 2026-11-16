@@ -263,7 +263,7 @@ void main() {
       await tester.tap(find.byKey(copyKey));
       await tester.pump();
       expect(
-        find.text('Productivity report copied to clipboard'),
+        find.text(AppLocalizations(const Locale('en')).get('reportCopied')),
         findsNothing,
       );
       expect(
@@ -277,7 +277,7 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.text('Productivity report copied to clipboard'),
+        find.text(AppLocalizations(const Locale('en')).get('reportCopied')),
         findsNothing,
       );
       clipboard = Completer<void>();
@@ -286,7 +286,7 @@ void main() {
       clipboard.complete();
       await tester.pumpAndSettle();
       expect(
-        find.text('Productivity report copied to clipboard'),
+        find.text(AppLocalizations(const Locale('en')).get('reportCopied')),
         findsOneWidget,
       );
       expect(copied, 'Local statistics report\n\nLocal fixture');
@@ -302,7 +302,7 @@ void main() {
     await show(tester, width: 375, scale: 2);
     expect(find.byKey(generateKey), findsNothing);
     expect(
-      find.text('No tasks yet. Create some to see statistics!'),
+      find.text(AppLocalizations(const Locale('en')).get('noTasksYet')),
       findsOneWidget,
     );
     expect(tester.takeException(), isNull);

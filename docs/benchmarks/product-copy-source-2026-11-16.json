@@ -1,0 +1,58 @@
+{
+  "reviewed_keys": 60,
+  "changed_translations": 168,
+  "unchanged_translations_in_four_maps": 2127,
+  "total_translations_compared": 2295,
+  "keys_preserved": true,
+  "placeholders_preserved": true,
+  "unreviewed_string_changes": false,
+  "critical_files_byte_identical": {
+    "lib/l10n/data_protection_strings.dart": "0aa53970fde5c8c75e055fe9529c065f881dfda0c2a7d8e24c172ac8db880c43",
+    "lib/l10n/notification_diagnostics_strings.dart": "72a3efce754f5fcacdd21a0591ac90a93d4339f356e369e1aecfc74f70abe656",
+    "lib/services/app_update_service.dart": "9c9df734edb8faab24cdcbf3a4c34966964dfbe273c760aa9d72a5424c8c6178",
+    "lib/services/content/external_backup_references.dart": "ea368d5dd0670ac9895420ad5ae81d442c7077945744abfbd6ce71569106cc65",
+    "lib/data/database_helper.dart": "ee3bb9735c1a24d4d619a4d6ac8f8728eb4e727f17dd71c443a094a8fc3b30d3",
+    "lib/ui/screens/task_reader_screen.dart": "a8fc875ef8e81da18d9bc36db36b6d4700d23a2d3db8662f62a0520844c2010d",
+    "lib/ui/widgets/voice_capture_feedback.dart": "7140cfbf8bce1dde3e7773f3474b4204d5481e4c03c8663fa8322f34dc0345ec"
+  },
+  "version": "1.8.12+82",
+  "baseline_commit": "e3660216a1786b1b3ddd468753486965ea51d741",
+  "fixed_sdk": {
+    "flutter": "3.44.9",
+    "dart": "3.12.2",
+    "original_sdk_changed": false
+  },
+  "related_flutter_passed": 125,
+  "related_flutter_skipped": 0,
+  "related_files": 10,
+  "analysis": "ZERO_ISSUES",
+  "new_behavior_tests": 4,
+  "success_minimum_seconds": 4,
+  "other_minimum_seconds": 8,
+  "actionable_or_accessible_navigation_auto_dismiss": false,
+  "caller_longer_duration_preserved": true,
+  "new_native_install": false,
+  "published": false,
+  "fixed_ci": "PENDING",
+  "source_sha256": {
+    "lib/l10n/about_strings.dart": "8ad5fb731bcd18191fd383e26e1e9de76855eb0e2ff1daef655035f343d49d79",
+    "lib/l10n/app_localizations.dart": "be25bc5d460262e9f853172aebbf71803e94750784895461ad282d475999231f",
+    "lib/l10n/preferences_strings.dart": "0feb8114b0b28275b7e15fb28d8ee1308698d32f501bc9e254bedbb80087caad",
+    "lib/l10n/shared_text_strings.dart": "60b1629b041d647d039a1fa74d251f47ad7c3a885c9a41e7e1050d36b53889b6",
+    "lib/ui/widgets/inline_feedback.dart": "147066894e686387e1f4f93950c419f52855b89f79f376d6c99196db24893786",
+    "pubspec.yaml": "984c81dc55025e3222c19f93d586e04f4e746cecb738d0243d0bcd37cd2e94ea",
+    "test/dashboard_screen_test.dart": "33d984f6f9ef6b7651a0b284eebc8388bcaf2bfe910217a71b414d9e746e2efa",
+    "test/quiet_feedback_test.dart": "37345d737a526b5bd6a74e94344fb3af216106ad1d903bccdcd0fb5caa37c912",
+    "test/settings_reliability_test.dart": "7017aa974d2d79cda357ef1538eb9fb844fd9c731f5ec98256435e7e2820ff92",
+    "test/task_board_performance_test.dart": "c431e0dfacd6398f186b552a0e0f249b1c3830a24d9b4ad955a6322f9d0f6eb9",
+    "test/task_search_panel_test.dart": "d46fe19ff5927098bc99c187e8d5b5a78fb43b0b22ecc21999e661e88825cea6",
+    "test/widget_test.dart": "9729d352a2b13058ad45604265c3a3c059a3b000651b42ad033d63ec7a778e98"
+  },
+  "logs_sha256": {
+    "build/stage123/related-all-final.log": "1f6c84569866b8b18c85119f6364098d54b754e3a6e2174c5bbba068d99f5932",
+    "build/stage123/analyze-final.log": "c5d3f3f70fc20ef3671caaf000e920ff624ffad6274055f691724bae4632379a",
+    "build/stage123/pub-get.log": "c76acea9d60fabf280e3b948b5d8d05d353b789cd71e293e06d5cb306fecd75b",
+    "build/stage123/old-copy-fixture-failures.log": "d315b119bff31f5f3f788980a853f77c7e66f985251f721c5ede451d0f2c04e9",
+    "build/stage123/analyze-initial-fixture-lints.log": "7b4ddca4c1a715d74475d915ac69d24a84b90db73e875c1665b4c4ced14e9878"
+  }
+}
