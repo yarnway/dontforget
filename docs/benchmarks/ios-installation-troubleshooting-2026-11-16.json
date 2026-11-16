@@ -1,0 +1,57 @@
+{
+  "date": "2026-11-16",
+  "target": "iPhone 15 Pro Max",
+  "host": "Windows",
+  "scope": "installation troubleshooting; no app source or release change",
+  "user_observations": {
+    "developer_trust": "reported_enabled",
+    "developer_mode": "reported_enabled_not_independently_queried",
+    "initial_installation_success_report": "superseded_by_installed_metadata",
+    "altserver_sideload_ipa_selection": "no_new_window_or_prompt",
+    "windows_notifications_and_alt_tab": "no_prompt_reported"
+  },
+  "usb_installed_metadata": {
+    "status": "READ",
+    "read_only": true,
+    "pairing_changed": false,
+    "business_data_read": false,
+    "install_or_uninstall_performed": false,
+    "ProductType": "iPhone16,2",
+    "existing_pair_record_used_in_memory": true,
+    "altstore_present": true,
+    "matching_dontforget_apps": [],
+    "expected_candidate_present": false
+  },
+  "metadata_scope": {
+    "nonempty_inventory_and_identifiers_checked": true,
+    "unrelated_app_inventory_saved": false,
+    "pairing_material_saved": false,
+    "pairing_material_used_only_in_short_lived_process": true,
+    "phone_container_accessed": false
+  },
+  "candidate": {
+    "filename": "DontForget-iPhone15ProMax-v1.8.10-79.ipa",
+    "version": "1.8.10+79",
+    "bytes": 11314833,
+    "sha256": "ef56432557aefa7a8b9dcd01f03f91651eb4213bdbd8a9c9c040aa68e771c3d3",
+    "signed_by_agent": false,
+    "installed_on_phone": false
+  },
+  "next_route": "User downloads verified artifact ZIP to iPhone, unzips, imports IPA using AltStore My Apps +; result pending",
+  "temporary_download": {
+    "artifact_id": 14145601480,
+    "archive_sha256": "053607e3533a96d5757d99adda57f6b85b52d16ae48ebed7115b35029fe50f66",
+    "signed_redirect_url_committed": false,
+    "github_account_credentials_in_qr": false,
+    "download_or_installation_verified": false
+  },
+  "runtime_acceptance": "NOT_PERFORMED",
+  "existing_backup_recovery_pointers_changed": false,
+  "local_evidence_sha256": {
+    "build/stage117/IPhoneAppMetadata.cs": "9a2f0f14257ea6bd31a51d481e8273c31a26760233069617b14907c2cc28f73c",
+    "build/stage117/IPhoneAppMetadataMain.cs": "19de89076569f7a91e348d6f086b2c2fde7d989075292e3bca8b54e63c2dcfd6",
+    "build/stage117/IPhoneAppMetadata.exe": "13d2240d439dfc64632a2513ab123a3c2fea9df99ad992a58b8f8812b67848ab",
+    "build/stage117/iphone-installed-app-metadata-verified-20261116-private.json": "8a2f743e733c22f4686bfa2d12c873b09c66eb392625e93fd819f7f6eeb256d9",
+    "build/stage117/iphone-downloads-copy-20261116.json": "6ad35eff17080d94a83aeae9be9c2118bdd67e7358546227db3f7fab2cce1676"
+  }
+}

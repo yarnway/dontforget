@@ -30,4 +30,14 @@
 
 computer-use按技能读取并初始化后仍在窗口发现前报`sandboxCwd is not a local file URI: file:///mnt/d/gitspace/opensources/dontforget`，未用PowerShell UIA替代。进程启动不计为GUI通过；账号认证必须由用户本人在本机完成，目前未登录Apple账号、未签名／安装手机应用，也未验证其在iOS27.2.1上的侧载兼容性。安装后只读USB元数据仍保持。不会把Apple密码、验证码或签名私钥写入聊天、日志、仓库或CI。[本机分层证据](benchmarks/ios-windows-preflight-2026-11-15.json)。
 
-接下来由用户确认托盘／依赖提示并在本机完成账号认证，再核对手机已有身份后尝试签名及独立安装。先做首启、正常重开、基础输入／附件／备份，再做通知热冷点击、录音与灵动岛；数据保全与未知现有身份保护沿用[Runbook](iOS_Device_Acceptance_Runbook.md)。现阶段没有iPhone安装、升级或运行通过证据。
+上述为11月15日准备状态；11月16日安装排查与后续路线见下节。数据保全与未知现有身份保护沿用[Runbook](iOS_Device_Acceptance_Runbook.md)。
+
+## 2026-11-16安装排查
+
+用户先报告安装成功，后报告已信任开发者并开启开发者模式，但找不到“别忘了”。再次从AltServer的`Sideload .ipa…`选择文件后无新窗口，通知中心／Alt+Tab均未见提示。后台进程响应正常、无相关崩溃事件，不足以证明侧载任务执行或账号认证成功；不把静默结果写成安装通过。
+
+为区分主屏幕未显示与实际未安装，使用AltServer已有的x86原生库和临时.NET命令行程序，只读查询安装元数据。通过现有配对记录在短期进程内建立会话，不重配对或保存材料，不执行安装／卸载，不读取应用容器／业务数据。只请求应用身份、名称、版本字段，非空清单／有效身份字段检查后，仅输出本项目匹配项及AltStore存在性，不保存其他应用清单。结果明确为AltStore存在、没有任何匹配“别忘了”的应用；独立候选尚未安装。Developer Mode与开发者信任仍只记录为用户已报告，不由元数据推定。
+
+Downloads中的`DontForget-iPhone15ProMax-v1.8.10-79.ipa`为独立候选副本，11,314,833字节、SHA256 `ef56432557aefa7a8b9dcd01f03f91651eb4213bdbd8a9c9c040aa68e771c3d3`与已核对原包相同。桌面静默路径改为手机AltStore的My Apps → ＋导入；为传文件，准备同一GitHub构建artifact的短期下载二维码，下载内容为ZIP，需在“文件”中解压后选择内部`DontForget_iOS_unsigned_v1.8.10.ipa`。二维码只含单份artifact的临时下载权限，不含GitHub账号凭据；签名地址与二维码不进入版本库。[GitHub说明](https://docs.github.com/en/rest/actions/artifacts#download-an-artifact)规定重定向地址有效期1分钟，过期须重新生成。
+
+手机实际下载、AltStore签名／安装与首启均待确认；用户自行完成Apple账号认证及验证码操作。后续先取得明确结果或错误，再只读核对安装身份／1.8.10与79版本，之后执行首启、正常重开、输入／附件／备份、通知热冷点击、录音与灵动岛。未发布新版本、未修改应用运行时代码，不新增自动化测试或iPhone运行通过结论。[脱敏回执](benchmarks/ios-installation-troubleshooting-2026-11-16.json)保留本轮证据摘要，11月15日旧回执保持原时间归属。
