@@ -1,0 +1,23 @@
+{
+  "source": "1c9aa1528531f1f2351cd322bbec23fa9e75b7e6",
+  "target_version": "1.8.12+82",
+  "version_before": "1.8.11+81",
+  "latest_backup_verified": true,
+  "counts": {
+    "Reminders": 3,
+    "MediaRecords": 1,
+    "Settings": 1
+  },
+  "schema": 17,
+  "integrity": "ok",
+  "sqlite_backup_sha256": "0abf4a164153aaf2260aaf95544ab318e7bf8b194bed76a99aadbe4c0f894f83",
+  "scope": "Documents and Library/Preferences only; excludes Keychain",
+  "independent_candidate_run": 43852101179,
+  "independent_candidate_url": "https://github.com/yarnway/dontforget/actions/runs/43852101179",
+  "same_independent_namespace_prepared": true,
+  "artifact_sha256": "sha256:d6d2991bec081f064056e34814239b392f3ffd65cf5bc7f0aac2cecb5ad9caec",
+  "ipa_sha256": "ed780d61b7466ea57b50d250947feb4037ce4584d81f30dd84b1a25c7f9e62f1",
+  "build82_installed": false,
+  "build82_native_acceptance": "NOT_PERFORMED",
+  "release_published": false
+}

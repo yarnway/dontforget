@@ -1,0 +1,21 @@
+{
+  "source": "1c9aa1528531f1f2351cd322bbec23fa9e75b7e6",
+  "version": "1.8.12+82",
+  "actual_settings_about_navigation": true,
+  "actual_package_info_version_visible": true,
+  "copy_version_accessible_label_visible": true,
+  "update_check_invoked": true,
+  "public_release_1_8_11_81_visible_in_native_tree": true,
+  "result_heading_matched": false,
+  "script_result": "INCOMPLETE",
+  "failure": "Expected update status was not present in captured native accessibility tree; preserve failure for visual and screen reader follow-up",
+  "screenshot_scope": "Before manual update request; About metadata only",
+  "screenshot_sha256": "c422dd7e477a571059a7014fad844ac1bfcf4af0f60f6e09dc2031156fd26761",
+  "result_tree_sha256": "2144141d113b613f64524b58f60922805468673a64ab71b48436fc0ac527ee38",
+  "returned_to_home_verified": false,
+  "screen_reader_tested": false,
+  "subsequent_capture": "Device disconnected after switching USB to iPhone; not retried against another device",
+  "business_records_added": false,
+  "preferences_saved": false,
+  "clipboard_written": false
+}
