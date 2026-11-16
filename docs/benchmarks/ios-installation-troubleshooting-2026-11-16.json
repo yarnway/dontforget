@@ -8,7 +8,9 @@
     "developer_mode": "reported_enabled_not_independently_queried",
     "initial_installation_success_report": "superseded_by_installed_metadata",
     "altserver_sideload_ipa_selection": "no_new_window_or_prompt",
-    "windows_notifications_and_alt_tab": "no_prompt_reported"
+    "windows_notifications_and_alt_tab": "no_prompt_reported",
+    "phone_zip_download_and_extraction": "not_yet_performed_user_confirmed",
+    "screenshot": "AltStore My Apps homepage shows AltStore only and top-left import +; not file picker"
   },
   "usb_installed_metadata": {
     "status": "READ",
@@ -37,7 +39,7 @@
     "signed_by_agent": false,
     "installed_on_phone": false
   },
-  "next_route": "User downloads verified artifact ZIP to iPhone, unzips, imports IPA using AltStore My Apps +; result pending",
+  "next_route": "Refresh artifact download QR; user downloads ZIP to iPhone and unzips in Files before AltStore My Apps + import",
   "temporary_download": {
     "artifact_id": 14145601480,
     "archive_sha256": "053607e3533a96d5757d99adda57f6b85b52d16ae48ebed7115b35029fe50f66",

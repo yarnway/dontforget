@@ -40,4 +40,4 @@ computer-use按技能读取并初始化后仍在窗口发现前报`sandboxCwd is
 
 Downloads中的`DontForget-iPhone15ProMax-v1.8.10-79.ipa`为独立候选副本，11,314,833字节、SHA256 `ef56432557aefa7a8b9dcd01f03f91651eb4213bdbd8a9c9c040aa68e771c3d3`与已核对原包相同。桌面静默路径改为手机AltStore的My Apps → ＋导入；为传文件，准备同一GitHub构建artifact的短期下载二维码，下载内容为ZIP，需在“文件”中解压后选择内部`DontForget_iOS_unsigned_v1.8.10.ipa`。二维码只含单份artifact的临时下载权限，不含GitHub账号凭据；签名地址与二维码不进入版本库。[GitHub说明](https://docs.github.com/en/rest/actions/artifacts#download-an-artifact)规定重定向地址有效期1分钟，过期须重新生成。
 
-手机实际下载、AltStore签名／安装与首启均待确认；用户自行完成Apple账号认证及验证码操作。后续先取得明确结果或错误，再只读核对安装身份／1.8.10与79版本，之后执行首启、正常重开、输入／附件／备份、通知热冷点击、录音与灵动岛。未发布新版本、未修改应用运行时代码，不新增自动化测试或iPhone运行通过结论。[脱敏回执](benchmarks/ios-installation-troubleshooting-2026-11-16.json)保留本轮证据摘要，11月15日旧回执保持原时间归属。
+随后用户提供的截图为AltStore的My Apps主页，仅显示AltStore，并确认尚未把ZIP下载／解压到iPhone；当前缺少可选IPA的原因已定位到文件尚未传入，不能推定导入入口失效。须先刷新二维码、手机实际下载与解压，再确认AltStore签名／安装与首启；用户自行完成Apple账号认证及验证码操作。后续先取得明确结果或错误，再只读核对安装身份／1.8.10与79版本，之后执行首启、正常重开、输入／附件／备份、通知热冷点击、录音与灵动岛。未发布新版本、未修改应用运行时代码，不新增自动化测试或iPhone运行通过结论。[脱敏回执](benchmarks/ios-installation-troubleshooting-2026-11-16.json)保留本轮证据摘要，11月15日旧回执保持原时间归属。
