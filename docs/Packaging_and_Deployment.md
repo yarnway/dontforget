@@ -1,6 +1,6 @@
 # DontForget 打包与发布验收
 
-当前稳定版为v1.8.11／build81、schema17，Android固定发行签名ARM64 APK／通用APK／AAB、Windows、Linux与iOS未签名IPA已发布，见[本轮发行](Release_1.8.11_81_2026-11-16.md)。iOS需个人AltStore重签；Android本轮因Pixel不可用未做+81正式／QA真机升级，原生矩阵另列。下列旧版本案例保留各自归属。
+当前稳定版为v1.8.12／build83、schema17，四平台七包与20附件已发布并独立读回，见[本轮发行](Release_1.8.12_83_2026-11-16.md)。Windows运行中82→83、双Android最新保全升级与普通重开已验；iOS为未签名IPA，独立83包已准备，手机尚未安装／真机验收。原生通知、录音、读屏及其余矩阵独立待验。下列旧版本案例保留各自归属。
 
 当前候选版本和构建号以 `pubspec.yaml` 为准，Flutter 固定为 3.44.9。构建成功、打包成功、安装运行、系统通知和正式发布分别验收。当前执行状态见[阶段台账](Next_Steps_2026-11-02.md)，v1.7历史范围见[验收总表](Release_Acceptance_v1.7.md)，历史结果见 [v1.6 阶段验收记录](Native_Acceptance_v1.6.md) 和 [v1.5.1 验收记录](Release_Acceptance_v1.5.1.md)。
 

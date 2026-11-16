@@ -54,3 +54,7 @@ Windows computer-use在初始化时仍报`sandboxCwd is not a local file URI`，
 - 阶段50下一候选：新构建号、固定CI及完整包核对，Windows最新保全运行中覆盖、iPhone最新保全同身份覆盖，再按设备可用范围发行；个人签名续期、macOS公证、Windows签名商店继续待办。
 
 当前首页／只读详情的同源基线与下一批优先级见[独立记录](UX_Next_Surface_Baselines_2026-11-16.md)，34项既有只读／语音／离页保护回归通过，未改这两页产品源码。
+
+## 后续交付
+
+以上为原源码阶段与合成渲染。设置／关于UX随后纳入v1.8.12／build83，固定CI、完整包、Windows运行中和双Android升级、Pixel实际版本及更新current、四平台发行与读回均完成；iPhone83仍未安装。各原生范围见[83最终记录](Release_1.8.12_83_2026-11-16.md)。

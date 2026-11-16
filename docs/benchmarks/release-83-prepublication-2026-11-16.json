@@ -1,0 +1,141 @@
+{
+  "version": "1.8.12",
+  "build_number": "83",
+  "revision": "ffdfa5acf88afe07c9a5501f1a46e5f0804a57c8",
+  "ci_run": 43862178029,
+  "ci_url": "https://github.com/yarnway/dontforget/actions/runs/43862178029",
+  "platforms": [
+    "android",
+    "windows",
+    "linux",
+    "ios"
+  ],
+  "android_certificate_sha256": "3db49656984fb848a73b1e8d056846b97e2a7caf47c9a9ae74f475cdbb79e9f1",
+  "archives": [
+    {
+      "name": "android-deliverables",
+      "sha256": "sha256:bdfaaeb220f9d97bcb9b9274470c7d4aa08f6ad36c92b5a316a1f78f192096e8",
+      "bytes": 122601361
+    },
+    {
+      "name": "windows-deliverables",
+      "sha256": "sha256:bb295622b6a6727ce1226d6c9803da09e8b709cd810a5fd456f1e69bb97c820d",
+      "bytes": 32399826
+    },
+    {
+      "name": "linux-deliverables",
+      "sha256": "sha256:404c8bc3b93ebe10158c1379d7531528c2e3681b8f5f85f8ba23ce3c9c6bd454",
+      "bytes": 14559332
+    },
+    {
+      "name": "ios-deliverables",
+      "sha256": "sha256:111cb4578dd330d14b9564dba0f86c1db2bf70d8d7e19fb5d3434d0997373d8c",
+      "bytes": 11388719
+    }
+  ],
+  "acceptance_reports": [
+    "windows-startup.json",
+    "linux-startup.json",
+    "windows-installation.json"
+  ],
+  "full_runtime_matrix": "NOT_PERFORMED",
+  "publisher_script_sha256": "03ee972067ea1ba7dcd737a1f9002a640aa2399856b9a6761408f3abbfc58211",
+  "files": [
+    {
+      "file": "android-manifest.json",
+      "sha256": "9e36052f4f7388c2bbb7221753746bcac73b841e0e61aad3aa10be59e95199f7",
+      "bytes": 1401
+    },
+    {
+      "file": "android-SHA256SUMS.txt",
+      "sha256": "37dea371fdfe5e0bb6e9ea42b45f9def5177ee65e629fded8e05a652dd1e7dec",
+      "bytes": 297
+    },
+    {
+      "file": "DontForget_Android_arm64_v1.8.12.apk",
+      "sha256": "3854e1c94441447ac71a3b8bf036ad9eced32ea8a3d3f4d1bc0d60f3d79dccb6",
+      "bytes": 26820575
+    },
+    {
+      "file": "DontForget_Android_v1.8.12.aab",
+      "sha256": "a557d666a6a604185108281c8eea77d2815f507a8711c26d9346eae60c171142",
+      "bytes": 74430538
+    },
+    {
+      "file": "DontForget_Android_v1.8.12.apk",
+      "sha256": "90dbdb6a8d85371c1080f6beac72c003898641945c598af97fe3f3c20c157cd8",
+      "bytes": 77719815
+    },
+    {
+      "file": "DontForget_iOS_unsigned_v1.8.12.ipa",
+      "sha256": "015b3aa9c19b145cdc34c9ace53734194005c14eda951a1f5ac84825da03f9c1",
+      "bytes": 11435928
+    },
+    {
+      "file": "DontForget_Linux_x64_v1.8.12.tar.gz",
+      "sha256": "2c9aa77edc25650fdf54e0d0e4556af8d726f264d6245788a597df04e1919023",
+      "bytes": 14597138
+    },
+    {
+      "file": "DontForget_Setup_v1.8.12.exe",
+      "sha256": "974dcdc96d5ab1042dcd3a89ebaf358dd2510219bbccf25e101823a40bd18f55",
+      "bytes": 14824574
+    },
+    {
+      "file": "DontForget_Windows_Portable_v1.8.12.zip",
+      "sha256": "84e08df3020305bf359e9b440d7ac2c315387f7025ecb9acd4c3d0ee42ced2c3",
+      "bytes": 18128994
+    },
+    {
+      "file": "ios-manifest.json",
+      "sha256": "49e97ccfeba3b140ac4a987e890b2e05542d4b8ccdea1c64029fc1e8ad1c623a",
+      "bytes": 594
+    },
+    {
+      "file": "ios-SHA256SUMS.txt",
+      "sha256": "b23ae89710f410bf8952908be9fccc27236845ee5acdc2ae1d05d6a2dce086b9",
+      "bytes": 102
+    },
+    {
+      "file": "linux-manifest.json",
+      "sha256": "a493ff1e7a422a3b075704548058ac51a44217f1afb6fe43492df1d812a66951",
+      "bytes": 403
+    },
+    {
+      "file": "linux-SHA256SUMS.txt",
+      "sha256": "4595c6c858327a4d47e3e96e49a69fea9f62dfa1c59ea9e2b7957c62a91a0188",
+      "bytes": 102
+    },
+    {
+      "file": "linux-startup.json",
+      "sha256": "758d8ae0940eaf1a2a10ca9fe3236b55830131965f5372ffe5aeb9d7f02c2aaf",
+      "bytes": 571
+    },
+    {
+      "file": "windows-installation.json",
+      "sha256": "c6aa77a7c257db4afbace545a178e4f3edc6410c9ff89e638246fc9ab11acb48",
+      "bytes": 288
+    },
+    {
+      "file": "windows-manifest.json",
+      "sha256": "a11fbd77203fee1fba020c75aa42d1ec582a4a94eb59fb3917c5f49e94b58a73",
+      "bytes": 660
+    },
+    {
+      "file": "windows-SHA256SUMS.txt",
+      "sha256": "3e3e57c2fe2bbd57c43d3abec0247124bbfd686760b55aab4fb73ee20310c5c3",
+      "bytes": 203
+    },
+    {
+      "file": "windows-startup.json",
+      "sha256": "76eb748d0fe0cf5e099f015215cd07c9c42db5609bca2f46cd415b8c65f3f03e",
+      "bytes": 443
+    }
+  ],
+  "ios_distribution": {
+    "signing": "unsigned",
+    "requires_personal_resigning": true,
+    "runtime_acceptance": "NOT_PERFORMED",
+    "app_store_or_testflight_distribution": false
+  }
+}

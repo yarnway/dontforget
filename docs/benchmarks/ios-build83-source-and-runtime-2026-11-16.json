@@ -1,0 +1,93 @@
+{
+  "source": "ffdfa5acf88afe07c9a5501f1a46e5f0804a57c8",
+  "version": "1.8.12+83",
+  "independent_candidate": {
+    "workflow_revision": "ffdfa5acf88afe07c9a5501f1a46e5f0804a57c8",
+    "source_revision": "ffdfa5acf88afe07c9a5501f1a46e5f0804a57c8",
+    "id": 43868257576,
+    "url": "https://github.com/yarnway/dontforget/actions/runs/43868257576",
+    "conclusion": "success",
+    "artifact": {
+      "id": 14228092400,
+      "name": "ios-device-iphone15-20261115-build83",
+      "size_in_bytes": 11390090,
+      "digest": "sha256:d5b8c635de328af1cd09f5c37011305afa8b9bad12885f48aa925ec98e3561f3"
+    },
+    "receipt": {
+      "source_revision": "ffdfa5acf88afe07c9a5501f1a46e5f0804a57c8",
+      "run_id": "iphone15-20261115",
+      "host_bundle": "com.yarnway.dontforget.acceptance.iphone15-20261115",
+      "extension_bundle": "com.yarnway.dontforget.acceptance.iphone15-20261115.ReminderActivity",
+      "version": "1.8.12+83",
+      "ipa_sha256": "201455b7c7c82854fc07425372a73ddb3fd3dde8b9d88173add82871d8002ac5",
+      "ipa_filename": "DontForget_iOS_unsigned_v1.8.12+83.ipa",
+      "signing": "unsigned",
+      "installed": false,
+      "runtime_acceptance": "NOT_PERFORMED",
+      "apple_credentials_used": false,
+      "prepared_files": {
+        "schema": 1,
+        "action": "prepare",
+        "run_id": "iphone15-20261115",
+        "host_bundle_id": "com.yarnway.dontforget.acceptance.iphone15-20261115",
+        "widget_bundle_id": "com.yarnway.dontforget.acceptance.iphone15-20261115.ReminderActivity",
+        "dry_run": false,
+        "files": {
+          "project.pbxproj": {
+            "original_sha256": "082d90f4e4d4f4a8d4565d4f31d588160bc485348a9923647221497adbc1a75c",
+            "prepared_sha256": "8944851cad3194c931c4a32ee14f56d067c73864b104aeae6a56234db4804afa",
+            "changed": true
+          },
+          "Info.plist": {
+            "original_sha256": "fb61ce9bec7d804dd7967fd86e733c08db2305eb3361cd0feace839a4e3dca85",
+            "prepared_sha256": "623bca8053e82238a9b0ea5c9013c4251cd2ce9c18aee2568e59be0b2ce95190",
+            "changed": true
+          }
+        }
+      }
+    },
+    "local_ipa": "build\\stage125\\ios-device-candidate\\DontForget_iOS_iphone15-20261115_unsigned_v1.8.12+83.ipa",
+    "bytes": 11436068,
+    "source_archive_and_ipa_digest_verified": true,
+    "zip_crc_verified": true,
+    "host_and_extension_ids_verified": true,
+    "installed": false,
+    "signed": false
+  },
+  "runtime": {
+    "source": "ffdfa5acf88afe07c9a5501f1a46e5f0804a57c8",
+    "target_version": "1.8.12+83",
+    "build83_installation_verified": false,
+    "agent_installed_build83": false,
+    "last_independently_read_version": "1.8.11+81",
+    "current_usb_status": "UNAVAILABLE",
+    "current_usb_stage": "exactly_one_usb_device_required",
+    "current_usb_read_only": true,
+    "public_ipa_unsigned_verified": true,
+    "apple_credentials_read_or_authentication_automated": false,
+    "runtime_pending_will_be_explicit_in_release_body": true,
+    "publication_scope_basis": "Existing four-platform unsigned-iOS policy; user authorization persists; native acceptance recorded separately",
+    "policy_sha256": "4ad49fa13bb9febe5b668eb1e39310d6f97e7a78fe5d823305d41f209a097095",
+    "private_metadata_evidence_sha256": {
+      "last_read": "ba06bc4b5e1563b0d059dbcc4a07adbbf4f600db62af2514f7a56ddd50219a9e",
+      "current": "0491c2d87574c514157282d8ec7e99dd46099944af8687862bc66c43fbb1fa46"
+    }
+  },
+  "run_attempt": 2,
+  "first_attempt": {
+    "run_id": 43868257576,
+    "runner_assigned": false,
+    "steps_started": 0,
+    "reason": "Hosted macOS arm64 capacity; job not acquired by a runner",
+    "automatic_failed_job_retry_count": 1,
+    "annotations": [
+      "The job was not acquired by Runner of type hosted even after multiple attempts",
+      "Due to capacity constraints, jobs targeting macOS arm64 runners may experience longer queue times.",
+      "Due to capacity constraints, jobs targeting macOS arm64 runners may experience longer queue times.",
+      "Due to capacity constraints, jobs targeting macOS arm64 runners may experience longer queue times."
+    ]
+  },
+  "device_installation_verified": false,
+  "keychain_read": false,
+  "apple_credentials_read": false
+}

@@ -1,0 +1,15 @@
+{
+  "checked_at_utc": "2026-11-16T13:08:23.021383Z",
+  "public_request_only": true,
+  "credentials_supplied": false,
+  "result": "READ",
+  "published_version": "1.8.12",
+  "published_build": 83,
+  "comparison": "current",
+  "download_entries": 6,
+  "ios_unsigned_download_available": true,
+  "source": "ffdfa5acf88afe07c9a5501f1a46e5f0804a57c8",
+  "installed": "1.8.12+83",
+  "physical_ui_automated": false,
+  "evidence_sha256": "3a789b1c7f0ee4a8adcb43b01d675a9b4bf064bc98c87155a7a09370dfaa8dec"
+}

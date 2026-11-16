@@ -1,0 +1,108 @@
+{
+  "source": "ffdfa5acf88afe07c9a5501f1a46e5f0804a57c8",
+  "version": "1.8.12+83",
+  "same_authorized_pixel_verified": true,
+  "backups": {
+    "source": "ffdfa5acf88afe07c9a5501f1a46e5f0804a57c8",
+    "version_before": "1.8.12+82",
+    "production_latest_backup": true,
+    "qa_independent_backup": true,
+    "actual_original_ordinary_entries_restored": true,
+    "protected_historical_pointers_preserved": true,
+    "reports": [
+      {
+        "kind": "production",
+        "package": "com.yarnway.dontforget",
+        "current_installed_before": "1.8.12+82",
+        "snapshot": "before-83-install-final",
+        "counts": {
+          "Reminders": 2,
+          "MediaRecords": 0,
+          "Settings": 1
+        },
+        "secure_entry_count": 0,
+        "referenced_media_files_verified": 0,
+        "original_ordinary_apk_restored": true,
+        "latest_backup_verified": true
+      },
+      {
+        "kind": "qa",
+        "package": "com.yarnway.dontforget.acceptance.p4720261102",
+        "current_installed_before": "1.8.12+82",
+        "snapshot": "before-83-qa-final",
+        "counts": {
+          "Reminders": 56,
+          "MediaRecords": 9,
+          "Settings": 1
+        },
+        "secure_entry_count": 1,
+        "referenced_media_files_verified": 9,
+        "original_ordinary_apk_restored": true,
+        "latest_backup_verified": true
+      }
+    ],
+    "pointer_sha256": {
+      "production-recovery-pointer-private.json": "8c185a9fe3d27e21b259322528f1de7310a8a640426eece6dd22d483dde921f9",
+      "qa-recovery-pointer-private.json": "8f4fc1a621247b841f8c75c92ea2c1d23575b8a82d8dff0bc535f66a8e99baba"
+    }
+  },
+  "production": {
+    "source": "ffdfa5acf88afe07c9a5501f1a46e5f0804a57c8",
+    "version": "1.8.12+83",
+    "package": "com.yarnway.dontforget",
+    "origin": "fixed-CI distribution ARM64 and universal APKs",
+    "latest_backup_before_upgrade": true,
+    "same_signing_identity": true,
+    "all_business_fields_media_and_secure_entries_preserved": true,
+    "counts": {
+      "Reminders": 2,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "secure_entry_count": 0,
+    "cold_reopen_passed": true,
+    "final_ordinary_entry": true,
+    "fresh_install_this_build": false,
+    "verified_ci_arm64_82_to_arm64_83": true,
+    "both_ci_apk_variants_installed": true,
+    "same_version_variant_exchange_data_preserved": true,
+    "final_variant": "arm64"
+  },
+  "qa": {
+    "source": "ffdfa5acf88afe07c9a5501f1a46e5f0804a57c8",
+    "version": "1.8.12+83",
+    "package": "com.yarnway.dontforget.acceptance.p4720261102",
+    "origin": "fixed SDK3.44.9 independent debug identity",
+    "latest_backup_before_upgrade": true,
+    "same_signing_identity": true,
+    "all_business_fields_media_and_secure_entries_preserved": true,
+    "counts": {
+      "Reminders": 56,
+      "MediaRecords": 9,
+      "Settings": 1
+    },
+    "secure_entry_count": 1,
+    "cold_reopen_passed": true,
+    "final_ordinary_entry": true,
+    "fresh_install_this_build": false,
+    "verified_ci_arm64_82_to_arm64_83": false,
+    "both_ci_apk_variants_installed": false,
+    "same_version_variant_exchange_data_preserved": false,
+    "final_variant": "debug"
+  },
+  "final_package_readback": {
+    "source": "ffdfa5acf88afe07c9a5501f1a46e5f0804a57c8",
+    "version": "1.8.12+83",
+    "package": "com.yarnway.dontforget",
+    "installed_apk_matches_fixed_ci_arm64": true,
+    "apk_sha256": "3854e1c94441447ac71a3b8bf036ad9eced32ea8a3d3f4d1bc0d60f3d79dccb6",
+    "bytes": 26820575,
+    "primary_cpu_abi": "arm64-v8a",
+    "ordinary_process_running": true,
+    "qa_installed_ordinary_package_bytes_equal": true,
+    "qa_apk_sha256": "054df0042125ed75c27a07fc340a148d17bbad53474ec3fd8220532bdb8d04a4"
+  },
+  "credentials_exported_plaintext": false,
+  "historical_recovery_pointers_unchanged": true,
+  "scope": "Latest82 backups, both identities upgraded to83, all fields/media/actual secure values, cold reopen and final ordinary APK verification; not a full notification/recording/IME matrix"
+}
