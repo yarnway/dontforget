@@ -1,0 +1,230 @@
+{
+  "version": "1.8.11",
+  "build_number": "81",
+  "revision": "ae11fd6327fffb47793e4ed8a772c58352744475",
+  "ci_run": 43807577968,
+  "ci_url": "https://github.com/yarnway/dontforget/actions/runs/43807577968",
+  "platforms": [
+    "android",
+    "windows",
+    "linux",
+    "ios"
+  ],
+  "android_certificate_sha256": "3db49656984fb848a73b1e8d056846b97e2a7caf47c9a9ae74f475cdbb79e9f1",
+  "archives": [
+    {
+      "name": "android-deliverables",
+      "sha256": "sha256:4f2aa059a628660f5192d4ec2d8811687fa69abeb6d670d2456effd35e129c50",
+      "bytes": 122598425
+    },
+    {
+      "name": "windows-deliverables",
+      "sha256": "sha256:576395638f8aa4c06ff749505f3ce169118fff153f1b732cf33b7018ea630ea7",
+      "bytes": 32398444
+    },
+    {
+      "name": "linux-deliverables",
+      "sha256": "sha256:53d7906637413b34ed41aa4aa8b56c272c3886e6527f04ee1f1ff9db3f6629d8",
+      "bytes": 14558615
+    },
+    {
+      "name": "ios-deliverables",
+      "sha256": "sha256:75ece3210e4ff8ccaa1b035041b7f71befbf0f47825f73781100ddbfce202900",
+      "bytes": 11389992
+    }
+  ],
+  "acceptance_reports": [
+    "windows-startup.json",
+    "linux-startup.json",
+    "windows-installation.json"
+  ],
+  "full_runtime_matrix": "NOT_PERFORMED",
+  "publisher_script_sha256": "03ee972067ea1ba7dcd737a1f9002a640aa2399856b9a6761408f3abbfc58211",
+  "files": [
+    {
+      "file": "android-manifest.json",
+      "sha256": "17a1b87bc0979c801058746090b18ce051c9315d6d4427e500ca2cb475d42033",
+      "bytes": 1401
+    },
+    {
+      "file": "android-SHA256SUMS.txt",
+      "sha256": "6d5818b85a3c0d8b0aa17cc1cd8399371843f3642b4e1ee4d582d2119f3819fe",
+      "bytes": 297
+    },
+    {
+      "file": "DontForget_Android_arm64_v1.8.11.apk",
+      "sha256": "f7cc0fbbb4cb5dc9a9d1f9e18eb7ff136eb8ca73062ab35c6e3b637ceeaf5a60",
+      "bytes": 26820575
+    },
+    {
+      "file": "DontForget_Android_v1.8.11.aab",
+      "sha256": "a9614211d9485ead160e9fd8121e0f0398006e58f1bce5de7bba01ef3d65019b",
+      "bytes": 74427919
+    },
+    {
+      "file": "DontForget_Android_v1.8.11.apk",
+      "sha256": "42655679e3cc30f1b958c8c4bbc4ca93a65d28fcfe5e6045efdc727854a4400a",
+      "bytes": 77719815
+    },
+    {
+      "file": "DontForget_iOS_unsigned_v1.8.11.ipa",
+      "sha256": "dd1930134ac8471cd3845389f48b9ab9b6dfa5f33204e230275bf8f92b96f8dc",
+      "bytes": 11437521
+    },
+    {
+      "file": "DontForget_Linux_x64_v1.8.11.tar.gz",
+      "sha256": "f09e7dfbacb364d613735efb81dc6aea3e6410da8b1f96c9008fe640f44e854d",
+      "bytes": 14597153
+    },
+    {
+      "file": "DontForget_Setup_v1.8.11.exe",
+      "sha256": "9ab8209da5856fb75fc23fbb4be37b4443c9e813750518b69a674e696003189c",
+      "bytes": 14825022
+    },
+    {
+      "file": "DontForget_Windows_Portable_v1.8.11.zip",
+      "sha256": "6096c64e2c9590345c1b63c5d81260f03330bf299e49e8feded88905f744e9f8",
+      "bytes": 18127274
+    },
+    {
+      "file": "ios-manifest.json",
+      "sha256": "83bfa9ea821ceb8055d7579d63908d5e3e3ae9caf5f3b852f396598cc1afb352",
+      "bytes": 594
+    },
+    {
+      "file": "ios-SHA256SUMS.txt",
+      "sha256": "4623d85ff528061dbc285e7fe12f0b66e13f34711c2fadba6f3da6ace4910716",
+      "bytes": 102
+    },
+    {
+      "file": "linux-manifest.json",
+      "sha256": "092a110f8db3337d773e3857ac9c271eb6cf8a7ff6ebeb7540086140883d493a",
+      "bytes": 403
+    },
+    {
+      "file": "linux-SHA256SUMS.txt",
+      "sha256": "fb60feed0883e6e3ebdd5e2551376ff47319bda1b4182030e3953cde92d28b96",
+      "bytes": 102
+    },
+    {
+      "file": "linux-startup.json",
+      "sha256": "e0cfd1a0aaaa04194403d4ea1a1796bf5f615dc0c4246bdf2d39bab0ad1b9c48",
+      "bytes": 571
+    },
+    {
+      "file": "windows-installation.json",
+      "sha256": "ad93c7810c11844a198a70ea5e213203b4913bc47105037a39cfc05145789c29",
+      "bytes": 288
+    },
+    {
+      "file": "windows-manifest.json",
+      "sha256": "109715a723b88757fba90e3537bd66621d4e06ea353f8461741b7aa2abe41f07",
+      "bytes": 660
+    },
+    {
+      "file": "windows-SHA256SUMS.txt",
+      "sha256": "9d77d5859f8becf804dd9056c85e50c53e40f346a42ae924690d4e530b9f6e56",
+      "bytes": 203
+    },
+    {
+      "file": "windows-startup.json",
+      "sha256": "89d733b878db32d5c450d549129557d895bca778c61ecca7658b49da459d12db",
+      "bytes": 443
+    }
+  ],
+  "ios_distribution": {
+    "signing": "unsigned",
+    "requires_personal_resigning": true,
+    "runtime_acceptance": "NOT_PERFORMED",
+    "app_store_or_testflight_distribution": false
+  },
+  "published": false,
+  "windows_actual_metadata": {
+    "read_only": true,
+    "reader": "same FileVersionInfo implementation used by package_info_plus",
+    "app_name": "DontForget",
+    "version": "1.8.11",
+    "build_number": "81",
+    "gui_interactions": false
+  },
+  "linux_actual_metadata": {
+    "version": "1.8.11+81",
+    "source": "ae11fd6327fffb47793e4ed8a772c58352744475",
+    "linux_actual_bundle_metadata": {
+      "app_name": "dont_forget",
+      "version": "1.8.11",
+      "build_number": "81",
+      "package_name": "dont_forget"
+    },
+    "native_gui_about_viewed": false,
+    "package_sha256": "f09e7dfbacb364d613735efb81dc6aea3e6410da8b1f96c9008fe640f44e854d"
+  },
+  "android_package_verification": {
+    "source": "ae11fd6327fffb47793e4ed8a772c58352744475",
+    "apk_identity": [
+      "com.yarnway.dontforget",
+      "81",
+      "1.8.11",
+      "24"
+    ],
+    "apk_variants": {
+      "universal": {
+        "arm64-v8a": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ],
+        "armeabi-v7a": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ],
+        "x86_64": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ]
+      },
+      "arm64": {
+        "arm64-v8a": [
+          "libapp.so",
+          "libdartjni.so",
+          "libflutter.so",
+          "libsqlite3.so"
+        ]
+      }
+    },
+    "aab_library_inventory": {
+      "arm64-v8a": [
+        "libapp.so",
+        "libdartjni.so",
+        "libflutter.so",
+        "libsqlite3.so"
+      ],
+      "armeabi-v7a": [
+        "libapp.so",
+        "libdartjni.so",
+        "libflutter.so",
+        "libsqlite3.so"
+      ],
+      "x86_64": [
+        "libapp.so",
+        "libdartjni.so",
+        "libflutter.so",
+        "libsqlite3.so"
+      ]
+    },
+    "aab_retains_three_abis": true,
+    "same_source_ci_apk_size_comparison": true,
+    "universal_bytes": 77719815,
+    "arm64_bytes": 26820575,
+    "signatures_verified_by_preparation": true,
+    "candidate_signature_verification": true
+  },
+  "iphone81_installed": false,
+  "iphone81_about_ui": "PENDING_USER_PHONE_ACTION",
+  "android_native_upgrade": "NOT_PERFORMED_DEVICE_UNAVAILABLE"
+}

@@ -1,0 +1,142 @@
+{
+  "url": "https://github.com/yarnway/dontforget/releases/tag/v1.8.11",
+  "tag": "v1.8.11",
+  "revision": "ae11fd6327fffb47793e4ed8a772c58352744475",
+  "published": true,
+  "prerelease": false,
+  "body_verified": true,
+  "assets": [
+    {
+      "file": "android-manifest.json",
+      "bytes": 1401,
+      "sha256": "17a1b87bc0979c801058746090b18ce051c9315d6d4427e500ca2cb475d42033"
+    },
+    {
+      "file": "android-SHA256SUMS.txt",
+      "bytes": 297,
+      "sha256": "6d5818b85a3c0d8b0aa17cc1cd8399371843f3642b4e1ee4d582d2119f3819fe"
+    },
+    {
+      "file": "DontForget_Android_arm64_v1.8.11.apk",
+      "bytes": 26820575,
+      "sha256": "f7cc0fbbb4cb5dc9a9d1f9e18eb7ff136eb8ca73062ab35c6e3b637ceeaf5a60"
+    },
+    {
+      "file": "DontForget_Android_v1.8.11.aab",
+      "bytes": 74427919,
+      "sha256": "a9614211d9485ead160e9fd8121e0f0398006e58f1bce5de7bba01ef3d65019b"
+    },
+    {
+      "file": "DontForget_Android_v1.8.11.apk",
+      "bytes": 77719815,
+      "sha256": "42655679e3cc30f1b958c8c4bbc4ca93a65d28fcfe5e6045efdc727854a4400a"
+    },
+    {
+      "file": "DontForget_iOS_unsigned_v1.8.11.ipa",
+      "bytes": 11437521,
+      "sha256": "dd1930134ac8471cd3845389f48b9ab9b6dfa5f33204e230275bf8f92b96f8dc"
+    },
+    {
+      "file": "DontForget_Linux_x64_v1.8.11.tar.gz",
+      "bytes": 14597153,
+      "sha256": "f09e7dfbacb364d613735efb81dc6aea3e6410da8b1f96c9008fe640f44e854d"
+    },
+    {
+      "file": "DontForget_Setup_v1.8.11.exe",
+      "bytes": 14825022,
+      "sha256": "9ab8209da5856fb75fc23fbb4be37b4443c9e813750518b69a674e696003189c"
+    },
+    {
+      "file": "DontForget_Windows_Portable_v1.8.11.zip",
+      "bytes": 18127274,
+      "sha256": "6096c64e2c9590345c1b63c5d81260f03330bf299e49e8feded88905f744e9f8"
+    },
+    {
+      "file": "ios-manifest.json",
+      "bytes": 594,
+      "sha256": "83bfa9ea821ceb8055d7579d63908d5e3e3ae9caf5f3b852f396598cc1afb352"
+    },
+    {
+      "file": "ios-SHA256SUMS.txt",
+      "bytes": 102,
+      "sha256": "4623d85ff528061dbc285e7fe12f0b66e13f34711c2fadba6f3da6ace4910716"
+    },
+    {
+      "file": "linux-manifest.json",
+      "bytes": 403,
+      "sha256": "092a110f8db3337d773e3857ac9c271eb6cf8a7ff6ebeb7540086140883d493a"
+    },
+    {
+      "file": "linux-SHA256SUMS.txt",
+      "bytes": 102,
+      "sha256": "fb60feed0883e6e3ebdd5e2551376ff47319bda1b4182030e3953cde92d28b96"
+    },
+    {
+      "file": "linux-startup.json",
+      "bytes": 571,
+      "sha256": "e0cfd1a0aaaa04194403d4ea1a1796bf5f615dc0c4246bdf2d39bab0ad1b9c48"
+    },
+    {
+      "file": "release-provenance.json",
+      "bytes": 4432,
+      "sha256": "eff8d0295c01e8f1e9a85bea755b2c6f4880b59041846c0a09942036ecb333e4"
+    },
+    {
+      "file": "SHA256SUMS.txt",
+      "bytes": 1752,
+      "sha256": "cd62ddf4835f2cc497cf7d9f2e10d4b88ad48e4fceccf483d81dd976d2d1e7a5"
+    },
+    {
+      "file": "windows-installation.json",
+      "bytes": 288,
+      "sha256": "ad93c7810c11844a198a70ea5e213203b4913bc47105037a39cfc05145789c29"
+    },
+    {
+      "file": "windows-manifest.json",
+      "bytes": 660,
+      "sha256": "109715a723b88757fba90e3537bd66621d4e06ea353f8461741b7aa2abe41f07"
+    },
+    {
+      "file": "windows-SHA256SUMS.txt",
+      "bytes": 203,
+      "sha256": "9d77d5859f8becf804dd9056c85e50c53e40f346a42ae924690d4e530b9f6e56"
+    },
+    {
+      "file": "windows-startup.json",
+      "bytes": 443,
+      "sha256": "89d733b878db32d5c450d549129557d895bca778c61ecca7658b49da459d12db"
+    }
+  ],
+  "latest_verified": true,
+  "previous_release_assets_and_body_preserved": true,
+  "public_provenance_and_total_checksums_verified": true,
+  "public_provenance_semantically_equal_after_filename_order_normalization": true,
+  "metadata_differences_only_crlf_and_windows_case_insensitive_filename_sort": true,
+  "total_checksums_recomputed_using_published_lf_provenance_and_linux_order": true,
+  "original_local_evidence_preserved": true,
+  "source_files_exact_bytes_equal": 18,
+  "public_large_assets_re_downloaded": false,
+  "large_assets_verified_using_github_digest_and_fully_verified_source_archives": true,
+  "source_ci": 43807577968,
+  "publish_workflow": 43818704828,
+  "publish_workflow_url": "https://github.com/yarnway/dontforget/actions/runs/43818704828",
+  "public_update_client": {
+    "checked_at_utc": "2026-11-16T06:47:57.102475Z",
+    "public_request_only": true,
+    "credentials_supplied": false,
+    "result": "READ",
+    "published_version": "1.8.11",
+    "published_build": 81,
+    "comparison": "current",
+    "download_entries": 6,
+    "ios_unsigned_download_available": true,
+    "source": "ae11fd6327fffb47793e4ed8a772c58352744475",
+    "installed": "1.8.11+81",
+    "physical_ui_automated": false
+  },
+  "initial_public_update_request_failed": true,
+  "initial_local_readback_rejected_crlf_and_filename_order_metadata": true,
+  "android_build81_native_upgrade": "NOT_PERFORMED_DEVICE_UNAVAILABLE",
+  "ios_standard_public_ipa_runtime_matrix": "NOT_PERFORMED",
+  "ios_independent_same_source_build81_upgrade_and_about": "VERIFIED_USB_PLUS_USER_REPORT"
+}

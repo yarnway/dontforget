@@ -1,0 +1,51 @@
+{
+  "source": "ae11fd6327fffb47793e4ed8a772c58352744475",
+  "version": "1.8.11+81",
+  "checked_at_utc": "2026-11-16T06:42:47.328982+00:00",
+  "version_independently_verified": true,
+  "same_bundle_identity_verified": true,
+  "latest_backup_before_upgrade": true,
+  "all_existing_business_fields_preserved": true,
+  "all_original_media_preserved": true,
+  "preferences_bytes_equal": true,
+  "user_reports_opened_after_upgrade": true,
+  "user_reports_qa_record_retained": true,
+  "counts_before": {
+    "Reminders": 3,
+    "MediaRecords": 1,
+    "Settings": 1
+  },
+  "counts_after": {
+    "Reminders": 3,
+    "MediaRecords": 1,
+    "Settings": 1
+  },
+  "schema": 17,
+  "integrity": "ok",
+  "all_three_tables_all_columns_equal": true,
+  "media_files_including_material_marker": 2,
+  "keychain_read_or_backed_up": false,
+  "snapshot_scope": "Documents and Library/Preferences only",
+  "physical_ui_automated": false,
+  "signed_identity_comparison": "SHA256 equal; actual personal team identity not published",
+  "evidence_sha256": {
+    "iphone-before81-latest-snapshot-private.json": "c83946e43a3933f48a7b94b813159a5d4bb65bf26a1973ec56f49d08f02166cf",
+    "iphone-after81-snapshot-private.json": "be7b739e782e554cd7a3b9d83be1323c889d8e30745883cb1c6c27e0560ea821",
+    "iphone-before81-consistent-private.db": "d172dd721ce12cd9bc9f1bb1fb87a293b52941e8846fcbbf9c7912f2e3ae4ec8"
+  },
+  "about_user_observation": {
+    "source": "ae11fd6327fffb47793e4ed8a772c58352744475",
+    "installed_version_reported": "1.8.11+81",
+    "about_screen_visible": true,
+    "manual_update_check_returned_result": true,
+    "existing_records_retained": true,
+    "user_reported": true,
+    "exact_update_status_text_independently_captured": false,
+    "user_answer": "显示1.8.11（81），检查更新有结果，原记录仍在",
+    "physical_ui_automated": false
+  },
+  "independent_candidate_build": 43811574464,
+  "candidate_ipa_sha256": "1845b58302c756a1f10ddc82d24ad3cab5a5ba458109a05588b4212e73ed58f8",
+  "candidate_identity": "com.yarnway.dontforget.acceptance.iphone15-20261115",
+  "standard_public_ipa_identity_tested_on_phone": false
+}
