@@ -1,4 +1,4 @@
-name: Publish verified Android Windows Linux release
+name: Publish verified multi-platform release
 
 on:
   workflow_dispatch:
@@ -7,6 +7,11 @@ on:
         description: Successful main build run containing the distribution-signed Android and desktop packages
         required: true
         type: string
+      include_ios:
+        description: Include the unsigned iOS IPA for personal AltStore resigning
+        required: true
+        default: true
+        type: boolean
 
 permissions:
   contents: read
@@ -24,6 +29,7 @@ jobs:
     outputs:
       tag: ${{ steps.prepare.outputs.tag }}
       revision: ${{ steps.prepare.outputs.revision }}
+      platform_title: ${{ steps.prepare.outputs.platform_title }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -38,7 +44,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_RUN: ${{ inputs.run_id }}
-        run: python scripts/prepare_platform_release.py --run-id "$SOURCE_RUN" --output release-files
+          INCLUDE_IOS: ${{ inputs.include_ios }}
+        run: |
+          options=()
+          if [[ "$INCLUDE_IOS" == "true" ]]; then options+=(--include-ios); fi
+          python scripts/prepare_platform_release.py --run-id "$SOURCE_RUN" --output release-files "${options[@]}"
       - uses: actions/upload-artifact@v7
         with:
           name: release-ready-${{ github.run_id }}
@@ -66,12 +76,13 @@ jobs:
         with:
           name: release-ready-${{ github.run_id }}
           path: .
-      - name: Publish the reviewed three-platform stable release
+      - name: Publish the verified multi-platform release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ needs.prepare.outputs.tag }}
           REVISION: ${{ needs.prepare.outputs.revision }}
-        run: gh release create "$TAG" release-files/* --target "$REVISION" --title "DontForget $TAG · Android / Windows / Linux" --notes-file release-notes.md --latest
+          PLATFORM_TITLE: ${{ needs.prepare.outputs.platform_title }}
+        run: gh release create "$TAG" release-files/* --target "$REVISION" --title "DontForget $TAG · $PLATFORM_TITLE" --notes-file release-notes.md --latest
       - name: Verify the published tag, body and every uploaded asset
         env:
           GH_TOKEN: ${{ github.token }}

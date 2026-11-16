@@ -1,0 +1,66 @@
+{
+  "checked_at_utc": "2026-11-16T03:05:39.082398+00:00",
+  "schema": 17,
+  "integrity": "ok",
+  "before_counts": {
+    "Reminders": 1,
+    "MediaRecords": 1,
+    "Settings": 1
+  },
+  "after_counts": {
+    "Reminders": 2,
+    "MediaRecords": 1,
+    "Settings": 1
+  },
+  "existing_rows_equal": {
+    "Reminders": true,
+    "MediaRecords": true,
+    "Settings": true
+  },
+  "added_counts": {
+    "Reminders": 1,
+    "MediaRecords": 0,
+    "Settings": 0
+  },
+  "original_media_files_equal": true,
+  "original_media_files": 2,
+  "user_reports": {
+    "first_launch": "homepage",
+    "close_and_reopen": "normal",
+    "chinese_keyboard_send": "normal",
+    "close_reopen_text_preserved": true
+  },
+  "physical_interactions_automated": false,
+  "whitespace_insensitive_expected_qa_text_found_in_added_rows": true,
+  "literal_input_difference": "One space before the Chinese acceptance label is absent; original keyboard buffer was not independently captured",
+  "expected_qa_text_found_in_added_rows_literal": false,
+  "date": "2026-11-16",
+  "version": "1.8.10+79",
+  "candidate_source": "72a7080d39adcf3ade2319c2c3ee56b302f54c86",
+  "installed_app_name": "别忘了·验收 iphone15-20261115",
+  "installed_bundle_pattern_verified": true,
+  "installed_version_verified": true,
+  "runtime_acceptance": "PARTIAL",
+  "signing_performed_by_agent": false,
+  "installation_performed_by_user": true,
+  "scope": "User physical first launch, close/reopen and Chinese send; independent USB installed metadata and readonly container/SQLite/media readback",
+  "backup_scope": "Documents plus Library/Preferences; excludes remaining Library and Keychain; not a complete device backup",
+  "snapshot_first_attempt": "Guard refused target because AltStore changes CFBundleName; no container access or data copied; corrected guard requires expected bundle pattern and version instead",
+  "remaining": [
+    "same-identity upgrade",
+    "notifications and actions",
+    "real microphone and gestures",
+    "attachments and backup roundtrip",
+    "Live Activity",
+    "free profile renewal"
+  ],
+  "local_evidence_sha256": {
+    "build/stage118/iphone-installed-after-user-success-20261116-private.json": "009baf4b4f0e6a8802f7ac300937aa159ba2b96281a3d5e7fc3d105832985657",
+    "build/stage118/iphone-before-write-snapshot-20261116-private.json": "f137c58287665d7bdd4500fcb39155db1c7d341511a8b172cc6f20fe204927c2",
+    "build/stage118/iphone-before-write-snapshot-retry-20261116-private.json": "b6042e67d6437666cb2c0f6fe7aa4d8089f3bf73febcd09550b9ab91956fd346",
+    "build/stage118/iphone-before-write-readback-20261116-private.json": "1ed3b8c0be8238ec287deab1273d17b6dc25f556daa2b88f5461a4e1c4b5330e",
+    "build/stage118/iphone-before-write-consistent-20261116-private.db": "410b9c89b38c539c72c12213cc8f07c8dcf8dcbf81688f4f4cce8caff95eb314",
+    "build/stage118/iphone-after-text-snapshot-20261116-private.json": "8c44f9325bc82ab1899a6ca33226dd14ada0925cab68d2e7cfc3b7d1c42a9c5c",
+    "build/stage118/iphone-text-preservation-readback-20261116-private.json": "a85efdbb6cae60a5d88f0a5dbd2a1e04f72494ab44c09ad8381252b614e6c20d"
+  }
+}

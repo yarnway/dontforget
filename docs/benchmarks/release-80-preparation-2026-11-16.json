@@ -1,0 +1,25 @@
+{
+  "version": "1.8.11+80",
+  "source_scope": "Optional iOS release gates, workflow, version and documentation; lib unchanged",
+  "local_python": {
+    "linux": {
+      "run": 180,
+      "skipped": 4,
+      "passed": true,
+      "sha256": "1672cd09c90b9f3bcb520b84240356896162a123e716530203adb709b2f6801f"
+    },
+    "windows": {
+      "run": 180,
+      "skipped": 6,
+      "passed": true,
+      "sha256": "6a5d71eb4e531a2c018eef9468d648a9a2867edc570725ea1402e069c3705b44"
+    }
+  },
+  "platform_release_tests": 19,
+  "fixed_sdk_ci": "PENDING",
+  "packages": "PENDING",
+  "windows_local_running_upgrade": "NOT_PERFORMED",
+  "android_latest_backups_and_upgrade": "NOT_PERFORMED",
+  "iphone_build80_upgrade": "NOT_PERFORMED",
+  "published": false
+}

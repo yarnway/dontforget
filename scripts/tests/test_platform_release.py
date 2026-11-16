@@ -2,6 +2,7 @@ import copy
 import hashlib
 import json
 import os
+import plistlib
 from pathlib import Path
 import stat
 import sys
@@ -32,6 +33,21 @@ def job_fixture():
 
 
 class SourceGateTest(unittest.TestCase):
+    def test_ios_release_requires_its_successful_job_and_artifact_provenance(self):
+        with self.assertRaises(ValueError):
+            validate_run(run_fixture(), job_fixture(), include_ios=True)
+        jobs = job_fixture() + [{'name': 'Build ios candidate', 'status': 'completed', 'conclusion': 'success'}]
+        self.assertEqual(validate_run(run_fixture(), jobs, include_ios=True), REV)
+        jobs[-1]['conclusion'] = 'failure'
+        with self.assertRaises(ValueError):
+            validate_run(run_fixture(), jobs, include_ios=True)
+        artifacts = [{'name': p + '-deliverables', 'expired': False, 'workflow_run': {'id': 42, 'head_sha': REV},
+                      'digest': 'sha256:' + CERT} for p in (*PLATFORMS, 'ios')]
+        self.assertEqual(len(select_artifacts(artifacts, 42, REV, include_ios=True)), 4)
+        artifacts[-1]['workflow_run']['head_sha'] = 'c' * 40
+        with self.assertRaises(ValueError):
+            select_artifacts(artifacts, 42, REV, include_ios=True)
+
     def test_successful_main_source_requires_both_quality_and_three_builds(self):
         self.assertEqual(validate_run(run_fixture(), job_fixture()), REV)
         for key, value in [('head_branch', 'other'), ('status', 'queued'), ('conclusion', 'failure'),
@@ -70,6 +86,18 @@ class SourceGateTest(unittest.TestCase):
 
 
 class ReleaseNotesTest(unittest.TestCase):
+    def test_ios_scope_and_resigning_limitations_cannot_be_omitted(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory); (root / 'docs').mkdir()
+            path = root / 'docs/Release_Notes_v1.8.11.md'
+            heading = '# DontForget v1.8.11 · Android / Windows / Linux / iOS\n'
+            for notes in [heading, heading + '未签名 AltStore',
+                          '# DontForget v1.8.11 · Android / Windows / Linux\n未签名 AltStore 7天']:
+                path.write_text(notes, encoding='utf-8')
+                with self.assertRaises(ValueError): read_release_notes(root, '1.8.11', include_ios=True)
+            path.write_text(heading + '未签名 IPA，使用AltStore个人重签，免费账号7天续期。', encoding='utf-8')
+            self.assertIn('AltStore', read_release_notes(root, '1.8.11', include_ios=True))
+
     def test_new_version_selects_its_own_utf8_notes(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -97,6 +125,31 @@ class ReleaseNotesTest(unittest.TestCase):
 
 
 class ReleaseFilesTest(unittest.TestCase):
+    def add_ios_package(self, fault=None):
+        filename = 'DontForget_iOS_unsigned_v1.7.0.ipa'
+        host = {'CFBundleIdentifier': 'com.yarnway.dontforget', 'CFBundleShortVersionString': '1.7.0',
+                'CFBundleVersion': '59', 'CFBundleExecutable': 'Runner'}
+        widget = {**host, 'CFBundleIdentifier': host['CFBundleIdentifier'] + '.ReminderActivity',
+                  'CFBundleExecutable': 'ReminderActivity',
+                  'NSExtension': {'NSExtensionPointIdentifier': 'com.apple.widgetkit-extension'}}
+        if fault == 'version': widget['CFBundleVersion'] = '58'
+        if fault == 'identity': host['CFBundleIdentifier'] += '.unexpected'
+        if fault == 'extension_type': widget['NSExtension'] = {}
+        with zipfile.ZipFile(self.files / filename, 'w') as archive:
+            archive.writestr('Payload/Runner.app/Info.plist', plistlib.dumps(host))
+            archive.writestr('Payload/Runner.app/Runner', b'synthetic-executable')
+            if fault != 'missing_widget':
+                archive.writestr('Payload/Runner.app/PlugIns/ReminderActivity.appex/Info.plist', plistlib.dumps(widget))
+                archive.writestr('Payload/Runner.app/PlugIns/ReminderActivity.appex/ReminderActivity', b'synthetic-widget')
+            if fault == 'profile': archive.writestr('Payload/Runner.app/embedded.mobileprovision', b'synthetic')
+            if fault == 'traversal': archive.writestr('Payload/../private', b'synthetic')
+        path = self.files / filename
+        entry = {'file': filename, 'bytes': path.stat().st_size, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+        (self.files / 'ios-manifest.json').write_text(json.dumps(
+            {'platform': 'ios', 'version': '1.7.0', 'build_number': '59', 'revision': REV,
+             'signing': 'unsigned', 'artifacts': [entry]}))
+        (self.files / 'ios-SHA256SUMS.txt').write_text(f'{entry["sha256"]}  {filename}\n')
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name); self.files = self.root / 'files'; self.files.mkdir()
@@ -126,19 +179,28 @@ class ReleaseFilesTest(unittest.TestCase):
         self.assertEqual(len(self.validate()), 3)
 
     def test_complete_prepare_writes_provenance_checksums_and_utf8_notes(self):
+        self.check_complete_prepare(False)
+
+    def test_complete_four_platform_prepare_keeps_ios_explicitly_unsigned(self):
+        self.check_complete_prepare(True)
+
+    def check_complete_prepare(self, include_ios):
+        if include_ios: self.add_ios_package()
         (self.root / 'pubspec.yaml').write_text('version: 1.7.0+59\n')
         (self.root / 'android').mkdir()
         (self.root / 'android/release-certificate.sha256').write_text(CERT)
         (self.root / 'docs').mkdir()
-        (self.root / 'docs/Release_Notes_v1.7.0.md').write_text('# DontForget v1.7.0 · Android / Windows / Linux\n三平台发行说明\n', encoding='utf-8')
+        (self.root / 'docs/Release_Notes_v1.7.0.md').write_text(
+            '# DontForget v1.7.0 · Android / Windows / Linux' +
+            (' / iOS\n四平台发行说明；未签名 IPA，AltStore免费账号7天续期。\n' if include_ios else '\n三平台发行说明\n'), encoding='utf-8')
         archives = {}
         artifacts = []
-        for platform in PLATFORMS:
+        for platform in (*PLATFORMS, 'ios') if include_ios else PLATFORMS:
             name = platform + '-deliverables'
             archive = self.root / (name + '.zip')
             with zipfile.ZipFile(archive, 'w') as target:
                 for file in self.files.iterdir():
-                    if file.name.startswith(platform + '-') or file.name.startswith('DontForget_' + ('Android' if platform == 'android' else 'Linux' if platform == 'linux' else 'Windows')) or (platform == 'windows' and file.name.startswith('DontForget_Setup')):
+                    if file.name.startswith(platform + '-') or file.name.startswith('DontForget_' + {'android': 'Android', 'linux': 'Linux', 'windows': 'Windows', 'ios': 'iOS'}[platform]) or (platform == 'windows' and file.name.startswith('DontForget_Setup')):
                         target.write(file, file.name)
             archives[name] = archive
             artifacts.append({'name': name, 'expired': False, 'size_in_bytes': archive.stat().st_size, 'workflow_run': {'id': 42, 'head_sha': REV},
@@ -147,7 +209,7 @@ class ReleaseFilesTest(unittest.TestCase):
             def get(self, path):
                 if path.startswith('git/ref/'):
                     raise urllib.error.HTTPError('synthetic', 404, '', None, None)
-                if '/jobs?' in path: return {'jobs': job_fixture()}
+                if '/jobs?' in path: return {'jobs': job_fixture() + ([{'name': 'Build ios candidate', 'status': 'completed', 'conclusion': 'success'}] if include_ios else [])}
                 if '/artifacts?' in path: return {'artifacts': artifacts}
                 return {**run_fixture(), 'html_url': 'https://example.com/synthetic'}
             def download(self, item, path): path.write_bytes(archives[item['name']].read_bytes())
@@ -157,13 +219,32 @@ class ReleaseFilesTest(unittest.TestCase):
             with patch('prepare_platform_release.ROOT', self.root), \
                  patch('prepare_platform_release.subprocess.check_output', return_value=REV), \
                  patch('prepare_platform_release.verify_android_signatures', return_value=CERT):
-                result = prepare(42, self.root / 'prepared', Fake())
-            self.assertEqual(len(result['files']), 14)
+                result = prepare(42, self.root / 'prepared', Fake(), include_ios=include_ios)
+            self.assertEqual(len(result['files']), 17 if include_ios else 14)
             self.assertTrue(all(isinstance(item['bytes'], int) for item in result['files']))
-            self.assertEqual(len((self.root / 'prepared/SHA256SUMS.txt').read_text().splitlines()), 15)
-            self.assertIn('三平台发行说明', (self.root / 'release-notes.md').read_text(encoding='utf-8'))
+            self.assertEqual(len((self.root / 'prepared/SHA256SUMS.txt').read_text().splitlines()), 18 if include_ios else 15)
+            self.assertIn('四平台发行说明' if include_ios else '三平台发行说明', (self.root / 'release-notes.md').read_text(encoding='utf-8'))
+            if include_ios:
+                self.assertEqual(result['platforms'], [*PLATFORMS, 'ios'])
+                self.assertEqual(result['ios_distribution']['signing'], 'unsigned')
+                self.assertFalse(result['ios_distribution']['app_store_or_testflight_distribution'])
         finally:
             os.chdir(previous)
+
+    def test_actual_ios_identity_versions_profile_and_paths_are_checked(self):
+        self.add_ios_package()
+        self.assertEqual(len(validate_files(self.files, REV, '1.7.0', '59', CERT, include_ios=True)), 3)
+        for fault in ['version', 'identity', 'extension_type', 'missing_widget', 'profile', 'traversal']:
+            self.add_ios_package(fault)
+            with self.subTest(fault=fault), self.assertRaises((ValueError, KeyError)):
+                validate_files(self.files, REV, '1.7.0', '59', CERT, include_ios=True)
+
+    def test_signed_or_unrequested_ios_inventory_is_rejected(self):
+        self.add_ios_package()
+        with self.assertRaises(ValueError): self.validate()
+        manifest = self.files / 'ios-manifest.json'; data = json.loads(manifest.read_text())
+        data['signing'] = 'development'; manifest.write_text(json.dumps(data))
+        with self.assertRaises(ValueError): validate_files(self.files, REV, '1.7.0', '59', CERT, include_ios=True)
 
     def test_debug_android_or_wrong_certificate_cannot_be_published(self):
         path = self.files / 'android-manifest.json'; original = path.read_text()

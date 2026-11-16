@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Prepare only Android/Windows/Linux assets from one successful trusted CI run."""
+"""Prepare verified desktop/Android assets and optional unsigned iOS from one CI run."""
 import argparse
 import hashlib
 import json
 import os
+import plistlib
 from pathlib import Path, PurePosixPath
 import re
 import stat
@@ -21,6 +22,10 @@ from verify_artifacts import verify, verify_tag
 
 PLATFORMS = ('android', 'windows', 'linux')
 REPOSITORY = 'yarnway/dontforget'
+
+
+def platforms(include_ios=False):
+    return (*PLATFORMS, 'ios') if include_ios else PLATFORMS
 
 
 class SafeRedirect(urllib.request.HTTPRedirectHandler):
@@ -66,7 +71,7 @@ class Github:
             raise ValueError('Artifact archive checksum mismatch')
 
 
-def validate_run(run, jobs):
+def validate_run(run, jobs, include_ios=False):
     if (run.get('status') != 'completed' or run.get('conclusion') != 'success' or
             run.get('head_branch') != 'main' or run.get('event') not in ('push', 'workflow_dispatch') or
             run.get('path') != '.github/workflows/build_and_release.yml' or
@@ -74,7 +79,7 @@ def validate_run(run, jobs):
             run.get('head_repository', {}).get('full_name') != REPOSITORY or
             not re.fullmatch('[0-9a-f]{40}', run.get('head_sha', ''))):
         raise ValueError('Release source is not a successful trusted main build')
-    expected = {'Analyze and test', 'Windows analyze and test', *('Build ' + p + ' candidate' for p in PLATFORMS)}
+    expected = {'Analyze and test', 'Windows analyze and test', *('Build ' + p + ' candidate' for p in platforms(include_ios))}
     for name in expected:
         matches = [job for job in jobs if job.get('name') == name]
         if len(matches) != 1 or matches[0].get('conclusion') != 'success' or matches[0].get('status') != 'completed':
@@ -82,9 +87,9 @@ def validate_run(run, jobs):
     return run['head_sha']
 
 
-def select_artifacts(artifacts, run_id, revision):
+def select_artifacts(artifacts, run_id, revision, include_ios=False):
     selected = []
-    for platform in PLATFORMS:
+    for platform in platforms(include_ios):
         matches = [a for a in artifacts if a.get('name') == platform + '-deliverables']
         if len(matches) != 1: raise ValueError('Missing or ambiguous platform artifact')
         item = matches[0]
@@ -129,11 +134,44 @@ def extract_archive(archive, output):
                 while block := incoming.read(1024 * 1024): target.write(block)
 
 
-def validate_files(directory, revision, release_version, build_number, expected_certificate):
+def verify_ios_package(path, release_version, build_number):
+    """Read the actual unsigned host/widget; never infer installation or signing."""
+    host_path = 'Payload/Runner.app/'
+    widget_path = host_path + 'PlugIns/ReminderActivity.appex/'
+    with zipfile.ZipFile(path) as archive:
+        entries = archive.infolist()
+        names = [entry.filename for entry in entries]
+        if (not 1 <= len(entries) <= 10000 or len(set(names)) != len(names) or
+                sum(entry.file_size for entry in entries) > 1024 ** 3):
+            raise ValueError('Invalid iOS archive inventory')
+        for name in names:
+            parsed = PurePosixPath(name)
+            if (parsed.is_absolute() or '..' in parsed.parts or '\\' in name or
+                    name.endswith('embedded.mobileprovision')):
+                raise ValueError('Unsafe or unexpectedly provisioned unsigned IPA')
+        hosts = {name for name in names if re.fullmatch(r'Payload/[^/]+\.app/Info\.plist', name)}
+        if hosts != {host_path + 'Info.plist'} or archive.testzip() is not None:
+            raise ValueError('iOS host inventory or CRC mismatch')
+        for prefix, identity in [(host_path, 'com.yarnway.dontforget'),
+                                 (widget_path, 'com.yarnway.dontforget.ReminderActivity')]:
+            info = plistlib.loads(archive.read(prefix + 'Info.plist'))
+            if (info.get('CFBundleIdentifier'), info.get('CFBundleShortVersionString'),
+                    info.get('CFBundleVersion')) != (identity, release_version, build_number):
+                raise ValueError('iOS host/widget identity or version mismatch')
+            executable = info.get('CFBundleExecutable', '')
+            if (not executable or PurePosixPath(executable).name != executable or
+                    '\\' in executable or executable in ('.', '..') or
+                    prefix + executable not in names or archive.getinfo(prefix + executable).file_size == 0):
+                raise ValueError('Missing or unsafe iOS executable')
+            if prefix == widget_path and info.get('NSExtension', {}).get('NSExtensionPointIdentifier') != 'com.apple.widgetkit-extension':
+                raise ValueError('iOS Live Activity is not a WidgetKit extension')
+
+
+def validate_files(directory, revision, release_version, build_number, expected_certificate, include_ios=False):
     directory = Path(directory)
     expected = set()
     reports = {}
-    for platform in PLATFORMS:
+    for platform in platforms(include_ios):
         verify(directory, release_version, build_number, revision, platform)
         manifest = json.loads((directory / (platform + '-manifest.json')).read_text(encoding='utf-8-sig'))
         expected.update([platform + '-manifest.json', platform + '-SHA256SUMS.txt'])
@@ -145,6 +183,12 @@ def validate_files(directory, revision, release_version, build_number, expected_
                     ({f'DontForget_Android_v{release_version}.{ext}' for ext in ('apk', 'aab')} |
                      ({f'DontForget_Android_arm64_v{release_version}.apk'} if requires_arm64(release_version) else set()))):
                 raise ValueError('A distribution-signed Android package is required')
+        elif platform == 'ios':
+            filename = f'DontForget_iOS_unsigned_v{release_version}.ipa'
+            if (manifest.get('signing') != 'unsigned' or
+                    {entry['file'] for entry in manifest['artifacts']} != {filename}):
+                raise ValueError('Only explicitly unsigned iOS packages can be distributed here')
+            verify_ios_package(directory / filename, release_version, build_number)
         else:
             name = platform + '-startup.json'
             report = json.loads((directory / name).read_text(encoding='utf-8-sig'))
@@ -164,27 +208,29 @@ def validate_files(directory, revision, release_version, build_number, expected_
     return reports
 
 
-def read_release_notes(root, release_version):
+def read_release_notes(root, release_version, include_ios=False):
     # Never reuse an older release's body when preparing a new stable tag.
     path = Path(root) / 'docs' / f'Release_Notes_v{release_version}.md'
     notes = path.read_text(encoding='utf-8')
-    heading = f'# DontForget v{release_version} · Android / Windows / Linux'
+    heading = f'# DontForget v{release_version} · Android / Windows / Linux' + (' / iOS' if include_ios else '')
     if not notes.splitlines() or notes.splitlines()[0].strip() != heading:
         raise ValueError('Release notes do not match the verified version')
+    if include_ios and not all(marker in notes for marker in ('未签名', 'AltStore', '7天')):
+        raise ValueError('iOS release notes must explain personal resigning and expiry')
     return notes
 
 
-def prepare(run_id, directory, github):
+def prepare(run_id, directory, github, include_ios=False):
     run = github.get('actions/runs/' + str(run_id))
     jobs = github.get('actions/runs/' + str(run_id) + '/jobs?per_page=100')['jobs']
-    revision = validate_run(run, jobs)
+    revision = validate_run(run, jobs, include_ios)
     if subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip() != revision:
         raise ValueError('Checked out source must equal the verified CI revision')
     release_version, build_number = version(ROOT)
     verify_tag('v' + release_version, release_version, build_number)
     verify_existing_tag(github, 'v' + release_version, revision)
-    notes = read_release_notes(ROOT, release_version)
-    selected = select_artifacts(github.get('actions/runs/' + str(run_id) + '/artifacts?per_page=100')['artifacts'], run_id, revision)
+    notes = read_release_notes(ROOT, release_version, include_ios)
+    selected = select_artifacts(github.get('actions/runs/' + str(run_id) + '/artifacts?per_page=100')['artifacts'], run_id, revision, include_ios)
     expected_certificate = certificate((ROOT / 'android/release-certificate.sha256').read_text())
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=False)
@@ -193,24 +239,29 @@ def prepare(run_id, directory, github):
             archive = Path(work) / (artifact['name'] + '.zip')
             github.download(artifact, archive)
             extract_archive(archive, directory)
-    reports = validate_files(directory, revision, release_version, build_number, expected_certificate)
+    reports = validate_files(directory, revision, release_version, build_number, expected_certificate, include_ios)
     verify_android_signatures(directory / f'DontForget_Android_v{release_version}.apk',
                               directory / f'DontForget_Android_v{release_version}.aab', expected_certificate,
                               **({'additional_apks': [directory / f'DontForget_Android_arm64_v{release_version}.apk']}
                                  if requires_arm64(release_version) else {}))
     receipt = {'version': release_version, 'build_number': build_number, 'revision': revision,
-               'ci_run': run_id, 'ci_url': run['html_url'], 'platforms': list(PLATFORMS),
+               'ci_run': run_id, 'ci_url': run['html_url'], 'platforms': list(platforms(include_ios)),
                'android_certificate_sha256': expected_certificate,
                'archives': [{'name': a['name'], 'sha256': a['digest'], 'bytes': a['size_in_bytes']} for a in selected],
                'acceptance_reports': list(reports), 'full_runtime_matrix': 'NOT_PERFORMED',
                'publisher_script_sha256': digest(Path(__file__)),
                'files': [{'file': p.name, 'sha256': digest(p), 'bytes': p.stat().st_size} for p in sorted(directory.iterdir())]}
+    if include_ios:
+        receipt['ios_distribution'] = {'signing': 'unsigned', 'requires_personal_resigning': True,
+                                       'runtime_acceptance': 'NOT_PERFORMED',
+                                       'app_store_or_testflight_distribution': False}
     (directory / 'release-provenance.json').write_text(json.dumps(receipt, indent=2) + '\n')
     (directory / 'SHA256SUMS.txt').write_text(''.join(f'{digest(p)}  {p.name}\n' for p in sorted(directory.iterdir())))
     Path('release-notes.md').write_text(notes + f'\n构建号：{build_number}；源码：`{revision}`；[完整CI]({run["html_url"]})。\n', encoding='utf-8')
     if os.environ.get('GITHUB_OUTPUT'):
         with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
             stream.write('tag=v' + release_version + '\nrevision=' + revision + '\n')
+            stream.write('platform_title=Android / Windows / Linux' + (' / iOS' if include_ios else '') + '\n')
     return receipt
 
 
@@ -218,6 +269,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--run-id', type=int, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--include-ios', action='store_true', help='Include the verified unsigned IPA for personal resigning')
     args = parser.parse_args()
-    receipt = prepare(args.run_id, args.output, Github(os.environ.get('GH_TOKEN', '')))
+    receipt = prepare(args.run_id, args.output, Github(os.environ.get('GH_TOKEN', '')), args.include_ios)
     print(json.dumps({k: receipt[k] for k in ('version', 'build_number', 'revision', 'platforms')}))

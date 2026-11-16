@@ -19,6 +19,12 @@ py -3 scripts/check_ios_device.py --output build/ios-preflight-windows-private.j
 
 若 USB 元数据不可用，报告为不完整，不能当作“未连接”。先按 [Apple 的 Windows 识别说明](https://support.apple.com/en-gb/108643)核对 USB、Apple Devices 与手机信任提示；脚本不自动安装驱动或更改信任。当前实测与脚本回归见[记录](iOS_Windows_Preflight_2026-11-15.md)。
 
+## 2026-11-16 个人侧载与基础验收进展
+
+用户已通过手机AltStore安装独立身份`acceptance.iphone15-20261115`的1.8.10／79，USB安装元数据与bundle模式独立核对。首启、上划关闭后重开、中文发送及再次重开文字保留由用户实际操作报告；只读USB保全Documents与Library/Preferences，派生SQLite快照schema17／integrity ok，原有1记录／1媒体／1设置与音频保持，新增1条QA记录。输入原始缓冲未独立采集，句子仅忽略空白后匹配；不把用户报告冒记为自动GUI或PID证据。[回执](benchmarks/iphone-personal-sideload-2026-11-16.json)。
+
+本轮只读工具使用现有配对材料在内存建立会话，不重配对或保存密钥；与上一节仅查询USB基本型号的预检分开。保全范围不含Keychain或整个Library，不能称完整设备备份。用户已授权继续开发与验收，现准备build80及Windows／Linux／Android／iOS新版Release；独立身份升级、通知、录音、附件／备份、灵动岛和续期未闭合，不沿用首启结果冒记为全部通过。
+
 ## 1. 前置条件
 
 | 项 | 要求 |
