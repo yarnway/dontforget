@@ -44,7 +44,7 @@ Windows computer-use在初始化时仍报`sandboxCwd is not a local file URI`，
 
 首次新测试误将tooltip语义当成label、SemanticsHandle清理过晚以及尚未构建的离屏项目直接定位，均为测试夹具问题，修正后完整相关集通过；失败日志保留。首次暗色预览的图标尚未解码，弃用该图并增加显式precache等待后重新生成、检查，未将空白图当成最终证据。
 
-固定CI状态在回执和[阶段台账](Next_Steps_2026-11-02.md)另记。源码、自动化、安装包和真实设备分开：本轮没有新包升级或新发行，不能将既有81的Windows／iPhone成功结果移记到本轮新UI。
+源码`00cb603537b1a409b3edcd47ff1855f95ae4e6da`的[固定CI43824368626](https://github.com/yarnway/dontforget/actions/runs/43824368626)两端质量门禁成功：Linux Flutter2632通过／2跳过、Python180运行／4跳过；Windows Flutter2614通过／20跳过、Python180运行／6跳过。整体工作流仍在生成私有平台候选，尚未完成；本轮交付源码和质量验证，发行包与设备升级另验。[质量回执](benchmarks/github-ci-ux-quality-2026-11-16.json)。源码、自动化、安装包和真实设备分开：本轮没有新包升级或新发行，不能将既有81的Windows／iPhone成功结果移记到本轮新UI。
 
 ## 后续顺序
 
@@ -52,3 +52,5 @@ Windows computer-use在初始化时仍报`sandboxCwd is not a local file URI`，
 - 阶段47原生：Windows工具恢复后补真实截图／键盘／焦点、Toast／托盘；iPhone补触屏、VoiceOver、通知／录音／灵动岛；Pixel接入后补新版正式与QA保全升级。
 - 阶段46自然USB／休眠／跨主机，48容量／真实故障／凭据锁定／文件保留和目录，49迁移／个性化／图片分享／LAN冲突继续单独推进。
 - 阶段50下一候选：新构建号、固定CI及完整包核对，Windows最新保全运行中覆盖、iPhone最新保全同身份覆盖，再按设备可用范围发行；个人签名续期、macOS公证、Windows签名商店继续待办。
+
+当前首页／只读详情的同源基线与下一批优先级见[独立记录](UX_Next_Surface_Baselines_2026-11-16.md)，34项既有只读／语音／离页保护回归通过，未改这两页产品源码。

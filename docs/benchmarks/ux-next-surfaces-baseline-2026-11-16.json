@@ -1,0 +1,42 @@
+{
+  "source": "00cb603537b1a409b3edcd47ff1855f95ae4e6da",
+  "source_only": true,
+  "actual_devices": false,
+  "temporary_synthetic_data_only": true,
+  "reader_no_text_field_no_checkbox": true,
+  "reader_all_business_fields_before_after_equal": true,
+  "existing_interaction_guard_tests": 34,
+  "home_current_layout_probe": 1,
+  "home_idle_fixture_probe": 1,
+  "reader_private_fixture_probe": 1,
+  "findings": [
+    {
+      "surface": "home narrow",
+      "observation": "Synthetic success feedback temporarily occupies the date-filter row region in the captured frame; idle frame shows all filters.",
+      "next": "Check feedback duration, action reachability and keyboard focus before choosing changes; do not infer native timing from a still."
+    },
+    {
+      "surface": "read-only detail",
+      "observation": "Modify remains distinct; preview has no editable fields or Checkbox controls; database tables unchanged.",
+      "next": "Retain explicit editing while checking long-title and attachment density."
+    },
+    {
+      "surface": "About identity",
+      "observation": "Existing app_icon.png still shows Flutter placeholder logo.",
+      "next": "Design and replace platform icon resources together in a separate coherent branding pass."
+    }
+  ],
+  "captures": {
+    "ux-reader-1440-light.png": "8fc6e7a7604a7813dc1223ca5e25821e17f0b1f95b1d6c9a3a0e6e05e6ef9469",
+    "ux-reader-390-light.png": "6eaf246a94fb3e2d6259df217ed8dd9f04f9916ec47b134abac9e9aa0d6b413d",
+    "workspace-feedback-375.png": "a601ca41be4d6110142abadf92729e225d70d87c07fbb0a4561797f7f3c9172f",
+    "workspace-idle-1440.png": "080f76b203ba6642310a53c4f908229e64ab952aa53c294866e8a42a4b630aa6",
+    "workspace-idle-375.png": "a83a7b956f6ea3460ab354db31f937c843d2d6614e7020014bfcb19fe0dabd2b"
+  },
+  "log_sha256": {
+    "build/stage122/interaction-guards.log": "ce8619ad905a94eada2604b0df99c7a27574fdac5c06d6e673778c7915ebe1b1",
+    "build/stage122/home-source-preview.log": "92ca25b3780e0f72697e3b1863b08d9673b802addc079acfdd9a56b5c6dd86fd",
+    "build/stage122/home-idle-source-preview.log": "4d55b10dd6ac1cf725f55183442899043a3abed6b28d27afa02ccfc3687ecc14",
+    "build/stage122/reader-source-preview.log": "16bc584c409b4b4b016b9c377757b1d07c069f27e831f705d62f2b39a1f28446"
+  }
+}
