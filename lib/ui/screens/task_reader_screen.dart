@@ -72,6 +72,7 @@ class _TaskReaderState extends ConsumerState<TaskDetailScreen> {
     final details = task.details;
     final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final readingStyle = theme.textTheme.bodyLarge?.copyWith(height: 1.6);
     final hasAttachments =
         task.recordId != null || details.attachmentIds.isNotEmpty;
     final linked = <String, Reminder>{};
@@ -101,7 +102,7 @@ class _TaskReaderState extends ConsumerState<TaskDetailScreen> {
           child: Align(
             heightFactor: 1,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1008),
+              constraints: const BoxConstraints(maxWidth: 768),
               child: SizedBox(
                 width: double.infinity,
                 child: FilledButton.icon(
@@ -127,7 +128,7 @@ class _TaskReaderState extends ConsumerState<TaskDetailScreen> {
         child: Align(
           alignment: Alignment.topCenter,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1040),
+            constraints: const BoxConstraints(maxWidth: 800),
             child: ListView(
               key: const ValueKey('task-detail-reader-list'),
               padding: const EdgeInsets.all(16),
@@ -187,6 +188,7 @@ class _TaskReaderState extends ConsumerState<TaskDetailScreen> {
                           SelectableText(
                             task.taskSummary!,
                             key: const ValueKey('task-detail-read-summary'),
+                            style: readingStyle,
                           ),
                       ],
                     ),
@@ -356,7 +358,10 @@ class _TaskReaderState extends ConsumerState<TaskDetailScreen> {
                       children: [
                         Padding(
                           padding: const EdgeInsets.all(12),
-                          child: SelectableText(task.sourceText!),
+                          child: SelectableText(
+                            task.sourceText!,
+                            style: readingStyle,
+                          ),
                         ),
                       ],
                     ),

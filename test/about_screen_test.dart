@@ -140,6 +140,69 @@ void main() {
     }
   }
 
+  testWidgets('update result is a separate live heading in every language', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      for (final language in ['zh', 'en', 'ja']) {
+        for (final installedVersion in ['1.8.11', '1.8.13']) {
+          await show(
+            tester,
+            language: language,
+            reader: () async => InstalledAppInfo(
+              name: 'DontForget',
+              version: installedVersion,
+              buildNumber: '81',
+            ),
+          );
+          await tap(tester, 'about-check-updates');
+          final status = aboutText(
+            language,
+            installedVersion == '1.8.11' ? 'newer' : 'ahead',
+          );
+          final heading = find.text(status);
+          await tester.ensureVisible(heading);
+          await tester.pumpAndSettle();
+          final data = tester.getSemantics(heading).getSemanticsData();
+          expect(data.label, status);
+          expect(data.flagsCollection.isHeader, isTrue);
+          expect(data.flagsCollection.isLiveRegion, isTrue);
+          await tester.pumpWidget(const SizedBox());
+        }
+      }
+    } finally {
+      semantics.dispose();
+    }
+  });
+
+  testWidgets(
+    'update failure announces only the error, without adjacent copy',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      try {
+        for (final language in ['zh', 'en', 'ja']) {
+          await show(
+            tester,
+            language: language,
+            service: AppUpdateService(
+              fetch: (uri, limit) async => const ReleaseHttpResponse(503, []),
+            ),
+          );
+          await tap(tester, 'about-check-updates');
+          final error = find.byKey(const ValueKey('about-update-error'));
+          final data = tester.getSemantics(error).getSemanticsData();
+          expect(data.label, aboutText(language, 'server'));
+          expect(data.flagsCollection.isLiveRegion, isTrue);
+          expect(find.text(aboutText(language, 'current')), findsNothing);
+          await tester.pumpWidget(const SizedBox());
+        }
+      } finally {
+        semantics.dispose();
+      }
+    },
+  );
+
   testWidgets('about visual preview', (tester) async {
     for (final width in [390.0, 1200.0]) {
       for (final brightness in Brightness.values) {

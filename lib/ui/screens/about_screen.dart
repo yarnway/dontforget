@@ -189,6 +189,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Semantics(
+              container: true,
               header: true,
               liveRegion: true,
               child: Text(
@@ -350,6 +351,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                         Padding(
                           padding: const EdgeInsets.only(top: 14),
                           child: Semantics(
+                            container: true,
                             liveRegion: true,
                             child: Text(
                               t(failure.name),

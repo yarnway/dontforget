@@ -119,6 +119,60 @@ void main() {
     await tester.pump();
   }
 
+  testWidgets(
+    'long reading at 200% keeps editing reachable and data unchanged',
+    (tester) async {
+      final summary = List.generate(
+        12,
+        (i) => '${i + 1}. 复核交付记录，保留原件并记录下一步安排。',
+      ).join('\n\n');
+      await tester.runAsync(() async {
+        final updated = task.copyWith(
+          taskTitle: '项目复盘与下一阶段行动安排：核对交付记录、未完成事项和协作计划',
+          taskSummary: summary,
+          sourceText: '原始记录：$summary',
+        );
+        await h.notifier.updateReminder(updated, baseline: task);
+        task = await h.row(task.id);
+      });
+      final before = await tester.runAsync(saved);
+      for (final width in [320.0, 1440.0]) {
+        await open(tester, width: width, scale: 2);
+        final modify = find.byKey(const ValueKey('task-detail-modify'));
+        final buttonBefore = tester.getRect(modify);
+        final source = find.text(
+          AppLocalizations.of(
+            tester.element(find.byType(TaskDetailScreen)),
+          ).get('sourceText'),
+        );
+        final list = find
+            .descendant(
+              of: find.byKey(const ValueKey('task-detail-reader-list')),
+              matching: find.byType(Scrollable),
+            )
+            .first;
+        await tester.scrollUntilVisible(source, 500, scrollable: list);
+        await tester.pumpAndSettle();
+        await Scrollable.ensureVisible(tester.element(source), alignment: 0.25);
+        await tester.pumpAndSettle();
+        expect(source.hitTestable(), findsOneWidget);
+        await tester.tap(source);
+        await tester.pumpAndSettle();
+        expect(find.text('原始记录：$summary'), findsOneWidget);
+        expect(modify.hitTestable(), findsOneWidget);
+        expect(tester.getRect(modify), buttonBefore);
+        expect(find.byType(TextField), findsNothing);
+        expect(find.byType(Checkbox), findsNothing);
+        expect(await tester.runAsync(saved), before);
+        expect(tester.takeException(), isNull);
+        await edit(tester);
+        expect(find.byType(TaskEditScreen), findsOneWidget);
+        expect(await tester.runAsync(saved), before);
+        await finish(tester);
+      }
+    },
+  );
+
   for (final dialog in [false, true]) {
     testWidgets(
       '${dialog ? 'compatibility' : 'ordinary'} details are read-only including keyboard save',
