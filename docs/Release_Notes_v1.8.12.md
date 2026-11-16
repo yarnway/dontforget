@@ -19,6 +19,6 @@
 
 ## 验收范围
 
-源码、质量门禁、安装包和真实设备分别记录，见[本版验收](https://github.com/yarnway/dontforget/blob/main/docs/Release_1.8.12_82_2026-11-16.md)。Android Pixel暂不可接入，本轮正式／QA真机保全升级未执行；签名、ABI与包校验不替代真机结果。Windows运行中保全升级与iPhone独立身份升级另列，不宣称全部平台原生矩阵完成。
+源码、质量门禁、安装包和真实设备分别记录，见[本版验收](https://github.com/yarnway/dontforget/blob/main/docs/Release_1.8.12_82_2026-11-16.md)。Android正式／QA的最新保全与升级结果见本版记录；签名、ABI与包校验和真机矩阵分别记录。Windows运行中保全升级与iPhone独立身份升级另列，不宣称全部平台原生矩阵完成。
 
 Windows原生GUI截图工具仍有已记录的工作目录URI故障；组件渲染和自动化不替代原生交互／读屏。iPhone通知、录音、附件、灵动岛与个人签名续期，以及容量、真实故障、迁移和同步冲突等继续按[阶段台账](https://github.com/yarnway/dontforget/blob/main/docs/Next_Steps_2026-11-02.md)推进。
