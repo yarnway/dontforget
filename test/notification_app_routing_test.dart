@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:dont_forget/app.dart';
+import 'package:dont_forget/l10n/shared_text_strings.dart';
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/notification_payload.dart';
 import 'package:dont_forget/models/reminder.dart';
@@ -405,7 +406,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
       await waitShare(
         tester,
-        () => find.text('Retry saving draft').evaluate().isNotEmpty,
+        () => find.text(sharedTextLabel('en', 'retry')).evaluate().isNotEmpty,
       );
       await tester.tap(find.byIcon(Icons.arrow_back).last);
       await waitShare(

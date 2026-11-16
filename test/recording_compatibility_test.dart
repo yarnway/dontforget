@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:ui' show Locale;
+import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/models/speech_settings.dart';
 import 'package:dont_forget/models/tencent_speech_credentials.dart';
 import 'package:dont_forget/services/speech_recognition_service.dart';
@@ -300,7 +302,12 @@ void main() {
     );
     expect(container.read(homeControllerProvider).isRecording, isFalse);
     expect(calls.where((call) => call.method == 'start'), isEmpty);
-    expect(container.read(homeControllerProvider).error, contains('麦克风权限未开启'));
+    expect(
+      container.read(homeControllerProvider).error,
+      contains(
+        AppLocalizations(const Locale('zh')).get('microphonePermissionDenied'),
+      ),
+    );
   });
 
   test(

@@ -46,13 +46,26 @@
     "test/settings_reliability_test.dart": "7017aa974d2d79cda357ef1538eb9fb844fd9c731f5ec98256435e7e2820ff92",
     "test/task_board_performance_test.dart": "c431e0dfacd6398f186b552a0e0f249b1c3830a24d9b4ad955a6322f9d0f6eb9",
     "test/task_search_panel_test.dart": "d46fe19ff5927098bc99c187e8d5b5a78fb43b0b22ecc21999e661e88825cea6",
-    "test/widget_test.dart": "9729d352a2b13058ad45604265c3a3c059a3b000651b42ad033d63ec7a778e98"
+    "test/widget_test.dart": "9729d352a2b13058ad45604265c3a3c059a3b000651b42ad033d63ec7a778e98",
+    "test/recording_compatibility_test.dart": "3c6249a13758ce736a8312042da734b041a4d8d4c24e4019e33abf12c208661b",
+    "test/notification_app_routing_test.dart": "2a9826718b9f1d5e5e4090b9517a727eeb628bc73558442f81874d0df44a7e8d"
   },
   "logs_sha256": {
     "build/stage123/related-all-final.log": "1f6c84569866b8b18c85119f6364098d54b754e3a6e2174c5bbba068d99f5932",
     "build/stage123/analyze-final.log": "c5d3f3f70fc20ef3671caaf000e920ff624ffad6274055f691724bae4632379a",
     "build/stage123/pub-get.log": "c76acea9d60fabf280e3b948b5d8d05d353b789cd71e293e06d5cb306fecd75b",
     "build/stage123/old-copy-fixture-failures.log": "d315b119bff31f5f3f788980a853f77c7e66f985251f721c5ede451d0f2c04e9",
-    "build/stage123/analyze-initial-fixture-lints.log": "7b4ddca4c1a715d74475d915ac69d24a84b90db73e875c1665b4c4ced14e9878"
+    "build/stage123/analyze-initial-fixture-lints.log": "7b4ddca4c1a715d74475d915ac69d24a84b90db73e875c1665b4c4ced14e9878",
+    "build/stage123/full-ci-fixture-fixes.log": "6fbd47073de87ef11cb7dd6ecbbd25674346414d38263cad596baca2419436e0",
+    "build/stage123/analyze-final-fixtures.log": "e288bf24c1dbcf8b0458766ee338b003be42982e830a4e030601eb84f6e47c67"
+  },
+  "additional_ci_fixture_regression_passed": 54,
+  "initial_full_ci_failed": 43830788819,
+  "initial_full_ci_failure": "old microphone message substring and old shared draft retry label",
+  "early_ios_gate_rejection": 43830872047,
+  "lib_tree_unchanged_by_fixture_fix": "55f2b6db454fa290f4d4e176e4b7a61c1ca93818",
+  "initial_full_ci_logs_sha256": {
+    "ci-first-failure-133175359929.log": "30ab9f3c91342934437f97c62cd31d9d79994ae47989f90b8dc8b75f01c2d29d",
+    "ci-first-failure-133175360329.log": "220c661a58d2da7a00073581951a86411deb37663e4baf58636776ac8b29126d"
   }
 }
