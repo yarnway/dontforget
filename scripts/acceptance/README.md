@@ -34,6 +34,22 @@ py -3 -X utf8 scripts/acceptance/windows_wsl_diskfull.py --distro Ubuntu-22.04 -
 
 这是**Windows原生运行时经UNC访问受限WSL tmpfs**的真实空间不足验收；不等同于NTFS卷耗尽、原生文件选择器／GUI、物理断电、恢复提交中断或真实凭据锁定。范围和后续任务仍须分别记录。
 
+## Windows 恢复过程实际进程中断
+
+```bat
+py -3 -X utf8 scripts/acceptance/windows_recovery_process.py --output build/recovery-crash-new-run
+```
+
+仅使用本项目固定的Windows Flutter3.44.9 SDK和新建的项目build输出目录。`recovery_process_worker_test.dart`在每个独立目录中创建两组全新合成数据库、媒体和窗口偏好，不读取日常应用数据或系统凭据。不要与其他共享原生SQLite DLL的Flutter验收并行。可先加`--smoke`只检查一个节点；报告的`full_matrix:false`不能记作完整验收。
+
+完整矩阵包含JSON／SQLite两种恢复输入，分别在候选准备、回滚副本准备、持久日志准备、原库移走、候选安装、候选打开、持久提交、回滚开始、回滚安装9个节点暂停，合计18个实际终止场景。另在候选安装后终止进程，对本轮合成主库或日志分别写入未知内容，验证新进程阻止恢复并保全证据，共20场景。
+
+运行器为每次子进程调用创建私有Windows Job，核对目标属于该Job、来自固定SDK的`flutter_tester.exe`且创建时间晚于本次调用，才以`TerminateProcess`终止该测试引擎。它不会按进程名全局终止，也不终止普通应用；失败／超时只清理本次Job的测试后代。暂停节点不抛`RecoveryInterruption`，不正常关闭数据库；必须观察原生退出码77和`finally`未运行，才能记为实际进程中断。回滚节点使用一次合成错误请求进入原有回滚分支，再实际终止。
+
+每个正常场景在另一个全新进程调用原有启动恢复入口：提交前恢复原数据，持久提交后保留新数据；核对三表全字段、源备份／旧镜像／原媒体／窗口偏好摘要、回滚副本、启动访问门禁，以及通知身份轮换与恢复调用顺序。第三个新进程再次冷重开，核对同一数据与通知身份且不重放恢复。通知和凭据使用替身，不代表实际系统通知、GUI或真实凭据锁定通过；进程终止也不等同于物理断电和目录fsync持久性。
+
+输出保留每例的节点日志、预期字段、文件摘要和恢复结果；`crash.log`中的测试未完成及非零退出是故障注入的预期表现，不能单独作为通过证据。只有`runner-result.json`的`outcome:PASS`、`full_matrix:true`、20场景齐全及全部新进程验证成功，才可记完整通过。不得将这些合成文件导入普通应用，不覆盖旧输出或历史恢复指针。
+
 ## 四附件总体加密验收
 
 `encrypted_backup_capacity_test.dart`独立验证四份512MiB、总2GiB的AES-GCM加密导出、预览、恢复、全部原件与恢复件SHA-256，以及DatabaseRecovery完成后关闭重开并再次核对四份媒体。还验证错误密码和解密中取消不会留下部分恢复文件。它不修改`backup_capacity_test.dart`已有普通／单附件结果的历史归属。
