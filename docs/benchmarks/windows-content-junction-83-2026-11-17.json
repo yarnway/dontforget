@@ -1,0 +1,61 @@
+{
+  "platform": "Windows NTFS",
+  "version": "1.8.12+83",
+  "checked_at_utc": "2026-11-17T02:23:08.124594Z",
+  "only_fresh_owned_temporary_directories_modified": true,
+  "normal_application_data_or_credentials_accessed": false,
+  "system_directory_acl_or_security_settings_modified": false,
+  "native_junction_creation": "cmd mklink /J",
+  "junction_removal": "kernel32 RemoveDirectoryW after reparse-point and scope checks",
+  "cases": [
+    {
+      "case": "import_directory_replaced_after_preview",
+      "junction_type": "link",
+      "stale_delete_rejected": true,
+      "all_business_fields_preserved_on_rejection": true,
+      "outside_files_preserved": true,
+      "original_files_preserved_on_rejection": true,
+      "original_directory_restored_and_explicit_cleanup_succeeds": true
+    },
+    {
+      "case": "media_root_replaced_after_preview",
+      "junction_type": "link",
+      "stale_delete_rejected": true,
+      "all_business_fields_preserved_on_rejection": true,
+      "outside_files_preserved": true,
+      "original_root_restored_and_explicit_cleanup_succeeds": true
+    },
+    {
+      "case": "interrupted_cleanup_directory_replaced_by_junction",
+      "junction_type": "link",
+      "repair_alias_rejected": true,
+      "all_business_fields_preserved_on_rejection": true,
+      "outside_files_preserved": true,
+      "original_staged_file_preserved_on_rejection": true,
+      "original_job_restored_and_repair_succeeds": true
+    }
+  ],
+  "runtime_source": "ffdfa5acf88afe07c9a5501f1a46e5f0804a57c8",
+  "lib_tree": "0e0589313f4eaf01b4f9f47cd949b904a8af3a90",
+  "test_file": "test/windows_content_junction_test.dart",
+  "test_sha256": "df0dd067b854d5114ce77508323fd5d1237b2aa55c0d10a73a2cef81795f434d",
+  "focused_tests": {
+    "passed": 27,
+    "skipped": 0
+  },
+  "final_promoted_native_tests": {
+    "passed": 3,
+    "skipped": 0
+  },
+  "analysis_issues": 0,
+  "ci": "pending",
+  "runtime_changed": false,
+  "new_version_or_installer": false,
+  "not_covered": [
+    "GUI deletion flow",
+    "real disk full",
+    "physical power loss",
+    "credential lock",
+    "concurrent directory replacement during deletion"
+  ]
+}
