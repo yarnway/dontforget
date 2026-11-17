@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers/home_controller.dart';
+import 'voice_capture_feedback.dart';
 
 /// The user can edit immediately while recognition finishes. Once edited,
 /// remote partial/final updates cannot replace their text.
@@ -181,57 +182,101 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
     };
     final actionHeight = math.max(
       48.0,
-      MediaQuery.textScalerOf(context).scale(14) * 2.4 + 16,
+      MediaQuery.textScalerOf(context).scale(mobile ? 16 : 14) * 2.4 + 16,
     );
-    const actionText = TextStyle(fontSize: 14, height: 1.2);
-    Widget field(bool compact) => Focus(
-      key: _editorHost,
-      onKeyEvent: _key,
-      child: TextField(
+    final actionText = TextStyle(fontSize: mobile ? 16 : 14, height: 1.2);
+    Widget field(bool compact) {
+      final editor = TextField(
         key: const ValueKey('voice-text-editor'),
         controller: _editor,
         autofocus: true,
-        minLines: compact ? 1 : 2,
+        minLines: compact || mobile ? 1 : 2,
         maxLines: null,
         readOnly: _sendingOriginal,
         textAlignVertical: TextAlignVertical.top,
         keyboardType: TextInputType.multiline,
         textInputAction: TextInputAction.newline,
+        cursorColor: mobile ? VoiceCaptureColors.ink : null,
         style: TextStyle(
-          fontSize: compact ? 14 : 18,
+          fontSize: compact
+              ? 14
+              : mobile
+              ? 20
+              : 18,
           height: compact ? 1.2 : 1.45,
-          color: colors.onPrimaryContainer,
+          color: mobile ? VoiceCaptureColors.ink : colors.onPrimaryContainer,
         ),
         decoration: InputDecoration(
           hintText: l10n.get('voiceEditorPlaceholder'),
-          filled: true,
+          hintStyle: mobile
+              ? const TextStyle(color: VoiceCaptureColors.secondaryInk)
+              : null,
+          isDense: mobile,
+          filled: !mobile,
           fillColor: colors.primaryContainer,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide.none,
+          border: mobile
+              ? InputBorder.none
+              : OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(18),
+                  borderSide: BorderSide.none,
+                ),
+          enabledBorder: mobile
+              ? InputBorder.none
+              : OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(18),
+                  borderSide: BorderSide.none,
+                ),
+          focusedBorder: mobile
+              ? InputBorder.none
+              : OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(18),
+                  borderSide: BorderSide(color: colors.primary, width: 2),
+                ),
+          contentPadding: EdgeInsets.all(
+            compact
+                ? 4
+                : mobile
+                ? 20
+                : 12,
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide(color: colors.primary, width: 2),
-          ),
-          contentPadding: EdgeInsets.all(compact ? 4 : 12),
         ),
         onChanged: (text) {
           setState(() => _edited = true);
           widget.onChanged(text);
         },
-      ),
-    );
+      );
+      return Focus(
+        key: _editorHost,
+        onKeyEvent: _key,
+        child: mobile
+            ? VoiceTextBubble(
+                child: TextSelectionTheme(
+                  data: const TextSelectionThemeData(
+                    cursorColor: VoiceCaptureColors.ink,
+                    selectionHandleColor: VoiceCaptureColors.ink,
+                    selectionColor: Color(0x55305638),
+                  ),
+                  child: editor,
+                ),
+              )
+            : editor,
+      );
+    }
+
     return PopScope(
       canPop: !_sendingOriginal,
       child: Dialog(
         key: const ValueKey('voice-text-sheet'),
         alignment: mobile ? Alignment.bottomCenter : Alignment.center,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        backgroundColor: mobile ? Colors.transparent : null,
+        surfaceTintColor: mobile ? Colors.transparent : null,
+        elevation: mobile ? 0 : null,
+        insetPadding: EdgeInsets.symmetric(
+          horizontal: mobile && MediaQuery.sizeOf(context).width >= 360
+              ? 24
+              : 12,
+          vertical: 12,
+        ),
         clipBehavior: Clip.antiAlias,
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
@@ -249,7 +294,12 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
               Widget keep() => IconButton(
                 key: const ValueKey('voice-editor-keep'),
                 tooltip: l10n.get('voiceKeepDraft'),
-                icon: const Icon(Icons.close),
+                icon: Icon(
+                  Icons.close,
+                  color: mobile
+                      ? (_sendingOriginal ? Colors.white38 : Colors.white)
+                      : null,
+                ),
                 visualDensity: VisualDensity.compact,
                 onPressed: _sendingOriginal
                     ? null
@@ -262,7 +312,15 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                   ? IconButton(
                       key: const ValueKey('voice-editor-original'),
                       tooltip: l10n.get('voiceSendOriginal'),
-                      icon: const Icon(Icons.mic_rounded),
+                      icon: Icon(
+                        Icons.mic_rounded,
+                        color: mobile
+                            ? (!_sendingOriginal &&
+                                      widget.onSendOriginal != null
+                                  ? Colors.white
+                                  : Colors.white38)
+                            : null,
+                      ),
                       visualDensity: VisualDensity.compact,
                       onPressed:
                           !_sendingOriginal && widget.onSendOriginal != null
@@ -275,6 +333,14 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                           !_sendingOriginal && widget.onSendOriginal != null
                           ? _sendOriginal
                           : null,
+                      style: mobile
+                          ? FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFF252525),
+                              foregroundColor: Colors.white,
+                              disabledBackgroundColor: const Color(0xFF202020),
+                              disabledForegroundColor: Colors.white38,
+                            )
+                          : null,
                       child: Text(
                         l10n.get('voiceSendOriginal'),
                         style: actionText,
@@ -286,13 +352,26 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                   ? IconButton(
                       key: const ValueKey('voice-editor-send'),
                       tooltip: l10n.get('send'),
-                      icon: const Icon(Icons.send_rounded),
+                      icon: Icon(
+                        Icons.send_rounded,
+                        color: mobile
+                            ? (canSend ? Colors.white : Colors.white38)
+                            : null,
+                      ),
                       visualDensity: VisualDensity.compact,
                       onPressed: canSend ? _send : null,
                     )
                   : FilledButton(
                       key: const ValueKey('voice-editor-send'),
                       onPressed: canSend ? _send : null,
+                      style: mobile
+                          ? FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFFE0E0E0),
+                              foregroundColor: const Color(0xFF171717),
+                              disabledBackgroundColor: const Color(0xFF252525),
+                              disabledForegroundColor: Colors.white38,
+                            )
+                          : null,
                       child: Text(
                         l10n.get('send'),
                         style: actionText,
@@ -310,15 +389,27 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                     children: [
                       if (!compact)
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+                          padding: EdgeInsets.fromLTRB(
+                            mobile ? 0 : 16,
+                            14,
+                            mobile ? 0 : 16,
+                            10,
+                          ),
                           child: Row(
                             children: [
-                              Icon(
-                                failed
-                                    ? Icons.warning_amber_rounded
-                                    : Icons.edit_note_rounded,
-                                color: failed ? colors.error : colors.primary,
-                              ),
+                              if (mobile)
+                                keep()
+                              else
+                                Icon(
+                                  failed
+                                      ? Icons.warning_amber_rounded
+                                      : Icons.edit_note_rounded,
+                                  color: mobile
+                                      ? Colors.white70
+                                      : failed
+                                      ? colors.error
+                                      : colors.primary,
+                                ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
@@ -329,9 +420,10 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(
-                                    context,
-                                  ).textTheme.titleMedium,
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(
+                                        color: mobile ? Colors.white70 : null,
+                                      ),
                                 ),
                               ),
                               if (!_complete || _sendingOriginal) ...[
@@ -346,6 +438,7 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                                         'voice-editor-progress',
                                       ),
                                       strokeWidth: 2,
+                                      color: mobile ? Colors.white70 : null,
                                       value:
                                           MediaQuery.disableAnimationsOf(
                                             context,
@@ -357,7 +450,7 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                                 ),
                               ],
                               const SizedBox(width: 4),
-                              keep(),
+                              if (!mobile) keep(),
                             ],
                           ),
                         ),
@@ -371,7 +464,11 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                             l10n.get('voicePartialReview'),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(color: colors.error),
+                            style: TextStyle(
+                              color: mobile
+                                  ? const Color(0xFFF2B8B5)
+                                  : colors.error,
+                            ),
                           ),
                         ),
                       // This keyed slot and its editor never change parents when the
@@ -382,7 +479,11 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             SizedBox(
-                              width: compact ? 44 : 16,
+                              width: compact
+                                  ? 44
+                                  : mobile
+                                  ? 0
+                                  : 16,
                               child: compact ? Center(child: keep()) : null,
                             ),
                             Expanded(child: field(compact)),
@@ -393,7 +494,11 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                                   : null,
                             ),
                             SizedBox(
-                              width: compact ? 44 : 16,
+                              width: compact
+                                  ? 44
+                                  : mobile
+                                  ? 0
+                                  : 16,
                               child: compact ? Center(child: send(true)) : null,
                             ),
                           ],

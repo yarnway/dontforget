@@ -17,6 +17,7 @@ import 'package:dont_forget/ui/widgets/input_bottom_bar.dart';
 import 'package:dont_forget/ui/widgets/live_voice_text_dialog.dart';
 import 'support/real_io.dart';
 import 'support/workspace_drafts.dart';
+import 'support/interaction_preview.dart';
 
 class _Recorder implements AudioRecorder {
   @override
@@ -94,6 +95,7 @@ class _Home extends HomeController {
 }
 
 void main() {
+  setUpAll(loadInteractionPreviewFonts);
   late Directory root;
   late DatabaseHelper db;
   late ProviderContainer container;
@@ -117,9 +119,13 @@ void main() {
     await db.close(createBackup: false);
     await root.delete(recursive: true);
   });
-  Future<void> show(WidgetTester tester) async {
+  Future<void> show(
+    WidgetTester tester, {
+    Size size = const Size(375, 812),
+    bool dark = false,
+  }) async {
     tester.view.devicePixelRatio = 1;
-    tester.view.physicalSize = const Size(375, 812);
+    tester.view.physicalSize = size;
     addTearDown(tester.view.resetDevicePixelRatio);
     addTearDown(tester.view.resetPhysicalSize);
     await tester.pumpWidget(
@@ -134,10 +140,12 @@ void main() {
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
           ],
-          theme: ThemeData(platform: TargetPlatform.android),
+          theme: dark
+              ? ThemeData.dark().copyWith(platform: TargetPlatform.android)
+              : ThemeData(platform: TargetPlatform.android),
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(context).copyWith(disableAnimations: true),
-            child: child!,
+            child: RepaintBoundary(key: interactionPreviewKey, child: child!),
           ),
           home: const Scaffold(
             body: Column(
@@ -746,6 +754,61 @@ void main() {
       await finish(tester);
     },
   );
+
+  testWidgets('voice three states reference observation', (tester) async {
+    await show(tester, size: const Size(430, 932), dark: true);
+    home.finalResult = Completer<String?>();
+    final held = await hold(tester);
+    await captureInteractionPreview(tester, 'voice-reference-recording');
+    await held.gesture.moveTo(held.origin + const Offset(70, -70));
+    home.preview('明天上午九点，核对项目交付记录。');
+    await tester.pumpAndSettle();
+    await captureInteractionPreview(tester, 'voice-reference-transcribing');
+    await held.gesture.up();
+    await tester.pumpAndSettle();
+    home.finalResult!.complete('明天上午九点，核对项目交付记录。');
+    await tester.pumpAndSettle();
+    tester.view.viewInsets = const FakeViewPadding(bottom: 330);
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pumpAndSettle();
+    await captureInteractionPreview(tester, 'voice-reference-editing');
+    final field = find.byKey(const ValueKey('voice-text-editor'));
+    await tester.enterText(field, '明天上午十点，核对项目交付记录。');
+    await tester.tap(find.byKey(const ValueKey('voice-editor-send')));
+    await pumpUntilRealIo(
+      tester,
+      () => home.sent.isNotEmpty,
+      reason: 'The edited transcript is submitted once',
+    );
+    expect(home.sent, ['明天上午十点，核对项目交付记录。']);
+    expect(home.saves, 0);
+    expect(home.cancels, 0);
+    await finish(tester);
+  });
+
+  testWidgets('voice pad has its own semantics bounds and a single label', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      await show(tester);
+      await tester.tap(find.byKey(const ValueKey('composer-mode-toggle')));
+      await tester.pumpAndSettle();
+      final target = find.bySemanticsLabel('按住说话');
+      expect(target, findsOneWidget);
+      final node = tester.getSemantics(target);
+      final pad = tester.getRect(
+        find.byKey(const ValueKey('composer-voice-pad')),
+      );
+      expect(node.label, '按住说话');
+      expect(node.rect.width, closeTo(pad.width, .5));
+      expect(node.rect.height, closeTo(pad.height, .5));
+      expect(node.rect.height, lessThan(100));
+      await finish(tester);
+    } finally {
+      semantics.dispose();
+    }
+  });
 
   testWidgets('left release cancels without sending a visible partial', (
     tester,

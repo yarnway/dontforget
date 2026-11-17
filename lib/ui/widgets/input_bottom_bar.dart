@@ -691,6 +691,13 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     try {
       final send = await showDialog<bool>(
         context: context,
+        barrierColor:
+            [
+              TargetPlatform.android,
+              TargetPlatform.iOS,
+            ].contains(Theme.of(context).platform)
+            ? Colors.black.withValues(alpha: .96)
+            : null,
         builder: (_) => LiveVoiceTextDialog(
           result: result,
           prefix: prefix,
@@ -1222,6 +1229,8 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
           // typing, selection and IME retain normal TextField behavior.
           : voiceMode
           ? Semantics(
+              container: true,
+              excludeSemantics: true,
               button: true,
               label: l10n.get('holdToTalk'),
               child: Container(

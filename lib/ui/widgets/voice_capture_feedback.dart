@@ -47,7 +47,7 @@ class VoiceCaptureFeedback extends StatelessWidget {
   final bool fullScreen, preparing, selectionOpen;
   final String transcript;
   final bool liveTranscription;
-  static const _green = Color(0xFF3BB47B);
+  static const _green = VoiceCaptureColors.bubble;
   static const _cancel = Color(0xFFC63C3C);
   static const _neutral = Color(0xFF252525);
 
@@ -162,10 +162,52 @@ class VoiceCaptureFeedback extends StatelessWidget {
             final feedbackHeight = compact
                 ? math.max(bubbleHeight + 8, captionHeight)
                 : bubbleHeight + 8 + bubbleCaptionGap + captionHeight;
-            final feedbackGap = compact ? 16.0 : 24.0;
+            final extraFeedbackGap = math.min(
+              width * .35,
+              math.max(0.0, (bounds.maxHeight - 640) * .6),
+            );
+            final feedbackGap = compact ? 16.0 : 24.0 + extraFeedbackGap;
             final feedbackTop = math.max(
               topInset + 8,
               geometry.targetsTop - feedbackGap - feedbackHeight,
+            );
+            final showTranscript =
+                ((selectionOpen && action != VoiceReleaseAction.cancel) ||
+                    action == VoiceReleaseAction.text ||
+                    action == VoiceReleaseAction.send) &&
+                feedbackTop - topInset > 56;
+            final previewWidth = math.min(
+              bounds.maxWidth -
+                  math.max(safe.left, 24) -
+                  math.max(safe.right, 24),
+              560.0,
+            );
+            final textMeasure = TextPainter(
+              text: TextSpan(
+                text: transcript.isEmpty
+                    ? loc.get(
+                        liveTranscription
+                            ? 'voiceListeningText'
+                            : 'voiceTranscribeAfterRelease',
+                      )
+                    : transcript,
+                style: const TextStyle(fontSize: 20, height: 1.45),
+              ),
+              textDirection: Directionality.of(context),
+              textScaler: scaler,
+              maxLines: 6,
+            )..layout(maxWidth: math.max(1, previewWidth - 40));
+            final desiredPreviewHeight = (textMeasure.height + 64).clamp(
+              104.0,
+              260.0,
+            );
+            textMeasure.dispose();
+            final previewBottom = compact
+                ? feedbackTop - 12
+                : feedbackTop + bubbleHeight + 8;
+            final previewTop = math.max(
+              topInset + 8,
+              previewBottom - desiredPreviewHeight,
             );
             final bubbleColor = preparing
                 ? const Color(0xFF3C5147)
@@ -195,7 +237,7 @@ class VoiceCaptureFeedback extends StatelessWidget {
                           )
                         : SizedBox(
                             width: bubbleWidth * .43,
-                            height: math.max(7, width * .014),
+                            height: math.max(10, width * .026),
                             child: CustomPaint(
                               painter: _VoiceWavePainter(
                                 action == VoiceReleaseAction.cancel
@@ -300,7 +342,7 @@ class VoiceCaptureFeedback extends StatelessWidget {
                         end:
                             (action == VoiceReleaseAction.text ||
                                 action == VoiceReleaseAction.send)
-                            ? _green
+                            ? const Color(0xFFE0E0E0)
                             : _neutral,
                       ),
                       duration: duration,
@@ -314,24 +356,14 @@ class VoiceCaptureFeedback extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (((selectionOpen && action != VoiceReleaseAction.cancel) ||
-                        action == VoiceReleaseAction.text ||
-                        action == VoiceReleaseAction.send) &&
-                    feedbackTop - topInset > 56)
+                if (showTranscript)
                   Positioned(
-                    left: math.max(
-                      safe.left + 12,
-                      math.max(16, (bounds.maxWidth - 560) / 2),
-                    ),
-                    right: math.max(
-                      safe.right + 12,
-                      math.max(16, (bounds.maxWidth - 560) / 2),
-                    ),
-                    top: math.max(topInset + 8, feedbackTop - 260),
-                    bottom: math.max(0, bounds.maxHeight - feedbackTop + 12),
+                    left: (bounds.maxWidth - previewWidth) / 2,
+                    width: previewWidth,
+                    top: previewTop,
+                    height: previewBottom - previewTop,
                     child: VoiceTranscriptPreview(
                       key: const ValueKey('voice-transcript-preview'),
-                      action: action,
                       transcript: transcript,
                       liveTranscription: liveTranscription,
                     ),
@@ -355,7 +387,10 @@ class VoiceCaptureFeedback extends StatelessWidget {
                       : Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            bubble,
+                            if (showTranscript)
+                              SizedBox(height: bubbleHeight + 8)
+                            else
+                              bubble,
                             SizedBox(height: bubbleCaptionGap),
                             caption,
                           ],
@@ -370,97 +405,57 @@ class VoiceCaptureFeedback extends StatelessWidget {
   }
 }
 
-/// The release choices are indicators: the held input still owns the pointer.
+/// Shared capture surfaces keep the live transcript and editor visually linked.
+abstract final class VoiceCaptureColors {
+  static const bubble = Color(0xFF61B77F);
+  static const ink = Color(0xFF102C1B);
+  static const secondaryInk = Color(0xFF19462A);
+}
+
+class VoiceTextBubble extends StatelessWidget {
+  const VoiceTextBubble({
+    super.key,
+    required this.child,
+    this.tailAlignment = .86,
+  });
+  final Widget child;
+  final double tailAlignment;
+
+  @override
+  Widget build(BuildContext context) => CustomPaint(
+    key: const ValueKey('voice-text-bubble'),
+    painter: _VoiceBubblePainter(
+      VoiceCaptureColors.bubble,
+      tailAlignment: tailAlignment,
+    ),
+    child: Padding(padding: const EdgeInsets.only(bottom: 8), child: child),
+  );
+}
+
+/// Preview only: the held input retains ownership of the gesture and pointer.
 class VoiceTranscriptPreview extends StatelessWidget {
   const VoiceTranscriptPreview({
     super.key,
-    required this.action,
     required this.transcript,
     this.liveTranscription = true,
   });
-  final VoiceReleaseAction action;
   final String transcript;
   final bool liveTranscription;
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
-    final colors = Theme.of(context).colorScheme;
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: colors.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colors.primary.withValues(alpha: .65)),
-      ),
-      child: LayoutBuilder(
-        builder: (context, bounds) {
-          final compact = bounds.maxHeight < 160;
-          Widget choice(bool send) {
-            final selected = send
-                ? action == VoiceReleaseAction.send
-                : action == VoiceReleaseAction.text;
-            return Expanded(
-              child: Semantics(
-                selected: selected,
-                excludeSemantics: true,
-                label: loc.get(send ? 'voiceReleaseSend' : 'voiceReleaseText'),
-                child: Container(
-                  key: ValueKey(
-                    send
-                        ? 'voice-preview-send-mode'
-                        : 'voice-preview-edit-mode',
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? colors.primary
-                        : colors.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    loc.get(send ? 'send' : 'voiceEditChoice'),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      height: 1.2,
-                      fontWeight: FontWeight.w600,
-                      color: selected
-                          ? colors.onPrimary
-                          : colors.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }
-
-          return Padding(
-            padding: EdgeInsets.all(compact ? 8 : 14),
+    return LayoutBuilder(
+      builder: (context, bounds) {
+        final compact = bounds.maxHeight < 100;
+        return VoiceTextBubble(
+          child: Padding(
+            padding: compact
+                ? const EdgeInsets.all(4)
+                : const EdgeInsets.fromLTRB(20, 16, 20, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (!compact) ...[
-                  Row(
-                    children: [
-                      choice(false),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Icon(
-                          Icons.arrow_forward_rounded,
-                          size: 18,
-                          color: colors.onSurfaceVariant,
-                        ),
-                      ),
-                      choice(true),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                ],
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, viewport) => SingleChildScrollView(
@@ -483,11 +478,11 @@ class VoiceTranscriptPreview extends StatelessWidget {
                                   : transcript,
                               key: const ValueKey('voice-preview-content'),
                               style: TextStyle(
-                                fontSize: compact ? 16 : 18,
-                                height: 1.45,
+                                fontSize: compact ? 16 : 20,
+                                height: compact ? 1.2 : 1.45,
                                 color: transcript.isEmpty
-                                    ? colors.onSurfaceVariant
-                                    : colors.onSurface,
+                                    ? VoiceCaptureColors.secondaryInk
+                                    : VoiceCaptureColors.ink,
                               ),
                             ),
                           ),
@@ -496,24 +491,27 @@ class VoiceTranscriptPreview extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (!compact &&
-                    bounds.maxHeight >= 220 &&
-                    MediaQuery.textScalerOf(context).scale(13) <= 20) ...[
-                  const SizedBox(height: 10),
-                  Text(
-                    loc.get('voiceSendOnRelease'),
-                    maxLines: 2,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colors.onSurfaceVariant,
+                if (!compact) const SizedBox(height: 8),
+                if (!compact)
+                  const Align(
+                    alignment: Alignment.centerRight,
+                    child: ExcludeSemantics(
+                      child: SizedBox(
+                        width: 32,
+                        height: 12,
+                        child: CustomPaint(
+                          painter: _VoiceWavePainter(
+                            VoiceCaptureColors.secondaryInk,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ],
               ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -562,10 +560,12 @@ class _VoiceScenePainter extends CustomPainter {
       geometry.radius,
       Paint()
         ..shader =
-            const LinearGradient(
+            LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [Color(0xFF606060), Color(0xFF929292)],
+              colors: rightFill.computeLuminance() > .3
+                  ? const [Color(0xFF151515), Color(0xFF202020)]
+                  : const [Color(0xFF606060), Color(0xFF929292)],
             ).createShader(
               Rect.fromLTRB(0, geometry.capTop, size.width, size.height),
             ),
@@ -574,7 +574,9 @@ class _VoiceScenePainter extends CustomPainter {
       geometry.center,
       geometry.radius,
       Paint()
-        ..color = const Color(0xFF737373)
+        ..color = rightFill.computeLuminance() > .3
+            ? const Color(0xFF2C2C2C)
+            : const Color(0xFF737373)
         ..style = PaintingStyle.stroke
         ..strokeWidth = math.max(2, geometry.width * .007),
     );
@@ -600,31 +602,29 @@ class _VoiceScenePainter extends CustomPainter {
 }
 
 class _VoiceBubblePainter extends CustomPainter {
-  const _VoiceBubblePainter(this.color);
+  const _VoiceBubblePainter(this.color, {this.tailAlignment = .5});
   final Color color;
+  final double tailAlignment;
   @override
   void paint(Canvas canvas, Size size) {
     final body = RRect.fromRectAndRadius(
       Rect.fromLTWH(0, 0, size.width, size.height - 8),
-      Radius.circular(size.width * .09),
+      Radius.circular(math.min(20, size.width * .09)),
     );
     canvas.drawRRect(body, Paint()..color = color);
+    final tailX = (size.width * tailAlignment).clamp(16.0, size.width - 16);
     final tail = Path()
-      ..moveTo(size.width / 2 - 8, size.height - 9)
-      ..lineTo(size.width / 2 - 2, size.height - 2)
-      ..quadraticBezierTo(
-        size.width / 2,
-        size.height,
-        size.width / 2 + 2,
-        size.height - 2,
-      )
-      ..lineTo(size.width / 2 + 8, size.height - 9)
+      ..moveTo(tailX - 8, size.height - 9)
+      ..lineTo(tailX - 2, size.height - 2)
+      ..quadraticBezierTo(tailX, size.height, tailX + 2, size.height - 2)
+      ..lineTo(tailX + 8, size.height - 9)
       ..close();
     canvas.drawPath(tail, Paint()..color = color);
   }
 
   @override
-  bool shouldRepaint(_VoiceBubblePainter old) => color != old.color;
+  bool shouldRepaint(_VoiceBubblePainter old) =>
+      color != old.color || tailAlignment != old.tailAlignment;
 }
 
 class _VoiceWavePainter extends CustomPainter {
@@ -634,11 +634,12 @@ class _VoiceWavePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
-      ..strokeWidth = 2
+      ..strokeWidth = (size.width / 40).clamp(.7, 2.0)
       ..strokeCap = StrokeCap.round;
     for (var i = 0; i < 25; i++) {
       final x = (i + .5) * size.width / 25;
-      final amplitude = size.height * (.32 + .12 * math.sin(i * .73).abs());
+      final amplitude =
+          size.height * (.12 + .34 * math.pow(math.sin(math.pi * i / 24), 2));
       canvas.drawLine(
         Offset(x, size.height / 2 - amplitude),
         Offset(x, size.height / 2 + amplitude),

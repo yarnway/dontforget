@@ -1,0 +1,65 @@
+{
+  "date": "2026-11-17",
+  "candidate_version": "1.8.13+84",
+  "schema": 17,
+  "sdk": "Windows Flutter3.44.9 / Dart3.12.2",
+  "runtime_files_sha256": {
+    "lib/ui/widgets/voice_capture_feedback.dart": "55f26bf7a116ee0350f1febaf416548b7712d133e78886d78c797b3f8ffc5f8e",
+    "lib/ui/widgets/live_voice_text_dialog.dart": "7305091f4493eb45e926332ec9cec2c46c5a1a5ac9b980f435f0a18b28fc10b3",
+    "lib/ui/widgets/input_bottom_bar.dart": "46e8521493750a6eb71ad84c4b2a9ccaf371fce7182ac298b29a2cc69cb8faf2",
+    "pubspec.yaml": "63fdb74d289b910ee12a961bf2e5e49e4b918dcfc86e4f6ee73390d80f5980a2",
+    "test/live_voice_input_ui_test.dart": "08a60c9a1e61229273816c421d386d0bc519eb6f0d8f2e16dbb3d9eea4514a5a",
+    "test/voice_capture_layout_test.dart": "a2257202d1dc5a5fde2c575c1d8217b1e07f0d5adcc0b7ea51fa09fddaee6226"
+  },
+  "final_related_tests": {
+    "files": 11,
+    "passed": 174,
+    "skipped": 0
+  },
+  "final_analysis_issues": 0,
+  "final_render_observation": {
+    "passed": 1,
+    "three_states": true,
+    "edited_text_submitted_once": true
+  },
+  "baseline_contract": {
+    "runtime_source": "ffdfa5acf88afe07c9a5501f1a46e5f0804a57c8",
+    "failed_as_expected": "Exact single hold-to-talk label missing before fix",
+    "new_contract_passes": true
+  },
+  "component_visual_qa": "passed",
+  "captures": [
+    {
+      "state": "recording",
+      "path": "docs/images/voice-input-recording-20261117.png",
+      "sha256": "6e99adf008f249f76f78bb9eebbdfe901be29784d97cd43d3a473369a9a3246f",
+      "viewport": "430x932",
+      "source": "fixed Flutter test engine; synthetic speech results; no OS keyboard rendered"
+    },
+    {
+      "state": "transcribing",
+      "path": "docs/images/voice-input-transcribing-20261117.png",
+      "sha256": "39b50f2f1ffa8caa5a39028e058e0f71215d48a2ad63dbe358d9fc8a3eb262ce",
+      "viewport": "430x932",
+      "source": "fixed Flutter test engine; synthetic speech results; no OS keyboard rendered"
+    },
+    {
+      "state": "editing",
+      "path": "docs/images/voice-input-editing-20261117.png",
+      "sha256": "4462c3dbd32ef69b02906ed97a2e91adf763195dcc86c6e2bc902eee464375e4",
+      "viewport": "430x932",
+      "source": "fixed Flutter test engine; synthetic speech results; no OS keyboard rendered"
+    }
+  ],
+  "native_validation": "pending",
+  "fixed_ci": "pending",
+  "packages": "pending",
+  "published": false,
+  "existing_credentials_or_speech_provider_configuration_changed": false,
+  "retained_failures": [
+    "Initial observation fixture omitted required reason argument; corrected before product changes.",
+    "Three old layout assertions expected the removed duplicate bubble/mode controls; replaced with single-bubble expansion and stable action-target contracts.",
+    "Very short landscape preview viewport was reduced to about one pixel; fixed compact padding and decorative wave suppression.",
+    "Semantics fixture handle disposal and one unnecessary non-null assertion corrected; final tests and analysis pass."
+  ]
+}

@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/ui/widgets/voice_capture_feedback.dart';
 import 'package:flutter/material.dart';
@@ -64,36 +65,49 @@ void main() {
     });
   });
 
-  testWidgets('a taller phone keeps the release caption near the action arcs', (
-    tester,
-  ) async {
-    for (final width in [375.0, 430.0]) {
-      double? previousGap;
-      Rect? previousBubble;
-      double? previousHeight;
-      for (final height in [667.0, 932.0, 1232.0]) {
-        await show(tester, Size(width, height));
-        final caption = rect(tester, 'voice-release-caption');
-        final cancel = rect(tester, 'voice-target-cancel');
-        final bubble = rect(tester, 'voice-recording-bubble');
-        final gap = cancel.top - caption.bottom;
-        expect(gap, inInclusiveRange(24, 80));
-        expect(bubble.bottom, lessThan(caption.top));
-        expect(bubble.center.dx, closeTo(width / 2, .5));
-        expect(caption.center.dx, closeTo(width / 2, .5));
-        if (previousGap != null) {
-          expect(gap, closeTo(previousGap, .5));
-          expect(
-            bubble.top - previousBubble!.top,
-            closeTo(height - previousHeight!, .5),
+  testWidgets(
+    'phone height balances feedback spacing while the action arcs stay anchored',
+    (tester) async {
+      for (final width in [375.0, 430.0]) {
+        double? previousGap;
+        Rect? previousBubble;
+        double? previousHeight;
+        double? previousExtraGap;
+        for (final height in [667.0, 932.0, 1232.0]) {
+          await show(tester, Size(width, height));
+          final caption = rect(tester, 'voice-release-caption');
+          final cancel = rect(tester, 'voice-target-cancel');
+          final bubble = rect(tester, 'voice-recording-bubble');
+          final gap = cancel.top - caption.bottom;
+          expect(gap, inInclusiveRange(24, 240));
+          expect(bubble.bottom, lessThan(caption.top));
+          expect(bubble.center.dx, closeTo(width / 2, .5));
+          expect(caption.center.dx, closeTo(width / 2, .5));
+          final extraGap = math.min(
+            width * .35,
+            math.max(0.0, (height - 640) * .6),
           );
+          if (previousGap != null) {
+            expect(
+              gap - previousGap,
+              closeTo(extraGap - previousExtraGap!, .5),
+            );
+            expect(
+              bubble.top - previousBubble!.top,
+              closeTo(
+                height - previousHeight! - (extraGap - previousExtraGap),
+                .5,
+              ),
+            );
+          }
+          previousGap = gap;
+          previousBubble = bubble;
+          previousHeight = height;
+          previousExtraGap = extraGap;
         }
-        previousGap = gap;
-        previousBubble = bubble;
-        previousHeight = height;
       }
-    }
-  });
+    },
+  );
 
   testWidgets(
     'recording feedback stays above the arcs across text and screens',
@@ -131,13 +145,14 @@ void main() {
     },
   );
 
-  testWidgets('sliding and preparing do not shift the feedback group', (
+  testWidgets('sliding and preparing keep release captions and targets fixed', (
     tester,
   ) async {
     for (final language in ['zh', 'en', 'ja']) {
       for (final size in [const Size(320, 568), const Size(568, 320)]) {
-        Rect? bubble;
         Rect? feedback;
+        Rect? cancel;
+        Rect? text;
         for (final action in VoiceReleaseAction.values) {
           for (final preparing in [false, true]) {
             await show(
@@ -148,14 +163,17 @@ void main() {
               action: action,
               preparing: preparing,
             );
-            final nextBubble = rect(tester, 'voice-recording-bubble');
             final nextFeedback = rect(tester, 'voice-recording-feedback');
-            if (bubble != null) {
-              expect(nextBubble, bubble);
+            final nextCancel = rect(tester, 'voice-target-cancel');
+            final nextText = rect(tester, 'voice-target-text');
+            if (feedback != null) {
               expect(nextFeedback, feedback);
+              expect(nextCancel, cancel);
+              expect(nextText, text);
             }
-            bubble = nextBubble;
             feedback = nextFeedback;
+            cancel = nextCancel;
+            text = nextText;
           }
         }
       }
@@ -191,7 +209,11 @@ void main() {
               of: preview,
               matching: find.byType(SingleChildScrollView),
             );
-            expect(tester.getSize(viewport).height, greaterThan(20));
+            expect(
+              tester.getSize(viewport).height,
+              greaterThan(20),
+              reason: '$size / $language / $scale',
+            );
             expect(
               rect(tester, 'voice-preview-content').bottom,
               closeTo(tester.getRect(viewport).bottom, .5),
@@ -199,7 +221,14 @@ void main() {
             );
             expect(
               tester.getRect(preview).bottom,
-              lessThan(rect(tester, 'voice-recording-feedback').top),
+              lessThan(
+                rect(
+                  tester,
+                  size.height < 440
+                      ? 'voice-recording-feedback'
+                      : 'voice-release-caption',
+                ).top,
+              ),
             );
             expect(
               tester.getRect(preview).top,
@@ -234,17 +263,18 @@ void main() {
         );
         if (before != null) expect(preview, before);
         before = preview;
-        final edit = find.byKey(const ValueKey('voice-preview-edit-mode'));
-        final send = find.byKey(const ValueKey('voice-preview-send-mode'));
-        expect(edit, findsOneWidget);
-        expect(send, findsOneWidget);
-        final theme = Theme.of(tester.element(edit));
-        final selected = tester.widget<Container>(
-          action == VoiceReleaseAction.text ? edit : send,
+        expect(find.byType(VoiceTextBubble), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('voice-recording-bubble')),
+          findsNothing,
+          reason:
+              'The transcript expands the bubble instead of adding a second one',
         );
         expect(
-          (selected.decoration as BoxDecoration).color,
-          theme.colorScheme.primary,
+          tester
+              .widget<Text>(find.byKey(const ValueKey('voice-release-caption')))
+              .data,
+          action == VoiceReleaseAction.text ? '松手编辑文字' : '松手发送文字',
         );
       }
     },
