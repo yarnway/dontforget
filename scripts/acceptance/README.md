@@ -18,6 +18,22 @@ C:\src\flutter\bin\flutter.bat --no-version-check test --no-pub scripts/acceptan
 
 宿主服务测试不替代手机文件选择器、真实跨设备恢复、磁盘满、断电、系统安全存储锁定或正式分发验收。当前结果按 `docs/Next_Steps_2026-11-02.md` 分层记录。
 
+## Windows 真实空间不足验收
+
+使用本项目固定的 Windows Flutter 3.44.9 SDK、原有锁文件和一个已安装的 WSL 发行版：
+
+```bat
+py -3 -X utf8 scripts/acceptance/windows_wsl_diskfull.py --distro Ubuntu-22.04 --output build/diskfull-new-run
+```
+
+`--distro` 必须为本机已有发行版的实际名称，输出目录必须位于本项目 `build/` 内且尚不存在。脚本不安装或更新 SDK／WSL，不读取日常应用数据库或凭据；不与另一组使用同一 SQLite DLL 的 Flutter 测试并行。
+
+脚本只以 WSL root 创建本轮随机命名的 `/tmp/dontforget-diskfull-*` **16 MiB tmpfs**，通过 Windows UNC 访问。先用原生 Windows Python 实际写满并确认 ENOSPC，再清除探测文件。随后用12 MiB合成填充文件与8 MiB合成附件，让应用现有代码分别在普通／加密备份创建、目录导出、恢复预备中遭遇真实空间不足；释放填充后分别重试。检查三表全字段、原附件与源备份摘要、已有目标文件、失败清理、进程内占用及数据库重开。测试入口为 `real_disk_full_backup_test.dart`，不纳入普通测试或每次 CI 的自动执行。
+
+结束时核对挂载来源与类型后正常卸载，并移除自有空挂载点；不强制卸载、不递归删除挂载路径，也不填满系统盘、NTFS卷或手机存储。新目录中保留 `acceptance.log`、六项结果及 `runner-result.json`；只有测试退出0、六项齐全且 `cleanup_succeeded: true`／`outcome: PASS` 才可记通过。异常时保留日志，不沿用旧报告。
+
+这是**Windows原生运行时经UNC访问受限WSL tmpfs**的真实空间不足验收；不等同于NTFS卷耗尽、原生文件选择器／GUI、物理断电、恢复提交中断或真实凭据锁定。范围和后续任务仍须分别记录。
+
 ## 四附件总体加密验收
 
 `encrypted_backup_capacity_test.dart`独立验证四份512MiB、总2GiB的AES-GCM加密导出、预览、恢复、全部原件与恢复件SHA-256，以及DatabaseRecovery完成后关闭重开并再次核对四份媒体。还验证错误密码和解密中取消不会留下部分恢复文件。它不修改`backup_capacity_test.dart`已有普通／单附件结果的历史归属。
