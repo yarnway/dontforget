@@ -1,0 +1,825 @@
+{
+  "date": "2026-11-17",
+  "scope": "stage48-native-Windows-recovery-process-termination",
+  "tools_source": "3c96bc8126156b45bdf767289fb9e530799e05a7",
+  "runtime_release_source": "a8b949e14a692b249aaed3654e9bda644f1a72a9",
+  "version": "1.8.13+84",
+  "schema": 17,
+  "filesystem": {
+    "native_windows_filesystem": "NTFS",
+    "volume_label_or_serial_saved": false
+  },
+  "native_matrix": {
+    "source": "3c96bc8126156b45bdf767289fb9e530799e05a7",
+    "runtime_lib_tree": "2e7684f13dfe056d5dc4626cd2c0c0edde7b0f16",
+    "flutter": "3.44.9",
+    "dart": "3.12.2",
+    "worker_sha256": "2ff7cea27d390caa35655c6df7176fca557a0521dce58cecccf770a57bcede61",
+    "runner_sha256": "de584f495285b5920944edc946a2af3e5a8c2ac85eb239fda573f1ab12ba5e24",
+    "full_matrix": true,
+    "cases": [
+      {
+        "checkpoint": "candidateReady",
+        "input_format": "json",
+        "startup_gate_blocked_normal_reads": false,
+        "gate_preserves_primary_identity_and_existing_files": true,
+        "selected_dataset": "old",
+        "all_business_fields_equal": true,
+        "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+        "pending_journal_absent": true,
+        "notification_epoch_and_resume_order_valid": true,
+        "second_fresh_process_reopen": {
+          "checkpoint": "candidateReady",
+          "input_format": "json",
+          "startup_gate_blocked_normal_reads": false,
+          "gate_preserves_primary_identity_and_existing_files": true,
+          "selected_dataset": "old",
+          "all_business_fields_equal": true,
+          "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+          "pending_journal_absent": true,
+          "notification_epoch_and_resume_order_valid": true
+        },
+        "label": "json-candidateReady",
+        "negative": null,
+        "actual_native_termination_exit_code": 77,
+        "target_owned_by_private_job_and_fixed_sdk_verified": true,
+        "graceful_finally_did_not_run": true,
+        "outcome": "PASS"
+      },
+      {
+        "checkpoint": "rollbackReady",
+        "input_format": "json",
+        "startup_gate_blocked_normal_reads": false,
+        "gate_preserves_primary_identity_and_existing_files": true,
+        "selected_dataset": "old",
+        "all_business_fields_equal": true,
+        "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+        "pending_journal_absent": true,
+        "notification_epoch_and_resume_order_valid": true,
+        "second_fresh_process_reopen": {
+          "checkpoint": "rollbackReady",
+          "input_format": "json",
+          "startup_gate_blocked_normal_reads": false,
+          "gate_preserves_primary_identity_and_existing_files": true,
+          "selected_dataset": "old",
+          "all_business_fields_equal": true,
+          "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+          "pending_journal_absent": true,
+          "notification_epoch_and_resume_order_valid": true
+        },
+        "label": "json-rollbackReady",
+        "negative": null,
+        "actual_native_termination_exit_code": 77,
+        "target_owned_by_private_job_and_fixed_sdk_verified": true,
+        "graceful_finally_did_not_run": true,
+        "outcome": "PASS"
+      },
+      {
+        "checkpoint": "journalPrepared",
+        "input_format": "json",
+        "startup_gate_blocked_normal_reads": true,
+        "gate_preserves_primary_identity_and_existing_files": true,
+        "selected_dataset": "old",
+        "all_business_fields_equal": true,
+        "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+        "pending_journal_absent": true,
+        "notification_epoch_and_resume_order_valid": true,
+        "second_fresh_process_reopen": {
+          "checkpoint": "journalPrepared",
+          "input_format": "json",
+          "startup_gate_blocked_normal_reads": false,
+          "gate_preserves_primary_identity_and_existing_files": true,
+          "selected_dataset": "old",
+          "all_business_fields_equal": true,
+          "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+          "pending_journal_absent": true,
+          "notification_epoch_and_resume_order_valid": true
+        },
+        "label": "json-journalPrepared",
+        "negative": null,
+        "actual_native_termination_exit_code": 77,
+        "target_owned_by_private_job_and_fixed_sdk_verified": true,
+        "graceful_finally_did_not_run": true,
+        "outcome": "PASS"
+      },
+      {
+        "checkpoint": "originalMoved",
+        "input_format": "json",
+        "startup_gate_blocked_normal_reads": true,
+        "gate_preserves_primary_identity_and_existing_files": true,
+        "selected_dataset": "old",
+        "all_business_fields_equal": true,
+        "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+        "pending_journal_absent": true,
+        "notification_epoch_and_resume_order_valid": true,
+        "second_fresh_process_reopen": {
+          "checkpoint": "originalMoved",
+          "input_format": "json",
+          "startup_gate_blocked_normal_reads": false,
+          "gate_preserves_primary_identity_and_existing_files": true,
+          "selected_dataset": "old",
+          "all_business_fields_equal": true,
+          "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+          "pending_journal_absent": true,
+          "notification_epoch_and_resume_order_valid": true
+        },
+        "label": "json-originalMoved",
+        "negative": null,
+        "actual_native_termination_exit_code": 77,
+        "target_owned_by_private_job_and_fixed_sdk_verified": true,
+        "graceful_finally_did_not_run": true,
+        "outcome": "PASS"
+      },
+      {
+        "checkpoint": "candidateInstalled",
+        "input_format": "json",
+        "startup_gate_blocked_normal_reads": true,
+        "gate_preserves_primary_identity_and_existing_files": true,
+        "selected_dataset": "old",
+        "all_business_fields_equal": true,
+        "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+        "pending_journal_absent": true,
+        "notification_epoch_and_resume_order_valid": true,
+        "second_fresh_process_reopen": {
+          "checkpoint": "candidateInstalled",
+          "input_format": "json",
+          "startup_gate_blocked_normal_reads": false,
+          "gate_preserves_primary_identity_and_existing_files": true,
+          "selected_dataset": "old",
+          "all_business_fields_equal": true,
+          "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+          "pending_journal_absent": true,
+          "notification_epoch_and_resume_order_valid": true
+        },
+        "label": "json-candidateInstalled",
+        "negative": null,
+        "actual_native_termination_exit_code": 77,
+        "target_owned_by_private_job_and_fixed_sdk_verified": true,
+        "graceful_finally_did_not_run": true,
+        "outcome": "PASS"
+      },
+      {
+        "checkpoint": "candidateOpened",
+        "input_format": "json",
+        "startup_gate_blocked_normal_reads": true,
+        "gate_preserves_primary_identity_and_existing_files": true,
+        "selected_dataset": "old",
+        "all_business_fields_equal": true,
+        "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+        "pending_journal_absent": true,
+        "notification_epoch_and_resume_order_valid": true,
+        "second_fresh_process_reopen": {
+          "checkpoint": "candidateOpened",
+          "input_format": "json",
+          "startup_gate_blocked_normal_reads": false,
+          "gate_preserves_primary_identity_and_existing_files": true,
+          "selected_dataset": "old",
+          "all_business_fields_equal": true,
+          "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+          "pending_journal_absent": true,
+          "notification_epoch_and_resume_order_valid": true
+        },
+        "label": "json-candidateOpened",
+        "negative": null,
+        "actual_native_termination_exit_code": 77,
+        "target_owned_by_private_job_and_fixed_sdk_verified": true,
+        "graceful_finally_did_not_run": true,
+        "outcome": "PASS"
+      },
+      {
+        "checkpoint": "committed",
+        "input_format": "json",
+        "startup_gate_blocked_normal_reads": true,
+        "gate_preserves_primary_identity_and_existing_files": true,
+        "selected_dataset": "new",
+        "all_business_fields_equal": true,
+        "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+        "pending_journal_absent": true,
+        "notification_epoch_and_resume_order_valid": true,
+        "second_fresh_process_reopen": {
+          "checkpoint": "committed",
+          "input_format": "json",
+          "startup_gate_blocked_normal_reads": false,
+          "gate_preserves_primary_identity_and_existing_files": true,
+          "selected_dataset": "new",
+          "all_business_fields_equal": true,
+          "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+          "pending_journal_absent": true,
+          "notification_epoch_and_resume_order_valid": true
+        },
+        "label": "json-committed",
+        "negative": null,
+        "actual_native_termination_exit_code": 77,
+        "target_owned_by_private_job_and_fixed_sdk_verified": true,
+        "graceful_finally_did_not_run": true,
+        "outcome": "PASS"
+      },
+      {
+        "checkpoint": "rollbackStarted",
+        "input_format": "json",
+        "startup_gate_blocked_normal_reads": true,
+        "gate_preserves_primary_identity_and_existing_files": true,
+        "selected_dataset": "old",
+        "all_business_fields_equal": true,
+        "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+        "pending_journal_absent": true,
+        "notification_epoch_and_resume_order_valid": true,
+        "second_fresh_process_reopen": {
+          "checkpoint": "rollbackStarted",
+          "input_format": "json",
+          "startup_gate_blocked_normal_reads": false,
+          "gate_preserves_primary_identity_and_existing_files": true,
+          "selected_dataset": "old",
+          "all_business_fields_equal": true,
+          "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+          "pending_journal_absent": true,
+          "notification_epoch_and_resume_order_valid": true
+        },
+        "label": "json-rollbackStarted",
+        "negative": null,
+        "actual_native_termination_exit_code": 77,
+        "target_owned_by_private_job_and_fixed_sdk_verified": true,
+        "graceful_finally_did_not_run": true,
+        "outcome": "PASS"
+      },
+      {
+        "checkpoint": "rollbackInstalled",
+        "input_format": "json",
+        "startup_gate_blocked_normal_reads": true,
+        "gate_preserves_primary_identity_and_existing_files": true,
+        "selected_dataset": "old",
+        "all_business_fields_equal": true,
+        "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+        "pending_journal_absent": true,
+        "notification_epoch_and_resume_order_valid": true,
+        "second_fresh_process_reopen": {
+          "checkpoint": "rollbackInstalled",
+          "input_format": "json",
+          "startup_gate_blocked_normal_reads": false,
+          "gate_preserves_primary_identity_and_existing_files": true,
+          "selected_dataset": "old",
+          "all_business_fields_equal": true,
+          "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+          "pending_journal_absent": true,
+          "notification_epoch_and_resume_order_valid": true
+        },
+        "label": "json-rollbackInstalled",
+        "negative": null,
+        "actual_native_termination_exit_code": 77,
+        "target_owned_by_private_job_and_fixed_sdk_verified": true,
+        "graceful_finally_did_not_run": true,
+        "outcome": "PASS"
+      },
+      {
+        "checkpoint": "candidateReady",
+        "input_format": "sqlite",
+        "startup_gate_blocked_normal_reads": false,
+        "gate_preserves_primary_identity_and_existing_files": true,
+        "selected_dataset": "old",
+        "all_business_fields_equal": true,
+        "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+        "pending_journal_absent": true,
+        "notification_epoch_and_resume_order_valid": true,
+        "second_fresh_process_reopen": {
+          "checkpoint": "candidateReady",
+          "input_format": "sqlite",
+          "startup_gate_blocked_normal_reads": false,
+          "gate_preserves_primary_identity_and_existing_files": true,
+          "selected_dataset": "old",
+          "all_business_fields_equal": true,
+          "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+          "pending_journal_absent": true,
+          "notification_epoch_and_resume_order_valid": true
+        },
+        "label": "sqlite-candidateReady",
+        "negative": null,
+        "actual_native_termination_exit_code": 77,
+        "target_owned_by_private_job_and_fixed_sdk_verified": true,
+        "graceful_finally_did_not_run": true,
+        "outcome": "PASS"
+      },
+      {
+        "checkpoint": "rollbackReady",
+        "input_format": "sqlite",
+        "startup_gate_blocked_normal_reads": false,
+        "gate_preserves_primary_identity_and_existing_files": true,
+        "selected_dataset": "old",
+        "all_business_fields_equal": true,
+        "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+        "pending_journal_absent": true,
+        "notification_epoch_and_resume_order_valid": true,
+        "second_fresh_process_reopen": {
+          "checkpoint": "rollbackReady",
+          "input_format": "sqlite",
+          "startup_gate_blocked_normal_reads": false,
+          "gate_preserves_primary_identity_and_existing_files": true,
+          "selected_dataset": "old",
+          "all_business_fields_equal": true,
+          "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+          "pending_journal_absent": true,
+          "notification_epoch_and_resume_order_valid": true
+        },
+        "label": "sqlite-rollbackReady",
+        "negative": null,
+        "actual_native_termination_exit_code": 77,
+        "target_owned_by_private_job_and_fixed_sdk_verified": true,
+        "graceful_finally_did_not_run": true,
+        "outcome": "PASS"
+      },
+      {
+        "checkpoint": "journalPrepared",
+        "input_format": "sqlite",
+        "startup_gate_blocked_normal_reads": true,
+        "gate_preserves_primary_identity_and_existing_files": true,
+        "selected_dataset": "old",
+        "all_business_fields_equal": true,
+        "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+        "pending_journal_absent": true,
+        "notification_epoch_and_resume_order_valid": true,
+        "second_fresh_process_reopen": {
+          "checkpoint": "journalPrepared",
+          "input_format": "sqlite",
+          "startup_gate_blocked_normal_reads": false,
+          "gate_preserves_primary_identity_and_existing_files": true,
+          "selected_dataset": "old",
+          "all_business_fields_equal": true,
+          "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+          "pending_journal_absent": true,
+          "notification_epoch_and_resume_order_valid": true
+        },
+        "label": "sqlite-journalPrepared",
+        "negative": null,
+        "actual_native_termination_exit_code": 77,
+        "target_owned_by_private_job_and_fixed_sdk_verified": true,
+        "graceful_finally_did_not_run": true,
+        "outcome": "PASS"
+      },
+      {
+        "checkpoint": "originalMoved",
+        "input_format": "sqlite",
+        "startup_gate_blocked_normal_reads": true,
+        "gate_preserves_primary_identity_and_existing_files": true,
+        "selected_dataset": "old",
+        "all_business_fields_equal": true,
+        "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+        "pending_journal_absent": true,
+        "notification_epoch_and_resume_order_valid": true,
+        "second_fresh_process_reopen": {
+          "checkpoint": "originalMoved",
+          "input_format": "sqlite",
+          "startup_gate_blocked_normal_reads": false,
+          "gate_preserves_primary_identity_and_existing_files": true,
+          "selected_dataset": "old",
+          "all_business_fields_equal": true,
+          "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+          "pending_journal_absent": true,
+          "notification_epoch_and_resume_order_valid": true
+        },
+        "label": "sqlite-originalMoved",
+        "negative": null,
+        "actual_native_termination_exit_code": 77,
+        "target_owned_by_private_job_and_fixed_sdk_verified": true,
+        "graceful_finally_did_not_run": true,
+        "outcome": "PASS"
+      },
+      {
+        "checkpoint": "candidateInstalled",
+        "input_format": "sqlite",
+        "startup_gate_blocked_normal_reads": true,
+        "gate_preserves_primary_identity_and_existing_files": true,
+        "selected_dataset": "old",
+        "all_business_fields_equal": true,
+        "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+        "pending_journal_absent": true,
+        "notification_epoch_and_resume_order_valid": true,
+        "second_fresh_process_reopen": {
+          "checkpoint": "candidateInstalled",
+          "input_format": "sqlite",
+          "startup_gate_blocked_normal_reads": false,
+          "gate_preserves_primary_identity_and_existing_files": true,
+          "selected_dataset": "old",
+          "all_business_fields_equal": true,
+          "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+          "pending_journal_absent": true,
+          "notification_epoch_and_resume_order_valid": true
+        },
+        "label": "sqlite-candidateInstalled",
+        "negative": null,
+        "actual_native_termination_exit_code": 77,
+        "target_owned_by_private_job_and_fixed_sdk_verified": true,
+        "graceful_finally_did_not_run": true,
+        "outcome": "PASS"
+      },
+      {
+        "checkpoint": "candidateOpened",
+        "input_format": "sqlite",
+        "startup_gate_blocked_normal_reads": true,
+        "gate_preserves_primary_identity_and_existing_files": true,
+        "selected_dataset": "old",
+        "all_business_fields_equal": true,
+        "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+        "pending_journal_absent": true,
+        "notification_epoch_and_resume_order_valid": true,
+        "second_fresh_process_reopen": {
+          "checkpoint": "candidateOpened",
+          "input_format": "sqlite",
+          "startup_gate_blocked_normal_reads": false,
+          "gate_preserves_primary_identity_and_existing_files": true,
+          "selected_dataset": "old",
+          "all_business_fields_equal": true,
+          "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+          "pending_journal_absent": true,
+          "notification_epoch_and_resume_order_valid": true
+        },
+        "label": "sqlite-candidateOpened",
+        "negative": null,
+        "actual_native_termination_exit_code": 77,
+        "target_owned_by_private_job_and_fixed_sdk_verified": true,
+        "graceful_finally_did_not_run": true,
+        "outcome": "PASS"
+      },
+      {
+        "checkpoint": "committed",
+        "input_format": "sqlite",
+        "startup_gate_blocked_normal_reads": true,
+        "gate_preserves_primary_identity_and_existing_files": true,
+        "selected_dataset": "new",
+        "all_business_fields_equal": true,
+        "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+        "pending_journal_absent": true,
+        "notification_epoch_and_resume_order_valid": true,
+        "second_fresh_process_reopen": {
+          "checkpoint": "committed",
+          "input_format": "sqlite",
+          "startup_gate_blocked_normal_reads": false,
+          "gate_preserves_primary_identity_and_existing_files": true,
+          "selected_dataset": "new",
+          "all_business_fields_equal": true,
+          "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+          "pending_journal_absent": true,
+          "notification_epoch_and_resume_order_valid": true
+        },
+        "label": "sqlite-committed",
+        "negative": null,
+        "actual_native_termination_exit_code": 77,
+        "target_owned_by_private_job_and_fixed_sdk_verified": true,
+        "graceful_finally_did_not_run": true,
+        "outcome": "PASS"
+      },
+      {
+        "checkpoint": "rollbackStarted",
+        "input_format": "sqlite",
+        "startup_gate_blocked_normal_reads": true,
+        "gate_preserves_primary_identity_and_existing_files": true,
+        "selected_dataset": "old",
+        "all_business_fields_equal": true,
+        "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+        "pending_journal_absent": true,
+        "notification_epoch_and_resume_order_valid": true,
+        "second_fresh_process_reopen": {
+          "checkpoint": "rollbackStarted",
+          "input_format": "sqlite",
+          "startup_gate_blocked_normal_reads": false,
+          "gate_preserves_primary_identity_and_existing_files": true,
+          "selected_dataset": "old",
+          "all_business_fields_equal": true,
+          "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+          "pending_journal_absent": true,
+          "notification_epoch_and_resume_order_valid": true
+        },
+        "label": "sqlite-rollbackStarted",
+        "negative": null,
+        "actual_native_termination_exit_code": 77,
+        "target_owned_by_private_job_and_fixed_sdk_verified": true,
+        "graceful_finally_did_not_run": true,
+        "outcome": "PASS"
+      },
+      {
+        "checkpoint": "rollbackInstalled",
+        "input_format": "sqlite",
+        "startup_gate_blocked_normal_reads": true,
+        "gate_preserves_primary_identity_and_existing_files": true,
+        "selected_dataset": "old",
+        "all_business_fields_equal": true,
+        "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+        "pending_journal_absent": true,
+        "notification_epoch_and_resume_order_valid": true,
+        "second_fresh_process_reopen": {
+          "checkpoint": "rollbackInstalled",
+          "input_format": "sqlite",
+          "startup_gate_blocked_normal_reads": false,
+          "gate_preserves_primary_identity_and_existing_files": true,
+          "selected_dataset": "old",
+          "all_business_fields_equal": true,
+          "source_backup_mirrors_media_and_geometry_hashes_equal": true,
+          "pending_journal_absent": true,
+          "notification_epoch_and_resume_order_valid": true
+        },
+        "label": "sqlite-rollbackInstalled",
+        "negative": null,
+        "actual_native_termination_exit_code": 77,
+        "target_owned_by_private_job_and_fixed_sdk_verified": true,
+        "graceful_finally_did_not_run": true,
+        "outcome": "PASS"
+      },
+      {
+        "startup_gate_blocked_normal_reads": true,
+        "gate_preserves_primary_identity_and_existing_files": true,
+        "unsafe_identity_blocks_recovery": true,
+        "all_preexisting_material_file_hashes_preserved": true,
+        "notification_resume_attempts": 0,
+        "label": "json-candidateInstalled-unknown-primary",
+        "negative": "unknown-primary",
+        "actual_native_termination_exit_code": 77,
+        "target_owned_by_private_job_and_fixed_sdk_verified": true,
+        "graceful_finally_did_not_run": true,
+        "outcome": "PASS"
+      },
+      {
+        "startup_gate_blocked_normal_reads": true,
+        "gate_preserves_primary_identity_and_existing_files": true,
+        "unsafe_identity_blocks_recovery": true,
+        "all_preexisting_material_file_hashes_preserved": true,
+        "notification_resume_attempts": 0,
+        "label": "json-candidateInstalled-corrupt-journal",
+        "negative": "corrupt-journal",
+        "actual_native_termination_exit_code": 77,
+        "target_owned_by_private_job_and_fixed_sdk_verified": true,
+        "graceful_finally_did_not_run": true,
+        "outcome": "PASS"
+      }
+    ],
+    "outcome": "PASS",
+    "normal_application_processes_or_data_touched": false,
+    "real_os_notifications_or_credentials_tested": false,
+    "physical_power_loss_tested": false
+  },
+  "independent_boundary_readback": [
+    {
+      "case": "json-candidateReady",
+      "durable_journal_state_at_termination": null,
+      "primary_exists_at_termination": true,
+      "all_protected_file_hashes_independently_equal": true
+    },
+    {
+      "case": "json-rollbackReady",
+      "durable_journal_state_at_termination": null,
+      "primary_exists_at_termination": true,
+      "all_protected_file_hashes_independently_equal": true
+    },
+    {
+      "case": "json-journalPrepared",
+      "durable_journal_state_at_termination": "prepared",
+      "primary_exists_at_termination": true,
+      "all_protected_file_hashes_independently_equal": true
+    },
+    {
+      "case": "json-originalMoved",
+      "durable_journal_state_at_termination": "prepared",
+      "primary_exists_at_termination": false,
+      "all_protected_file_hashes_independently_equal": true
+    },
+    {
+      "case": "json-candidateInstalled",
+      "durable_journal_state_at_termination": "prepared",
+      "primary_exists_at_termination": true,
+      "all_protected_file_hashes_independently_equal": true
+    },
+    {
+      "case": "json-candidateOpened",
+      "durable_journal_state_at_termination": "prepared",
+      "primary_exists_at_termination": true,
+      "all_protected_file_hashes_independently_equal": true
+    },
+    {
+      "case": "json-committed",
+      "durable_journal_state_at_termination": "committed",
+      "primary_exists_at_termination": true,
+      "all_protected_file_hashes_independently_equal": true
+    },
+    {
+      "case": "json-rollbackStarted",
+      "durable_journal_state_at_termination": "rollingBack",
+      "primary_exists_at_termination": true,
+      "all_protected_file_hashes_independently_equal": true
+    },
+    {
+      "case": "json-rollbackInstalled",
+      "durable_journal_state_at_termination": "rollingBack",
+      "primary_exists_at_termination": true,
+      "all_protected_file_hashes_independently_equal": true
+    },
+    {
+      "case": "sqlite-candidateReady",
+      "durable_journal_state_at_termination": null,
+      "primary_exists_at_termination": true,
+      "all_protected_file_hashes_independently_equal": true
+    },
+    {
+      "case": "sqlite-rollbackReady",
+      "durable_journal_state_at_termination": null,
+      "primary_exists_at_termination": true,
+      "all_protected_file_hashes_independently_equal": true
+    },
+    {
+      "case": "sqlite-journalPrepared",
+      "durable_journal_state_at_termination": "prepared",
+      "primary_exists_at_termination": true,
+      "all_protected_file_hashes_independently_equal": true
+    },
+    {
+      "case": "sqlite-originalMoved",
+      "durable_journal_state_at_termination": "prepared",
+      "primary_exists_at_termination": false,
+      "all_protected_file_hashes_independently_equal": true
+    },
+    {
+      "case": "sqlite-candidateInstalled",
+      "durable_journal_state_at_termination": "prepared",
+      "primary_exists_at_termination": true,
+      "all_protected_file_hashes_independently_equal": true
+    },
+    {
+      "case": "sqlite-candidateOpened",
+      "durable_journal_state_at_termination": "prepared",
+      "primary_exists_at_termination": true,
+      "all_protected_file_hashes_independently_equal": true
+    },
+    {
+      "case": "sqlite-committed",
+      "durable_journal_state_at_termination": "committed",
+      "primary_exists_at_termination": true,
+      "all_protected_file_hashes_independently_equal": true
+    },
+    {
+      "case": "sqlite-rollbackStarted",
+      "durable_journal_state_at_termination": "rollingBack",
+      "primary_exists_at_termination": true,
+      "all_protected_file_hashes_independently_equal": true
+    },
+    {
+      "case": "sqlite-rollbackInstalled",
+      "durable_journal_state_at_termination": "rollingBack",
+      "primary_exists_at_termination": true,
+      "all_protected_file_hashes_independently_equal": true
+    },
+    {
+      "case": "json-candidateInstalled-unknown-primary",
+      "durable_journal_state_at_termination": "prepared",
+      "primary_exists_at_termination": true,
+      "all_protected_file_hashes_independently_equal": true
+    },
+    {
+      "case": "json-candidateInstalled-corrupt-journal",
+      "durable_journal_state_at_termination": "prepared",
+      "primary_exists_at_termination": true,
+      "all_protected_file_hashes_independently_equal": true
+    }
+  ],
+  "verification_worker_normal_exits": 38,
+  "related_regressions": {
+    "passed": 98,
+    "skipped": 1,
+    "skip_reason": "POSIX directory permissions required",
+    "analysis_issues": 0
+  },
+  "ci": {
+    "run": {
+      "id": 44052431503,
+      "source": "3c96bc8126156b45bdf767289fb9e530799e05a7",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/yarnway/dontforget/actions/runs/44052431503"
+    },
+    "jobs": [
+      {
+        "id": 133933294078,
+        "name": "Windows analyze and test",
+        "status": "completed",
+        "conclusion": "success",
+        "active": []
+      },
+      {
+        "id": 133933294419,
+        "name": "Analyze and test",
+        "status": "completed",
+        "conclusion": "success",
+        "active": []
+      },
+      {
+        "id": 133942082250,
+        "name": "Build ios candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "active": []
+      },
+      {
+        "id": 133942082363,
+        "name": "Build android candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "active": []
+      },
+      {
+        "id": 133942082390,
+        "name": "Build macos candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "active": []
+      },
+      {
+        "id": 133942082449,
+        "name": "Build linux candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "active": []
+      },
+      {
+        "id": 133942082475,
+        "name": "Build windows candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "active": []
+      },
+      {
+        "id": 133955710854,
+        "name": "Verify tag packages without publishing",
+        "status": "completed",
+        "conclusion": "skipped",
+        "active": []
+      }
+    ],
+    "quality_logs": [
+      {
+        "name": "Windows analyze and test",
+        "conclusion": "success",
+        "summary": [
+          "No issues found! (ran in 19.5s)",
+          "13:33 +2626 ~20: All tests passed!",
+          "Ran 180 tests in 17.612s",
+          "OK (skipped=6)"
+        ]
+      },
+      {
+        "name": "Analyze and test",
+        "conclusion": "success",
+        "summary": [
+          "No issues found! (ran in 14.8s)",
+          "07:04 +2641 ~2: All tests passed!",
+          "Ran 180 tests in 0.791s",
+          "OK (skipped=4)"
+        ]
+      }
+    ],
+    "non_tag_verification_skipped_by_design": true
+  },
+  "explicit_process_crash_cases_executed_by_ci": false,
+  "new_runtime_version": false,
+  "normal_app_installed_or_replaced": false,
+  "published": false,
+  "historical_recovery_pointers_unchanged": true,
+  "phone_read_only_preflight": {
+    "read_only": true,
+    "awake": true,
+    "unlocked": true,
+    "known_app_foreground": false,
+    "known_app_microphone_running": false,
+    "ui_input_performed": false
+  },
+  "not_covered": [
+    "physical power loss or directory-fsync durability",
+    "termination inside arbitrary write or rename calls",
+    "GUI restore or normal app process termination",
+    "real notification delivery",
+    "real system credential lock or reauthorization",
+    "Android and iPhone process interruption",
+    "NTFS volume exhaustion",
+    "retention policy and old-directory takeover"
+  ],
+  "native_safety_guard_checks": [
+    {
+      "guard": "unowned-process",
+      "rejected_before_termination": true,
+      "owned_canary_remained_alive_before_cleanup": true
+    },
+    {
+      "guard": "different-executable",
+      "rejected_before_termination": true,
+      "owned_canary_remained_alive_before_cleanup": true
+    },
+    {
+      "guard": "predating-invocation",
+      "rejected_before_termination": true,
+      "owned_canary_remained_alive_before_cleanup": true
+    },
+    {
+      "guard": "existing-output",
+      "rejected_before_worker_launch": true
+    },
+    {
+      "guard": "outside-build",
+      "rejected_before_worker_launch": true
+    }
+  ],
+  "verification_logs_and_distinct_worker_pids_independently_verified": true
+}
