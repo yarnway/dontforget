@@ -1,0 +1,251 @@
+{
+  "date": "2026-11-17",
+  "scope": "stage48-real-filesystem-space-exhaustion",
+  "acceptance_tools_source": "435c367de7ce0fc2a89ea89b693e9a36b8d8107d",
+  "runtime_release_source": "a8b949e14a692b249aaed3654e9bda644f1a72a9",
+  "observation_checkout": "435c367de7ce0fc2a89ea89b693e9a36b8d8107d",
+  "runtime_lib_tree": "2e7684f13dfe056d5dc4626cd2c0c0edde7b0f16",
+  "version": "1.8.13+84",
+  "schema": 17,
+  "test_sha256": "d0b9de3cac999e73bcd19f578e07fc7848aec54e70e010d52df482dfde5eee1a",
+  "runner_sha256": "9f29e54213680087d29920674e072db5ef1fc7d0e26c27ca8a8fe6af34da8086",
+  "flutter": "3.44.9",
+  "dart": "3.12.2",
+  "native_probe": {
+    "errno": 28,
+    "winerror": null
+  },
+  "explicit_acceptance": {
+    "tests_passed": 1,
+    "skipped": 0,
+    "cases_passed": 6,
+    "cleanup_succeeded": true
+  },
+  "related_regressions": {
+    "passed": 116,
+    "skipped": 3,
+    "analysis_issues": 0,
+    "skip_reasons": {
+      "windows_symbolic_link_privileges": 2,
+      "macos_only_temp_alias": 1
+    }
+  },
+  "result": {
+    "runtime": "native Windows Flutter test engine",
+    "filesystem": "bounded WSL tmpfs through Windows UNC",
+    "capacity_bytes": 16777216,
+    "filler_bytes": 12582912,
+    "attachment_bytes": 8388608,
+    "cases": [
+      {
+        "encrypted": false,
+        "operation": "create",
+        "actual_os_error": 112,
+        "completed_write_frames_before_failure": 3,
+        "failure_leaves_only_preexisting_files": true,
+        "source_backup_hash_unchanged": true,
+        "original_attachment_hash_unchanged": true,
+        "all_business_fields_unchanged": true,
+        "process_local_reservations_unchanged": true,
+        "retry_after_freeing_space_passed": true
+      },
+      {
+        "encrypted": false,
+        "operation": "export",
+        "actual_os_error": 112,
+        "completed_write_frames_before_failure": 0,
+        "failure_leaves_only_preexisting_files": true,
+        "source_backup_hash_unchanged": true,
+        "original_attachment_hash_unchanged": true,
+        "all_business_fields_unchanged": true,
+        "process_local_reservations_unchanged": true,
+        "retry_after_freeing_space_passed": true
+      },
+      {
+        "encrypted": false,
+        "operation": "restore",
+        "actual_os_error": 112,
+        "completed_write_frames_before_failure": 0,
+        "failure_leaves_only_preexisting_files": true,
+        "source_backup_hash_unchanged": true,
+        "original_attachment_hash_unchanged": true,
+        "all_business_fields_unchanged": true,
+        "process_local_reservations_unchanged": true,
+        "retry_after_freeing_space_passed": true
+      },
+      {
+        "encrypted": true,
+        "operation": "create",
+        "actual_os_error": 112,
+        "completed_write_frames_before_failure": 3,
+        "failure_leaves_only_preexisting_files": true,
+        "source_backup_hash_unchanged": true,
+        "original_attachment_hash_unchanged": true,
+        "all_business_fields_unchanged": true,
+        "process_local_reservations_unchanged": true,
+        "retry_after_freeing_space_passed": true
+      },
+      {
+        "encrypted": true,
+        "operation": "export",
+        "actual_os_error": 112,
+        "completed_write_frames_before_failure": 0,
+        "failure_leaves_only_preexisting_files": true,
+        "source_backup_hash_unchanged": true,
+        "original_attachment_hash_unchanged": true,
+        "all_business_fields_unchanged": true,
+        "process_local_reservations_unchanged": true,
+        "retry_after_freeing_space_passed": true
+      },
+      {
+        "encrypted": true,
+        "operation": "restore",
+        "actual_os_error": 112,
+        "completed_write_frames_before_failure": 0,
+        "failure_leaves_only_preexisting_files": true,
+        "source_backup_hash_unchanged": true,
+        "original_attachment_hash_unchanged": true,
+        "all_business_fields_unchanged": true,
+        "process_local_reservations_unchanged": true,
+        "retry_after_freeing_space_passed": true
+      }
+    ],
+    "isolated_database_reopen_all_fields_preserved": true,
+    "native_file_picker_or_gui_tested": false,
+    "normal_user_data_or_credentials_accessed": false,
+    "physical_power_loss_tested": false,
+    "ntfs_disk_full_tested": false
+  },
+  "ci": {
+    "id": 44042957892,
+    "source": "435c367de7ce0fc2a89ea89b693e9a36b8d8107d",
+    "status": "completed",
+    "quality": {
+      "linux": {
+        "passed": 2641,
+        "skipped": 2,
+        "python_run": 180,
+        "python_skipped": 4
+      },
+      "windows": {
+        "passed": 2626,
+        "skipped": 20,
+        "python_run": 180,
+        "python_skipped": 6
+      }
+    },
+    "explicit_diskfull_cases_executed_by_ci": false,
+    "created_at": "2026-11-17T07:59:31Z",
+    "conclusion": "success",
+    "url": "https://github.com/yarnway/dontforget/actions/runs/44042957892",
+    "jobs": [
+      {
+        "id": 133901724435,
+        "name": "Analyze and test",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 133901724981,
+        "name": "Windows analyze and test",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 133909615937,
+        "name": "Build windows candidate",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 133909615957,
+        "name": "Build android candidate",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 133909616024,
+        "name": "Build macos candidate",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 133909616039,
+        "name": "Build linux candidate",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 133909616270,
+        "name": "Build ios candidate",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "id": 133914657243,
+        "name": "Verify tag packages without publishing",
+        "status": "completed",
+        "conclusion": "skipped"
+      }
+    ],
+    "quality_logs": [
+      {
+        "id": 133901724435,
+        "name": "Analyze and test",
+        "conclusion": "success",
+        "summary": [
+          "No issues found! (ran in 13.9s)",
+          "07:01 +2641 ~2: All tests passed!",
+          "Ran 180 tests in 0.826s",
+          "OK (skipped=4)"
+        ]
+      },
+      {
+        "id": 133901724981,
+        "name": "Windows analyze and test",
+        "conclusion": "success",
+        "summary": [
+          "No issues found! (ran in 19.9s)",
+          "13:58 +2626 ~20: All tests passed!",
+          "Ran 180 tests in 21.313s",
+          "OK (skipped=6)"
+        ]
+      }
+    ],
+    "non_tag_verification_skipped_by_design": true
+  },
+  "runtime_changes": false,
+  "new_version": false,
+  "installed_or_published": false,
+  "historical_recovery_pointers_unchanged": true,
+  "not_covered": [
+    "NTFS volume exhaustion",
+    "native FileSaver or system file picker GUI",
+    "database replacement interrupted during commit",
+    "physical power loss",
+    "real credential lock or reauthorization",
+    "Android or iPhone storage exhaustion"
+  ],
+  "runner_guard_checks": [
+    {
+      "case": "existing-output",
+      "rejected_before_mount": true,
+      "exit_code": 2
+    },
+    {
+      "case": "outside-build",
+      "rejected_before_mount": true,
+      "exit_code": 2
+    }
+  ],
+  "windows_gui_probe": {
+    "date": "2026-11-17",
+    "action": "initialize Computer Use via node_repl @oai/sky",
+    "outcome": "blocked_before_javascript_or_app_input",
+    "error": "codex/sandbox-state-meta: sandboxCwd is not a local file URI: file:///mnt/d/gitspace/opensources/dontforget",
+    "windows_app_input_performed": false,
+    "powershell_uia_fallback_used": false
+  },
+  "initial_observation_checkout": "da6d375bb1aedc410f0ad857f8a27e8686742db2",
+  "committed_source_retested": true
+}

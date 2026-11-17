@@ -1,5 +1,7 @@
 # Windows备份真实拒写与重试
 
+2026-11-17另补build84真实空间不足：Windows经UNC访问受限WSL tmpfs，普通／加密创建、目录导出和恢复预备六项错误112、失败保全与腾出空间重试通过；不代表NTFS卷或GUI通过。[新轮次记录](Windows_Backup_Disk_Full_2026-11-17.md)。下文ACL结果保留原版本归属。
+
 1.8.9+78相同运行时代码已重新执行此验收：普通／加密两分支真实错误5、失败保全与恢复重试，显式1项通过。[当前源码证据](benchmarks/windows-backup-acl-78-2026-11-13.json)。以下原始源码轮次保持归属。
 
 阶段48独立后端验收，使用本机SDK3.47.2、源码38587ed、全新合成SQLite及1 MiB附件。只在新建临时目录上增删当前用户的NTFS拒写ACE，未修改普通应用数据或目录权限；测试完成恢复原SDDL并删除临时目录。[证据](benchmarks/windows-backup-acl-2026-11-13.json)。
