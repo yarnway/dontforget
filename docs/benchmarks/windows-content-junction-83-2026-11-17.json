@@ -48,7 +48,31 @@
     "skipped": 0
   },
   "analysis_issues": 0,
-  "ci": "pending",
+  "ci": {
+    "run_id": 44003802980,
+    "source": "0eaa75b583494cad63e44398a99908e4286bc662",
+    "url": "https://github.com/yarnway/dontforget/actions/runs/44003802980",
+    "seven_jobs": "success",
+    "linux_flutter": {
+      "passed": 2639,
+      "skipped": 2
+    },
+    "windows_flutter": {
+      "passed": 2624,
+      "skipped": 20
+    },
+    "python_linux": {
+      "run": 180,
+      "skipped": 4
+    },
+    "python_windows": {
+      "run": 180,
+      "skipped": 6
+    },
+    "new_junction_tests_actually_run_in_windows_job": true,
+    "five_internal_candidates_built": true,
+    "these_internal_candidates_installed_or_published": false
+  },
   "runtime_changed": false,
   "new_version_or_installer": false,
   "not_covered": [

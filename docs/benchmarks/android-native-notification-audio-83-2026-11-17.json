@@ -1,0 +1,230 @@
+{
+  "date": "2026-11-17",
+  "version": "1.8.12+83",
+  "runtime_source": "ffdfa5acf88afe07c9a5501f1a46e5f0804a57c8",
+  "lib_tree": "0e0589313f4eaf01b4f9f47cd949b904a8af3a90",
+  "fixture": {
+    "runtime_source": "ffdfa5acf88afe07c9a5501f1a46e5f0804a57c8",
+    "checkout_revision": "1c70a11f7c036addb42b4238a21c4b3e362fbe21",
+    "lib_tree": "0e0589313f4eaf01b4f9f47cd949b904a8af3a90",
+    "package": "com.yarnway.dontforget.acceptance.native8320261116",
+    "display_name": "别忘了·原生83验收",
+    "version": "1.8.12+83",
+    "ordinary_entry": "lib/main.dart",
+    "fixed_sdk": "Flutter3.44.9 / Dart3.12.2",
+    "sha256": "c17686bde80eec07005a95ac4cf9175122cf03b473bd3c93d9f5b6dcf3232136",
+    "bytes": 96004846,
+    "certificate_sha256": "4f8518351e90e3293ad293b74b009ad40949e871adf91614bb27ba1ba098eea9",
+    "signing": "local debug",
+    "only_isolation_changes": [
+      "Android applicationId",
+      "Android display label"
+    ],
+    "custom_test_entry_or_bridge": false,
+    "real_credentials_in_fixture": false
+  },
+  "fresh_baseline": {
+    "date": "2026-11-17",
+    "fresh_snapshot_taken": true,
+    "fixture_counts": {
+      "Reminders": 0,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "original_qa_counts": {
+      "Reminders": 56,
+      "MediaRecords": 9,
+      "Settings": 1
+    },
+    "notification_permission_already_granted": true,
+    "speech_backend_disabled": true,
+    "real_credentials_configured": false,
+    "old_snapshot_reused_as_latest": false
+  },
+  "notification_cases": [
+    {
+      "case": "hot-body",
+      "passed": true,
+      "native_delivery": true,
+      "system_notification_body_clicked": true,
+      "same_process": true,
+      "correct_read_only_detail": true,
+      "one_back_returns_home": true,
+      "not_completed": true,
+      "notice_revision": 0
+    },
+    {
+      "case": "background-complete",
+      "passed": true,
+      "native_delivery": true,
+      "localized_system_action_clicked": "完成本次提醒",
+      "notice_revision": 1,
+      "history_count": 1,
+      "completed_once": true
+    },
+    {
+      "case": "recurring-skip",
+      "passed": true,
+      "native_delivery": true,
+      "localized_system_action_clicked": "跳过本次",
+      "notice_revision": 1,
+      "history_count": 1,
+      "next_trigger_advanced_seconds": 86400.0,
+      "not_completed": true
+    },
+    {
+      "case": "snooze15",
+      "passed": true,
+      "native_delivery": true,
+      "localized_system_action_clicked": "15分钟后",
+      "notice_revision": 1,
+      "history_count": 1,
+      "next_trigger_minutes": 15,
+      "difference_seconds": 899.962433,
+      "not_completed": true,
+      "next_trigger": "2026-11-17T10:40:50.401240"
+    },
+    {
+      "case": "snooze60",
+      "passed": true,
+      "native_delivery": true,
+      "localized_system_action_clicked": "1小时后",
+      "notice_revision": 1,
+      "history_count": 1,
+      "next_trigger_minutes": 60,
+      "difference_seconds": 3599.956137,
+      "not_completed": true,
+      "next_trigger": "2026-11-17T11:27:06.114792"
+    },
+    {
+      "case": "cold-body",
+      "passed": true,
+      "native_delivery": true,
+      "pid_absent_before_system_body_click": true,
+      "correct_read_only_detail": true,
+      "one_back_returns_home": true,
+      "not_completed": true,
+      "notice_revision": 0,
+      "force_stop_used": false
+    },
+    {
+      "case": "cold-complete",
+      "passed": true,
+      "native_delivery": true,
+      "pid_absent_before_system_action": true,
+      "headless_action_persisted": true,
+      "business_row_unchanged_until_reopen": true,
+      "completed_once_after_reopen": true,
+      "notice_revision": 1,
+      "history_count": 1,
+      "pending_actions_empty": true,
+      "force_stop_used": false,
+      "first_one_second_queue_read_empty": true,
+      "later_read_confirmed_without_reclick": true
+    }
+  ],
+  "fifteen_minute_second_delivery": {
+    "actual_second_system_notification_visible": true,
+    "second_system_body_clicked": true,
+    "correct_read_only_detail": true,
+    "not_completed": true,
+    "notice_revision": 1,
+    "history_count": 1,
+    "natural_15_minute_wait": true,
+    "device_clock_changed": false,
+    "observed_after_due_utc": "2026-11-17T02:44:18.431632+00:00"
+  },
+  "local_microphone": {
+    "cases": [
+      {
+        "case": "cancel",
+        "passed": true,
+        "actual_microphone_observed_running": true,
+        "microphone_stopped": true,
+        "all_business_fields_preserved": true,
+        "audio_cache_preserved": true
+      },
+      {
+        "case": "home-interruption",
+        "passed": true,
+        "actual_microphone_observed_running": true,
+        "microphone_stopped": true,
+        "all_business_fields_preserved": true,
+        "audio_cache_preserved": true
+      },
+      {
+        "case": "save",
+        "passed": true,
+        "actual_microphone_observed_running": true,
+        "microphone_stopped": true,
+        "one_local_memo_and_media_record": true,
+        "container": "M4A / mp4a",
+        "duration_seconds": 4.2260317460317465,
+        "bytes": 71055,
+        "cloud_credentials_configured": false,
+        "cloud_recognition_invoked": false,
+        "codec_decode_or_audible_playback_verified": false
+      }
+    ],
+    "media_sha256": "cc787dbad0e8f12a0ab0328b8bbe4f6af0f1c5d619584e158eba96f57b26e637",
+    "duration_seconds": 4.2260317460317465
+  },
+  "cold_reopen_and_play": {
+    "new_pid_ordinary_reopen": true,
+    "all_business_fields_preserved": true,
+    "audio_sha256_preserved": true,
+    "actual_reader_play_button_clicked": true,
+    "success_feedback_visible": true,
+    "human_audible_output_verified": false,
+    "cloud_recognition_tested": false
+  },
+  "cleanup": {
+    "synthetic_tasks_product_soft_deleted": 8,
+    "one_audio_retained_in_trash_until_fixture_uninstall": true,
+    "pending_alarms": 0,
+    "active_notifications": 0,
+    "pending_actions": 0,
+    "microphone_active": false,
+    "verified_before_force_stop_or_uninstall": true,
+    "schema": 17,
+    "integrity": "ok",
+    "sixty_minute_second_delivery_tested": false
+  },
+  "original_protection": {
+    "original_qa_all_business_fields_unchanged": true,
+    "original_qa_counts": {
+      "Reminders": 56,
+      "MediaRecords": 9,
+      "Settings": 1
+    },
+    "original_qa_all_captured_stable_files_byte_equal": true,
+    "original_qa_stable_files": 37,
+    "original_qa_media_and_secure_preferences_preserved": true,
+    "both_original_apks_unchanged": true,
+    "both_original_versions": "1.8.12+83",
+    "original_production_business_tables_rechecked_this_round": false,
+    "input_method_settings_unchanged": true,
+    "historical_recovery_pointers_not_modified": true,
+    "only_new_synthetic_fixture_uninstalled": true,
+    "original_foreground_restored": true,
+    "original_microphones_idle": true
+  },
+  "boundaries": {
+    "synthetic_notification_rows_seeded_from_actual_model_serializer": true,
+    "ordinary_notification_creation_ui_test": false,
+    "device_clock_or_dnd_changed": false,
+    "audible_notification_output_verified": false,
+    "microphone_permission_dialog_agent_grant_observed": false,
+    "microphone_permission_eventually_verified_granted": true,
+    "private_audio_screens_and_original_rows_committed": false,
+    "iPhone_83_validation": false,
+    "production_release_apk_notification_matrix": false
+  },
+  "preserved_failures": [
+    "Headless cold action queue first one-second read was empty; later queue confirmed once without reclick, business row unchanged until ordinary reopen.",
+    "First mic target inherited full-screen merged semantics and opened synthetic task detail; no mic start. After own visual inspection, actual pad coordinates used.",
+    "Mic permission label guard refused expected old label; later device permission read granted, no agent grant click claimed.",
+    "Cleanup UIAutomator capture failed; resumed from observed editor with expected synthetic title, no duplicate deletion.",
+    "Android original QA counts in first installation helper were incorrectly labelled fixture 0/0/1; corrected label and fresh 17-Nov original 56/9/1 used."
+  ]
+}
