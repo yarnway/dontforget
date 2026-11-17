@@ -440,7 +440,8 @@ class HomeController extends StateNotifier<HomeState> {
     if (generation == null) {
       return false;
     }
-    if (trimmed.startsWith('/agent ') || trimmed.startsWith('/goal ')) {
+    if (!memoOnly &&
+        (trimmed.startsWith('/agent ') || trimmed.startsWith('/goal '))) {
       final goal = trimmed.replaceFirst(RegExp(r'^/(agent|goal)\s+'), '');
       if (goal.isNotEmpty) {
         try {

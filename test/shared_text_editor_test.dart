@@ -1,0 +1,175 @@
+import 'dart:convert';
+import 'package:dont_forget/l10n/app_localizations.dart';
+import 'package:dont_forget/providers/home_controller.dart';
+import 'package:dont_forget/providers/shared_text_provider.dart';
+import 'package:dont_forget/providers/workspace_drafts_provider.dart';
+import 'package:dont_forget/services/shared_text_inbox.dart';
+import 'package:dont_forget/ui/screens/shared_text_inbox_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:record/record.dart';
+import 'support/offline_management_harness.dart';
+import 'support/real_io.dart';
+import 'support/workspace_drafts.dart';
+
+class _Recorder implements AudioRecorder {
+  @override
+  Future<void> dispose() async {}
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+class _Home extends HomeController {
+  _Home(super.ref) : super(audioRecorder: _Recorder());
+  int saves = 0;
+  @override
+  Future<bool> processText(
+    String text, {
+    DateTime? reminderTime,
+    bool memoOnly = false,
+    String? captureId,
+  }) {
+    saves++;
+    return super.processText(
+      text,
+      reminderTime: reminderTime,
+      memoOnly: memoOnly,
+      captureId: captureId,
+    );
+  }
+}
+
+void main() {
+  late OfflineManagementHarness h;
+  late SharedTextInbox inbox;
+  late _Home home;
+  late ProviderContainer uiContainer;
+  const id = '00000000-0000-4000-8000-000000000001';
+  setUp(() async {
+    h = OfflineManagementHarness();
+    await h.create();
+    inbox = h.container.read(sharedTextInboxProvider);
+    await h.container.read(workspaceDraftsProvider.notifier).put('capture', {
+      'text': '保留首页草稿',
+    });
+    await inbox.accept(
+      const SharedText(id: id, text: '分享原文', createdAt: 1762300800000),
+    );
+  });
+  tearDown(() => h.dispose());
+
+  Future<void> show(WidgetTester tester) async {
+    addTearDown(() async {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await drainWorkspaceDrafts(tester, h.container);
+    });
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: h.container,
+        child: ProviderScope(
+          overrides: [
+            homeControllerProvider.overrideWith((ref) => home = _Home(ref)),
+          ],
+          child: const MaterialApp(
+            locale: Locale('zh'),
+            supportedLocales: [Locale('zh'), Locale('en'), Locale('ja')],
+            localizationsDelegates: [
+              AppLocalizationsDelegate(),
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            home: SharedTextInboxScreen(),
+          ),
+        ),
+      ),
+    );
+    await pumpUntilRealIo(
+      tester,
+      () => find.byKey(const ValueKey('shared-item-$id')).evaluate().isNotEmpty,
+      reason: 'Persisted inbox must load',
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('shared-item-$id')));
+    await tester.pumpAndSettle();
+    uiContainer = ProviderScope.containerOf(
+      tester.element(find.byKey(const ValueKey('shared-text-editor'))),
+      listen: false,
+    );
+    home = uiContainer.read(homeControllerProvider.notifier) as _Home;
+    await tester.showKeyboard(find.byKey(const ValueKey('shared-text-editor')));
+    await tester.pump();
+  }
+
+  const composing = TextEditingValue(
+    text: '分享中文',
+    selection: TextSelection.collapsed(offset: 4),
+    composing: TextRange(start: 2, end: 4),
+  );
+
+  testWidgets(
+    'unconfirmed IME blocks memo save; range-only commit enables saving',
+    (tester) async {
+      await show(tester);
+      tester.testTextInput.updateEditingValue(composing);
+      await tester.pump();
+      final save = find.byKey(const ValueKey('shared-save-memo'));
+      expect(tester.widget<FilledButton>(save).onPressed, isNull);
+      expect(await tester.runAsync(h.rows), isEmpty);
+      tester.testTextInput.updateEditingValue(
+        composing.copyWith(composing: TextRange.empty),
+      );
+      await tester.pump();
+      expect(tester.widget<FilledButton>(save).onPressed, isNotNull);
+      await tester.ensureVisible(save);
+      await tester.tap(save);
+      await pumpUntilRealIo(
+        tester,
+        () =>
+            find.byKey(const ValueKey('shared-text-editor')).evaluate().isEmpty,
+        reason: 'A confirmed share must save and return',
+      );
+      await drainWorkspaceDrafts(tester, h.container);
+      expect(home.saves, 1);
+      final rows = await tester.runAsync(h.rows);
+      expect(rows, hasLength(1));
+      expect(rows!.single.sourceText, composing.text);
+      expect(rows.single.id, id);
+      expect(rows.single.triggerTime, isNull);
+      final stored = await tester.runAsync(
+        () => h.container
+            .read(workspaceDraftsProvider.notifier)
+            .readPersistedKey(SharedTextInbox.key),
+      );
+      expect(SharedTextInboxData.parse(stored).items, isEmpty);
+      final drafts = await tester.runAsync(h.drafts);
+      expect(jsonDecode(drafts!)['capture']['text'], '保留首页草稿');
+      expect(h.notifications.scheduled, isEmpty);
+    },
+  );
+
+  testWidgets(
+    'a previously queued save activation cannot submit a new composition',
+    (tester) async {
+      await show(tester);
+      final activate = tester
+          .widget<FilledButton>(find.byKey(const ValueKey('shared-save-memo')))
+          .onPressed!;
+      tester.testTextInput.updateEditingValue(composing);
+      await tester.pump();
+      activate();
+      for (var i = 0; i < 12; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 5)),
+        );
+        await tester.pump(const Duration(milliseconds: 30));
+      }
+      await drainWorkspaceDrafts(tester, uiContainer);
+      expect(home.saves, 0);
+      expect(await tester.runAsync(h.rows), isEmpty);
+      expect(find.byKey(const ValueKey('shared-text-editor')), findsOneWidget);
+    },
+  );
+}

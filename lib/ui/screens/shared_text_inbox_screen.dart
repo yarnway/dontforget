@@ -108,17 +108,24 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
       _runtime.isCurrent(_birth) &&
       _inbox.drafts.database.isCurrent(_inbox.drafts.generation);
   bool get _dirty => _text.text != _committed;
+  bool get _composing =>
+      _text.value.composing.isValid && !_text.value.composing.isCollapsed;
   String t(String key) =>
       sharedTextLabel(AppLocalizations.of(context).locale.languageCode, key);
   @override
   void initState() {
     super.initState();
     _text = TextEditingController(text: widget.item.text);
+    _text.addListener(_refreshEditorState);
     _committed = widget.item.text;
     _inbox = ref.read(sharedTextInboxProvider);
     _runtime = ref.read(runtimeRecoveryGateProvider);
     _birth = _runtime.capture();
     WidgetsBinding.instance.addObserver(this);
+  }
+
+  void _refreshEditorState() {
+    if (mounted && !_closing) setState(() {});
   }
 
   void _changed(String value) {
@@ -214,7 +221,7 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
     if (!_current ||
         _busy ||
         _closing ||
-        (!alreadySaved && _text.text.trim().isEmpty)) {
+        (!alreadySaved && (_composing || _text.text.trim().isEmpty))) {
       return;
     }
     setState(() => _busy = true);
@@ -326,7 +333,8 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
               onPressed:
                   _busy ||
                       _closing ||
-                      (!alreadySaved && _text.text.trim().isEmpty)
+                      (!alreadySaved &&
+                          (_composing || _text.text.trim().isEmpty))
                   ? null
                   : () => _save(alreadySaved: alreadySaved),
               icon: const Icon(Icons.note_add_outlined),
@@ -347,6 +355,7 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
   void dispose() {
     _debounce?.cancel();
     WidgetsBinding.instance.removeObserver(this);
+    _text.removeListener(_refreshEditorState);
     _text.dispose();
     super.dispose();
   }
