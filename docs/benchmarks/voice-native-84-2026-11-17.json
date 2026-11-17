@@ -1,0 +1,93 @@
+{
+  "implementation_source": "4de1608f3aebc33ff0a76cc56ae06785e6b8364d",
+  "final_release_source": "a8b949e14a692b249aaed3654e9bda644f1a72a9",
+  "runtime_equivalence": {
+    "earlier_source": "4de1608f3aebc33ff0a76cc56ae06785e6b8364d",
+    "final_source": "a8b949e14a692b249aaed3654e9bda644f1a72a9",
+    "lib_tree": "2e7684f13dfe056d5dc4626cd2c0c0edde7b0f16",
+    "runtime_lib_identical": true,
+    "native_source_pubspec_lock_and_workflows_identical": true,
+    "only_added_release_notes_and_scope": true
+  },
+  "ordinary_qa_final_apk_sha256": "d6f75d087776b052fb7bfb5bf3546ab2cf967562d014bf7a88497addad8f41f4",
+  "real_speech": {
+    "version": "1.8.13+84",
+    "existing_saved_speech_configuration_used_without_reentry": true,
+    "real_microphone_running_then_stopped": true,
+    "native_recording_slide_and_editor_observed": true,
+    "live_sample_tokens_visible_before_release": true,
+    "after_release_only_fallback_visible": false,
+    "editor_nonempty": true,
+    "final_synthetic_sample_tokens_matched": true,
+    "recognition_review_state_visible": false,
+    "raw_transcript_and_user_records_publicly_printed": false,
+    "digit_normalization_used_for_sample_check": true,
+    "repeated_sample_sentences_observed": true,
+    "repeated_sentence_cause_determined": false,
+    "spoken_repetitions_automatically_deleted": false,
+    "subsequent_send": "user confirmed manual Send; not agent Send"
+  },
+  "manual_send": {
+    "user_confirmed_manual_send": true,
+    "record_time_local": "2026-11-17T12:11:19.966447",
+    "row_persisted_independently_verified": true,
+    "agent_send_not_executed_due_foreground_guard": true,
+    "user_record_will_be_preserved": true,
+    "prior_automatic_audio_memo_will_be_preserved": true,
+    "cleanup_or_uninstall_performed": false,
+    "saved_source_text_equals_observed_editor_text": true,
+    "new_text_rows": 1
+  },
+  "independent_user_app_chinese_input_and_cold_reopen": {
+    "package": "com.yarnway.dontforget.acceptance.native8420261117",
+    "version": "1.8.13+84",
+    "manual_chinese_input_and_send_user_confirmed": true,
+    "latest_snapshot_before_cold_reopen": true,
+    "new_process_ordinary_reopen": true,
+    "all_business_fields_preserved": true,
+    "counts": {
+      "Reminders": 1,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "app_and_user_record_retained": true,
+    "uninstall_or_data_clear_performed": false,
+    "native_chinese_ime_composition_not_independently_observed": true
+  },
+  "default_local_recognition": {
+    "version": "1.8.13+84",
+    "ordinary_entry": true,
+    "custom_recognition_fixture_or_bridge": false,
+    "actual_microphone_used": true,
+    "source_audio": "local Microsoft Huihui synthetic Mandarin; played on existing Windows output without volume changes",
+    "local_speech_backend_only": true,
+    "cloud_credentials_configured": false,
+    "recording_native_scene_captured": true,
+    "slide_to_text_native_scene_captured": true,
+    "release_entered_native_editor": true,
+    "microphone_stopped_after_release": true,
+    "native_transcript_nonempty": false,
+    "synthetic_phrase_key_tokens_matched": false,
+    "recognition_review_state_visible": true,
+    "typed_user_text_or_raw_audio_published": false
+  },
+  "default_local_recognition_failure_cause_determined": false,
+  "local_cancel_preserved_all_fields_and_created_no_media": true,
+  "short_capture_failed_recognition_preserved_one_audio_memo_in_original_qa": true,
+  "user_and_automatic_audio_records_retained": true,
+  "original_qa_business_counts_before_voice_exercise": {
+    "Reminders": 56,
+    "MediaRecords": 9,
+    "Settings": 1
+  },
+  "latest_qa_counts_after_voice_exercise": {
+    "Reminders": 58,
+    "MediaRecords": 10,
+    "Settings": 1
+  },
+  "derived_link_changes_during_new_capture_are_recorded_not_overwritten": true,
+  "real_edited_text_automatically_sent_by_agent": false,
+  "physical_chinese_ime_composition_verified": false,
+  "full_speech_accuracy_benchmark": "pending",
+  "private_audio_original_rows_and_reference_chat_screens_published": false
+}

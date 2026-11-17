@@ -51,15 +51,41 @@
       "source": "fixed Flutter test engine; synthetic speech results; no OS keyboard rendered"
     }
   ],
-  "native_validation": "pending",
-  "fixed_ci": "pending",
-  "packages": "pending",
-  "published": false,
+  "native_validation": "see voice-native-84-2026-11-17.json; scopes remain distinct",
+  "fixed_ci": {
+    "id": 44015497318,
+    "seven_jobs": "success",
+    "linux_flutter": {
+      "passed": 2641,
+      "skipped": 2
+    },
+    "windows_flutter": {
+      "passed": 2626,
+      "skipped": 20
+    },
+    "python_linux": {
+      "run": 180,
+      "skipped": 4
+    },
+    "python_windows": {
+      "run": 180,
+      "skipped": 6
+    }
+  },
+  "packages": {
+    "public_platforms": 4,
+    "binary_packages": 7,
+    "assets": 20,
+    "verified": true
+  },
+  "published": true,
   "existing_credentials_or_speech_provider_configuration_changed": false,
   "retained_failures": [
     "Initial observation fixture omitted required reason argument; corrected before product changes.",
     "Three old layout assertions expected the removed duplicate bubble/mode controls; replaced with single-bubble expansion and stable action-target contracts.",
     "Very short landscape preview viewport was reduced to about one pixel; fixed compact padding and decorative wave suppression.",
     "Semantics fixture handle disposal and one unnecessary non-null assertion corrected; final tests and analysis pass."
-  ]
+  ],
+  "implementation_source": "4de1608f3aebc33ff0a76cc56ae06785e6b8364d",
+  "release_source": "a8b949e14a692b249aaed3654e9bda644f1a72a9"
 }

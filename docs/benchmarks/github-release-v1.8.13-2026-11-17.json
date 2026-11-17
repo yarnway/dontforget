@@ -1,0 +1,124 @@
+{
+  "url": "https://github.com/yarnway/dontforget/releases/tag/v1.8.13",
+  "tag": "v1.8.13",
+  "revision": "a8b949e14a692b249aaed3654e9bda644f1a72a9",
+  "published": true,
+  "prerelease": false,
+  "body_verified": true,
+  "assets": [
+    {
+      "file": "android-manifest.json",
+      "bytes": 1401,
+      "sha256": "e21eebd81c904e6dddcdab9c27533951d061581cbd5969868d96722f81324bbb"
+    },
+    {
+      "file": "android-SHA256SUMS.txt",
+      "bytes": 297,
+      "sha256": "7f85bf7ca44f657bdd61ab75b8b8c3bc2cf591a9a35d5e8df6cfbab7cfdd04d2"
+    },
+    {
+      "file": "DontForget_Android_arm64_v1.8.13.apk",
+      "bytes": 26820547,
+      "sha256": "4ff35fc6c822455bb135fad37426340ae370a083f41931d7bcc6d19e5fd47036"
+    },
+    {
+      "file": "DontForget_Android_v1.8.13.aab",
+      "bytes": 74463905,
+      "sha256": "524b7544e8da20c15bbbab01c27937008d54dc4710c519e29865770589677fb5"
+    },
+    {
+      "file": "DontForget_Android_v1.8.13.apk",
+      "bytes": 77736171,
+      "sha256": "edc909cf70e1b84bdea1bfce88b691209659ceae00b51d55903b4df360a5930c"
+    },
+    {
+      "file": "DontForget_iOS_unsigned_v1.8.13.ipa",
+      "bytes": 11438056,
+      "sha256": "89c7b39cdec21a56fc255d37f45a8f27668bde1e2afcc8555e7cdfd9017dc00a"
+    },
+    {
+      "file": "DontForget_Linux_x64_v1.8.13.tar.gz",
+      "bytes": 14601469,
+      "sha256": "efdab75552f66ae14ba836c7943e7ee173835de6e9597e8be604fe0bff4b9451"
+    },
+    {
+      "file": "DontForget_Setup_v1.8.13.exe",
+      "bytes": 14828275,
+      "sha256": "a5ec8ba210172d9ef1f979e20230c513e578776eb9ea458b11fc848b9df6b168"
+    },
+    {
+      "file": "DontForget_Windows_Portable_v1.8.13.zip",
+      "bytes": 18137371,
+      "sha256": "773c607c62962180e5c5484358c759af9e0e767722edb9806e5359873918aa9c"
+    },
+    {
+      "file": "ios-manifest.json",
+      "bytes": 594,
+      "sha256": "eae5008f00ffb0ef97bad355e55d7bfb55d5b828488d67b98a7622b4eab95283"
+    },
+    {
+      "file": "ios-SHA256SUMS.txt",
+      "bytes": 102,
+      "sha256": "887da891acf0e6c46ab96e3700dcae205b0c9da72ed4f16c5a4a6b94b1f332d1"
+    },
+    {
+      "file": "linux-manifest.json",
+      "bytes": 403,
+      "sha256": "a2c98ac2101688811d7bfae71265b0ec7a32d92fb7e3a7f902f0188aa787fda5"
+    },
+    {
+      "file": "linux-SHA256SUMS.txt",
+      "bytes": 102,
+      "sha256": "08d32ef7996594bd28afd62ce7e8e625c9bd527edf426036e034f5e955bc62bb"
+    },
+    {
+      "file": "linux-startup.json",
+      "bytes": 571,
+      "sha256": "b0f0bfc8f5d521bdd588eddd2180ab52abf29db57ee6986ae320e97fd605204a"
+    },
+    {
+      "file": "release-provenance.json",
+      "bytes": 4432,
+      "sha256": "39bbb53c367ff9738b96fe8c6b38f16599819d5a5daac112317ed20f95f69836"
+    },
+    {
+      "file": "SHA256SUMS.txt",
+      "bytes": 1752,
+      "sha256": "1f5b8c06076e174ac474c195342efc177ee1041dd19344be37a7d18ec7e11931"
+    },
+    {
+      "file": "windows-installation.json",
+      "bytes": 288,
+      "sha256": "9e02f7166029fe44813e964596e969401fd41e598369e1931deff077a9e9ce9b"
+    },
+    {
+      "file": "windows-manifest.json",
+      "bytes": 660,
+      "sha256": "607e9a88e8dc31c5768eed8d1b1c1a816d2ad66569381fe9b92b552d4980c0b6"
+    },
+    {
+      "file": "windows-SHA256SUMS.txt",
+      "bytes": 203,
+      "sha256": "5d14523c3e52e16423e033f08f266d05050c253574f799038a3c069e205277ba"
+    },
+    {
+      "file": "windows-startup.json",
+      "bytes": 443,
+      "sha256": "1b6e0f3cccd7b236e57b3a38fb6bb8e6170990408507e88094a99acf71322a77"
+    }
+  ],
+  "latest_verified": true,
+  "previous_release_assets_and_body_preserved": true,
+  "public_provenance_and_total_checksums_verified": true,
+  "public_provenance_semantically_equal_after_filename_order_normalization": true,
+  "metadata_differences_only_crlf_and_windows_case_insensitive_filename_sort": true,
+  "total_checksums_recomputed_using_published_lf_provenance_and_linux_order": true,
+  "original_local_evidence_preserved": true,
+  "source_files_exact_bytes_equal": 18,
+  "public_large_assets_re_downloaded": false,
+  "large_assets_verified_using_github_digest_and_fully_verified_source_archives": true,
+  "source_ci_run": 44015497318,
+  "publish_run": 44035847687,
+  "runtime_lib_tree": "2e7684f13dfe056d5dc4626cd2c0c0edde7b0f16",
+  "public_iphone84_runtime_verified": false
+}
