@@ -16,7 +16,7 @@
 - Windows x64：EXE安装版或便携ZIP，未做Authenticode签名。
 - Linux x64：TAR.GZ，Ubuntu24.04基线。
 - Android：固定发行证书的通用APK、ARM64 APK及AAB。
-- iOS：`DontForget_iOS_unsigned_v1.8.14.ipa`为未签名IPA，需要个人重签；免费账号通常每7天续期。安装方式见[说明](https://github.com/yarnway/dontforget/blob/main/docs/iOS_Sideload_Windows.md)，不属于App Store或TestFlight分发。
+- iOS：`DontForget_iOS_unsigned_v1.8.14.ipa`为未签名IPA，需要通过AltStore个人重签；免费账号通常每7天续期。安装方式见[说明](https://github.com/yarnway/dontforget/blob/main/docs/iOS_Sideload_Windows.md)，不属于App Store或TestFlight分发。
 
 ## 验收范围
 
