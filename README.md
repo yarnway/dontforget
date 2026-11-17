@@ -6,7 +6,7 @@
 
 本地优先的备忘与任务工作台，让文字、录音、附件和学习计划各有归处。
 
-[![Release](https://img.shields.io/badge/release-v1.8.13-007F83)](https://github.com/yarnway/dontforget/releases/tag/v1.8.13)
+[![Release](https://img.shields.io/badge/release-v1.8.14-007F83)](https://github.com/yarnway/dontforget/releases/tag/v1.8.14)
 [![Build](https://github.com/yarnway/dontforget/actions/workflows/build_and_release.yml/badge.svg?branch=main)](https://github.com/yarnway/dontforget/actions/workflows/build_and_release.yml)
 [![Flutter](https://img.shields.io/badge/Flutter-3.44.9-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Platforms](https://img.shields.io/badge/Windows%20%C2%B7%20Android%20%C2%B7%20Linux%20%C2%B7%20iOS-334155)](#下载)
@@ -24,18 +24,18 @@
 
 ## 下载
 
-**当前稳定版：v1.8.13 · build84**　[发行说明与校验文件](https://github.com/yarnway/dontforget/releases/tag/v1.8.13)
+**当前稳定版：v1.8.14 · build85**　[发行说明与校验文件](https://github.com/yarnway/dontforget/releases/tag/v1.8.14)
 
 | 平台 | 下载 | 运行基线 |
 | :--- | :--- | :--- |
-| Windows x64 | [安装版 EXE](https://github.com/yarnway/dontforget/releases/download/v1.8.13/DontForget_Setup_v1.8.13.exe) · [便携版 ZIP](https://github.com/yarnway/dontforget/releases/download/v1.8.13/DontForget_Windows_Portable_v1.8.13.zip) | Windows 10 / 11 |
-| Android | [ARM64 APK（推荐）](https://github.com/yarnway/dontforget/releases/download/v1.8.13/DontForget_Android_arm64_v1.8.13.apk) · [通用 APK](https://github.com/yarnway/dontforget/releases/download/v1.8.13/DontForget_Android_v1.8.13.apk) | Android 7.0 / API 24 起 |
-| Linux x64 | [归档 TAR.GZ](https://github.com/yarnway/dontforget/releases/download/v1.8.13/DontForget_Linux_x64_v1.8.13.tar.gz) | Ubuntu 24.04 基线 |
-| iOS | [未签名 IPA](https://github.com/yarnway/dontforget/releases/download/v1.8.13/DontForget_iOS_unsigned_v1.8.13.ipa) · [个人重签安装说明](docs/iOS_Sideload_Windows.md) | iOS 15+；需 AltStore 重签 |
+| Windows x64 | [安装版 EXE](https://github.com/yarnway/dontforget/releases/download/v1.8.14/DontForget_Setup_v1.8.14.exe) · [便携版 ZIP](https://github.com/yarnway/dontforget/releases/download/v1.8.14/DontForget_Windows_Portable_v1.8.14.zip) | Windows 10 / 11 |
+| Android | [ARM64 APK（推荐）](https://github.com/yarnway/dontforget/releases/download/v1.8.14/DontForget_Android_arm64_v1.8.14.apk) · [通用 APK](https://github.com/yarnway/dontforget/releases/download/v1.8.14/DontForget_Android_v1.8.14.apk) | Android 7.0 / API 24 起 |
+| Linux x64 | [归档 TAR.GZ](https://github.com/yarnway/dontforget/releases/download/v1.8.14/DontForget_Linux_x64_v1.8.14.tar.gz) | Ubuntu 24.04 基线 |
+| iOS | [未签名 IPA](https://github.com/yarnway/dontforget/releases/download/v1.8.14/DontForget_iOS_unsigned_v1.8.14.ipa) · [个人重签安装说明](docs/iOS_Sideload_Windows.md) | iOS 15+；需 AltStore 重签 |
 
-常见64位安卓手机推荐 ARM64 APK，较同版通用包缩小约65%；其他架构使用通用包。Android [AAB](https://github.com/yarnway/dontforget/releases/download/v1.8.13/DontForget_Android_v1.8.13.aab) 供分发使用，不能直接安装。iOS下载包需自己的Apple账号通过AltStore个人重签，免费账号通常每7天续期，非App Store／TestFlight分发。macOS签名与设备验收继续推进。Windows 当前未做 Authenticode 签名；Linux 运行依赖见[安装指南](docs/Packaging_and_Deployment.md)。
+常见64位安卓手机推荐 ARM64 APK，较同版通用包缩小约65%；其他架构使用通用包。Android [AAB](https://github.com/yarnway/dontforget/releases/download/v1.8.14/DontForget_Android_v1.8.14.aab) 供分发使用，不能直接安装。iOS下载包需自己的Apple账号通过AltStore个人重签，免费账号通常每7天续期，非App Store／TestFlight分发。macOS公证、商业签名及商店分发按需推进。Windows 当前未做 Authenticode 签名；Linux 运行依赖见[安装指南](docs/Packaging_and_Deployment.md)。
 
-下载后可用 Release 中的 `SHA256SUMS.txt` 核对文件。便携版指免安装启动，业务数据仍存放在平台应用目录；迁移数据请使用备份功能。[已验范围与已知限制](docs/Release_1.8.13_84_2026-11-17.md)单独记录。
+下载后可用 Release 中的 `SHA256SUMS.txt` 核对文件。便携版指免安装启动，业务数据仍存放在平台应用目录；迁移数据请使用备份功能。[已验范围与已知限制](docs/Release_1.8.14_85_2026-11-17.md)单独记录。
 
 ## 功能
 
@@ -127,5 +127,5 @@ python -m unittest discover -s scripts/tests -v
 | 使用 | 开发 | 进度与质量 |
 | :--- | :--- | :--- |
 | [用户指南](docs/User_Guide.md) | [开发指南](docs/Developer_Guide.md) | [变更日志](docs/Changelog.md) |
-| [功能实现索引](docs/Planning_Implementation.md) | [架构设计](docs/Architecture_Design.md) | [v1.8.13 验收记录](docs/Release_1.8.13_84_2026-11-17.md) |
+| [功能实现索引](docs/Planning_Implementation.md) | [架构设计](docs/Architecture_Design.md) | [v1.8.14 验收记录](docs/Release_1.8.14_85_2026-11-17.md) |
 | [记录与提醒设计](docs/Recording_Reminders_Phases.md) | [打包与部署](docs/Packaging_and_Deployment.md) | [剩余阶段](docs/Next_Steps_2026-11-02.md) · [发布策略](docs/Release_Policy.md) |

@@ -1,0 +1,47 @@
+{
+  "final_source": "116d7f203987cdab9e0ded5c48883cbade451043",
+  "runtime_lib_tree": "53ff4a67fe44eaa67786c720232f2aea612b5cea",
+  "native_receipt": {
+    "source": "866dfac99cf749091b1bb897d7b9db9bb5a95729",
+    "version": "1.8.14+85",
+    "ordinary_entry": true,
+    "isolated_identity": "com.yarnway.dontforget.acceptance.share8520261117",
+    "custom_bridge": false,
+    "real_credentials_used": false,
+    "cases": [
+      {
+        "prefix": "/goal",
+        "native_intent_received": true,
+        "actual_ui_save_clicked": true,
+        "one_literal_memo_created": true,
+        "reminder_time_absent": true,
+        "automatic_ai_capture_disabled": true,
+        "pending_share_removed_after_save": true
+      },
+      {
+        "prefix": "/agent",
+        "native_intent_received": true,
+        "actual_ui_save_clicked": true,
+        "one_literal_memo_created": true,
+        "reminder_time_absent": true,
+        "automatic_ai_capture_disabled": true,
+        "pending_share_removed_after_save": true
+      }
+    ],
+    "all_fields_equal_after_new_process_reopen": true,
+    "original_qa_and_user_owned_voice84_records_equal": true,
+    "only_fully_synthetic_fixture_uninstalled": true,
+    "physical_ime_composition_tested": false,
+    "system_share_sheet_selection_tested": false
+  },
+  "native_source_differs_only_in_release_docs": true,
+  "regression_contracts": {
+    "old_source_expected_failures": 4,
+    "explicit_command_controls_passed": 2,
+    "focused_passed": 43,
+    "related_passed": 151,
+    "related_skipped": 0,
+    "analyze_issues": 0
+  },
+  "physical_ime_composition_tested": false
+}

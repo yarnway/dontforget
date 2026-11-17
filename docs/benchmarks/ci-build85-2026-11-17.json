@@ -1,0 +1,188 @@
+{
+  "final_source": "116d7f203987cdab9e0ded5c48883cbade451043",
+  "final_ci": {
+    "run": {
+      "id": 44099364984,
+      "source": "116d7f203987cdab9e0ded5c48883cbade451043",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/yarnway/dontforget/actions/runs/44099364984"
+    },
+    "jobs": [
+      {
+        "id": 134094947261,
+        "name": "Analyze and test",
+        "status": "completed",
+        "conclusion": "success",
+        "active": []
+      },
+      {
+        "id": 134094948130,
+        "name": "Windows analyze and test",
+        "status": "completed",
+        "conclusion": "success",
+        "active": []
+      },
+      {
+        "id": 134105272918,
+        "name": "Build linux candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "active": []
+      },
+      {
+        "id": 134105272943,
+        "name": "Build ios candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "active": []
+      },
+      {
+        "id": 134105272972,
+        "name": "Build macos candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "active": []
+      },
+      {
+        "id": 134105273115,
+        "name": "Build android candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "active": []
+      },
+      {
+        "id": 134105273545,
+        "name": "Build windows candidate",
+        "status": "completed",
+        "conclusion": "success",
+        "active": []
+      },
+      {
+        "id": 134115794412,
+        "name": "Verify tag packages without publishing",
+        "status": "completed",
+        "conclusion": "skipped",
+        "active": []
+      }
+    ],
+    "quality_logs": [
+      {
+        "name": "Analyze and test",
+        "conclusion": "success",
+        "summary": [
+          "No issues found! (ran in 14.2s)",
+          "06:56 +2647 ~2: All tests passed!",
+          "Ran 180 tests in 0.871s",
+          "OK (skipped=4)"
+        ]
+      },
+      {
+        "name": "Windows analyze and test",
+        "conclusion": "success",
+        "summary": [
+          "No issues found! (ran in 21.8s)",
+          "13:11 +2632 ~20: All tests passed!",
+          "Ran 180 tests in 15.986s",
+          "OK (skipped=6)"
+        ]
+      }
+    ]
+  },
+  "first_hosted_ios_cancellation": {
+    "run": {
+      "id": 44087890929,
+      "created_at": "2026-11-17T12:56:49Z",
+      "updated_at": "2026-11-17T13:28:03Z",
+      "run_started_at": "2026-11-17T12:56:49Z",
+      "run_attempt": 1,
+      "conclusion": "failure"
+    },
+    "job": {
+      "id": 134064059904,
+      "status": "completed",
+      "conclusion": "cancelled",
+      "started_at": "2026-11-17T13:13:02Z",
+      "completed_at": "2026-11-17T13:28:02Z",
+      "labels": [
+        "macos-15"
+      ],
+      "runner_name": "",
+      "steps": []
+    },
+    "annotations": [
+      {
+        "path": ".github",
+        "blob_href": "https://github.com/yarnway/dontforget/blob/866dfac99cf749091b1bb897d7b9db9bb5a95729/.github",
+        "start_line": 1,
+        "start_column": null,
+        "end_line": 1,
+        "end_column": null,
+        "annotation_level": "failure",
+        "title": "",
+        "message": "The job was not acquired by Runner of type hosted even after multiple attempts",
+        "raw_details": ""
+      },
+      {
+        "path": ".github",
+        "blob_href": "https://github.com/yarnway/dontforget/blob/866dfac99cf749091b1bb897d7b9db9bb5a95729/.github",
+        "start_line": 1,
+        "start_column": null,
+        "end_line": 1,
+        "end_column": null,
+        "annotation_level": "notice",
+        "title": "",
+        "message": "Due to capacity constraints, jobs targeting macOS arm64 runners may experience longer queue times.",
+        "raw_details": ""
+      },
+      {
+        "path": ".github",
+        "blob_href": "https://github.com/yarnway/dontforget/blob/866dfac99cf749091b1bb897d7b9db9bb5a95729/.github",
+        "start_line": 1,
+        "start_column": null,
+        "end_line": 1,
+        "end_column": null,
+        "annotation_level": "notice",
+        "title": "",
+        "message": "Due to capacity constraints, jobs targeting macOS arm64 runners may experience longer queue times.",
+        "raw_details": ""
+      },
+      {
+        "path": ".github",
+        "blob_href": "https://github.com/yarnway/dontforget/blob/866dfac99cf749091b1bb897d7b9db9bb5a95729/.github",
+        "start_line": 1,
+        "start_column": null,
+        "end_line": 1,
+        "end_column": null,
+        "annotation_level": "notice",
+        "title": "",
+        "message": "Due to capacity constraints, jobs targeting macOS arm64 runners may experience longer queue times.",
+        "raw_details": ""
+      }
+    ]
+  },
+  "release_notes_preflight_rejection": {
+    "source": "866dfac99cf749091b1bb897d7b9db9bb5a95729",
+    "guard_rejected": true,
+    "reason": "iOS release notes must explain personal resigning and expiry",
+    "released": false
+  },
+  "final_release_note_preflight": {
+    "source": "116d7f203987cdab9e0ded5c48883cbade451043",
+    "four_platform_header_valid": true,
+    "unsigned_personal_resign_expiry_markers_present": true,
+    "all_required_markers": [
+      "未签名",
+      "AltStore",
+      "7天"
+    ]
+  },
+  "superseded_documentation_only_ci": {
+    "id": 44097356909,
+    "source": "4eca60856a1cb28e177b1eb39d47245c3f989f52",
+    "status": "completed",
+    "conclusion": "cancelled",
+    "url": "https://github.com/yarnway/dontforget/actions/runs/44097356909"
+  },
+  "full_native_matrix": "NOT_PERFORMED"
+}
