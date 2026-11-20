@@ -1,0 +1,126 @@
+{
+  "timestamp_utc": "2026-11-20T16:02:31.229576+00:00",
+  "release_tag": "v1.8.18",
+  "release_commit": "4855976b7b13edb26f279ba0c163f1a9095944ad",
+  "version": "1.8.18+89",
+  "device": {
+    "serial": "43201FDJG000M7",
+    "model": "Pixel 8 Pro",
+    "android_version": "16",
+    "wifi_ip": "192.168.50.158",
+    "windows_wifi_ip": "192.168.50.4"
+  },
+  "formal_package_zero_pollution_acceptance": {
+    "package": "com.yarnway.dontforget",
+    "installed_version": [
+      "versionCode=89 minSdk=24 targetSdk=36",
+      "versionName=1.8.18"
+    ],
+    "stage47_wetype_home_draft": {
+      "default_ime": "com.tencent.wetype/.plugin.hld.WxHldService",
+      "committed_text": "测试",
+      "draft_survived_settings_roundtrip": true,
+      "cleared_without_db_mutation": true
+    },
+    "stage48_export_history_clear": {
+      "history_button_before": "导出记录 (2)",
+      "preserved_after_cancel": true,
+      "cleared_feedback_visible": true,
+      "latest_export_card_gone": true,
+      "empty_after_cold_reopen": true,
+      "screenshots_sha256": {
+        "after_confirm_clear": "0c1bb262892aedc64e8431c5b5755353bd68b870821bd040f75ab140da61af78",
+        "reopen_empty": "edb87bf8fffa839f9e42d896f5dcdce2fabecfc6251462344219ad0953d2ba60"
+      }
+    },
+    "stage49_real_wifi_lan_server_auth": {
+      "advertised_endpoint": "192.168.50.158:42888",
+      "wrong_pin_http_status_over_real_wifi": 401,
+      "server_stopped_after_check": true,
+      "screenshot_sha256": "7b27c0bef444ecf60934f3e0425a1da77081aa581433a8ea125c876b55276c9a"
+    },
+    "flutter_errors": []
+  },
+  "qa_package_stage47_voice_and_ime": {
+    "package": "com.yarnway.dontforget.acceptance.sync20261118",
+    "voice_duplication_code_audit": {
+      "files_audited": [
+        "lib/services/speech/tencent_realtime_recognizer.dart",
+        "lib/services/speech/live_pcm_recording.dart",
+        "lib/ui/widgets/live_voice_text_dialog.dart",
+        "lib/controllers/home_controller.dart"
+      ],
+      "conclusion": "LivePcmRecording reads sequentially from PCM byte offset 44 without replay; TencentRealtimeRecognizer keys stable segments by slice index; LiveVoiceTextDialog._apply replaces full text instead of appending. Consistent with 2026-11-18 diagnostic capture (0 duplication in product protocol; build84 historical duplication not reproduced in current code)."
+    },
+    "voice_cancel_and_home_interrupt": {
+      "voice_cancel_preserves_counts": true,
+      "voice_cancel_no_leftover_audio": true,
+      "voice_home_interrupt_preserves_counts": true,
+      "audio_monitor_after_home_interrupt": ""
+    },
+    "voice_editor_exact_wetype_ime": {
+      "voice_editor_opened": true,
+      "composing_edit_text": "ce shi",
+      "send_disabled_while_composing": true,
+      "committed_edit_text": "测试",
+      "send_reenabled_after_commit": true,
+      "new_rows_count": 1,
+      "new_media_count": 0,
+      "saved_single_chinese_row": true,
+      "saved_title": "测试",
+      "screenshots_sha256": {
+        "composing_send_disabled": "dba105d4f1d2f2b35378f3d8715f48356f74e3f57347b5f0d55ece0ceb067788",
+        "committed_send_enabled": "9cb9f402c0fdc73bf4423aaca61944e59428be82865202b5f5ebfb7a4ba9dbdb",
+        "after_send": "16b7153fca052dbc1f3d97e922c9b67b81fd9d1fd65775a065b8f43af678c1a5"
+      }
+    }
+  },
+  "qa_package_stage49_documentsui_and_pdf_share": {
+    "documentsui_file_picker_and_utf8_preview": {
+      "documentsui_file_found": true,
+      "attachment_card_shows_filename": true,
+      "attachment_card_shows_size": true,
+      "utf8_preview_shows_chinese_content": true,
+      "attached_txt_sha256_equal": true,
+      "screenshots_sha256": {
+        "documentsui_picker": "b4fd9d212bc5cf5119b603bb60cb450d57a57a0e3663a20c1f366999a1177923",
+        "after_file_attach": "790319359033291ca16223ac7b3c27fb6e4389246e76ee2d914c44380099eaf5",
+        "utf8_preview": "7894cdb4e29164bbefe52a26c0dfd41518b0c27f6d7ed5f89f77598335983059"
+      }
+    },
+    "pdf_action_send_share_handoff": {
+      "source_pdf_bytes": 329,
+      "source_pdf_sha256": "a9236f0cf4e35e5faa95ee2e81f67e7f433b6339cdecc0d16d1cc5151dfac4e3",
+      "pdf_media_uri": "content://media/external/file/862",
+      "pdf_inbox_draft_visible": true,
+      "pdf_editor_shows_filename": true,
+      "pdf_editor_save_enabled": true,
+      "pdf_saved_media_count": 1,
+      "pdf_saved_rel_path": "app_flutter/media/import-DGEIHB/df_qa_share_89.pdf",
+      "pdf_imported_bytes": 329,
+      "pdf_imported_sha256_equal": true,
+      "screenshots_sha256": {
+        "pdf_inbox": "85fb6a6b7bd7ae41e89b85fc75d859cc682b9d89bd332c0b84c0f2845bda4229",
+        "pdf_editor": "b9e1d56b429eca791a40c8c06b3f0ffbf6886fc7c8e69332a8bae1670178d50d",
+        "pdf_saved": "5946a732670982ef45d06a5ca32516b700f9baa592ea4a4588b25b194d9d0938"
+      }
+    },
+    "flutter_errors": []
+  },
+  "post_test_invariants": {
+    "default_ime": "com.tencent.wetype/.plugin.hld.WxHldService",
+    "font_scale": "1.0",
+    "download_test_files_leftover": "",
+    "qa_record_audio_permission_line": "android.permission.RECORD_AUDIO\n        android.permission.RECORD_AUDIO: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]",
+    "qa_db_logical_sha256": "e4ab3901f5ccc51c4992a5dfa9913ad03d2850069c98eac320c638db6a7e437d",
+    "qa_baseline_restored_equal": true
+  },
+  "remaining_open_or_blocked": {
+    "windows_gui_tray_toast_desktop_ime": "BLOCKED_NON_INTERACTIVE_UIA_SESSION",
+    "iphone_v1_8_18_real_device": "BLOCKED_NO_USB_DEVICE_AND_NO_MACOS_XCODE",
+    "windows_live_legacy_localappdata_manual_takeover": "REQUIRES_EXPLICIT_USER_CONSENT_BEFORE_MUTATING_LEGACY_DIR",
+    "talkback_voiceover_and_real_acoustic_voice_playback": "NOT_PERFORMED",
+    "formal_package_full_notification_voice_attachment_and_bidirectional_sync": "ZERO_POLLUTION_POLICY_RESERVED_FOR_EXPLICIT_USER_ACCEPTANCE",
+    "android_system_share_chooser_manual_tap": "NOT_PERFORMED_AMBIGUOUS_MULTI_INSTALL_LABELS"
+  }
+}
