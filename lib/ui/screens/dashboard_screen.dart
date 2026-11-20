@@ -296,14 +296,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     double width,
   ) {
     final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     return SizedBox(
       width: width,
       child: _section(
         context,
         child: Row(
           children: [
-            Icon(icon, color: theme.colorScheme.primary, size: 24),
-            const SizedBox(width: 16),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: colors.primaryContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: colors.onPrimaryContainer, size: 22),
+            ),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -317,7 +326,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   Text(
                     label,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                      color: colors.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -335,6 +344,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     AppLocalizations l10n,
   ) {
     final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final barColors = [
+      colors.error,
+      colors.tertiary,
+      colors.secondary,
+      colors.primary,
+    ];
+    const barIcons = [
+      Icons.notifications_active_outlined,
+      Icons.star_outline_rounded,
+      Icons.checklist_rounded,
+      Icons.notes_rounded,
+    ];
     return _section(
       context,
       child: Column(
@@ -347,9 +369,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ),
           ),
           for (var i = 0; i < 4; i++) ...[
-            const SizedBox(height: 20),
+            const SizedBox(height: 18),
             Row(
               children: [
+                Icon(barIcons[i], size: 18, color: barColors[i]),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     l10n.get('cat${i + 1}'),
@@ -359,14 +383,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 const SizedBox(width: 12),
                 Text(
                   '${stats.categories[i]}',
-                  style: theme.textTheme.titleSmall,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             LinearProgressIndicator(
+              key: ValueKey('dashboard-cat-bar-${i + 1}'),
               value: stats.categories[i] / stats.total,
-              minHeight: 6,
+              minHeight: 7,
+              color: barColors[i],
+              backgroundColor: barColors[i].withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(6),
               semanticsLabel: l10n.get('cat${i + 1}'),
               semanticsValue:

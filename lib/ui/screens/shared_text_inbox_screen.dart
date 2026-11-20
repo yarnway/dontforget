@@ -57,19 +57,70 @@ class SharedTextInboxScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               if (data.items.isEmpty)
                 Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(t('empty')),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 36,
+                    horizontal: 24,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primaryContainer.withValues(alpha: 0.65),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.inbox_outlined,
+                          size: 28,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        t('empty'),
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               for (final item in data.items)
                 Card.outlined(
                   key: ValueKey('shared-item-${item.id}'),
+                  margin: const EdgeInsets.only(bottom: 10),
                   child: ListTile(
                     leading: item.hasAttachment
-                        ? Icon(
-                            item.isImageAttachment
-                                ? Icons.image_outlined
-                                : Icons.attach_file,
-                          )
+                        ? (item.isImageAttachment &&
+                                  SharedText.isHandoffPath(
+                                    item.attachmentPath!,
+                                    item.id,
+                                  )
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(
+                                    File(item.attachmentPath!),
+                                    width: 44,
+                                    height: 44,
+                                    cacheWidth: 128,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => const Icon(
+                                      Icons.image_outlined,
+                                    ),
+                                  ),
+                                )
+                              : Icon(
+                                  item.isImageAttachment
+                                      ? Icons.image_outlined
+                                      : Icons.attach_file,
+                                ))
                         : null,
                     title: Text(
                       item.text.trim().isNotEmpty

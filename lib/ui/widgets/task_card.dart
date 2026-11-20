@@ -32,6 +32,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
   bool _isDeleting = false;
   bool _showSubtasks = false;
   bool _showChecklist = false;
+  bool _hovered = false;
   DataGeneration? _checklistGeneration;
   RuntimeRecoveryToken? _checklistToken;
 
@@ -625,18 +626,26 @@ class _TaskCardState extends ConsumerState<TaskCard> {
 
   Widget _badge(String label, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.22), width: 0.8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: color),
+          Icon(icon, size: 13, color: color),
           const SizedBox(width: 4),
           Flexible(
-            child: Text(label, style: TextStyle(fontSize: 11, color: color)),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: color,
+              ),
+            ),
           ),
         ],
       ),
@@ -790,42 +799,56 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       },
       // Animate the inherited theme once. A second background-only animation
       // can leave a white card behind already-light dark-theme text.
-      child: Container(
-        key: ValueKey('task-surface-${task.id}'),
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          color: task.isCompleted
-              ? colors.surfaceContainerLowest
-              : colors.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: colors.outlineVariant.withValues(alpha: 0.65),
+      child: MouseRegion(
+        onEnter: (_) {
+          if (!_hovered) setState(() => _hovered = true);
+        },
+        onExit: (_) {
+          if (_hovered) setState(() => _hovered = false);
+        },
+        child: Container(
+          key: ValueKey('task-surface-${task.id}'),
+          margin: const EdgeInsets.only(bottom: 8),
+          decoration: BoxDecoration(
+            color: task.isCompleted
+                ? colors.surfaceContainerLowest
+                : colors.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: _hovered
+                  ? colors.primary.withValues(alpha: 0.55)
+                  : (!task.isCompleted && task.isOverdue)
+                  ? colors.error.withValues(alpha: 0.45)
+                  : (!task.isCompleted && task.isPinned)
+                  ? colors.primary.withValues(alpha: 0.35)
+                  : colors.outlineVariant.withValues(alpha: 0.65),
+            ),
           ),
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: _openDetails,
-          onSecondaryTapUp: (details) =>
-              _showContextMenu(details.globalPosition),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: Icon(
-                        Icons.circle,
-                        size: 6,
-                        color: task.isCompleted
-                            ? colors.onSurfaceVariant
-                            : priorityColor,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: _openDetails,
+            onSecondaryTapUp: (details) =>
+                _showContextMenu(details.globalPosition),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 3.5,
+                        height: 16,
+                        margin: const EdgeInsets.only(right: 9),
+                        decoration: BoxDecoration(
+                          color: task.isCompleted
+                              ? colors.outlineVariant
+                              : priorityColor,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
                       ),
-                    ),
                     Expanded(
                       child: Text(
                         task.taskTitle,
@@ -1117,6 +1140,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

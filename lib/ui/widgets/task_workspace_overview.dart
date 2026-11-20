@@ -180,7 +180,9 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
         if (group != null) groups[group]!.add(task);
       }
       for (final group in groups.entries) {
-        if (group.value.isNotEmpty) rows.addAll([group.key, ...group.value]);
+        if (group.value.isNotEmpty) {
+          rows.addAll([(key: group.key, count: group.value.length), ...group.value]);
+        }
       }
     } else if (view == 'missed') {
       rows.addAll(missedTasks);
@@ -249,33 +251,60 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                         constraints: const BoxConstraints(maxWidth: 1040),
                         child: rows.isEmpty && view != 'all'
                             ? Center(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      loc.get(
-                                        view == 'today'
-                                            ? 'todayEmpty'
-                                            : view == 'missed'
-                                            ? 'emptyMissed'
-                                            : 'futureEmpty',
+                                child: Padding(
+                                  padding: const EdgeInsets.all(24),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        width: 56,
+                                        height: 56,
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primaryContainer
+                                              .withValues(alpha: 0.65),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                          view == 'today'
+                                              ? Icons.wb_sunny_outlined
+                                              : view == 'missed'
+                                              ? Icons.notifications_none_rounded
+                                              : Icons.event_available_outlined,
+                                          size: 28,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onPrimaryContainer,
+                                        ),
                                       ),
-                                      textAlign: TextAlign.center,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium
-                                          ?.copyWith(
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.onSurfaceVariant,
-                                            height: 1.5,
-                                          ),
-                                    ),
-                                    TextButton(
-                                      onPressed: () => _select('all'),
-                                      child: Text(loc.get('viewAll')),
-                                    ),
-                                  ],
+                                      const SizedBox(height: 14),
+                                      Text(
+                                        loc.get(
+                                          view == 'today'
+                                              ? 'todayEmpty'
+                                              : view == 'missed'
+                                              ? 'emptyMissed'
+                                              : 'futureEmpty',
+                                        ),
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.onSurfaceVariant,
+                                              height: 1.5,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      TextButton(
+                                        onPressed: () => _select('all'),
+                                        child: Text(loc.get('viewAll')),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               )
                             : CustomScrollView(
@@ -289,8 +318,9 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                                         index,
                                       ) {
                                         final row = rows[index];
-                                        if (row is String) {
-                                          if (row == 'todayReview' &&
+                                        if (row
+                                            is ({String key, int count})) {
+                                          if (row.key == 'todayReview' &&
                                               widget.onOpenLearning != null) {
                                             return TextButton.icon(
                                               onPressed: widget.onOpenLearning,
@@ -298,20 +328,91 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                                                 Icons.auto_stories_outlined,
                                               ),
                                               label: Text(
-                                                loc.get('learningQueueTitle'),
+                                                '${loc.get('learningQueueTitle')} (${row.count})',
                                               ),
                                             );
                                           }
+                                          final colors = Theme.of(
+                                            context,
+                                          ).colorScheme;
+                                          final (icon, accent) =
+                                              switch (row.key) {
+                                                'todayUrgent' => (
+                                                  Icons
+                                                      .notifications_active_outlined,
+                                                  colors.error,
+                                                ),
+                                                'todayPinned' => (
+                                                  Icons.push_pin_outlined,
+                                                  colors.primary,
+                                                ),
+                                                'todayOverdue' => (
+                                                  Icons.schedule_rounded,
+                                                  colors.error,
+                                                ),
+                                                'captureInbox' => (
+                                                  Icons.inbox_outlined,
+                                                  colors.tertiary,
+                                                ),
+                                                _ => (
+                                                  Icons.today_outlined,
+                                                  colors.primary,
+                                                ),
+                                              };
                                           return Padding(
                                             padding: const EdgeInsets.only(
-                                              top: 10,
-                                              bottom: 10,
+                                              top: 12,
+                                              bottom: 8,
                                             ),
-                                            child: Text(
-                                              loc.get(row),
-                                              style: Theme.of(
-                                                context,
-                                              ).textTheme.titleSmall,
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  icon,
+                                                  size: 16,
+                                                  color: accent,
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Flexible(
+                                                  child: Text(
+                                                    loc.get(row.key),
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .titleSmall
+                                                        ?.copyWith(
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 7,
+                                                        vertical: 1,
+                                                      ),
+                                                  decoration: BoxDecoration(
+                                                    color: colors
+                                                        .surfaceContainer,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          10,
+                                                        ),
+                                                  ),
+                                                  child: Text(
+                                                    '${row.count}',
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .labelSmall
+                                                        ?.copyWith(
+                                                          color: colors
+                                                              .onSurfaceVariant,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           );
                                         }

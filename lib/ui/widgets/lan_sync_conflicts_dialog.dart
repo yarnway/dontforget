@@ -22,18 +22,72 @@ class LanSyncConflictsDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    Widget sideBox({
+      required IconData icon,
+      required String heading,
+      required String value,
+      required Color background,
+      required Color border,
+      required Color accent,
+    }) => Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 14, color: accent),
+              const SizedBox(width: 6),
+              Text(
+                heading,
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: accent,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(value.isEmpty ? '—' : value),
+        ],
+      ),
+    );
     Widget field(String label, String local, String peer) => Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: theme.textTheme.titleSmall),
-          const SizedBox(height: 4),
-          Text(l10n.get('syncThisDevice'), style: theme.textTheme.labelMedium),
-          Text(local.isEmpty ? '—' : local),
-          const SizedBox(height: 4),
-          Text(l10n.get('syncPeerDevice'), style: theme.textTheme.labelMedium),
-          Text(peer.isEmpty ? '—' : peer),
+          Text(
+            label,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          sideBox(
+            icon: Icons.devices_outlined,
+            heading: l10n.get('syncThisDevice'),
+            value: local,
+            background: colors.surfaceContainerLow,
+            border: colors.outlineVariant,
+            accent: colors.onSurfaceVariant,
+          ),
+          const SizedBox(height: 6),
+          sideBox(
+            icon: Icons.sync_alt_rounded,
+            heading: l10n.get('syncPeerDevice'),
+            value: peer,
+            background: colors.secondaryContainer.withValues(alpha: 0.45),
+            border: colors.primary.withValues(alpha: 0.35),
+            accent: colors.primary,
+          ),
         ],
       ),
     );
@@ -64,6 +118,12 @@ class LanSyncConflictsDialog extends StatelessWidget {
             itemBuilder: (context, index) {
               final conflict = conflicts[index];
               final local = conflict.local, peer = conflict.peer;
+              final diffLabels = <String>[
+                if (local.title != peer.title) l10n.get('syncTaskTitle'),
+                if (local.note != peer.note) l10n.get('syncTaskNote'),
+                if (local.inTrash != peer.inTrash)
+                  l10n.get('syncTaskTrashStatus'),
+              ];
               return ExpansionTile(
                 key: PageStorageKey(conflict.taskId),
                 tilePadding: EdgeInsets.zero,
@@ -73,6 +133,17 @@ class LanSyncConflictsDialog extends StatelessWidget {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
+                subtitle: diffLabels.isEmpty
+                    ? null
+                    : Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          diffLabels.join(' · '),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: colors.primary,
+                          ),
+                        ),
+                      ),
                 children: [
                   if (local.title != peer.title)
                     field(l10n.get('syncTaskTitle'), local.title, peer.title),

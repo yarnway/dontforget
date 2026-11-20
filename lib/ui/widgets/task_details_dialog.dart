@@ -228,17 +228,17 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = Theme.of(context).colorScheme;
 
     final dialog = Dialog(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(18),
         side: BorderSide(
-          color: Theme.of(context).colorScheme.outlineVariant,
+          color: colors.outlineVariant,
           width: 1,
         ),
       ),
-      backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+      backgroundColor: colors.surfaceContainerHigh,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 460),
         child: Padding(

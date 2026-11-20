@@ -708,7 +708,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void _confirmClearCompleted() {
     if (!mounted || !_runtimeActive) return;
     final l10n = AppLocalizations.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = Theme.of(context).colorScheme;
     final completedCount = ref
         .read(remindersProvider)
         .where((r) => r.isCompleted)
@@ -729,25 +729,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: BorderSide(
-            color: Theme.of(context).colorScheme.outlineVariant,
-            width: 1,
-          ),
-        ),
-        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         title: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.cleaning_services_outlined,
-              color: Colors.redAccent,
+              color: colors.error,
               size: 22,
             ),
             const SizedBox(width: 8),
-            Text(
-              l10n.get('clearCompletedTitle'),
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+            Expanded(
+              child: Text(
+                l10n.get('clearCompletedTitle'),
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+              ),
             ),
           ],
         ),
@@ -1761,11 +1755,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       icon: Icon(
                         _getContextProfileIcon(currentProfile),
                         size: 20,
-                        color:
-                            (currentProfile == ContextProfile.deepWork ||
-                                currentProfile == ContextProfile.office)
-                            ? Colors.tealAccent
-                            : null,
+                        color: currentProfile == ContextProfile.general
+                            ? null
+                            : Theme.of(context).colorScheme.primary,
                       ),
                       tooltip: l10n.get('contextProfileSwitch'),
                       splashRadius: 18,
@@ -1786,102 +1778,106 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           );
                         }
                       },
-                      itemBuilder: (context) => [
-                        PopupMenuItem(
-                          value: ContextProfile.general,
-                          child: Row(
-                            children: [
-                              const Icon(Icons.tune_rounded, size: 18),
-                              const SizedBox(width: 8),
-                              Text(l10n.get('profileGeneral')),
-                              if (currentProfile == ContextProfile.general) ...[
-                                const Spacer(),
-                                const Icon(
-                                  Icons.check,
-                                  size: 16,
-                                  color: Colors.teal,
-                                ),
+                      itemBuilder: (context) {
+                        final checkColor = Theme.of(context).colorScheme.primary;
+                        return [
+                          PopupMenuItem(
+                            value: ContextProfile.general,
+                            child: Row(
+                              children: [
+                                const Icon(Icons.tune_rounded, size: 18),
+                                const SizedBox(width: 8),
+                                Text(l10n.get('profileGeneral')),
+                                if (currentProfile == ContextProfile.general) ...[
+                                  const Spacer(),
+                                  Icon(
+                                    Icons.check,
+                                    size: 16,
+                                    color: checkColor,
+                                  ),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
-                        ),
-                        PopupMenuItem(
-                          value: ContextProfile.office,
-                          child: Row(
-                            children: [
-                              const Icon(Icons.apartment_rounded, size: 18),
-                              const SizedBox(width: 8),
-                              Text(l10n.get('profileOffice')),
-                              if (currentProfile == ContextProfile.office) ...[
-                                const Spacer(),
-                                const Icon(
-                                  Icons.check,
-                                  size: 16,
-                                  color: Colors.teal,
-                                ),
+                          PopupMenuItem(
+                            value: ContextProfile.office,
+                            child: Row(
+                              children: [
+                                const Icon(Icons.apartment_rounded, size: 18),
+                                const SizedBox(width: 8),
+                                Text(l10n.get('profileOffice')),
+                                if (currentProfile == ContextProfile.office) ...[
+                                  const Spacer(),
+                                  Icon(
+                                    Icons.check,
+                                    size: 16,
+                                    color: checkColor,
+                                  ),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
-                        ),
-                        PopupMenuItem(
-                          value: ContextProfile.deepWork,
-                          child: Row(
-                            children: [
-                              const Icon(Icons.psychology_rounded, size: 18),
-                              const SizedBox(width: 8),
-                              Text(l10n.get('profileDeepWork')),
-                              if (currentProfile ==
-                                  ContextProfile.deepWork) ...[
-                                const Spacer(),
-                                const Icon(
-                                  Icons.check,
-                                  size: 16,
-                                  color: Colors.teal,
-                                ),
+                          PopupMenuItem(
+                            value: ContextProfile.deepWork,
+                            child: Row(
+                              children: [
+                                const Icon(Icons.psychology_rounded, size: 18),
+                                const SizedBox(width: 8),
+                                Text(l10n.get('profileDeepWork')),
+                                if (currentProfile ==
+                                    ContextProfile.deepWork) ...[
+                                  const Spacer(),
+                                  Icon(
+                                    Icons.check,
+                                    size: 16,
+                                    color: checkColor,
+                                  ),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
-                        ),
-                        PopupMenuItem(
-                          value: ContextProfile.home,
-                          child: Row(
-                            children: [
-                              const Icon(Icons.home_rounded, size: 18),
-                              const SizedBox(width: 8),
-                              Text(l10n.get('profileHome')),
-                              if (currentProfile == ContextProfile.home) ...[
-                                const Spacer(),
-                                const Icon(
-                                  Icons.check,
-                                  size: 16,
-                                  color: Colors.teal,
-                                ),
+                          PopupMenuItem(
+                            value: ContextProfile.home,
+                            child: Row(
+                              children: [
+                                const Icon(Icons.home_rounded, size: 18),
+                                const SizedBox(width: 8),
+                                Text(l10n.get('profileHome')),
+                                if (currentProfile == ContextProfile.home) ...[
+                                  const Spacer(),
+                                  Icon(
+                                    Icons.check,
+                                    size: 16,
+                                    color: checkColor,
+                                  ),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
-                        ),
-                        PopupMenuItem(
-                          value: ContextProfile.commute,
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.directions_subway_rounded,
-                                size: 18,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(l10n.get('profileCommute')),
-                              if (currentProfile == ContextProfile.commute) ...[
-                                const Spacer(),
+                          PopupMenuItem(
+                            value: ContextProfile.commute,
+                            child: Row(
+                              children: [
                                 const Icon(
-                                  Icons.check,
-                                  size: 16,
-                                  color: Colors.teal,
+                                  Icons.directions_subway_rounded,
+                                  size: 18,
                                 ),
+                                const SizedBox(width: 8),
+                                Text(l10n.get('profileCommute')),
+                                if (currentProfile ==
+                                    ContextProfile.commute) ...[
+                                  const Spacer(),
+                                  Icon(
+                                    Icons.check,
+                                    size: 16,
+                                    color: checkColor,
+                                  ),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ];
+                      },
                     ),
                     ValueListenableBuilder<DateTime>(
                       valueListenable: _noticeClock,

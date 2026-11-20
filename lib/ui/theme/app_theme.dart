@@ -57,6 +57,39 @@ abstract final class AppTheme {
           side: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.6)),
         ),
       ),
+      dialogTheme: DialogThemeData(
+        elevation: 0,
+        backgroundColor: colors.surfaceContainerHigh,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.7)),
+        ),
+      ),
+      popupMenuTheme: PopupMenuThemeData(
+        elevation: 3,
+        color: colors.surfaceContainer,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.7)),
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        side: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.75)),
+        selectedColor: colors.secondaryContainer,
+        backgroundColor: colors.surfaceContainerLow,
+        labelStyle: TextStyle(color: colors.onSurface),
+        secondaryLabelStyle: TextStyle(
+          color: colors.onSecondaryContainer,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
       dividerTheme: DividerThemeData(color: colors.outlineVariant),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,

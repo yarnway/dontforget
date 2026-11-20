@@ -2097,10 +2097,10 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                             Text(
                               l10n.get('noLinksYet'),
                               style: TextStyle(
-                                fontSize: 11,
-                                color: isDark
-                                    ? Colors.grey.shade500
-                                    : Colors.grey.shade400,
+                                fontSize: 12,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                             )
                           else
@@ -2163,10 +2163,10 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                             spacing: 6,
                             runSpacing: 6,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.near_me_outlined,
                                 size: 16,
-                                color: Colors.teal,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                               const SizedBox(width: 6),
                               Text(
@@ -2346,7 +2346,9 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                                 l10n.get('linkedInputRecord'),
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.grey.shade700,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                                 ),
                               ),
                             ),

@@ -254,10 +254,30 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
                         label:
                             '${l10n.get('pending')}: ${active.length + folded.length}',
                         excludeSemantics: true,
-                        child: Text(
-                          '${active.length + folded.length}',
-                          style: Theme.of(context).textTheme.labelMedium
-                              ?.copyWith(color: colors.onSurfaceVariant),
+                        child: Container(
+                          key: ValueKey('quadrant-count-${widget.level}'),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: (active.length + folded.length) > 0
+                                ? widget.bgColor.withValues(
+                                    alpha: isDark ? 0.22 : 0.12,
+                                  )
+                                : colors.surfaceContainer,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            '${active.length + folded.length}',
+                            style: Theme.of(context).textTheme.labelMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: (active.length + folded.length) > 0
+                                      ? colors.onSurface
+                                      : colors.onSurfaceVariant,
+                                ),
+                          ),
                         ),
                       ),
                     ],
@@ -268,22 +288,35 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
                     ? Center(
                         child: SingleChildScrollView(
                           child: Padding(
-                            padding: const EdgeInsets.all(8),
+                            padding: const EdgeInsets.all(12),
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(
-                                  _getEmptyStateIcon(),
-                                  size: 32,
-                                  color: colors.onSurfaceVariant,
+                                Container(
+                                  width: 52,
+                                  height: 52,
+                                  decoration: BoxDecoration(
+                                    color: widget.bgColor.withValues(
+                                      alpha: isDark ? 0.16 : 0.09,
+                                    ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    _getEmptyStateIcon(),
+                                    size: 26,
+                                    color: widget.bgColor.withValues(
+                                      alpha: isDark ? 0.85 : 0.78,
+                                    ),
+                                  ),
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 10),
                                 Text(
                                   l10n.get('emptyQ${widget.level}'),
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     color: colors.onSurfaceVariant,
                                     fontSize: 12,
+                                    height: 1.4,
                                   ),
                                 ),
                               ],

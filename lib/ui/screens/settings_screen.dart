@@ -1358,8 +1358,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             Text(
                               l10n.get('probeDesc'),
                               style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey.shade600,
+                                fontSize: 12,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                             ),
                             if (_probeResults != null) ...[
@@ -1373,19 +1375,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                       vertical: 8,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: isDark
-                                          ? Colors.white.withValues(alpha: 0.03)
-                                          : Colors.grey.shade50,
-                                      borderRadius: BorderRadius.circular(6),
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.surfaceContainerLowest,
+                                      borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
                                         color: ep.isAvailable
-                                            ? Colors.green.withValues(
-                                                alpha: 0.4,
-                                              )
-                                            : Colors.grey.withValues(
-                                                alpha: 0.2,
-                                              ),
-                                        width: 0.8,
+                                            ? Theme.of(context)
+                                                  .colorScheme
+                                                  .primary
+                                                  .withValues(alpha: 0.45)
+                                            : Theme.of(context)
+                                                  .colorScheme
+                                                  .outlineVariant,
+                                        width: 1,
                                       ),
                                     ),
                                     child: Row(
@@ -1396,8 +1399,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                               : Icons.radio_button_unchecked,
                                           size: 16,
                                           color: ep.isAvailable
-                                              ? Colors.green
-                                              : Colors.grey,
+                                              ? (isDark
+                                                    ? const Color(0xFF6DD58C)
+                                                    : const Color(0xFF146C2E))
+                                              : Theme.of(
+                                                  context,
+                                                ).colorScheme.onSurfaceVariant,
                                         ),
                                         const SizedBox(width: 8),
                                         Expanded(
@@ -1417,10 +1424,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                                     ? '${ep.recommendedModel} · ${ep.latencyMs}ms'
                                                     : '端口未监听',
                                                 style: TextStyle(
-                                                  fontSize: 10,
+                                                  fontSize: 11,
                                                   color: ep.isAvailable
-                                                      ? Colors.green.shade700
-                                                      : Colors.grey,
+                                                      ? (isDark
+                                                            ? const Color(
+                                                                0xFF6DD58C,
+                                                              )
+                                                            : const Color(
+                                                                0xFF146C2E,
+                                                              ))
+                                                      : Theme.of(context)
+                                                            .colorScheme
+                                                            .onSurfaceVariant,
                                                 ),
                                               ),
                                             ],
@@ -1499,26 +1514,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             Text(
                               l10n.get('lanSyncDesc'),
                               style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey.shade600,
+                                fontSize: 12,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                             ),
                             if (_isLanServerRunning) ...[
                               const SizedBox(height: 10),
                               Container(
-                                padding: const EdgeInsets.all(10),
+                                padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: isDark
-                                      ? Colors.blueGrey.shade900.withValues(
-                                          alpha: 0.3,
-                                        )
-                                      : Colors.blueGrey.shade50,
-                                  borderRadius: BorderRadius.circular(6),
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.surfaceContainer,
+                                  borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: Colors.blueGrey.withValues(
-                                      alpha: 0.3,
-                                    ),
-                                    width: 0.8,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outlineVariant,
+                                    width: 1,
                                   ),
                                 ),
                                 child: Column(
