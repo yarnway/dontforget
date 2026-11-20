@@ -79,7 +79,19 @@
     "after_snooze_notice_revision": 2,
     "secondary_15m_delivery_verified": true,
     "secondary_delivered_at": "2026-11-20T21:49:08",
-    "secondary_delivery_screenshot_sha256": "bc077016ef88d5dfa04f07700aacc972f6cb53359eca8348107f7d91ce242eed"
+    "secondary_delivery_screenshot_sha256": "bc077016ef88d5dfa04f07700aacc972f6cb53359eca8348107f7d91ce242eed",
+    "share_editor_wetype_ime": {
+      "share_save_button_disabled_while_composing": true,
+      "share_save_button_reenabled_after_commit": true,
+      "share_ime_saved_single_row": true,
+      "share_ime_saved_title": "SHARE_IME_测试",
+      "share_ime_trigger_time": null,
+      "baseline_restored_equal": true,
+      "screenshots_sha256": [
+        "2cc63fd050caf740bdac9591693fee402dbac4e9a888e681be1f2239f1bb85dc",
+        "84b9b41e2296cbe8708f258ef89bc4a2f3866dc440ad19dd773a8fe249e921d8"
+      ]
+    }
   },
   "stage48_pixel_real_attachment_cleanup": {
     "shared_img_bytes": 70,
