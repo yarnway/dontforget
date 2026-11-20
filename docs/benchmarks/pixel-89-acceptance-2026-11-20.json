@@ -1,0 +1,157 @@
+{
+  "timestamp_utc": "2026-11-20T13:53:01.489096+00:00",
+  "source_commit": "600f517466eabe59dee75f5b2c62a98562123bc1",
+  "docs_commit": "582c58bfb50433d92752d1ddcabd48e02ab950cc",
+  "version": "1.8.18+89",
+  "scope": "Full post-fix Flutter test suite + Pixel 8 Pro isolated QA (com.yarnway.dontforget.acceptance.sync20261118) Stage 47/48/49 real-device acceptance + Windows real Wi-Fi peer + iOS/Windows GUI boundary check",
+  "full_automated_suite": {
+    "command": "flutter test --no-pub --concurrency 2 --timeout 2m",
+    "flutter_sdk": "3.44.9",
+    "passed": 2686,
+    "skipped": 20,
+    "failed": 0
+  },
+  "qa_package_upgrade": {
+    "package": "com.yarnway.dontforget.acceptance.sync20261118",
+    "build_mode": "debug-arm64-isolated-worktree",
+    "signer_sha256": "4f8518351e90e3293ad293b74b009ad40949e871adf91614bb27ba1ba098eea9",
+    "apk_sha256": "751b3fa7fe0749a6248b7d7afb6c5875489178351075ab7df74507bc19cae0f4",
+    "apk_bytes": 96369699,
+    "version_before": "1.8.14+85",
+    "version_after": "1.8.18+89",
+    "backup_tar_sha256": "95baec6867f0461769ebcdfa88c4163a8d067196845d4a7adc413a2c424afbaf",
+    "backup_tar_bytes": 101600256,
+    "installed_matches_built": true,
+    "cold_reopen_pid": "19013",
+    "db_before": {
+      "user_version": 17,
+      "integrity_check": "ok",
+      "counts": {
+        "Reminders": 3,
+        "MediaRecords": 0,
+        "Settings": 1
+      },
+      "logical_sha256": "e4ab3901f5ccc51c4992a5dfa9913ad03d2850069c98eac320c638db6a7e437d"
+    },
+    "db_after": {
+      "user_version": 17,
+      "integrity_check": "ok",
+      "counts": {
+        "Reminders": 3,
+        "MediaRecords": 0,
+        "Settings": 1
+      },
+      "logical_sha256": "e4ab3901f5ccc51c4992a5dfa9913ad03d2850069c98eac320c638db6a7e437d"
+    },
+    "all_business_fields_equal": true,
+    "about_1_8_18_89_verified": true,
+    "about_screenshot_sha256": "c6b192cc46c30985155f1344dcc85e24812d86f7dbf31ec3b362df553f115b8b"
+  },
+  "stage47_pixel_ime_density_and_snooze": {
+    "default_ime": "com.tencent.wetype/.plugin.hld.WxHldService",
+    "wetype_pinyin_composition_verified": true,
+    "wetype_composing_screenshots_sha256": [
+      "e973b1ef08ecbb267180e15bcf60ca714c2ee2ea975420df5b4ff64067af5ece",
+      "8cd5bce7bd33e5c5b09245bda05f3a83f72e7d676558f097a1f123db73f2351d"
+    ],
+    "wetype_draft_survived_settings_roundtrip": true,
+    "wetype_draft_screenshot_sha256": "9b199bcf8162804d5f0cbd9cb9e0880b83f7d1f132973a43d75b0df96f8d3582",
+    "wetype_single_save_verified": true,
+    "wetype_saved_title": "测试内网",
+    "ui_density_font_scale_1_0_and_1_3_verified": true,
+    "font_scale_restored": "1.0",
+    "flutter_overflow_count": 0,
+    "flutter_error_count": 0,
+    "density_screenshots_sha256": [
+      "2aa5a1f14a005366df30c2c5c9883de5c9b3ee03427f3dfe5909b2a7e8a37f92",
+      "77f40cbdc9cb6cff84143258eaa5dbdebf839724f2cd7de1a6d53144bdc36eb6",
+      "6ec9ad5a3d579f5bf363ac3191dff470c843db960fa2efb625cc125f12f710fd"
+    ],
+    "advance_reminder_10m_chip_visible": true,
+    "scheduled_event_time": "2026-11-20T21:44:00.000",
+    "scheduled_trigger_time": "2026-11-20T21:34:00.000",
+    "first_delivery_background_verified": true,
+    "first_delivered_at": "2026-11-20T21:34:00",
+    "first_delivery_screenshot_sha256": "160331ceb468ee857d9bd30b543633f7bf2218d08128f0f30b460306b9fddf67",
+    "snooze_15m_action_tapped": true,
+    "after_snooze_snoozed_at": "2026-11-20T21:34:08.925856",
+    "after_snooze_trigger_time": "2026-11-20T21:49:08.661211",
+    "after_snooze_notice_revision": 2,
+    "secondary_15m_delivery_verified": true,
+    "secondary_delivered_at": "2026-11-20T21:49:08",
+    "secondary_delivery_screenshot_sha256": "bc077016ef88d5dfa04f07700aacc972f6cb53359eca8348107f7d91ce242eed"
+  },
+  "stage48_pixel_real_attachment_cleanup": {
+    "shared_img_bytes": 70,
+    "shared_img_sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+    "shared_img_imported_sha256_equal": true,
+    "shared_handoff_emptied": true,
+    "content_management_scanned_before": "4.28 KiB (1 eligible: 4.11 KiB)",
+    "content_management_scanned_after": "175 B (0 eligible: 0 B)",
+    "scanned_shows_orphan": true,
+    "scanned_shows_active_img": true,
+    "orphan_dir_removed": true,
+    "active_img_preserved_sha256_equal": true,
+    "screenshots_sha256": [
+      "b68f621318c5e9acbc37d17807d2558011d31a9e6a4fc972381c93f4e602648b",
+      "0605bb3a13968246742190e800c111f7fa22e5c484b26d192334fe50744340de",
+      "329b468892b00f1cd01829e767823addb1cb383680f94bf959b2f48fda7e774d"
+    ]
+  },
+  "stage49_real_wifi_lan_sync_and_cross_device_trash": {
+    "transport": "direct-wifi-192.168.50.0/24",
+    "usb_reverse_rules": "",
+    "usb_forward_rules": "",
+    "windows_peer_ip": "192.168.50.4",
+    "windows_peer_port": 13395,
+    "pixel_wifi_ip_advertised_192_168_50_158": true,
+    "bidirectional_attachments_verified": true,
+    "windows_received_pixel_png_sha256": "c414cd0e204de974f73753c7e28d7638e7b3691bb8b1a2bab6b25bb7fed7ce77",
+    "pixel_received_windows_txt_sha256_equal": true,
+    "cross_device_trash_move_diff_visible": true,
+    "cross_device_trash_move_adopted_on_pixel": true,
+    "cross_device_trash_restore_diff_visible": true,
+    "cross_device_trash_restore_adopted_on_pixel": true,
+    "converged_zero_differences": true,
+    "windows_peer_exit_code": 0,
+    "screenshots_sha256": [
+      "4254cd55bae6d957ea3538086ae84947ad1a660cbed68b3a9ee8b60091e62cdc",
+      "c59b898f6bda99201eb0ceb6943fb84a06b669b1c6746abb7d04c9f70e26b81c",
+      "e9ec5bb7c7b582025af925be71b7acab90ab0975f6e75a792703bc874a3cbb18",
+      "64497828254b3aea9f0b9050699789f4170df957b93a4cb35a05f7282d7ebf5c"
+    ]
+  },
+  "baseline_restore_and_invariants": {
+    "restored_cold_reopen_pid": "17145",
+    "db_restored": {
+      "user_version": 17,
+      "integrity_check": "ok",
+      "counts": {
+        "Reminders": 3,
+        "MediaRecords": 0,
+        "Settings": 1
+      },
+      "logical_sha256": "e4ab3901f5ccc51c4992a5dfa9913ad03d2850069c98eac320c638db6a7e437d"
+    },
+    "restored_matches_pre_test_baseline": true,
+    "ime_unchanged": true,
+    "font_scale_unchanged": true,
+    "siblings_untouched": true,
+    "returned_to_launcher": true
+  },
+  "not_performed_or_blocked": {
+    "windows_gui_tray_toast_ime": "BLOCKED_SESSION_UIA_ROOT_EMPTY",
+    "ios_device": [
+      "MACOS_BUILD_HOST_REQUIRED",
+      "FULL_XCODE_UNAVAILABLE",
+      "IPHONEOS_SDK_UNAVAILABLE",
+      "DEVICECTL_UNAVAILABLE",
+      "SIGNING_QUERY_UNAVAILABLE",
+      "NO_USB_DEVICE"
+    ],
+    "formal_distribution_packages_non_windows": "NOT_BUILT_LOCAL_ONLY",
+    "voice_84_duplicate_root_cause_and_screen_reader": "NOT_PERFORMED",
+    "windows_live_legacy_dir_manual_takeover": "READONLY_INSPECTED_ONLY",
+    "android_system_share_sheet_manual_file_pick_and_formal_pkg": "NOT_PERFORMED"
+  }
+}
