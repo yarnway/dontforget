@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/reminder.dart';
+import 'package:dont_forget/services/scheduled_task_reminder.dart';
 import 'package:dont_forget/models/media_record.dart';
 import 'package:dont_forget/models/agent_models.dart';
 import 'package:dont_forget/l10n/app_localizations.dart';
@@ -223,7 +224,8 @@ void main() {
         expect(saved.single['capture_proposal_json'], isNull);
         final raw = container!.read(remindersProvider).single;
         expect(raw.capturePending, isFalse);
-        expect(raw.triggerTime, raw.eventTime);
+        expect(raw.eventTime!.difference(raw.triggerTime!).inMinutes, 10);
+        expect(ScheduledTaskReminder.leadOf(raw), 10);
         expect(raw.timeOrigin, ReminderTimeOrigin.manual);
         expect(raw.details.history.last.action, 'capture_auto_applied');
         expect((await rows('Reminders')).single['task_title'], '检查报告');
@@ -481,9 +483,9 @@ void main() {
           '/old-container/Documents/media/import-saved/audio.m4a',
         );
         addTearDown(() async {
-        await drainWorkspaceDrafts(tester, container!);
-        await tester.pumpWidget(const SizedBox());
-      });
+          await drainWorkspaceDrafts(tester, container!);
+          await tester.pumpWidget(const SizedBox());
+        });
         await tester.pumpWidget(const SizedBox());
       },
     );

@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:dont_forget/data/database_helper.dart';
 import 'package:dont_forget/models/reminder.dart';
+import 'package:dont_forget/models/task_details.dart';
 import 'package:dont_forget/services/lan_sync_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -64,6 +65,79 @@ void main() {
       "CREATE TRIGGER reject_sync BEFORE INSERT ON Reminders WHEN NEW.id = 'blocked' "
       "BEGIN SELECT RAISE(ABORT, 'synthetic failure'); END",
     ),
+  );
+
+  test('peer address keeps the default and accepts the displayed port', () {
+    expect(LanSyncService.parsePeerAddress(' 192.168.1.50 '), (
+      host: '192.168.1.50',
+      port: LanSyncService.defaultPort,
+    ));
+    expect(LanSyncService.parsePeerAddress('192。168。1。50：45123'), (
+      host: '192.168.1.50',
+      port: 45123,
+    ));
+    expect(LanSyncService.parsePeerAddress('other-device.local:80'), (
+      host: 'other-device.local',
+      port: 80,
+    ));
+    expect(LanSyncService.parsePeerAddress('[::1]:45123'), (
+      host: '::1',
+      port: 45123,
+    ));
+    for (final invalid in [
+      '',
+      'http://192.168.1.50',
+      '192.168.1.50:0',
+      '192.168.1.50:65536',
+      '192.168.1.50:',
+      '192.168.1.50:bad',
+      '192.168.1.50/path',
+      'a@192.168.1.50',
+    ]) {
+      expect(LanSyncService.parsePeerAddress(invalid), isNull, reason: invalid);
+    }
+  });
+
+  test(
+    'an occupied default port falls back without stopping its owner',
+    () async {
+      final blocker = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      addTearDown(() => blocker.close(force: true));
+      blocker.listen((request) {
+        request.response.write('original listener');
+        request.response.close();
+      });
+      final server = LanSyncService.forTesting(preferredPort: blocker.port);
+      addTearDown(server.stopServer);
+      await expectLater(
+        server.startServer(port: blocker.port, dbHelper: helper),
+        throwsA(isA<SocketException>()),
+      );
+      expect(server.isRunning, isFalse);
+      final info = await server.startServer(dbHelper: helper);
+      expect(info.port, isNot(blocker.port));
+      expect(info.isRunning, isTrue);
+      final address = LanSyncService.parsePeerAddress(
+        '${info.ip}:${info.port}',
+      )!;
+      expect(
+        await service.syncWithPeer(
+          peerIp: address.host,
+          port: address.port,
+          pin: info.pin,
+          dbHelper: helper,
+        ),
+        isTrue,
+      );
+      final client = HttpClient();
+      addTearDown(() => client.close(force: true));
+      final request = await client.get('127.0.0.1', blocker.port, '/');
+      final response = await request.close();
+      expect(
+        await response.transform(utf8.decoder).join(),
+        'original listener',
+      );
+    },
   );
 
   Future<({int status, Map<String, dynamic> data})> post(
@@ -190,6 +264,76 @@ void main() {
     expect((await rows()).map((r) => r['id']), ['baseline']);
     expect(callbacks, 0);
   });
+
+  test(
+    'two peers report divergent titles, notes and trash status while preserving each edit',
+    () async {
+      final remoteDirectory = await directory.createTemp('remote-');
+      final remoteDb = _ObservedDatabase(remoteDirectory.path);
+      final remote = LanSyncService.forTesting();
+      addTearDown(() async {
+        await remote.stopServer();
+        await remoteDb.close();
+      });
+      final deleted = TaskDetails(deletedAt: DateTime(2030)).encode();
+      final local = [
+        reminder('content').copyWith(taskTitle: 'Local title'),
+        reminder('notes').copyWith(taskSummary: 'Local note'),
+        reminder('trash').copyWith(detailsJson: deleted),
+        reminder('completion'),
+      ];
+      final remoteRows = [
+        reminder(
+          'content',
+        ).copyWith(taskTitle: 'Peer title', taskSummary: 'Peer note'),
+        reminder('notes').copyWith(taskSummary: 'Peer note'),
+        reminder('trash'),
+        reminder('completion', completed: true),
+        reminder('new'),
+      ];
+      await seed(local);
+      await remoteDb.writeTransaction(remoteDb.captureGeneration(), (tx) async {
+        for (final task in remoteRows) {
+          await tx.insert('Reminders', task.toJson());
+        }
+      });
+      final server = await remote.startServer(port: 0, dbHelper: remoteDb);
+      List<LanSyncConflict>? conflicts;
+      expect(
+        await service.syncWithPeer(
+          peerIp: server.ip,
+          port: server.port,
+          pin: server.pin,
+          dbHelper: helper,
+          onConflicts: (result) => conflicts = result,
+        ),
+        isTrue,
+      );
+      final byId = {
+        for (final conflict in conflicts!) conflict.taskId: conflict,
+      };
+      expect(byId.keys, unorderedEquals(['content', 'notes', 'trash']));
+      expect(byId['content']!.local.title, 'Local title');
+      expect(byId['content']!.peer.title, 'Peer title');
+      expect(byId['notes']!.local.note, 'Local note');
+      expect(byId['notes']!.peer.note, 'Peer note');
+      expect(byId['trash']!.local.inTrash, isTrue);
+      expect(byId['trash']!.peer.inTrash, isFalse);
+      final localById = {
+        for (final row in await rows()) row['id']: Reminder.fromJson(row),
+      };
+      expect(localById['content']!.taskTitle, 'Local title');
+      expect(localById['notes']!.taskSummary, 'Local note');
+      expect(localById['trash']!.details.deletedAt, isNotNull);
+      expect(localById['completion']!.isCompleted, isTrue);
+      expect(localById['new'], isNotNull);
+      final after = await remoteDb.read(
+        remoteDb.captureGeneration(),
+        (db) => db.query('Reminders'),
+      );
+      expect(after, unorderedEquals(remoteRows.map((task) => task.toJson())));
+    },
+  );
 
   test(
     'maintenance rejects server requests and client admission without callbacks',
@@ -325,6 +469,38 @@ void main() {
       }
     },
   );
+
+  test('client only reports success for a complete sync response', () async {
+    final remote = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    peers.add(remote);
+    final responses = [
+      {'status': 'success'},
+      {
+        'status': 'error',
+        'reminders': [reminder('ignored').toJson()],
+      },
+      {'status': 'success', 'reminders': []},
+    ].iterator;
+    remote.listen((request) async {
+      await request.drain<void>();
+      responses.moveNext();
+      request.response.write(jsonEncode(responses.current));
+      await request.response.close();
+    });
+    var callbacks = 0;
+    Future<bool> sync() => service.syncWithPeer(
+      peerIp: '127.0.0.1',
+      port: remote.port,
+      pin: '123456',
+      dbHelper: helper,
+      onDataChanged: () => callbacks++,
+    );
+    expect(await sync(), isFalse);
+    expect(await sync(), isFalse);
+    expect(await sync(), isTrue);
+    expect(callbacks, 1);
+    expect(await rows(), isEmpty);
+  });
 
   test('client merge failure is atomic and a later sync can retry', () async {
     await seed([reminder('baseline')]);

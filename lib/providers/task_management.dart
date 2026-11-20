@@ -224,9 +224,15 @@ extension TaskManagement on RemindersNotifier {
   Future<ReminderActionResult> _lifecycleResult(
     Reminder expected,
     String action,
-    DataGeneration generation,
-  ) async {
-    final result = await changeLifecycle(expected, action, generation);
+    DataGeneration generation, {
+    bool ordinaryOnly = false,
+  }) async {
+    final result = await _changeLifecycles(
+      [expected],
+      action,
+      generation,
+      ordinaryOnly: ordinaryOnly,
+    );
     final rows = await _dbHelper.read(
       generation,
       (db) => db.query('Reminders', where: 'id = ?', whereArgs: [expected.id]),
@@ -236,6 +242,26 @@ extension TaskManagement on RemindersNotifier {
       reminder: Reminder.fromJson(rows.single),
       nativeSyncFailed: result.nativeSyncFailures > 0,
     );
+  }
+
+  Future<ReminderActionResult> adoptLanSyncTrash(
+    LanSyncConflict conflict,
+    Reminder expected,
+    DataGeneration generation,
+  ) async {
+    if (!conflict.canAdoptTrash(expected)) {
+      return const ReminderActionResult(ReminderActionDisposition.stale);
+    }
+    try {
+      return await _lifecycleResult(
+        expected,
+        conflict.peer.inTrash ? 'trash' : 'restore',
+        generation,
+        ordinaryOnly: true,
+      );
+    } on StaleReminderOccurrenceException {
+      return const ReminderActionResult(ReminderActionDisposition.stale);
+    }
   }
 
   Future<ReminderActionResult> markNotTaken(

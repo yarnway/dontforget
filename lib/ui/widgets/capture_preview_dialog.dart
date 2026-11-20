@@ -1,5 +1,6 @@
 import '../../data/database_helper.dart';
 import '../../services/recovery/runtime_gate.dart';
+import '../../services/scheduled_task_reminder.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -64,10 +65,18 @@ class _CapturePreviewDialogState extends ConsumerState<CapturePreviewDialog> {
               )
               .toList();
       if (widget.task.triggerTime != null) {
+        final details = _items[0].details;
+        final marked = ScheduledTaskReminder.withLead(
+          details,
+          ScheduledTaskReminder.leadOf(widget.task),
+        );
         _items[0] = _items[0].copyWith(
           triggerTime: widget.task.triggerTime,
           timeOrigin: widget.task.timeOrigin,
           eventTime: widget.task.eventTime ?? _items[0].eventTime,
+          detailsJson: identical(marked, details)
+              ? _items[0].detailsJson
+              : marked.encode(),
         );
       }
       _selected.addAll(List.filled(_items.length, true));
@@ -102,13 +111,39 @@ class _CapturePreviewDialogState extends ConsumerState<CapturePreviewDialog> {
       time.hour,
       time.minute,
     );
-    setState(
-      () => _items[index] = event
-          ? _items[index].copyWith(eventTime: value)
-          : _items[index].copyWith(
-              triggerTime: value,
-              timeOrigin: ReminderTimeOrigin.manual,
-            ),
+    setState(() => _changeTime(index, event, value));
+  }
+
+  void _changeTime(int index, bool event, DateTime? value) {
+    final item = _items[index];
+    var lead = ScheduledTaskReminder.leadOf(item);
+    var trigger = item.triggerTime;
+    if (!event) {
+      trigger = value;
+      lead = null;
+    } else if (ScheduledTaskReminder.canSetLead(item) &&
+        (lead != null || (value != null && trigger == null))) {
+      lead ??= ScheduledTaskReminder.defaultLeadMinutes;
+      trigger = ScheduledTaskReminder.timeFor(
+        value,
+        DateTime.now(),
+        lead: lead,
+      );
+      if (trigger == null) lead = null;
+    }
+    final details = item.details;
+    final marked = ScheduledTaskReminder.withLead(details, lead);
+    _items[index] = item.copyWith(
+      eventTime: event ? value : item.eventTime,
+      triggerTime: trigger,
+      timeOrigin: trigger == null
+          ? ReminderTimeOrigin.unknown
+          : !event || trigger != item.triggerTime
+          ? ReminderTimeOrigin.manual
+          : item.timeOrigin,
+      detailsJson: identical(marked, details)
+          ? item.detailsJson
+          : marked.encode(),
     );
   }
 
@@ -248,15 +283,7 @@ class _CapturePreviewDialogState extends ConsumerState<CapturePreviewDialog> {
                                 onPressed: _saving
                                     ? null
                                     : () => setState(
-                                        () => _items[i] = event
-                                            ? _items[i].copyWith(
-                                                eventTime: null,
-                                              )
-                                            : _items[i].copyWith(
-                                                triggerTime: null,
-                                                timeOrigin:
-                                                    ReminderTimeOrigin.unknown,
-                                              ),
+                                        () => _changeTime(i, event, null),
                                       ),
                               ),
                             ),

@@ -10,6 +10,7 @@ import 'package:dont_forget/providers/providers.dart';
 import 'package:dont_forget/services/capture_automation_policy.dart';
 import 'package:dont_forget/services/llm_service.dart';
 import 'package:dont_forget/services/quick_reminder_parser.dart';
+import 'package:dont_forget/services/scheduled_task_reminder.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/services.dart';
 import 'support/offline_management_harness.dart';
@@ -63,6 +64,17 @@ class _Adapter implements HttpClientAdapter {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   final reference = DateTime(2030, 1, 7, 8);
+  test('default reminder uses the closest available supported lead', () {
+    DateTime? reminderFor(int minutes) => ScheduledTaskReminder.defaultTime(
+      reference.add(Duration(minutes: minutes)),
+      reference,
+    );
+    expect(reminderFor(30), reference.add(const Duration(minutes: 20)));
+    expect(reminderFor(7), reference.add(const Duration(minutes: 2)));
+    expect(reminderFor(4), reference.add(const Duration(minutes: 4)));
+    expect(reminderFor(0), isNull);
+    expect(ScheduledTaskReminder.defaultTime(null, reference), isNull);
+  });
   Reminder baseline(
     String source, {
     DateTime? event,
@@ -141,7 +153,7 @@ void main() {
       item('开会', event: DateTime(2030, 1, 8, 9)),
     ])!;
     expect(values.map((e) => e.taskTitle), ['开会', '交报告']);
-    expect(values.last.triggerTime, DateTime(2030, 1, 8, 15));
+    expect(values.last.triggerTime, DateTime(2030, 1, 8, 14, 50));
   });
   test(
     'ambiguous questions model omissions and invented dates remain proposals',
@@ -192,7 +204,7 @@ void main() {
         resolve(baseline('2030-01-09 14:00开会'), [
           item('开会', event: DateTime(2030, 1, 9, 14)),
         ])!.single.triggerTime,
-        DateTime(2030, 1, 9, 14),
+        DateTime(2030, 1, 9, 13, 50),
       );
       expect(
         resolve(baseline('2030-02-31 14:00开会'), [
@@ -497,6 +509,28 @@ void main() {
         expect(await h.rows(), hasLength(1));
       },
     );
+    test('a scheduled capture submits one alarm before the event', () async {
+      final home = h.container.read(homeControllerProvider.notifier);
+      expect(await home.processText('明天9点开会', captureId: 'meeting'), isTrue);
+      final meeting = await h.row('meeting');
+      expect(meeting.eventTime!.difference(meeting.triggerTime!).inMinutes, 10);
+      expect(ScheduledTaskReminder.leadOf(meeting), 10);
+      expect(h.notifications.scheduled, ['meeting']);
+
+      final manual = DateTime.now().add(const Duration(hours: 2));
+      expect(
+        await home.processText(
+          '明天9点交材料',
+          captureId: 'manual',
+          reminderTime: manual,
+        ),
+        isTrue,
+      );
+      final manualRow = await h.row('manual');
+      expect(manualRow.triggerTime, manual);
+      expect(ScheduledTaskReminder.leadOf(manualRow), isNull);
+      expect(h.notifications.scheduled, ['meeting', 'manual']);
+    });
     test(
       'ambiguous live time stays unscheduled until review and memo-only never calls AI',
       () async {
@@ -520,6 +554,7 @@ void main() {
         await home.processText('明天9点开会', captureId: 'memo', memoOnly: true);
         expect(model.requests, hasLength(1));
         expect((await h.row('memo')).triggerTime, isNull);
+        expect((await h.row('memo')).eventTime, isNull);
       },
     );
   });

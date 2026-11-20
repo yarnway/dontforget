@@ -274,12 +274,7 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
                           ),
                   ),
                   SizedBox(height: constraints.maxHeight < 320 ? 6 : 12),
-                  Expanded(
-                    child: panel(
-                      selection,
-                      showHeader: constraints.maxHeight >= 200,
-                    ),
-                  ),
+                  Expanded(child: panel(selection, showHeader: false)),
                 ],
               ),
             ),

@@ -76,7 +76,9 @@ class LocalMediaStore {
         sourcePath,
       ).copy(path.join(destination.path, path.basename(sourcePath)));
       // Preserve even a user file whose name equals our optional marker.
-      if (path.basename(sourcePath) != OwnedMaterialActivity.markerName) {
+      if (!await File(
+        path.join(destination.path, OwnedMaterialActivity.markerName),
+      ).exists()) {
         await OwnedMaterialActivity.mark(destination, 'original');
       }
       return copied.path;

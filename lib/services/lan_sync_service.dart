@@ -8,6 +8,7 @@ import '../data/database_helper.dart';
 import '../models/reminder.dart';
 import '../models/medication_plan.dart';
 import '../models/departure_plan.dart';
+import '../models/ordinary_series.dart';
 
 class LanSyncServerInfo {
   final bool isRunning;
@@ -23,14 +24,64 @@ class LanSyncServerInfo {
   });
 }
 
+typedef LanSyncPeerAddress = ({String host, int port});
+
+typedef LanSyncTaskContent = ({String title, String note, bool inTrash});
+
+class LanSyncConflict {
+  const LanSyncConflict({
+    required this.taskId,
+    required this.local,
+    required this.peer,
+  });
+
+  final String taskId;
+  final LanSyncTaskContent local, peer;
+
+  bool canAdoptText(Reminder reminder) =>
+      reminder.id == taskId &&
+      reminder.isVisible &&
+      !reminder.capturePending &&
+      reminder.details.kind == 'task' &&
+      !OrdinarySeries.isOwner(reminder) &&
+      !OrdinarySeries.isOccurrence(reminder) &&
+      contentOf(reminder) == local &&
+      (peer.title == local.title || peer.title.trim().isNotEmpty) &&
+      (local.title != peer.title || local.note != peer.note);
+
+  bool canAdoptTrash(Reminder reminder) =>
+      local.inTrash != peer.inTrash &&
+      reminder.id == taskId &&
+      !reminder.capturePending &&
+      !reminder.isRecurring &&
+      reminder.details.kind == 'task' &&
+      reminder.details.planId == null &&
+      reminder.details.archivedAt == null &&
+      !OrdinarySeries.isOwner(reminder) &&
+      !OrdinarySeries.isOccurrence(reminder) &&
+      contentOf(reminder) == local;
+
+  static LanSyncTaskContent contentOf(Reminder reminder) => (
+    title: reminder.taskTitle,
+    note: reminder.taskSummary ?? '',
+    inTrash: reminder.details.deletedAt != null,
+  );
+}
+
 class LanSyncService {
-  static final LanSyncService instance = LanSyncService._internal();
-  LanSyncService._internal() : _bindAddress = InternetAddress.anyIPv4;
+  static const defaultPort = 42888;
+  static final LanSyncService instance = LanSyncService._internal(
+    InternetAddress.anyIPv4,
+    defaultPort,
+  );
+  LanSyncService._internal(this._bindAddress, this._preferredPort);
 
   @visibleForTesting
-  LanSyncService.forTesting() : _bindAddress = InternetAddress.loopbackIPv4;
+  LanSyncService.forTesting({int preferredPort = defaultPort})
+    : this._internal(InternetAddress.loopbackIPv4, preferredPort);
 
   final InternetAddress _bindAddress;
+  final int _preferredPort;
   HttpServer? _server;
   HttpServer? _closingServer;
   Future<LanSyncServerInfo>? _starting;
@@ -85,7 +136,7 @@ class LanSyncService {
   }
 
   String _currentPin = '';
-  int _serverPort = 42888;
+  int _serverPort = defaultPort;
   String _localIp = '127.0.0.1';
 
   bool get isRunning => _server != null;
@@ -119,12 +170,12 @@ class LanSyncService {
   }
 
   String _generatePin() {
-    final rand = Random();
+    final rand = Random.secure();
     return (100000 + rand.nextInt(900000)).toString();
   }
 
   Future<LanSyncServerInfo> startServer({
-    int port = 42888,
+    int? port,
     required DatabaseHelper dbHelper,
     VoidCallback? onDataChanged,
   }) async {
@@ -156,7 +207,7 @@ class LanSyncService {
   );
 
   Future<LanSyncServerInfo> _startServer(
-    int port,
+    int? port,
     DatabaseHelper dbHelper,
     VoidCallback? onDataChanged,
     int epoch,
@@ -172,7 +223,7 @@ class LanSyncService {
 
     try {
       _checkRuntime(epoch);
-      final server = await HttpServer.bind(_bindAddress, port);
+      final server = await _bindServer(port, epoch);
       if (_recoveryPaused || epoch != _recoveryEpoch) {
         await server.close(force: true);
         _checkRuntime(epoch);
@@ -192,6 +243,43 @@ class LanSyncService {
       _currentPin = '';
       rethrow;
     }
+  }
+
+  Future<HttpServer> _bindServer(int? port, int epoch) async {
+    try {
+      return await HttpServer.bind(_bindAddress, port ?? _preferredPort);
+    } on SocketException {
+      if (port != null) rethrow;
+      // Let the OS assign a port when the preferred port cannot be opened.
+      _checkRuntime(epoch);
+      return HttpServer.bind(_bindAddress, 0);
+    }
+  }
+
+  static LanSyncPeerAddress? parsePeerAddress(String input) {
+    final value = input
+        .trim()
+        .replaceAll(RegExp('[。．]'), '.')
+        .replaceAll('：', ':');
+    final numeric = InternetAddress.tryParse(value);
+    if (numeric != null) return (host: numeric.address, port: defaultPort);
+    if (value.isEmpty ||
+        value.endsWith(':') ||
+        RegExp(r'\s|[/\\?#@%]').hasMatch(value)) {
+      return null;
+    }
+    final uri = Uri.tryParse('http://$value');
+    if (uri == null || uri.host.isEmpty) return null;
+    final host = uri.host;
+    if (InternetAddress.tryParse(host) == null &&
+        !RegExp(r'^[A-Za-z0-9][A-Za-z0-9_.-]*$').hasMatch(host)) {
+      return null;
+    }
+    final suffix = RegExp(r':([0-9]+)$').firstMatch(value)?.group(1);
+    final port = suffix == null ? defaultPort : int.tryParse(suffix);
+    return port != null && port > 0 && port <= 65535
+        ? (host: host, port: port)
+        : null;
   }
 
   Future<void> _handleRequest(
@@ -323,10 +411,11 @@ class LanSyncService {
 
   Future<bool> syncWithPeer({
     required String peerIp,
-    int port = 42888,
+    int port = defaultPort,
     required String pin,
     required DatabaseHelper dbHelper,
     VoidCallback? onDataChanged,
+    ValueChanged<List<LanSyncConflict>>? onConflicts,
   }) {
     final epoch = _recoveryEpoch;
     if (_recoveryPaused) return Future.value(false);
@@ -336,6 +425,7 @@ class LanSyncService {
       pin,
       dbHelper,
       onDataChanged,
+      onConflicts,
       epoch,
     );
     _syncs.add(syncing);
@@ -349,6 +439,7 @@ class LanSyncService {
     String pin,
     DatabaseHelper dbHelper,
     VoidCallback? onDataChanged,
+    ValueChanged<List<LanSyncConflict>>? onConflicts,
     int epoch,
   ) async {
     HttpClient? client;
@@ -382,16 +473,26 @@ class LanSyncService {
             .timeout(const Duration(seconds: 30));
         dbHelper.checkGeneration(generation);
         _checkRuntime(epoch);
-        final peerReminders = _reminders(_decode(respStr));
+        final data = _decode(respStr);
+        if (data['status'] != 'success') return false;
+        final peerReminders = _reminders(data);
+        final conflicts = <String, LanSyncConflict>{};
         // The network exchange holds no database scope. Only this short atomic
         // merge re-enters storage, using the original pre-network generation.
         await dbHelper.writeTransaction(
           generation,
-          (transaction) => _merge(transaction, peerReminders),
+          (transaction) => _merge(
+            transaction,
+            peerReminders,
+            conflicts: onConflicts == null ? null : conflicts,
+          ),
         );
         dbHelper.checkGeneration(generation);
         _checkRuntime(epoch);
         _notify(onDataChanged);
+        if (onConflicts != null) {
+          _notify(() => onConflicts(List.unmodifiable(conflicts.values)));
+        }
         return true;
       } else {
         return false;
@@ -414,7 +515,7 @@ class LanSyncService {
 
   static List<Reminder> _reminders(Map<String, dynamic> data) {
     try {
-      return (data['reminders'] as List? ?? []).map((row) {
+      return (data['reminders'] as List).map((row) {
         final reminder = Reminder.fromJson(row as Map<String, dynamic>);
         final details = reminder.details;
         if (details.kind == 'medicationPlan') {
@@ -431,8 +532,9 @@ class LanSyncService {
 
   static Future<void> _merge(
     DatabaseExecutor db,
-    List<Reminder> incoming,
-  ) async {
+    List<Reminder> incoming, {
+    Map<String, LanSyncConflict>? conflicts,
+  }) async {
     for (final reminder in incoming) {
       final existing = await db.query(
         'Reminders',
@@ -452,10 +554,26 @@ class LanSyncService {
               )
               .toJson(),
         );
-      } else if (existing.first['is_completed'] != 1 && reminder.isCompleted) {
+        continue;
+      }
+      final stored = existing.single;
+      final completes = stored['is_completed'] != 1 && reminder.isCompleted;
+      if (conflicts == null && !completes) continue;
+      final current = Reminder.fromJson(stored);
+      if (conflicts != null) {
+        final local = LanSyncConflict.contentOf(current);
+        final peer = LanSyncConflict.contentOf(reminder);
+        if (local != peer) {
+          conflicts[reminder.id] = LanSyncConflict(
+            taskId: reminder.id,
+            local: local,
+            peer: peer,
+          );
+        }
+      }
+      if (completes) {
         // Completion wins, but stale peer fields must not overwrite this
         // device's newer title, snooze time, or locally assigned revision.
-        final current = Reminder.fromJson(existing.single);
         await db.update(
           'Reminders',
           current

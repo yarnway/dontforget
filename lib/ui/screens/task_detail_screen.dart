@@ -21,6 +21,7 @@ import '../../providers/providers.dart';
 import '../../services/context_trigger_service.dart';
 import '../../services/notification_permission_service.dart';
 import '../../services/notification_schedule_reader.dart';
+import '../../services/scheduled_task_reminder.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/planning_strings.dart';
 import '../../l10n/routine_policy_strings.dart';
@@ -60,6 +61,7 @@ typedef _DetailDraft = ({
   bool promoted,
   DateTime? time,
   DateTime? eventTime,
+  int? reminderLead,
   bool acceptedSuggestion,
   String recurrence,
   bool completed,
@@ -81,6 +83,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
   late int _originalQuadrant;
   late bool _isDynamicallyPromoted;
   late DateTime? _selectedTime;
+  int? _reminderLead;
   bool _acceptedSuggestion = false;
   late DateTime? _eventTime;
   late String _selectedRecurrenceRule;
@@ -153,6 +156,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
     _originalQuadrant = widget.task.originalQuadrantLevel;
     _isDynamicallyPromoted = widget.task.isDynamicallyPromoted;
     _selectedTime = widget.task.triggerTime;
+    _reminderLead = ScheduledTaskReminder.leadOf(widget.task);
     _statusReference = widget.task;
     _eventTime = widget.task.eventTime;
     _selectedRecurrenceRule =
@@ -315,6 +319,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
     promoted: _isDynamicallyPromoted,
     time: _selectedTime,
     eventTime: _eventTime,
+    reminderLead: _reminderLead,
     acceptedSuggestion: _acceptedSuggestion,
     recurrence: _selectedRecurrenceRule,
     completed: _isCompleted,
@@ -444,11 +449,20 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
     final summary = _summaryController.text.trim();
 
     final baseline = widget.task;
+    final leadChanged = submittedDraft.reminderLead != _savedDraft.reminderLead;
+    final alarmChanged = submittedDraft.time != _savedDraft.time;
+    final eventChanged = submittedDraft.eventTime != _savedDraft.eventTime;
+    final updateTimeOrigin = alarmChanged || _acceptedSuggestion || leadChanged;
     final current = ref
         .read(remindersProvider)
         .where((task) => task.id == baseline.id)
         .firstOrNull;
-    if (current == null) {
+    if (current == null ||
+        ((leadChanged ||
+                (submittedDraft.reminderLead != null && eventChanged)) &&
+            (current.eventTime != _statusReference.eventTime ||
+                current.occurrenceIdentity !=
+                    _statusReference.occurrenceIdentity))) {
       InlineFeedback.of(
         context,
       ).showSnackBar(SnackBar(content: Text(l10n.get('reminderUpdateFailed'))));
@@ -488,21 +502,16 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
           _isDynamicallyPromoted != baseline.isDynamicallyPromoted
           ? _isDynamicallyPromoted
           : current.isDynamicallyPromoted,
-      triggerTime: _selectedTime != baseline.triggerTime
-          ? _selectedTime
-          : current.triggerTime,
-      timeOrigin: _selectedTime != baseline.triggerTime || _acceptedSuggestion
+      triggerTime: alarmChanged ? _selectedTime : current.triggerTime,
+      timeOrigin: updateTimeOrigin
           ? (_selectedTime == null
                 ? ReminderTimeOrigin.unknown
                 : _acceptedSuggestion
                 ? ReminderTimeOrigin.aiSuggested
                 : ReminderTimeOrigin.manual)
           : current.timeOrigin,
-      eventTime: _eventTime != baseline.eventTime
-          ? _eventTime
-          : current.eventTime,
-      suggestedTriggerTime:
-          _selectedTime != baseline.triggerTime || _acceptedSuggestion
+      eventTime: eventChanged ? _eventTime : current.eventTime,
+      suggestedTriggerTime: updateTimeOrigin
           ? null
           : current.suggestedTriggerTime,
       isCompleted: _isCompleted != baseline.isCompleted
@@ -562,6 +571,15 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
           );
         }
         gate.check(_editorToken);
+        if (leadChanged || alarmChanged || eventChanged) {
+          final details = ScheduledTaskReminder.withLead(
+            saveBaseline.details,
+            submittedDraft.reminderLead,
+          );
+          if (!identical(details, saveBaseline.details)) {
+            saveTask = saveTask.copyWith(detailsJson: details.encode());
+          }
+        }
         final saved = await notifier.updateReminder(
           saveTask,
           baseline: saveBaseline,
@@ -722,30 +740,76 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
             pickedTime.minute,
           );
           if (event) {
-            _eventTime = selected;
+            _setEventTime(selected);
           } else {
-            _selectedTime = selected;
-            _acceptedSuggestion = false;
+            _setAlarmTime(selected);
           }
         });
       }
     }
   }
 
+  bool get _canChooseAdvanceReminder =>
+      ScheduledTaskReminder.canSetLead(widget.task);
+
+  void _setEventTime(DateTime? time) {
+    _eventTime = time;
+    if (_canChooseAdvanceReminder &&
+        (_reminderLead != null || (time != null && _selectedTime == null))) {
+      final lead = _reminderLead ?? ScheduledTaskReminder.defaultLeadMinutes;
+      final trigger = ScheduledTaskReminder.timeFor(
+        time,
+        DateTime.now(),
+        lead: lead,
+      );
+      _setAlarmTime(trigger, lead: trigger == null ? null : lead);
+    }
+  }
+
+  void _setAlarmTime(DateTime? time, {int? lead, bool suggested = false}) {
+    _selectedTime = time;
+    _reminderLead = lead;
+    _acceptedSuggestion = suggested;
+  }
+
+  Widget _buildAdvanceReminderChoices(DateTime event, AppLocalizations l10n) {
+    return ForegroundTimeBuilder(
+      boundary: event,
+      builder: (context, now) => Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        children: [
+          for (final minutes in ScheduledTaskReminder.leadMinutes)
+            ChoiceChip(
+              label: Text(
+                l10n
+                    .get('reminderBeforeEventMinutes')
+                    .replaceAll('{minutes}', '$minutes'),
+              ),
+              selected: _reminderLead == minutes,
+              onSelected:
+                  _isMutating ||
+                      !event.subtract(Duration(minutes: minutes)).isAfter(now)
+                  ? null
+                  : (_) {
+                      final time = event.subtract(Duration(minutes: minutes));
+                      if (!time.isAfter(DateTime.now())) return;
+                      setState(() => _setAlarmTime(time, lead: minutes));
+                    },
+            ),
+        ],
+      ),
+    );
+  }
+
   void _applyQuickTime(Duration offset) {
-    setState(() {
-      _selectedTime = DateTime.now().add(offset);
-      _acceptedSuggestion = false;
-    });
+    setState(() => _setAlarmTime(DateTime.now().add(offset)));
   }
 
   void _applyFixedHour(int hour, {bool tomorrow = false}) {
     final now = DateTime.now();
     final target = nextReminderClockTime(now, hour, tomorrow: tomorrow);
-    setState(() {
-      _selectedTime = target;
-      _acceptedSuggestion = false;
-    });
+    setState(() => _setAlarmTime(target));
   }
 
   Color _getCategoryColor(int level) {
@@ -1591,9 +1655,11 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                               icon: const Icon(Icons.clear),
                               onPressed: _isMutating
                                   ? null
-                                  : () => setState(() => _eventTime = null),
+                                  : () => setState(() => _setEventTime(null)),
                             ),
                     ),
+                    if (_canChooseAdvanceReminder && _eventTime != null)
+                      _buildAdvanceReminderChoices(_eventTime!, l10n),
                     if (widget.task.usableSuggestedTriggerTime != null)
                       TextButton(
                         onPressed:
@@ -1601,11 +1667,12 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                                 !widget.task.usableSuggestedTriggerTime!
                                     .isAfter(DateTime.now())
                             ? null
-                            : () => setState(() {
-                                _selectedTime =
-                                    widget.task.usableSuggestedTriggerTime;
-                                _acceptedSuggestion = true;
-                              }),
+                            : () => setState(
+                                () => _setAlarmTime(
+                                  widget.task.usableSuggestedTriggerTime,
+                                  suggested: true,
+                                ),
+                              ),
                         child: Text(
                           '${l10n.get('adoptSuggestion')}: ${formatLocalDateTime(widget.task.usableSuggestedTriggerTime!)}',
                         ),
@@ -1673,10 +1740,8 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                                   splashRadius: 14,
                                   padding: EdgeInsets.zero,
                                   constraints: const BoxConstraints(),
-                                  onPressed: () => setState(() {
-                                    _selectedTime = null;
-                                    _acceptedSuggestion = false;
-                                  }),
+                                  onPressed: () =>
+                                      setState(() => _setAlarmTime(null)),
                                 ),
                               ],
                             ],

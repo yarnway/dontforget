@@ -1489,10 +1489,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       }
     });
 
-    final statusColor = isProcessing
-        ? const Color(0xFF00E5FF)
-        : const Color(0xFF00E676);
-
     return KeyboardListener(
       focusNode: _shortcutFocus,
       autofocus: true,
@@ -1533,6 +1529,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 : Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      const Image(
+                        image: AssetImage('assets/app_icon.png'),
+                        width: 26,
+                        height: 26,
+                        excludeFromSemantics: true,
+                      ),
+                      const SizedBox(width: 7),
                       Flexible(
                         child: Text(
                           l10n.get('appTitle'),
@@ -1545,13 +1548,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Tooltip(
-                        message: isProcessing
-                            ? l10n.get('statusBusy')
-                            : l10n.get('statusReady'),
-                        child: Icon(Icons.circle, size: 7, color: statusColor),
-                      ),
+                      if (isProcessing) ...[
+                        const SizedBox(width: 8),
+                        Semantics(
+                          liveRegion: true,
+                          child: Icon(
+                            Icons.circle,
+                            size: 7,
+                            color: Theme.of(context).colorScheme.primary,
+                            semanticLabel: l10n.get('statusBusy'),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
             elevation: 0,

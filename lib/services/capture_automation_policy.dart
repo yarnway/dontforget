@@ -1,5 +1,6 @@
 import '../models/reminder.dart';
 import 'quick_reminder_parser.dart';
+import 'scheduled_task_reminder.dart';
 
 /// Automatic application uses grounded intent and independently readable times.
 /// Model-suggested preparation time remains a suggestion, not a new alarm.
@@ -152,14 +153,27 @@ class CaptureAutomationPolicy {
         return null;
       }
       final event = i == 0 ? baseline.eventTime ?? explicit : explicit;
-      final trigger = i == 0 ? baseline.triggerTime ?? event : event;
+      final savedTrigger = i == 0 ? baseline.triggerTime : null;
+      final trigger =
+          savedTrigger ?? ScheduledTaskReminder.defaultTime(event, now);
+      final lead = savedTrigger != null
+          ? ScheduledTaskReminder.leadOf(baseline)
+          : trigger == null
+          ? null
+          : ScheduledTaskReminder.defaultLeadMinutes;
+      if (event != null && !event.isAfter(now) && trigger == null) return null;
       if (trigger != null && !trigger.isAfter(now)) return null;
       final suggested = item.triggerTime;
+      final details = item.details;
+      final marked = ScheduledTaskReminder.withLead(details, lead);
       result.add(
         item.copyWith(
           taskSummary: text,
           eventTime: event,
           triggerTime: trigger,
+          detailsJson: identical(marked, details)
+              ? item.detailsJson
+              : marked.encode(),
           timeOrigin: i == 0 && baseline.triggerTime != null
               ? baseline.timeOrigin
               : trigger == null

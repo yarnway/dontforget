@@ -202,6 +202,7 @@ void main() {
       });
       await host(tester, const ContentManagementPanel());
       await tap(tester, const ValueKey('content-scan'));
+      expect(find.textContaining('已扫描的原始资料与恢复材料共'), findsOneWidget);
       expect(find.text('当前可清理 1 项，约 4.00 KiB'), findsOneWidget);
       await tap(tester, const ValueKey('content-eligible-only'));
       expect(

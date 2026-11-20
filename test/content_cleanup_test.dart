@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'package:dont_forget/data/database_helper.dart';
 import 'dart:io';
+import 'package:path/path.dart' as p;
+import 'package:sqflite_common_ffi/sqflite_ffi.dart' show databaseFactoryFfi;
+import 'package:dont_forget/data/database_location_migrator.dart';
 import 'package:dont_forget/models/media_record.dart';
 import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/models/task_details.dart';
@@ -155,6 +158,44 @@ void main() {
       expect(await file.exists(), isFalse);
     },
   );
+  test('alternate path spelling keeps a shared attachment protected', () async {
+    final file = await owned('shared-file');
+    final alias = '${file.parent.path}/SHARED-FILE.BIN';
+    if (!await File(alias).exists()) {
+      // A case-sensitive volume still accepts repeated separators.
+      await record('alias', '${file.parent.path}//shared-file.bin');
+    } else {
+      await record('alias', alias);
+    }
+    await record('primary', file.path);
+    await task('kept', source: 'alias');
+    final prepared = await plan({'record:primary'});
+    expect(prepared.bytes, 0);
+    await clean(prepared);
+    expect(await file.readAsString(), 'Public synthetic shared-file');
+  });
+
+  test('non-UTF8 marker leaves other imports available for cleanup', () async {
+    final file = await owned('binary-marker');
+    await File(
+      '${file.parent.path}/${OwnedMaterialActivity.markerName}',
+    ).writeAsBytes([255, 254, 0]);
+    await owned('unrelated');
+    final inventory = await service.inspect(h.database.captureGeneration());
+    expect(
+      inventory.entries
+          .singleWhere((e) => e.label == 'import-binary-marker')
+          .reason,
+      'unknown',
+    );
+    expect(
+      inventory.entries
+          .singleWhere((e) => e.label == 'import-unrelated')
+          .eligible,
+      isTrue,
+    );
+  });
+
   test(
     'registration after cleanup preview rejects stale deletion plans',
     () async {
@@ -371,6 +412,46 @@ void main() {
     );
     expect(await unknown.exists(), isTrue);
   });
+  test(
+    'scanned size counts each file once and includes protected imports',
+    () async {
+      final attachment = await owned('referenced');
+      final invalid = await owned('invalid-marker');
+      final marker = File(
+        '${invalid.parent.path}/${OwnedMaterialActivity.markerName}',
+      );
+      await marker.writeAsString('{broken');
+      final outside = await File(
+        '${h.directory.path}/outside.bin',
+      ).writeAsString('external');
+      await record('referenced', attachment.path);
+      await record('second-reference', attachment.path);
+      await task('hold', source: 'referenced');
+      await record('external', outside.path);
+      final internalFiles = [
+        ...attachment.parent.listSync().whereType<File>(),
+        ...invalid.parent.listSync().whereType<File>(),
+      ];
+      final inventory = await service.inspect(h.database.captureGeneration());
+      expect(
+        inventory.scannedBytes,
+        internalFiles.fold<int>(0, (sum, file) => sum + file.lengthSync()),
+      );
+      expect(
+        inventory.entries
+            .singleWhere((e) => e.key == 'directory:import-invalid-marker')
+            .reason,
+        'unknown',
+      );
+      expect(
+        inventory.entries
+            .singleWhere((e) => e.key == 'directory:import-referenced')
+            .eligible,
+        isFalse,
+      );
+      expect(await outside.exists(), isTrue);
+    },
+  );
   test(
     'unreferenced restore material is removable, while one live media path protects its complete directory',
     () async {
@@ -643,6 +724,87 @@ void main() {
       expect(await file.exists(), isFalse);
     },
   );
+  test(
+    'cleanup follows retained backups after a real location migration',
+    () async {
+      final historical = await owned('legacy-snapshot');
+      await owned('free-after-migration');
+      final legacy = await Directory(
+        p.join(
+          h.directory.path,
+          '.dart_tool',
+          'sqflite_common_ffi',
+          'databases',
+        ),
+      ).create(recursive: true);
+      final source = DatabaseHelper.forTesting(legacy.path, databaseFactoryFfi);
+      await source.database;
+      await source.close(createBackup: false);
+      await File(p.join(legacy.path, 'ha_snapshot.json')).writeAsString(
+        jsonEncode({
+          'version': DatabaseHelper.schemaVersion,
+          'reminders': [],
+          'settings': [],
+          'media_records': [
+            {'type': 'image', 'content_or_path': historical.path},
+          ],
+        }),
+      );
+      final target = p.join(h.directory.path, 'relocated');
+      expect(
+        await DatabaseLocationMigrator.resolveAndMigrate(
+          targetDir: target,
+          candidateLegacyDirs: [legacy.path],
+        ),
+        target,
+      );
+      final current = DatabaseHelper.forTesting(target, databaseFactoryFfi);
+      final previousWorkingDirectory = Directory.current;
+      try {
+        Directory.current = h.directory;
+        final cleanup = ContentCleanupService(
+          current,
+          documents,
+          clock: () => now,
+        );
+        Future<ContentInventory> scan() =>
+            cleanup.inspect(current.captureGeneration());
+        var entries = (await scan()).entries;
+        expect(
+          entries
+              .singleWhere((e) => e.label == 'import-legacy-snapshot')
+              .reason,
+          'backupProtected',
+        );
+        expect(
+          entries
+              .singleWhere((e) => e.label == 'import-free-after-migration')
+              .eligible,
+          isTrue,
+        );
+        // Old releases wrote a text receipt for the same retained directory.
+        await File(
+          p.join(target, DatabaseLocationMigrator.receiptName),
+        ).writeAsString(
+          'Migration completed from ${legacy.path} to $target at 2030-01-01T00:00:00Z\nFiles: dont_forget_v3.db\n',
+        );
+        expect(
+          (await scan()).entries
+              .singleWhere((e) => e.label == 'import-legacy-snapshot')
+              .reason,
+          'backupProtected',
+        );
+        await legacy.rename('${legacy.path}-offline');
+        entries = (await scan()).entries;
+        expect(entries.every((e) => !e.eligible), isTrue);
+        expect(await historical.exists(), isTrue);
+      } finally {
+        Directory.current = previousWorkingDirectory;
+        await current.close(createBackup: false);
+      }
+    },
+  );
+
   test(
     'schema rollback references and unreadable retained backups fail closed for physical cleanup',
     () async {

@@ -38,6 +38,11 @@ class BackupExportHistory {
       a['location'] == b['location'] &&
       a['name'] == b['name'];
 
+  static bool supportsEditing(Object? value) =>
+      value is! Map ||
+      !value.containsKey(_versionKey) ||
+      value[_versionKey] == 1;
+
   /// The existing last-export map remains readable without a migration write.
   static List<Map<String, dynamic>> read(Object? value) {
     final latest = _record(value);
@@ -63,9 +68,7 @@ class BackupExportHistory {
     Map<String, dynamic> latest,
     Object? existing,
   ) {
-    if (existing is Map &&
-        existing.containsKey(_versionKey) &&
-        existing[_versionKey] != 1) {
+    if (!supportsEditing(existing)) {
       throw const FormatException('Unsupported backup history version');
     }
     final record = _record(latest);

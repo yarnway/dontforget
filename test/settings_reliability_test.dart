@@ -14,8 +14,39 @@ import 'package:dont_forget/models/settings.dart';
 import 'package:dont_forget/models/notification_schedule_status.dart';
 import 'package:dont_forget/ui/screens/settings_screen.dart';
 import 'package:dont_forget/services/notification_service.dart';
+import 'package:dont_forget/services/lan_sync_service.dart';
+import 'package:dont_forget/models/reminder.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'support/interaction_preview.dart';
+
+class _LanReviewService extends LanSyncService {
+  _LanReviewService() : super.forTesting();
+
+  List<LanSyncConflict> conflicts = const [];
+  LanSyncServerInfo? listening;
+  LanSyncPeerAddress? lastPeer;
+
+  @override
+  Future<LanSyncServerInfo> startServer({
+    int? port,
+    required DatabaseHelper dbHelper,
+    VoidCallback? onDataChanged,
+  }) async => listening!;
+
+  @override
+  Future<bool> syncWithPeer({
+    required String peerIp,
+    int port = LanSyncService.defaultPort,
+    required String pin,
+    required DatabaseHelper dbHelper,
+    VoidCallback? onDataChanged,
+    ValueChanged<List<LanSyncConflict>>? onConflicts,
+  }) async {
+    lastPeer = (host: peerIp, port: port);
+    onConflicts?.call(conflicts);
+    return true;
+  }
+}
 
 void main() {
   setUpAll(loadInteractionPreviewFonts);
@@ -26,6 +57,7 @@ void main() {
   late Directory directory;
   late DatabaseHelper helper;
   late ProviderContainer container;
+  late _LanReviewService lan;
   setUp(() async {
     // Persistence/layout tests have no native permission channel. The focused
     // permission tests exercise supported platforms and stalled native reads.
@@ -40,8 +72,10 @@ void main() {
     sqfliteFfiInit();
     directory = await Directory.systemTemp.createTemp('dontforget-settings-');
     helper = DatabaseHelper.forTesting(directory.path, databaseFactoryFfi);
+    lan = _LanReviewService();
     container = ProviderContainer(
       overrides: [
+        lanSyncServiceProvider.overrideWithValue(lan),
         notificationFailureHistoryReaderProvider.overrideWithValue(
           () async => const NotificationFailureHistory(available: false),
         ),
@@ -79,7 +113,11 @@ void main() {
     await directory.delete(recursive: true);
   });
 
-  Future<void> showSettings(WidgetTester tester, {bool routed = false}) async {
+  Future<void> showSettings(
+    WidgetTester tester, {
+    bool routed = false,
+    SettingsArea? area,
+  }) async {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
@@ -109,7 +147,7 @@ void main() {
                     ),
                   ),
                 )
-              : const SettingsScreen(),
+              : SettingsScreen(area: area),
         ),
       ),
     );
@@ -121,6 +159,273 @@ void main() {
     await tester.runAsync(() => Future<void>.delayed(Duration.zero));
     await tester.pumpAndSettle();
   }
+
+  testWidgets('sync settings advertise and connect using the selected port', (
+    tester,
+  ) async {
+    lan.listening = LanSyncServerInfo(
+      isRunning: true,
+      ip: '192.168.1.50',
+      port: 45123,
+      pin: '123456',
+    );
+    await tester.runAsync(
+      () => container.read(remindersProvider.notifier).ready,
+    );
+    await showSettings(tester, area: SettingsArea.sync);
+    final toggle = find.byKey(const ValueKey('lan-sync-server'));
+    await tester.ensureVisible(toggle);
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('192.168.1.50:45123'), findsOneWidget);
+    expect(find.textContaining('默认端口不可用'), findsOneWidget);
+    final fields = find.byType(TextField);
+    await tester.enterText(fields.at(0), '192。168。1。50：45123');
+    await tester.enterText(fields.at(1), '123456');
+    final sync = find.byKey(const ValueKey('lan-sync-now'));
+    await tester.ensureVisible(sync);
+    await tester.tap(sync);
+    await tester.pumpAndSettle();
+    expect(lan.lastPeer, (host: '192.168.1.50', port: 45123));
+  });
+
+  testWidgets('sync differences show both versions and open the local reader', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(320, 640);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    final task = Reminder(id: 'local', taskTitle: '营业时间', quadrantLevel: 3);
+    await tester.runAsync(() async {
+      final reminders = container.read(remindersProvider.notifier);
+      await reminders.ready;
+      await reminders.addReminder(task);
+    });
+    lan.conflicts = [
+      LanSyncConflict(
+        taskId: task.id,
+        local: (title: task.taskTitle, note: '', inTrash: false),
+        peer: (title: '门店时间', note: '周末延长', inTrash: true),
+      ),
+    ];
+    await showSettings(tester, area: SettingsArea.sync);
+    final fields = find.byType(TextField);
+    await tester.enterText(fields.at(0), '127.0.0.1');
+    await tester.enterText(fields.at(1), '123456');
+    final sync = find.byKey(const ValueKey('lan-sync-now'));
+    await tester.ensureVisible(sync);
+    await tester.tap(sync);
+    await tester.pumpAndSettle();
+    final review = find.byKey(const ValueKey('lan-sync-conflicts'));
+    await tester.ensureVisible(review);
+    expect(find.text('查看差异（1）'), findsOneWidget);
+    await tester.tap(review);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('营业时间'));
+    await tester.pumpAndSettle();
+    expect(find.text('门店时间'), findsOneWidget);
+    expect(find.text('周末延长'), findsOneWidget);
+    final dialog = find.byKey(const ValueKey('lan-sync-conflicts-dialog'));
+    final scrollable = find
+        .descendant(of: dialog, matching: find.byType(Scrollable))
+        .first;
+    final open = find.text('打开本机事项');
+    await tester.dragUntilVisible(
+      open.hitTestable(),
+      scrollable,
+      const Offset(0, -120),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('在回收站'), findsOneWidget);
+    await tester.tap(open.hitTestable());
+    await tester.pumpAndSettle();
+    final reader = find.byKey(const ValueKey('task-detail-reader-list'));
+    expect(reader, findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
+    Navigator.of(tester.element(reader)).pop();
+    await tester.pumpAndSettle();
+
+    Future<void> choosePeerText() async {
+      await tester.ensureVisible(review);
+      await tester.tap(review);
+      await tester.pumpAndSettle();
+      final heading = find.descendant(of: dialog, matching: find.text('营业时间'));
+      if (find.text('门店时间').evaluate().isEmpty) {
+        await tester.tap(heading);
+        await tester.pumpAndSettle();
+      }
+      final adopt = find.text('采用对方的标题和备注');
+      await tester.dragUntilVisible(
+        adopt.hitTestable(),
+        scrollable,
+        const Offset(0, -120),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(adopt.hitTestable());
+      await tester.pumpAndSettle();
+    }
+
+    await choosePeerText();
+    await tester.tap(find.text('取消'));
+    await tester.pumpAndSettle();
+    expect(container.read(remindersProvider).single.taskTitle, '营业时间');
+
+    await choosePeerText();
+    await tester.runAsync(
+      () => tester.tap(find.widgetWithText(FilledButton, '保存')),
+    );
+    for (var i = 0; i < 50; i++) {
+      await tester.pump();
+      if (container.read(remindersProvider).single.taskTitle == '门店时间') break;
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 20)),
+      );
+    }
+    await tester.pumpAndSettle();
+    final saved = container.read(remindersProvider).single;
+    expect(saved.taskTitle, '门店时间');
+    expect(saved.taskSummary, '周末延长');
+    expect(saved.details.deletedAt, isNull);
+    await tester.ensureVisible(review);
+    await tester.tap(review);
+    await tester.pumpAndSettle();
+    await tester.tap(find.descendant(of: dialog, matching: find.text('门店时间')));
+    await tester.pumpAndSettle();
+    expect(find.text('在回收站'), findsOneWidget);
+    expect(find.text('采用对方的标题和备注'), findsNothing);
+    await tester.tap(find.text('关闭'));
+    await tester.pumpAndSettle();
+
+    lan.conflicts = const [];
+    await tester.ensureVisible(sync);
+    await tester.tap(sync);
+    await tester.pumpAndSettle();
+    expect(review, findsNothing);
+  });
+
+  test(
+    'adopting peer text checks the stored row and preserves other fields',
+    () async {
+      final notifier = container.read(remindersProvider.notifier);
+      await notifier.ready;
+      final task = Reminder(
+        id: 'local',
+        taskTitle: 'Local',
+        taskSummary: 'Local notes',
+        quadrantLevel: 3,
+      );
+      await notifier.addReminder(task);
+      final generation = helper.captureGeneration();
+      final conflict = LanSyncConflict(
+        taskId: task.id,
+        local: LanSyncConflict.contentOf(task),
+        peer: (title: 'Peer', note: '', inTrash: true),
+      );
+      Future<void> patch(Map<String, Object?> fields) =>
+          helper.writeTransaction(generation, (tx) async {
+            await tx.update(
+              'Reminders',
+              fields,
+              where: 'id = ?',
+              whereArgs: [task.id],
+            );
+          });
+      Future<Reminder> read() => helper.read(
+        generation,
+        (db) async => Reminder.fromJson((await db.query('Reminders')).single),
+      );
+
+      // Simulate a newer write that the notifier has not refreshed yet.
+      await patch({'task_summary': 'Newer'});
+      expect(
+        (await notifier.adoptLanSyncText(conflict, generation)).accepted,
+        isFalse,
+      );
+      expect((await read()).taskSummary, 'Newer');
+
+      await patch({'task_summary': 'Local notes', 'is_pinned': 1});
+      expect(
+        (await notifier.adoptLanSyncText(conflict, generation)).accepted,
+        isTrue,
+      );
+      final saved = await read();
+      expect(saved.taskTitle, 'Peer');
+      expect(saved.taskSummary, isEmpty);
+      expect(saved.isPinned, isTrue);
+      expect(saved.details.deletedAt, isNull);
+      expect(saved.details.history.last.action, 'edited');
+    },
+  );
+
+  testWidgets(
+    'trash differences require confirmation before changing local status',
+    (tester) async {
+      final task = Reminder(
+        id: 'trash-qa',
+        taskTitle: '本机事项',
+        quadrantLevel: 3,
+      );
+      await tester.runAsync(() async {
+        final notifier = container.read(remindersProvider.notifier);
+        await notifier.ready;
+        await notifier.addReminder(task);
+      });
+      lan.conflicts = [
+        LanSyncConflict(
+          taskId: task.id,
+          local: (title: task.taskTitle, note: '', inTrash: false),
+          peer: (title: task.taskTitle, note: '', inTrash: true),
+        ),
+      ];
+      await showSettings(tester, area: SettingsArea.sync);
+      final fields = find.byType(TextField);
+      await tester.enterText(fields.at(0), '127.0.0.1');
+      await tester.enterText(fields.at(1), '123456');
+      final sync = find.byKey(const ValueKey('lan-sync-now'));
+      await tester.ensureVisible(sync);
+      await tester.tap(sync);
+      await tester.pumpAndSettle();
+      final review = find.byKey(const ValueKey('lan-sync-conflicts'));
+      Future<void> openConfirmation() async {
+        await tester.ensureVisible(review);
+        await tester.tap(review);
+        await tester.pumpAndSettle();
+        final move = find.widgetWithText(TextButton, '移入本机回收站');
+        if (move.evaluate().isEmpty) {
+          await tester.tap(find.text('本机事项'));
+          await tester.pumpAndSettle();
+        }
+        await tester.ensureVisible(move);
+        await tester.tap(move.hitTestable());
+        await tester.pumpAndSettle();
+      }
+
+      await openConfirmation();
+      await tester.tap(find.text('取消'));
+      await tester.pumpAndSettle();
+      expect(container.read(remindersProvider).single.isVisible, isTrue);
+
+      await openConfirmation();
+      final confirm = find.widgetWithText(FilledButton, '移入本机回收站');
+      await tester.runAsync(() => tester.tap(confirm));
+      for (var i = 0; i < 50; i++) {
+        await tester.pump();
+        if (!container.read(remindersProvider).single.isVisible &&
+            review.evaluate().isEmpty) {
+          break;
+        }
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+      }
+      await tester.pumpAndSettle();
+      final moved = container.read(remindersProvider).single;
+      expect(moved.details.deletedAt, isNotNull);
+      expect(moved.details.history.last.action, 'trash');
+      expect(review, findsNothing);
+    },
+  );
 
   testWidgets('appearance remains a draft until save and survives reopening', (
     tester,

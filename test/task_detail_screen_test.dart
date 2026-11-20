@@ -11,10 +11,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:dont_forget/models/reminder.dart';
+import 'package:dont_forget/models/task_details.dart';
 import 'package:dont_forget/ui/screens/task_detail_screen.dart';
 import 'package:dont_forget/ui/widgets/task_details_dialog.dart';
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/services/notification_service.dart';
+import 'package:dont_forget/services/scheduled_task_reminder.dart';
 
 // Observe the real queued SQLite operation instead of assuming it finishes in 50 ms.
 class _ObservedRemindersNotifier extends RemindersNotifier {
@@ -204,6 +206,113 @@ void main() {
     await tester.tap(find.text('Open QA'));
     await tester.pumpAndSettle();
   }
+
+  Future<void> chooseEventDay(WidgetTester tester, int day) async {
+    final eventLabel = find.descendant(
+      of: find.byKey(const ValueKey('event-time-editor')),
+      matching: find.text('事项／截止时间'),
+    );
+    await Scrollable.ensureVisible(tester.element(eventLabel), alignment: 0.45);
+    await tester.pumpAndSettle();
+    await tester.tap(eventLabel);
+    await tester.pumpAndSettle();
+    final datePicker = find.byType(DatePickerDialog);
+    expect(datePicker, findsOneWidget);
+    final localizations = MaterialLocalizations.of(tester.element(datePicker));
+    await tester.tap(
+      find.descendant(
+        of: datePicker,
+        matching: find.text(localizations.formatDecimal(day)),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('确定'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('确定'));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('advance reminder follows a rescheduled event after reopening', (
+    tester,
+  ) async {
+    final now = DateTime.now();
+    final event = DateTime(now.year, now.month + 1, 12, 16);
+    final task = Reminder(
+      id: 'advance-task',
+      taskTitle: 'Scheduled meeting',
+      quadrantLevel: 2,
+      eventTime: event,
+      triggerTime: event.subtract(const Duration(minutes: 10)),
+    );
+    await tester.runAsync(() => notifier.addReminder(task));
+    await openDetail(tester, task);
+    final choice = find.widgetWithText(ChoiceChip, '提前 15 分钟');
+    await tester.ensureVisible(choice);
+    await tester.pumpAndSettle();
+    await tester.tap(choice);
+    await tester.pumpAndSettle();
+    expect(tester.widget<ChoiceChip>(choice).selected, isTrue);
+    await tester.ensureVisible(find.text('保存修改'));
+    await performWrite(tester, find.text('保存修改'));
+    final saved = container
+        .read(remindersProvider)
+        .singleWhere((row) => row.id == task.id);
+    expect(saved.eventTime, event);
+    expect(saved.triggerTime, event.subtract(const Duration(minutes: 15)));
+    expect(ScheduledTaskReminder.leadOf(saved), 15);
+
+    await openDetail(tester, saved);
+    expect(tester.widget<ChoiceChip>(choice).selected, isTrue);
+    await chooseEventDay(tester, 13);
+    final dayAfter = DateTime(event.year, event.month, 13, 16);
+    notifications.canceled.clear();
+    notifications.scheduled.clear();
+    await tester.ensureVisible(find.text('保存修改'));
+    await performWrite(tester, find.text('保存修改'));
+    final moved = container
+        .read(remindersProvider)
+        .singleWhere((row) => row.id == task.id);
+    expect(moved.eventTime, dayAfter);
+    expect(moved.triggerTime, dayAfter.subtract(const Duration(minutes: 15)));
+    expect(moved.noticeRevision, saved.noticeRevision + 1);
+    expect(notifications.canceled, [task.id]);
+    expect(notifications.scheduled.single.triggerTime, moved.triggerTime);
+  });
+
+  testWidgets('rescheduling an event preserves a fixed reminder time', (
+    tester,
+  ) async {
+    final now = DateTime.now();
+    final event = DateTime(now.year, now.month + 1, 12, 16);
+    final task = Reminder(
+      id: 'fixed-alarm',
+      taskTitle: 'Scheduled meeting with fixed alarm',
+      quadrantLevel: 2,
+      eventTime: event,
+      triggerTime: event.subtract(const Duration(minutes: 30)),
+      timeOrigin: ReminderTimeOrigin.manual,
+      detailsJson: ScheduledTaskReminder.withLead(
+        const TaskDetails(),
+        15,
+      ).encode(),
+    );
+    await tester.runAsync(() => notifier.addReminder(task));
+    await openDetail(tester, task);
+    await chooseEventDay(tester, 13);
+    notifications.canceled.clear();
+    notifications.scheduled.clear();
+    await tester.ensureVisible(find.text('保存修改'));
+    await performWrite(tester, find.text('保存修改'));
+    final saved = container
+        .read(remindersProvider)
+        .singleWhere((row) => row.id == task.id);
+    expect(saved.eventTime, DateTime(event.year, event.month, 13, 16));
+    expect(saved.triggerTime, task.triggerTime);
+    expect(ScheduledTaskReminder.leadOf(saved), isNull);
+    expect(saved.details.data['reminder_lead_minutes'], isNull);
+    expect(notifications.canceled, isEmpty);
+    expect(notifications.scheduled, isEmpty);
+  });
 
   testWidgets(
     'legacy vocabulary opens as cards and edits preserve custom notes',

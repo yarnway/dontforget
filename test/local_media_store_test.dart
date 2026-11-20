@@ -45,6 +45,18 @@ void main() {
     },
   );
 
+  test(
+    'case variants of the ownership marker retain the imported bytes',
+    () async {
+      final file = await File(
+        path.join(directory.path, '.DONTFORGET-MATERIAL.JSON'),
+      ).writeAsBytes([255, 0, 42]);
+      final copy = await store.importFile(file.path);
+      expect(await File(copy).readAsBytes(), [255, 0, 42]);
+      expect(await file.readAsBytes(), [255, 0, 42]);
+    },
+  );
+
   test('failed copy removes only its new staging directory', () async {
     final source = await File(
       path.join(directory.path, 'note.txt'),

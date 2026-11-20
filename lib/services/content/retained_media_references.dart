@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart' show OpenDatabaseOptions;
 import '../../data/database_helper.dart';
+import '../../data/database_location_migrator.dart';
 import '../../models/stored_json.dart';
 import '../recovery/backup_inspector.dart';
 
@@ -17,49 +18,77 @@ class RetainedMediaReferences {
     final directory = await database.notificationActionQueueDirectory;
     final candidates = <File>[];
     var uncertain = false;
-    await for (final entry in directory.list(followLinks: false)) {
-      final name = p.basename(entry.path);
-      if (entry is File &&
-          const {
-            'ha_snapshot.json',
-            'dont_forget_v3.mirror.db',
-          }.contains(name)) {
-        candidates.add(entry);
-      }
-      if (entry is File &&
-          name.startsWith('pre-migration-') &&
-          name.endsWith('.json')) {
-        candidates.add(entry);
-      }
-      if (entry is Directory && name.startsWith('recovery-')) {
-        await for (final child in entry.list(followLinks: false)) {
-          if (child is File &&
-              const {
-                'rollback.db',
-                'source.backup',
-              }.contains(p.basename(child.path))) {
-            candidates.add(child);
-          }
-          if (child is Link) uncertain = true;
+    final visited = <String>{directory.path};
+    var store = directory;
+    while (true) {
+      await for (final entry in store.list(followLinks: false)) {
+        final name = p.basename(entry.path);
+        if (entry is File &&
+            const {
+              'ha_snapshot.json',
+              'dont_forget_v3.mirror.db',
+            }.contains(name)) {
+          candidates.add(entry);
         }
-      }
-      if (entry is Directory && name.startsWith('schema-upgrade-')) {
-        final snapshot = File(p.join(entry.path, 'snapshot.json'));
-        if (await FileSystemEntity.type(snapshot.path, followLinks: false) ==
-            FileSystemEntityType.file) {
-          candidates.add(snapshot);
-        } else {
+        if (entry is File &&
+            name.startsWith('pre-migration-') &&
+            name.endsWith('.json')) {
+          candidates.add(entry);
+        }
+        if (entry is Directory && name.startsWith('recovery-')) {
+          await for (final child in entry.list(followLinks: false)) {
+            if (child is File &&
+                const {
+                  'rollback.db',
+                  'source.backup',
+                }.contains(p.basename(child.path))) {
+              candidates.add(child);
+              if (candidates.length > 256) break;
+            }
+            if (child is Link) uncertain = true;
+          }
+        }
+        if (entry is Directory && name.startsWith('schema-upgrade-')) {
+          final snapshot = File(p.join(entry.path, 'snapshot.json'));
+          if (await FileSystemEntity.type(snapshot.path, followLinks: false) ==
+              FileSystemEntityType.file) {
+            candidates.add(snapshot);
+          } else {
+            uncertain = true;
+          }
+        }
+        if (entry is Link &&
+            ((name.startsWith('pre-migration-') && name.endsWith('.json')) ||
+                name == 'ha_snapshot.json' ||
+                name == 'dont_forget_v3.mirror.db' ||
+                name.startsWith('recovery-') ||
+                name.startsWith('schema-upgrade-'))) {
           uncertain = true;
         }
+        if (candidates.length > 256) {
+          uncertain = true;
+          break;
+        }
       }
-      if (entry is Link &&
-          (name == 'ha_snapshot.json' ||
-              name == 'dont_forget_v3.mirror.db' ||
-              name.startsWith('recovery-') ||
-              name.startsWith('schema-upgrade-'))) {
-        uncertain = true;
-      }
-      if (candidates.length > 256) {
+      if (candidates.length > 256) break;
+      try {
+        final previous = await DatabaseLocationMigrator.retainedSource(store);
+        if (previous == null) break;
+        if (!visited.add(previous.path) || visited.length > 8) {
+          uncertain = true;
+          break;
+        }
+        final db = File(
+          p.join(previous.path, DatabaseLocationMigrator.databaseFileName),
+        );
+        if (await FileSystemEntity.type(db.path, followLinks: false) !=
+            FileSystemEntityType.file) {
+          uncertain = true;
+          break;
+        }
+        candidates.add(db);
+        store = previous;
+      } catch (_) {
         uncertain = true;
         break;
       }

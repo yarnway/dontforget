@@ -431,6 +431,14 @@ class _ContentManagementPanelState
                         if (_inventory != null) ...[
                           const SizedBox(height: 8),
                           Text(
+                            t('scannedSpace').replaceAll(
+                              '{bytes}',
+                              _size(_inventory!.scannedBytes),
+                            ),
+                            key: const ValueKey('content-scanned-space'),
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          Text(
                             t('spaceSummary')
                                 .replaceAll('{count}', '${eligible.length}')
                                 .replaceAll(

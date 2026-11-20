@@ -319,6 +319,75 @@ void main() {
     },
   );
   testWidgets(
+    'clear history confirms, preserves a newer export, and never removes backup files',
+    (tester) async {
+      final file = await tester.runAsync(
+        () =>
+            File('${h.directory.path}/export.dfbackup').writeAsString('backup'),
+      );
+      final store = h.container.read(workspaceDraftsProvider.notifier);
+      final entry = {'at': '2029-01-01T10:00:00', 'location': file!.path};
+      await tester.runAsync(() async {
+        await store.put('lastPortableBackup', entry);
+        await store.put('unrelatedDraft', 'keep');
+      });
+      await host(tester);
+      Future<void> requestClear() async {
+        await tap(tester, const ValueKey('backup-history'));
+        await tap(tester, const ValueKey('backup-history-clear'));
+      }
+
+      await requestClear();
+      expect(find.text('清除所有导出记录？已导出的备份文件会保留。'), findsOneWidget);
+      await tester.tap(find.text('取消'));
+      await settle(tester);
+      expect(
+        await tester.runAsync(
+          () => store.readPersistedKey('lastPortableBackup'),
+        ),
+        entry,
+      );
+
+      await requestClear();
+      final updated = BackupExportHistory.prepend({
+        'at': '2030-01-01T10:00:00',
+        'location': '${h.directory.path}/new.dfbackup',
+      }, entry);
+      await tester.runAsync(() => store.put('lastPortableBackup', updated));
+      await tap(tester, const ValueKey('backup-history-confirm-clear'));
+      expect(find.text('未能清除记录，请重试'), findsOneWidget);
+      expect(
+        await tester.runAsync(
+          () => store.readPersistedKey('lastPortableBackup'),
+        ),
+        updated,
+      );
+      await requestClear();
+      await tap(tester, const ValueKey('backup-history-confirm-clear'));
+      expect(find.text('导出记录已清除'), findsOneWidget);
+      expect(find.byKey(const ValueKey('backup-history')), findsNothing);
+      expect(await tester.runAsync(() => file.readAsString()), 'backup');
+      await finish(tester);
+      await tester.runAsync(() async {
+        await h.close();
+        await h.open();
+      });
+      final reopened = h.container.read(workspaceDraftsProvider.notifier);
+      expect(
+        await tester.runAsync(
+          () => reopened.readPersistedKey('lastPortableBackup'),
+        ),
+        isNull,
+      );
+      expect(
+        await tester.runAsync(
+          () => reopened.readPersistedKey('unrelatedDraft'),
+        ),
+        'keep',
+      );
+    },
+  );
+  testWidgets(
     'future history is preserved when a new export record cannot be merged',
     (tester) async {
       final future = {
@@ -334,6 +403,10 @@ void main() {
       );
       final persisted = await tester.runAsync(h.drafts);
       await host(tester);
+      await tap(tester, const ValueKey('backup-history'));
+      expect(find.byKey(const ValueKey('backup-history-clear')), findsNothing);
+      await tester.tap(find.text('关闭'));
+      await settle(tester);
       await tap(tester, const ValueKey('backup-encryption'));
       await tap(tester, const ValueKey('backup-export'));
       expect(exporter.calls, 1);

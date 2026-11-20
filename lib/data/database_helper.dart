@@ -399,13 +399,14 @@ class DatabaseHelper {
           dbDirectory = fallback.path;
         }
       }
-      if (dbDirectory != null) {
-        // An ambiguous migration/recovery result must not select a different
-        // directory through the path-provider fallback above.
-        return Platform.isWindows
-            ? DatabaseLocationMigrator.resolveAndMigrate(targetDir: dbDirectory)
-            : dbDirectory;
-      }
+      // Resolve migration and recovery before acquiring the selected store.
+      // Keep the old working-directory store last, after installed locations.
+      return DatabaseLocationMigrator.resolveAndMigrate(
+        targetDir: dbDirectory ?? await sqflite.getDatabasesPath(),
+        candidateLegacyDirs: DatabaseLocationMigrator.getLegacyCandidates(
+          developmentRoot: Directory.current.path,
+        ),
+      );
     }
     return await sqflite.getDatabasesPath();
   }
@@ -428,26 +429,7 @@ class DatabaseHelper {
     if (!allowRecovery && await _hasRecoveryJournal(dbDir)) {
       throw const DatabaseRecoveryRequiredException();
     }
-    const filePath = 'dont_forget_v3.db';
-    final targetPath = join(dbDir, filePath);
-
-    // Auto-migrate legacy DB from previous development/relative path if target doesn't exist
-    final targetFile = File(targetPath);
-    if (!allowRecovery && _directory == null && !targetFile.existsSync()) {
-      try {
-        final legacyDir = join(
-          Directory.current.path,
-          '.dart_tool',
-          'sqflite_common_ffi',
-          'databases',
-          filePath,
-        );
-        final legacyFile = File(legacyDir);
-        if (legacyFile.existsSync()) {
-          legacyFile.copySync(targetPath);
-        }
-      } catch (_) {}
-    }
+    final targetPath = join(dbDir, DatabaseLocationMigrator.databaseFileName);
 
     // An open failure may be a permission/lock/migration error. Never replace
     // the user's database with an older backup merely because opening failed.

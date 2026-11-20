@@ -40,6 +40,11 @@ class ContentInventory {
   ContentInventory(this.entries, this.pendingJobs);
   final List<ContentCleanupEntry> entries;
   final List<String> pendingJobs;
+
+  /// Directory entries account for files already represented by media records.
+  late final int scannedBytes = entries
+      .where((entry) => entry.kind != ContentEntryKind.record)
+      .fold(0, (total, entry) => total + entry.bytes);
 }
 
 class ContentCleanupPlan {
@@ -91,6 +96,15 @@ class ContentCleanupService {
       if (part == '.' || part == '..') return true;
     }
     return false;
+  }
+
+  // Compare references conservatively on platforms with case-insensitive volumes.
+  // Keep the original spelling for every filesystem operation.
+  static String _pathKey(String path) {
+    final normalized = p.normalize(path);
+    return Platform.isWindows || Platform.isMacOS || Platform.isIOS
+        ? normalized.toLowerCase()
+        : normalized;
   }
 
   Future<String?> _owned(String path, String root) async {
@@ -187,7 +201,7 @@ class ContentCleanupService {
       final path = await _owned(resolved, root);
       if (path != null) {
         owned[entry.key] = path;
-        owners.putIfAbsent(path, () => {}).add(entry.key);
+        owners.putIfAbsent(_pathKey(path), () => {}).add(entry.key);
       }
     }
     final normalizedPaths = <String>{...pathReferences};
@@ -219,12 +233,12 @@ class ContentCleanupService {
     return _Graph(
       rows,
       referenced,
-      normalizedPaths,
+      normalizedPaths.map(_pathKey).toSet(),
       owned,
       owners,
       drafts,
-      directReferences,
-      backupPaths,
+      directReferences.map(_pathKey).toSet(),
+      backupPaths.map(_pathKey).toSet(),
       retained.uncertain || externalUncertain,
     );
   }
@@ -244,7 +258,12 @@ class ContentCleanupService {
     );
     if (files.any((e) => p.equals(e.path, marker.path))) {
       if (await marker.length() > 1024) return null;
-      final raw = decodeStoredJson(await marker.readAsString());
+      final Object? raw;
+      try {
+        raw = decodeStoredJson(utf8.decode(await marker.readAsBytes()));
+      } on FormatException {
+        return null;
+      }
       if (raw is Map &&
           raw.length == 4 &&
           raw['format'] == 'dontforget.material' &&
@@ -332,7 +351,7 @@ class ContentCleanupService {
       final isFile = stat?.type == FileSystemEntityType.file;
       final referenced =
           graph.referenced.contains(item.key) ||
-          (owned != null && graph.directReferences.contains(owned));
+          (owned != null && graph.directReferences.contains(_pathKey(owned)));
       final active =
           owned != null && OwnedMaterialActivity.active(p.dirname(owned));
       final recent =
@@ -340,9 +359,9 @@ class ContentCleanupService {
       final deletableFile =
           owned != null &&
           isFile &&
-          graph.owners[owned]!.length == 1 &&
+          graph.owners[_pathKey(owned)]!.length == 1 &&
           !graph.backupUncertain &&
-          !graph.backupPaths.contains(owned) &&
+          !graph.backupPaths.contains(_pathKey(owned)) &&
           await recognized(owned);
       entries.add(
         ContentCleanupEntry(
@@ -364,6 +383,8 @@ class ContentCleanupService {
         ),
       );
     }
+    final referencedDirectories = graph.pathReferences.map(p.dirname).toSet();
+    final backupDirectories = graph.backupPaths.map(p.dirname).toSet();
     final pending = <String>[];
     if (await Directory(root).exists()) {
       var count = 0;
@@ -384,12 +405,10 @@ class ContentCleanupService {
         } catch (_) {
           continue;
         }
-        final protected =
-            graph.owners.keys.any((f) => p.dirname(f) == child.path) ||
-            graph.pathReferences.any((f) => p.dirname(f) == child.path);
+        final directoryKey = _pathKey(child.path);
+        final protected = referencedDirectories.contains(directoryKey);
         final backupProtected =
-            graph.backupUncertain ||
-            graph.backupPaths.any((f) => p.dirname(f) == child.path);
+            graph.backupUncertain || backupDirectories.contains(directoryKey);
         final role = await _role(child, files);
         var bytes = 0, recent = false;
         for (final file in files) {
@@ -765,9 +784,8 @@ class ContentCleanupService {
             final relativeFrom = p.joinAll(p.posix.split(m['from'] as String));
             final diskFrom = p.join(root, relativeFrom);
             final diskTo = p.join(quarantine.path, m['to'] as String);
-            return currentPaths.any(
-              (cp) => p.equals(cp, diskFrom) || p.equals(cp, diskTo),
-            );
+            return currentPaths.contains(_pathKey(diskFrom)) ||
+                currentPaths.contains(_pathKey(diskTo));
           });
       if (!committed || protected) {
         await _restoreMoves(root, quarantine, moves);

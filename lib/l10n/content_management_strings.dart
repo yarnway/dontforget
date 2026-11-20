@@ -45,6 +45,11 @@ const _strings = <String, List<String>>{
   ],
   'title': ['内容管理', 'Content manager', 'コンテンツ管理'],
   'protectionHelp': ['引用保护与清理范围', 'Protection and cleanup scope', '参照保護と削除範囲'],
+  'scannedSpace': [
+    '已扫描的原始资料与恢复材料共 {bytes}',
+    'Scanned originals and restore materials total {bytes}',
+    '確認済みの元資料と復元用ファイルの合計 {bytes}',
+  ],
   'spaceSummary': [
     '当前可清理 {count} 项，约 {bytes}',
     '{count} eligible items, about {bytes}',

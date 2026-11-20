@@ -78,6 +78,19 @@ const _strings = <String, List<String>>{
   'confirmInput': ['请先确认输入', 'Confirm the input first', '入力を確定してください'],
   'backupLocation': ['查看保存位置', 'View saved location', '保存先を表示'],
   'backupHistory': ['导出记录', 'Export history', '保存履歴'],
+  'backupHistoryClear': ['清除记录', 'Clear history', '履歴を消去'],
+  'backupHistoryConfirmClear': ['清除', 'Clear', '消去'],
+  'backupHistoryClearHint': [
+    '清除所有导出记录？已导出的备份文件会保留。',
+    'Clear all export records? Your exported backup files will be kept.',
+    'すべての保存履歴を消去しますか？保存したバックアップファイルは残ります。',
+  ],
+  'backupHistoryCleared': ['导出记录已清除', 'Export history cleared', '保存履歴を消去しました'],
+  'backupHistoryClearFailed': [
+    '未能清除记录，请重试',
+    'Couldn’t clear the history. Try again.',
+    '履歴を消去できませんでした。もう一度お試しください。',
+  ],
   'savedUnrecorded': [
     '备份已导出，导出记录未保存',
     'Backup exported; export record could not be saved',

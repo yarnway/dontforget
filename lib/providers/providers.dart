@@ -41,6 +41,7 @@ import '../services/dynamic_urgency_service.dart';
 import '../services/bidirectional_link_service.dart';
 import '../services/context_trigger_service.dart';
 import '../services/capture_automation_policy.dart';
+import '../services/scheduled_task_reminder.dart';
 
 part 'task_management.dart';
 part 'study_plan_management.dart';
@@ -833,6 +834,36 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     Reminder reminder,
     DataGeneration generation, {
     Reminder? baseline,
+  }) => _updateReminderForGeneration(reminder, generation, baseline: baseline);
+
+  Future<ReminderActionResult> adoptLanSyncText(
+    LanSyncConflict conflict,
+    DataGeneration generation,
+  ) async {
+    final baseline = state
+        .where((task) => task.id == conflict.taskId)
+        .firstOrNull;
+    if (baseline == null || !conflict.canAdoptText(baseline)) {
+      return const ReminderActionResult(ReminderActionDisposition.stale);
+    }
+    return _updateReminderForGeneration(
+      baseline.copyWith(
+        taskTitle: conflict.peer.title,
+        taskSummary: conflict.local.note == conflict.peer.note
+            ? baseline.taskSummary
+            : conflict.peer.note,
+      ),
+      generation,
+      baseline: baseline,
+      expectedLanConflict: conflict,
+    );
+  }
+
+  Future<ReminderActionResult> _updateReminderForGeneration(
+    Reminder reminder,
+    DataGeneration generation, {
+    Reminder? baseline,
+    LanSyncConflict? expectedLanConflict,
   }) async {
     if (baseline != null && baseline.id != reminder.id) {
       throw ArgumentError('Reminder edit baseline does not match.');
@@ -864,8 +895,15 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
             where: 'id = ?',
             whereArgs: [reminder.id],
           );
-          if (rows.isEmpty) throw StateError('Task no longer exists.');
+          if (rows.isEmpty) {
+            if (expectedLanConflict != null) return null;
+            throw StateError('Task no longer exists.');
+          }
           final current = Reminder.fromJson(rows.single);
+          if (expectedLanConflict != null &&
+              !expectedLanConflict.canAdoptText(current)) {
+            return null;
+          }
           if (changes.containsKey('details_json') &&
               before != null &&
               current.detailsJson != before.detailsJson) {
@@ -992,6 +1030,9 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           return saved;
         });
         _dbHelper.checkGeneration(ticket);
+        if (updated == null) {
+          return const ReminderActionResult(ReminderActionDisposition.stale);
+        }
         _publish([updated]);
         return ReminderActionResult(
           changes.isEmpty
@@ -1052,7 +1093,10 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         OrdinarySeries.isOccurrence(candidate)) {
       throw const FormatException('Capture needs an ordinary task');
     }
-    return original
+    return ScheduledTaskReminder.withLead(
+          original,
+          ScheduledTaskReminder.leadOf(candidate),
+        )
         .patch({
           'repeat': details.repeat?.toJson() ?? original.repeat?.toJson(),
           'checklist': details.checklist.isEmpty

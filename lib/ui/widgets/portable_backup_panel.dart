@@ -371,49 +371,99 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
 
   Future<void> _showHistory(
     List<Map<String, dynamic>> entries,
-  ) => showDialog<void>(
-    context: context,
-    builder: (context) => AlertDialog(
-      key: const ValueKey('backup-history-dialog'),
-      title: Text(t('backupHistory')),
-      content: SizedBox(
-        width: 560,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(context).height * .6,
-          ),
-          child: ListView.separated(
-            shrinkWrap: true,
-            itemCount: entries.length,
-            separatorBuilder: (_, _) => const Divider(height: 1),
-            itemBuilder: (context, index) {
-              final entry = entries[index];
-              final name = entry['name'] as String? ?? t('backupTitle');
-              return ListTile(
-                key: ValueKey('backup-history-entry-$index'),
-                contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                title: Text(name, maxLines: 2, overflow: TextOverflow.ellipsis),
-                subtitle: Text(
-                  formatLocalDateTime(DateTime.parse(entry['at'] as String)),
-                ),
-                trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () => _showDetails(
-                  t('backupLocation'),
-                  '$name\n${entry['location']}',
-                ),
-              );
-            },
+    Object? expected,
+  ) async {
+    if (!_current || _busy) return;
+    final clear = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        key: const ValueKey('backup-history-dialog'),
+        title: Text(t('backupHistory')),
+        content: SizedBox(
+          width: 560,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.sizeOf(context).height * .6,
+            ),
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: entries.length,
+              separatorBuilder: (_, _) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final entry = entries[index];
+                final name = entry['name'] as String? ?? t('backupTitle');
+                return ListTile(
+                  key: ValueKey('backup-history-entry-$index'),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                  title: Text(
+                    name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  subtitle: Text(
+                    formatLocalDateTime(DateTime.parse(entry['at'] as String)),
+                  ),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => _showDetails(
+                    t('backupLocation'),
+                    '$name\n${entry['location']}',
+                  ),
+                );
+              },
+            ),
           ),
         ),
+        actions: [
+          if (BackupExportHistory.supportsEditing(expected))
+            TextButton(
+              key: const ValueKey('backup-history-clear'),
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(t('backupHistoryClear')),
+            ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(t('close')),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(t('close')),
-        ),
-      ],
-    ),
-  );
+    );
+    if (!mounted || !_current || _busy || clear != true) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t('backupHistoryClear')),
+        content: Text(t('backupHistoryClearHint')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(t('cancel')),
+          ),
+          TextButton(
+            key: const ValueKey('backup-history-confirm-clear'),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(t('backupHistoryConfirmClear')),
+          ),
+        ],
+      ),
+    );
+    if (!_current || _busy || confirmed != true) return;
+    setState(() => _busy = true);
+    var message = 'backupHistoryCleared';
+    try {
+      await ref
+          .read(workspaceDraftsProvider.notifier)
+          .compareAndPut('lastPortableBackup', expected, null);
+    } catch (_) {
+      message = 'backupHistoryClearFailed';
+    } finally {
+      if (_current) {
+        setState(() {
+          _busy = false;
+          _result = t(message);
+        });
+      }
+    }
+  }
 
   static String _size(int value) => value >= 1024 * 1024
       ? '${(value / (1024 * 1024)).toStringAsFixed(1)} MiB'
@@ -619,18 +669,16 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
                   ),
               ],
             ),
-            if (history.length > 1) ...[
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton.icon(
-                  key: const ValueKey('backup-history'),
-                  onPressed: _busy ? null : () => _showHistory(history),
-                  icon: const Icon(Icons.history_rounded),
-                  label: Text('${t('backupHistory')} (${history.length})'),
-                ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const ValueKey('backup-history'),
+                onPressed: _busy ? null : () => _showHistory(history, raw),
+                icon: const Icon(Icons.history_rounded),
+                label: Text('${t('backupHistory')} (${history.length})'),
               ),
-            ],
+            ),
           ]),
         ],
         const SizedBox(height: 16),

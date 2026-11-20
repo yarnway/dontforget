@@ -77,6 +77,29 @@ void main() {
   );
 
   test(
+    'the last legacy candidate can migrate an old development store safely',
+    () async {
+      final candidates = DatabaseLocationMigrator.getLegacyCandidates(
+        developmentRoot: root.path,
+      );
+      expect(
+        candidates.take(candidates.length - 1),
+        DatabaseLocationMigrator.getLegacyCandidates(),
+      );
+      expect(
+        candidates.last,
+        p.join(root.path, '.dart_tool', 'sqflite_common_ffi', 'databases'),
+      );
+      source = await Directory(candidates.last).create(recursive: true);
+      await seed();
+      final before = await snapshot(source);
+      expect(await resolve(), target.path);
+      await expectRows(target);
+      expect(await snapshot(source), before);
+    },
+  );
+
+  test(
     'real SQLite and operational files migrate without changing source bytes',
     () async {
       await seed();
@@ -109,6 +132,35 @@ void main() {
       );
     },
   );
+
+  test('retained backups alone prevent initializing an empty store', () async {
+    for (final location in [source, target]) {
+      final snapshot = await file(
+        location,
+        'ha_snapshot.json',
+      ).writeAsString('keep');
+      await expectLater(
+        resolve(),
+        throwsA(isA<DatabaseLocationMigrationException>()),
+      );
+      expect(await snapshot.readAsString(), 'keep');
+      expect(
+        await file(target, DatabaseLocationMigrator.databaseFileName).exists(),
+        isFalse,
+      );
+      if (location == target) {
+        await file(
+          source,
+          'recovery.pending.json',
+        ).writeAsString('keep legacy recovery');
+        await expectLater(
+          resolve(),
+          throwsA(isA<DatabaseLocationMigrationException>()),
+        );
+      }
+      await snapshot.delete();
+    }
+  });
 
   test('existing target database wins and is never replaced', () async {
     await seed();

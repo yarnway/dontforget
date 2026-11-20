@@ -2,8 +2,11 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:dont_forget/data/database_helper.dart';
+import 'package:dont_forget/models/media_record.dart';
 import 'package:dont_forget/models/reminder.dart';
+import 'package:dont_forget/models/task_details.dart';
 import 'package:dont_forget/providers/providers.dart';
+import 'package:dont_forget/services/lan_sync_service.dart';
 import 'package:dont_forget/services/notification_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -116,6 +119,100 @@ void main() {
       expect((await saved('retry')).noticeRevision, 0);
       await current.updateReminder(retry.reminder!);
       expect(native.scheduled, hasLength(2));
+    },
+  );
+
+  test(
+    'peer trash and restore check the local snapshot and retain attachments',
+    () async {
+      final current = await load();
+      final generation = helper.captureGeneration();
+      final file = await File(
+        '${directory.path}/fixture.txt',
+      ).writeAsString('original attachment bytes');
+      final media = MediaRecord(
+        id: 'attachment',
+        type: 'file',
+        contentOrPath: file.path,
+        createdAt: DateTime(2026),
+      );
+      await helper.writeTransaction(
+        generation,
+        (tx) => tx.insert('MediaRecords', media.toJson()),
+      );
+      final original = (await current.addReminder(
+        task('lan-trash').copyWith(
+          detailsJson: const TaskDetails(
+            attachmentIds: ['attachment'],
+          ).encode(),
+        ),
+      )).reminder!;
+      LanSyncConflict conflict(Reminder baseline, bool inTrash) =>
+          LanSyncConflict(
+            taskId: baseline.id,
+            local: LanSyncConflict.contentOf(baseline),
+            peer: (
+              title: 'Peer text stays separate',
+              note: 'Peer notes',
+              inTrash: inTrash,
+            ),
+          );
+      expect(
+        conflict(
+          original,
+          true,
+        ).canAdoptTrash(original.copyWith(isRecurring: true)),
+        isFalse,
+      );
+      final newTime = original.triggerTime!.add(const Duration(hours: 1));
+      await helper.writeTransaction(
+        generation,
+        (tx) => tx.update(
+          'Reminders',
+          {'trigger_time': newTime.toIso8601String()},
+          where: 'id = ?',
+          whereArgs: [original.id],
+        ),
+      );
+      final stale = await current.adoptLanSyncTrash(
+        conflict(original, true),
+        original,
+        generation,
+      );
+      expect(stale.accepted, isFalse);
+      expect(native.cancelled, isEmpty);
+      final fresh = await saved(original.id);
+      expect(fresh.triggerTime, newTime);
+      expect(fresh.isVisible, isTrue);
+
+      final trash = (await current.adoptLanSyncTrash(
+        conflict(fresh, true),
+        fresh,
+        generation,
+      )).reminder!;
+      expect(trash.details.deletedAt, isNotNull);
+      expect(trash.details.history.last.action, 'trash');
+      expect(trash.details.attachmentIds, ['attachment']);
+      expect(trash.taskTitle, original.taskTitle);
+      expect(trash.taskSummary, original.taskSummary);
+      expect(native.cancelled, [trash.id]);
+
+      final restored = (await current.adoptLanSyncTrash(
+        conflict(trash, false),
+        trash,
+        generation,
+      )).reminder!;
+      expect(restored.isVisible, isTrue);
+      expect(restored.triggerTime, newTime);
+      expect(restored.details.history.last.action, 'restore');
+      expect(restored.noticeRevision, original.noticeRevision + 2);
+      expect(restored.details.attachmentIds, ['attachment']);
+      expect(native.scheduled.map((r) => r.triggerTime), [
+        original.triggerTime,
+        newTime,
+      ]);
+      expect(await database.query('MediaRecords'), [media.toJson()]);
+      expect(await file.readAsString(), 'original attachment bytes');
     },
   );
 

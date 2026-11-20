@@ -89,6 +89,11 @@ class DatabaseLocationMigrator {
       return target;
     }
     if (await _exists(p.join(target, 'recovery.pending.json'))) return target;
+    // An incomplete target may hold the only recovery copy, even when a
+    // different legacy candidate has a pending recovery of its own.
+    if (await Directory(target).exists()) {
+      await _requireEmptyStore(Directory(target));
+    }
     for (final candidate in candidates) {
       if (await _exists(p.join(candidate, 'recovery.pending.json'))) {
         return candidate;
@@ -110,18 +115,14 @@ class DatabaseLocationMigrator {
           ? target
           : candidate;
     }
-    // Even with no legacy candidate, don't initialize an empty DB over an
-    // incomplete store whose origin cannot be established.
-    if (await Directory(target).exists()) {
-      await _requireEmptyStore(Directory(target));
-    }
     return target;
   }
 
-  static List<String> getLegacyCandidates() {
-    if (!Platform.isWindows) return const [];
-    final appData = Platform.environment['APPDATA'];
-    final local = Platform.environment['LOCALAPPDATA'];
+  static List<String> getLegacyCandidates({String? developmentRoot}) {
+    final appData = Platform.isWindows ? Platform.environment['APPDATA'] : null;
+    final local = Platform.isWindows
+        ? Platform.environment['LOCALAPPDATA']
+        : null;
     return [
       if (appData != null && appData.isNotEmpty) ...[
         p.join(appData, 'com.example', 'DontForget', 'databases'),
@@ -129,7 +130,50 @@ class DatabaseLocationMigrator {
       ],
       if (local != null && local.isNotEmpty)
         p.join(local, 'DontForget', 'databases'),
+      if (developmentRoot != null)
+        p.join(
+          developmentRoot,
+          '.dart_tool',
+          'sqflite_common_ffi',
+          'databases',
+        ),
     ];
+  }
+
+  /// Locate the retained source for cleanup without following paths supplied by
+  /// a receipt outside the app's known legacy locations.
+  static Future<Directory?> retainedSource(Directory target) async {
+    final receipt = File(p.join(target.path, receiptName));
+    if (!await _exists(receipt.path)) return null;
+    await _requireFile(receipt);
+    if (await receipt.length() > 65536) {
+      throw const DatabaseLocationMigrationException();
+    }
+    final text = await receipt.readAsString();
+    String? source;
+    if (text.startsWith('{')) {
+      final data = jsonDecode(text);
+      if (data is! Map ||
+          data['version'] != 1 ||
+          data['source'] is! String ||
+          data['files'] is! Map ||
+          !data['files'].containsKey(databaseFileName)) {
+        throw const DatabaseLocationMigrationException();
+      }
+      source = data['source'] as String;
+    }
+    for (final path in getLegacyCandidates(
+      developmentRoot: Directory.current.path,
+    )) {
+      if (!await Directory(path).exists()) continue;
+      final directory = await _safeDirectory(path);
+      if (source == null
+          ? text.startsWith('Migration completed from $path to ')
+          : p.equals(directory.path, source)) {
+        return directory;
+      }
+    }
+    throw const DatabaseLocationMigrationException();
   }
 
   static Future<bool> migrateDirectory({
@@ -396,7 +440,12 @@ class DatabaseLocationMigrator {
   }) async {
     await for (final entry in directory.list(followLinks: false)) {
       final name = p.basename(entry.path);
-      if (name.startsWith(_stagePrefix) && name != allowedStage) {
+      if ((name.startsWith(_stagePrefix) && name != allowedStage) ||
+          name == 'ha_snapshot.json' ||
+          name == 'dont_forget_v3.mirror.db' ||
+          (name.startsWith('pre-migration-') && name.endsWith('.json')) ||
+          name.startsWith('recovery-') ||
+          name.startsWith('schema-upgrade-')) {
         throw const DatabaseLocationMigrationException();
       }
     }

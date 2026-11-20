@@ -17,6 +17,7 @@ import 'package:uuid/uuid.dart';
 import '../data/database_helper.dart';
 import '../models/media_record.dart';
 import '../models/reminder.dart';
+import '../models/task_details.dart';
 import '../models/agent_models.dart';
 import '../services/llm_service.dart';
 import '../services/local_media_store.dart';
@@ -28,6 +29,7 @@ import '../services/local_speech_service.dart';
 import '../services/speech_recognition_service.dart';
 import '../l10n/speech_recognition_strings.dart';
 import '../services/quick_reminder_parser.dart';
+import '../services/scheduled_task_reminder.dart';
 import '../services/recovery/runtime_gate.dart';
 import 'providers.dart';
 
@@ -454,7 +456,10 @@ class HomeController extends StateNotifier<HomeState> {
       }
     }
     final settings = _ref.read(settingsProvider);
-    final parsed = QuickReminderParser.parse(trimmed);
+    final now = DateTime.now();
+    final parsed = memoOnly
+        ? null
+        : QuickReminderParser.parse(trimmed, now: now);
     final localRule = !memoOnly && !settings.hasConfiguredExtraction
         ? QuickReminderParser.recurrence(trimmed)
         : null;
@@ -463,10 +468,11 @@ class HomeController extends StateNotifier<HomeState> {
         !memoOnly &&
         QuickReminderParser.hasRecurrenceIntent(trimmed) &&
         (localRule == null || parsed == null);
+    final event = needsRecurringPlan ? null : parsed;
     final time = memoOnly
         ? null
-        : reminderTime ?? (needsRecurringPlan ? null : parsed);
-    if (time != null && !time.isAfter(DateTime.now())) {
+        : reminderTime ?? ScheduledTaskReminder.defaultTime(event, now);
+    if (time != null && !time.isAfter(now)) {
       _reportError(
         generation,
         AppLocalizations(Locale(settings.language)).get('chooseFutureTime'),
@@ -480,7 +486,7 @@ class HomeController extends StateNotifier<HomeState> {
     if (existing != null) return existing.sourceText == text;
     final local = Reminder(
       id: captureId ?? const Uuid().v4(),
-      createdAt: DateTime.now(),
+      createdAt: now,
       taskTitle: String.fromCharCodes(trimmed.runes.take(80)),
       taskSummary: text,
       sourceText: text,
@@ -489,7 +495,13 @@ class HomeController extends StateNotifier<HomeState> {
       timeOrigin: time == null
           ? ReminderTimeOrigin.unknown
           : ReminderTimeOrigin.manual,
-      eventTime: needsRecurringPlan ? null : parsed,
+      eventTime: event,
+      detailsJson: reminderTime == null && time != null
+          ? ScheduledTaskReminder.withLead(
+              const TaskDetails(),
+              ScheduledTaskReminder.defaultLeadMinutes,
+            ).encode()
+          : null,
       capturePending: settings.hasConfiguredExtraction && !memoOnly,
       isRecurring: localRule != null && parsed != null,
       recurrenceRule: parsed == null ? 'none' : localRule ?? 'none',
@@ -1053,12 +1065,12 @@ class HomeController extends StateNotifier<HomeState> {
       releaseCapture: (sentText) async {
         released = true;
         detachPreview(cancel: false);
+        final capture = await captureFuture;
         // Do not make sending edited text wait for a slow final ASR response.
         // The lease keeps the file until that reader has actually completed.
         unawaited(
           () async {
             final text = await result;
-            final capture = await captureFuture;
             if (capture == null) return;
             if (!sentText &&
                 text == null &&
