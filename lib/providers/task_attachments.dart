@@ -118,7 +118,7 @@ extension TaskAttachments on RemindersNotifier {
   }) => _enqueue(
     (ticket) => _dbHelper.runOperation(ticket, () async {
       final sourcePath = item.attachmentPath;
-      if (sourcePath == null || !SharedText.validAttachmentPath(sourcePath)) {
+      if (sourcePath == null || !SharedText.isHandoffPath(sourcePath, item.id)) {
         throw const FormatException('Missing shared attachment');
       }
       final trimmed = text.trim();

@@ -41,6 +41,7 @@ class _LanReviewService extends LanSyncService {
     required DatabaseHelper dbHelper,
     VoidCallback? onDataChanged,
     ValueChanged<List<LanSyncConflict>>? onConflicts,
+    ValueChanged<LanSyncFailure>? onFailure,
   }) async {
     lastPeer = (host: peerIp, port: port);
     onConflicts?.call(conflicts);

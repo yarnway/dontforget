@@ -18,6 +18,9 @@ const taskAttachmentStrings = <String, Map<String, String>>{
     'taskAttachmentSaved': 'Copy saved',
     'taskAttachmentFileHint': 'Save a copy to open this file in another app.',
     'taskAttachmentOriginal': 'Original input',
+    'taskAttachmentCopyText': 'Copy text',
+    'taskAttachmentTextCopied': 'Text copied',
+    'taskAttachmentTextTruncated': 'Showing first 128 KB. Save a copy to view the full file.',
   },
   'zh': {
     'taskAttachments': '附件',
@@ -36,6 +39,9 @@ const taskAttachmentStrings = <String, Map<String, String>>{
     'taskAttachmentSaved': '已保存副本',
     'taskAttachmentFileHint': '保存副本后，可在其他应用中打开此文件。',
     'taskAttachmentOriginal': '原始输入',
+    'taskAttachmentCopyText': '复制文本',
+    'taskAttachmentTextCopied': '已复制文本',
+    'taskAttachmentTextTruncated': '当前仅预览前 128 KB，请保存副本查看完整文件。',
   },
   'ja': {
     'taskAttachments': '添付ファイル',
@@ -54,5 +60,8 @@ const taskAttachmentStrings = <String, Map<String, String>>{
     'taskAttachmentSaved': 'コピーを保存しました',
     'taskAttachmentFileHint': 'コピーを保存すると、他のアプリで開くことができます。',
     'taskAttachmentOriginal': '元の入力',
+    'taskAttachmentCopyText': 'テキストをコピー',
+    'taskAttachmentTextCopied': 'テキストをコピーしました',
+    'taskAttachmentTextTruncated': '先頭 128 KB のみ表示しています。全体を見るにはコピーを保存してください。',
   },
 };

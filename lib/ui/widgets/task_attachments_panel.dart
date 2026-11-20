@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -390,6 +391,10 @@ class _AttachmentTileState extends State<_AttachmentTile> {
                                   ? Icons.broken_image_outlined
                                   : media.type == 'image'
                                   ? Icons.image_outlined
+                                  : media.type == 'audio'
+                                  ? Icons.audiotrack_outlined
+                                  : media.type == 'video'
+                                  ? Icons.videocam_outlined
                                   : Icons.description_outlined,
                               size: 30,
                             ),
@@ -439,7 +444,111 @@ class TaskAttachmentPreview extends StatefulWidget {
 }
 
 class _TaskAttachmentPreviewState extends State<TaskAttachmentPreview> {
+  static const _maxPreviewBytes = 128 * 1024;
+  static const _previewableTextExtensions = {
+    '.txt',
+    '.md',
+    '.markdown',
+    '.json',
+    '.csv',
+    '.tsv',
+    '.log',
+    '.yaml',
+    '.yml',
+    '.xml',
+    '.ini',
+    '.cfg',
+    '.conf',
+    '.toml',
+    '.env',
+    '.dart',
+    '.py',
+    '.js',
+    '.ts',
+    '.html',
+    '.css',
+    '.sql',
+    '.sh',
+    '.ps1',
+    '.bat',
+  };
+
   bool _saving = false;
+  Future<({String text, bool truncated})?>? _textPreview;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTextPreview();
+  }
+
+  @override
+  void didUpdateWidget(covariant TaskAttachmentPreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.resolvedPath != widget.resolvedPath ||
+        oldWidget.media.id != widget.media.id ||
+        oldWidget.media.type != widget.media.type) {
+      _textPreview = null;
+      _loadTextPreview();
+    }
+  }
+
+  void _loadTextPreview() {
+    final filePath = widget.resolvedPath;
+    if (widget.media.type != 'file' || filePath == null) return;
+    final ext = path.extension(filePath).toLowerCase();
+    final nameExt = path.extension(widget.media.contentOrPath).toLowerCase();
+    if (!_previewableTextExtensions.contains(ext) &&
+        !_previewableTextExtensions.contains(nameExt)) {
+      return;
+    }
+    _textPreview = _readTextPreview(filePath);
+  }
+
+  static Future<({String text, bool truncated})?> _readTextPreview(
+    String filePath,
+  ) async {
+    try {
+      final file = File(filePath);
+      if (!await file.exists()) return null;
+      final total = await file.length();
+      if (total == 0) return (text: '', truncated: false);
+      final readLen = total > _maxPreviewBytes ? _maxPreviewBytes : total;
+      final raf = await file.open();
+      final Uint8List bytes;
+      try {
+        bytes = await raf.read(readLen);
+      } finally {
+        await raf.close();
+      }
+      if (bytes.contains(0)) return null;
+      final truncated = total > _maxPreviewBytes;
+      final decoded = utf8.decode(bytes, allowMalformed: truncated);
+      return (text: decoded, truncated: truncated);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _copyText(String text) async {
+    final l10n = AppLocalizations.of(context);
+    try {
+      await Clipboard.setData(ClipboardData(text: text));
+      if (!mounted) return;
+      final inline = context.findAncestorStateOfType<InlineFeedbackState>();
+      if (inline != null) {
+        inline.showSnackBar(
+          SnackBar(content: Text(l10n.get('taskAttachmentTextCopied'))),
+          tone: FeedbackTone.success,
+        );
+      } else {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(content: Text(l10n.get('taskAttachmentTextCopied'))),
+        );
+      }
+    } catch (_) {}
+  }
+
   Future<void> _saveCopy() async {
     if (_saving || widget.resolvedPath == null) return;
     setState(() => _saving = true);
@@ -483,6 +592,7 @@ class _TaskAttachmentPreviewState extends State<TaskAttachmentPreview> {
     final l10n = AppLocalizations.of(context);
     final media = widget.media;
     final file = widget.resolvedPath;
+    final theme = Theme.of(context);
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.escape): () =>
@@ -499,42 +609,113 @@ class _TaskAttachmentPreviewState extends State<TaskAttachmentPreview> {
             ),
           ),
           body: SafeArea(
-            child: Column(
-              children: [
-                Expanded(
-                  child: Center(
-                    child: media.type == 'image' && file != null
-                        ? InteractiveViewer(
-                            minScale: 0.5,
-                            maxScale: 4,
-                            child: Image.file(
-                              File(file),
-                              fit: BoxFit.contain,
-                              cacheWidth: 2048,
-                              errorBuilder: (_, __, ___) =>
-                                  Text(l10n.get('taskAttachmentUnavailable')),
+            child: FutureBuilder<({String text, bool truncated})?>(
+              future: _textPreview,
+              builder: (context, snapshot) {
+                final textPreview = snapshot.data;
+                return Column(
+                  children: [
+                    Expanded(
+                      child: media.type == 'image' && file != null
+                          ? Center(
+                              child: InteractiveViewer(
+                                minScale: 0.5,
+                                maxScale: 4,
+                                child: Image.file(
+                                  File(file),
+                                  fit: BoxFit.contain,
+                                  cacheWidth: 2048,
+                                  errorBuilder: (_, __, ___) => Text(
+                                    l10n.get('taskAttachmentUnavailable'),
+                                  ),
+                                ),
+                              ),
+                            )
+                          : textPreview != null
+                          ? SingleChildScrollView(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  if (textPreview.truncated)
+                                    Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: 12,
+                                      ),
+                                      child: Text(
+                                        l10n.get('taskAttachmentTextTruncated'),
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: theme
+                                                  .colorScheme
+                                                  .onSurfaceVariant,
+                                            ),
+                                      ),
+                                    ),
+                                  Container(
+                                    key: const ValueKey(
+                                      'attachment-text-preview',
+                                    ),
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          theme.colorScheme.surfaceContainerLow,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: theme.colorScheme.outlineVariant,
+                                      ),
+                                    ),
+                                    child: SelectableText(
+                                      textPreview.text,
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                            fontFamily: 'monospace',
+                                            height: 1.5,
+                                          ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : Center(
+                              child: SingleChildScrollView(
+                                padding: const EdgeInsets.all(24),
+                                child: SelectableText(
+                                  media.type == 'text'
+                                      ? media.contentOrPath
+                                      : l10n.get('taskAttachmentFileHint'),
+                                ),
+                              ),
                             ),
-                          )
-                        : SingleChildScrollView(
-                            padding: const EdgeInsets.all(24),
-                            child: SelectableText(
-                              media.type == 'text'
-                                  ? media.contentOrPath
-                                  : l10n.get('taskAttachmentFileHint'),
-                            ),
-                          ),
-                  ),
-                ),
-                if (file != null)
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: FilledButton.tonalIcon(
-                      onPressed: _saving ? null : _saveCopy,
-                      icon: const Icon(Icons.save_alt),
-                      label: Text(l10n.get('taskAttachmentSaveCopy')),
                     ),
-                  ),
-              ],
+                    if (file != null || textPreview != null)
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Wrap(
+                          spacing: 12,
+                          runSpacing: 8,
+                          alignment: WrapAlignment.center,
+                          children: [
+                            if (textPreview != null &&
+                                textPreview.text.isNotEmpty)
+                              OutlinedButton.icon(
+                                key: const ValueKey('attachment-copy-text'),
+                                onPressed: () => _copyText(textPreview.text),
+                                icon: const Icon(Icons.copy_outlined),
+                                label: Text(l10n.get('taskAttachmentCopyText')),
+                              ),
+                            if (file != null)
+                              FilledButton.tonalIcon(
+                                onPressed: _saving ? null : _saveCopy,
+                                icon: const Icon(Icons.save_alt),
+                                label: Text(l10n.get('taskAttachmentSaveCopy')),
+                              ),
+                          ],
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
           ),
         ),

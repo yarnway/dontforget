@@ -343,7 +343,11 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
           children: [
             Text(t(alreadySaved ? 'saved' : 'hint')),
             const SizedBox(height: 16),
-            if (widget.item.hasAttachment) ...[
+            if (widget.item.hasAttachment &&
+                SharedText.isHandoffPath(
+                  widget.item.attachmentPath!,
+                  widget.item.id,
+                )) ...[
               Card.outlined(
                 key: const ValueKey('shared-attachment-card'),
                 child: Column(

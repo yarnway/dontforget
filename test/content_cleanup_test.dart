@@ -782,6 +782,22 @@ void main() {
               .eligible,
           isTrue,
         );
+        // A later launch from another working directory still recognizes the
+        // retained development store recorded by the JSON receipt.
+        Directory.current = documents;
+        expect(
+          (await scan()).entries
+              .singleWhere((e) => e.label == 'import-legacy-snapshot')
+              .reason,
+          'backupProtected',
+        );
+        expect(
+          (await scan()).entries
+              .singleWhere((e) => e.label == 'import-free-after-migration')
+              .eligible,
+          isTrue,
+        );
+        Directory.current = h.directory;
         // Old releases wrote a text receipt for the same retained directory.
         await File(
           p.join(target, DatabaseLocationMigrator.receiptName),

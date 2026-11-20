@@ -173,7 +173,25 @@ class DatabaseLocationMigrator {
         return directory;
       }
     }
+    // A development store is recorded with the working directory used at the
+    // time of migration. Later launches may use another working directory, so
+    // accept the recorded store only when it still has the exact known layout.
+    if (source != null &&
+        _isDevelopmentStore(source) &&
+        await _exists(source)) {
+      final directory = await _safeDirectory(source);
+      if (p.equals(directory.path, source)) return directory;
+    }
     throw const DatabaseLocationMigrationException();
+  }
+
+  static bool _isDevelopmentStore(String path) {
+    if (!p.isAbsolute(path) || p.normalize(path) != path) return false;
+    final parts = p.split(path);
+    return parts.length > 3 &&
+        parts[parts.length - 3] == '.dart_tool' &&
+        parts[parts.length - 2] == 'sqflite_common_ffi' &&
+        parts.last == 'databases';
   }
 
   static Future<bool> migrateDirectory({

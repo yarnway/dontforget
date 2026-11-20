@@ -51,6 +51,15 @@ class SharedText {
   static bool isImagePath(String filePath) =>
       imageExtensions.contains(p.extension(filePath).toLowerCase());
 
+  /// The Android bridge stages each share as `shared_handoff/<id>/<name>`.
+  /// Only that private layout may be imported or removed for a share.
+  static bool isHandoffPath(String filePath, String id) {
+    final parent = p.dirname(filePath);
+    return validAttachmentPath(filePath) &&
+        p.basename(parent) == id &&
+        p.basename(p.dirname(parent)) == 'shared_handoff';
+  }
+
   bool get hasAttachment => attachmentPath != null;
   bool get isImageAttachment =>
       attachmentPath != null &&
@@ -84,7 +93,8 @@ class SharedText {
     String? attachmentPath;
     String? attachmentName;
     if (rawPath != null) {
-      if (rawPath is! String || !validAttachmentPath(rawPath)) {
+      final shareId = value['id'] as String;
+      if (rawPath is! String || !isHandoffPath(rawPath, shareId)) {
         throw const FormatException('Invalid shared attachment path');
       }
       attachmentPath = rawPath;
@@ -239,15 +249,12 @@ class SharedTextInbox {
       ).toJson(),
     );
     final stagedPath = item.attachmentPath;
-    if (stagedPath != null) {
+    if (stagedPath != null && SharedText.isHandoffPath(stagedPath, id)) {
       final parent = p.dirname(stagedPath);
-      if (p.basename(parent) == id &&
-          p.basename(p.dirname(parent)) == 'shared_handoff') {
-        try {
-          final dir = Directory(parent);
-          if (await dir.exists()) await dir.delete(recursive: true);
-        } catch (_) {}
-      }
+      try {
+        final dir = Directory(parent);
+        if (await dir.exists()) await dir.delete(recursive: true);
+      } catch (_) {}
     }
   });
 

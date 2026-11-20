@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
@@ -14,6 +15,10 @@ import '../models/departure_plan.dart';
 import '../models/ordinary_series.dart';
 import '../models/task_details.dart';
 import 'local_media_store.dart';
+
+class _PayloadTooLargeException implements Exception {
+  const _PayloadTooLargeException();
+}
 
 class LanSyncServerInfo {
   final bool isRunning;
@@ -32,6 +37,17 @@ class LanSyncServerInfo {
 typedef LanSyncPeerAddress = ({String host, int port});
 
 typedef LanSyncTaskContent = ({String title, String note, bool inTrash});
+
+enum LanSyncFailure {
+  invalidPin,
+  pinLocked,
+  payloadTooLarge,
+  timeout,
+  unreachable,
+  invalidResponse,
+  storageUnavailable,
+  unknown,
+}
 
 class LanSyncConflict {
   const LanSyncConflict({
@@ -76,6 +92,10 @@ class LanSyncConflict {
 class LanSyncService {
   static const defaultPort = 42888;
   static const maxMediaBytes = 32 * 1024 * 1024;
+
+  /// Base64 attachments plus task rows; anything larger is rejected unread.
+  static const maxBodyBytes = 64 * 1024 * 1024;
+  static const pinFailuresBeforeLockout = 5;
   static final LanSyncService instance = LanSyncService._internal(
     InternetAddress.anyIPv4,
     defaultPort,
@@ -111,6 +131,9 @@ class LanSyncService {
   final Set<HttpClient> _clients = {};
   final Set<Future<bool>> _syncs = {};
   String _lastPin = '';
+  int _pinFailures = 0;
+  int _pinLockouts = 0;
+  DateTime? _pinLockedUntil;
 
   bool get pausedForRecovery => _recoveryPaused;
 
@@ -161,25 +184,64 @@ class LanSyncService {
   int get port => _serverPort;
   String get localIp => _localIp;
 
+  static final _virtualInterfacePattern = RegExp(
+    r'vethernet|wsl|hyper-v|docker|vmware|virtualbox|vbox|loopback|teredo|isatap|tailscale|zerotier|utun|hamachi|wireguard|tun\d|tap\d|br-|virbr',
+    caseSensitive: false,
+  );
+
+  static bool _isRfc1918Private172(String address) {
+    if (!address.startsWith('172.')) return false;
+    final parts = address.split('.');
+    if (parts.length != 4) return false;
+    final second = int.tryParse(parts[1]);
+    return second != null && second >= 16 && second <= 31;
+  }
+
+  /// Prefer physical LAN interfaces (192.168.x > 10.x > 172.16-31.x) over
+  /// virtual/container/VPN adapters so peers receive a reachable Wi-Fi IP.
+  static String selectPreferredLocalIp(
+    Iterable<({String name, String address})> candidates,
+  ) {
+    String? bestAddress;
+    var bestScore = -1;
+    for (final candidate in candidates) {
+      final address = candidate.address.trim();
+      final parsed = InternetAddress.tryParse(address);
+      if (parsed == null ||
+          parsed.type != InternetAddressType.IPv4 ||
+          parsed.isLoopback ||
+          address.startsWith('169.254.')) {
+        continue;
+      }
+      final virtual = _virtualInterfacePattern.hasMatch(candidate.name);
+      final rangeScore = address.startsWith('192.168.')
+          ? 30
+          : address.startsWith('10.')
+          ? 20
+          : _isRfc1918Private172(address)
+          ? 10
+          : 5;
+      final score = (virtual ? 0 : 100) + rangeScore;
+      if (score > bestScore) {
+        bestScore = score;
+        bestAddress = address;
+      }
+    }
+    return bestAddress ?? '127.0.0.1';
+  }
+
   Future<String> getLocalIpAddress() async {
     try {
       final interfaces = await NetworkInterface.list(
         type: InternetAddressType.IPv4,
         includeLoopback: false,
       );
-      for (final iface in interfaces) {
-        for (final addr in iface.addresses) {
-          if (!addr.isLoopback &&
-              (addr.address.startsWith('192.168.') ||
-                  addr.address.startsWith('10.') ||
-                  addr.address.startsWith('172.'))) {
-            return addr.address;
-          }
-        }
-      }
-      if (interfaces.isNotEmpty && interfaces.first.addresses.isNotEmpty) {
-        return interfaces.first.addresses.first.address;
-      }
+      final candidates = <({String name, String address})>[
+        for (final iface in interfaces)
+          for (final addr in iface.addresses)
+            (name: iface.name, address: addr.address),
+      ];
+      return selectPreferredLocalIp(candidates);
     } catch (e) {
       debugPrint('Error getting local IP: $e');
     }
@@ -189,6 +251,49 @@ class LanSyncService {
   String _generatePin() {
     final rand = Random.secure();
     return (100000 + rand.nextInt(900000)).toString();
+  }
+
+  bool get _pinLocked {
+    final until = _pinLockedUntil;
+    return until != null && DateTime.now().isBefore(until);
+  }
+
+  /// Compare without an early exit so response timing does not reveal digits.
+  bool _pinMatches(Object? value) {
+    final expected = _currentPin;
+    if (value is! String || expected.isEmpty) return false;
+    var difference = value.length ^ expected.length;
+    for (var i = 0; i < expected.length; i++) {
+      difference |=
+          expected.codeUnitAt(i) ^ (i < value.length ? value.codeUnitAt(i) : 0);
+    }
+    return difference == 0;
+  }
+
+  /// A six-digit PIN cannot withstand unlimited guesses from the network.
+  /// Repeated failures close sync admission for an increasing period.
+  void _recordPinFailure() {
+    if (++_pinFailures < pinFailuresBeforeLockout) return;
+    _pinFailures = 0;
+    final seconds = 30 * (1 << min(_pinLockouts, 6));
+    _pinLockouts++;
+    _pinLockedUntil = DateTime.now().add(Duration(seconds: seconds));
+  }
+
+  /// Bound memory use before the PIN has been checked or a peer response parsed.
+  static Future<String> _readBody(
+    Stream<List<int>> stream, {
+    int declaredLength = -1,
+  }) async {
+    if (declaredLength > maxBodyBytes) throw const _PayloadTooLargeException();
+    final bytes = BytesBuilder(copy: false);
+    await for (final chunk in stream) {
+      if (bytes.length + chunk.length > maxBodyBytes) {
+        throw const _PayloadTooLargeException();
+      }
+      bytes.add(chunk);
+    }
+    return utf8.decode(bytes.takeBytes());
   }
 
   Future<LanSyncServerInfo> startServer({
@@ -234,6 +339,10 @@ class LanSyncService {
       _currentPin = _generatePin();
     } while (_currentPin == _lastPin);
     _lastPin = _currentPin;
+    // A new PIN starts a new guessing budget.
+    _pinFailures = 0;
+    _pinLockouts = 0;
+    _pinLockedUntil = null;
     _localIp = _bindAddress.isLoopback
         ? _bindAddress.address
         : await getLocalIpAddress();
@@ -339,20 +448,28 @@ class LanSyncService {
       // Capture at admission, before waiting for even the request body. A body
       // arriving after recovery must not be admitted against the new database.
       final generation = dbHelper.captureGeneration();
+      if (_pinLocked) {
+        await _respond(request, HttpStatus.tooManyRequests, {
+          'error': 'Too many invalid PIN attempts',
+        });
+        return;
+      }
       final data = _decode(
-        await request
-            .cast<List<int>>()
-            .transform(utf8.decoder)
-            .join()
-            .timeout(const Duration(seconds: 30)),
+        await _readBody(
+          request,
+          declaredLength: request.contentLength,
+        ).timeout(const Duration(seconds: 30)),
       );
       _checkRuntime(epoch);
-      if (data['pin']?.toString() != _currentPin) {
+      if (!_pinMatches(data['pin'])) {
+        _recordPinFailure();
         await _respond(request, HttpStatus.unauthorized, {
           'error': 'Invalid PIN',
         });
         return;
       }
+      _pinFailures = 0;
+      _pinLockouts = 0;
       final incoming = _reminders(data);
       final incomingMedia = _parseIncomingMedia(data);
       final stagedPaths = <String, String>{};
@@ -410,6 +527,13 @@ class LanSyncService {
         'error': 'Database unavailable for sync',
         'code': error.code.name,
       });
+    } on _PayloadTooLargeException {
+      await _respond(
+        request,
+        HttpStatus.requestEntityTooLarge,
+        {'error': 'Sync data too large'},
+        closeSocket: true,
+      );
     } on FormatException {
       await _respond(request, HttpStatus.badRequest, {
         'error': 'Invalid sync data',
@@ -428,13 +552,25 @@ class LanSyncService {
   Future<void> _respond(
     HttpRequest request,
     int status,
-    Map<String, Object?> data,
-  ) async {
+    Map<String, Object?> data, {
+    bool closeSocket = false,
+  }) async {
     try {
+      final payload = utf8.encode(jsonEncode(data));
       request.response.statusCode = status;
       request.response.headers.contentType = ContentType.json;
-      request.response.write(jsonEncode(data));
-      await request.response.close();
+      request.response.contentLength = payload.length;
+      if (closeSocket) {
+        request.response.headers.set(HttpHeaders.connectionHeader, 'close');
+        final socket = await request.response.detachSocket(writeHeaders: true);
+        socket.add(payload);
+        await socket.flush();
+        await socket.close();
+        socket.destroy();
+      } else {
+        request.response.add(payload);
+        await request.response.close();
+      }
     } catch (_) {
       // A disconnected peer must not leave an unhandled handler Future behind.
     }
@@ -471,9 +607,13 @@ class LanSyncService {
     required DatabaseHelper dbHelper,
     VoidCallback? onDataChanged,
     ValueChanged<List<LanSyncConflict>>? onConflicts,
+    ValueChanged<LanSyncFailure>? onFailure,
   }) {
     final epoch = _recoveryEpoch;
-    if (_recoveryPaused) return Future.value(false);
+    if (_recoveryPaused) {
+      if (onFailure != null) _notify(() => onFailure(LanSyncFailure.storageUnavailable));
+      return Future.value(false);
+    }
     final syncing = _syncWithPeer(
       peerIp,
       port,
@@ -481,6 +621,7 @@ class LanSyncService {
       dbHelper,
       onDataChanged,
       onConflicts,
+      onFailure,
       epoch,
     );
     _syncs.add(syncing);
@@ -495,9 +636,14 @@ class LanSyncService {
     DatabaseHelper dbHelper,
     VoidCallback? onDataChanged,
     ValueChanged<List<LanSyncConflict>>? onConflicts,
+    ValueChanged<LanSyncFailure>? onFailure,
     int epoch,
   ) async {
     HttpClient? client;
+    void fail(LanSyncFailure reason) {
+      if (onFailure != null) _notify(() => onFailure(reason));
+    }
+
     try {
       _checkRuntime(epoch);
       final generation = dbHelper.captureGeneration();
@@ -542,14 +688,17 @@ class LanSyncService {
       );
 
       if (response.statusCode == HttpStatus.ok) {
-        final respStr = await response
-            .transform(utf8.decoder)
-            .join()
-            .timeout(const Duration(seconds: 30));
+        final respStr = await _readBody(
+          response,
+          declaredLength: response.contentLength,
+        ).timeout(const Duration(seconds: 30));
         dbHelper.checkGeneration(generation);
         _checkRuntime(epoch);
         final data = _decode(respStr);
-        if (data['status'] != 'success') return false;
+        if (data['status'] != 'success') {
+          fail(LanSyncFailure.invalidResponse);
+          return false;
+        }
         final peerReminders = _reminders(data);
         final peerMedia = _parseIncomingMedia(data);
         final existingMediaIds = {
@@ -591,9 +740,35 @@ class LanSyncService {
         }
         return true;
       } else {
+        await response.drain<void>().catchError((Object _) {});
+        fail(switch (response.statusCode) {
+          HttpStatus.unauthorized => LanSyncFailure.invalidPin,
+          HttpStatus.tooManyRequests => LanSyncFailure.pinLocked,
+          HttpStatus.requestEntityTooLarge => LanSyncFailure.payloadTooLarge,
+          HttpStatus.requestTimeout => LanSyncFailure.timeout,
+          HttpStatus.serviceUnavailable => LanSyncFailure.storageUnavailable,
+          HttpStatus.badRequest => LanSyncFailure.invalidResponse,
+          _ => LanSyncFailure.unknown,
+        });
         return false;
       }
+    } on TimeoutException {
+      fail(LanSyncFailure.timeout);
+      return false;
+    } on SocketException {
+      fail(LanSyncFailure.unreachable);
+      return false;
+    } on _PayloadTooLargeException {
+      fail(LanSyncFailure.payloadTooLarge);
+      return false;
+    } on FormatException {
+      fail(LanSyncFailure.invalidResponse);
+      return false;
+    } on DatabaseAccessException {
+      fail(LanSyncFailure.storageUnavailable);
+      return false;
     } catch (_) {
+      fail(LanSyncFailure.unknown);
       return false;
     } finally {
       client?.close(force: true);

@@ -3,12 +3,15 @@ import '../../data/database_helper.dart';
 import '../widgets/inline_feedback.dart';
 import '../formatters/local_date_time.dart';
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:path/path.dart' as p;
+import 'package:url_launcher/url_launcher.dart';
 import '../../models/reminder.dart';
 import '../../providers/providers.dart';
 import '../../providers/home_controller.dart';
@@ -19,8 +22,11 @@ import '../../services/time_zone_change_coordinator.dart';
 import '../../services/startup_trace.dart';
 import '../../services/local_media_store.dart';
 import '../../services/recovery/runtime_gate.dart';
+import '../../services/shared_text_inbox.dart';
 import 'preferences_screen.dart';
 import 'dashboard_screen.dart';
+import 'shared_text_inbox_screen.dart';
+import '../../l10n/shared_text_strings.dart';
 import '../widgets/task_search_panel.dart';
 import '../widgets/input_bottom_bar.dart';
 import '../widgets/command_palette_dialog.dart';
@@ -73,6 +79,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   late final ContextTriggerService _contextTriggers;
   Future<void> _playbackOperations = Future<void>.value();
   bool _playbackStarted = false;
+  String? _playingRecordId;
+  StreamSubscription<void>? _playerCompleteSubscription;
 
   bool get _runtimeActive => mounted && _runtime.isCurrent(_birth);
 
@@ -103,10 +111,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       if (_catchUpDigestSubscription != null)
         _catchUpDigestSubscription!.cancel(),
       if (_suppressedSubscription != null) _suppressedSubscription!.cancel(),
+      if (_playerCompleteSubscription != null)
+        _playerCompleteSubscription!.cancel(),
       _serializePlayback(() async {
         if (_playbackStarted) {
           await _audioPlayer.stop();
           _playbackStarted = false;
+          _playingRecordId = null;
         }
       }),
     ]);
@@ -241,6 +252,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Listen to notification service broadcast stream
     _dueSubscription = _notifications.onReminderDue.listen((reminder) {
       _queueDueReminder(reminder);
+    });
+    _playerCompleteSubscription = _audioPlayer.onPlayerComplete.listen((_) {
+      _playbackStarted = false;
+      _playingRecordId = null;
     });
 
     // 聚合情境摘要为页面入口，由用户选择何时查看。
@@ -389,6 +404,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _dueSubscription?.cancel();
     _catchUpDigestSubscription?.cancel();
     _suppressedSubscription?.cancel();
+    _playerCompleteSubscription?.cancel();
+    _playingRecordId = null;
     unawaited(
       _serializePlayback(
         () => _audioPlayer.dispose(),
@@ -889,34 +906,51 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
+  static const _filePreviewMaxBytes = 128 * 1024;
+
+  Future<({String text, bool truncated})?> _readBoundedTextPreview(
+    String filePath,
+  ) async {
+    try {
+      final file = File(filePath);
+      if (!await file.exists()) return null;
+      final raf = await file.open();
+      final Uint8List raw;
+      try {
+        raw = await raf.read(_filePreviewMaxBytes + 1);
+      } finally {
+        await raf.close();
+      }
+      if (raw.isEmpty) return null;
+      final truncated = raw.length > _filePreviewMaxBytes;
+      final slice = truncated ? raw.sublist(0, _filePreviewMaxBytes) : raw;
+      if (slice.contains(0)) return null;
+      final decoded = utf8.decode(slice, allowMalformed: truncated);
+      if (decoded.trim().isEmpty) return null;
+      return (text: decoded, truncated: truncated);
+    } catch (_) {
+      return null;
+    }
+  }
+
   void _showFileDialog(String filePath) {
     final l10n = AppLocalizations.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final fileName = filePath.split(Platform.pathSeparator).last;
-    String preview = '';
-    try {
-      final f = File(filePath);
-      if (f.existsSync() && f.lengthSync() < 300 * 1024) {
-        preview = f.readAsStringSync();
-      }
-    } catch (_) {}
+    final colors = Theme.of(context).colorScheme;
+    final fileName = p.basename(filePath);
+    final previewFuture = _readBoundedTextPreview(filePath);
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: BorderSide(
-            color: Theme.of(context).colorScheme.outlineVariant,
-            width: 1,
-          ),
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: colors.outlineVariant, width: 1),
         ),
-        backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         title: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.description_outlined,
-              color: Colors.amber,
+              color: colors.primary,
               size: 22,
             ),
             const SizedBox(width: 8),
@@ -934,50 +968,108 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         ),
         content: SizedBox(
           width: double.maxFinite,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '${l10n.get('localPath')}: $filePath',
-                style: const TextStyle(fontSize: 11, color: Colors.grey),
-              ),
-              const Divider(height: 18),
-              if (preview.isNotEmpty) ...[
-                Text(
-                  '${l10n.get('contentPreview')}:',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Container(
-                  constraints: const BoxConstraints(maxHeight: 200),
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(
-                      color: Colors.grey.withValues(alpha: 0.2),
+          child: FutureBuilder<({String text, bool truncated})?>(
+            future: previewFuture,
+            builder: (context, snapshot) {
+              final preview = snapshot.data;
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${l10n.get('localPath')}: $filePath',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: colors.onSurfaceVariant,
                     ),
                   ),
-                  child: SingleChildScrollView(
-                    child: Text(
-                      preview,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontFamily: 'monospace',
+                  const Divider(height: 18),
+                  if (snapshot.connectionState != ConnectionState.done)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Row(
+                        children: [
+                          const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(l10n.get('loading')),
+                        ],
+                      ),
+                    )
+                  else if (preview != null) ...[
+                    Row(
+                      children: [
+                        Text(
+                          '${l10n.get('contentPreview')}:',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const Spacer(),
+                        TextButton.icon(
+                          key: const ValueKey('home-file-preview-copy'),
+                          onPressed: () async {
+                            await Clipboard.setData(
+                              ClipboardData(text: preview.text),
+                            );
+                            if (mounted && _runtimeActive) {
+                              InlineFeedback.of(this.context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    l10n.get('taskAttachmentTextCopied'),
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.copy_rounded, size: 15),
+                          label: Text(l10n.get('taskAttachmentCopyText')),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      constraints: const BoxConstraints(maxHeight: 240),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: colors.surfaceContainerHighest.withValues(
+                          alpha: 0.45,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: colors.outlineVariant),
+                      ),
+                      child: SingleChildScrollView(
+                        child: SelectableText(
+                          preview.text,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontFamily: 'monospace',
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              ] else
-                Text(
-                  l10n.get('binaryFileNotice'),
-                  style: const TextStyle(fontSize: 12),
-                ),
-            ],
+                    if (preview.truncated) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        l10n.get('taskAttachmentTextTruncated'),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ] else
+                    Text(
+                      l10n.get('binaryFileNotice'),
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                ],
+              );
+            },
           ),
         ),
         actions: [
@@ -993,23 +1085,60 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
-  void _openVideo(String filePath) {
+  Future<void> _openVideo(String filePath) async {
     final l10n = AppLocalizations.of(context);
-    final fileName = filePath.split(Platform.pathSeparator).last;
-    if (Platform.isWindows) {
-      try {
-        Process.run('cmd', ['/c', 'start', '', filePath]);
-      } catch (_) {}
+    final fileName = p.basename(filePath);
+    var launched = false;
+    try {
+      final file = File(filePath);
+      if (await file.exists()) {
+        launched = await launchUrl(
+          Uri.file(filePath),
+          mode: LaunchMode.externalApplication,
+        );
+      }
+    } catch (_) {
+      launched = false;
     }
+    if (!mounted || !_runtimeActive) return;
     InlineFeedback.of(context).hideCurrentSnackBar();
     InlineFeedback.of(context).showSnackBar(
       SnackBar(
         duration: const Duration(seconds: 3),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        content: Text('${l10n.get('openedVideo')}: $fileName'),
+        content: Text(
+          launched
+              ? '${l10n.get('openedVideo')}: $fileName'
+              : l10n.get('videoOpenFailed'),
+        ),
       ),
+      tone: launched ? FeedbackTone.info : FeedbackTone.error,
     );
+  }
+
+  Future<void> _stopAudioPlayback({bool showFeedback = true}) async {
+    try {
+      await _serializePlayback(() async {
+        if (_playbackStarted) {
+          await _audioPlayer.stop();
+          _playbackStarted = false;
+          _playingRecordId = null;
+        }
+      });
+    } catch (_) {}
+    if (showFeedback && mounted && _runtimeActive) {
+      final l10n = AppLocalizations.of(context);
+      InlineFeedback.of(context).hideCurrentSnackBar();
+      InlineFeedback.of(context).showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          content: Text(l10n.get('playbackStopped')),
+        ),
+      );
+    }
   }
 
   void _playMedia(String recordId) async {
@@ -1033,13 +1162,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final mediaPath = await _mediaStore.resolvePath(media.contentOrPath);
     if (!mounted || !_runtimeActive) return;
     if (media.type == 'audio') {
+      if (_playbackStarted && _playingRecordId == recordId) {
+        await _stopAudioPlayback();
+        return;
+      }
       try {
         await _serializePlayback(() async {
           if (!mounted || !_runtimeActive) return;
           _playbackStarted = true;
+          _playingRecordId = recordId;
           await _audioPlayer.play(DeviceFileSource(mediaPath));
         });
       } catch (_) {
+        _playbackStarted = false;
+        _playingRecordId = null;
         if (mounted && _runtimeActive) {
           InlineFeedback.of(context).showSnackBar(
             SnackBar(content: Text(l10n.get('audioPlaybackFailed'))),
@@ -1051,12 +1187,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         InlineFeedback.of(context).hideCurrentSnackBar();
         InlineFeedback.of(context).showSnackBar(
           SnackBar(
-            duration: const Duration(seconds: 3),
+            duration: const Duration(seconds: 6),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
             content: Text(l10n.get('playingAudio')),
+            action: SnackBarAction(
+              label: l10n.get('stopPlayback'),
+              onPressed: () => unawaited(_stopAudioPlayback()),
+            ),
           ),
         );
       }
@@ -1065,7 +1205,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     } else if (media.type == 'file') {
       _showFileDialog(mediaPath);
     } else if (media.type == 'video') {
-      _openVideo(mediaPath);
+      unawaited(_openVideo(mediaPath));
     }
   }
 
@@ -1170,6 +1310,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
   }
 
+  Future<void> _runDynamicUrgencyScan() async {
+    if (!mounted || !_runtimeActive) return;
+    final l10n = AppLocalizations.of(context);
+    try {
+      final result = await ref
+          .read(remindersProvider.notifier)
+          .scanAndApplyDynamicUrgency();
+      if (!mounted || !_runtimeActive) return;
+      final message =
+          '${l10n.get('dynamicPromotedCount')}: ${result.changed}'
+          '${result.nativeSyncFailures > 0 ? '\n${l10n.get('reminderNativeSyncFailed')}' : ''}';
+      InlineFeedback.of(context).showSnackBar(SnackBar(content: Text(message)));
+    } catch (_) {
+      if (!mounted || !_runtimeActive) return;
+      InlineFeedback.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.get('dynamicScanFailed'))),
+      );
+    }
+  }
+
+  void _openSettings() {
+    if (!mounted || !_runtimeActive || _toolBlocked) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const PreferencesScreen()),
+    );
+  }
+
   bool _openCommandPalette() {
     if (!_runtimeActive ||
         _toolBlocked ||
@@ -1178,6 +1346,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
     final l10n = AppLocalizations.of(context);
     final isImmersive = ref.read(immersiveModeProvider);
+    final pendingSharedCount = SharedTextInbox.count(
+      ref.read(workspaceDraftsProvider),
+    );
+    final lang = l10n.locale.languageCode;
 
     CommandPaletteDialog.show(context, [
       CommandPaletteAction(
@@ -1226,26 +1398,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         subtitle: l10n.get('scanDynamicUrgencyDesc'),
         icon: Icons.bolt,
         shortcut: 'U',
-        onExecute: () async {
-          if (!mounted || !_runtimeActive) return;
-          try {
-            final result = await ref
-                .read(remindersProvider.notifier)
-                .scanAndApplyDynamicUrgency();
-            if (!mounted || !_runtimeActive) return;
-            final message =
-                '${l10n.get('dynamicPromotedCount')}: ${result.changed}'
-                '${result.nativeSyncFailures > 0 ? '\n${l10n.get('reminderNativeSyncFailed')}' : ''}';
-            InlineFeedback.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(message)));
-          } catch (_) {
-            if (!mounted || !_runtimeActive) return;
-            InlineFeedback.of(context).showSnackBar(
-              SnackBar(content: Text(l10n.get('dynamicScanFailed'))),
-            );
-          }
-        },
+        onExecute: () => unawaited(_runDynamicUrgencyScan()),
       ),
       CommandPaletteAction(
         id: 'focus',
@@ -1280,6 +1433,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         onExecute: _openSearch,
       ),
       CommandPaletteAction(
+        id: 'shared_drafts',
+        title: sharedTextLabel(lang, 'title'),
+        subtitle: pendingSharedCount > 0
+            ? l10n
+                  .get('pendingSharedDrafts')
+                  .replaceAll('{count}', '$pendingSharedCount')
+            : sharedTextLabel(lang, 'hint'),
+        icon: Icons.inbox_outlined,
+        onExecute: () => openSharedTextInbox(context, ref),
+      ),
+      CommandPaletteAction(
         id: 'dashboard',
         title: l10n.get('dashboardTitle'),
         subtitle: l10n.get('taskCompletion'),
@@ -1307,10 +1471,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         subtitle: l10n.get('lanSyncTitle'),
         icon: Icons.settings_outlined,
         shortcut: ',',
-        onExecute: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const PreferencesScreen()),
-        ),
+        onExecute: _openSettings,
       ),
       CommandPaletteAction(
         id: 'planning',
@@ -1381,6 +1542,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       _selectTool(_WorkspaceTool.graph);
     } else if (event.logicalKey == LogicalKeyboardKey.keyC) {
       _openContextDigest();
+    } else if (event.logicalKey == LogicalKeyboardKey.keyU) {
+      unawaited(_runDynamicUrgencyScan());
     } else if (event.logicalKey == LogicalKeyboardKey.keyF) {
       _openFocusMode();
     } else if (event.logicalKey == LogicalKeyboardKey.keyR) {
@@ -1389,6 +1552,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       _selectTool(_WorkspaceTool.dashboard);
     } else if (event.logicalKey == LogicalKeyboardKey.keyE) {
       _exportCsvData();
+    } else if (event.logicalKey == LogicalKeyboardKey.comma) {
+      _openSettings();
     }
   }
 
@@ -1456,6 +1621,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
     final spacedService = ref.watch(spacedRepetitionServiceProvider);
     final currentProfile = ref.watch(contextProfileProvider);
+    final pendingSharedCount = ref.watch(
+      workspaceDraftsProvider.select(SharedTextInbox.count),
+    );
     final digest = _contextTriggers.activeDigest(
       reminders,
       previous: _contextDigest,
@@ -1494,9 +1662,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       autofocus: true,
       onKeyEvent: _handleGlobalKeyEvent,
       child: PopScope(
-        canPop: _activeTool == null,
+        canPop: _activeTool == null && !_isSearchOpen,
         onPopInvokedWithResult: (didPop, _) {
-          if (!didPop) _closeWorkspaceTool();
+          if (didPop) return;
+          if (_activeTool != null) {
+            _closeWorkspaceTool();
+          } else if (_isSearchOpen) {
+            _closeSearch();
+          }
         },
         child: Scaffold(
           extendBodyBehindAppBar: false,
@@ -1687,6 +1860,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                             ],
                           ),
                         ),
+                        PopupMenuItem(
+                          value: ContextProfile.commute,
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.directions_subway_rounded,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(l10n.get('profileCommute')),
+                              if (currentProfile == ContextProfile.commute) ...[
+                                const Spacer(),
+                                const Icon(
+                                  Icons.check,
+                                  size: 16,
+                                  color: Colors.teal,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                     ValueListenableBuilder<DateTime>(
@@ -1723,12 +1917,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     IconButton(
                       icon: const Icon(Icons.settings_outlined),
                       tooltip: l10n.get('settings'),
-                      onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const PreferencesScreen(),
-                        ),
-                      ),
+                      onPressed: _openSettings,
                     ),
                     const SizedBox(width: 8),
                   ],
@@ -1795,16 +1984,46 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           );
                         },
                       ),
-                      if (digest.isNotEmpty)
+                      if (digest.isNotEmpty || pendingSharedCount > 0)
                         Align(
                           alignment: Alignment.centerLeft,
-                          child: TextButton.icon(
-                            onPressed: _openContextDigest,
-                            icon: const Icon(
-                              Icons.summarize_outlined,
-                              size: 18,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 4,
+                              children: [
+                                if (digest.isNotEmpty)
+                                  TextButton.icon(
+                                    onPressed: _openContextDigest,
+                                    icon: const Icon(
+                                      Icons.summarize_outlined,
+                                      size: 18,
+                                    ),
+                                    label: Text(l10n.get('contextDigestTitle')),
+                                  ),
+                                if (pendingSharedCount > 0)
+                                  TextButton.icon(
+                                    key: const ValueKey(
+                                      'pending-shared-drafts-bar',
+                                    ),
+                                    onPressed: () =>
+                                        openSharedTextInbox(context, ref),
+                                    icon: const Icon(
+                                      Icons.inbox_outlined,
+                                      size: 18,
+                                    ),
+                                    label: Text(
+                                      l10n
+                                          .get('pendingSharedDrafts')
+                                          .replaceAll(
+                                            '{count}',
+                                            '$pendingSharedCount',
+                                          ),
+                                    ),
+                                  ),
+                              ],
                             ),
-                            label: Text(l10n.get('contextDigestTitle')),
                           ),
                         ),
                       Expanded(

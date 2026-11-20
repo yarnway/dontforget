@@ -7,9 +7,11 @@ import '../../l10n/content_management_strings.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/reminder.dart';
 import '../../providers/providers.dart';
+import '../../providers/workspace_drafts_provider.dart';
 import '../../services/content/content_cleanup_service.dart';
 import '../../services/local_media_store.dart';
 import '../../services/recovery/runtime_gate.dart';
+import '../../services/shared_text_inbox.dart';
 import '../screens/notification_repair_screen.dart';
 import '../screens/shared_text_inbox_screen.dart';
 import '../../l10n/shared_text_strings.dart';
@@ -253,7 +255,7 @@ class _ContentManagementPanelState
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(c),
-            child: Text(t('cancel')),
+            child: Text(t('close')),
           ),
         ],
       ),
@@ -273,6 +275,9 @@ class _ContentManagementPanelState
   Widget build(BuildContext context) {
     final all = ref.watch(remindersProvider),
         query = _query.text.trim().toLowerCase();
+    final sharedDraftCount = ref.watch(
+      workspaceDraftsProvider.select(SharedTextInbox.count),
+    );
     final entries = (_inventory?.entries ?? <ContentCleanupEntry>[])
         .where(
           (e) =>
@@ -326,7 +331,21 @@ class _ContentManagementPanelState
                             'title',
                           ),
                         ),
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (sharedDraftCount > 0) ...[
+                              Badge.count(
+                                key: const ValueKey(
+                                  'content-shared-drafts-count',
+                                ),
+                                count: sharedDraftCount,
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                            const Icon(Icons.chevron_right),
+                          ],
+                        ),
                         onTap: _busy
                             ? null
                             : () => openSharedTextInbox(context, ref),

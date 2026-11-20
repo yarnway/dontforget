@@ -57,6 +57,41 @@ class _TaskReaderState extends ConsumerState<TaskDetailScreen> {
     }
   }
 
+  Future<void> _copyTask(Reminder task) async {
+    final loc = AppLocalizations.of(context);
+    final summary = task.taskSummary?.trim();
+    final checklist = task.details.checklist;
+    final buffer = StringBuffer(task.taskTitle.trim());
+    if (summary != null && summary.isNotEmpty && summary != task.taskTitle.trim()) {
+      buffer
+        ..writeln()
+        ..write(summary);
+    }
+    if (checklist.isNotEmpty) {
+      for (final item in checklist) {
+        buffer
+          ..writeln()
+          ..write(item.done ? '- [x] ' : '- [ ] ')
+          ..write(item.label);
+      }
+    }
+    try {
+      await Clipboard.setData(ClipboardData(text: buffer.toString()));
+      if (!mounted) return;
+      final inline = context.findAncestorStateOfType<InlineFeedbackState>();
+      if (inline != null) {
+        inline.showSnackBar(
+          SnackBar(content: Text(loc.get('taskContentCopied'))),
+          tone: FeedbackTone.success,
+        );
+      } else {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          SnackBar(content: Text(loc.get('taskContentCopied'))),
+        );
+      }
+    } catch (_) {}
+  }
+
   Widget _card(Widget child, {Key? key}) => Card.outlined(
     key: key,
     clipBehavior: Clip.antiAlias,
@@ -94,7 +129,17 @@ class _TaskReaderState extends ConsumerState<TaskDetailScreen> {
     final rule = ContextTriggerRule.tryParse(task.contextTrigger);
     return Scaffold(
       key: const ValueKey('task-detail-reader'),
-      appBar: AppBar(title: Text(loc.get('taskDetailTitle'))),
+      appBar: AppBar(
+        title: Text(loc.get('taskDetailTitle')),
+        actions: [
+          IconButton(
+            key: const ValueKey('task-detail-copy'),
+            tooltip: loc.get('copyTaskContent'),
+            onPressed: () => _copyTask(task),
+            icon: const Icon(Icons.copy_outlined),
+          ),
+        ],
+      ),
       bottomNavigationBar: SafeArea(
         top: false,
         child: Padding(

@@ -1038,4 +1038,74 @@ void main() {
       }
     },
   );
-}
+
+  test(
+    'repeated wrong PINs lock sync admission and oversized bodies are rejected unread',
+    () async {
+      final server = LanSyncService.forTesting();
+      addTearDown(server.stopServer);
+      var info = await server.startServer(port: 0, dbHelper: helper);
+
+      Future<int> rawStatus(String head) async {
+        final socket = await Socket.connect(
+          InternetAddress.loopbackIPv4,
+          info.port,
+        );
+        try {
+          socket.write(head);
+          await socket.flush();
+          final response = await utf8.decoder
+              .bind(socket)
+              .join()
+              .timeout(const Duration(seconds: 10));
+          return int.parse(response.split(' ')[1]);
+        } finally {
+          socket.destroy();
+        }
+      }
+
+      expect(
+        await rawStatus(
+          'POST /sync HTTP/1.1\r\nHost: 127.0.0.1\r\n'
+          'Content-Type: application/json\r\n'
+          'Content-Length: ${LanSyncService.maxBodyBytes + 1}\r\n\r\n',
+        ),
+        HttpStatus.requestEntityTooLarge,
+      );
+
+      Future<int> send(Object? pin) async {
+        final client = HttpClient();
+        try {
+          final request = await client.postUrl(
+            Uri(
+              scheme: 'http',
+              host: '127.0.0.1',
+              port: info.port,
+              path: '/sync',
+            ),
+          );
+          request.headers.contentType = ContentType.json;
+          request.write(jsonEncode({'pin': pin, 'reminders': []}));
+          final response = await request.close();
+          await response.drain<void>();
+          return response.statusCode;
+        } finally {
+          client.close(force: true);
+        }
+      }
+
+      final wrong = info.pin == '100000' ? '100001' : '100000';
+      for (var i = 0; i < LanSyncService.pinFailuresBeforeLockout; i++) {
+        expect(await send(wrong), HttpStatus.unauthorized);
+      }
+      // Even the correct PIN is refused while admission is locked.
+      expect(await send(info.pin), HttpStatus.tooManyRequests);
+      expect(await send(int.parse(info.pin)), HttpStatus.tooManyRequests);
+
+      // A restarted service issues a new PIN and a new guessing budget.
+      await server.stopServer();
+      info = await server.startServer(port: 0, dbHelper: helper);
+      expect(await send(int.parse(info.pin)), HttpStatus.unauthorized);
+      expect(await send(info.pin), HttpStatus.ok);
+    },
+  );}

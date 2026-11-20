@@ -19,6 +19,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../providers/providers.dart';
 import '../../services/llm_service.dart';
 import '../../services/lan_sync_service.dart';
@@ -35,10 +36,14 @@ import '../../l10n/speech_recognition_strings.dart';
 typedef ConsoleProcessRunner =
     Future<ProcessResult> Function(String executable, List<String> arguments);
 
-/// Desktop browser handoff, injectable without launching real apps in tests.
+/// Cross-platform browser handoff, injectable without launching real apps in tests.
 class ConsoleUrlLauncher {
-  const ConsoleUrlLauncher({this.runProcess = Process.run});
+  const ConsoleUrlLauncher({
+    this.runProcess = Process.run,
+    this.launchExternalUrl,
+  });
   final ConsoleProcessRunner runProcess;
+  final Future<bool> Function(Uri uri)? launchExternalUrl;
 
   Future<bool> open(String url, {TargetPlatform? platform}) async {
     final uri = Uri.tryParse(url);
@@ -57,7 +62,19 @@ class ConsoleUrlLauncher {
       TargetPlatform.linux => ('xdg-open', [url]),
       _ => null,
     };
-    if (command == null) return false;
+    if (command == null) {
+      if (target == TargetPlatform.android || target == TargetPlatform.iOS) {
+        try {
+          final opener =
+              launchExternalUrl ??
+              ((u) => launchUrl(u, mode: LaunchMode.externalApplication));
+          return await opener(uri);
+        } catch (_) {
+          return false;
+        }
+      }
+      return false;
+    }
     try {
       final result = await runProcess(command.$1, command.$2);
       return result.exitCode == 0;
@@ -648,6 +665,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final reminders = ref.read(remindersProvider.notifier);
     Future<void>? refresh;
     List<LanSyncConflict> conflicts = const [];
+    LanSyncFailure? failure;
     final success = await lanSync.syncWithPeer(
       peerIp: address.host,
       port: address.port,
@@ -664,6 +682,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         if (futures.isNotEmpty) refresh = Future.wait(futures);
       },
       onConflicts: (result) => conflicts = result,
+      onFailure: (reason) => failure = reason,
     );
     try {
       await refresh;
@@ -678,10 +697,39 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final feedback = InlineFeedback.of(context);
     feedback.hideCurrentSnackBar();
     if (_lanConflicts.isNotEmpty) return;
+    final failureKey = switch (failure) {
+      LanSyncFailure.invalidPin => 'syncFailedInvalidPin',
+      LanSyncFailure.pinLocked => 'syncFailedPinLocked',
+      LanSyncFailure.payloadTooLarge => 'syncFailedTooLarge',
+      LanSyncFailure.timeout => 'syncFailedTimeout',
+      LanSyncFailure.unreachable => 'syncFailedUnreachable',
+      _ => 'syncFailed',
+    };
     feedback.showSnackBar(
-      SnackBar(content: Text(l10n.get(success ? 'syncSuccess' : 'syncFailed'))),
+      SnackBar(
+        content: Text(l10n.get(success ? 'syncSuccess' : failureKey)),
+      ),
       tone: success ? FeedbackTone.success : FeedbackTone.error,
     );
+  }
+
+  Future<void> _copyLanValue(String text, String feedbackKey) async {
+    if (text.isEmpty) return;
+    final l10n = AppLocalizations.of(context);
+    try {
+      await Clipboard.setData(ClipboardData(text: text));
+      if (!mounted) return;
+      InlineFeedback.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.get(feedbackKey))),
+        tone: FeedbackTone.success,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      InlineFeedback.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.get('linkCopyFailed'))),
+        tone: FeedbackTone.error,
+      );
+    }
   }
 
   Future<void> _showLanConflicts() async {
@@ -924,7 +972,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         bottomNavigationBar:
             widget.area == SettingsArea.notifications ||
-                widget.area == SettingsArea.sync
+                (widget.area == SettingsArea.sync && !_dirty)
             ? null
             : SafeArea(
                 top: false,
@@ -1478,13 +1526,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   children: [
                                     Row(
                                       children: [
-                                        const Icon(
+                                        Icon(
                                           Icons.router_rounded,
                                           size: 14,
-                                          color: Colors.blueAccent,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
                                         ),
                                         const SizedBox(width: 6),
-                                        Flexible(
+                                        Expanded(
                                           child: SelectableText(
                                             '${l10n.get('lanServerRunning')}$_lanIp:$_lanPort',
                                             style: const TextStyle(
@@ -1493,27 +1543,59 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                             ),
                                           ),
                                         ),
+                                        IconButton(
+                                          key: const ValueKey(
+                                            'lan-sync-copy-address',
+                                          ),
+                                          tooltip: l10n.get('syncCopyAddress'),
+                                          visualDensity: VisualDensity.compact,
+                                          iconSize: 16,
+                                          onPressed: () => _copyLanValue(
+                                            '$_lanIp:$_lanPort',
+                                            'syncCopiedAddress',
+                                          ),
+                                          icon: const Icon(Icons.copy_outlined),
+                                        ),
                                       ],
                                     ),
                                     if (_lanPort != LanSyncService.defaultPort)
                                       Text(l10n.get('syncAlternativePort')),
-                                    const SizedBox(height: 6),
+                                    const SizedBox(height: 2),
                                     Row(
                                       children: [
-                                        const Icon(
+                                        Icon(
                                           Icons.vpn_key_rounded,
                                           size: 14,
-                                          color: Colors.amber,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
                                         ),
                                         const SizedBox(width: 6),
-                                        Text(
-                                          '${l10n.get('syncPin')}$_lanPin',
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                            letterSpacing: 1.5,
-                                            color: Colors.amber,
+                                        Expanded(
+                                          child: SelectableText(
+                                            '${l10n.get('syncPin')}$_lanPin',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                              letterSpacing: 1.5,
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.primary,
+                                            ),
                                           ),
+                                        ),
+                                        IconButton(
+                                          key: const ValueKey(
+                                            'lan-sync-copy-pin',
+                                          ),
+                                          tooltip: l10n.get('syncCopyPin'),
+                                          visualDensity: VisualDensity.compact,
+                                          iconSize: 16,
+                                          onPressed: () => _copyLanValue(
+                                            _lanPin,
+                                            'syncCopiedPin',
+                                          ),
+                                          icon: const Icon(Icons.copy_outlined),
                                         ),
                                       ],
                                     ),
@@ -1560,6 +1642,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   child: TextField(
                                     controller: _targetPinController,
                                     keyboardType: TextInputType.number,
+                                    textInputAction: TextInputAction.done,
+                                    onSubmitted: (_) => _syncWithTarget(),
                                     style: const TextStyle(fontSize: 12),
                                     decoration: InputDecoration(
                                       labelText: l10n.get('enterPin'),

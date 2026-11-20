@@ -65,6 +65,7 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
   late final RuntimeRecoveryGate _runtime;
   late final RuntimeRecoveryToken _birth;
   bool _busy = false, _encrypt = true;
+  bool _obscurePassword = true, _obscureRepeat = true;
   String? _result;
   String? _nameError;
   BackupProgress? _progress;
@@ -557,23 +558,51 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
             TextField(
               key: const ValueKey('backup-password'),
               controller: _password,
-              obscureText: true,
+              obscureText: _obscurePassword,
               autocorrect: false,
               enableSuggestions: false,
               enabled: !_busy,
               maxLength: 1024,
-              decoration: InputDecoration(labelText: t('password')),
+              decoration: InputDecoration(
+                labelText: t('password'),
+                suffixIcon: IconButton(
+                  key: const ValueKey('backup-password-toggle'),
+                  onPressed: _busy
+                      ? null
+                      : () => setState(
+                          () => _obscurePassword = !_obscurePassword,
+                        ),
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 12),
             TextField(
               key: const ValueKey('backup-password-repeat'),
               controller: _repeat,
-              obscureText: true,
+              obscureText: _obscureRepeat,
               autocorrect: false,
               enableSuggestions: false,
               enabled: !_busy,
               maxLength: 1024,
-              decoration: InputDecoration(labelText: t('passwordAgain')),
+              decoration: InputDecoration(
+                labelText: t('passwordAgain'),
+                suffixIcon: IconButton(
+                  key: const ValueKey('backup-password-repeat-toggle'),
+                  onPressed: _busy
+                      ? null
+                      : () => setState(() => _obscureRepeat = !_obscureRepeat),
+                  icon: Icon(
+                    _obscureRepeat
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
+                ),
+              ),
             ),
           ],
           const SizedBox(height: 12),
@@ -726,6 +755,7 @@ class _RestoreBackupPasswordDialog extends StatefulWidget {
 class _RestoreBackupPasswordDialogState
     extends State<_RestoreBackupPasswordDialog> {
   final _controller = TextEditingController();
+  bool _obscure = true;
   @override
   void dispose() {
     _controller.clear();
@@ -741,11 +771,22 @@ class _RestoreBackupPasswordDialogState
       content: TextField(
         key: const ValueKey('restore-password'),
         controller: _controller,
-        obscureText: true,
+        obscureText: _obscure,
         autocorrect: false,
         enableSuggestions: false,
         maxLength: 1024,
-        decoration: InputDecoration(labelText: t('password')),
+        decoration: InputDecoration(
+          labelText: t('password'),
+          suffixIcon: IconButton(
+            key: const ValueKey('restore-password-toggle'),
+            onPressed: () => setState(() => _obscure = !_obscure),
+            icon: Icon(
+              _obscure
+                  ? Icons.visibility_outlined
+                  : Icons.visibility_off_outlined,
+            ),
+          ),
+        ),
         onSubmitted: (v) => Navigator.pop(context, v),
       ),
       actions: [

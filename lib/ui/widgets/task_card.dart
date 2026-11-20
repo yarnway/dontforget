@@ -10,6 +10,7 @@ import '../../data/database_helper.dart';
 import '../../services/recovery/runtime_gate.dart';
 import '../../providers/providers.dart';
 import '../../providers/home_controller.dart';
+import '../../services/quick_reminder_parser.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/planning_strings.dart';
 import '../screens/task_detail_screen.dart';
@@ -323,6 +324,16 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     );
   }
 
+  bool get _canQuickPostpone {
+    final task = widget.task;
+    if (task.isCompleted || task.triggerTime == null) return false;
+    if (task.details.kind == 'medication') return false;
+    if (task.details.kind == 'departure' && task.details.planId != null) {
+      return false;
+    }
+    return true;
+  }
+
   List<PopupMenuEntry<String>> _menuItems(AppLocalizations l10n) => [
     _menuItem('edit', Icons.edit_outlined, l10n.get('editTask')),
     if (!widget.task.isCompleted)
@@ -331,6 +342,9 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         Icons.push_pin_outlined,
         l10n.get(widget.task.isPinned ? 'unpinToday' : 'pinToday'),
       ),
+    _menuItem('move_category', Icons.drive_file_move_outlined, l10n.get('moveCategory')),
+    if (_canQuickPostpone)
+      _menuItem('postpone', Icons.snooze_outlined, l10n.get('quickPostpone')),
     if (widget.task.canSkipOccurrence)
       _menuItem('skip', Icons.skip_next_outlined, l10n.get('skipOccurrence')),
     if (widget.task.sourceText != null)
@@ -382,10 +396,158 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     if (mounted && action != null) await _onAction(action);
   }
 
+  Future<void> _chooseCategory() async {
+    if (_isBusy) return;
+    final l10n = AppLocalizations.of(context);
+    final colors = Theme.of(context).colorScheme;
+    const icons = [
+      Icons.notifications_active_outlined,
+      Icons.star_outline_rounded,
+      Icons.checklist_rounded,
+      Icons.notes_rounded,
+    ];
+    final target = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        key: const ValueKey('task-move-category-dialog'),
+        title: Text(l10n.get('moveCategory')),
+        children: [
+          for (var level = 1; level <= 4; level++)
+            SimpleDialogOption(
+              key: ValueKey('task-move-category-$level'),
+              onPressed: () => Navigator.pop(dialogContext, level),
+              child: Row(
+                children: [
+                  Icon(
+                    icons[level - 1],
+                    size: 20,
+                    color: widget.task.quadrantLevel == level
+                        ? colors.primary
+                        : colors.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(child: Text(l10n.get('cat$level'))),
+                  if (widget.task.quadrantLevel == level)
+                    Icon(Icons.check_rounded, size: 18, color: colors.primary),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+    if (!mounted || target == null || target == widget.task.quadrantLevel) {
+      return;
+    }
+    setState(() => _isUpdating = true);
+    try {
+      final result = await ref
+          .read(remindersProvider.notifier)
+          .updateReminder(
+            widget.task.copyWith(quadrantLevel: target),
+            baseline: widget.task,
+          );
+      if (!mounted) return;
+      _showMessage(
+        result.nativeSyncFailed
+            ? l10n.get('reminderNativeSyncFailed')
+            : '${l10n.get('movedToQuadrant')}${l10n.get('cat$target')}: ${widget.task.taskTitle}',
+      );
+    } catch (_) {
+      _showMessage(l10n.get('reminderUpdateFailed'));
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
+  Future<void> _choosePostpone() async {
+    if (_isBusy || !_canQuickPostpone) {
+      return;
+    }
+    final l10n = AppLocalizations.of(context);
+    final choice = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        key: const ValueKey('task-postpone-dialog'),
+        title: Text(l10n.get('quickPostpone')),
+        children: [
+          for (final entry in const {
+            '15': 'snooze15',
+            '60': 'snooze60',
+            'evening': 'quickEvening',
+            'morning': 'quickMorning',
+          }.entries)
+            SimpleDialogOption(
+              key: ValueKey('task-postpone-${entry.key}'),
+              onPressed: () => Navigator.pop(dialogContext, entry.key),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Text(l10n.get(entry.value)),
+              ),
+            ),
+        ],
+      ),
+    );
+    if (!mounted || choice == null) return;
+    final now = DateTime.now();
+    final currentTrigger = widget.task.triggerTime!;
+    final isFuture = currentTrigger.isAfter(now);
+    final base = isFuture ? currentTrigger : now;
+    final target = switch (choice) {
+      '15' => base.add(const Duration(minutes: 15)),
+      '60' => base.add(const Duration(hours: 1)),
+      'evening' => QuickReminderParser.tonight(now),
+      'morning' => QuickReminderParser.tomorrowMorning(now),
+      _ => null,
+    };
+    if (target == null || !target.isAfter(now)) return;
+    setState(() => _isUpdating = true);
+    try {
+      final notifier = ref.read(remindersProvider.notifier);
+      final ReminderActionResult result;
+      if (isFuture) {
+        final data = Map<String, dynamic>.from(widget.task.details.data)
+          ..remove('reminder_lead_minutes');
+        final updated = widget.task.copyWith(
+          triggerTime: target,
+          timeOrigin: ReminderTimeOrigin.manual,
+          detailsJson: widget.task.details.data.containsKey('reminder_lead_minutes')
+              ? widget.task.details.patch({'data': data}).encode()
+              : widget.task.detailsJson,
+        );
+        result = await notifier.updateReminder(updated, baseline: widget.task);
+      } else {
+        result = await notifier.snoozeOccurrence(
+          widget.task,
+          now: now,
+          duration: target.difference(now),
+        );
+      }
+      if (!mounted) return;
+      if (result.disposition == ReminderActionDisposition.stale) {
+        _showMessage(l10n.get('reminderOccurrenceChanged'));
+      } else if (result.nativeSyncFailed) {
+        _showMessage(l10n.get('reminderNativeSyncFailed'));
+      } else {
+        final savedTime = result.reminder?.triggerTime ?? target;
+        _showMessage(
+          '${l10n.get('reminderDelayedTo')} ${formatLocalDateTime(savedTime)}',
+        );
+      }
+    } catch (_) {
+      _showMessage(l10n.get('reminderUpdateFailed'));
+    } finally {
+      if (mounted) setState(() => _isUpdating = false);
+    }
+  }
+
   Future<void> _onAction(String action) async {
     if (_isBusy) return;
     if (action == 'edit') {
       _openEditor();
+    } else if (action == 'move_category') {
+      await _chooseCategory();
+    } else if (action == 'postpone') {
+      await _choosePostpone();
     } else if (action == 'source') {
       await showDialog<void>(
         context: context,
