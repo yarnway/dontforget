@@ -13,6 +13,8 @@ String sharedTextLabel(String language, String key) {
     ],
     'empty': ['暂无分享草稿', 'No shared drafts', '共有下書きはありません'],
     'emptyDraft': ['空草稿', 'Empty draft', '空の下書き'],
+    'attachment': ['分享附件', 'Shared attachment', '共有添付ファイル'],
+    'imageAttachment': ['分享图片', 'Shared image', '共有画像'],
     'failed': [
       '草稿未保存，请重试。',
       'Draft not saved. Retry.',

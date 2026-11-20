@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart' show DatabaseExecutor;
 import '../services/recovery/runtime_gate.dart';
 import 'package:flutter/foundation.dart';
@@ -42,6 +43,7 @@ import '../services/bidirectional_link_service.dart';
 import '../services/context_trigger_service.dart';
 import '../services/capture_automation_policy.dart';
 import '../services/scheduled_task_reminder.dart';
+import '../services/shared_text_inbox.dart';
 
 part 'task_management.dart';
 part 'study_plan_management.dart';
@@ -2175,6 +2177,8 @@ class MediaRecordsNotifier extends StateNotifier<List<MediaRecord>> {
       state = rows.map(MediaRecord.fromJson).toList();
     }
   }
+
+  Future<void> refreshMediaRecords() => _loadRecords();
 
   Future<void> addRecord(MediaRecord record) async {
     final generation = _dbHelper.captureGeneration();

@@ -208,6 +208,63 @@ void main() {
         expect((await data()).items, isEmpty);
       });
     }
+    test(
+      'shared attachments allow empty caption, preserve metadata on edit, and clean handoff dir on remove',
+      () async {
+        const shareId = '00000000-0000-4000-8000-000000000099';
+        final handoffDir = await Directory(
+          '${h.directory.path}/shared_handoff/$shareId',
+        ).create(recursive: true);
+        final handoffFile = await File(
+          '${handoffDir.path}/receipt.png',
+        ).writeAsBytes([137, 80, 78, 71]);
+        final shared = SharedText.parse({
+          'id': shareId,
+          'text': '',
+          'created_at': 1762300800000,
+          'attachment_path': handoffFile.path,
+          'attachment_name': 'receipt.png',
+        }, incoming: true);
+        expect(shared.hasAttachment, isTrue);
+        expect(shared.isImageAttachment, isTrue);
+        expect(await inbox.accept(shared), isTrue);
+        await inbox.edit(shareId, '', '报销凭证');
+        final updated = (await data()).items.single;
+        expect(updated.text, '报销凭证');
+        expect(updated.attachmentPath, handoffFile.path);
+        expect(updated.attachmentName, 'receipt.png');
+        await inbox.remove(shareId, '报销凭证');
+        expect((await data()).items, isEmpty);
+        expect(await handoffDir.exists(), isFalse);
+      },
+    );
+    for (final invalid in <Map<String, Object?>>[
+      {
+        'id': '00000000-0000-4000-8000-000000000010',
+        'text': 'relative',
+        'created_at': 1,
+        'attachment_path': 'relative/file.png',
+      },
+      {
+        'id': '00000000-0000-4000-8000-000000000011',
+        'text': 'traversal',
+        'created_at': 1,
+        'attachment_path': '/tmp/../etc/passwd',
+      },
+      {
+        'id': '00000000-0000-4000-8000-000000000012',
+        'text': 'orphan-name',
+        'created_at': 1,
+        'attachment_name': 'photo.png',
+      },
+    ]) {
+      test('invalid shared attachment metadata is rejected', () {
+        expect(
+          () => SharedText.parse(invalid, incoming: true),
+          throwsFormatException,
+        );
+      });
+    }
   });
 
   group('Android handoff channel', () {

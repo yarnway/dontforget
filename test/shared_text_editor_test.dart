@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/providers/home_controller.dart';
+import 'package:dont_forget/providers/providers.dart';
 import 'package:dont_forget/providers/shared_text_provider.dart';
 import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'package:dont_forget/services/shared_text_inbox.dart';
@@ -170,6 +172,121 @@ void main() {
       expect(home.saves, 0);
       expect(await tester.runAsync(h.rows), isEmpty);
       expect(find.byKey(const ValueKey('shared-text-editor')), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'shared image attachment can be confirmed and saved as memo while preserving composer draft',
+    (tester) async {
+      const attachmentShareId = '00000000-0000-4000-8000-000000000002';
+      final handoffDir = await tester.runAsync(
+        () => Directory(
+          '${h.directory.path}/shared_handoff/$attachmentShareId',
+        ).create(recursive: true),
+      );
+      final sourceImage = await tester.runAsync(
+        () => File('${handoffDir!.path}/diagram.png').writeAsBytes([
+          137,
+          80,
+          78,
+          71,
+          13,
+          10,
+          26,
+          10,
+        ]),
+      );
+      await tester.runAsync(
+        () => inbox.accept(
+          SharedText(
+            id: attachmentShareId,
+            text: '',
+            createdAt: 1762300801000,
+            attachmentPath: sourceImage!.path,
+            attachmentName: 'diagram.png',
+          ),
+        ),
+      );
+      addTearDown(() async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        await drainWorkspaceDrafts(tester, h.container);
+      });
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: h.container,
+          child: const MaterialApp(
+            locale: Locale('zh'),
+            supportedLocales: [Locale('zh'), Locale('en'), Locale('ja')],
+            localizationsDelegates: [
+              AppLocalizationsDelegate(),
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            home: SharedTextInboxScreen(),
+          ),
+        ),
+      );
+      await pumpUntilRealIo(
+        tester,
+        () => find
+            .byKey(const ValueKey('shared-item-$attachmentShareId'))
+            .evaluate()
+            .isNotEmpty,
+        reason: 'Shared attachment item must load',
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('diagram.png'), findsOneWidget);
+      await tester.tap(
+        find.byKey(const ValueKey('shared-item-$attachmentShareId')),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('shared-attachment-card')),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<Text>(find.byKey(const ValueKey('shared-attachment-name')))
+            .data,
+        'diagram.png',
+      );
+      final save = find.byKey(const ValueKey('shared-save-memo'));
+      // Even with empty text, an attachment share can be saved once confirmed.
+      expect(tester.widget<FilledButton>(save).onPressed, isNotNull);
+      await tester.ensureVisible(save);
+      await tester.tap(save);
+      await pumpUntilRealIo(
+        tester,
+        () =>
+            find.byKey(const ValueKey('shared-text-editor')).evaluate().isEmpty,
+        reason: 'Confirmed shared attachment must save and return',
+      );
+      await drainWorkspaceDrafts(tester, h.container);
+      final rows = await tester.runAsync(h.rows);
+      expect(rows, hasLength(1));
+      final saved = rows!.single;
+      expect(saved.id, attachmentShareId);
+      expect(saved.taskTitle, 'diagram.png');
+      expect(saved.triggerTime, isNull);
+      expect(saved.eventTime, isNull);
+      expect(saved.capturePending, isFalse);
+      expect(saved.recordId, isNotNull);
+      expect(saved.details.attachmentIds, [saved.recordId]);
+      final mediaRows = h.container.read(mediaRecordsProvider);
+      expect(mediaRows, hasLength(1));
+      expect(mediaRows.single.id, saved.recordId);
+      expect(mediaRows.single.type, 'image');
+      expect(
+        await tester.runAsync(
+          () => File(mediaRows.single.contentOrPath).readAsBytes(),
+        ),
+        [137, 80, 78, 71, 13, 10, 26, 10],
+      );
+      expect(await tester.runAsync(() => handoffDir!.exists()), isFalse);
+      final drafts = await tester.runAsync(h.drafts);
+      expect(jsonDecode(drafts!)['capture']['text'], '保留首页草稿');
+      expect(h.notifications.scheduled, isEmpty);
     },
   );
 }

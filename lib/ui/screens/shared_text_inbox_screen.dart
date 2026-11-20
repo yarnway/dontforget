@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 import '../../l10n/app_localizations.dart';
 import '../../l10n/shared_text_strings.dart';
 import '../../providers/providers.dart';
@@ -9,6 +11,7 @@ import '../../providers/shared_text_provider.dart';
 import '../../providers/workspace_drafts_provider.dart';
 import '../../services/shared_text_inbox.dart';
 import '../../services/recovery/runtime_gate.dart';
+import '../widgets/task_attachments_panel.dart';
 
 void openSharedTextInbox(BuildContext context, WidgetRef ref) {
   final command = ref.read(sharedTextInboxCommandProvider).open;
@@ -61,11 +64,30 @@ class SharedTextInboxScreen extends ConsumerWidget {
                 Card.outlined(
                   key: ValueKey('shared-item-${item.id}'),
                   child: ListTile(
+                    leading: item.hasAttachment
+                        ? Icon(
+                            item.isImageAttachment
+                                ? Icons.image_outlined
+                                : Icons.attach_file,
+                          )
+                        : null,
                     title: Text(
-                      item.text.trim().isEmpty ? t('emptyDraft') : item.text,
+                      item.text.trim().isNotEmpty
+                          ? item.text
+                          : (item.attachmentName ?? t('emptyDraft')),
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    subtitle:
+                        item.hasAttachment &&
+                            item.text.trim().isNotEmpty &&
+                            item.attachmentName != null
+                        ? Text(
+                            item.attachmentName!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          )
+                        : null,
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
@@ -110,6 +132,8 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
   bool get _dirty => _text.text != _committed;
   bool get _composing =>
       _text.value.composing.isValid && !_text.value.composing.isCollapsed;
+  bool get _hasSavableContent =>
+      _text.text.trim().isNotEmpty || widget.item.hasAttachment;
   String t(String key) =>
       sharedTextLabel(AppLocalizations.of(context).locale.languageCode, key);
   @override
@@ -221,23 +245,39 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
     if (!_current ||
         _busy ||
         _closing ||
-        (!alreadySaved && (_composing || _text.text.trim().isEmpty))) {
+        (!alreadySaved && (_composing || !_hasSavableContent))) {
       return;
     }
     setState(() => _busy = true);
     try {
       await _persist();
       if (!_current) return;
-      final saved =
-          alreadySaved ||
+      if (!alreadySaved) {
+        if (widget.item.hasAttachment) {
           await ref
+              .read(remindersProvider.notifier)
+              .saveSharedAttachmentMemo(
+                widget.item,
+                text: _text.text,
+                generation: _inbox.drafts.generation,
+                files: ref.read(taskAttachmentFilesProvider),
+              );
+          if (!_current) throw StateError('Shared memo not committed');
+          await ref.read(mediaRecordsProvider.notifier).refreshMediaRecords();
+        } else {
+          final saved = await ref
               .read(homeControllerProvider.notifier)
               .processText(
                 _text.text,
                 memoOnly: true,
                 captureId: widget.item.id,
               );
-      if (!saved || !_current) throw StateError('Shared memo not committed');
+          if (!saved || !_current) {
+            throw StateError('Shared memo not committed');
+          }
+        }
+      }
+      if (!_current) throw StateError('Shared memo not committed');
       await _inbox.remove(widget.item.id, _committed);
       if (_current) await _pop();
     } catch (_) {
@@ -303,6 +343,51 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
           children: [
             Text(t(alreadySaved ? 'saved' : 'hint')),
             const SizedBox(height: 16),
+            if (widget.item.hasAttachment) ...[
+              Card.outlined(
+                key: const ValueKey('shared-attachment-card'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (widget.item.isImageAttachment)
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 220),
+                        child: Image.file(
+                          File(widget.item.attachmentPath!),
+                          key: const ValueKey('shared-attachment-image'),
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, _, _) => const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Icon(Icons.broken_image_outlined, size: 40),
+                          ),
+                        ),
+                      ),
+                    ListTile(
+                      leading: Icon(
+                        widget.item.isImageAttachment
+                            ? Icons.image_outlined
+                            : Icons.attach_file,
+                      ),
+                      title: Text(
+                        widget.item.attachmentName ??
+                            p.basename(widget.item.attachmentPath!),
+                        key: const ValueKey('shared-attachment-name'),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        t(
+                          widget.item.isImageAttachment
+                              ? 'imageAttachment'
+                              : 'attachment',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
             TextField(
               key: const ValueKey('shared-text-editor'),
               controller: _text,
@@ -333,8 +418,7 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
               onPressed:
                   _busy ||
                       _closing ||
-                      (!alreadySaved &&
-                          (_composing || _text.text.trim().isEmpty))
+                      (!alreadySaved && (_composing || !_hasSavableContent))
                   ? null
                   : () => _save(alreadySaved: alreadySaved),
               icon: const Icon(Icons.note_add_outlined),

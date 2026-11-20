@@ -6,6 +6,9 @@ import 'package:dont_forget/providers/providers.dart';
 import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'package:dont_forget/services/notification_service.dart';
 import 'package:dont_forget/services/llm_service.dart';
+import 'package:dont_forget/services/local_media_store.dart';
+import 'package:dont_forget/services/task_attachment_files.dart';
+import 'package:dont_forget/ui/widgets/task_attachments_panel.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -56,6 +59,14 @@ class OfflineManagementHarness {
         if (model != null) llmServiceProvider.overrideWithValue(model!),
         databaseHelperProvider.overrideWithValue(database),
         notificationServiceProvider.overrideWithValue(notifications),
+        taskAttachmentFilesProvider.overrideWithValue(
+          TaskAttachmentFiles(
+            store: LocalMediaStore(
+              documentsDirectory: () async =>
+                  Directory('${directory.path}/Documents')..createSync(),
+            ),
+          ),
+        ),
         remindersProvider.overrideWith(
           (_) => RemindersNotifier(
             database,

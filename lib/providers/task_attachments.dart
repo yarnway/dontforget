@@ -109,4 +109,80 @@ extension TaskAttachments on RemindersNotifier {
     }),
     generation: generation,
   );
+
+  Future<Reminder> saveSharedAttachmentMemo(
+    SharedText item, {
+    required String text,
+    required DataGeneration generation,
+    TaskAttachmentFiles? files,
+  }) => _enqueue(
+    (ticket) => _dbHelper.runOperation(ticket, () async {
+      final sourcePath = item.attachmentPath;
+      if (sourcePath == null || !SharedText.validAttachmentPath(sourcePath)) {
+        throw const FormatException('Missing shared attachment');
+      }
+      final trimmed = text.trim();
+      final fallbackName = (item.attachmentName?.trim().isNotEmpty == true)
+          ? item.attachmentName!.trim()
+          : p.basename(sourcePath);
+      final titleSource = trimmed.isEmpty ? fallbackName : trimmed;
+      final title = String.fromCharCodes(titleSource.runes.take(80));
+      final summary = trimmed.isEmpty ? fallbackName : text;
+      final existingRow = await _dbHelper.read(
+        ticket,
+        (db) => db.query('Reminders', where: 'id = ?', whereArgs: [item.id]),
+      );
+      if (existingRow.isNotEmpty) {
+        final existing = Reminder.fromJson(existingRow.single);
+        if (existing.sourceText == summary &&
+            existing.details.attachmentIds.isNotEmpty) {
+          return existing;
+        }
+        throw const StaleReminderOccurrenceException();
+      }
+      final storage = files ?? TaskAttachmentFiles();
+      final media = await storage.import(sourcePath);
+      late Reminder saved;
+      try {
+        saved = await _dbHelper.writeTransaction(ticket, (db) async {
+          final current = await db.query(
+            'Reminders',
+            where: 'id = ?',
+            whereArgs: [item.id],
+          );
+          if (current.isNotEmpty) {
+            throw const StaleReminderOccurrenceException();
+          }
+          final now = DateTime.now();
+          final reminder = Reminder(
+            id: item.id,
+            recordId: media.id,
+            createdAt: now,
+            taskTitle: title,
+            taskSummary: summary,
+            sourceText: summary,
+            quadrantLevel: 2,
+            triggerTime: null,
+            timeOrigin: ReminderTimeOrigin.unknown,
+            eventTime: null,
+            capturePending: false,
+            detailsJson: TaskDetails(
+              attachmentIds: [media.id],
+            ).encode(),
+          );
+          await db.insert('MediaRecords', media.toJson());
+          await db.insert('Reminders', reminder.toJson());
+          return reminder;
+        });
+      } catch (_) {
+        await storage.discard(media);
+        rethrow;
+      }
+      storage.committed(media);
+      _dbHelper.checkGeneration(ticket);
+      _publishManaged([saved]);
+      return saved;
+    }),
+    generation: generation,
+  );
 }
