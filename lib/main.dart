@@ -58,7 +58,7 @@ Future<void> _handleCli(List<String> args) async {
   if (args.contains('--help') || args.contains('-h')) {
     stdout.writeln('''
 ======================================================
- DontForget Geek CLI v1.5.2
+ DontForget CLI v1.8.18
 ======================================================
 Usage:
   dont_forget --add <content>   (-a) Quickly record a reminder
@@ -70,16 +70,20 @@ Usage:
 
   if (args.contains('--list') || args.contains('-l')) {
     final dbHelper = DatabaseHelper.instance;
-    final res = await dbHelper.read(
+    final rows = await dbHelper.read(
       dbHelper.captureGeneration(),
       (db) => db.query('Reminders', where: 'is_completed = 0'),
     );
-    stdout.writeln('📋 Active Reminders (${res.length}):');
-    for (final item in res) {
-      final quad = item['quadrant_level'];
-      final title = item['task_title'];
-      final time = item['trigger_time'] ?? 'Not set';
-      stdout.writeln('  • [Q$quad] $title (Reminder: $time)');
+    final active = rows
+        .map(Reminder.fromJson)
+        .where((r) => r.isWorkspaceItem)
+        .toList();
+    stdout.writeln('Active Reminders (${active.length}):');
+    for (final item in active) {
+      final time = item.triggerTime?.toIso8601String() ?? 'Not set';
+      stdout.writeln(
+        '  - [Q${item.quadrantLevel}] ${item.taskTitle} (Reminder: $time)',
+      );
     }
     return;
   }
@@ -89,13 +93,14 @@ Usage:
   if (addIdx != -1) {
     final content = args.sublist(addIdx + 1).join(' ').trim();
     if (content.isEmpty) {
-      stderr.writeln('❌ Error: Please provide content for --add');
+      stderr.writeln('Error: Please provide content for --add');
       return;
     }
 
     final dbHelper = DatabaseHelper.instance;
-    final title = content.length > 30
-        ? '${content.substring(0, 30)}...'
+    final runes = content.runes;
+    final title = runes.length > 30
+        ? '${String.fromCharCodes(runes.take(30))}...'
         : content;
     final reminder = Reminder(
       id: const Uuid().v4(),
@@ -110,7 +115,7 @@ Usage:
       dbHelper.captureGeneration(),
       (db) => db.insert('Reminders', reminder.toJson()),
     );
-    stdout.writeln('✅ [DontForget CLI] Reminder created: "$title"');
+    stdout.writeln('[DontForget CLI] Reminder created: "$title"');
     return;
   }
 }

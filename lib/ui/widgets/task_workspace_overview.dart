@@ -34,11 +34,13 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
   Timer? _timer;
   String? _selected;
   bool _showCompleted = false;
+  int _refreshRevision = 0;
   List<Reminder>? _cachedReminders;
   List<Reminder>? _cachedMissedProp;
   String? _cachedView;
   bool? _cachedShowCompleted;
   int? _cachedMinuteBucket;
+  int? _cachedRefreshRevision;
   List<Reminder> _cachedMissedTasks = const [];
   List<Reminder> _cachedCompleted = const [];
   List<Object> _cachedRows = const [];
@@ -49,7 +51,8 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
         identical(_cachedMissedProp, widget.missedReminders) &&
         _cachedView == view &&
         _cachedShowCompleted == _showCompleted &&
-        _cachedMinuteBucket == minuteBucket) {
+        _cachedMinuteBucket == minuteBucket &&
+        _cachedRefreshRevision == _refreshRevision) {
       return;
     }
     final missedTasks =
@@ -148,6 +151,7 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
     _cachedView = view;
     _cachedShowCompleted = _showCompleted;
     _cachedMinuteBucket = minuteBucket;
+    _cachedRefreshRevision = _refreshRevision;
     _cachedMissedTasks = missedTasks;
     _cachedCompleted = completed;
     _cachedRows = rows;
@@ -174,14 +178,14 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
   void _startClock() {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(minutes: 1), (_) {
-      if (mounted) setState(() {});
+      if (mounted) setState(() => _refreshRevision++);
     });
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      setState(() {});
+      setState(() => _refreshRevision++);
       _startClock();
     } else {
       _timer?.cancel();

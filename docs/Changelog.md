@@ -4,6 +4,15 @@
 
 ---
 
+## 四轮迭代优化：v1.8.15（build86）至 v1.8.18（build89，本机已构建与升级验证）- 2026-11-20
+
+- **v1.8.15（build86）功能可用性**：收紧分享附件私有 `shared_handoff/<id>/` 路径校验；局域网同步支持物理网卡 IP 优先级排序、细分失败提示、大包未读 413 断连防护、地址／配对码一键复制与 PIN 回车直连；修复同步页边缘模型应用后保存按钮与移动端控制台外链打开；事项卡片新增调整分类与快捷延后提醒；只读详情支持一键复制正文与清单；文件附件与首页文件预览升级为异步 128 KiB 有界 UTF-8 预览（含 CJK 截断安全与复制）；加密备份／恢复补齐密码显隐切换；首页补齐通勤情境、`U`/`,` 快捷键、`PopScope` 关闭搜索、`url_launcher` 打开视频、音频停止播放及待处理分享草稿提示条／命令面板入口。
+- **v1.8.16（build87）易用性与美观性**：`AppTheme` 统一 Material 3 对话框、弹出菜单、标签与浮层反馈令牌；全面清理硬编码低对比度色值以符合明暗双主题 WCAG AA；优化 `TaskCard` 竖条优先级指示、悬停与状态边框及语义标签胶囊；优化 `QuadrantView`、`TaskWorkspaceOverview`、`LanSyncConflictsDialog`（双端对比卡片＋差异摘要）、`DashboardScreen`（四象限语义配色进度条＋图标底托）及 `SharedTextInboxScreen`（安全图片缩略图与空态）。
+- **v1.8.17（build88）稳定性与性能**：修复 `RetainedMediaReferences` 生产目录路径错位、`DatabaseMaintenanceLease` 缺失 v15/v16 历史版本兼容及 `HomeController` 录音停止异常导致的文件锁泄漏／录制死锁与取消转写误存备忘；加固 `WindowsToast` 码点安全截断与桌面崩溃日志 1 MiB 轮转；新增 `remindersByIdProvider` / `mediaRecordByIdProvider` O(1) 索引、`TaskBoard` 与 `TaskWorkspaceOverview` 投影记忆化、首页空闲 Wi‑Fi／跃迁轮询门控，以及 `LanSyncService` 单次预加载合并与 8 路并发上限控制。
+- **v1.8.18（build89）全局架构与一致性收敛**：移除 758 行废弃 `ai_background_effect.dart`，去重附件临时文件清理逻辑并抽离共享 `formatByteSize` 格式化器（附件预览新增文件大小展示）；完善 `AppLocalizations` 合并映射英文回退与剩余硬编码文案（含三语 `StorageUnavailableScreen` 与 `HomeController` 多语言错误提示）；升级桌面 CLI 版本横幅、工作区过滤与码点安全截断；新增 `test/l10n_integrity_test.dart` 守卫三语键与占位符 100% 一致，并同步更新 `docs/Architecture_Design.md`。
+
+---
+
 ## Android／Windows／Linux／iOS v1.8.12（build83，已发布）- 2026-11-16
 
 - 设置与关于页统一层级、用途说明和窄屏／大字布局；精简60组键、中英日168条提示。

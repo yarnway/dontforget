@@ -2207,7 +2207,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                               style: const TextStyle(fontSize: 13),
                               decoration: InputDecoration(
                                 labelText: l10n.get('wifiSsidLabel'),
-                                hintText: 'e.g. Office-WiFi, Home-Net',
+                                hintText: l10n.get('wifiSsidHint'),
                                 isDense: true,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(6),
@@ -2290,7 +2290,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                               style: const TextStyle(fontSize: 13),
                               decoration: InputDecoration(
                                 labelText: l10n.get('contextPromptLabel'),
-                                hintText: 'e.g. 提醒同步团队进度或更新站会看板',
+                                hintText: l10n.get('contextPromptHint'),
                                 isDense: true,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(6),

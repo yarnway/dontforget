@@ -7,6 +7,10 @@ class AppLocalizations {
   final Locale locale;
   AppLocalizations(this.locale);
 
+  @visibleForTesting
+  static Map<String, Map<String, String>> get debugLocalizedValues =>
+      _localizedValues;
+
   static AppLocalizations of(BuildContext context) {
     return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
@@ -767,6 +771,24 @@ class AppLocalizations {
       'videoOpenFailed': 'Could not open this file externally.',
       'pendingSharedDrafts': 'Pending shared drafts ({count})',
       'loading': 'Loading…',
+      'portNotListening': 'Port not listening',
+      'contextWifiConnectedToast': 'Context reminder [Wi-Fi: {ssid}]',
+      'wifiSsidHint': 'e.g. Office-WiFi, Home-Net',
+      'contextPromptHint': 'e.g. Remind to sync team status or update board',
+      'dataTemporarilyUnavailable': 'Data is temporarily unavailable. Please try again later.',
+      'goalContentRequired': 'Goal content cannot be empty.',
+      'multiAgentError': 'Goal planning error: {error}',
+      'taskSaveIncomplete': 'Could not finish saving this task. Your input is kept; check local storage and retry.',
+      'originalSavedForLaterAi': 'Original input saved locally; you can run AI organization later.',
+      'startRecordingFailed': 'Could not start recording: {error}',
+      'stopRecordingFailed': 'Could not stop recording cleanly: {error}',
+      'imagePickFailed': 'Could not select image: {error}',
+      'filePickFailed': 'Could not select file: {error}',
+      'videoPickFailed': 'Could not select video: {error}',
+      'voiceParseNotice': 'Voice parsing note',
+      'imageParseNotice': 'Image recognition note',
+      'documentParseNotice': 'Document parsing note',
+      'videoParseNotice': 'Video processing note',
       // Semantic Search
       'searchHint': 'Search titles, summaries and subtasks...',
       'searchResults': 'Search Results',
@@ -1558,6 +1580,24 @@ class AppLocalizations {
       'videoOpenFailed': '无法调用外部应用打开该文件。',
       'pendingSharedDrafts': '待处理分享草稿 ({count})',
       'loading': '加载中…',
+      'portNotListening': '端口未监听',
+      'contextWifiConnectedToast': '📍 情境感知提醒 [已连接 {ssid}]',
+      'wifiSsidHint': '例如：Office-WiFi、Home-Net',
+      'contextPromptHint': '例如：提醒同步团队进度或更新站会看板',
+      'dataTemporarilyUnavailable': '数据暂时不可用，请稍后重试。',
+      'goalContentRequired': '目标内容不能为空',
+      'multiAgentError': '多智能体协同处理异常: {error}',
+      'taskSaveIncomplete': '事项未能完整保存，输入内容已保留，请检查本地存储后重试。',
+      'originalSavedForLaterAi': '原文已保存在本地，可稍后继续 AI 整理。',
+      'startRecordingFailed': '启动录音失败: {error}',
+      'stopRecordingFailed': '录音停止异常: {error}',
+      'imagePickFailed': '图片选择失败: {error}',
+      'filePickFailed': '文件选择失败: {error}',
+      'videoPickFailed': '视频选择失败: {error}',
+      'voiceParseNotice': '语音解析提示',
+      'imageParseNotice': '图片识别提示',
+      'documentParseNotice': '文档解析提示',
+      'videoParseNotice': '视频处理提示',
       // 语义搜索
       'searchHint': '搜索标题、摘要和子任务…',
       'searchResults': '搜索结果',
@@ -2358,6 +2398,24 @@ class AppLocalizations {
       'videoOpenFailed': '外部アプリでファイルを開けませんでした。',
       'pendingSharedDrafts': '未処理の共有下書き ({count})',
       'loading': '読み込み中…',
+      'portNotListening': 'ポート未待ち受け',
+      'contextWifiConnectedToast': '📍 コンテキスト通知 [接続: {ssid}]',
+      'wifiSsidHint': '例: Office-WiFi, Home-Net',
+      'contextPromptHint': '例: チーム進捗の共有やボード更新を通知',
+      'dataTemporarilyUnavailable': '現在データを利用できません。しばらくしてから再試行してください。',
+      'goalContentRequired': '目標内容を入力してください。',
+      'multiAgentError': '目標プランの処理中にエラーが発生しました: {error}',
+      'taskSaveIncomplete': 'タスクを完全に保存できませんでした。入力内容は保持されています。ストレージを確認して再試行してください。',
+      'originalSavedForLaterAi': '元の入力をローカルに保存しました。あとで AI 整理を実行できます。',
+      'startRecordingFailed': '録音を開始できませんでした: {error}',
+      'stopRecordingFailed': '録音の停止中にエラーが発生しました: {error}',
+      'imagePickFailed': '画像を選択できませんでした: {error}',
+      'filePickFailed': 'ファイルを選択できませんでした: {error}',
+      'videoPickFailed': '動画を選択できませんでした: {error}',
+      'voiceParseNotice': '音声解析のお知らせ',
+      'imageParseNotice': '画像認識のお知らせ',
+      'documentParseNotice': 'ドキュメント解析のお知らせ',
+      'videoParseNotice': '動画処理のお知らせ',
       // セマンティック検索
       'searchHint': 'タイトル・概要・サブタスクを検索…',
       'searchResults': '検索結果',
@@ -2498,10 +2556,14 @@ class AppLocalizations {
   };
 
   String get(String key) {
-    return taskAttachmentStrings[locale.languageCode]?[key] ??
-        taskConsistencyStrings[locale.languageCode]?[key] ??
-        notificationDiagnosticsStrings[locale.languageCode]?[key] ??
-        _localizedValues[locale.languageCode]?[key] ??
+    final code = locale.languageCode;
+    return taskAttachmentStrings[code]?[key] ??
+        taskConsistencyStrings[code]?[key] ??
+        notificationDiagnosticsStrings[code]?[key] ??
+        _localizedValues[code]?[key] ??
+        taskAttachmentStrings['en']?[key] ??
+        taskConsistencyStrings['en']?[key] ??
+        notificationDiagnosticsStrings['en']?[key] ??
         _localizedValues['en']?[key] ??
         key;
   }

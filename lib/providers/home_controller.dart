@@ -185,6 +185,16 @@ class HomeController extends StateNotifier<HomeState> {
     }
   }
 
+  String _t(String key, [Map<String, String> params = const {}]) {
+    var value = AppLocalizations(
+      Locale(_ref.read(settingsProvider).language),
+    ).get(key);
+    for (final entry in params.entries) {
+      value = value.replaceAll('{${entry.key}}', entry.value);
+    }
+    return value;
+  }
+
   DataGeneration? _beginInput() {
     if (!mounted || !_runtime.isCurrent(_birth)) {
       return null;
@@ -192,7 +202,7 @@ class HomeController extends StateNotifier<HomeState> {
     try {
       return _database.captureGeneration();
     } on DatabaseAccessException {
-      state = state.copyWith(error: '数据暂时不可用，请稍后重试。');
+      state = state.copyWith(error: _t('dataTemporarilyUnavailable'));
       return null;
     }
   }
@@ -405,7 +415,7 @@ class HomeController extends StateNotifier<HomeState> {
   ) async {
     final trimmed = complexGoal.trim();
     if (trimmed.isEmpty) {
-      throw Exception('目标内容不能为空');
+      throw Exception(_t('goalContentRequired'));
     }
     final operation = _startPending(generation);
     try {
@@ -421,7 +431,7 @@ class HomeController extends StateNotifier<HomeState> {
       await _saveTasks(result.scheduledTasks, generation);
       return result;
     } catch (error) {
-      _reportError(generation, '多智能体协同处理异常: $error');
+      _reportError(generation, _t('multiAgentError', {'error': '$error'}));
       rethrow;
     } finally {
       _finishPending(operation);
@@ -515,7 +525,7 @@ class HomeController extends StateNotifier<HomeState> {
       _check(generation);
       nativeFailed = result.nativeSyncFailed;
     } catch (_) {
-      _reportError(generation, '事项未能完整保存，输入内容已保留，请检查本地存储后重试。');
+      _reportError(generation, _t('taskSaveIncomplete'));
       _finishPending(saving);
       return false;
     }
@@ -630,7 +640,7 @@ class HomeController extends StateNotifier<HomeState> {
           _activeCaptures.remove(task.id);
         }
       },
-      failureMessage: '原文已保存在本地，可稍后继续 AI 整理。',
+      failureMessage: _t('originalSavedForLaterAi'),
       explainModelError: true,
     );
   }
@@ -737,7 +747,7 @@ class HomeController extends StateNotifier<HomeState> {
         }
       });
     } catch (error) {
-      _reportError(generation, '启动录音失败: $error');
+      _reportError(generation, _t('startRecordingFailed', {'error': '$error'}));
       return false;
     } finally {
       if (_isCurrent(generation)) {
@@ -850,7 +860,7 @@ class HomeController extends StateNotifier<HomeState> {
     } catch (error) {
       live?.cancel();
       if (_isCurrent(generation)) state = state.copyWith(isRecording: false);
-      _reportError(generation, '录音停止异常: $error');
+      _reportError(generation, _t('stopRecordingFailed', {'error': '$error'}));
     }
     return null;
   }
@@ -1299,7 +1309,7 @@ class HomeController extends StateNotifier<HomeState> {
           );
         }
       },
-      failureMessage: '语音解析提示',
+      failureMessage: _t('voiceParseNotice'),
       explainModelError: true,
     );
   }
@@ -1344,11 +1354,11 @@ class HomeController extends StateNotifier<HomeState> {
             preview: settings.hasConfiguredExtraction,
           );
         },
-        failureMessage: '图片识别提示',
+        failureMessage: _t('imageParseNotice'),
         explainModelError: true,
       );
     } catch (error) {
-      _reportError(generation, '图片选择失败: $error');
+      _reportError(generation, _t('imagePickFailed', {'error': '$error'}));
     }
   }
 
@@ -1402,11 +1412,11 @@ class HomeController extends StateNotifier<HomeState> {
             preview: settings.hasConfiguredExtraction,
           );
         },
-        failureMessage: '文档解析提示',
+        failureMessage: _t('documentParseNotice'),
         explainModelError: true,
       );
     } catch (error) {
-      _reportError(generation, '文件选择失败: $error');
+      _reportError(generation, _t('filePickFailed', {'error': '$error'}));
     }
   }
 
@@ -1446,11 +1456,11 @@ class HomeController extends StateNotifier<HomeState> {
             preview: settings.hasConfiguredExtraction,
           );
         },
-        failureMessage: '视频处理提示',
+        failureMessage: _t('videoParseNotice'),
         explainModelError: true,
       );
     } catch (error) {
-      _reportError(generation, '视频选择失败: $error');
+      _reportError(generation, _t('videoPickFailed', {'error': '$error'}));
     }
   }
 

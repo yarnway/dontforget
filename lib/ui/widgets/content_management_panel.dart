@@ -12,6 +12,7 @@ import '../../services/content/content_cleanup_service.dart';
 import '../../services/local_media_store.dart';
 import '../../services/recovery/runtime_gate.dart';
 import '../../services/shared_text_inbox.dart';
+import '../formatters/byte_size.dart';
 import '../screens/notification_repair_screen.dart';
 import '../screens/shared_text_inbox_screen.dart';
 import '../../l10n/shared_text_strings.dart';
@@ -262,14 +263,7 @@ class _ContentManagementPanelState
     );
   }
 
-  String _size(int bytes) {
-    if (bytes < 1024) return '$bytes B';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(2)} KiB';
-    if (bytes < 1024 * 1024 * 1024) {
-      return '${(bytes / 1024 / 1024).toStringAsFixed(2)} MiB';
-    }
-    return '${(bytes / 1024 / 1024 / 1024).toStringAsFixed(2)} GiB';
-  }
+  String _size(int bytes) => formatByteSize(bytes);
 
   @override
   Widget build(BuildContext context) {

@@ -17,6 +17,7 @@ import '../../services/backup_cache_service.dart';
 import '../../services/backup_export_name.dart';
 import '../../services/backup_export_history.dart';
 import '../../services/recovery/runtime_gate.dart';
+import '../formatters/byte_size.dart';
 import '../formatters/local_date_time.dart';
 import '../screens/backup_preview_screen.dart';
 import 'credential_status_panel.dart';
@@ -466,9 +467,7 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
     }
   }
 
-  static String _size(int value) => value >= 1024 * 1024
-      ? '${(value / (1024 * 1024)).toStringAsFixed(1)} MiB'
-      : '${(value / 1024).toStringAsFixed(1)} KiB';
+  static String _size(int value) => formatByteSize(value, fractionDigits: 1);
   @override
   Widget build(BuildContext context) {
     final raw = ref.watch(workspaceDraftsProvider)['lastPortableBackup'];

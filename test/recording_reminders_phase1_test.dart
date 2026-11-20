@@ -243,7 +243,7 @@ void main() {
       final saved = container.read(remindersProvider).single;
       expect(saved.id, 'stable-capture');
       expect(saved.taskTitle, '明天9点开会；会后整理纪要');
-      expect(saved.triggerTime, event);
+      expect(saved.triggerTime, event.subtract(const Duration(minutes: 10)));
       expect(saved.eventTime, event);
       final proposals = (jsonDecode(saved.captureProposalJson!) as List)
           .map(

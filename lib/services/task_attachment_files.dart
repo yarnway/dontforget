@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'dart:convert';
-import 'content/owned_material_activity.dart';
 
 import 'package:path/path.dart' as path;
 import 'package:uuid/uuid.dart';
@@ -57,31 +55,7 @@ class TaskAttachmentFiles {
   Future<void> _discard(String copied) async {
     if (!_uncommitted.remove(copied)) return;
     // Only the fresh, uniquely named import returned to this instance qualifies.
-    try {
-      final file = File(copied);
-      if (await file.exists()) await file.delete();
-      final remaining = await file.parent.list(followLinks: false).toList();
-      if (remaining.length == 1 &&
-          remaining.single is File &&
-          path.basename(remaining.single.path) ==
-              OwnedMaterialActivity.markerName) {
-        final marker = remaining.single as File;
-        if (await marker.length() <= 1024) {
-          final value = jsonDecode(await marker.readAsString());
-          if (value is Map &&
-              value['format'] == 'dontforget.material' &&
-              value['version'] == 1 &&
-              value['role'] == 'original') {
-            await marker.delete();
-          }
-        }
-      }
-      if (await file.parent.exists() && await file.parent.list().isEmpty) {
-        await file.parent.delete();
-      }
-    } catch (_) {
-      // Preserve the original failure. A leftover private copy can be recovered.
-    }
+    await _store.discardImport(copied);
   }
 }
 

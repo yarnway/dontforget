@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 /// Standalone startup failure surface: deliberately outside ProviderScope.
 class StorageUnavailableScreen extends StatelessWidget {
@@ -13,10 +14,9 @@ class StorageUnavailableScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => MaterialApp(
     debugShowCheckedModeBanner: false,
-    theme: ThemeData(
-      colorSchemeSeed: const Color(0xff367f80),
-      useMaterial3: true,
-    ),
+    theme: AppTheme.light,
+    darkTheme: AppTheme.dark,
+    themeMode: ThemeMode.system,
     home: Scaffold(
       body: SafeArea(
         child: Center(
@@ -40,13 +40,17 @@ class StorageUnavailableScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(
                     busy
-                        ? '请先退出另一份“别忘了”，再重新打开。\nQuit the other DontForget instance, then reopen this app.'
-                        : '应用已停止加载任务和安排提醒。恢复记录与回退文件已保留，请检查存储状态后重新启动；不要删除这些文件。\nStartup is paused. Recovery evidence is preserved. Check local storage before restarting.',
+                        ? '请先退出另一份“别忘了”，再重新打开。\n'
+                              'Quit the other DontForget instance, then reopen this app.\n'
+                              '別の DontForget を終了してから、もう一度開いてください。'
+                        : '应用已停止加载任务和安排提醒。恢复记录与回退文件已保留，请检查存储状态后重新启动；不要删除这些文件。\n'
+                              'Startup is paused. Recovery evidence is preserved. Check local storage before restarting.\n'
+                              '起動を一時停止しました。復旧記録は保持されています。ストレージ状態を確認して再起動してください。',
                   ),
                   const SizedBox(height: 24),
                   FilledButton(
                     onPressed: onExit,
-                    child: const Text('退出 / Exit'),
+                    child: const Text('退出 / Exit / 終了'),
                   ),
                 ],
               ),

@@ -520,6 +520,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
     // 情境感知触发器检测：仅当存在 Wi-Fi 触发器时才执行 SSID 嗅探
     if (reminders.any(_hasActiveWifiTrigger)) {
+      final wifiToastTemplate = AppLocalizations.of(
+        context,
+      ).get('contextWifiConnectedToast');
       _contextTriggers
           .detectCurrentWifiSsid()
           .then((ssid) {
@@ -537,7 +540,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         await ref
                             .read(notificationServiceProvider)
                             .showWindowsToast(
-                              '📍 情境感知提醒 [已连接 $ssid]',
+                              wifiToastTemplate.replaceAll('{ssid}', ssid),
                               m.taskTitle,
                             );
                       })

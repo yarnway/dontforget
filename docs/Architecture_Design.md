@@ -1,178 +1,89 @@
 # DontForget (别忘了) - 系统与技术架构设计文档
 
-> **版本**：v1.2.4  
-> **更新时间**：2026-09-09  
-> **定位**：端侧隐私第一 · 大模型驱动 · 3D 全息 AI 视觉 · 全平台智能备忘与任务调度系统
+> **版本**：v1.8.18（build89）  
+> **更新时间**：2026-11-20  
+> **定位**：本地优先（Local-First）· 端侧数据保全 · 多模态录入与 AI 辅助整理 · 四平台（Windows / Linux / Android / iOS）事项、提醒与复习工作台
 
 ---
 
 ## 1. 架构总览
 
-DontForget 采用现代清晰的分层架构（Clean Architecture）结合响应式状态管理（Riverpod），保障各层职责解耦、代码高内聚低耦合，并具备极致的跨平台运行能力。
+DontForget 采用清晰的分层架构，围绕 **单进程所有权（Process Ownership）**、**代数隔离（DataGeneration）**、**运行时恢复门控（RuntimeRecoveryGate）** 与 **响应式 Riverpod 状态管理** 构建，确保跨平台日常录入、提醒调度、局域网同步、加密备份恢复与附件清理的一致性和可恢复性。
 
+```text
+┌──────────────────────────────────────────────────────────────────────┐
+│                      展现层 (Presentation Layer)                     │
+│  - 统一 Material 3 设计令牌 (AppTheme: light / dark, WCAG AA)        │
+│  - 主工作台 (HomeScreen, TaskWorkspaceOverview, TaskBoard, Quadrant)  │
+│  - 默认只读详情与显式编辑 (TaskDetailScreen / TaskEditScreen)         │
+│  - 多模态输入与实时语音三态 (InputBottomBar, SharedTextInboxScreen)  │
+│  - 看板、知识图谱、学习排程与专注工具 (Dashboard / Graph / Planning) │
+│  - 设置中心与数据管理 (Settings / Backup / ContentManagement)        │
+└──────────────────────────────────┬───────────────────────────────────┘
+                                   │ watch / select / O(1) index
+┌──────────────────────────────────▼───────────────────────────────────┐
+│                   状态与协调层 (Providers & State)                   │
+│  - remindersProvider + remindersByIdProvider (O(1) 索引)             │
+│  - mediaRecordsProvider + mediaRecordByIdProvider (O(1) 索引)        │
+│  - settingsProvider / workspaceDraftsProvider / contextProfile       │
+│  - homeControllerProvider (录入/语音/多模态串行队列与草稿保全)       │
+│  - runtimeRecoveryGateProvider (恢复前排空全部前台活动与回调)        │
+└──────────────────────────────────┬───────────────────────────────────┘
+                                   │ generation-fenced operations
+┌──────────────────────────────────▼───────────────────────────────────┐
+│                    领域与服务层 (Domain & Services)                  │
+│  - AI 与语音：LLMService / MultiAgentService / TencentRealtimeASR    │
+│  - 提醒与情境：NotificationService / WindowsToast / ContextTriggers  │
+│  - 跨设备同步：LanSyncService (物理网卡优先、并发上限、双向附件校验) │
+│  - 分享采集：AndroidShareService / SharedTextInbox (私有 handoff)    │
+│  - 数据保护：StreamingBackupService / PortableBackupService          │
+│  - 清理保护：ContentCleanupService / RetainedMediaReferences         │
+└──────────────────────────────────┬───────────────────────────────────┘
+                                   │ exclusive ownership & transactions
+┌──────────────────────────────────▼───────────────────────────────────┐
+│                     数据持久层 (Data & Storage)                      │
+│  - DatabaseHelper (SQLite Schema v17, WAL, 单进程锁与维护租约)       │
+│  - StorageBootstrap / DatabaseRecovery / DatabaseLocationMigrator    │
+│  - LocalMediaStore (受管原件目录与活动标记 OwnedMaterialActivity)    │
+│  - 系统安全存储 (DPAPI / Keychain / Keystore；不随备份导出明文密钥)  │
+└──────────────────────────────────────────────────────────────────────┘
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                 展现层 (Presentation Layer)                  │
-│  - 3D 全息粒子背景 (AiBackgroundEffect: CustomPainter)        │
-│  - 纯净图标线框象限 (QuadrantView & TaskCard)                 │
-│  - 统计数据看板 (DashboardScreen: Completion Ring & Pie)      │
-│  - 悬浮微型状态指示灯 (LED Status Indicator)                   │
-│  - 极速多模态底部输入流 (InputBottomBar & Media Sheets)        │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ Watch / Read
-┌──────────────────────────────▼──────────────────────────────┐
-│                  状态层 (State Management Layer)             │
-│  - remindersProvider (StateNotifierProvider<List<Reminder>>)│
-│  - mediaRecordsProvider (StateNotifierProvider<MediaRecord>)│
-│  - appSettingsProvider (StateNotifierProvider<AppSettings>) │
-│  - homeControllerProvider (异步解析中/错误状态流)             │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ Business Logic
-┌──────────────────────────────▼──────────────────────────────┐
-│                  领域与服务层 (Domain & Service Layer)       │
-│  - LLMService (Dio HTTP Client, Prompt Engineering,         │
-│               智能提前量评估, Vision & Audio 多模态流)       │
-│  - NotificationService (flutter_local_notifications,        │
-│                         系统托盘通知, 定时闹钟, Snooze 调度)│
-│  - AudioEngine (record, audioplayers, Windows fmedia 内置核)│
-│  - WindowManagerService (最小化到托盘, 隐藏到后台, 窗口守护) │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ Local Storage Only
-┌──────────────────────────────▼──────────────────────────────┐
-│                    数据持久层 (Data Layer)                   │
-│  - DatabaseHelper (SQLite, sqflite_common_ffi, WAL 模式)    │
-│  - 本地表结构: reminders, media_records, settings            │
-│  - 本地文件沙盒存储: app_data/media/ (音频/视频/图片)         │
-└─────────────────────────────────────────────────────────────┘
-```
 
 ---
 
-## 2. 核心模块与职责划分
+## 2. 核心架构原则与关键子系统
 
-### 2.1 展现层 (Presentation Layer)
-- **`AiBackgroundEffect`**：
-  - 基于 Flutter `CustomPainter` 与 `SingleTickerProviderStateMixin` 打造的高性能 3D 光粒子画布。
-  - 维护 620+ 空间点云（555 实体粒子 + 150 深空背景星），支持 3D 仿射变换、四点光学衍射十字星芒、突触脉冲光子传输。
-  - 集成**流体阻尼跟踪**与**胡克定律弹性慢速复位模型**，带来科技而有生命的交互体验。
-- **`HomeScreen`**：
-  - 承载四象限矩阵网格、透明浮动 AppBar、LED 状态指示器与底部多模态输入栏。
-  - 监听定时触发任务，展示到期提醒弹窗（支持一键推迟 5 分钟与直接标记完成）。
-- **`QuadrantView` & `TaskCard`**：
-  - 采用极简透明细线框与彩色徽标（🔥、⭐、⚡、☕），彻底剔除冗余分类文本与右上角计数，回归内容本身。
-  - 支持拖拽换象限（`LongPressDraggable` & `DragTarget`），手势滑动删除、右键上下文菜单。
-- **`DashboardScreen`**：
-  - 纯图标化统计分析视图，支持中/英/日多语言动态适配，直观展示任务完成率与分类分布。
+### 2.1 数据安全与恢复门控（Storage & Recovery）
+- **启动门控（`StorageBootstrap`）**：主界面渲染前必须先获取进程目录锁（`acquireOwnership`）、校验未完成恢复日志并完成安全迁移，避免多实例并发写库或覆盖历史数据；异常时进入独立于 `ProviderScope` 的三语 `StorageUnavailableScreen`。
+- **代数栅栏（`DataGeneration`）与恢复门控（`RuntimeRecoveryGate`）**：所有异步读写、通知动作、录音、同步及备份操作均绑定代数令牌；在数据库恢复或目录接管前先排空后台任务，恢复后旧代数写入被拒绝。
+- **维护租约（`DatabaseMaintenanceLease`）**：覆盖恢复、回退与只读预检期间持有独占租约，历史完整性校验动态兼容 `7..schemaVersion`（当前 v17）。
+- **系统凭据隔离**：模型与语音 API 密钥统一保存于系统安全存储（Windows DPAPI / macOS & iOS Keychain / Android Keystore），新备份默认不导出密钥。
 
-### 2.2 状态管理层 (State Management Layer)
-- 基于 `flutter_riverpod: ^2.6.1`，全工程摒弃繁重的全局单例与命令式状态传递：
-  - `remindersProvider`：响应式管理待办事项列表，提供增、删、改、查、分类过滤、清空历史完成等原子操作。
-  - `appSettingsProvider`：热加载用户配置（API Key、Base URL、Model Name、语言、主题等）。
-  - `homeControllerProvider`：统一调度后台大模型提取工作流，处理音频转录、视觉分析及异常错误透传。
+### 2.2 内容保护与备份恢复（Backup & Content Management）
+- **流式/可移植加密备份（`StreamingBackupService` / `PortableBackupService`）**：支持未加密与口令加密包、大附件流式读写、预检摘要核对与失败自动回退。
+- **原件引用保护（`ContentCleanupService` + `RetainedMediaReferences`）**：扫描真实受控数据库目录（`acquireOwnership()`）中的 `ha_snapshot.json`、`dont_forget_v3.mirror.db`、`recovery-*`、`schema-upgrade-*` 与迁移回执，同时保护回收站、归档、分享草稿与外部登记备份引用；遇到未知或损坏材料保守阻断清理。
 
-### 2.3 领域与服务层 (Domain & Service Layer)
-- **`LLMService`**：
-  - 采用 OpenAI 兼容格式通信，支持 DeepSeek、Google Gemini 以及自定义兼容接口。
-  - **智能提前量（Lead Time）规划**：大模型根据任务性质（会议、出行、截止期、即刻行动）自动返回 `lead_time_minutes` 与 `lead_time_desc`，并在客户端进行双重精准计算。
-  - 具备重试机制（Exponential Backoff）、格式化错误翻译、Markdown 代码块及非标准 JSON 容错正则解析。
-- **`NotificationService`**：
-  - 封装桌面与移动端本地通知，支持分类通知渠道（High/Urgent 强提醒，General 常规提醒）。
-  - 结合 `timezone` 库实现精准跨时区绝对时间调度。
-- **`AudioService` & 音频引擎**：
-  - 录音使用跨平台统一组件 `record`。Windows 端生成规范 `.aac` 音频，iOS/Android/macOS 生成 `.m4a`。
-  - 采用 `RecordingDurationReader` 支持 ADTS AAC 裸流与 MP4 容器双模式解析，基于帧头计算采样率与帧数获得精准时长。
-  - 严格实施 250ms 最短录音保护，杜绝碎片空音频落盘，历史录音完全向下兼容。
+### 2.3 跨设备局域网同步与分享采集（LAN Sync & Share）
+- **局域网双向同步（`LanSyncService`）**：
+  - 自动优先选择物理局域网 IPv4（`192.168.x` > `10.x` > `172.16–31.x`），避开 WSL/Hyper-V/Docker/VPN 虚拟网卡。
+  - PIN 常量时间比对、错误计数锁定（429）、64 MiB 请求体未读拒收（`detachSocket` 立即返回 413 并断开连接）、入站并发上限（8 路，超限 503）与单次预加载合并（消除 N+1 SQL 查询）。
+  - 支持任务附件原件双向传输（32 MiB 单附件限制、SHA‑256 摘要核对、暂存落盘并在事务回滚时清理）。
+  - 冲突对比对话框（`LanSyncConflictsDialog`）支持差异字段摘要、本机/对端对比视图以及确认后采用对端文案或回收站状态。
+- **分享采集（`SharedTextInbox`）**：所有分享附件严格限定于应用私有 `shared_handoff/<share-id>/` 目录，独立持久化不覆盖首页输入草稿，支持无配文或带配文经同一事务保存为备忘。
 
-### 2.4 数据持久层 (Data Layer)
-- **本地绝对隐私原则**：
-  - 用户的所有数据（待办记录、语音文件、图片、本地设置、API Key）**完全存放在用户本机**，应用自身绝不搭建任何云端存储，真正做到数据物理隔离。
-- **SQLite 架构**：
-  - 桌面端：`sqflite_common_ffi` + `sqlite3.dll`，开启 Write-Ahead Logging (WAL) 模式保障高并发读写安全。
-  - 移动端：原生系统 SQLite 驱动。
-- **核心数据模型**：
-  - `reminders` 表：`id`, `record_id`, `task_title`, `task_summary`, `quadrant_level`, `urgency_level`, `importance_level`, `trigger_time`, `is_completed`, `is_recurring`, `recurrence_rule`, `recurrence_description`。
-  - `media_records` 表：`id`, `type`, `content_or_path`, `created_at`。
-  - `settings` 表：`api_key`, `base_url`, `model_name`, `language`。
+### 2.4 展现层、无障碍与性能（UI/UX & Performance）
+- **设计系统（`AppTheme`）**：统一 Material 3 明暗主题令牌（Card / Dialog / PopupMenu / Chip / SnackBar / InputDecoration），保证 WCAG AA 文本对比度并支持 200% 系统字体缩放与窄屏响应式布局。
+- **只读与显式编辑边界**：常规事项点击进入只读 `TaskDetailScreen`（支持一键复制正文与清单、查看/预览附件），仅点击「修改」进入 `TaskEditScreen`，杜绝误触写库。
+- **性能热路径优化**：
+  - `remindersByIdProvider` 与 `mediaRecordByIdProvider` 提供 `O(1)` 索引查找，避免卡片与详情面板随数据增长发生线性扫描。
+  - `TaskBoard` 与 `TaskWorkspaceOverview` 对排序与分组投影按数据引用与分钟桶记忆化。
+  - `HomeScreen` 10 秒心跳按需门控 Wi‑Fi 触发器探测与动态优先级跃迁扫描，空闲状态零冗余系统进程开销。
+- **国际化一致性**：中／英／日三语全覆盖，`AppLocalizations.get` 统一回退英文，并由 `test/l10n_integrity_test.dart` 自动守卫键集合与占位符一致性。
 
 ---
 
-## 3. 跨平台兼容性设计
+## 3. 跨平台与交付工程
 
-| 操作系统 | 架构 | 特殊适配措施 |
-|---|---|---|
-| **Windows 10 / 11** | x64 | 现代 MSVC (VS 2022 C++20 + ATL) 原生编译构建，支持 WinRT Toast 原生动作与免提权协议唤醒、托盘动态多语言与优雅退出、单实例守护、窗口记忆与旧版数据原子迁移；提供 Inno Setup 安装包与绿色便携包 |
-| **macOS** | Universal | 支持 macOS 原生 MenuBar 与暗黑模式切换 |
-| **Linux (Ubuntu)** | x64 | GTK 3.0 前端适配，遵循 XDG 桌面规范与桌面本地通知 |
-| **Android & iOS** | ARM64 / ARMv7 | 触摸手势优化、移动端通知权限申请与麦克风/相册权限按需申请 |
-
----
-
-## 4. 安全与性能指标
-
-1. **凭据安全**：
-   - 敏感凭据（如 API Key）由 `CredentialRepository` 托管，优先使用平台安全存储（Windows DPAPI、macOS/iOS Keychain、Android KeyStore），与明文业务库解耦。
-2. **端到端加密流式备份**：
-   - 引入 `StreamingBackupService`，采用 **AES-256-GCM** 配合 **Argon2id** 密钥派生函数对全量数据及多媒体附件本体进行流式分块打包加密（`.dfbackup` 格式），具备防重放、抗篡改与原子安全恢复。
-3. **渲染性能**：
-   - 3D 光粒子全息系统采用独立的 `RepaintBoundary` 分离重绘区域。
-   - 粒子连线与脉冲计算采用 $O(N)$ 临近局部检索算法，在常规桌面集成显卡上均能稳定跑满 60 FPS，CPU 占用率低于 2%。
-4. **打包体积控制**：
-   - 独立安装包（Setup.exe）体积约 **14.08 MB**。
-   - 绿色便携包（Portable.zip）体积约 **17.10 MB**（已包含系统依赖与完整运行时）。
-
-
-## v1.5.2 一致性与渲染更新
-
-本节以当前实现为准，覆盖早期文档中的理想化描述。
-
-- `RemindersNotifier` 用统一异步队列协调初始化、刷新、CRUD、链接与优先级扫描。跨行变更采用 SQLite 事务；只有持久化成功后才发布内存状态。调用时提取字段差异，执行时与最新任务合并。此队列不覆盖 LAN 同步与 CLI 的直接数据库入口。
-- `TaskSearchIndex` 保存任务快照及规范化搜索字段，由 Riverpod 自动释放提供者管理；任务列表改变时刷新，搜索不触发远程 AI。
-- `TaskBoard` 进行一次分类分桶；每个 `QuadrantView` 用惰性列表构造可见卡片，ID key 保留组件状态。提醒面板保留10秒刷新，工作台时间状态在每分钟/恢复前台时更新。
-- `LocalMediaStore` 为每次导入分配独立目录并保留原文件名。成功复制后再交给既有媒体持久化流程；不删除用户源文件，不清理历史备份，不增加附件本体备份能力。
-
-验证记录见 [v1.5.2 迭代记录](Iteration_v1.5.2.md)。
-
-
-## v1.6 恢复隔离与启动门禁（当前实现）
-
-本节更新上方 v1.5.2 的入口边界：LAN、CLI 和业务 provider 现已共同受 `DatabaseHelper` 维护门禁约束；schema 仍为 v8。恢复引擎是内部能力，设置页尚无主库替换按钮。
-
-- **作用域和代次**：`captureGeneration` 在操作开始时取得数据代次，`read`、`writeTransaction`、`runOperation` 限定数据库或短副作用的生命周期。维护开始同步停止新准入并推进代次，再排空已接纳操作。关闭、维护、旧代次和故障会明确拒绝请求，不自动等待后向新库重放。
-- **状态与异步入口**：provider 的排队写入和状态发布检查代次；AI/附件结果、微习惯拆解、LAN 网络响应携带起始代次。LAN 不持有数据库作用域跨网络等待，合并与服务端快照在一个事务内完成。旧编辑器、删除 Undo 和情境摘要不能更新恢复后的同 ID 任务；短保存/删除与通知更新共同纳入排空。
-- **启动与所有权**：`StorageBootstrap` 在 GUI provider 和 CLI 数据访问前取得合作式所有权、处理未完成恢复日志并检查业务表及数据。失败进入存储不可用页面或 CLI 非零退出，不能以默认空状态掩盖损坏。CLI 因其他实例占用退出 `75`；帮助命令不触库。合作式锁不能拦截旧版或任意不遵守协议的进程。
-- **恢复与回退**：`DatabaseRecovery` 重新核对候选摘要，在每次操作的独立目录中准备、验证及迁移候选，保存独立 rollback 副本与原库材料；维护关闭不会覆盖固定备份。`recovery.pending.json` 保存操作身份、摘要和提交决定。启动续检对未提交操作回退，对已提交操作完成收尾；身份不明、日志损坏或回退失败保持故障并保留材料。
-- **通知边界**：维护暂停新请求、排空在途操作并严格取消原生通知；切换和回退均从最终库严格重建。取消或重建失败向恢复流程传播，通知保持暂停。这里保证的是恢复流程观察错误，尚不能证明真机系统送达。
-
-下一阶段仍需产品层统一协调运行中的输入/AI、LAN、心跳和情境生产者，重建设置/媒体/任务 provider，并提供显示具体影响和回退位置的确认流程。引擎和代次隔离完成不代表 UI 恢复流程已交付。
-
-文件替换当前只支持无 sidecar、SQLite 文件头读写格式均为 `1` 的回滚日志格式文件；WAL 候选或原库在 journal/替换前拒绝。通知计时器在整个重建成功后统一启动，期间到期的本轮提醒补发；CLI 显式无备份关闭以免只读查询覆盖固定备份。
-
-提交边界先于候选通知启用：`committed` journal 写入前失败回退旧库；写入后通知重建/归档失败保留新库与提交记录，门禁保持关闭，重启继续提交决定。外部通知已可能生效，因此该阶段不再回退到旧库。
-
-验证：静态分析无问题，326 项 Flutter 回归与 10 项脚本测试通过，其中本轮新增 91 项。当前证据来自临时数据库、loopback 和受控通知/故障注入。过程边界的中断与重启测试不证明突然断电时目录 fsync 的持久性；真实用户库替换和真机通知重建未验收，录音播放按用户要求跳过。阶段和验收边界见 [v1.6 迭代记录](Iteration_v1.6.md)。
-
-## v1.7 桌面端与端侧安全架构演进（当前实现）
-
-### 1. 桌面端（Windows）架构深度适配
-- **WinRT Toast 协议激活与原生动作**：
-  - Windows Toast 采用原生 `activationType="protocol"` 与 `<actions>` 结构，免管理员提权注册 `HKCU\Software\Classes\dontforget` 协议；
-  - 冷启动通过 entrypoint 命令行参数分发 `initialProtocolRoute`；
-  - 运行时通过命名互斥体唤醒并经由 `WM_COPYDATA` (0x4446) 跨进程通信投递至已运行实例，驱动 Flutter MethodChannel 进行任务查看、完成及延后操作。
-- **单实例互斥与优雅退出**：
-  - Windows 原生层增加 `Local\DontForget.SingleInstance` 命名 Mutex，已有进程时激活窗口并立即退出，杜绝多实例并发写库风险；
-  - 托盘右键退出接入 `DesktopShutdown`，遵循“先关库、再销毁窗口、最后退出”的严格生命周期。
-- **状态持久化与响应式容错**：
-  - 窗口尺寸、位置与最大化状态防抖持久化至 `Settings` 表，启动自动读取并针对多屏拔出/分辨率变更进行虚拟桌面边界检测，越界自动居中回退；
-  - 启动阶段自动聚合 72 小时内可提醒的逾期事项为 `MissedRemindersBar`，提供一键知晓已读落盘。
-- **生产身份与平滑数据迁移**：
-  - 全平台统一应用标识为 `com.yarnway.dontforget`；
-  - Windows 侧开发 `DatabaseLocationMigrator`，在启动时自动探测候选旧数据路径（如 `%APPDATA%\com.example\DontForget\databases`），通过原子重命名完成主库及 WAL/shm/epoch/journal 完整迁移，异常时安全回退旧路径。
-
-### 2. 端侧安全架构
-- **流式加密备份（StreamingBackupService）**：
-  - 格式版本升级为支持带密码端到端加密的 `.dfbackup` 容器；
-  - 采用 **Argon2id** 进行高强度密钥派生（包含防降级参数校验），核心载荷与媒体文件采用 **AES-256-GCM** 分帧加密传输；
-  - 恢复时严格校验帧序号与认证标签，防止重放与篡改，并在恢复中断时原子清理临时解密数据。
-- **凭据分级存储（CredentialRepository）**：
-  - 平台原生安全存储（DPAPI / Keychain / KeyStore）与普通 SQLite 数据库完全物理隔离。
-
+- **支持平台**：Windows x64（Inno Setup 安装器 + 便携 ZIP）、Linux x64（AppImage / tarball）、Android（ARM64 / 通用 APK / AAB）、iOS（未签名 IPA，供个人重签）。
+- **固定工具链**：严格对齐 CI 基线 Flutter `3.44.9`（Dart `3.12.2`），通过 `scripts/check_flutter_version.py --strict` 与 `scripts/verify_artifacts.py` 校验版本与产物摘要。
+- **Windows 运行中升级验收**：每个新版本均在运行中的旧版实例上执行最新数据备份→静默正常关闭升级（禁止强关）→载荷逐字节校验→SQLite 完整性与全字段哈希核对→DPAPI 凭据解保护核对→普通重开验证，并归档 JSON 回执至 `docs/benchmarks/`。

@@ -1422,7 +1422,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                               Text(
                                                 ep.isAvailable
                                                     ? '${ep.recommendedModel} · ${ep.latencyMs}ms'
-                                                    : '端口未监听',
+                                                    : l10n.get(
+                                                        'portNotListening',
+                                                      ),
                                                 style: TextStyle(
                                                   fontSize: 11,
                                                   color: ep.isAvailable

@@ -16,6 +16,7 @@ import '../../models/task_details.dart';
 import '../../providers/providers.dart';
 import '../../services/local_media_store.dart';
 import '../../services/task_attachment_files.dart';
+import '../formatters/byte_size.dart';
 import 'inline_feedback.dart';
 
 class TaskAttachmentPicker {
@@ -469,11 +470,12 @@ class _TaskAttachmentPreviewState extends State<TaskAttachmentPreview> {
 
   bool _saving = false;
   Future<({String text, bool truncated})?>? _textPreview;
+  Future<int?>? _fileSize;
 
   @override
   void initState() {
     super.initState();
-    _loadTextPreview();
+    _loadPreviewMetadata();
   }
 
   @override
@@ -483,7 +485,26 @@ class _TaskAttachmentPreviewState extends State<TaskAttachmentPreview> {
         oldWidget.media.id != widget.media.id ||
         oldWidget.media.type != widget.media.type) {
       _textPreview = null;
-      _loadTextPreview();
+      _fileSize = null;
+      _loadPreviewMetadata();
+    }
+  }
+
+  void _loadPreviewMetadata() {
+    final filePath = widget.resolvedPath;
+    if (filePath != null && widget.media.type != 'text') {
+      _fileSize = _readFileSize(filePath);
+    }
+    _loadTextPreview();
+  }
+
+  static Future<int?> _readFileSize(String filePath) async {
+    try {
+      final f = File(filePath);
+      if (!await f.exists()) return null;
+      return await f.length();
+    } catch (_) {
+      return null;
     }
   }
 
@@ -601,6 +622,28 @@ class _TaskAttachmentPreviewState extends State<TaskAttachmentPreview> {
                   ? l10n.get('taskAttachmentOriginal')
                   : path.basename(media.contentOrPath),
             ),
+            actions: [
+              if (_fileSize != null)
+                FutureBuilder<int?>(
+                  future: _fileSize,
+                  builder: (context, sizeSnap) {
+                    final bytes = sizeSnap.data;
+                    if (bytes == null) return const SizedBox.shrink();
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 16),
+                        child: Text(
+                          formatByteSize(bytes),
+                          key: const ValueKey('attachment-preview-size'),
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+            ],
           ),
           body: SafeArea(
             child: FutureBuilder<({String text, bool truncated})?>(

@@ -37,11 +37,13 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
       _categoryFocus ??= List.generate(4, (_) => FocusNode());
   int? _manualCategory;
   Timer? _refresh;
+  int _refreshRevision = 0;
   TaskBoardData? _cachedData;
   List<Reminder>? _cachedReminders;
   bool? _cachedCompact;
   int? _cachedManualCategory;
   int? _cachedMinuteBucket;
+  int? _cachedRefreshRevision;
   Object? _cachedUrgency;
 
   TaskBoardData _projectBoard(
@@ -56,6 +58,7 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
         _cachedCompact == compact &&
         _cachedManualCategory == _manualCategory &&
         _cachedMinuteBucket == minuteBucket &&
+        _cachedRefreshRevision == _refreshRevision &&
         identical(_cachedUrgency, urgency)) {
       return _cachedData!;
     }
@@ -70,6 +73,7 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
     _cachedCompact = compact;
     _cachedManualCategory = _manualCategory;
     _cachedMinuteBucket = minuteBucket;
+    _cachedRefreshRevision = _refreshRevision;
     _cachedUrgency = urgency;
     return projected;
   }
@@ -85,14 +89,14 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
     _refresh?.cancel();
     // Time labels and the 48-hour memo fold need no page-wide heartbeat.
     _refresh = Timer.periodic(const Duration(minutes: 1), (_) {
-      if (mounted) setState(() {});
+      if (mounted) setState(() => _refreshRevision++);
     });
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      if (mounted) setState(() {});
+      if (mounted) setState(() => _refreshRevision++);
       _startRefresh();
     } else {
       _refresh?.cancel();
