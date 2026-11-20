@@ -589,6 +589,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           dbHelper: dbHelper,
           onDataChanged: () {
             if (reminders.mounted) reminders.refreshReminders();
+            if (mounted && ref.exists(mediaRecordsProvider)) {
+              ref.read(mediaRecordsProvider.notifier).refreshMediaRecords();
+            }
           },
         );
         if (!_syncCurrent) return;
@@ -653,7 +656,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       onDataChanged: () {
         // The service verifies the storage generation before this callback.
         // A committed merge still needs a refresh if Settings has been closed.
-        if (reminders.mounted) refresh = reminders.refreshReminders();
+        final futures = <Future<void>>[
+          if (reminders.mounted) reminders.refreshReminders(),
+          if (mounted && ref.exists(mediaRecordsProvider))
+            ref.read(mediaRecordsProvider.notifier).refreshMediaRecords(),
+        ];
+        if (futures.isNotEmpty) refresh = Future.wait(futures);
       },
       onConflicts: (result) => conflicts = result,
     );

@@ -2,13 +2,18 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 import '../data/database_helper.dart';
+import '../models/media_record.dart';
 import '../models/reminder.dart';
 import '../models/medication_plan.dart';
 import '../models/departure_plan.dart';
 import '../models/ordinary_series.dart';
+import '../models/task_details.dart';
+import 'local_media_store.dart';
 
 class LanSyncServerInfo {
   final bool isRunning;
@@ -70,18 +75,30 @@ class LanSyncConflict {
 
 class LanSyncService {
   static const defaultPort = 42888;
+  static const maxMediaBytes = 32 * 1024 * 1024;
   static final LanSyncService instance = LanSyncService._internal(
     InternetAddress.anyIPv4,
     defaultPort,
   );
-  LanSyncService._internal(this._bindAddress, this._preferredPort);
+  LanSyncService._internal(
+    this._bindAddress,
+    this._preferredPort, [
+    LocalMediaStore? mediaStore,
+  ]) : _mediaStore = mediaStore ?? LocalMediaStore();
 
   @visibleForTesting
-  LanSyncService.forTesting({int preferredPort = defaultPort})
-    : this._internal(InternetAddress.loopbackIPv4, preferredPort);
+  LanSyncService.forTesting({
+    int preferredPort = defaultPort,
+    LocalMediaStore? mediaStore,
+  }) : this._internal(
+         InternetAddress.loopbackIPv4,
+         preferredPort,
+         mediaStore,
+       );
 
   final InternetAddress _bindAddress;
   final int _preferredPort;
+  final LocalMediaStore _mediaStore;
   HttpServer? _server;
   HttpServer? _closingServer;
   Future<LanSyncServerInfo>? _starting;
@@ -337,19 +354,57 @@ class LanSyncService {
         return;
       }
       final incoming = _reminders(data);
-      final current = await dbHelper.writeTransaction(generation, (
-        transaction,
-      ) async {
-        await _merge(transaction, incoming);
-        return transaction.query('Reminders');
-      });
-      dbHelper.checkGeneration(generation);
-      _checkRuntime(epoch);
-      _notify(onDataChanged);
-      await _respond(request, HttpStatus.ok, {
-        'status': 'success',
-        'reminders': current,
-      });
+      final incomingMedia = _parseIncomingMedia(data);
+      final stagedPaths = <String, String>{};
+      var committedStaged = const <String>{};
+      try {
+        await _stageIncomingMedia(
+          incomingMedia,
+          stagedPaths,
+          () => _checkRuntime(epoch),
+        );
+        final current = await dbHelper.writeTransaction(generation, (
+          transaction,
+        ) async {
+          final usedStaged = await _merge(
+            transaction,
+            incoming,
+            incomingMedia: incomingMedia.records,
+            stagedPaths: stagedPaths,
+          );
+          return (
+            reminders: await transaction.query('Reminders'),
+            mediaRecords: await transaction.query('MediaRecords'),
+            usedStaged: usedStaged,
+          );
+        });
+        committedStaged = current.usedStaged;
+        await _cleanupUncommittedStaged(stagedPaths, committedStaged);
+        dbHelper.checkGeneration(generation);
+        _checkRuntime(epoch);
+        final outgoingMedia = await _buildOutgoingMedia(
+          current.reminders,
+          current.mediaRecords,
+          excludeIds: {for (final r in incomingMedia.records) r.id},
+          checkAlive: () {
+            dbHelper.checkGeneration(generation);
+            _checkRuntime(epoch);
+          },
+        );
+        dbHelper.checkGeneration(generation);
+        _checkRuntime(epoch);
+        _notify(onDataChanged);
+        await _respond(request, HttpStatus.ok, {
+          'status': 'success',
+          'reminders': current.reminders,
+          if (outgoingMedia.records.isNotEmpty)
+            'media_records': outgoingMedia.records,
+          if (outgoingMedia.attachments.isNotEmpty)
+            'attachments': outgoingMedia.attachments,
+        });
+      } finally {
+        await _cleanupUncommittedStaged(stagedPaths, committedStaged);
+      }
     } on DatabaseAccessException catch (error) {
       await _respond(request, HttpStatus.serviceUnavailable, {
         'error': 'Database unavailable for sync',
@@ -446,9 +501,22 @@ class LanSyncService {
     try {
       _checkRuntime(epoch);
       final generation = dbHelper.captureGeneration();
-      final localRecords = await dbHelper.read(
+      final local = await dbHelper.read(
         generation,
-        (db) => db.query('Reminders'),
+        (db) async => (
+          reminders: await db.query('Reminders'),
+          mediaRecords: await db.query('MediaRecords'),
+        ),
+      );
+      dbHelper.checkGeneration(generation);
+      _checkRuntime(epoch);
+      final outgoingMedia = await _buildOutgoingMedia(
+        local.reminders,
+        local.mediaRecords,
+        checkAlive: () {
+          dbHelper.checkGeneration(generation);
+          _checkRuntime(epoch);
+        },
       );
       dbHelper.checkGeneration(generation);
       _checkRuntime(epoch);
@@ -460,7 +528,14 @@ class LanSyncService {
       _checkRuntime(epoch);
       request.headers.contentType = ContentType.json;
 
-      final payload = {'pin': pin, 'reminders': localRecords};
+      final payload = {
+        'pin': pin,
+        'reminders': local.reminders,
+        if (outgoingMedia.records.isNotEmpty)
+          'media_records': outgoingMedia.records,
+        if (outgoingMedia.attachments.isNotEmpty)
+          'attachments': outgoingMedia.attachments,
+      };
       request.write(jsonEncode(payload));
       final response = await request.close().timeout(
         const Duration(seconds: 30),
@@ -476,17 +551,38 @@ class LanSyncService {
         final data = _decode(respStr);
         if (data['status'] != 'success') return false;
         final peerReminders = _reminders(data);
+        final peerMedia = _parseIncomingMedia(data);
+        final existingMediaIds = {
+          for (final row in local.mediaRecords) row['id'] as String,
+        };
+        final stagedPaths = <String, String>{};
+        var committedStaged = const <String>{};
         final conflicts = <String, LanSyncConflict>{};
-        // The network exchange holds no database scope. Only this short atomic
-        // merge re-enters storage, using the original pre-network generation.
-        await dbHelper.writeTransaction(
-          generation,
-          (transaction) => _merge(
-            transaction,
-            peerReminders,
-            conflicts: onConflicts == null ? null : conflicts,
-          ),
-        );
+        try {
+          await _stageIncomingMedia(
+            peerMedia,
+            stagedPaths,
+            () {
+              dbHelper.checkGeneration(generation);
+              _checkRuntime(epoch);
+            },
+            skipIds: existingMediaIds,
+          );
+          // The network exchange holds no database scope. Only this short atomic
+          // merge re-enters storage, using the original pre-network generation.
+          committedStaged = await dbHelper.writeTransaction(
+            generation,
+            (transaction) => _merge(
+              transaction,
+              peerReminders,
+              incomingMedia: peerMedia.records,
+              stagedPaths: stagedPaths,
+              conflicts: onConflicts == null ? null : conflicts,
+            ),
+          );
+        } finally {
+          await _cleanupUncommittedStaged(stagedPaths, committedStaged);
+        }
         dbHelper.checkGeneration(generation);
         _checkRuntime(epoch);
         _notify(onDataChanged);
@@ -502,6 +598,230 @@ class LanSyncService {
     } finally {
       client?.close(force: true);
       _clients.remove(client);
+    }
+  }
+
+  Future<
+    ({
+      List<Map<String, Object?>> records,
+      List<Map<String, Object?>> attachments,
+    })
+  >
+  _buildOutgoingMedia(
+    List<Map<String, Object?>> reminderRows,
+    List<Map<String, Object?>> mediaRows, {
+    Set<String> excludeIds = const <String>{},
+    required void Function() checkAlive,
+  }) async {
+    if (mediaRows.isEmpty || reminderRows.isEmpty) {
+      return (
+        records: const <Map<String, Object?>>[],
+        attachments: const <Map<String, Object?>>[],
+      );
+    }
+    final referencedIds = <String>{};
+    for (final row in reminderRows) {
+      final recordId = row['record_id'];
+      if (recordId is String && recordId.isNotEmpty) {
+        referencedIds.add(recordId);
+      }
+      final reminder = Reminder.fromJson(row);
+      referencedIds.addAll(reminder.details.attachmentIds);
+    }
+    referencedIds.removeAll(excludeIds);
+    if (referencedIds.isEmpty) {
+      return (
+        records: const <Map<String, Object?>>[],
+        attachments: const <Map<String, Object?>>[],
+      );
+    }
+    final records = <Map<String, Object?>>[];
+    final attachments = <Map<String, Object?>>[];
+    var totalBytes = 0;
+    for (final row in mediaRows) {
+      final id = row['id'];
+      if (id is! String || !referencedIds.contains(id)) continue;
+      checkAlive();
+      final record = MediaRecord.fromJson(row);
+      if (record.type == 'text') {
+        records.add(record.toJson());
+        continue;
+      }
+      final resolved = await _mediaStore.resolvePath(record.contentOrPath);
+      if (await FileSystemEntity.type(resolved, followLinks: false) !=
+          FileSystemEntityType.file) {
+        continue;
+      }
+      final length = await File(resolved).length();
+      if (length > maxMediaBytes || totalBytes + length > maxMediaBytes) {
+        continue;
+      }
+      final bytes = await File(resolved).readAsBytes();
+      if (bytes.length > maxMediaBytes ||
+          totalBytes + bytes.length > maxMediaBytes) {
+        continue;
+      }
+      totalBytes += bytes.length;
+      final name = _safeFileName(p.basename(resolved));
+      records.add(record.toJson());
+      attachments.add({
+        'id': record.id,
+        'name': name,
+        'sha256': sha256.convert(bytes).toString(),
+        'bytes': base64Encode(bytes),
+      });
+    }
+    return (records: records, attachments: attachments);
+  }
+
+  Future<void> _stageIncomingMedia(
+    ({
+      List<MediaRecord> records,
+      Map<String, ({String name, Uint8List bytes})> attachments,
+    })
+    incoming,
+    Map<String, String> stagedPaths,
+    void Function() checkAlive, {
+    Set<String> skipIds = const <String>{},
+  }) async {
+    for (final record in incoming.records) {
+      if (record.type == 'text' || skipIds.contains(record.id)) continue;
+      checkAlive();
+      final attachment = incoming.attachments[record.id];
+      if (attachment == null) {
+        throw const FormatException('Missing sync attachment bytes');
+      }
+      stagedPaths[record.id] = await _mediaStore.importBytes(
+        attachment.bytes,
+        fileName: attachment.name,
+      );
+    }
+  }
+
+  Future<void> _cleanupUncommittedStaged(
+    Map<String, String> stagedPaths,
+    Set<String> committedIds,
+  ) async {
+    final entries = stagedPaths.entries.toList();
+    stagedPaths.clear();
+    for (final entry in entries) {
+      if (!committedIds.contains(entry.key)) {
+        await _mediaStore.discardImport(entry.value);
+      }
+    }
+  }
+
+  static String _safeFileName(String rawName) {
+    final cleaned = p
+        .basename(rawName)
+        .replaceAll(RegExp(r'[/\\:\x00-\x1F\x7F]'), '_')
+        .trim();
+    if (cleaned.isEmpty || cleaned == '.' || cleaned == '..') {
+      return 'attachment.bin';
+    }
+    return cleaned.length <= 180 ? cleaned : cleaned.substring(0, 180);
+  }
+
+  static bool _isValidAttachmentName(String name) {
+    final trimmed = name.trim();
+    return trimmed.isNotEmpty &&
+        trimmed.length <= 180 &&
+        trimmed == name &&
+        trimmed != '.' &&
+        trimmed != '..' &&
+        p.basename(trimmed) == trimmed &&
+        !trimmed.contains('/') &&
+        !trimmed.contains('\\') &&
+        !RegExp(r'[\x00-\x1F\x7F]').hasMatch(trimmed);
+  }
+
+  static ({
+    List<MediaRecord> records,
+    Map<String, ({String name, Uint8List bytes})> attachments,
+  })
+  _parseIncomingMedia(Map<String, dynamic> data) {
+    if (!data.containsKey('media_records') &&
+        !data.containsKey('attachments')) {
+      return (
+        records: const <MediaRecord>[],
+        attachments: const <String, ({String name, Uint8List bytes})>{},
+      );
+    }
+    if (data['media_records'] != null && data['media_records'] is! List) {
+      throw const FormatException('Invalid sync media records');
+    }
+    if (data['attachments'] != null && data['attachments'] is! List) {
+      throw const FormatException('Invalid sync attachments');
+    }
+    try {
+      final rawRecords = (data['media_records'] as List?) ?? const [];
+      if (rawRecords.length > 10000) {
+        throw const FormatException('Too many sync media records');
+      }
+      final records = <MediaRecord>[];
+      final byId = <String, MediaRecord>{};
+      for (final raw in rawRecords) {
+        final record = MediaRecord.fromJson(raw as Map<String, dynamic>);
+        final id = record.id.trim();
+        if (id.isEmpty ||
+            id != record.id ||
+            RegExp(r'[\x00-\x1F\x7F]').hasMatch(id) ||
+            !const {
+              'text',
+              'image',
+              'file',
+              'audio',
+              'video',
+            }.contains(record.type) ||
+            byId.containsKey(id)) {
+          throw const FormatException('Invalid sync media record');
+        }
+        records.add(record);
+        byId[id] = record;
+      }
+      final rawAttachments = (data['attachments'] as List?) ?? const [];
+      final attachments = <String, ({String name, Uint8List bytes})>{};
+      var totalBytes = 0;
+      for (final raw in rawAttachments) {
+        if (raw is! Map) {
+          throw const FormatException('Invalid sync attachment');
+        }
+        final id = raw['id'];
+        final name = raw['name'];
+        final digest = raw['sha256'];
+        final encoded = raw['bytes'];
+        if (id is! String ||
+            name is! String ||
+            digest is! String ||
+            encoded is! String ||
+            !_isValidAttachmentName(name) ||
+            attachments.containsKey(id)) {
+          throw const FormatException('Invalid sync attachment');
+        }
+        final record = byId[id];
+        if (record == null || record.type == 'text') {
+          throw const FormatException('Orphan sync attachment');
+        }
+        if (encoded.length > maxMediaBytes * 4 ~/ 3 + 8) {
+          throw const FormatException('Sync attachment too large');
+        }
+        final bytes = base64Decode(encoded);
+        totalBytes += bytes.length;
+        if (bytes.length > maxMediaBytes ||
+            totalBytes > maxMediaBytes ||
+            sha256.convert(bytes).toString() != digest) {
+          throw const FormatException('Sync attachment digest mismatch');
+        }
+        attachments[id] = (name: name, bytes: bytes);
+      }
+      for (final record in records) {
+        if (record.type != 'text' && !attachments.containsKey(record.id)) {
+          throw const FormatException('Missing sync attachment bytes');
+        }
+      }
+      return (records: records, attachments: attachments);
+    } catch (_) {
+      throw const FormatException('Invalid sync media');
     }
   }
 
@@ -530,11 +850,49 @@ class LanSyncService {
     }
   }
 
-  static Future<void> _merge(
+  static Future<Set<String>> _merge(
     DatabaseExecutor db,
     List<Reminder> incoming, {
+    List<MediaRecord> incomingMedia = const <MediaRecord>[],
+    Map<String, String> stagedPaths = const <String, String>{},
     Map<String, LanSyncConflict>? conflicts,
   }) async {
+    final usedStaged = <String>{};
+    final newlyInsertedMediaIds = <String>{};
+    var knownMediaIds = <String>{};
+    final needsMediaLookup =
+        incomingMedia.isNotEmpty ||
+        incoming.any(
+          (r) => r.recordId != null || r.details.attachmentIds.isNotEmpty,
+        );
+    if (needsMediaLookup) {
+      final rows = await db.query('MediaRecords', columns: ['id']);
+      knownMediaIds = {for (final row in rows) row['id'] as String};
+    }
+    for (final record in incomingMedia) {
+      if (knownMediaIds.contains(record.id)) continue;
+      if (record.type == 'text') {
+        await db.insert('MediaRecords', record.toJson());
+        knownMediaIds.add(record.id);
+        newlyInsertedMediaIds.add(record.id);
+        continue;
+      }
+      final stagedPath = stagedPaths[record.id];
+      if (stagedPath == null) continue;
+      await db.insert(
+        'MediaRecords',
+        MediaRecord(
+          id: record.id,
+          type: record.type,
+          contentOrPath: stagedPath,
+          createdAt: record.createdAt,
+        ).toJson(),
+      );
+      usedStaged.add(record.id);
+      knownMediaIds.add(record.id);
+      newlyInsertedMediaIds.add(record.id);
+    }
+
     for (final reminder in incoming) {
       final existing = await db.query(
         'Reminders',
@@ -544,21 +902,38 @@ class LanSyncService {
       if (existing.isEmpty) {
         // A peer's acknowledgement belongs to that device. Keep the shared
         // effective time and recurrence anchor, but start a local occurrence.
-        await db.insert(
-          'Reminders',
-          reminder
-              .copyWith(
-                noticeRevision: 0,
-                noticeAcknowledgedAt: null,
-                upcomingDismissedAt: null,
-              )
-              .toJson(),
+        var candidate = reminder.copyWith(
+          noticeRevision: 0,
+          noticeAcknowledgedAt: null,
+          upcomingDismissedAt: null,
         );
+        if (candidate.details.attachmentIds.any(
+          (id) => !knownMediaIds.contains(id),
+        )) {
+          final validAttachments = [
+            for (final id in candidate.details.attachmentIds)
+              if (knownMediaIds.contains(id)) id,
+          ];
+          candidate = candidate.copyWith(
+            detailsJson: candidate.details
+                .patch({'attachment_ids': validAttachments})
+                .encode(),
+          );
+        }
+        final row = candidate.toJson();
+        if (candidate.recordId != null &&
+            !knownMediaIds.contains(candidate.recordId)) {
+          row['record_id'] = null;
+        }
+        await db.insert('Reminders', row);
         continue;
       }
       final stored = existing.single;
       final completes = stored['is_completed'] != 1 && reminder.isCompleted;
-      if (conflicts == null && !completes) continue;
+      final hasNewAttachments =
+          newlyInsertedMediaIds.isNotEmpty &&
+          reminder.details.attachmentIds.any(newlyInsertedMediaIds.contains);
+      if (conflicts == null && !completes && !hasNewAttachments) continue;
       final current = Reminder.fromJson(stored);
       if (conflicts != null) {
         final local = LanSyncConflict.contentOf(current);
@@ -571,26 +946,54 @@ class LanSyncService {
           );
         }
       }
-      if (completes) {
-        // Completion wins, but stale peer fields must not overwrite this
-        // device's newer title, snooze time, or locally assigned revision.
+      final addedAttachments =
+          current.details.kind == 'task' && reminder.details.kind == 'task'
+          ? [
+              for (final id in reminder.details.attachmentIds)
+                if (newlyInsertedMediaIds.contains(id) &&
+                    knownMediaIds.contains(id) &&
+                    !current.details.attachmentIds.contains(id))
+                  id,
+            ]
+          : const <String>[];
+      final canAddAttachments =
+          addedAttachments.isNotEmpty &&
+          current.details.attachmentIds.length < TaskDetails.maxAttachments;
+      if (completes || canAddAttachments) {
+        // Completion wins, and newly received peer attachments are linked,
+        // without overwriting this device's newer title, snooze time, or
+        // locally assigned revision.
+        var updated = current;
+        if (canAddAttachments) {
+          final mergedIds = [
+            ...current.details.attachmentIds,
+            ...addedAttachments,
+          ].take(TaskDetails.maxAttachments).toList();
+          updated = updated.copyWith(
+            detailsJson: current.details
+                .patch({'attachment_ids': mergedIds})
+                .encode(),
+          );
+        }
+        if (completes) {
+          updated = updated.copyWith(
+            isCompleted: true,
+            noticeRevision: current.noticeRevision + 1,
+            noticeAcknowledgedAt: null,
+            upcomingDismissedAt: null,
+            snoozedAt: null,
+            recurrenceAnchorTime: null,
+          );
+        }
         await db.update(
           'Reminders',
-          current
-              .copyWith(
-                isCompleted: true,
-                noticeRevision: current.noticeRevision + 1,
-                noticeAcknowledgedAt: null,
-                upcomingDismissedAt: null,
-                snoozedAt: null,
-                recurrenceAnchorTime: null,
-              )
-              .toJson(),
+          updated.toJson(),
           where: 'id = ?',
           whereArgs: [reminder.id],
         );
       }
     }
+    return usedStaged;
   }
 
   static void _notify(VoidCallback? callback) {

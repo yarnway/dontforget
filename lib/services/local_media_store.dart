@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'content/owned_material_activity.dart';
 import 'package:path/path.dart' as path;
@@ -91,6 +92,75 @@ class LocalMediaStore {
       rethrow;
     } finally {
       OwnedMaterialActivity.releaseDirectory(destination);
+    }
+  }
+
+  Future<String> importBytes(
+    List<int> bytes, {
+    required String fileName,
+  }) async {
+    final safeName = path.basename(fileName).trim();
+    if (safeName.isEmpty ||
+        safeName == '.' ||
+        safeName == '..' ||
+        safeName != fileName ||
+        safeName.contains('/') ||
+        safeName.contains('\\') ||
+        RegExp(r'[\x00-\x1F\x7F]').hasMatch(safeName)) {
+      throw const FormatException('Invalid imported media file name');
+    }
+    final documents = await _documentsDirectory();
+    final media = Directory(path.join(documents.path, 'media'));
+    await media.create(recursive: true);
+    final destination = await media.createTemp('import-');
+    OwnedMaterialActivity.hold(destination);
+    try {
+      final target = File(path.join(destination.path, safeName));
+      await target.writeAsBytes(bytes, flush: true);
+      if (!await File(
+        path.join(destination.path, OwnedMaterialActivity.markerName),
+      ).exists()) {
+        await OwnedMaterialActivity.mark(destination, 'original');
+      }
+      return target.path;
+    } catch (_) {
+      try {
+        await destination.delete(recursive: true);
+      } catch (_) {}
+      rethrow;
+    } finally {
+      OwnedMaterialActivity.releaseDirectory(destination);
+    }
+  }
+
+  Future<void> discardImport(String copied) async {
+    try {
+      final file = File(copied);
+      if (!_importDirectoryName.hasMatch(path.basename(file.parent.path))) {
+        return;
+      }
+      if (await file.exists()) await file.delete();
+      final remaining = await file.parent.list(followLinks: false).toList();
+      if (remaining.length == 1 &&
+          remaining.single is File &&
+          path.basename(remaining.single.path) ==
+              OwnedMaterialActivity.markerName) {
+        final marker = remaining.single as File;
+        if (await marker.length() <= 1024) {
+          final value = jsonDecode(await marker.readAsString());
+          if (value is Map &&
+              value['format'] == 'dontforget.material' &&
+              value['version'] == 1 &&
+              value['role'] == 'original') {
+            await marker.delete();
+          }
+        }
+      }
+      if (await file.parent.exists() && await file.parent.list().isEmpty) {
+        await file.parent.delete();
+      }
+    } catch (_) {
+      // Preserve the original failure. A leftover private copy can be recovered.
     }
   }
 }

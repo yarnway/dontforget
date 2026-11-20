@@ -2,11 +2,15 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:dont_forget/data/database_helper.dart';
+import 'package:dont_forget/models/media_record.dart';
 import 'package:dont_forget/models/reminder.dart';
 import 'package:dont_forget/models/task_details.dart';
 import 'package:dont_forget/services/lan_sync_service.dart';
+import 'package:dont_forget/services/local_media_store.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class _ObservedDatabase extends DatabaseHelper {
@@ -718,6 +722,319 @@ void main() {
         expect(await rows(), isEmpty);
       } finally {
         client.close(force: true);
+      }
+    },
+  );
+
+  test(
+    'bidirectional sync transfers task attachments into each peer LocalMediaStore and links new attachments without relinking unlinked ones',
+    () async {
+      final localDocs = await directory.createTemp('local-docs-');
+      final remoteDocs = await directory.createTemp('remote-docs-');
+      final remoteDir = await directory.createTemp('remote-db-');
+      final remoteDb = _ObservedDatabase(remoteDir.path);
+      final localStore = LocalMediaStore(
+        documentsDirectory: () async => localDocs,
+      );
+      final remoteStore = LocalMediaStore(
+        documentsDirectory: () async => remoteDocs,
+      );
+      final localSync = LanSyncService.forTesting(mediaStore: localStore);
+      final remoteSync = LanSyncService.forTesting(mediaStore: remoteStore);
+      addTearDown(() async {
+        await localSync.stopServer();
+        await remoteSync.stopServer();
+        await remoteDb.close();
+      });
+
+      final localPath = await localStore.importBytes(
+        const [1, 2, 3, 4],
+        fileName: 'local.png',
+      );
+      final addedByLocalPath = await localStore.importBytes(
+        const [10, 20, 30],
+        fileName: 'added.txt',
+      );
+      final unlinkedPath = await localStore.importBytes(
+        const [99, 98],
+        fileName: 'unlinked.bin',
+      );
+      final remoteUnlinkedPath = await remoteStore.importBytes(
+        const [99, 98],
+        fileName: 'unlinked.bin',
+      );
+      final remotePath = await remoteStore.importBytes(
+        const [5, 6, 7, 8],
+        fileName: 'remote.pdf',
+      );
+
+      final mLocal = MediaRecord(
+        id: 'm-local',
+        type: 'image',
+        contentOrPath: localPath,
+        createdAt: DateTime.utc(2026, 11, 20, 8),
+      );
+      final mAdded = MediaRecord(
+        id: 'm-added',
+        type: 'file',
+        contentOrPath: addedByLocalPath,
+        createdAt: DateTime.utc(2026, 11, 20, 8, 5),
+      );
+      final mUnlinkedLocal = MediaRecord(
+        id: 'm-unlinked',
+        type: 'file',
+        contentOrPath: unlinkedPath,
+        createdAt: DateTime.utc(2026, 11, 20, 7),
+      );
+      final mUnlinkedRemote = MediaRecord(
+        id: 'm-unlinked',
+        type: 'file',
+        contentOrPath: remoteUnlinkedPath,
+        createdAt: DateTime.utc(2026, 11, 20, 7),
+      );
+      final mRemote = MediaRecord(
+        id: 'm-remote',
+        type: 'file',
+        contentOrPath: remotePath,
+        createdAt: DateTime.utc(2026, 11, 20, 9),
+      );
+
+      await helper.writeTransaction(helper.captureGeneration(), (tx) async {
+        await tx.insert('MediaRecords', mLocal.toJson());
+        await tx.insert('MediaRecords', mAdded.toJson());
+        await tx.insert('MediaRecords', mUnlinkedLocal.toJson());
+        await tx.insert(
+          'Reminders',
+          Reminder(
+            id: 'local-task',
+            recordId: mLocal.id,
+            taskTitle: 'Local attachment memo',
+            quadrantLevel: 2,
+            detailsJson: TaskDetails(attachmentIds: [mLocal.id]).encode(),
+          ).toJson(),
+        );
+        await tx.insert(
+          'Reminders',
+          Reminder(
+            id: 'shared-task',
+            taskTitle: 'Shared task',
+            quadrantLevel: 2,
+            detailsJson: TaskDetails(
+              attachmentIds: [mUnlinkedLocal.id, mAdded.id],
+            ).encode(),
+          ).toJson(),
+        );
+      });
+
+      await remoteDb.writeTransaction(remoteDb.captureGeneration(), (tx) async {
+        await tx.insert('MediaRecords', mUnlinkedRemote.toJson());
+        await tx.insert('MediaRecords', mRemote.toJson());
+        await tx.insert(
+          'Reminders',
+          Reminder(
+            id: 'remote-task',
+            recordId: mRemote.id,
+            taskTitle: 'Remote attachment memo',
+            quadrantLevel: 2,
+            detailsJson: TaskDetails(attachmentIds: [mRemote.id]).encode(),
+          ).toJson(),
+        );
+        // Remote previously knew m-unlinked and unlinked it from shared-task.
+        await tx.insert(
+          'Reminders',
+          Reminder(
+            id: 'shared-task',
+            taskTitle: 'Shared task',
+            quadrantLevel: 2,
+            detailsJson: const TaskDetails().encode(),
+          ).toJson(),
+        );
+      });
+
+      final server = await remoteSync.startServer(port: 0, dbHelper: remoteDb);
+      expect(
+        await localSync.syncWithPeer(
+          peerIp: server.ip,
+          port: server.port,
+          pin: server.pin,
+          dbHelper: helper,
+        ),
+        isTrue,
+      );
+
+      final localMedia = {
+        for (final row in await helper.read(
+          helper.captureGeneration(),
+          (db) => db.query('MediaRecords'),
+        ))
+          row['id'] as String: MediaRecord.fromJson(row),
+      };
+      expect(
+        localMedia.keys,
+        unorderedEquals(['m-local', 'm-added', 'm-unlinked', 'm-remote']),
+      );
+      expect(
+        p.isWithin(localDocs.path, localMedia['m-remote']!.contentOrPath),
+        isTrue,
+      );
+      expect(
+        await File(localMedia['m-remote']!.contentOrPath).readAsBytes(),
+        [5, 6, 7, 8],
+      );
+
+      final remoteMedia = {
+        for (final row in await remoteDb.read(
+          remoteDb.captureGeneration(),
+          (db) => db.query('MediaRecords'),
+        ))
+          row['id'] as String: MediaRecord.fromJson(row),
+      };
+      expect(
+        remoteMedia.keys,
+        unorderedEquals(['m-local', 'm-added', 'm-unlinked', 'm-remote']),
+      );
+      expect(
+        p.isWithin(remoteDocs.path, remoteMedia['m-local']!.contentOrPath),
+        isTrue,
+      );
+      expect(
+        await File(remoteMedia['m-local']!.contentOrPath).readAsBytes(),
+        [1, 2, 3, 4],
+      );
+      expect(
+        await File(remoteMedia['m-added']!.contentOrPath).readAsBytes(),
+        [10, 20, 30],
+      );
+
+      final remoteReminders = {
+        for (final row in await remoteDb.read(
+          remoteDb.captureGeneration(),
+          (db) => db.query('Reminders'),
+        ))
+          row['id'] as String: Reminder.fromJson(row),
+      };
+      expect(remoteReminders['local-task']!.details.attachmentIds, ['m-local']);
+      // Newly added m-added is linked on remote, but previously unlinked m-unlinked is not re-linked.
+      expect(remoteReminders['shared-task']!.details.attachmentIds, [
+        'm-added',
+      ]);
+
+      final remoteImportCountBefore = await Directory(
+        p.join(remoteDocs.path, 'media'),
+      ).list().length;
+      expect(
+        await localSync.syncWithPeer(
+          peerIp: server.ip,
+          port: server.port,
+          pin: server.pin,
+          dbHelper: helper,
+        ),
+        isTrue,
+      );
+      final remoteImportCountAfter = await Directory(
+        p.join(remoteDocs.path, 'media'),
+      ).list().length;
+      expect(remoteImportCountAfter, remoteImportCountBefore);
+    },
+  );
+
+  test(
+    'attachment sync rejects missing or tampered attachment bytes and cleans up staged imports on transaction rollback',
+    () async {
+      final serverDocs = await directory.createTemp('server-docs-');
+      final serverStore = LocalMediaStore(
+        documentsDirectory: () async => serverDocs,
+      );
+      final guardedServer = LanSyncService.forTesting(mediaStore: serverStore);
+      addTearDown(guardedServer.stopServer);
+      await rejectSecondInsert();
+      final info = await guardedServer.startServer(port: 0, dbHelper: helper);
+
+      Future<int> postRaw(Map<String, Object?> payload) async {
+        final client = HttpClient();
+        try {
+          final request = await client.postUrl(
+            Uri(
+              scheme: 'http',
+              host: '127.0.0.1',
+              port: info.port,
+              path: '/sync',
+            ),
+          );
+          request.headers.contentType = ContentType.json;
+          request.write(jsonEncode({'pin': info.pin, ...payload}));
+          final response = await request.close();
+          await response.drain<void>();
+          return response.statusCode;
+        } finally {
+          client.close(force: true);
+        }
+      }
+
+      final mediaRow = MediaRecord(
+        id: 'm-1',
+        type: 'image',
+        contentOrPath: '/untrusted/peer/path.png',
+        createdAt: DateTime.utc(2026, 11, 20),
+      ).toJson();
+
+      // Non-text media record without attachment bytes must be rejected.
+      expect(
+        await postRaw({
+          'reminders': [reminder('first').toJson()],
+          'media_records': [mediaRow],
+        }),
+        HttpStatus.badRequest,
+      );
+
+      // Tampered digest must be rejected.
+      expect(
+        await postRaw({
+          'reminders': [reminder('first').toJson()],
+          'media_records': [mediaRow],
+          'attachments': [
+            {
+              'id': 'm-1',
+              'name': 'pic.png',
+              'sha256': 'deadbeef',
+              'bytes': base64Encode(const [1, 2, 3]),
+            },
+          ],
+        }),
+        HttpStatus.badRequest,
+      );
+
+      // Valid attachment whose SQL transaction rolls back must discard staged file.
+      const validBytes = [7, 8, 9];
+      expect(
+        await postRaw({
+          'reminders': [
+            reminder('first').toJson(),
+            reminder('blocked').toJson(),
+          ],
+          'media_records': [mediaRow],
+          'attachments': [
+            {
+              'id': 'm-1',
+              'name': 'pic.png',
+              'sha256': sha256.convert(validBytes).toString(),
+              'bytes': base64Encode(validBytes),
+            },
+          ],
+        }),
+        HttpStatus.internalServerError,
+      );
+      expect(await rows(), isEmpty);
+      expect(
+        await helper.read(
+          helper.captureGeneration(),
+          (db) => db.query('MediaRecords'),
+        ),
+        isEmpty,
+      );
+      final mediaDir = Directory(p.join(serverDocs.path, 'media'));
+      if (await mediaDir.exists()) {
+        expect(await mediaDir.list().toList(), isEmpty);
       }
     },
   );
