@@ -214,6 +214,12 @@ final remindersProvider =
       );
     });
 
+/// Derived O(1) lookup index for reminders to avoid O(N) scans inside card/detail widgets.
+final remindersByIdProvider = Provider<Map<String, Reminder>>((ref) {
+  final list = ref.watch(remindersProvider);
+  return {for (final r in list) r.id: r};
+});
+
 enum ReminderNoticePhase { upcoming, due }
 
 enum ReminderActionDisposition { applied, alreadyApplied, stale }
@@ -2154,6 +2160,12 @@ final mediaRecordsProvider =
     StateNotifierProvider<MediaRecordsNotifier, List<MediaRecord>>((ref) {
       return MediaRecordsNotifier(ref.read(databaseHelperProvider));
     });
+
+/// Derived O(1) lookup index for media records so TaskCard avoids scanning all records per card.
+final mediaRecordByIdProvider = Provider<Map<String, MediaRecord>>((ref) {
+  final list = ref.watch(mediaRecordsProvider);
+  return {for (final m in list) m.id: m};
+});
 
 class MediaRecordsNotifier extends StateNotifier<List<MediaRecord>> {
   final DatabaseHelper _dbHelper;

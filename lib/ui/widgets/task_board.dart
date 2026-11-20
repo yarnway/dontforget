@@ -37,6 +37,42 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
       _categoryFocus ??= List.generate(4, (_) => FocusNode());
   int? _manualCategory;
   Timer? _refresh;
+  TaskBoardData? _cachedData;
+  List<Reminder>? _cachedReminders;
+  bool? _cachedCompact;
+  int? _cachedManualCategory;
+  int? _cachedMinuteBucket;
+  Object? _cachedUrgency;
+
+  TaskBoardData _projectBoard(
+    List<Reminder> reminders,
+    bool compact,
+    dynamic urgency,
+    DateTime now,
+  ) {
+    final minuteBucket = now.millisecondsSinceEpoch ~/ 60000;
+    if (_cachedData != null &&
+        identical(_cachedReminders, reminders) &&
+        _cachedCompact == compact &&
+        _cachedManualCategory == _manualCategory &&
+        _cachedMinuteBucket == minuteBucket &&
+        identical(_cachedUrgency, urgency)) {
+      return _cachedData!;
+    }
+    final projected = TaskBoardData.project(
+      reminders,
+      visibleCategory: compact ? _manualCategory : null,
+      selectFirstNonEmpty: compact && _manualCategory == null,
+      isFolded: (task) => urgency.isQ4StagnantFolded(task, now: now),
+    );
+    _cachedData = projected;
+    _cachedReminders = reminders;
+    _cachedCompact = compact;
+    _cachedManualCategory = _manualCategory;
+    _cachedMinuteBucket = minuteBucket;
+    _cachedUrgency = urgency;
+    return projected;
+  }
 
   @override
   void initState() {
@@ -188,12 +224,11 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
         final compact =
             constraints.maxWidth < 640 || constraints.maxHeight < 320;
         final projectionTime = DateTime.now();
-        final data = TaskBoardData.project(
+        final data = _projectBoard(
           widget.reminders,
-          visibleCategory: compact ? _manualCategory : null,
-          selectFirstNonEmpty: compact && _manualCategory == null,
-          isFolded: (task) =>
-              urgency.isQ4StagnantFolded(task, now: projectionTime),
+          compact,
+          urgency,
+          projectionTime,
         );
         final pending = data.pending;
         final selection = data.visibleCategory ?? 0;

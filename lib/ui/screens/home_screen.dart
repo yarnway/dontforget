@@ -276,8 +276,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       if (mounted && _runtimeActive) setState(() {});
     });
 
-    // 启动时触发 Wi-Fi 嗅探与情境感知
-    _contextTriggers.detectCurrentWifiSsid();
+    // 启动时仅在存在 Wi-Fi 情境触发器时执行嗅探，避免空闲时拉起系统网络进程
+    final initialHasWifiTriggers = ref
+        .read(remindersProvider)
+        .any(_hasActiveWifiTrigger);
+    if (initialHasWifiTriggers) {
+      unawaited(_contextTriggers.detectCurrentWifiSsid());
+    }
 
     _departureMaintenance = NotificationRetryCoordinator(
       run: (isActive) async {
@@ -448,6 +453,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _noticeClock.value = DateTime.now();
   }
 
+  static bool _hasActiveWifiTrigger(Reminder reminder) {
+    if (reminder.isCompleted || !reminder.isVisible) return false;
+    final raw = reminder.contextTrigger;
+    if (raw == null || raw.isEmpty) return false;
+    return ContextTriggerRule.tryParse(raw)?.type == 'wifi';
+  }
+
+  static bool _needsDynamicUrgencyPromotion(
+    List<Reminder> reminders,
+    DateTime now,
+  ) {
+    const threshold = Duration(hours: 24);
+    for (final reminder in reminders) {
+      if (reminder.quadrantLevel != 2 ||
+          !reminder.canNotify ||
+          reminder.spacedRepetitionLevel > 0 ||
+          reminder.noticeAcknowledgedAt != null ||
+          reminder.triggerTime == null) {
+        continue;
+      }
+      final diff = reminder.triggerTime!.difference(now);
+      if (diff.inSeconds > 0 && diff <= threshold) return true;
+    }
+    return false;
+  }
+
   void _checkDueReminders() {
     if (!mounted || !_runtimeActive) return;
     final database = ref.read(databaseHelperProvider);
@@ -487,54 +518,58 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       }
     }
 
-    // 情境感知触发器检测 (检测 Wi-Fi SSID 接入)
-    _contextTriggers
-        .detectCurrentWifiSsid()
-        .then((ssid) {
-          if (ssid != null &&
-              _runtimeActive &&
-              database.isCurrent(generation)) {
-            final matched = _contextTriggers.evaluateContextTriggers(
-              reminders,
-              ssid: ssid,
-            );
-            for (final m in matched) {
-              unawaited(
-                database
-                    .runOperation(generation, () async {
-                      await ref
-                          .read(notificationServiceProvider)
-                          .showWindowsToast(
-                            '📍 情境感知提醒 [已连接 $ssid]',
-                            m.taskTitle,
-                          );
-                    })
-                    .catchError((Object _) {}),
+    // 情境感知触发器检测：仅当存在 Wi-Fi 触发器时才执行 SSID 嗅探
+    if (reminders.any(_hasActiveWifiTrigger)) {
+      _contextTriggers
+          .detectCurrentWifiSsid()
+          .then((ssid) {
+            if (ssid != null &&
+                _runtimeActive &&
+                database.isCurrent(generation)) {
+              final matched = _contextTriggers.evaluateContextTriggers(
+                reminders,
+                ssid: ssid,
+              );
+              for (final m in matched) {
+                unawaited(
+                  database
+                      .runOperation(generation, () async {
+                        await ref
+                            .read(notificationServiceProvider)
+                            .showWindowsToast(
+                              '📍 情境感知提醒 [已连接 $ssid]',
+                              m.taskTitle,
+                            );
+                      })
+                      .catchError((Object _) {}),
+                );
+              }
+            }
+          })
+          .catchError((Object _) {});
+    }
+
+    // 动态跃迁周期扫描：仅当存在满足 24h 阈值的 Q2 事项时才发起写入扫描
+    if (_needsDynamicUrgencyPromotion(reminders, now)) {
+      ref
+          .read(remindersProvider.notifier)
+          .scanAndApplyDynamicUrgency()
+          .then((result) {
+            if (mounted && _runtimeActive && result.nativeSyncFailures > 0) {
+              InlineFeedback.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    AppLocalizations.of(context).get('reminderNativeSyncFailed'),
+                  ),
+                ),
               );
             }
-          }
-        })
-        .catchError((Object _) {});
-
-    // 动态跃迁周期扫描
-    ref
-        .read(remindersProvider.notifier)
-        .scanAndApplyDynamicUrgency()
-        .then((result) {
-          if (mounted && _runtimeActive && result.nativeSyncFailures > 0) {
-            InlineFeedback.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  AppLocalizations.of(context).get('reminderNativeSyncFailed'),
-                ),
-              ),
-            );
-          }
-        })
-        .catchError((Object _) {
-          // The next heartbeat can retry. Failed persistence must not become an
-          // unhandled asynchronous error or interrupt foreground due notices.
-        });
+          })
+          .catchError((Object _) {
+            // The next heartbeat can retry. Failed persistence must not become an
+            // unhandled asynchronous error or interrupt foreground due notices.
+          });
+    }
   }
 
   void _queueDueReminder(Reminder reminder) {
@@ -614,17 +649,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Future<void> _acknowledgeAllMissed(List<Reminder> missed) async {
-    if (missed.isEmpty) return;
+    if (missed.isEmpty || !_runtimeActive) return;
+    final l10n = AppLocalizations.of(context);
     final now = DateTime.now();
-    await ref
-        .read(remindersProvider.notifier)
-        .acknowledgeOccurrences(missed, now: now);
-    if (mounted) {
-      setState(() {
-        if (_workspaceView == 'missed') {
-          _workspaceView = 'today';
-        }
-      });
+    try {
+      await ref
+          .read(remindersProvider.notifier)
+          .acknowledgeOccurrences(missed, now: now);
+      if (mounted && _runtimeActive) {
+        setState(() {
+          if (_workspaceView == 'missed') {
+            _workspaceView = 'today';
+          }
+        });
+      }
+    } catch (_) {
+      if (mounted && _runtimeActive) {
+        InlineFeedback.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.get('reminderUpdateFailed'))),
+          tone: FeedbackTone.error,
+        );
+      }
     }
   }
 

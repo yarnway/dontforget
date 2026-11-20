@@ -96,6 +96,7 @@ class LanSyncService {
   /// Base64 attachments plus task rows; anything larger is rejected unread.
   static const maxBodyBytes = 64 * 1024 * 1024;
   static const pinFailuresBeforeLockout = 5;
+  static const maxConcurrentHandlers = 8;
   static final LanSyncService instance = LanSyncService._internal(
     InternetAddress.anyIPv4,
     defaultPort,
@@ -358,6 +359,17 @@ class LanSyncService {
       _serverPort = server.port;
       _accepting = _stopping == null;
       server.listen((request) {
+        if (_handlers.length >= maxConcurrentHandlers) {
+          unawaited(
+            _respond(
+              request,
+              HttpStatus.serviceUnavailable,
+              {'error': 'Sync server busy'},
+              closeSocket: true,
+            ),
+          );
+          return;
+        }
         final handler = _handleRequest(request, dbHelper, onDataChanged);
         _handlers.add(handler);
         unawaited(handler.then<void>((_) => _handlers.remove(handler)));
@@ -1068,13 +1080,14 @@ class LanSyncService {
       newlyInsertedMediaIds.add(record.id);
     }
 
+    final existingById = <String, Map<String, Object?>>{
+      for (final row in await db.query('Reminders'))
+        if (row['id'] is String) row['id'] as String: row,
+    };
+
     for (final reminder in incoming) {
-      final existing = await db.query(
-        'Reminders',
-        where: 'id = ?',
-        whereArgs: [reminder.id],
-      );
-      if (existing.isEmpty) {
+      final stored = existingById[reminder.id];
+      if (stored == null) {
         // A peer's acknowledgement belongs to that device. Keep the shared
         // effective time and recurrence anchor, but start a local occurrence.
         var candidate = reminder.copyWith(
@@ -1101,9 +1114,9 @@ class LanSyncService {
           row['record_id'] = null;
         }
         await db.insert('Reminders', row);
+        existingById[reminder.id] = row;
         continue;
       }
-      final stored = existing.single;
       final completes = stored['is_completed'] != 1 && reminder.isCompleted;
       final hasNewAttachments =
           newlyInsertedMediaIds.isNotEmpty &&
@@ -1160,12 +1173,14 @@ class LanSyncService {
             recurrenceAnchorTime: null,
           );
         }
+        final updatedRow = updated.toJson();
         await db.update(
           'Reminders',
-          updated.toJson(),
+          updatedRow,
           where: 'id = ?',
           whereArgs: [reminder.id],
         );
+        existingById[reminder.id] = updatedRow;
       }
     }
     return usedStaged;

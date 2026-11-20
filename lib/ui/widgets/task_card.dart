@@ -678,12 +678,9 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       _ => isDark ? Colors.green.shade300 : Colors.green.shade700,
     };
     IconData? mediaIcon;
-    if (task.recordId != null) {
+    if (task.recordId != null && details.attachmentIds.isEmpty) {
       final media = ref.watch(
-        mediaRecordsProvider.select(
-          (records) =>
-              records.where((record) => record.id == task.recordId).firstOrNull,
-        ),
+        mediaRecordByIdProvider.select((byId) => byId[task.recordId]),
       );
       mediaIcon = switch (media?.type) {
         'audio' => Icons.mic_none,

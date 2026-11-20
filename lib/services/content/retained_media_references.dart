@@ -15,7 +15,7 @@ class RetainedMediaReferences {
   static Future<({Set<String> paths, bool uncertain})> read(
     DatabaseHelper database,
   ) async {
-    final directory = await database.notificationActionQueueDirectory;
+    final directory = Directory(await database.acquireOwnership());
     final candidates = <File>[];
     var uncertain = false;
     final visited = <String>{directory.path};

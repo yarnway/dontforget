@@ -46,12 +46,14 @@ class WindowsToast {
     String? snoozeActionUri,
   }) {
     final safeTitle = _escape(title.trim());
-    final safeBody = _escape(body.trim());
+    final rawBody = body.trim();
+    final bodyRunes = rawBody.runes;
+    final boundedBody = bodyRunes.length > maxBodyLength
+        ? '${String.fromCharCodes(bodyRunes.take(maxBodyLength))}…'
+        : rawBody;
     final singleLine = bodyDuplicatesTitle(title, body);
     final template = singleLine ? 'ToastText01' : 'ToastText02';
-    final trimmedBody = safeBody.length > maxBodyLength
-        ? '${safeBody.substring(0, maxBodyLength)}…'
-        : safeBody;
+    final trimmedBody = _escape(boundedBody);
 
     final buffer = StringBuffer()
       ..writeln(

@@ -813,11 +813,18 @@ class HomeController extends StateNotifier<HomeState> {
           await _discardRecording();
           return null;
         }
-        final nativePath = await _audioRecorder.stop();
         final pcm = _pcmRecording;
         _pcmRecording = null;
-        final path = pcm == null ? nativePath : await pcm.finish();
-        _nativeRecording = false;
+        final String? path;
+        try {
+          final nativePath = await _audioRecorder.stop();
+          path = pcm == null ? nativePath : await pcm.finish();
+        } catch (_) {
+          await pcm?.discard();
+          rethrow;
+        } finally {
+          _nativeRecording = false;
+        }
         if (!_isCurrent(generation)) {
           // Stop raced recovery. The result was never confirmed for import.
           if (path != null) {
@@ -1145,6 +1152,10 @@ class HomeController extends StateNotifier<HomeState> {
       return text.trim();
     } catch (error) {
       if (!_isCurrent(generation)) {
+        removeTemporary = true;
+        return null;
+      }
+      if (error is SpeechRecognitionException && error.code == 'cancelled') {
         removeTemporary = true;
         return null;
       }

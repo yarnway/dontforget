@@ -39,6 +39,12 @@ void _writeCrashLog(dynamic error, StackTrace? stack) {
         dir.createSync(recursive: true);
       }
       final logFile = File(p.join(logDir, 'error_log.txt'));
+      const maxLogBytes = 1024 * 1024;
+      if (logFile.existsSync() && logFile.lengthSync() >= maxLogBytes) {
+        final prev = File(p.join(logDir, 'error_log.txt.prev'));
+        if (prev.existsSync()) prev.deleteSync();
+        logFile.renameSync(prev.path);
+      }
       final timestamp = DateTime.now().toIso8601String();
       logFile.writeAsStringSync(
         '[$timestamp] Error: $error\nStack: $stack\n\n',

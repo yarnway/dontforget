@@ -68,15 +68,12 @@ class TaskAttachmentsPanel extends ConsumerStatefulWidget {
 class _TaskAttachmentsPanelState extends ConsumerState<TaskAttachmentsPanel> {
   bool _busy = false;
   String? _readKey;
-  List<Reminder>? _taskSource;
-  String? _taskId;
-  Reminder? _visibleTask;
   Future<Map<String, MediaRecord>>? _records;
 
-  Reminder? get _current => ref
-      .read(remindersProvider)
-      .where((r) => r.id == widget.task.id && r.isVisible)
-      .firstOrNull;
+  Reminder? get _current {
+    final row = ref.read(remindersByIdProvider)[widget.task.id];
+    return row != null && row.isVisible ? row : null;
+  }
 
   void _setBusy(bool value) {
     if (!mounted) return;
@@ -166,15 +163,12 @@ class _TaskAttachmentsPanelState extends ConsumerState<TaskAttachmentsPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final tasks = ref.watch(remindersProvider);
-    if (!identical(_taskSource, tasks) || _taskId != widget.task.id) {
-      _taskId = widget.task.id;
-      _taskSource = tasks;
-      _visibleTask = tasks
-          .where((r) => r.id == widget.task.id && r.isVisible)
-          .firstOrNull;
-    }
-    final current = _visibleTask;
+    final current = ref.watch(
+      remindersByIdProvider.select((byId) {
+        final row = byId[widget.task.id];
+        return row != null && row.isVisible ? row : null;
+      }),
+    );
     final task = current ?? widget.task;
     final ids = <String>{
       if (task.recordId != null) task.recordId!,

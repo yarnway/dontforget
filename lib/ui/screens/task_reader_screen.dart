@@ -101,8 +101,8 @@ class _TaskReaderState extends ConsumerState<TaskDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final rows = ref.watch(remindersProvider);
-    final latest = rows.where((r) => r.id == widget.task.id).firstOrNull;
+    final byId = ref.watch(remindersByIdProvider);
+    final latest = byId[widget.task.id];
     final task = latest ?? widget.task;
     final details = task.details;
     final loc = AppLocalizations.of(context);
@@ -111,12 +111,9 @@ class _TaskReaderState extends ConsumerState<TaskDetailScreen> {
     final hasAttachments =
         task.recordId != null || details.attachmentIds.isNotEmpty;
     final linked = <String, Reminder>{};
-    if (task.linkedTaskIds.isNotEmpty) {
-      final needed = task.linkedTaskIds.toSet();
-      for (final row in rows) {
-        if (needed.remove(row.id) && row.isVisible) linked[row.id] = row;
-        if (needed.isEmpty) break;
-      }
+    for (final linkedId in task.linkedTaskIds) {
+      final row = byId[linkedId];
+      if (row != null && row.isVisible) linked[linkedId] = row;
     }
     Widget date(String label, DateTime? value, IconData icon) => ListTile(
       contentPadding: EdgeInsets.zero,
