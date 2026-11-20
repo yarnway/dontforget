@@ -62,6 +62,13 @@
 
 ## 本轮执行记录
 
+### 11月20日 迭代 1（v1.8.15／build86，功能可用性推进）
+
+- **源码**　收紧分享附件私有路径边界（`SharedText.parse` / `saveSharedAttachmentMemo` / 预览页统一校验 `shared_handoff/<id>/`）；局域网同步增强：物理网卡 IP 优先级排序（避开 WSL/Hyper-V/Docker/VPN 虚拟网卡）、客户端细分失败码与本地化提示（PIN 错误/锁定/超限/超时/不可达）、大包未读拒收直接 `detachSocket` 发送 413 并断开连接防止客户端挂死、本机地址与配对码一键复制、PIN 回车直连；设置页修复 `SettingsArea.sync` 边缘模型探测「应用到配置」后保存按钮可见性及移动端 `ConsoleUrlLauncher` 外部打开回退；事项卡片新增「调整分类（Q1–Q4）」与「延后提醒（+15m/+1h/今晚/明早，兼容未来与到期事项并避开计划例程限制）」；只读事项详情新增一键复制正文与清单（严格保持只读契约）；文件附件与首页文件预览升级为异步 128 KiB 有界 UTF-8 预览（含 NUL 字节检测、CJK 截断安全与复制文本）；加密备份/恢复补齐密码显隐切换；首页补齐「移动通勤」情境切换、`U`/`,` 快捷键、`PopScope` 优先关闭搜索、`url_launcher` 跨平台打开视频、音频停止播放/再点停止、待处理分享草稿提示条与命令面板入口，内容管理增加待处理分享草稿计数徽标并修正详情弹窗关闭按钮文案。
+- **自动化**　固定 Windows Flutter 3.44.9 下 `python scripts/check_flutter_version.py --strict` 通过，`flutter analyze --no-pub` 0 问题；14 个相关 Flutter 测试文件共 200 项通过（含新增 `test/v1_8_15_availability_test.dart` 10 项及 `lan_sync_maintenance_test.dart` 19 项、`home_*` / `shared_text_*` / `settings_*` / `task_*` / `content_cleanup_test.dart` / `portable_backup_test.dart`），Python 脚本测试 180 项通过（6 项 POSIX 跳过）。
+- **安装包**　基于干净提交 `84b90f4` 在本机固定 Flutter 3.44.9 构建 Windows x64 未签名安装包 `DontForget_Setup_v1.8.15.exe`（SHA‑256 `29fad5ae6185d030a73a53d5ecc4c228782c9f4a72576c3f8f08c4c1d502ab92`）与便携包 `DontForget_Windows_Portable_v1.8.15.zip`（SHA‑256 `bcf7420c1c3df2481712d7d688a0135431ea7360f740c176761bfb160744696f`），通过 `scripts/verify_artifacts.py` 校验。未构建 Linux／Android／iOS 正式包，未发布 GitHub Release。
+- **真机／本机升级**　Windows 本机在 `1.8.14+85` 运行中执行最新数据备份→正常静默覆盖升级（`/CLOSEAPPLICATIONS /NOFORCECLOSEAPPLICATIONS`，禁止强关）→安装后 39 个载荷文件与便携包逐字节一致、PE 版本 `1.8.15.86`、CLI `--list` 正常退出、SQLite schema 17 `integrity_check=ok`、全业务字段（Reminders 7 / MediaRecords 0 / Settings 1）及 DPAPI 凭据（1 项）解保护摘要一致、普通重开后字段与凭据保持，详见 [windows-upgrade-86-2026-11-20.json](benchmarks/windows-upgrade-86-2026-11-20.json)。Windows GUI 交互／托盘／Toast 与 Android／iOS 真机未在本轮实测。
+
 ### 11月20日源码审查修复、图片／附件分享与局域网附件传输
 
 - **源码**　审查修复三处缺陷：局域网同步完成后等待事项刷新再展示冲突列表；事项编辑在旧提前偏好已失效时手动改时间同步清理残留 `reminder_lead_minutes`；实时语音发送前等待底层录音停止完成再释放录制状态以防首页提交被拦截。扩展阶段49分享采集：Android 系统分享支持接收 `image/*` 与 `application/*`（`EXTRA_STREAM` 安全暂存至应用私有 `shared_handoff/<id>/`，限制 32 MiB 与 16 条队列上限），`SharedTextInbox` 持久化附件路径与文件名并在移除时清理暂存目录，分享确认页展示附件／图片预览卡片并支持无配文或带配文经同一 SQLite 事务导入 `LocalMediaStore` 及保存备忘，全程保留首页原输入草稿。扩展阶段49局域网同步附件传输：`LanSyncService` 双向同步事项引用的 `MediaRecords` 与原件字节（含 32 MiB 上限、安全单段文件名与 SHA‑256 摘要校验），在 SQLite 事务外通过 `LocalMediaStore.importBytes` 暂存落盘并在事务提交／回滚时经 `discardImport` 清理未采用或回滚的暂存副本；对新事项与已有事项自动关联首次接收的对端附件，同时不重新绑定本机已解绑的既有媒体记录。
