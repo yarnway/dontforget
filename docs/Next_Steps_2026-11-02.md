@@ -62,6 +62,13 @@
 
 ## 本轮执行记录
 
+### 11月20日 迭代 2（v1.8.16／build87，易用性与美观性优化）
+
+- **源码**　完善 `AppTheme` 统一 Material 3 设计令牌（`dialogTheme`、`popupMenuTheme`、`chipTheme`、`snackBarTheme`），消除首页清空完成确认弹窗、任务编辑弹窗、设置页探测与局域网卡片、详情页链接／媒体区块及首页情境切换图标中的硬编码色值（`#1E1E1E`、`Colors.tealAccent`、`Colors.grey.shade400/600/700` 等），全面对齐明暗双主题 WCAG AA 对比度；优化 `TaskCard` 视觉层级（竖条优先级色带、桌面悬停边框反馈、逾期／置顶边框强调、带细描边的语义标签胶囊，并严格保持主题同步底色契约）；优化 `QuadrantView` 计数胶囊与柔和空态图标容器；优化 `TaskWorkspaceOverview` 今日分组图标＋计数徽标及空态引导；升级 `LanSyncConflictsDialog` 为本机／对端双色对比卡片与折叠差异字段摘要；升级 `DashboardScreen` 统计卡片图标底托及四象限语义配色进度条；为 `SharedTextInboxScreen` 增加安全校验后的有界图片缩略图（`cacheWidth: 128`）与统一空态视觉。
+- **自动化**　固定 Windows Flutter 3.44.9 下 `flutter analyze --no-pub` 0 问题；9 个相关 UX／主题／布局测试文件共 70 项通过（含新增 `test/v1_8_16_ux_theme_test.dart` 5 项及 `task_card_theme_test.dart`、`task_board_theme_test.dart`、`settings_card_paint_test.dart`、`dashboard_screen_test.dart`、`home_notice_persistence_test.dart`、`task_reader_screen_test.dart`、`shared_text_editor_test.dart`、`settings_reliability_test.dart`）。
+- **安装包**　基于干净提交 `978d44f` 在本机固定 Flutter 3.44.9 构建 Windows x64 未签名安装包 `DontForget_Setup_v1.8.16.exe`（SHA‑256 `a3b588008778d4fb9e77ce11f172848a5cb6af40bd5038d79405dfcab5194fcd`）与便携包 `DontForget_Windows_Portable_v1.8.16.zip`（SHA‑256 `ea97ed007084b4aeef4cf7bc1fed0b1a39eaf9a8fa1ed2f10badf15ed5ea1991`），通过 `scripts/verify_artifacts.py` 校验。未构建 Linux／Android／iOS 正式包，未发布 GitHub Release。
+- **真机／本机升级**　Windows 本机在 `1.8.15+86` 运行中执行最新数据备份→正常静默覆盖升级（禁止强关）→安装后 39 个载荷文件逐字节一致、PE 版本 `1.8.16.87`、CLI `--list` 正常、SQLite schema 17 `integrity_check=ok`、全业务字段（7/0/1）及 DPAPI 凭据（1 项）一致、普通重开后字段与凭据保持，详见 [windows-upgrade-87-2026-11-20.json](benchmarks/windows-upgrade-87-2026-11-20.json)。Windows GUI 视觉／托盘／Toast 与 Android／iOS 真机未在本轮实测。
+
 ### 11月20日 迭代 1（v1.8.15／build86，功能可用性推进）
 
 - **源码**　收紧分享附件私有路径边界（`SharedText.parse` / `saveSharedAttachmentMemo` / 预览页统一校验 `shared_handoff/<id>/`）；局域网同步增强：物理网卡 IP 优先级排序（避开 WSL/Hyper-V/Docker/VPN 虚拟网卡）、客户端细分失败码与本地化提示（PIN 错误/锁定/超限/超时/不可达）、大包未读拒收直接 `detachSocket` 发送 413 并断开连接防止客户端挂死、本机地址与配对码一键复制、PIN 回车直连；设置页修复 `SettingsArea.sync` 边缘模型探测「应用到配置」后保存按钮可见性及移动端 `ConsoleUrlLauncher` 外部打开回退；事项卡片新增「调整分类（Q1–Q4）」与「延后提醒（+15m/+1h/今晚/明早，兼容未来与到期事项并避开计划例程限制）」；只读事项详情新增一键复制正文与清单（严格保持只读契约）；文件附件与首页文件预览升级为异步 128 KiB 有界 UTF-8 预览（含 NUL 字节检测、CJK 截断安全与复制文本）；加密备份/恢复补齐密码显隐切换；首页补齐「移动通勤」情境切换、`U`/`,` 快捷键、`PopScope` 优先关闭搜索、`url_launcher` 跨平台打开视频、音频停止播放/再点停止、待处理分享草稿提示条与命令面板入口，内容管理增加待处理分享草稿计数徽标并修正详情弹窗关闭按钮文案。

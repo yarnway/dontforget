@@ -1,0 +1,50 @@
+{
+  "timestamp_utc": "2026-11-20T09:16:35.323521+00:00",
+  "version": "1.8.16+87",
+  "revision": "978d44f0012525260b6a91e1a67b26717e3338ca",
+  "setup_file": "DontForget_Setup_v1.8.16.exe",
+  "setup_sha256": "a3b588008778d4fb9e77ce11f172848a5cb6af40bd5038d79405dfcab5194fcd",
+  "portable_file": "DontForget_Windows_Portable_v1.8.16.zip",
+  "portable_sha256": "ea97ed007084b4aeef4cf7bc1fed0b1a39eaf9a8fa1ed2f10badf15ed5ea1991",
+  "package_origin": "local-pinned-flutter-3.44.9",
+  "running_before_upgrade": true,
+  "started_for_running_check": true,
+  "pids_before": [
+    12280
+  ],
+  "version_before": [
+    1,
+    8,
+    15,
+    86
+  ],
+  "backup_dir": "C:\\Users\\Wayne\\AppData\\Local\\Temp\\dontforget-upgrade-backups\\20261120-171631-pre-1.8.16-87",
+  "backup_verified": true,
+  "force_close_allowed": false,
+  "installer_exit": 0,
+  "gui_tested": false,
+  "running_upgrade_result": "PASS",
+  "version_after": [
+    1,
+    8,
+    16,
+    87
+  ],
+  "payload_files_identical": 39,
+  "native_cli_exit": 0,
+  "schema": 17,
+  "integrity_check": "ok",
+  "all_business_fields_preserved": true,
+  "business_counts": {
+    "Reminders": 7,
+    "MediaRecords": 0,
+    "Settings": 1
+  },
+  "credential_files_preserved": true,
+  "dpapi_credential_readback_equal": true,
+  "credential_count": 1,
+  "normal_app_reopen_process_verified": true,
+  "normal_app_reopen_pid": 24880,
+  "normal_app_reopen_business_fields_equal": true,
+  "normal_app_reopen_dpapi_equal": true
+}
