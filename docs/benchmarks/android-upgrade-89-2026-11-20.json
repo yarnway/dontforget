@@ -1,0 +1,149 @@
+{
+  "timestamp_utc": "2026-11-20T14:40:45.425788+00:00",
+  "package": "com.yarnway.dontforget",
+  "ci_apk_path": "C:\\Users\\Wayne\\AppData\\Local\\Temp\\dontforget-ci-44749926901\\android-deliverables\\DontForget_Android_arm64_v1.8.18.apk",
+  "ci_apk_sha256": "8dcb28de3921e1e21ba2ed88084cfc8479a9477249dcc97c535855a40b137183",
+  "ci_apk_bytes": 27222947,
+  "default_ime_before": "com.tencent.wetype/.plugin.hld.WxHldService",
+  "formal_before": {
+    "package": "com.yarnway.dontforget",
+    "sha256": "dd9f918070c37b89c62a82881d45d84cb1d0afef86113f3b3d13b6356039e914",
+    "version_lines": [
+      "versionCode=85 minSdk=24 targetSdk=36",
+      "versionName=1.8.14"
+    ]
+  },
+  "siblings_before": [
+    {
+      "package": "com.yarnway.dontforget.acceptance.p4720261102",
+      "sha256": "74867b0f47c953669f63afb99551fb3c533d99ac6b09cf565aaf14a99470508e",
+      "version_lines": [
+        "versionCode=85 minSdk=24 targetSdk=36",
+        "versionName=1.8.14"
+      ]
+    },
+    {
+      "package": "com.yarnway.dontforget.acceptance.native8420261117",
+      "sha256": "05d671c5c4850b341c1bc446271eab968cca99410d25b793b56066effc856428",
+      "version_lines": [
+        "versionCode=84 minSdk=24 targetSdk=36",
+        "versionName=1.8.13"
+      ]
+    },
+    {
+      "package": "com.yarnway.dontforget.acceptance.sync20261118",
+      "sha256": "751b3fa7fe0749a6248b7d7afb6c5875489178351075ab7df74507bc19cae0f4",
+      "version_lines": [
+        "versionCode=89 minSdk=24 targetSdk=36",
+        "versionName=1.8.18"
+      ]
+    }
+  ],
+  "pre_upgrade_backup": {
+    "local_path": "C:\\Users\\Wayne\\AppData\\Local\\Temp\\dontforget-pixel-formal-backups\\pre89-dontforget-2026-11-20-223905846.dfbackup",
+    "bytes": 3525,
+    "sha256": "1f726f23cbb20a95ff678dbdaae14334669ab0d76bd28e0387a471f309e90c55",
+    "format": "dontforget.file",
+    "cipher": "none",
+    "schema_version": null,
+    "counts": {
+      "Reminders": 2,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "reminders_media_sha256": "b4d0a32464d7947cba7963e713487acd4bceeb7f9c79f348bc03a3edc7a3de68",
+    "top_keys": [
+      "attachments",
+      "bundle_version",
+      "format",
+      "missing_media",
+      "snapshot"
+    ],
+    "snapshot_keys": [
+      "media_records",
+      "reminders",
+      "settings",
+      "timestamp",
+      "version"
+    ]
+  },
+  "install_output": "Performing Streamed Install\nSuccess",
+  "formal_after": {
+    "package": "com.yarnway.dontforget",
+    "sha256": "8dcb28de3921e1e21ba2ed88084cfc8479a9477249dcc97c535855a40b137183",
+    "version_lines": [
+      "versionCode=89 minSdk=24 targetSdk=36",
+      "versionName=1.8.18"
+    ]
+  },
+  "installed_matches_ci_apk": true,
+  "cold_reopen_pid": "21593",
+  "post_upgrade_backup": {
+    "local_path": "C:\\Users\\Wayne\\AppData\\Local\\Temp\\dontforget-pixel-formal-backups\\post89-dontforget-2026-11-20-224120886.dfbackup",
+    "bytes": 3829,
+    "sha256": "b5ce647ce7d6a1944538ca5512a030969a35ab08ffbb2582eb358f8c21cd1a24",
+    "format": "dontforget.file",
+    "cipher": "none",
+    "schema_version": null,
+    "counts": {
+      "Reminders": 2,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "reminders_media_sha256": "b4d0a32464d7947cba7963e713487acd4bceeb7f9c79f348bc03a3edc7a3de68",
+    "top_keys": [
+      "attachments",
+      "bundle_version",
+      "format",
+      "missing_media",
+      "snapshot"
+    ],
+    "remote_path": "/sdcard/Download/dontforget-2026-11-20-224120886.dfbackup",
+    "snapshot_keys": [
+      "media_records",
+      "reminders",
+      "settings",
+      "timestamp",
+      "version"
+    ]
+  },
+  "counts_preserved": true,
+  "reminders_and_media_exact_equal": true,
+  "about_shows_1_8_18_89": true,
+  "update_check_is_current": true,
+  "update_check_ui_snippet": [
+    "关于与更新",
+    "应用更新\n从 GitHub 检查发布版本，不自动安装。\n最近检查 下午 10:41",
+    "检查更新",
+    "已是最新发布版"
+  ],
+  "siblings_after": [
+    {
+      "package": "com.yarnway.dontforget.acceptance.p4720261102",
+      "sha256": "74867b0f47c953669f63afb99551fb3c533d99ac6b09cf565aaf14a99470508e",
+      "version_lines": [
+        "versionCode=85 minSdk=24 targetSdk=36",
+        "versionName=1.8.14"
+      ]
+    },
+    {
+      "package": "com.yarnway.dontforget.acceptance.native8420261117",
+      "sha256": "05d671c5c4850b341c1bc446271eab968cca99410d25b793b56066effc856428",
+      "version_lines": [
+        "versionCode=84 minSdk=24 targetSdk=36",
+        "versionName=1.8.13"
+      ]
+    },
+    {
+      "package": "com.yarnway.dontforget.acceptance.sync20261118",
+      "sha256": "751b3fa7fe0749a6248b7d7afb6c5875489178351075ab7df74507bc19cae0f4",
+      "version_lines": [
+        "versionCode=89 minSdk=24 targetSdk=36",
+        "versionName=1.8.18"
+      ]
+    }
+  ],
+  "siblings_untouched": true,
+  "default_ime_after": "com.tencent.wetype/.plugin.hld.WxHldService",
+  "ime_unchanged": true
+}

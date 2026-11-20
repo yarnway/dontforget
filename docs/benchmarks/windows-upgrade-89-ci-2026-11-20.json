@@ -1,0 +1,50 @@
+{
+  "timestamp_utc": "2026-11-20T14:34:51.450791+00:00",
+  "version": "1.8.18+89",
+  "revision": "4855976b7b13edb26f279ba0c163f1a9095944ad",
+  "setup_file": "DontForget_Setup_v1.8.18.exe",
+  "setup_sha256": "0cc56abfa4e1ce86775bef50597ef8763b3c3d462cf6bb238dc2330ff68fd870",
+  "portable_file": "DontForget_Windows_Portable_v1.8.18.zip",
+  "portable_sha256": "3e6e448813a1d63dd75cc7fce8fdcea702b43556e552bbd5434541e166b4c1d6",
+  "package_origin": "github-actions-run-44749926901",
+  "running_before_upgrade": true,
+  "started_for_running_check": true,
+  "pids_before": [
+    10496
+  ],
+  "version_before": [
+    1,
+    8,
+    18,
+    89
+  ],
+  "backup_dir": "C:\\Users\\Wayne\\AppData\\Local\\Temp\\dontforget-upgrade-backups\\20261120-223447-pre-1.8.18-89",
+  "backup_verified": true,
+  "force_close_allowed": false,
+  "installer_exit": 0,
+  "gui_tested": false,
+  "running_upgrade_result": "PASS",
+  "version_after": [
+    1,
+    8,
+    18,
+    89
+  ],
+  "payload_files_identical": 38,
+  "native_cli_exit": 0,
+  "schema": 17,
+  "integrity_check": "ok",
+  "all_business_fields_preserved": true,
+  "business_counts": {
+    "Reminders": 7,
+    "MediaRecords": 0,
+    "Settings": 1
+  },
+  "credential_files_preserved": true,
+  "dpapi_credential_readback_equal": true,
+  "credential_count": 1,
+  "normal_app_reopen_process_verified": true,
+  "normal_app_reopen_pid": 26776,
+  "normal_app_reopen_business_fields_equal": true,
+  "normal_app_reopen_dpapi_equal": true
+}

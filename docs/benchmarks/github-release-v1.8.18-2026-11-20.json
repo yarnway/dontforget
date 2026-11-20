@@ -1,0 +1,143 @@
+{
+  "timestamp_utc": "2026-11-20T14:40:58.5799242Z",
+  "publish_workflow_run_id": 44754960147,
+  "publish_workflow_url": "https://github.com/yarnway/dontforget/actions/runs/44754960147",
+  "source_ci_run_id": 44749926901,
+  "source_ci_url": "https://github.com/yarnway/dontforget/actions/runs/44749926901",
+  "latest_tag": "v1.8.18",
+  "release_name": "DontForget v1.8.18 · Android / Windows / Linux / iOS",
+  "html_url": "https://github.com/yarnway/dontforget/releases/tag/v1.8.18",
+  "draft": false,
+  "prerelease": false,
+  "target_commitish": "4855976b7b13edb26f279ba0c163f1a9095944ad",
+  "tag_object_sha": "4855976b7b13edb26f279ba0c163f1a9095944ad",
+  "tag_matches_4855976": true,
+  "asset_count": 20,
+  "assets": [
+    {
+      "name": "android-manifest.json",
+      "size": 1401,
+      "digest": "sha256:bc9f943a7663fa7b43cd382d47e74e4117b07e15f0e22cdae8ccef7d1a1cf9f2",
+      "id": 772157142
+    },
+    {
+      "name": "android-SHA256SUMS.txt",
+      "size": 297,
+      "digest": "sha256:461231159e1b9f1a7dade0fe896327ec6142ff10cd8d98a51e621c8c4e9db48f",
+      "id": 772157139
+    },
+    {
+      "name": "DontForget_Android_arm64_v1.8.18.apk",
+      "size": 27222947,
+      "digest": "sha256:8dcb28de3921e1e21ba2ed88084cfc8479a9477249dcc97c535855a40b137183",
+      "id": 772157010
+    },
+    {
+      "name": "DontForget_Android_v1.8.18.aab",
+      "size": 75486546,
+      "digest": "sha256:d66c43b86fd89f1a7fff79326e7b85c3d8ac3446957e9a0aaaeca79112e52051",
+      "id": 772157005
+    },
+    {
+      "name": "DontForget_Android_v1.8.18.apk",
+      "size": 78908619,
+      "digest": "sha256:96c1d263d71b61607644631786f737b4bb7115e07641dc281c5f1bab9a870f76",
+      "id": 772157006
+    },
+    {
+      "name": "DontForget_iOS_unsigned_v1.8.18.ipa",
+      "size": 11724773,
+      "digest": "sha256:e7b2b8bcb94029b5f3af11e81c19cd5fbc6a65497cf778c43540622aadb800db",
+      "id": 772157097
+    },
+    {
+      "name": "DontForget_Linux_x64_v1.8.18.tar.gz",
+      "size": 14825133,
+      "digest": "sha256:80043e3ac84d22cfe6c85005f8c5a4d7ca7c7def50512e87e6f7235443c69d4b",
+      "id": 772157008
+    },
+    {
+      "name": "DontForget_Setup_v1.8.18.exe",
+      "size": 15070109,
+      "digest": "sha256:0cc56abfa4e1ce86775bef50597ef8763b3c3d462cf6bb238dc2330ff68fd870",
+      "id": 772157007
+    },
+    {
+      "name": "DontForget_Windows_Portable_v1.8.18.zip",
+      "size": 18368011,
+      "digest": "sha256:3e6e448813a1d63dd75cc7fce8fdcea702b43556e552bbd5434541e166b4c1d6",
+      "id": 772157074
+    },
+    {
+      "name": "ios-manifest.json",
+      "size": 594,
+      "digest": "sha256:7c0729811846955c65f58da965bb9eee70c521f063af6b00b3b0dcf7407ba1fe",
+      "id": 772157154
+    },
+    {
+      "name": "ios-SHA256SUMS.txt",
+      "size": 102,
+      "digest": "sha256:250e5542ccff6f3a79b83658c4f3175cda19b2b521ecc1b70cd04040a00bc163",
+      "id": 772157148
+    },
+    {
+      "name": "linux-manifest.json",
+      "size": 403,
+      "digest": "sha256:96a8070f0d64018315c69478e69292cf1a386c7e54561c75562c9050dbf4c94f",
+      "id": 772157177
+    },
+    {
+      "name": "linux-SHA256SUMS.txt",
+      "size": 102,
+      "digest": "sha256:5deddf9a62704f0eba3444daade83e2d2c02e20decc7cc41b674d263a7d1fe97",
+      "id": 772157157
+    },
+    {
+      "name": "linux-startup.json",
+      "size": 571,
+      "digest": "sha256:249712db8b89f531b1862f87e3e2d7333781cbe87bef910dd7aa2f546c47f01a",
+      "id": 772157186
+    },
+    {
+      "name": "release-provenance.json",
+      "size": 4432,
+      "digest": "sha256:ccd1ac5819a2a18d2b738f3c8e47cd54ec2781f0588bae1a1d54a4871814b7f7",
+      "id": 772157185
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "size": 1752,
+      "digest": "sha256:728b1ae7548874cdc05ce309d8a1473764c118d47858a6e4e9f49c2093d0de3f",
+      "id": 772157138
+    },
+    {
+      "name": "windows-installation.json",
+      "size": 288,
+      "digest": "sha256:b104fc0374f32c60a127dae75d91ab851eb475b695c7579f92374c0d48316e30",
+      "id": 772157207
+    },
+    {
+      "name": "windows-manifest.json",
+      "size": 660,
+      "digest": "sha256:efc7c73810fed3639270a73f37262ff3571d186d723b00da151c472955935c22",
+      "id": 772157211
+    },
+    {
+      "name": "windows-SHA256SUMS.txt",
+      "size": 203,
+      "digest": "sha256:3d185f943007be1d8f5574d47756640eab292c65a03e1f94d2ec2787456bbb6b",
+      "id": 772157188
+    },
+    {
+      "name": "windows-startup.json",
+      "size": 443,
+      "digest": "sha256:7a4f5e0fb062a0029bc768701ad772f0f9ff323dd6505432ca3606c9707d291c",
+      "id": 772157214
+    }
+  ],
+  "previous_v1_8_14_preserved": {
+    "tag": "v1.8.14",
+    "target_commitish": "116d7f203987cdab9e0ded5c48883cbade451043",
+    "asset_count": 20
+  }
+}
