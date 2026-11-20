@@ -40,15 +40,16 @@ internal class SharedTextBridge(context: Context) {
         val queued = load().toMutableList()
         if (queued.none { it["id"] == id }) {
             if (queued.size >= 16) throw IllegalArgumentException("full")
-            val hasStream = intent.hasExtra(Intent.EXTRA_STREAM)
+            @Suppress("DEPRECATION")
+            val streamUri = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+                ?: intent.clipData?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.uri
+                ?: intent.data?.takeIf { intent.type != null && intent.type !in setOf("text/plain", "text/html") }
+            val hasStream = intent.hasExtra(Intent.EXTRA_STREAM) || streamUri != null
             val text: String
             var attachmentPath: String? = null
             var attachmentName: String? = null
             if (hasStream) {
-                @Suppress("DEPRECATION")
-                val stream = intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
-                    ?: intent.clipData?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.uri
-                    ?: throw IllegalArgumentException("unsupported")
+                val stream = streamUri ?: throw IllegalArgumentException("unsupported")
                 if (stream.scheme != "content") {
                     throw IllegalArgumentException("unsupported")
                 }
@@ -225,6 +226,7 @@ internal class SharedTextBridge(context: Context) {
             intent.removeExtra(Intent.EXTRA_SUBJECT)
             intent.removeExtra(Intent.EXTRA_STREAM)
             intent.clipData = null
+            intent.setDataAndType(null, null)
             intent.action = Intent.ACTION_MAIN
         }
     }
