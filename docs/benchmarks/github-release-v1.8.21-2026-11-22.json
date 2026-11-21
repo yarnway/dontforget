@@ -1,0 +1,182 @@
+{
+  "timestamp_utc": "2026-11-21T20:22:13.2832499Z",
+  "publish_workflow_run_id": 44945602264,
+  "publish_workflow_url": "https://github.com/yarnway/dontforget/actions/runs/44945602264",
+  "source_ci_run_id": 44942853490,
+  "source_ci_url": "https://github.com/yarnway/dontforget/actions/runs/44942853490",
+  "latest_tag": "v1.8.21",
+  "release_name": "DontForget v1.8.21 · Android / Windows / Linux / iOS",
+  "html_url": "https://github.com/yarnway/dontforget/releases/tag/v1.8.21",
+  "draft": false,
+  "prerelease": false,
+  "target_commitish": "7cc4e8e1e848a2b8c7d1e3cf11da9b28202cbd0b",
+  "tag_object_sha": "7cc4e8e1e848a2b8c7d1e3cf11da9b28202cbd0b",
+  "tag_matches_source": true,
+  "asset_count": 20,
+  "assets": [
+    {
+      "name": "android-manifest.json",
+      "size": 1301,
+      "digest": "sha256:21b2c2bffc1ccb9a1da5221979aacbc63e712a5574aca865e206a71ed9c913e2",
+      "id": 776764401
+    },
+    {
+      "name": "android-SHA256SUMS.txt",
+      "size": 297,
+      "digest": "sha256:cd1e988166c3f62f00b7fc209a16c54371a4a1612c687dfac1069c1597eed4e5",
+      "id": 776764398
+    },
+    {
+      "name": "DontForget_Android_arm64_v1.8.21.apk",
+      "size": 10664355,
+      "digest": "sha256:8da7e521c226456e4f465018f559cb8f8d91e2cfa4abe25dd5f69f4bb1b7a5dd",
+      "id": 776764264
+    },
+    {
+      "name": "DontForget_Android_v1.8.21.aab",
+      "size": 63827509,
+      "digest": "sha256:9c752e9946df11c33326541c89bdb0751d95526db3fbb9dcac46d489778e586d",
+      "id": 776764272
+    },
+    {
+      "name": "DontForget_Android_v1.8.21.apk",
+      "size": 29773890,
+      "digest": "sha256:dddb9b6d851b0f7c0ba3e0f00f797b63cb9cea821f09dd3a5e33c2253bfa585a",
+      "id": 776764267
+    },
+    {
+      "name": "DontForget_iOS_unsigned_v1.8.21.ipa",
+      "size": 10470373,
+      "digest": "sha256:7e8bbbd4ff74df78b8a3eac2b8659ea74fcea06b6703ca8897bb379ae6424410",
+      "id": 776764365
+    },
+    {
+      "name": "DontForget_Linux_x64_v1.8.21.tar.gz",
+      "size": 12951085,
+      "digest": "sha256:457f6b90f83712643ba902673f8b0b6652f5fc6167da96ac63339c69bbe90e8e",
+      "id": 776764276
+    },
+    {
+      "name": "DontForget_Setup_v1.8.21.exe",
+      "size": 13410865,
+      "digest": "sha256:4f97d67ea5c220e8ced8aea73ccc0c54eef94ec2ee67a86573edc39b65248c97",
+      "id": 776764263
+    },
+    {
+      "name": "DontForget_Windows_Portable_v1.8.21.zip",
+      "size": 15967858,
+      "digest": "sha256:6f6aecb7c06028c36a59532709f07f526bfc0c71b5c88dc0d480b905af0fcb6d",
+      "id": 776764357
+    },
+    {
+      "name": "ios-manifest.json",
+      "size": 594,
+      "digest": "sha256:bc2aee569bc20887fb8809da7d99a3a25bc2e9b47f4a5c4496be36f8531ef71f",
+      "id": 776764426
+    },
+    {
+      "name": "ios-SHA256SUMS.txt",
+      "size": 102,
+      "digest": "sha256:019a495de55fde48f2de7e3881f8e185c21386b956cdae5b5a2501568e11b9a1",
+      "id": 776764423
+    },
+    {
+      "name": "linux-manifest.json",
+      "size": 403,
+      "digest": "sha256:4b530e78ca0ad40de489c06db744ea1f65d8f987e4863ba64085493f340b4eaf",
+      "id": 776764442
+    },
+    {
+      "name": "linux-SHA256SUMS.txt",
+      "size": 102,
+      "digest": "sha256:30e7bb5eae9b6899e7030baf53dba5bcfb10350ebb7bc1fc3ca0b85a27107536",
+      "id": 776764438
+    },
+    {
+      "name": "linux-startup.json",
+      "size": 571,
+      "digest": "sha256:5ba0377cca39ae2524cf894ff55f504ac019dac5fe64cc0dbd8d6f4db3677ba8",
+      "id": 776764455
+    },
+    {
+      "name": "release-provenance.json",
+      "size": 4432,
+      "digest": "sha256:473c265bc8969e8f789495bda34fe81f12f2966df1407193c32066dc756cc11f",
+      "id": 776764461
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "size": 1752,
+      "digest": "sha256:d6c8e05aa6783d7d84ccaa6142b61ae2eb024c2e5ab5b6fa788d77c8c3800414",
+      "id": 776764378
+    },
+    {
+      "name": "windows-installation.json",
+      "size": 288,
+      "digest": "sha256:dd9610294f7c68ac20049db1ea1631cefddc1876dee68ca968ee61223d813adc",
+      "id": 776764482
+    },
+    {
+      "name": "windows-manifest.json",
+      "size": 660,
+      "digest": "sha256:57798c9140574c9633cbc0af8bc6de33529a4d22961fe65200afaef241300d3f",
+      "id": 776764498
+    },
+    {
+      "name": "windows-SHA256SUMS.txt",
+      "size": 203,
+      "digest": "sha256:7a6137219769fa12cf31155ddfbb835f27c8a73021cde88dbcc24e9231e1398d",
+      "id": 776764484
+    },
+    {
+      "name": "windows-startup.json",
+      "size": 443,
+      "digest": "sha256:9dd323092e9a24e79e6bbed3ce671f5d6da1efdf5a405279d9f11df4cbec4a48",
+      "id": 776764503
+    }
+  ],
+  "previous_release_preserved": {
+    "tag": "v1.8.20",
+    "tag_sha": "b820337968b9fa7279928aa87eab5234f387dfba",
+    "matches_expected_sha": true,
+    "asset_count": 20,
+    "draft": false
+  },
+  "verified_downloads": {
+    "DontForget_Setup_v1.8.21.exe": {
+      "path": "C:\\Users\\Wayne\\AppData\\Local\\Temp\\dontforget-release-v1.8.21\\DontForget_Setup_v1.8.21.exe",
+      "bytes": 13410865,
+      "sha256": "4f97d67ea5c220e8ced8aea73ccc0c54eef94ec2ee67a86573edc39b65248c97"
+    },
+    "ios-manifest.json": {
+      "path": "C:\\Users\\Wayne\\AppData\\Local\\Temp\\dontforget-release-v1.8.21\\ios-manifest.json",
+      "bytes": 594,
+      "sha256": "bc2aee569bc20887fb8809da7d99a3a25bc2e9b47f4a5c4496be36f8531ef71f"
+    },
+    "DontForget_Windows_Portable_v1.8.21.zip": {
+      "path": "C:\\Users\\Wayne\\AppData\\Local\\Temp\\dontforget-release-v1.8.21\\DontForget_Windows_Portable_v1.8.21.zip",
+      "bytes": 15967858,
+      "sha256": "6f6aecb7c06028c36a59532709f07f526bfc0c71b5c88dc0d480b905af0fcb6d"
+    },
+    "DontForget_Android_arm64_v1.8.21.apk": {
+      "path": "C:\\Users\\Wayne\\AppData\\Local\\Temp\\dontforget-release-v1.8.21\\DontForget_Android_arm64_v1.8.21.apk",
+      "bytes": 10664355,
+      "sha256": "8da7e521c226456e4f465018f559cb8f8d91e2cfa4abe25dd5f69f4bb1b7a5dd"
+    },
+    "windows-manifest.json": {
+      "path": "C:\\Users\\Wayne\\AppData\\Local\\Temp\\dontforget-release-v1.8.21\\windows-manifest.json",
+      "bytes": 660,
+      "sha256": "57798c9140574c9633cbc0af8bc6de33529a4d22961fe65200afaef241300d3f"
+    },
+    "release-provenance.json": {
+      "path": "C:\\Users\\Wayne\\AppData\\Local\\Temp\\dontforget-release-v1.8.21\\release-provenance.json",
+      "bytes": 4432,
+      "sha256": "473c265bc8969e8f789495bda34fe81f12f2966df1407193c32066dc756cc11f"
+    },
+    "android-manifest.json": {
+      "path": "C:\\Users\\Wayne\\AppData\\Local\\Temp\\dontforget-release-v1.8.21\\android-manifest.json",
+      "bytes": 1301,
+      "sha256": "21b2c2bffc1ccb9a1da5221979aacbc63e712a5574aca865e206a71ed9c913e2"
+    }
+  }
+}
