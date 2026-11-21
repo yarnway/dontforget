@@ -17,6 +17,7 @@ import 'package:dont_forget/ui/widgets/input_bottom_bar.dart';
 import 'package:dont_forget/ui/widgets/lan_sync_conflicts_dialog.dart';
 import 'package:dont_forget/ui/widgets/live_voice_text_dialog.dart';
 import 'package:dont_forget/ui/widgets/portable_backup_panel.dart';
+import 'package:dont_forget/ui/widgets/voice_capture_feedback.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -477,6 +478,86 @@ void main() {
         expect(keepSize.width, greaterThanOrEqualTo(48));
         expect(keepSize.height, greaterThanOrEqualTo(48));
         await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+      } finally {
+        semantics.dispose();
+      }
+    },
+  );
+
+  testWidgets(
+    'InlineFeedback close button exposes localized tooltip directly and satisfies labeled tap target guideline',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      try {
+        late BuildContext pageContext;
+        await tester.pumpWidget(
+          _shell(
+            Scaffold(
+              body: Builder(
+                builder: (context) {
+                  pageContext = context;
+                  return const SizedBox.expand();
+                },
+              ),
+            ),
+            platform: TargetPlatform.android,
+          ),
+        );
+        await tester.pump();
+
+        InlineFeedback.of(pageContext).showSnackBar(
+          const SnackBar(content: Text('请核对文字，或发送原语音。')),
+          tone: FeedbackTone.warning,
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+
+        final closeFinder = find.byKey(const ValueKey('inline-feedback-close'));
+        expect(closeFinder, findsOneWidget);
+        final closeSemantics = tester.getSemantics(closeFinder);
+        expect(closeSemantics.label, contains('关闭'));
+
+        await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+        await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
+
+        await tester.tap(closeFinder);
+        await tester.pump();
+        expect(find.byKey(const ValueKey('inline-feedback')), findsNothing);
+      } finally {
+        semantics.dispose();
+      }
+    },
+  );
+
+  testWidgets(
+    'VoiceCaptureFeedback accessible cancel button uses opaque dark surface for WCAG contrast on bottom arc',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      try {
+        await tester.pumpWidget(
+          _shell(
+            Scaffold(
+              body: VoiceCaptureFeedback(
+                action: VoiceReleaseAction.save,
+                fullScreen: true,
+                onAccessibleAction: (_) {},
+              ),
+            ),
+            platform: TargetPlatform.android,
+            accessibleNavigation: true,
+          ),
+        );
+        await tester.pump();
+
+        final cancelButton = tester.widget<OutlinedButton>(
+          find.byKey(const ValueKey('voice-accessible-cancel')),
+        );
+        final bg = cancelButton.style?.backgroundColor?.resolve(<WidgetState>{});
+        final fg = cancelButton.style?.foregroundColor?.resolve(<WidgetState>{});
+        expect(bg, const Color(0xFF2B2B2B));
+        expect(fg, Colors.white);
+        await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
+        await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
       } finally {
         semantics.dispose();
       }

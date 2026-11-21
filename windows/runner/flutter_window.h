@@ -27,6 +27,10 @@ class FlutterWindow : public Win32Window {
                          LPARAM const lparam) noexcept override;
 
  private:
+  static constexpr UINT kUpgradeExitMessage = WM_APP + 0x44;
+  static VOID CALLBACK OnUpgradeExitEvent(PVOID context,
+                                          BOOLEAN timer_or_wait_fired);
+
   // The project to run.
   flutter::DartProject project_;
   bool show_on_create_ = true;
@@ -40,6 +44,11 @@ class FlutterWindow : public Win32Window {
   std::unique_ptr<GlobalCaptureHotkey> capture_hotkey_;
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>>
       capture_channel_;
+
+  // Per-user session event signaled by the Windows installer before Restart
+  // Manager runs so tray-hidden GUI windows can still shut down gracefully.
+  HANDLE upgrade_exit_event_ = nullptr;
+  HANDLE upgrade_exit_wait_ = nullptr;
 };
 
 #endif  // RUNNER_FLUTTER_WINDOW_H_

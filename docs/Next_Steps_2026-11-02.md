@@ -62,6 +62,16 @@
 
 ## 本轮执行记录
 
+### 11月21日 主线体验与 Windows 托盘优雅升级收口（已合入 `main`，尚未发布新版本）
+
+- **源码**　在公开 `v1.8.19+90` 之后于 `main` 完成三项来自本轮实机与本机验收反馈的定向修复（不改变 schema 17、锁文件、版本号或公开 `v1.8.19` Release 附件）：
+  - **Windows 托盘隐藏态优雅升级退出通道（`windows/runner/flutter_window.h`、`windows/runner/flutter_window.cpp`、`windows_installer/installer.iss`）**：GUI 实例（`show_on_create_ == true`）在 `OnCreate` 注册同用户会话级事件 `Local\DontForget.GracefulUpgradeExit`（初始化 `ResetEvent` 防残留误触发、`RegisterWaitForSingleObject` 经 `PostMessageW` 投递 `kUpgradeExitMessage` 复用既有 `onUpgradeExit` / `DesktopUpgradeExit` 优雅收口链路，并在 `OnDestroy` 通过 `UnregisterWaitEx(..., INVALID_HANDLE_VALUE)` 干净解绑）；Inno Setup 在 `PrepareToInstall` 中遵循 `/NOCLOSEAPPLICATIONS` 约束，仅当检测到运行实例互斥锁且对方注册了优雅退出事件时发送信号并等待最多 8 秒自然释放（严禁强杀，超时仍回退标准 Restart Manager）。此修复将在后续包含该源码的新版 Windows 实装后生效，不回溯改变当前运行中的 `v1.8.18.89` 进程。
+  - **浮动提示条关闭按钮读屏语义修复（`lib/ui/widgets/inline_feedback.dart`）**：移除原先导致外层容器误标为不可点击按钮 `'关闭'` 且内层 `IconButton` 标签为空的外包 `Semantics`，改用不依赖 `Overlay` 祖先的 `MergeSemantics` + `Semantics(label: closeButtonTooltip)` 与 `ValueKey('inline-feedback-close')`，确保 TalkBack／VoiceOver 精确朗读关闭按钮。
+  - **TalkBack 无障碍录音浮层「取消」按钮高对比度增强（`lib/ui/widgets/voice_capture_feedback.dart`）**：将 `voice-accessible-cancel` 按钮底色由透明描边升级为不透明深色底（`Color(0xFF2B2B2B)`＋白色前景，对比度 > 14:1 WCAG AAA），解决在浅灰底弧上对比度不足的问题。
+- **自动化**　固定 Windows Flutter `3.44.9` 下 `check_flutter_version.py --strict` 通过、`flutter analyze --no-pub` 0 问题；定向运行 4 个 Flutter 测试文件（`test/accessibility_guidelines_test.dart` 新增 2 项回归及 `quiet_feedback_test.dart`、`desktop_shutdown_test.dart`、`windows_upgrade_exit_channel_test.dart`）共 **32 项全部通过**；Python 脚本测试（`scripts/tests/test_windows_runner_cli.py` 新增 2 项托盘优雅退出与无强杀契约校验）**186 通过／6 跳过／0 失败**；已推送触发主线四平台 CI 进行全仓回归与隔离安装器冒烟校验。
+- **安装包与本地构建**　本机固定 Flutter `3.44.9` 下已通过 `scripts/package_windows.ps1 -NoPub` 完成 MSVC C++ Runner 与 Inno Setup 6.7.3 安装脚本完整编译校验，内置 CLI `--help` 管道返回码 `0`（`DontForget CLI v1.8.19`）；未创建新版本标签或新 Release，公开最新版仍为 `v1.8.19`。
+- **真机／本机验收**　Windows 桌面用户进程 `PID 19044`（`v1.8.18.89`）仍处于运行态未强杀，本机 `v1.8.19+90` 退出后安装与同桌面运行中升级继续待用户退出后执行；上述三项新修复待主线 CI 通过及后续发版时并入真机回归，当前不记为已实机发布验收。
+
 ### 11月21日 v1.8.19／build90 四平台正式发布、Pixel 正式版保全升级与真实 TalkBack 实机验收（含 Windows CI 安装包运行中退出码 5 留证）
 
 - **源码**　固定发布提交 `6eedd2a1717fb794a902fe22c2d585a1ecf0fdd7`（代码提交 `7e28ef0953b030fd482fdf3c36208b93dfb49da9`，schema 17）。

@@ -73,6 +73,86 @@ Type: files; Name: "{autodesktop}\DontForget.lnk"
 ; Inno removes files it installed. Preserve unknown files and legacy user data.
 
 [Code]
+const
+  EVENT_MODIFY_STATE = $0002;
+  SYNCHRONIZE = $00100000;
+
+function OpenEventW(dwDesiredAccess: DWORD; bInheritHandle: BOOL; lpName: string): THandle;
+  external 'OpenEventW@kernel32.dll stdcall';
+function SetEvent(hEvent: THandle): BOOL;
+  external 'SetEvent@kernel32.dll stdcall';
+function OpenMutexW(dwDesiredAccess: DWORD; bInheritHandle: BOOL; lpName: string): THandle;
+  external 'OpenMutexW@kernel32.dll stdcall';
+function CloseHandle(hObject: THandle): BOOL;
+  external 'CloseHandle@kernel32.dll stdcall';
+
+function HasNoCloseApplicationsFlag(): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 1 to ParamCount do
+  begin
+    if CompareText(ParamStr(I), '/NOCLOSEAPPLICATIONS') = 0 then
+    begin
+      Result := True;
+      Exit;
+    end;
+  end;
+end;
+
+function IsDontForgetRunning(): Boolean;
+var
+  HMutex: THandle;
+begin
+  HMutex := OpenMutexW(SYNCHRONIZE, False, 'Local\DontForget.SingleInstance');
+  if HMutex <> 0 then
+  begin
+    CloseHandle(HMutex);
+    Result := True;
+  end
+  else
+    Result := False;
+end;
+
+procedure RequestGracefulAppExit();
+var
+  HEvent: THandle;
+  Attempt: Integer;
+begin
+  if HasNoCloseApplicationsFlag() then
+    Exit;
+  if not IsDontForgetRunning() then
+    Exit;
+  HEvent := OpenEventW(EVENT_MODIFY_STATE, False, 'Local\DontForget.GracefulUpgradeExit');
+  if HEvent = 0 then
+    Exit;
+  try
+    Log('Signaling Local\DontForget.GracefulUpgradeExit for tray-safe graceful shutdown.');
+    SetEvent(HEvent);
+  finally
+    CloseHandle(HEvent);
+  end;
+  // Wait up to 8 seconds for DontForget to flush drafts/SQLite and exit on its own.
+  // Never force-terminate: if still running, fall back to standard Restart Manager.
+  for Attempt := 1 to 40 do
+  begin
+    Sleep(200);
+    if not IsDontForgetRunning() then
+    begin
+      Log('DontForget released single-instance mutex gracefully.');
+      Exit;
+    end;
+  end;
+  Log('DontForget did not exit within 8s after graceful signal; continuing to Restart Manager.');
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  RequestGracefulAppExit();
+  Result := '';
+end;
+
 procedure CleanLegacyRegistry();
 begin
   // Remove conflicting manual registry key registered by legacy Install.ps1 so Windows Settings only displays one clean DontForget entry

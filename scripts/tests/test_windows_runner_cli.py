@@ -4,7 +4,9 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 RUNNER_MAIN = ROOT / 'windows' / 'runner' / 'main.cpp'
+FLUTTER_WINDOW_H = ROOT / 'windows' / 'runner' / 'flutter_window.h'
 FLUTTER_WINDOW_CPP = ROOT / 'windows' / 'runner' / 'flutter_window.cpp'
+INSTALLER_ISS = ROOT / 'windows_installer' / 'installer.iss'
 DART_MAIN = ROOT / 'lib' / 'main.dart'
 
 
@@ -34,6 +36,28 @@ class WindowsRunnerCliTests(unittest.TestCase):
         self.assertIn('await stdout.flush();', source)
         self.assertIn('await stderr.flush();', source)
         self.assertIn('return 2;', source)
+
+    def test_runner_supports_tray_safe_graceful_upgrade_exit_event(self):
+        header = FLUTTER_WINDOW_H.read_text(encoding='utf-8')
+        cpp = FLUTTER_WINDOW_CPP.read_text(encoding='utf-8')
+        self.assertIn('kUpgradeExitMessage', header)
+        self.assertIn('upgrade_exit_event_', header)
+        self.assertIn('upgrade_exit_wait_', header)
+        self.assertIn(r'L"Local\\DontForget.GracefulUpgradeExit"', cpp)
+        self.assertIn('::ResetEvent(upgrade_exit_event_);', cpp)
+        self.assertIn('::RegisterWaitForSingleObject(', cpp)
+        self.assertIn('::PostMessageW(hwnd, kUpgradeExitMessage, 0, 0);', cpp)
+        self.assertIn('::UnregisterWaitEx(upgrade_exit_wait_, INVALID_HANDLE_VALUE);', cpp)
+        self.assertIn('protocol_channel_->InvokeMethod("onUpgradeExit", nullptr);', cpp)
+
+    def test_installer_signals_graceful_exit_without_force_kill(self):
+        iss = INSTALLER_ISS.read_text(encoding='utf-8')
+        self.assertIn('PrepareToInstall(var NeedsRestart: Boolean): String;', iss)
+        self.assertIn("Local\\DontForget.GracefulUpgradeExit", iss)
+        self.assertIn("Local\\DontForget.SingleInstance", iss)
+        self.assertIn("'/NOCLOSEAPPLICATIONS'", iss)
+        for forbidden in ('TerminateProcess', 'taskkill', 'Stop-Process', 'WM_DESTROY'):
+            self.assertNotIn(forbidden, iss)
 
 
 if __name__ == '__main__':

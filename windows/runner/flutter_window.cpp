@@ -70,6 +70,23 @@ bool FlutterWindow::OnCreate() {
       });
 
   if (show_on_create_) {
+    // Allow same-user installer upgrades to request a graceful shutdown even
+    // when the window is hidden to the system tray (where Restart Manager
+    // classifies hidden windows as RmUnknownApp and skips WM_ENDSESSION).
+    upgrade_exit_event_ = ::CreateEventW(
+        nullptr, FALSE, FALSE, L"Local\\DontForget.GracefulUpgradeExit");
+    if (upgrade_exit_event_ != nullptr) {
+      ::ResetEvent(upgrade_exit_event_);
+      if (!::RegisterWaitForSingleObject(
+              &upgrade_exit_wait_, upgrade_exit_event_,
+              &FlutterWindow::OnUpgradeExitEvent,
+              reinterpret_cast<PVOID>(GetHandle()), INFINITE,
+              WT_EXECUTEDEFAULT)) {
+        ::CloseHandle(upgrade_exit_event_);
+        upgrade_exit_event_ = nullptr;
+      }
+    }
+
     flutter_controller_->engine()->SetNextFrameCallback([&]() {
       this->Show();
     });
@@ -83,7 +100,24 @@ bool FlutterWindow::OnCreate() {
   return true;
 }
 
+// static
+VOID CALLBACK FlutterWindow::OnUpgradeExitEvent(
+    PVOID context, BOOLEAN /*timer_or_wait_fired*/) {
+  HWND hwnd = reinterpret_cast<HWND>(context);
+  if (hwnd != nullptr && ::IsWindow(hwnd)) {
+    ::PostMessageW(hwnd, kUpgradeExitMessage, 0, 0);
+  }
+}
+
 void FlutterWindow::OnDestroy() {
+  if (upgrade_exit_wait_ != nullptr) {
+    ::UnregisterWaitEx(upgrade_exit_wait_, INVALID_HANDLE_VALUE);
+    upgrade_exit_wait_ = nullptr;
+  }
+  if (upgrade_exit_event_ != nullptr) {
+    ::CloseHandle(upgrade_exit_event_);
+    upgrade_exit_event_ = nullptr;
+  }
   capture_channel_ = nullptr;
   capture_hotkey_ = nullptr;
   protocol_channel_ = nullptr;
@@ -98,6 +132,12 @@ LRESULT
 FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               WPARAM const wparam,
                               LPARAM const lparam) noexcept {
+  if (message == kUpgradeExitMessage) {
+    if (protocol_channel_) {
+      protocol_channel_->InvokeMethod("onUpgradeExit", nullptr);
+    }
+    return 0;
+  }
   // Restart Manager must not fall through to the ordinary close-to-tray path.
   // Query is consent only; another application can still cancel shutdown.
   if ((lparam & ENDSESSION_CLOSEAPP) != 0) {

@@ -257,18 +257,22 @@ class InlineFeedbackState extends State<InlineFeedback> {
                                 const SizedBox(width: 8),
                                 _actionButton(action, colors),
                               ],
-                              Semantics(
-                                label: MaterialLocalizations.of(
-                                  context,
-                                ).closeButtonTooltip,
-                                button: true,
-                                child: IconButton(
-                                  focusNode: _closeFocus,
-                                  color: colors.onSurfaceVariant,
-                                  onPressed: hideCurrentSnackBar,
-                                  icon: const Icon(
-                                    Icons.close_rounded,
-                                    size: 18,
+                              MergeSemantics(
+                                child: Semantics(
+                                  label: MaterialLocalizations.of(
+                                    context,
+                                  ).closeButtonTooltip,
+                                  child: IconButton(
+                                    key: const ValueKey(
+                                      'inline-feedback-close',
+                                    ),
+                                    focusNode: _closeFocus,
+                                    color: colors.onSurfaceVariant,
+                                    onPressed: hideCurrentSnackBar,
+                                    icon: const Icon(
+                                      Icons.close_rounded,
+                                      size: 18,
+                                    ),
                                   ),
                                 ),
                               ),

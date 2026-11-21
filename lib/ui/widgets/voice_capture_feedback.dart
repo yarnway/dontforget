@@ -447,8 +447,11 @@ class VoiceCaptureFeedback extends StatelessWidget {
                               key: const ValueKey('voice-accessible-cancel'),
                               style: OutlinedButton.styleFrom(
                                 minimumSize: const Size(48, 48),
+                                backgroundColor: const Color(0xFF2B2B2B),
                                 foregroundColor: Colors.white,
-                                side: const BorderSide(color: Colors.white70),
+                                side: const BorderSide(
+                                  color: Color(0xFF666666),
+                                ),
                               ),
                               onPressed: () => onAccessibleAction!(
                                 VoiceReleaseAction.cancel,
