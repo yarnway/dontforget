@@ -1,0 +1,248 @@
+{
+  "timestamp_utc": "2026-11-21T02:49:07.836926+00:00",
+  "release_tag": "v1.8.18",
+  "release_commit": "4855976b7b13edb26f279ba0c163f1a9095944ad",
+  "version": "1.8.18+89",
+  "device": {
+    "serial": "43201FDJG000M7",
+    "model": "Pixel 8 Pro",
+    "android_version": "16",
+    "wifi_ip": "192.168.50.158",
+    "windows_wifi_ip": "192.168.50.4"
+  },
+  "formal_package_identity": {
+    "package": "com.yarnway.dontforget",
+    "installed_apk_sha256": "8dcb28de3921e1e21ba2ed88084cfc8479a9477249dcc97c535855a40b137183",
+    "matches_public_release_arm64_v1_8_18": true,
+    "pre_test_backup": {
+      "local_path": "C:\\Users\\Wayne\\AppData\\Local\\Temp\\dontforget-pixel-formal-backups\\pre-formal-acc89-dontforget-2026-11-21-101638335.dfbackup",
+      "bytes": 3525,
+      "sha256": "ca64efa2588e1275fc2e7d2436c84887951d13a8896da575ba476d7818b5a7b4",
+      "format": "dontforget.file",
+      "cipher": "none",
+      "schema_version": 17,
+      "counts": {
+        "Reminders": 2,
+        "MediaRecords": 0,
+        "Settings": 1
+      },
+      "reminders_media_sha256": "b4d0a32464d7947cba7963e713487acd4bceeb7f9c79f348bc03a3edc7a3de68",
+      "reminder_titles": [
+        "测试",
+        "CrossDeviceStage61"
+      ]
+    }
+  },
+  "stage47_formal_package_acceptance": {
+    "wetype_home_single_save": {
+      "composing_text": "ce shi",
+      "committed_text": "测试 89",
+      "single_card_visible_on_home": true,
+      "screenshots_sha256": {
+        "composing": "d89b486c1551262db020ae1f0e693e5a9f76207f1a5c5f714c3b421e4f3491c8",
+        "committed": "f62dfa3c8db9c235adf42ad7e43be7278bf7bcce4490461464963923bcb4c492",
+        "home_card": "50d65c6117485f66a400133ed311c91104f8c52dcf522d629c7860ec4ac25c88"
+      }
+    },
+    "voice_cancel_interrupt_and_exact_wetype_editor": {
+      "voice_cancel_no_new_card": true,
+      "audio_monitor_after_home_interrupt": "",
+      "voice_editor_opened": true,
+      "composing_text": "yu yin",
+      "send_disabled_while_composing": true,
+      "committed_text": "语音",
+      "send_reenabled_after_commit": true,
+      "saved_card_visible": true,
+      "screenshots_sha256": {
+        "composing": "d43457c266dddbcfcce06e24e457d466d64319affd2050099f7036c290495b97",
+        "committed": "4a0b589cd7e385efdb20aa6affdc06a7bbf2685078aa6204ba469cd1ec1f124a",
+        "after_send": "969b61d8af5b567dc01060f13d21f0d7d91fac65252932770b3c393342e3c82f"
+      }
+    },
+    "large_font_density_1_3": {
+      "tested_scales": [
+        "1.0",
+        "1.3"
+      ],
+      "restored_font_scale": "1.0",
+      "flutter_errors": [],
+      "screenshots_sha256": {
+        "all_1_3": "80e0005d2ac3fff614a302a750bdfefc203fbff2873fed00edbc029784016227",
+        "quad_1_3": "0fba23f164ba88edaa7709f66234a98fd350495737f6cc9375481284a75548a0"
+      }
+    },
+    "advance_10m_reminder_snooze_15m_and_body_open": {
+      "event_time": "2026-11-21 10:38",
+      "advance_10m_chip_visible": true,
+      "scheduled_first_trigger": "2026-11-21 10:28:00",
+      "first_delivery_background_verified": true,
+      "first_delivered_at": "2026-11-21T10:28:01",
+      "tapped_snooze_15m": true,
+      "snooze_tapped_at": "2026-11-21T10:28:07",
+      "expected_secondary_delivery_at": "2026-11-21T10:43:07",
+      "secondary_delivery_background_verified": true,
+      "tap_notification_body_opened_task_detail": true,
+      "screenshots_sha256": {
+        "editor_10m": "900746ca521b1c2c7346e171f734c460a7630b34fbb404dcdcc52bd53258faa0",
+        "first_delivery": "1dbd5b87a2b8766bfe7ca2d1e5dd0da32eb0adb99df5b454a6120b60b5c50da9",
+        "secondary_delivery": "86c8fe45ae9ed0fee97c7b7e9cd3acfa151b3352d4536d8654b05632f40ee5e6",
+        "body_opened_detail": "75f4c402a11ba26ee69f3febcdb36f1056cfc76afc607c27600c342c4c1e3311"
+      }
+    }
+  },
+  "stage48_formal_package_and_windows_legacy": {
+    "formal_content_management_active_attachment_protection": {
+      "shows_protected_active_attachments": true,
+      "shows_nonzero_scanned_bytes": true,
+      "protected_filenames_visible": {
+        "df_f89_doc.pdf": true,
+        "df_f89_img.png": true,
+        "win_formal89.txt": true
+      },
+      "screenshot_sha256": "14a486db555540ae7fda674c795ef92d29cc3ee8dd60ffdd3c03dddc0775b98e"
+    },
+    "formal_dfbk2_restore_and_exact_baseline_recovery": {
+      "inspect_passed": true,
+      "replace_btn_disabled_before_checkbox": true,
+      "replace_btn_enabled_after_checkbox": true,
+      "restore_success_shown": true,
+      "cold_reopen_pid": "11578",
+      "cold_reopen_no_synthetic_tasks_visible": true,
+      "post_restore_backup": {
+        "local_path": "C:\\Users\\Wayne\\AppData\\Local\\Temp\\dontforget-pixel-formal-backups\\post-formal-acc89-dontforget-2026-11-21-104758661.dfbackup",
+        "bytes": 3525,
+        "sha256": "02f7bfd0ea6ac3a0e1449b26bfb4cb75a701791086dfc7e530167ac7b45b6160",
+        "format": "dontforget.file",
+        "cipher": "none",
+        "schema_version": 17,
+        "counts": {
+          "Reminders": 2,
+          "MediaRecords": 0,
+          "Settings": 1
+        },
+        "reminders_media_sha256": "b4d0a32464d7947cba7963e713487acd4bceeb7f9c79f348bc03a3edc7a3de68",
+        "reminder_titles": [
+          "测试",
+          "CrossDeviceStage61"
+        ]
+      },
+      "post_restore_counts_equal": true,
+      "post_restore_reminders_media_sha256_equal": true,
+      "export_history_cleared_after_verification": true,
+      "screenshots_sha256": {
+        "inspect_passed": "7bbf6ccc261fa6ed8e727ac70020616c22498c2dc16ecac622ab72b443d6d608",
+        "confirm_before_check": "f845dc876c66b199b6ef4818ff3ba5d183eaec19d1b42e02a78366a6990d2a36",
+        "confirm_checked": "066209df71bff9688c7a5cfc90221a7b48cefffffcd9041dd8b6bbf769f9ae7a",
+        "cold_reopen_home": "696d883634008b0e52a76ad7b95265024649bcc0740acd210cf01030badc4e33"
+      }
+    },
+    "windows_legacy_dir_readonly_and_copy_takeover": {
+      "live_target_dir": "C:\\Users\\Wayne\\AppData\\Roaming\\com.yarnway.dontforget\\DontForget\\databases",
+      "live_retained_source_resolved": "C:\\Users\\Wayne\\AppData\\Local\\DontForget\\databases",
+      "live_legacy_db_sha256_before": "56fdfedc6699f88fa8fd28c11ea40b04c85c011b53214ca49eae174bcd2c6e89",
+      "live_legacy_db_sha256_after": "56fdfedc6699f88fa8fd28c11ea40b04c85c011b53214ca49eae174bcd2c6e89",
+      "live_legacy_untouched": true,
+      "sandbox_copy_takeover_migrated": true,
+      "sandbox_source_bytes_preserved": true,
+      "sandbox_post_upgrade_summary": {
+        "user_version": 17,
+        "integrity_check": "ok",
+        "reminders": [
+          {
+            "id": "qa-missed-10m",
+            "task_title": "10分钟前测试任务"
+          },
+          {
+            "id": "qa-missed-2h",
+            "task_title": "2小时前测试任务"
+          },
+          {
+            "id": "qa-missed-3d",
+            "task_title": "3天前测试任务"
+          }
+        ],
+        "media_count": 0,
+        "settings_count": 1
+      },
+      "sandbox_retained_refs_scanned_cleanly": true
+    }
+  },
+  "stage49_formal_share_documentsui_and_wifi_sync": {
+    "android_system_share_sheet_pdf_and_share_editor_wetype": {
+      "pdf_uri": "content://media/external/file/865",
+      "share_sheet_target_index": 0,
+      "share_sheet_focus_verified": "mCurrentFocus=Window{18a89b3 u0 com.yarnway.dontforget/com.yarnway.dontforget.MainActivity}\n  mFocusedApp=ActivityRecord{11803589 u0 com.yarnway.dontforget/.MainActivity t1423}",
+      "system_share_sheet_pdf_opened_formal_app": true,
+      "share_editor_save_disabled_while_composing": true,
+      "share_editor_save_reenabled_after_commit": true,
+      "pdf_share_saved": true,
+      "png_share_saved": true,
+      "screenshots_sha256": {
+        "share_sheet": "672245a4bc4c712a0d880cb52c84acc46b9eee6fd72962778a7d3c3c6e1bd2e6",
+        "pdf_inbox": "d8e6c45419cf4c767a722f0ea408929aa8078ce1e65d62328a4193fa65ede11d",
+        "pdf_editor_composing": "aefa73ac0386e843236249a0977e481a29675ca70b299ce36cde212ca7adde0b",
+        "pdf_editor_committed": "5e0802e4c4e503d222cf7bba12229018d704642f6a24e1043669e6af009cd6b6",
+        "png_editor": "4211c3a78b6ebf705980be26e5f0a1886004a5bfb866b4f01b9237e197eccb45"
+      }
+    },
+    "native_documentsui_txt_attach_and_inapp_utf8_preview": {
+      "attached_filename_visible": true,
+      "inapp_preview_shows_size_131_B": true,
+      "inapp_preview_shows_cjk_content": true,
+      "inapp_preview_shows_copy_and_save_buttons": true,
+      "screenshots_sha256": {
+        "after_txt_attach": "87d1b48eac422773a9ca4e57428b0bd1cf6bfde24ce5714d27ab9c34dc753a38",
+        "inapp_utf8_preview": "52fc6ed1f0aad2b423b30d10b342463e980bb6585451e20f8788c04071a2d761"
+      }
+    },
+    "real_wifi_bidirectional_lan_sync_formal_pixel_vs_windows_peer": {
+      "transport": "direct-wifi-192.168.50.0/24",
+      "usb_reverse_rules": "",
+      "usb_forward_rules": "",
+      "windows_peer_address": "192.168.50.4:14697",
+      "sync_events_completed": 4,
+      "windows_received_formal_attachments_sha256_equal": {
+        "df_f89_doc.pdf": true,
+        "df_f89_img.png": true
+      },
+      "pixel_received_win_task_visible": true,
+      "pixel_win_attachment_card_visible": true,
+      "sync2_trash_move_diff_and_adopted": true,
+      "sync3_trash_restore_diff_and_adopted": true,
+      "sync4_converged_zero_differences": true,
+      "pixel_restored_trash_task_visible": true,
+      "windows_peer_exit_code": 0,
+      "flutter_errors": [],
+      "screenshots_sha256": {
+        "trash_move_expanded": "88301dde5c9d9f6ab7b3b1fd4c8c266eb9b643deb068eb72a04cf7b3611319e8",
+        "trash_restore_expanded": "0b960c35ed9a2ac5ae7da6d433c61477dba6234ace980e6703f18f61a24e1733",
+        "win_task_reader": "60367d157dfa22afb73efda2dc69ddb501ee8ac94482c23f89749badfd805772"
+      }
+    }
+  },
+  "post_test_invariants": {
+    "post_permissions": [
+      "android.permission.POST_NOTIFICATIONS: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]",
+      "android.permission.RECORD_AUDIO: granted=false, flags=[ USER_SENSITIVE_WHEN_GRANTED|USER_SENSITIVE_WHEN_DENIED]"
+    ],
+    "post_ime": "com.tencent.wetype/.plugin.hld.WxHldService",
+    "post_font_scale": "1.0",
+    "post_download_leftover": "",
+    "flutter_errors_total": 0
+  },
+  "environment_blocked_or_not_performed": {
+    "windows_gui_tray_toast_desktop_ime": "BLOCKED_NON_INTERACTIVE_UIA_SESSION (UIA_CHILDREN=0)",
+    "iphone_v1_8_18_real_device": [
+      "MACOS_BUILD_HOST_REQUIRED",
+      "FULL_XCODE_UNAVAILABLE",
+      "IPHONEOS_SDK_UNAVAILABLE",
+      "DEVICECTL_UNAVAILABLE",
+      "SIGNING_QUERY_UNAVAILABLE",
+      "NO_USB_DEVICE"
+    ],
+    "real_acoustic_tencent_asr_on_formal_pixel": "FORMAL_SPEECH_CONFIG_DISABLED_NO_API_KEY",
+    "talkback_voiceover_screen_reader": "NOT_PERFORMED",
+    "windows_live_legacy_dir_in_place_deletion": "PRESERVED_READONLY_CONTAINS_SIGNING_AND_CREDENTIAL_REFS",
+    "formal_24h_aged_orphan_purge_on_non_debuggable_release": "PROTECTED_BY_24H_RETENTION_AND_NON_DEBUGGABLE_SANDBOX"
+  }
+}
