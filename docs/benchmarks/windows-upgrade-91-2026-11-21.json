@@ -1,0 +1,36 @@
+{
+  "timestamp_utc": "2026-11-21T08:58:17.622221+00:00",
+  "version": "1.8.20+91",
+  "revision": "b820337968b9fa7279928aa87eab5234f387dfba",
+  "setup_file": "DontForget_Setup_v1.8.20.exe",
+  "setup_sha256": "2dac7394caed796828cab94c1337688537b7d96b6122f9fe6c2f95fce371fee5",
+  "portable_file": "DontForget_Windows_Portable_v1.8.20.zip",
+  "portable_sha256": "942cb57b6797fbf02464cadc0e2d2e2c11b414653c2c10c47825354749e79790",
+  "package_origin": "local-pinned-flutter-3.44.9",
+  "upgrade_mode": "same_desktop_running",
+  "running_before_upgrade": true,
+  "started_for_running_check": false,
+  "pids_before": [
+    28900
+  ],
+  "version_before": [
+    1,
+    8,
+    19,
+    90
+  ],
+  "backup_dir": "C:\\Users\\Wayne\\AppData\\Local\\Temp\\dontforget-upgrade-backups\\20261121-165814-pre-1.8.20-91",
+  "backup_verified": true,
+  "force_close_allowed": false,
+  "installer_exit": 5,
+  "gui_tested": false,
+  "running_upgrade_result": "FAIL",
+  "version_after_failed_attempt": [
+    1,
+    8,
+    19,
+    90
+  ],
+  "db_preserved_after_failure": true,
+  "dpapi_preserved_after_failure": true
+}

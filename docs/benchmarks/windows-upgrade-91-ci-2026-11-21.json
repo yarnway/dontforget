@@ -1,0 +1,42 @@
+{
+  "timestamp_utc": "2026-11-21T09:28:28.063223+00:00",
+  "version": "1.8.20+91",
+  "revision": "b820337968b9fa7279928aa87eab5234f387dfba",
+  "setup_file": "DontForget_Setup_v1.8.20.exe",
+  "setup_sha256": "6419ed53a54e4d170a3c20256ff0d19bf8ca7a9609fc1af56d989841ea6c20b2",
+  "portable_file": "DontForget_Windows_Portable_v1.8.20.zip",
+  "portable_sha256": "744456df3f7c2c0c574ea29e544eabb8a83b8955ec52aaa5dfb23a118fafac96",
+  "package_origin": "github-release-v1.8.20-run-44887222048",
+  "upgrade_mode": "same_desktop_running",
+  "running_before_upgrade": true,
+  "started_for_running_check": false,
+  "pids_before": [
+    28900
+  ],
+  "version_before": [
+    1,
+    8,
+    19,
+    90
+  ],
+  "backup_dir": "C:\\Users\\Wayne\\AppData\\Local\\Temp\\dontforget-upgrade-backups\\20261121-172825-pre-1.8.20-91",
+  "backup_verified": true,
+  "force_close_allowed": false,
+  "installer_exit": 5,
+  "gui_tested": false,
+  "running_upgrade_result": "FAIL",
+  "version_after_failed_attempt": [
+    1,
+    8,
+    19,
+    90
+  ],
+  "db_preserved_after_failure": true,
+  "dpapi_preserved_after_failure": true,
+  "ci_portable_pe_version": "1.8.20.91",
+  "ci_portable_cli_help_exit": 0,
+  "ci_portable_cli_help_has_version": true,
+  "ci_portable_cli_empty_add_exit": 2,
+  "ci_portable_cli_list_locked_exit": 75,
+  "ci_portable_cli_list_locked_output": "Local data is in use. Quit the other DontForget instance before using CLI."
+}
