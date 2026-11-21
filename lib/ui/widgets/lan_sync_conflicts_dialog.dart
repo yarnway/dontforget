@@ -30,33 +30,41 @@ class LanSyncConflictsDialog extends StatelessWidget {
       required Color background,
       required Color border,
       required Color accent,
-    }) => Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 14, color: accent),
-              const SizedBox(width: 6),
-              Text(
-                heading,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: accent,
-                  fontWeight: FontWeight.w600,
+    }) => MergeSemantics(
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, size: 14, color: accent),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    heading,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: accent,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(value.isEmpty ? '—' : value),
-        ],
+              ],
+            ),
+            const SizedBox(height: 4),
+            Semantics(
+              label: value.isEmpty ? l10n.get('emptyValue') : null,
+              excludeSemantics: value.isEmpty,
+              child: Text(value.isEmpty ? '—' : value),
+            ),
+          ],
+        ),
       ),
     );
     Widget field(String label, String local, String peer) => Padding(
@@ -64,10 +72,13 @@ class LanSyncConflictsDialog extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
+          Semantics(
+            header: true,
+            child: Text(
+              label,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
           const SizedBox(height: 6),

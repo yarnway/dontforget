@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
+import 'text_bounds.dart';
 
 const appRepositoryUrl = 'https://github.com/yarnway/dontforget';
 const appReleasesUrl = '$appRepositoryUrl/releases';
@@ -228,7 +229,7 @@ class AppUpdateService {
         AppRelease(
           version: version,
           buildNumber: build,
-          notes: text.length > 32000 ? text.substring(0, 32000) : text,
+          notes: truncateRunes(text, 32000),
           url: url,
           downloads: List.unmodifiable(downloads),
         ),

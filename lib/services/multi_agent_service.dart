@@ -5,6 +5,7 @@ import '../models/agent_models.dart';
 import '../models/reminder.dart';
 import '../models/settings.dart';
 import 'dp_scheduler_service.dart';
+import 'text_bounds.dart';
 
 class MultiAgentService {
   final dynamic llmService;
@@ -60,7 +61,7 @@ class MultiAgentService {
       detail: '正在解析输入意图，评估四象限权重与认知阻抗...',
     ));
 
-    String macroTitle = trimmed.length > 25 ? '${trimmed.substring(0, 25)}...' : trimmed;
+    String macroTitle = truncateRunes(trimmed, 25, suffix: '...');
     int targetQuadrant = 2; // Default to Q2 Important Non-Urgent
     bool needsDecomposition = trimmed.length > 15 ||
         trimmed.contains('准备') ||

@@ -322,14 +322,23 @@ class _TaskReaderState extends ConsumerState<TaskDetailScreen> {
                             ],
                           ),
                         for (final item in details.checklist)
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: Icon(
-                              item.done
-                                  ? Icons.check_box_outlined
-                                  : Icons.check_box_outline_blank,
+                          Semantics(
+                            container: true,
+                            checked: item.done,
+                            child: ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: Icon(
+                                item.done
+                                    ? Icons.check_box_outlined
+                                    : Icons.check_box_outline_blank,
+                                semanticLabel: loc.get(
+                                  item.done
+                                      ? 'checklistDone'
+                                      : 'checklistPending',
+                                ),
+                              ),
+                              title: Text(item.label),
                             ),
-                            title: Text(item.label),
                           ),
                       ],
                     ),

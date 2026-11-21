@@ -1,5 +1,6 @@
 import 'package:dont_forget/l10n/app_localizations.dart';
 import 'package:dont_forget/l10n/notification_diagnostics_strings.dart';
+import 'package:dont_forget/l10n/shared_text_strings.dart';
 import 'package:dont_forget/l10n/task_attachment_strings.dart';
 import 'package:dont_forget/l10n/task_consistency_strings.dart';
 import 'package:dont_forget/ui/formatters/byte_size.dart';
@@ -109,11 +110,22 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('退出 / Exit / 終了'), findsOneWidget);
       if (busy) {
+        expect(find.textContaining('Local data is in use'), findsOneWidget);
         expect(find.textContaining('別の DontForget'), findsOneWidget);
       } else {
+        expect(find.textContaining('Unable to open local data'), findsOneWidget);
         expect(find.textContaining('復旧記録は保持されています'), findsOneWidget);
       }
       expect(tester.takeException(), isNull);
     }
+  });
+
+  test('sharedTextLabel hint describes text, links, images, and files in zh/en/ja', () {
+    expect(sharedTextLabel('zh', 'hint'), contains('图片'));
+    expect(sharedTextLabel('zh', 'hint'), contains('文件'));
+    expect(sharedTextLabel('en', 'hint'), contains('images'));
+    expect(sharedTextLabel('en', 'hint'), contains('files'));
+    expect(sharedTextLabel('ja', 'hint'), contains('画像'));
+    expect(sharedTextLabel('ja', 'hint'), contains('ファイル'));
   });
 }

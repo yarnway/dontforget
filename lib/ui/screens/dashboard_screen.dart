@@ -299,40 +299,42 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final colors = theme.colorScheme;
     return SizedBox(
       width: width,
-      child: _section(
-        context,
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: colors.primaryContainer,
-                borderRadius: BorderRadius.circular(12),
+      child: MergeSemantics(
+        child: _section(
+          context,
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: colors.primaryContainer,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: colors.onPrimaryContainer, size: 22),
               ),
-              child: Icon(icon, color: colors.onPrimaryContainer, size: 22),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '$value',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$value',
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                  Text(
-                    label,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colors.onSurfaceVariant,
+                    Text(
+                      label,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

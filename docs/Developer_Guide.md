@@ -30,37 +30,50 @@ DontForget/
 │   ├── User_Guide.md
 │   ├── Developer_Guide.md
 │   ├── Packaging_and_Deployment.md
-│   ├── AI_Vision_and_3D_Effects.md
+│   ├── Next_Steps_2026-11-02.md
 │   └── Changelog.md
-├── fmedia/                     # 内置便携式音频处理引擎（Windows 平台解码支持）
 ├── lib/
-│   ├── l10n/                   # 多语言国际化字典 (中/英/日)
-│   │   └── app_localizations.dart
-│   ├── models/                 # 数据领域模型 (Reminder, MediaRecord, AppSettings)
-│   ├── providers/              # Riverpod 状态管理核心容器
-│   │   └── providers.dart
-│   ├── services/               # 业务逻辑服务层 (LLM, Database, Audio, Notification)
+│   ├── data/                   # SQLite 存储、读写事务与旧目录迁移
+│   │   ├── database_access.dart
 │   │   ├── database_helper.dart
+│   │   └── database_location_migrator.dart
+│   ├── l10n/                   # 模块化三语本地化字典 (中/英/日)
+│   │   ├── app_localizations.dart
+│   │   └── *_strings.dart
+│   ├── models/                 # 数据领域模型 (Reminder, MediaRecord, AppSettings 等)
+│   ├── providers/              # Riverpod 状态与工作区控制器
+│   │   ├── home_controller.dart
+│   │   └── providers.dart
+│   ├── services/               # 业务逻辑服务层
+│   │   ├── ai/                 # AI 路由与调度辅助
+│   │   ├── content/            # 媒体引用保留、外部备份引用与清理
+│   │   ├── recovery/           # 存储启动检查、恢复规划与运行门禁
+│   │   ├── security/           # 系统安全凭据仓库
+│   │   ├── lan_sync_service.dart
 │   │   ├── llm_service.dart
-│   │   └── notification_service.dart
+│   │   ├── notification_service.dart
+│   │   ├── text_bounds.dart
+│   │   └── windows_toast.dart
 │   ├── ui/                     # 界面展现层
-│   │   ├── screens/            # 页面 (HomeScreen, SettingsScreen, DashboardScreen)
-│   │   └── widgets/            # 组件 (3D全息粒子, 象限网格, 任务卡片, 输入条等)
-│   │       ├── ai_background_effect.dart
-│   │       ├── input_bottom_bar.dart
-│   │       ├── quadrant_view.dart
-│   │       ├── task_card.dart
-│   │       └── task_details_dialog.dart
-│   └── main.dart               # 应用启动总入口
+│   │   ├── formatters/         # 共享字节大小与时间格式化器
+│   │   ├── screens/            # 页面 (HomeScreen, TaskDetailScreen, SettingsScreen 等)
+│   │   ├── theme/              # AppTheme Material 3 令牌与对比度规范
+│   │   └── widgets/            # 组件 (QuadrantView, TaskBoard, TaskCard, InputBottomBar,
+│   │                           #       LanSyncConflictsDialog, TaskDetailsDialog 兼容入口等)
+│   └── main.dart               # GUI 与 CLI 统一启动入口
 ├── linux/                      # Linux GTK 原生工程
 ├── macos/                      # macOS Cocoa 原生工程
-├── scripts/                    # 自动化脚本库
-│   ├── Install.ps1             # Windows 本地一键部署与测试脚本
-│   └── package_windows.ps1     # 生产环境编译、DLL 注入与双格式打包脚本
-├── test/                       # 自动化测试用例集
-│   ├── database_test.dart      # SQLite CRUD 与事务测试
-│   ├── end_to_end_test.dart    # 端到端业务链路测试
-│   └── widget_test.dart        # UI 组件渲染与交互测试
+├── scripts/                    # 构建、版本门禁、校验与回归脚本库
+│   ├── check_flutter_version.py
+│   ├── package_artifacts.py
+│   ├── package_windows.ps1
+│   ├── report_windows_skipped_tests.py
+│   ├── verify_artifacts.py
+│   └── tests/                  # Python 与原生脚本测试套件
+├── test/                       # Flutter 单元、组件与端到端测试集
+│   ├── database_test.dart
+│   ├── l10n_integrity_test.dart
+│   └── widget_test.dart
 ├── windows/                    # Windows 桌面平台原生 C++ 工程
 ├── windows_installer/          # Inno Setup 脚本与安装器资源
 │   └── installer.iss
@@ -81,13 +94,17 @@ flutter pub get
 ```
 
 ### 3.2 运行静态检查与自动化测试
-在提交任何代码前，必须确保通过静态代码扫描与测试套件：
+在提交任何代码前，必须确保通过版本门禁、静态代码扫描、Flutter 与 Python 测试套件：
 ```bash
-# 执行代码静态分析 (确保 0 issues)
-flutter analyze
+# 校验 Flutter SDK 与 CI 基线 (3.44.9) 完全一致
+python scripts/check_flutter_version.py --strict
 
-# 执行全量单元测试与集成测试
-flutter test
+# 执行代码静态分析 (确保 0 issues)
+flutter analyze --no-pub
+
+# 执行全量 Flutter 测试与 Python 脚本回归（Windows 下勿与 flutter build windows 并行）
+flutter test --no-pub --concurrency 2 --timeout 2m
+python -m unittest discover -s scripts/tests -v
 ```
 
 ### 3.3 本地开发调试运行
@@ -120,21 +137,14 @@ DontForget 使用 `flutter_riverpod` 构建单向数据流：
 
 ### 4.2 本地数据层 (SQLite FFI)
 - 桌面平台通过 `sqflite_common_ffi` 调用原生 C 动态库 `sqlite3.dll`。
-- 在 `main.dart` 初始化阶段：
-  ```dart
-  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-    sqfliteFfiInit();
-    databaseFactory = databaseFactoryFfi;
-  }
-  ```
-- 数据库位于用户应用数据目录下：`%LOCALAPPDATA%\DontForget\app_database.db`。
+- 当前生产数据库（Schema 17）由 `lib/data/database_helper.dart` 与 `lib/services/recovery/storage_bootstrap.dart` 统一初始化，Windows 默认目录位于 `%APPDATA%\com.yarnway.dontforget\DontForget\databases\dont_forget_v3.db`。
+- 早期遗留目录（如 `%LOCALAPPDATA%\DontForget\databases` 或历史 `app_database.db`）通过 `DatabaseLocationMigrator` 安全检测与隔离迁移，并搭配运行目录租约锁防止多进程同时写入损坏数据。
 - 启动自动校验并创建数据表索引，提高按分类与时间排序检索的效率。
 
 ### 4.3 多语言国际化机制
-- 集中维护在 `lib/l10n/app_localizations.dart`。
-- 采用轻量高性能静态 Map 索引，避免生成过重的编译期代码。
-- 在任意 Widget 内使用 `AppLocalizations.of(context).get('key')` 即可取到对应翻译。
-- 若需新增语言（如法语、韩语），只需在 `_localizedValues` 字典中添加对应的语言代码键值即可。
+- 核心总表与合并解析位于 `lib/l10n/app_localizations.dart`，各业务域文案拆分在 `lib/l10n/*_strings.dart`（支持 `zh`、`en`、`ja`，并向英文回退）。
+- 在任意 Widget 内使用 `AppLocalizations.of(context).get('key')` 或对应域辅助函数（如 `aboutText`、`sharedTextLabel`、`protectionText`）取到翻译。
+- `test/l10n_integrity_test.dart` 自动守卫核心与合并词表的 `en / zh / ja` 键集合及 `{placeholder}` 100% 对齐。
 
 ---
 
@@ -142,14 +152,14 @@ DontForget 使用 `flutter_riverpod` 构建单向数据流：
 
 1. **Windows 编译报错缺少 MSVC 或 CMake**：
    - 请确保在 Visual Studio 安装器中勾选了“使用 C++ 的桌面开发”，并检查环境变量 `PATH` 中是否能找到 `cl.exe` 和 `cmake.exe`。
-2. **测试时遇到 `sqflite default factory` 警告**：
+2. **Windows 下 `flutter test` 与 `flutter build windows` 冲突**：
+   - 两者共用 `build/native_assets/windows/sqlite3.dll`，Windows 环境必须**串行执行**，不可同时后台并发运行。
+3. **测试时遇到 `sqflite default factory` 警告**：
    - 属于单元测试环境下内存 SQLite 驱动的正常信息，不影响测试断言与功能。
-3. **音视频播报异常**：
-   - Windows 平台构建脚本已配置好 `fmedia` 绿色便携音频内核，请勿随意删除构建输出目录中的 `fmedia/` 文件夹。
 
-## Android／Windows／Linux发行（+59）
+## Android／Windows／Linux／iOS 发布说明
 
-主线只构建和校验。明确发布时，手动运行 `Publish verified Android Windows Linux release`，输入同一main提交已成功的构建run ID；工作流重新下载三平台完整归档，核验来源／摘要／Android证书及桌面报告，再发布并读回。不要把旧源码run ID用于新提交，不覆盖已有不匹配标签。
+主线由 `.github/workflows/build_and_release.yml` 执行质量检查与五平台构建校验（包含 Linux、Windows 质量门禁及 Windows / Linux / Android / macOS / iOS 构建）。明确发布时，手动运行 `.github/workflows/publish_release.yml`（详见 [Release_Policy.md](Release_Policy.md)），校验完整构建摘要、Android 发行证书及平台产物后发布并读回核验。不要把旧源码 run ID 用于新提交，也不得修改已有 Release 标签。
 
 Android发行材料由 `DONTFORGET_ANDROID_KEYSTORE_BASE64`、`DONTFORGET_ANDROID_STORE_PASSWORD`、`DONTFORGET_ANDROID_KEY_ALIAS`、`DONTFORGET_ANDROID_KEY_PASSWORD`、`DONTFORGET_ANDROID_CERT_SHA256` 五项仓库Secrets供CI使用，值不写入源码、参数或日志。公开证书固定在 `android/release-certificate.sha256`；更换证书会影响已有安装，普通版本更新不可重新生成签名身份。
 

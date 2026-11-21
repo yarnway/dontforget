@@ -37,6 +37,16 @@ class StorageUnavailableScreen extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  const SizedBox(height: 6),
+                  Text(
+                    busy
+                        ? 'Local data is in use · ローカルデータは使用中です'
+                        : 'Unable to open local data · ローカルデータを開けません',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   const SizedBox(height: 16),
                   Text(
                     busy

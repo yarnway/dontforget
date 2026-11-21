@@ -566,6 +566,7 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
                 labelText: t('password'),
                 suffixIcon: IconButton(
                   key: const ValueKey('backup-password-toggle'),
+                  tooltip: t(_obscurePassword ? 'showPassword' : 'hidePassword'),
                   onPressed: _busy
                       ? null
                       : () => setState(
@@ -592,6 +593,7 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
                 labelText: t('passwordAgain'),
                 suffixIcon: IconButton(
                   key: const ValueKey('backup-password-repeat-toggle'),
+                  tooltip: t(_obscureRepeat ? 'showPassword' : 'hidePassword'),
                   onPressed: _busy
                       ? null
                       : () => setState(() => _obscureRepeat = !_obscureRepeat),
@@ -620,8 +622,16 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
           ),
           if (_busy) ...[
             const SizedBox(height: 12),
-            LinearProgressIndicator(value: _progress?.fraction),
-            if (_progress != null) Text(t(_progress!.stage)),
+            LinearProgressIndicator(
+              value: _progress?.fraction,
+              semanticsLabel: t('backupProgress'),
+            ),
+            if (_progress != null)
+              Semantics(
+                container: true,
+                liveRegion: true,
+                child: Text(t(_progress!.stage)),
+              ),
             TextButton(
               key: const ValueKey('backup-cancel'),
               onPressed: () => _control?.cancel(),
@@ -631,6 +641,7 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
           if (_result != null) ...[
             const SizedBox(height: 12),
             Semantics(
+              container: true,
               liveRegion: true,
               child: SelectableText(
                 _result!,
@@ -733,10 +744,14 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
             ],
           ),
           if (_cache != null)
-            Text(
-              _cache!.isEmpty
-                  ? t('cacheEmpty')
-                  : '${_cache!.length} · ${_size(_cache!.fold<int>(0, (n, e) => n + e.bytes))}',
+            Semantics(
+              container: true,
+              liveRegion: true,
+              child: Text(
+                _cache!.isEmpty
+                    ? t('cacheEmpty')
+                    : '${_cache!.length} · ${_size(_cache!.fold<int>(0, (n, e) => n + e.bytes))}',
+              ),
             ),
         ]),
       ],
@@ -778,6 +793,7 @@ class _RestoreBackupPasswordDialogState
           labelText: t('password'),
           suffixIcon: IconButton(
             key: const ValueKey('restore-password-toggle'),
+            tooltip: t(_obscure ? 'showPassword' : 'hidePassword'),
             onPressed: () => setState(() => _obscure = !_obscure),
             icon: Icon(
               _obscure

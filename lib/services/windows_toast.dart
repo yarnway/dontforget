@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'text_bounds.dart';
 
 /// Windows toast delivery for reminders.
 ///
@@ -47,10 +48,7 @@ class WindowsToast {
   }) {
     final safeTitle = _escape(title.trim());
     final rawBody = body.trim();
-    final bodyRunes = rawBody.runes;
-    final boundedBody = bodyRunes.length > maxBodyLength
-        ? '${String.fromCharCodes(bodyRunes.take(maxBodyLength))}…'
-        : rawBody;
+    final boundedBody = truncateRunes(rawBody, maxBodyLength, suffix: '…');
     final singleLine = bodyDuplicatesTitle(title, body);
     final template = singleLine ? 'ToastText01' : 'ToastText02';
     final trimmedBody = _escape(boundedBody);

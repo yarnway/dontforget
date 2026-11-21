@@ -7,6 +7,7 @@ import '../models/reminder.dart';
 import '../models/review_report.dart';
 import '../models/task_statistics.dart';
 import '../models/task_details.dart';
+import 'text_bounds.dart';
 import 'package:uuid/uuid.dart';
 
 class AudioTranscriptionUnsupportedException implements Exception {
@@ -167,9 +168,11 @@ class LLMService {
   Future<List<Reminder>> extractTasksFromFile(
       String fileName, String fileContent, AppSettings settings) async {
     _checkActive();
-    final truncatedContent = fileContent.length > 2500
-        ? '${fileContent.substring(0, 2500)}...\n[文件内容较长，已截取前段分析]'
-        : fileContent;
+    final truncatedContent = truncateRunes(
+      fileContent,
+      2500,
+      suffix: '...\n[文件内容较长，已截取前段分析]',
+    );
 
     final prompt = '''
 用户上传了文档附件，文件名: "$fileName"。
@@ -191,7 +194,7 @@ $truncatedContent
       Reminder(
         id: const Uuid().v4(),
         taskTitle: '文件任务: $fileName',
-        taskSummary: truncatedContent.length > 60 ? '${truncatedContent.substring(0, 60)}...' : truncatedContent,
+        taskSummary: truncateRunes(truncatedContent, 60, suffix: '...'),
         quadrantLevel: 2,
         urgencyLevel: 'General',
         importanceLevel: 'Important',
@@ -492,7 +495,7 @@ Output strictly in valid JSON object matching this structure:
           if (evidence is String && evidence.length <= 4000)
             'capture_evidence': evidence,
           if (issues is List)
-            'capture_issues': issues.take(16).map((e) => e.toString().substring(0, e.toString().length.clamp(0, 256))).toList(),
+            'capture_issues': issues.take(16).map((e) => truncateRunes(e.toString(), 256)).toList(),
           if (issues != null && issues is! List)
             'capture_requires_review': true,
         };

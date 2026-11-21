@@ -112,6 +112,9 @@ const _strings = <String, List<String>>{
   ],
   'password': ['备份密码', 'Backup password', 'バックアップのパスワード'],
   'passwordAgain': ['再次输入密码', 'Repeat password', 'パスワードを再入力'],
+  'showPassword': ['显示密码', 'Show password', 'パスワードを表示'],
+  'hidePassword': ['隐藏密码', 'Hide password', 'パスワードを隠す'],
+  'backupProgress': ['正在处理备份', 'Backup in progress', 'バックアップ処理中'],
   'passwordHint': [
     '至少 12 个字符。密码不会保存，遗失后无法恢复加密备份。',
     'At least 12 characters. Passwords are not saved; encrypted backups cannot be recovered without them.',

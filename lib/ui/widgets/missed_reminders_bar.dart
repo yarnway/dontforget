@@ -71,35 +71,41 @@ class MissedRemindersBar extends StatelessWidget {
 
                   final isNarrow = constraints.maxWidth < 420;
 
-                  final titleWidget = InkWell(
-                    key: const ValueKey('missed-reminders-title'),
-                    borderRadius: BorderRadius.circular(8),
-                    onTap: onOpenMissed,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 6,
-                        horizontal: 4,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.history_toggle_off_rounded,
-                            size: 20,
-                            color: colors.error,
+                  final titleWidget = Semantics(
+                    button: true,
+                    child: InkWell(
+                      key: const ValueKey('missed-reminders-title'),
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: onOpenMissed,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(minHeight: 48),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 6,
+                            horizontal: 4,
                           ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              titleText,
-                              style: textTheme.titleSmall?.copyWith(
-                                color: colors.onSurface,
-                                fontWeight: FontWeight.w600,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.history_toggle_off_rounded,
+                                size: 20,
+                                color: colors.error,
                               ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  titleText,
+                                  style: textTheme.titleSmall?.copyWith(
+                                    color: colors.onSurface,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   );

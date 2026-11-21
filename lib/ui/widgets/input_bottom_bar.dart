@@ -66,6 +66,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   bool _memoOnly = false, _submitting = false, _restoring = false;
   bool _draftTouched = false, _draftSaveFailed = false;
   bool _resolvingPending = false;
+  bool _accessibleVoiceSession = false;
   int _draftRevision = 0;
   String _captureId = const Uuid().v4();
   String _lastText = '';
@@ -129,6 +130,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                       container: true,
                       explicitChildNodes: true,
                       child: AbsorbPointer(
+                        absorbing: !_accessibleVoiceSession,
                         child: Consumer(
                           builder: (_, ref, _) {
                             final state = ref.watch(homeControllerProvider);
@@ -148,6 +150,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                               selectionOpen: _voiceGesture.selectionOpen,
                               transcript: state.voicePreview,
                               liveTranscription: live,
+                              onAccessibleAction: _accessibleVoiceSession
+                                  ? _completeAccessibleVoiceAction
+                                  : null,
                             );
                           },
                         ),
@@ -538,6 +543,19 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         ].contains(Theme.of(context).platform),
       );
 
+  Future<void> _startAccessibleVoiceRecording() {
+    if (!_current || _voiceBusy) return Future.value();
+    _accessibleVoiceSession = true;
+    return _beginHeldRecording(Offset.zero, editable: false);
+  }
+
+  void _completeAccessibleVoiceAction(VoiceReleaseAction action) {
+    if (!_current || !_isLongPressRecording || _isFinishingLongPress) return;
+    _voiceAction = action;
+    _accessibleVoiceSession = false;
+    unawaited(_finishLongPressRecording());
+  }
+
   Future<void> _beginHeldRecording(
     Offset origin, {
     bool editable = false,
@@ -576,6 +594,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
       _removeCaptureOverlay();
       setState(() {
         _isLongPressRecording = false;
+        _accessibleVoiceSession = false;
         if (!_isFinishingLongPress) {
           _pendingRecordingStart = null;
           _heldRecorder = null;
@@ -675,6 +694,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
           _isTranscribing = false;
           _heldRecorder = null;
           _desktopVoiceDraft = false;
+          _accessibleVoiceSession = false;
         });
       }
     }
@@ -838,17 +858,23 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                     ),
                   ),
                 ),
-                Text(
-                  l10n.get('uploadMaterial'),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
+                Semantics(
+                  header: true,
+                  child: Text(
+                    l10n.get('uploadMaterial'),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   l10n.get('uploadMaterialDesc'),
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(sheetCtx).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -910,29 +936,39 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     required VoidCallback onTap,
   }) {
     return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: color, size: 26),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                ),
+      child: Semantics(
+        button: true,
+        label: label,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 48),
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            decoration: BoxDecoration(
+              border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            child: ExcludeSemantics(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(icon, color: color, size: 26),
+                  const SizedBox(height: 6),
+                  Text(
+                    label,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -1128,6 +1164,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
           ? null
           : _toggleInputMode,
     );
+    final accessibleNav = MediaQuery.accessibleNavigationOf(context);
     final inputSurface = RawGestureDetector(
       key: const ValueKey('composer-input-surface'),
       behavior: HitTestBehavior.translucent,
@@ -1139,6 +1176,12 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                 ..onTap = () {
                   if (!voiceMode && !isRecording && !_isTranscribing) {
                     _requestTextKeyboard();
+                  } else if (voiceMode &&
+                      canHold &&
+                      accessibleNav &&
+                      !isRecording &&
+                      !_isTranscribing) {
+                    unawaited(_startAccessibleVoiceRecording());
                   }
                 }
                 ..onSecondaryTapDown = isMobile && idleVoiceTarget && !voiceMode
@@ -1190,34 +1233,38 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                   ),
                   const SizedBox(width: 6),
                   Expanded(
-                    child: Text(
-                      l10n.get(
-                        _isTranscribing
-                            ? 'voiceTranscribing'
-                            : homeState.isPreparingRecording
-                            ? 'voicePreparing'
-                            : _isLongPressRecording
-                            ? !homeState.isRecording
-                                  ? 'voicePreparing'
-                                  : switch (_voiceAction) {
-                                      VoiceReleaseAction.save =>
-                                        'voiceReleaseSave',
-                                      VoiceReleaseAction.cancel =>
-                                        'voiceReleaseCancel',
-                                      VoiceReleaseAction.text =>
-                                        'voiceReleaseText',
-                                      VoiceReleaseAction.send =>
-                                        'voiceReleaseSend',
-                                    }
-                            : 'recordingClickStop',
+                    child: Semantics(
+                      container: true,
+                      liveRegion: true,
+                      child: Text(
+                        l10n.get(
+                          _isTranscribing
+                              ? 'voiceTranscribing'
+                              : homeState.isPreparingRecording
+                              ? 'voicePreparing'
+                              : _isLongPressRecording
+                              ? !homeState.isRecording
+                                    ? 'voicePreparing'
+                                    : switch (_voiceAction) {
+                                        VoiceReleaseAction.save =>
+                                          'voiceReleaseSave',
+                                        VoiceReleaseAction.cancel =>
+                                          'voiceReleaseCancel',
+                                        VoiceReleaseAction.text =>
+                                          'voiceReleaseText',
+                                        VoiceReleaseAction.send =>
+                                          'voiceReleaseSend',
+                                      }
+                              : 'recordingClickStop',
+                        ),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.red.shade700,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -1233,6 +1280,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
               excludeSemantics: true,
               button: true,
               label: l10n.get('holdToTalk'),
+              onTap: canHold && accessibleNav
+                  ? () => unawaited(_startAccessibleVoiceRecording())
+                  : null,
               child: Container(
                 key: const ValueKey('composer-voice-pad'),
                 alignment: Alignment.center,

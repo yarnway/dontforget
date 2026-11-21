@@ -104,41 +104,43 @@ class ReminderNoticePanel extends StatelessWidget {
       heightFactor: 1,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1040),
-        child: Container(
-          key: const ValueKey('reminder-notice-panel'),
-          margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: colors.surfaceContainerLow,
-            border: Border.all(color: colors.outlineVariant),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.notifications_none_rounded,
-                    size: 18,
-                    color: colors.primary,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '${l10n.get(upcoming ? 'upcomingReminder' : 'dueReminder')} · $categoryCount',
-                      style: Theme.of(context).textTheme.labelMedium,
+        child: Semantics(
+          container: true,
+          liveRegion: true,
+          child: Container(
+            key: const ValueKey('reminder-notice-panel'),
+            margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerLow,
+              border: Border.all(color: colors.outlineVariant),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.notifications_none_rounded,
+                      size: 18,
+                      color: colors.primary,
                     ),
-                  ),
-                  IconButton(
-                    tooltip: l10n.get('dismissReminderHint'),
-                    onPressed: busy ? null : () => onDismiss(reminder),
-                    icon: const Icon(Icons.close, size: 18),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                ],
-              ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '${l10n.get(upcoming ? 'upcomingReminder' : 'dueReminder')} · $categoryCount',
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: l10n.get('dismissReminderHint'),
+                      onPressed: busy ? null : () => onDismiss(reminder),
+                      icon: const Icon(Icons.close, size: 18),
+                    ),
+                  ],
+                ),
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Text(
@@ -269,6 +271,7 @@ class ReminderNoticePanel extends StatelessWidget {
                 ),
             ],
           ),
+        ),
         ),
       ),
     );

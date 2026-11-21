@@ -5,8 +5,9 @@
 #include "flutter/generated_plugin_registrant.h"
 #include "utils.h"
 
-FlutterWindow::FlutterWindow(const flutter::DartProject& project)
-    : project_(project) {}
+FlutterWindow::FlutterWindow(const flutter::DartProject& project,
+                             bool show_on_create)
+    : project_(project), show_on_create_(show_on_create) {}
 
 FlutterWindow::~FlutterWindow() {}
 
@@ -68,14 +69,16 @@ bool FlutterWindow::OnCreate() {
         result->Success(flutter::EncodableValue(success));
       });
 
-  flutter_controller_->engine()->SetNextFrameCallback([&]() {
-    this->Show();
-  });
+  if (show_on_create_) {
+    flutter_controller_->engine()->SetNextFrameCallback([&]() {
+      this->Show();
+    });
 
-  // Flutter can complete the first frame before the "show window" callback is
-  // registered. The following call ensures a frame is pending to ensure the
-  // window is shown. It is a no-op if the first frame hasn't completed yet.
-  flutter_controller_->ForceRedraw();
+    // Flutter can complete the first frame before the "show window" callback is
+    // registered. The following call ensures a frame is pending to ensure the
+    // window is shown. It is a no-op if the first frame hasn't completed yet.
+    flutter_controller_->ForceRedraw();
+  }
 
   return true;
 }

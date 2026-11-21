@@ -857,45 +857,14 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
 
   Widget _buildTriggerTypeRadio(String type, String label) {
     final isSelected = _contextTriggerType == type;
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
-      onTap: () => setState(() => _contextTriggerType = type),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? Colors.teal.withValues(alpha: 0.18)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? Colors.teal
-                : Colors.grey.withValues(alpha: 0.3),
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isSelected
-                  ? Icons.radio_button_checked
-                  : Icons.radio_button_unchecked,
-              size: 14,
-              color: isSelected ? Colors.teal : Colors.grey,
-            ),
-            const SizedBox(width: 4),
-            Flexible(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected ? Colors.teal : null,
-                ),
-              ),
-            ),
-          ],
-        ),
+    return Semantics(
+      inMutuallyExclusiveGroup: true,
+      selected: isSelected,
+      child: ChoiceChip(
+        selected: isSelected,
+        materialTapTargetSize: MaterialTapTargetSize.padded,
+        onSelected: (_) => setState(() => _contextTriggerType = type),
+        label: Text(label),
       ),
     );
   }
@@ -1366,19 +1335,21 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                                 children: [
                                   Text(
                                     l10n.get('dynamicPromotedAlertTitle'),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.amber,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .tertiary,
                                     ),
                                   ),
                                   Text(
                                     l10n.get('dynamicPromotedAlertDesc'),
                                     style: TextStyle(
                                       fontSize: 11,
-                                      color: isDark
-                                          ? Colors.grey.shade400
-                                          : Colors.grey.shade700,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
                                     ),
                                   ),
                                 ],
@@ -1393,9 +1364,9 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                               },
                               child: Text(
                                 l10n.get('revertToQ2'),
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.amber,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Theme.of(context).colorScheme.tertiary,
                                 ),
                               ),
                             ),
@@ -1728,7 +1699,9 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                                       style: TextStyle(
                                         fontSize: 11,
                                         color: !_selectedTime!.isAfter(now)
-                                            ? Colors.red.shade400
+                                            ? Theme.of(context)
+                                                  .colorScheme
+                                                  .error
                                             : primaryColor,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -1736,11 +1709,8 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                                   ),
                                 const SizedBox(width: 6),
                                 IconButton(
-                                  icon: const Icon(Icons.clear, size: 16),
+                                  icon: const Icon(Icons.clear, size: 18),
                                   tooltip: l10n.get('clearTime'),
-                                  splashRadius: 14,
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
                                   onPressed: () =>
                                       setState(() => _setAlarmTime(null)),
                                 ),
@@ -1748,62 +1718,71 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                             ],
                           ),
                           const SizedBox(height: 10),
-                          InkWell(
-                            borderRadius: BorderRadius.circular(6),
-                            onTap: _pickDateTime,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.05)
-                                    : Colors.grey.shade50,
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .outlineVariant
-                                      .withValues(alpha: 0.6),
+                          Semantics(
+                            button: true,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(6),
+                              onTap: _pickDateTime,
+                              child: Container(
+                                constraints: const BoxConstraints(
+                                  minHeight: 48,
                                 ),
-                              ),
-                              child: Wrap(
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: [
-                                  Icon(
-                                    Icons.calendar_month_outlined,
-                                    size: 18,
-                                    color: primaryColor,
+                                alignment: Alignment.centerLeft,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? Colors.white.withValues(alpha: 0.05)
+                                      : Colors.grey.shade50,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .outlineVariant
+                                        .withValues(alpha: 0.6),
                                   ),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    _selectedTime != null
-                                        ? formatLocalDateTime(_selectedTime!)
-                                        : l10n.get('notSet'),
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: _selectedTime != null
-                                          ? FontWeight.w600
-                                          : FontWeight.normal,
-                                      color: _selectedTime != null
-                                          ? Theme.of(
-                                              context,
-                                            ).textTheme.bodyMedium?.color
-                                          : Colors.grey,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    l10n.get('tapToChange'),
-                                    style: TextStyle(
-                                      fontSize: 12,
+                                ),
+                                child: Wrap(
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_month_outlined,
+                                      size: 18,
                                       color: primaryColor,
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      _selectedTime != null
+                                          ? formatLocalDateTime(_selectedTime!)
+                                          : l10n.get('notSet'),
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: _selectedTime != null
+                                            ? FontWeight.w600
+                                            : FontWeight.normal,
+                                        color: _selectedTime != null
+                                            ? Theme.of(
+                                                context,
+                                              ).textTheme.bodyMedium?.color
+                                            : Theme.of(
+                                                context,
+                                              ).colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      l10n.get('tapToChange'),
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: primaryColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),

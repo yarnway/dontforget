@@ -300,7 +300,6 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                       ? (_sendingOriginal ? Colors.white38 : Colors.white)
                       : null,
                 ),
-                visualDensity: VisualDensity.compact,
                 onPressed: _sendingOriginal
                     ? null
                     : () {
@@ -321,7 +320,6 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                                   : Colors.white38)
                             : null,
                       ),
-                      visualDensity: VisualDensity.compact,
                       onPressed:
                           !_sendingOriginal && widget.onSendOriginal != null
                           ? _sendOriginal
@@ -345,6 +343,7 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                         l10n.get('voiceSendOriginal'),
                         style: actionText,
                         maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
                       ),
                     );
@@ -358,7 +357,6 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                             ? (canSend ? Colors.white : Colors.white38)
                             : null,
                       ),
-                      visualDensity: VisualDensity.compact,
                       onPressed: canSend ? _send : null,
                     )
                   : FilledButton(
@@ -376,6 +374,7 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                         l10n.get('send'),
                         style: actionText,
                         maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
                       ),
                     );
@@ -412,24 +411,33 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                                 ),
                               const SizedBox(width: 10),
                               Expanded(
-                                child: Text(
-                                  l10n.get(
-                                    failed
-                                        ? 'voiceReviewTitle'
-                                        : 'voiceEditTitle',
+                                child: Semantics(
+                                  header: true,
+                                  child: Text(
+                                    l10n.get(
+                                      failed
+                                          ? 'voiceReviewTitle'
+                                          : 'voiceEditTitle',
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          color: mobile ? Colors.white70 : null,
+                                        ),
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(
-                                        color: mobile ? Colors.white70 : null,
-                                      ),
                                 ),
                               ),
                               if (!_complete || _sendingOriginal) ...[
                                 const SizedBox(width: 12),
                                 Semantics(
-                                  label: l10n.get('voiceListeningText'),
+                                  label: l10n.get(
+                                    _sendingOriginal
+                                        ? 'voiceSendingOriginal'
+                                        : 'voiceListeningText',
+                                  ),
                                   child: SizedBox(
                                     width: 18,
                                     height: 18,
@@ -454,20 +462,21 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                             ],
                           ),
                         ),
-                      if (!compact &&
-                          failed &&
-                          height >= 360 &&
-                          MediaQuery.textScalerOf(context).scale(14) <= 22)
+                      if (!compact && failed && height >= 280)
                         Padding(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                          child: Text(
-                            l10n.get('voicePartialReview'),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: mobile
-                                  ? const Color(0xFFF2B8B5)
-                                  : colors.error,
+                          child: Semantics(
+                            container: true,
+                            liveRegion: true,
+                            child: Text(
+                              l10n.get('voicePartialReview'),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: mobile
+                                    ? const Color(0xFFF2B8B5)
+                                    : colors.error,
+                              ),
                             ),
                           ),
                         ),
@@ -480,7 +489,7 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                           children: [
                             SizedBox(
                               width: compact
-                                  ? 44
+                                  ? 48
                                   : mobile
                                   ? 0
                                   : 16,
@@ -488,14 +497,14 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                             ),
                             Expanded(child: field(compact)),
                             SizedBox(
-                              width: compact ? 44 : 0,
+                              width: compact ? 48 : 0,
                               child: compact
                                   ? Center(child: original(true))
                                   : null,
                             ),
                             SizedBox(
                               width: compact
-                                  ? 44
+                                  ? 48
                                   : mobile
                                   ? 0
                                   : 16,

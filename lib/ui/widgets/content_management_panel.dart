@@ -539,7 +539,11 @@ class _ContentManagementPanelState
                         ),
                       if (_message != null) ...[
                         const SizedBox(height: 12),
-                        Text(t(_message!)),
+                        Semantics(
+                          container: true,
+                          liveRegion: true,
+                          child: Text(t(_message!)),
+                        ),
                       ],
                       if (_nativeFailed)
                         TextButton(
@@ -554,7 +558,11 @@ class _ContentManagementPanelState
                         ),
                       if (_busy && !_prompting) ...[
                         const SizedBox(height: 8),
-                        const LinearProgressIndicator(),
+                        LinearProgressIndicator(
+                          semanticsLabel: AppLocalizations.of(
+                            context,
+                          ).get('loading'),
+                        ),
                       ],
                     ],
                   ),

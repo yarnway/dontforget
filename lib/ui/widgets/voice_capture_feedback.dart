@@ -42,11 +42,13 @@ class VoiceCaptureFeedback extends StatelessWidget {
     this.selectionOpen = false,
     this.transcript = '',
     this.liveTranscription = true,
+    this.onAccessibleAction,
   });
   final VoiceReleaseAction action;
   final bool fullScreen, preparing, selectionOpen;
   final String transcript;
   final bool liveTranscription;
+  final ValueChanged<VoiceReleaseAction>? onAccessibleAction;
   static const _green = VoiceCaptureColors.bubble;
   static const _cancel = Color(0xFFC63C3C);
   static const _neutral = Color(0xFF252525);
@@ -121,10 +123,12 @@ class VoiceCaptureFeedback extends StatelessWidget {
                 ? math.min(120.0, width * .4)
                 : width * .408;
             final bubbleHeight = compact ? 46.0 : width * .185;
-            const captionStyle = TextStyle(
+            final captionStyle = TextStyle(
               fontSize: 15,
               height: 1.35,
-              color: Color(0xFFAAAAAA),
+              color: fullScreen
+                  ? const Color(0xFFD0D0D0)
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w500,
             );
             final safe = MediaQuery.paddingOf(context);
@@ -228,6 +232,7 @@ class VoiceCaptureFeedback extends StatelessWidget {
                             width: 18,
                             height: 18,
                             child: CircularProgressIndicator(
+                              semanticsLabel: loc.get('voicePreparing'),
                               value: MediaQuery.disableAnimationsOf(context)
                                   ? .7
                                   : null,
@@ -251,6 +256,7 @@ class VoiceCaptureFeedback extends StatelessWidget {
               ),
             );
             final caption = Semantics(
+              container: true,
               liveRegion: true,
               child: SizedBox(
                 height: captionHeight,
@@ -368,8 +374,10 @@ class VoiceCaptureFeedback extends StatelessWidget {
                       liveTranscription: liveTranscription,
                     ),
                   ),
-                target(true),
-                target(false),
+                if (onAccessibleAction == null) ...[
+                  target(true),
+                  target(false),
+                ],
                 Positioned(
                   key: const ValueKey('voice-recording-feedback'),
                   left: (bounds.maxWidth - feedbackWidth) / 2,
@@ -396,6 +404,63 @@ class VoiceCaptureFeedback extends StatelessWidget {
                           ],
                         ),
                 ),
+                if (onAccessibleAction != null)
+                  Positioned(
+                    left: 16,
+                    right: 16,
+                    bottom: math.max(24.0, safe.bottom + 16),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 520),
+                        child: Wrap(
+                          key: const ValueKey('voice-accessible-actions'),
+                          alignment: WrapAlignment.center,
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: [
+                            FilledButton.icon(
+                              key: const ValueKey('voice-accessible-save'),
+                              autofocus: true,
+                              style: FilledButton.styleFrom(
+                                minimumSize: const Size(48, 48),
+                                backgroundColor: VoiceCaptureColors.bubble,
+                                foregroundColor: VoiceCaptureColors.ink,
+                              ),
+                              onPressed: () =>
+                                  onAccessibleAction!(VoiceReleaseAction.save),
+                              icon: const Icon(Icons.check_rounded),
+                              label: Text(loc.get('voiceAccessibleSave')),
+                            ),
+                            FilledButton.tonalIcon(
+                              key: const ValueKey('voice-accessible-text'),
+                              style: FilledButton.styleFrom(
+                                minimumSize: const Size(48, 48),
+                                backgroundColor: const Color(0xFFE0E0E0),
+                                foregroundColor: const Color(0xFF171717),
+                              ),
+                              onPressed: () =>
+                                  onAccessibleAction!(VoiceReleaseAction.text),
+                              icon: const Icon(Icons.edit_note_rounded),
+                              label: Text(loc.get('voiceAccessibleEditText')),
+                            ),
+                            OutlinedButton.icon(
+                              key: const ValueKey('voice-accessible-cancel'),
+                              style: OutlinedButton.styleFrom(
+                                minimumSize: const Size(48, 48),
+                                foregroundColor: Colors.white,
+                                side: const BorderSide(color: Colors.white70),
+                              ),
+                              onPressed: () => onAccessibleAction!(
+                                VoiceReleaseAction.cancel,
+                              ),
+                              icon: const Icon(Icons.close_rounded),
+                              label: Text(loc.get('cancel')),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             );
           },

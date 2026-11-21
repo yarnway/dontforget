@@ -42,7 +42,11 @@ class SharedTextInboxScreen extends ConsumerWidget {
         builder: (context, snapshot) {
           if (snapshot.hasError) return Center(child: Text(t('readFailed')));
           if (snapshot.connectionState != ConnectionState.done) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: CircularProgressIndicator(
+                semanticsLabel: AppLocalizations.of(context).get('loading'),
+              ),
+            );
           }
           late SharedTextInboxData data;
           try {
@@ -111,6 +115,7 @@ class SharedTextInboxScreen extends ConsumerWidget {
                                     height: 44,
                                     cacheWidth: 128,
                                     fit: BoxFit.cover,
+                                    excludeFromSemantics: true,
                                     errorBuilder: (_, __, ___) => const Icon(
                                       Icons.image_outlined,
                                     ),
@@ -386,6 +391,7 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
           title: Text(t('title')),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
+            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
             onPressed: _busy || _closing ? null : _close,
           ),
         ),
@@ -410,6 +416,9 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
                         child: Image.file(
                           File(widget.item.attachmentPath!),
                           key: const ValueKey('shared-attachment-image'),
+                          semanticLabel:
+                              widget.item.attachmentName ??
+                              p.basename(widget.item.attachmentPath!),
                           fit: BoxFit.contain,
                           errorBuilder: (_, _, _) => const Padding(
                             padding: EdgeInsets.all(16),
@@ -451,12 +460,20 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
               minLines: 5,
               maxLines: 16,
               maxLength: SharedText.maxTextLength,
+              decoration: InputDecoration(
+                labelText: t('title'),
+                hintText: t('hint'),
+              ),
               onChanged: _changed,
             ),
             if (_failed) ...[
-              Text(
-                t('failed'),
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              Semantics(
+                container: true,
+                liveRegion: true,
+                child: Text(
+                  t('failed'),
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
               ),
               TextButton(
                 onPressed: _busy || _closing

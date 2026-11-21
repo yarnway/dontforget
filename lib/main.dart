@@ -13,6 +13,7 @@ import 'ui/screens/storage_unavailable_screen.dart';
 import 'app.dart';
 import 'services/startup_trace.dart';
 import 'services/desktop_window_service.dart';
+import 'services/text_bounds.dart';
 import 'services/windows_protocol_service.dart';
 
 void _writeCrashLog(dynamic error, StackTrace? stack) {
@@ -54,18 +55,18 @@ void _writeCrashLog(dynamic error, StackTrace? stack) {
   } catch (_) {}
 }
 
-Future<void> _handleCli(List<String> args) async {
+Future<int> _handleCli(List<String> args) async {
   if (args.contains('--help') || args.contains('-h')) {
     stdout.writeln('''
 ======================================================
- DontForget CLI v1.8.18
+ DontForget CLI v1.8.19
 ======================================================
 Usage:
   dont_forget --add <content>   (-a) Quickly record a reminder
   dont_forget --list            (-l) List all active reminders
   dont_forget --help            (-h) Show this help message
 ======================================================''');
-    return;
+    return 0;
   }
 
   if (args.contains('--list') || args.contains('-l')) {
@@ -85,7 +86,7 @@ Usage:
         '  - [Q${item.quadrantLevel}] ${item.taskTitle} (Reminder: $time)',
       );
     }
-    return;
+    return 0;
   }
 
   int addIdx = args.indexOf('--add');
@@ -94,14 +95,11 @@ Usage:
     final content = args.sublist(addIdx + 1).join(' ').trim();
     if (content.isEmpty) {
       stderr.writeln('Error: Please provide content for --add');
-      return;
+      return 2;
     }
 
     final dbHelper = DatabaseHelper.instance;
-    final runes = content.runes;
-    final title = runes.length > 30
-        ? '${String.fromCharCodes(runes.take(30))}...'
-        : content;
+    final title = truncateRunes(content, 30, suffix: '...');
     final reminder = Reminder(
       id: const Uuid().v4(),
       taskTitle: title,
@@ -116,8 +114,10 @@ Usage:
       (db) => db.insert('Reminders', reminder.toJson()),
     );
     stdout.writeln('[DontForget CLI] Reminder created: "$title"');
-    return;
+    return 0;
   }
+
+  return 0;
 }
 
 void main(List<String> args) async {
@@ -130,16 +130,26 @@ void main(List<String> args) async {
           args.contains('--help') ||
           args.contains('-h'))) {
     final helpOnly = args.contains('--help') || args.contains('-h');
+    final listRequested = !helpOnly && (args.contains('--list') || args.contains('-l'));
+    var addIdx = args.indexOf('--add');
+    if (addIdx == -1) addIdx = args.indexOf('-a');
+    final emptyAdd = !helpOnly &&
+        !listRequested &&
+        addIdx != -1 &&
+        args.sublist(addIdx + 1).join(' ').trim().isEmpty;
+    final needsStorage = !helpOnly && !emptyAdd;
     try {
-      if (!helpOnly) {
+      if (needsStorage) {
         WidgetsFlutterBinding.ensureInitialized();
         await StorageBootstrap(DatabaseHelper.instance).prepare();
       }
-      await _handleCli(args);
-      if (!helpOnly) {
+      final code = await _handleCli(args);
+      if (needsStorage) {
         await DatabaseHelper.instance.close(createBackup: false);
       }
-      exit(0);
+      await stdout.flush();
+      await stderr.flush();
+      exit(code);
     } catch (error) {
       final busy =
           error is DatabaseAccessException &&
@@ -149,6 +159,8 @@ void main(List<String> args) async {
             ? 'Local data is in use. Quit the other DontForget instance before using CLI.'
             : 'The command did not finish. Check saved data and recovery records before retrying.',
       );
+      await stdout.flush();
+      await stderr.flush();
       exit(busy ? 75 : 1);
     }
   }

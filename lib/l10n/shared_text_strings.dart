@@ -7,9 +7,9 @@ String sharedTextLabel(String language, String key) {
   const labels = {
     'title': ['分享草稿', 'Shared drafts', '共有下書き'],
     'hint': [
-      '接收分享的文字或链接，确认后保存为备忘。',
-      'Review shared text or links, then save a memo.',
-      '共有テキストやリンクを確認し、メモとして保存します。',
+      '接收分享的文字、链接、图片或文件，确认后保存为备忘。',
+      'Review shared text, links, images or files, then save a memo.',
+      '共有されたテキスト・リンク・画像・ファイルを確認し、メモとして保存します。',
     ],
     'empty': ['暂无分享草稿', 'No shared drafts', '共有下書きはありません'],
     'emptyDraft': ['空草稿', 'Empty draft', '空の下書き'],

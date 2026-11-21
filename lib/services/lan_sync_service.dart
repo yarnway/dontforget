@@ -15,6 +15,7 @@ import '../models/departure_plan.dart';
 import '../models/ordinary_series.dart';
 import '../models/task_details.dart';
 import 'local_media_store.dart';
+import 'text_bounds.dart';
 
 class _PayloadTooLargeException implements Exception {
   const _PayloadTooLargeException();
@@ -906,7 +907,7 @@ class LanSyncService {
     if (cleaned.isEmpty || cleaned == '.' || cleaned == '..') {
       return 'attachment.bin';
     }
-    return cleaned.length <= 180 ? cleaned : cleaned.substring(0, 180);
+    return truncateUtf16Safe(cleaned, 180);
   }
 
   static bool _isValidAttachmentName(String name) {

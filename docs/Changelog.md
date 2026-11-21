@@ -4,6 +4,21 @@
 
 ---
 
+## v1.8.19（build90，无障碍读屏收口、Windows CLI／Runner 修复与 UTF-16 代理对安全截断）- 2026-11-21
+
+- **Android TalkBack / iOS VoiceOver 无障碍与 WCAG AA 收口**：
+  - **语音输入无障碍闭环（`input_bottom_bar.dart`、`voice_capture_feedback.dart`）**：当系统启用读屏／无障碍导航（`MediaQuery.accessibleNavigationOf(context)`）时，移动端 `composer-voice-pad` 支持单次点击／双点激活启动录音，录音浮层解除 `AbsorbPointer` 阻塞并渲染 >= 48dp 高对比度交互按钮（`保存原语音` / `转文字编辑` / `取消`，默认自动聚焦主按钮），在完全保留原有按住滑动手势的同时让 TalkBack / VoiceOver 用户完整使用语音录入。
+  - **未加标签控件与语义状态修复**：为 `PortableBackupPanel` 全部 3 处密码显隐切换按钮补齐动态本地化 `tooltip`（`显示密码` / `隐藏密码`），为 `SettingsScreen` 局域网同步服务端 `Switch` 补齐 `Semantics(label: lanSyncTitle)`，为 `SharedTextInboxScreen` 分享编辑器补齐返回按钮 `tooltip` 与 `shared-text-editor` 的 `labelText`/`hintText`，为首页图片预览关闭按钮扩大至 48×48dp 并补齐 `tooltip` 与图片 `semanticLabel`，为 `TaskReaderScreen` 清单补齐 `checked` 与完成状态语义标签，为 `TaskAttachmentPreview` / `_AttachmentTile` 补齐图片 `semanticLabel` 与 `enabled` 状态。
+  - **触控热区、大字号缩放与对比度修复**：移除 `TaskDetailScreen` 清除时间按钮的 16×16dp 约束并将情境触发类型改为带互斥组语义的 `ChoiceChip`；升级设置页外链标签为 `Semantics(link: true)` + `ActionChip`；移除语音编辑页／提醒通知条／局域网复制按钮的 `VisualDensity.compact` 约束以保障 >= 48dp 触控热区；移除 `LiveVoiceTextDialog` 在 >1.57x 字号下隐藏识别失败提示的限制并接入 `liveRegion`；修复 `LanSyncConflictsDialog` 2.0x 缩放溢出与空值语义；修复 `HomeScreen` 清空完成确认按钮与 `TaskDetailScreen` 提示文案的 WCAG AA 对比度；首页情境切换菜单改用 `CheckedPopupMenuItem`；新增 `test/accessibility_guidelines_test.dart`（含 `labeledTapTargetGuideline` / `androidTapTargetGuideline` 与 TalkBack 语音交互验证）。
+- **Windows CLI 与 Runner 修复（`windows/runner/main.cpp`、`flutter_window.h`、`flutter_window.cpp`、`lib/main.dart`）**：
+  - 修复 `ConfigureStandardStreams()`：保留调用方已重定向的 `STD_OUTPUT_HANDLE` / `STD_ERROR_HANDLE` / `STD_INPUT_HANDLE`（管道或文件），仅在对应句柄无效且成功附加父控制台时绑定 `CONOUT$` / `CONIN$`，并仅在纯控制台附加且无输出重定向时调用 `FlutterDesktopResyncOutputStreams()`（避免无控制台管道场景下引擎触发 `0xC0000409` 快速失败，也避免 `CONOUT$` 覆盖管道导致 `dont_forget.exe --help | Out-String` 及子进程捕获输出为空）。
+  - `IsCliInvocation()` 改用 `CommandLineToArgvW(::GetCommandLineW(), ...)` 跳过 `argv[0]` 做参数精确比较（`wcscmp`），替代原先基于 `wcsstr` 的子串误判（防止路径或协议 URI 含 `-a`/`-l`/`-h` 绕过单实例互斥锁）。
+  - `FlutterWindow` 增加 `show_on_create = true`（CLI 传 `!is_cli`），避免命令行调用时闪现 `1280x720` 窗口；`lib/main.dart` 为 CLI 增加 `stdout`/`stderr` 退出前 `flush()`，并在 `--add` 缺少内容时直接返回非零退出码 `2` 且不触发存储锁检测；CLI 横幅更新至 `v1.8.19`。
+- **UTF-16 代理对安全截断（`lib/services/text_bounds.dart`）**：新增共享 `truncateRunes` 与 `truncateUtf16Safe` 辅助函数，统一替换 `LLMService`、`MultiAgentService`、`AppUpdateService`、`LanSyncService._safeFileName`（同时保持 `<= 180` UTF-16 码元约束）、`main.dart` 与 `WindowsToast` 中的截断逻辑，避免截断拆分表情符号代理对。
+- **多语言与文档同步**：补齐中／英／日三语无障碍词条，更新 `lib/l10n/shared_text_strings.dart` `hint` 与 `StorageUnavailableScreen` 三语副标题；同步更新 `README.md`、`docs/User_Guide.md`、`docs/Developer_Guide.md`、`docs/Packaging_and_Deployment.md` 与 `docs/Release_Notes_v1.8.19.md`；新增 `test/text_bounds_test.dart`、`scripts/tests/test_windows_runner_cli.py` 与 `test/accessibility_guidelines_test.dart`。
+
+---
+
 ## 四轮迭代优化：v1.8.15（build86）至 v1.8.18（build89，本机已构建与升级验证）- 2026-11-20
 
 - **v1.8.15（build86）功能可用性**：收紧分享附件私有 `shared_handoff/<id>/` 路径校验；局域网同步支持物理网卡 IP 优先级排序、细分失败提示、大包未读 413 断连防护、地址／配对码一键复制与 PIN 回车直连；修复同步页边缘模型应用后保存按钮与移动端控制台外链打开；事项卡片新增调整分类与快捷延后提醒；只读详情支持一键复制正文与清单；文件附件与首页文件预览升级为异步 128 KiB 有界 UTF-8 预览（含 CJK 截断安全与复制）；加密备份／恢复补齐密码显隐切换；首页补齐通勤情境、`U`/`,` 快捷键、`PopScope` 关闭搜索、`url_launcher` 打开视频、音频停止播放及待处理分享草稿提示条／命令面板入口。

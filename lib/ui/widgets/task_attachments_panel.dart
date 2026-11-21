@@ -371,6 +371,9 @@ class _AttachmentTileState extends State<_AttachmentTile> {
                   child: Semantics(
                     label: '${l10n.get('taskAttachmentPreview')}: $name',
                     button: true,
+                    enabled:
+                        media != null &&
+                        (media.type == 'text' || resolved != null),
                     child: SizedBox(
                       height: 104,
                       child: media?.type == 'image' && resolved != null
@@ -660,6 +663,7 @@ class _TaskAttachmentPreviewState extends State<TaskAttachmentPreview> {
                                 maxScale: 4,
                                 child: Image.file(
                                   File(file),
+                                  semanticLabel: path.basename(file),
                                   fit: BoxFit.contain,
                                   cacheWidth: 2048,
                                   errorBuilder: (_, __, ___) => Text(

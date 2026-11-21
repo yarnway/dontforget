@@ -888,38 +888,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _buildConsoleLinkChip(String label, String url) {
-    return InkWell(
-      onTap: _isOpeningConsole ? null : () => _openConsoleUrl(url),
-      borderRadius: BorderRadius.circular(4),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(
-            color: Theme.of(
-              context,
-            ).colorScheme.outlineVariant.withValues(alpha: 0.7),
-            width: 0.8,
-          ),
+    return Semantics(
+      link: true,
+      child: ActionChip(
+        onPressed: _isOpeningConsole ? null : () => _openConsoleUrl(url),
+        materialTapTargetSize: MaterialTapTargetSize.padded,
+        avatar: Icon(
+          Icons.arrow_outward,
+          size: 14,
+          color: Theme.of(context).colorScheme.primary,
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                color: Theme.of(context).textTheme.bodySmall?.color,
-              ),
-            ),
-            const SizedBox(width: 3),
-            Icon(
-              Icons.arrow_outward,
-              size: 10,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ],
-        ),
+        label: Text(label),
       ),
     );
   }
@@ -1034,12 +1013,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   children: [
                     if (!_ready && _loadError == null)
-                      const LinearProgressIndicator(),
+                      LinearProgressIndicator(
+                        semanticsLabel: l10n.get('loading'),
+                      ),
                     if (_loadError != null)
-                      Text(
-                        l10n.get(_loadError!),
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
+                      Semantics(
+                        container: true,
+                        liveRegion: true,
+                        child: Text(
+                          l10n.get(_loadError!),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                         ),
                       ),
                     if (widget.area == null) ...[
@@ -1496,20 +1481,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
-                                  child: Text(
-                                    l10n.get('lanSyncTitle'),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 14,
+                                  child: Semantics(
+                                    header: true,
+                                    child: Text(
+                                      l10n.get('lanSyncTitle'),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 14,
+                                      ),
                                     ),
                                   ),
                                 ),
-                                Switch(
-                                  key: const ValueKey('lan-sync-server'),
-                                  value: _isLanServerRunning,
-                                  onChanged: _lanServerChanging
-                                      ? null
-                                      : (_) => _toggleLanServer(),
+                                Semantics(
+                                  label: l10n.get('lanSyncTitle'),
+                                  child: Switch(
+                                    key: const ValueKey('lan-sync-server'),
+                                    value: _isLanServerRunning,
+                                    onChanged: _lanServerChanging
+                                        ? null
+                                        : (_) => _toggleLanServer(),
+                                  ),
                                 ),
                               ],
                             ),
@@ -1565,8 +1556,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                             'lan-sync-copy-address',
                                           ),
                                           tooltip: l10n.get('syncCopyAddress'),
-                                          visualDensity: VisualDensity.compact,
-                                          iconSize: 16,
+                                          iconSize: 18,
                                           onPressed: () => _copyLanValue(
                                             '$_lanIp:$_lanPort',
                                             'syncCopiedAddress',
@@ -1606,8 +1596,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                             'lan-sync-copy-pin',
                                           ),
                                           tooltip: l10n.get('syncCopyPin'),
-                                          visualDensity: VisualDensity.compact,
-                                          iconSize: 16,
+                                          iconSize: 18,
                                           onPressed: () => _copyLanValue(
                                             _lanPin,
                                             'syncCopiedPin',
@@ -1621,11 +1610,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               ),
                             ],
                             const Divider(height: 20),
-                            Text(
-                              l10n.get('connectToDevice'),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
+                            Semantics(
+                              header: true,
+                              child: Text(
+                                l10n.get('connectToDevice'),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -1696,12 +1688,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                     ? null
                                     : _syncWithTarget,
                                 icon: _isSyncing
-                                    ? const SizedBox(
+                                    ? SizedBox(
                                         width: 12,
                                         height: 12,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 1.5,
-                                          color: Colors.white,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withValues(alpha: 0.55),
                                         ),
                                       )
                                     : const Icon(Icons.sync_rounded, size: 14),
@@ -1715,6 +1710,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             ),
                             if (_lanConflicts.isNotEmpty)
                               Semantics(
+                                container: true,
                                 liveRegion: true,
                                 child: TextButton.icon(
                                   key: const ValueKey('lan-sync-conflicts'),
