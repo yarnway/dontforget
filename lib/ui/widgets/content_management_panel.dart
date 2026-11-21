@@ -245,6 +245,7 @@ class _ContentManagementPanelState
                 if (image != null)
                   Image.file(
                     File(image),
+                    semanticLabel: entry.label,
                     errorBuilder: (_, error, stack) => Text(t('failed')),
                   ),
                 for (final path in entry.files) SelectableText(path),

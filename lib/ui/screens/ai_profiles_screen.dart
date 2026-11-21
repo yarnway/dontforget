@@ -255,12 +255,17 @@ class _AiProfilesScreenState extends ConsumerState<AiProfilesScreen> {
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ),
-                Switch(
-                  value: profile.enabled,
-                  onChanged: saving || !ready
-                      ? null
-                      : (value) =>
-                            change(index, profile.copyWith(enabled: value)),
+                Semantics(
+                  label:
+                      '${t('aiProfilesPriority').replaceAll('{n}', '${index + 1}')} ${profile.label}'
+                          .trim(),
+                  child: Switch(
+                    value: profile.enabled,
+                    onChanged: saving || !ready
+                        ? null
+                        : (value) =>
+                              change(index, profile.copyWith(enabled: value)),
+                  ),
                 ),
                 IconButton(
                   tooltip: t('aiProfilesUp'),

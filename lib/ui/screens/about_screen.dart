@@ -267,6 +267,7 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                               'assets/app_icon.png',
                               width: 56,
                               height: 56,
+                              excludeFromSemantics: true,
                             ),
                           ),
                           const SizedBox(width: 16),

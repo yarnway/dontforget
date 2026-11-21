@@ -381,6 +381,7 @@ class _AttachmentTileState extends State<_AttachmentTile> {
                               File(resolved),
                               fit: BoxFit.cover,
                               cacheWidth: 384,
+                              excludeFromSemantics: true,
                               errorBuilder: (_, __, ___) =>
                                   const Icon(Icons.broken_image_outlined),
                             )

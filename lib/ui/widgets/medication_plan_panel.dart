@@ -592,6 +592,9 @@ class _MedicationPlanPanelState extends ConsumerState<MedicationPlanPanel> {
                             File(snapshot.data!),
                             cacheWidth: 1024,
                             fit: BoxFit.contain,
+                            semanticLabel: source.text.isEmpty
+                                ? t('sourceAttachmentHint')
+                                : source.text,
                             errorBuilder: (_, e, stack) =>
                                 Text(t('sourceMissing')),
                           )
