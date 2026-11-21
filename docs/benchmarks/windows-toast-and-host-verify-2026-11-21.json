@@ -1,0 +1,61 @@
+{
+  "timestamp_utc": "2026-11-21T08:36:00Z",
+  "source_revision": "b3d016b4197d842741931e45680ac9a4f9994463",
+  "os": "Windows 11 x64 (Build 26300)",
+  "installed_app_pe": "1.8.19.90",
+  "installed_app_running_pid": 28900,
+  "installed_app_untouched": true,
+  "protocol_and_shortcut_verification": {
+    "hkcu_protocol_command": "\"C:\\Users\\Wayne\\AppData\\Local\\Programs\\DontForget\\dont_forget.exe\" \"%1\"",
+    "start_menu_shortcut_exists": true,
+    "start_menu_shortcut_aumid": "DontForget",
+    "desktop_shortcut_exists": true
+  },
+  "windows_toast_verification": {
+    "host_dontforget_notification_registry_enabled": 0,
+    "host_dontforget_toast_notifier_setting": "DisabledForApplication",
+    "powershell_winrt_quirk_verified": "PowerShell 5.1 returns $null for ToastNotifier.Setting when enabled and non-null NotificationSetting enum (e.g. DisabledForApplication) when blocked; guarded via ($null -ne $notifier.Setting -and $notifier.Setting -ne Enabled).",
+    "blocked_detection_test": {
+      "aumid": "DontForget",
+      "exit_code": 2,
+      "stderr": "Windows toast blocked: DisabledForApplication",
+      "pass": true
+    },
+    "live_delivery_test_with_temp_registered_aumid": {
+      "temp_aumid": "DontForget.ToastVerify20261121",
+      "registry_cleaned_up": true,
+      "template": "ToastText02",
+      "protocol_launch_uri": "dontforget://task/win-toast-verify",
+      "action_buttons": [
+        "完成 (dontforget://action/complete?id=win-toast-verify)",
+        "15分钟后 (dontforget://action/snooze?id=win-toast-verify&minutes=15)"
+      ],
+      "exit_code": 0,
+      "delivered_history_count": 1,
+      "cleaned_history_count": 0,
+      "pass": true
+    }
+  },
+  "tray_hidden_graceful_exit_kernel_proof": {
+    "sandbox_pid": 32052,
+    "window_visible_after_sw_hide": false,
+    "graceful_event": "Local\\DontForget.GracefulUpgradeExit",
+    "exited_gracefully": true,
+    "exit_code": 0,
+    "shutdown_ms": 76,
+    "single_instance_mutex_released": true,
+    "pass": true
+  },
+  "interactive_gui_desktop_boundary_probe": {
+    "agent_desktop": "WinSta0\\exebox-ECVKIFYV7ZGA2SW5PXFPXZF33U",
+    "qa_worktree_built_and_cleaned": true,
+    "qa_hwnd_visible": true,
+    "titlebar_and_brand_icon_rendered": true,
+    "client_surface_composited_in_inactive_exebox": false,
+    "uia_node_count_in_inactive_exebox": 2,
+    "single_owner_db_lock_protected_live_db": true,
+    "second_instance_mutex_exited_cleanly": true,
+    "interactive_gui_tested": false,
+    "reason": "Windows DWM does not composite ANGLE/DirectComposition Flutter client frames onto the inactive WinSta0\\exebox desktop, and path_provider_windows resolves SHGetKnownFolderPath(FOLDERID_RoamingAppData) which is safely protected by PID 28900's single-owner DB lock. Interactive GUI, desktop IME, and tray menu remain honestly unverified until run on the active WinSta0\\Default desktop."
+  }
+}
