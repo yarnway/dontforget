@@ -62,6 +62,18 @@
 
 ## 本轮执行记录
 
+### 11月21日 v1.8.19／build90 无障碍读屏收口、Windows CLI／Runner 修复、UTF‑16 安全截断与本机运行中升级初验留证
+
+- **源码**　固定提交 `7e28ef0953b030fd482fdf3c36208b93dfb49da9`（版本升至 `1.8.19+90`，不更改 schema 17、依赖锁文件或既有凭据存储格式）：
+  - **阶段 47 无障碍读屏（TalkBack / VoiceOver）与 WCAG AA**：基于 `flutter_a11y_agent` 全量审计及 Pixel 8 Pro 正式版 XML 实查，修复移动语音按住条读屏阻塞（`MediaQuery.accessibleNavigationOf(context)` 下支持单次点击／双点激活启动录音，解除浮层 `AbsorbPointer` 并提供 >= 48dp 高对比度 `保存原语音`／`转文字编辑`／`取消` 按钮，完全保留原有按住滑动手势）；补齐加密备份／恢复全部 3 处密码显隐按钮动态三语 `tooltip`、局域网同步 `Switch` 语义标签、分享编辑器返回按钮 `tooltip` 与输入框标签、首页图片预览 48dp 关闭按钮与 `semanticLabel`、只读清单完成状态语义及附件卡片 `enabled`/`semanticLabel`；扩大任务详情清除时间按钮、情境触发 `ChoiceChip`、设置页外链 `ActionChip`、语音编辑页与提醒通知条触控热区至 >= 48dp；解除语音编辑页高字号隐藏错误提示并补齐 `liveRegion`、`Semantics(header: true)`、`CheckedPopupMenuItem`、局域网冲突弹窗 2.0x 缩放防溢出与 WCAG AA 对比度修复；新增 `test/accessibility_guidelines_test.dart`。
+  - **Windows CLI／Runner 与 UTF‑16 代理对安全截断**：修复 `windows/runner/main.cpp` `ConfigureStandardStreams()` 保留重定向管道／文件流且仅在纯父控制台无重定向时调用 `FlutterDesktopResyncOutputStreams()`（解决 `0xC0000409` 崩溃与管道捕获为空），`IsCliInvocation()` 改用 `CommandLineToArgvW` 精确参数比对，`FlutterWindow` CLI 禁用启动闪窗，`lib/main.dart` CLI 版本对齐 `v1.8.19`、退出前冲刷流且 `--add` 空参返回码 `2`；抽离共享 `lib/services/text_bounds.dart`（`truncateRunes`/`truncateUtf16Safe`）消除 `LLMService`、`MultiAgentService`、`AppUpdateService`、`LanSyncService._safeFileName`、`main.dart` 与 `WindowsToast` 的 UTF‑16 代理对切分风险；补齐中／英／日三语无障碍词条、分享收件箱提示、`StorageUnavailableScreen` 三语副标题及使用／开发／打包文档；新增 `test/text_bounds_test.dart` 与 `scripts/tests/test_windows_runner_cli.py`。
+- **自动化**　固定 Windows Flutter `3.44.9` 下：`python scripts/check_flutter_version.py --strict` 通过，`flutter analyze --no-pub` 0 问题，`python scripts/report_windows_skipped_tests.py` 通过（14 项文档化 Windows 跳过），Python 脚本测试 **184 通过／6 项 POSIX 跳过**，全仓 `flutter test --no-pub --concurrency 2 --timeout 2m` **2,699 通过／20 项文档化 Windows 跳过／0 失败**。
+- **安装包**　基于干净提交 `7e28ef0` 本机固定 Flutter `3.44.9` 构建 Windows x64 未签名安装包 `DontForget_Setup_v1.8.19.exe`（`15,071,091 B`，SHA‑256 `55097c2402cd4603934390e8284a3ca08e2a627a17ac13492d31dd851101e0cf`）与便携包 `DontForget_Windows_Portable_v1.8.19.zip`（`18,374,315 B`，SHA‑256 `3f05df2a8d1db2e1be0ea86e0331ce9ae416255ab9f85d3caf612e4a8a4e31a9`），通过 `scripts/verify_artifacts.py` 校验；尚未发布 `v1.8.19` GitHub Release。
+- **本机／真机验收**　详见 [windows-upgrade-90-2026-11-21.json](benchmarks/windows-upgrade-90-2026-11-21.json)：
+  - **Windows 运行中覆盖升级（初验正常关闭失败，保留证据）**：升级前对实机运行目录完成最新数据与 SQLite 在线备份并验证一致；实机已运行用户经 `explorer.exe`（PID `6556`）启动的 `dont_forget.exe`（PID `19044`，`v1.8.18.89`）。自当前隔离桌面（`WinSta0\exebox-...`）调用安装器 `/CLOSEAPPLICATIONS /NOFORCECLOSEAPPLICATIONS`（禁止强关），Restart Manager 命中 `DontForget` 但因跨桌面／托盘无可见主窗将其归类为 `RmUnknownApp`（`Type=0, Restartable=False`）导致无法自动关闭，安装器在 0.7s 内中止并回滚（**退出码 `5`**）。独立复核安装文件仍保持 `1.8.18.89`，业务三表（`7/0/1`）与 DPAPI 凭据（1 项）完好无损。遵循 `AGENTS.md`，未强杀用户进程，保留本次失败证据，待用户从桌面／托盘退出 `DontForget` 后继续执行退出后覆盖安装与同桌面运行中升级续验（两者分别记录，不冒记通过）。
+  - **内置 Release CLI 实测**：对 `build\windows\x64\runner\Release\dont_forget.exe` 实测 `--help` 管道捕获返回码 `0` 且完整输出 `DontForget CLI v1.8.19`、`--add "   "` 返回码 `2`、在 PID `19044` 持有库锁时 `--list` 正确返回码 `75`（`Local data is in use`）。
+  - **待续验**：用户退出 PID `19044` 后完成 Windows 本机 `v1.8.19+90` 覆盖安装与同桌面运行中升级、主线 CI 通过后发布四平台 `v1.8.19`、CI 官方安装包复验、Pixel 8 Pro 正式版 `com.yarnway.dontforget` 同签名升级至 `1.8.19 (90)` 及真实 Android TalkBack 实机读屏验收。
+
 ### 11月21日 正式版实机验收收口（Pixel 8 Pro 公开正式版 `com.yarnway.dontforget` `v1.8.18 (89)` 全链路＋Windows 旧库全真副本接管）
 
 - **源码**　无产品源码变更（全程基于公开 `v1.8.18` 发布提交 `4855976`）。

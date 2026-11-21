@@ -1,0 +1,62 @@
+{
+  "timestamp_utc": "2026-11-21T03:52:03.357661+00:00",
+  "version": "1.8.19+90",
+  "revision": "7e28ef0953b030fd482fdf3c36208b93dfb49da9",
+  "setup_file": "DontForget_Setup_v1.8.19.exe",
+  "setup_sha256": "55097c2402cd4603934390e8284a3ca08e2a627a17ac13492d31dd851101e0cf",
+  "portable_file": "DontForget_Windows_Portable_v1.8.19.zip",
+  "portable_sha256": "3f05df2a8d1db2e1be0ea86e0331ce9ae416255ab9f85d3caf612e4a8a4e31a9",
+  "package_origin": "local-pinned-flutter-3.44.9",
+  "running_before_upgrade": true,
+  "started_for_running_check": false,
+  "pids_before": [
+    19044
+  ],
+  "version_before": [
+    1,
+    8,
+    18,
+    89
+  ],
+  "backup_dir": "C:\\Users\\Wayne\\AppData\\Local\\Temp\\dontforget-upgrade-backups\\20261121-115200-pre-1.8.19-90",
+  "backup_verified": true,
+  "force_close_allowed": false,
+  "installer_exit": 5,
+  "gui_tested": false,
+  "running_upgrade_result": "FAIL",
+  "version_after_failed_attempt": [
+    1,
+    8,
+    18,
+    89
+  ],
+  "db_preserved_after_failure": true,
+  "dpapi_preserved_after_failure": true,
+  "restart_manager_diagnosis": {
+    "installer_desktop": "WinSta0\\exebox-ECVKIFYV7ZGA2SW5PXFPXZF33U",
+    "running_process_pid": 19044,
+    "running_process_parent": "explorer.exe (PID 6556)",
+    "running_process_session_id": 1,
+    "running_process_start_time_local": "2026-11-21 11:44:55",
+    "running_process_main_window_handle": 0,
+    "rm_get_list_application_type": 0,
+    "rm_get_list_application_type_name": "RmUnknownApp",
+    "rm_get_list_restartable": false,
+    "inno_log_summary": [
+      "RestartManager found an application using one of our files: DontForget",
+      "Shutting down applications using our files.",
+      "Some applications could not be shut down.",
+      "Defaulting to Abort for suppressed message box (Abort/Retry/Ignore)",
+      "Rolling back changes."
+    ],
+    "note": "PID 19044 (v1.8.18+89) was started by explorer.exe on the user's interactive desktop (or hidden to tray). From the isolated WinSta0\\exebox desktop, RestartManager classified it as RmUnknownApp (Type=0) and refused graceful shutdown under /NOFORCECLOSEAPPLICATIONS. Per AGENTS.md, process was NOT force-closed; failure evidence preserved pending user exit from tray/desktop for follow-up."
+  },
+  "built_release_cli_verification": {
+    "binary": "build\\windows\\x64\\runner\\Release\\dont_forget.exe",
+    "help_piped_exit": 0,
+    "help_piped_has_version_banner": true,
+    "empty_add_exit": 2,
+    "list_while_running_exit": 75,
+    "list_while_running_message": "Local data is in use. Quit the other DontForget instance before using CLI."
+  }
+}
