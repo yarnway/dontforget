@@ -1,0 +1,54 @@
+{
+  "timestamp_utc": "2026-11-21T09:49:11.951718+00:00",
+  "package": "com.yarnway.dontforget",
+  "installed_pkg": {
+    "package": "com.yarnway.dontforget",
+    "sha256": "438398274d5cc078fdd38f4525b2898e049f6701cd547620275b5eb4daf630fd",
+    "version_lines": [
+      "versionCode=91 minSdk=24 targetSdk=36",
+      "versionName=1.8.20"
+    ]
+  },
+  "pre_state": {
+    "enabled_accessibility_services": "null",
+    "accessibility_enabled": "0",
+    "record_audio_granted": false,
+    "default_input_method": "com.tencent.wetype/.plugin.hld.WxHldService",
+    "font_scale": "1.0"
+  },
+  "checks": {
+    "talkback_overlay_dark_cancel": {
+      "save_48dp": true,
+      "edit_48dp": true,
+      "cancel_48dp": true,
+      "screenshot": "f91_tb_overlay.png",
+      "pass": true
+    },
+    "inline_feedback_close_semantics": {
+      "naf_unlabeled_buttons": [],
+      "close_buttons": [
+        {
+          "desc": "关闭",
+          "clickable": "true",
+          "bounds": "[864,271][972,379]",
+          "size_px": [
+            108,
+            108
+          ]
+        }
+      ],
+      "clickable_labeled_close_found": true,
+      "mislabeled_outer_banner_count": 0,
+      "pass": true
+    }
+  },
+  "flutter_errors": [],
+  "post_state": {
+    "enabled_accessibility_services": "null",
+    "accessibility_enabled": "0",
+    "record_audio_granted": false,
+    "default_input_method": "com.tencent.wetype/.plugin.hld.WxHldService",
+    "font_scale": "1.0"
+  },
+  "restored_cleanly": true
+}

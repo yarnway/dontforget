@@ -1,0 +1,61 @@
+{
+  "timestamp_utc": "2026-11-21T09:47:26.187144+00:00",
+  "version": "1.8.20+91",
+  "revision": "b820337968b9fa7279928aa87eab5234f387dfba",
+  "setup_file": "DontForget_Setup_v1.8.20.exe",
+  "setup_sha256": "6419ed53a54e4d170a3c20256ff0d19bf8ca7a9609fc1af56d989841ea6c20b2",
+  "portable_file": "DontForget_Windows_Portable_v1.8.20.zip",
+  "portable_sha256": "744456df3f7c2c0c574ea29e544eabb8a83b8955ec52aaa5dfb23a118fafac96",
+  "package_origin": "github-release-v1.8.20-run-44887222048",
+  "upgrade_mode": "post_user_exit",
+  "running_before_upgrade": false,
+  "started_for_running_check": false,
+  "pids_before": [],
+  "version_before": [
+    1,
+    8,
+    19,
+    90
+  ],
+  "backup_dir": "C:\\Users\\Wayne\\AppData\\Local\\Temp\\dontforget-upgrade-backups\\20261121-174724-pre-1.8.20-91",
+  "backup_verified": true,
+  "force_close_allowed": false,
+  "installer_exit": 0,
+  "gui_tested": false,
+  "running_upgrade_result": "NOT_APPLICABLE_POST_EXIT",
+  "post_exit_upgrade_result": "PASS",
+  "version_after": [
+    1,
+    8,
+    20,
+    91
+  ],
+  "payload_files_identical": 38,
+  "native_cli_exit": 0,
+  "native_cli_help_exit": 0,
+  "native_cli_help_has_version": true,
+  "native_cli_empty_add_exit": 2,
+  "native_cli_list_stdout_lines": 10,
+  "schema": 17,
+  "integrity_check": "ok",
+  "all_business_fields_preserved": true,
+  "business_counts": {
+    "Reminders": 7,
+    "MediaRecords": 0,
+    "Settings": 1
+  },
+  "credential_files_preserved": true,
+  "dpapi_credential_readback_equal": true,
+  "credential_count": 1,
+  "normal_app_reopen_process_verified": true,
+  "normal_app_reopen_pid": 14840,
+  "normal_app_reopen_business_fields_equal": true,
+  "normal_app_reopen_dpapi_equal": true,
+  "aumid_registry": {
+    "exists": true,
+    "display_name": "DontForget",
+    "icon_uri": "C:\\Users\\Wayne\\AppData\\Local\\Programs\\DontForget\\data\\flutter_assets\\assets\\app_icon.png",
+    "icon_file_exists": true,
+    "valid": true
+  }
+}
