@@ -81,7 +81,11 @@ final homeControllerProvider = StateNotifierProvider<HomeController, HomeState>(
 class HomeController extends StateNotifier<HomeState> {
   final Ref _ref;
   final DatabaseHelper _database;
-  final AudioRecorder _audioRecorder;
+  final AudioRecorder? _injectedRecorder;
+  AudioRecorder? _lazyRecorder;
+  AudioRecorder? get _activeRecorder => _injectedRecorder ?? _lazyRecorder;
+  AudioRecorder _ensureAudioRecorder() =>
+      _injectedRecorder ?? (_lazyRecorder ??= AudioRecorder());
   final Future<Directory> Function() _temporaryDirectory;
   final RuntimeRecoveryGate _runtime;
   late final RuntimeRecoveryToken? _birth;
@@ -109,7 +113,7 @@ class HomeController extends StateNotifier<HomeState> {
     AudioRecorder? audioRecorder,
     Future<Directory> Function()? temporaryDirectory,
   }) : _runtime = _ref.read(runtimeRecoveryGateProvider),
-       _audioRecorder = audioRecorder ?? AudioRecorder(),
+       _injectedRecorder = audioRecorder,
        _temporaryDirectory = temporaryDirectory ?? getTemporaryDirectory,
        _database = _ref.read(databaseHelperProvider),
        _pickImage =
@@ -132,7 +136,7 @@ class HomeController extends StateNotifier<HomeState> {
         try {
           await _discardRecording();
         } finally {
-          await _audioRecorder.dispose();
+          await _activeRecorder?.dispose();
         }
       }).catchError((Object _) {}),
     );
@@ -158,7 +162,7 @@ class HomeController extends StateNotifier<HomeState> {
     _recordingOutputPath = null;
     if (_nativeRecording) {
       // cancel removes the unconfirmed temporary capture; it never imports it.
-      await _audioRecorder.cancel();
+      await _activeRecorder?.cancel();
       _nativeRecording = false;
     }
     final pcm = _pcmRecording;
@@ -678,7 +682,8 @@ class HomeController extends StateNotifier<HomeState> {
       voicePreview: '',
     );
     try {
-      final permitted = await _audioRecorder.hasPermission();
+      final recorder = _ensureAudioRecorder();
+      final permitted = await recorder.hasPermission();
       _check(generation);
       if (!permitted) {
         _reportError(
@@ -722,9 +727,9 @@ class HomeController extends StateNotifier<HomeState> {
           if (realtime &&
               speech.isConfigured &&
               TencentSpeechCredentials.decode(speech.apiKey) != null) {
-            _pcmRecording = await LivePcmRecording.start(_audioRecorder, path);
+            _pcmRecording = await LivePcmRecording.start(recorder, path);
           } else {
-            await _audioRecorder.start(config, path: path);
+            await recorder.start(config, path: path);
           }
           _check(generation);
           _recordingOutputPath = path;
@@ -827,7 +832,7 @@ class HomeController extends StateNotifier<HomeState> {
         _pcmRecording = null;
         final String? path;
         try {
-          final nativePath = await _audioRecorder.stop();
+          final nativePath = await _activeRecorder?.stop();
           path = pcm == null ? nativePath : await pcm.finish();
         } catch (_) {
           await pcm?.discard();

@@ -57,7 +57,7 @@ def assert_clean(directory):
 
 def zip_tree(directory, target, prefix=''):
     assert_clean(directory)
-    with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED) as archive:
+    with zipfile.ZipFile(target, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
         for path in sorted(directory.rglob('*')):
             if path.is_symlink():
                 raise ValueError(f'Use the native macOS packager for symbolic links: {path}')
@@ -171,7 +171,7 @@ def package(root, platform, revision=None):
             require(bundle / 'data/flutter_assets')
             assert_clean(bundle)
             name = f'DontForget_Linux_x64_v{release_version}.tar.gz'
-            with tarfile.open(staging / name, 'w:gz') as archive:
+            with tarfile.open(staging / name, 'w:gz', compresslevel=9) as archive:
                 for path in sorted(bundle.iterdir()):
                     archive.add(path, arcname=path.name)
             names.append(name)

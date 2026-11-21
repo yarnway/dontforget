@@ -22,7 +22,9 @@ AllowNoIcons=yes
 OutputDir=..\dist
 OutputBaseFilename=DontForget_Setup_v{#MyAppVersion}
 SetupIconFile=..\windows\runner\resources\app_icon.ico
-Compression=lzma2/max
+Compression=lzma2/ultra64
+LZMADictionarySize=65536
+LZMANumFastBytes=273
 SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=lowest
@@ -44,6 +46,16 @@ Type: files; Name: "{userdesktop}\别忘了.lnk"
 Type: files; Name: "{commondesktop}\别忘了.lnk"
 Type: files; Name: "{userprograms}\DontForget\别忘了.lnk"
 Type: files; Name: "{commonprograms}\DontForget\别忘了.lnk"
+; Remove unused CRT/shim DLLs and removed package assets left by pre-v1.8.21 versions
+Type: files; Name: "{app}\concrt140.dll"
+Type: files; Name: "{app}\dartjni.dll"
+Type: files; Name: "{app}\msvcp140_1.dll"
+Type: files; Name: "{app}\msvcp140_2.dll"
+Type: files; Name: "{app}\msvcp140_atomic_wait.dll"
+Type: files; Name: "{app}\msvcp140_codecvt_ids.dll"
+Type: files; Name: "{app}\vccorlib140.dll"
+Type: files; Name: "{app}\vcruntime140_threads.dll"
+Type: filesandordirs; Name: "{app}\data\flutter_assets\packages\cupertino_icons"
 
 [Registry]
 ; Register dontforget:// protocol for Toast notification activation and custom URL scheme

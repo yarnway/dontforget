@@ -470,7 +470,9 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
   static String _size(int value) => formatByteSize(value, fractionDigits: 1);
   @override
   Widget build(BuildContext context) {
-    final raw = ref.watch(workspaceDraftsProvider)['lastPortableBackup'];
+    final raw = ref.watch(
+      workspaceDraftsProvider.select((d) => d['lastPortableBackup']),
+    );
     final history = BackupExportHistory.read(raw);
     final last = history.firstOrNull;
     final colors = Theme.of(context).colorScheme;

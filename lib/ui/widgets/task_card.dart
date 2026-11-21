@@ -27,6 +27,7 @@ class TaskCard extends ConsumerStatefulWidget {
 }
 
 class _TaskCardState extends ConsumerState<TaskCard> {
+  static final _whitespace = RegExp(r'\s+');
   bool _isDecomposing = false;
   bool _isUpdating = false;
   bool _isDeleting = false;
@@ -662,11 +663,12 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     final subTasks = task.subTasksView;
     final details = task.details;
     final summary = task.taskSummary?.trim();
+    final now = DateTime.now();
     final showSummary =
         summary != null &&
         summary.isNotEmpty &&
-        summary.replaceAll(RegExp(r'\s+'), ' ') !=
-            task.taskTitle.trim().replaceAll(RegExp(r'\s+'), ' ');
+        summary.replaceAll(_whitespace, ' ') !=
+            task.taskTitle.trim().replaceAll(_whitespace, ' ');
     final sharedTime =
         task.eventTime != null &&
         task.triggerTime != null &&
@@ -748,7 +750,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       if (!task.isCompleted &&
           !sharedTime &&
           task.eventTime != null &&
-          task.eventTime!.isBefore(DateTime.now()))
+          task.eventTime!.isBefore(now))
         _badge(
           l10n.get('deadlinePassed'),
           Icons.event_busy_outlined,
@@ -937,9 +939,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                         key: ValueKey('adopt-time-${task.id}'),
                         onPressed:
                             _isBusy ||
-                                !task.usableSuggestedTriggerTime!.isAfter(
-                                  DateTime.now(),
-                                )
+                                !task.usableSuggestedTriggerTime!.isAfter(now)
                             ? null
                             : () => _onAction('adopt'),
                         child: Text(l10n.get('adoptSuggestion')),
@@ -949,16 +949,17 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                 if (task.capturePending && !task.isCompleted)
                   Consumer(
                     builder: (context, ref, _) {
-                      ref.watch(homeControllerProvider);
+                      final pendingCount = ref.watch(
+                        homeControllerProvider.select(
+                          (s) => s.pendingTasksCount,
+                        ),
+                      );
                       final controller = ref.read(
                         homeControllerProvider.notifier,
                       );
                       final running =
                           controller.isCaptureRunning(task.id) ||
-                          (task.recordId != null &&
-                              ref
-                                  .read(homeControllerProvider)
-                                  .isProcessingInBackground);
+                          (task.recordId != null && pendingCount > 0);
                       return TextButton.icon(
                         key: ValueKey('retry-capture-${task.id}'),
                         onPressed: running

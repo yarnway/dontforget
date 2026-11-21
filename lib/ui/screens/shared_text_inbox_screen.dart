@@ -33,7 +33,9 @@ class SharedTextInboxScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     String t(String key) =>
         sharedTextLabel(AppLocalizations.of(context).locale.languageCode, key);
-    final workspace = ref.watch(workspaceDraftsProvider);
+    final rawSharedTexts = ref.watch(
+      workspaceDraftsProvider.select((d) => d[SharedTextInbox.key]),
+    );
     final drafts = ref.read(workspaceDraftsProvider.notifier);
     return Scaffold(
       appBar: AppBar(title: Text(t('title'))),
@@ -50,7 +52,7 @@ class SharedTextInboxScreen extends ConsumerWidget {
           }
           late SharedTextInboxData data;
           try {
-            data = SharedTextInboxData.parse(workspace[SharedTextInbox.key]);
+            data = SharedTextInboxData.parse(rawSharedTexts);
           } catch (_) {
             return Center(child: Text(t('readFailed')));
           }
@@ -416,6 +418,7 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
                         child: Image.file(
                           File(widget.item.attachmentPath!),
                           key: const ValueKey('shared-attachment-image'),
+                          cacheHeight: 660,
                           semanticLabel:
                               widget.item.attachmentName ??
                               p.basename(widget.item.attachmentPath!),

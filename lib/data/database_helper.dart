@@ -7,6 +7,8 @@ import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite/sqflite.dart' as sqflite;
+import '../models/media_record.dart';
+import '../models/reminder.dart';
 import '../models/settings.dart';
 import '../models/legacy_credentials.dart';
 import '../models/task_details.dart';
@@ -39,6 +41,11 @@ class DatabaseHelper {
   NotificationEpochStore? _notificationEpochStore;
   DeviceWindowPreferencesStore? _deviceWindowPreferences;
   NotificationJournal? _notificationJournal;
+  int? _bootstrapGeneration;
+  Map<String, Object?>? _bootstrapSettingsRow;
+  Map<String, Object?>? _bootstrapDraftsRow;
+  List<MediaRecord>? _bootstrapMediaRecords;
+  List<Reminder>? _bootstrapReminders;
   static final Map<String, DatabaseHelper> _directoryOwners = {};
   static final Object _operationZoneKey = Object();
   final String? _directory;
@@ -159,10 +166,83 @@ class DatabaseHelper {
     }
   });
 
+  void _clearBootstrapCache() {
+    _bootstrapGeneration = null;
+    _bootstrapSettingsRow = null;
+    _bootstrapDraftsRow = null;
+    _bootstrapMediaRecords = null;
+    _bootstrapReminders = null;
+  }
+
+  /// One-shot handoff from StorageBootstrap so initial provider loads avoid
+  /// re-scanning and re-parsing all three tables. Any write, maintenance or
+  /// close invalidates every remaining slot immediately.
+  void cacheBootstrapSnapshot(
+    DataGeneration generation, {
+    required Map<String, Object?>? defaultSettingsRow,
+    required List<MediaRecord> mediaRecords,
+    required List<Reminder> reminders,
+  }) {
+    if (!isCurrent(generation)) return;
+    _bootstrapGeneration = generation._value;
+    _bootstrapSettingsRow = defaultSettingsRow == null
+        ? null
+        : Map<String, Object?>.of(defaultSettingsRow);
+    _bootstrapDraftsRow = defaultSettingsRow == null
+        ? null
+        : Map<String, Object?>.of(defaultSettingsRow);
+    _bootstrapMediaRecords = List<MediaRecord>.of(mediaRecords);
+    _bootstrapReminders = List<Reminder>.of(reminders);
+  }
+
+  bool _bootstrapValid(DataGeneration generation) =>
+      isCurrent(generation) && _bootstrapGeneration == generation._value;
+
+  Map<String, Object?>? takeBootstrapSettingsRow(DataGeneration generation) {
+    if (!_bootstrapValid(generation)) {
+      _clearBootstrapCache();
+      return null;
+    }
+    final row = _bootstrapSettingsRow;
+    _bootstrapSettingsRow = null;
+    return row;
+  }
+
+  Map<String, Object?>? takeBootstrapDraftsRow(DataGeneration generation) {
+    if (!_bootstrapValid(generation)) {
+      _clearBootstrapCache();
+      return null;
+    }
+    final row = _bootstrapDraftsRow;
+    _bootstrapDraftsRow = null;
+    return row;
+  }
+
+  List<MediaRecord>? takeBootstrapMediaRecords(DataGeneration generation) {
+    if (!_bootstrapValid(generation)) {
+      _clearBootstrapCache();
+      return null;
+    }
+    final records = _bootstrapMediaRecords;
+    _bootstrapMediaRecords = null;
+    return records;
+  }
+
+  List<Reminder>? takeBootstrapReminders(DataGeneration generation) {
+    if (!_bootstrapValid(generation)) {
+      _clearBootstrapCache();
+      return null;
+    }
+    final reminders = _bootstrapReminders;
+    _bootstrapReminders = null;
+    return reminders;
+  }
+
   Future<T> writeTransaction<T>(
     DataGeneration generation,
     Future<T> Function(Transaction) operation,
   ) => runOperation(generation, () async {
+    _clearBootstrapCache();
     final db = await _openDatabase();
     return db.transaction((txn) async {
       final scope = _ScopedExecutor(txn, writable: true);
@@ -192,6 +272,7 @@ class DatabaseHelper {
     _checkOutsideOperation();
     _checkReady();
     _accessState = _AccessState.maintenance;
+    _clearBootstrapCache();
     _generation++;
     return _beginMaintenance();
   }
@@ -440,6 +521,15 @@ class DatabaseHelper {
         readOnly: !migrate,
         onCreate: migrate ? _createDB : null,
         onUpgrade: migrate ? _upgradeDB : null,
+        onOpen: migrate
+            ? (db) async {
+                // Session-only performance pragmas: never alter rollback
+                // journal mode, header bytes [18..19], durability, or schema.
+                await db.rawQuery('PRAGMA cache_size = -8000');
+                await db.rawQuery('PRAGMA temp_store = MEMORY');
+                await db.rawQuery('PRAGMA busy_timeout = 5000');
+              }
+            : null,
         onDowngrade: migrate
             ? (db, oldVersion, newVersion) async {
                 throw StateError('Database belongs to a newer app version.');
@@ -984,6 +1074,7 @@ CREATE TABLE Reminders (
     final wasFaulted = _accessState == _AccessState.faulted;
     final pendingBackup = _backup;
     _accessState = wasFaulted ? _AccessState.faulted : _AccessState.closing;
+    _clearBootstrapCache();
     _generation++;
     return _closing =
         _close(

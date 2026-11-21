@@ -97,8 +97,9 @@ extension DepartureRoutines on RemindersNotifier {
         }
         if (!mapEquals(owner.toJson(), updated.toJson())) changes.add(updated);
       }
+      final existingIds = {for (final old in all) old.id};
       for (final row in changes) {
-        if (all.any((old) => old.id == row.id)) {
+        if (existingIds.contains(row.id)) {
           await db.update(
             'Reminders',
             row.toJson(),
@@ -107,6 +108,7 @@ extension DepartureRoutines on RemindersNotifier {
           );
         } else {
           await db.insert('Reminders', row.toJson());
+          existingIds.add(row.id);
         }
       }
       return changes;

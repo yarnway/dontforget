@@ -4,6 +4,21 @@
 
 ---
 
+## v1.8.21（build92，全平台安装包大幅瘦身与启动／数据库／UI 运行时性能优化）- 2026-11-22
+
+- **全平台安装包体积优化（`pubspec.yaml`、`lib/services/notification_service.dart`、`assets/app_icon.ico`、`android/app/build.gradle.kts`、`windows_installer/installer.iss`、`scripts/prune_windows_bundle.py` 及五平台打包脚本）**：
+  - 移除未使用的 `cupertino_icons` 与空包 `sqlite3_flutter_libs`；移除冷启动同步加载的 `package:timezone/data/latest.dart`（改用 `tz.UTC` 零开销初始化，三 ABI 合计减少 >1.1 MiB）；托盘专用 `assets/app_icon.ico` 精简至 ≤64px 尺寸（保留可执行文件 256px 图标）。
+  - 全平台正式构建启用 `--split-debug-info=build/symbols/<platform>`（保留栈名与 `runtimeType`）；规避 Flutter 3.44.9 桌面端 `tool_backend.dart` 图标树摇引号缺陷，使 Windows／Linux `MaterialIcons-Regular.otf` 从 1.65 MB 缩减至 30 KB（-98.2%）；构建前自动清理 `flutter_assets` 残留缓存。
+  - 新增 `scripts/prune_windows_bundle.py` 基于 PE 导入表静态裁剪 Windows 运行库（仅保留 3 个传递引用的 CRT DLL，剔除 7 个未用 CRT DLL 与仅用于 Android 的 `dartjni.dll`）；Inno Setup 启用 `lzma2/ultra64` 固实压缩并在 `[InstallDelete]` 中清理旧版残留的无用 DLL 与 `cupertino_icons` 资源；便携 ZIP／Linux `.tar.gz` 启用 9 级压缩。
+  - Android 启用 `jniLibs.useLegacyPackaging = true` 压缩直装 APK 原生库，移除冗余 `multiDexEnabled`，并剔除 Android 端未使用的 `libsqlite3.so` 及 `DebugProbesKt.bin`／冗余元数据，本地 ARM64 APK 实测从 `27.22 MB` 降至 `10.67 MB`（-60.8%）。
+- **启动延迟、数据库与界面渲染性能优化（`storage_bootstrap.dart`、`database_helper.dart`、`credential_repository.dart`、`providers.dart`、`departure_routines.dart`、`workspace_drafts_provider.dart`、`home_controller.dart`、`main.dart`、`app.dart`、`reminder.dart`、`home_screen.dart`、`input_bottom_bar.dart`、`task_card.dart`、`task_workspace_overview.dart` 等）**：
+  - 引导阶段提供单次 `DataGeneration` 绑定 `BootstrapSnapshot` 消除冷启动 4 次重复 `Settings` 查询与 2–4 次全表扫描；桌面端并行 `windowManager.ensureInitialized()` 与存储引导；`AudioPlayer` 与 `AudioRecorder` 懒初始化；SQLite `onOpen` 增加纯会话级 `cache_size = -8000`／`temp_store = MEMORY`／`busy_timeout = 5000`（严格保持回滚日志 `[1, 1]` 与 schema17 索引契约不变）。
+  - 提醒冷启对账与取消通知增加快路径；出发例程改用 `O(1)` 集合判重；新增共享 `workspaceRemindersProvider`；草稿键入改为 350 ms 防抖合并写盘并在销毁与读取前自动冲刷（`flushPending`）。
+  - 记忆化 `Reminder.occurrenceIdentity`；精细收窄根组件、输入底栏、首页与任务卡片 `Riverpod` 监听范围并拆分局部 `Consumer`；合并首页 10 秒心跳扫描并缓存完成数与 `findChildIndexCallback`；为图标与本地图片解码统一设置 `cacheWidth` / `ResizeImage` 上限。
+- 新增 `test/performance_optimizations_test.dart` 与 `scripts/tests/test_bundle_size_optimizations.py` 回归测试。
+
+---
+
 ## v1.8.20（build91，Windows 托盘优雅升级、Toast 禁用检测与 AUMID 注册、全仓无障碍语义清零）- 2026-11-21
 
 - **Windows 托盘隐藏态优雅升级与安装器增强（`windows/runner/flutter_window.h`、`windows/runner/flutter_window.cpp`、`windows_installer/installer.iss`）**：

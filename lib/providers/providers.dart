@@ -220,6 +220,16 @@ final remindersByIdProvider = Provider<Map<String, Reminder>>((ref) {
   return {for (final r in list) r.id: r};
 });
 
+/// Shared derived list of visible workspace items so HomeScreen, search, and
+/// statistics share one filtered projection and keep downstream List identities
+/// stable across unrelated header/composer rebuilds.
+final workspaceRemindersProvider = Provider<List<Reminder>>((ref) {
+  return ref
+      .watch(remindersProvider)
+      .where((r) => r.isWorkspaceItem)
+      .toList(growable: false);
+});
+
 enum ReminderNoticePhase { upcoming, due }
 
 enum ReminderActionDisposition { applied, alreadyApplied, stale }
@@ -323,15 +333,25 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     bool runEffects = true,
   }) async {
     try {
-      final rows = await _dbHelper.read(
-        generation,
-        (db) => db.query('Reminders'),
-      );
-      _dbHelper.checkGeneration(generation);
-      if (!mounted) {
-        return;
+      final cached = startup
+          ? _dbHelper.takeBootstrapReminders(generation)
+          : null;
+      final List<Reminder> list;
+      if (cached != null) {
+        _dbHelper.checkGeneration(generation);
+        if (!mounted) return;
+        list = cached;
+      } else {
+        final rows = await _dbHelper.read(
+          generation,
+          (db) => db.query('Reminders'),
+        );
+        _dbHelper.checkGeneration(generation);
+        if (!mounted) {
+          return;
+        }
+        list = rows.map(Reminder.fromJson).toList();
       }
-      final list = rows.map(Reminder.fromJson).toList();
       final previousGeneration = _stateGeneration;
       if (previousGeneration != null &&
           !_dbHelper.isCurrent(previousGeneration)) {
@@ -345,11 +365,18 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       // Recovery already rebuilt notifications from the committed database.
       // Loading UI state must not reschedule or mutate it a second time.
       if (!runEffects) return;
-      await _reconcileDepartures(generation, DateTime.now());
-      await _reconcileOrdinary(generation, DateTime.now());
+      if (state.any(
+        (r) => r.details.kind == 'departure' && r.details.planId == null,
+      )) {
+        await _reconcileDepartures(generation, DateTime.now());
+      }
+      if (state.any(OrdinarySeries.isOwner)) {
+        await _reconcileOrdinary(generation, DateTime.now());
+      }
       // Promote before scheduling so startup uses the final saved priority.
       await _applyDynamicUrgency(generation, synchronize: false);
-      final journal = await _notificationEntries(generation);
+      final journalState = await _notificationJournalState(generation);
+      final journal = journalState.entries;
       _rememberUnfinished(journal.values);
       // A process can exit between deleting a row and cancelling its OS
       // request. Retained ID allocations let startup find those orphaned
@@ -379,10 +406,21 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         if (!mounted) {
           return;
         }
+        final entry = journal[reminder.id];
+        final needsPastCancel = _requiresPastCancellation(reminder, entry, now);
         if (!reminder.canNotify ||
             reminder.noticeAcknowledgedAt != null ||
             reminder.triggerTime == null ||
-            _requiresPastCancellation(reminder, journal[reminder.id], now)) {
+            needsPastCancel) {
+          // When the current-epoch journal is already established and confirms
+          // this non-notifiable task has never been scheduled or is already
+          // cancelled, skip issuing redundant disk journal + OS cancel IPCs.
+          if (journalState.hasCurrentEpoch &&
+              !needsPastCancel &&
+              !_pendingNotificationCancellations.contains(reminder.id) &&
+              (entry == null || !entry.needsCancellation)) {
+            return;
+          }
           await _dbHelper.runOperation(generation, () async {
             _dbHelper.checkGeneration(generation);
             await _synchronizeReminder(
@@ -397,7 +435,6 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           // Restart must not bypass the persisted quiet-retry cooldown for
           // the SAME failed occurrence. Edits, pending crash intents and old
           // failures still reconcile immediately; manual rebuild is immediate.
-          final entry = journal[reminder.id];
           if (entry != null &&
               entry.status == 'failed' &&
               entry.action == 'schedule' &&
@@ -455,13 +492,27 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
 
   Future<Map<String, NotificationJournalEntry>> _notificationEntries(
     DataGeneration generation,
-  ) async {
+  ) async => (await _notificationJournalState(generation)).entries;
+
+  Future<({bool hasCurrentEpoch, Map<String, NotificationJournalEntry> entries})>
+  _notificationJournalState(DataGeneration generation) async {
     final snapshot = await _dbHelper.withNotificationJournal((j) => j.read());
     _dbHelper.checkGeneration(generation);
-    if (snapshot == null) return {};
+    if (snapshot == null) {
+      return (
+        hasCurrentEpoch: false,
+        entries: const <String, NotificationJournalEntry>{},
+      );
+    }
     final epoch = await _dbHelper.readNotificationEpoch();
     _dbHelper.checkGeneration(generation);
-    return snapshot.epoch == epoch ? snapshot.entries : {};
+    if (snapshot.epoch != epoch) {
+      return (
+        hasCurrentEpoch: false,
+        entries: const <String, NotificationJournalEntry>{},
+      );
+    }
+    return (hasCurrentEpoch: true, entries: snapshot.entries);
   }
 
   void _rememberUnfinished(Iterable<NotificationJournalEntry> entries) {
@@ -2179,14 +2230,21 @@ class MediaRecordsNotifier extends StateNotifier<List<MediaRecord>> {
 
   Future<void> _loadRecords() async {
     final generation = _dbHelper.captureGeneration();
-    final rows = await _dbHelper.read(
-      generation,
-      (db) => db.query('MediaRecords'),
-    );
+    final cached = _dbHelper.takeBootstrapMediaRecords(generation);
+    final List<MediaRecord> records;
+    if (cached != null) {
+      records = cached;
+    } else {
+      final rows = await _dbHelper.read(
+        generation,
+        (db) => db.query('MediaRecords'),
+      );
+      records = rows.map(MediaRecord.fromJson).toList();
+    }
     _dbHelper.checkGeneration(generation);
     _stateGeneration = generation;
     if (mounted) {
-      state = rows.map(MediaRecord.fromJson).toList();
+      state = records;
     }
   }
 

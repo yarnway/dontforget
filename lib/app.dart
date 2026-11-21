@@ -1110,12 +1110,17 @@ class _MyAppState extends ConsumerState<MyApp>
       workspaceDraftsProvider.select(SharedTextInbox.count),
       (_, _) => _scheduleSharedTexts(),
     );
-    final settings = ref.watch(settingsProvider);
+    final displaySettings = ref.watch(
+      settingsProvider.select(
+        (s) => (language: s.language, appearance: s.appearance),
+      ),
+    );
     ref.listen(settingsProvider.select((settings) => settings.language), (
       _,
       _,
     ) {
       unawaited(_syncNotificationLanguage());
+      _syncMacMenu();
     });
     if (_supportsLiveActivities) {
       ref.listen(remindersProvider, (_, _) => _syncLiveReminder());
@@ -1124,7 +1129,6 @@ class _MyAppState extends ConsumerState<MyApp>
         (_, _) => _syncLiveReminder(),
       );
     }
-    _syncMacMenu();
     final recovery = ref.watch(recoveryCoordinatorProvider);
     final recoveryState = recovery.state;
 
@@ -1135,7 +1139,7 @@ class _MyAppState extends ConsumerState<MyApp>
       navigatorKey: _navigatorKey,
       title: "DontForget",
       debugShowCheckedModeBanner: false,
-      locale: Locale(settings.language),
+      locale: Locale(displaySettings.language),
       localizationsDelegates: const [
         AppLocalizationsDelegate(),
         GlobalMaterialLocalizations.delegate,
@@ -1149,7 +1153,7 @@ class _MyAppState extends ConsumerState<MyApp>
       ],
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
-      themeMode: AppTheme.mode(settings.appearance),
+      themeMode: AppTheme.mode(displaySettings.appearance),
       builder: (context, child) {
         // MaterialApp can finish replacing its Navigator a frame after the
         // provider future becomes ready. Retry from this subtree's build so a

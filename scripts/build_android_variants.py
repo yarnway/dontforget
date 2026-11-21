@@ -37,7 +37,9 @@ def build(root=ROOT, disable_kotlin_incremental=False):
     flutter = shutil.which('flutter')
     if not flutter:
         raise ValueError('Flutter SDK is required')
-    common = ['--release', '--no-pub']
+    symbols = root / 'build/symbols/android'
+    symbols.mkdir(parents=True, exist_ok=True)
+    common = ['--release', '--no-pub', f'--split-debug-info={symbols}']
     if disable_kotlin_incremental:
         common += ['--android-project-arg=kotlin.incremental=false']
     def run(kind, extra=()):

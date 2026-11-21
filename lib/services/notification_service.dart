@@ -8,7 +8,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest.dart' as tz;
 import '../models/reminder.dart';
 import '../models/notification_payload.dart';
 import '../data/database_helper.dart';
@@ -619,7 +618,7 @@ class NotificationService {
   Future<void> _initialize({bool rethrowFailures = false}) async {
     final language = _notificationLanguage;
     try {
-      tz.initializeTimeZones();
+      tz.setLocalLocation(tz.UTC);
       _datasetEpoch = await _readDatasetEpoch();
 
       if (usesNativeNotifications) {
@@ -880,7 +879,7 @@ class NotificationService {
           nativeId,
           reminder.taskTitle,
           reminder.notificationSummary ?? 'You have a scheduled task',
-          tz.TZDateTime.from(reminder.triggerTime!, tz.local),
+          tz.TZDateTime.from(reminder.triggerTime!, tz.UTC),
           platformChannelSpecifics,
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           uiLocalNotificationDateInterpretation:

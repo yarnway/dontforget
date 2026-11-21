@@ -59,7 +59,7 @@ Future<int> _handleCli(List<String> args) async {
   if (args.contains('--help') || args.contains('-h')) {
     stdout.writeln('''
 ======================================================
- DontForget CLI v1.8.20
+ DontForget CLI v1.8.21
 ======================================================
 Usage:
   dont_forget --add <content>   (-a) Quickly record a reminder
@@ -182,16 +182,18 @@ void main(List<String> args) async {
         return true;
       };
 
-      // Initialize window manager safely on desktop platforms
+      // Overlap desktop windowManager initialization with storage bootstrap so
+      // cold startup does not serialize platform window setup ahead of SQLite.
       final isDesktop =
           Platform.isWindows || Platform.isLinux || Platform.isMacOS;
-      if (isDesktop) {
-        try {
-          await windowManager.ensureInitialized();
-        } catch (e, st) {
-          _writeCrashLog('windowManager ensureInitialized error: $e', st);
-        }
-      }
+      final Future<void> windowReady = isDesktop
+          ? windowManager.ensureInitialized().catchError((
+              Object e,
+              StackTrace st,
+            ) {
+              _writeCrashLog('windowManager ensureInitialized error: $e', st);
+            })
+          : Future<void>.value();
 
       // Recovery and process ownership precede every provider, migration and
       // notification startup side effect. Never fall through to default data.
@@ -200,7 +202,7 @@ void main(List<String> args) async {
         if (StartupTrace.enabled) {
           StartupTrace.attach(await helper.acquireOwnership());
         }
-        await StorageBootstrap(helper).prepare();
+        await Future.wait([StorageBootstrap(helper).prepare(), windowReady]);
         StartupTrace.mark('storage_ready');
 
         if (isDesktop) {
@@ -211,6 +213,7 @@ void main(List<String> args) async {
           }
         }
       } catch (error, stack) {
+        await windowReady;
         StartupTrace.fail('storage');
         if (kDebugMode) {
           // Keep record contents and credentials out of startup diagnostics.

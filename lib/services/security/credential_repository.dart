@@ -138,7 +138,8 @@ class CredentialRepository {
   Future<CredentialLoad> load(
     DataGeneration generation,
   ) => _serial(generation, () async {
-    final row = await _row(generation);
+    final row =
+        database.takeBootstrapSettingsRow(generation) ?? await _row(generation);
     database.checkGeneration(generation);
     final raw = AppSettings.fromJson(row), reference = row['api_key'];
     if (isReference(reference)) {
@@ -184,7 +185,7 @@ class CredentialRepository {
         });
         final clean = await database.runOperation(
           generation,
-          () => _cleanup(generation),
+          () => _cleanup(generation, prefetchedRow: row),
         );
         return CredentialLoad(
           settings,
@@ -216,7 +217,7 @@ class CredentialRepository {
     }
     final clean = await database.runOperation(
       generation,
-      () => _cleanup(generation),
+      () => _cleanup(generation, prefetchedRow: row),
     );
     return CredentialLoad(
       raw,
@@ -408,8 +409,11 @@ class CredentialRepository {
     );
   }
 
-  Future<bool> _cleanup(DataGeneration generation) async {
-    final row = await _row(generation);
+  Future<bool> _cleanup(
+    DataGeneration generation, {
+    Map<String, Object?>? prefetchedRow,
+  }) async {
+    final row = prefetchedRow ?? await _row(generation);
     final pending = _pending(row);
     if (pending.isEmpty) return true;
     final removed = <String>{};

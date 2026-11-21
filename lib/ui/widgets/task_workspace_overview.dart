@@ -44,6 +44,8 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
   List<Reminder> _cachedMissedTasks = const [];
   List<Reminder> _cachedCompleted = const [];
   List<Object> _cachedRows = const [];
+  Map<String, int> _cachedRowIndexByTaskId = const {};
+  int _cachedCompletedCount = 0;
 
   void _ensureProjected(String view, DateTime now) {
     final minuteBucket = now.millisecondsSinceEpoch ~/ 60000;
@@ -59,31 +61,39 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
         (widget.missedReminders ?? selectMissedReminders(widget.reminders, now))
             .where((r) => r.isWorkspaceItem)
             .toList();
+    final todayStart = DateTime(now.year, now.month, now.day);
     final tomorrow = DateTime(now.year, now.month, now.day + 1);
     final rows = <Object>[];
+    final completedList = <Reminder>[];
+    final tasks = <Reminder>[];
+    var completedCount = 0;
+    for (final r in widget.reminders) {
+      if (r.isCompleted) {
+        completedCount++;
+        if (view == 'all' && _showCompleted && r.isWorkspaceItem) {
+          completedList.add(r);
+        }
+      } else if (r.isWorkspaceItem) {
+        tasks.add(r);
+      }
+    }
     final completed = view == 'all' && _showCompleted
-        ? widget.reminders
-              .where((task) => task.isWorkspaceItem && task.isCompleted)
-              .toList()
+        ? completedList
         : const <Reminder>[];
-    final tasks =
-        widget.reminders
-            .where((r) => r.isWorkspaceItem && !r.isCompleted)
-            .toList()
-          ..sort((a, b) {
-            final learning = (a.spacedRepetitionLevel > 0 ? 1 : 0).compareTo(
-              b.spacedRepetitionLevel > 0 ? 1 : 0,
-            );
-            if (learning != 0) return learning;
-            if ((a.quadrantLevel == 1) != (b.quadrantLevel == 1)) {
-              return a.quadrantLevel == 1 ? -1 : 1;
-            }
-            final at = a.eventTime ?? a.triggerTime ?? a.nextReviewAt;
-            final bt = b.eventTime ?? b.triggerTime ?? b.nextReviewAt;
-            if (at == null) return bt == null ? a.id.compareTo(b.id) : 1;
-            if (bt == null) return -1;
-            return at.compareTo(bt);
-          });
+    tasks.sort((a, b) {
+      final learning = (a.spacedRepetitionLevel > 0 ? 1 : 0).compareTo(
+        b.spacedRepetitionLevel > 0 ? 1 : 0,
+      );
+      if (learning != 0) return learning;
+      if ((a.quadrantLevel == 1) != (b.quadrantLevel == 1)) {
+        return a.quadrantLevel == 1 ? -1 : 1;
+      }
+      final at = a.eventTime ?? a.triggerTime ?? a.nextReviewAt;
+      final bt = b.eventTime ?? b.triggerTime ?? b.nextReviewAt;
+      if (at == null) return bt == null ? a.id.compareTo(b.id) : 1;
+      if (bt == null) return -1;
+      return at.compareTo(bt);
+    });
     if (view == 'today') {
       final groups = <String, List<Reminder>>{
         'todayUrgent': [],
@@ -107,10 +117,7 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                   task.captureProposalJson != null ||
                   (task.triggerTime == null &&
                       task.sourceText != null &&
-                      task.createdAt?.isBefore(
-                            DateTime(now.year, now.month, now.day),
-                          ) ==
-                          false))
+                      task.createdAt?.isBefore(todayStart) == false))
             ? 'captureInbox'
             : task.quadrantLevel == 1 &&
                   (task.isPinned || (time?.isBefore(tomorrow) ?? false))
@@ -146,6 +153,13 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
         ),
       );
     }
+    final rowIndexByTaskId = <String, int>{};
+    for (var i = 0; i < rows.length; i++) {
+      final row = rows[i];
+      if (row is Reminder) {
+        rowIndexByTaskId[row.id] = i;
+      }
+    }
     _cachedReminders = widget.reminders;
     _cachedMissedProp = widget.missedReminders;
     _cachedView = view;
@@ -155,6 +169,8 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
     _cachedMissedTasks = missedTasks;
     _cachedCompleted = completed;
     _cachedRows = rows;
+    _cachedRowIndexByTaskId = rowIndexByTaskId;
+    _cachedCompletedCount = completedCount;
   }
   @override
   void initState() {
@@ -466,7 +482,13 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                                             }
                                           },
                                         );
-                                      }, childCount: rows.length),
+                                      },
+                                      childCount: rows.length,
+                                      findChildIndexCallback: (key) =>
+                                          key is ValueKey<String>
+                                          ? _cachedRowIndexByTaskId[key.value]
+                                          : null,
+                                    ),
                                     ),
                                   ),
                                   if (view == 'all')
@@ -485,7 +507,7 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                                               : Icons.expand_more,
                                         ),
                                         label: Text(
-                                          '${loc.get('completed')} · ${widget.reminders.where((r) => r.isCompleted).length}',
+                                          '${loc.get('completed')} · $_cachedCompletedCount',
                                         ),
                                       ),
                                     ),

@@ -147,7 +147,7 @@ class Reminder {
   }
 
   /// One occurrence remains stable across timezone serialization and restart.
-  String get occurrenceIdentity => jsonEncode([
+  late final String occurrenceIdentity = jsonEncode([
     id,
     triggerTime?.toUtc().microsecondsSinceEpoch,
     noticeRevision,

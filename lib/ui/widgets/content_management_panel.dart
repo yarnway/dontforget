@@ -245,6 +245,7 @@ class _ContentManagementPanelState
                 if (image != null)
                   Image.file(
                     File(image),
+                    cacheWidth: 1160,
                     semanticLabel: entry.label,
                     errorBuilder: (_, error, stack) => Text(t('failed')),
                   ),

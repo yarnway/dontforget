@@ -15,7 +15,8 @@ class StorageBootstrap {
 
   Future<void> prepare() async {
     await recovery.recoverInterrupted();
-    await database.read(database.captureGeneration(), (db) async {
+    final generation = database.captureGeneration();
+    await database.read(generation, (db) async {
       final requiredColumns = {
         'Settings': AppSettings.defaults().toJson().keys,
         'MediaRecords': MediaRecord(
@@ -37,15 +38,26 @@ class StorageBootstrap {
           throw StateError('Local database schema is incomplete.');
         }
       }
-      for (final row in await db.query('Settings')) {
+      final settingsRows = await db.query('Settings');
+      Map<String, Object?>? defaultSettingsRow;
+      for (final row in settingsRows) {
         AppSettings.fromJson(row);
+        if (row['id'] == 'default') {
+          defaultSettingsRow = row;
+        }
       }
-      for (final row in await db.query('MediaRecords')) {
-        MediaRecord.fromJson(row);
-      }
-      for (final row in await db.query('Reminders')) {
-        Reminder.fromJson(row);
-      }
+      final mediaRecords = (await db.query(
+        'MediaRecords',
+      )).map(MediaRecord.fromJson).toList();
+      final reminders = (await db.query(
+        'Reminders',
+      )).map(Reminder.fromJson).toList();
+      database.cacheBootstrapSnapshot(
+        generation,
+        defaultSettingsRow: defaultSettingsRow,
+        mediaRecords: mediaRecords,
+        reminders: reminders,
+      );
     });
   }
 }

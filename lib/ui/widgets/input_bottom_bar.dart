@@ -212,7 +212,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     }
   }
 
-  void _persistDraft() {
+  void _persistDraft({bool immediate = false}) {
     if (_restoring || !_current) return;
     _draftTouched = true;
     final text = _textController.text;
@@ -225,19 +225,20 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
             if (_voiceTextDraft) 'voiceText': true,
             'id': _captureId,
           };
+    final write = immediate || value == null
+        ? _draftStore.put('capture', value)
+        : _draftStore.putDebounced('capture', value);
     unawaited(
-      _draftStore
-          .put('capture', value)
-          .then(
-            (_) {
-              if (mounted && _draftSaveFailed) {
-                setState(() => _draftSaveFailed = false);
-              }
-            },
-            onError: (Object _) {
-              if (mounted) setState(() => _draftSaveFailed = true);
-            },
-          ),
+      write.then(
+        (_) {
+          if (mounted && _draftSaveFailed) {
+            setState(() => _draftSaveFailed = false);
+          }
+        },
+        onError: (Object _) {
+          if (mounted) setState(() => _draftSaveFailed = true);
+        },
+      ),
     );
   }
 
@@ -260,6 +261,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
 
   @override
   void dispose() {
+    _draftStore.flushPending();
     _removeCaptureOverlay();
     if (identical(_captureCommand.focus, _focusCapture)) {
       _captureCommand.focus = null;
@@ -982,8 +984,18 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
 
   Widget _buildComposer(BuildContext context, BoxConstraints constraints) {
     final l10n = AppLocalizations.of(context);
-    final homeState = ref.watch(homeControllerProvider);
-    final rawPending = ref.watch(workspaceDraftsProvider)['pendingCaptures'];
+    final homeState = ref.watch(
+      homeControllerProvider.select(
+        (s) => (
+          isRecording: s.isRecording,
+          isPreparingRecording: s.isPreparingRecording,
+          isProcessingInBackground: s.isProcessingInBackground,
+        ),
+      ),
+    );
+    final rawPending = ref.watch(
+      workspaceDraftsProvider.select((d) => d['pendingCaptures']),
+    );
     final pending = rawPending is Map
         ? rawPending.entries
               .where(
@@ -1771,54 +1783,65 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (((!isMobile && isRecording) ||
-                          (_isTranscribing && !_voiceEditorOpen)) &&
-                      homeState.voicePreview.isNotEmpty)
-                    Container(
-                      key: const ValueKey('desktop-voice-transcript-preview'),
-                      width: double.infinity,
-                      constraints: BoxConstraints(
-                        maxHeight: math.min(
-                          160,
-                          MediaQuery.sizeOf(context).height * .25,
-                        ),
-                      ),
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: colors.secondaryContainer,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: SingleChildScrollView(
-                              reverse: true,
-                              child: Text(
-                                homeState.voicePreview,
-                                style: Theme.of(context).textTheme.bodyLarge
-                                    ?.copyWith(
-                                      color: colors.onSecondaryContainer,
-                                    ),
-                              ),
+                  if ((!isMobile && isRecording) ||
+                      (_isTranscribing && !_voiceEditorOpen))
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final voicePreview = ref.watch(
+                          homeControllerProvider.select((s) => s.voicePreview),
+                        );
+                        if (voicePreview.isEmpty) {
+                          return const SizedBox.shrink();
+                        }
+                        return Container(
+                          key: const ValueKey(
+                            'desktop-voice-transcript-preview',
+                          ),
+                          width: double.infinity,
+                          constraints: BoxConstraints(
+                            maxHeight: math.min(
+                              160,
+                              MediaQuery.sizeOf(context).height * .25,
                             ),
                           ),
-                          if (_isTranscribing)
-                            IconButton(
-                              key: const ValueKey(
-                                'cancel-pending-transcription',
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: colors.secondaryContainer,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: SingleChildScrollView(
+                                  reverse: true,
+                                  child: Text(
+                                    voicePreview,
+                                    style: Theme.of(context).textTheme.bodyLarge
+                                        ?.copyWith(
+                                          color: colors.onSecondaryContainer,
+                                        ),
+                                  ),
+                                ),
                               ),
-                              tooltip: l10n.get('cancel'),
-                              onPressed: () => ref
-                                  .read(homeControllerProvider.notifier)
-                                  .cancelLiveTranscription(),
-                              icon: const Icon(Icons.close),
-                            ),
-                        ],
-                      ),
+                              if (_isTranscribing)
+                                IconButton(
+                                  key: const ValueKey(
+                                    'cancel-pending-transcription',
+                                  ),
+                                  tooltip: l10n.get('cancel'),
+                                  onPressed: () => ref
+                                      .read(homeControllerProvider.notifier)
+                                      .cancelLiveTranscription(),
+                                  icon: const Icon(Icons.close),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   composer,
                 ],

@@ -71,12 +71,24 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen>
     with WidgetsBindingObserver {
-  final _audioPlayer = AudioPlayer();
+  AudioPlayer? _audioPlayer;
   final _mediaStore = LocalMediaStore();
+
+  AudioPlayer _ensureAudioPlayer() {
+    final existing = _audioPlayer;
+    if (existing != null) return existing;
+    final player = AudioPlayer();
+    _playerCompleteSubscription = player.onPlayerComplete.listen((_) {
+      _playbackStarted = false;
+      _playingRecordId = null;
+    });
+    return _audioPlayer = player;
+  }
   late final RuntimeRecoveryGate _runtime;
   late final RuntimeRecoveryToken? _birth;
   late final NotificationService _notifications;
   late final ContextTriggerService _contextTriggers;
+  WorkspaceDrafts? _workspaceDrafts;
   Future<void> _playbackOperations = Future<void>.value();
   bool _playbackStarted = false;
   String? _playingRecordId;
@@ -115,7 +127,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         _playerCompleteSubscription!.cancel(),
       _serializePlayback(() async {
         if (_playbackStarted) {
-          await _audioPlayer.stop();
+          await _audioPlayer?.stop();
           _playbackStarted = false;
           _playingRecordId = null;
         }
@@ -195,28 +207,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
   }
 
-  void _persistWorkspaceDrafts() {
+  void _persistAgentGoalDraft() => _persistWorkspaceDraftKey(
+    'goal',
+    _agentGoal.text.isEmpty ? null : _agentGoal.text,
+  );
+
+  void _persistStudyDraft() =>
+      _persistWorkspaceDraftKey('study', _studyDraft.toJson());
+
+  void _persistWorkspaceDraftKey(String key, Object? value) {
     if (_restoringTools || !_runtimeActive) return;
     _toolsEdited = true;
     final store = ref.read(workspaceDraftsProvider.notifier);
     unawaited(
-      Future.wait([
-        store.put('goal', _agentGoal.text.isEmpty ? null : _agentGoal.text),
-        store.put('study', _studyDraft.toJson()),
-      ]).then<void>(
-        (_) {},
-        onError: (Object _) {
-          if (mounted && _runtimeActive) {
-            InlineFeedback.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  AppLocalizations.of(context).get('draftSaveFailed'),
-                ),
-              ),
-            );
-          }
-        },
-      ),
+      store
+          .putDebounced(key, value)
+          .then<void>(
+            (_) {},
+            onError: (Object _) {
+              if (mounted && _runtimeActive) {
+                InlineFeedback.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      AppLocalizations.of(context).get('draftSaveFailed'),
+                    ),
+                  ),
+                );
+              }
+            },
+          ),
     );
   }
 
@@ -239,8 +258,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _notifications = ref.read(notificationServiceProvider);
     _contextTriggers = ref.read(contextTriggerServiceProvider);
     if (_birth == null) return;
-    _agentGoal.addListener(_persistWorkspaceDrafts);
-    _studyDraft.addListener(_persistWorkspaceDrafts);
+    _workspaceDrafts = ref.read(workspaceDraftsProvider.notifier);
+    _agentGoal.addListener(_persistAgentGoalDraft);
+    _studyDraft.addListener(_persistStudyDraft);
     unawaited(_restoreWorkspaceDrafts());
     _toolsCommand = ref.read(workspaceToolsCommandProvider);
     _toolsCommand!.open = _nativeToolsHandler;
@@ -252,10 +272,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Listen to notification service broadcast stream
     _dueSubscription = _notifications.onReminderDue.listen((reminder) {
       _queueDueReminder(reminder);
-    });
-    _playerCompleteSubscription = _audioPlayer.onPlayerComplete.listen((_) {
-      _playbackStarted = false;
-      _playingRecordId = null;
     });
 
     // 聚合情境摘要为页面入口，由用户选择何时查看。
@@ -394,6 +410,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       _toolsCommand?.playMedia = null;
     }
     _runtime.unregister(this);
+    _workspaceDrafts?.flushPending();
     WidgetsBinding.instance.removeObserver(this);
     _agentGoal.dispose();
     _studyDraft.dispose();
@@ -411,11 +428,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _suppressedSubscription?.cancel();
     _playerCompleteSubscription?.cancel();
     _playingRecordId = null;
-    unawaited(
-      _serializePlayback(
-        () => _audioPlayer.dispose(),
-      ).catchError((Object _) {}),
-    );
+    final player = _audioPlayer;
+    if (player != null) {
+      unawaited(
+        _serializePlayback(() => player.dispose()).catchError((Object _) {}),
+      );
+    }
     super.dispose();
   }
 
@@ -918,6 +936,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   maxScale: 4.0,
                   child: Image.file(
                     File(filePath),
+                    cacheWidth: 2048,
                     semanticLabel: p.basename(filePath),
                     fit: BoxFit.contain,
                     errorBuilder: (_, __, ___) => Padding(
@@ -1166,7 +1185,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     try {
       await _serializePlayback(() async {
         if (_playbackStarted) {
-          await _audioPlayer.stop();
+          await _audioPlayer?.stop();
           _playbackStarted = false;
           _playingRecordId = null;
         }
@@ -1216,7 +1235,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           if (!mounted || !_runtimeActive) return;
           _playbackStarted = true;
           _playingRecordId = recordId;
-          await _audioPlayer.play(DeviceFileSource(mediaPath));
+          await _ensureAudioPlayer().play(DeviceFileSource(mediaPath));
         });
       } catch (_) {
         _playbackStarted = false;
@@ -1654,18 +1673,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    final reminders = ref
-        .watch(remindersProvider)
-        .where((r) => r.isWorkspaceItem)
-        .toList();
+    final reminders = ref.watch(workspaceRemindersProvider);
     final l10n = AppLocalizations.of(context);
-    // Streaming transcript updates belong to the composer. Avoid rebuilding
-    // the full task list and context digest for every partial result.
-    final isProcessing = ref.watch(
-      homeControllerProvider.select((state) => state.isProcessingInBackground),
-    );
     final spacedService = ref.watch(spacedRepetitionServiceProvider);
-    final currentProfile = ref.watch(contextProfileProvider);
     final pendingSharedCount = ref.watch(
       workspaceDraftsProvider.select(SharedTextInbox.count),
     );
@@ -1748,7 +1758,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Image(
-                        image: AssetImage('assets/app_icon.png'),
+                        image: ResizeImage(
+                          AssetImage('assets/app_icon.png'),
+                          width: 78,
+                          height: 78,
+                        ),
                         width: 26,
                         height: 26,
                         excludeFromSemantics: true,
@@ -1766,18 +1780,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           ),
                         ),
                       ),
-                      if (isProcessing) ...[
-                        const SizedBox(width: 8),
-                        Semantics(
-                          liveRegion: true,
-                          child: Icon(
-                            Icons.circle,
-                            size: 7,
-                            color: Theme.of(context).colorScheme.primary,
-                            semanticLabel: l10n.get('statusBusy'),
-                          ),
-                        ),
-                      ],
+                      Consumer(
+                        builder: (context, ref, _) {
+                          final isProcessing = ref.watch(
+                            homeControllerProvider.select(
+                              (state) => state.isProcessingInBackground,
+                            ),
+                          );
+                          if (!isProcessing) return const SizedBox.shrink();
+                          return Padding(
+                            padding: const EdgeInsets.only(left: 8),
+                            child: Semantics(
+                              liveRegion: true,
+                              child: Icon(
+                                Icons.circle,
+                                size: 7,
+                                color: Theme.of(context).colorScheme.primary,
+                                semanticLabel: l10n.get('statusBusy'),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ],
                   ),
             elevation: 0,
@@ -1802,74 +1826,86 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                       tooltip: l10n.get('searchHint'),
                       onPressed: _openSearch,
                     ),
-                    PopupMenuButton<ContextProfile>(
-                      icon: Icon(
-                        _getContextProfileIcon(currentProfile),
-                        size: 20,
-                        color: currentProfile == ContextProfile.general
-                            ? null
-                            : Theme.of(context).colorScheme.primary,
-                      ),
-                      tooltip: l10n.get('contextProfileSwitch'),
-                      splashRadius: 18,
-                      onSelected: (profile) async {
-                        if (!mounted || !_runtimeActive) return;
-                        try {
-                          await ref
-                              .read(contextProfileProvider.notifier)
-                              .setProfile(profile);
-                        } catch (_) {
-                          if (!mounted || !_runtimeActive || !context.mounted) {
-                            return;
-                          }
-                          InlineFeedback.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(l10n.get('reminderUpdateFailed')),
-                            ),
-                          );
-                        }
-                      },
-                      itemBuilder: (context) {
-                        return [
-                          for (final entry in <(ContextProfile, IconData, String)>[
-                            (
-                              ContextProfile.general,
-                              Icons.tune_rounded,
-                              'profileGeneral',
-                            ),
-                            (
-                              ContextProfile.office,
-                              Icons.apartment_rounded,
-                              'profileOffice',
-                            ),
-                            (
-                              ContextProfile.deepWork,
-                              Icons.psychology_rounded,
-                              'profileDeepWork',
-                            ),
-                            (
-                              ContextProfile.home,
-                              Icons.home_rounded,
-                              'profileHome',
-                            ),
-                            (
-                              ContextProfile.commute,
-                              Icons.directions_subway_rounded,
-                              'profileCommute',
-                            ),
-                          ])
-                            CheckedPopupMenuItem<ContextProfile>(
-                              value: entry.$1,
-                              checked: currentProfile == entry.$1,
-                              child: Row(
-                                children: [
-                                  Icon(entry.$2, size: 18),
-                                  const SizedBox(width: 8),
-                                  Expanded(child: Text(l10n.get(entry.$3))),
-                                ],
-                              ),
-                            ),
-                        ];
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final currentProfile = ref.watch(
+                          contextProfileProvider,
+                        );
+                        return PopupMenuButton<ContextProfile>(
+                          icon: Icon(
+                            _getContextProfileIcon(currentProfile),
+                            size: 20,
+                            color: currentProfile == ContextProfile.general
+                                ? null
+                                : Theme.of(context).colorScheme.primary,
+                          ),
+                          tooltip: l10n.get('contextProfileSwitch'),
+                          splashRadius: 18,
+                          onSelected: (profile) async {
+                            if (!mounted || !_runtimeActive) return;
+                            try {
+                              await ref
+                                  .read(contextProfileProvider.notifier)
+                                  .setProfile(profile);
+                            } catch (_) {
+                              if (!mounted ||
+                                  !_runtimeActive ||
+                                  !context.mounted) {
+                                return;
+                              }
+                              InlineFeedback.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    l10n.get('reminderUpdateFailed'),
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                          itemBuilder: (context) {
+                            return [
+                              for (final entry
+                                  in <(ContextProfile, IconData, String)>[
+                                    (
+                                      ContextProfile.general,
+                                      Icons.tune_rounded,
+                                      'profileGeneral',
+                                    ),
+                                    (
+                                      ContextProfile.office,
+                                      Icons.apartment_rounded,
+                                      'profileOffice',
+                                    ),
+                                    (
+                                      ContextProfile.deepWork,
+                                      Icons.psychology_rounded,
+                                      'profileDeepWork',
+                                    ),
+                                    (
+                                      ContextProfile.home,
+                                      Icons.home_rounded,
+                                      'profileHome',
+                                    ),
+                                    (
+                                      ContextProfile.commute,
+                                      Icons.directions_subway_rounded,
+                                      'profileCommute',
+                                    ),
+                                  ])
+                                CheckedPopupMenuItem<ContextProfile>(
+                                  value: entry.$1,
+                                  checked: currentProfile == entry.$1,
+                                  child: Row(
+                                    children: [
+                                      Icon(entry.$2, size: 18),
+                                      const SizedBox(width: 8),
+                                      Expanded(child: Text(l10n.get(entry.$3))),
+                                    ],
+                                  ),
+                                ),
+                            ];
+                          },
+                        );
                       },
                     ),
                     ValueListenableBuilder<DateTime>(
@@ -1891,16 +1927,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           child: child,
                         );
                       },
-                      child: IconButton(
-                        icon: Icon(
-                          ref.watch(immersiveModeProvider)
-                              ? Icons.shield_rounded
-                              : Icons.more_horiz_rounded,
-                        ),
-                        tooltip: ref.watch(immersiveModeProvider)
-                            ? '${l10n.get('moreTools')} / ${l10n.get('focusOn')}'
-                            : l10n.get('moreTools'),
-                        onPressed: _openCommandPalette,
+                      child: Consumer(
+                        builder: (context, ref, _) {
+                          final isImmersive = ref.watch(immersiveModeProvider);
+                          return IconButton(
+                            icon: Icon(
+                              isImmersive
+                                  ? Icons.shield_rounded
+                                  : Icons.more_horiz_rounded,
+                            ),
+                            tooltip: isImmersive
+                                ? '${l10n.get('moreTools')} / ${l10n.get('focusOn')}'
+                                : l10n.get('moreTools'),
+                            onPressed: _openCommandPalette,
+                          );
+                        },
                       ),
                     ),
                     IconButton(
@@ -1925,12 +1966,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         valueListenable: _noticeClock,
                         builder: (context, _, _) {
                           final now = DateTime.now();
-                          final missed = _missedReminders(reminders, now);
+                          final visible = _visibleNotices(reminders, now);
+                          final missed = selectMissedReminders(
+                            reminders,
+                            now,
+                            visibleNoticeOccurrences: visible.map(
+                              reminderOccurrenceKey,
+                            ),
+                          );
                           return Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               ReminderNoticePanel(
-                                reminders: _visibleNotices(reminders, now),
+                                reminders: visible,
                                 now: now,
                                 busyIds: _noticeOperations,
                                 onDismiss: _dismissNotice,

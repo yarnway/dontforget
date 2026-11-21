@@ -226,7 +226,11 @@ void main() {
 
   tearDown(() async {
     container.dispose();
-    await disposed.future;
+    // AudioRecorder is initialized lazily on first recording; only await
+    // native recorder disposal when the test actually initialized one.
+    if (calls.any((c) => c.method == 'create')) {
+      await disposed.future;
+    }
     await database.close();
     messenger.setMockMethodCallHandler(recorder, null);
     messenger.setMockMethodCallHandler(paths, null);
@@ -612,7 +616,9 @@ void main() {
     'Android cold start waits for saved speech settings before opening the microphone',
     () async {
       container.dispose();
-      await disposed.future;
+      if (calls.any((c) => c.method == 'create')) {
+        await disposed.future;
+      }
       disposed = Completer<void>();
       final delayed = _DelayedSettings();
       speech.androidPlatform = true;
@@ -852,7 +858,9 @@ void main() {
     'audio keeps its original file and waits for extraction confirmation',
     () async {
       container.dispose();
-      await disposed.future;
+      if (calls.any((c) => c.method == 'create')) {
+        await disposed.future;
+      }
       disposed = Completer<void>();
       final model = _PreviewModel();
       container = ProviderContainer(

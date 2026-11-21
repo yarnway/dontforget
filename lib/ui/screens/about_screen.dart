@@ -267,6 +267,8 @@ class _AboutScreenState extends ConsumerState<AboutScreen> {
                               'assets/app_icon.png',
                               width: 56,
                               height: 56,
+                              cacheWidth: 168,
+                              cacheHeight: 168,
                               excludeFromSemantics: true,
                             ),
                           ),

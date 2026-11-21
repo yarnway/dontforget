@@ -43,7 +43,6 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 24
         targetSdk = flutter.targetSdkVersion
-        multiDexEnabled = true
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         if (distributionAbi != null) {
@@ -66,6 +65,22 @@ android {
         release {
             signingConfig = signingConfigs.getByName(
                 if (hasDistributionSigning) "distribution" else "debug"
+            )
+        }
+    }
+
+    packaging {
+        jniLibs {
+            // Compress native libraries inside direct-download APKs (~65-70% smaller
+            // download) and drop desktop-only libsqlite3.so (Android uses sqflite).
+            useLegacyPackaging = true
+            excludes += setOf("**/libsqlite3.so")
+        }
+        resources {
+            excludes += setOf(
+                "DebugProbesKt.bin",
+                "META-INF/androidx/**/LICENSE.txt",
+                "META-INF/*.version",
             )
         }
     }
