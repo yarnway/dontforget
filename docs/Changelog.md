@@ -4,6 +4,22 @@
 
 ---
 
+## v1.8.20（build91，Windows 托盘优雅升级、Toast 禁用检测与 AUMID 注册、全仓无障碍语义清零）- 2026-11-21
+
+- **Windows 托盘隐藏态优雅升级与安装器增强（`windows/runner/flutter_window.h`、`windows/runner/flutter_window.cpp`、`windows_installer/installer.iss`）**：
+  - GUI 实例（`show_on_create_ == true`）在 `OnCreate` 注册同用户会话级事件 `Local\DontForget.GracefulUpgradeExit`（初始化 `ResetEvent` 防止残留信号误触发，经 `RegisterWaitForSingleObject` → `PostMessageW(kUpgradeExitMessage)` 复用既有 `onUpgradeExit` / `DesktopUpgradeExit` 优雅落盘退出链路，并在 `OnDestroy` 通过 `UnregisterWaitEx(..., INVALID_HANDLE_VALUE)` 干净解绑）。
+  - Inno Setup 新增 `PrepareToInstall` → `RequestGracefulAppExit()`：严格遵循 `/NOCLOSEAPPLICATIONS`，仅当检测到运行中单实例互斥锁与优雅退出事件时发出信号并等待最多 8 秒自然退出（严禁强杀，超时回退标准 Restart Manager），解决关闭到系统托盘（`SW_HIDE`）或同会话跨桌面升级时 Restart Manager 返回 `RmUnknownApp`（退出码 `5`）的问题。
+  - 安装器新增 `HKCU\Software\Classes\AppUserModelId\DontForget`（`DisplayName` 与 `IconUri` 指向品牌图标，卸载自动清理），完善 Windows 10/11 通知中心图标与名称显示。
+- **Windows Toast 禁用态准确报错检测（`lib/services/windows_toast.dart`、`test/windows_toast_test.dart`）**：
+  - 修复 Windows 11 通知在系统设置中关闭（`DisabledForApplication`／`DisabledForUser`／`DisabledByGroupPolicy`）时 `$notifier.Show(...)` 退出码仍为 `0` 导致 `WindowsToast.show()` 静默误报成功的问题；兼容 PowerShell 5.1 WinRT 桥开启态返回 `$null` 的行为，精准输出诊断 `stderr` 并以退出码 `2` 返回 `false`。
+- **全仓无障碍读屏与对比度收口（`inline_feedback.dart`、`voice_capture_feedback.dart`、`ai_profiles_screen.dart`、`about_screen.dart`、`content_management_panel.dart`、`medication_plan_panel.dart`、`task_attachments_panel.dart`）**：
+  - `InlineFeedback` 关闭按钮改用不依赖 `Overlay` 祖先的 `MergeSemantics` + `Semantics(label: closeButtonTooltip)` 与 `ValueKey('inline-feedback-close')`，解决实机外层横幅误标为按钮 `'关闭'` 且内层图标按钮无标签的问题。
+  - `VoiceCaptureFeedback` TalkBack 无障碍录音浮层「取消」按钮升级为不透明深色底（`Color(0xFF2B2B2B)`＋白色前景，对比度 > 14:1 WCAG AAA），彻底消除在浅灰底弧上的低对比度。
+  - 补齐 `AIProfilesScreen` 最后一处原始 `Switch` 语义标签及剩余 4 处 `Image` 语义声明，并新增永久性静态门禁 `scripts/tests/test_ui_accessibility_lint.py` 校验全仓 `lib/ui/` 零未加标签 `IconButton`／原始 `Switch`／`Image`。
+- 不更改数据库 schema17、依赖锁文件或既有模型／语音凭据存储格式。
+
+---
+
 ## v1.8.19（build90，无障碍读屏收口、Windows CLI／Runner 修复与 UTF-16 代理对安全截断）- 2026-11-21
 
 - **Android TalkBack / iOS VoiceOver 无障碍与 WCAG AA 收口**：

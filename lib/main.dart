@@ -59,7 +59,7 @@ Future<int> _handleCli(List<String> args) async {
   if (args.contains('--help') || args.contains('-h')) {
     stdout.writeln('''
 ======================================================
- DontForget CLI v1.8.19
+ DontForget CLI v1.8.20
 ======================================================
 Usage:
   dont_forget --add <content>   (-a) Quickly record a reminder
