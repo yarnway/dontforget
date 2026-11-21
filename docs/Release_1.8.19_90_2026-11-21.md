@@ -1,6 +1,6 @@
 # v1.8.19／build90 最终发行与验收
 
-[v1.8.19](https://github.com/yarnway/dontforget/releases/tag/v1.8.19) 已发布并设为 `latest`，四平台七包、20 附件独立读回通过。固定发布源码 `6eedd2a1717fb794a902fe22c2d585a1ecf0fdd7`（代码提交 `7e28ef0953b030fd482fdf3c36208b93dfb49da9`，schema 17）。源码、自动化、安装包与真实设备验收严格分层记录：**Windows 本机运行中覆盖升级因用户桌面运行中进程 `PID 19044` 跨桌面正常关闭失败（退出码 `5`）已完整保留失败证据且未强杀，尚待用户退出后续验**；iPhone 90 未安装／未真机验收；Windows 原生 GUI／托盘／Toast 仍受非交互桌面会话限制未实测。
+[v1.8.19](https://github.com/yarnway/dontforget/releases/tag/v1.8.19) 已发布并设为 `latest`，四平台七包、20 附件独立读回通过。固定发布源码 `6eedd2a1717fb794a902fe22c2d585a1ecf0fdd7`（代码提交 `7e28ef0953b030fd482fdf3c36208b93dfb49da9`，schema 17）。源码、自动化、安装包与真实设备验收严格分层记录：**Windows 本机先后保留跨桌面用户进程 `PID 19044` 运行中正常关闭失败（退出码 `5`）原始证据，并在用户从桌面／托盘正常退出后分别补齐官方 CI 安装包「退出后覆盖安装（`1.8.18.89`→`1.8.19.90`）」与「同桌面运行中覆盖升级（`1.8.19.90`→`1.8.19.90`）」续验通过**；Pixel 8 Pro 正式版同签名保全升级与真实 Android TalkBack 读屏实机验收通过；iPhone 90 未安装／未真机验收；Windows 原生 GUI／托盘／Toast 仍受非交互桌面会话限制未实测。
 
 ## 源码与自动化
 
@@ -25,12 +25,12 @@
 - **iOS（未签名，需 AltStore 个人重签，免费账号每 7 天续期，非 App Store／TestFlight）**：
   - `DontForget_iOS_unsigned_v1.8.19.ipa`（`11,728,281 B`，SHA‑256 `2aaf162937cf3f3b9ffc13c220f1da8e9737a76ba29e2bc61d01e6382531f6de`，主包与 Live Activity WidgetKit 扩展身份／版本由发布门禁校验通过）
 
-## Windows 本机覆盖升级状态（失败留证，待用户退出后续验）
+## Windows 本机覆盖升级（失败留证与退出后续验分别记录）
 
-- **本地包与 CI 官方包两次运行中尝试均正常关闭失败（退出码 `5`）**：用户经 `explorer.exe`（`PID 6556`）在其交互桌面启动的 `dont_forget.exe`（`PID 19044`，`v1.8.18.89`）全程处于运行态。自当前隔离桌面（`WinSta0\exebox-...`）调用安装器 `/CLOSEAPPLICATIONS /NOFORCECLOSEAPPLICATIONS`（禁止强关），Restart Manager 将跨桌面／托盘无可见主窗的 `PID 19044` 归类为 `RmUnknownApp`（`Type=0, Restartable=False`）并在 0.7s 内中止回滚。
-- 两次尝试前均已完成最新数据与 SQLite 在线备份，回滚后复核实装程序仍保持 `1.8.18.89`、SQLite schema 17 `Reminders=7 / MediaRecords=0 / Settings=1` 全业务字段与 DPAPI 凭据（`1` 项）完好无损；详见本地包回执 [windows-upgrade-90-2026-11-21.json](benchmarks/windows-upgrade-90-2026-11-21.json) 与 CI 官方包回执 [windows-upgrade-90-ci-2026-11-21.json](benchmarks/windows-upgrade-90-ci-2026-11-21.json)。
-- **CLI 与 PE 独立校验通过**：CI 官方便携包 `dont_forget.exe` PE 版本为 `1.8.19.90`，管道捕获 `--help` 返回码 `0`（输出 `DontForget CLI v1.8.19`），`--add "   "` 返回码 `2`；本地 Release 二进制另实测 `PID 19044` 持有库锁时 `--list` 正确返回码 `75`。
-- 遵循 `AGENTS.md`，未强杀用户进程，不将 Windows `v1.8.19+90` 覆盖升级记为通过；待用户从桌面／托盘退出 `PID 19044` 后，分别补齐**退出后安装**与**同桌面运行中升级**续验。
+- **初验：跨桌面运行中正常关闭失败（FAIL，退出码 `5`，原始证据完整留存）**：用户经 `explorer.exe`（`PID 6556`）在其交互桌面启动的 `dont_forget.exe`（`PID 19044`，`v1.8.18.89`）处于运行态。自当前隔离桌面（`WinSta0\exebox-...`）分别调用本地与 CI 官方安装器 `/CLOSEAPPLICATIONS /NOFORCECLOSEAPPLICATIONS`（禁止强关），Restart Manager 将跨桌面无可见主窗的 `PID 19044` 归类为 `RmUnknownApp`（`Type=0, Restartable=False`）并在 0.7s 内中止回滚。两次尝试前均已完成最新数据与 SQLite 在线备份，回滚后实装保持 `1.8.18.89`、业务三表（`7/0/1`）与 DPAPI 凭据（`1` 项）完好无损，未强杀用户进程；详见 [本地初验失败回执](benchmarks/windows-upgrade-90-2026-11-21.json) 与 [CI 初验失败回执](benchmarks/windows-upgrade-90-ci-2026-11-21.json)。
+- **续验 1：用户退出后官方 CI 覆盖安装（PASS，单独记录，不替代前述运行中失败）**：用户从桌面／托盘正常退出 `PID 19044` 后，对公开 Release 官方 CI `DontForget_Setup_v1.8.19.exe`（SHA‑256 `395d9efe...`）执行最新备份→覆盖安装（`1.8.18.89`→`1.8.19.90`，退出码 `0`）→38 个程序载荷与官方便携包逐字节一致、PE 版本 `1.8.19.90`、CLI `--help` 管道返回码 `0`（输出 `DontForget CLI v1.8.19`）／`--add "   "` 返回码 `2`／`--list` 返回码 `0`（10 行输出）、SQLite schema 17 `integrity_check=ok`、`Reminders=7 / MediaRecords=0 / Settings=1` 全业务字段与 DPAPI 凭据（`1` 项）解保护摘要一致、普通重开（`PID 4412`）保持一致；详见 [windows-upgrade-90-ci-post-exit-2026-11-21.json](benchmarks/windows-upgrade-90-ci-post-exit-2026-11-21.json)。
+- **续验 2：同桌面运行中官方 CI 覆盖升级（PASS，禁止强关）**：在同桌面拉起已安装的 `v1.8.19.90`（`PID 30340`）保持运行中，完成最新数据备份→官方 CI `DontForget_Setup_v1.8.19.exe` 执行 `/CLOSEAPPLICATIONS /NOFORCECLOSEAPPLICATIONS` 正常关闭覆盖（退出码 `0`，无强关）→38 个载荷逐字节一致、PE 版本 `1.8.19.90`、CLI `--help`/`--add`/`--list` 全通、SQLite schema 17 `7/0/1` 全字段与 DPAPI 凭据（`1` 项）及普通重开（`PID 23768`）全部保持一致；详见 [windows-upgrade-90-ci-running-followup-2026-11-21.json](benchmarks/windows-upgrade-90-ci-running-followup-2026-11-21.json)。
+- 本轮受非交互隔离桌面会话 `UIA_CHILDREN=0` 限制，仍未验收 Windows 原生 GUI、托盘、Toast 与真实桌面中文键盘，不以 CLI 或进程存在代替 GUI 通过。
 
 ## Android（Pixel 8 Pro）正式包升级与真实 TalkBack 读屏实机验收
 
@@ -46,7 +46,6 @@
 
 ## 未验范围与后续主线
 
-- **Windows 本机覆盖升级（`v1.8.19+90`）**：待用户退出桌面运行中的 `PID 19044` 后分别执行退出后安装与同桌面运行中升级续验，不冒记通过。
 - **Windows 原生 GUI／托盘／Toast／桌面中文输入法**：非交互隔离桌面会话 `UIA_CHILDREN=0`，仍受环境限制未实测。
 - **iPhone 真机（build90）**：本机无连接 iPhone 且无 macOS／Xcode，不自动处理 Apple 认证（最近独立读回仍为 build81）。
 - **正式版云端 ASR 真实声学播音**与**实机 `LocalAppData\DontForget` 原地删除**：保持如实留存，详见 [Next_Steps_2026-11-02.md](Next_Steps_2026-11-02.md)。
