@@ -4,7 +4,7 @@
 
 按用户要求精简主线，只保留直接影响“别忘了”录入、提醒、数据保全与四平台交付的工作。阶段编号保留以便追踪；**阶段46退出当前任务列表**，不改记为全部通过。
 
-当前发行版为[v1.8.18／build89](https://github.com/yarnway/dontforget/releases/tag/v1.8.18)，Windows／Linux／Android／iOS四平台。源码、自动化、安装包与真机结果分别记录；[发行与设备范围](Release_1.8.18_89_2026-11-20.md)。完整旧台账已移至[历史记录](Next_Steps_History_2026-11-02_2026-11-17.md)，旧“剩余”清单不再自动进入主线。
+当前发行版为[v1.8.19／build90](https://github.com/yarnway/dontforget/releases/tag/v1.8.19)，Windows／Linux／Android／iOS四平台。源码、自动化、安装包与真机结果分别记录；[发行与设备范围](Release_1.8.19_90_2026-11-21.md)。完整旧台账已移至[历史记录](Next_Steps_History_2026-11-02_2026-11-17.md)，旧“剩余”清单不再自动进入主线。
 
 | 处理 | 内容 | 后续规则 |
 | --- | --- | --- |
@@ -21,13 +21,13 @@
 | 任务 | 当前状态 | 下一步 |
 | --- | --- | --- |
 | 中文输入与草稿 | 11月21日已在 Pixel 8 Pro **正式版 `com.yarnway.dontforget`（`v1.8.18 (89)`）**使用真实默认中文输入法（微信输入法 `WeType`）完整实机验收全三类入口：① 首页拼音组合态（`ce shi`→`测试 89`）、往返设置页草稿保留与回车单次保存；② 分享草稿编辑页组合态（`wen dang`）禁用「保存为备忘」→候选确认（`文档`）后启用→单次保存；③ 语音核对编辑页（`LiveVoiceTextDialog`）组合态（`yu yin`）禁用「发送」→候选确认（`语音`）后启用→单次保存文本事项（此前 11月20日隔离 QA 包亦已全项通过） | 补 Windows 交互式桌面真实中文输入法及 iPhone 真机中文输入法验收 |
-| 语音输入三态 | 84已有 Pixel 真实腾讯预览、编辑及用户发送证据；11月18日 85 QA 诊断包单次播放未复现重复；11月20日完成 `LivePcmRecording`／`TencentRealtimeRecognizer`／`LiveVoiceTextDialog`／`HomeController` 源码审计（无重复追加路径）；11月21日已在 Pixel 8 Pro **正式版 `com.yarnway.dontforget`（`v1.8.18 (89)`）**实机验收真实麦克风按住左滑取消（0 新增卡片）、录中按 Home 键中断（`RecordingActivityMonitor` 无残留录音会话）与上滑右转语音核对编辑页 `WeType` 组合态单次发送（测后撤销临时录音权限 `granted=false`） | 正式版当前未配置云端 ASR 密钥；补用户配置语音服务后的真实声学播音全链路转写及 TalkBack／VoiceOver 读屏验收 |
-| Android最终归档 | 11月20日 Pixel 正式版 `com.yarnway.dontforget` 经应用内导出最新备份后同签名覆盖公开 ARM64 `v1.8.18 (89)`（APK 摘要 `8dcb28de...` 与公开 Release 一致，冷重开 2／0／1 摘要保持，关于页 `1.8.18 (89)` 且更新检查返回「已是最新发布版」）；11月21日完成本版正式包全流程实机验收（中文输入、语音取消／中断／编辑、大字号密度、提前10分钟提醒＋`15分钟后`延后＋二次送达＋点正文打开详情、系统分享面板＋`documentsui`＋UTF‑8 预览、内容管理引用保护、真实 Wi‑Fi 双向同步＋回收站冲突采用、完整 `DFBK2` 备份与两步确认恢复回归基线） | Android `v1.8.18 (89)` 正式包核心原生路径已收口；仅留读屏与云端 ASR 真实播音专项 |
+| 语音输入三态 | 84已有 Pixel 真实腾讯预览、编辑及用户发送证据；11月18日 85 QA 诊断包单次播放未复现重复；11月20日完成 `LivePcmRecording`／`TencentRealtimeRecognizer`／`LiveVoiceTextDialog`／`HomeController` 源码审计（无重复追加路径）；11月21日已在 Pixel 8 Pro 正式版 `v1.8.18 (89)` 实机验收真实麦克风按住左滑取消、录中按 Home 键中断与上滑右转语音核对编辑页 `WeType` 组合态单次发送；同日升级至公开正式版 **`v1.8.19 (90)`** 后开启**真实 Android TalkBack**（`TalkBackService`，`touch_exploration_enabled=1`）实机通过单击语音输入条拉起无障碍录音浮层三按钮（`保存原语音`／`转文字编辑`／`取消`，均 `48.0dp @ 360dpi`）与点击 `取消` 干净收口（0 残留录音会话、0 Flutter 异常，测后恢复 TalkBack 关闭与录音权限撤销） | Android 正式包传统按住手势与 TalkBack 读屏语音闭环均已收口；仅留配置云端 ASR 密钥后的真实声学播音全链路转写与 iOS VoiceOver 读屏验收 |
+| Android最终归档 | 11月21日 Pixel 正式版 `com.yarnway.dontforget` 经应用内导出升级前最新 `DFBK2` 备份（`2/0/1`、`b4d0a324...`）后同签名覆盖公开 ARM64 **`v1.8.19 (90)`**（APK 摘要 `69f2f6e5...` 与 GitHub Release 一致，同机 QA 包未改，冷重开后导出复核 `2/0/1` 与 `reminders_media_sha256` 逐字节一致，关于页 `1.8.19 (90)` 且检查更新返回「已是最新发布版」）；并于正式版完成真实 Android TalkBack 读屏验收（数据与安全加密密码显隐按钮、局域网同步开关零 `NAF` 未加标签控件，TalkBack 单击语音录制浮层三按钮闭环）；此前 11月21日 `v1.8.18 (89)` 已完成全部原生功能全流程实机验收 | Android `v1.8.19 (90)` 正式包升级、原生核心路径与 TalkBack 读屏已收口；仅留正式版云端 ASR 真实播音专项 |
 | Android提醒 | 11月21日已在 Pixel 8 Pro **正式版 `com.yarnway.dontforget`（`v1.8.18 (89)`）**完整闭环实机验收：提前10分钟后台准时送达（`10:28:01`）→展开系统通知点击 **`15分钟后`**（`10:28:07`）→15分钟后后台准时二次送达（`10:43`）→点击通知正文直达 `事项详情`（`测试 89`）；测后已撤销临时通知权限至原始状态 | Android 正式包当前版本核心提醒闭环已收口；后续版本回归沿用同样实机门禁 |
 | 普通事项提前提醒 | 快速录入与自动整理默认提前10分钟，可选5／10／15分钟。11月18–20日 Pixel 隔离包已验三档后台送达与改期旧时点零通知；11月21日 **正式版 `com.yarnway.dontforget`（`v1.8.18 (89)`）**实机通过任务编辑器设定事项时间（`10:38`）并选「提前 10 分钟」→`10:28:01` 后台首投→`15分钟后` 延后→`10:43` 后台二次送达→点击正文打开 `事项详情` | Android 正式包已收口；待补 Windows Toast 与 iPhone 真机通知验收 |
-| Windows原生入口 | 85至89（`v1.8.14+85`→`v1.8.18+89`）均已完成本机运行中正常覆盖、全字段与实际凭据保持及普通重开；11月21日复检当前会话 UIA 根节点仍返回空（`UIA_CHILDREN=0`），GUI 自动化工具初始化仍受阻 | 交互式桌面会话工具可用后补窗口／托盘／Toast／真实中文输入，不以CLI或进程存在代替GUI通过 |
-| iPhone客户端 | 手机最近独立读回为81。同源同验收身份85未签名 IPA 已构建并读回；11月21日 `check_ios_device.py` 预检仍无 iPhone USB 连接且本机为 Windows（`MACOS_BUILD_HOST_REQUIRED`／无 Xcode／`devicectl`） | 接入后取最新备份，按既有 AltStore 身份签名覆盖 `v1.8.18 (89)`，核对版本、记录、中文输入、通知与录音 |
-| 界面与文案 | 首页和启动／托盘资源已改用统一品牌图标，手机分类列表去掉重复栏头；11月21日已在 Pixel 8 Pro **正式版 `com.yarnway.dontforget`（`v1.8.18 (89)`）**完成系统大字号（`font_scale=1.3`，随后恢复 `1.0`）在全部列表与四象限分类页的实机密度验收（0 `RenderFlex` 溢出、0 框架异常，截图已归档） | 核对后续四平台正式包图标 |
+| Windows原生入口 | 85至89（`v1.8.14+85`→`v1.8.18+89`）均已完成本机运行中正常覆盖、全字段与实际凭据保持及普通重开；`v1.8.19+90` 本地包与 CI 官方包均因用户桌面运行中进程 `PID 19044`（`v1.8.18.89`）跨桌面 Restart Manager 归类为 `RmUnknownApp` 导致正常关闭失败（退出码 `5`），已保留失败证据且未强杀，CI 便携包 PE `1.8.19.90` 与修复后 CLI 管道输出已校验通过；11月21日复检当前会话 UIA 根节点仍返回空（`UIA_CHILDREN=0`） | ① 待用户退出桌面 `PID 19044` 后分别补齐 `v1.8.19+90` 退出后安装与同桌面运行中升级续验；② 交互式桌面会话工具可用后补窗口／托盘／Toast／真实中文输入，不以 CLI 或进程存在代替 GUI 通过 |
+| iPhone客户端 | 手机最近独立读回为81。同源同验收身份85未签名 IPA 已构建并读回；11月21日 `check_ios_device.py` 预检仍无 iPhone USB 连接且本机为 Windows（`MACOS_BUILD_HOST_REQUIRED`／无 Xcode／`devicectl`） | 接入后取最新备份，按既有 AltStore 身份签名覆盖 `v1.8.19 (90)`，核对版本、记录、中文输入、通知、录音与 VoiceOver |
+| 界面与文案 | 首页和启动／托盘资源已改用统一品牌图标，手机分类列表去掉重复栏头；11月21日已在 Pixel 8 Pro 正式版完成大字号（`font_scale=1.3`，随后恢复 `1.0`）密度零溢出验收及 `v1.8.19 (90)` 真实 TalkBack 无障碍树核验（数据与安全密码显隐与局域网同步开关 0 `NAF` 未加标签控件，浮层三按钮均 `48.0dp`）；记录两处非阻塞视觉／无障碍微调项（录音浮层浅灰底弧上「取消」按钮可改深色底提升对比度、顶部浮动提示条关闭按钮补 `tooltip`） | 后续版本跟进上述两处小项微调并核对四平台正式包图标 |
 
 ## 阶段 48：数据保护与长期管理
 
@@ -50,7 +50,7 @@
 | 局域网同步 | Windows 已实测默认端口冲突后换端口。11月21日已在 Pixel 8 Pro **正式版 `com.yarnway.dontforget`（`192.168.50.158`，`v1.8.18 (89)`）**与 Windows `v1.8.18+89` 隔离对端（`192.168.50.4:14697`，物理网卡优选，**零 USB 转发**）完成同一真实 Wi‑Fi 子网（`192.168.50.0/24`）4 次直连双向同步实机闭环：Windows 端实收正式版 PDF（`329 B`）与 PNG（`69 B`）原件 SHA‑256 逐字节一致，正式版实收 Windows 事项与附件 `win_formal89.txt`（`106 B`）并受内容管理保护；完成跨设备回收站移入差异采用（`移入本机回收站`）、恢复差异采用（`在本机恢复事项`）与第 4 次同步 0 差异收敛；此前亦已验证正式版服务端 `192.168.50.158:42888` 错误配对码 HTTP `401` 拒绝 | Android 正式版 ↔ Windows 真实 Wi‑Fi 同步已收口；待 Windows GUI 交互会话可用与接入 iPhone 后补全三端 GUI 实机互联 |
 | 学习与排程 | 计划管理、词条档案、批量改期、七天预测等已有实现和验收 | 维护已有功能；身份迁移、更多练习与预测扩展移入可选需求池 |
 
-## 阶段 50：正式发布（build89已完成）
+## 阶段 50：正式发布（build90 四平台已发布；Windows 本机覆盖升级待用户退出后继验）
 
 **目标：稳定后交付Windows／Linux／Android／iOS新版Release。**
 
@@ -58,9 +58,19 @@
 2. 核对四平台发行包版本、来源、摘要及平台签名／未签名状态；不移动旧标签或覆盖旧附件。
 3. 每个Windows新版本：最新数据备份→旧／新包与实际版本核对→本机运行中正常覆盖→安装后文件、全字段、实际凭据与普通重开验证。关闭失败保留证据，不强关或冒记通过。
 4. 可用手机分别最新保全、同身份升级及关键功能验收；设备不可用的范围明确列出。iPhone当前采用个人签名路径，安装与签名续期分别记录。
-5. 本版89四平台七包、20附件已发布并独立读回（[Release_1.8.18_89_2026-11-20.md](Release_1.8.18_89_2026-11-20.md)）；后续版本按[发布策略](Release_Policy.md)发布并独立读回。macOS客户端、公证、商业签名及商店上架属于可选分发扩展，不附加为当前四平台发布的必做阶段。
+5. 本版90四平台七包、20附件已发布并独立读回（[Release_1.8.19_90_2026-11-21.md](Release_1.8.19_90_2026-11-21.md)）；Pixel 8 Pro 正式版已保全升级并完成真实 TalkBack 实机验收；Windows 本机运行中覆盖升级因用户进程 `PID 19044` 正常关闭失败（退出码 `5`）已保留证据，待用户退出后继验；后续版本按[发布策略](Release_Policy.md)发布并独立读回。macOS客户端、公证、商业签名及商店上架属于可选分发扩展，不附加为当前四平台发布的必做阶段。
 
 ## 本轮执行记录
+
+### 11月21日 v1.8.19／build90 四平台正式发布、Pixel 正式版保全升级与真实 TalkBack 实机验收（含 Windows CI 安装包运行中退出码 5 留证）
+
+- **源码**　固定发布提交 `6eedd2a1717fb794a902fe22c2d585a1ecf0fdd7`（代码提交 `7e28ef0953b030fd482fdf3c36208b93dfb49da9`，schema 17）。
+- **自动化**　主线 [CI 44863670223](https://github.com/yarnway/dontforget/actions/runs/44863670223) 七项任务全部通过（Linux `Analyze and test`、Windows `Windows analyze and test` 及 Windows／Linux／Android／macOS／iOS 五平台构建与桌面安装／启动冒烟）；本机固定 Flutter `3.44.9` 全量测试 `2,699 通过 / 20 跳过 / 0 失败`、Python 测试 `184 通过 / 6 跳过`。
+- **安装包与发布**　经 [发布工作流 44869031743](https://github.com/yarnway/dontforget/actions/runs/44869031743) 发布 [v1.8.19](https://github.com/yarnway/dontforget/releases/tag/v1.8.19) 并设为 `latest`，独立读回校验全部 20 个公开附件、Android 三包固定发行证书（`3db49656...`）、iOS 未签名 IPA 与 WidgetKit 扩展及旧版 `v1.8.18`（`4855976`、20 附件）保持未改，详见 [github-release-v1.8.19-2026-11-21.json](benchmarks/github-release-v1.8.19-2026-11-21.json)。
+- **真机／本机验收**：
+  - **Pixel 8 Pro 正式版同签名保全升级（PASS）**：详见 [android-upgrade-90-2026-11-21.json](benchmarks/android-upgrade-90-2026-11-21.json)。升级前应用内导出最新明文 `DFBK2` 备份（schema 17、`2/0/1`、`reminders_media_sha256: b4d0a324...`）→同签名覆盖公开 ARM64 `v1.8.19 (90)`（实装 APK SHA‑256 `69f2f6e5...` 与公开附件一致，同机 QA 包未动）→冷重开（`PID 20449`）后复核导出 `2/0/1` 与逻辑摘要逐字节一致并清空临时导出记录；关于页显示 **`1.8.19 (90)`**，检查更新返回 **`已是最新发布版`**。
+  - **Pixel 8 Pro 正式版真实 Android TalkBack 读屏验收（PASS）**：详见 [pixel-formal-90-talkback-2026-11-21.json](benchmarks/pixel-formal-90-talkback-2026-11-21.json)。核验「数据与安全」（加密态两处密码显隐按钮均为 `显示密码`、`108×108px = 48×48dp`，`naf_count=0`）与「设备与同步」（局域网同步 `Switch` 为 `局域网同步`、`135×108px = 60×48dp`，`naf_count=0`）；开启真实 `TalkBackService`（`accessibility_enabled=1`、`touch_exploration_enabled=1`）并临时授予录音权限，单击首页 `按住说话` 成功弹出无障碍录制浮层且三按钮 **`保存原语音`／`转文字编辑`／`取消`** 均满足 `48.0dp`（`108px @ 360dpi`），点击 `取消` 正常收口（`RecordingActivityMonitor` 无残留、0 Flutter 异常），测后完整恢复 `enabled_accessibility_services=null`、`accessibility_enabled=0`、撤销 `RECORD_AUDIO` 与 `WeType`/`font_scale=1.0` 基线。
+  - **Windows CI 官方包运行中覆盖升级（FAIL，退出码 `5`，留证待续验）**：详见 [windows-upgrade-90-ci-2026-11-21.json](benchmarks/windows-upgrade-90-ci-2026-11-21.json)。CI 官方便携包 PE `1.8.19.90` 与 CLI `--help` 管道（`rc=0`、`DontForget CLI v1.8.19`）／`--add "   "`（`rc=2`）独立校验通过；使用 CI 官方 `DontForget_Setup_v1.8.19.exe`（SHA‑256 `395d9efe...`）按 `/CLOSEAPPLICATIONS /NOFORCECLOSEAPPLICATIONS` 尝试覆盖运行中的用户桌面 `PID 19044`（`v1.8.18.89`）仍因跨桌面 `RmUnknownApp` 正常关闭失败并回滚（退出码 `5`），实装版本保持 `1.8.18.89`、业务三表（`7/0/1`）与 DPAPI 凭据（`1` 项）完好，遵循 `AGENTS.md` 不强杀进程且不冒记通过，待用户退出 `PID 19044` 后分别续验退出后安装与同桌面运行中升级。
 
 ### 11月21日 v1.8.19／build90 无障碍读屏收口、Windows CLI／Runner 修复、UTF‑16 安全截断与本机运行中升级初验留证
 

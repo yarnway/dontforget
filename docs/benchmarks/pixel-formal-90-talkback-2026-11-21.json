@@ -1,0 +1,107 @@
+{
+  "timestamp_utc": "2026-11-21T05:25:33.420998+00:00",
+  "package": "com.yarnway.dontforget",
+  "installed_pkg": {
+    "package": "com.yarnway.dontforget",
+    "sha256": "69f2f6e55be5feb514266665eb9f1e9f13ce9f28110317e8c9f0827b515cf07e",
+    "version_lines": [
+      "versionCode=90 minSdk=24 targetSdk=36",
+      "versionName=1.8.19"
+    ]
+  },
+  "pre_state": {
+    "enabled_accessibility_services": "null",
+    "accessibility_enabled": "0",
+    "record_audio_granted": false,
+    "default_input_method": "com.tencent.wetype/.plugin.hld.WxHldService",
+    "font_scale": "1.0"
+  },
+  "checks": {
+    "data_security_encrypted_view": {
+      "naf_unlabeled_controls": [],
+      "naf_count": 0,
+      "password_toggle_buttons": [
+        {
+          "desc": "显示密码",
+          "bounds": "[828,1101][936,1209]",
+          "size_px": [
+            108,
+            108
+          ]
+        },
+        {
+          "desc": "显示密码",
+          "bounds": "[828,1299][936,1407]",
+          "size_px": [
+            108,
+            108
+          ]
+        }
+      ],
+      "pass": true
+    },
+    "device_sync_view": {
+      "naf_unlabeled_controls": [],
+      "naf_count": 0,
+      "switches": [
+        {
+          "desc": "局域网同步",
+          "bounds": "[792,590][927,698]",
+          "size_px": [
+            135,
+            108
+          ]
+        }
+      ],
+      "pass": true
+    },
+    "real_talkback_voice_capture": {
+      "device_dpi": 360,
+      "min_48dp_px": 108,
+      "talkback_service_active": true,
+      "touch_exploration_enabled": "1",
+      "voice_pad_desc": "按住说话",
+      "accessible_overlay_buttons": {
+        "save": {
+          "found": true,
+          "desc": "保存原语音",
+          "bounds": "[64,2046][371,2154]",
+          "width_px": 307,
+          "height_px": 108,
+          "height_dp": 48.0,
+          "meets_48dp": true
+        },
+        "edit": {
+          "found": true,
+          "desc": "转文字编辑",
+          "bounds": "[398,2046][705,2154]",
+          "width_px": 307,
+          "height_px": 108,
+          "height_dp": 48.0,
+          "meets_48dp": true
+        },
+        "cancel": {
+          "found": true,
+          "desc": "取消",
+          "bounds": "[732,2046][944,2154]",
+          "width_px": 212,
+          "height_px": 108,
+          "height_dp": 48.0,
+          "meets_48dp": true
+        }
+      },
+      "cancelled_cleanly": true,
+      "active_recording_sessions_after_cancel": [],
+      "flutter_error_lines": [],
+      "pass": true
+    }
+  },
+  "post_state": {
+    "enabled_accessibility_services": "null",
+    "accessibility_enabled": "0",
+    "record_audio_granted": false,
+    "default_input_method": "com.tencent.wetype/.plugin.hld.WxHldService",
+    "font_scale": "1.0"
+  },
+  "restored_cleanly": true
+}

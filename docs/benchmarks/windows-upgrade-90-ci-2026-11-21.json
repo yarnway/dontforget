@@ -1,0 +1,42 @@
+{
+  "timestamp_utc": "2026-11-21T05:10:25.764200+00:00",
+  "version": "1.8.19+90",
+  "revision": "6eedd2a1717fb794a902fe22c2d585a1ecf0fdd7",
+  "setup_file": "DontForget_Setup_v1.8.19.exe",
+  "setup_sha256": "395d9efe841cfa7e712a9bab9267578f9739563c33b2b6a9f72d8fc97da6d2b6",
+  "portable_file": "DontForget_Windows_Portable_v1.8.19.zip",
+  "portable_sha256": "3ed518041babb00463de92656035e0d3294e3e75b005cd0ff48863ad7b38ecc5",
+  "package_origin": "github-release-v1.8.19-run-44863670223",
+  "running_before_upgrade": true,
+  "started_for_running_check": false,
+  "pids_before": [
+    19044
+  ],
+  "version_before": [
+    1,
+    8,
+    18,
+    89
+  ],
+  "backup_dir": "C:\\Users\\Wayne\\AppData\\Local\\Temp\\dontforget-upgrade-backups\\20261121-131023-pre-1.8.19-90",
+  "backup_verified": true,
+  "force_close_allowed": false,
+  "installer_exit": 5,
+  "gui_tested": false,
+  "running_upgrade_result": "FAIL",
+  "version_after_failed_attempt": [
+    1,
+    8,
+    18,
+    89
+  ],
+  "db_preserved_after_failure": true,
+  "dpapi_preserved_after_failure": true,
+  "ci_portable_cli_verification": {
+    "pe_version": "1.8.19.90",
+    "help_piped_exit": 0,
+    "help_piped_has_version_banner": true,
+    "empty_add_exit": 2
+  },
+  "note": "Official GitHub Release v1.8.19 CI installer attempted graceful running upgrade with /CLOSEAPPLICATIONS /NOFORCECLOSEAPPLICATIONS while user-launched PID 19044 (v1.8.18.89 on WinSta0\\Default) remained open. Cross-desktop RestartManager returned RmUnknownApp and rolled back with exit code 5; DB (7/0/1) and DPAPI credentials (1) preserved intact. Process NOT force-closed per AGENTS.md; pending user exit from tray/desktop to complete post-exit install and same-desktop running upgrade."
+}
