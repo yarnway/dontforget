@@ -56,6 +56,7 @@ class WindowsRunnerCliTests(unittest.TestCase):
         self.assertIn("Local\\DontForget.GracefulUpgradeExit", iss)
         self.assertIn("Local\\DontForget.SingleInstance", iss)
         self.assertIn("'/NOCLOSEAPPLICATIONS'", iss)
+        self.assertIn(r'Software\Classes\AppUserModelId\DontForget', iss)
         for forbidden in ('TerminateProcess', 'taskkill', 'Stop-Process', 'WM_DESTROY'):
             self.assertNotIn(forbidden, iss)
 

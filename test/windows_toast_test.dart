@@ -61,6 +61,13 @@ void main() {
       script,
       contains('CreateToastNotifier("${WindowsToast.appUserModelId}")'),
     );
+    expect(
+      script,
+      contains(
+        r'if ($null -ne $notifier.Setting -and $notifier.Setting -ne [Windows.UI.Notifications.NotificationSetting]::Enabled)',
+      ),
+    );
+    expect(script, contains('exit 2'));
   });
 
   test('a non-zero exit is reported instead of silently ignored', () async {

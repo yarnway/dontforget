@@ -128,6 +128,15 @@ class WindowsToast {
         '::CreateToastNotifier("$appUserModelId")',
       )
       ..writeln(
+        'if (\$null -ne \$notifier.Setting -and \$notifier.Setting -ne '
+        '[Windows.UI.Notifications.NotificationSetting]::Enabled) {',
+      )
+      ..writeln(
+        "  [Console]::Error.WriteLine('Windows toast blocked: ' + \$notifier.Setting)",
+      )
+      ..writeln('  exit 2')
+      ..writeln('}')
+      ..writeln(
         '\$notification = [Windows.UI.Notifications.ToastNotification]'
         '::new(\$template)',
       )

@@ -50,6 +50,9 @@ Type: files; Name: "{commonprograms}\DontForget\别忘了.lnk"
 Root: HKCU; Subkey: "Software\Classes\dontforget"; ValueType: string; ValueName: ""; ValueData: "URL:DontForget Protocol"; Flags: uninsdeletekey
 Root: HKCU; Subkey: "Software\Classes\dontforget"; ValueType: string; ValueName: "URL Protocol"; ValueData: ""; Flags: uninsdeletekey
 Root: HKCU; Subkey: "Software\Classes\dontforget\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Flags: uninsdeletekey
+; Register AppUserModelId metadata so Windows 10/11 Toast notifications display the app name and brand icon
+Root: HKCU; Subkey: "Software\Classes\AppUserModelId\DontForget"; ValueType: string; ValueName: "DisplayName"; ValueData: "{#MyAppName}"; Flags: uninsdeletekey
+Root: HKCU; Subkey: "Software\Classes\AppUserModelId\DontForget"; ValueType: string; ValueName: "IconUri"; ValueData: "{app}\data\flutter_assets\assets\app_icon.png"; Flags: uninsdeletekey
 
 [Files]
 ; Main executable and all dependencies in the Release folder
