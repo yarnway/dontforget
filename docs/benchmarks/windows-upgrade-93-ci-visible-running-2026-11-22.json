@@ -1,0 +1,88 @@
+{
+  "timestamp_utc": "2026-11-22T05:45:24Z",
+  "version": "1.8.22+93",
+  "revision": "8ecad7c9526856c5f9ba4c307984607d4636d688",
+  "setup_file": "DontForget_Setup_v1.8.22.exe",
+  "setup_bytes": 13251976,
+  "setup_sha256": "eb486df739574f94e7fb95a7af2be002b3413ca0ec9e980059c234885f0e8cb7",
+  "portable_file": "DontForget_Windows_Portable_v1.8.22.zip",
+  "portable_bytes": 15719636,
+  "portable_sha256": "71ec0fbcded6a376c97e6e83920c7cd366bd36d2223f8dc74b3aaebd0c6b9455",
+  "package_origin": "github-release-v1.8.22-run-44987637794-pub-44989612452",
+  "upgrade_mode": "visible_running",
+  "running_before_upgrade": true,
+  "pids_before": [
+    37232
+  ],
+  "version_before": [
+    1,
+    8,
+    22,
+    93
+  ],
+  "window_visible_before_action": true,
+  "window_visible_at_install": true,
+  "graceful_upgrade_event_present_before_install": true,
+  "backup_dir": "C:\\Users\\Wayne\\AppData\\Local\\Temp\\dontforget-upgrade-backups\\20261122-134507-pre-1.8.22-93-visible_running",
+  "backup_verified": true,
+  "force_close_allowed": false,
+  "installer_exit": 0,
+  "installer_elapsed_seconds": 1.79,
+  "inno_graceful_mutex_release_logged": true,
+  "inno_restart_manager_active_apps_zero": true,
+  "old_pid_closed_gracefully": true,
+  "running_upgrade_result": "PASS",
+  "version_after": [
+    1,
+    8,
+    22,
+    93
+  ],
+  "payload_files_identical": 27,
+  "material_icons_font_bytes": 30580,
+  "obsolete_files_present_before": [],
+  "obsolete_files_remaining_after": [],
+  "record_web_dir_removed": true,
+  "cupertino_icons_dir_removed": true,
+  "aumid_registry": {
+    "exists": true,
+    "display_name": "DontForget",
+    "icon_uri": "C:\\Users\\Wayne\\AppData\\Local\\Programs\\DontForget\\data\\flutter_assets\\assets\\app_icon.png",
+    "icon_file_exists": true,
+    "valid": true
+  },
+  "native_cli_help_exit": 0,
+  "native_cli_help_has_version": true,
+  "native_cli_empty_add_exit": 2,
+  "native_cli_list_exit": 0,
+  "native_cli_list_stdout_lines": 10,
+  "schema": 17,
+  "integrity_check": "ok",
+  "sqlite_journal_header_before": [
+    1,
+    1
+  ],
+  "sqlite_journal_header_after": [
+    1,
+    1
+  ],
+  "sqlite_journal_header_reopen": [
+    1,
+    1
+  ],
+  "all_business_fields_preserved": true,
+  "business_counts": {
+    "Reminders": 7,
+    "MediaRecords": 0,
+    "Settings": 1
+  },
+  "credential_files_preserved": true,
+  "dpapi_credential_readback_equal": true,
+  "credential_count": 1,
+  "normal_app_reopen_process_verified": true,
+  "normal_app_reopen_pid": 16836,
+  "normal_app_reopen_graceful_event_registered": true,
+  "normal_app_reopen_business_fields_equal": true,
+  "normal_app_reopen_dpapi_equal": true,
+  "gui_tested": false
+}

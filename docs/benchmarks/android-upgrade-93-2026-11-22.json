@@ -1,0 +1,123 @@
+{
+  "timestamp_utc": "2026-11-22T05:50:17.435486+00:00",
+  "package": "com.yarnway.dontforget",
+  "release_apk_path": "C:\\Users\\Wayne\\.gemini\\antigravity\\brain\\117c7c12-f7b6-4c2d-9910-a977cd06f364\\scratch\\official_v1_8_22\\DontForget_Android_arm64_v1.8.22.apk",
+  "release_apk_sha256": "4f3a18a411b36ac5c19be1f60dd31997390ad9f4478935cb4a224cc9bd2adbf0",
+  "release_apk_bytes": 10321255,
+  "release_apk_cert_sha256": "3db49656984fb848a73b1e8d056846b97e2a7caf47c9a9ae74f475cdbb79e9f1",
+  "formal_before": {
+    "package": "com.yarnway.dontforget",
+    "sha256": "8da7e521c226456e4f465018f559cb8f8d91e2cfa4abe25dd5f69f4bb1b7a5dd",
+    "version_lines": [
+      "versionCode=92 minSdk=24 targetSdk=36",
+      "versionName=1.8.21"
+    ]
+  },
+  "formal_after": {
+    "package": "com.yarnway.dontforget",
+    "sha256": "4f3a18a411b36ac5c19be1f60dd31997390ad9f4478935cb4a224cc9bd2adbf0",
+    "version_lines": [
+      "versionCode=93 minSdk=24 targetSdk=36",
+      "versionName=1.8.22"
+    ]
+  },
+  "installed_matches_release_apk": true,
+  "siblings_before": [
+    {
+      "package": "com.yarnway.dontforget.acceptance.p4720261102",
+      "sha256": "74867b0f47c953669f63afb99551fb3c533d99ac6b09cf565aaf14a99470508e",
+      "version_lines": [
+        "versionCode=85 minSdk=24 targetSdk=36",
+        "versionName=1.8.14"
+      ]
+    },
+    {
+      "package": "com.yarnway.dontforget.acceptance.native8420261117",
+      "sha256": "05d671c5c4850b341c1bc446271eab968cca99410d25b793b56066effc856428",
+      "version_lines": [
+        "versionCode=84 minSdk=24 targetSdk=36",
+        "versionName=1.8.13"
+      ]
+    },
+    {
+      "package": "com.yarnway.dontforget.acceptance.sync20261118",
+      "sha256": "751b3fa7fe0749a6248b7d7afb6c5875489178351075ab7df74507bc19cae0f4",
+      "version_lines": [
+        "versionCode=89 minSdk=24 targetSdk=36",
+        "versionName=1.8.18"
+      ]
+    }
+  ],
+  "siblings_after": [
+    {
+      "package": "com.yarnway.dontforget.acceptance.p4720261102",
+      "sha256": "74867b0f47c953669f63afb99551fb3c533d99ac6b09cf565aaf14a99470508e",
+      "version_lines": [
+        "versionCode=85 minSdk=24 targetSdk=36",
+        "versionName=1.8.14"
+      ]
+    },
+    {
+      "package": "com.yarnway.dontforget.acceptance.native8420261117",
+      "sha256": "05d671c5c4850b341c1bc446271eab968cca99410d25b793b56066effc856428",
+      "version_lines": [
+        "versionCode=84 minSdk=24 targetSdk=36",
+        "versionName=1.8.13"
+      ]
+    },
+    {
+      "package": "com.yarnway.dontforget.acceptance.sync20261118",
+      "sha256": "751b3fa7fe0749a6248b7d7afb6c5875489178351075ab7df74507bc19cae0f4",
+      "version_lines": [
+        "versionCode=89 minSdk=24 targetSdk=36",
+        "versionName=1.8.18"
+      ]
+    }
+  ],
+  "siblings_unchanged": true,
+  "pre_upgrade_backup": {
+    "local_path": "C:\\Users\\Wayne\\AppData\\Local\\Temp\\dontforget-pixel-formal-backups\\pre93-dontforget-2026-11-22-134632453.dfbackup",
+    "bytes": 85461,
+    "sha256": "aecb6d7ef29fe1a5f8b44516d83e8fc1b18bf4d4d37c4768a905e6264ff4eb1a",
+    "format": "dontforget.file",
+    "cipher": "none",
+    "schema_version": 17,
+    "counts": {
+      "Reminders": 3,
+      "MediaRecords": 1,
+      "Settings": 1
+    },
+    "reminders_media_sha256": "d033065a5e59aebfcdef5eb0daba5cd395f3db5b9ad91a9c507045a746490db3"
+  },
+  "post_upgrade_backup": {
+    "local_path": "C:\\Users\\Wayne\\AppData\\Local\\Temp\\dontforget-pixel-formal-backups\\post93-dontforget-2026-11-22-134715086.dfbackup",
+    "bytes": 85765,
+    "sha256": "9a4b7bf307f60929bb428c11a6bb6e73914aa87d379fd8d8e501d5e22b06dc46",
+    "format": "dontforget.file",
+    "cipher": "none",
+    "schema_version": 17,
+    "counts": {
+      "Reminders": 3,
+      "MediaRecords": 1,
+      "Settings": 1
+    },
+    "reminders_media_sha256": "d033065a5e59aebfcdef5eb0daba5cd395f3db5b9ad91a9c507045a746490db3"
+  },
+  "counts_preserved": true,
+  "reminders_and_media_exact_equal": true,
+  "cold_reopen_pid": "29578",
+  "about_shows_1_8_22_93": true,
+  "update_check_is_current": true,
+  "runtime_logcat_error_lines": [],
+  "zero_runtime_errors": true,
+  "device_extracted_arm64_libs": [
+    "libapp.so",
+    "libdartjni.so",
+    "libflutter.so"
+  ],
+  "libsqlite3_absent_on_device": true,
+  "default_ime_after": "com.tencent.wetype/.plugin.hld.WxHldService",
+  "font_scale_after": "1.0",
+  "update_check_first_attempt_network_failed": true,
+  "update_check_verified_label": "已是最新发布版 / 公开版本 1.8.22 (93)"
+}

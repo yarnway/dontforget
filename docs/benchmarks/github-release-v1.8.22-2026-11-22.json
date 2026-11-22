@@ -1,0 +1,144 @@
+{
+  "verified_at": "2026-11-22T05:31:52.3132585Z",
+  "publish_run_id": 44989612452,
+  "ci_run_id": 44987637794,
+  "release": {
+    "tag_name": "v1.8.22",
+    "id": 454226294,
+    "target_commitish": "8ecad7c9526856c5f9ba4c307984607d4636d688",
+    "draft": false,
+    "prerelease": false,
+    "published_at": "2026-11-22T05:30:51Z",
+    "html_url": "https://github.com/yarnway/dontforget/releases/tag/v1.8.22",
+    "asset_count": 20,
+    "assets": [
+      {
+        "name": "android-manifest.json",
+        "size": 1301,
+        "digest": "sha256:4944fca2e38d0e32fcf4b8315a68320075403c201734cee9831dea52c7eb3b56",
+        "url": "https://github.com/yarnway/dontforget/releases/download/v1.8.22/android-manifest.json"
+      },
+      {
+        "name": "android-SHA256SUMS.txt",
+        "size": 297,
+        "digest": "sha256:0b0832f2ac75cfd4508e49ead88ef8ab2205818a2423c2f6c08410fbdb830c30",
+        "url": "https://github.com/yarnway/dontforget/releases/download/v1.8.22/android-SHA256SUMS.txt"
+      },
+      {
+        "name": "DontForget_Android_arm64_v1.8.22.apk",
+        "size": 10321255,
+        "digest": "sha256:4f3a18a411b36ac5c19be1f60dd31997390ad9f4478935cb4a224cc9bd2adbf0",
+        "url": "https://github.com/yarnway/dontforget/releases/download/v1.8.22/DontForget_Android_arm64_v1.8.22.apk"
+      },
+      {
+        "name": "DontForget_Android_v1.8.22.aab",
+        "size": 62430868,
+        "digest": "sha256:6de0f4d61bc17fd17d96ebd1914ed83029a4f3ff8e7c93b92c8558a068d4116e",
+        "url": "https://github.com/yarnway/dontforget/releases/download/v1.8.22/DontForget_Android_v1.8.22.aab"
+      },
+      {
+        "name": "DontForget_Android_v1.8.22.apk",
+        "size": 29009290,
+        "digest": "sha256:34e3db5b48e6c2c99e735ac3448b052abe07aacec92bdb0987875a2cd0b68bdc",
+        "url": "https://github.com/yarnway/dontforget/releases/download/v1.8.22/DontForget_Android_v1.8.22.apk"
+      },
+      {
+        "name": "DontForget_iOS_unsigned_v1.8.22.ipa",
+        "size": 10219816,
+        "digest": "sha256:ad8ed003b64965ede7fe1da306dd4089c6b29488742befff9327971b7fd3b0c4",
+        "url": "https://github.com/yarnway/dontforget/releases/download/v1.8.22/DontForget_iOS_unsigned_v1.8.22.ipa"
+      },
+      {
+        "name": "DontForget_Linux_x64_v1.8.22.tar.gz",
+        "size": 12688990,
+        "digest": "sha256:6a82ba8d02bd4988e10d6187e481a9caf7ca5ec8249f5a7130f5a8ea2f75dc1d",
+        "url": "https://github.com/yarnway/dontforget/releases/download/v1.8.22/DontForget_Linux_x64_v1.8.22.tar.gz"
+      },
+      {
+        "name": "DontForget_Setup_v1.8.22.exe",
+        "size": 13251976,
+        "digest": "sha256:eb486df739574f94e7fb95a7af2be002b3413ca0ec9e980059c234885f0e8cb7",
+        "url": "https://github.com/yarnway/dontforget/releases/download/v1.8.22/DontForget_Setup_v1.8.22.exe"
+      },
+      {
+        "name": "DontForget_Windows_Portable_v1.8.22.zip",
+        "size": 15719636,
+        "digest": "sha256:71ec0fbcded6a376c97e6e83920c7cd366bd36d2223f8dc74b3aaebd0c6b9455",
+        "url": "https://github.com/yarnway/dontforget/releases/download/v1.8.22/DontForget_Windows_Portable_v1.8.22.zip"
+      },
+      {
+        "name": "ios-manifest.json",
+        "size": 594,
+        "digest": "sha256:42f54ef7f926a43718ff90cded524e9abfa37cb82741469991c159f20f5a0b55",
+        "url": "https://github.com/yarnway/dontforget/releases/download/v1.8.22/ios-manifest.json"
+      },
+      {
+        "name": "ios-SHA256SUMS.txt",
+        "size": 102,
+        "digest": "sha256:154cb1a69b576554399f768c940db050b19c04be2301520429a3117d88a476f5",
+        "url": "https://github.com/yarnway/dontforget/releases/download/v1.8.22/ios-SHA256SUMS.txt"
+      },
+      {
+        "name": "linux-manifest.json",
+        "size": 403,
+        "digest": "sha256:60ce143cdfd2ece87868cf25b86d75647348214558aaea29ea174a7174886f8d",
+        "url": "https://github.com/yarnway/dontforget/releases/download/v1.8.22/linux-manifest.json"
+      },
+      {
+        "name": "linux-SHA256SUMS.txt",
+        "size": 102,
+        "digest": "sha256:b50ca05b8db81c2e3fda1ffe43914fbecfa37b7d792e103fab9caf4ad615637a",
+        "url": "https://github.com/yarnway/dontforget/releases/download/v1.8.22/linux-SHA256SUMS.txt"
+      },
+      {
+        "name": "linux-startup.json",
+        "size": 573,
+        "digest": "sha256:6cc9c97ed84a41b65dfbf3ea8aa33dfd9f110e61fae6c0f080af7b9a172bb668",
+        "url": "https://github.com/yarnway/dontforget/releases/download/v1.8.22/linux-startup.json"
+      },
+      {
+        "name": "release-provenance.json",
+        "size": 4432,
+        "digest": "sha256:f47b4fb78c8f7675776c226fb67a1dceae46df83f29c2a5415d4c4a4c3fe388b",
+        "url": "https://github.com/yarnway/dontforget/releases/download/v1.8.22/release-provenance.json"
+      },
+      {
+        "name": "SHA256SUMS.txt",
+        "size": 1752,
+        "digest": "sha256:c76f044749b0120b280ec4dec740919a73e2f8c4c44af8ab40163cf8a7639ee9",
+        "url": "https://github.com/yarnway/dontforget/releases/download/v1.8.22/SHA256SUMS.txt"
+      },
+      {
+        "name": "windows-installation.json",
+        "size": 288,
+        "digest": "sha256:0fab7a51d5f7deca70cc4abf185705c1ba47310d30448f88fcbe048c541a6160",
+        "url": "https://github.com/yarnway/dontforget/releases/download/v1.8.22/windows-installation.json"
+      },
+      {
+        "name": "windows-manifest.json",
+        "size": 660,
+        "digest": "sha256:b0904bff875642f06ad1960e9798c80997f47f88bbf3eed036ff89bf7db0747d",
+        "url": "https://github.com/yarnway/dontforget/releases/download/v1.8.22/windows-manifest.json"
+      },
+      {
+        "name": "windows-SHA256SUMS.txt",
+        "size": 203,
+        "digest": "sha256:293f3bd0554c2e64df5713487aefcab3bb0cde9715d5f88fc7d3cb750e1d81a6",
+        "url": "https://github.com/yarnway/dontforget/releases/download/v1.8.22/windows-SHA256SUMS.txt"
+      },
+      {
+        "name": "windows-startup.json",
+        "size": 443,
+        "digest": "sha256:c3940e0070e49cf2bc5eda9d14327e6fad67878682c66f5e195f68b45f9ec0ab",
+        "url": "https://github.com/yarnway/dontforget/releases/download/v1.8.22/windows-startup.json"
+      }
+    ]
+  },
+  "previous_release_preserved": {
+    "tag_name": "v1.8.21",
+    "id": 453957569,
+    "target_commitish": "7cc4e8e1e848a2b8c7d1e3cf11da9b28202cbd0b",
+    "published_at": "2026-11-21T20:20:18Z",
+    "asset_count": 20
+  }
+}
