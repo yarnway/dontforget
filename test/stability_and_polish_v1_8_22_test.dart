@@ -14,6 +14,7 @@ import 'package:dont_forget/ui/theme/app_theme.dart';
 import 'package:dont_forget/ui/widgets/inline_feedback.dart';
 import 'package:dont_forget/ui/widgets/task_workspace_overview.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -97,12 +98,17 @@ void main() {
   });
 
   test('NotificationService.seedInitialLanguage sets baseline without reconcile', () async {
-    final service = NotificationService();
+    final service = NotificationService.forTesting(
+      FlutterLocalNotificationsPlugin(),
+      usesNativeNotifications: false,
+    );
+    addTearDown(service.pauseForMaintenance);
     service.seedInitialLanguage('en');
     // Subsequent seed calls before init update pre-init baseline cleanly.
     service.seedInitialLanguage('ja');
-    // Verify desktop setNotificationLanguage completes cleanly in O(1).
+    // Verify desktop setNotificationLanguage completes cleanly in O(1) across OSes.
     await service.setNotificationLanguage('ja');
+    await service.setNotificationLanguage('zh');
   });
 
   test('AppTheme.quadrantColor provides 4 distinct AA-contrast colors per theme', () {
