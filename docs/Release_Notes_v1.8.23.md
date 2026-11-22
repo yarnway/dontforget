@@ -36,7 +36,7 @@
 - Windows x64：`DontForget_Setup_v1.8.23.exe` 安装版或 `DontForget_Windows_Portable_v1.8.23.zip` 便携包，未做 Authenticode 签名。
 - Linux x64：`DontForget_Linux_x64_v1.8.23.tar.gz`，Ubuntu 24.04 基线。
 - Android：固定发行证书签名的通用 APK（`DontForget_Android_v1.8.23.apk`）、ARM64 APK（`DontForget_Android_arm64_v1.8.23.apk`）及 AAB（`DontForget_Android_v1.8.23.aab`）。
-- iOS：`DontForget_iOS_unsigned_v1.8.23.ipa` 为未签名 IPA，需要通过 AltStore 个人重签；免费账号通常每 7 天续期。安装方式见[说明](https://github.com/yarnway/dontforget/blob/main/docs/iOS_Sideload_Windows.md)，不属于 App Store 或 TestFlight 分发。
+- iOS：`DontForget_iOS_unsigned_v1.8.23.ipa` 为未签名 IPA，需要通过 AltStore 个人重签；免费账号通常每 7天 续期。安装方式见[说明](https://github.com/yarnway/dontforget/blob/main/docs/iOS_Sideload_Windows.md)，不属于 App Store 或 TestFlight 分发。
 
 ## 验收范围与限制
 
