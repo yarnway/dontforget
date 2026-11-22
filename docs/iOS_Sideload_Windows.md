@@ -14,4 +14,4 @@ GitHub Release中的`DontForget_iOS_unsigned_v<版本>.ipa`由固定源码在云
 
 ## 当前发行与设备状态（2026-11-22）
 
-v1.8.22／build93 已发布普通身份未签名 IPA（`DontForget_iOS_unsigned_v1.8.22.ipa`，`10,219,816 B` / `9.75 MiB`，较 `v1.8.20` 累计缩减 `-12.87%`，SHA‑256 `ad8ed003...`，内含 `PlugIns/ReminderActivity.appex` 并已独立读回校验），但本机当前无 iPhone USB 连接且为 Windows 环境，尚未在 iPhone 实机安装或验收。手机最近独立读回仍为 `1.8.11／81`，原应用与数据保留。自动签名安装尚无可用路径，构建／发布不等于手机已升级；下次接入 iPhone 覆盖前重新取最新备份，再按既有 AltStore 身份重签覆盖并核对版本、数据、中文输入、通知、录音与 VoiceOver。[分层记录](Release_1.8.22_93_2026-11-22.md)。
+v1.8.23／build94 已发布普通身份未签名 IPA（`DontForget_iOS_unsigned_v1.8.23.ipa`，`10,242,177 B` / `9.77 MiB`，较 `v1.8.20` 累计缩减 `-12.68%`，SHA‑256 `7f735c69...`，内含 `PlugIns/ReminderActivity.appex` 并已独立读回校验），但本机当前无 iPhone USB 连接且为 Windows 环境，尚未在 iPhone 实机安装或验收。手机最近独立读回仍为 `1.8.11／81`，原应用与数据保留。自动签名安装尚无可用路径，构建／发布不等于手机已升级；下次接入 iPhone 覆盖前重新取最新备份，再按既有 AltStore 身份重签覆盖并核对版本、数据、中文输入、通知、录音与 VoiceOver。[分层记录](Release_1.8.23_94_2026-11-22.md)。

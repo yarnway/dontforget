@@ -1,6 +1,6 @@
 # DontForget 打包与发布验收
 
-当前稳定版为 v1.8.22／build93、schema17（SQLite 回滚日志头 `[1, 1]`），四平台七包与 20 附件已发布并独立读回，见[本轮发行](Release_1.8.22_93_2026-11-22.md)。七包总大小降至 `146.52 MiB`（较 `v1.8.20` 累计缩减 **`-36.42%`**，Android ARM64 APK `9.84 MiB`、iOS 未签名 IPA `9.75 MiB`）；Windows 已一次性通过跨版本 `SW_HIDE` 托盘隐藏态运行中优雅升级（`1.8.21.92`→`1.8.22.93`，213 ms 释放互斥锁、零强杀、`[InstallDelete]` 清除旧版残留、27/27 载荷与 SQLite/DPAPI/普通重开一致）及可见运行态／自托盘隐藏态升级；Pixel 8 Pro 正式版已完成 `1.8.21 (92)`→`1.8.22 (93)` 同签名保全升级、`libsqlite3.so` 剔除验证、新版 UI 视觉核验与 `已是最新发布版` 更新检查；iOS 提供未签名 IPA，手机 93 尚未安装／真机验收。Windows 活动桌面 GUI 交互细节、云端 ASR 真实播音与 iPhone 矩阵独立待验。下列旧版本案例保留各自归属。
+当前稳定版为 v1.8.23／build94、schema17（SQLite 回滚日志头 `[1, 1]`），四平台七包与 20 附件已发布并独立读回，见[本轮发行](Release_1.8.23_94_2026-11-22.md)。七包总大小保持在 `146.86 MiB`（较 `v1.8.20` 累计缩减 **`-36.27%`**，Android ARM64 APK `9.87 MiB`、iOS 未签名 IPA `9.77 MiB`）；Windows 已一次性通过跨版本 `SW_HIDE` 托盘隐藏态运行中优雅升级（`1.8.22.93`→`1.8.23.94`，优雅释放互斥锁、RestartManager 0 占用、退出码 `0`、零强杀、27/27 载荷与 SQLite/DPAPI/普通重开一致）及可见运行态／自托盘隐藏态升级；Pixel 8 Pro 正式版已完成 `1.8.22 (93)`→`1.8.23 (94)` 同签名保全升级、`libsqlite3.so` 持续剔除验证、零异常冷重开、备份往返一致性与新版 UI（首页隐藏空 `已完成 · 0`、AI 设置 `本地模型` 探测卡片、内容管理未扫描引导、关于页 `1.8.23 (94)`）实机截图核验（Pixel 当前 Wi‑Fi 访问 GitHub 更新检查超时，已如实记录）；iOS 提供未签名 IPA，手机 94 尚未安装／真机验收。Windows 活动桌面 GUI 交互细节、云端 ASR 真实播音与 iPhone 矩阵独立待验。下列旧版本案例保留各自归属。
 
 当前候选版本和构建号以 `pubspec.yaml` 为准，Flutter 固定为 3.44.9。构建成功、打包成功、安装运行、系统通知和正式发布分别验收。当前执行状态见[阶段台账](Next_Steps_2026-11-02.md)，v1.7历史范围见[验收总表](Release_Acceptance_v1.7.md)，历史结果见 [v1.6 阶段验收记录](Native_Acceptance_v1.6.md) 和 [v1.5.1 验收记录](Release_Acceptance_v1.5.1.md)。
 
@@ -85,7 +85,7 @@ python3 scripts/check_ios_device.py --output /tmp/dontforget-ios-preflight.json
 
 Linux 的编译开发库不等于媒体运行时插件。使用 `--no-install-recommends` 时须显式安装 `gstreamer1.0-plugins-base`、`gstreamer1.0-plugins-good`；CI 另安装 `gstreamer1.0-tools` 并用 `gst-inspect-1.0` 检查 `playbin`、`audiopanorama`、`autoaudiosink`，再执行原生进程启动检查。锁定的音频插件在 `playbin` 缺失时可能在初始化直接退出。无头 CI 还显式提供 Xvfb/xauth 和 AT-SPI；这不替代实际桌面播放、录音及可访问性验收。CI 将托管运行器的 Azure Ubuntu 下载源替换为 Ubuntu 官方 HTTPS archive，保留原有发行版、组件和签名密钥；依赖安装限制为 12 分钟，网络请求有超时与重试，避免缓慢传输耗尽整个构建时限。
 
-## 包体瘦身与运行中升级机制（v1.8.20–v1.8.22）
+## 包体瘦身与运行中升级机制（v1.8.20–v1.8.23）
 
 - **全平台符号分离与图标树摇**：五平台构建脚本统一启用 `--split-debug-info=build/symbols/<platform>` 分离 Dart 调试符号；桌面端显式传入 `-dTreeShakeIcons=true`（规避 Flutter 3.44.9 `tool_backend.dart` 图标树摇参数缺陷）并清理增量 `flutter_assets`，使 `MaterialIcons-Regular.otf` 从 `1.65 MB` 降至 `~30.5 KB`（`-98.2%`），并移除未用 `cupertino_icons` 与冷启动全量时区表。
 - **三语框架本地化与资源裁剪**：应用改用仅覆盖 `zh`/`en`/`ja` 的 `lib/l10n/framework_localizations.dart` 替代全量 `GlobalMaterialLocalizations`／`GlobalCupertinoLocalizations`，剔除 116 套未用语言表与 122 套日期符号；Android 同时配置 `resourceConfigurations` 裁剪 69 套无用系统语言资源并排除 `kotlin/*.kotlin_builtins`、`DebugProbesKt.bin` 及桌面 FFI 库 `libsqlite3.so`，并启用 `jniLibs.useLegacyPackaging = true` 压缩原生 `.so`。
