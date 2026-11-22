@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'content/content_cleanup_service.dart';
 import 'content/owned_material_activity.dart';
 import 'dart:isolate';
 import 'dart:math';
@@ -112,6 +113,7 @@ class StreamingBackupService {
       if (drafts is String) {
         final value = jsonDecode(drafts) as Map<String, dynamic>;
         value.remove(CredentialRepository.cleanupKey);
+        value.remove(ContentCleanupService.cleanupKey);
         row['workspace_drafts_json'] = jsonEncode(value);
       }
     }
@@ -165,12 +167,13 @@ class StreamingBackupService {
         paths = <String>[],
         missing = <String>[];
     var total = 0;
+    final mediaStore = LocalMediaStore();
     final records = snapshot['media_records'] as List;
     for (var i = 0; i < records.length; i++) {
       check();
       final record = records[i] as Map;
       if (record['type'] == 'text') continue;
-      final path = await LocalMediaStore().resolvePath(
+      final path = await mediaStore.resolvePath(
         record['content_or_path'] as String,
       );
       check();
@@ -239,7 +242,11 @@ class StreamingBackupService {
     BackupCacheService.activeDirectories.add(directory.path);
     final partial = File(p.join(directory.path, 'backup.partial'));
     RandomAccessFile? output;
+    _AesGcmWorker? worker;
     try {
+      if (key != null) {
+        worker = await _AesGcmWorker.spawn(key);
+      }
       output = await partial.open(mode: FileMode.write);
       await output.writeFrom(magic);
       await output.writeFrom(_u32(header.length));
@@ -248,7 +255,7 @@ class StreamingBackupService {
         output,
         header,
         noncePrefix,
-        key,
+        worker,
         check,
         payloadBytes,
         onProgress,
@@ -294,6 +301,7 @@ class StreamingBackupService {
       if (await directory.exists()) await directory.delete(recursive: true);
       rethrow;
     } finally {
+      worker?.close();
       key?.fillRange(0, key.length, 0);
     }
   });
@@ -343,7 +351,7 @@ class StreamingBackupService {
   Future<File> prepareRestore(
     File source,
     Directory ownedMediaRoot, {
-    required String expectedDigest,
+    String? expectedDigest,
     required bool Function() isCurrent,
     String? password,
     BackupControl? control,
@@ -425,6 +433,7 @@ class StreamingBackupService {
     await _validSource(source);
     Directory? created, validation;
     Uint8List? key;
+    _AesGcmWorker? worker;
     final input = await source.open();
     try {
       final reader = _FileReader(input, check);
@@ -445,12 +454,13 @@ class StreamingBackupService {
         onProgress?.call(const BackupProgress('key', 0, 0));
         key = await _derive(password, base64Decode(header['salt']));
         check();
+        worker = await _AesGcmWorker.spawn(key);
       }
       final payload = _PayloadReader(
         reader,
         headerBytes,
         header,
-        key,
+        worker,
         check,
         onProgress,
       );
@@ -460,7 +470,8 @@ class StreamingBackupService {
       }
       final manifest = _parseManifest(await payload.take(length));
       final snapshot = Map<String, dynamic>.from(manifest['snapshot']);
-      if (utf8.encode(jsonEncode(snapshot)).length > maxSnapshotBytes) {
+      final encodedSnapshot = jsonEncode(snapshot);
+      if (utf8.encode(encodedSnapshot).length > maxSnapshotBytes) {
         throw const FormatException('Backup metadata too large');
       }
       final files = manifest['attachments'] as List;
@@ -478,7 +489,7 @@ class StreamingBackupService {
       );
       final probe = await File(
         p.join(validation.path, 'snapshot.json'),
-      ).writeAsString(jsonEncode(snapshot), flush: true);
+      ).writeAsString(encodedSnapshot, flush: true);
       await BackupInspector.platform().inspect(probe);
       check();
       if (destination != null) {
@@ -487,6 +498,10 @@ class StreamingBackupService {
         created = await destination.createTemp('import-');
         OwnedMaterialActivity.hold(created);
       }
+      final mediaRecordsById = <Object?, Map>{
+        for (final row in snapshot['media_records'] as List)
+          if (row is Map) row['id']: row,
+      };
       for (var index = 0; index < files.length; index++) {
         final meta = files[index] as Map, digest = _HashSink();
         RandomAccessFile? out;
@@ -513,9 +528,11 @@ class StreamingBackupService {
           }
           await out?.flush();
           if (file != null) {
-            (snapshot['media_records'] as List).firstWhere(
-              (r) => r['id'] == meta['id'],
-            )['content_or_path'] = file.path;
+            final target = mediaRecordsById[meta['id']];
+            if (target == null) {
+              throw const FormatException('Unknown attachment record');
+            }
+            target['content_or_path'] = file.path;
           }
         } finally {
           await out?.close();
@@ -559,6 +576,7 @@ class StreamingBackupService {
       }
       rethrow;
     } finally {
+      worker?.close();
       await input.close();
       key?.fillRange(0, key.length, 0);
       if (validation != null && await validation.exists()) {
@@ -701,19 +719,43 @@ class StreamingBackupService {
     }
     // New files never carry credentials, even when encrypted.
     for (final row in m['snapshot']['settings'] as List) {
-      if ((row['api_key'] as String? ?? '').isNotEmpty) {
+      if (row is! Map) {
+        throw const FormatException('Invalid backup settings row');
+      }
+      final apiKey = row['api_key'];
+      if (apiKey != null && apiKey is! String) {
+        throw const FormatException('Invalid backup settings row');
+      }
+      if ((apiKey as String? ?? '').isNotEmpty) {
         throw const FormatException('Backup contains credentials');
       }
-      if (row['speech_config_json'] is String &&
-          ((jsonDecode(row['speech_config_json']) as Map)['api_key']
-                      as String? ??
-                  '')
-              .isNotEmpty) {
-        throw const FormatException('Backup contains credentials');
+      if (row['speech_config_json'] is String) {
+        final speech = jsonDecode(row['speech_config_json'] as String);
+        if (speech is! Map) {
+          throw const FormatException('Invalid backup speech config');
+        }
+        final speechKey = speech['api_key'];
+        if (speechKey != null && speechKey is! String) {
+          throw const FormatException('Invalid backup speech config');
+        }
+        if ((speechKey as String? ?? '').isNotEmpty) {
+          throw const FormatException('Backup contains credentials');
+        }
       }
       if (row['ai_profiles_json'] is String) {
-        for (final p in jsonDecode(row['ai_profiles_json']) as List) {
-          if ((p['api_key'] as String? ?? '').isNotEmpty) {
+        final profiles = jsonDecode(row['ai_profiles_json'] as String);
+        if (profiles is! List) {
+          throw const FormatException('Invalid backup AI profiles');
+        }
+        for (final p in profiles) {
+          if (p is! Map) {
+            throw const FormatException('Invalid backup AI profile');
+          }
+          final profileKey = p['api_key'];
+          if (profileKey != null && profileKey is! String) {
+            throw const FormatException('Invalid backup AI profile');
+          }
+          if ((profileKey as String? ?? '').isNotEmpty) {
             throw const FormatException('Backup contains credentials');
           }
         }
@@ -790,46 +832,157 @@ Future<Uint8List> _derive(String password, List<int> salt) =>
       ).deriveKeyFromPassword(password: password, nonce: salt);
       return Uint8List.fromList(await key.extractBytes());
     });
-Future<Uint8List> _crypt(
-  Uint8List input,
-  Uint8List key,
-  List<int> nonce,
-  List<int> aad,
-  bool encrypt,
-) => Isolate.run(() async {
-  final cipher = AesGcm.with256bits();
-  if (encrypt) {
-    final box = await cipher.encrypt(
-      input,
-      secretKey: SecretKey(key),
-      nonce: nonce,
-      aad: aad,
-    );
-    return Uint8List.fromList([...box.cipherText, ...box.mac.bytes]);
+/// Long-lived worker isolate reused across every 1 MiB AES-256-GCM frame in a
+/// backup or restore operation so multi-hundred-MiB backups spawn 1 isolate
+/// instead of hundreds and avoid boxed List<int> copies.
+class _AesGcmWorker {
+  _AesGcmWorker._(this._isolate, this._commands, this._responses) {
+    _subscription = _responses.listen((message) {
+      final completer = _pending;
+      _pending = null;
+      if (completer == null || completer.isCompleted) return;
+      if (message is TransferableTypedData) {
+        completer.complete(message.materialize().asUint8List());
+      } else if (message == 'auth_error') {
+        completer.completeError(const BackupPasswordException());
+      } else {
+        completer.completeError(FormatException('Backup crypto failed: $message'));
+      }
+    });
   }
-  try {
-    return Uint8List.fromList(
-      await cipher.decrypt(
-        SecretBox(
-          input.sublist(0, input.length - 16),
-          nonce: nonce,
-          mac: Mac(input.sublist(input.length - 16)),
-        ),
-        secretKey: SecretKey(key),
-        aad: aad,
+
+  final Isolate _isolate;
+  final SendPort _commands;
+  final ReceivePort _responses;
+  late final StreamSubscription<dynamic> _subscription;
+  Completer<Uint8List>? _pending;
+  bool _closed = false;
+
+  static Future<_AesGcmWorker> spawn(Uint8List key) async {
+    final initPort = ReceivePort();
+    final responsePort = ReceivePort();
+    final isolate = await Isolate.spawn(
+      _workerMain,
+      (
+        initPort.sendPort,
+        responsePort.sendPort,
+        TransferableTypedData.fromList([key]),
       ),
     );
-  } on SecretBoxAuthenticationError {
-    throw const BackupPasswordException();
+    final commandPort = await initPort.first as SendPort;
+    initPort.close();
+    return _AesGcmWorker._(isolate, commandPort, responsePort);
   }
-});
+
+  Future<Uint8List> crypt(
+    Uint8List input,
+    Uint8List nonce,
+    Uint8List aad, {
+    required bool encrypt,
+  }) {
+    if (_closed) {
+      throw StateError('Backup crypto worker is closed');
+    }
+    final completer = Completer<Uint8List>();
+    _pending = completer;
+    _commands.send((
+      encrypt,
+      TransferableTypedData.fromList([input]),
+      TransferableTypedData.fromList([nonce]),
+      TransferableTypedData.fromList([aad]),
+    ));
+    return completer.future;
+  }
+
+  void close() {
+    if (_closed) return;
+    _closed = true;
+    _commands.send(null);
+    unawaited(_subscription.cancel());
+    _responses.close();
+    _isolate.kill(priority: Isolate.beforeNextEvent);
+  }
+
+  static Future<void> _workerMain(
+    (SendPort, SendPort, TransferableTypedData) args,
+  ) async {
+    final (initPort, responsePort, transferableKey) = args;
+    final keyBytes = transferableKey.materialize().asUint8List();
+    final secretKey = SecretKey(keyBytes);
+    final cipher = AesGcm.with256bits();
+    final commandPort = ReceivePort();
+    initPort.send(commandPort.sendPort);
+    try {
+      await for (final message in commandPort) {
+        if (message == null) break;
+        final (
+          bool encrypt,
+          TransferableTypedData rawInput,
+          TransferableTypedData rawNonce,
+          TransferableTypedData rawAad,
+        ) = message as (
+          bool,
+          TransferableTypedData,
+          TransferableTypedData,
+          TransferableTypedData,
+        );
+        final input = rawInput.materialize().asUint8List();
+        final nonce = rawNonce.materialize().asUint8List();
+        final aad = rawAad.materialize().asUint8List();
+        try {
+          if (encrypt) {
+            final box = await cipher.encrypt(
+              input,
+              secretKey: secretKey,
+              nonce: nonce,
+              aad: aad,
+            );
+            final ct = box.cipherText;
+            final mac = box.mac.bytes;
+            final out = Uint8List(ct.length + mac.length)
+              ..setAll(0, ct)
+              ..setAll(ct.length, mac);
+            responsePort.send(TransferableTypedData.fromList([out]));
+          } else {
+            final plain = await cipher.decrypt(
+              SecretBox(
+                Uint8List.sublistView(input, 0, input.length - 16),
+                nonce: nonce,
+                mac: Mac(Uint8List.sublistView(input, input.length - 16)),
+              ),
+              secretKey: secretKey,
+              aad: aad,
+            );
+            final out = plain is Uint8List ? plain : Uint8List.fromList(plain);
+            responsePort.send(TransferableTypedData.fromList([out]));
+          }
+        } on SecretBoxAuthenticationError {
+          responsePort.send('auth_error');
+        } catch (error) {
+          responsePort.send(error.toString());
+        }
+      }
+    } finally {
+      keyBytes.fillRange(0, keyBytes.length, 0);
+      commandPort.close();
+    }
+  }
+}
+
+Uint8List _concat3(List<int> a, List<int> b, [List<int>? c]) {
+  final out = Uint8List(a.length + b.length + (c?.length ?? 0))
+    ..setAll(0, a)
+    ..setAll(a.length, b);
+  if (c != null) out.setAll(a.length + b.length, c);
+  return out;
+}
 
 class _FrameWriter {
   _FrameWriter(
     this.output,
     this.header,
     this.noncePrefix,
-    this.key,
+    this.worker,
     this.check,
     this.total,
     this.progress,
@@ -837,7 +990,7 @@ class _FrameWriter {
   final RandomAccessFile output;
   final Uint8List header;
   final List<int> noncePrefix;
-  final Uint8List? key;
+  final _AesGcmWorker? worker;
   final void Function() check;
   final int total;
   final BackupProgressCallback? progress;
@@ -859,14 +1012,14 @@ class _FrameWriter {
     if (used == 0) return;
     check();
     final size = _u32(used), seq = _u32(sequence++);
-    final bytes = key == null
-        ? Uint8List.fromList(buffer.sublist(0, used))
-        : await _crypt(
-            Uint8List.fromList(buffer.sublist(0, used)),
-            key!,
-            [...noncePrefix, ...seq],
-            [...header, ...seq, ...size],
-            true,
+    final slice = Uint8List.sublistView(buffer, 0, used);
+    final bytes = worker == null
+        ? slice
+        : await worker!.crypt(
+            slice,
+            _concat3(noncePrefix, seq),
+            _concat3(header, seq, size),
+            encrypt: true,
           );
     check();
     await output.writeFrom(size);
@@ -928,14 +1081,17 @@ class _PayloadReader {
     this.file,
     this.headerBytes,
     this.header,
-    this.key,
+    this.worker,
     this.check,
     this.progress,
-  );
+  ) : _noncePrefix = worker == null
+          ? null
+          : base64Decode(header['nonce'] as String);
   final _FileReader file;
   final Uint8List headerBytes;
   final Map<String, dynamic> header;
-  final Uint8List? key;
+  final _AesGcmWorker? worker;
+  final Uint8List? _noncePrefix;
   final void Function() check;
   final BackupProgressCallback? progress;
   Uint8List buffer = Uint8List(0);
@@ -959,16 +1115,15 @@ class _PayloadReader {
         if (size <= 0 || size != expected) {
           throw const FormatException('Invalid backup frame');
         }
-        final bytes = await file.take(size + (key == null ? 0 : 16)),
+        final bytes = await file.take(size + (worker == null ? 0 : 16)),
             seq = _u32(sequence++);
-        buffer = key == null
+        buffer = worker == null
             ? bytes
-            : await _crypt(
+            : await worker!.crypt(
                 bytes,
-                key!,
-                [...base64Decode(header['nonce']), ...seq],
-                [...headerBytes, ...seq, ...sizeBytes],
-                false,
+                _concat3(_noncePrefix!, seq),
+                _concat3(headerBytes, seq, sizeBytes),
+                encrypt: false,
               );
         decoded += size;
         offset = 0;

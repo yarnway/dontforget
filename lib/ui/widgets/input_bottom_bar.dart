@@ -328,6 +328,17 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     final time = _quickTime;
     final memo = _memoOnly;
     final voiceText = _voiceTextDraft;
+    // Validate pre-write time constraints before recording a pendingCapture so
+    // an elapsed quick time never strands a phantom "Record needs review" badge.
+    if (time != null && !memo && !time.isAfter(DateTime.now())) {
+      InlineFeedback.maybeOf(context)?.showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).get('chooseFutureTime')),
+        ),
+        tone: FeedbackTone.warning,
+      );
+      return;
+    }
     setState(() {
       _submitting = true;
     });
@@ -495,7 +506,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   Future<void> _pickQuickTime() async {
     if (!_current) return;
     final now = DateTime.now();
-    final initial = _quickTime?.isAfter(now) == true ? _quickTime! : now;
+    final initial = _quickTime?.isAfter(now) == true
+        ? _quickTime!
+        : now.add(const Duration(minutes: 15));
     final date = await showDatePicker(
       context: context,
       initialDate: initial,
@@ -507,7 +520,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
       context: context,
       initialTime: TimeOfDay.fromDateTime(initial),
     );
-    if (!_current || time == null) return;
+    if (!mounted || !_current || time == null) return;
     final selected = DateTime(
       date.year,
       date.month,
@@ -515,7 +528,15 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
       time.hour,
       time.minute,
     );
-    if (!selected.isAfter(DateTime.now())) return;
+    if (!selected.isAfter(DateTime.now())) {
+      InlineFeedback.maybeOf(context)?.showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).get('chooseFutureTime')),
+        ),
+        tone: FeedbackTone.warning,
+      );
+      return;
+    }
     _selectTime(selected);
   }
 

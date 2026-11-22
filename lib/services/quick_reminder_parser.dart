@@ -35,8 +35,14 @@ class QuickReminderParser {
   static final _multiWeeklyPattern = RegExp(
     r'(?:每周|每星期|毎週)[一二三四五六日天月火水木金土][、和及至到-]',
   );
+  static const int maxParseLength = 500;
   static final _cjkNumber = RegExp(
     r'([零〇一二两三四五六七八九十]{1,3})(?=分钟|小时|点|分|時|時間)',
+  );
+  static final _cjkZeroDigit = RegExp(r'[零〇](?=\d)');
+  static final _compoundRelativeDuration = RegExp(
+    r'(\d{1,3})\s*(?:小时|小時|時間|hours?|hrs?)\s*(?:零|〇)?\s*(\d{1,3})\s*(?:分钟|minutes?|mins?|分)(?:后|後|\s+later)?',
+    caseSensitive: false,
   );
   static final _relativeDuration = RegExp(
     r'(\d{1,4})\s*(分钟|小時|小时|minutes?|mins?|hours?|hrs?|分|時間)(?:后|後|\s+later)?',
@@ -47,12 +53,16 @@ class QuickReminderParser {
     caseSensitive: false,
   );
   static final _dayMarker = RegExp(
-    r'今天|明天|后天|今晚|明早|明日|今日|today|tomorrow',
+    r'今天|明天|后天|今晚|明晚|明早|今早|明日|今日|today|tomorrow',
     caseSensitive: false,
   );
   static final _periodOnlyMarker = RegExp(r'上午|早上|早晨|下午|晚上|中午|午前|午後');
+  static final _standaloneAmPmMarker = RegExp(
+    r'\b\d{1,2}(?::\d{2})?\s*(?:am|pm)\b',
+    caseSensitive: false,
+  );
   static final _timePattern = RegExp(
-    r'(上午|早上|早晨|下午|晚上|中午|午前|午後|am|pm)?\s*(\d{1,2})(?::(\d{2})|[点時](半|\d{1,2}分?)?)\s*(am|pm)?',
+    r'(上午|早上|早晨|下午|晚上|中午|午前|午後|am|pm)?\s*(\d{1,2})(?::(\d{2})|[点時](半|[零〇]?\d{1,2}分?)?)\s*(am|pm)?',
     caseSensitive: false,
   );
   static final _simpleAmPm = RegExp(
@@ -126,9 +136,12 @@ class QuickReminderParser {
     return matches.length == 1 ? matches.single : null;
   }
 
-  static DateTime? parse(String text, {DateTime? now}) =>
-      isAmbiguous(text) ? null : _parse(text, now: now);
-  static DateTime? _parse(String text, {DateTime? now, bool calendar = true}) {
+  static DateTime? parse(String text, {DateTime? now}) {
+    if (text.length > maxParseLength || isAmbiguous(text)) return null;
+    return _parse(text, now: now);
+  }
+
+  static String _normalizeCjkNumbers(String text) {
     const digits = {
       '零': 0,
       '〇': 0,
@@ -143,16 +156,48 @@ class QuickReminderParser {
       '八': 8,
       '九': 9,
     };
-    text = text.replaceAllMapped(_cjkNumber, (match) {
+    return text.replaceAllMapped(_cjkNumber, (match) {
       final value = match.group(1)!;
-      if (!value.contains('十')) return '${digits[value] ?? value}';
+      if (!value.contains('十')) {
+        if (value.length == 2 &&
+            (value.startsWith('零') || value.startsWith('〇'))) {
+          final ones = digits[value[1]];
+          if (ones != null) return '0$ones';
+        }
+        return '${digits[value] ?? value}';
+      }
       final parts = value.split('十');
       if (parts.length != 2) return value;
       return '${(parts.first.isEmpty ? 1 : digits[parts.first] ?? 0) * 10 + (parts.last.isEmpty ? 0 : digits[parts.last] ?? 0)}';
-    });
+    }).replaceAll(_cjkZeroDigit, '0');
+  }
+
+  static DateTime? _parse(
+    String text, {
+    DateTime? now,
+    bool calendar = true,
+    bool normalized = false,
+  }) {
+    if (!normalized) {
+      text = _normalizeCjkNumbers(text);
+    }
     final local = (now ?? DateTime.now()).toLocal();
-    final relative = _relativeDuration.firstMatch(text);
-    if (relative != null) {
+    for (final compound in _compoundRelativeDuration.allMatches(text)) {
+      final prefix = text.substring(0, compound.start).toLowerCase();
+      final matched = compound.group(0)!.toLowerCase();
+      if (prefix.endsWith('in ') ||
+          matched.endsWith('后') ||
+          matched.endsWith('後') ||
+          matched.endsWith('later')) {
+        final hours = int.parse(compound.group(1)!);
+        final mins = int.parse(compound.group(2)!);
+        final totalMinutes = hours * 60 + mins;
+        if (totalMinutes > 0) {
+          return local.add(Duration(minutes: totalMinutes));
+        }
+      }
+    }
+    for (final relative in _relativeDuration.allMatches(text)) {
       // A number of minutes without a relative marker is a duration, not a date.
       final prefix = text.substring(0, relative.start).toLowerCase();
       final matched = relative.group(0)!.toLowerCase();
@@ -171,11 +216,13 @@ class QuickReminderParser {
       if (exact.matched) return exact.time;
     }
     final day = _dayMarker.firstMatch(text);
-    if (day == null && !_periodOnlyMarker.hasMatch(text)) {
+    if (day == null &&
+        !_periodOnlyMarker.hasMatch(text) &&
+        !_standaloneAmPmMarker.hasMatch(text)) {
       return null;
     }
     final marker = day?.group(0)?.toLowerCase() ?? '今天';
-    final offset = ['明天', '明早', '明日', 'tomorrow'].contains(marker)
+    final offset = ['明天', '明早', '明晚', '明日', 'tomorrow'].contains(marker)
         ? 1
         : marker == '后天'
         ? 2
@@ -189,11 +236,20 @@ class QuickReminderParser {
     final minuteText = time?.group(3) ?? time?.group(4);
     final minute = minuteText == '半'
         ? 30
-        : int.tryParse((minuteText ?? '0').replaceAll('分', '')) ?? 0;
+        : int.tryParse(
+                (minuteText ?? '0')
+                    .replaceAll('分', '')
+                    .replaceAll('零', '')
+                    .replaceAll('〇', ''),
+              ) ??
+              0;
     final period = (time?.group(1) ?? time?.group(5) ?? simple?.group(2) ?? '')
         .toLowerCase();
     if (hour > 23 || minute > 59) return null;
-    final evening = ['下午', '晚上', '午後', 'pm'].contains(period) || marker == '今晚';
+    final evening =
+        ['下午', '晚上', '午後', 'pm'].contains(period) ||
+        marker == '今晚' ||
+        marker == '明晚';
     if (evening && hour < 12) hour += 12;
     if (['am', '上午', '早上', '早晨', '午前'].contains(period) && hour == 12) hour = 0;
     final value = DateTime(
@@ -231,6 +287,7 @@ class QuickReminderParser {
         '明天 $tail',
         now: DateTime(now.year, now.month, now.day),
         calendar: false,
+        normalized: true,
       );
       if (clock == null) return (matched: true, time: null);
       final at = DateTime(y, m, d, clock.hour, clock.minute);
@@ -282,6 +339,7 @@ class QuickReminderParser {
       '明天 $text',
       now: DateTime(now.year, now.month, now.day),
       calendar: false,
+      normalized: true,
     );
     if (clock == null) return (matched: true, time: null);
     final next = _nextWeekPattern.hasMatch(text);

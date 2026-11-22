@@ -48,8 +48,9 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
   int _selectedIndex = 0;
   bool _executing = false;
   String _query = '';
+  static final _whitespace = RegExp(r'\s+');
   late List<CommandPaletteAction> _filteredActions;
-  late List<String> _searchTerms;
+  late List<({String title, String shortcut, String full})> _searchIndex;
   double _itemExtent = 76;
 
   @override
@@ -66,21 +67,55 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
   }
 
   void _indexActions() {
-    _searchTerms = [
+    _searchIndex = [
       for (final action in widget.actions)
-        '${action.id}\n${action.title}\n${action.subtitle}'.toLowerCase(),
+        (
+          title: action.title.toLowerCase(),
+          shortcut: (action.shortcut ?? '').trim().toLowerCase(),
+          full:
+              '${action.id}\n${action.title}\n${action.subtitle}\n${action.shortcut ?? ''}'
+                  .toLowerCase(),
+        ),
     ];
     _filter();
   }
 
   void _filter() {
-    _filteredActions = [
-      for (var i = 0; i < widget.actions.length; i++)
-        if (_query.isEmpty || _searchTerms[i].contains(_query))
-          widget.actions[i],
-    ];
+    if (_query.isEmpty) {
+      _filteredActions = List<CommandPaletteAction>.of(widget.actions);
+    } else {
+      final tokens = _query.split(_whitespace);
+      final primary = <CommandPaletteAction>[];
+      final secondary = <CommandPaletteAction>[];
+      for (var i = 0; i < widget.actions.length; i++) {
+        final entry = _searchIndex[i];
+        if (!tokens.every(entry.full.contains)) continue;
+        final prefixMatch =
+            entry.title.startsWith(_query) ||
+            (entry.shortcut.isNotEmpty && entry.shortcut.startsWith(_query));
+        (prefixMatch ? primary : secondary).add(widget.actions[i]);
+      }
+      _filteredActions = [...primary, ...secondary];
+    }
     _selectedIndex = 0;
     if (_scrollController.hasClients) _scrollController.jumpTo(0);
+  }
+
+  void _selectIndex(int index) {
+    if (_filteredActions.isEmpty) return;
+    final clamped = index.clamp(0, _filteredActions.length - 1);
+    setState(() => _selectedIndex = clamped);
+    if (_scrollController.hasClients) {
+      final position = _scrollController.position;
+      final start = _selectedIndex * _itemExtent;
+      final end = start + _itemExtent;
+      final target = start < position.pixels
+          ? start
+          : end > position.pixels + position.viewportDimension
+          ? end - position.viewportDimension
+          : position.pixels;
+      _scrollController.jumpTo(target.clamp(0.0, position.maxScrollExtent));
+    }
   }
 
   @override
@@ -121,22 +156,25 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
     if (key == LogicalKeyboardKey.arrowDown ||
         key == LogicalKeyboardKey.arrowUp) {
       if (_filteredActions.isNotEmpty) {
-        setState(() {
-          final delta = key == LogicalKeyboardKey.arrowDown ? 1 : -1;
-          _selectedIndex = (_selectedIndex + delta) % _filteredActions.length;
-        });
-        if (_scrollController.hasClients) {
-          final position = _scrollController.position;
-          final start = _selectedIndex * _itemExtent;
-          final end = start + _itemExtent;
-          final target = start < position.pixels
-              ? start
-              : end > position.pixels + position.viewportDimension
-              ? end - position.viewportDimension
-              : position.pixels;
-          _scrollController.jumpTo(target.clamp(0.0, position.maxScrollExtent));
-        }
+        final delta = key == LogicalKeyboardKey.arrowDown ? 1 : -1;
+        _selectIndex((_selectedIndex + delta) % _filteredActions.length);
       }
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.home && _query.isEmpty) {
+      _selectIndex(0);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.end && _query.isEmpty) {
+      _selectIndex(_filteredActions.length - 1);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.pageUp) {
+      _selectIndex(_selectedIndex - 5);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.pageDown) {
+      _selectIndex(_selectedIndex + 5);
       return KeyEventResult.handled;
     }
     if (key == LogicalKeyboardKey.enter ||
@@ -166,7 +204,7 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
         insetPadding: const EdgeInsets.all(16),
         constraints: const BoxConstraints(maxWidth: 640, maxHeight: 560),
         clipBehavior: Clip.antiAlias,
-        backgroundColor: colors.surface,
+        backgroundColor: colors.surfaceContainerHigh,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
           side: BorderSide(color: colors.outlineVariant),
@@ -190,7 +228,10 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                       contextMenuBuilder: buildEditableTextMenu,
                       decoration: InputDecoration(
                         hintText: loc.get('commandSearchHint'),
+                        filled: false,
                         border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
                         isDense: true,
                         contentPadding: const EdgeInsets.symmetric(
                           vertical: 12,
@@ -198,7 +239,22 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                       ),
                     ),
                   ),
-                  if (_query.isNotEmpty)
+                  if (_query.isNotEmpty) ...[
+                    Semantics(
+                      liveRegion: true,
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: Text(
+                          '${_filteredActions.length}',
+                          key: const ValueKey('command-palette-count'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ),
                     IconButton(
                       tooltip: loc.get('clearSearch'),
                       onPressed: () {
@@ -207,6 +263,7 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                       },
                       icon: const Icon(Icons.backspace_outlined, size: 18),
                     ),
+                  ],
                   IconButton(
                     tooltip: loc.get('close'),
                     onPressed: () => Navigator.of(context).pop(),
@@ -268,121 +325,119 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                         return Semantics(
                           selected: selected,
                           button: true,
-                          child: Tooltip(
-                            message: '${action.title}\n${action.subtitle}',
-                            child: MouseRegion(
-                              // Only pointer movement changes selection. A row
-                              // entering beneath a stationary pointer during
-                              // keyboard scrolling must not steal selection.
-                              onHover: (_) {
-                                if (_selectedIndex != index) {
-                                  setState(() => _selectedIndex = index);
-                                }
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(12),
-                                  onTap: () => _execute(action),
-                                  child: Ink(
-                                    decoration: BoxDecoration(
-                                      color: selected
-                                          ? colors.secondaryContainer
-                                          : null,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        AnimatedContainer(
-                                          duration:
-                                              MediaQuery.disableAnimationsOf(
-                                                    context,
-                                                  )
-                                                  ? Duration.zero
-                                                  : const Duration(
-                                                      milliseconds: 120,
-                                                    ),
-                                          width: 3,
-                                          height: selected ? 24 : 0,
-                                          margin: const EdgeInsets.only(
-                                            right: 10,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: selected
-                                                ? colors.primary
-                                                : Colors.transparent,
-                                            borderRadius: BorderRadius.circular(
-                                              2,
-                                            ),
-                                          ),
+                          label: '${action.title}, ${action.subtitle}',
+                          child: MouseRegion(
+                            // Only pointer movement changes selection. A row
+                            // entering beneath a stationary pointer during
+                            // keyboard scrolling must not steal selection.
+                            onHover: (_) {
+                              if (_selectedIndex != index) {
+                                setState(() => _selectedIndex = index);
+                              }
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(12),
+                                onTap: () => _execute(action),
+                                child: Ink(
+                                  decoration: BoxDecoration(
+                                    color: selected
+                                        ? colors.secondaryContainer
+                                        : null,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      AnimatedContainer(
+                                        duration:
+                                            MediaQuery.disableAnimationsOf(
+                                                  context,
+                                                )
+                                                ? Duration.zero
+                                                : const Duration(
+                                                    milliseconds: 120,
+                                                  ),
+                                        width: 3,
+                                        height: selected ? 24 : 0,
+                                        margin: const EdgeInsets.only(
+                                          right: 10,
                                         ),
-                                        Icon(
-                                          action.icon,
-                                          size: 22,
+                                        decoration: BoxDecoration(
                                           color: selected
-                                              ? colors.onSecondaryContainer
-                                              : colors.primary,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                action.title,
-                                                maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  height: 1.25,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: selected
-                                                      ? colors
-                                                            .onSecondaryContainer
-                                                      : colors.onSurface,
-                                                ),
-                                              ),
-                                              Text(
-                                                action.subtitle,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  height: 1.3,
-                                                  color: selected
-                                                      ? colors
-                                                            .onSecondaryContainer
-                                                            .withValues(
-                                                              alpha: 0.85,
-                                                            )
-                                                      : colors.onSurfaceVariant,
-                                                ),
-                                              ),
-                                            ],
+                                              ? colors.primary
+                                              : Colors.transparent,
+                                          borderRadius: BorderRadius.circular(
+                                            2,
                                           ),
                                         ),
-                                        if (shortcut != null &&
-                                            shortcut.isNotEmpty &&
-                                            MediaQuery.sizeOf(context).width >=
-                                                600)
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                              left: 12,
+                                      ),
+                                      Icon(
+                                        action.icon,
+                                        size: 22,
+                                        color: selected
+                                            ? colors.onSecondaryContainer
+                                            : colors.primary,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              action.title,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                height: 1.25,
+                                                fontWeight: FontWeight.w600,
+                                                color: selected
+                                                    ? colors
+                                                          .onSecondaryContainer
+                                                    : colors.onSurface,
+                                              ),
                                             ),
-                                            child: _Keycap(label: shortcut),
+                                            Text(
+                                              action.subtitle,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                height: 1.3,
+                                                color: selected
+                                                    ? colors
+                                                          .onSecondaryContainer
+                                                          .withValues(
+                                                            alpha: 0.85,
+                                                          )
+                                                    : colors.onSurfaceVariant,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (shortcut != null &&
+                                          shortcut.isNotEmpty &&
+                                          MediaQuery.sizeOf(context).width >=
+                                              600)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            left: 12,
                                           ),
-                                      ],
-                                    ),
+                                          child: _Keycap(label: shortcut),
+                                        ),
+                                    ],
                                   ),
                                 ),
                               ),

@@ -744,6 +744,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       var attempted = 0;
       var failed = 0;
       final existingIds = <String>{};
+      final instant = now ?? DateTime.now();
       for (final row in rows) {
         checkCurrent();
         final reminder = Reminder.fromJson(row);
@@ -755,11 +756,11 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
             _requiresPastCancellation(
               reminder,
               journal[reminder.id],
-              now ?? DateTime.now(),
+              instant,
             );
         // Existing overdue notices remain available. Retrying must not replay
         // them, erase their delivered banner, or persist an acknowledgement.
-        if (!cancel && !reminder.triggerTime!.isAfter(now ?? DateTime.now())) {
+        if (!cancel && !reminder.triggerTime!.isAfter(instant)) {
           continue;
         }
         attempted++;
@@ -773,7 +774,11 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           _pendingNotificationCancellations.remove(reminder.id);
         } catch (_) {
           _pendingNotificationRetries[reminder.id] = DateTime.now();
-          if (cancel) _pendingNotificationCancellations.add(reminder.id);
+          if (cancel) {
+            _pendingNotificationCancellations.add(reminder.id);
+          } else {
+            _pendingNotificationCancellations.remove(reminder.id);
+          }
           failed++;
         }
         // Recovery/disposal is not a native failure to collect and continue.
@@ -1402,23 +1407,18 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           (t) => !t.isCompleted && t.spacedRepetitionLevel > 0,
         )) {
           final words = VocabularyEntry.parseNotes(task.taskSummary ?? '');
-          if (!words.any(
-            (word) => LearningQueueService.wordKey(word.word) == key,
-          )) {
+          final wordKeys = {
+            for (final word in words) LearningQueueService.wordKey(word.word),
+          };
+          if (!wordKeys.contains(key)) {
             continue;
           }
           final local = LearningQueueService.decode(task.wordProgressJson)
-            ..removeWhere(
-              (storedKey, _) => !words.any(
-                (word) => LearningQueueService.wordKey(word.word) == storedKey,
-              ),
-            )
+            ..removeWhere((storedKey, _) => !wordKeys.contains(storedKey))
             ..[key] = progress;
           final dates = [
-            for (final word in words)
-              all[LearningQueueService.wordKey(word.word)]?.due ??
-                  task.nextReviewAt ??
-                  at,
+            for (final wordKey in wordKeys)
+              all[wordKey]?.due ?? task.nextReviewAt ?? at,
           ]..sort();
           final due = dates.first;
           final clock = (task.nextReviewAt ?? task.triggerTime ?? at).toLocal();
@@ -2000,6 +2000,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           if (!task2.linkedTaskIds.contains(id1))
             id2: task2.copyWith(linkedTaskIds: [...task2.linkedTaskIds, id1]),
         };
+        if (replacements.isEmpty) return;
         await _dbHelper.writeTransaction(generation, (txn) async {
           for (final item in replacements.values) {
             await txn.update(
@@ -2011,7 +2012,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           }
         });
         _dbHelper.checkGeneration(generation);
-        if (mounted && replacements.isNotEmpty) {
+        if (mounted) {
           state = [for (final item in state) replacements[item.id] ?? item];
         }
       });
@@ -2032,6 +2033,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
             );
           }
         }
+        if (replacements.isEmpty) return;
         await _dbHelper.writeTransaction(generation, (txn) async {
           for (final item in replacements.values) {
             await txn.update(
@@ -2043,7 +2045,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
           }
         });
         _dbHelper.checkGeneration(generation);
-        if (mounted && replacements.isNotEmpty) {
+        if (mounted) {
           state = [for (final item in state) replacements[item.id] ?? item];
         }
       });
@@ -2197,14 +2199,24 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         ];
       }
       var failures = 0;
-      for (final id in result.ids) {
-        if (await _synchronizeNotification(
-          id,
-          generation,
-          () => _notifications.cancelReminderStrict(id),
-          cancellation: true,
-        )) {
-          failures++;
+      if (result.ids.isNotEmpty) {
+        final journalState = await _notificationJournalState(generation);
+        final journal = journalState.entries;
+        for (final id in result.ids) {
+          final needsCancel =
+              !journalState.hasCurrentEpoch ||
+              _pendingNotificationRetries.containsKey(id) ||
+              _pendingNotificationCancellations.contains(id) ||
+              (journal[id]?.needsCancellation ?? false);
+          if (!needsCancel) continue;
+          if (await _synchronizeNotification(
+            id,
+            generation,
+            () => _notifications.cancelReminderStrict(id),
+            cancellation: true,
+          )) {
+            failures++;
+          }
         }
       }
       return ReminderBatchResult(
@@ -2240,10 +2252,17 @@ class MediaRecordsNotifier extends StateNotifier<List<MediaRecord>> {
   final DatabaseHelper _dbHelper;
   late final Future<void> ready;
   DataGeneration? _stateGeneration;
+  Future<void> _operations = Future<void>.value();
 
   MediaRecordsNotifier(this._dbHelper) : super([]) {
-    ready = _loadRecords();
+    ready = _enqueue(_loadRecords);
     unawaited(ready.then<void>((_) {}, onError: (Object _, StackTrace __) {}));
+  }
+
+  Future<T> _enqueue<T>(Future<T> Function() action) {
+    final next = _operations.then((_) => action());
+    _operations = next.then<void>((_) {}, onError: (Object _, StackTrace __) {});
+    return next;
   }
 
   Future<void> _loadRecords() async {
@@ -2266,7 +2285,7 @@ class MediaRecordsNotifier extends StateNotifier<List<MediaRecord>> {
     }
   }
 
-  Future<void> refreshMediaRecords() => _loadRecords();
+  Future<void> refreshMediaRecords() => _enqueue(_loadRecords);
 
   Future<void> addRecord(MediaRecord record) async {
     final generation = _dbHelper.captureGeneration();
@@ -2276,14 +2295,11 @@ class MediaRecordsNotifier extends StateNotifier<List<MediaRecord>> {
   Future<void> addRecordForGeneration(
     MediaRecord record,
     DataGeneration generation,
-  ) async {
+  ) => _enqueue(() async {
     _dbHelper.checkGeneration(generation);
     if (_stateGeneration != null) {
       _dbHelper.checkGeneration(_stateGeneration!);
     }
-    await ready;
-    _dbHelper.checkGeneration(generation);
-    _dbHelper.checkGeneration(_stateGeneration!);
     await _dbHelper.writeTransaction(
       generation,
       (txn) => txn.insert('MediaRecords', record.toJson()),
@@ -2292,7 +2308,7 @@ class MediaRecordsNotifier extends StateNotifier<List<MediaRecord>> {
     if (mounted) {
       state = [...state, record];
     }
-  }
+  });
 }
 
 final llmServiceProvider = Provider<LLMService>((ref) {
@@ -2381,14 +2397,22 @@ class ContextProfileNotifier extends StateNotifier<ContextProfile> {
 
   Future<void> setProfile(ContextProfile profile) async {
     final generation = _database.captureGeneration();
-    await _database.runOperation(generation, () async {
+    final previous = _service.currentProfile;
+    try {
+      await _database.runOperation(generation, () async {
+        _database.checkGeneration(generation);
+        _service.switchProfile(profile);
+        await _notifications.reconcileNotificationPolicy();
+      });
       _database.checkGeneration(generation);
-      _service.switchProfile(profile);
-      await _notifications.reconcileNotificationPolicy();
-    });
-    _database.checkGeneration(generation);
-    if (mounted) {
-      state = profile;
+      if (mounted) {
+        state = profile;
+      } else {
+        _service.switchProfile(previous);
+      }
+    } catch (_) {
+      _service.switchProfile(previous);
+      rethrow;
     }
   }
 }

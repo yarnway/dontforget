@@ -167,17 +167,25 @@ class _TaskReaderState extends ConsumerState<TaskDetailScreen> {
     );
 
     final rule = ContextTriggerRule.tryParse(task.contextTrigger);
+    final now = DateTime.now();
+    final isOverdue =
+        !task.isCompleted &&
+        ((task.triggerTime != null && task.triggerTime!.isBefore(now)) ||
+            (task.eventTime != null && task.eventTime!.isBefore(now)));
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.escape): () {
           Navigator.of(context).maybePop();
         },
+        const SingleActivator(LogicalKeyboardKey.keyE, control: true): _edit,
+        const SingleActivator(LogicalKeyboardKey.keyE, meta: true): _edit,
       },
       child: Focus(
         autofocus: true,
         child: Scaffold(
           key: const ValueKey('task-detail-reader'),
           appBar: AppBar(
+            centerTitle: false,
             title: Text(loc.get('taskDetailTitle')),
             actions: [
               IconButton(
@@ -291,6 +299,25 @@ class _TaskReaderState extends ConsumerState<TaskDetailScreen> {
                                   ),
                                   label: Text(loc.get('pin')),
                                 ),
+                              if (isOverdue)
+                                Chip(
+                                  avatar: Icon(
+                                    Icons.schedule_rounded,
+                                    size: 16,
+                                    color: colors.onErrorContainer,
+                                  ),
+                                  backgroundColor: colors.errorContainer,
+                                  side: BorderSide(
+                                    color: colors.error.withValues(alpha: 0.35),
+                                  ),
+                                  label: Text(
+                                    loc.get('overdue'),
+                                    style: TextStyle(
+                                      color: colors.onErrorContainer,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                           const SizedBox(height: 12),
@@ -344,6 +371,7 @@ class _TaskReaderState extends ConsumerState<TaskDetailScreen> {
                                 'eventTimeShort',
                                 task.eventTime,
                                 Icons.event_outlined,
+                                showCountdown: true,
                               ),
                             if (task.triggerTime != null)
                               dateTile(
@@ -419,6 +447,14 @@ class _TaskReaderState extends ConsumerState<TaskDetailScreen> {
                                 subtitle: SelectableText(details.project),
                               ),
                             if (details.tags.isNotEmpty) ...[
+                              Text(
+                                loc.get('taskTags'),
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  color: colors.onSurfaceVariant,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
                               Wrap(
                                 spacing: 8,
                                 runSpacing: 8,
@@ -506,7 +542,9 @@ class _TaskReaderState extends ConsumerState<TaskDetailScreen> {
                           collapsedShape: const Border(),
                           tilePadding: EdgeInsets.zero,
                           childrenPadding: const EdgeInsets.only(bottom: 4),
-                          title: Text(loc.get('taskMicroHabits')),
+                          title: Text(
+                            '${loc.get('taskMicroHabits')} (${task.subTasksView.length})',
+                          ),
                           children: [
                             for (final habit in task.subTasksView)
                               ListTile(

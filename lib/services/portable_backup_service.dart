@@ -129,11 +129,11 @@ class PortableBackupService {
   Future<File> prepareRestore(
     File source,
     Directory ownedMediaRoot, {
-    required String expectedDigest,
+    String? expectedDigest,
     required bool Function() isCurrent,
   }) async {
     final bundle = await _read(source);
-    if (bundle['_source_digest'] != expectedDigest) {
+    if (expectedDigest != null && bundle['_source_digest'] != expectedDigest) {
       throw const FormatException('Backup changed after preview');
     }
     if (!isCurrent()) throw StateError('Backup session expired');
@@ -149,11 +149,18 @@ class PortableBackupService {
     OwnedMaterialActivity.hold(destination);
     try {
       final records = (bundle['snapshot']['media_records'] as List);
+      final recordById = <Object?, ({Map record, int index})>{
+        for (var i = 0; i < records.length; i++)
+          if (records[i] is Map) records[i]['id']: (record: records[i] as Map, index: i),
+      };
       for (final attachment in bundle['attachments'] as List) {
         if (!isCurrent()) throw StateError('Backup session expired');
-        final record = records.firstWhere((r) => r['id'] == attachment['id']);
+        final entry = recordById[attachment['id']];
+        if (entry == null) {
+          throw const FormatException('Unknown attachment record');
+        }
         // The on-disk filename is a local ordinal, never an untrusted path.
-        final index = records.indexOf(record);
+        final index = entry.index;
         var extension = p.extension(attachment['name'] as String).toLowerCase();
         if (!RegExp(r'^\.[a-z0-9]{1,10}$').hasMatch(extension)) {
           extension = '.bin';
@@ -165,7 +172,7 @@ class PortableBackupService {
           base64Decode(attachment['bytes'] as String),
           flush: true,
         );
-        record['content_or_path'] = file.path;
+        entry.record['content_or_path'] = file.path;
       }
       if (!isCurrent()) throw StateError('Backup session expired');
       final missing = (bundle['missing_media'] as List).toSet();

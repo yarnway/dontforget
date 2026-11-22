@@ -7,6 +7,8 @@ abstract final class AppTheme {
   static final light = _build(Brightness.light);
   static final dark = _build(Brightness.dark);
 
+  static const tabularFigures = <FontFeature>[FontFeature.tabularFigures()];
+
   static ThemeMode mode(AppAppearance appearance) => switch (appearance) {
     AppAppearance.system => ThemeMode.system,
     AppAppearance.light => ThemeMode.light,
@@ -14,12 +16,13 @@ abstract final class AppTheme {
   };
 
   /// AA-verified semantic accent for Q1..Q4 across cards, boards, dashboard and
-  /// detail views (>= 4.5:1 against both active and recessed card surfaces).
+  /// detail views (>= 4.5:1 against both active and recessed card surfaces,
+  /// including 12%-tinted Light Q2 badge backgrounds).
   static Color quadrantColor(Brightness brightness, int level) {
     final dark = brightness == Brightness.dark;
     return switch (level) {
       1 => dark ? const Color(0xFFF28B82) : const Color(0xFFC62828),
-      2 => dark ? const Color(0xFFF6BF60) : const Color(0xFFB45309),
+      2 => dark ? const Color(0xFFF6BF60) : const Color(0xFF9E4706),
       3 => dark ? const Color(0xFF8AB4F8) : const Color(0xFF1D56B8),
       _ => dark ? const Color(0xFF7CD4A8) : const Color(0xFF1F6E58),
     };
@@ -111,6 +114,21 @@ abstract final class AppTheme {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: colors.surfaceContainerLow,
+        surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+      ),
+      tooltipTheme: TooltipThemeData(
+        waitDuration: const Duration(milliseconds: 500),
+        decoration: BoxDecoration(
+          color: colors.inverseSurface,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        textStyle: TextStyle(color: colors.onInverseSurface, fontSize: 12),
+      ),
       dividerTheme: DividerThemeData(color: colors.outlineVariant),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -119,6 +137,10 @@ abstract final class AppTheme {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: colors.outlineVariant),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: colors.primary, width: 1.6),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(

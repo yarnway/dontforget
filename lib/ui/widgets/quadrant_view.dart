@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
 import '../../providers/providers.dart';
 import '../../l10n/app_localizations.dart';
+import '../theme/app_theme.dart';
 import 'task_card.dart';
 import 'task_board_data.dart';
 
@@ -14,6 +15,8 @@ class QuadrantView extends ConsumerStatefulWidget {
   final List<Reminder> allReminders;
   final Color bgColor;
   final bool showHeader;
+  final bool draggable;
+  final DateTime? referenceNow;
   final TaskSectionData? sections;
   final void Function(String recordId) onPlayMedia;
 
@@ -24,6 +27,8 @@ class QuadrantView extends ConsumerStatefulWidget {
     required this.allReminders,
     required this.bgColor,
     this.showHeader = true,
+    this.draggable = true,
+    this.referenceNow,
     this.sections,
     required this.onPlayMedia,
   });
@@ -37,12 +42,7 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
   bool _completedExpanded = false;
   final _pendingMoves = <String>{};
 
-  IconData _getEmptyStateIcon() => switch (widget.level) {
-    1 => Icons.local_fire_department_outlined,
-    2 => Icons.star_outline_rounded,
-    3 => Icons.bolt_outlined,
-    _ => Icons.coffee_outlined,
-  };
+  IconData _getEmptyStateIcon() => AppTheme.quadrantIcon(widget.level);
 
   String _getLevelTitle(AppLocalizations l10n) =>
       l10n.get('cat${widget.level}');
@@ -69,18 +69,36 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
                 : '${l10n.get('movedToQuadrant')}$title: ${task.taskTitle}',
           ),
         ),
+        tone: result.nativeSyncFailed
+            ? FeedbackTone.warning
+            : FeedbackTone.success,
       );
     } catch (_) {
       if (!mounted) return;
-      InlineFeedback.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.get('reminderUpdateFailed'))));
+      InlineFeedback.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.get('reminderUpdateFailed'))),
+        tone: FeedbackTone.error,
+      );
     } finally {
       _pendingMoves.remove(task.id);
     }
   }
 
-  Widget _buildDraggableCard(Reminder task) {
+  void _playTaskMedia(Reminder task) {
+    final recordId = task.recordId;
+    if (recordId != null && recordId.isNotEmpty) {
+      widget.onPlayMedia(recordId);
+    }
+  }
+
+  Widget _buildTaskRow(Reminder task) {
+    final card = TaskCard(
+      key: widget.draggable ? null : ValueKey('task-${task.id}'),
+      task: task,
+      referenceNow: widget.referenceNow,
+      onPlayMedia: () => _playTaskMedia(task),
+    );
+    if (!widget.draggable) return card;
     return LongPressDraggable<Reminder>(
       key: ValueKey('task-${task.id}'),
       data: task,
@@ -88,27 +106,22 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
       delay: const Duration(milliseconds: 500),
       feedback: Material(
         elevation: 12,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(14),
         color: Colors.transparent,
         child: SizedBox(
           width: 260,
           child: Opacity(
             opacity: 0.95,
-            child: TaskCard(task: task, onPlayMedia: () {}),
+            child: TaskCard(
+              task: task,
+              referenceNow: widget.referenceNow,
+              onPlayMedia: () {},
+            ),
           ),
         ),
       ),
-      childWhenDragging: Opacity(
-        opacity: 0.2,
-        child: TaskCard(
-          task: task,
-          onPlayMedia: () => widget.onPlayMedia(task.recordId ?? ''),
-        ),
-      ),
-      child: TaskCard(
-        task: task,
-        onPlayMedia: () => widget.onPlayMedia(task.recordId ?? ''),
-      ),
+      childWhenDragging: Opacity(opacity: 0.2, child: card),
+      child: card,
     );
   }
 
@@ -147,7 +160,7 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
       },
       itemBuilder: (context, index) {
         final row = rowAt(index);
-        if (row is Reminder) return _buildDraggableCard(row);
+        if (row is Reminder) return _buildTaskRow(row);
         final isCompleted = row == 'completed';
         final expanded = isCompleted ? _completedExpanded : _isQ4FoldExpanded;
         final label = isCompleted
@@ -250,6 +263,29 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
                         ),
                       ),
                       const SizedBox(width: 8),
+                      if (isHovered) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: widget.bgColor.withValues(
+                              alpha: isDark ? 0.28 : 0.16,
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            l10n.get('dropToMoveHere'),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: widget.bgColor,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                      ],
                       Semantics(
                         label:
                             '${l10n.get('pending')}: ${active.length + folded.length}',
@@ -273,6 +309,7 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
                             style: Theme.of(context).textTheme.labelMedium
                                 ?.copyWith(
                                   fontWeight: FontWeight.w700,
+                                  fontFeatures: AppTheme.tabularFigures,
                                   color: (active.length + folded.length) > 0
                                       ? colors.onSurface
                                       : colors.onSurfaceVariant,

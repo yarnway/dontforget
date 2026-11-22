@@ -4,6 +4,26 @@
 
 ---
 
+## v1.8.23（build94，核心功能稳定性、性能、易用性与美观性深度优化与架构重构）- 2026-11-22
+
+- **核心链路稳定性、数据安全与后台并发加固（`notification_service.dart`、`database_helper.dart`、`llm_service.dart`、`lan_sync_service.dart`、`providers.dart`、`task_management.dart`、`content_cleanup_service.dart`、`home_controller.dart`、`context_trigger_service.dart`、`preferences_screen.dart`）**：
+  - 修复 `NotificationService._reconcileNativeWindow` 在维护暂停（`pauseForMaintenance`）切换时可能触发的空值解引用与窗口状态破坏；将 `_reminderDueController.add` 提前至异步窗口对账前消除心跳双触发竞态，并合并移动端窗口恢复／专注策略对账。
+  - 修复 `DatabaseHelper` 在异常路径泄漏 `StorageDirectoryLease` 锁租约的问题，并在近期已完成镜像备份且无新写入时跳过关闭阶段的冗余镜像拷贝与空批提交。
+  - 修复 `LLMService` 解析外部模型输出时异常 `quadrant_level` 污染备份（强制约束 `1..4` 且提前量限定 `0..43200` 分钟）及格式畸形抛出未捕获 `TypeError`/`RangeError` 的问题（统一收敛为 `FormatException`）；重试等待接入 `CancelToken` 可即时取消。
+  - 修复 `LanSyncService` 慢速对端（slowloris）流读取泄漏、异常超时未断开套接字及入站 `quadrantLevel` 未校验问题，并为已存在媒体增加 `skipIds` 跳过冗余落盘／同步。
+  - 释放 `ContentCleanupService.inspect()` 磁盘扫描期间对 SQLite `EXCLUSIVE` 写事务的长占，消除清理与归档阶段的 `O(N²)` 扫描；序列化 `MediaRecordsNotifier` 异步写队列、`ContextProfileNotifier.setProfile` 异常原子回滚、`TaskManagement._lifecycleResult` 改为事务内直接捕获结果。
+  - 修复 `HomeController` 录音启动与取消双异常导致的 `_nativeRecording` 永久锁死、`PreferencesScreen._save()` 未在 `finally` 复位 `_saving` 导致的界面锁死，以及 `TaskEditDialog` 漏写 `'yearly'` 重复规则。
+- **核心工作区、搜索、编辑与设置重构及体验打磨（`app_theme.dart`、`task_search_index.dart`、`task_search_panel.dart`、`task_workspace_overview.dart`、`task_board.dart`、`quadrant_view.dart`、`task_card.dart`、`home_screen.dart`、`reminder_notice_panel.dart`、`missed_reminders_bar.dart`、`command_palette_dialog.dart`、`task_reader_screen.dart`、`task_detail_screen.dart`、`task_metadata_editor.dart`、`task_details_dialog.dart`、`settings_screen.dart`、`content_management_panel.dart`、`portable_backup_panel.dart`、`input_bottom_bar.dart`、`capture_preview_dialog.dart`）**：
+  - 架构重构：将 2,072 行 `settings_screen.dart` 中的浏览器跳转、本地推理探测与局域网同步拆分为独立模块（`lib/services/console_url_launcher.dart`、`lib/ui/widgets/settings/local_engine_probe_section.dart`、`lib/ui/widgets/settings/lan_sync_section.dart`），在 **AI 设置** 与 **同步设置** 两侧均可一键探测 Ollama／LM Studio；抽取公共延后选择器 `task_snooze_picker.dart` 与分类选择弹窗 `task_category_picker_dialog.dart`；分离内容管理页归档订阅（`_ArchiveTabView`）。
+  - 修复多项 P0 交互问题：恢复主界面与 `TaskWorkspaceOverview` 的视图同步（`onViewChanged`）；统一 `TaskSearchIndex.project()` 单遍计算确保搜索筛选芯片计数与结果严格一致并移除键入重建滚动容器；修复 `Today` 视图中仅含 `triggerTime` 的逾期事项误归入「今日安排」；`Future` 视图按「明天／本周／更晚」分组；命令面板支持 `/study` 等快捷键与多词匹配并优先前缀排序；桌面悬停快捷操作改为右上角浮层彻底消除卡片标题换行抖动；清单新增输入框改为 `TextInputAction.done` 支持回车直加；修复单次完成／跳过提示语并新增单次完成「撤销」条；修复 `TaskEditScreen` 无框输入框双边框与多处 WCAG AA 对比度问题（浅色 Q2 调至 `#9E4706`，12% 淡底对比度达 `5.23:1`）；新增阅读页 `Ctrl/Cmd+E` 快速编辑、关联弹窗实时检索、标题内联错误提示及内容管理未扫描引导态。
+- **备份加密、离线解析与渲染热路径提速（`streaming_backup_service.dart`、`portable_backup_service.dart`、`portable_backup_panel.dart`、`quick_reminder_parser.dart`、`home_screen.dart`、`task_card.dart`、`context_trigger_service.dart`）**：
+  - 流式备份改用常驻 `_AesGcmWorker` Isolate＋`TransferableTypedData`＋零拷贝视图与单遍恢复（消除 2× 60 万次 PBKDF2 与双倍全量解密），输错密码可原地重试无需重选文件。
+  - `QuickReminderParser` 限制最大解析长度（`500` 字符），新增中文「零X分」（如「三点零五分」）、复合相对时长（「1小时30分钟后」）、多段扫描（「开会30分钟，10分钟后提醒」）、「明晚／今早」与独立 `3pm`／`3:30 pm` 语法。
+  - `HomeScreen` 保留通知缓存与列表引用并收窄监听；`TaskCard` 将媒体图标订阅隔离至局部 `Consumer` 并复用帧级 `referenceNow`；`ContextTriggerService` 增加 45 秒 Wi-Fi 嗅探冷却、`runInShell: false` 与活动规则预判。
+- 新增 `test/v1_8_23_core_improvements_test.dart`（13 项回归用例），不更改 SQLite schema17、回滚日志 `[1, 1]`、依赖锁文件或凭据格式。
+
+---
+
 ## v1.8.22（build93，稳定性加固、视觉美观与易用性全面升级、运行时性能及三语包体再瘦身）- 2026-11-22
 
 - **稳定性与边界加固（`windows/runner/flutter_window.*`、`windows_protocol_service.dart`、`windows_toast.dart`、`SharedTextBridge.kt`、`MainActivity.kt`、`app.dart`、`workspace_drafts_provider.dart`、`home_controller.dart`、`tencent_realtime_recognizer.dart`、`live_pcm_recording.dart`、`llm_service.dart`、`multi_agent_service.dart`、`settings_screen.dart`、`home_screen.dart`、`input_bottom_bar.dart`、`task_card.dart`）**：

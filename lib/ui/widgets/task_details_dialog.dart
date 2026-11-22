@@ -1,6 +1,8 @@
 import 'inline_feedback.dart';
 import '../screens/task_detail_screen.dart';
 import '../formatters/local_date_time.dart';
+import '../theme/app_theme.dart';
+import 'editable_text_menu.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
@@ -71,6 +73,7 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
       'workday' => 'repeatWorkday',
       'weekly' => 'repeatWeekly',
       'monthly' => 'repeatMonthly',
+      'yearly' => 'repeatYearly',
       _ => null,
     };
     setState(() => _isBusy = true);
@@ -228,7 +231,9 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final brightness = theme.brightness;
 
     final dialog = Dialog(
       shape: RoundedRectangleBorder(
@@ -257,6 +262,7 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
               const SizedBox(height: 16),
               TextField(
                 controller: _titleController,
+                contextMenuBuilder: buildEditableTextMenu,
                 style: const TextStyle(fontSize: 14),
                 decoration: InputDecoration(
                   labelText: l10n.get('taskTitleLabel'),
@@ -287,74 +293,24 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                   ),
                 ),
                 items: [
-                  DropdownMenuItem(
-                    value: 1,
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.local_fire_department_rounded,
-                          color: Colors.red.shade400,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          l10n.get('cat1'),
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ],
+                  for (final level in const [1, 2, 3, 4])
+                    DropdownMenuItem(
+                      value: level,
+                      child: Row(
+                        children: [
+                          Icon(
+                            AppTheme.quadrantIcon(level),
+                            color: AppTheme.quadrantColor(brightness, level),
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            l10n.get('cat$level'),
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  DropdownMenuItem(
-                    value: 2,
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.star_rounded,
-                          color: Colors.orange.shade400,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          l10n.get('cat2'),
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
-                  DropdownMenuItem(
-                    value: 3,
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.bolt_rounded,
-                          color: Colors.blue.shade400,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          l10n.get('cat3'),
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
-                  DropdownMenuItem(
-                    value: 4,
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.coffee_rounded,
-                          color: Colors.green.shade400,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          l10n.get('cat4'),
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
                 onChanged: (val) {
                   if (val != null) {
@@ -450,7 +406,7 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                             l10n.get('triggerTimeLabel'),
                             style: TextStyle(
                               fontSize: 11,
-                              color: Colors.grey.shade600,
+                              color: colors.onSurfaceVariant,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -461,8 +417,8 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                             style: TextStyle(
                               fontSize: 13,
                               color: _selectedTime == null
-                                  ? Colors.grey
-                                  : Theme.of(context).colorScheme.primary,
+                                  ? colors.onSurfaceVariant
+                                  : colors.primary,
                               fontWeight: _selectedTime == null
                                   ? FontWeight.normal
                                   : FontWeight.w600,
@@ -492,21 +448,21 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
                 const SizedBox(height: 12),
                 Text(
                   widget.task.taskSummary!,
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
                 ),
               ],
               const SizedBox(height: 20),
               Row(
                 children: [
                   TextButton.icon(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.delete_outline,
-                      color: Colors.red,
+                      color: colors.error,
                       size: 16,
                     ),
                     label: Text(
                       l10n.get('deleteTask'),
-                      style: const TextStyle(color: Colors.red, fontSize: 13),
+                      style: TextStyle(color: colors.error, fontSize: 13),
                     ),
                     onPressed: _delete,
                   ),

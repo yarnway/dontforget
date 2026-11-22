@@ -4,6 +4,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../models/task_details.dart';
+import 'editable_text_menu.dart';
 
 /// Edits one task's metadata draft. Persistence and navigation belong to the
 /// host editor; this deliberately has no planning or database responsibilities.
@@ -279,7 +280,11 @@ class _TaskMetadataEditorState extends State<TaskMetadataEditor> {
           enabled: widget.enabled && checklist.length < 64,
           maxLength: 512,
           inputFormatters: [_storedLimit(512)],
-          maxLines: null,
+          keyboardType: TextInputType.text,
+          textInputAction: TextInputAction.done,
+          minLines: 1,
+          maxLines: 3,
+          contextMenuBuilder: buildEditableTextMenu,
           onSubmitted: (_) => _addItem(),
           decoration: InputDecoration(
             labelText: l10n.get('taskAddChecklistItem'),

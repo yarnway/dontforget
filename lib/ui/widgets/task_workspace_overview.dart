@@ -5,6 +5,7 @@ import '../../l10n/app_localizations.dart';
 import '../../models/reminder.dart';
 import '../../providers/global_capture_provider.dart';
 import '../../providers/workspace_drafts_provider.dart';
+import '../theme/app_theme.dart';
 import 'inline_feedback.dart';
 import 'task_board.dart';
 import 'task_card.dart';
@@ -17,12 +18,14 @@ class TaskWorkspaceOverview extends ConsumerStatefulWidget {
     required this.onPlayMedia,
     this.onOpenLearning,
     this.activeView,
+    this.onViewChanged,
     this.missedReminders,
   });
   final List<Reminder> reminders;
   final ValueChanged<String> onPlayMedia;
   final VoidCallback? onOpenLearning;
   final String? activeView;
+  final ValueChanged<String>? onViewChanged;
   // Home supplies the same selection used by its missed-reminder banner.
   final List<Reminder>? missedReminders;
   @override
@@ -46,6 +49,7 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
   List<Reminder> _cachedCompleted = const [];
   List<Object> _cachedRows = const [];
   Map<String, int> _cachedRowIndexByTaskId = const {};
+  Map<String, int> _cachedCompletedIndexByTaskId = const {};
   int _cachedCompletedCount = 0;
   int _cachedTodayCount = 0;
   int _cachedFutureCount = 0;
@@ -77,7 +81,8 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
         ? 'todayUrgent'
         : task.isPinned
         ? 'todayPinned'
-        : deadline != null && deadline.isBefore(now)
+        : (deadline != null && deadline.isBefore(now)) ||
+              (reminder != null && reminder.isBefore(now))
         ? 'todayOverdue'
         : (deadline != null && deadline.isBefore(tomorrow)) ||
               (reminder != null && reminder.isBefore(tomorrow))
@@ -101,9 +106,12 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
             .toList();
     final todayStart = DateTime(now.year, now.month, now.day);
     final tomorrow = DateTime(now.year, now.month, now.day + 1);
+    final dayAfterTomorrow = DateTime(now.year, now.month, now.day + 2);
+    final nextWeekStart = DateTime(now.year, now.month, now.day + 7);
     final rows = <Object>[];
     final completedList = <Reminder>[];
     final tasks = <Reminder>[];
+    final todayGroupById = <String, String>{};
     var completedCount = 0;
     var todayCount = 0;
     var futureCount = 0;
@@ -115,8 +123,12 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
         }
       } else if (r.isWorkspaceItem) {
         tasks.add(r);
-        if (_todayGroupFor(r, now, todayStart, tomorrow) != null) {
+        final todayGroup = _todayGroupFor(r, now, todayStart, tomorrow);
+        if (todayGroup != null) {
           todayCount++;
+          if (view == 'today') {
+            todayGroupById[r.id] = todayGroup;
+          }
         }
         if ((r.eventTime ?? r.triggerTime ?? r.nextReviewAt)
                 ?.isBefore(tomorrow) ==
@@ -154,7 +166,7 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
           'todayReview': [],
         };
         for (final task in tasks) {
-          final group = _todayGroupFor(task, now, todayStart, tomorrow);
+          final group = todayGroupById[task.id];
           if (group != null) groups[group]!.add(task);
         }
         for (final group in groups.entries) {
@@ -167,16 +179,33 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
         }
       } else if (view == 'missed') {
         rows.addAll(missedTasks);
+      } else if (view == 'future') {
+        final groups = <String, List<Reminder>>{
+          'futureTomorrow': [],
+          'futureThisWeek': [],
+          'futureLater': [],
+        };
+        for (final task in tasks) {
+          final time = task.eventTime ?? task.triggerTime ?? task.nextReviewAt;
+          if (time == null || time.isBefore(tomorrow)) continue;
+          if (time.isBefore(dayAfterTomorrow)) {
+            groups['futureTomorrow']!.add(task);
+          } else if (time.isBefore(nextWeekStart)) {
+            groups['futureThisWeek']!.add(task);
+          } else {
+            groups['futureLater']!.add(task);
+          }
+        }
+        for (final group in groups.entries) {
+          if (group.value.isNotEmpty) {
+            rows.addAll([
+              (key: group.key, count: group.value.length),
+              ...group.value,
+            ]);
+          }
+        }
       } else {
-        rows.addAll(
-          tasks.where(
-            (task) =>
-                view == 'all' ||
-                (task.eventTime ?? task.triggerTime ?? task.nextReviewAt)
-                        ?.isBefore(tomorrow) ==
-                    false,
-          ),
-        );
+        rows.addAll(tasks);
       }
     }
     final rowIndexByTaskId = <String, int>{};
@@ -186,6 +215,9 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
         rowIndexByTaskId[row.id] = i;
       }
     }
+    final completedIndexByTaskId = <String, int>{
+      for (var i = 0; i < completed.length; i++) completed[i].id: i,
+    };
     _cachedReminders = widget.reminders;
     _cachedMissedProp = widget.missedReminders;
     _cachedView = view;
@@ -196,6 +228,7 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
     _cachedCompleted = completed;
     _cachedRows = rows;
     _cachedRowIndexByTaskId = rowIndexByTaskId;
+    _cachedCompletedIndexByTaskId = completedIndexByTaskId;
     _cachedCompletedCount = completedCount;
     _cachedTodayCount = todayCount;
     _cachedFutureCount = futureCount;
@@ -232,7 +265,7 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      setState(() => _refreshRevision++);
+      if (mounted) setState(() => _refreshRevision++);
       _startClock();
     } else {
       _timer?.cancel();
@@ -248,6 +281,7 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
 
   void _select(String value) {
     setState(() => _selected = value);
+    widget.onViewChanged?.call(value);
     unawaited(
       ref
           .read(workspaceDraftsProvider.notifier)
@@ -320,46 +354,74 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                       runSpacing: 2,
                       children: [
                         for (final entry in choices.entries)
-                          ChoiceChip(
-                            key: ValueKey('workspace-view-${entry.key}'),
-                            label: entry.key == 'missed'
-                                ? Text('${loc.get(entry.value)} · $missedCount')
-                                : (tabCounts[entry.key] ?? 0) > 0
-                                ? Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(loc.get(entry.value)),
-                                      const SizedBox(width: 6),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 6,
-                                          vertical: 1,
+                          Builder(
+                            builder: (context) {
+                              final selected = view == entry.key;
+                              final isMissed = entry.key == 'missed';
+                              final count = isMissed
+                                  ? missedCount
+                                  : (tabCounts[entry.key] ?? 0);
+                              final highlightMissed =
+                                  isMissed && missedCount > 0 && !selected;
+                              return ChoiceChip(
+                                key: ValueKey('workspace-view-${entry.key}'),
+                                side: highlightMissed
+                                    ? BorderSide(
+                                        color: colors.error.withValues(
+                                          alpha: 0.45,
                                         ),
-                                        decoration: BoxDecoration(
-                                          color: view == entry.key
-                                              ? colors.onSecondaryContainer
-                                                    .withValues(alpha: 0.14)
-                                              : colors.surfaceContainerHighest,
-                                          borderRadius: BorderRadius.circular(
-                                            10,
+                                      )
+                                    : null,
+                                label: count > 0
+                                    ? Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            loc.get(entry.value),
+                                            style: highlightMissed
+                                                ? TextStyle(color: colors.error)
+                                                : null,
                                           ),
-                                        ),
-                                        child: Text(
-                                          '${tabCounts[entry.key]}',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                            color: view == entry.key
-                                                ? colors.onSecondaryContainer
-                                                : colors.onSurfaceVariant,
+                                          const SizedBox(width: 6),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 1,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: selected
+                                                  ? colors.onSecondaryContainer
+                                                        .withValues(alpha: 0.14)
+                                                  : highlightMissed
+                                                  ? colors.errorContainer
+                                                  : colors
+                                                        .surfaceContainerHighest,
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            child: Text(
+                                              '$count',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w600,
+                                                fontFeatures:
+                                                    AppTheme.tabularFigures,
+                                                color: selected
+                                                    ? colors
+                                                          .onSecondaryContainer
+                                                    : highlightMissed
+                                                    ? colors.onErrorContainer
+                                                    : colors.onSurfaceVariant,
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                : Text(loc.get(entry.value)),
-                            selected: view == entry.key,
-                            onSelected: (_) => _select(entry.key),
+                                        ],
+                                      )
+                                    : Text(loc.get(entry.value)),
+                                selected: selected,
+                                onSelected: (_) => _select(entry.key),
+                              );
+                            },
                           ),
                       ],
                     ),
@@ -480,13 +542,25 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                                             is ({String key, int count})) {
                                           if (row.key == 'todayReview' &&
                                               widget.onOpenLearning != null) {
-                                            return TextButton.icon(
-                                              onPressed: widget.onOpenLearning,
-                                              icon: const Icon(
-                                                Icons.auto_stories_outlined,
+                                            return Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 8,
+                                                bottom: 4,
                                               ),
-                                              label: Text(
-                                                '${loc.get('learningQueueTitle')} (${row.count})',
+                                              child: Align(
+                                                alignment: AlignmentDirectional
+                                                    .centerStart,
+                                                child: TextButton.icon(
+                                                  onPressed:
+                                                      widget.onOpenLearning,
+                                                  icon: const Icon(
+                                                    Icons.auto_stories_outlined,
+                                                    size: 18,
+                                                  ),
+                                                  label: Text(
+                                                    '${loc.get('learningQueueTitle')} (${row.count})',
+                                                  ),
+                                                ),
                                               ),
                                             );
                                           }
@@ -511,6 +585,18 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                                                 'captureInbox' => (
                                                   Icons.inbox_outlined,
                                                   colors.tertiary,
+                                                ),
+                                                'futureTomorrow' => (
+                                                  Icons.wb_sunny_outlined,
+                                                  colors.primary,
+                                                ),
+                                                'futureThisWeek' => (
+                                                  Icons.date_range_outlined,
+                                                  colors.primary,
+                                                ),
+                                                'futureLater' => (
+                                                  Icons.event_note_outlined,
+                                                  colors.onSurfaceVariant,
                                                 ),
                                                 _ => (
                                                   Icons.today_outlined,
@@ -578,6 +664,7 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                                         return TaskCard(
                                           key: ValueKey(task.id),
                                           task: task,
+                                          referenceNow: now,
                                           onPlayMedia: () {
                                             if (task.recordId != null) {
                                               widget.onPlayMedia(
@@ -595,7 +682,7 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                                     ),
                                     ),
                                   ),
-                                  if (view == 'all')
+                                  if (view == 'all' && _cachedCompletedCount > 0)
                                     SliverToBoxAdapter(
                                       child: Padding(
                                         padding: const EdgeInsets.symmetric(
@@ -619,12 +706,18 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                                             ),
                                             label: Text(
                                               '${loc.get('completed')} · $_cachedCompletedCount',
+                                              style: const TextStyle(
+                                                fontFeatures:
+                                                    AppTheme.tabularFigures,
+                                              ),
                                             ),
                                           ),
                                         ),
                                       ),
                                     ),
-                                  if (view == 'all' && _showCompleted)
+                                  if (view == 'all' &&
+                                      _cachedCompletedCount > 0 &&
+                                      _showCompleted)
                                     SliverPadding(
                                       padding: const EdgeInsets.fromLTRB(
                                         12,
@@ -633,23 +726,29 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                                         12,
                                       ),
                                       sliver: SliverList(
-                                        delegate: SliverChildBuilderDelegate((
-                                          context,
-                                          index,
-                                        ) {
-                                          final task = completed[index];
-                                          return TaskCard(
-                                            key: ValueKey(task.id),
-                                            task: task,
-                                            onPlayMedia: () {
-                                              if (task.recordId != null) {
-                                                widget.onPlayMedia(
-                                                  task.recordId!,
-                                                );
-                                              }
-                                            },
-                                          );
-                                        }, childCount: completed.length),
+                                        delegate: SliverChildBuilderDelegate(
+                                          (context, index) {
+                                            final task = completed[index];
+                                            return TaskCard(
+                                              key: ValueKey(task.id),
+                                              task: task,
+                                              referenceNow: now,
+                                              onPlayMedia: () {
+                                                if (task.recordId != null) {
+                                                  widget.onPlayMedia(
+                                                    task.recordId!,
+                                                  );
+                                                }
+                                              },
+                                            );
+                                          },
+                                          childCount: completed.length,
+                                          findChildIndexCallback: (key) =>
+                                              key is ValueKey<String>
+                                              ? _cachedCompletedIndexByTaskId[key
+                                                    .value]
+                                              : null,
+                                        ),
                                       ),
                                     ),
                                 ],

@@ -179,19 +179,52 @@ class ContextTriggerService {
     );
   }
 
-  /// 嗅探当前 Wi-Fi SSID (仅在 Windows 原生命令行执行 netsh，防卡顿超时处理)
-  Future<String?> detectCurrentWifiSsid() async {
-    final recoveryEpoch = _recoveryEpoch;
+  DateTime? _lastWifiProbeAt;
+  Future<String?>? _inFlightWifiProbe;
+  static const Duration wifiProbeCooldown = Duration(seconds: 45);
+
+  /// Fast pre-check before spawning a Wi-Fi SSID subprocess: skips completed,
+  /// hidden, paused, or already-triggered-this-session tasks.
+  bool hasPendingWifiTrigger(Iterable<Reminder> reminders) {
+    for (final reminder in reminders) {
+      if (reminder.isCompleted ||
+          !reminder.isVisible ||
+          reminder.details.paused ||
+          _sessionTriggeredTaskIds.contains(reminder.id)) {
+        continue;
+      }
+      final raw = reminder.contextTrigger;
+      if (raw == null || raw.isEmpty || !raw.contains('wifi')) continue;
+      if (ContextTriggerRule.tryParse(raw)?.type == 'wifi') return true;
+    }
+    return false;
+  }
+
+  /// 嗅探当前 Wi-Fi SSID (仅在 Windows 原生命令行执行 netsh，防卡顿超时与高频轮询)
+  Future<String?> detectCurrentWifiSsid() {
     if (!Platform.isWindows ||
         Platform.environment.containsKey('FLUTTER_TEST')) {
-      return null;
+      return Future<String?>.value(null);
     }
+    final now = DateTime.now();
+    if (_lastWifiProbeAt != null &&
+        now.difference(_lastWifiProbeAt!) < wifiProbeCooldown) {
+      return Future<String?>.value(_detectedSsid);
+    }
+    return _inFlightWifiProbe ??= _runWifiProbe().whenComplete(
+      () => _inFlightWifiProbe = null,
+    );
+  }
+
+  Future<String?> _runWifiProbe() async {
+    final recoveryEpoch = _recoveryEpoch;
+    _lastWifiProbeAt = DateTime.now();
     try {
       final result = await Process.run('netsh', [
         'wlan',
         'show',
         'interfaces',
-      ], runInShell: true).timeout(const Duration(seconds: 2));
+      ], runInShell: false).timeout(const Duration(seconds: 2));
 
       if (recoveryEpoch != _recoveryEpoch) return null;
       if (result.exitCode == 0) {

@@ -1,5 +1,7 @@
 import 'inline_feedback.dart';
 import 'capture_preview_dialog.dart';
+import 'task_category_picker_dialog.dart';
+import 'task_snooze_picker.dart';
 import '../formatters/local_date_time.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -20,8 +22,14 @@ import '../theme/app_theme.dart';
 class TaskCard extends ConsumerStatefulWidget {
   final Reminder task;
   final VoidCallback onPlayMedia;
+  final DateTime? referenceNow;
 
-  const TaskCard({super.key, required this.task, required this.onPlayMedia});
+  const TaskCard({
+    super.key,
+    required this.task,
+    required this.onPlayMedia,
+    this.referenceNow,
+  });
 
   @override
   ConsumerState<TaskCard> createState() => _TaskCardState();
@@ -141,9 +149,8 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     try {
       generationForFeedback = databaseForFeedback.captureGeneration();
       if (completed) {
-        final result = await ref
-            .read(remindersProvider.notifier)
-            .completeOccurrence(task);
+        final notifier = ref.read(remindersProvider.notifier);
+        final result = await notifier.completeOccurrence(task);
         if (result.disposition == ReminderActionDisposition.stale) {
           _showMessage(
             l10n.get('reminderOccurrenceChanged'),
@@ -157,6 +164,49 @@ class _TaskCardState extends ConsumerState<TaskCard> {
             '${l10n.get('periodicNext')}${formatLocalDateTime(result.reminder!.triggerTime!)}',
             tone: FeedbackTone.success,
           );
+        } else if (result.reminder?.isCompleted == true) {
+          final completedTask = result.reminder!;
+          final gen = generationForFeedback;
+          if (host.mounted && databaseForFeedback.isCurrent(gen)) {
+            host.showSnackBar(
+              SnackBar(
+                content: Text(l10n.get('taskCompleted')),
+                action: SnackBarAction(
+                  label: l10n.get('undo'),
+                  onPressed: () async {
+                    try {
+                      final undone = await databaseForFeedback.runOperation(
+                        gen,
+                        () => notifier.updateReminder(
+                          completedTask.copyWith(isCompleted: false),
+                          baseline: completedTask,
+                        ),
+                      );
+                      if (undone.nativeSyncFailed && host.mounted) {
+                        host.showSnackBar(
+                          SnackBar(
+                            content: Text(l10n.get('reminderNativeSyncFailed')),
+                            action: repair,
+                          ),
+                          tone: FeedbackTone.warning,
+                        );
+                      }
+                    } catch (_) {
+                      if (host.mounted) {
+                        host.showSnackBar(
+                          SnackBar(
+                            content: Text(l10n.get('reminderUpdateFailed')),
+                          ),
+                          tone: FeedbackTone.error,
+                        );
+                      }
+                    }
+                  },
+                ),
+              ),
+              tone: FeedbackTone.success,
+            );
+          }
         }
       } else {
         final database = ref.read(databaseHelperProvider);
@@ -428,69 +478,9 @@ class _TaskCardState extends ConsumerState<TaskCard> {
   Future<void> _chooseCategory() async {
     if (_isBusy) return;
     final l10n = AppLocalizations.of(context);
-    final colors = Theme.of(context).colorScheme;
-    final brightness = Theme.of(context).brightness;
-    final target = await showDialog<int>(
-      context: context,
-      builder: (dialogContext) => SimpleDialog(
-        key: const ValueKey('task-move-category-dialog'),
-        title: Text(l10n.get('moveCategory')),
-        children: [
-          for (var level = 1; level <= 4; level++)
-            SimpleDialogOption(
-              key: ValueKey('task-move-category-$level'),
-              onPressed: () => Navigator.pop(dialogContext, level),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: widget.task.quadrantLevel == level
-                      ? colors.primaryContainer.withValues(alpha: 0.38)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: AppTheme.quadrantColor(
-                          brightness,
-                          level,
-                        ).withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        AppTheme.quadrantIcon(level),
-                        size: 18,
-                        color: AppTheme.quadrantColor(brightness, level),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        l10n.get('cat$level'),
-                        style: TextStyle(
-                          fontWeight: widget.task.quadrantLevel == level
-                              ? FontWeight.w600
-                              : FontWeight.w400,
-                        ),
-                      ),
-                    ),
-                    if (widget.task.quadrantLevel == level)
-                      Icon(
-                        Icons.check_rounded,
-                        size: 18,
-                        color: colors.primary,
-                      ),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
+    final target = await showTaskCategoryPickerDialog(
+      context,
+      currentLevel: widget.task.quadrantLevel,
     );
     if (!mounted || target == null || target == widget.task.quadrantLevel) {
       return;
@@ -581,6 +571,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                         style: TextStyle(
                           fontSize: 12,
                           color: colors.onSurfaceVariant,
+                          fontFeatures: AppTheme.tabularFigures,
                         ),
                       ),
                     ],
@@ -592,42 +583,12 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       ),
     );
     if (!mounted || choice == null) return;
-    DateTime? pickedCustom;
-    if (choice == 'custom') {
-      final initial = previewBase.add(const Duration(hours: 1));
-      final date = await showDatePicker(
-        context: context,
-        initialDate: initial,
-        firstDate: previewNow,
-        lastDate: previewNow.add(const Duration(days: 365 * 5)),
-      );
-      if (!mounted || date == null) return;
-      final tod = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.fromDateTime(initial),
-      );
-      if (!mounted || tod == null) return;
-      pickedCustom = DateTime(
-        date.year,
-        date.month,
-        date.day,
-        tod.hour,
-        tod.minute,
-      );
-    }
     final now = DateTime.now();
     final currentTrigger = widget.task.triggerTime!;
     final isFuture = currentTrigger.isAfter(now);
     final base = isFuture ? currentTrigger : now;
-    final target = switch (choice) {
-      '15' => base.add(const Duration(minutes: 15)),
-      '60' => base.add(const Duration(hours: 1)),
-      'evening' => QuickReminderParser.tonight(now),
-      'morning' => QuickReminderParser.tomorrowMorning(now),
-      'custom' => pickedCustom,
-      _ => null,
-    };
-    if (target == null || !target.isAfter(now)) return;
+    final target = await pickSnoozeUntil(context, choice, now: now, base: base);
+    if (!mounted || target == null) return;
     setState(() => _isUpdating = true);
     try {
       final notifier = ref.read(remindersProvider.notifier);
@@ -764,7 +725,12 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     }
   }
 
-  Widget _badge(String label, IconData icon, Color color) {
+  Widget _badge(
+    String label,
+    IconData icon,
+    Color color, {
+    bool tabular = false,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
@@ -784,6 +750,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
                 color: color,
+                fontFeatures: tabular ? AppTheme.tabularFigures : null,
               ),
             ),
           ),
@@ -791,6 +758,72 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       ),
     );
   }
+
+  Widget _buildMediaButton(
+    BuildContext context,
+    AppLocalizations l10n,
+    ColorScheme colors,
+    Reminder task,
+    List<String> attachmentIds,
+  ) {
+    if (attachmentIds.isNotEmpty) {
+      return _mediaActionButton(
+        colors: colors,
+        taskId: task.id,
+        icon: Icons.attach_file_rounded,
+        label: '${l10n.get('taskAttachments')} · ${attachmentIds.length}',
+        onPressed: _isBusy ? null : _openDetails,
+      );
+    }
+    final recordId = task.recordId;
+    if (recordId == null) return const SizedBox.shrink();
+    return Consumer(
+      builder: (context, ref, _) {
+        final media = ref.watch(
+          mediaRecordByIdProvider.select((byId) => byId[recordId]),
+        );
+        final mediaIcon = switch (media?.type) {
+          'audio' => Icons.mic_none,
+          'image' => Icons.image_outlined,
+          'video' => Icons.videocam_outlined,
+          'file' => Icons.description_outlined,
+          _ => null,
+        };
+        if (mediaIcon == null) return const SizedBox.shrink();
+        return _mediaActionButton(
+          colors: colors,
+          taskId: task.id,
+          icon: mediaIcon,
+          label: l10n.get('playOrPreview'),
+          onPressed: _isBusy ? null : widget.onPlayMedia,
+        );
+      },
+    );
+  }
+
+  Widget _mediaActionButton({
+    required ColorScheme colors,
+    required String taskId,
+    required IconData icon,
+    required String label,
+    required VoidCallback? onPressed,
+  }) => TextButton(
+    key: ValueKey('media-$taskId'),
+    onPressed: onPressed,
+    style: TextButton.styleFrom(
+      minimumSize: const Size(48, 48),
+      foregroundColor: colors.primary,
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    ),
+    child: Row(
+      children: [
+        Icon(icon, size: 20),
+        const SizedBox(width: 10),
+        Expanded(child: Text(label, style: const TextStyle(fontSize: 12))),
+      ],
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -803,11 +836,16 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     final subTasks = task.subTasksView;
     final details = task.details;
     final summary = task.taskSummary?.trim();
-    final now = DateTime.now();
+    final now = widget.referenceNow ?? DateTime.now();
     final isOverdue =
         !task.isCompleted &&
         task.triggerTime != null &&
         task.triggerTime!.isBefore(now);
+    final isDueSoon =
+        !task.isCompleted &&
+        !isOverdue &&
+        task.triggerTime != null &&
+        task.triggerTime!.difference(now) <= const Duration(hours: 24);
     final showSummary =
         summary != null &&
         summary.isNotEmpty &&
@@ -818,22 +856,17 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         task.triggerTime != null &&
         task.eventTime!.isAtSameMomentAs(task.triggerTime!);
     final priorityColor = AppTheme.quadrantColor(brightness, task.quadrantLevel);
-    IconData? mediaIcon;
-    if (task.recordId != null && details.attachmentIds.isEmpty) {
-      final media = ref.watch(
-        mediaRecordByIdProvider.select((byId) => byId[task.recordId]),
-      );
-      mediaIcon = switch (media?.type) {
-        'audio' => Icons.mic_none,
-        'image' => Icons.image_outlined,
-        'video' => Icons.videocam_outlined,
-        'file' => Icons.description_outlined,
-        _ => null,
-      };
-    }
-    if (details.attachmentIds.isNotEmpty) {
-      mediaIcon = Icons.attach_file_rounded;
-    }
+    final reminderTimeColor = isOverdue
+        ? colors.error
+        : isDueSoon
+        ? colors.primary
+        : colors.onSurfaceVariant;
+    final eventTimeColor =
+        !task.isCompleted && task.eventTime != null && task.eventTime!.isBefore(now)
+        ? colors.error
+        : (sharedTime && isDueSoon)
+        ? colors.primary
+        : colors.onSurfaceVariant;
     final metadata = <Widget>[
       if (details.project.isNotEmpty)
         _badge(details.project, Icons.folder_outlined, colors.onSurfaceVariant),
@@ -855,7 +888,8 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         _badge(
           '${l10n.get(sharedTime ? 'taskTimeAndReminder' : 'eventTimeShort')}: ${formatLocalDateTime(task.eventTime!)}',
           Icons.event_outlined,
-          colors.onSurfaceVariant,
+          eventTimeColor,
+          tabular: true,
         ),
       if (task.isEmotionFiltered)
         _badge(
@@ -875,7 +909,8 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         _badge(
           '${l10n.get('reminderTimeShort')}: ${formatLocalDateTime(task.triggerTime!)}',
           Icons.access_time,
-          colors.onSurfaceVariant,
+          reminderTimeColor,
+          tabular: true,
         ),
       if (task.triggerTime != null &&
           task.timeOrigin == ReminderTimeOrigin.aiSuggested)
@@ -917,6 +952,10 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         ),
     ];
 
+    final cardSurfaceColor = task.isCompleted
+        ? colors.surfaceContainerLowest
+        : colors.surfaceContainerLow;
+
     return Dismissible(
       key: ValueKey(task.id),
       direction: _isBusy ? DismissDirection.none : DismissDirection.endToStart,
@@ -924,7 +963,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
           color: colors.errorContainer,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
         ),
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 16),
@@ -950,9 +989,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
             key: ValueKey('task-surface-${task.id}'),
             margin: const EdgeInsets.only(bottom: 8),
             decoration: BoxDecoration(
-              color: task.isCompleted
-                  ? colors.surfaceContainerLowest
-                  : colors.surfaceContainerLow,
+              color: cardSurfaceColor,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: hovered
@@ -989,154 +1026,195 @@ class _TaskCardState extends ConsumerState<TaskCard> {
               child: LayoutBuilder(
                 builder: (context, cardConstraints) {
                   final allowHoverActions = cardConstraints.maxWidth >= 360;
+                  final checklistDone = details.checklist
+                      .where((e) => e.done)
+                      .length;
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                      Stack(
+                        alignment: AlignmentDirectional.centerEnd,
                         children: [
-                          Container(
-                            width: 3.5,
-                            height: 16,
-                            margin: const EdgeInsets.only(right: 9),
-                            decoration: BoxDecoration(
-                              color: task.isCompleted
-                                  ? colors.outlineVariant
-                                  : priorityColor,
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                          Expanded(
-                            child: Text(
-                              task.taskTitle,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                height: 1.35,
-                                color: task.isCompleted
-                                    ? colors.onSurfaceVariant
-                                    : colors.onSurface,
-                                decoration: task.isCompleted
-                                    ? TextDecoration.lineThrough
-                                    : null,
-                              ),
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          if (allowHoverActions)
-                            ValueListenableBuilder<bool>(
-                              valueListenable: _hovered,
-                              builder: (context, hovered, _) {
-                                if (!hovered || _isBusy) {
-                                  return const SizedBox.shrink();
-                                }
-                                return Row(
-                                  mainAxisSize: MainAxisSize.min,
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    if (!task.isCompleted)
-                                      IconButton(
-                                        key: ValueKey('hover-pin-${task.id}'),
-                                        tooltip: l10n.get(
-                                          task.isPinned
-                                              ? 'unpinToday'
-                                              : 'pinToday',
-                                        ),
-                                        constraints: const BoxConstraints(
-                                          minWidth: 48,
-                                          minHeight: 48,
-                                        ),
-                                        icon: Icon(
-                                          task.isPinned
-                                              ? Icons.push_pin_rounded
-                                              : Icons.push_pin_outlined,
-                                          size: 18,
-                                          color: task.isPinned
-                                              ? colors.primary
-                                              : colors.onSurfaceVariant,
-                                        ),
-                                        onPressed: () => _onAction('pin'),
+                                    Container(
+                                      width: 3.5,
+                                      height: 16,
+                                      margin: const EdgeInsets.only(
+                                        top: 2,
+                                        right: 9,
                                       ),
-                                    if (_canQuickPostpone)
-                                      IconButton(
-                                        key: ValueKey(
-                                          'hover-postpone-${task.id}',
-                                        ),
-                                        tooltip: l10n.get('quickPostpone'),
-                                        constraints: const BoxConstraints(
-                                          minWidth: 48,
-                                          minHeight: 48,
-                                        ),
-                                        icon: Icon(
-                                          Icons.snooze_outlined,
-                                          size: 18,
-                                          color: colors.onSurfaceVariant,
-                                        ),
-                                        onPressed: _choosePostpone,
+                                      decoration: BoxDecoration(
+                                        color: task.isCompleted
+                                            ? colors.outlineVariant
+                                            : priorityColor,
+                                        borderRadius: BorderRadius.circular(2),
                                       ),
-                                    IconButton(
-                                      key: ValueKey('hover-edit-${task.id}'),
-                                      tooltip: l10n.get('editTask'),
-                                      constraints: const BoxConstraints(
-                                        minWidth: 48,
-                                        minHeight: 48,
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        task.taskTitle,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          height: 1.35,
+                                          color: task.isCompleted
+                                              ? colors.onSurfaceVariant
+                                              : colors.onSurface,
+                                          decoration: task.isCompleted
+                                              ? TextDecoration.lineThrough
+                                              : null,
+                                        ),
+                                        maxLines: 3,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                      icon: Icon(
-                                        Icons.edit_outlined,
-                                        size: 18,
-                                        color: colors.onSurfaceVariant,
-                                      ),
-                                      onPressed: _openEditor,
                                     ),
                                   ],
-                                );
-                              },
-                            ),
-                          SizedBox(
-                            width: 48,
-                            height: 48,
-                            child: Checkbox(
-                              key: ValueKey('complete-${task.id}'),
-                              semanticLabel:
-                                  '${l10n.get(task.isCompleted ? 'markUndone' : 'markDone')}: ${task.taskTitle}',
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4),
+                                ),
                               ),
-                              materialTapTargetSize:
-                                  MaterialTapTargetSize.padded,
-                              value: task.isCompleted,
-                              onChanged: _isBusy
-                                  ? null
-                                  : (value) {
-                                      HapticFeedback.selectionClick();
-                                      if (value != null) _setCompleted(value);
-                                    },
-                            ),
+                              SizedBox(
+                                width: 48,
+                                height: 48,
+                                child: Checkbox(
+                                  key: ValueKey('complete-${task.id}'),
+                                  semanticLabel:
+                                      '${l10n.get(task.isCompleted ? 'markUndone' : 'markDone')}: ${task.taskTitle}',
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.padded,
+                                  value: task.isCompleted,
+                                  onChanged: _isBusy
+                                      ? null
+                                      : (value) {
+                                          HapticFeedback.selectionClick();
+                                          if (value != null) {
+                                            _setCompleted(value);
+                                          }
+                                        },
+                                ),
+                              ),
+                              PopupMenuButton<String>(
+                                key: ValueKey('actions-${task.id}'),
+                                tooltip: l10n.get('taskActions'),
+                                enabled: !_isBusy,
+                                constraints: const BoxConstraints(
+                                  minWidth: 200,
+                                  maxWidth: 320,
+                                ),
+                                color: colors.surfaceContainer,
+                                surfaceTintColor: Colors.transparent,
+                                icon: Icon(
+                                  Icons.more_horiz_rounded,
+                                  size: 20,
+                                  color: colors.onSurfaceVariant,
+                                ),
+                                itemBuilder: (_) => _menuItems(l10n),
+                                onSelected: _onAction,
+                              ),
+                            ],
                           ),
-                          PopupMenuButton<String>(
-                            key: ValueKey('actions-${task.id}'),
-                            tooltip: l10n.get('taskActions'),
-                            enabled: !_isBusy,
-                            constraints: const BoxConstraints(
-                              minWidth: 200,
-                              maxWidth: 320,
+                          if (allowHoverActions)
+                            PositionedDirectional(
+                              end: 96,
+                              child: ValueListenableBuilder<bool>(
+                                valueListenable: _hovered,
+                                builder: (context, hovered, _) {
+                                  if (!hovered || _isBusy) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  return DecoratedBox(
+                                    key: ValueKey('hover-actions-${task.id}'),
+                                    decoration: BoxDecoration(
+                                      color: cardSurfaceColor.withValues(
+                                        alpha: 0.96,
+                                      ),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: colors.outlineVariant.withValues(
+                                          alpha: 0.55,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (!task.isCompleted)
+                                          IconButton(
+                                            key: ValueKey(
+                                              'hover-pin-${task.id}',
+                                            ),
+                                            tooltip: l10n.get(
+                                              task.isPinned
+                                                  ? 'unpinToday'
+                                                  : 'pinToday',
+                                            ),
+                                            constraints: const BoxConstraints(
+                                              minWidth: 48,
+                                              minHeight: 48,
+                                            ),
+                                            icon: Icon(
+                                              task.isPinned
+                                                  ? Icons.push_pin_rounded
+                                                  : Icons.push_pin_outlined,
+                                              size: 18,
+                                              color: task.isPinned
+                                                  ? colors.primary
+                                                  : colors.onSurfaceVariant,
+                                            ),
+                                            onPressed: () => _onAction('pin'),
+                                          ),
+                                        if (_canQuickPostpone)
+                                          IconButton(
+                                            key: ValueKey(
+                                              'hover-postpone-${task.id}',
+                                            ),
+                                            tooltip: l10n.get('quickPostpone'),
+                                            constraints: const BoxConstraints(
+                                              minWidth: 48,
+                                              minHeight: 48,
+                                            ),
+                                            icon: Icon(
+                                              Icons.snooze_outlined,
+                                              size: 18,
+                                              color: colors.onSurfaceVariant,
+                                            ),
+                                            onPressed: _choosePostpone,
+                                          ),
+                                        IconButton(
+                                          key: ValueKey(
+                                            'hover-edit-${task.id}',
+                                          ),
+                                          tooltip: l10n.get('editTask'),
+                                          constraints: const BoxConstraints(
+                                            minWidth: 48,
+                                            minHeight: 48,
+                                          ),
+                                          icon: Icon(
+                                            Icons.edit_outlined,
+                                            size: 18,
+                                            color: colors.onSurfaceVariant,
+                                          ),
+                                          onPressed: _openEditor,
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
-                            color: colors.surfaceContainer,
-                            surfaceTintColor: Colors.transparent,
-                            icon: Icon(
-                              Icons.more_horiz_rounded,
-                              size: 20,
-                              color: colors.onSurfaceVariant,
-                            ),
-                            itemBuilder: (_) => _menuItems(l10n),
-                            onSelected: _onAction,
-                          ),
                         ],
                       ),
                 if (showSummary)
                   Padding(
-                    padding: const EdgeInsets.only(left: 14, top: 2),
+                    padding: const EdgeInsets.only(left: 12.5, top: 2),
                     child: Text(
                       task.taskSummary!,
                       maxLines: 2,
@@ -1229,67 +1307,66 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                     icon: const Icon(Icons.preview_outlined, size: 16),
                     label: Text(l10n.get('capturePreview')),
                   ),
-                if (mediaIcon != null)
-                  TextButton(
-                    key: ValueKey('media-${task.id}'),
-                    onPressed: _isBusy
-                        ? null
-                        : details.attachmentIds.isNotEmpty
-                        ? _openDetails
-                        : widget.onPlayMedia,
-                    style: TextButton.styleFrom(
-                      minimumSize: const Size(48, 48),
-                      foregroundColor: colors.primary,
-                      alignment: Alignment.centerLeft,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(mediaIcon, size: 20),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            details.attachmentIds.isNotEmpty
-                                ? '${l10n.get('taskAttachments')} · ${details.attachmentIds.length}'
-                                : l10n.get('playOrPreview'),
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ),
-                      ],
-                    ),
+                if (task.recordId != null || details.attachmentIds.isNotEmpty)
+                  _buildMediaButton(
+                    context,
+                    l10n,
+                    colors,
+                    task,
+                    details.attachmentIds,
                   ),
                 if (details.checklist.isNotEmpty) ...[
-                  TextButton(
-                    key: ValueKey('checklist-${task.id}'),
-                    onPressed: () =>
-                        setState(() => _showChecklist = !_showChecklist),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.checklist_rounded, size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            l10n
-                                .get('taskChecklistProgress')
-                                .replaceAll(
-                                  '{done}',
-                                  '${details.checklist.where((e) => e.done).length}',
-                                )
-                                .replaceAll(
-                                  '{total}',
-                                  '${details.checklist.length}',
+                  Semantics(
+                    expanded: _showChecklist,
+                    child: TextButton(
+                      key: ValueKey('checklist-${task.id}'),
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size(48, 48),
+                        foregroundColor: colors.primary,
+                        alignment: Alignment.centerLeft,
+                      ),
+                      onPressed: () =>
+                          setState(() => _showChecklist = !_showChecklist),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.checklist_rounded, size: 18),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  l10n
+                                      .get('taskChecklistProgress')
+                                      .replaceAll('{done}', '$checklistDone')
+                                      .replaceAll(
+                                        '{total}',
+                                        '${details.checklist.length}',
+                                      ),
+                                  style: const TextStyle(
+                                    fontFeatures: AppTheme.tabularFigures,
+                                  ),
                                 ),
+                              ),
+                              Icon(
+                                _showChecklist
+                                    ? Icons.expand_less
+                                    : Icons.expand_more,
+                              ),
+                            ],
                           ),
-                        ),
-                        Icon(
-                          _showChecklist
-                              ? Icons.expand_less
-                              : Icons.expand_more,
-                        ),
-                      ],
+                          const SizedBox(height: 4),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(2),
+                            child: LinearProgressIndicator(
+                              value: checklistDone / details.checklist.length,
+                              minHeight: 3,
+                              backgroundColor: colors.surfaceContainerHighest,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   if (_showChecklist)
@@ -1318,10 +1395,13 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                               ),
                               onChanged: _isBusy || details.kind != 'task'
                                   ? null
-                                  : (value) => _setChecklistItem(
-                                      item.id,
-                                      value ?? false,
-                                    ),
+                                  : (value) {
+                                      HapticFeedback.selectionClick();
+                                      _setChecklistItem(
+                                        item.id,
+                                        value ?? false,
+                                      );
+                                    },
                             ),
                           ),
                       ],

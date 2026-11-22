@@ -422,21 +422,40 @@ class NotificationService {
       _datasetEpoch = await _readDatasetEpoch();
       if (_database != null && usesNativeNotifications) await init();
       final startedAt = _now();
-      final batch = <Future<void>>[];
-      for (final reminder in reminders) {
-        if (reminder.canNotify &&
-            reminder.noticeAcknowledgedAt == null &&
-            (reminder.triggerTime?.isAfter(startedAt) ?? false)) {
-          batch.add(_scheduleReminder(reminder));
-          if (batch.length == reconciliationBatchSize) {
-            // Default Future.wait drains every admitted task on failure before
-            // cleanup cancels all native requests. No later batch is admitted.
-            await Future.wait(batch);
-            batch.clear();
+      if (usesNativeNotifications && nativePendingLimit != null) {
+        for (final reminder in reminders) {
+          if (reminder.canNotify &&
+              reminder.noticeAcknowledgedAt == null &&
+              (reminder.triggerTime?.isAfter(startedAt) ?? false)) {
+            _windowMutation++;
+            final revision = ++_nextRevision;
+            _revisions[reminder.id] = revision;
+            _activeTimers.remove(reminder.id)?.cancel();
+            _scheduledReminders[reminder.id] = reminder;
           }
         }
+        await init();
+        if (!_initialized) {
+          throw StateError('Native notification initialization failed.');
+        }
+        await _reconcileNativeWindow(strict: true);
+      } else {
+        final batch = <Future<void>>[];
+        for (final reminder in reminders) {
+          if (reminder.canNotify &&
+              reminder.noticeAcknowledgedAt == null &&
+              (reminder.triggerTime?.isAfter(startedAt) ?? false)) {
+            batch.add(_scheduleReminder(reminder));
+            if (batch.length == reconciliationBatchSize) {
+              // Default Future.wait drains every admitted task on failure before
+              // cleanup cancels all native requests. No later batch is admitted.
+              await Future.wait(batch);
+              batch.clear();
+            }
+          }
+        }
+        await Future.wait(batch);
       }
-      await Future.wait(batch);
       _maintenance = false;
       _maintenanceReady = false;
       // Timers start only after the whole rebuild succeeds. An occurrence that
@@ -509,6 +528,27 @@ class NotificationService {
       final tasks = _scheduledReminders.values
           .where((r) => r.quadrantLevel >= 3 && r.triggerTime!.isAfter(_now()))
           .toList();
+      if (tasks.isEmpty) return;
+      // Desktop toast delivery evaluates focus suppression dynamically at fire
+      // time, so toggling focus needs no timer cancel/re-arm pass.
+      if (!usesNativeNotifications) {
+        return;
+      }
+      if (nativePendingLimit != null) {
+        if (_maintenance) return;
+        attempted = tasks.length;
+        _windowMutation++;
+        try {
+          await init();
+          if (!_initialized) {
+            throw StateError('Native notification initialization failed.');
+          }
+          await _reconcileNativeWindow(strict: true);
+        } catch (_) {
+          failed = attempted;
+        }
+        return;
+      }
       for (
         var offset = 0;
         offset < tasks.length;
@@ -930,7 +970,10 @@ class NotificationService {
     }
     await init();
     if (!_initialized) {
-      throw StateError('Native notification initialization failed.');
+      if (strict || _strictFailures) {
+        throw StateError('Native notification initialization failed.');
+      }
+      return;
     }
     if (_revisions[reminder.id] == revision &&
         identical(_scheduledReminders[reminder.id], reminder) &&
@@ -939,6 +982,8 @@ class NotificationService {
     }
     await _reconcileNativeWindow(strict: strict);
   }
+
+  bool get _isPausedForMaintenance => _maintenance && !_strictFailures;
 
   String _nativeSignature(Reminder task) => jsonEncode([
     _categoryLanguage,
@@ -956,7 +1001,9 @@ class NotificationService {
   Future<void> _reconcileNativeWindow({required bool strict}) {
     final operation = _windowTail.then((_) async {
       try {
+        if (_isPausedForMaintenance) return;
         final epoch = await _readDatasetEpoch();
+        if (_isPausedForMaintenance) return;
         if (_nativeWindowEpoch == epoch &&
             _windowMutation == _windowReconciled) {
           return;
@@ -969,6 +1016,7 @@ class NotificationService {
             final snapshot = await database.withNotificationJournal(
               (j) => j.read(),
             );
+            if (_isPausedForMaintenance) return;
             if (snapshot?.epoch == epoch) {
               for (final entry in snapshot!.entries.values) {
                 if (entry.needsCancellation) {
@@ -996,7 +1044,9 @@ class NotificationService {
         );
         final desired = {for (final task in selected) task.id: task};
         for (final id in _nativeWindow.keys.toList()) {
-          final previous = _nativeWindow[id]!;
+          if (_isPausedForMaintenance) return;
+          final previous = _nativeWindow[id];
+          if (previous == null) continue;
           final task = desired[id];
           // Past banners remain available unless the task was explicitly edited
           // or cancelled; freeing a delivered slot must not erase that banner.
@@ -1006,10 +1056,12 @@ class NotificationService {
           }
           if (task == null || previous.signature != _nativeSignature(task)) {
             await _cancelNative(id, strict: true);
+            if (_isPausedForMaintenance) return;
             _nativeWindow.remove(id);
           }
         }
         for (final task in selected) {
+          if (_isPausedForMaintenance) return;
           if (_nativeWindow.containsKey(task.id) ||
               !identical(_scheduledReminders[task.id], task) ||
               isSuppressed(task)) {
@@ -1021,6 +1073,7 @@ class NotificationService {
           // created a request, so the next pass must cancel it before retrying.
           _nativeWindow[task.id] = (trigger: task.triggerTime, signature: null);
           await _submitNativeReminder(task, revision, epoch);
+          if (_isPausedForMaintenance) return;
           if (identical(_scheduledReminders[task.id], task) &&
               _revisions[task.id] == revision) {
             _nativeWindow[task.id] = (
@@ -1029,7 +1082,9 @@ class NotificationService {
             );
           }
         }
-        _windowReconciled = version;
+        if (!_isPausedForMaintenance) {
+          _windowReconciled = version;
+        }
       } catch (error) {
         if (strict || _strictFailures) rethrow;
         debugPrint('Notification window reconciliation failed: $error');
@@ -1143,9 +1198,6 @@ class NotificationService {
     _activeTimers.remove(reminder.id)?.cancel();
     _scheduledReminders.remove(reminder.id);
     _windowMutation++;
-    if (usesNativeNotifications && nativePendingLimit != null) {
-      await _reconcileNativeWindow(strict: false);
-    }
 
     // 高压场景专注模式：拦截并静音所有“紧急不重要 (Q3)”和“不重要不紧急 (Q4)”的通知
     if (isImmersiveModeActive &&
@@ -1154,6 +1206,9 @@ class NotificationService {
       debugPrint(
         '[沉浸模式拦截] 已静音跳过低优先级提醒: [Q${reminder.quadrantLevel}] ${reminder.taskTitle}',
       );
+      if (usesNativeNotifications && nativePendingLimit != null) {
+        await _reconcileNativeWindow(strict: false);
+      }
       return;
     }
 
@@ -1162,11 +1217,19 @@ class NotificationService {
       debugPrint(
         '[情境感知拦截] 处于办公/专注情境，拦截并记录次要提醒: [Q${reminder.quadrantLevel}] ${reminder.taskTitle}',
       );
+      if (usesNativeNotifications && nativePendingLimit != null) {
+        await _reconcileNativeWindow(strict: false);
+      }
       return;
     }
 
-    // Notify UI / Stream listeners
+    // Notify UI / Stream listeners synchronously before awaiting window
+    // reconciliation so heartbeat ticks cannot re-fire the same occurrence.
     _reminderDueController.add(reminder);
+    if (usesNativeNotifications && nativePendingLimit != null) {
+      await _reconcileNativeWindow(strict: false);
+      if (_isPausedForMaintenance) return;
+    }
 
     // Native notifications own the sound policy. Do not add another app sound
     // or steal keyboard focus when an occurrence arrives.

@@ -132,7 +132,14 @@ class ContentCleanupService {
     return p.equals(path, result) ? path : result;
   }
 
-  Future<_Graph> _graph(DatabaseExecutor db, String root) async {
+  Future<
+    ({
+      List<Map<String, Object?>> rawMedia,
+      List<Map<String, Object?>> reminders,
+      List<Map<String, Object?>> settings,
+    })
+  >
+  _readSnapshot(DatabaseExecutor db) async {
     final rawMedia = await db.query('MediaRecords', limit: 100001);
     final reminders = await db.query('Reminders', limit: 100001);
     final settings = await db.query(
@@ -145,6 +152,24 @@ class ContentCleanupService {
         settings.length != 1) {
       throw const FormatException('Content inventory too large or unavailable');
     }
+    return (rawMedia: rawMedia, reminders: reminders, settings: settings);
+  }
+
+  Future<_Graph> _graph(DatabaseExecutor db, String root) async =>
+      _graphFromSnapshot(await _readSnapshot(db), root);
+
+  Future<_Graph> _graphFromSnapshot(
+    ({
+      List<Map<String, Object?>> rawMedia,
+      List<Map<String, Object?>> reminders,
+      List<Map<String, Object?>> settings,
+    })
+    snapshot,
+    String root,
+  ) async {
+    final rawMedia = snapshot.rawMedia;
+    final reminders = snapshot.reminders;
+    final settings = snapshot.settings;
     final rows = {
       for (final row in rawMedia)
         row['id'] as String: Map<String, dynamic>.from(row),
@@ -300,7 +325,7 @@ class ContentCleanupService {
           data['media_records'] is! List) {
         return null;
       }
-      final paths = <String>{};
+      final pathKeys = <String>{};
       for (final row in data['media_records']) {
         if (row is! Map ||
             row['type'] is! String ||
@@ -313,13 +338,15 @@ class ContentCleanupService {
           if (safe == null || !p.equals(p.dirname(safe), directory.path)) {
             return null;
           }
-          paths.add(safe);
+          pathKeys.add(_pathKey(safe));
         }
       }
+      final snapshotKey = _pathKey(snapshot.path);
       if (files.any(
-        (f) =>
-            !p.equals(f.path, snapshot.path) &&
-            !paths.any((p0) => p.equals(p0, f.path)),
+        (f) {
+          final k = _pathKey(f.path);
+          return k != snapshotKey && !pathKeys.contains(k);
+        },
       )) {
         return null;
       }
@@ -329,19 +356,39 @@ class ContentCleanupService {
     }
   }
 
-  Future<ContentInventory> _inspect(DatabaseExecutor db, String root) async {
-    final graph = await _graph(db, root), entries = <ContentCleanupEntry>[];
-    final ownership = <String, bool>{};
-    Future<bool> recognized(String file) async {
-      final directory = p.dirname(file);
-      if (ownership.containsKey(directory)) return ownership[directory]!;
+  Future<ContentInventory> _inspect(DatabaseExecutor db, String root) async =>
+      _inspectSnapshot(await _readSnapshot(db), root);
+
+  Future<ContentInventory> _inspectSnapshot(
+    ({
+      List<Map<String, Object?>> rawMedia,
+      List<Map<String, Object?>> reminders,
+      List<Map<String, Object?>> settings,
+    })
+    snapshot,
+    String root,
+  ) async {
+    final graph = await _graphFromSnapshot(snapshot, root);
+    final entries = <ContentCleanupEntry>[];
+    final dirScanCache = <String, ({List<File> files, String? role})?>{};
+    Future<({List<File> files, String? role})?> scanDirectory(
+      String directory,
+    ) async {
+      final key = _pathKey(directory);
+      if (dirScanCache.containsKey(key)) return dirScanCache[key];
       try {
         final folder = Directory(directory);
-        return ownership[directory] =
-            await _role(folder, await _flatFiles(folder)) != null;
+        final files = await _flatFiles(folder);
+        final role = await _role(folder, files);
+        return dirScanCache[key] = (files: files, role: role);
       } catch (_) {
-        return ownership[directory] = false;
+        return dirScanCache[key] = null;
       }
+    }
+
+    Future<bool> recognized(String file) async {
+      final scan = await scanDirectory(p.dirname(file));
+      return scan != null && scan.role != null;
     }
 
     for (final item in graph.rows.entries) {
@@ -399,17 +446,14 @@ class ContentCleanupService {
           continue;
         }
         if (!_import.hasMatch(name)) continue;
-        List<File> files;
-        try {
-          files = await _flatFiles(child);
-        } catch (_) {
-          continue;
-        }
+        final scan = await scanDirectory(child.path);
+        if (scan == null) continue;
+        final files = scan.files;
         final directoryKey = _pathKey(child.path);
         final protected = referencedDirectories.contains(directoryKey);
         final backupProtected =
             graph.backupUncertain || backupDirectories.contains(directoryKey);
-        final role = await _role(child, files);
+        final role = scan.role;
         var bytes = 0, recent = false;
         for (final file in files) {
           final stat = await file.stat();
@@ -450,10 +494,11 @@ class ContentCleanupService {
   Future<ContentInventory> inspect(DataGeneration generation) =>
       database.runOperation(generation, () async {
         final root = await _root();
-        return database.writeTransaction(
-          generation,
-          (db) => _inspect(db, root),
-        );
+        // Keep the SQLite read short so disk walks and retained-backup scans
+        // never hold an exclusive write transaction blocking app writes.
+        final snapshot = await database.read(generation, _readSnapshot);
+        database.checkGeneration(generation);
+        return _inspectSnapshot(snapshot, root);
       });
   Future<String> _fingerprint(String path, void Function() check) async {
     check();
@@ -611,10 +656,9 @@ class ContentCleanupService {
       await database.writeTransaction(generation, (db) async {
         check();
         final fresh = await _inspect(db, root);
+        final freshByKey = {for (final e in fresh.entries) e.key: e};
         for (final expected in plan.entries) {
-          final found = fresh.entries
-              .where((e) => e.key == expected.key)
-              .firstOrNull;
+          final found = freshByKey[expected.key];
           if (found == null ||
               found.signature != expected.signature ||
               !found.eligible) {
@@ -699,10 +743,19 @@ class ContentCleanupService {
     String job,
     DataGeneration generation, {
     required bool Function() isCurrent,
-  }) => database.runOperation(
-    generation,
-    () => _resume(job, generation, isCurrent),
-  );
+  }) => database.runOperation(generation, () async {
+    if (!_job.hasMatch(job)) {
+      throw const FormatException('Invalid cleanup identity');
+    }
+    final root = await _root();
+    final quarantine = Directory(p.join(root, job));
+    OwnedMaterialActivity.hold(quarantine);
+    try {
+      return await _resume(job, generation, isCurrent);
+    } finally {
+      OwnedMaterialActivity.releaseDirectory(quarantine);
+    }
+  });
   Future<int> _resume(
     String job,
     DataGeneration generation,

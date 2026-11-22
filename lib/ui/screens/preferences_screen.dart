@@ -62,6 +62,9 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
   }
 
   Future<void> _load() async {
+    if (_error != null && mounted) {
+      setState(() => _error = null);
+    }
     try {
       await ref.read(settingsProvider.notifier).ready;
       if (!_current) return;
@@ -71,7 +74,7 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
         _error = null;
       });
     } catch (_) {
-      if (mounted) setState(() => _error = 'settingsSaveFailed');
+      if (mounted) setState(() => _error = 'aiProfilesUnavailable');
     }
   }
 
@@ -92,13 +95,14 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
     } catch (error) {
       if (mounted) {
         setState(() {
-          _saving = false;
           _error = error is PreferencesConflict
               ? 'conflict'
               : 'settingsSaveFailed';
         });
       }
       return false;
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
@@ -119,11 +123,13 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
       context,
     ).push(MaterialPageRoute<void>(builder: (_) => page));
     if (!_current) return;
-    if (!_dirty) {
-      setState(() {
+    setState(() {
+      // Always rebuild on return so live status badges (e.g. LAN sync running)
+      // refresh even when the user still has an unsaved preference draft.
+      if (!_dirty) {
         _saved = _draft = _from(ref.read(settingsProvider));
-      });
-    }
+      }
+    });
   }
 
   Widget _choice<T>({
@@ -503,11 +509,22 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
                 if (_error != null)
                   Padding(
                     padding: const EdgeInsets.all(12),
-                    child: Text(
-                      _error == 'conflict' ? t('conflict') : loc.get(_error!),
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
-                      ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _error == 'conflict'
+                                ? t('conflict')
+                                : loc.get(_error!),
+                            style: TextStyle(color: colors.error),
+                          ),
+                        ),
+                        TextButton(
+                          key: const ValueKey('preferences-error-retry'),
+                          onPressed: _saving ? null : _load,
+                          child: Text(loc.get('retry')),
+                        ),
+                      ],
                     ),
                   ),
                 ...sections,

@@ -8,6 +8,7 @@ import '../../l10n/app_localizations.dart';
 import '../../models/reminder.dart';
 import '../../providers/providers.dart';
 import '../formatters/local_date_time.dart';
+import '../theme/app_theme.dart';
 import 'inline_feedback.dart';
 import '../screens/notification_repair_screen.dart';
 
@@ -148,7 +149,24 @@ class _CapturePreviewDialogState extends ConsumerState<CapturePreviewDialog> {
   }
 
   Future<void> _confirm() async {
-    if (_saving || !_current) return;
+    if (_saving) return;
+    if (!_current) {
+      if (mounted) setState(() => _error = 'dataTemporarilyUnavailable');
+      return;
+    }
+    final chosen = <Reminder>[
+      for (var i = 0; i < _items.length; i++)
+        if (_selected[i]) _items[i],
+    ];
+    if (chosen.isEmpty || chosen.any((r) => r.taskTitle.trim().isEmpty)) {
+      setState(() => _error = 'captureProposalInvalid');
+      return;
+    }
+    final now = DateTime.now();
+    if (chosen.any((r) => r.triggerTime != null && !r.triggerTime!.isAfter(now))) {
+      setState(() => _error = 'captureProposalFuture');
+      return;
+    }
     setState(() {
       _saving = true;
       _error = null;
@@ -156,19 +174,17 @@ class _CapturePreviewDialogState extends ConsumerState<CapturePreviewDialog> {
     try {
       final result = await ref
           .read(remindersProvider.notifier)
-          .applyCaptureProposal(widget.task, [
-            for (var i = 0; i < _items.length; i++)
-              if (_selected[i]) _items[i],
-          ], generation: _generation);
+          .applyCaptureProposal(widget.task, chosen, generation: _generation);
       if (!mounted || !_current) return;
       if (result.nativeSyncFailures > 0) {
-        InlineFeedback.of(context).showSnackBar(
+        InlineFeedback.maybeOf(context)?.showSnackBar(
           SnackBar(
             content: Text(
               AppLocalizations.of(context).get('reminderNativeSyncFailed'),
             ),
             action: notificationRepairAction(context),
           ),
+          tone: FeedbackTone.warning,
         );
       }
       Navigator.pop(context);
@@ -184,6 +200,9 @@ class _CapturePreviewDialogState extends ConsumerState<CapturePreviewDialog> {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
+    final colors = Theme.of(context).colorScheme;
+    final brightness = Theme.of(context).brightness;
+    final now = DateTime.now();
     return PopScope(
       canPop: !_saving,
       child: Dialog(
@@ -199,16 +218,29 @@ class _CapturePreviewDialogState extends ConsumerState<CapturePreviewDialog> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(4, 16, 4, 8),
                   child: Text(
                     loc.get('capturePreview'),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
-                Text(loc.get('capturePreviewHint')),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    loc.get('capturePreviewHint'),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colors.onSurfaceVariant,
+                    ),
+                  ),
+                ),
                 ExpansionTile(
                   title: Text(loc.get('sourceText')),
-                  children: [SelectableText(widget.task.sourceText ?? '')],
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                      child: SelectableText(widget.task.sourceText ?? ''),
+                    ),
+                  ],
                 ),
                 for (var i = 0; i < _items.length; i++)
                   Card(
@@ -223,7 +255,24 @@ class _CapturePreviewDialogState extends ConsumerState<CapturePreviewDialog> {
                                 : (value) => setState(
                                     () => _selected[i] = value ?? true,
                                   ),
-                            title: Text('${i + 1}'),
+                            title: Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    '${loc.get('captureProposalItem')} ${i + 1}',
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  AppTheme.quadrantIcon(_items[i].quadrantLevel),
+                                  size: 16,
+                                  color: AppTheme.quadrantColor(
+                                    brightness,
+                                    _items[i].quadrantLevel,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                           TextFormField(
                             key: ValueKey('proposal-title-$i'),
@@ -250,58 +299,69 @@ class _CapturePreviewDialogState extends ConsumerState<CapturePreviewDialog> {
                             ),
                           ),
                           for (final event in [true, false])
-                            ListTile(
-                              key: ValueKey(
-                                'proposal-${event ? 'event' : 'reminder'}-$i',
-                              ),
-                              title: Text(
-                                loc.get(
-                                  event
-                                      ? 'eventTimeShort'
-                                      : 'reminderTimeShort',
-                                ),
-                              ),
-                              subtitle: Text(
-                                (event
-                                            ? _items[i].eventTime
-                                            : _items[i].triggerTime) ==
-                                        null
-                                    ? loc.get('notSet')
-                                    : formatLocalDateTime(
-                                        (event
-                                            ? _items[i].eventTime
-                                            : _items[i].triggerTime)!,
-                                      ),
-                              ),
-                              onTap: _saving ? null : () => _pick(i, event),
-                              trailing: IconButton(
-                                key: ValueKey(
-                                  'proposal-clear-${event ? 'event' : 'reminder'}-$i',
-                                ),
-                                tooltip: loc.get('clear'),
-                                icon: const Icon(Icons.clear),
-                                onPressed: _saving
-                                    ? null
-                                    : () => setState(
-                                        () => _changeTime(i, event, null),
-                                      ),
-                              ),
+                            Builder(
+                              builder: (context) {
+                                final dt = event
+                                    ? _items[i].eventTime
+                                    : _items[i].triggerTime;
+                                final isPastReminder =
+                                    !event && dt != null && !dt.isAfter(now);
+                                return ListTile(
+                                  key: ValueKey(
+                                    'proposal-${event ? 'event' : 'reminder'}-$i',
+                                  ),
+                                  title: Text(
+                                    loc.get(
+                                      event
+                                          ? 'eventTimeShort'
+                                          : 'reminderTimeShort',
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    dt == null
+                                        ? loc.get('notSet')
+                                        : formatLocalDateTime(dt),
+                                    style: isPastReminder
+                                        ? TextStyle(
+                                            color: colors.error,
+                                            fontWeight: FontWeight.w600,
+                                          )
+                                        : null,
+                                  ),
+                                  onTap: _saving ? null : () => _pick(i, event),
+                                  trailing: IconButton(
+                                    key: ValueKey(
+                                      'proposal-clear-${event ? 'event' : 'reminder'}-$i',
+                                    ),
+                                    tooltip: loc.get('clear'),
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: _saving || dt == null
+                                        ? null
+                                        : () => setState(
+                                            () => _changeTime(i, event, null),
+                                          ),
+                                  ),
+                                );
+                              },
                             ),
                         ],
                       ),
                     ),
                   ),
                 if (_error != null)
-                  Text(
-                    loc.get(_error!),
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      loc.get(_error!),
+                      style: TextStyle(color: colors.error),
                     ),
                   ),
                 Padding(
                   padding: const EdgeInsets.all(12),
                   child: Wrap(
                     spacing: 12,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.end,
                     children: [
                       TextButton(
                         onPressed: _saving
@@ -312,7 +372,13 @@ class _CapturePreviewDialogState extends ConsumerState<CapturePreviewDialog> {
                       FilledButton(
                         key: const ValueKey('confirm-capture-proposal'),
                         onPressed: _saving || _items.isEmpty ? null : _confirm,
-                        child: Text(loc.get('captureConfirm')),
+                        child: _saving
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : Text(loc.get('captureConfirm')),
                       ),
                     ],
                   ),

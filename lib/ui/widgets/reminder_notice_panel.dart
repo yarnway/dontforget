@@ -2,7 +2,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/reminder.dart';
-import '../../services/quick_reminder_parser.dart';
+import '../formatters/local_date_time.dart';
+import 'task_snooze_picker.dart';
 
 String reminderOccurrenceKey(Reminder reminder) => reminder.occurrenceIdentity;
 
@@ -13,8 +14,10 @@ class ReminderNoticePanel extends StatelessWidget {
     required this.reminders,
     required this.now,
     required this.onDismiss,
+    this.onDismissPhase,
     required this.onSnooze,
     required this.onComplete,
+    this.onOpen,
     this.onReview,
     this.onSnoozeUntil,
     this.onSkip,
@@ -24,41 +27,55 @@ class ReminderNoticePanel extends StatelessWidget {
   final Set<String> busyIds;
   final DateTime now;
   final ValueChanged<Reminder> onDismiss;
+  final void Function(Reminder reminder, {required bool upcoming})?
+  onDismissPhase;
   final ValueChanged<Reminder> onSnooze;
   final ValueChanged<Reminder> onComplete;
+  final ValueChanged<Reminder>? onOpen;
   final ValueChanged<Reminder>? onReview;
   final void Function(Reminder, DateTime)? onSnoozeUntil;
   final ValueChanged<Reminder>? onSkip;
+
+  static Object? _lastHeightCacheKey;
+  static double _lastActionHeight = 44.0;
+
+  static double _measureActionHeight({
+    required BuildContext context,
+    required double maxWidth,
+    required TextStyle? style,
+    required List<(String, double)> entries,
+  }) {
+    final scaler = MediaQuery.textScalerOf(context);
+    final direction = Directionality.of(context);
+    final key = (
+      maxWidth.round(),
+      scaler.scale(14).toStringAsFixed(2),
+      direction,
+      entries.map((e) => '${e.$1}:${e.$2.round()}').join('|'),
+    );
+    if (_lastHeightCacheKey == key) return _lastActionHeight;
+    var actionHeight = 44.0;
+    for (final entry in entries) {
+      final painter = TextPainter(
+        text: TextSpan(text: entry.$1, style: style),
+        textDirection: direction,
+        textScaler: scaler,
+      )..layout(maxWidth: math.max(1, maxWidth - 24 - entry.$2));
+      actionHeight = math.max(actionHeight, painter.height + 20);
+      painter.dispose();
+    }
+    _lastHeightCacheKey = key;
+    _lastActionHeight = actionHeight;
+    return actionHeight;
+  }
 
   Future<void> _chooseSnooze(
     BuildContext context,
     String choice,
     Reminder task,
   ) async {
-    final current = DateTime.now();
-    DateTime? until = switch (choice) {
-      '15' => current.add(const Duration(minutes: 15)),
-      '60' => current.add(const Duration(hours: 1)),
-      'evening' => QuickReminderParser.tonight(current),
-      'morning' => QuickReminderParser.tomorrowMorning(current),
-      _ => null,
-    };
-    if (choice == 'custom') {
-      final date = await showDatePicker(
-        context: context,
-        initialDate: current,
-        firstDate: DateTime(current.year, current.month, current.day),
-        lastDate: DateTime(current.year + 10),
-      );
-      if (!context.mounted || date == null) return;
-      final time = await showTimePicker(
-        context: context,
-        initialTime: TimeOfDay.fromDateTime(current),
-      );
-      if (!context.mounted || time == null) return;
-      until = DateTime(date.year, date.month, date.day, time.hour, time.minute);
-    }
-    if (context.mounted && until != null && until.isAfter(DateTime.now())) {
+    final until = await pickSnoozeUntil(context, choice);
+    if (context.mounted && until != null) {
       onSnoozeUntil?.call(task, until);
     }
   }
@@ -142,60 +159,88 @@ class ReminderNoticePanel extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(
-                        '${l10n.get(upcoming ? 'upcomingReminder' : 'dueReminder')} · $categoryCount',
-                        style: Theme.of(context).textTheme.labelMedium,
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 2,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            '${l10n.get(upcoming ? 'upcomingReminder' : 'dueReminder')} · $categoryCount',
+                            style: Theme.of(context).textTheme.labelMedium,
+                          ),
+                          if (reminder.triggerTime != null)
+                            Text(
+                              formatLocalDateTime(
+                                reminder.triggerTime!,
+                                pattern: 'HH:mm',
+                              ),
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: colors.onSurfaceVariant,
+                                    fontFeatures: const [
+                                      FontFeature.tabularFigures(),
+                                    ],
+                                  ),
+                            ),
+                        ],
                       ),
                     ),
                     IconButton(
                       tooltip: l10n.get('dismissReminderHint'),
-                      onPressed: busy ? null : () => onDismiss(reminder),
+                      onPressed: busy
+                          ? null
+                          : () {
+                              if (onDismissPhase != null) {
+                                onDismissPhase!(reminder, upcoming: upcoming);
+                              } else {
+                                onDismiss(reminder);
+                              }
+                            },
                       icon: const Icon(Icons.close, size: 18),
                     ),
                   ],
                 ),
               Padding(
                 padding: const EdgeInsets.only(bottom: 6),
-                child: Text(
-                  reminder.taskTitle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
+                child: onOpen == null
+                    ? Text(
+                        reminder.taskTitle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleSmall,
+                      )
+                    : InkWell(
+                        borderRadius: BorderRadius.circular(6),
+                        onTap: busy ? null : () => onOpen!(reminder),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Text(
+                            reminder.taskTitle,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                        ),
+                      ),
               ),
               if (!upcoming)
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    var actionHeight = 44.0;
-                    for (final entry in [
-                      (l10n.get('snooze5Min'), 0.0),
-                      if (onSnoozeUntil != null) (l10n.get('snoozeMore'), 26.0),
-                      if (canReview) (l10n.get('startReview'), 26.0),
-                      if (reminder.canSkipOccurrence && onSkip != null)
-                        (l10n.get('skipOccurrence'), 0.0),
-                      (l10n.get('markDone'), 0.0),
-                      (l10n.get('iKnow'), 0.0),
-                    ]) {
-                      final painter =
-                          TextPainter(
-                            text: TextSpan(
-                              text: entry.$1,
-                              style: actionTextStyle,
-                            ),
-                            textDirection: Directionality.of(context),
-                            textScaler: MediaQuery.textScalerOf(context),
-                          )..layout(
-                            maxWidth: math.max(
-                              1,
-                              constraints.maxWidth - 24 - entry.$2,
-                            ),
-                          );
-                      actionHeight = math.max(
-                        actionHeight,
-                        painter.height + 20,
-                      );
-                      painter.dispose();
-                    }
+                    final actionHeight = _measureActionHeight(
+                      context: context,
+                      maxWidth: constraints.maxWidth,
+                      style: actionTextStyle,
+                      entries: [
+                        (l10n.get('snooze5Min'), 0.0),
+                        if (onSnoozeUntil != null)
+                          (l10n.get('snoozeMore'), 26.0),
+                        if (canReview) (l10n.get('startReview'), 26.0),
+                        if (reminder.canSkipOccurrence && onSkip != null)
+                          (l10n.get('skipOccurrence'), 0.0),
+                        (l10n.get('markDone'), 0.0),
+                        (l10n.get('iKnow'), 0.0),
+                      ],
+                    );
                     final actionStyle = baseActionStyle.copyWith(
                       minimumSize: WidgetStatePropertyAll(
                         Size(0, actionHeight),

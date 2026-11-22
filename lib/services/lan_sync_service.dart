@@ -181,7 +181,7 @@ class LanSyncService {
   int _serverPort = defaultPort;
   String _localIp = '127.0.0.1';
 
-  bool get isRunning => _server != null;
+  bool get isRunning => _server != null && _accepting;
   String get pin => _currentPin;
   int get port => _serverPort;
   String get localIp => _localIp;
@@ -283,13 +283,24 @@ class LanSyncService {
   }
 
   /// Bound memory use before the PIN has been checked or a peer response parsed.
+  /// Enforcing [timeout] directly on the stream guarantees the subscription is
+  /// cancelled immediately if a peer stalls mid-body (preventing slowloris
+  /// leaks of up to [maxBodyBytes]).
   static Future<String> _readBody(
     Stream<List<int>> stream, {
     int declaredLength = -1,
+    Duration timeout = const Duration(seconds: 30),
   }) async {
     if (declaredLength > maxBodyBytes) throw const _PayloadTooLargeException();
     final bytes = BytesBuilder(copy: false);
-    await for (final chunk in stream) {
+    final deadline = DateTime.now().add(timeout);
+    await for (final chunk in stream.timeout(
+      timeout,
+      onTimeout: (sink) => sink.addError(TimeoutException('Sync body timeout', timeout)),
+    )) {
+      if (DateTime.now().isAfter(deadline)) {
+        throw TimeoutException('Sync body timeout', timeout);
+      }
       if (bytes.length + chunk.length > maxBodyBytes) {
         throw const _PayloadTooLargeException();
       }
@@ -373,7 +384,7 @@ class LanSyncService {
         }
         final handler = _handleRequest(request, dbHelper, onDataChanged);
         _handlers.add(handler);
-        unawaited(handler.then<void>((_) => _handlers.remove(handler)));
+        unawaited(handler.whenComplete(() => _handlers.remove(handler)));
       });
       return _serverInfo();
     } catch (e) {
@@ -477,7 +488,8 @@ class LanSyncService {
         await _readBody(
           request,
           declaredLength: request.contentLength,
-        ).timeout(const Duration(seconds: 30)),
+          timeout: const Duration(seconds: 30),
+        ),
       );
       _checkRuntime(epoch);
       if (!_pinMatches(data['pin'])) {
@@ -491,6 +503,12 @@ class LanSyncService {
       _pinLockouts = 0;
       final incoming = _reminders(data);
       final incomingMedia = _parseIncomingMedia(data);
+      final existingMediaIds = incomingMedia.attachments.isEmpty
+          ? const <String>{}
+          : await dbHelper.read(generation, (db) async {
+              final rows = await db.query('MediaRecords', columns: ['id']);
+              return {for (final row in rows) row['id'] as String};
+            });
       final stagedPaths = <String, String>{};
       var committedStaged = const <String>{};
       try {
@@ -498,6 +516,7 @@ class LanSyncService {
           incomingMedia,
           stagedPaths,
           () => _checkRuntime(epoch),
+          skipIds: existingMediaIds,
         );
         final current = await dbHelper.writeTransaction(generation, (
           transaction,
@@ -558,9 +577,12 @@ class LanSyncService {
         'error': 'Invalid sync data',
       });
     } on TimeoutException {
-      await _respond(request, HttpStatus.requestTimeout, {
-        'error': 'Sync request timed out',
-      });
+      await _respond(
+        request,
+        HttpStatus.requestTimeout,
+        {'error': 'Sync request timed out'},
+        closeSocket: true,
+      );
     } catch (_) {
       await _respond(request, HttpStatus.internalServerError, {
         'error': 'Sync failed',
@@ -582,10 +604,13 @@ class LanSyncService {
       if (closeSocket) {
         request.response.headers.set(HttpHeaders.connectionHeader, 'close');
         final socket = await request.response.detachSocket(writeHeaders: true);
-        socket.add(payload);
-        await socket.flush();
-        await socket.close();
-        socket.destroy();
+        try {
+          socket.add(payload);
+          await socket.flush();
+          await socket.close();
+        } finally {
+          socket.destroy();
+        }
       } else {
         request.response.add(payload);
         await request.response.close();
@@ -644,7 +669,7 @@ class LanSyncService {
       epoch,
     );
     _syncs.add(syncing);
-    unawaited(syncing.then<void>((_) => _syncs.remove(syncing)));
+    unawaited(syncing.whenComplete(() => _syncs.remove(syncing)));
     return syncing;
   }
 
@@ -688,11 +713,6 @@ class LanSyncService {
       client = HttpClient()..connectionTimeout = const Duration(seconds: 5);
       _clients.add(client);
 
-      final uri = Uri(scheme: 'http', host: peerIp, port: port, path: '/sync');
-      final request = await client.postUrl(uri);
-      _checkRuntime(epoch);
-      request.headers.contentType = ContentType.json;
-
       final payload = {
         'pin': pin,
         'reminders': local.reminders,
@@ -701,7 +721,20 @@ class LanSyncService {
         if (outgoingMedia.attachments.isNotEmpty)
           'attachments': outgoingMedia.attachments,
       };
-      request.write(jsonEncode(payload));
+      final bodyBytes = utf8.encode(jsonEncode(payload));
+      if (bodyBytes.length > maxBodyBytes) {
+        fail(LanSyncFailure.payloadTooLarge);
+        return false;
+      }
+
+      final uri = Uri(scheme: 'http', host: peerIp, port: port, path: '/sync');
+      final request = await client
+          .postUrl(uri)
+          .timeout(const Duration(seconds: 10));
+      _checkRuntime(epoch);
+      request.headers.contentType = ContentType.json;
+      request.contentLength = bodyBytes.length;
+      request.add(bodyBytes);
       final response = await request.close().timeout(
         const Duration(seconds: 30),
       );
@@ -710,7 +743,8 @@ class LanSyncService {
         final respStr = await _readBody(
           response,
           declaredLength: response.contentLength,
-        ).timeout(const Duration(seconds: 30));
+          timeout: const Duration(seconds: 30),
+        );
         dbHelper.checkGeneration(generation);
         _checkRuntime(epoch);
         final data = _decode(respStr);
@@ -1035,6 +1069,9 @@ class LanSyncService {
     try {
       return (data['reminders'] as List).map((row) {
         final reminder = Reminder.fromJson(row as Map<String, dynamic>);
+        if (reminder.quadrantLevel < 1 || reminder.quadrantLevel > 4) {
+          throw const FormatException('Invalid quadrantLevel');
+        }
         final details = reminder.details;
         if (details.kind == 'medicationPlan') {
           MedicationPlan.fromJson(details.data);

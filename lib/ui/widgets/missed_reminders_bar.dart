@@ -110,6 +110,12 @@ class MissedRemindersBar extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                size: 18,
+                                color: colors.onSurfaceVariant,
+                              ),
                             ],
                           ),
                         ),
@@ -119,7 +125,13 @@ class MissedRemindersBar extends StatelessWidget {
 
                   final actionButton = TextButton(
                     key: const ValueKey('missed-reminders-acknowledge-all'),
-                    style: buttonStyle,
+                    style: buttonStyle.copyWith(
+                      foregroundColor: WidgetStateProperty.resolveWith(
+                        (states) => states.contains(WidgetState.disabled)
+                            ? colors.onSurface.withValues(alpha: 0.38)
+                            : colors.onErrorContainer,
+                      ),
+                    ),
                     onPressed: busy ? null : onAcknowledgeAll,
                     child: Text(buttonText),
                   );

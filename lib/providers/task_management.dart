@@ -238,19 +238,21 @@ extension TaskManagement on RemindersNotifier {
     DataGeneration generation, {
     bool ordinaryOnly = false,
   }) async {
+    final saved = <Reminder>[];
     final result = await _changeLifecycles(
       [expected],
       action,
       generation,
       ordinaryOnly: ordinaryOnly,
+      savedOut: saved,
     );
-    final rows = await _dbHelper.read(
-      generation,
-      (db) => db.query('Reminders', where: 'id = ?', whereArgs: [expected.id]),
-    );
+    final updated = saved.where((r) => r.id == expected.id).firstOrNull;
+    if (updated == null) {
+      throw const StaleReminderOccurrenceException();
+    }
     return ReminderActionResult(
       ReminderActionDisposition.applied,
-      reminder: Reminder.fromJson(rows.single),
+      reminder: updated,
       nativeSyncFailed: result.nativeSyncFailures > 0,
     );
   }
@@ -719,6 +721,7 @@ extension TaskManagement on RemindersNotifier {
     bool ordinaryOnly = false,
     Map<String, Reminder>? contentBaseline,
     List<StudyPlanGroup>? studyPlanBaselines,
+    List<Reminder>? savedOut,
   }) {
     if (!const {
       'pause',
@@ -886,6 +889,7 @@ extension TaskManagement on RemindersNotifier {
           return changes;
         });
         _dbHelper.checkGeneration(ticket);
+        savedOut?.addAll(saved);
         _publishManaged(saved);
         var failures = 0;
         for (final row in saved) {

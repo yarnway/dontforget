@@ -2,8 +2,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../l10n/app_localizations.dart';
+import '../../models/reminder.dart';
 import '../../providers/task_search_provider.dart';
 import '../../services/task_search_index.dart';
+import '../theme/app_theme.dart';
 import 'task_card.dart';
 
 /// Search and browsing share one lazy list, including an empty search query.
@@ -25,9 +27,18 @@ class TaskSearchPanel extends ConsumerStatefulWidget {
 
 class _TaskSearchPanelState extends ConsumerState<TaskSearchPanel>
     with WidgetsBindingObserver {
+  final _scrollController = ScrollController();
   TaskSearchFilter _filter = TaskSearchFilter.all;
   TaskSearchSort _sort = TaskSearchSort.source;
   Timer? _refresh;
+  TaskSearchIndex? _projectedIndex;
+  String? _projectedQuery;
+  TaskSearchFilter? _projectedFilter;
+  TaskSearchSort? _projectedSort;
+  int? _projectedMinute;
+  List<Reminder> _cachedResults = const [];
+  Map<TaskSearchFilter, int> _cachedCounts = const {};
+  Map<String, int> _cachedPositions = const {};
 
   @override
   void initState() {
@@ -39,70 +50,53 @@ class _TaskSearchPanelState extends ConsumerState<TaskSearchPanel>
     }
   }
 
-  TaskSearchIndex? _countsIndex;
-  String? _countsQuery;
-  int? _countsMinute;
-  Map<TaskSearchFilter, int> _cachedCounts = const {};
+  @override
+  void didUpdateWidget(TaskSearchPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.query != widget.query) {
+      _scrollToTop();
+    }
+  }
 
-  Map<TaskSearchFilter, int> _filterCounts(
-    TaskSearchIndex index,
-    String query,
-    DateTime now,
-  ) {
+  void _scrollToTop() {
+    if (_scrollController.hasClients && _scrollController.offset > 0) {
+      _scrollController.jumpTo(0);
+    }
+  }
+
+  void _ensureProjected(TaskSearchIndex index, DateTime now) {
     final minute = now.millisecondsSinceEpoch ~/ 60000;
-    if (identical(_countsIndex, index) &&
-        _countsQuery == query &&
-        _countsMinute == minute) {
-      return _cachedCounts;
+    if (identical(_projectedIndex, index) &&
+        _projectedQuery == widget.query &&
+        _projectedFilter == _filter &&
+        _projectedSort == _sort &&
+        _projectedMinute == minute) {
+      return;
     }
-    final allMatches = index.search(
-      query,
-      filter: TaskSearchFilter.all,
+    final projected = index.project(
+      widget.query,
+      filter: _filter,
+      sort: _sort,
       includeAllWhenEmpty: true,
+      now: now,
     );
-    final tomorrow = DateTime(now.year, now.month, now.day + 1);
-    var pending = 0;
-    var today = 0;
-    var overdue = 0;
-    var completed = 0;
-    for (final task in allMatches) {
-      if (task.isCompleted) {
-        completed++;
-      } else {
-        pending++;
-        final trigger = task.triggerTime;
-        final deadline = task.eventTime;
-        if (trigger != null && trigger.isBefore(now)) {
-          overdue++;
-        }
-        final due = deadline ?? trigger;
-        if (task.isPinned ||
-            (due != null && due.isBefore(tomorrow)) ||
-            (trigger != null && trigger.isBefore(tomorrow))) {
-          today++;
-        }
-      }
-    }
-    _countsIndex = index;
-    _countsQuery = query;
-    _countsMinute = minute;
-    return _cachedCounts = {
-      TaskSearchFilter.all: allMatches.length,
-      TaskSearchFilter.pending: pending,
-      TaskSearchFilter.today: today,
-      TaskSearchFilter.overdue: overdue,
-      TaskSearchFilter.completed: completed,
+    _projectedIndex = index;
+    _projectedQuery = widget.query;
+    _projectedFilter = _filter;
+    _projectedSort = _sort;
+    _projectedMinute = minute;
+    _cachedResults = projected.results;
+    _cachedCounts = projected.counts;
+    _cachedPositions = {
+      for (var i = 0; i < projected.results.length; i++)
+        projected.results[i].id: i,
     };
   }
 
   void _startRefresh() {
     _refresh?.cancel();
     _refresh = Timer.periodic(const Duration(minutes: 1), (_) {
-      if (mounted &&
-          (_filter == TaskSearchFilter.today ||
-              _filter == TaskSearchFilter.overdue)) {
-        setState(() {});
-      }
+      if (mounted) setState(() {});
     });
   }
 
@@ -119,6 +113,7 @@ class _TaskSearchPanelState extends ConsumerState<TaskSearchPanel>
   @override
   void dispose() {
     _refresh?.cancel();
+    _scrollController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -128,6 +123,7 @@ class _TaskSearchPanelState extends ConsumerState<TaskSearchPanel>
       _filter = TaskSearchFilter.all;
       _sort = TaskSearchSort.source;
     });
+    _scrollToTop();
     widget.onClearQuery();
   }
 
@@ -138,16 +134,10 @@ class _TaskSearchPanelState extends ConsumerState<TaskSearchPanel>
     final colors = theme.colorScheme;
     final index = ref.watch(taskSearchIndexProvider);
     final now = DateTime.now();
-    final filterCounts = _filterCounts(index, widget.query, now);
-    final results = index.search(
-      widget.query,
-      filter: _filter,
-      sort: _sort,
-      includeAllWhenEmpty: true,
-    );
-    final positions = {
-      for (var i = 0; i < results.length; i++) results[i].id: i,
-    };
+    _ensureProjected(index, now);
+    final filterCounts = _cachedCounts;
+    final results = _cachedResults;
+    final positions = _cachedPositions;
     final hasConditions =
         widget.query.trim().isNotEmpty ||
         _filter != TaskSearchFilter.all ||
@@ -170,7 +160,7 @@ class _TaskSearchPanelState extends ConsumerState<TaskSearchPanel>
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 960),
         child: CustomScrollView(
-          key: ValueKey(('task-search-results', widget.query, _filter, _sort)),
+          controller: _scrollController,
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           slivers: [
             SliverPadding(
@@ -198,13 +188,39 @@ class _TaskSearchPanelState extends ConsumerState<TaskSearchPanel>
                       runSpacing: 4,
                       children: [
                         for (final filter in TaskSearchFilter.values)
-                          ChoiceChip(
-                            key: ValueKey('search-filter-${filter.name}'),
-                            label: Text(
-                              '${l10n.get(filterLabels[filter]!)} · ${filterCounts[filter] ?? 0}',
-                            ),
-                            selected: filter == _filter,
-                            onSelected: (_) => setState(() => _filter = filter),
+                          Builder(
+                            builder: (context) {
+                              final count = filterCounts[filter] ?? 0;
+                              final highlightOverdue =
+                                  filter == TaskSearchFilter.overdue &&
+                                  count > 0 &&
+                                  filter != _filter;
+                              return ChoiceChip(
+                                key: ValueKey('search-filter-${filter.name}'),
+                                side: highlightOverdue
+                                    ? BorderSide(
+                                        color: colors.error.withValues(
+                                          alpha: 0.45,
+                                        ),
+                                      )
+                                    : null,
+                                label: Text(
+                                  '${l10n.get(filterLabels[filter]!)} · $count',
+                                  style: TextStyle(
+                                    fontFeatures: AppTheme.tabularFigures,
+                                    color: highlightOverdue
+                                        ? colors.error
+                                        : null,
+                                  ),
+                                ),
+                                selected: filter == _filter,
+                                onSelected: (_) {
+                                  if (_filter == filter) return;
+                                  setState(() => _filter = filter);
+                                  _scrollToTop();
+                                },
+                              );
+                            },
                           ),
                       ],
                     ),
@@ -220,6 +236,7 @@ class _TaskSearchPanelState extends ConsumerState<TaskSearchPanel>
                             key: const ValueKey('search-result-count'),
                             style: theme.textTheme.labelLarge?.copyWith(
                               color: colors.onSurfaceVariant,
+                              fontFeatures: AppTheme.tabularFigures,
                             ),
                           ),
                         ),
@@ -227,7 +244,11 @@ class _TaskSearchPanelState extends ConsumerState<TaskSearchPanel>
                           key: const ValueKey('search-sort'),
                           tooltip: l10n.get('searchSort'),
                           initialValue: _sort,
-                          onSelected: (value) => setState(() => _sort = value),
+                          onSelected: (value) {
+                            if (_sort == value) return;
+                            setState(() => _sort = value);
+                            _scrollToTop();
+                          },
                           itemBuilder: (_) => [
                             for (final sort in TaskSearchSort.values)
                               CheckedPopupMenuItem(
@@ -348,6 +369,7 @@ class _TaskSearchPanelState extends ConsumerState<TaskSearchPanel>
                       return TaskCard(
                         key: ValueKey(task.id),
                         task: task,
+                        referenceNow: now,
                         onPlayMedia: () {
                           if (task.recordId != null) {
                             widget.onPlayMedia(task.recordId!);

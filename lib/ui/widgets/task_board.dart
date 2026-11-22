@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/providers.dart';
+import '../../services/dynamic_urgency_service.dart';
 import 'task_board_data.dart';
 import '../../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
@@ -27,12 +28,6 @@ class TaskBoard extends ConsumerStatefulWidget {
 
 class _TaskBoardState extends ConsumerState<TaskBoard>
     with WidgetsBindingObserver {
-  static const _icons = [
-    Icons.notifications_active_outlined,
-    Icons.star_outline_rounded,
-    Icons.checklist_rounded,
-    Icons.notes_rounded,
-  ];
   List<FocusNode>? _categoryFocus;
   List<FocusNode> get _categoryNodes =>
       _categoryFocus ??= List.generate(4, (_) => FocusNode());
@@ -45,12 +40,12 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
   int? _cachedManualCategory;
   int? _cachedMinuteBucket;
   int? _cachedRefreshRevision;
-  Object? _cachedUrgency;
+  DynamicUrgencyService? _cachedUrgency;
 
   TaskBoardData _projectBoard(
     List<Reminder> reminders,
     bool compact,
-    dynamic urgency,
+    DynamicUrgencyService urgency,
     DateTime now,
   ) {
     final minuteBucket = now.millisecondsSinceEpoch ~/ 60000;
@@ -182,7 +177,7 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
           ),
           child: Row(
             children: [
-              Icon(_icons[index], size: 18, color: foreground),
+              Icon(AppTheme.quadrantIcon(index + 1), size: 18, color: foreground),
               const SizedBox(width: 7),
               Expanded(
                 child: Text(
@@ -202,7 +197,11 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
                 excludeSemantics: true,
                 child: Text(
                   '$pending',
-                  style: TextStyle(color: foreground, fontSize: 12),
+                  style: TextStyle(
+                    color: foreground,
+                    fontSize: 12,
+                    fontFeatures: AppTheme.tabularFigures,
+                  ),
                 ),
               ),
             ],
@@ -237,12 +236,18 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
         );
         final pending = data.pending;
         final selection = data.visibleCategory ?? 0;
-        Widget panel(int index, {bool showHeader = true}) => QuadrantView(
+        Widget panel(
+          int index, {
+          bool showHeader = true,
+          bool draggable = true,
+        }) => QuadrantView(
           key: ValueKey('quadrant-${index + 1}'),
           level: index + 1,
           showHeader: showHeader,
+          draggable: draggable,
+          referenceNow: projectionTime,
           titleIcon: Icon(
-            _icons[index],
+            AppTheme.quadrantIcon(index + 1),
             size: 20,
             color: categoryColors[index],
           ),
@@ -314,7 +319,13 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
                           ),
                   ),
                   SizedBox(height: constraints.maxHeight < 320 ? 6 : 12),
-                  Expanded(child: panel(selection, showHeader: false)),
+                  Expanded(
+                    child: panel(
+                      selection,
+                      showHeader: false,
+                      draggable: false,
+                    ),
+                  ),
                 ],
               ),
             ),

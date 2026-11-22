@@ -100,6 +100,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
   late TaskDetails _detailsDraft;
   late String _savedMetadata;
   bool _metadataValid = true;
+  bool _showTitleError = false;
 
   Map<String, dynamic> _metadataFields(TaskDetails details) => {
     'project': details.project,
@@ -330,10 +331,15 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
 
   void _draftChanged() {
     final dirty = _captureDraft() != _savedDraft;
+    final clearTitleError =
+        _showTitleError && _titleController.text.trim().isNotEmpty;
     // Selection/caret changes and subsequent keystrokes in a dirty form do not
     // rebuild the whole detail page just to maintain the navigation guard.
-    if (mounted && dirty != _reportedDirty) {
-      setState(() => _reportedDirty = dirty);
+    if (mounted && (dirty != _reportedDirty || clearTitleError)) {
+      setState(() {
+        _reportedDirty = dirty;
+        if (clearTitleError) _showTitleError = false;
+      });
     }
   }
 
@@ -413,13 +419,17 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
     final l10n = AppLocalizations.of(context);
     final title = _titleController.text.trim();
     if (title.isEmpty || !_metadataValid) {
+      if (title.isEmpty && !_showTitleError && mounted) {
+        setState(() => _showTitleError = true);
+      }
       InlineFeedback.of(context).showSnackBar(
         SnackBar(
           duration: const Duration(seconds: 2),
           content: Text(
-            l10n.get(title.isEmpty ? 'taskTitleLabel' : 'taskChecklistInvalid'),
+            l10n.get(title.isEmpty ? 'taskTitleRequired' : 'taskChecklistInvalid'),
           ),
         ),
+        tone: FeedbackTone.warning,
       );
       return;
     }
@@ -903,55 +913,110 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
   void _showAddLinkDialog(AppLocalizations l10n) {
     final allReminders = ref.read(remindersProvider);
     final available = allReminders
-        .where((r) => r.id != widget.task.id && !_linkedTaskIds.contains(r.id))
+        .where(
+          (r) =>
+              r.isWorkspaceItem &&
+              r.id != widget.task.id &&
+              !_linkedTaskIds.contains(r.id),
+        )
         .toList();
+    var query = '';
 
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (ctx) {
-        return AlertDialog(
-          title: Text(l10n.get('addLinkedTask')),
-          content: SizedBox(
-            width: double.maxFinite,
-            height: 300,
-            child: available.isEmpty
-                ? Center(child: Text(l10n.get('noAvailableTasksToLink')))
-                : ListView.builder(
-                    itemCount: available.length,
-                    itemBuilder: (_, i) {
-                      final item = available[i];
-                      final qColor = _getCategoryColor(item.quadrantLevel);
-                      return ListTile(
-                        leading: CircleAvatar(
-                          radius: 12,
-                          backgroundColor: qColor.withValues(alpha: 0.2),
-                          child: Text(
-                            'Q${item.quadrantLevel}',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: qColor,
-                              fontWeight: FontWeight.bold,
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            final normalized = query.trim().toLowerCase();
+            final filtered = normalized.isEmpty
+                ? available
+                : available
+                      .where(
+                        (item) =>
+                            item.taskTitle.toLowerCase().contains(normalized) ||
+                            (item.taskSummary?.toLowerCase().contains(
+                                  normalized,
+                                ) ??
+                                false),
+                      )
+                      .toList();
+            return AlertDialog(
+              title: Text(l10n.get('addLinkedTask')),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 340,
+                child: available.isEmpty
+                    ? Center(child: Text(l10n.get('noAvailableTasksToLink')))
+                    : Column(
+                        children: [
+                          TextField(
+                            key: const ValueKey('link-task-search'),
+                            contextMenuBuilder: buildEditableTextMenu,
+                            decoration: InputDecoration(
+                              hintText: l10n.get('searchLinkHint'),
+                              prefixIcon: const Icon(
+                                Icons.search_rounded,
+                                size: 18,
+                              ),
+                              isDense: true,
                             ),
+                            onChanged: (value) =>
+                                setDialogState(() => query = value),
                           ),
-                        ),
-                        title: Text(
-                          item.taskTitle,
-                          style: const TextStyle(fontSize: 13),
-                        ),
-                        onTap: () async {
-                          Navigator.pop(ctx);
-                          await _changeLink(item.id, remove: false);
-                        },
-                      );
-                    },
-                  ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(l10n.get('cancel')),
-            ),
-          ],
+                          const SizedBox(height: 8),
+                          Expanded(
+                            child: filtered.isEmpty
+                                ? Center(
+                                    child: Text(l10n.get('noSearchResult')),
+                                  )
+                                : ListView.builder(
+                                    itemCount: filtered.length,
+                                    itemBuilder: (_, i) {
+                                      final item = filtered[i];
+                                      final qColor = _getCategoryColor(
+                                        item.quadrantLevel,
+                                      );
+                                      return ListTile(
+                                        leading: CircleAvatar(
+                                          radius: 12,
+                                          backgroundColor: qColor.withValues(
+                                            alpha: 0.2,
+                                          ),
+                                          child: Text(
+                                            'Q${item.quadrantLevel}',
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: qColor,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        title: Text(
+                                          item.taskTitle,
+                                          style: const TextStyle(fontSize: 13),
+                                        ),
+                                        onTap: () async {
+                                          Navigator.pop(ctx);
+                                          await _changeLink(
+                                            item.id,
+                                            remove: false,
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
+                          ),
+                        ],
+                      ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(l10n.get('cancel')),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -965,7 +1030,6 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
     final primaryColor = colors.primary;
     final catColor = _getCategoryColor(_selectedQuadrant);
 
@@ -1331,17 +1395,17 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: colors.tertiary.withValues(alpha: 0.12),
+                          color: colors.error.withValues(alpha: 0.10),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: colors.tertiary.withValues(alpha: 0.5),
+                            color: colors.error.withValues(alpha: 0.45),
                           ),
                         ),
                         child: Row(
                           children: [
                             Icon(
                               Icons.bolt,
-                              color: colors.tertiary,
+                              color: colors.error,
                               size: 20,
                             ),
                             const SizedBox(width: 8),
@@ -1354,18 +1418,14 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .tertiary,
+                                      color: colors.error,
                                     ),
                                   ),
                                   Text(
                                     l10n.get('dynamicPromotedAlertDesc'),
                                     style: TextStyle(
                                       fontSize: 11,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurfaceVariant,
+                                      color: colors.onSurfaceVariant,
                                     ),
                                   ),
                                 ],
@@ -1382,7 +1442,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                                 l10n.get('revertToQ2'),
                                 style: TextStyle(
                                   fontSize: 12,
-                                  color: Theme.of(context).colorScheme.tertiary,
+                                  color: colors.error,
                                 ),
                               ),
                             ),
@@ -1394,22 +1454,8 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                     const SizedBox(height: 14),
 
                     // 2. Task Title Input
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outlineVariant,
-                          width: 1,
-                        ),
-                      ),
-                      child: Column(
+                    sectionCard(
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
@@ -1417,9 +1463,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
+                              color: colors.onSurfaceVariant,
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -1431,18 +1475,24 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
                               color: _isCompleted
-                                  ? Colors.grey
-                                  : Theme.of(
-                                      context,
-                                    ).textTheme.bodyLarge?.color,
+                                  ? colors.onSurfaceVariant
+                                  : theme.textTheme.bodyLarge?.color,
                               decoration: _isCompleted
                                   ? TextDecoration.lineThrough
                                   : null,
                             ),
                             decoration: InputDecoration(
                               isDense: true,
+                              filled: false,
                               contentPadding: EdgeInsets.zero,
                               border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              focusedErrorBorder: InputBorder.none,
+                              errorText: _showTitleError
+                                  ? l10n.get('taskTitleRequired')
+                                  : null,
                               labelText: l10n.get('taskTitleLabel'),
                               floatingLabelBehavior:
                                   FloatingLabelBehavior.never,
@@ -1457,22 +1507,8 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                     const SizedBox(height: 14),
 
                     // 3. Supplemental Details / Notes (详情信息补充)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outlineVariant,
-                          width: 1,
-                        ),
-                      ),
-                      child: Column(
+                    sectionCard(
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Wrap(
@@ -1491,9 +1527,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
+                                  color: colors.onSurfaceVariant,
                                 ),
                               ),
                             ],
@@ -1512,15 +1546,20 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                               ),
                               decoration: InputDecoration(
                                 isDense: true,
+                                filled: false,
                                 contentPadding: EdgeInsets.zero,
                                 border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
                                 labelText: l10n.get('taskDetailsSupplement'),
                                 floatingLabelBehavior:
                                     FloatingLabelBehavior.never,
                                 hintText: l10n.get('supplementHint'),
                                 hintStyle: TextStyle(
                                   fontSize: 12,
-                                  color: Colors.grey.shade400,
+                                  color: colors.onSurfaceVariant.withValues(
+                                    alpha: 0.72,
+                                  ),
                                 ),
                               ),
                               maxLines: 6,
@@ -1728,22 +1767,8 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                     ),
                     const SizedBox(height: 14),
                     // 4. Reminder Time Section (提示时间与快捷设定)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outlineVariant,
-                          width: 1,
-                        ),
-                      ),
-                      child: Column(
+                    sectionCard(
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Wrap(
@@ -1762,9 +1787,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
+                                  color: colors.onSurfaceVariant,
                                 ),
                               ),
                               const SizedBox(width: 6),
@@ -1777,9 +1800,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                                       style: TextStyle(
                                         fontSize: 11,
                                         color: !_selectedTime!.isAfter(now)
-                                            ? Theme.of(context)
-                                                  .colorScheme
-                                                  .error
+                                            ? colors.error
                                             : primaryColor,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -1799,7 +1820,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                           Semantics(
                             button: true,
                             child: InkWell(
-                              borderRadius: BorderRadius.circular(6),
+                              borderRadius: BorderRadius.circular(10),
                               onTap: _pickDateTime,
                               child: Container(
                                 constraints: const BoxConstraints(
@@ -1811,15 +1832,12 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                                   vertical: 10,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: isDark
-                                      ? Colors.white.withValues(alpha: 0.05)
-                                      : Colors.grey.shade50,
-                                  borderRadius: BorderRadius.circular(6),
+                                  color: colors.surfaceContainer,
+                                  borderRadius: BorderRadius.circular(10),
                                   border: Border.all(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .outlineVariant
-                                        .withValues(alpha: 0.6),
+                                    color: colors.outlineVariant.withValues(
+                                      alpha: 0.65,
+                                    ),
                                   ),
                                 ),
                                 child: Wrap(
@@ -1951,22 +1969,8 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                     const SizedBox(height: 14),
 
                     // 5. Category Selection & Recurrence Setting Card
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outlineVariant,
-                          width: 1,
-                        ),
-                      ),
-                      child: Column(
+                    sectionCard(
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
@@ -1974,9 +1978,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
+                              color: colors.onSurfaceVariant,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -1985,16 +1987,21 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                             runSpacing: 8,
                             children: [
                               for (final level in [1, 2, 3, 4])
-                                ChoiceChip(
-                                  avatar: Icon(
-                                    _getCategoryIcon(level),
-                                    size: 18,
-                                    color: _getCategoryColor(level),
-                                  ),
-                                  label: Text(_getCategoryName(l10n, level)),
+                                Semantics(
+                                  inMutuallyExclusiveGroup: true,
                                   selected: _selectedQuadrant == level,
-                                  onSelected: (_) =>
-                                      setState(() => _selectedQuadrant = level),
+                                  child: ChoiceChip(
+                                    avatar: Icon(
+                                      _getCategoryIcon(level),
+                                      size: 18,
+                                      color: _getCategoryColor(level),
+                                    ),
+                                    label: Text(_getCategoryName(l10n, level)),
+                                    selected: _selectedQuadrant == level,
+                                    onSelected: (_) => setState(
+                                      () => _selectedQuadrant = level,
+                                    ),
+                                  ),
                                 ),
                             ],
                           ),
@@ -2083,22 +2090,8 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                     const SizedBox(height: 14),
 
                     // 6. Bi-directional Links (双向链接 / 关联备忘)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outlineVariant,
-                          width: 1,
-                        ),
-                      ),
-                      child: Column(
+                    sectionCard(
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Wrap(
@@ -2203,22 +2196,8 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                     const SizedBox(height: 14),
 
                     // 7. Context Trigger Section (情境感知触发器)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.surfaceContainerLow,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: Theme.of(context).colorScheme.outlineVariant,
-                          width: 1,
-                        ),
-                      ),
-                      child: Column(
+                    sectionCard(
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Wrap(
@@ -2267,6 +2246,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                             const SizedBox(height: 8),
                             TextField(
                               controller: _wifiSsidController,
+                              contextMenuBuilder: buildEditableTextMenu,
                               style: const TextStyle(fontSize: 13),
                               decoration: InputDecoration(
                                 labelText: l10n.get('wifiSsidLabel'),
@@ -2350,6 +2330,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                             const SizedBox(height: 8),
                             TextField(
                               controller: _contextPromptController,
+                              contextMenuBuilder: buildEditableTextMenu,
                               style: const TextStyle(fontSize: 13),
                               decoration: InputDecoration(
                                 labelText: l10n.get('contextPromptLabel'),
@@ -2381,22 +2362,8 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                     // 8. Media Attachment if any
                     if (widget.task.recordId != null) ...[
                       const SizedBox(height: 14),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.surfaceContainerLow,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: Theme.of(context).colorScheme.outlineVariant,
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
+                      sectionCard(
+                        Row(
                           children: [
                             Icon(
                               Icons.attach_file_rounded,

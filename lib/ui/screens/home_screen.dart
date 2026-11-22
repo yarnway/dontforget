@@ -48,7 +48,10 @@ import '../widgets/study_plan_panel.dart';
 import '../../services/context_trigger_service.dart';
 import '../../services/spaced_repetition_service.dart';
 import 'knowledge_graph_screen.dart';
+import 'task_detail_screen.dart';
 import '../../l10n/app_localizations.dart';
+
+enum _NoticeActionKind { dismiss, snooze, complete, skip }
 
 enum _WorkspaceTool {
   focus,
@@ -135,8 +138,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       }),
     ]);
     _promptedReminderIds.clear();
-    _dueNotices.clear();
+    _dueNoticeKeys.clear();
+    _dueNoticesVersion++;
     _cachedNoticeSnapshot = null;
+    _noticeOperations.value = const {};
+    _acknowledgingMissed.value = false;
     _contextDigest = [];
   }
 
@@ -148,8 +154,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   StreamSubscription<List<Reminder>>? _catchUpDigestSubscription;
   StreamSubscription<List<Reminder>>? _suppressedSubscription;
   final Set<String> _promptedReminderIds = {};
-  final Map<String, Reminder> _dueNotices = {};
-  final Set<String> _noticeOperations = {};
+  final Set<String> _dueNoticeKeys = {};
+  int _dueNoticesVersion = 0;
+  final ValueNotifier<Set<String>> _noticeOperations = ValueNotifier(const {});
+  final ValueNotifier<bool> _acknowledgingMissed = ValueNotifier(false);
   String? _workspaceView;
   late final DateTime _launchTime = DateTime.now();
   List<Reminder> _contextDigest = [];
@@ -294,11 +302,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       if (mounted && _runtimeActive) setState(() {});
     });
 
-    // 启动时仅在存在 Wi-Fi 情境触发器时执行嗅探，避免空闲时拉起系统网络进程
-    final initialHasWifiTriggers = ref
-        .read(remindersProvider)
-        .any(_hasActiveWifiTrigger);
-    if (initialHasWifiTriggers) {
+    // 启动时仅在存在未触发的 Wi-Fi 情境触发器时执行嗅探，避免空闲时拉起系统网络进程
+    if (_contextTriggers.hasPendingWifiTrigger(ref.read(remindersProvider))) {
       unawaited(_contextTriggers.detectCurrentWifiSsid());
     }
 
@@ -309,6 +314,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         final notifier = ref.read(remindersProvider.notifier);
         await notifier.refreshOrdinarySchedules();
         if (!active()) return;
+        final hasDepartures = ref
+            .read(remindersProvider)
+            .any((r) => r.details.kind == 'departure');
+        if (!hasDepartures) return;
         await notifier.refreshDepartureSchedules();
         if (!active()) return;
         await notifier.refreshDepartureWeather(
@@ -386,7 +395,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             .toSet();
         setState(() {
           _promptedReminderIds.retainAll(currentKeys);
-          _dueNotices.removeWhere((key, _) => !currentKeys.contains(key));
+          _dueNoticeKeys.retainAll(currentKeys);
+          _dueNoticesVersion++;
           _contextDigest = [];
         });
         StartupTrace.notificationEvent('time_zone_reconciled', {});
@@ -420,6 +430,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _searchFocus.dispose();
     _searchDebounce?.cancel();
     _noticeClock.dispose();
+    _noticeOperations.dispose();
+    _acknowledgingMissed.dispose();
     _shortcutFocus.dispose();
     _heartbeatTimer?.cancel();
     unawaited(_timeZoneChanges?.stop());
@@ -471,13 +483,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     unawaited(_notificationRetries?.tick());
     unawaited(_departureMaintenance?.tick());
     _noticeClock.value = DateTime.now();
-  }
-
-  static bool _hasActiveWifiTrigger(Reminder reminder) {
-    if (reminder.isCompleted || !reminder.isVisible) return false;
-    final raw = reminder.contextTrigger;
-    if (raw == null || raw.isEmpty) return false;
-    return ContextTriggerRule.tryParse(raw)?.type == 'wifi';
   }
 
   static bool _needsDynamicUrgencyPromotion(
@@ -538,8 +543,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       }
     }
 
-    // 情境感知触发器检测：仅当存在 Wi-Fi 触发器时才执行 SSID 嗅探
-    if (reminders.any(_hasActiveWifiTrigger)) {
+    // 情境感知触发器检测：仅当存在未暂停且本轮未触发的 Wi-Fi 触发器时才执行嗅探
+    if (_contextTriggers.hasPendingWifiTrigger(reminders)) {
       final wifiToastTemplate = AppLocalizations.of(
         context,
       ).get('contextWifiConnectedToast');
@@ -547,10 +552,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           .detectCurrentWifiSsid()
           .then((ssid) {
             if (ssid != null &&
+                mounted &&
                 _runtimeActive &&
                 database.isCurrent(generation)) {
+              // Re-read current reminders after async SSID probe so completed
+              // or deleted tasks never trigger a stale toast.
+              final latestReminders = ref.read(remindersProvider);
               final matched = _contextTriggers.evaluateContextTriggers(
-                reminders,
+                latestReminders,
                 ssid: ssid,
               );
               for (final m in matched) {
@@ -609,50 +618,74 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         );
     if (current.isEmpty) return;
     _promptedReminderIds.add(key);
-    setState(() => _dueNotices[key] = current.first);
+    if (_dueNoticeKeys.add(key)) {
+      _dueNoticesVersion++;
+      _noticeClock.value = DateTime.now();
+    }
   }
 
   List<Reminder> _visibleNotices(List<Reminder> reminders, DateTime now) {
-    return reminders.where((r) {
+    final activeKeys = _dueNoticeKeys.isEmpty ? null : <String>{};
+    final visible = <Reminder>[];
+    for (final r in reminders) {
       if (!r.canNotify ||
           r.triggerTime == null ||
           _notifications.isSuppressed(r)) {
-        return false;
+        continue;
       }
       final key = reminderOccurrenceKey(r);
       final upcoming = r.triggerTime!.isAfter(now);
       if (r.noticeAcknowledgedAt != null ||
           (upcoming && r.upcomingDismissedAt != null)) {
-        return false;
+        continue;
       }
-      return upcoming
+      activeKeys?.add(key);
+      final show = upcoming
           ? r.triggerTime!.difference(now) <= const Duration(minutes: 5)
-          : _dueNotices.containsKey(key) ||
+          : _dueNoticeKeys.contains(key) ||
                 now.difference(r.triggerTime!) <= const Duration(minutes: 15);
-    }).toList()..sort((a, b) => a.triggerTime!.compareTo(b.triggerTime!));
+      if (show) visible.add(r);
+    }
+    if (activeKeys != null) {
+      _dueNoticeKeys.retainAll(activeKeys);
+    }
+    visible.sort((a, b) => a.triggerTime!.compareTo(b.triggerTime!));
+    return visible;
   }
 
   List<Reminder>? _cachedNoticeReminders;
   DateTime? _cachedNoticeTick;
+  int _cachedNoticeDueVersion = -1;
   ({List<Reminder> visible, List<Reminder> missed, DateTime now})?
   _cachedNoticeSnapshot;
 
   ({List<Reminder> visible, List<Reminder> missed, DateTime now})
   _noticeSnapshot(List<Reminder> reminders, DateTime tick) {
+    final previous = _cachedNoticeSnapshot;
     if (identical(_cachedNoticeReminders, reminders) &&
         _cachedNoticeTick == tick &&
-        _cachedNoticeSnapshot != null) {
-      return _cachedNoticeSnapshot!;
+        _cachedNoticeDueVersion == _dueNoticesVersion &&
+        previous != null) {
+      return previous;
     }
     final now = DateTime.now();
-    final visible = _visibleNotices(reminders, now);
-    final missed = selectMissedReminders(
+    final computedVisible = _visibleNotices(reminders, now);
+    final computedMissed = selectMissedReminders(
       reminders,
       now,
-      visibleNoticeOccurrences: visible.map(reminderOccurrenceKey),
+      visibleNoticeOccurrences: computedVisible.map(reminderOccurrenceKey),
     );
+    // Preserve previous List instances when membership is unchanged so
+    // downstream identical() caches in TaskWorkspaceOverview stay warm.
+    final visible = previous != null && listEquals(previous.visible, computedVisible)
+        ? previous.visible
+        : computedVisible;
+    final missed = previous != null && listEquals(previous.missed, computedMissed)
+        ? previous.missed
+        : computedMissed;
     _cachedNoticeReminders = reminders;
     _cachedNoticeTick = tick;
+    _cachedNoticeDueVersion = _dueNoticesVersion;
     return _cachedNoticeSnapshot = (visible: visible, missed: missed, now: now);
   }
 
@@ -686,6 +719,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             reminders: reminders,
             missedReminders: missed,
             activeView: _workspaceView,
+            onViewChanged: (view) => _workspaceView = view,
             onPlayMedia: _playMedia,
             onOpenLearning: () => _selectTool(_WorkspaceTool.learning),
           );
@@ -696,19 +730,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Future<void> _acknowledgeAllMissed(List<Reminder> missed) async {
-    if (missed.isEmpty || !_runtimeActive) return;
+    if (missed.isEmpty || !_runtimeActive || _acknowledgingMissed.value) return;
+    _acknowledgingMissed.value = true;
     final l10n = AppLocalizations.of(context);
     final now = DateTime.now();
     try {
-      await ref
+      final results = await ref
           .read(remindersProvider.notifier)
           .acknowledgeOccurrences(missed, now: now);
       if (mounted && _runtimeActive) {
-        setState(() {
-          if (_workspaceView == 'missed') {
-            _workspaceView = 'today';
-          }
-        });
+        if (_workspaceView == 'missed') {
+          setState(() => _workspaceView = 'today');
+        }
+        if (results.any((r) => r.nativeSyncFailed)) {
+          InlineFeedback.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.get('reminderNativeSyncFailed')),
+              action: notificationRepairAction(context),
+            ),
+            tone: FeedbackTone.warning,
+          );
+        }
       }
     } catch (_) {
       if (mounted && _runtimeActive) {
@@ -717,22 +759,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           tone: FeedbackTone.error,
         );
       }
+    } finally {
+      _acknowledgingMissed.value = false;
     }
   }
 
-  Future<void> _dismissNotice(Reminder reminder) async {
+  Future<void> _dismissNotice(Reminder reminder, {bool? upcoming}) async {
     final now = DateTime.now();
+    final isUpcoming = upcoming ?? (reminder.triggerTime?.isAfter(now) ?? false);
     await _performNoticeAction(
       reminder,
       () => ref
           .read(remindersProvider.notifier)
           .acknowledgeOccurrence(
             reminder,
-            phase: reminder.triggerTime!.isAfter(now)
+            phase: isUpcoming
                 ? ReminderNoticePhase.upcoming
                 : ReminderNoticePhase.due,
             now: now,
           ),
+      kind: _NoticeActionKind.dismiss,
     );
   }
 
@@ -742,17 +788,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       () => snooze
           ? ref.read(remindersProvider.notifier).snoozeOccurrence(reminder)
           : ref.read(remindersProvider.notifier).completeOccurrence(reminder),
-      snooze: snooze,
+      kind: snooze ? _NoticeActionKind.snooze : _NoticeActionKind.complete,
     );
   }
 
   Future<void> _performNoticeAction(
     Reminder reminder,
     Future<ReminderActionResult> Function() action, {
-    bool? snooze,
+    required _NoticeActionKind kind,
   }) async {
-    if (!_runtimeActive || !_noticeOperations.add(reminder.id)) return;
-    setState(() {});
+    if (!_runtimeActive || _noticeOperations.value.contains(reminder.id)) return;
+    _noticeOperations.value = {..._noticeOperations.value, reminder.id};
     final l10n = AppLocalizations.of(context);
     try {
       final result = await action();
@@ -760,40 +806,81 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       if (result.disposition == ReminderActionDisposition.stale) {
         InlineFeedback.of(context).showSnackBar(
           SnackBar(content: Text(l10n.get('reminderOccurrenceChanged'))),
+          tone: FeedbackTone.warning,
         );
         return;
       }
-      setState(() => _dueNotices.remove(reminderOccurrenceKey(reminder)));
+      if (_dueNoticeKeys.remove(reminderOccurrenceKey(reminder))) {
+        _dueNoticesVersion++;
+        _noticeClock.value = DateTime.now();
+      }
       String? message;
+      FeedbackTone tone = FeedbackTone.info;
+      SnackBarAction? snackAction;
+      final saved = result.reminder;
       if (result.nativeSyncFailed) {
         message = l10n.get('reminderNativeSyncFailed');
-      } else if (snooze != null) {
-        final saved = result.reminder;
-        message = snooze
-            ? '${l10n.get('reminderDelayedTo')} ${saved?.triggerTime == null ? '' : formatLocalDateTime(saved!.triggerTime!)}'
-            : saved != null && !saved.isCompleted && saved.triggerTime != null
-            ? '${l10n.get('periodicNext')}${formatLocalDateTime(saved.triggerTime!)}'
-            : l10n.get('taskCompleted');
+        tone = FeedbackTone.warning;
+        snackAction = notificationRepairAction(context);
+      } else {
+        switch (kind) {
+          case _NoticeActionKind.dismiss:
+            break;
+          case _NoticeActionKind.snooze:
+            message =
+                '${l10n.get('reminderDelayedTo')} ${saved?.triggerTime == null ? '' : formatLocalDateTime(saved!.triggerTime!)}';
+            tone = FeedbackTone.success;
+          case _NoticeActionKind.skip:
+            message = saved != null && !saved.isCompleted && saved.triggerTime != null
+                ? '${planningText(context, 'skipped')} · ${formatLocalDateTime(saved.triggerTime!)}'
+                : planningText(context, 'skipped');
+            tone = FeedbackTone.info;
+          case _NoticeActionKind.complete:
+            if (saved != null && !saved.isCompleted && saved.triggerTime != null) {
+              message =
+                  '${l10n.get('periodicNext')}${formatLocalDateTime(saved.triggerTime!)}';
+            } else {
+              message = l10n.get('taskCompleted');
+              if (saved != null && saved.isCompleted) {
+                final completedRow = saved;
+                snackAction = SnackBarAction(
+                  label: l10n.get('undo'),
+                  onPressed: () {
+                    if (!mounted || !_runtimeActive) return;
+                    unawaited(
+                      ref
+                          .read(remindersProvider.notifier)
+                          .updateReminder(
+                            completedRow.copyWith(isCompleted: false),
+                            baseline: completedRow,
+                          )
+                          .catchError((Object _) => const ReminderActionResult(
+                            ReminderActionDisposition.stale,
+                          )),
+                    );
+                  },
+                );
+              }
+            }
+            tone = FeedbackTone.success;
+        }
       }
       if (message != null) {
         InlineFeedback.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            action: result.nativeSyncFailed
-                ? notificationRepairAction(context)
-                : null,
-          ),
+          SnackBar(content: Text(message), action: snackAction),
+          tone: tone,
         );
       }
     } catch (_) {
       if (mounted && _runtimeActive) {
         InlineFeedback.of(context).showSnackBar(
           SnackBar(content: Text(l10n.get('reminderUpdateFailed'))),
+          tone: FeedbackTone.error,
         );
       }
     } finally {
-      _noticeOperations.remove(reminder.id);
-      if (_runtimeActive) setState(() {});
+      final updated = Set<String>.of(_noticeOperations.value)..remove(reminder.id);
+      _noticeOperations.value = updated;
     }
   }
 
@@ -803,7 +890,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final colors = Theme.of(context).colorScheme;
     final completedCount = ref
         .read(remindersProvider)
-        .where((r) => r.isCompleted)
+        .where(
+          (r) => r.isCompleted && r.details.data['learning_archive'] != true,
+        )
         .length;
     if (completedCount == 0) {
       InlineFeedback.of(context).hideCurrentSnackBar();
@@ -908,41 +997,67 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Future<void> _clearAllNotices() async {
-    if (!_runtimeActive || _noticeOperations.isNotEmpty) return;
+    if (!_runtimeActive || _noticeOperations.value.isNotEmpty) return;
     final l10n = AppLocalizations.of(context);
     final now = DateTime.now();
     final visible = _visibleNotices(ref.read(remindersProvider), now);
-    setState(() => _noticeOperations.addAll(visible.map((r) => r.id)));
+    if (visible.isEmpty) {
+      ref.read(homeControllerProvider.notifier).clearError();
+      if (_contextDigest.isNotEmpty) {
+        setState(() => _contextDigest = []);
+      }
+      InlineFeedback.of(context).hideCurrentSnackBar();
+      InlineFeedback.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.get('noticesCleared'))),
+        tone: FeedbackTone.success,
+      );
+      return;
+    }
+    final ids = visible.map((r) => r.id).toSet();
+    _noticeOperations.value = {..._noticeOperations.value, ...ids};
     try {
       final results = await ref
           .read(remindersProvider.notifier)
           .acknowledgeOccurrences(visible, now: now);
       if (!mounted || !_runtimeActive) return;
       ref.read(homeControllerProvider.notifier).clearError();
-      setState(() {
-        for (final reminder in visible) {
-          _dueNotices.remove(reminderOccurrenceKey(reminder));
-        }
-        _contextDigest = [];
-      });
-      final message = results.any((r) => r.nativeSyncFailed)
+      for (final reminder in visible) {
+        _dueNoticeKeys.remove(reminderOccurrenceKey(reminder));
+      }
+      _dueNoticesVersion++;
+      _noticeClock.value = DateTime.now();
+      if (_contextDigest.isNotEmpty) {
+        setState(() => _contextDigest = []);
+      }
+      final nativeFailed = results.any((r) => r.nativeSyncFailed);
+      final stale = results.any(
+        (r) => r.disposition == ReminderActionDisposition.stale,
+      );
+      final message = nativeFailed
           ? 'reminderNativeSyncFailed'
-          : results.any((r) => r.disposition == ReminderActionDisposition.stale)
+          : stale
           ? 'reminderOccurrenceChanged'
           : 'noticesCleared';
       InlineFeedback.of(context).hideCurrentSnackBar();
-      InlineFeedback.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.get(message))));
+      InlineFeedback.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.get(message)),
+          action: nativeFailed ? notificationRepairAction(context) : null,
+        ),
+        tone: nativeFailed || stale
+            ? FeedbackTone.warning
+            : FeedbackTone.success,
+      );
     } catch (_) {
       if (mounted && _runtimeActive) {
         InlineFeedback.of(context).showSnackBar(
           SnackBar(content: Text(l10n.get('reminderUpdateFailed'))),
+          tone: FeedbackTone.error,
         );
       }
     } finally {
-      _noticeOperations.removeAll(visible.map((r) => r.id));
-      if (_runtimeActive) setState(() {});
+      final updated = Set<String>.of(_noticeOperations.value)..removeAll(ids);
+      _noticeOperations.value = updated;
     }
   }
 
@@ -1736,7 +1851,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
-    _cachedNoticeSnapshot = null;
     final reminders = ref.watch(workspaceRemindersProvider);
     final l10n = AppLocalizations.of(context);
     final spacedService = ref.watch(spacedRepetitionServiceProvider);
@@ -1749,8 +1863,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
     final suppressedCount = digest.length;
 
-    ref.listen<HomeState>(homeControllerProvider, (previous, next) {
-      if (_runtimeActive && next.error != null) {
+    ref.listen<String?>(homeControllerProvider.select((s) => s.error), (
+      previous,
+      nextError,
+    ) {
+      if (_runtimeActive && nextError != null) {
         InlineFeedback.of(context).hideCurrentSnackBar();
         InlineFeedback.of(context).showSnackBar(
           SnackBar(
@@ -1759,16 +1876,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
-            action: next.error == l10n.get('reminderNativeSyncFailed')
+            action: nextError == l10n.get('reminderNativeSyncFailed')
                 ? notificationRepairAction(context)
                 : null,
             content: Text(
-              next.error == l10n.get('reminderNativeSyncFailed')
+              nextError == l10n.get('reminderNativeSyncFailed')
                   ? l10n.get('reminderNativeSyncFailedCompact')
-                  : next.error!,
+                  : nextError,
             ),
           ),
-          tone: next.error == l10n.get('reminderNativeSyncFailed')
+          tone: nextError == l10n.get('reminderNativeSyncFailed')
               ? FeedbackTone.warning
               : FeedbackTone.error,
         );
@@ -2065,45 +2182,64 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                           return Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              ReminderNoticePanel(
-                                reminders: visible,
-                                now: snapshot.now,
-                                busyIds: _noticeOperations,
-                                onDismiss: _dismissNotice,
-                                onSnooze: (r) => _actOnNotice(r, snooze: true),
-                                onSnoozeUntil: (r, until) {
-                                  final at = DateTime.now();
-                                  if (!until.isAfter(at)) return;
-                                  _performNoticeAction(
-                                    r,
-                                    () => ref
-                                        .read(remindersProvider.notifier)
-                                        .snoozeOccurrence(
-                                          r,
-                                          now: at,
-                                          duration: until.difference(at),
+                              ValueListenableBuilder<Set<String>>(
+                                valueListenable: _noticeOperations,
+                                builder: (context, busyIds, _) =>
+                                    ReminderNoticePanel(
+                                      reminders: visible,
+                                      now: snapshot.now,
+                                      busyIds: busyIds,
+                                      onDismiss: _dismissNotice,
+                                      onDismissPhase: (r, {required upcoming}) =>
+                                          _dismissNotice(r, upcoming: upcoming),
+                                      onOpen: (r) => Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              TaskDetailScreen(task: r),
                                         ),
-                                    snooze: true,
-                                  );
-                                },
-                                onSkip: (r) => _performNoticeAction(
-                                  r,
-                                  () => ref
-                                      .read(remindersProvider.notifier)
-                                      .skipOccurrence(r),
-                                  snooze: false,
-                                ),
-                                onComplete: (r) =>
-                                    _actOnNotice(r, snooze: false),
-                                onReview: _toolBlocked
-                                    ? null
-                                    : _openNoticeReview,
+                                      ),
+                                      onSnooze: (r) =>
+                                          _actOnNotice(r, snooze: true),
+                                      onSnoozeUntil: (r, until) {
+                                        final at = DateTime.now();
+                                        if (!until.isAfter(at)) return;
+                                        _performNoticeAction(
+                                          r,
+                                          () => ref
+                                              .read(remindersProvider.notifier)
+                                              .snoozeOccurrence(
+                                                r,
+                                                now: at,
+                                                duration: until.difference(at),
+                                              ),
+                                          kind: _NoticeActionKind.snooze,
+                                        );
+                                      },
+                                      onSkip: (r) => _performNoticeAction(
+                                        r,
+                                        () => ref
+                                            .read(remindersProvider.notifier)
+                                            .skipOccurrence(r),
+                                        kind: _NoticeActionKind.skip,
+                                      ),
+                                      onComplete: (r) =>
+                                          _actOnNotice(r, snooze: false),
+                                      onReview: _toolBlocked
+                                          ? null
+                                          : _openNoticeReview,
+                                    ),
                               ),
-                              MissedRemindersBar(
-                                reminders: missed,
-                                onOpenMissed: _openMissedFilter,
-                                onAcknowledgeAll: () =>
-                                    _acknowledgeAllMissed(missed),
+                              ValueListenableBuilder<bool>(
+                                valueListenable: _acknowledgingMissed,
+                                builder: (context, ackBusy, _) =>
+                                    MissedRemindersBar(
+                                      reminders: missed,
+                                      busy: ackBusy,
+                                      onOpenMissed: _openMissedFilter,
+                                      onAcknowledgeAll: () =>
+                                          _acknowledgeAllMissed(missed),
+                                    ),
                               ),
                             ],
                           );

@@ -16,6 +16,7 @@ import '../formatters/byte_size.dart';
 import '../screens/notification_repair_screen.dart';
 import '../screens/shared_text_inbox_screen.dart';
 import '../../l10n/shared_text_strings.dart';
+import 'editable_text_menu.dart';
 import 'external_backup_references_dialog.dart';
 
 final contentCleanupServiceProvider = Provider<Future<ContentCleanupService>>((
@@ -149,16 +150,18 @@ class _ContentManagementPanelState
         _generation,
         isCurrent: () => _current,
       );
+      if (!_current) return;
       ref.invalidate(mediaRecordsProvider);
+      ContentInventory? refreshed;
+      try {
+        refreshed = await service.inspect(_generation);
+      } catch (_) {}
       if (_current) {
-        final inventory = await service.inspect(_generation);
-        if (_current) {
-          setState(() {
-            _inventory = inventory;
-            _selected.clear();
-            _message = result.pending ? 'pending' : 'done';
-          });
-        }
+        setState(() {
+          if (refreshed != null) _inventory = refreshed;
+          _selected.clear();
+          _message = result.pending ? 'pending' : 'done';
+        });
       }
     } catch (_) {
       if (_current) setState(() => _message = 'failed');
@@ -269,8 +272,8 @@ class _ContentManagementPanelState
 
   @override
   Widget build(BuildContext context) {
-    final all = ref.watch(remindersProvider),
-        query = _query.text.trim().toLowerCase();
+    final query = _query.text.trim().toLowerCase();
+    final l10n = AppLocalizations.of(context);
     final sharedDraftCount = ref.watch(
       workspaceDraftsProvider.select(SharedTextInbox.count),
     );
@@ -288,20 +291,6 @@ class _ContentManagementPanelState
     final selectedBytes = (_inventory?.entries ?? <ContentCleanupEntry>[])
         .where((e) => _selected.contains(e.key))
         .fold<int>(0, (n, e) => n + e.bytes);
-    final roots =
-        all
-            .where(
-              (e) =>
-                  e.details.planId == null &&
-                  e.details.deletedAt == null &&
-                  e.details.data['learning_archive'] != true &&
-                  (e.details.archivedAt != null) == _showArchive &&
-                  '${e.taskTitle} ${e.details.project} ${e.details.tags.join(' ')}'
-                      .toLowerCase()
-                      .contains(query),
-            )
-            .toList()
-          ..sort((a, b) => a.taskTitle.compareTo(b.taskTitle));
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
@@ -370,10 +359,22 @@ class _ContentManagementPanelState
                       const SizedBox(height: 16),
                       TextField(
                         key: const ValueKey('content-query'),
+                        contextMenuBuilder: buildEditableTextMenu,
                         controller: _query,
                         decoration: InputDecoration(
                           hintText: t('filter'),
                           prefixIcon: const Icon(Icons.search_rounded),
+                          suffixIcon: _query.text.isEmpty
+                              ? null
+                              : IconButton(
+                                  key: const ValueKey('content-query-clear'),
+                                  tooltip: l10n.get('clearSearch'),
+                                  icon: const Icon(Icons.clear_rounded, size: 18),
+                                  onPressed: () {
+                                    _query.clear();
+                                    setState(() {});
+                                  },
+                                ),
                           isDense: true,
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
@@ -573,40 +574,29 @@ class _ContentManagementPanelState
             ),
             Expanded(
               child: _view == 'archive'
-                  ? (roots.isEmpty
-                        ? Center(child: Text(t('empty')))
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                            itemCount: roots.length,
-                            itemBuilder: (context, i) {
-                              final row = roots[i];
-                              return Card(
-                                child: ListTile(
-                                  title: Text(row.taskTitle),
-                                  subtitle: Text(
-                                    '${t(row.details.kind)} · ${row.details.project} ${row.details.tags.join(' / ')}',
-                                  ),
-                                  isThreeLine: false,
-                                  trailing: IconButton(
-                                    key: ValueKey('content-archive:${row.id}'),
-                                    tooltip: t(
-                                      row.details.archivedAt == null
-                                          ? 'archiveAction'
-                                          : 'unarchiveAction',
-                                    ),
-                                    onPressed: _busy
-                                        ? null
-                                        : () => _archive(row, all),
-                                    icon: Icon(
-                                      row.details.archivedAt == null
-                                          ? Icons.archive_outlined
-                                          : Icons.unarchive_outlined,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
-                          ))
+                  ? _ArchiveTabView(
+                      query: query,
+                      showArchive: _showArchive,
+                      busy: _busy,
+                      labelFor: t,
+                      onArchive: _archive,
+                    )
+                  : _inventory == null
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          l10n.get('contentCleanupUnscanned'),
+                          key: const ValueKey('content-unscanned-hint'),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    )
                   : entries.isEmpty
                   ? Center(child: Text(t('empty')))
                   : ListView.builder(
@@ -669,6 +659,76 @@ class _ContentManagementPanelState
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Isolated subscriber for the Archive tab so reminder mutations do not rebuild
+/// the Originals / Restore cleanup views.
+class _ArchiveTabView extends ConsumerWidget {
+  const _ArchiveTabView({
+    required this.query,
+    required this.showArchive,
+    required this.busy,
+    required this.labelFor,
+    required this.onArchive,
+  });
+
+  final String query;
+  final bool showArchive;
+  final bool busy;
+  final String Function(String key) labelFor;
+  final Future<void> Function(Reminder row, List<Reminder> all) onArchive;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final all = ref.watch(remindersProvider);
+    final roots =
+        all
+            .where(
+              (e) =>
+                  e.details.planId == null &&
+                  e.details.deletedAt == null &&
+                  e.details.data['learning_archive'] != true &&
+                  (e.details.archivedAt != null) == showArchive &&
+                  '${e.taskTitle} ${e.details.project} ${e.details.tags.join(' ')}'
+                      .toLowerCase()
+                      .contains(query),
+            )
+            .toList()
+          ..sort((a, b) => a.taskTitle.compareTo(b.taskTitle));
+    if (roots.isEmpty) {
+      return Center(child: Text(labelFor('empty')));
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      itemCount: roots.length,
+      itemBuilder: (context, i) {
+        final row = roots[i];
+        return Card(
+          child: ListTile(
+            title: Text(row.taskTitle),
+            subtitle: Text(
+              '${labelFor(row.details.kind)} · ${row.details.project} ${row.details.tags.join(' / ')}',
+            ),
+            isThreeLine: false,
+            trailing: IconButton(
+              key: ValueKey('content-archive:${row.id}'),
+              tooltip: labelFor(
+                row.details.archivedAt == null
+                    ? 'archiveAction'
+                    : 'unarchiveAction',
+              ),
+              onPressed: busy ? null : () => onArchive(row, all),
+              icon: Icon(
+                row.details.archivedAt == null
+                    ? Icons.archive_outlined
+                    : Icons.unarchive_outlined,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

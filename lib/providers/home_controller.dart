@@ -189,6 +189,7 @@ class HomeController extends StateNotifier<HomeState> {
 
   Future<void> _quiesce() async {
     _pending.clear();
+    _activeCaptures.clear();
     if (mounted) state = HomeState();
     _ref.read(speechRecognitionServiceProvider).cancel();
     await _ref.read(localSpeechServiceProvider).cancel();
@@ -578,10 +579,11 @@ class HomeController extends StateNotifier<HomeState> {
         .read(remindersProvider)
         .where((r) => r.id == task.id)
         .firstOrNull;
-    if (current?.capturePending != true ||
+    if (current == null ||
+        !current.capturePending ||
         !task.capturePending ||
-        task.sourceText == null ||
-        !_activeCaptures.add(task.id)) {
+        current.sourceText == null ||
+        !_activeCaptures.add(current.id)) {
       return;
     }
     _launch(
@@ -593,7 +595,7 @@ class HomeController extends StateNotifier<HomeState> {
           _check(generation);
           final record = _ref
               .read(mediaRecordsProvider)
-              .where((r) => r.id == task.recordId)
+              .where((r) => r.id == current.recordId)
               .firstOrNull;
           if (record != null) {
             final path = await LocalMediaStore().resolvePath(
@@ -602,7 +604,7 @@ class HomeController extends StateNotifier<HomeState> {
             _check(generation);
             final settings = _ref.read(settingsProvider);
             final name = path.split(RegExp(r'[/\\]')).last;
-            String source = task.sourceText!;
+            String source = current.sourceText!;
             late List<Reminder> tasks;
             switch (record.type) {
               case 'audio':
@@ -642,13 +644,13 @@ class HomeController extends StateNotifier<HomeState> {
             return;
           }
           final tasks = await service.extractTasks(
-            task.sourceText!,
+            current.sourceText!,
             _ref.read(settingsProvider),
           );
           _check(generation);
           final result = await _ref
               .read(remindersProvider.notifier)
-              .enrichCapture(task, tasks, generation);
+              .enrichCapture(current, tasks, generation);
           if (result.nativeSyncFailures > 0) {
             _reportError(
               generation,
@@ -658,7 +660,7 @@ class HomeController extends StateNotifier<HomeState> {
             );
           }
         } finally {
-          _activeCaptures.remove(task.id);
+          _activeCaptures.remove(current.id);
         }
       },
       failureMessage: _t('originalSavedForLaterAi'),
@@ -673,7 +675,7 @@ class HomeController extends StateNotifier<HomeState> {
     final operation = _startRecording();
     _recordingStart = operation;
     unawaited(
-      operation.then((_) {
+      operation.whenComplete(() {
         if (identical(_recordingStart, operation)) _recordingStart = null;
       }),
     );
@@ -727,6 +729,7 @@ class HomeController extends StateNotifier<HomeState> {
             speech.endpoint == TencentSpeechCredentials.realtimeEndpoint;
         final ext = recordingExtensionForPlatform(null, realtime);
         final path = '${tempDir.path}/audio_${const Uuid().v4()}.$ext';
+        var nativeStarted = false;
         try {
           _nativeRecording = true;
           // Tencent's speech engines accept 8/16k input. Capture a 16k mono
@@ -748,6 +751,7 @@ class HomeController extends StateNotifier<HomeState> {
           } else {
             await recorder.start(config, path: path);
           }
+          nativeStarted = true;
           _check(generation);
           _recordingOutputPath = path;
           _recordingGeneration = generation;
@@ -762,9 +766,18 @@ class HomeController extends StateNotifier<HomeState> {
           prepareRecordingTranscription();
           return true;
         } catch (_) {
-          // Native start may have succeeded before the runtime was paused.
-          // Cleanup is serialized ahead of the recovery quiesce completion.
-          if (_nativeRecording) await _discardRecording();
+          // If native start succeeded before runtime pause, preserve strict
+          // _discardRecording semantics so recovery retries on cancel failure.
+          // If start itself threw, never wedge _nativeRecording = true forever.
+          if (nativeStarted) {
+            if (_nativeRecording) await _discardRecording();
+          } else {
+            try {
+              if (_nativeRecording) await _discardRecording();
+            } catch (_) {
+              _nativeRecording = false;
+            }
+          }
           rethrow;
         }
       });
@@ -1257,7 +1270,13 @@ class HomeController extends StateNotifier<HomeState> {
             duration < RecordingDurationReader.minimumCapture) {
           // Only this just-finished, unimported capture is discarded. Existing
           // attachments and unrecognized formats are never deleted here.
-          await File(path).delete();
+          if (ownedTemporary) {
+            try {
+              await File(path).delete();
+            } on FileSystemException catch (_) {
+              // Ignore transient OS file locks on temporary capture files.
+            }
+          }
           _check(generation);
           _reportError(
             generation,
@@ -1353,8 +1372,6 @@ class HomeController extends StateNotifier<HomeState> {
         () async {
           final savedPath = await _saveFileToLocal(selected.path, generation);
           _check(generation);
-          final bytes = await File(savedPath).readAsBytes();
-          _check(generation);
           final id = await _saveMedia(
             'image',
             savedPath,
@@ -1364,8 +1381,14 @@ class HomeController extends StateNotifier<HomeState> {
           _check(generation);
           final settings = _ref.read(settingsProvider);
           final service = _ref.read(llmServiceProvider);
+          // Avoid reading & base64-encoding multi-MB photos when AI extraction
+          // is not configured; fall straight back to the local image memo.
+          final base64Image = settings.hasConfiguredExtraction
+              ? base64Encode(await File(savedPath).readAsBytes())
+              : '';
+          _check(generation);
           final tasks = await service.extractTasksFromImage(
-            base64Encode(bytes),
+            base64Image,
             settings,
           );
           _check(generation);

@@ -248,13 +248,16 @@ class DatabaseHelper {
     return reminders;
   }
 
+  int _writeSequence = 0;
+  int _lastBackedUpWriteSequence = -1;
+
   Future<T> writeTransaction<T>(
     DataGeneration generation,
     Future<T> Function(Transaction) operation,
   ) => runOperation(generation, () async {
     _clearBootstrapCache();
     final db = await _openDatabase();
-    return db.transaction((txn) async {
+    final result = await db.transaction((txn) async {
       final scope = _ScopedExecutor(txn, writable: true);
       try {
         return await operation(scope);
@@ -262,6 +265,8 @@ class DatabaseHelper {
         await scope.finish();
       }
     });
+    _writeSequence++;
+    return result;
   });
 
   Future<void> _waitForOperations() {
@@ -421,7 +426,9 @@ class DatabaseHelper {
       _ownedDirectory = canonical;
       return canonical;
     } catch (error) {
-      await handle?.close();
+      try {
+        await handle?.close();
+      } catch (_) {}
       if (identical(_directoryOwners[canonical], this)) {
         _directoryOwners.remove(canonical);
       }
@@ -435,16 +442,35 @@ class DatabaseHelper {
   Future<void> _releaseOwnership() async {
     final directory = _ownedDirectory;
     final handle = _ownershipLock;
+    final journal = _notificationJournal;
     if (handle == null) return;
-    await _notificationJournal?.close();
-    await handle.close();
-    _ownershipLock = null;
-    _notificationEpochStore = null;
-    _deviceWindowPreferences = null;
-    _notificationJournal = null;
-    _ownedDirectory = null;
-    if (identical(_directoryOwners[directory], this)) {
-      _directoryOwners.remove(directory);
+    Object? firstError;
+    StackTrace? firstStack;
+    try {
+      try {
+        await journal?.close();
+      } catch (e, st) {
+        firstError = e;
+        firstStack = st;
+      }
+      try {
+        await handle.close();
+      } catch (e, st) {
+        firstError ??= e;
+        firstStack ??= st;
+      }
+    } finally {
+      _ownershipLock = null;
+      _notificationEpochStore = null;
+      _deviceWindowPreferences = null;
+      _notificationJournal = null;
+      _ownedDirectory = null;
+      if (identical(_directoryOwners[directory], this)) {
+        _directoryOwners.remove(directory);
+      }
+    }
+    if (firstError != null) {
+      Error.throwWithStackTrace(firstError, firstStack!);
     }
   }
 
@@ -576,8 +602,9 @@ class DatabaseHelper {
     final temporary = await Directory(dbDir).createTemp('backup-');
     Database? mirror;
     try {
-      // One read transaction includes committed WAL data and keeps all tables
+      // One read transaction includes committed data and keeps all tables
       // from the same point in time. Never copy an open SQLite file directly.
+      final capturedWriteSequence = _writeSequence;
       final data = await db.transaction(
         (txn) async => <String, Object?>{
           'version': schemaVersion,
@@ -615,7 +642,9 @@ class DatabaseHelper {
             }
           }
         }
-        await batch.commit(noResult: true);
+        if (queued > 0) {
+          await batch.commit(noResult: true);
+        }
       });
       final check = await mirror.rawQuery('PRAGMA integrity_check');
       if (check.length != 1 || check.single.values.single != 'ok') {
@@ -628,9 +657,16 @@ class DatabaseHelper {
       // Each artifact replaces its predecessor only after it is complete.
       await File(temporaryMirror).rename(mirrorPath);
       await snapshot.rename(snapshotPath);
+      _lastBackedUpWriteSequence = capturedWriteSequence;
     } finally {
-      await mirror?.close();
-      await temporary.delete(recursive: true);
+      try {
+        await mirror?.close();
+      } catch (_) {}
+      try {
+        if (await temporary.exists()) {
+          await temporary.delete(recursive: true);
+        }
+      } catch (_) {}
     }
   }
 
@@ -1104,16 +1140,34 @@ CREATE TABLE Reminders (
   }) async {
     try {
       await _waitForOperations();
+      final hadPendingBackup = pendingBackup != null;
       if (pendingBackup != null) await pendingBackup;
       final db = _database;
-      if (backup && db != null) await _backupDatabase(db);
+      // Avoid running a second back-to-back mirror backup when an in-flight
+      // createMirrorBackup() already captured the latest write sequence.
+      final alreadyFresh =
+          hadPendingBackup && _lastBackedUpWriteSequence == _writeSequence;
+      if (backup && db != null && !alreadyFresh) {
+        await _backupDatabase(db);
+      }
     } finally {
+      Object? closeError;
+      StackTrace? closeStack;
       try {
         await _closeDatabase();
+      } catch (e, st) {
+        closeError = e;
+        closeStack = st;
+      }
+      try {
         await _releaseOwnership();
-      } catch (_) {
+      } catch (e, st) {
+        closeError ??= e;
+        closeStack ??= st;
+      }
+      if (closeError != null) {
         _accessState = _AccessState.faulted;
-        rethrow;
+        Error.throwWithStackTrace(closeError, closeStack!);
       }
     }
   }

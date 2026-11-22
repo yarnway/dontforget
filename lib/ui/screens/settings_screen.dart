@@ -3,8 +3,10 @@ import '../widgets/unsaved_editor_scope.dart';
 import '../widgets/editable_text_menu.dart';
 import '../widgets/appearance_picker.dart';
 import '../widgets/input_send_mode_picker.dart';
-import '../widgets/lan_sync_conflicts_dialog.dart';
+import '../widgets/settings/lan_sync_section.dart';
+import '../widgets/settings/local_engine_probe_section.dart';
 import '../../data/database_helper.dart';
+import '../../services/console_url_launcher.dart';
 import '../../services/recovery/runtime_gate.dart';
 import '../widgets/notification_permission_panel.dart';
 import '../widgets/notification_diagnostics_panel.dart';
@@ -14,79 +16,20 @@ import '../widgets/content_management_panel.dart';
 import '../../l10n/content_management_strings.dart';
 import '../../l10n/data_protection_strings.dart';
 import '../../services/notification_diagnostics_service.dart';
-import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../providers/providers.dart';
 import '../../services/llm_service.dart';
-import '../../services/lan_sync_service.dart';
 import '../../models/settings.dart';
-import '../../models/reminder.dart';
 import '../../l10n/app_localizations.dart';
 import 'backup_preview_screen.dart';
 import 'ai_profiles_screen.dart';
 import 'speech_settings_screen.dart';
-import 'task_detail_screen.dart';
 import '../../l10n/preferences_strings.dart';
 import '../../l10n/speech_recognition_strings.dart';
 
-typedef ConsoleProcessRunner =
-    Future<ProcessResult> Function(String executable, List<String> arguments);
-
-/// Cross-platform browser handoff, injectable without launching real apps in tests.
-class ConsoleUrlLauncher {
-  const ConsoleUrlLauncher({
-    this.runProcess = Process.run,
-    this.launchExternalUrl,
-  });
-  final ConsoleProcessRunner runProcess;
-  final Future<bool> Function(Uri uri)? launchExternalUrl;
-
-  Future<bool> open(String url, {TargetPlatform? platform}) async {
-    final uri = Uri.tryParse(url);
-    if (uri == null ||
-        !const ['http', 'https'].contains(uri.scheme) ||
-        uri.host.isEmpty) {
-      return false;
-    }
-    final target = platform ?? defaultTargetPlatform;
-    final (String, List<String>)? command = switch (target) {
-      TargetPlatform.windows => (
-        'rundll32',
-        ['url.dll,FileProtocolHandler', url],
-      ),
-      TargetPlatform.macOS => ('open', [url]),
-      TargetPlatform.linux => ('xdg-open', [url]),
-      _ => null,
-    };
-    if (command == null) {
-      if (target == TargetPlatform.android || target == TargetPlatform.iOS) {
-        try {
-          final opener =
-              launchExternalUrl ??
-              ((u) => launchUrl(u, mode: LaunchMode.externalApplication));
-          return await opener(uri);
-        } catch (_) {
-          return false;
-        }
-      }
-      return false;
-    }
-    try {
-      final result = await runProcess(command.$1, command.$2);
-      return result.exitCode == 0;
-    } catch (_) {
-      return false;
-    }
-  }
-}
-
-final consoleUrlLauncherProvider = Provider<ConsoleUrlLauncher>(
-  (_) => const ConsoleUrlLauncher(),
-);
+export '../../services/console_url_launcher.dart';
 
 final notificationFailureHistoryReaderProvider =
     Provider<Future<NotificationFailureHistory> Function()>((ref) {
@@ -200,29 +143,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     ref.read(runtimeRecoveryGateProvider).check(_birth);
   }
 
+  ModelProvider? _matchProvider(AppSettings settings) {
+    for (final provider in _providers) {
+      if (provider.defaultBaseUrl == settings.baseUrl &&
+          provider.defaultModel == settings.requestModelName) {
+        return provider;
+      }
+    }
+    return null;
+  }
+
   Future<void> _load() async {
+    if (_loadError != null && mounted) {
+      setState(() => _loadError = null);
+    }
     try {
       await ref.read(settingsProvider.notifier).ready;
       if (!mounted) return;
       _checkCurrent();
       final current = ref.read(settingsProvider);
+      _apiKeyController.text = current.apiKey;
+      _baseUrlController.text = current.baseUrl;
+      _modelNameController.text = current.modelName;
       setState(() {
-        _apiKeyController.text = current.apiKey;
-        _baseUrlController.text = current.baseUrl;
-        _modelNameController.text = current.modelName;
         _selectedLang = current.language;
         _selectedAppearance = current.appearance;
         _selectedSendMode = current.inputSendMode;
-        _selectedProvider = null;
-        for (final provider in _providers) {
-          if (provider.defaultBaseUrl == current.baseUrl &&
-              provider.defaultModel == current.requestModelName) {
-            _selectedProvider = provider;
-            break;
-          }
-        }
+        _selectedProvider = _matchProvider(current);
         _savedDraft = _captureDraft();
         _dirty = false;
+        _loadError = null;
         _ready = true;
       });
     } catch (_) {
@@ -237,23 +187,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   AppAppearance _selectedAppearance = AppAppearance.system;
   InputSendMode _selectedSendMode = InputSendMode.enter;
   ModelProvider? _selectedProvider;
-
-  // Edge AI Probe State
   bool _obscureApiKey = true;
-  bool _isProbing = false;
-  List<LocalInferenceEndpoint>? _probeResults;
-
-  // LAN Sync State
-  bool _isLanServerRunning = false;
-  bool _lanServerChanging = false;
-  String _lanIp = '';
-  String _lanPin = '';
-  int _lanPort = LanSyncService.defaultPort;
-  final _targetIpController = TextEditingController();
-  final _targetPinController = TextEditingController();
-  bool _isSyncing = false;
-  bool _applyingLanConflict = false;
-  List<LanSyncConflict> _lanConflicts = const [];
+  bool _lanSyncBusy = false;
 
   bool get _syncCurrent =>
       mounted &&
@@ -272,6 +207,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _selectedLang = settings.language;
     _selectedAppearance = settings.appearance;
     _selectedSendMode = settings.inputSendMode;
+    _selectedProvider = _matchProvider(settings);
     _savedDraft = _captureDraft();
     for (final controller in [
       _apiKeyController,
@@ -280,52 +216,43 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     ]) {
       controller.addListener(_draftChanged);
     }
-    _load();
-
-    for (var p in _providers) {
-      if (p.defaultBaseUrl == settings.baseUrl &&
-          p.defaultModel == settings.requestModelName) {
-        _selectedProvider = p;
-        break;
-      }
-    }
-
-    if (widget.area == null || widget.area == SettingsArea.sync) {
-      final lanSync = ref.read(lanSyncServiceProvider);
-      _isLanServerRunning = lanSync.isRunning;
-      _lanIp = lanSync.localIp;
-      _lanPin = lanSync.pin;
-      _lanPort = lanSync.port;
+    if (widget.area == SettingsArea.notifications) {
+      _ready = true;
+    } else {
+      _load();
     }
   }
 
   @override
   void dispose() {
+    _apiKeyController.removeListener(_draftChanged);
+    _baseUrlController.removeListener(_draftChanged);
+    _modelNameController.removeListener(_draftChanged);
+    _apiKeyController.clear();
     _apiKeyController.dispose();
     _baseUrlController.dispose();
     _modelNameController.dispose();
-    _targetIpController.dispose();
-    _targetPinController.dispose();
     super.dispose();
   }
 
   void _onProviderChanged(ModelProvider? provider) {
     if (provider == null) return;
+    if (_baseUrlController.text.trim() != provider.defaultBaseUrl) {
+      _apiKeyController.clear();
+    }
+    _baseUrlController.text = provider.defaultBaseUrl;
+    _modelNameController.text = provider.defaultModel;
+    if (provider.defaultApiKey != null && provider.defaultApiKey!.isNotEmpty) {
+      _apiKeyController.text = provider.defaultApiKey!;
+    }
     setState(() {
-      if (_baseUrlController.text.trim() != provider.defaultBaseUrl) {
-        _apiKeyController.clear();
-      }
       _selectedProvider = provider;
-      _baseUrlController.text = provider.defaultBaseUrl;
-      _modelNameController.text = provider.defaultModel;
-      if (provider.defaultApiKey != null &&
-          provider.defaultApiKey!.isNotEmpty) {
-        _apiKeyController.text = provider.defaultApiKey!;
-      }
+      _dirty = _captureDraft() != _savedDraft;
     });
   }
 
   Future<void> _openModelProfiles() async {
+    if (!_ready || _isSaving) return;
     final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (_) => AiProfilesScreen(
@@ -334,12 +261,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
     );
     if (!mounted || saved != true) return;
+    try {
+      _checkCurrent();
+    } catch (_) {
+      return;
+    }
     final current = ref.read(settingsProvider);
+    _apiKeyController.text = current.apiKey;
+    _baseUrlController.text = current.baseUrl;
+    _modelNameController.text = current.modelName;
     setState(() {
-      _apiKeyController.text = current.apiKey;
-      _baseUrlController.text = current.baseUrl;
-      _modelNameController.text = current.modelName;
-      _selectedProvider = null;
+      _selectedProvider = _matchProvider(current);
       // The nested editor saved models only; other preferences remain drafts.
       _savedDraft = (
         key: current.apiKey,
@@ -396,11 +328,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   bool _isBackingUp = false;
 
   Future<void> _backupNow() async {
-    if (_isBackingUp) return;
+    if (_isBackingUp || !_syncCurrent) return;
     setState(() => _isBackingUp = true);
     var messageKey = 'backupSuccess';
     var ok = true;
     try {
+      _checkCurrent();
       await ref.read(databaseHelperProvider).createMirrorBackup();
     } catch (_) {
       ok = false;
@@ -408,6 +341,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
     if (!mounted) return;
     setState(() => _isBackingUp = false);
+    if (!_syncCurrent) return;
     InlineFeedback.of(context).showSnackBar(
       SnackBar(content: Text(AppLocalizations.of(context).get(messageKey))),
       tone: ok ? FeedbackTone.success : FeedbackTone.error,
@@ -448,6 +382,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     setState(() => _isSaving = true);
     final settings = ref.read(settingsProvider);
     final newSettings = _modelDraft(settings);
+    final clearedApiKey =
+        settings.apiKey.trim().isNotEmpty && newSettings.apiKey.isEmpty;
     try {
       _checkCurrent();
       await ref.read(settingsProvider.notifier).updateSettings(newSettings);
@@ -455,6 +391,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       _checkCurrent();
       _savedDraft = _captureDraft();
       _dirty = false;
+      if (clearedApiKey) {
+        InlineFeedback.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context).get('settingsApiKeyClearedHint'),
+            ),
+          ),
+          tone: FeedbackTone.info,
+        );
+      }
       return true;
     } catch (_) {
       if (mounted) {
@@ -554,34 +500,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
-  Future<void> _probeLocalEngines() async {
-    if (_isProbing) return;
-    setState(() => _isProbing = true);
-    try {
-      final llmService = ref.read(llmServiceProvider);
-      final results = await llmService.probeLocalInferenceEndpoints();
-      if (mounted) setState(() => _probeResults = results);
-    } catch (_) {
-      if (mounted) {
-        InlineFeedback.of(context).showSnackBar(
-          SnackBar(
-            content: Text(AppLocalizations.of(context).get('probeFailed')),
-          ),
-          tone: FeedbackTone.error,
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isProbing = false);
-    }
-  }
-
   void _applyLocalEngine(LocalInferenceEndpoint endpoint) {
     final l10n = AppLocalizations.of(context);
+    _baseUrlController.text = endpoint.url;
+    _modelNameController.text = endpoint.recommendedModel ?? 'default-model';
+    _apiKeyController.text = 'ollama';
     setState(() {
-      _baseUrlController.text = endpoint.url;
-      _modelNameController.text = endpoint.recommendedModel ?? 'default-model';
-      _apiKeyController.text = 'ollama';
       _selectedProvider = null;
+      _dirty = _captureDraft() != _savedDraft;
     });
 
     InlineFeedback.of(context).hideCurrentSnackBar();
@@ -594,325 +520,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
       tone: FeedbackTone.success,
     );
-  }
-
-  Future<void> _toggleLanServer() async {
-    if (!_syncCurrent || _lanServerChanging) return;
-    final lanSync = ref.read(lanSyncServiceProvider);
-    final dbHelper = ref.read(databaseHelperProvider);
-    final container = ProviderScope.containerOf(context, listen: false);
-    final wasRunning = _isLanServerRunning;
-    setState(() => _lanServerChanging = true);
-    try {
-      if (wasRunning) {
-        await lanSync.stopServer();
-        if (!_syncCurrent) return;
-        setState(() {
-          _isLanServerRunning = false;
-          _lanPin = '';
-        });
-      } else {
-        final reminders = ref.read(remindersProvider.notifier);
-        final info = await lanSync.startServer(
-          dbHelper: dbHelper,
-          onDataChanged: () {
-            if (reminders.mounted) {
-              reminders.refreshReminders().catchError((Object _) {});
-            }
-            try {
-              if (container.exists(mediaRecordsProvider)) {
-                final media = container.read(mediaRecordsProvider.notifier);
-                if (media.mounted) {
-                  media.refreshMediaRecords().catchError((Object _) {});
-                }
-              }
-            } catch (_) {}
-          },
-        );
-        if (!_syncCurrent) return;
-        setState(() {
-          _isLanServerRunning = info.isRunning;
-          _lanIp = info.ip;
-          _lanPin = info.pin;
-          _lanPort = info.port;
-        });
-      }
-    } catch (_) {
-      if (mounted && _syncCurrent) {
-        setState(() => _isLanServerRunning = lanSync.isRunning);
-        InlineFeedback.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              AppLocalizations.of(
-                context,
-              ).get(wasRunning ? 'syncServerStopFailed' : 'syncServerFailed'),
-            ),
-          ),
-          tone: FeedbackTone.error,
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _lanServerChanging = false);
-    }
-  }
-
-  Future<void> _syncWithTarget() async {
-    if (!_syncCurrent || _isSyncing || _applyingLanConflict) return;
-    final l10n = AppLocalizations.of(context);
-    final address = LanSyncService.parsePeerAddress(_targetIpController.text);
-    final pin = _targetPinController.text.trim();
-    if (address == null || pin.isEmpty) {
-      InlineFeedback.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            l10n.get(address == null ? 'syncInvalidAddress' : 'enterPin'),
-          ),
-        ),
-        tone: FeedbackTone.error,
-      );
-      return;
-    }
-
-    setState(() {
-      _isSyncing = true;
-      _lanConflicts = const [];
-    });
-    final lanSync = ref.read(lanSyncServiceProvider);
-    final dbHelper = ref.read(databaseHelperProvider);
-    final container = ProviderScope.containerOf(context, listen: false);
-
-    final reminders = ref.read(remindersProvider.notifier);
-    Future<void>? refresh;
-    List<LanSyncConflict> conflicts = const [];
-    LanSyncFailure? failure;
-    final success = await lanSync.syncWithPeer(
-      peerIp: address.host,
-      port: address.port,
-      pin: pin,
-      dbHelper: dbHelper,
-      onDataChanged: () {
-        // The service verifies the storage generation before this callback.
-        // A committed merge still needs a refresh if Settings has been closed.
-        final futures = <Future<void>>[
-          if (reminders.mounted)
-            reminders.refreshReminders().catchError((Object _) {}),
-        ];
-        try {
-          if (container.exists(mediaRecordsProvider)) {
-            final media = container.read(mediaRecordsProvider.notifier);
-            if (media.mounted) {
-              futures.add(
-                media.refreshMediaRecords().catchError((Object _) {}),
-              );
-            }
-          }
-        } catch (_) {}
-        if (futures.isNotEmpty) refresh = Future.wait(futures);
-      },
-      onConflicts: (result) => conflicts = result,
-      onFailure: (reason) => failure = reason,
-    );
-    try {
-      await refresh;
-    } catch (_) {}
-
-    if (!mounted) return;
-    setState(() {
-      _isSyncing = false;
-      if (success && _syncCurrent) _lanConflicts = conflicts;
-    });
-    if (!_syncCurrent) return;
-    final feedback = InlineFeedback.of(context);
-    feedback.hideCurrentSnackBar();
-    if (_lanConflicts.isNotEmpty) return;
-    final failureKey = switch (failure) {
-      LanSyncFailure.invalidPin => 'syncFailedInvalidPin',
-      LanSyncFailure.pinLocked => 'syncFailedPinLocked',
-      LanSyncFailure.payloadTooLarge => 'syncFailedTooLarge',
-      LanSyncFailure.timeout => 'syncFailedTimeout',
-      LanSyncFailure.unreachable => 'syncFailedUnreachable',
-      _ => 'syncFailed',
-    };
-    feedback.showSnackBar(
-      SnackBar(
-        content: Text(l10n.get(success ? 'syncSuccess' : failureKey)),
-      ),
-      tone: success ? FeedbackTone.success : FeedbackTone.error,
-    );
-  }
-
-  Future<void> _copyLanValue(String text, String feedbackKey) async {
-    if (text.isEmpty) return;
-    final l10n = AppLocalizations.of(context);
-    try {
-      await Clipboard.setData(ClipboardData(text: text));
-      if (!mounted) return;
-      InlineFeedback.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.get(feedbackKey))),
-        tone: FeedbackTone.success,
-      );
-    } catch (_) {
-      if (!mounted) return;
-      InlineFeedback.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.get('linkCopyFailed'))),
-        tone: FeedbackTone.error,
-      );
-    }
-  }
-
-  Future<void> _showLanConflicts() async {
-    if (!_syncCurrent || _lanConflicts.isEmpty || _applyingLanConflict) return;
-    final tasks = {
-      for (final task in ref.read(remindersProvider)) task.id: task,
-    };
-    final openable = {
-      for (final task in tasks.values)
-        if (task.isVisible) task.id,
-    };
-    final adoptable = {
-      for (final conflict in _lanConflicts)
-        if (tasks[conflict.taskId] case final task?)
-          if (conflict.canAdoptText(task)) task.id,
-    };
-    final rootsWithChildren = {
-      for (final task in tasks.values)
-        if (task.details.planId case final id?) id,
-    };
-    final trashActions = {
-      for (final conflict in _lanConflicts)
-        if (tasks[conflict.taskId] case final task?)
-          if (!rootsWithChildren.contains(task.id) &&
-              conflict.canAdoptTrash(task))
-            task.id,
-    };
-    final choice =
-        await showDialog<
-          ({LanSyncConflict conflict, LanSyncConflictAction action})
-        >(
-          context: context,
-          builder: (_) => LanSyncConflictsDialog(
-            conflicts: _lanConflicts,
-            openableTaskIds: openable,
-            adoptableTaskIds: adoptable,
-            trashActionTaskIds: trashActions,
-          ),
-        );
-    if (!mounted || !_syncCurrent || choice == null) return;
-    if (choice.action != LanSyncConflictAction.openLocal) {
-      if (tasks[choice.conflict.taskId] case final expected?) {
-        await _confirmLanConflict(choice.conflict, choice.action, expected);
-      }
-      return;
-    }
-    final task = ref
-        .read(remindersProvider)
-        .where((task) => task.id == choice.conflict.taskId && task.isVisible)
-        .firstOrNull;
-    if (task != null) {
-      await Navigator.of(context).push<void>(
-        MaterialPageRoute(builder: (_) => TaskDetailScreen(task: task)),
-      );
-    }
-  }
-
-  Future<void> _confirmLanConflict(
-    LanSyncConflict conflict,
-    LanSyncConflictAction action,
-    Reminder expected,
-  ) async {
-    final l10n = AppLocalizations.of(context);
-    final text = action == LanSyncConflictAction.adoptPeerText;
-    final toTrash = conflict.peer.inTrash;
-    final title = text
-        ? 'syncAdoptPeerText'
-        : toTrash
-        ? 'syncMoveLocalToTrash'
-        : 'syncRestoreLocal';
-    final message = text
-        ? 'syncAdoptPeerTextConfirm'
-        : toTrash
-        ? 'syncMoveLocalToTrashConfirm'
-        : 'syncRestoreLocalConfirm';
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.get(title)),
-        content: Text(l10n.get(message)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.get('cancel')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.get(text ? 'save' : title)),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true ||
-        !mounted ||
-        !_syncCurrent ||
-        _applyingLanConflict ||
-        !_lanConflicts.contains(conflict)) {
-      return;
-    }
-    setState(() => _applyingLanConflict = true);
-    final feedback = InlineFeedback.of(context);
-    try {
-      final notifier = ref.read(remindersProvider.notifier);
-      final result = await (text
-          ? notifier.adoptLanSyncText(conflict, _generation)
-          : notifier.adoptLanSyncTrash(conflict, expected, _generation));
-      if (!_syncCurrent) return;
-      if (result.reminder case final saved?) {
-        final local = LanSyncConflict.contentOf(saved);
-        setState(() {
-          _lanConflicts = [
-            for (final item in _lanConflicts)
-              if (item != conflict)
-                item
-              else if (local != item.peer)
-                LanSyncConflict(
-                  taskId: item.taskId,
-                  local: local,
-                  peer: item.peer,
-                ),
-          ];
-        });
-      }
-      feedback.showSnackBar(
-        SnackBar(
-          content: Text(
-            l10n.get(
-              !result.accepted
-                  ? 'syncConflictStale'
-                  : result.nativeSyncFailed
-                  ? 'reminderNativeSyncFailed'
-                  : 'changesSaved',
-            ),
-          ),
-        ),
-        tone: !result.accepted || result.nativeSyncFailed
-            ? FeedbackTone.warning
-            : FeedbackTone.success,
-      );
-    } catch (_) {
-      if (_syncCurrent) {
-        feedback.showSnackBar(
-          SnackBar(
-            content: Text(
-              l10n.get(
-                text ? 'syncAdoptPeerTextFailed' : 'syncAdoptPeerTrashFailed',
-              ),
-            ),
-          ),
-          tone: FeedbackTone.error,
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _applyingLanConflict = false);
-    }
   }
 
   Widget _buildConsoleLinkChip(String label, String url) {
@@ -959,14 +566,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
 
     return UnsavedEditorScope(
       dirty: _dirty,
       busy:
           _isSaving ||
           _isBackingUp ||
-          _isSyncing ||
+          _lanSyncBusy ||
           (!_ready && _loadError == null),
       onSave: _saveSettings,
       builder: (context, save, exit) => Scaffold(
@@ -1060,14 +666,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         semanticsLabel: l10n.get('loading'),
                       ),
                     if (_loadError != null)
-                      Semantics(
-                        container: true,
-                        liveRegion: true,
-                        child: Text(
-                          l10n.get(_loadError!),
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.error,
-                          ),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Semantics(
+                                container: true,
+                                liveRegion: true,
+                                child: Text(
+                                  l10n.get(_loadError!),
+                                  style: TextStyle(color: colors.error),
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              key: const ValueKey('settings-load-retry'),
+                              onPressed: _load,
+                              child: Text(l10n.get('retry')),
+                            ),
+                          ],
                         ),
                       ),
                     if (widget.area == null) ...[
@@ -1131,7 +749,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           leading: const Icon(Icons.swap_vert),
                           title: Text(l10n.get('aiProfilesEntry')),
                           trailing: const Icon(Icons.chevron_right),
-                          onTap: _isSaving ? null : _openModelProfiles,
+                          onTap: !_ready || _isSaving
+                              ? null
+                              : _openModelProfiles,
                         ),
                       ),
                     ],
@@ -1325,453 +945,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     if (widget.area == null) ...[const SizedBox(height: 20)],
                     if (widget.area == null ||
                         widget.area == SettingsArea.sync) ...[
-                      // Edge AI Inference Probe Card
-                      _section(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.radar_rounded,
-                                  size: 18,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    l10n.get('localEngineProbe'),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ),
-                                OutlinedButton.icon(
-                                  style: OutlinedButton.styleFrom(
-                                    visualDensity: VisualDensity.compact,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                  ),
-                                  onPressed: _isProbing
-                                      ? null
-                                      : _probeLocalEngines,
-                                  icon: _isProbing
-                                      ? const SizedBox(
-                                          width: 12,
-                                          height: 12,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 1.5,
-                                          ),
-                                        )
-                                      : const Icon(
-                                          Icons.refresh_rounded,
-                                          size: 14,
-                                        ),
-                                  label: Text(
-                                    _isProbing
-                                        ? l10n.get('probing')
-                                        : l10n.get('probeNow'),
-                                    style: const TextStyle(fontSize: 11),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              l10n.get('probeDesc'),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                            if (_probeResults != null) ...[
-                              const SizedBox(height: 10),
-                              for (final ep in _probeResults!)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 6),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.surfaceContainerLowest,
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: ep.isAvailable
-                                            ? Theme.of(context)
-                                                  .colorScheme
-                                                  .primary
-                                                  .withValues(alpha: 0.45)
-                                            : Theme.of(context)
-                                                  .colorScheme
-                                                  .outlineVariant,
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          ep.isAvailable
-                                              ? Icons.check_circle_rounded
-                                              : Icons.radio_button_unchecked,
-                                          size: 16,
-                                          color: ep.isAvailable
-                                              ? (isDark
-                                                    ? const Color(0xFF6DD58C)
-                                                    : const Color(0xFF146C2E))
-                                              : Theme.of(
-                                                  context,
-                                                ).colorScheme.onSurfaceVariant,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                '${ep.name} (Port ${ep.port})',
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              Text(
-                                                ep.isAvailable
-                                                    ? '${ep.recommendedModel} · ${ep.latencyMs}ms'
-                                                    : l10n.get(
-                                                        'portNotListening',
-                                                      ),
-                                                style: TextStyle(
-                                                  fontSize: 11,
-                                                  color: ep.isAvailable
-                                                      ? (isDark
-                                                            ? const Color(
-                                                                0xFF6DD58C,
-                                                              )
-                                                            : const Color(
-                                                                0xFF146C2E,
-                                                              ))
-                                                      : Theme.of(context)
-                                                            .colorScheme
-                                                            .onSurfaceVariant,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        if (ep.isAvailable)
-                                          FilledButton.tonal(
-                                            style: FilledButton.styleFrom(
-                                              minimumSize: const Size(64, 48),
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 12,
-                                                    vertical: 8,
-                                                  ),
-                                            ),
-                                            onPressed: () =>
-                                                _applyLocalEngine(ep),
-                                            child: Text(
-                                              l10n.get('applyToSettings'),
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ],
-                        ),
+                      LocalEngineProbeSection(
+                        enabled: _ready && !_isSaving,
+                        onApply: _applyLocalEngine,
                       ),
-                    ],
-                    if (widget.area == null ||
-                        widget.area == SettingsArea.sync) ...[
                       const SizedBox(height: 20),
-                    ],
-                    if (widget.area == null ||
-                        widget.area == SettingsArea.sync) ...[
-                      // Decentralized LAN Sync Card
-                      _section(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.wifi_tethering_rounded,
-                                  size: 18,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Semantics(
-                                    header: true,
-                                    child: Text(
-                                      l10n.get('lanSyncTitle'),
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Semantics(
-                                  label: l10n.get('lanSyncTitle'),
-                                  child: Switch(
-                                    key: const ValueKey('lan-sync-server'),
-                                    value: _isLanServerRunning,
-                                    onChanged: _lanServerChanging
-                                        ? null
-                                        : (_) => _toggleLanServer(),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Text(
-                              l10n.get('lanSyncDesc'),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                            if (_isLanServerRunning) ...[
-                              const SizedBox(height: 10),
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.surfaceContainer,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.outlineVariant,
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          Icons.router_rounded,
-                                          size: 14,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Expanded(
-                                          child: SelectableText(
-                                            '${l10n.get('lanServerRunning')}$_lanIp:$_lanPort',
-                                            style: const TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ),
-                                        IconButton(
-                                          key: const ValueKey(
-                                            'lan-sync-copy-address',
-                                          ),
-                                          tooltip: l10n.get('syncCopyAddress'),
-                                          iconSize: 18,
-                                          onPressed: () => _copyLanValue(
-                                            '$_lanIp:$_lanPort',
-                                            'syncCopiedAddress',
-                                          ),
-                                          icon: const Icon(Icons.copy_outlined),
-                                        ),
-                                      ],
-                                    ),
-                                    if (_lanPort != LanSyncService.defaultPort)
-                                      Text(l10n.get('syncAlternativePort')),
-                                    const SizedBox(height: 2),
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          Icons.vpn_key_rounded,
-                                          size: 14,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Expanded(
-                                          child: SelectableText(
-                                            '${l10n.get('syncPin')}$_lanPin',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.bold,
-                                              letterSpacing: 1.5,
-                                              color: Theme.of(
-                                                context,
-                                              ).colorScheme.primary,
-                                            ),
-                                          ),
-                                        ),
-                                        IconButton(
-                                          key: const ValueKey(
-                                            'lan-sync-copy-pin',
-                                          ),
-                                          tooltip: l10n.get('syncCopyPin'),
-                                          iconSize: 18,
-                                          onPressed: () => _copyLanValue(
-                                            _lanPin,
-                                            'syncCopiedPin',
-                                          ),
-                                          icon: const Icon(Icons.copy_outlined),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                            const Divider(height: 20),
-                            Semantics(
-                              header: true,
-                              child: Text(
-                                l10n.get('connectToDevice'),
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  flex: 3,
-                                  child: TextField(
-                                    controller: _targetIpController,
-                                    keyboardType: TextInputType.url,
-                                    autocorrect: false,
-                                    enableSuggestions: false,
-                                    style: const TextStyle(fontSize: 12),
-                                    decoration: InputDecoration(
-                                      labelText: l10n.get('enterTargetIp'),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      isDense: true,
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 8,
-                                          ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  flex: 2,
-                                  child: TextField(
-                                    controller: _targetPinController,
-                                    keyboardType: TextInputType.number,
-                                    textInputAction: TextInputAction.done,
-                                    onSubmitted: (_) => _syncWithTarget(),
-                                    style: const TextStyle(fontSize: 12),
-                                    decoration: InputDecoration(
-                                      labelText: l10n.get('enterPin'),
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      isDense: true,
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 8,
-                                          ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: FilledButton.icon(
-                                key: const ValueKey('lan-sync-now'),
-                                style: FilledButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 8,
-                                  ),
-                                ),
-                                onPressed: _isSyncing || _applyingLanConflict
-                                    ? null
-                                    : _syncWithTarget,
-                                icon: _isSyncing
-                                    ? SizedBox(
-                                        width: 12,
-                                        height: 12,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 1.5,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withValues(alpha: 0.55),
-                                        ),
-                                      )
-                                    : const Icon(Icons.sync_rounded, size: 14),
-                                label: Text(
-                                  _isSyncing
-                                      ? l10n.get('syncing')
-                                      : l10n.get('syncNow'),
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                              ),
-                            ),
-                            if (_lanConflicts.isNotEmpty)
-                              Semantics(
-                                container: true,
-                                liveRegion: true,
-                                child: TextButton.icon(
-                                  key: const ValueKey('lan-sync-conflicts'),
-                                  onPressed: _applyingLanConflict
-                                      ? null
-                                      : _showLanConflicts,
-                                  icon: const Icon(Icons.compare_arrows),
-                                  label: Text(
-                                    l10n
-                                        .get('syncConflictingTasks')
-                                        .replaceAll(
-                                          '{count}',
-                                          '${_lanConflicts.length}',
-                                        ),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
+                      LanSyncSection(
+                        generation: _generation,
+                        birth: _birth,
+                        onBusyChanged: (busy) {
+                          if (mounted && _lanSyncBusy != busy) {
+                            setState(() => _lanSyncBusy = busy);
+                          }
+                        },
                       ),
-                    ],
-                    if (widget.area == null ||
-                        widget.area == SettingsArea.sync) ...[
                       const SizedBox(height: 20),
                     ],
                     if (widget.area == null ||
@@ -1914,7 +1101,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               const SizedBox(height: 20),
                               TextField(
                                 key: const ValueKey('settings-api-key'),
+                                contextMenuBuilder: buildEditableTextMenu,
                                 controller: _apiKeyController,
+                                autocorrect: false,
+                                enableSuggestions: false,
                                 decoration: InputDecoration(
                                   labelText: l10n.get('apiKey'),
                                   border: OutlineInputBorder(
@@ -2047,6 +1237,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             ],
                           ),
                         ),
+                      ),
+                    ],
+                    if (widget.area == SettingsArea.ai) ...[
+                      const SizedBox(height: 20),
+                      LocalEngineProbeSection(
+                        enabled: _ready && !_isSaving,
+                        onApply: _applyLocalEngine,
                       ),
                     ],
                     if (widget.area == null ||

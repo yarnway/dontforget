@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
@@ -105,11 +106,11 @@ class LLMService {
               'response_format': {'type': 'json_object'},
             },
           );
-          final raw = response.data?['choices']?[0]?['message']?['content'];
-          if (raw is! String || raw.length > 65536) {
+          final raw = _extractChatContent(response.data);
+          if (raw.isEmpty || raw.length > 65536) {
             throw const FormatException('Invalid structured response');
           }
-          final value = jsonDecode(raw);
+          final value = jsonDecode(_extractJsonPayload(raw));
           if (value is! Map<String, dynamic>) {
             throw const FormatException('Invalid structured response');
           }
@@ -277,11 +278,83 @@ $truncatedContent
         if (attempts >= maxRetries || !_canRetry(e)) {
           rethrow;
         }
-        await Future.delayed(const Duration(seconds: 2));
+        await _retryDelay(const Duration(seconds: 2));
+        _checkActive();
       }
     }
     return [];
   }
+
+  Future<void> _retryDelay(Duration duration) {
+    final completer = Completer<void>();
+    final token = CancelToken();
+    _activeRoutes.add(token);
+    final timer = Timer(duration, () {
+      _activeRoutes.remove(token);
+      if (!completer.isCompleted) completer.complete();
+    });
+    token.whenCancel.then((_) {
+      timer.cancel();
+      _activeRoutes.remove(token);
+      if (!completer.isCompleted) completer.complete();
+    });
+    return completer.future;
+  }
+
+  static final _jsonBlockRegex = RegExp(
+    r'```(?:json)?\s*([\s\S]*?)\s*```',
+    caseSensitive: false,
+  );
+
+  /// Safely extracts chat message text from an OpenAI-compatible response,
+  /// throwing [FormatException] instead of TypeError/RangeError on malformed
+  /// HTTP 200 bodies (captive portals, empty choices, non-map payloads).
+  static String _extractChatContent(
+    dynamic data, {
+    bool allowReasoning = false,
+  }) {
+    if (data is! Map) {
+      throw const FormatException('Invalid chat completion response');
+    }
+    final choices = data['choices'];
+    if (choices is! List || choices.isEmpty) {
+      throw const FormatException('Missing choices in chat completion');
+    }
+    final first = choices[0];
+    if (first is! Map) {
+      throw const FormatException('Invalid choice entry in chat completion');
+    }
+    final message = first['message'];
+    if (message is! Map) {
+      throw const FormatException('Missing message in chat completion');
+    }
+    final rawContent = message['content'];
+    String content = rawContent is String ? rawContent.trim() : '';
+    if (content.isEmpty && allowReasoning) {
+      final reasoning = message['reasoning_content'];
+      if (reasoning is String) {
+        content = reasoning.trim();
+      }
+    }
+    return content;
+  }
+
+  static String _extractJsonPayload(String content) {
+    String jsonStr = content.trim();
+    final match = _jsonBlockRegex.firstMatch(jsonStr);
+    if (match != null) {
+      return match.group(1)!.trim();
+    }
+    final startIdx = jsonStr.indexOf('{');
+    final endIdx = jsonStr.lastIndexOf('}');
+    if (startIdx != -1 && endIdx != -1 && endIdx > startIdx) {
+      return jsonStr.substring(startIdx, endIdx + 1);
+    }
+    return jsonStr;
+  }
+
+  static String? _optionalString(dynamic value) =>
+      value is String ? value : null;
 
   Future<List<Reminder>> _sendExtractionRequest(AppSettings settings, List<Map<String, dynamic>> userMessages, {CancelToken? cancelToken, bool strict = false}) async {
     _checkActive();
@@ -359,7 +432,7 @@ Output strictly in valid JSON object matching this structure:
       ];
 
       final response = await _post(
-        '${settings.baseUrl.replaceFirst(RegExp(r'/+$'), '')}/chat/completions',
+        chatCompletionsUrl(settings.baseUrl),
         cancelToken: cancelToken,
         options: Options(
           followRedirects: false,
@@ -377,24 +450,8 @@ Output strictly in valid JSON object matching this structure:
         },
       );
 
-      final message = response.data['choices'][0]['message'];
-      String content = (message['content'] as String? ?? '').trim();
-      if (content.isEmpty && message['reasoning_content'] != null) {
-        content = (message['reasoning_content'] as String? ?? '').trim();
-      }
-      
-      String jsonStr = content.trim();
-      final jsonBlockRegex = RegExp(r'```(?:json)?\s*([\s\S]*?)\s*```', caseSensitive: false);
-      final match = jsonBlockRegex.firstMatch(jsonStr);
-      if (match != null) {
-        jsonStr = match.group(1)!.trim();
-      } else {
-        final startIdx = jsonStr.indexOf('{');
-        final endIdx = jsonStr.lastIndexOf('}');
-        if (startIdx != -1 && endIdx != -1 && endIdx > startIdx) {
-          jsonStr = jsonStr.substring(startIdx, endIdx + 1);
-        }
-      }
+      final content = _extractChatContent(response.data, allowReasoning: true);
+      final jsonStr = _extractJsonPayload(content);
 
       dynamic decoded;
       try {
@@ -427,7 +484,11 @@ Output strictly in valid JSON object matching this structure:
           (task['title'] as String).trim().isEmpty))) {
         throw const FormatException('Invalid task response');
       }
-      return tasksList.map((json) {
+      final validTaskMaps = tasksList.whereType<Map>().toList();
+      if (strict && validTaskMaps.length != tasksList.length) {
+        throw const FormatException('Invalid task response');
+      }
+      return validTaskMaps.map((json) {
         DateTime? parsedTriggerTime;
         DateTime? parsedEventTime;
 
@@ -447,9 +508,16 @@ Output strictly in valid JSON object matching this structure:
 
         int leadMinutes = 0;
         if (json['lead_time_minutes'] is int) {
-          leadMinutes = json['lead_time_minutes'];
+          leadMinutes = json['lead_time_minutes'] as int;
         } else if (json['lead_time_minutes'] != null) {
           leadMinutes = int.tryParse(json['lead_time_minutes'].toString()) ?? 0;
+        }
+        // Bound lead time to [0, 30 days] so hallucinated values never produce
+        // invalid timestamps.
+        if (leadMinutes < 0) {
+          leadMinutes = 0;
+        } else if (leadMinutes > 43200) {
+          leadMinutes = 43200;
         }
 
         // If event_time was provided and leadMinutes > 0, verify/ensure lead time is applied
@@ -461,23 +529,30 @@ Output strictly in valid JSON object matching this structure:
           }
         }
         
-        int quad = json['quadrant'] is int ? json['quadrant'] : 4;
+        final rawQuad = json['quadrant'] is int
+            ? json['quadrant'] as int
+            : int.tryParse(json['quadrant']?.toString() ?? '');
+        final int quad = (rawQuad != null && rawQuad >= 1 && rawQuad <= 4)
+            ? rawQuad
+            : 4;
 
         // A missing event time remains a memo. Model guesses are never an alarm.
         if (parsedEventTime == null) parsedTriggerTime = null;
 
         bool isRecur = false;
         if (json['is_recurring'] is bool) {
-          isRecur = json['is_recurring'];
+          isRecur = json['is_recurring'] as bool;
         } else if (json['is_recurring'] != null) {
           isRecur = json['is_recurring'].toString().toLowerCase() == 'true' || json['is_recurring'] == 1;
         }
 
-        String rule = json['recurrence_rule'] as String? ?? 'none';
-        String? desc = json['recurrence_desc'] as String? ?? json['recurrence_description'] as String?;
+        String rule = _optionalString(json['recurrence_rule']) ?? 'none';
+        String? desc = _optionalString(json['recurrence_desc']) ??
+            _optionalString(json['recurrence_description']);
 
-        String? leadDesc = json['lead_time_desc'] as String?;
-        String? summary = json['summary'] ?? json['description'];
+        String? leadDesc = _optionalString(json['lead_time_desc']);
+        String? summary = _optionalString(json['summary']) ??
+            _optionalString(json['description']);
         if (leadDesc != null && leadDesc.isNotEmpty) {
           if (summary == null || summary.isEmpty) {
             summary = leadDesc;
@@ -488,7 +563,7 @@ Output strictly in valid JSON object matching this structure:
 
         bool isEmotionFiltered = false;
         if (json['is_emotion_filtered'] is bool) {
-          isEmotionFiltered = json['is_emotion_filtered'];
+          isEmotionFiltered = json['is_emotion_filtered'] as bool;
         } else if (json['is_emotion_filtered'] != null) {
           isEmotionFiltered = json['is_emotion_filtered'].toString().toLowerCase() == 'true' || json['is_emotion_filtered'] == 1;
         }
@@ -505,13 +580,19 @@ Output strictly in valid JSON object matching this structure:
           if (issues != null && issues is! List)
             'capture_requires_review': true,
         };
+        final rawTitle = _optionalString(json['title']) ??
+            _optionalString(json['task']) ??
+            _optionalString(json['event']);
+        final taskTitle = (rawTitle != null && rawTitle.trim().isNotEmpty)
+            ? rawTitle
+            : '新事项';
         return Reminder(
           id: const Uuid().v4(),
-          taskTitle: json['title'] ?? json['task'] ?? json['event'] ?? '新事项',
+          taskTitle: taskTitle,
           taskSummary: summary,
           quadrantLevel: quad,
-          urgencyLevel: json['urgency'] ?? 'General',
-          importanceLevel: json['importance'] ?? 'General',
+          urgencyLevel: _optionalString(json['urgency']) ?? 'General',
+          importanceLevel: _optionalString(json['importance']) ?? 'General',
           triggerTime: parsedTriggerTime,
           timeOrigin: parsedTriggerTime == null
               ? ReminderTimeOrigin.unknown
@@ -655,7 +736,8 @@ Output strictly in valid JSON object matching this structure:
         data: formData,
       );
 
-      return response.data['text'] ?? '';
+      final text = response.data is Map ? _optionalString(response.data['text']) : null;
+      return text ?? '';
     } catch (e) {
       _checkActive();
       if (e is AudioTranscriptionUnsupportedException) rethrow;
@@ -753,8 +835,7 @@ and keep the report under 250 words (under 400 Chinese/Japanese characters).
           },
         );
 
-        final message = response.data['choices'][0]['message'];
-        final content = (message['content'] as String? ?? '').trim();
+        final content = _extractChatContent(response.data);
         // Reasoning-only or empty replies are not a completed user report.
         if (content.isNotEmpty) {
           return ReviewReport(content, source: ReviewReportSource.model);
@@ -849,9 +930,13 @@ ${pending > 0 ? '- 从未完成事项中选一项，明确下一步具体动作�
         final res = await testDio.get('http://127.0.0.1:11434/api/tags');
         _checkActive();
         sw.stop();
+        if (res.data is! Map || res.data['models'] is! List) {
+          throw const FormatException('Not an Ollama endpoint');
+        }
+        final models = res.data['models'] as List;
         String? modelName;
-        if (res.data != null && res.data['models'] is List && (res.data['models'] as List).isNotEmpty) {
-          modelName = res.data['models'][0]['name'];
+        if (models.isNotEmpty && models[0] is Map) {
+          modelName = _optionalString((models[0] as Map)['name']);
         }
         modelName ??= 'qwen2.5:latest';
         results.add(LocalInferenceEndpoint(
@@ -879,9 +964,13 @@ ${pending > 0 ? '- 从未完成事项中选一项，明确下一步具体动作�
         final res = await testDio.get('http://127.0.0.1:8000/v1/models');
         _checkActive();
         sw.stop();
+        if (res.data is! Map || res.data['data'] is! List) {
+          throw const FormatException('Not an OpenAI-compatible model endpoint');
+        }
+        final models = res.data['data'] as List;
         String? modelName;
-        if (res.data != null && res.data['data'] is List && (res.data['data'] as List).isNotEmpty) {
-          modelName = res.data['data'][0]['id'];
+        if (models.isNotEmpty && models[0] is Map) {
+          modelName = _optionalString((models[0] as Map)['id']);
         }
         modelName ??= 'default-model';
         results.add(LocalInferenceEndpoint(
@@ -909,9 +998,13 @@ ${pending > 0 ? '- 从未完成事项中选一项，明确下一步具体动作�
         final res = await testDio.get('http://127.0.0.1:8080/v1/models');
         _checkActive();
         sw.stop();
+        if (res.data is! Map || res.data['data'] is! List) {
+          throw const FormatException('Not an OpenAI-compatible model endpoint');
+        }
+        final models = res.data['data'] as List;
         String? modelName;
-        if (res.data != null && res.data['data'] is List && (res.data['data'] as List).isNotEmpty) {
-          modelName = res.data['data'][0]['id'];
+        if (models.isNotEmpty && models[0] is Map) {
+          modelName = _optionalString((models[0] as Map)['id']);
         }
         modelName ??= 'llama-3.2-1b';
         results.add(LocalInferenceEndpoint(
@@ -993,15 +1086,8 @@ Strictly return a JSON object with a "habits" array of strings:
           },
         );
 
-        final message = response.data['choices'][0]['message'];
-        String content = (message['content'] as String? ?? '').trim();
-        if (content.isEmpty && message['reasoning_content'] != null) {
-          content = (message['reasoning_content'] as String? ?? '').trim();
-        }
-
-        final jsonBlockRegex = RegExp(r'```(?:json)?\s*([\s\S]*?)\s*```', caseSensitive: false);
-        final match = jsonBlockRegex.firstMatch(content);
-        final jsonStr = match != null ? match.group(1)!.trim() : content;
+        final content = _extractChatContent(response.data, allowReasoning: true);
+        final jsonStr = _extractJsonPayload(content);
 
         final decoded = jsonDecode(jsonStr);
         if (decoded is Map && decoded['habits'] is List) {

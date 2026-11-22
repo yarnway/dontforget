@@ -236,49 +236,59 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
     }
   }
 
-  Future<String?> _askPassword() => showDialog<String>(
+  Future<String?> _askPassword({String? errorMessage}) => showDialog<String>(
     context: context,
-    builder: (_) => const _RestoreBackupPasswordDialog(),
+    builder: (_) => _RestoreBackupPasswordDialog(errorMessage: errorMessage),
   );
   Future<void> _restore() async {
     if (!_current || _busy) return;
     _start();
     String? password;
     File? preparedSnapshot;
+    var openedPreview = false;
     try {
       final chosen = await FilePicker.pickFile(dialogTitle: t('import'));
       if (!_current || chosen?.path == null) return;
       final source = File(chosen!.path!),
           service = ref.read(streamingBackupServiceProvider);
-      if (await service.needsPassword(source)) {
-        if (!_current) return;
-        password = await _askPassword();
-        if (!_current || password == null) return;
-      }
-      _control!.check();
-      final preview = await service.inspect(
-        source,
-        password: password,
-        control: _control,
-        isCurrent: () => _current,
-        onProgress: _updateProgress,
-      );
+      final needsPassword = await service.needsPassword(source);
       if (!_current) return;
       final root = await ref.read(backupMediaRootProvider)();
       if (!_current) return;
-      final snapshot = await service.prepareRestore(
-        source,
-        root,
-        expectedDigest: preview.digest,
-        password: password,
-        control: _control,
-        isCurrent: () => _current,
-        onProgress: _updateProgress,
-      );
+      String? passwordError;
+      late File snapshot;
+      while (true) {
+        if (needsPassword) {
+          password = await _askPassword(errorMessage: passwordError);
+          if (!_current || password == null) return;
+        }
+        _control!.check();
+        try {
+          // Single-pass prepareRestore authenticates every AES-GCM frame,
+          // checks every attachment SHA-256, and runs BackupInspector once
+          // without repeating the 600,000-iteration PBKDF2 key derivation.
+          snapshot = await service.prepareRestore(
+            source,
+            root,
+            password: password,
+            control: _control,
+            isCurrent: () => _current,
+            onProgress: _updateProgress,
+          );
+          break;
+        } on BackupPasswordException {
+          if (!needsPassword || !_current) rethrow;
+          passwordError = t('wrongPassword');
+          if (_current) {
+            setState(() => _progress = null);
+          }
+        }
+      }
       preparedSnapshot = snapshot;
       if (!mounted || !_current) return;
       // Password is no longer needed once the private, verified restore copy exists.
       password = null;
+      openedPreview = true;
       await Navigator.of(context).push(
         MaterialPageRoute<void>(
           builder: (_) => BackupPreviewScreen(
@@ -293,6 +303,17 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
     } finally {
       if (preparedSnapshot != null) {
         OwnedMaterialActivity.release(preparedSnapshot);
+        // If this panel was disposed/superseded before opening preview, remove
+        // the freshly extracted import-* directory immediately instead of
+        // stranding up to 2 GiB on disk for the 24h cleanup retention window.
+        if (!openedPreview) {
+          try {
+            final dir = preparedSnapshot.parent;
+            if (await dir.exists()) {
+              await dir.delete(recursive: true);
+            }
+          } catch (_) {}
+        }
       }
       password = null;
       if (_current) {
@@ -562,6 +583,7 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
               obscureText: _obscurePassword,
               autocorrect: false,
               enableSuggestions: false,
+              textInputAction: TextInputAction.next,
               enabled: !_busy,
               maxLength: 1024,
               decoration: InputDecoration(
@@ -589,6 +611,8 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
               obscureText: _obscureRepeat,
               autocorrect: false,
               enableSuggestions: false,
+              textInputAction: TextInputAction.done,
+              onSubmitted: _busy ? null : (_) => _export(),
               enabled: !_busy,
               maxLength: 1024,
               decoration: InputDecoration(
@@ -762,7 +786,8 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
 }
 
 class _RestoreBackupPasswordDialog extends StatefulWidget {
-  const _RestoreBackupPasswordDialog();
+  const _RestoreBackupPasswordDialog({this.errorMessage});
+  final String? errorMessage;
   @override
   State<_RestoreBackupPasswordDialog> createState() =>
       _RestoreBackupPasswordDialogState();
@@ -787,12 +812,14 @@ class _RestoreBackupPasswordDialogState
       content: TextField(
         key: const ValueKey('restore-password'),
         controller: _controller,
+        autofocus: true,
         obscureText: _obscure,
         autocorrect: false,
         enableSuggestions: false,
         maxLength: 1024,
         decoration: InputDecoration(
           labelText: t('password'),
+          errorText: widget.errorMessage,
           suffixIcon: IconButton(
             key: const ValueKey('restore-password-toggle'),
             tooltip: t(_obscure ? 'showPassword' : 'hidePassword'),
