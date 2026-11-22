@@ -37,8 +37,9 @@ DontForget/
 │   │   ├── database_access.dart
 │   │   ├── database_helper.dart
 │   │   └── database_location_migrator.dart
-│   ├── l10n/                   # 模块化三语本地化字典 (中/英/日)
+│   ├── l10n/                   # 模块化三语本地化字典 (中/英/日) 与三语框架代理
 │   │   ├── app_localizations.dart
+│   │   ├── framework_localizations.dart
 │   │   └── *_strings.dart
 │   ├── models/                 # 数据领域模型 (Reminder, MediaRecord, AppSettings 等)
 │   ├── providers/              # Riverpod 状态与工作区控制器
@@ -47,7 +48,7 @@ DontForget/
 │   ├── services/               # 业务逻辑服务层
 │   │   ├── ai/                 # AI 路由与调度辅助
 │   │   ├── content/            # 媒体引用保留、外部备份引用与清理
-│   │   ├── recovery/           # 存储启动检查、恢复规划与运行门禁
+│   │   ├── recovery/           # 存储启动检查、恢复规划、BootstrapSnapshot 与运行门禁
 │   │   ├── security/           # 系统安全凭据仓库
 │   │   ├── lan_sync_service.dart
 │   │   ├── llm_service.dart
@@ -56,23 +57,27 @@ DontForget/
 │   │   └── windows_toast.dart
 │   ├── ui/                     # 界面展现层
 │   │   ├── formatters/         # 共享字节大小与时间格式化器
-│   │   ├── screens/            # 页面 (HomeScreen, TaskDetailScreen, SettingsScreen 等)
-│   │   ├── theme/              # AppTheme Material 3 令牌与对比度规范
+│   │   ├── screens/            # 页面 (HomeScreen, TaskDetailScreen, PreferencesScreen, SettingsScreen 等)
+│   │   ├── theme/              # AppTheme Material 3 令牌与 WCAG AA 象限配色规范
 │   │   └── widgets/            # 组件 (QuadrantView, TaskBoard, TaskCard, InputBottomBar,
-│   │                           #       LanSyncConflictsDialog, TaskDetailsDialog 兼容入口等)
+│   │                           #       VoiceCaptureFeedback, InlineFeedback, LanSyncConflictsDialog 等)
 │   └── main.dart               # GUI 与 CLI 统一启动入口
 ├── linux/                      # Linux GTK 原生工程
 ├── macos/                      # macOS Cocoa 原生工程
-├── scripts/                    # 构建、版本门禁、校验与回归脚本库
+├── scripts/                    # 构建、版本门禁、瘦身裁剪、校验与回归脚本库
 │   ├── check_flutter_version.py
 │   ├── package_artifacts.py
 │   ├── package_windows.ps1
+│   ├── prune_windows_bundle.py # PE 导入表驱动的 Windows CRT 与冗余资产裁剪
 │   ├── report_windows_skipped_tests.py
 │   ├── verify_artifacts.py
-│   └── tests/                  # Python 与原生脚本测试套件
-├── test/                       # Flutter 单元、组件与端到端测试集
+│   └── tests/                  # Python、无障碍静态门禁 (test_ui_accessibility_lint.py)
+│                               # 与包体回归测试 (test_bundle_size_optimizations.py)
+├── test/                       # Flutter 单元、组件、性能与端到端测试集
 │   ├── database_test.dart
 │   ├── l10n_integrity_test.dart
+│   ├── performance_optimizations_test.dart
+│   ├── stability_and_polish_v1_8_22_test.dart
 │   └── widget_test.dart
 ├── windows/                    # Windows 桌面平台原生 C++ 工程
 ├── windows_installer/          # Inno Setup 脚本与安装器资源
@@ -136,15 +141,17 @@ DontForget 使用 `flutter_riverpod` 构建单向数据流：
   - 通过 `ref.watch(provider)` 获取响应式数据，通过 `ref.read(provider.notifier)` 触发业务操作。
 
 ### 4.2 本地数据层 (SQLite FFI)
-- 桌面平台通过 `sqflite_common_ffi` 调用原生 C 动态库 `sqlite3.dll`。
+- 桌面平台通过 `sqflite_common_ffi` 调用原生 C 动态库 `sqlite3.dll`（Android／iOS 直接使用系统原生 SQLite，不再捆绑桌面 FFI `libsqlite3.so`）。
 - 当前生产数据库（Schema 17）由 `lib/data/database_helper.dart` 与 `lib/services/recovery/storage_bootstrap.dart` 统一初始化，Windows 默认目录位于 `%APPDATA%\com.yarnway.dontforget\DontForget\databases\dont_forget_v3.db`。
+- **回滚日志与 Schema 17 索引不变量**：主库强制保持经典回滚日志模式（文件头第 18–19 字节恒为 `[1, 1]`，**禁止启用 WAL**）且不改动既有 Schema 17 表结构与索引布局，以保证单文件加密备份、崩溃回滚与跨版本兼容性；`onOpen` 仅设置纯会话级 `cache_size = -8000`、`temp_store = MEMORY` 与 `busy_timeout = 5000`。
 - 早期遗留目录（如 `%LOCALAPPDATA%\DontForget\databases` 或历史 `app_database.db`）通过 `DatabaseLocationMigrator` 安全检测与隔离迁移，并搭配运行目录租约锁防止多进程同时写入损坏数据。
-- 启动自动校验并创建数据表索引，提高按分类与时间排序检索的效率。
+- 启动阶段通过 `BootstrapSnapshot` 单次加载核心状态，避免重复 `Settings` 与任务表扫描。
 
 ### 4.3 多语言国际化机制
 - 核心总表与合并解析位于 `lib/l10n/app_localizations.dart`，各业务域文案拆分在 `lib/l10n/*_strings.dart`（支持 `zh`、`en`、`ja`，并向英文回退）。
+- `lib/l10n/framework_localizations.dart` 提供仅覆盖 `zh` / `en` / `ja` 的 Material／Cupertino 本地化代理与精简日期符号，在完整保留三语日期／时间选择器的同时剔除 116 套未用语言表以缩减全平台安装包体积。
 - 在任意 Widget 内使用 `AppLocalizations.of(context).get('key')` 或对应域辅助函数（如 `aboutText`、`sharedTextLabel`、`protectionText`）取到翻译。
-- `test/l10n_integrity_test.dart` 自动守卫核心与合并词表的 `en / zh / ja` 键集合及 `{placeholder}` 100% 对齐。
+- `test/l10n_integrity_test.dart` 自动守卫核心与合并词表的 `en / zh / ja` 键集合及 `{placeholder}` 100% 对齐；`scripts/tests/test_ui_accessibility_lint.py` 自动守卫 `lib/ui/` 控件的读屏无障碍语义。
 
 ---
 
@@ -159,7 +166,7 @@ DontForget 使用 `flutter_riverpod` 构建单向数据流：
 
 ## Android／Windows／Linux／iOS 发布说明
 
-主线由 `.github/workflows/build_and_release.yml` 执行质量检查与五平台构建校验（包含 Linux、Windows 质量门禁及 Windows / Linux / Android / macOS / iOS 构建）。明确发布时，手动运行 `.github/workflows/publish_release.yml`（详见 [Release_Policy.md](Release_Policy.md)），校验完整构建摘要、Android 发行证书及平台产物后发布并读回核验。不要把旧源码 run ID 用于新提交，也不得修改已有 Release 标签。
+主线由 `.github/workflows/build_and_release.yml` 执行质量检查与五平台构建校验（包含 Linux、Windows 质量门禁及 Windows / Linux / Android / macOS / iOS 构建）。明确发布时，手动运行 `.github/workflows/publish_platform_release.yml`（详见 [Release_Policy.md](Release_Policy.md)），校验完整构建摘要、Android 发行证书及平台产物后发布并读回核验。不要把旧源码 run ID 用于新提交，也不得修改已有 Release 标签。
 
 Android发行材料由 `DONTFORGET_ANDROID_KEYSTORE_BASE64`、`DONTFORGET_ANDROID_STORE_PASSWORD`、`DONTFORGET_ANDROID_KEY_ALIAS`、`DONTFORGET_ANDROID_KEY_PASSWORD`、`DONTFORGET_ANDROID_CERT_SHA256` 五项仓库Secrets供CI使用，值不写入源码、参数或日志。公开证书固定在 `android/release-certificate.sha256`；更换证书会影响已有安装，普通版本更新不可重新生成签名身份。
 

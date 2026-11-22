@@ -6,7 +6,7 @@
 
 本地优先的备忘与任务工作台，让文字、录音、附件和学习计划各有归处。
 
-[![Release](https://img.shields.io/badge/release-v1.8.18-007F83)](https://github.com/yarnway/dontforget/releases/tag/v1.8.18)
+[![Release](https://img.shields.io/badge/release-v1.8.22-007F83)](https://github.com/yarnway/dontforget/releases/tag/v1.8.22)
 [![Build](https://github.com/yarnway/dontforget/actions/workflows/build_and_release.yml/badge.svg?branch=main)](https://github.com/yarnway/dontforget/actions/workflows/build_and_release.yml)
 [![Flutter](https://img.shields.io/badge/Flutter-3.44.9-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Platforms](https://img.shields.io/badge/Windows%20%C2%B7%20Android%20%C2%B7%20Linux%20%C2%B7%20iOS-334155)](#下载)
@@ -24,34 +24,34 @@
 
 ## 下载
 
-**当前稳定版：v1.8.18 · build89**　[发行说明与校验文件](https://github.com/yarnway/dontforget/releases/tag/v1.8.18)
+**当前稳定版：v1.8.22 · build93**　[发行说明与校验文件](https://github.com/yarnway/dontforget/releases/tag/v1.8.22)
 
 | 平台 | 下载 | 运行基线 |
 | :--- | :--- | :--- |
-| Windows x64 | [安装版 EXE](https://github.com/yarnway/dontforget/releases/download/v1.8.18/DontForget_Setup_v1.8.18.exe) · [便携版 ZIP](https://github.com/yarnway/dontforget/releases/download/v1.8.18/DontForget_Windows_Portable_v1.8.18.zip) | Windows 10 / 11 |
-| Android | [ARM64 APK（推荐）](https://github.com/yarnway/dontforget/releases/download/v1.8.18/DontForget_Android_arm64_v1.8.18.apk) · [通用 APK](https://github.com/yarnway/dontforget/releases/download/v1.8.18/DontForget_Android_v1.8.18.apk) | Android 7.0 / API 24 起 |
-| Linux x64 | [归档 TAR.GZ](https://github.com/yarnway/dontforget/releases/download/v1.8.18/DontForget_Linux_x64_v1.8.18.tar.gz) | Ubuntu 24.04 基线 |
-| iOS | [未签名 IPA](https://github.com/yarnway/dontforget/releases/download/v1.8.18/DontForget_iOS_unsigned_v1.8.18.ipa) · [个人重签安装说明](docs/iOS_Sideload_Windows.md) | iOS 15+；需 AltStore 重签 |
+| Windows x64 | [安装版 EXE](https://github.com/yarnway/dontforget/releases/download/v1.8.22/DontForget_Setup_v1.8.22.exe) · [便携版 ZIP](https://github.com/yarnway/dontforget/releases/download/v1.8.22/DontForget_Windows_Portable_v1.8.22.zip) | Windows 10 / 11 |
+| Android | [ARM64 APK（推荐，9.84 MiB）](https://github.com/yarnway/dontforget/releases/download/v1.8.22/DontForget_Android_arm64_v1.8.22.apk) · [通用 APK](https://github.com/yarnway/dontforget/releases/download/v1.8.22/DontForget_Android_v1.8.22.apk) | Android 7.0 / API 24 起 |
+| Linux x64 | [归档 TAR.GZ](https://github.com/yarnway/dontforget/releases/download/v1.8.22/DontForget_Linux_x64_v1.8.22.tar.gz) | Ubuntu 24.04 基线 |
+| iOS | [未签名 IPA（9.75 MiB）](https://github.com/yarnway/dontforget/releases/download/v1.8.22/DontForget_iOS_unsigned_v1.8.22.ipa) · [个人重签安装说明](docs/iOS_Sideload_Windows.md) | iOS 15+；需 AltStore 重签 |
 
-常见64位安卓手机推荐 ARM64 APK，较同版通用包缩小约65%；其他架构使用通用包。Android [AAB](https://github.com/yarnway/dontforget/releases/download/v1.8.18/DontForget_Android_v1.8.18.aab) 供分发使用，不能直接安装。iOS下载包需自己的Apple账号通过AltStore个人重签，免费账号通常每7天续期，非App Store／TestFlight分发。macOS公证、商业签名及商店分发按需推进。Windows 当前未做 Authenticode 签名；Linux 运行依赖见[安装指南](docs/Packaging_and_Deployment.md)。
+常见 64 位安卓手机推荐 ARM64 APK（`9.84 MiB`，较同版通用包缩小约 64%）；其他架构使用通用包。Android [AAB](https://github.com/yarnway/dontforget/releases/download/v1.8.22/DontForget_Android_v1.8.22.aab) 供分发使用，不能直接安装。iOS 下载包需自己的 Apple 账号通过 AltStore 个人重签，免费账号通常每 7 天续期，非 App Store／TestFlight 分发。macOS 公证、商业签名及商店分发按需推进。Windows 当前未做 Authenticode 签名；Linux 运行依赖见[安装指南](docs/Packaging_and_Deployment.md)。
 
-下载后可用 Release 中的 `SHA256SUMS.txt` 核对文件。便携版指免安装启动，业务数据仍存放在平台应用目录；迁移数据请使用备份功能。[已验范围与已知限制](docs/Release_1.8.18_89_2026-11-20.md)单独记录。
+下载后可用 Release 中的 `SHA256SUMS.txt` 核对文件。便携版指免安装启动，业务数据仍存放在平台应用目录；迁移数据请使用备份功能。[已验范围与已知限制](docs/Release_1.8.22_93_2026-11-22.md)单独记录。
 
 ## 功能
 
 | 记录与整理 | 提醒与跟进 | 学习与复盘 |
 | :--- | :--- | :--- |
 | 文字、原声录音、图片和文件 | 紧急提醒、重点跟进、常规待办、备忘便签 | 词汇学习计划与批次管理 |
-| 草稿保留、关键词搜索与状态筛选 | 提醒、延后、错过提醒与回收站 | 多选改期、暂停与七天学习预测 |
-| 可编辑的 AI 提取建议，确认后应用 | 子任务、归档与关联事项 | 专注计时、统计复盘与 CSV 导出 |
+| 草稿保留、关键词搜索与带计数状态筛选 | 提醒、逾期一键延后、自定义延后与回收站 | 多选改期、暂停与七天学习预测 |
+| 可编辑的 AI 提取建议，确认后应用 | 子任务清单进度条、归档与关联事项 | 专注模式、统计复盘与 CSV 导出 |
 
-- **先查看，再修改**：点击事项阅读内容、一键复制正文或清单；需要调整时点“修改”，任务卡也支持快捷调整分类与延后提醒。
-- **跨设备局域网同步与多媒体分享**：同网段设备通过地址／配对码直连双向同步任务与附件，支持双端对比并采用回收站或正文变更；Android 系统分享面板支持接收文字、链接、图片和文件并安全预览（最大 128 KiB UTF‑8 文本预览、体积展示与一键复制）。
-- **轻量录入与桌面 CLI**：Windows 默认紧凑输入，内容变长后展开；支持键盘快捷键（含 `Ctrl/Cmd+F` 搜索、`Ctrl/Cmd+K` 命令面板、`U`/`,` 常用入口）、中文输入、三种外观（Material 3 双主题对比度优化）及中英日文界面；Windows 命令行另提供 `--add` / `--list` / `--help` 快速录入与查询。
+- **先查看，再修改**：点击事项进入只读详情（支持 `Esc` 返回、一键复制正文或清单、倒计时与清单进度条）；需要调整时点“修改”，桌面宽卡还支持悬停快捷操作、逾期一键延后与自定义延后时间。
+- **跨设备局域网同步与多媒体分享**：同网段设备通过地址／配对码直连双向同步任务与附件，支持双端对比并采用回收站或正文变更；Android 系统分享面板采用后台线程拷贝接收文字、链接、图片和文件，支持最大 128 KiB UTF‑8 文本安全预览与一键复制。
+- **轻量录入、读屏无障碍与桌面 CLI**：Windows 默认紧凑输入，支持可交互时间胶囊与托盘隐藏态运行中优雅覆盖升级；开启 TalkBack／VoiceOver 后提供单击直达三按钮无障碍录音浮层（48dp 触控热区、WCAG AA/AAA 配色与对比度）；支持中英日三语、键盘快捷键（`N`/`Ctrl+N` 聚焦录入、`1`–`4` 切换工作区视图、`Ctrl/Cmd+F` 搜索、`Ctrl/Cmd+K` 命令面板、`U`/`,` 常用入口）及 Windows CLI（`--add` / `--list` / `--help`）。
 - **流式转写**：配置腾讯云后，录音时提前识别中英文；上滑预览、松手编辑，继续右滑可选择松手发送。转写框随文字展开，可发送原语音或文字，关闭保留草稿。
-- **按需接入 AI**：自行配置模型服务或本地模型，支持提取模型排序与失败切换。未配置模型也能保存文字、附件和原声。
+- **按需接入 AI**：自行配置模型服务或本地模型（设置页提供 API 密钥显隐切换与本地／云端状态徽章），支持提取模型排序与失败切换。未配置模型也能保存文字、附件和原声。
 - **词条档案**：检索词条、释义与例句，查看已有复习记录。
-- **带附件备份**：自定义名称、密码加密与自动预检；按需查看最近20次导出记录。
+- **带附件备份**：自定义名称、密码加密与自动预检；按需查看最近 20 次导出记录。
 - **关于与更新**：在设置查看实际版本／构建号，手动检查公开新版并打开对应平台下载；网络失败可重试。
 - **旧备份引用保护**：只读预检并明确登记旧备份附件引用，源文件移走后仍保护原件；移除登记不删除备份或附件。
 
@@ -98,7 +98,7 @@
 3. **整理跟进**：按状态筛选、搜索关键词，或在事项菜单中完成、归档及移至回收站。
 4. **开始学习**：从“更多功能 → 词汇学习计划”选择目标与学习量，检查生成内容后创建，在复习中反馈掌握情况。
 
-桌面快捷键：`Ctrl/Cmd + F` 搜索，`Ctrl/Cmd + K` 更多功能，`Shift + Enter` 换行。发送方式可在设置中调整。[完整使用指南](docs/User_Guide.md)
+桌面快捷键：`N` / `Ctrl+N` 聚焦录入，`1`–`4` 切换工作区视图，`Ctrl/Cmd + F` 搜索，`Ctrl/Cmd + K` 更多功能，`Esc` 返回或关闭面板，`Shift + Enter` 换行。发送方式可在设置中调整。[完整使用指南](docs/User_Guide.md)
 
 ## 数据与隐私
 
@@ -128,5 +128,5 @@ python -m unittest discover -s scripts/tests -v
 | 使用 | 开发 | 进度与质量 |
 | :--- | :--- | :--- |
 | [用户指南](docs/User_Guide.md) | [开发指南](docs/Developer_Guide.md) | [变更日志](docs/Changelog.md) |
-| [功能实现索引](docs/Planning_Implementation.md) | [架构设计](docs/Architecture_Design.md) | [v1.8.18 验收记录](docs/Release_1.8.18_89_2026-11-20.md) |
+| [功能实现索引](docs/Planning_Implementation.md) | [架构设计](docs/Architecture_Design.md) | [v1.8.22 验收记录](docs/Release_1.8.22_93_2026-11-22.md) |
 | [记录与提醒设计](docs/Recording_Reminders_Phases.md) | [打包与部署](docs/Packaging_and_Deployment.md) | [剩余阶段](docs/Next_Steps_2026-11-02.md) · [发布策略](docs/Release_Policy.md) |

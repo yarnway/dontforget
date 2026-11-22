@@ -1,0 +1,75 @@
+{
+  "timestamp_utc": "2026-11-22T11:15:46.626995+00:00",
+  "installed_exe": "C:\\Users\\Wayne\\AppData\\Local\\Programs\\DontForget\\dont_forget.exe",
+  "installed_pe_version": "1.8.22+93",
+  "curly_quote_toast_prod_aumid_disabled": {
+    "aumid": "DontForget",
+    "returncode": 2,
+    "stderr": "Windows toast blocked: DisabledForApplication",
+    "passed": true
+  },
+  "curly_quote_toast_temp_aumid_delivered": {
+    "aumid": "DontForget.ToastVerify20261122",
+    "returncode": 0,
+    "stderr": "",
+    "history_after_show": 1,
+    "history_after_remove": 0,
+    "temp_aumid_cleaned": true,
+    "passed": true
+  },
+  "cold_start_buffered_upgrade_exit": {
+    "pid": 36044,
+    "signaled_immediately_on_event_create": true,
+    "signal_delay_ms": 307.33,
+    "total_exit_ms": 557.0,
+    "exit_code": 0,
+    "remaining_win_procs": [],
+    "passed": true
+  },
+  "storage_invariance": {
+    "before": {
+      "journal_header_bytes": [
+        1,
+        1
+      ],
+      "schema_version": 17,
+      "integrity_check": "ok",
+      "counts": {
+        "Reminders": 7,
+        "MediaRecords": 0,
+        "Settings": 1
+      },
+      "digests": {
+        "Reminders": "d3c8cb62bd7175b668919d7834018954c56607c1d150ca41d6f647fe883e8fe1",
+        "MediaRecords": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "Settings": "3b39cca77059614f540aa8dcb366ae9d852b1e456ff43e0a7e678d0b5e48111c"
+      },
+      "secure_storage_bytes": 742,
+      "secure_storage_sha256": "a6aa809fda900a2baf9a8c077cb3c30dd9bdbee4ee98f33bfe69aed9c7a94108"
+    },
+    "after": {
+      "journal_header_bytes": [
+        1,
+        1
+      ],
+      "schema_version": 17,
+      "integrity_check": "ok",
+      "counts": {
+        "Reminders": 7,
+        "MediaRecords": 0,
+        "Settings": 1
+      },
+      "digests": {
+        "Reminders": "d3c8cb62bd7175b668919d7834018954c56607c1d150ca41d6f647fe883e8fe1",
+        "MediaRecords": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+        "Settings": "3b39cca77059614f540aa8dcb366ae9d852b1e456ff43e0a7e678d0b5e48111c"
+      },
+      "secure_storage_bytes": 742,
+      "secure_storage_sha256": "a6aa809fda900a2baf9a8c077cb3c30dd9bdbee4ee98f33bfe69aed9c7a94108"
+    },
+    "counts_equal": true,
+    "digests_equal": true,
+    "journal_header_is_1_1": true,
+    "secure_storage_sha256_equal": true
+  }
+}
