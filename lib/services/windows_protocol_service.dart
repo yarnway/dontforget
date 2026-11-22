@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../models/notification_payload.dart';
@@ -162,6 +164,9 @@ class WindowsProtocolService {
         }
       }
     });
+    unawaited(
+      channel.invokeMethod<void>('initialize').catchError((Object _) {}),
+    );
   }
 
   /// Cleans up method channel handlers.

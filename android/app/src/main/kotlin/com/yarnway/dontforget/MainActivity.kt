@@ -2,10 +2,14 @@ package com.yarnway.dontforget
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.widget.Toast
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 class MainActivity : FlutterActivity() {
     private var speechChannel: MethodChannel? = null
@@ -17,6 +21,8 @@ class MainActivity : FlutterActivity() {
     private var shareBridge: SharedTextBridge? = null
     private var shareReady = false
     private var currentShareId: String? = null
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val shareExecutor: ExecutorService = Executors.newSingleThreadExecutor()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         currentShareId = savedInstanceState?.getString("dontforget.share.id")
@@ -113,20 +119,64 @@ class MainActivity : FlutterActivity() {
         super.cleanUpFlutterEngine(flutterEngine)
     }
 
+    override fun onDestroy() {
+        shareExecutor.shutdown()
+        super.onDestroy()
+    }
+
     private fun receiveSharedText(incoming: Intent?, restoredId: String? = null) {
+        if (incoming?.action != Intent.ACTION_SEND ||
+            incoming.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return
+        val bridge = shareBridge ?: return
+        val hasStream = incoming.hasExtra(Intent.EXTRA_STREAM) ||
+            (incoming.clipData?.itemCount ?: 0) > 0 ||
+            (incoming.data != null && incoming.type != null &&
+                incoming.type !in setOf("text/plain", "text/html"))
+        if (!hasStream) {
+            handleShareReceiveResult(incoming, restoredId, bridge)
+            return
+        }
+        // Offload up-to-32 MB ContentProvider stream copying off the UI thread to prevent ANRs.
+        val copy = Intent(incoming)
+        SharedTextBridge.clearIntent(incoming)
+        shareExecutor.execute {
+            try {
+                val id = bridge.receive(copy, restoredId) ?: return@execute
+                mainHandler.post {
+                    if (isDestroyed) return@post
+                    currentShareId = id
+                    if (shareReady) shareChannel?.invokeMethod("onPendingShares", null)
+                }
+            } catch (_: Exception) {
+                mainHandler.post {
+                    if (!isDestroyed) showShareErrorToast()
+                }
+            }
+        }
+    }
+
+    private fun handleShareReceiveResult(
+        incoming: Intent,
+        restoredId: String?,
+        bridge: SharedTextBridge,
+    ) {
         try {
-            val id = shareBridge?.receive(incoming, restoredId) ?: return
+            val id = bridge.receive(incoming, restoredId) ?: return
             currentShareId = id
             if (shareReady) shareChannel?.invokeMethod("onPendingShares", null)
         } catch (_: Exception) {
-            val language = resources.configuration.locales[0].language
-            val message = when (language) {
-                "zh" -> "无法接收分享，请检查文字长度或先处理分享草稿后重试。"
-                "ja" -> "共有を受信できません。文字数と共有下書きを確認して再試行してください。"
-                else -> "Could not receive this share. Check its length or handle pending shared drafts, then retry."
-            }
-            Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+            showShareErrorToast()
         }
+    }
+
+    private fun showShareErrorToast() {
+        val language = resources.configuration.locales[0].language
+        val message = when (language) {
+            "zh" -> "无法接收分享，请检查文字长度或先处理分享草稿后重试。"
+            "ja" -> "共有を受信できません。文字数と共有下書きを確認して再試行してください。"
+            else -> "Could not receive this share. Check its length or handle pending shared drafts, then retry."
+        }
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
     private fun protocolUrl(intent: Intent?): String? {

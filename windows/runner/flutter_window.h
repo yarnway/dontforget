@@ -7,6 +7,8 @@
 #include <flutter/standard_method_codec.h>
 
 #include <memory>
+#include <optional>
+#include <string>
 
 #include "win32_window.h"
 #include "global_capture_hotkey.h"
@@ -49,6 +51,12 @@ class FlutterWindow : public Win32Window {
   // Manager runs so tray-hidden GUI windows can still shut down gracefully.
   HANDLE upgrade_exit_event_ = nullptr;
   HANDLE upgrade_exit_wait_ = nullptr;
+
+  // Buffers early WM_COPYDATA / upgrade-exit signals until Dart registers its
+  // protocol channel handler and sends the "initialize" handshake.
+  bool protocol_ready_ = false;
+  std::optional<std::string> pending_protocol_url_;
+  bool pending_upgrade_exit_ = false;
 };
 
 #endif  // RUNNER_FLUTTER_WINDOW_H_

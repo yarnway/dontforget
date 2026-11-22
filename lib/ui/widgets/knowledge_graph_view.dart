@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import '../../services/bidirectional_link_service.dart';
+import '../theme/app_theme.dart';
 
 /// 知识图谱画布组件，使用稳定布局，支持节点拖拽与高亮交互
 class KnowledgeGraphView extends StatefulWidget {
@@ -27,6 +28,24 @@ class _KnowledgeGraphViewState extends State<KnowledgeGraphView> {
   GraphNode? _draggedNode;
   Offset? _lastDragPos;
   Size _canvasSize = Size.zero;
+  int _dragRevision = 0;
+  final Map<String, TextPainter> _painterCache = {};
+  Brightness? _cachedBrightness;
+  KnowledgeGraphData? _cachedGraph;
+  String? _cachedSelectedId;
+
+  void _clearPainterCache() {
+    for (final painter in _painterCache.values) {
+      painter.dispose();
+    }
+    _painterCache.clear();
+  }
+
+  @override
+  void dispose() {
+    _clearPainterCache();
+    super.dispose();
+  }
 
   @override
   void didUpdateWidget(KnowledgeGraphView oldWidget) {
@@ -34,6 +53,7 @@ class _KnowledgeGraphViewState extends State<KnowledgeGraphView> {
     if (!identical(oldWidget.graphData, widget.graphData)) {
       _draggedNode = null;
       _lastDragPos = null;
+      _clearPainterCache();
     }
   }
 
@@ -51,7 +71,16 @@ class _KnowledgeGraphViewState extends State<KnowledgeGraphView> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brightness = Theme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
+    if (_cachedBrightness != brightness ||
+        !identical(_cachedGraph, widget.graphData) ||
+        _cachedSelectedId != widget.selectedNodeId) {
+      _clearPainterCache();
+      _cachedBrightness = brightness;
+      _cachedGraph = widget.graphData;
+      _cachedSelectedId = widget.selectedNodeId;
+    }
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -99,7 +128,7 @@ class _KnowledgeGraphViewState extends State<KnowledgeGraphView> {
                           _draggedNode!.vx = 0;
                           _draggedNode!.vy = 0;
                           _lastDragPos = details.localPosition;
-                          setState(() {});
+                          setState(() => _dragRevision++);
                         }
                       }
                       ..onEnd = (_) {
@@ -112,12 +141,17 @@ class _KnowledgeGraphViewState extends State<KnowledgeGraphView> {
                       },
                   ),
             },
-            child: CustomPaint(
-              size: Size.infinite,
-              painter: _GraphPainter(
-                graphData: widget.graphData,
-                selectedNodeId: widget.selectedNodeId,
-                isDark: isDark,
+            child: RepaintBoundary(
+              child: CustomPaint(
+                size: Size.infinite,
+                painter: _GraphPainter(
+                  graphData: widget.graphData,
+                  selectedNodeId: widget.selectedNodeId,
+                  brightness: brightness,
+                  isDark: isDark,
+                  dragRevision: _dragRevision,
+                  painterCache: _painterCache,
+                ),
               ),
             ),
           ),
@@ -142,27 +176,38 @@ class _NodePanRecognizer extends PanGestureRecognizer {
 class _GraphPainter extends CustomPainter {
   final KnowledgeGraphData graphData;
   final String? selectedNodeId;
+  final Brightness brightness;
   final bool isDark;
+  final int dragRevision;
+  final Map<String, TextPainter> painterCache;
 
   _GraphPainter({
     required this.graphData,
     required this.selectedNodeId,
+    required this.brightness,
     required this.isDark,
+    required this.dragRevision,
+    required this.painterCache,
   });
 
-  Color _getNodeColor(int quadrant) {
-    switch (quadrant) {
-      case 1:
-        return const Color(0xFFEF5350); // Red
-      case 2:
-        return const Color(0xFFFFA726); // Orange
-      case 3:
-        return const Color(0xFF42A5F5); // Blue
-      case 4:
-      default:
-        return const Color(0xFF66BB6A); // Green
-    }
-  }
+  Color _getNodeColor(int quadrant) =>
+      AppTheme.quadrantColor(brightness, quadrant);
+
+  TextPainter _cachedText(
+    String cacheKey,
+    TextSpan span, {
+    int? maxLines,
+    String? ellipsis,
+    double maxWidth = double.infinity,
+  }) => painterCache.putIfAbsent(
+    cacheKey,
+    () => TextPainter(
+      text: span,
+      textDirection: TextDirection.ltr,
+      maxLines: maxLines,
+      ellipsis: ellipsis,
+    )..layout(maxWidth: maxWidth),
+  );
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -251,54 +296,55 @@ class _GraphPainter extends CustomPainter {
       canvas.drawCircle(Offset(node.x, node.y), radius, borderPaint);
 
       // 象限微标记 (Q1~Q4)
-      final textSpan = TextSpan(
-        text: 'Q${node.quadrantLevel}',
-        style: TextStyle(
-          color: isDark
-              ? Colors.white.withValues(alpha: nodeAlpha)
-              : Colors.black87.withValues(alpha: nodeAlpha),
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
+      final badgeKey = 'q:${node.quadrantLevel}:$nodeAlpha';
+      final textPainter = _cachedText(
+        badgeKey,
+        TextSpan(
+          text: 'Q${node.quadrantLevel}',
+          style: TextStyle(
+            color: isDark
+                ? Colors.white.withValues(alpha: nodeAlpha)
+                : Colors.black87.withValues(alpha: nodeAlpha),
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       );
-      final textPainter = TextPainter(
-        text: textSpan,
-        textDirection: TextDirection.ltr,
-      )..layout();
       textPainter.paint(
         canvas,
         Offset(node.x - textPainter.width / 2, node.y - textPainter.height / 2),
       );
 
       // 标题标签 (Label below node)
-      final displayTitle = node.title;
-
-      final labelSpan = TextSpan(
-        text: displayTitle,
-        style: TextStyle(
-          color: isDark
-              ? Colors.grey.shade300.withValues(alpha: nodeAlpha)
-              : Colors.grey.shade800.withValues(alpha: nodeAlpha),
-          fontSize: 10,
-          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+      final labelKey = 'l:${node.id}:$isSelected:$nodeAlpha';
+      final labelPainter = _cachedText(
+        labelKey,
+        TextSpan(
+          text: node.title,
+          style: TextStyle(
+            color: isDark
+                ? Colors.grey.shade300.withValues(alpha: nodeAlpha)
+                : Colors.grey.shade800.withValues(alpha: nodeAlpha),
+            fontSize: 10,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+          ),
         ),
-      );
-      final labelPainter = TextPainter(
-        text: labelSpan,
-        textDirection: TextDirection.ltr,
         maxLines: 1,
         ellipsis: '…',
-      )..layout(maxWidth: 100);
+        maxWidth: 100,
+      );
       labelPainter.paint(
         canvas,
         Offset(node.x - labelPainter.width / 2, node.y + radius + 4),
       );
-      textPainter.dispose();
-      labelPainter.dispose();
     }
     canvas.restore();
   }
 
   @override
-  bool shouldRepaint(covariant _GraphPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _GraphPainter oldDelegate) =>
+      !identical(oldDelegate.graphData, graphData) ||
+      oldDelegate.selectedNodeId != selectedNodeId ||
+      oldDelegate.brightness != brightness ||
+      oldDelegate.dragRevision != dragRevision;
 }

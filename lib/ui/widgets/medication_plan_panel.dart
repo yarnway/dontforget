@@ -967,7 +967,10 @@ class _MedicationPlanPanelState extends ConsumerState<MedicationPlanPanel> {
         ),
         TextButton.icon(
           onPressed:
-              _busy || !ref.watch(settingsProvider).hasConfiguredExtraction
+              _busy ||
+              !ref.watch(
+                settingsProvider.select((s) => s.hasConfiguredExtraction),
+              )
               ? null
               : _extract,
           icon: const Icon(Icons.auto_awesome),

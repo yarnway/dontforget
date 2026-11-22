@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:isolate';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
-import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import '../models/reminder.dart';
@@ -135,13 +134,18 @@ class DataExportService {
       : locale.startsWith('ja')
       ? 'ja'
       : 'en';
+  static String _formatDateTime(DateTime value) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${value.year.toString().padLeft(4, '0')}-${two(value.month)}-${two(value.day)} '
+        '${two(value.hour)}:${two(value.minute)}:${two(value.second)}';
+  }
+
   Iterable<String> _lines(
     List<Reminder> tasks,
     String locale,
     DateTime now,
   ) sync* {
     final language = _language(locale), labels = _labels[_language(locale)]!;
-    final date = DateFormat('yyyy-MM-dd HH:mm:ss');
     yield '\uFEFF${_row(_headers[language]!)}\r\n';
     for (final task in tasks) {
       final due = task.triggerTime?.toLocal();
@@ -172,7 +176,7 @@ class DataExportService {
           ? 0
           : overdue
           ? 1
-          : 2], due == null ? '' : date.format(due), due == null ? '' : '${due.year}', due == null ? '' : '${due.year}-${due.month.toString().padLeft(2, '0')}', due == null ? '' : days[due.weekday - 1], _known(task.urgencyLevel, language), task.recurrenceDescription ?? _known(task.recurrenceRule, language), '${task.spacedRepetitionLevel}', task.nextReviewAt == null ? '' : date.format(task.nextReviewAt!.toLocal()), labels[stagnant ? 3 : 4], '0x${mask.toRadixString(16).padLeft(8, '0').toUpperCase()}', task.eventTime == null ? '' : date.format(task.eventTime!.toLocal())])}\r\n';
+          : 2], due == null ? '' : _formatDateTime(due), due == null ? '' : '${due.year}', due == null ? '' : '${due.year}-${due.month.toString().padLeft(2, '0')}', due == null ? '' : days[due.weekday - 1], _known(task.urgencyLevel, language), task.recurrenceDescription ?? _known(task.recurrenceRule, language), '${task.spacedRepetitionLevel}', task.nextReviewAt == null ? '' : _formatDateTime(task.nextReviewAt!.toLocal()), labels[stagnant ? 3 : 4], '0x${mask.toRadixString(16).padLeft(8, '0').toUpperCase()}', task.eventTime == null ? '' : _formatDateTime(task.eventTime!.toLocal())])}\r\n';
     }
   }
 

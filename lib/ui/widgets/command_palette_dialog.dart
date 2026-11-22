@@ -198,6 +198,15 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                       ),
                     ),
                   ),
+                  if (_query.isNotEmpty)
+                    IconButton(
+                      tooltip: loc.get('clearSearch'),
+                      onPressed: () {
+                        _searchController.clear();
+                        _inputFocusNode.requestFocus();
+                      },
+                      icon: const Icon(Icons.backspace_outlined, size: 18),
+                    ),
                   IconButton(
                     tooltip: loc.get('close'),
                     onPressed: () => Navigator.of(context).pop(),
@@ -212,10 +221,39 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                   ? Center(
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.all(24),
-                        child: Text(
-                          loc.get('noSearchResult'),
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: colors.onSurfaceVariant),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: colors.surfaceContainerHighest,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.search_off_rounded,
+                                color: colors.onSurfaceVariant,
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              loc.get('noSearchResult'),
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: colors.onSurfaceVariant),
+                            ),
+                            if (_query.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              TextButton(
+                                onPressed: () {
+                                  _searchController.clear();
+                                  _inputFocusNode.requestFocus();
+                                },
+                                child: Text(loc.get('clearSearch')),
+                              ),
+                            ],
+                          ],
                         ),
                       ),
                     )
@@ -226,6 +264,7 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                       itemBuilder: (context, index) {
                         final action = _filteredActions[index];
                         final selected = index == _selectedIndex;
+                        final shortcut = action.shortcut?.trim();
                         return Semantics(
                           selected: selected,
                           button: true,
@@ -240,70 +279,110 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                                   setState(() => _selectedIndex = index);
                                 }
                               },
-                              child: InkWell(
-                                onTap: () => _execute(action),
-                                child: Ink(
-                                  color: selected
-                                      ? colors.secondaryContainer
-                                      : null,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 10,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        action.icon,
-                                        size: 22,
-                                        color: colors.primary,
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              action.title,
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                height: 1.25,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                            Text(
-                                              action.subtitle,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                height: 1.3,
-                                                color: colors.onSurfaceVariant,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      if (action.shortcut != null &&
-                                          MediaQuery.sizeOf(context).width >=
-                                              600)
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            left: 12,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(12),
+                                  onTap: () => _execute(action),
+                                  child: Ink(
+                                    decoration: BoxDecoration(
+                                      color: selected
+                                          ? colors.secondaryContainer
+                                          : null,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        AnimatedContainer(
+                                          duration:
+                                              MediaQuery.disableAnimationsOf(
+                                                    context,
+                                                  )
+                                                  ? Duration.zero
+                                                  : const Duration(
+                                                      milliseconds: 120,
+                                                    ),
+                                          width: 3,
+                                          height: selected ? 24 : 0,
+                                          margin: const EdgeInsets.only(
+                                            right: 10,
                                           ),
-                                          child: Text(
-                                            action.shortcut!,
-                                            style: TextStyle(
-                                              fontSize: 11,
-                                              color: colors.onSurfaceVariant,
+                                          decoration: BoxDecoration(
+                                            color: selected
+                                                ? colors.primary
+                                                : Colors.transparent,
+                                            borderRadius: BorderRadius.circular(
+                                              2,
                                             ),
                                           ),
                                         ),
-                                    ],
+                                        Icon(
+                                          action.icon,
+                                          size: 22,
+                                          color: selected
+                                              ? colors.onSecondaryContainer
+                                              : colors.primary,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                action.title,
+                                                maxLines: 2,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  height: 1.25,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: selected
+                                                      ? colors
+                                                            .onSecondaryContainer
+                                                      : colors.onSurface,
+                                                ),
+                                              ),
+                                              Text(
+                                                action.subtitle,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  height: 1.3,
+                                                  color: selected
+                                                      ? colors
+                                                            .onSecondaryContainer
+                                                            .withValues(
+                                                              alpha: 0.85,
+                                                            )
+                                                      : colors.onSurfaceVariant,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        if (shortcut != null &&
+                                            shortcut.isNotEmpty &&
+                                            MediaQuery.sizeOf(context).width >=
+                                                600)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              left: 12,
+                                            ),
+                                            child: _Keycap(label: shortcut),
+                                          ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -331,27 +410,15 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
                     runSpacing: 8,
                     alignment: WrapAlignment.center,
                     children: [
-                      Text(
-                        '↑↓ ${loc.get('commandNavigate')}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: colors.onSurfaceVariant,
-                        ),
+                      _FooterHint(
+                        keys: '↑↓',
+                        label: loc.get('commandNavigate'),
                       ),
-                      Text(
-                        'Enter ${loc.get('commandExecute')}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: colors.onSurfaceVariant,
-                        ),
+                      _FooterHint(
+                        keys: 'Enter',
+                        label: loc.get('commandExecute'),
                       ),
-                      Text(
-                        'Esc ${loc.get('close')}',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: colors.onSurfaceVariant,
-                        ),
-                      ),
+                      _FooterHint(keys: 'Esc', label: loc.get('close')),
                     ],
                   ),
                 );
@@ -360,6 +427,55 @@ class _CommandPaletteDialogState extends State<CommandPaletteDialog> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _Keycap extends StatelessWidget {
+  const _Keycap({required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: colors.outlineVariant.withValues(alpha: 0.9)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'monospace',
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: colors.onSurface,
+        ),
+      ),
+    );
+  }
+}
+
+class _FooterHint extends StatelessWidget {
+  const _FooterHint({required this.keys, required this.label});
+  final String keys;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _Keycap(label: keys),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: TextStyle(fontSize: 11, color: colors.onSurfaceVariant),
+        ),
+      ],
     );
   }
 }

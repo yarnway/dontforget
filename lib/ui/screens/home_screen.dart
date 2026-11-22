@@ -14,6 +14,7 @@ import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/reminder.dart';
 import '../../providers/providers.dart';
+import '../../providers/global_capture_provider.dart';
 import '../../providers/home_controller.dart';
 import '../../services/notification_service.dart';
 import '../../services/notification_permission_service.dart';
@@ -135,6 +136,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     ]);
     _promptedReminderIds.clear();
     _dueNotices.clear();
+    _cachedNoticeSnapshot = null;
     _contextDigest = [];
   }
 
@@ -630,27 +632,51 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }).toList()..sort((a, b) => a.triggerTime!.compareTo(b.triggerTime!));
   }
 
+  List<Reminder>? _cachedNoticeReminders;
+  DateTime? _cachedNoticeTick;
+  ({List<Reminder> visible, List<Reminder> missed, DateTime now})?
+  _cachedNoticeSnapshot;
+
+  ({List<Reminder> visible, List<Reminder> missed, DateTime now})
+  _noticeSnapshot(List<Reminder> reminders, DateTime tick) {
+    if (identical(_cachedNoticeReminders, reminders) &&
+        _cachedNoticeTick == tick &&
+        _cachedNoticeSnapshot != null) {
+      return _cachedNoticeSnapshot!;
+    }
+    final now = DateTime.now();
+    final visible = _visibleNotices(reminders, now);
+    final missed = selectMissedReminders(
+      reminders,
+      now,
+      visibleNoticeOccurrences: visible.map(reminderOccurrenceKey),
+    );
+    _cachedNoticeReminders = reminders;
+    _cachedNoticeTick = tick;
+    return _cachedNoticeSnapshot = (visible: visible, missed: missed, now: now);
+  }
+
   void _openMissedFilter() {
     setState(() => _workspaceView = 'missed');
   }
 
-  List<Reminder> _missedReminders(List<Reminder> reminders, DateTime now) =>
-      selectMissedReminders(
-        reminders,
-        now,
-        visibleNoticeOccurrences: _visibleNotices(
-          reminders,
-          now,
-        ).map(reminderOccurrenceKey),
-      );
+  void _switchWorkspaceView(String view) {
+    setState(() => _workspaceView = view);
+    unawaited(
+      ref
+          .read(workspaceDraftsProvider.notifier)
+          .put('homeView', view)
+          .catchError((Object _) {}),
+    );
+  }
 
   Widget _buildWorkspaceOverview(List<Reminder> reminders) {
     List<Reminder>? previousMissed;
     TaskWorkspaceOverview? overview;
     return ValueListenableBuilder<DateTime>(
       valueListenable: _noticeClock,
-      builder: (context, _, _) {
-        final missed = _missedReminders(reminders, DateTime.now());
+      builder: (context, tick, _) {
+        final missed = _noticeSnapshot(reminders, tick).missed;
         // Keep the board intact on idle heartbeats; rebuild only when this
         // clock actually changes missed-list membership. Task edits rebuild
         // Home and create a fresh builder with the current task data.
@@ -1217,9 +1243,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final records = ref.read(mediaRecordsProvider);
     final media = records.where((m) => m.id == recordId).firstOrNull;
     if (media == null) {
-      InlineFeedback.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.get('mediaUnavailable'))));
+      InlineFeedback.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.get('mediaUnavailable'))),
+        tone: FeedbackTone.warning,
+      );
       return;
     }
 
@@ -1230,19 +1257,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         await _stopAudioPlayback();
         return;
       }
-      try {
-        await _serializePlayback(() async {
-          if (!mounted || !_runtimeActive) return;
-          _playbackStarted = true;
-          _playingRecordId = recordId;
+      var playFailed = false;
+      await _serializePlayback(() async {
+        if (!mounted || !_runtimeActive) return;
+        _playbackStarted = true;
+        _playingRecordId = recordId;
+        try {
           await _ensureAudioPlayer().play(DeviceFileSource(mediaPath));
-        });
-      } catch (_) {
-        _playbackStarted = false;
-        _playingRecordId = null;
+        } catch (_) {
+          if (_playingRecordId == recordId) {
+            _playbackStarted = false;
+            _playingRecordId = null;
+          }
+          playFailed = true;
+        }
+      });
+      if (playFailed) {
         if (mounted && _runtimeActive) {
           InlineFeedback.of(context).showSnackBar(
             SnackBar(content: Text(l10n.get('audioPlaybackFailed'))),
+            tone: FeedbackTone.error,
           );
         }
         return;
@@ -1445,7 +1479,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         title: l10n.get('learningQueueTitle'),
         subtitle: l10n.get('learningBudgetHint'),
         icon: Icons.auto_stories_outlined,
-        shortcut: '',
         onExecute: () => _selectTool(_WorkspaceTool.learning),
       ),
       CommandPaletteAction(
@@ -1495,6 +1528,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         icon: Icons.search_rounded,
         shortcut: '/',
         onExecute: _openSearch,
+      ),
+      CommandPaletteAction(
+        id: 'quick_capture',
+        title: l10n.get('quickCaptureAction'),
+        subtitle: l10n.get('addFirstTask'),
+        icon: Icons.add_task_rounded,
+        shortcut: 'N',
+        onExecute: () => ref.read(captureInputCommandProvider).focus?.call(),
       ),
       CommandPaletteAction(
         id: 'shared_drafts',
@@ -1597,11 +1638,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       _openCommandPalette();
       return;
     }
+    if (isCtrl && event.logicalKey == LogicalKeyboardKey.keyN) {
+      ref.read(captureInputCommandProvider).focus?.call();
+      return;
+    }
 
     if (isTyping || isCtrl || HardwareKeyboard.instance.isAltPressed) return;
 
     if (event.logicalKey == LogicalKeyboardKey.slash) {
       _openSearch();
+    } else if (event.logicalKey == LogicalKeyboardKey.keyN) {
+      ref.read(captureInputCommandProvider).focus?.call();
+    } else if (!_isSearchOpen &&
+        _activeTool == null &&
+        event.logicalKey == LogicalKeyboardKey.digit1) {
+      _switchWorkspaceView('today');
+    } else if (!_isSearchOpen &&
+        _activeTool == null &&
+        event.logicalKey == LogicalKeyboardKey.digit2) {
+      _switchWorkspaceView('future');
+    } else if (!_isSearchOpen &&
+        _activeTool == null &&
+        event.logicalKey == LogicalKeyboardKey.digit3) {
+      _switchWorkspaceView('all');
+    } else if (!_isSearchOpen &&
+        _activeTool == null &&
+        event.logicalKey == LogicalKeyboardKey.digit4) {
+      _switchWorkspaceView('board');
     } else if (event.logicalKey == LogicalKeyboardKey.keyG) {
       _selectTool(_WorkspaceTool.graph);
     } else if (event.logicalKey == LogicalKeyboardKey.keyC) {
@@ -1673,6 +1736,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    _cachedNoticeSnapshot = null;
     final reminders = ref.watch(workspaceRemindersProvider);
     final l10n = AppLocalizations.of(context);
     final spacedService = ref.watch(spacedRepetitionServiceProvider);
@@ -1750,7 +1814,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                         fontSize: 13,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
-                      border: InputBorder.none,
+                      filled: true,
+                      fillColor: Theme.of(context).colorScheme.surfaceContainer,
+                      prefixIcon: Icon(
+                        Icons.search_rounded,
+                        size: 18,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.primary.withValues(alpha: 0.45),
+                        ),
+                      ),
                     ),
                     onChanged: _updateSearch,
                   )
@@ -1964,22 +2055,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                     children: [
                       ValueListenableBuilder<DateTime>(
                         valueListenable: _noticeClock,
-                        builder: (context, _, _) {
-                          final now = DateTime.now();
-                          final visible = _visibleNotices(reminders, now);
-                          final missed = selectMissedReminders(
-                            reminders,
-                            now,
-                            visibleNoticeOccurrences: visible.map(
-                              reminderOccurrenceKey,
-                            ),
-                          );
+                        builder: (context, tick, _) {
+                          final snapshot = _noticeSnapshot(reminders, tick);
+                          final visible = snapshot.visible;
+                          final missed = snapshot.missed;
+                          if (visible.isEmpty && missed.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
                           return Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               ReminderNoticePanel(
                                 reminders: visible,
-                                now: now,
+                                now: snapshot.now,
                                 busyIds: _noticeOperations,
                                 onDismiss: _dismissNotice,
                                 onSnooze: (r) => _actOnNotice(r, snooze: true),

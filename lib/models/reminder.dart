@@ -235,10 +235,11 @@ class Reminder {
       urgencyLevel: json['urgency_level'] as String?,
       importanceLevel: json['importance_level'] as String?,
       triggerTime: _storedDate(json['trigger_time']),
-      timeOrigin: ReminderTimeOrigin.values.firstWhere(
-        (value) => value.name == json['trigger_time_origin'],
-        orElse: () => ReminderTimeOrigin.unknown,
-      ),
+      timeOrigin: switch (json['trigger_time_origin']) {
+        'manual' => ReminderTimeOrigin.manual,
+        'aiSuggested' => ReminderTimeOrigin.aiSuggested,
+        _ => ReminderTimeOrigin.unknown,
+      },
       eventTime: _storedDate(json['event_time']),
       suggestedTriggerTime: _storedDate(json['suggested_trigger_time']),
       sourceText: json['source_text'] as String?,

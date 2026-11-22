@@ -27,6 +27,7 @@ import '../../l10n/app_localizations.dart';
 import '../../l10n/planning_strings.dart';
 import '../../l10n/routine_policy_strings.dart';
 import '../widgets/planning_panel.dart';
+import '../theme/app_theme.dart';
 import 'knowledge_graph_screen.dart';
 import 'settings_screen.dart';
 import 'notification_repair_screen.dart';
@@ -90,9 +91,6 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
   late String _selectedRecurrenceRule;
   late bool _isCompleted;
   late List<String> _linkedTaskIds;
-  List<Reminder>? _linkedSource;
-  List<String>? _indexedLinkIds;
-  Map<String, Reminder> _linkedTaskIndex = {};
   late _DetailDraft _savedDraft;
   bool _reportedDirty = false;
   bool _allowPop = false;
@@ -813,33 +811,10 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
     setState(() => _setAlarmTime(target));
   }
 
-  Color _getCategoryColor(int level) {
-    switch (level) {
-      case 1:
-        return Colors.red.shade400;
-      case 2:
-        return Colors.orange.shade400;
-      case 3:
-        return Colors.blue.shade400;
-      case 4:
-      default:
-        return Colors.green.shade400;
-    }
-  }
+  Color _getCategoryColor(int level) =>
+      AppTheme.quadrantColor(Theme.of(context).brightness, level);
 
-  IconData _getCategoryIcon(int level) {
-    switch (level) {
-      case 1:
-        return Icons.local_fire_department_rounded;
-      case 2:
-        return Icons.star_rounded;
-      case 3:
-        return Icons.bolt_rounded;
-      case 4:
-      default:
-        return Icons.coffee_rounded;
-    }
-  }
+  IconData _getCategoryIcon(int level) => AppTheme.quadrantIcon(level);
 
   String _getCategoryName(AppLocalizations l10n, int level) {
     switch (level) {
@@ -925,7 +900,8 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
     );
   }
 
-  void _showAddLinkDialog(List<Reminder> allReminders, AppLocalizations l10n) {
+  void _showAddLinkDialog(AppLocalizations l10n) {
+    final allReminders = ref.read(remindersProvider);
     final available = allReminders
         .where((r) => r.id != widget.task.id && !_linkedTaskIds.contains(r.id))
         .toList();
@@ -987,34 +963,62 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
     // before building either the Live Activity action or the navigation guard.
     _reportedDirty = _captureDraft() != _savedDraft;
     final l10n = AppLocalizations.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = Theme.of(context).colorScheme.primary;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = colors.primary;
     final catColor = _getCategoryColor(_selectedQuadrant);
-    final allReminders = ref.watch(remindersProvider);
-    // Reuse the index across local form changes; task mutations publish a new
-    // list. Unlinked details never allocate an index for the whole database.
-    if (_linkedTaskIds.isEmpty) {
-      _linkedSource = null;
-      _indexedLinkIds = null;
-      _linkedTaskIndex = {};
-    } else if (!identical(_linkedSource, allReminders) ||
-        !identical(_indexedLinkIds, _linkedTaskIds)) {
-      _linkedSource = allReminders;
-      _indexedLinkIds = _linkedTaskIds;
-      final needed = _linkedTaskIds.toSet();
-      _linkedTaskIndex = {};
-      for (final task in allReminders) {
-        if (needed.remove(task.id)) _linkedTaskIndex[task.id] = task;
-        if (needed.isEmpty) break;
-      }
-    }
+
+    Widget sectionCard(Widget child, {EdgeInsetsGeometry? padding}) => Material(
+      color: colors.surfaceContainerLow,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: colors.outlineVariant, width: 1),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding:
+            padding ??
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: child,
+      ),
+    );
 
     final scaffold = Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(
-          l10n.get('editTask'),
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                l10n.get('editTask'),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (_reportedDirty) ...[
+              const SizedBox(width: 8),
+              Tooltip(
+                message: l10n.get('unsavedChangesIndicator'),
+                child: Semantics(
+                  label: l10n.get('unsavedChangesIndicator'),
+                  child: Container(
+                    key: const ValueKey('detail-unsaved-dot'),
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: colors.tertiary,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
         centerTitle: false,
         elevation: 0,
@@ -1031,7 +1035,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
               _isCompleted
                   ? Icons.check_circle_rounded
                   : Icons.radio_button_unchecked_rounded,
-              color: _isCompleted ? Colors.green : Colors.grey,
+              color: _isCompleted ? colors.primary : colors.onSurfaceVariant,
               size: 22,
             ),
             tooltip: _isCompleted
@@ -1049,10 +1053,10 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
           ),
           // Delete
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.delete_outline_rounded,
               size: 22,
-              color: Colors.redAccent,
+              color: colors.error,
             ),
             tooltip: l10n.get('deleteTask'),
             onPressed: _isMutating ? null : _delete,
@@ -1060,60 +1064,72 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            16,
-            8,
-            16,
-            12 + MediaQuery.viewInsetsOf(context).bottom,
+      bottomNavigationBar: DecoratedBox(
+        decoration: BoxDecoration(
+          color: colors.surfaceContainerLow,
+          border: Border(
+            top: BorderSide(
+              color: colors.outlineVariant.withValues(alpha: 0.6),
+            ),
           ),
-          child: Align(
-            heightFactor: 1,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1008),
-              child: Row(
-                children: [
-                  OutlinedButton(
-                    key: const ValueKey('detail-editor-back'),
-                    onPressed: _isMutating ? null : _requestExit,
-                    child: Text(
-                      MaterialLocalizations.of(context).backButtonTooltip,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton.icon(
-                      icon: _isSaving
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.save_outlined, size: 18),
-                      label: Text(
-                        l10n.get('saveChanges'),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              16,
+              8,
+              16,
+              12 + MediaQuery.viewInsetsOf(context).bottom,
+            ),
+            child: Align(
+              heightFactor: 1,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1008),
+                child: Row(
+                  children: [
+                    OutlinedButton(
+                      key: const ValueKey('detail-editor-back'),
+                      onPressed: _isMutating ? null : _requestExit,
+                      child: Text(
+                        MaterialLocalizations.of(context).backButtonTooltip,
                       ),
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(48),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 14,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      key: const ValueKey('detail-save'),
-                      onPressed: _isMutating ? null : _save,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton.icon(
+                        icon: _isSaving
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.save_outlined, size: 18),
+                        label: Text(
+                          l10n.get('saveChanges'),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        key: const ValueKey('detail-save'),
+                        onPressed: _isMutating ? null : _save,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -1256,13 +1272,13 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                             ),
                             decoration: BoxDecoration(
                               color: _isCompleted
-                                  ? Colors.green.withValues(alpha: 0.12)
-                                  : Colors.blue.withValues(alpha: 0.12),
+                                  ? colors.primary.withValues(alpha: 0.12)
+                                  : colors.secondary.withValues(alpha: 0.12),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: _isCompleted
-                                    ? Colors.green.withValues(alpha: 0.4)
-                                    : Colors.blue.withValues(alpha: 0.4),
+                                    ? colors.primary.withValues(alpha: 0.4)
+                                    : colors.secondary.withValues(alpha: 0.4),
                                 width: 0.8,
                               ),
                             ),
@@ -1275,8 +1291,8 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
                                     color: _isCompleted
-                                        ? Colors.green
-                                        : Colors.blue,
+                                        ? colors.primary
+                                        : colors.secondary,
                                   ),
                                 ),
                                 const SizedBox(width: 5),
@@ -1288,8 +1304,8 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                     color: _isCompleted
-                                        ? Colors.green
-                                        : Colors.blue,
+                                        ? colors.primary
+                                        : colors.secondary,
                                   ),
                                 ),
                               ],
@@ -1315,17 +1331,17 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.amber.withValues(alpha: 0.12),
+                          color: colors.tertiary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: Colors.amber.withValues(alpha: 0.5),
+                            color: colors.tertiary.withValues(alpha: 0.5),
                           ),
                         ),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.bolt,
-                              color: Colors.amber,
+                              color: colors.tertiary,
                               size: 20,
                             ),
                             const SizedBox(width: 8),
@@ -1548,107 +1564,169 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                     const SizedBox(height: 14),
 
                     if (widget.task.details.kind == 'task') ...[
-                      TaskMetadataEditor(
-                        details: _detailsDraft,
-                        enabled: !_isMutating,
-                        onChanged: (details) =>
-                            setState(() => _detailsDraft = details),
-                        onValidityChanged: (valid) {
-                          _metadataValid = valid;
-                          _draftChanged();
-                        },
+                      sectionCard(
+                        TaskMetadataEditor(
+                          details: _detailsDraft,
+                          enabled: !_isMutating,
+                          onChanged: (details) =>
+                              setState(() => _detailsDraft = details),
+                          onValidityChanged: (valid) {
+                            _metadataValid = valid;
+                            _draftChanged();
+                          },
+                        ),
                       ),
                       const SizedBox(height: 14),
-                    ] else ...[
-                      if (widget.task.details.project.isNotEmpty)
-                        Text(
-                          '${l10n.get('taskProject')}: ${widget.task.details.project}',
-                        ),
-                      if (widget.task.details.tags.isNotEmpty)
-                        Wrap(
-                          spacing: 6,
+                    ] else if (widget.task.details.project.isNotEmpty ||
+                        widget.task.details.tags.isNotEmpty ||
+                        widget.task.details.checklist.isNotEmpty) ...[
+                      sectionCard(
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            for (final tag in widget.task.details.tags)
-                              Chip(label: Text(tag)),
-                          ],
-                        ),
-                      if (widget.task.details.checklist.isNotEmpty) ...[
-                        Text(
-                          l10n
-                              .get('taskChecklistProgress')
-                              .replaceAll(
-                                '{done}',
-                                '${widget.task.details.checklist.where((e) => e.done).length}',
-                              )
-                              .replaceAll(
-                                '{total}',
-                                '${widget.task.details.checklist.length}',
+                            if (widget.task.details.project.isNotEmpty)
+                              Text(
+                                '${l10n.get('taskProject')}: ${widget.task.details.project}',
                               ),
-                        ),
-                        Text(l10n.get('taskChecklistReadOnly')),
-                        const SizedBox(height: 14),
-                      ],
-                    ],
-                    if (widget.task.subTasksView.isNotEmpty)
-                      ExpansionTile(
-                        key: const ValueKey('detail-micro-habits'),
-                        title: Text(l10n.get('taskMicroHabits')),
-                        children: [
-                          for (final habit in widget.task.subTasksView)
-                            ListTile(title: Text(habit)),
-                        ],
-                      ),
-                    if (widget.task.sourceText != null)
-                      ExpansionTile(
-                        title: Text(l10n.get('sourceText')),
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: SelectableText(widget.task.sourceText!),
-                          ),
-                        ],
-                      ),
-                    ListTile(
-                      key: const ValueKey('event-time-editor'),
-                      leading: const Icon(Icons.event_outlined),
-                      title: Text(l10n.get('eventTimeShort')),
-                      subtitle: Text(
-                        _eventTime == null
-                            ? l10n.get('notSet')
-                            : formatLocalDateTime(_eventTime!),
-                      ),
-                      onTap: _isMutating
-                          ? null
-                          : () => _pickDateTime(event: true),
-                      trailing: _eventTime == null
-                          ? null
-                          : IconButton(
-                              tooltip: l10n.get('clear'),
-                              icon: const Icon(Icons.clear),
-                              onPressed: _isMutating
-                                  ? null
-                                  : () => setState(() => _setEventTime(null)),
-                            ),
-                    ),
-                    if (_canChooseAdvanceReminder && _eventTime != null)
-                      _buildAdvanceReminderChoices(_eventTime!, l10n),
-                    if (widget.task.usableSuggestedTriggerTime != null)
-                      TextButton(
-                        onPressed:
-                            _isMutating ||
-                                !widget.task.usableSuggestedTriggerTime!
-                                    .isAfter(DateTime.now())
-                            ? null
-                            : () => setState(
-                                () => _setAlarmTime(
-                                  widget.task.usableSuggestedTriggerTime,
-                                  suggested: true,
+                            if (widget.task.details.tags.isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: [
+                                  for (final tag in widget.task.details.tags)
+                                    Chip(label: Text(tag)),
+                                ],
+                              ),
+                            ],
+                            if (widget.task.details.checklist.isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Text(
+                                l10n
+                                    .get('taskChecklistProgress')
+                                    .replaceAll(
+                                      '{done}',
+                                      '${widget.task.details.checklist.where((e) => e.done).length}',
+                                    )
+                                    .replaceAll(
+                                      '{total}',
+                                      '${widget.task.details.checklist.length}',
+                                    ),
+                              ),
+                              Text(
+                                l10n.get('taskChecklistReadOnly'),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colors.onSurfaceVariant,
                                 ),
                               ),
-                        child: Text(
-                          '${l10n.get('adoptSuggestion')}: ${formatLocalDateTime(widget.task.usableSuggestedTriggerTime!)}',
+                            ],
+                          ],
                         ),
                       ),
+                      const SizedBox(height: 14),
+                    ],
+                    if (widget.task.subTasksView.isNotEmpty) ...[
+                      sectionCard(
+                        ExpansionTile(
+                          key: const ValueKey('detail-micro-habits'),
+                          shape: const Border(),
+                          collapsedShape: const Border(),
+                          tilePadding: EdgeInsets.zero,
+                          title: Text(l10n.get('taskMicroHabits')),
+                          children: [
+                            for (final habit in widget.task.subTasksView)
+                              ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                title: Text(habit),
+                              ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 4,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+                    if (widget.task.sourceText != null) ...[
+                      sectionCard(
+                        ExpansionTile(
+                          shape: const Border(),
+                          collapsedShape: const Border(),
+                          tilePadding: EdgeInsets.zero,
+                          title: Text(l10n.get('sourceText')),
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: SelectableText(widget.task.sourceText!),
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 4,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+                    sectionCard(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ListTile(
+                            key: const ValueKey('event-time-editor'),
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(
+                              Icons.event_outlined,
+                              color: primaryColor,
+                            ),
+                            title: Text(l10n.get('eventTimeShort')),
+                            subtitle: Text(
+                              _eventTime == null
+                                  ? l10n.get('notSet')
+                                  : formatLocalDateTime(_eventTime!),
+                            ),
+                            onTap: _isMutating
+                                ? null
+                                : () => _pickDateTime(event: true),
+                            trailing: _eventTime == null
+                                ? null
+                                : IconButton(
+                                    tooltip: l10n.get('clear'),
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: _isMutating
+                                        ? null
+                                        : () => setState(
+                                            () => _setEventTime(null),
+                                          ),
+                                  ),
+                          ),
+                          if (_canChooseAdvanceReminder &&
+                              _eventTime != null) ...[
+                            const SizedBox(height: 4),
+                            _buildAdvanceReminderChoices(_eventTime!, l10n),
+                          ],
+                          if (widget.task.usableSuggestedTriggerTime != null)
+                            TextButton(
+                              onPressed:
+                                  _isMutating ||
+                                      !widget.task.usableSuggestedTriggerTime!
+                                          .isAfter(DateTime.now())
+                                  ? null
+                                  : () => setState(
+                                      () => _setAlarmTime(
+                                        widget.task.usableSuggestedTriggerTime,
+                                        suggested: true,
+                                      ),
+                                    ),
+                              child: Text(
+                                '${l10n.get('adoptSuggestion')}: ${formatLocalDateTime(widget.task.usableSuggestedTriggerTime!)}',
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 14),
                     // 4. Reminder Time Section (提示时间与快捷设定)
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -2028,10 +2106,10 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                             spacing: 6,
                             runSpacing: 6,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.link,
                                 size: 16,
-                                color: Colors.indigoAccent,
+                                color: primaryColor,
                               ),
                               const SizedBox(width: 6),
                               Text(
@@ -2049,14 +2127,14 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                                 icon: const Icon(Icons.hub_outlined, size: 14),
                                 label: Text(
                                   l10n.get('viewInGraph'),
-                                  style: const TextStyle(fontSize: 11),
+                                  style: const TextStyle(fontSize: 12),
                                 ),
                                 style: TextButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
+                                    horizontal: 10,
+                                    vertical: 8,
                                   ),
-                                  minimumSize: Size.zero,
+                                  minimumSize: const Size(48, 48),
                                 ),
                                 onPressed: () {
                                   Navigator.push(
@@ -2083,17 +2161,24 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                               ),
                             )
                           else
-                            Column(
-                              children: [
-                                for (final linkedId in _linkedTaskIds)
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 6),
-                                    child: _buildLinkedTaskChip(
-                                      linkedId,
-                                      _linkedTaskIndex,
-                                    ),
-                                  ),
-                              ],
+                            Consumer(
+                              builder: (context, ref, _) {
+                                final byId = ref.watch(remindersByIdProvider);
+                                return Column(
+                                  children: [
+                                    for (final linkedId in _linkedTaskIds)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 6,
+                                        ),
+                                        child: _buildLinkedTaskChip(
+                                          linkedId,
+                                          byId,
+                                        ),
+                                      ),
+                                  ],
+                                );
+                              },
                             ),
                           const SizedBox(height: 8),
                           OutlinedButton.icon(
@@ -2104,13 +2189,12 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
                             ),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
+                                horizontal: 14,
+                                vertical: 10,
                               ),
-                              minimumSize: Size.zero,
+                              minimumSize: const Size(48, 48),
                             ),
-                            onPressed: () =>
-                                _showAddLinkDialog(allReminders, l10n),
+                            onPressed: () => _showAddLinkDialog(l10n),
                           ),
                         ],
                       ),

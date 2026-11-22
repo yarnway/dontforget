@@ -160,14 +160,31 @@ class HomeController extends StateNotifier<HomeState> {
     _livePreviewOwner = null;
     _recordingGeneration = null;
     _recordingOutputPath = null;
-    if (_nativeRecording) {
-      // cancel removes the unconfirmed temporary capture; it never imports it.
-      await _activeRecorder?.cancel();
-      _nativeRecording = false;
-    }
     final pcm = _pcmRecording;
     _pcmRecording = null;
-    await pcm?.discard();
+    Object? cancelError;
+    StackTrace? cancelStack;
+    if (_nativeRecording) {
+      try {
+        // cancel removes the unconfirmed temporary capture; it never imports it.
+        // Only clear _nativeRecording once cancel succeeds so recovery retries
+        // will attempt native cleanup again after a transient platform error.
+        await _activeRecorder?.cancel();
+        _nativeRecording = false;
+      } catch (error, stack) {
+        cancelError = error;
+        cancelStack = stack;
+      }
+    }
+    try {
+      await pcm?.discard();
+    } catch (error, stack) {
+      cancelError ??= error;
+      cancelStack ??= stack;
+    }
+    if (cancelError != null) {
+      Error.throwWithStackTrace(cancelError, cancelStack!);
+    }
   }
 
   Future<void> _quiesce() async {
@@ -886,9 +903,6 @@ class HomeController extends StateNotifier<HomeState> {
     if (generation == null) return false;
     try {
       await _serializeRecorder(_discardRecording);
-      if (_isCurrent(generation)) {
-        state = state.copyWith(isRecording: false, voicePreview: '');
-      }
       return true;
     } catch (_) {
       _reportError(
@@ -898,6 +912,10 @@ class HomeController extends StateNotifier<HomeState> {
         ).get('voiceCancelFailed'),
       );
       return false;
+    } finally {
+      if (_isCurrent(generation)) {
+        state = state.copyWith(isRecording: false, voicePreview: '');
+      }
     }
   }
 

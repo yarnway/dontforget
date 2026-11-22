@@ -104,6 +104,7 @@ class LivePcmRecording {
     try {
       input = await file.open();
       await input.setPosition(44);
+      final onCancelled = cancellation.whenCancel.then((_) {});
       while (true) {
         if (cancellation.isCancelled) {
           throw const SpeechRecognitionException('cancelled');
@@ -119,7 +120,7 @@ class LivePcmRecording {
         } else {
           final changed = _changed.future;
           if (offset >= _written && !_ended) {
-            await Future.any([changed, cancellation.whenCancel.then((_) {})]);
+            await Future.any([changed, onCancelled]);
           }
         }
       }
@@ -158,10 +159,17 @@ class LivePcmRecording {
     } catch (_) {
       /* Keep cancellation independent of I/O. */
     }
-    await Future.wait(
-      _readers.map((reader) => reader.future).toList(),
-    ).timeout(const Duration(seconds: 5));
-    if (await file.exists()) await file.delete();
+    try {
+      await Future.wait(
+        _readers.map((reader) => reader.future).toList(),
+      ).timeout(const Duration(seconds: 5));
+    } on TimeoutException {
+      /* Proceed to best-effort temp cleanup so cancel/quiesce cannot leak. */
+    } finally {
+      try {
+        if (await file.exists()) await file.delete();
+      } catch (_) {}
+    }
   }
 
   static Uint8List _header(int bytes) {

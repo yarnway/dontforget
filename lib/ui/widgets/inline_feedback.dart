@@ -15,12 +15,16 @@ class InlineFeedback extends StatefulWidget {
   static InlineFeedbackState of(BuildContext context) =>
       context.findAncestorStateOfType<InlineFeedbackState>()!;
 
+  static InlineFeedbackState? maybeOf(BuildContext context) =>
+      context.findAncestorStateOfType<InlineFeedbackState>();
+
   @override
   State<InlineFeedback> createState() => InlineFeedbackState();
 }
 
 class InlineFeedbackState extends State<InlineFeedback> {
   SnackBar? _message;
+  int _messageSeq = 0;
   Timer? _expiry;
   FeedbackTone _tone = FeedbackTone.info;
   final _actionFocus = FocusNode(debugLabel: 'Feedback action');
@@ -49,6 +53,7 @@ class InlineFeedbackState extends State<InlineFeedback> {
     _expiry?.cancel();
     setState(() {
       _message = message;
+      _messageSeq++;
       _tone = tone;
     });
     // Actionable results (for example Undo) remain until explicitly handled.
@@ -165,10 +170,25 @@ class InlineFeedbackState extends State<InlineFeedback> {
                   top: top,
                   end: 12 + insets.right,
                   width: width,
-                  child: Semantics(
-                    container: true,
-                    liveRegion: true,
-                    child: Material(
+                  child: TweenAnimationBuilder<double>(
+                    key: ValueKey('inline-feedback-anim-$_messageSeq'),
+                    tween: Tween<double>(begin: 0, end: 1),
+                    duration: MediaQuery.disableAnimationsOf(context)
+                        ? Duration.zero
+                        : const Duration(milliseconds: 160),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, t, child) => Opacity(
+                      opacity: t,
+                      alwaysIncludeSemantics: true,
+                      child: Transform.translate(
+                        offset: Offset(0, -6 * (1 - t)),
+                        child: child,
+                      ),
+                    ),
+                    child: Semantics(
+                      container: true,
+                      liveRegion: true,
+                      child: Material(
                       key: const ValueKey('inline-feedback'),
                       color: colors.surfaceContainer,
                       elevation: 3,
@@ -281,6 +301,7 @@ class InlineFeedbackState extends State<InlineFeedback> {
                         ),
                       ),
                     ),
+                  ),
                   ),
                 ),
             ],

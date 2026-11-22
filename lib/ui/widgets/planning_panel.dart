@@ -344,7 +344,9 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
   @override
   Widget build(BuildContext context) {
     final all = ref.watch(remindersProvider);
-    final configured = ref.watch(settingsProvider).hasConfiguredExtraction;
+    final configured = ref.watch(
+      settingsProvider.select((s) => s.hasConfiguredExtraction),
+    );
     return LayoutBuilder(
       builder: (_, constraints) => _content(all, constraints, configured),
     );

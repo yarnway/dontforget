@@ -2132,25 +2132,34 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
     if (!mounted) {
       throw StateError('Reminder state is no longer active.');
     }
-    final deleted = await _dbHelper.writeTransaction(generation, (txn) async {
+    final result = await _dbHelper.writeTransaction(generation, (txn) async {
       final rows = await txn.query(
         'Reminders',
         where: 'id = ?',
         whereArgs: [id],
       );
-      if (rows.isNotEmpty) {
-        await _archiveLearning(txn, Reminder.fromJson(rows.single));
+      if (rows.isEmpty) {
+        return (deleted: null, archived: const <Reminder>[]);
       }
+      final target = Reminder.fromJson(rows.single);
+      final archived = await _archiveLearning(txn, target);
       await txn.delete('Reminders', where: 'id = ?', whereArgs: [id]);
-      return rows.isEmpty ? null : Reminder.fromJson(rows.single);
+      return (deleted: target, archived: archived);
     });
     _dbHelper.checkGeneration(generation);
-    await _loadReminders(generation, runEffects: false);
+    if (mounted) {
+      final archivedById = {for (final r in result.archived) r.id: r};
+      state = [
+        for (final r in state)
+          if (r.id != id) archivedById.remove(r.id) ?? r,
+        ...archivedById.values,
+      ];
+    }
     return ReminderActionResult(
-      deleted == null
+      result.deleted == null
           ? ReminderActionDisposition.alreadyApplied
           : ReminderActionDisposition.applied,
-      reminder: deleted,
+      reminder: result.deleted,
       nativeSyncFailed: await _synchronizeNotification(
         id,
         generation,
@@ -2165,21 +2174,30 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
       if (!mounted) {
         throw StateError('Reminder state is no longer active.');
       }
-      final ids = await _dbHelper.writeTransaction(generation, (txn) async {
+      final result = await _dbHelper.writeTransaction(generation, (txn) async {
         final rows = (await txn.query('Reminders', where: 'is_completed = 1'))
             .map(Reminder.fromJson)
             .where((row) => row.details.data['learning_archive'] != true)
             .toList();
+        final archived = <Reminder>[];
         for (final row in rows) {
-          await _archiveLearning(txn, row);
+          archived.addAll(await _archiveLearning(txn, row));
           await txn.delete('Reminders', where: 'id = ?', whereArgs: [row.id]);
         }
-        return rows.map((row) => row.id).toList();
+        return (ids: rows.map((row) => row.id).toList(), archived: archived);
       });
       _dbHelper.checkGeneration(generation);
-      await _loadReminders(generation, runEffects: false);
+      if (mounted && (result.ids.isNotEmpty || result.archived.isNotEmpty)) {
+        final removed = result.ids.toSet();
+        final archivedById = {for (final r in result.archived) r.id: r};
+        state = [
+          for (final r in state)
+            if (!removed.contains(r.id)) archivedById.remove(r.id) ?? r,
+          ...archivedById.values,
+        ];
+      }
       var failures = 0;
-      for (final id in ids) {
+      for (final id in result.ids) {
         if (await _synchronizeNotification(
           id,
           generation,
@@ -2190,7 +2208,7 @@ class RemindersNotifier extends StateNotifier<List<Reminder>> {
         }
       }
       return ReminderBatchResult(
-        changed: ids.length,
+        changed: result.ids.length,
         nativeSyncFailures: failures,
       );
     }),

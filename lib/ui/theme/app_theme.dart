@@ -13,24 +13,45 @@ abstract final class AppTheme {
     AppAppearance.dark => ThemeMode.dark,
   };
 
+  /// AA-verified semantic accent for Q1..Q4 across cards, boards, dashboard and
+  /// detail views (>= 4.5:1 against both active and recessed card surfaces).
+  static Color quadrantColor(Brightness brightness, int level) {
+    final dark = brightness == Brightness.dark;
+    return switch (level) {
+      1 => dark ? const Color(0xFFF28B82) : const Color(0xFFC62828),
+      2 => dark ? const Color(0xFFF6BF60) : const Color(0xFFB45309),
+      3 => dark ? const Color(0xFF8AB4F8) : const Color(0xFF1D56B8),
+      _ => dark ? const Color(0xFF7CD4A8) : const Color(0xFF1F6E58),
+    };
+  }
+
+  static IconData quadrantIcon(int level) => switch (level) {
+    1 => Icons.notifications_active_outlined,
+    2 => Icons.star_outline_rounded,
+    3 => Icons.checklist_rounded,
+    _ => Icons.notes_rounded,
+  };
+
   static ThemeData _build(Brightness brightness) {
     final dark = brightness == Brightness.dark;
     final colors = ColorScheme.fromSeed(
       seedColor: const Color(0xFF326E6C),
       brightness: brightness,
       primary: dark ? const Color(0xFF83D3C9) : const Color(0xFF226B67),
-      surface: dark ? const Color(0xFF121A1B) : const Color(0xFFF5F8F7),
-      surfaceContainerLowest: dark ? const Color(0xFF0E1516) : Colors.white,
+      surface: dark ? const Color(0xFF121A1B) : const Color(0xFFF1F5F4),
+      surfaceContainerLowest: dark
+          ? const Color(0xFF0E1516)
+          : const Color(0xFFF6F9F8),
       surfaceContainerLow: dark ? const Color(0xFF182223) : Colors.white,
       surfaceContainer: dark
           ? const Color(0xFF202C2D)
-          : const Color(0xFFEDF3F1),
+          : const Color(0xFFEAF1EF),
       surfaceContainerHigh: dark
           ? const Color(0xFF283536)
-          : const Color(0xFFE5EEEB),
+          : const Color(0xFFE2ECE9),
       surfaceContainerHighest: dark
           ? const Color(0xFF314041)
-          : const Color(0xFFDEE8E5),
+          : const Color(0xFFD9E5E2),
     );
     return ThemeData(
       useMaterial3: true,

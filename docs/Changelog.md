@@ -4,6 +4,23 @@
 
 ---
 
+## v1.8.22（build93，稳定性加固、视觉美观与易用性全面升级、运行时性能及三语包体再瘦身）- 2026-11-22
+
+- **稳定性与边界加固（`windows/runner/flutter_window.*`、`windows_protocol_service.dart`、`windows_toast.dart`、`SharedTextBridge.kt`、`MainActivity.kt`、`app.dart`、`workspace_drafts_provider.dart`、`home_controller.dart`、`tencent_realtime_recognizer.dart`、`live_pcm_recording.dart`、`llm_service.dart`、`multi_agent_service.dart`、`settings_screen.dart`、`home_screen.dart`、`input_bottom_bar.dart`、`task_card.dart`）**：
+  - 修复 Windows `WM_FONTCHANGE` 空引擎指针解引用、有界读取 `WM_COPYDATA` 并缓冲冷启动握手前早期协议与升级退出信号；`WindowsToast` 转义 PowerShell 5.1 弯单引号并增加 10 秒超时收口。
+  - 加固 Android 分享桥并发同步与过期目录清理，将 `ContentProvider` 文件流拷贝移至后台执行器避免主线程 ANR。
+  - `DesktopUpgradeExit.prepare()` 失败原子回滚；修复 `WorkspaceDrafts.putAll` 未结清旧防抖等待者挂起；规范化 `LLMService.chatCompletionsUrl()` 尾部斜杠并补充 30 秒 `sendTimeout`；修复录音清理／恢复重试、`MultiAgentService` 模型名回退、局域网同步回调 `mediaRecordsProvider` 刷新及媒体播放报错竞态。
+- **美观性、易用性与全链路交互打磨（`app_theme.dart`、`task_board.dart`、`task_card.dart`、`input_bottom_bar.dart`、`task_workspace_overview.dart`、`command_palette_dialog.dart`、`task_search_panel.dart`、`home_screen.dart`、`task_reader_screen.dart`、`task_detail_screen.dart`、`task_metadata_editor.dart`、`dashboard_screen.dart`、`preferences_screen.dart`、`settings_screen.dart`、`inline_feedback.dart` 等）**：
+  - 统一浅色表面层次与明暗双主题 WCAG AA `AppTheme.quadrantColor`／`quadrantIcon`。
+  - 桌面宽卡新增悬停快捷操作，逾期任务支持一键延后与自定义时间选择；输入栏时间胶囊支持点击编辑／清除；工作区页签展示实时数量并完善「全部」空态引导；首页补齐 `N`/`Ctrl+N` 与 `1`–`4` 快捷键；命令面板新增按键帽样式；搜索筛选芯片展示计数。
+  - 阅读页支持 `Escape` 返回、倒计时、清单进度条并消除重复词汇解析；编辑页统一分节 `Material` 卡片、补齐 48dp 触控热区与未保存红点；仪表盘升级三色语义 KPI、等宽数字、占比百分比与平滑进度条；偏好设置新增 AI／同步状态徽章（保持 LAN 懒加载）；设置页新增 API 密钥显隐切换；统一 `InlineFeedback` 语义色与首帧可读入场动画。
+- **性能提升与安装包进一步瘦身（`lib/l10n/framework_localizations.dart`、`android/app/build.gradle.kts`、`prune_windows_bundle.py`、`build_linux.sh`、`installer.iss`、`database_helper.dart`、`notification_service.dart`、`quick_reminder_parser.dart`、`bidirectional_link_service.dart`、`providers.dart`、`task_management.dart`、`knowledge_graph_view.dart`、`voice_capture_feedback.dart` 等）**：
+  - 引入三语（`en`/`zh`/`ja`）精简框架本地化代理树摇 116 套未用框架语言表与 122 套日期符号；Android 启用 `resourceConfigurations` 剔除 69 套无用系统语言资源并排除 `kotlin_builtins`；Windows／Linux 移除 `packages/record_web` 并在 `[InstallDelete]` 中自动清理旧版残留（本地 Android ARM64 APK 降至 `10,391,655 B` / `9.9 MiB`，Windows Setup 降至 `13,255,851 B`）。
+  - 冷启动预读持久化语言避免重复通知渠道初始化，语言切换优化至桌面 `O(1)`／移动端 `O(K)`；静态提升高频正则与缓存分词；内存直更删除／清空事项及 `O(N+M)` 批量元数据写入；为知识图谱与语音浮层引入 `RepaintBoundary`、精确 `shouldRepaint` 与 `TextPainter` 缓存，进一步收窄 `Riverpod` `select(...)` 范围。
+- 新增 `test/stability_and_polish_v1_8_22_test.dart` 并扩展 `scripts/tests/test_bundle_size_optimizations.py`。
+
+---
+
 ## v1.8.21（build92，全平台安装包大幅瘦身与启动／数据库／UI 运行时性能优化）- 2026-11-22
 
 - **全平台安装包体积优化（`pubspec.yaml`、`lib/services/notification_service.dart`、`assets/app_icon.ico`、`android/app/build.gradle.kts`、`windows_installer/installer.iss`、`scripts/prune_windows_bundle.py` 及五平台打包脚本）**：

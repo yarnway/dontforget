@@ -112,8 +112,21 @@ class ReminderNoticePanel extends StatelessWidget {
             margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: colors.surfaceContainerLow,
-              border: Border.all(color: colors.outlineVariant),
+              color: upcoming
+                  ? colors.surfaceContainerLow
+                  : Color.alphaBlend(
+                      colors.primary.withValues(
+                        alpha: Theme.of(context).brightness == Brightness.dark
+                            ? 0.14
+                            : 0.06,
+                      ),
+                      colors.surfaceContainerLow,
+                    ),
+              border: Border.all(
+                color: upcoming
+                    ? colors.outlineVariant
+                    : colors.primary.withValues(alpha: 0.45),
+              ),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -255,7 +268,14 @@ class ReminderNoticePanel extends StatelessWidget {
                           ),
                         TextButton(
                           key: const ValueKey('notice-complete'),
-                          style: actionStyle,
+                          style: actionStyle.copyWith(
+                            backgroundColor: WidgetStatePropertyAll(
+                              colors.primaryContainer.withValues(alpha: 0.65),
+                            ),
+                            foregroundColor: WidgetStatePropertyAll(
+                              colors.onPrimaryContainer,
+                            ),
+                          ),
                           onPressed: busy ? null : () => onComplete(reminder),
                           child: Text(l10n.get('markDone')),
                         ),

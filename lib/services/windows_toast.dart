@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -18,8 +20,18 @@ class WindowsToast {
   /// Longest body accepted by the toast template before wrapping degrades.
   static const maxBodyLength = 240;
 
+  /// Upper bound on a PowerShell toast child so a stalled OS toast host can
+  /// never wedge recovery, backup restore, or graceful upgrade exit.
+  static const processTimeout = Duration(seconds: 10);
+
+  // PowerShell 5.1 treats ASCII apostrophe AND Unicode curly single quotes
+  // (U+2018, U+2019, U+201A, U+201B) as single-quoted string delimiters.
   static String _escape(String value) => value
       .replaceAll("'", "''")
+      .replaceAll('\u2018', '\u2018\u2018')
+      .replaceAll('\u2019', '\u2019\u2019')
+      .replaceAll('\u201A', '\u201A\u201A')
+      .replaceAll('\u201B', '\u201B\u201B')
       .replaceAll('`', '``')
       .replaceAll(r'$', r'`$')
       .replaceAll('\r', '')
@@ -194,6 +206,29 @@ class WindowsToast {
     }
   }
 
-  static Future<ProcessResult> _runPowerShell(List<String> arguments) =>
-      Process.run('powershell', arguments);
+  static Future<ProcessResult> _runPowerShell(List<String> arguments) async {
+    final process = await Process.start('powershell', arguments);
+    final stdoutFuture = process.stdout
+        .transform(const Utf8Decoder(allowMalformed: true))
+        .join();
+    final stderrFuture = process.stderr
+        .transform(const Utf8Decoder(allowMalformed: true))
+        .join();
+    try {
+      final exitCode = await process.exitCode.timeout(processTimeout);
+      final stdout = await stdoutFuture.timeout(const Duration(seconds: 2));
+      final stderr = await stderrFuture.timeout(const Duration(seconds: 2));
+      return ProcessResult(process.pid, exitCode, stdout, stderr);
+    } on TimeoutException {
+      process.kill();
+      unawaited(stdoutFuture.catchError((Object _) => ''));
+      unawaited(stderrFuture.catchError((Object _) => ''));
+      return ProcessResult(
+        process.pid,
+        -1,
+        '',
+        'Windows toast timed out after ${processTimeout.inSeconds}s',
+      );
+    }
+  }
 }

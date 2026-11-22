@@ -39,10 +39,70 @@ class _TaskSearchPanelState extends ConsumerState<TaskSearchPanel>
     }
   }
 
+  TaskSearchIndex? _countsIndex;
+  String? _countsQuery;
+  int? _countsMinute;
+  Map<TaskSearchFilter, int> _cachedCounts = const {};
+
+  Map<TaskSearchFilter, int> _filterCounts(
+    TaskSearchIndex index,
+    String query,
+    DateTime now,
+  ) {
+    final minute = now.millisecondsSinceEpoch ~/ 60000;
+    if (identical(_countsIndex, index) &&
+        _countsQuery == query &&
+        _countsMinute == minute) {
+      return _cachedCounts;
+    }
+    final allMatches = index.search(
+      query,
+      filter: TaskSearchFilter.all,
+      includeAllWhenEmpty: true,
+    );
+    final tomorrow = DateTime(now.year, now.month, now.day + 1);
+    var pending = 0;
+    var today = 0;
+    var overdue = 0;
+    var completed = 0;
+    for (final task in allMatches) {
+      if (task.isCompleted) {
+        completed++;
+      } else {
+        pending++;
+        final trigger = task.triggerTime;
+        final deadline = task.eventTime;
+        if (trigger != null && trigger.isBefore(now)) {
+          overdue++;
+        }
+        final due = deadline ?? trigger;
+        if (task.isPinned ||
+            (due != null && due.isBefore(tomorrow)) ||
+            (trigger != null && trigger.isBefore(tomorrow))) {
+          today++;
+        }
+      }
+    }
+    _countsIndex = index;
+    _countsQuery = query;
+    _countsMinute = minute;
+    return _cachedCounts = {
+      TaskSearchFilter.all: allMatches.length,
+      TaskSearchFilter.pending: pending,
+      TaskSearchFilter.today: today,
+      TaskSearchFilter.overdue: overdue,
+      TaskSearchFilter.completed: completed,
+    };
+  }
+
   void _startRefresh() {
     _refresh?.cancel();
     _refresh = Timer.periodic(const Duration(minutes: 1), (_) {
-      if (mounted) setState(() {});
+      if (mounted &&
+          (_filter == TaskSearchFilter.today ||
+              _filter == TaskSearchFilter.overdue)) {
+        setState(() {});
+      }
     });
   }
 
@@ -76,14 +136,15 @@ class _TaskSearchPanelState extends ConsumerState<TaskSearchPanel>
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final results = ref
-        .watch(taskSearchIndexProvider)
-        .search(
-          widget.query,
-          filter: _filter,
-          sort: _sort,
-          includeAllWhenEmpty: true,
-        );
+    final index = ref.watch(taskSearchIndexProvider);
+    final now = DateTime.now();
+    final filterCounts = _filterCounts(index, widget.query, now);
+    final results = index.search(
+      widget.query,
+      filter: _filter,
+      sort: _sort,
+      includeAllWhenEmpty: true,
+    );
     final positions = {
       for (var i = 0; i < results.length; i++) results[i].id: i,
     };
@@ -139,7 +200,9 @@ class _TaskSearchPanelState extends ConsumerState<TaskSearchPanel>
                         for (final filter in TaskSearchFilter.values)
                           ChoiceChip(
                             key: ValueKey('search-filter-${filter.name}'),
-                            label: Text(l10n.get(filterLabels[filter]!)),
+                            label: Text(
+                              '${l10n.get(filterLabels[filter]!)} · ${filterCounts[filter] ?? 0}',
+                            ),
                             selected: filter == _filter,
                             onSelected: (_) => setState(() => _filter = filter),
                           ),
@@ -223,12 +286,22 @@ class _TaskSearchPanelState extends ConsumerState<TaskSearchPanel>
                   ),
                   child: Column(
                     children: [
-                      Icon(
-                        hasConditions
-                            ? Icons.search_off_rounded
-                            : Icons.checklist_rounded,
-                        color: colors.primary,
-                        size: 40,
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: colors.primaryContainer.withValues(
+                            alpha: 0.65,
+                          ),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          hasConditions
+                              ? Icons.search_off_rounded
+                              : Icons.checklist_rounded,
+                          color: colors.onPrimaryContainer,
+                          size: 28,
+                        ),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -250,6 +323,17 @@ class _TaskSearchPanelState extends ConsumerState<TaskSearchPanel>
                           color: colors.onSurfaceVariant,
                         ),
                       ),
+                      if (hasConditions) ...[
+                        const SizedBox(height: 14),
+                        OutlinedButton.icon(
+                          onPressed: _reset,
+                          icon: const Icon(
+                            Icons.restart_alt_rounded,
+                            size: 18,
+                          ),
+                          label: Text(l10n.get('searchReset')),
+                        ),
+                      ],
                     ],
                   ),
                 ),

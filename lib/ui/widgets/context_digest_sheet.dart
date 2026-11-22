@@ -69,8 +69,10 @@ class _ContextDigestSheetState extends ConsumerState<ContextDigestSheet> {
   }
 
   bool get _current => mounted && _gate.isCurrent(_birth);
-  void _message(String value) =>
-      InlineFeedback.of(context).showSnackBar(SnackBar(content: Text(value)));
+  void _message(String value, {FeedbackTone tone = FeedbackTone.info}) =>
+      InlineFeedback.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(value)), tone: tone);
   Future<void> _complete(Reminder task) async {
     if (_busy.contains(task.id) || _resolved.contains(task.id)) return;
     final loc = AppLocalizations.of(context);
@@ -89,6 +91,9 @@ class _ContextDigestSheetState extends ConsumerState<ContextDigestSheet> {
         _resolved.add(task.id);
         _source = null;
       });
+      final isWarning =
+          result.nativeSyncFailed ||
+          result.disposition == ReminderActionDisposition.stale;
       _message(
         result.nativeSyncFailed
             ? loc.get('reminderNativeSyncFailed')
@@ -98,9 +103,12 @@ class _ContextDigestSheetState extends ConsumerState<ContextDigestSheet> {
                   result.reminder?.triggerTime != null
             ? '${loc.get('periodicNext')}${formatLocalDateTime(result.reminder!.triggerTime!)}'
             : '${loc.get('taskCompleted')}: ${task.taskTitle}',
+        tone: isWarning ? FeedbackTone.warning : FeedbackTone.success,
       );
     } catch (_) {
-      if (mounted) _message(loc.get('reminderUpdateFailed'));
+      if (mounted) {
+        _message(loc.get('reminderUpdateFailed'), tone: FeedbackTone.error);
+      }
     } finally {
       if (mounted) setState(() => _busy.remove(task.id));
     }
@@ -146,6 +154,8 @@ class _ContextDigestSheetState extends ConsumerState<ContextDigestSheet> {
                         ),
                         const SizedBox(height: 8),
                         ExpansionTile(
+                          shape: const Border(),
+                          collapsedShape: const Border(),
                           tilePadding: EdgeInsets.zero,
                           title: Text(loc.get('digestScope')),
                           children: [

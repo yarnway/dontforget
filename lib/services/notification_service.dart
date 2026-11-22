@@ -540,6 +540,15 @@ class NotificationService {
   bool _languageNeedsReconcile = false;
   Future<void> _languageTail = Future.value();
 
+  /// Seeds the initial notification language before first [init] so cold start
+  /// initializes native categories once in the user's persisted locale.
+  void seedInitialLanguage(String language) {
+    if (_initialized || _initialization != null) return;
+    if (const {'zh', 'en', 'ja'}.contains(language)) {
+      _notificationLanguage = language;
+    }
+  }
+
   /// Re-register Darwin labels and pass saved occurrences through the existing
   /// scheduling/journal path so pending requests use the new interface language.
   Future<void> setNotificationLanguage(String language) {
@@ -557,17 +566,28 @@ class NotificationService {
       await init();
       if (_maintenance) return;
       if (!_initialized) throw StateError('Notification initialization failed.');
+      // Desktop toast delivery reads `_notificationLanguage` dynamically when
+      // firing, so changing language needs no timer cancel/re-arm pass.
+      if (!usesNativeNotifications) {
+        _registeredNotificationLanguage = normalized;
+        _languageNeedsReconcile = false;
+        return;
+      }
       // Another caller may have started initialization with the old language.
       // Its completion is a barrier, not proof that our categories registered.
       if (_registeredNotificationLanguage != normalized) {
         await _initialize(rethrowFailures: true);
       }
       _windowMutation++;
-      final tasks = _scheduledReminders.values.toList();
-      for (final task in tasks) {
-        if (_maintenance) return;
-        if (identical(_scheduledReminders[task.id], task)) {
-          await scheduleReminderStrict(task);
+      if (nativePendingLimit != null) {
+        await _reconcileNativeWindow(strict: true);
+      } else {
+        final tasks = _scheduledReminders.values.toList();
+        for (final task in tasks) {
+          if (_maintenance) return;
+          if (identical(_scheduledReminders[task.id], task)) {
+            await scheduleReminderStrict(task);
+          }
         }
       }
       _languageNeedsReconcile = false;
@@ -748,7 +768,11 @@ class NotificationService {
       _scheduledReminders.remove(reminder.id);
       // If it passed within the last 30 seconds, fire it immediately
       if (difference.inSeconds > -30) {
-        fireReminderNow(reminder);
+        unawaited(
+          fireReminderNow(reminder).catchError((Object e) {
+            debugPrint('Immediate reminder delivery failed: $e');
+          }),
+        );
       }
       return;
     }
@@ -1025,7 +1049,11 @@ class NotificationService {
       () {
         if (!_maintenance && _revisions[reminder.id] == revision) {
           _scheduledReminders.remove(reminder.id);
-          fireReminderNow(reminder);
+          unawaited(
+            fireReminderNow(reminder).catchError((Object e) {
+              debugPrint('Scheduled reminder delivery failed: $e');
+            }),
+          );
         }
       },
     );

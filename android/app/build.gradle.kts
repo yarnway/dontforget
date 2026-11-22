@@ -45,6 +45,8 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // Keep only Android resources matching the app's supported locales (en/zh/ja).
+        resourceConfigurations += listOf("en", "zh", "zh-rCN", "zh-rTW", "ja")
         if (distributionAbi != null) {
             ndk { abiFilters.add(distributionAbi) }
         }
@@ -81,6 +83,9 @@ android {
                 "DebugProbesKt.bin",
                 "META-INF/androidx/**/LICENSE.txt",
                 "META-INF/*.version",
+                "kotlin/*.kotlin_builtins",
+                "kotlin/**/*.kotlin_builtins",
+                "kotlin-tooling-metadata.json",
             )
         }
     }

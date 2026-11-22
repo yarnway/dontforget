@@ -166,11 +166,20 @@ def prune_and_stage_crt(release_dir: Path, redist_dir: Path) -> dict:
     skipped_crt = sorted(
         redist_map[n].name for n in redist_map if n not in needed_crt
     )
+    removed_unused_assets: list[str] = []
+    record_web_dir = release_dir / 'data' / 'flutter_assets' / 'packages' / 'record_web'
+    if record_web_dir.is_dir():
+        shutil.rmtree(record_web_dir)
+        removed_unused_assets.append('data/flutter_assets/packages/record_web')
+        packages_dir = record_web_dir.parent
+        if packages_dir.is_dir() and not any(packages_dir.iterdir()):
+            packages_dir.rmdir()
     return {
         'copied_crt': copied_crt,
         'skipped_crt': skipped_crt,
         'removed_stale_crt': sorted(removed_stale_crt),
         'removed_unused_shims': sorted(removed_unused_shims),
+        'removed_unused_assets': removed_unused_assets,
     }
 
 

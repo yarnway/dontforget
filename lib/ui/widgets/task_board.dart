@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/providers.dart';
 import 'task_board_data.dart';
 import '../../l10n/app_localizations.dart';
+import '../theme/app_theme.dart';
 import '../../models/reminder.dart';
 import 'quadrant_view.dart';
 
@@ -213,12 +214,12 @@ class _TaskBoardState extends ConsumerState<TaskBoard>
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final brightness = Theme.of(context).brightness;
     final categoryColors = [
-      colors.error,
-      colors.tertiary,
-      colors.secondary,
-      colors.primary,
+      AppTheme.quadrantColor(brightness, 1),
+      AppTheme.quadrantColor(brightness, 2),
+      AppTheme.quadrantColor(brightness, 3),
+      AppTheme.quadrantColor(brightness, 4),
     ];
     final urgency = ref.watch(dynamicUrgencyServiceProvider);
     return LayoutBuilder(

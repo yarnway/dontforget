@@ -295,8 +295,9 @@ class DesktopWindowService {
     List<Rect>? mockDisplays,
   }) async {
     final manager = wm ?? windowManager;
-    final savedPrefs = await load(dbHelper);
-    final displays = mockDisplays ?? await getDisplayBounds();
+    final (savedPrefs, displays) = mockDisplays != null
+        ? (await load(dbHelper), mockDisplays)
+        : await (load(dbHelper), getDisplayBounds()).wait;
     final validated = validateAndClamp(
       prefs: savedPrefs,
       displayBounds: displays,

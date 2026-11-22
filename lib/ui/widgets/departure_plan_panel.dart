@@ -856,7 +856,10 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
             ),
           TextButton(
             onPressed:
-                _busy || !ref.watch(settingsProvider).hasConfiguredExtraction
+                _busy ||
+                !ref.watch(
+                  settingsProvider.select((s) => s.hasConfiguredExtraction),
+                )
                 ? null
                 : _askAi,
             child: Text(t('aiSuggest')),

@@ -395,26 +395,32 @@ class LanSyncService {
     }
   }
 
+  static final _cjkDots = RegExp('[。．]');
+  static final _invalidHostChars = RegExp(r'\s|[/\\?#@%]');
+  static final _validHost = RegExp(r'^[A-Za-z0-9][A-Za-z0-9_.-]*$');
+  static final _portSuffix = RegExp(r':([0-9]+)$');
+  static final _unsafeFileNameChars = RegExp(r'[/\\:\x00-\x1F\x7F]');
+  static final _controlChars = RegExp(r'[\x00-\x1F\x7F]');
+
   static LanSyncPeerAddress? parsePeerAddress(String input) {
     final value = input
         .trim()
-        .replaceAll(RegExp('[。．]'), '.')
+        .replaceAll(_cjkDots, '.')
         .replaceAll('：', ':');
     final numeric = InternetAddress.tryParse(value);
     if (numeric != null) return (host: numeric.address, port: defaultPort);
     if (value.isEmpty ||
         value.endsWith(':') ||
-        RegExp(r'\s|[/\\?#@%]').hasMatch(value)) {
+        _invalidHostChars.hasMatch(value)) {
       return null;
     }
     final uri = Uri.tryParse('http://$value');
     if (uri == null || uri.host.isEmpty) return null;
     final host = uri.host;
-    if (InternetAddress.tryParse(host) == null &&
-        !RegExp(r'^[A-Za-z0-9][A-Za-z0-9_.-]*$').hasMatch(host)) {
+    if (InternetAddress.tryParse(host) == null && !_validHost.hasMatch(host)) {
       return null;
     }
-    final suffix = RegExp(r':([0-9]+)$').firstMatch(value)?.group(1);
+    final suffix = _portSuffix.firstMatch(value)?.group(1);
     final port = suffix == null ? defaultPort : int.tryParse(suffix);
     return port != null && port > 0 && port <= 65535
         ? (host: host, port: port)
@@ -813,8 +819,12 @@ class LanSyncService {
       if (recordId is String && recordId.isNotEmpty) {
         referencedIds.add(recordId);
       }
-      final reminder = Reminder.fromJson(row);
-      referencedIds.addAll(reminder.details.attachmentIds);
+      final detailsJson = row['details_json'];
+      if (detailsJson is String &&
+          detailsJson.isNotEmpty &&
+          detailsJson.contains('attachment_ids')) {
+        referencedIds.addAll(TaskDetails.decode(detailsJson).attachmentIds);
+      }
     }
     referencedIds.removeAll(excludeIds);
     if (referencedIds.isEmpty) {
@@ -902,7 +912,7 @@ class LanSyncService {
   static String _safeFileName(String rawName) {
     final cleaned = p
         .basename(rawName)
-        .replaceAll(RegExp(r'[/\\:\x00-\x1F\x7F]'), '_')
+        .replaceAll(_unsafeFileNameChars, '_')
         .trim();
     if (cleaned.isEmpty || cleaned == '.' || cleaned == '..') {
       return 'attachment.bin';
@@ -920,7 +930,7 @@ class LanSyncService {
         p.basename(trimmed) == trimmed &&
         !trimmed.contains('/') &&
         !trimmed.contains('\\') &&
-        !RegExp(r'[\x00-\x1F\x7F]').hasMatch(trimmed);
+        !_controlChars.hasMatch(trimmed);
   }
 
   static ({
@@ -953,7 +963,7 @@ class LanSyncService {
         final id = record.id.trim();
         if (id.isEmpty ||
             id != record.id ||
-            RegExp(r'[\x00-\x1F\x7F]').hasMatch(id) ||
+            _controlChars.hasMatch(id) ||
             !const {
               'text',
               'image',

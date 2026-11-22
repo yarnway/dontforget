@@ -41,9 +41,16 @@ class MissedRemindersBar extends StatelessWidget {
           margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
           child: Material(
             key: const ValueKey('missed-reminders-bar'),
-            color: colors.surfaceContainerLow,
+            color: Color.alphaBlend(
+              colors.errorContainer.withValues(
+                alpha: Theme.of(context).brightness == Brightness.dark
+                    ? 0.28
+                    : 0.35,
+              ),
+              colors.surfaceContainerLow,
+            ),
             shape: RoundedRectangleBorder(
-              side: BorderSide(color: colors.outlineVariant),
+              side: BorderSide(color: colors.error.withValues(alpha: 0.35)),
               borderRadius: BorderRadius.circular(12),
             ),
             clipBehavior: Clip.antiAlias,

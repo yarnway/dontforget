@@ -18,6 +18,7 @@ import '../../models/settings.dart';
 import '../../models/tencent_speech_credentials.dart';
 import '../../l10n/app_localizations.dart';
 import 'editable_text_menu.dart';
+import 'inline_feedback.dart';
 import 'voice_capture_feedback.dart';
 import 'live_voice_text_dialog.dart';
 import '../../services/voice_text_draft.dart';
@@ -63,6 +64,32 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   bool _captureOverlayWanted = false;
   HomeController? _heldRecorder;
   DateTime? _quickTime;
+  String? _parsedCacheText;
+  int? _parsedCacheMinute;
+  DateTime? _parsedCacheTime;
+
+  DateTime? _cachedParsedTime(String text) {
+    if (text.trim().isEmpty) return null;
+    final minute = DateTime.now().millisecondsSinceEpoch ~/ 60000;
+    if (_parsedCacheText == text && _parsedCacheMinute == minute) {
+      return _parsedCacheTime;
+    }
+    _parsedCacheText = text;
+    _parsedCacheMinute = minute;
+    return _parsedCacheTime = QuickReminderParser.parse(text);
+  }
+
+  void _showToast(String message, {FeedbackTone tone = FeedbackTone.info}) {
+    if (!mounted) return;
+    final inline = InlineFeedback.maybeOf(context);
+    if (inline != null) {
+      inline.showSnackBar(SnackBar(content: Text(message)), tone: tone);
+    } else {
+      ScaffoldMessenger.maybeOf(
+        context,
+      )?.showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
   bool _memoOnly = false, _submitting = false, _restoring = false;
   bool _draftTouched = false, _draftSaveFailed = false;
   bool _resolvingPending = false;
@@ -133,7 +160,14 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                         absorbing: !_accessibleVoiceSession,
                         child: Consumer(
                           builder: (_, ref, _) {
-                            final state = ref.watch(homeControllerProvider);
+                            final state = ref.watch(
+                              homeControllerProvider.select(
+                                (s) => (
+                                  isRecording: s.isRecording,
+                                  voicePreview: s.voicePreview,
+                                ),
+                              ),
+                            );
                             final live = ref.watch(
                               settingsProvider.select(
                                 (s) =>
@@ -369,12 +403,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     if (_resolvingPending || _submitting || !_current) return;
     final composing = _textController.value.composing;
     if (restore && composing.isValid && !composing.isCollapsed) {
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(
-          content: Text(
-            AppLocalizations.of(context).get('failedInputComposing'),
-          ),
-        ),
+      _showToast(
+        AppLocalizations.of(context).get('failedInputComposing'),
+        tone: FeedbackTone.warning,
       );
       return;
     }
@@ -452,17 +483,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     if (action == 'copy') {
       try {
         await Clipboard.setData(ClipboardData(text: draft['text'] as String));
-        if (mounted) {
-          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-            SnackBar(content: Text(l10n.get('failedInputCopied'))),
-          );
-        }
+        _showToast(l10n.get('failedInputCopied'), tone: FeedbackTone.success);
       } catch (_) {
-        if (mounted) {
-          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-            SnackBar(content: Text(l10n.get('failedInputCopyFailed'))),
-          );
-        }
+        _showToast(l10n.get('failedInputCopyFailed'), tone: FeedbackTone.error);
       }
     } else {
       await _resolvePending(id, draft, restore: action == 'restore');
@@ -634,6 +657,10 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     // Wait for that same start before stopping, so a late start cannot keep recording.
     try {
       if (await operation) {
+        if (!mounted || !_current) {
+          await controller.cancelRecording();
+          return;
+        }
         switch (action) {
           case VoiceReleaseAction.cancel:
             await controller.cancelRecording();
@@ -852,10 +879,10 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                 Center(
                   child: Container(
                     width: 36,
-                    height: 3,
+                    height: 3.5,
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade400,
+                      color: Theme.of(sheetCtx).colorScheme.outlineVariant,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -885,8 +912,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                     // would always fail; mobile keeps it.
                     if (Platform.isAndroid || Platform.isIOS)
                       _buildMediaOption(
+                        sheetCtx: sheetCtx,
                         icon: Icons.camera_alt_outlined,
-                        color: Colors.blue.shade600,
+                        color: Theme.of(sheetCtx).colorScheme.primary,
                         label: l10n.get('takePhoto'),
                         onTap: () {
                           Navigator.pop(sheetCtx);
@@ -894,8 +922,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                         },
                       ),
                     _buildMediaOption(
+                      sheetCtx: sheetCtx,
                       icon: Icons.photo_library_outlined,
-                      color: Colors.purple.shade500,
+                      color: Theme.of(sheetCtx).colorScheme.secondary,
                       label: l10n.get('galleryPhoto'),
                       onTap: () {
                         Navigator.pop(sheetCtx);
@@ -903,8 +932,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                       },
                     ),
                     _buildMediaOption(
+                      sheetCtx: sheetCtx,
                       icon: Icons.snippet_folder_outlined,
-                      color: Colors.amber.shade700,
+                      color: Theme.of(sheetCtx).colorScheme.tertiary,
                       label: l10n.get('importFile'),
                       onTap: () {
                         Navigator.pop(sheetCtx);
@@ -912,8 +942,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                       },
                     ),
                     _buildMediaOption(
+                      sheetCtx: sheetCtx,
                       icon: Icons.video_collection_outlined,
-                      color: Colors.redAccent,
+                      color: Theme.of(sheetCtx).colorScheme.error,
                       label: l10n.get('uploadVideo'),
                       onTap: () {
                         Navigator.pop(sheetCtx);
@@ -932,40 +963,55 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   }
 
   Widget _buildMediaOption({
+    required BuildContext sheetCtx,
     required IconData icon,
     required Color color,
     required String label,
     required VoidCallback onTap,
   }) {
+    final colors = Theme.of(sheetCtx).colorScheme;
     return Expanded(
       child: Semantics(
         button: true,
         label: label,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           child: Container(
             constraints: const BoxConstraints(minHeight: 48),
-            padding: const EdgeInsets.symmetric(vertical: 10),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
             decoration: BoxDecoration(
-              border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
-              borderRadius: BorderRadius.circular(8),
+              color: colors.surfaceContainer,
+              border: Border.all(
+                color: colors.outlineVariant.withValues(alpha: 0.7),
+                width: 1,
+              ),
+              borderRadius: BorderRadius.circular(12),
             ),
             margin: const EdgeInsets.symmetric(horizontal: 4),
             child: ExcludeSemantics(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(icon, color: color, size: 26),
-                  const SizedBox(height: 6),
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.14),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, color: color, size: 22),
+                  ),
+                  const SizedBox(height: 8),
                   Text(
                     label,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
+                      color: colors.onSurface,
                     ),
                   ),
                 ],
@@ -1023,7 +1069,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     final isWindows = platform == TargetPlatform.windows;
     final voiceMode = isMobile && _voiceMode;
     final displayedTime =
-        _quickTime ?? QuickReminderParser.parse(_textController.text);
+        _memoOnly ? null : (_quickTime ?? _cachedParsedTime(_textController.text));
     final idleVoiceTarget =
         (voiceMode || (_textController.text.isEmpty && !_focusNode.hasFocus)) &&
         !_isTranscribing;
@@ -1238,8 +1284,8 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                   Container(
                     width: 8,
                     height: 8,
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
+                    decoration: BoxDecoration(
+                      color: colors.error,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -1610,16 +1656,89 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                   if (showTimeOptions || isWindows)
                     SizedBox(width: 44, height: 44, child: timeOptions),
                   if (displayedTime != null || _memoOnly)
-                    Expanded(
-                      child: Text(
-                        _memoOnly
-                            ? l10n.get('memoOnly')
-                            : formatLocalDateTime(displayedTime!),
-                        key: const ValueKey('composer-time-summary'),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.labelMedium
-                            ?.copyWith(color: colors.onSurfaceVariant),
+                    Flexible(
+                      child: Container(
+                        margin: const EdgeInsets.only(left: 4),
+                        decoration: BoxDecoration(
+                          color: colors.primaryContainer.withValues(alpha: 0.55),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(10),
+                                onTap: _pickQuickTime,
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    8,
+                                    6,
+                                    4,
+                                    6,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        _memoOnly
+                                            ? Icons.notes_outlined
+                                            : Icons
+                                                  .notifications_active_outlined,
+                                        size: 14,
+                                        color: colors.onPrimaryContainer,
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Flexible(
+                                        child: Text(
+                                          _memoOnly
+                                              ? l10n.get('memoOnly')
+                                              : formatLocalDateTime(
+                                                  displayedTime!,
+                                                ),
+                                          key: const ValueKey(
+                                            'composer-time-summary',
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelMedium
+                                              ?.copyWith(
+                                                color:
+                                                    colors.onPrimaryContainer,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              key: const ValueKey('composer-time-clear'),
+                              tooltip: l10n.get('clear'),
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(
+                                minWidth: 36,
+                                minHeight: 36,
+                              ),
+                              icon: Icon(
+                                Icons.close_rounded,
+                                size: 15,
+                                color: colors.onPrimaryContainer,
+                              ),
+                              onPressed: () {
+                                if (_quickTime != null || _memoOnly) {
+                                  _selectTime(null);
+                                } else {
+                                  _selectTime(null, memo: true);
+                                }
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                 ],
@@ -1637,6 +1756,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         ],
       ),
     );
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final composer = SafeArea(
       top: false,
       child: Container(
@@ -1657,12 +1777,24 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
           borderRadius: BorderRadius.circular(isWindows ? 16 : 20),
           border: Border.all(
             color: isRecording
-                ? Colors.red.withValues(alpha: 0.6)
+                ? colors.error.withValues(alpha: 0.7)
                 : _focusNode.hasFocus
-                ? colors.primary.withValues(alpha: 0.6)
+                ? colors.primary.withValues(alpha: 0.65)
                 : colors.outlineVariant.withValues(alpha: 0.7),
             width: 1.0,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 2),
+            ),
+            if (_focusNode.hasFocus && !isRecording)
+              BoxShadow(
+                color: colors.primary.withValues(alpha: 0.14),
+                blurRadius: 8,
+              ),
+          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1916,7 +2048,8 @@ class _RecordingPulseState extends State<_RecordingPulse>
         boxShadow: widget.active && _controller.isAnimating
             ? [
                 BoxShadow(
-                  color: Colors.red.withValues(alpha: 0.4 * _controller.value),
+                  color: Theme.of(context).colorScheme.error
+                      .withValues(alpha: 0.4 * _controller.value),
                   blurRadius: 8 * _controller.value,
                   spreadRadius: 2 * _controller.value,
                 ),

@@ -85,7 +85,7 @@ Strictly return a JSON object:
 }
 ''';
         final res = await _dio.post(
-          '${effectiveSettings.baseUrl}/chat/completions',
+          '${effectiveSettings.baseUrl.trim().replaceFirst(RegExp(r'/+$'), '')}/chat/completions',
           options: Options(
             followRedirects: false,
             headers: {
@@ -94,7 +94,7 @@ Strictly return a JSON object:
             },
           ),
           data: {
-            'model': effectiveSettings.modelName,
+            'model': effectiveSettings.requestModelName,
             'messages': [
               {'role': 'system', 'content': 'You are the Manager Agent.'},
               {'role': 'user', 'content': managerPrompt},
@@ -154,7 +154,7 @@ Strictly return a JSON object:
 }
 ''';
         final res = await _dio.post(
-          '${effectiveSettings.baseUrl}/chat/completions',
+          '${effectiveSettings.baseUrl.trim().replaceFirst(RegExp(r'/+$'), '')}/chat/completions',
           options: Options(
             followRedirects: false,
             headers: {
@@ -163,7 +163,7 @@ Strictly return a JSON object:
             },
           ),
           data: {
-            'model': effectiveSettings.modelName,
+            'model': effectiveSettings.requestModelName,
             'messages': [
               {'role': 'system', 'content': 'You are the Decomposer Agent.'},
               {'role': 'user', 'content': decompPrompt},

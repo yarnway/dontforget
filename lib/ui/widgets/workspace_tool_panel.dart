@@ -45,15 +45,30 @@ class WorkspaceToolArea extends StatelessWidget {
                     12,
                     8,
                   ),
-                  child: Material(
-                    key: const ValueKey('workspace-tool-panel'),
-                    color: colors.surfaceContainerLow,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(color: colors.outlineVariant),
+                  child: TweenAnimationBuilder<double>(
+                    key: ValueKey(tool!.key ?? tool.runtimeType),
+                    tween: Tween<double>(begin: 0, end: 1),
+                    duration: MediaQuery.disableAnimationsOf(context)
+                        ? Duration.zero
+                        : const Duration(milliseconds: 180),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, t, panelChild) => Opacity(
+                      opacity: t,
+                      child: Transform.translate(
+                        offset: Offset(12 * (1 - t), 0),
+                        child: panelChild,
+                      ),
                     ),
-                    clipBehavior: Clip.antiAlias,
-                    child: tool,
+                    child: Material(
+                      key: const ValueKey('workspace-tool-panel'),
+                      color: colors.surfaceContainerLow,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                        side: BorderSide(color: colors.outlineVariant),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: tool,
+                    ),
                   ),
                 ),
               ),

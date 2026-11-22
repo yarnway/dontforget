@@ -144,15 +144,17 @@ class WorkspaceDrafts extends StateNotifier<Map<String, dynamic>> {
   }
 
   Future<void> compareAndPut(String key, Object? expected, Object? value) {
-    _flushDebounced();
+    if (_pendingDebounced.isNotEmpty) {
+      unawaited(_flushDebounced().then<void>((_) {}, onError: (Object _) {}));
+    }
     return _put(key, value, expected: expected);
   }
 
   Future<void> put(String key, Object? value) {
     _pendingDebounced.remove(key);
     if (_pendingDebounced.isNotEmpty) {
-      _flushDebounced();
-    } else if (_debounceTimer != null) {
+      unawaited(_flushDebounced().then<void>((_) {}, onError: (Object _) {}));
+    } else if (_debounceTimer != null || _debouncedWaiters.isNotEmpty) {
       _debounceTimer?.cancel();
       _debounceTimer = null;
       final waiters = List<Completer<void>>.of(_debouncedWaiters);
@@ -180,7 +182,26 @@ class WorkspaceDrafts extends StateNotifier<Map<String, dynamic>> {
       _pendingDebounced.remove(k);
     }
     if (_pendingDebounced.isNotEmpty) {
-      _flushDebounced();
+      unawaited(_flushDebounced().then<void>((_) {}, onError: (Object _) {}));
+    } else if (_debounceTimer != null || _debouncedWaiters.isNotEmpty) {
+      _debounceTimer?.cancel();
+      _debounceTimer = null;
+      final waiters = List<Completer<void>>.of(_debouncedWaiters);
+      _debouncedWaiters.clear();
+      final op = _putAllInternal(entries);
+      op.then(
+        (_) {
+          for (final w in waiters) {
+            if (!w.isCompleted) w.complete();
+          }
+        },
+        onError: (Object e, StackTrace st) {
+          for (final w in waiters) {
+            if (!w.isCompleted) w.completeError(e, st);
+          }
+        },
+      );
+      return op;
     }
     return _putAllInternal(entries);
   }

@@ -11,6 +11,7 @@ import '../../providers/providers.dart';
 import '../../services/recovery/runtime_gate.dart';
 import '../widgets/content_management_panel.dart';
 import '../widgets/global_capture_shortcut_panel.dart';
+import '../widgets/inline_feedback.dart';
 import '../widgets/portable_backup_panel.dart';
 import '../widgets/unsaved_editor_scope.dart';
 import 'settings_screen.dart';
@@ -104,9 +105,13 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
   Future<void> _open(Widget page, {bool needsCleanDraft = false}) async {
     if (!_current || !_ready || _saving) return;
     if (needsCleanDraft && _dirty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(protectionText(context, 'retryDirty'))),
-      );
+      final snack = SnackBar(content: Text(protectionText(context, 'retryDirty')));
+      final inline = InlineFeedback.maybeOf(context);
+      if (inline != null) {
+        inline.showSnackBar(snack, tone: FeedbackTone.warning);
+      } else {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(snack);
+      }
       return;
     }
     _check();
@@ -157,62 +162,102 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
     required String title,
     required String description,
     required VoidCallback action,
-  }) => ConstrainedBox(
-    constraints: const BoxConstraints(minHeight: 88),
-    child: ListTile(
-      key: ValueKey(id),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      horizontalTitleGap: 12,
-      leading: MediaQuery.textScalerOf(context).scale(14) > 18.2
-          ? null
-          : ExcludeSemantics(
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.primary.withValues(alpha: .09),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  icon,
-                  size: 20,
-                  color: Theme.of(context).colorScheme.primary,
+    String? statusBadge,
+    bool statusActive = false,
+  }) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 88),
+      child: ListTile(
+        key: ValueKey(id),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 10,
+        ),
+        horizontalTitleGap: 12,
+        leading: MediaQuery.textScalerOf(context).scale(14) > 18.2
+            ? null
+            : ExcludeSemantics(
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: .09),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, size: 20, color: colors.primary),
                 ),
               ),
+        title: Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(
+              title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
-      title: Text(
-        title,
-        style: Theme.of(
-          context,
-        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-      ),
-      subtitle: Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: Text(
-          description,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+            if (statusBadge != null)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: statusActive
+                      ? colors.primaryContainer.withValues(alpha: 0.75)
+                      : colors.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  statusBadge,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: statusActive
+                        ? colors.onPrimaryContainer
+                        : colors.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Text(
+            description,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: colors.onSurfaceVariant,
+            ),
           ),
         ),
-      ),
-      trailing: ExcludeSemantics(
-        child: Icon(
-          Icons.chevron_right,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        trailing: ExcludeSemantics(
+          child: Icon(Icons.chevron_right, color: colors.onSurfaceVariant),
         ),
+        onTap: !_ready || _saving ? null : action,
       ),
-      onTap: !_ready || _saving ? null : action,
-    ),
-  );
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
+    final colors = Theme.of(context).colorScheme;
+    final aiConfigured = ref.watch(
+      settingsProvider.select((s) => s.hasConfiguredExtraction),
+    );
+    final lanSyncRunning =
+        ref.exists(lanSyncServiceProvider) &&
+        ref.read(lanSyncServiceProvider).isRunning;
     String t(String key) => preferencesText(loc.locale.languageCode, key);
     final sections = <Widget>[
       Padding(
         padding: const EdgeInsets.fromLTRB(4, 8, 4, 10),
-        child: Text(t('common'), style: Theme.of(context).textTheme.titleSmall),
+        child: Semantics(
+          header: true,
+          child: Text(
+            t('common'),
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+        ),
       ),
       Card.outlined(
         child: Column(
@@ -291,9 +336,12 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
         ),
       Padding(
         padding: const EdgeInsets.fromLTRB(4, 24, 4, 10),
-        child: Text(
-          t('features'),
-          style: Theme.of(context).textTheme.titleSmall,
+        child: Semantics(
+          header: true,
+          child: Text(
+            t('features'),
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
         ),
       ),
       LayoutBuilder(
@@ -310,6 +358,10 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
               icon: Icons.auto_awesome_outlined,
               title: t('ai'),
               description: t('aiHint'),
+              statusBadge: loc.get(
+                aiConfigured ? 'aiStatusConfigured' : 'aiStatusLocal',
+              ),
+              statusActive: aiConfigured,
               action: () => _open(const SettingsScreen(area: SettingsArea.ai)),
             ),
             _entry(
@@ -350,6 +402,10 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
               icon: Icons.devices_outlined,
               title: t('sync'),
               description: t('syncHint'),
+              statusBadge: lanSyncRunning
+                  ? loc.get('syncStatusRunning')
+                  : null,
+              statusActive: lanSyncRunning,
               action: () =>
                   _open(const SettingsScreen(area: SettingsArea.sync)),
             ),
@@ -405,21 +461,31 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
         ),
         bottomNavigationBar: !_dirty
             ? null
-            : SafeArea(
-                child: Center(
-                  heightFactor: 1,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 960),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 12,
-                      ),
-                      child: FilledButton.icon(
-                        key: const ValueKey('preferences-save'),
-                        icon: const Icon(Icons.check_rounded),
-                        onPressed: _ready && !_saving ? save : null,
-                        label: Text(loc.get('save')),
+            : DecoratedBox(
+                decoration: BoxDecoration(
+                  color: colors.surfaceContainerLow,
+                  border: Border(
+                    top: BorderSide(
+                      color: colors.outlineVariant.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ),
+                child: SafeArea(
+                  child: Center(
+                    heightFactor: 1,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 960),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 12,
+                        ),
+                        child: FilledButton.icon(
+                          key: const ValueKey('preferences-save'),
+                          icon: const Icon(Icons.check_rounded),
+                          onPressed: _ready && !_saving ? save : null,
+                          label: Text(loc.get('save')),
+                        ),
                       ),
                     ),
                   ),

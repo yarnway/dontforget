@@ -1,6 +1,9 @@
 #include "flutter_window.h"
 
+#include <algorithm>
+#include <cwchar>
 #include <optional>
+#include <string>
 
 #include "flutter/generated_plugin_registrant.h"
 #include "utils.h"
@@ -34,6 +37,32 @@ bool FlutterWindow::OnCreate() {
           flutter_controller_->engine()->messenger(),
           "com.yarnway.dontforget/protocol",
           &flutter::StandardMethodCodec::GetInstance());
+  protocol_channel_->SetMethodCallHandler(
+      [this](const flutter::MethodCall<flutter::EncodableValue>& call,
+             std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>>
+                 result) {
+        if (call.method_name() != "initialize") {
+          result->NotImplemented();
+          return;
+        }
+        protocol_ready_ = true;
+        result->Success();
+        if (pending_upgrade_exit_) {
+          pending_upgrade_exit_ = false;
+          if (protocol_channel_) {
+            protocol_channel_->InvokeMethod("onUpgradeExit", nullptr);
+          }
+        }
+        if (pending_protocol_url_.has_value()) {
+          std::string url = std::move(*pending_protocol_url_);
+          pending_protocol_url_.reset();
+          if (protocol_channel_ && !url.empty()) {
+            protocol_channel_->InvokeMethod(
+                "onProtocolUrl",
+                std::make_unique<flutter::EncodableValue>(std::move(url)));
+          }
+        }
+      });
 
   capture_hotkey_ = std::make_unique<GlobalCaptureHotkey>(GetHandle());
   capture_channel_ =
@@ -120,6 +149,9 @@ void FlutterWindow::OnDestroy() {
   }
   capture_channel_ = nullptr;
   capture_hotkey_ = nullptr;
+  protocol_ready_ = false;
+  pending_protocol_url_.reset();
+  pending_upgrade_exit_ = false;
   protocol_channel_ = nullptr;
   if (flutter_controller_) {
     flutter_controller_ = nullptr;
@@ -134,7 +166,11 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
                               LPARAM const lparam) noexcept {
   if (message == kUpgradeExitMessage) {
     if (protocol_channel_) {
-      protocol_channel_->InvokeMethod("onUpgradeExit", nullptr);
+      if (protocol_ready_) {
+        protocol_channel_->InvokeMethod("onUpgradeExit", nullptr);
+      } else {
+        pending_upgrade_exit_ = true;
+      }
     }
     return 0;
   }
@@ -144,7 +180,11 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
     if (message == WM_QUERYENDSESSION) return TRUE;
     if (message == WM_ENDSESSION) {
       if (wparam && protocol_channel_) {
-        protocol_channel_->InvokeMethod("onUpgradeExit", nullptr);
+        if (protocol_ready_) {
+          protocol_channel_->InvokeMethod("onUpgradeExit", nullptr);
+        } else {
+          pending_upgrade_exit_ = true;
+        }
       }
       return 0;
     }
@@ -167,17 +207,29 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
 
   switch (message) {
     case WM_FONTCHANGE:
-      flutter_controller_->engine()->ReloadSystemFonts();
+      if (flutter_controller_ && flutter_controller_->engine()) {
+        flutter_controller_->engine()->ReloadSystemFonts();
+      }
       break;
     case WM_COPYDATA: {
       auto* cds = reinterpret_cast<PCOPYDATASTRUCT>(lparam);
-      if (cds != nullptr && cds->dwData == 0x4446 && cds->lpData != nullptr) {
+      if (cds != nullptr && cds->dwData == 0x4446 && cds->lpData != nullptr &&
+          cds->cbData >= sizeof(wchar_t)) {
         const wchar_t* cmd = reinterpret_cast<const wchar_t*>(cds->lpData);
-        std::string utf8_cmd = Utf8FromUtf16(cmd);
+        const size_t max_chars =
+            (std::min)(static_cast<size_t>(cds->cbData / sizeof(wchar_t)),
+                       static_cast<size_t>(32767));
+        const size_t bounded_len = wcsnlen(cmd, max_chars);
+        std::wstring bounded_cmd(cmd, bounded_len);
+        std::string utf8_cmd = Utf8FromUtf16(bounded_cmd.c_str());
         if (protocol_channel_ && !utf8_cmd.empty()) {
-          protocol_channel_->InvokeMethod(
-              "onProtocolUrl",
-              std::make_unique<flutter::EncodableValue>(utf8_cmd));
+          if (protocol_ready_) {
+            protocol_channel_->InvokeMethod(
+                "onProtocolUrl",
+                std::make_unique<flutter::EncodableValue>(std::move(utf8_cmd)));
+          } else {
+            pending_protocol_url_ = std::move(utf8_cmd);
+          }
         }
         return TRUE;
       }

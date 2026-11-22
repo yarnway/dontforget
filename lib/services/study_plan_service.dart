@@ -68,7 +68,7 @@ class StudyPlanService {
                 if (cancelToken.isCancelled) throw cancelToken.cancelError!;
                 if (token.isCancelled) throw token.cancelError!;
                 final response = await _dio.post(
-                  '${config.baseUrl}/chat/completions',
+                  '${config.baseUrl.trim().replaceFirst(RegExp(r'/+$'), '')}/chat/completions',
                   cancelToken: token,
                   options: Options(
                     followRedirects: false,

@@ -87,8 +87,9 @@ class LearningSnapshot {
 }
 
 class LearningQueueService {
+  static final _whitespace = RegExp(r'\s+');
   static String wordKey(String word) =>
-      word.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
+      word.trim().toLowerCase().replaceAll(_whitespace, ' ');
   static bool sameDay(DateTime a, DateTime b) {
     final x = a.toLocal(), y = b.toLocal();
     return x.year == y.year && x.month == y.month && x.day == y.day;
@@ -161,7 +162,7 @@ class LearningQueueService {
           t.spacedRepetitionLevel > 0,
     )) {
       for (final word in VocabularyEntry.parseNotes(task.taskSummary ?? '')) {
-        final key = wordKey(word.word), p = all[wordKey(word.word)];
+        final key = wordKey(word.word), p = all[key];
         final eligible = p == null
             ? task.nextReviewAt == null || task.nextReviewAt!.isBefore(tomorrow)
             : !sameDay(p.reviewed, current) && p.due.isBefore(tomorrow);

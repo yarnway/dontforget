@@ -33,4 +33,8 @@ MANIFEST="build/linux/x64/release/bundle/data/flutter_assets/NativeAssetsManifes
 if [ -f "$DARTJNI" ] && ! grep -q "libdartjni.so" "$MANIFEST" 2>/dev/null; then
   rm -f "$DARTJNI"
 fi
+# Drop Windows-only tray ICO and Web-only record_web JS assets from Linux bundle.
+rm -f build/linux/x64/release/bundle/data/flutter_assets/assets/app_icon.ico
+rm -rf build/linux/x64/release/bundle/data/flutter_assets/packages/record_web
+rmdir build/linux/x64/release/bundle/data/flutter_assets/packages 2>/dev/null || true
 python3 scripts/package_artifacts.py --platform linux

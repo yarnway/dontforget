@@ -15,6 +15,7 @@ import '../../l10n/app_localizations.dart';
 import '../../l10n/planning_strings.dart';
 import '../screens/task_detail_screen.dart';
 import '../screens/notification_repair_screen.dart';
+import '../theme/app_theme.dart';
 
 class TaskCard extends ConsumerStatefulWidget {
   final Reminder task;
@@ -33,7 +34,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
   bool _isDeleting = false;
   bool _showSubtasks = false;
   bool _showChecklist = false;
-  bool _hovered = false;
+  final _hovered = ValueNotifier<bool>(false);
   DataGeneration? _checklistGeneration;
   RuntimeRecoveryToken? _checklistToken;
 
@@ -50,19 +51,24 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     }
   }
 
+  @override
+  void dispose() {
+    _hovered.dispose();
+    super.dispose();
+  }
+
   bool get _isBusy => _isUpdating || _isDeleting;
 
-  void _showMessage(String message) {
+  void _showMessage(String message, {FeedbackTone tone = FeedbackTone.info}) {
     if (!mounted) return;
+    final isNativeSyncFailure =
+        message == AppLocalizations.of(context).get('reminderNativeSyncFailed');
     InlineFeedback.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        action:
-            message ==
-                AppLocalizations.of(context).get('reminderNativeSyncFailed')
-            ? notificationRepairAction(context)
-            : null,
+        action: isNativeSyncFailure ? notificationRepairAction(context) : null,
       ),
+      tone: isNativeSyncFailure ? FeedbackTone.warning : tone,
     );
   }
 
@@ -98,9 +104,12 @@ class _TaskCardState extends ConsumerState<TaskCard> {
           );
       database.checkGeneration(generation);
       if (mounted) setState(() => _showSubtasks = true);
-      _showMessage(l10n.get('addMicroHabitsAsSubtasks'));
+      _showMessage(
+        l10n.get('addMicroHabitsAsSubtasks'),
+        tone: FeedbackTone.success,
+      );
     } catch (_) {
-      _showMessage(l10n.get('taskBreakdownFailed'));
+      _showMessage(l10n.get('taskBreakdownFailed'), tone: FeedbackTone.error);
     } finally {
       if (mounted) setState(() => _isDecomposing = false);
     }
@@ -112,34 +121,41 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     final l10n = AppLocalizations.of(context);
     final task = widget.task;
     final databaseForFeedback = ref.read(databaseHelperProvider);
-    final generationForFeedback = databaseForFeedback.captureGeneration();
     final host = InlineFeedback.of(context);
     final repair = notificationRepairAction(context);
+    DataGeneration? generationForFeedback;
     void showNativeFailure() {
+      final gen = generationForFeedback;
       if (host.mounted &&
-          databaseForFeedback.isCurrent(generationForFeedback)) {
+          (gen == null || databaseForFeedback.isCurrent(gen))) {
         host.showSnackBar(
           SnackBar(
             content: Text(l10n.get('reminderNativeSyncFailed')),
             action: repair,
           ),
+          tone: FeedbackTone.warning,
         );
       }
     }
 
     try {
+      generationForFeedback = databaseForFeedback.captureGeneration();
       if (completed) {
         final result = await ref
             .read(remindersProvider.notifier)
             .completeOccurrence(task);
         if (result.disposition == ReminderActionDisposition.stale) {
-          _showMessage(l10n.get('reminderOccurrenceChanged'));
+          _showMessage(
+            l10n.get('reminderOccurrenceChanged'),
+            tone: FeedbackTone.warning,
+          );
         } else if (result.nativeSyncFailed) {
           showNativeFailure();
         } else if (result.reminder?.isCompleted == false &&
             result.reminder?.triggerTime != null) {
           _showMessage(
             '${l10n.get('periodicNext')}${formatLocalDateTime(result.reminder!.triggerTime!)}',
+            tone: FeedbackTone.success,
           );
         }
       } else {
@@ -160,7 +176,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         database.checkGeneration(generation);
       }
     } catch (_) {
-      _showMessage(l10n.get('reminderUpdateFailed'));
+      _showMessage(l10n.get('reminderUpdateFailed'), tone: FeedbackTone.error);
     } finally {
       if (mounted) setState(() => _isUpdating = false);
     }
@@ -186,10 +202,15 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       database.checkGeneration(generation);
       gate.check(token);
       if (result.nativeSyncFailed) {
-        _showMessage(l10n.get('reminderNativeSyncFailed'));
+        _showMessage(
+          l10n.get('reminderNativeSyncFailed'),
+          tone: FeedbackTone.warning,
+        );
       }
     } catch (_) {
-      if (!gate.paused) _showMessage(l10n.get('reminderUpdateFailed'));
+      if (!gate.paused) {
+        _showMessage(l10n.get('reminderUpdateFailed'), tone: FeedbackTone.error);
+      }
     } finally {
       if (mounted) setState(() => _isUpdating = false);
     }
@@ -232,23 +253,29 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                     SnackBar(
                       content: Text(l10n.get('reminderNativeSyncFailed')),
                     ),
+                    tone: FeedbackTone.warning,
                   );
                 }
               } catch (_) {
                 if (feedback.mounted) {
                   feedback.showSnackBar(
                     SnackBar(content: Text(l10n.get('reminderUpdateFailed'))),
+                    tone: FeedbackTone.error,
                   );
                 }
               }
             },
           ),
         ),
+        tone: result.nativeSyncFailed
+            ? FeedbackTone.warning
+            : FeedbackTone.info,
       );
     } catch (_) {
       if (feedback.mounted) {
         feedback.showSnackBar(
           SnackBar(content: Text(l10n.get('taskDeleteFailed'))),
+          tone: FeedbackTone.error,
         );
       }
     } finally {
@@ -402,12 +429,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     if (_isBusy) return;
     final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).colorScheme;
-    const icons = [
-      Icons.notifications_active_outlined,
-      Icons.star_outline_rounded,
-      Icons.checklist_rounded,
-      Icons.notes_rounded,
-    ];
+    final brightness = Theme.of(context).brightness;
     final target = await showDialog<int>(
       context: context,
       builder: (dialogContext) => SimpleDialog(
@@ -418,20 +440,53 @@ class _TaskCardState extends ConsumerState<TaskCard> {
             SimpleDialogOption(
               key: ValueKey('task-move-category-$level'),
               onPressed: () => Navigator.pop(dialogContext, level),
-              child: Row(
-                children: [
-                  Icon(
-                    icons[level - 1],
-                    size: 20,
-                    color: widget.task.quadrantLevel == level
-                        ? colors.primary
-                        : colors.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(child: Text(l10n.get('cat$level'))),
-                  if (widget.task.quadrantLevel == level)
-                    Icon(Icons.check_rounded, size: 18, color: colors.primary),
-                ],
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: widget.task.quadrantLevel == level
+                      ? colors.primaryContainer.withValues(alpha: 0.38)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppTheme.quadrantColor(
+                          brightness,
+                          level,
+                        ).withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        AppTheme.quadrantIcon(level),
+                        size: 18,
+                        color: AppTheme.quadrantColor(brightness, level),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        l10n.get('cat$level'),
+                        style: TextStyle(
+                          fontWeight: widget.task.quadrantLevel == level
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                        ),
+                      ),
+                    ),
+                    if (widget.task.quadrantLevel == level)
+                      Icon(
+                        Icons.check_rounded,
+                        size: 18,
+                        color: colors.primary,
+                      ),
+                  ],
+                ),
               ),
             ),
         ],
@@ -453,9 +508,12 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         result.nativeSyncFailed
             ? l10n.get('reminderNativeSyncFailed')
             : '${l10n.get('movedToQuadrant')}${l10n.get('cat$target')}: ${widget.task.taskTitle}',
+        tone: result.nativeSyncFailed
+            ? FeedbackTone.warning
+            : FeedbackTone.success,
       );
     } catch (_) {
-      _showMessage(l10n.get('reminderUpdateFailed'));
+      _showMessage(l10n.get('reminderUpdateFailed'), tone: FeedbackTone.error);
     } finally {
       if (mounted) setState(() => _isUpdating = false);
     }
@@ -466,30 +524,97 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       return;
     }
     final l10n = AppLocalizations.of(context);
+    final colors = Theme.of(context).colorScheme;
+    final previewNow = DateTime.now();
+    final previewTrigger = widget.task.triggerTime!;
+    final previewBase = previewTrigger.isAfter(previewNow)
+        ? previewTrigger
+        : previewNow;
+    final options = <(String key, String labelKey, IconData icon, DateTime? preview)>[
+      (
+        '15',
+        'snooze15',
+        Icons.timer_outlined,
+        previewBase.add(const Duration(minutes: 15)),
+      ),
+      (
+        '60',
+        'snooze60',
+        Icons.hourglass_bottom_rounded,
+        previewBase.add(const Duration(hours: 1)),
+      ),
+      (
+        'evening',
+        'quickEvening',
+        Icons.nightlight_outlined,
+        QuickReminderParser.tonight(previewNow),
+      ),
+      (
+        'morning',
+        'quickMorning',
+        Icons.wb_sunny_outlined,
+        QuickReminderParser.tomorrowMorning(previewNow),
+      ),
+      ('custom', 'quickChoose', Icons.edit_calendar_outlined, null),
+    ];
     final choice = await showDialog<String>(
       context: context,
       builder: (dialogContext) => SimpleDialog(
         key: const ValueKey('task-postpone-dialog'),
         title: Text(l10n.get('quickPostpone')),
         children: [
-          for (final entry in const {
-            '15': 'snooze15',
-            '60': 'snooze60',
-            'evening': 'quickEvening',
-            'morning': 'quickMorning',
-          }.entries)
+          for (final opt in options)
             SimpleDialogOption(
-              key: ValueKey('task-postpone-${entry.key}'),
-              onPressed: () => Navigator.pop(dialogContext, entry.key),
+              key: ValueKey('task-postpone-${opt.$1}'),
+              onPressed: () => Navigator.pop(dialogContext, opt.$1),
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Text(l10n.get(entry.value)),
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    Icon(opt.$3, size: 18, color: colors.primary),
+                    const SizedBox(width: 12),
+                    Expanded(child: Text(l10n.get(opt.$2))),
+                    if (opt.$4 != null) ...[
+                      const SizedBox(width: 10),
+                      Text(
+                        formatLocalDateTime(opt.$4!),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
         ],
       ),
     );
     if (!mounted || choice == null) return;
+    DateTime? pickedCustom;
+    if (choice == 'custom') {
+      final initial = previewBase.add(const Duration(hours: 1));
+      final date = await showDatePicker(
+        context: context,
+        initialDate: initial,
+        firstDate: previewNow,
+        lastDate: previewNow.add(const Duration(days: 365 * 5)),
+      );
+      if (!mounted || date == null) return;
+      final tod = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(initial),
+      );
+      if (!mounted || tod == null) return;
+      pickedCustom = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        tod.hour,
+        tod.minute,
+      );
+    }
     final now = DateTime.now();
     final currentTrigger = widget.task.triggerTime!;
     final isFuture = currentTrigger.isAfter(now);
@@ -499,6 +624,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       '60' => base.add(const Duration(hours: 1)),
       'evening' => QuickReminderParser.tonight(now),
       'morning' => QuickReminderParser.tomorrowMorning(now),
+      'custom' => pickedCustom,
       _ => null,
     };
     if (target == null || !target.isAfter(now)) return;
@@ -526,17 +652,24 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       }
       if (!mounted) return;
       if (result.disposition == ReminderActionDisposition.stale) {
-        _showMessage(l10n.get('reminderOccurrenceChanged'));
+        _showMessage(
+          l10n.get('reminderOccurrenceChanged'),
+          tone: FeedbackTone.warning,
+        );
       } else if (result.nativeSyncFailed) {
-        _showMessage(l10n.get('reminderNativeSyncFailed'));
+        _showMessage(
+          l10n.get('reminderNativeSyncFailed'),
+          tone: FeedbackTone.warning,
+        );
       } else {
         final savedTime = result.reminder?.triggerTime ?? target;
         _showMessage(
           '${l10n.get('reminderDelayedTo')} ${formatLocalDateTime(savedTime)}',
+          tone: FeedbackTone.success,
         );
       }
     } catch (_) {
-      _showMessage(l10n.get('reminderUpdateFailed'));
+      _showMessage(l10n.get('reminderUpdateFailed'), tone: FeedbackTone.error);
     } finally {
       if (mounted) setState(() => _isUpdating = false);
     }
@@ -584,14 +717,20 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                 baseline: widget.task,
               );
         if (result.nativeSyncFailed) {
-          _showMessage(loc.get('reminderNativeSyncFailed'));
+          _showMessage(
+            loc.get('reminderNativeSyncFailed'),
+            tone: FeedbackTone.warning,
+          );
         } else if (!result.accepted) {
-          _showMessage(loc.get('reminderOccurrenceChanged'));
+          _showMessage(
+            loc.get('reminderOccurrenceChanged'),
+            tone: FeedbackTone.warning,
+          );
         }
       } on PinLimitException {
-        _showMessage(loc.get('pinLimit'));
+        _showMessage(loc.get('pinLimit'), tone: FeedbackTone.warning);
       } catch (_) {
-        _showMessage(loc.get('reminderUpdateFailed'));
+        _showMessage(loc.get('reminderUpdateFailed'), tone: FeedbackTone.error);
       } finally {
         if (mounted) setState(() => _isUpdating = false);
       }
@@ -618,7 +757,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
               .updateReminder(updated, baseline: widget.task);
         });
       } catch (_) {
-        _showMessage(l10n.get('reminderUpdateFailed'));
+        _showMessage(l10n.get('reminderUpdateFailed'), tone: FeedbackTone.error);
       } finally {
         if (mounted) setState(() => _isUpdating = false);
       }
@@ -659,11 +798,16 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     final colors = Theme.of(context).colorScheme;
     final task = widget.task;
     if (!task.isVisible) return const SizedBox.shrink();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final brightness = Theme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
     final subTasks = task.subTasksView;
     final details = task.details;
     final summary = task.taskSummary?.trim();
     final now = DateTime.now();
+    final isOverdue =
+        !task.isCompleted &&
+        task.triggerTime != null &&
+        task.triggerTime!.isBefore(now);
     final showSummary =
         summary != null &&
         summary.isNotEmpty &&
@@ -673,12 +817,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         task.eventTime != null &&
         task.triggerTime != null &&
         task.eventTime!.isAtSameMomentAs(task.triggerTime!);
-    final priorityColor = switch (task.quadrantLevel) {
-      1 => isDark ? Colors.red.shade300 : Colors.red.shade700,
-      2 => isDark ? Colors.orange.shade300 : Colors.orange.shade800,
-      3 => isDark ? Colors.blue.shade300 : Colors.blue.shade700,
-      _ => isDark ? Colors.green.shade300 : Colors.green.shade700,
-    };
+    final priorityColor = AppTheme.quadrantColor(brightness, task.quadrantLevel);
     IconData? mediaIcon;
     if (task.recordId != null && details.attachmentIds.isEmpty) {
       final media = ref.watch(
@@ -745,7 +884,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
           Icons.auto_awesome_outlined,
           colors.primary,
         ),
-      if (!task.isCompleted && task.isOverdue)
+      if (isOverdue)
         _badge(l10n.get('overdue'), Icons.schedule_rounded, colors.error),
       if (!task.isCompleted &&
           !sharedTime &&
@@ -800,28 +939,45 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       // can leave a white card behind already-light dark-theme text.
       child: MouseRegion(
         onEnter: (_) {
-          if (!_hovered) setState(() => _hovered = true);
+          if (!_hovered.value) _hovered.value = true;
         },
         onExit: (_) {
-          if (_hovered) setState(() => _hovered = false);
+          if (_hovered.value) _hovered.value = false;
         },
-        child: Container(
-          key: ValueKey('task-surface-${task.id}'),
-          margin: const EdgeInsets.only(bottom: 8),
-          decoration: BoxDecoration(
-            color: task.isCompleted
-                ? colors.surfaceContainerLowest
-                : colors.surfaceContainerLow,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: _hovered
-                  ? colors.primary.withValues(alpha: 0.55)
-                  : (!task.isCompleted && task.isOverdue)
-                  ? colors.error.withValues(alpha: 0.45)
-                  : (!task.isCompleted && task.isPinned)
-                  ? colors.primary.withValues(alpha: 0.35)
-                  : colors.outlineVariant.withValues(alpha: 0.65),
+        child: ValueListenableBuilder<bool>(
+          valueListenable: _hovered,
+          builder: (context, hovered, cardContent) => Container(
+            key: ValueKey('task-surface-${task.id}'),
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              color: task.isCompleted
+                  ? colors.surfaceContainerLowest
+                  : colors.surfaceContainerLow,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: hovered
+                    ? colors.primary.withValues(alpha: 0.55)
+                    : isOverdue
+                    ? colors.error.withValues(alpha: 0.45)
+                    : (!task.isCompleted && task.isPinned)
+                    ? colors.primary.withValues(alpha: 0.35)
+                    : colors.outlineVariant.withValues(alpha: 0.65),
+              ),
+              boxShadow: task.isCompleted
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withValues(
+                          alpha: isDark
+                              ? (hovered ? 0.28 : 0.16)
+                              : (hovered ? 0.08 : 0.035),
+                        ),
+                        blurRadius: hovered ? 10 : 4,
+                        offset: Offset(0, hovered ? 3 : 1),
+                      ),
+                    ],
             ),
+            child: cardContent,
           ),
           child: InkWell(
             borderRadius: BorderRadius.circular(14),
@@ -830,82 +986,154 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                 _showContextMenu(details.globalPosition),
             child: Padding(
               padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
+              child: LayoutBuilder(
+                builder: (context, cardConstraints) {
+                  final allowHoverActions = cardConstraints.maxWidth >= 360;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        width: 3.5,
-                        height: 16,
-                        margin: const EdgeInsets.only(right: 9),
-                        decoration: BoxDecoration(
-                          color: task.isCompleted
-                              ? colors.outlineVariant
-                              : priorityColor,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    Expanded(
-                      child: Text(
-                        task.taskTitle,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          height: 1.35,
-                          color: task.isCompleted
-                              ? colors.onSurfaceVariant
-                              : colors.onSurface,
-                          decoration: task.isCompleted
-                              ? TextDecoration.lineThrough
-                              : null,
-                        ),
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    SizedBox(
-                      width: 48,
-                      height: 48,
-                      child: Checkbox(
-                        key: ValueKey('complete-${task.id}'),
-                        semanticLabel:
-                            '${l10n.get(task.isCompleted ? 'markUndone' : 'markDone')}: ${task.taskTitle}',
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        materialTapTargetSize: MaterialTapTargetSize.padded,
-                        value: task.isCompleted,
-                        onChanged: _isBusy
-                            ? null
-                            : (value) {
-                                HapticFeedback.selectionClick();
-                                if (value != null) _setCompleted(value);
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 3.5,
+                            height: 16,
+                            margin: const EdgeInsets.only(right: 9),
+                            decoration: BoxDecoration(
+                              color: task.isCompleted
+                                  ? colors.outlineVariant
+                                  : priorityColor,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              task.taskTitle,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                height: 1.35,
+                                color: task.isCompleted
+                                    ? colors.onSurfaceVariant
+                                    : colors.onSurface,
+                                decoration: task.isCompleted
+                                    ? TextDecoration.lineThrough
+                                    : null,
+                              ),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (allowHoverActions)
+                            ValueListenableBuilder<bool>(
+                              valueListenable: _hovered,
+                              builder: (context, hovered, _) {
+                                if (!hovered || _isBusy) {
+                                  return const SizedBox.shrink();
+                                }
+                                return Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (!task.isCompleted)
+                                      IconButton(
+                                        key: ValueKey('hover-pin-${task.id}'),
+                                        tooltip: l10n.get(
+                                          task.isPinned
+                                              ? 'unpinToday'
+                                              : 'pinToday',
+                                        ),
+                                        constraints: const BoxConstraints(
+                                          minWidth: 48,
+                                          minHeight: 48,
+                                        ),
+                                        icon: Icon(
+                                          task.isPinned
+                                              ? Icons.push_pin_rounded
+                                              : Icons.push_pin_outlined,
+                                          size: 18,
+                                          color: task.isPinned
+                                              ? colors.primary
+                                              : colors.onSurfaceVariant,
+                                        ),
+                                        onPressed: () => _onAction('pin'),
+                                      ),
+                                    if (_canQuickPostpone)
+                                      IconButton(
+                                        key: ValueKey(
+                                          'hover-postpone-${task.id}',
+                                        ),
+                                        tooltip: l10n.get('quickPostpone'),
+                                        constraints: const BoxConstraints(
+                                          minWidth: 48,
+                                          minHeight: 48,
+                                        ),
+                                        icon: Icon(
+                                          Icons.snooze_outlined,
+                                          size: 18,
+                                          color: colors.onSurfaceVariant,
+                                        ),
+                                        onPressed: _choosePostpone,
+                                      ),
+                                    IconButton(
+                                      key: ValueKey('hover-edit-${task.id}'),
+                                      tooltip: l10n.get('editTask'),
+                                      constraints: const BoxConstraints(
+                                        minWidth: 48,
+                                        minHeight: 48,
+                                      ),
+                                      icon: Icon(
+                                        Icons.edit_outlined,
+                                        size: 18,
+                                        color: colors.onSurfaceVariant,
+                                      ),
+                                      onPressed: _openEditor,
+                                    ),
+                                  ],
+                                );
                               },
+                            ),
+                          SizedBox(
+                            width: 48,
+                            height: 48,
+                            child: Checkbox(
+                              key: ValueKey('complete-${task.id}'),
+                              semanticLabel:
+                                  '${l10n.get(task.isCompleted ? 'markUndone' : 'markDone')}: ${task.taskTitle}',
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.padded,
+                              value: task.isCompleted,
+                              onChanged: _isBusy
+                                  ? null
+                                  : (value) {
+                                      HapticFeedback.selectionClick();
+                                      if (value != null) _setCompleted(value);
+                                    },
+                            ),
+                          ),
+                          PopupMenuButton<String>(
+                            key: ValueKey('actions-${task.id}'),
+                            tooltip: l10n.get('taskActions'),
+                            enabled: !_isBusy,
+                            constraints: const BoxConstraints(
+                              minWidth: 200,
+                              maxWidth: 320,
+                            ),
+                            color: colors.surfaceContainer,
+                            surfaceTintColor: Colors.transparent,
+                            icon: Icon(
+                              Icons.more_horiz_rounded,
+                              size: 20,
+                              color: colors.onSurfaceVariant,
+                            ),
+                            itemBuilder: (_) => _menuItems(l10n),
+                            onSelected: _onAction,
+                          ),
+                        ],
                       ),
-                    ),
-                    PopupMenuButton<String>(
-                      key: ValueKey('actions-${task.id}'),
-                      tooltip: l10n.get('taskActions'),
-                      enabled: !_isBusy,
-                      constraints: const BoxConstraints(
-                        minWidth: 200,
-                        maxWidth: 320,
-                      ),
-                      color: colors.surfaceContainer,
-                      surfaceTintColor: Colors.transparent,
-                      icon: Icon(
-                        Icons.more_horiz_rounded,
-                        size: 20,
-                        color: colors.onSurfaceVariant,
-                      ),
-                      itemBuilder: (_) => _menuItems(l10n),
-                      onSelected: _onAction,
-                    ),
-                  ],
-                ),
                 if (showSummary)
                   Padding(
                     padding: const EdgeInsets.only(left: 14, top: 2),
@@ -924,6 +1152,21 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Wrap(spacing: 6, runSpacing: 6, children: metadata),
+                  ),
+                if (isOverdue && _canQuickPostpone)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: TextButton.icon(
+                      key: ValueKey('overdue-postpone-${task.id}'),
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size(48, 48),
+                        foregroundColor: colors.error,
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                      ),
+                      onPressed: _isBusy ? null : _choosePostpone,
+                      icon: const Icon(Icons.snooze_outlined, size: 17),
+                      label: Text(l10n.get('quickPostpone')),
+                    ),
                   ),
                 if (task.usableSuggestedTriggerTime != null &&
                     !task.isCompleted)
@@ -1050,22 +1293,39 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                     ),
                   ),
                   if (_showChecklist)
-                    for (final item in details.checklist)
-                      Material(
-                        color: Colors.transparent,
-                        child: CheckboxListTile(
-                          key: ValueKey('checklist-item-${task.id}-${item.id}'),
-                          value: item.done,
-                          dense: true,
-                          contentPadding: EdgeInsets.zero,
-                          controlAffinity: ListTileControlAffinity.leading,
-                          title: Text(item.label),
-                          onChanged: _isBusy || details.kind != 'task'
-                              ? null
-                              : (value) =>
-                                    _setChecklistItem(item.id, value ?? false),
-                        ),
-                      ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (final item in details.checklist)
+                          Material(
+                            color: Colors.transparent,
+                            child: CheckboxListTile(
+                              key: ValueKey(
+                                'checklist-item-${task.id}-${item.id}',
+                              ),
+                              value: item.done,
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                              controlAffinity: ListTileControlAffinity.leading,
+                              title: Text(
+                                item.label,
+                                style: item.done
+                                    ? TextStyle(
+                                        decoration: TextDecoration.lineThrough,
+                                        color: colors.onSurfaceVariant,
+                                      )
+                                    : null,
+                              ),
+                              onChanged: _isBusy || details.kind != 'task'
+                                  ? null
+                                  : (value) => _setChecklistItem(
+                                      item.id,
+                                      value ?? false,
+                                    ),
+                            ),
+                          ),
+                      ],
+                    ),
                 ],
                 if (subTasks.isNotEmpty) ...[
                   const SizedBox(height: 6),
@@ -1106,39 +1366,46 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                     ),
                   ),
                   if (_showSubtasks)
-                    for (final subTask in subTasks)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(14, 2, 8, 6),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '•  ',
-                              style: TextStyle(color: colors.primary),
-                            ),
-                            Expanded(
-                              child: Text(
-                                subTask,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  height: 1.4,
-                                  color: colors.onSurfaceVariant,
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (final subTask in subTasks)
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(14, 2, 8, 6),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '•  ',
+                                  style: TextStyle(color: colors.primary),
                                 ),
-                              ),
+                                Expanded(
+                                  child: Text(
+                                    subTask,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      height: 1.4,
+                                      color: colors.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
+                          ),
+                      ],
+                    ),
                 ],
                 if (_isDecomposing)
                   LinearProgressIndicator(
                     semanticsLabel: l10n.get('breakdownLoading'),
                   ),
-              ],
+                    ],
+                  );
+                },
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }

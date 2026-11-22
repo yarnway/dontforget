@@ -239,6 +239,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   ModelProvider? _selectedProvider;
 
   // Edge AI Probe State
+  bool _obscureApiKey = true;
   bool _isProbing = false;
   List<LocalInferenceEndpoint>? _probeResults;
 
@@ -356,6 +357,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (_dirty) {
       InlineFeedback.of(context).showSnackBar(
         SnackBar(content: Text(protectionText(context, 'retryDirty'))),
+        tone: FeedbackTone.warning,
       );
       return;
     }
@@ -370,6 +372,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (_dirty) {
       InlineFeedback.of(context).showSnackBar(
         SnackBar(content: Text(protectionText(context, 'retryDirty'))),
+        tone: FeedbackTone.warning,
       );
       return;
     }
@@ -396,15 +399,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (_isBackingUp) return;
     setState(() => _isBackingUp = true);
     var messageKey = 'backupSuccess';
+    var ok = true;
     try {
       await ref.read(databaseHelperProvider).createMirrorBackup();
     } catch (_) {
+      ok = false;
       messageKey = 'backupFailed';
     }
     if (!mounted) return;
     setState(() => _isBackingUp = false);
     InlineFeedback.of(context).showSnackBar(
       SnackBar(content: Text(AppLocalizations.of(context).get(messageKey))),
+      tone: ok ? FeedbackTone.success : FeedbackTone.error,
     );
   }
 
@@ -458,6 +464,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               AppLocalizations.of(context).get('settingsSaveFailed'),
             ),
           ),
+          tone: FeedbackTone.error,
         );
       }
       return false;
@@ -537,9 +544,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
       );
       if (copied == true && mounted) {
-        InlineFeedback.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(l10n.get('linkCopied'))));
+        InlineFeedback.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.get('linkCopied'))),
+          tone: FeedbackTone.success,
+        );
       }
     } finally {
       if (mounted) setState(() => _isOpeningConsole = false);
@@ -559,6 +567,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           SnackBar(
             content: Text(AppLocalizations.of(context).get('probeFailed')),
           ),
+          tone: FeedbackTone.error,
         );
       }
     } finally {
@@ -583,6 +592,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         content: Text('${l10n.get('appliedLocalEngine')} (${endpoint.name})'),
       ),
+      tone: FeedbackTone.success,
     );
   }
 
@@ -590,6 +600,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     if (!_syncCurrent || _lanServerChanging) return;
     final lanSync = ref.read(lanSyncServiceProvider);
     final dbHelper = ref.read(databaseHelperProvider);
+    final container = ProviderScope.containerOf(context, listen: false);
     final wasRunning = _isLanServerRunning;
     setState(() => _lanServerChanging = true);
     try {
@@ -605,10 +616,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         final info = await lanSync.startServer(
           dbHelper: dbHelper,
           onDataChanged: () {
-            if (reminders.mounted) reminders.refreshReminders();
-            if (mounted && ref.exists(mediaRecordsProvider)) {
-              ref.read(mediaRecordsProvider.notifier).refreshMediaRecords();
+            if (reminders.mounted) {
+              reminders.refreshReminders().catchError((Object _) {});
             }
+            try {
+              if (container.exists(mediaRecordsProvider)) {
+                final media = container.read(mediaRecordsProvider.notifier);
+                if (media.mounted) {
+                  media.refreshMediaRecords().catchError((Object _) {});
+                }
+              }
+            } catch (_) {}
           },
         );
         if (!_syncCurrent) return;
@@ -661,6 +679,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     });
     final lanSync = ref.read(lanSyncServiceProvider);
     final dbHelper = ref.read(databaseHelperProvider);
+    final container = ProviderScope.containerOf(context, listen: false);
 
     final reminders = ref.read(remindersProvider.notifier);
     Future<void>? refresh;
@@ -675,10 +694,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         // The service verifies the storage generation before this callback.
         // A committed merge still needs a refresh if Settings has been closed.
         final futures = <Future<void>>[
-          if (reminders.mounted) reminders.refreshReminders(),
-          if (mounted && ref.exists(mediaRecordsProvider))
-            ref.read(mediaRecordsProvider.notifier).refreshMediaRecords(),
+          if (reminders.mounted)
+            reminders.refreshReminders().catchError((Object _) {}),
         ];
+        try {
+          if (container.exists(mediaRecordsProvider)) {
+            final media = container.read(mediaRecordsProvider.notifier);
+            if (media.mounted) {
+              futures.add(
+                media.refreshMediaRecords().catchError((Object _) {}),
+              );
+            }
+          }
+        } catch (_) {}
         if (futures.isNotEmpty) refresh = Future.wait(futures);
       },
       onConflicts: (result) => conflicts = result,
@@ -910,8 +938,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget _advancedConnection(Widget child) => widget.area == null
       ? child
       : Card.outlined(
+          clipBehavior: Clip.antiAlias,
           child: ExpansionTile(
             key: const ValueKey('settings-advanced-connection'),
+            shape: const Border(),
+            collapsedShape: const Border(),
             leading: const Icon(Icons.tune),
             title: Text(
               preferencesText(
@@ -926,7 +957,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return UnsavedEditorScope(
       dirty: _dirty,
@@ -953,48 +986,58 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             widget.area == SettingsArea.notifications ||
                 (widget.area == SettingsArea.sync && !_dirty)
             ? null
-            : SafeArea(
-                top: false,
-                child: Center(
-                  heightFactor: 1,
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 840),
-                    child: Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        16,
-                        12,
-                        16,
-                        12 + MediaQuery.viewInsetsOf(context).bottom,
-                      ),
-                      child: Row(
-                        children: [
-                          if (widget.area == null)
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: _isBackingUp ? null : _backupNow,
-                                icon: const Icon(
-                                  Icons.backup_outlined,
-                                  size: 18,
-                                ),
-                                label: Text(
-                                  l10n.get('backupNow'),
-                                  textAlign: TextAlign.center,
+            : DecoratedBox(
+                decoration: BoxDecoration(
+                  color: colors.surfaceContainerLow,
+                  border: Border(
+                    top: BorderSide(
+                      color: colors.outlineVariant.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: Center(
+                    heightFactor: 1,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 840),
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          12,
+                          16,
+                          12 + MediaQuery.viewInsetsOf(context).bottom,
+                        ),
+                        child: Row(
+                          children: [
+                            if (widget.area == null)
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: _isBackingUp ? null : _backupNow,
+                                  icon: const Icon(
+                                    Icons.backup_outlined,
+                                    size: 18,
+                                  ),
+                                  label: Text(
+                                    l10n.get('backupNow'),
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ),
                               ),
+                            if (widget.area == null) const SizedBox(width: 12),
+                            Expanded(
+                              child: FilledButton(
+                                onPressed:
+                                    !_ready ||
+                                        _isSaving ||
+                                        (widget.area != null && !_dirty)
+                                    ? null
+                                    : save,
+                                child: Text(l10n.get('save')),
+                              ),
                             ),
-                          if (widget.area == null) const SizedBox(width: 12),
-                          Expanded(
-                            child: FilledButton(
-                              onPressed:
-                                  !_ready ||
-                                      _isSaving ||
-                                      (widget.area != null && !_dirty)
-                                  ? null
-                                  : save,
-                              child: Text(l10n.get('save')),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -1429,26 +1472,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                           ),
                                         ),
                                         if (ep.isAvailable)
-                                          ElevatedButton(
-                                            style: ElevatedButton.styleFrom(
-                                              visualDensity:
-                                                  VisualDensity.compact,
+                                          FilledButton.tonal(
+                                            style: FilledButton.styleFrom(
+                                              minimumSize: const Size(64, 48),
                                               padding:
                                                   const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 2,
+                                                    horizontal: 12,
+                                                    vertical: 8,
                                                   ),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(4),
-                                              ),
                                             ),
                                             onPressed: () =>
                                                 _applyLocalEngine(ep),
                                             child: Text(
                                               l10n.get('applyToSettings'),
                                               style: const TextStyle(
-                                                fontSize: 10,
+                                                fontSize: 12,
                                               ),
                                             ),
                                           ),
@@ -1785,66 +1823,54 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 runSpacing: 8,
                                 children: [
                                   ActionChip(
-                                    avatar: const Icon(
+                                    avatar: Icon(
                                       Icons.bolt_rounded,
                                       size: 15,
-                                      color: Colors.blue,
+                                      color: colors.primary,
                                     ),
                                     label: Text(
                                       l10n.get('quickDeepSeek'),
                                       style: const TextStyle(fontSize: 12),
                                     ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(6),
-                                      side: BorderSide(
-                                        color: Colors.blue.withValues(
-                                          alpha: 0.4,
-                                        ),
-                                        width: 1,
+                                    side: BorderSide(
+                                      color: colors.primary.withValues(
+                                        alpha: 0.4,
                                       ),
                                     ),
                                     onPressed: () =>
                                         _onProviderChanged(_providers[0]),
                                   ),
                                   ActionChip(
-                                    avatar: const Icon(
+                                    avatar: Icon(
                                       Icons.auto_awesome,
                                       size: 15,
-                                      color: Colors.deepPurple,
+                                      color: colors.tertiary,
                                     ),
                                     label: Text(
                                       l10n.get('quickGemini'),
                                       style: const TextStyle(fontSize: 12),
                                     ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(6),
-                                      side: BorderSide(
-                                        color: Colors.deepPurple.withValues(
-                                          alpha: 0.4,
-                                        ),
-                                        width: 1,
+                                    side: BorderSide(
+                                      color: colors.tertiary.withValues(
+                                        alpha: 0.4,
                                       ),
                                     ),
                                     onPressed: () =>
                                         _onProviderChanged(_providers[1]),
                                   ),
                                   ActionChip(
-                                    avatar: const Icon(
+                                    avatar: Icon(
                                       Icons.download_for_offline_rounded,
                                       size: 15,
-                                      color: Colors.teal,
+                                      color: colors.secondary,
                                     ),
                                     label: Text(
                                       l10n.get('ollamaLocal'),
                                       style: const TextStyle(fontSize: 12),
                                     ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(6),
-                                      side: BorderSide(
-                                        color: Colors.teal.withValues(
-                                          alpha: 0.4,
-                                        ),
-                                        width: 1,
+                                    side: BorderSide(
+                                      color: colors.secondary.withValues(
+                                        alpha: 0.4,
                                       ),
                                     ),
                                     onPressed: () =>
@@ -1899,8 +1925,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                     horizontal: 12,
                                     vertical: 10,
                                   ),
+                                  suffixIcon: IconButton(
+                                    key: const ValueKey(
+                                      'settings-api-key-toggle',
+                                    ),
+                                    tooltip: l10n.get(
+                                      _obscureApiKey
+                                          ? 'showApiKey'
+                                          : 'hideApiKey',
+                                    ),
+                                    icon: Icon(
+                                      _obscureApiKey
+                                          ? Icons.visibility_outlined
+                                          : Icons.visibility_off_outlined,
+                                      size: 18,
+                                    ),
+                                    onPressed: () => setState(
+                                      () => _obscureApiKey = !_obscureApiKey,
+                                    ),
+                                  ),
                                 ),
-                                obscureText: true,
+                                obscureText: _obscureApiKey,
                               ),
                               const SizedBox(height: 8),
                               // Platform Official Console Direct Links

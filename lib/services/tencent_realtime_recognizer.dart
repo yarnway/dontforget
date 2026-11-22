@@ -260,16 +260,20 @@ class TencentRealtimeRecognizer {
       var scheduledMicros = 0, sent = 0;
       inputIterator = StreamIterator(audio);
       final packetBytes = live ? 1280 : 6400; // 40ms live, 200ms file replay.
+      // Hoist stop sentinels outside the per-chunk loop so long recordings do
+      // not accumulate thousands of chained .then() closures.
+      final onFinished = finished.future.then((_) {
+        check();
+        return false;
+      });
+      final onCancelled = cancellation.whenCancel.then((_) {
+        check();
+        return false;
+      });
       while (await Future.any([
         inputIterator.moveNext(),
-        finished.future.then((_) {
-          check();
-          return false;
-        }),
-        cancellation.whenCancel.then((_) {
-          check();
-          return false;
-        }),
+        onFinished,
+        onCancelled,
       ])) {
         final input = inputIterator.current;
         for (var offset = 0; offset < input.length; offset += packetBytes) {
@@ -332,9 +336,13 @@ class TencentRealtimeRecognizer {
       throw const SpeechRecognitionException('network');
     } finally {
       abandoned = true;
-      if (inputIterator != null) unawaited(inputIterator.cancel());
+      if (inputIterator != null) {
+        unawaited(inputIterator.cancel().catchError((Object _) {}));
+      }
       await subscription?.cancel();
-      if (socket != null) unawaited(socket.close());
+      if (socket != null) {
+        unawaited(socket.close().catchError((Object _) {}));
+      }
     }
   }
 }

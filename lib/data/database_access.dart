@@ -387,6 +387,16 @@ class _ScopedExecutor implements Transaction {
     ),
   );
 
+  static final _trailingSemicolon = RegExp(r';$');
+  static final _selectQuery = RegExp(r'^SELECT\b', caseSensitive: false);
+  static final _readOnlyPragma = RegExp(
+    r'^PRAGMA\s+(?:(?:main|temp)\.)?'
+    r'(?:(?:integrity_check|quick_check|user_version|foreign_key_check)|'
+    r'(?:table_info|table_xinfo|foreign_key_list|index_list|index_info)'
+    r'\s*\(\s*(?:[a-z_][a-z0-9_]*|\x27[a-z_][a-z0-9_]*\x27)\s*\))$',
+    caseSensitive: false,
+  );
+
   @override
   Future<List<Map<String, Object?>>> rawQuery(
     String sql, [
@@ -396,17 +406,10 @@ class _ScopedExecutor implements Transaction {
       // SQLite accepts INSERT/UPDATE/DELETE ... RETURNING through rawQuery.
       // Keep the read API deliberately limited to the application's SELECTs
       // and explicitly read-only schema/integrity pragmas, without SQL batches.
-      final statement = sql.trim().replaceFirst(RegExp(r';$'), '').trim();
-      final select = RegExp(r'^SELECT\b', caseSensitive: false);
-      final pragma = RegExp(
-        r'^PRAGMA\s+(?:(?:main|temp)\.)?'
-        r'(?:(?:integrity_check|quick_check|user_version|foreign_key_check)|'
-        r'(?:table_info|table_xinfo|foreign_key_list|index_list|index_info)'
-        r'\s*\(\s*(?:[a-z_][a-z0-9_]*|\x27[a-z_][a-z0-9_]*\x27)\s*\))$',
-        caseSensitive: false,
-      );
+      final statement = sql.trim().replaceFirst(_trailingSemicolon, '').trim();
       if (statement.contains(';') ||
-          (!select.hasMatch(statement) && !pragma.hasMatch(statement))) {
+          (!_selectQuery.hasMatch(statement) &&
+              !_readOnlyPragma.hasMatch(statement))) {
         throw StateError('Only read-only queries are allowed in a read scope.');
       }
     }

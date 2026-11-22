@@ -83,15 +83,20 @@ extension TaskManagement on RemindersNotifier {
           final all = (await db.query(
             'Reminders',
           )).map(Reminder.fromJson).toList();
+          final byId = <String, Reminder>{for (final r in all) r.id: r};
+          final planParentIds = <String>{
+            for (final r in all)
+              if (r.details.planId != null) r.details.planId!,
+          };
           final changes = <Reminder>[];
           for (final wanted in frozen) {
-            final row = all.where((e) => e.id == wanted.id).firstOrNull;
+            final row = byId[wanted.id];
             if (row == null ||
                 !mapEquals(row.toJson(), wanted.toJson()) ||
                 row.details.kind != 'task' ||
                 row.details.planId != null ||
                 row.details.deletedAt != null ||
-                all.any((e) => e.details.planId == row.id)) {
+                planParentIds.contains(row.id)) {
               throw const StaleReminderOccurrenceException();
             }
             final details = patch.apply(row.details);
@@ -150,10 +155,14 @@ extension TaskManagement on RemindersNotifier {
     );
   }
 
-  Future<void> _archiveLearning(DatabaseExecutor db, Reminder source) async {
+  Future<List<Reminder>> _archiveLearning(
+    DatabaseExecutor db,
+    Reminder source,
+  ) async {
     final progress = LearningQueueService.decode(source.wordProgressJson);
-    if (progress.isEmpty) return;
+    if (progress.isEmpty) return const [];
     final words = VocabularyEntry.parseNotes(source.taskSummary ?? '');
+    final archivedRows = <Reminder>[];
     for (final entry in progress.entries) {
       final word = words
           .where((w) => LearningQueueService.wordKey(w.word) == entry.key)
@@ -218,7 +227,9 @@ extension TaskManagement on RemindersNotifier {
           whereArgs: [id],
         );
       }
+      archivedRows.add(archived);
     }
+    return archivedRows;
   }
 
   Future<ReminderActionResult> _lifecycleResult(
@@ -491,18 +502,18 @@ extension TaskManagement on RemindersNotifier {
                 : '${data['id']}|${MedicationPlan.dateKey(at)}|$index';
           }
 
+          final byId = <String, Reminder>{for (final r in all) r.id: r};
+          final existingPlanChildren = <Reminder>[
+            for (final r in all)
+              if (r.details.planId == owner.id) r,
+          ];
           final protectedDoseSlots = <String>{
-            for (final row in all.where(
-              (r) =>
-                  r.details.planId == owner.id &&
-                  (r.isCompleted ||
-                      !(r.eventTime ?? r.triggerTime)!.isAfter(at)),
-            ))
-              if (doseSlot(row) != null) doseSlot(row)!,
+            for (final row in existingPlanChildren)
+              if (row.isCompleted ||
+                  !(row.eventTime ?? row.triggerTime)!.isAfter(at))
+                if (doseSlot(row) != null) doseSlot(row)!,
           };
-          for (final previous in all.where(
-            (r) => r.details.planId == owner.id,
-          )) {
+          for (final previous in existingPlanChildren) {
             if (!ids.contains(previous.id) &&
                 !protectedDeparture(previous) &&
                 !previous.isCompleted &&
@@ -527,7 +538,7 @@ extension TaskManagement on RemindersNotifier {
                 protectedDoseSlots.contains(doseSlot(proposed))) {
               continue;
             }
-            final old = all.where((r) => r.id == proposed.id).firstOrNull;
+            final old = byId[proposed.id];
             if (old != null &&
                 old.id != owner.id &&
                 old.details.planId != owner.id) {
@@ -564,8 +575,7 @@ extension TaskManagement on RemindersNotifier {
             );
           }
           for (final row in changes) {
-            final exists = all.any((r) => r.id == row.id);
-            if (exists) {
+            if (byId.containsKey(row.id)) {
               await db.update(
                 'Reminders',
                 row.toJson(),
@@ -574,6 +584,7 @@ extension TaskManagement on RemindersNotifier {
               );
             } else {
               await db.insert('Reminders', row.toJson());
+              byId[row.id] = row;
             }
           }
           return changes;
@@ -748,9 +759,17 @@ extension TaskManagement on RemindersNotifier {
               throw const StaleReminderOccurrenceException();
             }
           }
+          final byId = <String, Reminder>{for (final r in all) r.id: r};
+          final childrenByPlan = <String, List<Reminder>>{};
+          for (final r in all) {
+            final pid = r.details.planId;
+            if (pid != null) {
+              (childrenByPlan[pid] ??= <Reminder>[]).add(r);
+            }
+          }
           final targets = <Reminder>[];
           for (final wanted in expected) {
-            final target = all.where((r) => r.id == wanted.id).firstOrNull;
+            final target = byId[wanted.id];
             if (target == null ||
                 !mapEquals(target.toJson(), wanted.toJson())) {
               throw const StaleReminderOccurrenceException();
@@ -758,7 +777,7 @@ extension TaskManagement on RemindersNotifier {
             if (ordinaryOnly &&
                 (target.details.kind != 'task' ||
                     target.details.planId != null ||
-                    all.any((r) => r.details.planId == target.id))) {
+                    childrenByPlan.containsKey(target.id))) {
               throw StateError('Bulk actions only accept ordinary root tasks');
             }
             if (ordinaryOnly &&
@@ -784,9 +803,8 @@ extension TaskManagement on RemindersNotifier {
           }
           final changes = <Reminder>[];
           for (final target in targets) {
-            for (final row in all.where(
-              (r) => r.id == target.id || r.details.planId == target.id,
-            )) {
+            final group = <Reminder>[target, ...?childrenByPlan[target.id]];
+            for (final row in group) {
               if (contentBaseline != null && row.details.deletedAt != null) {
                 continue;
               }

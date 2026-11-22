@@ -218,39 +218,41 @@ class VoiceCaptureFeedback extends StatelessWidget {
                 : action == VoiceReleaseAction.cancel
                 ? _cancel
                 : _green;
-            final bubble = SizedBox(
-              key: const ValueKey('voice-recording-bubble'),
-              width: bubbleWidth,
-              height: bubbleHeight + 8,
-              child: CustomPaint(
-                painter: _VoiceBubblePainter(bubbleColor),
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Center(
-                    child: preparing
-                        ? SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              semanticsLabel: loc.get('voicePreparing'),
-                              value: MediaQuery.disableAnimationsOf(context)
-                                  ? .7
-                                  : null,
-                              strokeWidth: 2,
-                              color: const Color(0xFFBFD4C9),
-                            ),
-                          )
-                        : SizedBox(
-                            width: bubbleWidth * .43,
-                            height: math.max(10, width * .026),
-                            child: CustomPaint(
-                              painter: _VoiceWavePainter(
-                                action == VoiceReleaseAction.cancel
-                                    ? Colors.white70
-                                    : const Color(0xFF1E7850),
+            final bubble = RepaintBoundary(
+              child: SizedBox(
+                key: const ValueKey('voice-recording-bubble'),
+                width: bubbleWidth,
+                height: bubbleHeight + 8,
+                child: CustomPaint(
+                  painter: _VoiceBubblePainter(bubbleColor),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Center(
+                      child: preparing
+                          ? SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                semanticsLabel: loc.get('voicePreparing'),
+                                value: MediaQuery.disableAnimationsOf(context)
+                                    ? .7
+                                    : null,
+                                strokeWidth: 2,
+                                color: const Color(0xFFBFD4C9),
+                              ),
+                            )
+                          : SizedBox(
+                              width: bubbleWidth * .43,
+                              height: math.max(10, width * .026),
+                              child: CustomPaint(
+                                painter: _VoiceWavePainter(
+                                  action == VoiceReleaseAction.cancel
+                                      ? Colors.white70
+                                      : const Color(0xFF1E7850),
+                                ),
                               ),
                             ),
-                          ),
+                    ),
                   ),
                 ),
               ),
@@ -352,11 +354,13 @@ class VoiceCaptureFeedback extends StatelessWidget {
                             : _neutral,
                       ),
                       duration: duration,
-                      builder: (_, rightFill, _) => CustomPaint(
-                        painter: _VoiceScenePainter(
-                          geometry,
-                          leftFill!,
-                          rightFill!,
+                      builder: (_, rightFill, _) => RepaintBoundary(
+                        child: CustomPaint(
+                          painter: _VoiceScenePainter(
+                            geometry,
+                            leftFill!,
+                            rightFill!,
+                          ),
                         ),
                       ),
                     ),

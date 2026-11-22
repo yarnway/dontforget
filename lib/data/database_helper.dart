@@ -198,6 +198,16 @@ class DatabaseHelper {
   bool _bootstrapValid(DataGeneration generation) =>
       isCurrent(generation) && _bootstrapGeneration == generation._value;
 
+  /// Non-consuming read of the persisted language from the bootstrap snapshot
+  /// so startup subsystems (e.g. NotificationService) initialize directly in
+  /// the user's locale without a redundant second initialization pass.
+  String? peekBootstrapLanguage(DataGeneration generation) {
+    if (!_bootstrapValid(generation)) return null;
+    final row = _bootstrapSettingsRow ?? _bootstrapDraftsRow;
+    final lang = row?['language'];
+    return lang is String && lang.isNotEmpty ? lang : null;
+  }
+
   Map<String, Object?>? takeBootstrapSettingsRow(DataGeneration generation) {
     if (!_bootstrapValid(generation)) {
       _clearBootstrapCache();

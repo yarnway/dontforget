@@ -7,10 +7,12 @@ class VocabularyDeck extends StatefulWidget {
   const VocabularyDeck({
     super.key,
     required this.content,
+    this.preparsedEntries,
     this.practice = false,
     this.individualFeedback = false,
   });
   final String content;
+  final List<VocabularyEntry>? preparsedEntries;
   final bool practice;
   final bool individualFeedback;
   @override
@@ -28,7 +30,8 @@ class _VocabularyDeckState extends State<VocabularyDeck> {
   }
 
   void _read() {
-    _words = VocabularyEntry.parseNotes(widget.content);
+    _words =
+        widget.preparsedEntries ?? VocabularyEntry.parseNotes(widget.content);
     _index = 0;
     _revealed = !widget.practice;
   }
@@ -37,7 +40,8 @@ class _VocabularyDeckState extends State<VocabularyDeck> {
   void didUpdateWidget(VocabularyDeck oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.content != widget.content ||
-        oldWidget.practice != widget.practice) {
+        oldWidget.practice != widget.practice ||
+        !identical(oldWidget.preparsedEntries, widget.preparsedEntries)) {
       _read();
     }
   }

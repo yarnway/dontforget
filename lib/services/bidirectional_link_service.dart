@@ -67,6 +67,10 @@ class KnowledgeGraphData {
 class BiDirectionalLinkService {
   const BiDirectionalLinkService();
 
+  static final _nonWord = RegExp(r'[\s\p{P}\p{S}]+', unicode: true);
+  static final _nonCjk = RegExp(r'[^\u4e00-\u9fa5]');
+  static final _reminderTokenCache = Expando<Set<String>>('reminderTokens');
+
   static const Set<String> _stopWords = {
     '的', '了', '在', '是', '我', '有', '和', '就', '不', '人', '都', '一', '一个', '上',
     '也', '很', '到', '说', '要', '去', '你', '会', '着', '没有', '看', '好', '自己', '这',
@@ -76,13 +80,30 @@ class BiDirectionalLinkService {
     'task', 'todo', 'reminder', 'check', 'do', 'need',
   };
 
+  static bool _hasCjk(String value) {
+    final units = value.codeUnits;
+    for (var i = 0; i < units.length; i++) {
+      final c = units[i];
+      if (c >= 0x4e00 && c <= 0x9fa5) return true;
+    }
+    return false;
+  }
+
+  static int _intersectionCount(Set<String> a, Set<String> b) {
+    final smaller = a.length <= b.length ? a : b;
+    final larger = identical(smaller, a) ? b : a;
+    var count = 0;
+    for (final token in smaller) {
+      if (larger.contains(token)) count++;
+    }
+    return count;
+  }
+
   /// 本地中英文混合特征词提取器
   Set<String> extractTokens(String text) {
     if (text.trim().isEmpty) return {};
 
-    final cleanText = text
-        .toLowerCase()
-        .replaceAll(RegExp(r'[\s\p{P}\p{S}]+', unicode: true), ' ');
+    final cleanText = text.toLowerCase().replaceAll(_nonWord, ' ');
 
     final tokens = <String>{};
     final parts = cleanText.split(' ');
@@ -96,18 +117,30 @@ class BiDirectionalLinkService {
       }
 
       // 针对连续中文词元提取 2-gram 核心词根
-      final chineseChars = trimmed.replaceAll(RegExp(r'[^\u4e00-\u9fa5]'), '');
-      if (chineseChars.length >= 2) {
-        for (int i = 0; i < chineseChars.length - 1; i++) {
-          final biGram = chineseChars.substring(i, i + 2);
-          if (!_stopWords.contains(biGram)) {
-            tokens.add(biGram);
+      if (_hasCjk(trimmed)) {
+        final chineseChars = trimmed.replaceAll(_nonCjk, '');
+        if (chineseChars.length >= 2) {
+          for (int i = 0; i < chineseChars.length - 1; i++) {
+            final biGram = chineseChars.substring(i, i + 2);
+            if (!_stopWords.contains(biGram)) {
+              tokens.add(biGram);
+            }
           }
         }
       }
     }
 
     return tokens;
+  }
+
+  Set<String> _tokensForReminder(Reminder reminder) {
+    final cached = _reminderTokenCache[reminder];
+    if (cached != null) return cached;
+    final extracted = extractTokens(
+      '${reminder.taskTitle} ${reminder.taskSummary ?? ''}',
+    );
+    _reminderTokenCache[reminder] = extracted;
+    return extracted;
   }
 
   /// 计算两段文本间的 Jaccard 相似度与特征匹配度
@@ -117,14 +150,14 @@ class BiDirectionalLinkService {
 
     if (tokensA.isEmpty || tokensB.isEmpty) return 0.0;
 
-    final intersection = tokensA.intersection(tokensB);
-    final union = tokensA.union(tokensB);
+    final inter = _intersectionCount(tokensA, tokensB);
+    final union = tokensA.length + tokensB.length - inter;
 
-    if (union.isEmpty) return 0.0;
-    final jaccard = intersection.length / union.length;
+    if (union == 0) return 0.0;
+    final jaccard = inter / union;
 
     // 若共享多个核心特征词，给予额外权重增益
-    final matchBonus = min(intersection.length * 0.15, 0.45);
+    final matchBonus = min(inter * 0.15, 0.45);
     return min(jaccard + matchBonus, 1.0);
   }
 
@@ -136,25 +169,27 @@ class BiDirectionalLinkService {
     double threshold = 0.22,
   }) {
     if (!targetTask.isVisible) return [];
-    final targetContent = '${targetTask.taskTitle} ${targetTask.taskSummary ?? ''}';
-    final targetTokens = extractTokens(targetContent);
+    final targetTokens = _tokensForReminder(targetTask);
     if (targetTokens.isEmpty) return [];
 
+    final existingLinks = targetTask.linkedTaskIds.isEmpty
+        ? const <String>{}
+        : targetTask.linkedTaskIds.toSet();
     final scored = <MapEntry<String, double>>[];
 
     for (final other in allReminders) {
       if (other.id == targetTask.id || !other.isVisible) continue;
       // 已存在链接则不重复作为新推荐
-      if (targetTask.linkedTaskIds.contains(other.id)) continue;
+      if (existingLinks.contains(other.id)) continue;
 
-      final otherContent = '${other.taskTitle} ${other.taskSummary ?? ''}';
-      final otherTokens = extractTokens(otherContent);
-      final intersection = targetTokens.intersection(otherTokens);
+      final otherTokens = _tokensForReminder(other);
+      if (otherTokens.isEmpty) continue;
+      final inter = _intersectionCount(targetTokens, otherTokens);
 
-      if (intersection.isEmpty) continue;
+      if (inter == 0) continue;
 
-      final union = targetTokens.union(otherTokens);
-      final sim = (intersection.length / union.length) + (intersection.length >= 2 ? 0.2 : 0.0);
+      final union = targetTokens.length + otherTokens.length - inter;
+      final sim = (inter / union) + (inter >= 2 ? 0.2 : 0.0);
 
       if (sim >= threshold) {
         scored.add(MapEntry(other.id, sim));

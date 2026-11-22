@@ -24,8 +24,14 @@ class AiExtractionStatus {
 }
 
 class LLMService {
+  static String chatCompletionsUrl(String baseUrl) {
+    final trimmed = baseUrl.trim().replaceFirst(RegExp(r'/+$'), '');
+    return '$trimmed/chat/completions';
+  }
+
   LLMService({Dio? client, this.probeClientFactory}) : _dio = client ?? Dio(BaseOptions(
     connectTimeout: const Duration(seconds: 10),
+    sendTimeout: const Duration(seconds: 30),
     receiveTimeout: const Duration(seconds: 25),
     persistentConnection: true,
   ));
@@ -80,7 +86,7 @@ class LLMService {
         request: (profile, attempt) async {
           final config = profile.settings;
           final response = await _post(
-            '${config.baseUrl}/chat/completions',
+            chatCompletionsUrl(config.baseUrl),
             cancelToken: attempt,
             options: Options(
               headers: {
@@ -723,7 +729,7 @@ and keep the report under 250 words (under 400 Chinese/Japanese characters).
 
       try {
         final response = await _post(
-          '${settings.baseUrl}/chat/completions',
+          chatCompletionsUrl(settings.baseUrl),
           options: Options(
             headers: {
               'Authorization': 'Bearer ${settings.apiKey}',
@@ -964,7 +970,7 @@ Strictly return a JSON object with a "habits" array of strings:
     if (settings.apiKey.isNotEmpty) {
       try {
         final response = await _post(
-          '${settings.baseUrl}/chat/completions',
+          chatCompletionsUrl(settings.baseUrl),
           options: Options(
             headers: {
               'Authorization': 'Bearer ${settings.apiKey}',

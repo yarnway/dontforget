@@ -101,323 +101,520 @@ class _TaskReaderState extends ConsumerState<TaskDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final byId = ref.watch(remindersByIdProvider);
-    final latest = byId[widget.task.id];
+    final latest = ref.watch(
+      remindersByIdProvider.select((byId) => byId[widget.task.id]),
+    );
     final task = latest ?? widget.task;
     final details = task.details;
     final loc = AppLocalizations.of(context);
     final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final quadrantColor = AppTheme.quadrantColor(
+      theme.brightness,
+      task.quadrantLevel,
+    );
     final readingStyle = theme.textTheme.bodyLarge?.copyWith(height: 1.6);
     final hasAttachments =
         task.recordId != null || details.attachmentIds.isNotEmpty;
-    final linked = <String, Reminder>{};
-    for (final linkedId in task.linkedTaskIds) {
-      final row = byId[linkedId];
-      if (row != null && row.isVisible) linked[linkedId] = row;
-    }
-    Widget date(String label, DateTime? value, IconData icon) => ListTile(
+    final vocabEntries = task.taskSummary?.isNotEmpty == true
+        ? VocabularyEntry.parseNotes(task.taskSummary!)
+        : const <VocabularyEntry>[];
+    final checklist = details.checklist;
+    final checklistDone = checklist.where((e) => e.done).length;
+
+    Widget dateTile(
+      String label,
+      DateTime? value,
+      IconData icon, {
+      bool showCountdown = false,
+    }) => ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: Icon(icon),
+      leading: Icon(icon, color: colors.primary),
       title: Text(loc.get(label)),
-      subtitle: Text(
-        value == null ? loc.get('notSet') : formatLocalDateTime(value),
-      ),
+      subtitle: value == null
+          ? Text(loc.get('notSet'))
+          : showCountdown && !task.isCompleted
+          ? ForegroundTimeBuilder(
+              boundary: value,
+              builder: (context, now) {
+                final overdue = !value.isAfter(now);
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      formatLocalDateTime(value),
+                      style: overdue
+                          ? TextStyle(
+                              color: colors.error,
+                              fontWeight: FontWeight.w600,
+                            )
+                          : null,
+                    ),
+                    Text(
+                      formatReminderTimeRemaining(loc, value, now),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: overdue ? colors.error : colors.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            )
+          : Text(formatLocalDateTime(value)),
     );
+
     final rule = ContextTriggerRule.tryParse(task.contextTrigger);
-    return Scaffold(
-      key: const ValueKey('task-detail-reader'),
-      appBar: AppBar(
-        title: Text(loc.get('taskDetailTitle')),
-        actions: [
-          IconButton(
-            key: const ValueKey('task-detail-copy'),
-            tooltip: loc.get('copyTaskContent'),
-            onPressed: () => _copyTask(task),
-            icon: const Icon(Icons.copy_outlined),
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.escape): () {
+          Navigator.of(context).maybePop();
+        },
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
+          key: const ValueKey('task-detail-reader'),
+          appBar: AppBar(
+            title: Text(loc.get('taskDetailTitle')),
+            actions: [
+              IconButton(
+                key: const ValueKey('task-detail-copy'),
+                tooltip: loc.get('copyTaskContent'),
+                onPressed: () => _copyTask(task),
+                icon: const Icon(Icons.copy_outlined),
+              ),
+            ],
           ),
-        ],
-      ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: Align(
-            heightFactor: 1,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 768),
-              child: SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  key: const ValueKey('task-detail-modify'),
-                  onPressed:
-                      !_current ||
-                          _openingEditor ||
-                          latest == null ||
-                          !latest.isVisible
-                      ? null
-                      : _edit,
-                  icon: const Icon(Icons.edit_outlined),
-                  label: Text(loc.get('modifyTask')),
+          bottomNavigationBar: DecoratedBox(
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerLow,
+              border: Border(
+                top: BorderSide(
+                  color: colors.outlineVariant.withValues(alpha: 0.6),
+                ),
+              ),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: Align(
+                  heightFactor: 1,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 768),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        key: const ValueKey('task-detail-modify'),
+                        onPressed:
+                            !_current ||
+                                _openingEditor ||
+                                latest == null ||
+                                !latest.isVisible
+                            ? null
+                            : _edit,
+                        icon: const Icon(Icons.edit_outlined),
+                        label: Text(loc.get('modifyTask')),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ),
-      body: SafeArea(
-        top: false,
-        bottom: false,
-        child: Align(
-          alignment: Alignment.topCenter,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
-            child: ListView(
-              key: const ValueKey('task-detail-reader-list'),
-              padding: const EdgeInsets.all(16),
-              children: [
-                _card(
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
+          body: SafeArea(
+            top: false,
+            bottom: false,
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: ListView(
+                  key: const ValueKey('task-detail-reader-list'),
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    _card(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Chip(
-                            label: Text(loc.get('cat${task.quadrantLevel}')),
-                          ),
-                          Chip(
-                            avatar: Icon(
-                              task.isCompleted
-                                  ? Icons.check_circle_outline
-                                  : Icons.schedule,
-                              size: 18,
-                            ),
-                            label: Text(
-                              loc.get(
-                                task.isCompleted
-                                    ? 'statusCompleted'
-                                    : 'statusPending',
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      SelectableText(
-                        task.taskTitle,
-                        key: const ValueKey('task-detail-read-title'),
-                        style: theme.textTheme.headlineSmall,
-                      ),
-                    ],
-                  ),
-                ),
-                if (task.taskSummary?.isNotEmpty == true)
-                  _card(
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          loc.get('taskDetailsSupplement'),
-                          style: theme.textTheme.titleSmall,
-                        ),
-                        const SizedBox(height: 12),
-                        if (VocabularyEntry.parseNotes(
-                          task.taskSummary!,
-                        ).isNotEmpty)
-                          VocabularyDeck(content: task.taskSummary!)
-                        else
-                          SelectableText(
-                            task.taskSummary!,
-                            key: const ValueKey('task-detail-read-summary'),
-                            style: readingStyle,
-                          ),
-                      ],
-                    ),
-                  ),
-                if (task.eventTime != null ||
-                    task.triggerTime != null ||
-                    task.isRecurring ||
-                    rule != null)
-                  _card(
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (task.eventTime != null)
-                          date(
-                            'eventTimeShort',
-                            task.eventTime,
-                            Icons.event_outlined,
-                          ),
-                        if (task.triggerTime != null)
-                          date(
-                            'triggerTimeLabel',
-                            task.triggerTime,
-                            Icons.notifications_none,
-                          ),
-                        if (task.isRecurring)
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: const Icon(Icons.event_repeat),
-                            title: Text(loc.get('recurrenceLabel')),
-                            subtitle: Text(
-                              task.recurrenceDescription ??
-                                  loc.get(switch (task.recurrenceRule) {
-                                    'daily' => 'repeatDaily',
-                                    'workday' => 'repeatWorkday',
-                                    'weekly' => 'repeatWeekly',
-                                    'monthly' => 'repeatMonthly',
-                                    'yearly' => 'repeatYearly',
-                                    _ => 'repeatNone',
-                                  }),
-                            ),
-                          ),
-                        if (rule != null)
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: Icon(
-                              rule.type == 'wifi'
-                                  ? Icons.wifi
-                                  : Icons.location_on_outlined,
-                            ),
-                            title: Text(
-                              rule.type == 'profile'
-                                  ? switch (rule.value) {
-                                      'general' => loc.get('profileGeneral'),
-                                      'office' => loc.get('profileOffice'),
-                                      'deepWork' => loc.get('profileDeepWork'),
-                                      'home' => loc.get('profileHome'),
-                                      'commute' => loc.get('profileCommute'),
-                                      _ => rule.value,
-                                    }
-                                  : rule.value,
-                            ),
-                            subtitle: rule.prompt == null
-                                ? null
-                                : Text(rule.prompt!),
-                          ),
-                      ],
-                    ),
-                  ),
-                if (details.project.isNotEmpty ||
-                    details.tags.isNotEmpty ||
-                    details.checklist.isNotEmpty)
-                  _card(
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (details.project.isNotEmpty)
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(loc.get('taskProject')),
-                            subtitle: SelectableText(details.project),
-                          ),
-                        if (details.tags.isNotEmpty)
                           Wrap(
                             spacing: 8,
                             runSpacing: 8,
                             children: [
-                              for (final tag in details.tags)
-                                Chip(label: Text(tag)),
-                            ],
-                          ),
-                        for (final item in details.checklist)
-                          Semantics(
-                            container: true,
-                            checked: item.done,
-                            child: ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              leading: Icon(
-                                item.done
-                                    ? Icons.check_box_outlined
-                                    : Icons.check_box_outline_blank,
-                                semanticLabel: loc.get(
-                                  item.done
-                                      ? 'checklistDone'
-                                      : 'checklistPending',
+                              Chip(
+                                avatar: Icon(
+                                  AppTheme.quadrantIcon(task.quadrantLevel),
+                                  size: 16,
+                                  color: quadrantColor,
+                                ),
+                                backgroundColor: quadrantColor.withValues(
+                                  alpha: 0.12,
+                                ),
+                                side: BorderSide(
+                                  color: quadrantColor.withValues(alpha: 0.3),
+                                ),
+                                label: Text(
+                                  loc.get('cat${task.quadrantLevel}'),
+                                  style: TextStyle(
+                                    color: quadrantColor,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                               ),
-                              title: Text(item.label),
+                              Chip(
+                                avatar: Icon(
+                                  task.isCompleted
+                                      ? Icons.check_circle_outline
+                                      : Icons.schedule,
+                                  size: 18,
+                                  color: task.isCompleted
+                                      ? colors.primary
+                                      : colors.onSurfaceVariant,
+                                ),
+                                label: Text(
+                                  loc.get(
+                                    task.isCompleted
+                                        ? 'statusCompleted'
+                                        : 'statusPending',
+                                  ),
+                                ),
+                              ),
+                              if (task.isPinned)
+                                Chip(
+                                  avatar: Icon(
+                                    Icons.push_pin_rounded,
+                                    size: 16,
+                                    color: colors.primary,
+                                  ),
+                                  label: Text(loc.get('pin')),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          SelectableText(
+                            task.taskTitle,
+                            key: const ValueKey('task-detail-read-title'),
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                if (task.subTasksView.isNotEmpty)
-                  _card(
-                    ExpansionTile(
-                      title: Text(loc.get('taskMicroHabits')),
-                      children: [
-                        for (final habit in task.subTasksView)
-                          ListTile(title: Text(habit)),
-                      ],
-                    ),
-                  ),
-                if (task.linkedTaskIds.isNotEmpty)
-                  _card(
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          loc.get('bidirectionalLinks'),
-                          style: theme.textTheme.titleSmall,
-                        ),
-                        for (final id in task.linkedTaskIds)
-                          ListTile(
-                            key: ValueKey('reader-linked-$id'),
-                            leading: const Icon(Icons.link),
-                            title: Text(
-                              linked[id]?.taskTitle ??
-                                  loc.get('linkedTaskUnavailable'),
+                    if (task.taskSummary?.isNotEmpty == true)
+                      _card(
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              loc.get('taskDetailsSupplement'),
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                color: colors.onSurfaceVariant,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                            trailing: linked[id] == null
-                                ? null
-                                : const Icon(Icons.chevron_right),
-                            onTap: linked[id] == null
-                                ? null
-                                : () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute<void>(
-                                      builder: (_) =>
-                                          TaskDetailScreen(task: linked[id]!),
+                            const SizedBox(height: 12),
+                            if (vocabEntries.isNotEmpty)
+                              VocabularyDeck(
+                                content: task.taskSummary!,
+                                preparsedEntries: vocabEntries,
+                              )
+                            else
+                              SelectableText(
+                                task.taskSummary!,
+                                key: const ValueKey('task-detail-read-summary'),
+                                style: readingStyle,
+                              ),
+                          ],
+                        ),
+                      ),
+                    if (task.eventTime != null ||
+                        task.triggerTime != null ||
+                        task.isRecurring ||
+                        rule != null)
+                      _card(
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (task.eventTime != null)
+                              dateTile(
+                                'eventTimeShort',
+                                task.eventTime,
+                                Icons.event_outlined,
+                              ),
+                            if (task.triggerTime != null)
+                              dateTile(
+                                'triggerTimeLabel',
+                                task.triggerTime,
+                                Icons.notifications_none,
+                                showCountdown: true,
+                              ),
+                            if (task.isRecurring)
+                              ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: Icon(
+                                  Icons.event_repeat,
+                                  color: colors.primary,
+                                ),
+                                title: Text(loc.get('recurrenceLabel')),
+                                subtitle: Text(
+                                  task.recurrenceDescription ??
+                                      loc.get(switch (task.recurrenceRule) {
+                                        'daily' => 'repeatDaily',
+                                        'workday' => 'repeatWorkday',
+                                        'weekly' => 'repeatWeekly',
+                                        'monthly' => 'repeatMonthly',
+                                        'yearly' => 'repeatYearly',
+                                        _ => 'repeatNone',
+                                      }),
+                                ),
+                              ),
+                            if (rule != null)
+                              ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: Icon(
+                                  rule.type == 'wifi'
+                                      ? Icons.wifi
+                                      : Icons.location_on_outlined,
+                                  color: colors.primary,
+                                ),
+                                title: Text(
+                                  rule.type == 'profile'
+                                      ? switch (rule.value) {
+                                          'general' => loc.get('profileGeneral'),
+                                          'office' => loc.get('profileOffice'),
+                                          'deepWork' =>
+                                            loc.get('profileDeepWork'),
+                                          'home' => loc.get('profileHome'),
+                                          'commute' => loc.get('profileCommute'),
+                                          _ => rule.value,
+                                        }
+                                      : rule.value,
+                                ),
+                                subtitle: rule.prompt == null
+                                    ? null
+                                    : Text(rule.prompt!),
+                              ),
+                          ],
+                        ),
+                      ),
+                    if (details.project.isNotEmpty ||
+                        details.tags.isNotEmpty ||
+                        checklist.isNotEmpty)
+                      _card(
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (details.project.isNotEmpty)
+                              ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: Icon(
+                                  Icons.folder_outlined,
+                                  color: colors.primary,
+                                ),
+                                title: Text(loc.get('taskProject')),
+                                subtitle: SelectableText(details.project),
+                              ),
+                            if (details.tags.isNotEmpty) ...[
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  for (final tag in details.tags)
+                                    Chip(label: Text(tag)),
+                                ],
+                              ),
+                              if (checklist.isNotEmpty)
+                                const SizedBox(height: 12),
+                            ],
+                            if (checklist.isNotEmpty) ...[
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      loc.get('taskChecklist'),
+                                      style: theme.textTheme.titleSmall
+                                          ?.copyWith(
+                                            color: colors.onSurfaceVariant,
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                     ),
                                   ),
-                          ),
-                      ],
-                    ),
-                  ),
-                if (hasAttachments)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: TaskAttachmentsPanel(task: task, readOnly: true),
-                  ),
-                if (task.recordId != null &&
-                    task.recordId == widget.task.recordId &&
-                    widget.onPlayMedia != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: OutlinedButton.icon(
-                      onPressed: widget.onPlayMedia,
-                      icon: const Icon(Icons.play_arrow_outlined),
-                      label: Text(loc.get('playOrPreview')),
-                    ),
-                  ),
-                if (task.sourceText?.isNotEmpty == true)
-                  _card(
-                    ExpansionTile(
-                      title: Text(loc.get('sourceText')),
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: SelectableText(
-                            task.sourceText!,
-                            style: readingStyle,
-                          ),
+                                  Text(
+                                    '$checklistDone / ${checklist.length}',
+                                    style: theme.textTheme.labelMedium
+                                        ?.copyWith(
+                                          color: colors.primary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: LinearProgressIndicator(
+                                  value: checklistDone / checklist.length,
+                                  minHeight: 4,
+                                  backgroundColor:
+                                      colors.surfaceContainerHighest,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                            ],
+                            for (final item in checklist)
+                              Semantics(
+                                container: true,
+                                checked: item.done,
+                                child: ListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  leading: Icon(
+                                    item.done
+                                        ? Icons.check_box_outlined
+                                        : Icons.check_box_outline_blank,
+                                    color: item.done
+                                        ? colors.primary
+                                        : colors.onSurfaceVariant,
+                                    semanticLabel: loc.get(
+                                      item.done
+                                          ? 'checklistDone'
+                                          : 'checklistPending',
+                                    ),
+                                  ),
+                                  title: Text(
+                                    item.label,
+                                    style: item.done
+                                        ? TextStyle(
+                                            decoration:
+                                                TextDecoration.lineThrough,
+                                            color: colors.onSurfaceVariant,
+                                          )
+                                        : null,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-              ],
+                      ),
+                    if (task.subTasksView.isNotEmpty)
+                      _card(
+                        ExpansionTile(
+                          shape: const Border(),
+                          collapsedShape: const Border(),
+                          tilePadding: EdgeInsets.zero,
+                          childrenPadding: const EdgeInsets.only(bottom: 4),
+                          title: Text(loc.get('taskMicroHabits')),
+                          children: [
+                            for (final habit in task.subTasksView)
+                              ListTile(
+                                contentPadding: EdgeInsets.zero,
+                                leading: Icon(
+                                  Icons.subdirectory_arrow_right_rounded,
+                                  size: 18,
+                                  color: colors.onSurfaceVariant,
+                                ),
+                                title: Text(habit),
+                              ),
+                          ],
+                        ),
+                      ),
+                    if (task.linkedTaskIds.isNotEmpty)
+                      _card(
+                        Consumer(
+                          builder: (context, ref, _) {
+                            final byId = ref.watch(remindersByIdProvider);
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Text(
+                                  loc.get('bidirectionalLinks'),
+                                  style: theme.textTheme.titleSmall?.copyWith(
+                                    color: colors.onSurfaceVariant,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                for (final id in task.linkedTaskIds)
+                                  Builder(
+                                    builder: (context) {
+                                      final row = byId[id];
+                                      final visibleRow =
+                                          row != null && row.isVisible
+                                          ? row
+                                          : null;
+                                      return ListTile(
+                                        key: ValueKey('reader-linked-$id'),
+                                        contentPadding: EdgeInsets.zero,
+                                        leading: Icon(
+                                          Icons.link,
+                                          color: colors.primary,
+                                        ),
+                                        title: Text(
+                                          visibleRow?.taskTitle ??
+                                              loc.get('linkedTaskUnavailable'),
+                                        ),
+                                        trailing: visibleRow == null
+                                            ? null
+                                            : const Icon(Icons.chevron_right),
+                                        onTap: visibleRow == null
+                                            ? null
+                                            : () => Navigator.push(
+                                                context,
+                                                MaterialPageRoute<void>(
+                                                  builder: (_) =>
+                                                      TaskDetailScreen(
+                                                        task: visibleRow,
+                                                      ),
+                                                ),
+                                              ),
+                                      );
+                                    },
+                                  ),
+                              ],
+                            );
+                          },
+                        ),
+                      ),
+                    if (hasAttachments)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: TaskAttachmentsPanel(task: task, readOnly: true),
+                      ),
+                    if (task.recordId != null &&
+                        task.recordId == widget.task.recordId &&
+                        widget.onPlayMedia != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: OutlinedButton.icon(
+                          onPressed: widget.onPlayMedia,
+                          icon: const Icon(Icons.play_arrow_outlined),
+                          label: Text(loc.get('playOrPreview')),
+                        ),
+                      ),
+                    if (task.sourceText?.isNotEmpty == true)
+                      _card(
+                        ExpansionTile(
+                          shape: const Border(),
+                          collapsedShape: const Border(),
+                          tilePadding: EdgeInsets.zero,
+                          childrenPadding: const EdgeInsets.only(bottom: 4),
+                          title: Text(loc.get('sourceText')),
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: SelectableText(
+                                task.sourceText!,
+                                style: readingStyle,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),

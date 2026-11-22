@@ -68,9 +68,12 @@ class BundleSizeOptimizationsTest(unittest.TestCase):
             (rel / 'dont_forget.exe').write_bytes(_make_minimal_pe64(['KERNEL32.dll', 'MSVCP140.dll']))
             (rel / 'flutter_windows.dll').write_bytes(_make_minimal_pe64(['KERNEL32.dll']))
             (rel / 'sqlite3.dll').write_bytes(_make_minimal_pe64(['KERNEL32.dll']))
-            # Unused Android-only JNI shim and stale unused CRT DLL.
+            # Unused Android-only JNI shim, web-only record asset, and stale unused CRT DLL.
             (rel / 'dartjni.dll').write_bytes(_make_minimal_pe64(['VCRUNTIME140.dll']))
             (rel / 'concrt140.dll').write_bytes(_make_minimal_pe64(['MSVCP140.dll']))
+            web_dir = rel / 'data' / 'flutter_assets' / 'packages' / 'record_web' / 'assets' / 'js'
+            web_dir.mkdir(parents=True)
+            (web_dir / 'record.worklet.js').write_text('// web only', encoding='utf-8')
 
             (redist / 'msvcp140.dll').write_bytes(_make_minimal_pe64(['VCRUNTIME140.dll', 'VCRUNTIME140_1.dll']))
             (redist / 'vcruntime140.dll').write_bytes(_make_minimal_pe64(['KERNEL32.dll']))
@@ -87,6 +90,7 @@ class BundleSizeOptimizationsTest(unittest.TestCase):
             self.assertFalse((rel / 'dartjni.dll').exists())
             self.assertFalse((rel / 'concrt140.dll').exists())
             self.assertFalse((rel / 'vccorlib140.dll').exists())
+            self.assertFalse((rel / 'data' / 'flutter_assets' / 'packages' / 'record_web').exists())
             for dll in ('msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll', 'sqlite3.dll'):
                 self.assertTrue((rel / dll).is_file(), f'Missing expected {dll}')
 
@@ -115,7 +119,14 @@ class BundleSizeOptimizationsTest(unittest.TestCase):
         gradle = (ROOT / 'android' / 'app' / 'build.gradle.kts').read_text(encoding='utf-8')
         self.assertIn('useLegacyPackaging = true', gradle)
         self.assertIn('**/libsqlite3.so', gradle)
+        self.assertIn('resourceConfigurations += listOf("en", "zh", "zh-rCN", "zh-rTW", "ja")', gradle)
+        self.assertIn('kotlin/*.kotlin_builtins', gradle)
         self.assertNotIn('multiDexEnabled = true', gradle)
+
+        app_dart = (ROOT / 'lib' / 'app.dart').read_text(encoding='utf-8')
+        self.assertIn('AppMaterialLocalizationsDelegate', app_dart)
+        self.assertNotIn('GlobalMaterialLocalizations.delegate', app_dart)
+        self.assertTrue((ROOT / 'lib' / 'l10n' / 'framework_localizations.dart').is_file())
 
         win_pkg = (ROOT / 'scripts' / 'package_windows.ps1').read_text(encoding='utf-8')
         self.assertIn('--split-debug-info=', win_pkg)
@@ -125,6 +136,7 @@ class BundleSizeOptimizationsTest(unittest.TestCase):
         linux_sh = (ROOT / 'scripts' / 'build_linux.sh').read_text(encoding='utf-8')
         self.assertIn('--split-debug-info=build/symbols/linux', linux_sh)
         self.assertIn('-dTreeShakeIcons=true', linux_sh)
+        self.assertIn('packages/record_web', linux_sh)
 
         for rel in ('scripts/build_macos.sh', 'scripts/build_ios.sh', 'scripts/build_android_variants.py'):
             self.assertIn('--split-debug-info', (ROOT / rel).read_text(encoding='utf-8'))
@@ -133,6 +145,7 @@ class BundleSizeOptimizationsTest(unittest.TestCase):
         self.assertIn('Compression=lzma2/ultra64', iss)
         self.assertIn(r'Type: files; Name: "{app}\dartjni.dll"', iss)
         self.assertIn(r'Type: filesandordirs; Name: "{app}\data\flutter_assets\packages\cupertino_icons"', iss)
+        self.assertIn(r'Type: filesandordirs; Name: "{app}\data\flutter_assets\packages\record_web"', iss)
 
 
 if __name__ == '__main__':

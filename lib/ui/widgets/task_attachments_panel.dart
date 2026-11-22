@@ -589,6 +589,7 @@ class _TaskAttachmentPreviewState extends State<TaskAttachmentPreview> {
               AppLocalizations.of(context).get('taskAttachmentSaved'),
             ),
           ),
+          tone: FeedbackTone.success,
         );
       }
     } catch (_) {
@@ -599,6 +600,7 @@ class _TaskAttachmentPreviewState extends State<TaskAttachmentPreview> {
               AppLocalizations.of(context).get('taskAttachmentUnavailable'),
             ),
           ),
+          tone: FeedbackTone.error,
         );
       }
     } finally {

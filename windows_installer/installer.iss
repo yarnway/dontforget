@@ -56,6 +56,7 @@ Type: files; Name: "{app}\msvcp140_codecvt_ids.dll"
 Type: files; Name: "{app}\vccorlib140.dll"
 Type: files; Name: "{app}\vcruntime140_threads.dll"
 Type: filesandordirs; Name: "{app}\data\flutter_assets\packages\cupertino_icons"
+Type: filesandordirs; Name: "{app}\data\flutter_assets\packages\record_web"
 
 [Registry]
 ; Register dontforget:// protocol for Toast notification activation and custom URL scheme

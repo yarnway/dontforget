@@ -20,17 +20,26 @@ internal class SharedTextBridge(context: Context) {
     private val controls = Regex("[\\x00-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f]")
     private var datasetEpoch: String? = null
 
+    @Synchronized
     fun initialize(epoch: String) {
         require(epoch.isNotBlank() && epoch.length <= 256 && !controls.containsMatchIn(epoch))
         val records = load()
         // Unbound events arrived before Dart was ready. Already-bound events
         // from a replaced database are never imported into the restored data.
+        val dropped = records.filter { it["dataset_epoch"] != null && it["dataset_epoch"] != epoch }
         val next = records.filter { it["dataset_epoch"] == null || it["dataset_epoch"] == epoch }
             .map { it + ("dataset_epoch" to epoch) }
         if (records.any { it["dataset_epoch"] != epoch }) persist(next)
+        for (item in dropped) {
+            val id = item["id"] as? String ?: continue
+            try {
+                File(handoffRoot, id).deleteRecursively()
+            } catch (_: Exception) {}
+        }
         datasetEpoch = epoch
     }
 
+    @Synchronized
     fun receive(intent: Intent?, restoredId: String? = null): String? {
         if (intent?.action != Intent.ACTION_SEND ||
             intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return null
@@ -139,6 +148,7 @@ internal class SharedTextBridge(context: Context) {
         }
     }
 
+    @Synchronized
     fun pending(): List<Map<String, Any>> {
         val epoch = checkNotNull(datasetEpoch)
         return load().filter { it["dataset_epoch"] == epoch }.map { record ->
@@ -192,6 +202,7 @@ internal class SharedTextBridge(context: Context) {
         }
     }
 
+    @Synchronized
     fun acknowledge(id: String) {
         require(identity.matches(id))
         val queued = load()
@@ -199,6 +210,7 @@ internal class SharedTextBridge(context: Context) {
         if (next.size != queued.size) persist(next)
     }
 
+    @Synchronized
     fun reset() {
         datasetEpoch = null
         // Keep entries if recovery is cancelled. initialize() filters bound

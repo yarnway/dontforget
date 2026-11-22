@@ -96,7 +96,10 @@ class _TaskMetadataEditorState extends State<TaskMetadataEditor> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     final checklist = widget.details.checklist;
+    final doneCount = checklist.where((e) => e.done).length;
     return Column(
       key: const ValueKey('detail-task-metadata'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -110,23 +113,34 @@ class _TaskMetadataEditorState extends State<TaskMetadataEditor> {
           decoration: InputDecoration(labelText: l10n.get('taskProject')),
           onChanged: (value) => _patch({'project': value}),
         ),
-        Text(l10n.get('taskTags')),
-        Wrap(
-          spacing: 6,
-          children: [
-            for (final tag in widget.details.tags)
-              InputChip(
-                label: Text(tag),
-                onDeleted: !widget.enabled
-                    ? null
-                    : () => _patch({
-                        'tags': widget.details.tags
-                            .where((e) => e != tag)
-                            .toList(),
-                      }),
-              ),
-          ],
+        const SizedBox(height: 12),
+        Text(
+          l10n.get('taskTags'),
+          style: theme.textTheme.titleSmall?.copyWith(
+            color: colors.onSurfaceVariant,
+          ),
         ),
+        if (widget.details.tags.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final tag in widget.details.tags)
+                InputChip(
+                  label: Text(tag),
+                  onDeleted: !widget.enabled
+                      ? null
+                      : () => _patch({
+                          'tags': widget.details.tags
+                              .where((e) => e != tag)
+                              .toList(),
+                        }),
+                ),
+            ],
+          ),
+        ],
+        const SizedBox(height: 8),
         TextField(
           key: const ValueKey('detail-new-tag'),
           controller: _newTag,
@@ -144,83 +158,120 @@ class _TaskMetadataEditorState extends State<TaskMetadataEditor> {
             ),
           ),
         ),
-        const SizedBox(height: 8),
-        Text(
-          l10n.get('taskChecklist'),
-          style: Theme.of(context).textTheme.titleSmall,
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.get('taskChecklist'),
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+            ),
+            if (checklist.isNotEmpty)
+              Text(
+                '$doneCount / ${checklist.length}',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: colors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+          ],
         ),
-        if (checklist.isEmpty) Text(l10n.get('taskChecklistEmpty')),
+        const SizedBox(height: 6),
+        if (checklist.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              l10n.get('taskChecklistEmpty'),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
+            ),
+          ),
         for (var i = 0; i < checklist.length; i++)
-          Column(
+          Container(
             key: ValueKey('detail-item-${checklist[i].id}'),
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Checkbox(
-                    key: ValueKey('detail-item-done-${checklist[i].id}'),
-                    value: checklist[i].done,
-                    semanticLabel: checklist[i].label,
-                    onChanged: !widget.enabled
-                        ? null
-                        : (value) => _changeItem(
-                            i,
-                            checklist[i].copyWith(done: value),
-                          ),
-                  ),
-                  Expanded(
-                    child: TextFormField(
-                      key: ValueKey('detail-item-label-${checklist[i].id}'),
-                      initialValue: checklist[i].label,
-                      enabled: widget.enabled,
-                      maxLength: 512,
-                      inputFormatters: [_storedLimit(512)],
-                      maxLines: null,
-                      decoration: const InputDecoration(counterText: ''),
-                      onChanged: (value) {
-                        if (value.trim().isEmpty) {
-                          _invalidLabels.add(checklist[i].id);
-                        } else {
-                          _invalidLabels.remove(checklist[i].id);
-                          _changeItem(i, checklist[i].copyWith(label: value));
-                        }
-                        widget.onValidityChanged(_invalidLabels.isEmpty);
-                      },
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.fromLTRB(6, 6, 8, 2),
+            decoration: BoxDecoration(
+              color: colors.surfaceContainer,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: colors.outlineVariant.withValues(alpha: 0.55),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Checkbox(
+                      key: ValueKey('detail-item-done-${checklist[i].id}'),
+                      value: checklist[i].done,
+                      semanticLabel: checklist[i].label,
+                      onChanged: !widget.enabled
+                          ? null
+                          : (value) => _changeItem(
+                              i,
+                              checklist[i].copyWith(done: value),
+                            ),
                     ),
-                  ),
-                ],
-              ),
-              Wrap(
-                alignment: WrapAlignment.end,
-                children: [
-                  IconButton(
-                    key: ValueKey('detail-item-up-${checklist[i].id}'),
-                    tooltip: l10n.get('taskMoveUp'),
-                    onPressed: widget.enabled && i > 0
-                        ? () => _changeItem(i, null, moveTo: i - 1)
-                        : null,
-                    icon: const Icon(Icons.arrow_upward, size: 18),
-                  ),
-                  IconButton(
-                    key: ValueKey('detail-item-down-${checklist[i].id}'),
-                    tooltip: l10n.get('taskMoveDown'),
-                    onPressed: widget.enabled && i < checklist.length - 1
-                        ? () => _changeItem(i, null, moveTo: i + 1)
-                        : null,
-                    icon: const Icon(Icons.arrow_downward, size: 18),
-                  ),
-                  IconButton(
-                    key: ValueKey('detail-item-remove-${checklist[i].id}'),
-                    tooltip: l10n.get('taskRemoveItem'),
-                    onPressed: widget.enabled
-                        ? () => _changeItem(i, null)
-                        : null,
-                    icon: const Icon(Icons.delete_outline, size: 18),
-                  ),
-                ],
-              ),
-            ],
+                    Expanded(
+                      child: TextFormField(
+                        key: ValueKey('detail-item-label-${checklist[i].id}'),
+                        initialValue: checklist[i].label,
+                        enabled: widget.enabled,
+                        maxLength: 512,
+                        inputFormatters: [_storedLimit(512)],
+                        maxLines: null,
+                        decoration: const InputDecoration(counterText: ''),
+                        onChanged: (value) {
+                          if (value.trim().isEmpty) {
+                            _invalidLabels.add(checklist[i].id);
+                          } else {
+                            _invalidLabels.remove(checklist[i].id);
+                            _changeItem(i, checklist[i].copyWith(label: value));
+                          }
+                          widget.onValidityChanged(_invalidLabels.isEmpty);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                Wrap(
+                  alignment: WrapAlignment.end,
+                  children: [
+                    IconButton(
+                      key: ValueKey('detail-item-up-${checklist[i].id}'),
+                      tooltip: l10n.get('taskMoveUp'),
+                      onPressed: widget.enabled && i > 0
+                          ? () => _changeItem(i, null, moveTo: i - 1)
+                          : null,
+                      icon: const Icon(Icons.arrow_upward, size: 18),
+                    ),
+                    IconButton(
+                      key: ValueKey('detail-item-down-${checklist[i].id}'),
+                      tooltip: l10n.get('taskMoveDown'),
+                      onPressed: widget.enabled && i < checklist.length - 1
+                          ? () => _changeItem(i, null, moveTo: i + 1)
+                          : null,
+                      icon: const Icon(Icons.arrow_downward, size: 18),
+                    ),
+                    IconButton(
+                      key: ValueKey('detail-item-remove-${checklist[i].id}'),
+                      tooltip: l10n.get('taskRemoveItem'),
+                      onPressed: widget.enabled
+                          ? () => _changeItem(i, null)
+                          : null,
+                      icon: const Icon(Icons.delete_outline, size: 18),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         TextField(
           key: const ValueKey('detail-new-checklist-item'),

@@ -10,6 +10,7 @@ import '../../models/task_statistics.dart';
 import '../../providers/providers.dart';
 import '../../providers/task_statistics_provider.dart';
 import '../../services/recovery/runtime_gate.dart';
+import '../theme/app_theme.dart';
 import '../widgets/inline_feedback.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -88,27 +89,30 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final text = '${l10n.get(source)}\n\n${_report!.content}';
     setState(() => _copying = true);
     var message = l10n.get('reportCopied');
+    var copiedOk = true;
     try {
       await Clipboard.setData(ClipboardData(text: text));
     } catch (_) {
+      copiedOk = false;
       message = l10n.get('reportCopyFailed');
     }
     if (!mounted || !_isCurrent) return;
     setState(() => _copying = false);
-    InlineFeedback.of(context).showSnackBar(SnackBar(content: Text(message)));
+    InlineFeedback.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+      tone: copiedOk ? FeedbackTone.success : FeedbackTone.error,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final stats = ref.watch(taskStatisticsProvider);
-    final tasks = ref.watch(remindersProvider);
-    final settings = ref.watch(settingsProvider);
     final theme = Theme.of(context);
-    final stale =
-        _report != null &&
-        (!identical(_reportTasks, tasks) ||
-            !identical(_reportSettings, settings));
+    final colors = theme.colorScheme;
+    final barDuration = MediaQuery.disableAnimationsOf(context)
+        ? Duration.zero
+        : const Duration(milliseconds: 240);
 
     final body = SafeArea(
       child: Align(
@@ -129,7 +133,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               Text(
                 l10n.get('dashboardScope'),
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                  color: colors.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 20),
@@ -137,18 +141,31 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 _section(
                   context,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    padding: const EdgeInsets.symmetric(vertical: 28),
                     child: Column(
                       children: [
-                        Icon(
-                          Icons.bar_chart_rounded,
-                          size: 40,
-                          color: theme.colorScheme.primary,
+                        Container(
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            color: colors.primaryContainer.withValues(
+                              alpha: 0.7,
+                            ),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.bar_chart_rounded,
+                            size: 32,
+                            color: colors.onPrimaryContainer,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           l10n.get('noTasksYet'),
                           textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyLarge?.copyWith(
+                            color: colors.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
@@ -173,6 +190,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           stats.total,
                           Icons.checklist_rounded,
                           width,
+                          badgeBackground: colors.primaryContainer,
+                          badgeForeground: colors.onPrimaryContainer,
                         ),
                         _stat(
                           context,
@@ -180,6 +199,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           stats.completed,
                           Icons.task_alt_rounded,
                           width,
+                          badgeBackground: colors.secondaryContainer,
+                          badgeForeground: colors.onSecondaryContainer,
                         ),
                         _stat(
                           context,
@@ -187,6 +208,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           stats.pending,
                           Icons.schedule_rounded,
                           width,
+                          badgeBackground: colors.tertiaryContainer,
+                          badgeForeground: colors.onTertiaryContainer,
                         ),
                       ],
                     );
@@ -209,19 +232,27 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           Text(
                             '${stats.completionPercent}%',
                             style: theme.textTheme.titleLarge?.copyWith(
-                              color: theme.colorScheme.primary,
+                              color: colors.primary,
                               fontWeight: FontWeight.w700,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
-                      LinearProgressIndicator(
-                        value: stats.completionFraction,
-                        minHeight: 8,
-                        borderRadius: BorderRadius.circular(8),
-                        semanticsLabel: l10n.get('dashboardCompletion'),
-                        semanticsValue: '${stats.completionPercent}%',
+                      TweenAnimationBuilder<double>(
+                        tween: Tween<double>(end: stats.completionFraction),
+                        duration: barDuration,
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, _) => LinearProgressIndicator(
+                          value: value,
+                          minHeight: 8,
+                          borderRadius: BorderRadius.circular(8),
+                          semanticsLabel: l10n.get('dashboardCompletion'),
+                          semanticsValue: '${stats.completionPercent}%',
+                        ),
                       ),
                     ],
                   ),
@@ -229,8 +260,23 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 const SizedBox(height: 20),
                 LayoutBuilder(
                   builder: (context, constraints) {
-                    final categories = _categories(context, stats, l10n);
-                    final review = _review(context, l10n, settings, stale);
+                    final categories = _categories(
+                      context,
+                      stats,
+                      l10n,
+                      barDuration,
+                    );
+                    final review = Consumer(
+                      builder: (context, ref, _) {
+                        final tasks = ref.watch(remindersProvider);
+                        final settings = ref.watch(settingsProvider);
+                        final stale =
+                            _report != null &&
+                            (!identical(_reportTasks, tasks) ||
+                                !identical(_reportSettings, settings));
+                        return _review(context, l10n, settings, stale);
+                      },
+                    );
                     final scale =
                         MediaQuery.textScalerOf(context).scale(14) / 14;
                     if (constraints.maxWidth >= 860 && scale <= 1.3) {
@@ -293,8 +339,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     String label,
     int value,
     IconData icon,
-    double width,
-  ) {
+    double width, {
+    required Color badgeBackground,
+    required Color badgeForeground,
+  }) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     return SizedBox(
@@ -308,10 +356,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: colors.primaryContainer,
+                  color: badgeBackground,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: colors.onPrimaryContainer, size: 22),
+                child: Icon(icon, color: badgeForeground, size: 22),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -322,6 +370,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       '$value',
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w700,
+                        fontFeatures: const [FontFeature.tabularFigures()],
                       ),
                     ),
                     Text(
@@ -344,21 +393,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     BuildContext context,
     TaskStatistics stats,
     AppLocalizations l10n,
+    Duration barDuration,
   ) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final barColors = [
-      colors.error,
-      colors.tertiary,
-      colors.secondary,
-      colors.primary,
-    ];
-    const barIcons = [
-      Icons.notifications_active_outlined,
-      Icons.star_outline_rounded,
-      Icons.checklist_rounded,
-      Icons.notes_rounded,
-    ];
+    final brightness = theme.brightness;
     return _section(
       context,
       child: Column(
@@ -372,36 +411,67 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           for (var i = 0; i < 4; i++) ...[
             const SizedBox(height: 18),
-            Row(
-              children: [
-                Icon(barIcons[i], size: 18, color: barColors[i]),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    l10n.get('cat${i + 1}'),
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  '${stats.categories[i]}',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            LinearProgressIndicator(
-              key: ValueKey('dashboard-cat-bar-${i + 1}'),
-              value: stats.categories[i] / stats.total,
-              minHeight: 7,
-              color: barColors[i],
-              backgroundColor: barColors[i].withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(6),
-              semanticsLabel: l10n.get('cat${i + 1}'),
-              semanticsValue:
-                  '${(stats.categories[i] / stats.total * 100).round()}%',
+            Builder(
+              builder: (context) {
+                final level = i + 1;
+                final barColor = AppTheme.quadrantColor(brightness, level);
+                final count = stats.categories[i];
+                final fraction = count / stats.total;
+                final percent = (fraction * 100).round();
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          AppTheme.quadrantIcon(level),
+                          size: 18,
+                          color: barColor,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            l10n.get('cat$level'),
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          '$count',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '$percent%',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: colors.onSurfaceVariant,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    TweenAnimationBuilder<double>(
+                      tween: Tween<double>(end: fraction),
+                      duration: barDuration,
+                      curve: Curves.easeOutCubic,
+                      builder: (context, value, _) => LinearProgressIndicator(
+                        key: ValueKey('dashboard-cat-bar-$level'),
+                        value: value,
+                        minHeight: 7,
+                        color: barColor,
+                        backgroundColor: barColor.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(6),
+                        semanticsLabel: l10n.get('cat$level'),
+                        semanticsValue: '$percent%',
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ],
         ],
@@ -416,6 +486,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     bool stale,
   ) {
     final theme = Theme.of(context);
+    final colors = theme.colorScheme;
     final hasModel = settings.primaryModelSettings.apiKey.trim().isNotEmpty;
     final report = _report;
     final sourceLabel = report?.source == ReviewReportSource.model
@@ -436,16 +507,30 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           Text(
             l10n.get('aiReviewSubtitle'),
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+              color: colors.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 16),
           if (report != null) ...[
-            Text(
-              l10n.get(sourceLabel),
-              key: const ValueKey('review-source'),
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: theme.colorScheme.primary,
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: colors.primaryContainer.withValues(alpha: 0.65),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  l10n.get(sourceLabel),
+                  key: const ValueKey('review-source'),
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: colors.onPrimaryContainer,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ),
             if (report.source == ReviewReportSource.localAfterFailure)
@@ -454,10 +539,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               _notice(context, l10n.get('reviewLocalExplanation')),
             if (stale) _notice(context, l10n.get('reviewStale')),
             const SizedBox(height: 12),
-            SelectableText(
-              report.content,
-              key: const ValueKey('review-content'),
-              style: theme.textTheme.bodyMedium?.copyWith(height: 1.6),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: colors.surfaceContainer,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: colors.outlineVariant.withValues(alpha: 0.65),
+                ),
+              ),
+              child: SelectableText(
+                report.content,
+                key: const ValueKey('review-content'),
+                style: theme.textTheme.bodyMedium?.copyWith(height: 1.65),
+              ),
             ),
             const SizedBox(height: 16),
           ] else if (!hasModel)

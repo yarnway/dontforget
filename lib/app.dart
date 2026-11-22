@@ -7,7 +7,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:tray_manager/tray_manager.dart';
 import 'providers/providers.dart';
@@ -40,6 +39,7 @@ import 'ui/screens/recovery_outcome_screen.dart';
 import 'ui/screens/task_detail_screen.dart';
 import 'ui/screens/preferences_screen.dart';
 import 'l10n/app_localizations.dart';
+import 'l10n/framework_localizations.dart';
 
 typedef _MacInputToken = ({DataGeneration data, RuntimeRecoveryToken runtime});
 
@@ -126,22 +126,71 @@ class _MyAppState extends ConsumerState<MyApp>
             !ref.read(homeControllerProvider).isRecording &&
             !ref.read(homeControllerProvider).isPreparingRecording,
         prepare: () async {
-          await _globalCapture?.pause();
-          final drafts = ref.read(workspaceDraftsProvider.notifier);
-          await drafts.ready;
-          // Flush before invalidating producer tokens: recovery pause rejects
-          // old queued writes, which must not discard the last typed draft.
-          await drainDesktopWrites(() => drafts.flushed, () => drafts.failed);
-          await Future.wait<Object?>([
-            _actionRuntimeGate.pause(),
-            ref.read(lanSyncServiceProvider).pauseForRecovery(),
-            _notifications.pauseForMaintenance(),
-          ]);
-          await drafts.flushed;
-          if (drafts.failed) {
-            throw StateError('Pending drafts could not be saved');
+          var capturePaused = false;
+          RuntimeRecoveryToken? runtimeToken;
+          var lanPaused = false;
+          var notificationsPaused = false;
+          try {
+            if (_globalCapture != null) {
+              await _globalCapture!.pause();
+              capturePaused = true;
+            }
+            final drafts = ref.read(workspaceDraftsProvider.notifier);
+            await drafts.ready;
+            // Flush before invalidating producer tokens: recovery pause rejects
+            // old queued writes, which must not discard the last typed draft.
+            await drainDesktopWrites(() => drafts.flushed, () => drafts.failed);
+            final lanSync = ref.read(lanSyncServiceProvider);
+            await Future.wait<void>([
+              _actionRuntimeGate.pause().then((token) {
+                runtimeToken = token;
+              }),
+              lanSync.pauseForRecovery().then((_) {
+                lanPaused = true;
+              }),
+              _notifications.pauseForMaintenance().then((_) {
+                notificationsPaused = true;
+              }),
+            ]);
+            await drafts.flushed;
+            if (drafts.failed) {
+              throw StateError('Pending drafts could not be saved');
+            }
+            await DesktopWindowService.flush(DatabaseHelper.instance);
+          } catch (_) {
+            if (notificationsPaused) {
+              try {
+                await _notifications.resumeFromReminders(
+                  ref.read(remindersProvider),
+                );
+              } catch (e) {
+                debugPrint('Upgrade rollback: notification resume failed: $e');
+              }
+            }
+            if (lanPaused) {
+              try {
+                ref.read(lanSyncServiceProvider).resumeAfterRecovery();
+              } catch (e) {
+                debugPrint('Upgrade rollback: LAN sync resume failed: $e');
+              }
+            }
+            final token = runtimeToken;
+            if (token != null) {
+              try {
+                _actionRuntimeGate.resume(token);
+              } catch (e) {
+                debugPrint('Upgrade rollback: runtime gate resume failed: $e');
+              }
+            }
+            if (capturePaused && _globalCapture != null) {
+              unawaited(
+                _globalCapture!
+                    .start(_activateGlobalCapture)
+                    .catchError((Object _) {}),
+              );
+            }
+            rethrow;
           }
-          await DesktopWindowService.flush(DatabaseHelper.instance);
         },
         exitApp: _closeStorageAndExit,
         onError: (_, __) => debugPrint('Upgrade exit preparation failed'),
@@ -298,6 +347,10 @@ class _MyAppState extends ConsumerState<MyApp>
     final database = ref.read(databaseHelperProvider);
     try {
       final generation = database.captureGeneration();
+      final bootstrapLang = database.peekBootstrapLanguage(generation);
+      if (bootstrapLang != null) {
+        _notifications.seedInitialLanguage(bootstrapLang);
+      }
       final reminders = ref.read(remindersProvider.notifier);
       await Future.wait([reminders.ready, _notifications.init()]);
       if (!mounted ||
@@ -1142,9 +1195,9 @@ class _MyAppState extends ConsumerState<MyApp>
       locale: Locale(displaySettings.language),
       localizationsDelegates: const [
         AppLocalizationsDelegate(),
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
+        AppMaterialLocalizationsDelegate(),
+        AppWidgetsLocalizationsDelegate(),
+        AppCupertinoLocalizationsDelegate(),
       ],
       supportedLocales: const [
         Locale('en', ''),

@@ -88,10 +88,9 @@ class _LiveReminderButtonState extends ConsumerState<LiveReminderButton> {
       return const SizedBox.shrink();
     }
     final service = ref.watch(liveReminderServiceProvider);
-    final reminders = ref.watch(remindersProvider);
-    final task = reminders
-        .where((task) => task.id == widget.taskId)
-        .firstOrNull;
+    final task = ref.watch(
+      remindersByIdProvider.select((byId) => byId[widget.taskId]),
+    );
     final epoch = ref.read(notificationServiceProvider).datasetEpoch;
     final language = Localizations.localeOf(context).languageCode;
     String copy(String key) => LiveReminderCopy.text(language, key);
