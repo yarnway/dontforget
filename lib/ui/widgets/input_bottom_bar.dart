@@ -1591,7 +1591,13 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
       child: ValueListenableBuilder<TextEditingValue>(
         valueListenable: _textController,
         builder: (context, value, _) {
-          final onSend = value.text.trim().isEmpty || captureBusy || voiceMode
+          final composing = value.composing;
+          final isComposing = composing.isValid && !composing.isCollapsed;
+          final onSend =
+              value.text.trim().isEmpty ||
+                  isComposing ||
+                  captureBusy ||
+                  voiceMode
               ? null
               : _submitText;
           if (!isMobile) {

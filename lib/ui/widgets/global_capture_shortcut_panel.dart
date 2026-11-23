@@ -45,7 +45,7 @@ class GlobalCaptureShortcutPanel extends ConsumerWidget {
                   TextButton(
                     onPressed: !service.ready || service.busy
                         ? null
-                        : () => unawaited(service.setEnabled(true)),
+                        : () => unawaited(service.retry()),
                     child: Text(t('retry')),
                   ),
                 ],

@@ -1,0 +1,43 @@
+{
+  "date": "2026-11-23",
+  "platform": "windows",
+  "source_base": "5da98d673da33afcbabc05895f18461eace4bf9b",
+  "product_patch_sha256": "922d7406447d5d39bca88c8eae04dafbf777b7ca76ff44debc70b6658096687c",
+  "matches_installed_candidate_patch": true,
+  "flutter_sdk": "3.44.9",
+  "dart": "3.12.2",
+  "strict_sdk_version_check": "PASS",
+  "static_analysis_issues": 0,
+  "flutter": {
+    "concurrency": 2,
+    "passed": 2730,
+    "skipped": 20,
+    "failed": 0
+  },
+  "python": {
+    "passed": 186,
+    "skipped": 6,
+    "failed": 0,
+    "initial_inherited_environment_issue": "Windows test environment restoration dropped empty unrelated Git override values",
+    "rerun": "fixed SDK with unrelated overrides isolated in the test subprocess"
+  },
+  "windows_install": {
+    "version": "1.8.24+96",
+    "receipt": "windows-upgrade-96-local-2026-11-23.json",
+    "this_run_new_install": false,
+    "close_hid_window_and_kept_process": true,
+    "ordinary_entry_restored_same_pid_and_window": true,
+    "tray_show_action_observed": false
+  },
+  "pixel_8_pro": {
+    "version": "1.8.23+94",
+    "adb_authorized": true,
+    "tencent_streaming_enabled": false,
+    "nonempty_credential_fields": 0,
+    "credentials_exported": false,
+    "settings_written": false,
+    "real_acoustic_asr": "pending_device_configuration"
+  },
+  "iphone_enumerated": false,
+  "public_release_in_this_run": false
+}

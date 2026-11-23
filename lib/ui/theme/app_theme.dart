@@ -7,6 +7,7 @@ abstract final class AppTheme {
   static final light = _build(Brightness.light);
   static final dark = _build(Brightness.dark);
 
+  static const workspaceMaxWidth = 1040.0;
   static const tabularFigures = <FontFeature>[FontFeature.tabularFigures()];
 
   static ThemeMode mode(AppAppearance appearance) => switch (appearance) {

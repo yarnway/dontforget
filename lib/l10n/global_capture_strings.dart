@@ -12,9 +12,9 @@ String globalCaptureText(String language, String key) {
       'ショートカットが使用できないか、別のアプリが使用中です。確認して再試行してください。',
     ],
     'unavailable': [
-      '暂时无法启用快捷键，请重试。',
-      'The shortcut is unavailable. Try again.',
-      'ショートカットを有効にできません。再試行してください。',
+      '暂时无法应用快捷键设置，请重试。',
+      'Could not apply shortcut settings. Try again.',
+      'ショートカットの設定を適用できませんでした。再試行してください。',
     ],
     'saveFailed': [
       '快捷键设置未保存，请重试。',

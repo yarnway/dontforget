@@ -1,0 +1,35 @@
+{
+  "date": "2026-11-23",
+  "release": "1.8.23+94",
+  "release_source": "8b35d753ac31602a0aacaa1ea78600c6ef6b9641",
+  "regression_source": "5da98d673da33afcbabc05895f18461eace4bf9b",
+  "automation": {
+    "host": "Windows",
+    "flutter": "3.44.9",
+    "backup_recovery_window_update_service_passed": 101,
+    "toast_protocol_routing_about_passed": 107,
+    "failed": 0
+  },
+  "windows_installed": {
+    "version_readback": "1.8.23 (94)",
+    "active_desktop_home_search_settings_about": "pass",
+    "physical_key_in_search_and_clear": "pass",
+    "chinese_ime_composition": "pending",
+    "tray_context_menu": "pending",
+    "toast_click": "pending: DontForget notification Enabled=0",
+    "update_check": "connection failure",
+    "separate_http_probe": {
+      "api_http_status": 403,
+      "api_rate_limit_remaining": 0,
+      "fallback_https": "TLS handshake failed"
+    }
+  },
+  "pixel_installed": {
+    "package": "com.yarnway.dontforget",
+    "version_readback": "1.8.23 (94)",
+    "update_check": "current",
+    "public_version_readback": "1.8.23 (94)"
+  },
+  "installation_this_run": "not performed; existing build 94 release receipts retained",
+  "iphone": "no present iPhone detected on the Windows host"
+}

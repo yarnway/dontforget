@@ -68,6 +68,7 @@ class GlobalCaptureShortcut extends ChangeNotifier {
   bool _disposed = false, _listening = false, _ready = false;
   bool enabled = false, registered = false, busy = false;
   String? error;
+  bool? _retryEnabled;
   String? _nonce;
   int _epoch = 0;
   VoidCallback? _activate;
@@ -111,6 +112,7 @@ class GlobalCaptureShortcut extends ChangeNotifier {
       }
       busy = true;
       _ready = false;
+      _retryEnabled = null;
       _changed();
       try {
         if (!await _bind(false)) throw StateError('Shortcut unbind failed');
@@ -130,6 +132,15 @@ class GlobalCaptureShortcut extends ChangeNotifier {
     });
   }
 
+  Future<void> retry() {
+    if (!ready || busy || error == null) return Future.value();
+    final value = _retryEnabled;
+    if (value != null) return setEnabled(value);
+    // A startup failure must reload the saved opt-in before binding.
+    final activate = _activate;
+    return activate == null ? Future.value() : start(activate);
+  }
+
   Future<void> setEnabled(bool value) {
     final epoch = _epoch;
     return _serial(() async {
@@ -137,6 +148,7 @@ class GlobalCaptureShortcut extends ChangeNotifier {
       if (enabled == value && registered == value && error == null) return;
       busy = true;
       error = null;
+      _retryEnabled = value;
       _changed();
       final previous = enabled;
       var persisted = false;

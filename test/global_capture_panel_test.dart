@@ -8,16 +8,83 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-class _Conflict implements CaptureShortcutBackend {
+class _Backend implements CaptureShortcutBackend {
+  _Backend({this.conflict = false});
+
+  final bool conflict;
+
   @override
   void listen(void Function(String) receive) {}
   @override
-  Future<bool> setEnabled(bool value, String nonce) async => !value;
+  Future<bool> setEnabled(bool value, String nonce) async =>
+      !value || !conflict;
   @override
   void dispose() {}
 }
 
+Widget _panelApp(
+  ProviderContainer container, {
+  Locale locale = const Locale('en'),
+  TransitionBuilder? builder,
+}) => UncontrolledProviderScope(
+  container: container,
+  child: MaterialApp(
+    locale: locale,
+    supportedLocales: const [Locale('zh'), Locale('en'), Locale('ja')],
+    localizationsDelegates: const [
+      AppLocalizationsDelegate(),
+      GlobalMaterialLocalizations.delegate,
+      GlobalWidgetsLocalizations.delegate,
+      GlobalCupertinoLocalizations.delegate,
+    ],
+    builder: builder,
+    home: const Scaffold(
+      body: SingleChildScrollView(child: GlobalCaptureShortcutPanel()),
+    ),
+  ),
+);
+
 void main() {
+  testWidgets('retry repeats disabling after the preference write fails', (
+    tester,
+  ) async {
+    var saved = true;
+    final writes = <bool>[];
+    final shortcut = GlobalCaptureShortcut(
+      backend: _Backend(),
+      runtime: RuntimeRecoveryGate(),
+      readSaved: () async => saved,
+      writeSaved: (value) async {
+        writes.add(value);
+        if (writes.length == 1) throw StateError('Preference file is locked');
+        saved = value;
+      },
+    );
+    final container = ProviderContainer(
+      overrides: [globalCaptureShortcutProvider.overrideWith((_) => shortcut)],
+    );
+    addTearDown(container.dispose);
+    await shortcut.start(() {});
+    await tester.pumpWidget(_panelApp(container));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('global-capture-enabled')));
+    await tester.pumpAndSettle();
+    expect(shortcut.error, 'saveFailed');
+    expect(shortcut.registered, isTrue);
+    expect(saved, isTrue);
+
+    await tester.tap(find.text('Retry'));
+    await tester.pumpAndSettle();
+    expect(writes, [false, false]);
+    expect(saved, isFalse);
+    expect(shortcut.registered, isFalse);
+    expect(
+      tester.widget<SwitchListTile>(find.byType(SwitchListTile)).value,
+      isFalse,
+    );
+    expect(find.text('Retry'), findsNothing);
+  });
+
   testWidgets(
     'shortcut conflict and retry fit three languages on narrow and desktop windows',
     (tester) async {
@@ -25,7 +92,7 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
       addTearDown(tester.view.resetPhysicalSize);
       final shortcut = GlobalCaptureShortcut(
-        backend: _Conflict(),
+        backend: _Backend(conflict: true),
         runtime: RuntimeRecoveryGate(),
         readSaved: () async => false,
         writeSaved: (_) async {},
@@ -43,33 +110,15 @@ void main() {
         tester.view.physicalSize = size;
         for (final language in ['zh', 'en', 'ja']) {
           await tester.pumpWidget(
-            UncontrolledProviderScope(
-              container: container,
-              child: MaterialApp(
-                locale: Locale(language),
-                supportedLocales: const [
-                  Locale('zh'),
-                  Locale('en'),
-                  Locale('ja'),
-                ],
-                localizationsDelegates: const [
-                  AppLocalizationsDelegate(),
-                  GlobalMaterialLocalizations.delegate,
-                  GlobalWidgetsLocalizations.delegate,
-                  GlobalCupertinoLocalizations.delegate,
-                ],
-                builder: (_, child) => MediaQuery(
-                  data: MediaQueryData(
-                    size: size,
-                    textScaler: const TextScaler.linear(2),
-                  ),
-                  child: child!,
+            _panelApp(
+              container,
+              locale: Locale(language),
+              builder: (_, child) => MediaQuery(
+                data: MediaQueryData(
+                  size: size,
+                  textScaler: const TextScaler.linear(2),
                 ),
-                home: const Scaffold(
-                  body: SingleChildScrollView(
-                    child: GlobalCaptureShortcutPanel(),
-                  ),
-                ),
+                child: child!,
               ),
             ),
           );

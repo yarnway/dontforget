@@ -1,0 +1,39 @@
+{
+  "date": "2026-11-23",
+  "installed_windows": {
+    "version": "1.8.23+94",
+    "search": {
+      "native_composition": "ceshi",
+      "committed_candidate": "测试",
+      "results_after_commit": 3,
+      "query_cleared": true
+    },
+    "home_composer": {
+      "native_candidate_committed_to_draft": true,
+      "send_appeared_enabled_while_composing": true,
+      "temporary_draft_cleared": true,
+      "send_to_saved_record": "pending",
+      "input_mode_restored": true
+    },
+    "window": {
+      "close_hid_window": true,
+      "application_entry_restored_same_process_and_window": true,
+      "tray_context_menu": "pending"
+    },
+    "notification_setting": "disabled",
+    "toast_click": "pending",
+    "update_endpoint_recheck": {
+      "github_api": "connection timed out",
+      "provenance_download": "connection timed out"
+    }
+  },
+  "working_tree_fix": {
+    "send_disabled_during_ime_composition": true,
+    "send_reenabled_on_commit_of_same_text": true,
+    "new_regression_reproduced_before_fix": true,
+    "focused_tests_passed": 75,
+    "focused_tests_failed": 0,
+    "flutter_analyze_issues": 0,
+    "build_or_install_this_turn": "not performed"
+  }
+}

@@ -1,0 +1,155 @@
+{
+  "date": "2026-11-23",
+  "platform": "windows",
+  "flutter_sdk": "3.44.9",
+  "fixture_data_only": true,
+  "directed_flutter": {
+    "passed": 173,
+    "skipped": 3,
+    "failed": 0,
+    "skip_reason": "Creating symlinks requires Windows privileges"
+  },
+  "backup_capacity": {
+    "format": 1,
+    "platform": "windows",
+    "dart": "3.12.2",
+    "attachment_bytes": 4194304,
+    "total_attachment_bytes": 16777216,
+    "full_capacity_boundary": false,
+    "baseline_rss_bytes": 149831680,
+    "cases": [
+      {
+        "stage": "single_attachment_limit_plus_one",
+        "elapsed_ms": 31,
+        "rss_bytes": 151277568,
+        "max_rss_bytes": 151277568
+      },
+      {
+        "stage": "seed_and_hash_four_attachments",
+        "elapsed_ms": 367,
+        "rss_bytes": 172224512,
+        "max_rss_bytes": 172224512
+      },
+      {
+        "stage": "plain_export",
+        "elapsed_ms": 469,
+        "rss_bytes": 165482496,
+        "max_rss_bytes": 199122944
+      },
+      {
+        "stage": "plain_inspect",
+        "elapsed_ms": 437,
+        "rss_bytes": 178470912,
+        "max_rss_bytes": 199122944
+      },
+      {
+        "stage": "cancel_after_first_attachment",
+        "elapsed_ms": 164,
+        "rss_bytes": 173744128,
+        "max_rss_bytes": 199122944
+      },
+      {
+        "stage": "plain_prepare_restore",
+        "elapsed_ms": 439,
+        "rss_bytes": 168615936,
+        "max_rss_bytes": 199122944
+      },
+      {
+        "stage": "verify_all_restored_and_original_hashes",
+        "elapsed_ms": 409,
+        "rss_bytes": 169037824,
+        "max_rss_bytes": 201248768
+      },
+      {
+        "stage": "restore_database_and_reopen",
+        "elapsed_ms": 173,
+        "rss_bytes": 169885696,
+        "max_rss_bytes": 201248768
+      },
+      {
+        "stage": "protected_single_export",
+        "elapsed_ms": 3811,
+        "rss_bytes": 176537600,
+        "max_rss_bytes": 201248768
+      },
+      {
+        "stage": "protected_single_inspect",
+        "elapsed_ms": 3241,
+        "rss_bytes": 178786304,
+        "max_rss_bytes": 201248768
+      },
+      {
+        "stage": "protected_single_prepare_restore",
+        "elapsed_ms": 3093,
+        "rss_bytes": 184393728,
+        "max_rss_bytes": 201248768
+      }
+    ],
+    "plain_backup_bytes": 16783306,
+    "outcome": "PASS",
+    "max_rss_bytes": 201248768
+  },
+  "encrypted_backup_capacity": {
+    "format": 1,
+    "scope": "encrypted-total",
+    "platform": "windows",
+    "dart": "3.12.2",
+    "attachment_bytes": 4194304,
+    "total_attachment_bytes": 16777216,
+    "full_capacity_boundary": false,
+    "baseline_rss_bytes": 150597632,
+    "cases": [
+      {
+        "stage": "seed_and_hash_four_attachments",
+        "elapsed_ms": 393,
+        "rss_bytes": 168144896,
+        "max_rss_bytes": 168144896
+      },
+      {
+        "stage": "encrypted_total_export",
+        "elapsed_ms": 4468,
+        "rss_bytes": 178409472,
+        "max_rss_bytes": 202305536
+      },
+      {
+        "stage": "encrypted_total_inspect",
+        "elapsed_ms": 4671,
+        "rss_bytes": 189145088,
+        "max_rss_bytes": 202305536
+      },
+      {
+        "stage": "wrong_password_leaves_no_restore_output",
+        "elapsed_ms": 2709,
+        "rss_bytes": 192876544,
+        "max_rss_bytes": 202305536
+      },
+      {
+        "stage": "encrypted_cancel_cleans_partial_files",
+        "elapsed_ms": 3363,
+        "rss_bytes": 183721984,
+        "max_rss_bytes": 202305536
+      },
+      {
+        "stage": "encrypted_total_prepare_restore",
+        "elapsed_ms": 4697,
+        "rss_bytes": 178679808,
+        "max_rss_bytes": 202305536
+      },
+      {
+        "stage": "verify_all_restored_and_original_hashes",
+        "elapsed_ms": 493,
+        "rss_bytes": 179466240,
+        "max_rss_bytes": 202305536
+      },
+      {
+        "stage": "restore_database_close_reopen_and_hash",
+        "elapsed_ms": 445,
+        "rss_bytes": 196562944,
+        "max_rss_bytes": 202305536
+      }
+    ],
+    "encrypted_backup_bytes": 16783896,
+    "outcome": "PASS",
+    "max_rss_bytes": 202305536
+  }
+}

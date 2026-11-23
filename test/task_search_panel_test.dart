@@ -201,7 +201,7 @@ void main() {
         await show(tester, width: width, brightness: brightness);
         expect(tester.takeException(), isNull);
         if (width == 1440) {
-          expect(tester.getSize(find.byType(CustomScrollView)).width, 960);
+          expect(tester.getSize(find.byType(CustomScrollView)).width, 1040);
         }
         if (const bool.fromEnvironment('UI_PREVIEW')) {
           final boundary = tester.renderObject<RenderRepaintBoundary>(

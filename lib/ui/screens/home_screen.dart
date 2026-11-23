@@ -29,6 +29,7 @@ import 'dashboard_screen.dart';
 import 'shared_text_inbox_screen.dart';
 import '../../l10n/shared_text_strings.dart';
 import '../widgets/task_search_panel.dart';
+import '../theme/app_theme.dart';
 import '../widgets/input_bottom_bar.dart';
 import '../widgets/command_palette_dialog.dart';
 import '../widgets/spaced_repetition_sheet.dart';
@@ -1849,6 +1850,68 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     });
   }
 
+  Widget _buildSearchBar(BuildContext context, AppLocalizations l10n) {
+    final colors = Theme.of(context).colorScheme;
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(24),
+      borderSide: BorderSide.none,
+    );
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: AppTheme.workspaceMaxWidth),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: TextField(
+            key: const ValueKey('task-search-field'),
+            controller: _searchController,
+            focusNode: _searchFocus,
+            autofocus: true,
+            style: const TextStyle(fontSize: 14),
+            textAlignVertical: TextAlignVertical.center,
+            decoration: InputDecoration(
+              hintText: l10n.get('searchHint'),
+              hintStyle: TextStyle(
+                fontSize: 13,
+                color: colors.onSurfaceVariant,
+              ),
+              filled: true,
+              fillColor: colors.surfaceContainer,
+              prefixIcon: IconButton(
+                icon: const Icon(Icons.arrow_back, size: 20),
+                tooltip: l10n.get('close'),
+                onPressed: _closeSearch,
+              ),
+              suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _searchController,
+                builder: (context, value, _) => value.text.isEmpty
+                    ? const SizedBox.shrink()
+                    : IconButton(
+                        icon: const Icon(Icons.clear, size: 18),
+                        tooltip: l10n.get('clearSearch'),
+                        onPressed: _clearSearch,
+                      ),
+              ),
+              suffixIconConstraints: const BoxConstraints(),
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              border: border,
+              enabledBorder: border,
+              focusedBorder: border.copyWith(
+                borderSide: BorderSide(
+                  color: colors.primary.withValues(alpha: 0.45),
+                ),
+              ),
+            ),
+            onChanged: _updateSearch,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final reminders = ref.watch(workspaceRemindersProvider);
@@ -1911,57 +1974,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           extendBodyBehindAppBar: false,
           appBar: AppBar(
             centerTitle: false,
-            leading: _isSearchOpen
-                ? IconButton(
-                    icon: const Icon(Icons.arrow_back, size: 20),
-                    tooltip: l10n.get('close'),
-                    onPressed: _closeSearch,
-                  )
-                : null,
+            automaticallyImplyLeading: !_isSearchOpen,
+            titleSpacing: _isSearchOpen ? 0 : null,
             title: _isSearchOpen
-                ? TextField(
-                    controller: _searchController,
-                    focusNode: _searchFocus,
-                    key: const ValueKey('task-search-field'),
-                    autofocus: true,
-                    style: const TextStyle(fontSize: 14),
-                    decoration: InputDecoration(
-                      hintText: l10n.get('searchHint'),
-                      hintStyle: TextStyle(
-                        fontSize: 13,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      filled: true,
-                      fillColor: Theme.of(context).colorScheme.surfaceContainer,
-                      prefixIcon: Icon(
-                        Icons.search_rounded,
-                        size: 18,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.primary.withValues(alpha: 0.45),
-                        ),
-                      ),
-                    ),
-                    onChanged: _updateSearch,
-                  )
+                ? _buildSearchBar(context, l10n)
                 : Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -2015,19 +2031,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             elevation: 0,
             backgroundColor: Colors.transparent,
             actions: _isSearchOpen
-                ? [
-                    ValueListenableBuilder<TextEditingValue>(
-                      valueListenable: _searchController,
-                      builder: (context, value, _) => value.text.isEmpty
-                          ? const SizedBox.shrink()
-                          : IconButton(
-                              icon: const Icon(Icons.clear, size: 18),
-                              tooltip: l10n.get('clearSearch'),
-                              onPressed: _clearSearch,
-                            ),
-                    ),
-                    const SizedBox(width: 6),
-                  ]
+                ? null
                 : [
                     IconButton(
                       icon: const Icon(Icons.search_rounded),
@@ -2167,7 +2171,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               child: Center(
                 child: ConstrainedBox(
                   key: const ValueKey('home-content-frame'),
-                  constraints: const BoxConstraints(maxWidth: 1040),
+                  constraints: const BoxConstraints(
+                    maxWidth: AppTheme.workspaceMaxWidth,
+                  ),
                   child: Column(
                     children: [
                       ValueListenableBuilder<DateTime>(

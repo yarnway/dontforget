@@ -28,12 +28,13 @@ void main() {
   late _Backend backend;
   late RuntimeRecoveryGate gate;
   late GlobalCaptureShortcut shortcut;
-  bool saved = false, failWrite = false;
+  bool saved = false, failRead = false, failWrite = false;
   int activations = 0;
   final writes = <bool>[];
   Completer<void>? blocked;
   setUp(() {
     saved = false;
+    failRead = false;
     failWrite = false;
     activations = 0;
     writes.clear();
@@ -43,7 +44,10 @@ void main() {
     shortcut = GlobalCaptureShortcut(
       backend: backend,
       runtime: gate,
-      readSaved: () async => saved,
+      readSaved: () async {
+        if (failRead) throw StateError('Disk unavailable');
+        return saved;
+      },
       writeSaved: (value) async {
         if (blocked != null) await blocked!.future;
         if (failWrite) throw StateError('Disk unavailable');
@@ -95,11 +99,26 @@ void main() {
       backend.receive('');
       expect(activations, 0);
       backend.conflict = false;
-      await shortcut.setEnabled(true);
+      await shortcut.retry();
       expect(shortcut.error, isNull);
       expect(shortcut.registered, isTrue);
+      expect(writes, [true]);
     },
   );
+
+  test('retry after a startup read failure preserves opt-out', () async {
+    failRead = true;
+    await start();
+    expect(shortcut.error, 'unavailable');
+
+    failRead = false;
+    await shortcut.retry();
+    expect(shortcut.error, isNull);
+    expect(shortcut.enabled, isFalse);
+    expect(shortcut.registered, isFalse);
+    expect(backend.calls, [false, false]);
+    expect(writes, isEmpty);
+  });
 
   test(
     'startup conflict preserves saved opt-in and permits disabling it',

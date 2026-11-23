@@ -1,0 +1,93 @@
+{
+  "first_run": {
+    "timestamp_utc": "2026-11-23T07:45:30.583448+00:00",
+    "app_route": "settings/about",
+    "running_pid": 28084,
+    "backup_verified": true,
+    "installer_exit": 5,
+    "graceful_event_timed_out": true,
+    "restart_manager_could_not_close": true,
+    "version_after_rollback": "1.8.23+94",
+    "data_after_rollback": {
+      "all_business_fields_equal": true,
+      "dpapi_credential_readback_equal": true,
+      "credential_files_equal": true,
+      "credential_count": 1,
+      "counts": {
+        "Reminders": 7,
+        "MediaRecords": 0,
+        "Settings": 1
+      },
+      "schema": 17,
+      "integrity_check": "ok"
+    }
+  },
+  "retest": {
+    "app_route": "home",
+    "timestamp_utc": "2026-11-23T07:47:13.003911+00:00",
+    "package_origin": "local-candidate-from-base-and-workspace-patch",
+    "base_revision": "5da98d673da33afcbabc05895f18461eace4bf9b",
+    "source_patch_sha256": "74e743325d0b73fb347bb6ad53d848bf5d9693b130fda4086e69bf553716e883",
+    "candidate_diff_sha256": "74e743325d0b73fb347bb6ad53d848bf5d9693b130fda4086e69bf553716e883",
+    "build_version": "1.8.24+95",
+    "flutter_sdk": "3.44.9",
+    "verified_source_files": [
+      "lib/l10n/global_capture_strings.dart",
+      "lib/services/global_capture_shortcut.dart",
+      "lib/ui/widgets/global_capture_shortcut_panel.dart",
+      "lib/ui/widgets/input_bottom_bar.dart",
+      "test/global_capture_panel_test.dart",
+      "test/global_capture_shortcut_test.dart",
+      "test/windows_composer_test.dart"
+    ],
+    "sqlite3_sha256": "2bf39f2aadafdc59a90b260f582a8fccebc5b89eb94175fdbaa9148c1e1f084d",
+    "setup_sha256": "1d2ea3fe1baf314c5a20fa58ca84c4f9e316ebf5f0495a36a315a8f8df7e415d",
+    "setup_bytes": 13271324,
+    "portable_sha256": "53f0dcf4e3c857410f36fe4edbe7dce433c896f9b568a32bed90952e4d1685c9",
+    "portable_bytes": 15740655,
+    "version_before": "1.8.23+94",
+    "running_at_install_pid": 28084,
+    "visible_at_install": true,
+    "graceful_exit_event_before_install": true,
+    "backup_verified": true,
+    "force_close_allowed": false,
+    "installer_exit": 0,
+    "graceful_release_logged": true,
+    "old_pid_exited": true,
+    "version_after": "1.8.24+95",
+    "payload_files_identical": 27,
+    "expected_payload_files": 27,
+    "after_install": {
+      "all_business_fields_equal": true,
+      "dpapi_credential_readback_equal": true,
+      "credential_files_equal": true,
+      "credential_count": 1,
+      "counts": {
+        "Reminders": 7,
+        "MediaRecords": 0,
+        "Settings": 1
+      },
+      "schema": 17,
+      "integrity_check": "ok"
+    },
+    "reopen_pid": 22980,
+    "reopen_window_visible": true,
+    "after_reopen": {
+      "all_business_fields_equal": true,
+      "dpapi_credential_readback_equal": true,
+      "credential_files_equal": true,
+      "credential_count": 1,
+      "counts": {
+        "Reminders": 7,
+        "MediaRecords": 0,
+        "Settings": 1
+      },
+      "schema": 17,
+      "integrity_check": "ok"
+    }
+  },
+  "automated_tests": {
+    "flutter_directed_passed": 37
+  },
+  "published": false
+}

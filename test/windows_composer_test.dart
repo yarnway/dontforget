@@ -438,6 +438,35 @@ void main() {
     },
   );
 
+  testWidgets('Send stays disabled until the active IME composition commits', (
+    tester,
+  ) async {
+    await show(tester);
+    await tester.tap(fieldFinder);
+    const text = '中文测试';
+    final send = find.descendant(
+      of: find.byKey(const ValueKey('composer-send')),
+      matching: find.byType(FilledButton),
+    );
+
+    await replace(tester, text, composing: true);
+    expect(tester.widget<FilledButton>(send).onPressed, isNull);
+    await tester.tap(send);
+    await tester.pump();
+    expect(home.sent, isEmpty);
+
+    await replace(tester, text);
+    expect(tester.widget<FilledButton>(send).onPressed, isNotNull);
+    await tester.tap(send);
+    await pumpUntilRealIo(
+      tester,
+      () => field(tester).controller!.text.isEmpty,
+      reason: 'Committing the IME enables exactly one submission',
+    );
+    expect(home.sent, [text]);
+    await unmount(tester);
+  });
+
   testWidgets(
     'failed Send preserves the expanded draft, successful Send returns to compact input',
     (tester) async {

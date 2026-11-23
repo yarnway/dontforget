@@ -1,0 +1,94 @@
+{
+  "timestamp_utc": "2026-11-23T13:49:49.304426+00:00",
+  "package_origin": "local-candidate-from-base-and-workspace-patch",
+  "base_revision": "5da98d673da33afcbabc05895f18461eace4bf9b",
+  "source_patch_sha256": "922d7406447d5d39bca88c8eae04dafbf777b7ca76ff44debc70b6658096687c",
+  "candidate_diff_sha256": "922d7406447d5d39bca88c8eae04dafbf777b7ca76ff44debc70b6658096687c",
+  "build_version": "1.8.24+96",
+  "flutter_sdk": "3.44.9",
+  "verified_source_files": [
+    "lib/l10n/global_capture_strings.dart",
+    "lib/services/global_capture_shortcut.dart",
+    "lib/ui/screens/home_screen.dart",
+    "lib/ui/theme/app_theme.dart",
+    "lib/ui/widgets/global_capture_shortcut_panel.dart",
+    "lib/ui/widgets/input_bottom_bar.dart",
+    "lib/ui/widgets/task_search_panel.dart",
+    "test/global_capture_panel_test.dart",
+    "test/global_capture_shortcut_test.dart",
+    "test/home_notice_persistence_test.dart",
+    "test/task_search_panel_test.dart",
+    "test/windows_composer_test.dart"
+  ],
+  "sqlite3_sha256": "2bf39f2aadafdc59a90b260f582a8fccebc5b89eb94175fdbaa9148c1e1f084d",
+  "setup_sha256": "a09fed1c5913d3ead24bb762ca4124636749b88092c6fdc392552eaad50f500f",
+  "setup_bytes": 13271409,
+  "portable_sha256": "71cfe0207f2b78023e918f8bf5f45528842ca984aba7f3d83d3039538469eb02",
+  "portable_bytes": 15740399,
+  "version_before": "1.8.24+95",
+  "running_at_install_pid": 29360,
+  "visible_at_install": true,
+  "graceful_exit_event_before_install": true,
+  "backup_verified": true,
+  "verified_installed_prior_payload_files": 27,
+  "force_close_allowed": false,
+  "installer_exit": 0,
+  "graceful_release_logged": true,
+  "old_pid_exited": true,
+  "version_after": "1.8.24+96",
+  "payload_files_identical": 27,
+  "expected_payload_files": 27,
+  "after_install": {
+    "all_business_fields_equal": true,
+    "dpapi_credential_readback_equal": true,
+    "credential_files_equal": true,
+    "credential_count": 1,
+    "counts": {
+      "Reminders": 8,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "schema": 17,
+    "integrity_check": "ok"
+  },
+  "reopen_pid": 4992,
+  "reopen_window_visible": true,
+  "after_reopen": {
+    "all_business_fields_equal": true,
+    "dpapi_credential_readback_equal": true,
+    "credential_files_equal": true,
+    "credential_count": 1,
+    "counts": {
+      "Reminders": 8,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "schema": 17,
+    "integrity_check": "ok"
+  },
+  "published": false,
+  "search_alignment": {
+    "installed_normal_and_maximized_window": true,
+    "observed_window_screenshot_widths": [
+      1244,
+      1536
+    ],
+    "visually_aligned": [
+      "search_field",
+      "search_result",
+      "composer"
+    ],
+    "all_four_surfaces_in_geometry_test": true,
+    "geometry_test_widths": [
+      390,
+      900,
+      1244,
+      1440
+    ],
+    "clear_kept_field_focus": true,
+    "back_returned_to_home": true,
+    "directed_regression_passed": 105,
+    "analyzer_issues": 0
+  },
+  "test_toast_completion_preserved_on_reopen": true
+}

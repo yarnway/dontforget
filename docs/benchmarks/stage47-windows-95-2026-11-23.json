@@ -1,0 +1,55 @@
+{
+  "installed_candidate": "1.8.24+95",
+  "published_version_observed": "1.8.23+94",
+  "upgrade_receipt": "windows-upgrade-95-local-2026-11-23.json",
+  "global_capture": {
+    "foreground_at_keypress": "Windows File Explorer",
+    "shortcut": "Ctrl+Alt+Space",
+    "initial_app_hidden": true,
+    "same_window_restored": true,
+    "home_input_focused": true,
+    "preference_restored_to_disabled": true
+  },
+  "tray": {
+    "user_observed_context_menu": true,
+    "exit_selected_by_user": true,
+    "old_process_exited": true,
+    "show_window_item_independently_verified": false
+  },
+  "chinese_input": {
+    "native_pinyin_candidate": true,
+    "send_disabled_during_composition": true,
+    "single_memo_after_enter": true,
+    "same_full_row_after_cold_reopen": true,
+    "preexisting_business_fields_equal": true,
+    "synthetic_task_reused_for_toast": true
+  },
+  "update_check": {
+    "public_build_status": "current",
+    "local_candidate_status": "ahead",
+    "same_public_release_returned": true
+  },
+  "windows_toast": {
+    "subject": "synthetic test task only",
+    "permission": "Enabled",
+    "scheduled_at": "2026-11-23T16:02:00+08:00",
+    "first_observed_at": "2026-11-23T16:02:00.7202756+08:00",
+    "title_and_body_match": true,
+    "protocol_activation_in_os_history": true,
+    "complete_and_snooze_actions_in_os_history": true,
+    "click_round_trip_status": "PASS",
+    "complete_clicked_in_windows_notification_center": true,
+    "completion_verified_at": "2026-11-23T21:47:58+08:00",
+    "test_row_is_completed": true,
+    "notice_revision_before": 1,
+    "notice_revision_after": 2,
+    "preexisting_business_fields_equal_after_action": true
+  },
+  "search_alignment": {
+    "change_in_working_tree": true,
+    "candidate_includes_change": false,
+    "widths_tested_logical_pixels": [390, 900, 1244, 1440],
+    "directed_tests_passed": 105,
+    "analyzer_issues": 0
+  }
+}

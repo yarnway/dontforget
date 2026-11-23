@@ -220,6 +220,58 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
 
+  testWidgets(
+    'search field, notice, results and composer share the home edges',
+    (tester) async {
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await showHome(tester);
+      final l10n = AppLocalizations(const Locale('zh'));
+      await tester.tap(find.byTooltip(l10n.get('searchHint')));
+      await tester.pump();
+      final field = find.byKey(const ValueKey('task-search-field'));
+      await tester.enterText(field, 'Persisted');
+      await tester.pump(const Duration(milliseconds: 200));
+
+      Rect surface(String key) => tester.getRect(
+        find
+            .descendant(
+              of: find.byKey(ValueKey(key)),
+              matching: find.byType(DecoratedBox),
+            )
+            .first,
+      );
+      for (final width in [1440.0, 1244.0, 900.0, 390.0]) {
+        await tester.binding.setSurfaceSize(Size(width, 1000));
+        await tester.pump();
+        final composer = surface('composer-frame');
+        for (final rect in [
+          tester.getRect(field),
+          surface('reminder-notice-panel'),
+          surface('task-surface-due'),
+        ]) {
+          expect(
+            rect.left,
+            closeTo(composer.left, .01),
+            reason: 'viewport $width',
+          );
+          expect(
+            rect.right,
+            closeTo(composer.right, .01),
+            reason: 'viewport $width',
+          );
+        }
+        expect(tester.takeException(), isNull);
+      }
+      await tester.tap(find.byTooltip(l10n.get('clearSearch')));
+      await tester.pump();
+      expect(tester.widget<TextField>(field).controller!.text, isEmpty);
+      await tester.tap(find.byTooltip(l10n.get('close')));
+      await tester.pump();
+      expect(field, findsNothing);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
   testWidgets('acknowledgement survives a new database and home session', (
     tester,
   ) async {
