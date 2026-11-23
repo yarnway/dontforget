@@ -1,0 +1,69 @@
+{
+  "date": "2026-11-23",
+  "source": {
+    "base_commit": "cff0bf5714806d8b38f63d48237512cb442b93d2",
+    "changes_in_worktree": true,
+    "flutter": "3.44.9",
+    "flutter_analyze_passed": true,
+    "focused_tests_passed": 134,
+    "cloud_credentials_in_public_presets": false
+  },
+  "device": {
+    "name": "Pixel 8 Pro",
+    "application_id": "com.yarnway.dontforget",
+    "version": "1.8.23+94",
+    "deepseek": {
+      "configured_using_settings": true,
+      "masked_key_endpoint_and_model_verified_after_restart": true,
+      "official_models_http_status": 200,
+      "models_include_configured_model": true,
+      "chat_completion_tested": false
+    },
+    "tencent_cloud_speech": {
+      "appid_lookup_http_status": 200,
+      "enabled_and_read_back_after_restart": true,
+      "synthetic_sample_only": true,
+      "microphone_activated_and_stopped": true,
+      "live_sample_matched_before_release": true,
+      "editing_dialog_opened_and_sample_matched": true,
+      "tested_using_after_release_fallback": false,
+      "sent_task": false,
+      "test_draft_cleared": true,
+      "original_microphone_permission_restored": true
+    }
+  },
+  "packaging": {
+    "new_installer_created": false,
+    "public_release": "1.8.23+94",
+    "installed_windows_build": "1.8.24+96",
+    "windows_credentials_changed": false
+  },
+  "prior_main_ci": {
+    "run_id": 45191277272,
+    "attempt_1": {
+      "analysis_and_test_jobs_passed": 2,
+      "candidate_builds_passed": ["windows", "android", "ios", "macos"],
+      "linux_native_dependencies_step_timeout_minutes": 12
+    },
+    "attempt_2": {
+      "conclusion": "success",
+      "analysis_and_test_jobs_passed": 2,
+      "candidate_builds_passed": ["windows", "android", "linux", "ios", "macos"]
+    },
+    "candidate_packages": {
+      "version": "1.8.23+94",
+      "archive_sha256_and_manifest_verified": true,
+      "package_files_verified": 8,
+      "archive_ids": {
+        "windows": 14829245122,
+        "android": 14828760913,
+        "linux": 14829786726,
+        "ios": 14827073652,
+        "macos": 14829036353
+      },
+      "android_fixed_release_signatures_verified": 3,
+      "ios_bundle_and_reminder_extension_metadata_verified": true,
+      "local_candidate_installation_performed": false
+    }
+  }
+}

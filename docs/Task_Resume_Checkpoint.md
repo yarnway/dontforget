@@ -1,5 +1,15 @@
 # 手动续行检查点
 
+## 2026-11-23 · Windows build 97 候选覆盖与数据保全
+
+- `1.8.24+97` 候选从仍在托盘运行的 build 96 本机覆盖。升级前最新备份已核对，安装器正常关闭旧进程并以 `0` 退出。27 个安装文件、全部业务字段及 DPAPI 凭据通过安装后和普通重开核对。[升级回执](benchmarks/windows-upgrade-97-local-2026-11-23.json)
+- 固定 Flutter 3.44.9，静态分析通过，Flutter 2730 项通过／20 项跳过，Python 186 项通过／6 项跳过。后续验证 GitHub 的 build 97 同源制品，保全升级 Windows 与 Pixel，补 Windows 托盘「显示窗口」和 iPhone 真机验收。[当前执行顺序](Next_Steps_2026-11-02.md#当前执行顺序2026-11-23)
+
+## 2026-11-23 · Pixel 云服务配置与真实转写
+
+- Pixel 正式版 build 94 已配置 DeepSeek 与腾讯云，重开均读回。DeepSeek 官方模型列表鉴权成功，腾讯云真实麦克风实时识别及松手编辑均通过。测试草稿及临时麦克风权限已清理。云模型预设保留服务地址和模型，密钥由设备安全存储。定向测试 134 项通过，静态分析无问题。[验收记录](benchmarks/stage47-cloud-providers-2026-11-23.json)
+- 此前主线 `cff0bf5` 在 Linux 依赖下载超时后重跑通过，两项分析测试和五平台候选全部成功。已独立核对 8 个候选制品、Android 固定证书和 iOS 提醒扩展。本机 Windows build 96、Pixel 正式版 build 94，下一阶段须继续托盘「显示窗口」、新版覆盖保全和接入 iPhone 后的实机验收。[当前执行顺序](Next_Steps_2026-11-02.md#当前执行顺序2026-11-23)
+
 ## 2026-11-23 · Windows 阶段集成验收
 
 - 固定 Flutter 3.44.9 完成静态分析、Windows 全量 Flutter 2730 通过／20 跳过和 Python 186 通过／6 跳过。受测产品补丁与本机覆盖验收的 build 96 一致。[集成回执](benchmarks/windows-stage47-integration-2026-11-23.json)

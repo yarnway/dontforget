@@ -1,0 +1,51 @@
+{
+  "date": "2026-11-23",
+  "source": {
+    "base_revision": "cff0bf5714806d8b38f63d48237512cb442b93d2",
+    "source_patch_sha256": "2aab12e86c6f1420c2d69c123af6ffcae19082fd0bcea5d749c06dc940c86e66",
+    "isolated_build_source_matches_product_patch": true,
+    "dependency_lock_sha256": "4a47ac79c5f94bb9f3b61ec2c2f70598ce677c7fbb702883ac02eff9ab21f3b1",
+    "flutter_sdk": "3.44.9"
+  },
+  "automation": {
+    "strict_sdk_check_passed": true,
+    "flutter_analyze_issues": 0,
+    "flutter_tests_passed": 2730,
+    "flutter_tests_skipped": 20,
+    "python_tests_passed": 186,
+    "python_tests_skipped": 6
+  },
+  "package": {
+    "origin": "local-candidate",
+    "version": "1.8.24+97",
+    "setup_sha256": "01ee598aec2e8e72da7e6efa781cda11583956830e5f98e1adb40579e1512924",
+    "setup_bytes": 13271828,
+    "portable_sha256": "e0d83517db5f58f9de1aec054480c1d8fa6e7274bec27556ce2a1e13509ae331",
+    "portable_bytes": 15740606,
+    "sqlite3_sha256": "2bf39f2aadafdc59a90b260f582a8fccebc5b89eb94175fdbaa9148c1e1f084d"
+  },
+  "windows": {
+    "version_before": "1.8.24+96",
+    "prior_payload_files_verified": 27,
+    "latest_data_backup_verified": true,
+    "old_process_running_at_install": true,
+    "old_window_hidden_at_install": true,
+    "installer_exit_code": 0,
+    "graceful_exit_logged": true,
+    "forced_close_used": false,
+    "version_after": "1.8.24+97",
+    "installed_payload_files_verified": 27,
+    "sqlite_integrity_check": "ok",
+    "schema": 17,
+    "record_counts": {"reminders": 9, "media": 0, "settings": 1, "dpapi_credentials": 1},
+    "all_business_fields_and_credentials_equal_after_install": true,
+    "usual_reopen_visible_in_new_process": true,
+    "all_business_fields_and_credentials_equal_after_reopen": true,
+    "tray_show_window_menu_action_observed": false
+  },
+  "other_devices": {
+    "pixel_8_pro_adb_available": true,
+    "pixel_installed_version": "1.8.23+94",
+    "iphone_usb_devices_detected": 0
+  }
+}

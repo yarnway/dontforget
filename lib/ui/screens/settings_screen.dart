@@ -41,15 +41,15 @@ class ModelProvider {
   final String name;
   final String defaultBaseUrl;
   final String defaultModel;
-  final String? defaultApiKey;
 
-  const ModelProvider(
-    this.name,
-    this.defaultBaseUrl,
-    this.defaultModel, [
-    this.defaultApiKey,
-  ]);
+  const ModelProvider(this.name, this.defaultBaseUrl, this.defaultModel);
 }
+
+const _ollamaPreset = ModelProvider(
+  'Ollama (本地离线大模型)',
+  'http://localhost:11434/v1',
+  'llama3',
+);
 
 const List<ModelProvider> _providers = [
   ModelProvider(
@@ -62,12 +62,7 @@ const List<ModelProvider> _providers = [
     'https://generativelanguage.googleapis.com/v1beta/openai',
     'gemini-3.6-flash',
   ),
-  ModelProvider(
-    'Ollama (本地离线大模型)',
-    'http://localhost:11434/v1',
-    'llama3',
-    'ollama',
-  ),
+  _ollamaPreset,
   ModelProvider('OpenAI (ChatGPT)', 'https://api.openai.com/v1', 'gpt-4o-mini'),
   ModelProvider(
     'Kimi (Moonshot)',
@@ -242,8 +237,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
     _baseUrlController.text = provider.defaultBaseUrl;
     _modelNameController.text = provider.defaultModel;
-    if (provider.defaultApiKey != null && provider.defaultApiKey!.isNotEmpty) {
-      _apiKeyController.text = provider.defaultApiKey!;
+    if (provider == _ollamaPreset) {
+      _apiKeyController.text = 'ollama';
     }
     setState(() {
       _selectedProvider = provider;
@@ -1105,6 +1100,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 controller: _apiKeyController,
                                 autocorrect: false,
                                 enableSuggestions: false,
+                                enableIMEPersonalizedLearning: false,
                                 decoration: InputDecoration(
                                   labelText: l10n.get('apiKey'),
                                   border: OutlineInputBorder(

@@ -354,6 +354,7 @@ class _AiProfilesScreenState extends ConsumerState<AiProfilesScreen> {
       obscureText: secret,
       autocorrect: false,
       enableSuggestions: false,
+      enableIMEPersonalizedLearning: !secret,
       decoration: InputDecoration(
         labelText: label,
         helperText: kind == 'url' ? t('aiProfilesUrlHint') : null,
