@@ -66,9 +66,18 @@
     "build99_user_confirmed_voice_editor": {
       "shows_editor_and_two_actions": true,
       "clearing_all_text_dismisses_editor": true,
-      "transition_feedback": "abrupt"
+      "transition_feedback": "abrupt",
+      "user_confirmed_text_saved_once_and_original_audio_played": true,
+      "new_text_memos_read_back": 1,
+      "new_voice_memos_read_back": 1,
+      "new_audio_files_read_back": 1,
+      "existing_media_and_settings_preserved": true,
+      "existing_task_difference": "one reciprocal link to the new test memo",
+      "user_confirmed_cold_reopen_retained_both_memos_and_audio_playback": true,
+      "playback_feedback_persisted_after_natural_completion": true
     },
-    "build99_runtime_acceptance": "launch, voice editor layout and clear-to-dismiss confirmed; appearance of the transition requires follow-up"
+    "build99_user_confirmed_background_notification_body_opens_matching_task": true,
+    "build99_runtime_acceptance": "launch, voice editor layout, clear-to-dismiss, text sending and audio playback confirmed; animation follow-up in build 100"
   },
   "follow_up_regressions": {
     "flutter_sdk": "3.44.9",

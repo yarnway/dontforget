@@ -73,6 +73,10 @@ class InlineFeedbackState extends State<InlineFeedback> {
     if (mounted && _message != null) setState(() => _message = null);
   }
 
+  void hideSnackBar(SnackBar message) {
+    if (mounted && identical(_message, message)) hideCurrentSnackBar();
+  }
+
   Widget _actionButton(SnackBarAction action, ColorScheme colors) => TextButton(
     focusNode: _actionFocus,
     style: TextButton.styleFrom(
