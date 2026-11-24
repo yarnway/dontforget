@@ -15,6 +15,7 @@ import 'package:dont_forget/providers/providers.dart';
 import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'package:dont_forget/ui/widgets/input_bottom_bar.dart';
 import 'package:dont_forget/ui/widgets/live_voice_text_dialog.dart';
+import 'package:dont_forget/ui/widgets/voice_capture_feedback.dart';
 import 'support/real_io.dart';
 import 'support/workspace_drafts.dart';
 import 'support/interaction_preview.dart';
@@ -125,6 +126,7 @@ void main() {
     Size size = const Size(375, 812),
     bool dark = false,
     TargetPlatform platform = TargetPlatform.android,
+    bool disableAnimations = true,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = size;
@@ -146,7 +148,9 @@ void main() {
               ? ThemeData.dark().copyWith(platform: platform)
               : ThemeData(platform: platform),
           builder: (context, child) => MediaQuery(
-            data: MediaQuery.of(context).copyWith(disableAnimations: true),
+            data: MediaQuery.of(
+              context,
+            ).copyWith(disableAnimations: disableAnimations),
             child: RepaintBoundary(key: interactionPreviewKey, child: child!),
           ),
           home: const Scaffold(
@@ -308,6 +312,33 @@ void main() {
       await finish(tester);
     },
   );
+
+  testWidgets('the iOS editing route covers recording before releasing it', (
+    tester,
+  ) async {
+    await show(tester, platform: TargetPlatform.iOS, disableAnimations: false);
+    final held = await hold(tester);
+    await held.gesture.moveTo(held.origin + const Offset(70, -70));
+    await tester.pumpAndSettle();
+    final recording = find.byType(VoiceCaptureFeedback, skipOffstage: false);
+    expect(recording, findsOneWidget);
+
+    await held.gesture.up();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 80));
+    final editor = find.byKey(const ValueKey('voice-text-editor'));
+    final route = ModalRoute.of(tester.element(editor))!;
+    expect(route, isA<MobileVoiceEditorRoute>());
+    expect(route.animation!.value, inExclusiveRange(0, 1));
+    expect(recording, findsOneWidget);
+
+    await tester.pumpAndSettle();
+    expect(recording, findsNothing);
+    await tester.enterText(editor, '');
+    await tester.pumpAndSettle();
+    expect(editor, findsNothing);
+    await finish(tester);
+  });
 
   for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
     testWidgets(

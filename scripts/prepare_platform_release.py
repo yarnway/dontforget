@@ -17,7 +17,7 @@ import urllib.error
 import zipfile
 from android_release_signing import certificate, verify_android_signatures
 from android_apk_variants import requires_arm64
-from package_artifacts import ROOT, digest, version
+from package_artifacts import ROOT, digest, validate_ios_share_group, version
 from verify_artifacts import verify, verify_tag
 
 PLATFORMS = ('android', 'windows', 'linux')
@@ -152,8 +152,13 @@ def verify_ios_package(path, release_version, build_number):
         hosts = {name for name in names if re.fullmatch(r'Payload/[^/]+\.app/Info\.plist', name)}
         if hosts != {host_path + 'Info.plist'} or archive.testzip() is not None:
             raise ValueError('iOS host inventory or CRC mismatch')
-        for prefix, identity in [(host_path, 'com.yarnway.dontforget'),
-                                 (widget_path, 'com.yarnway.dontforget.ReminderActivity')]:
+        host = plistlib.loads(archive.read(host_path + 'Info.plist'))
+        targets = [(host_path, 'com.yarnway.dontforget', None),
+                   (widget_path, 'com.yarnway.dontforget.ReminderActivity', 'com.apple.widgetkit-extension')]
+        share_path = host_path + 'PlugIns/ShareExtension.appex/'
+        if 'DontForgetShareGroup' in host or share_path + 'Info.plist' in names:
+            targets.append((share_path, 'com.yarnway.dontforget.ShareExtension', 'com.apple.share-services'))
+        for prefix, identity, point in targets:
             info = plistlib.loads(archive.read(prefix + 'Info.plist'))
             if (info.get('CFBundleIdentifier'), info.get('CFBundleShortVersionString'),
                     info.get('CFBundleVersion')) != (identity, release_version, build_number):
@@ -163,8 +168,10 @@ def verify_ios_package(path, release_version, build_number):
                     '\\' in executable or executable in ('.', '..') or
                     prefix + executable not in names or archive.getinfo(prefix + executable).file_size == 0):
                 raise ValueError('Missing or unsafe iOS executable')
-            if prefix == widget_path and info.get('NSExtension', {}).get('NSExtensionPointIdentifier') != 'com.apple.widgetkit-extension':
-                raise ValueError('iOS Live Activity is not a WidgetKit extension')
+            if point and info.get('NSExtension', {}).get('NSExtensionPointIdentifier') != point:
+                raise ValueError('iOS extension point mismatch')
+            if prefix == share_path:
+                validate_ios_share_group(host, info)
 
 
 def validate_files(directory, revision, release_version, build_number, expected_certificate, include_ios=False):

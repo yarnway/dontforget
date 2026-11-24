@@ -89,30 +89,63 @@ def macos_architectures(app):
 
 
 def ios_extensions(app, release_version, build_number):
-    """Fail packaging if the embedded widget is missing or cannot share a version."""
+    """Verify the embedded extension versions, identities and extension points."""
     host = plistlib.loads(require(app / 'Info.plist').read_bytes())
     for key, expected in [('CFBundleShortVersionString', release_version),
                           ('CFBundleVersion', build_number)]:
         if host.get(key) != expected:
             raise ValueError(f'iOS host version mismatch: {key}')
-    extension = require(app / 'PlugIns/ReminderActivity.appex')
-    info = plistlib.loads(require(extension / 'Info.plist').read_bytes())
-    for key in ['CFBundleShortVersionString', 'CFBundleVersion']:
-        if info.get(key) != host.get(key):
-            raise ValueError(f'iOS widget version mismatch or missing: {key}')
-    expected_id = host.get('CFBundleIdentifier', '') + '.ReminderActivity'
-    if info.get('CFBundleIdentifier') != expected_id:
-        raise ValueError('iOS widget must belong to the host bundle')
-    point = info.get('NSExtension', {}).get('NSExtensionPointIdentifier')
-    if point != 'com.apple.widgetkit-extension':
-        raise ValueError('iOS Live Activity requires a WidgetKit extension')
-    executable = info.get('CFBundleExecutable')
-    if not isinstance(executable, str) or Path(executable).name != executable:
-        raise ValueError('iOS widget executable name is invalid')
-    require(extension / executable)
-    return [{'bundle': 'PlugIns/ReminderActivity.appex',
-             'version': release_version, 'build_number': build_number,
-             'extension_point': point}]
+    results = []
+    for target, point in (('ReminderActivity', 'com.apple.widgetkit-extension'),
+                          ('ShareExtension', 'com.apple.share-services')):
+        bundle = f'PlugIns/{target}.appex'
+        extension = require(app / bundle)
+        info = plistlib.loads(require(extension / 'Info.plist').read_bytes())
+        if any(info.get(key) != host.get(key) for key in ('CFBundleShortVersionString', 'CFBundleVersion')):
+            raise ValueError(f'iOS {target} version mismatch')
+        if info.get('CFBundleIdentifier') != host.get('CFBundleIdentifier', '') + '.' + target:
+            raise ValueError(f'iOS {target} must belong to the host bundle')
+        if info.get('NSExtension', {}).get('NSExtensionPointIdentifier') != point:
+            raise ValueError(f'iOS {target} extension point mismatch')
+        if target == 'ShareExtension':
+            validate_ios_share_group(host, info)
+        executable = info.get('CFBundleExecutable')
+        if not isinstance(executable, str) or executable in ('', '.', '..') or Path(executable).name != executable:
+            raise ValueError(f'iOS {target} executable name is invalid')
+        require(extension / executable)
+        results.append({'bundle': bundle, 'version': release_version, 'build_number': build_number,
+                        'extension_point': point})
+    return results
+
+
+def validate_ios_share_group(host, share):
+    identity = host.get('CFBundleIdentifier', '')
+    expected = 'group.' + identity
+    if not identity or host.get('DontForgetShareGroup') != expected or share.get('DontForgetShareGroup') != expected:
+        raise ValueError('iOS share group must match the host bundle')
+    return expected
+
+
+def embed_ios_share_entitlements(app, staging):
+    """Carry the group request to personal re-signers using certificate-free signatures."""
+    extension = app / 'PlugIns/ShareExtension.appex'
+    host = plistlib.loads((app / 'Info.plist').read_bytes())
+    share = plistlib.loads((extension / 'Info.plist').read_bytes())
+    request = {'com.apple.security.application-groups': [validate_ios_share_group(host, share)]}
+    entitlements = staging / 'share-entitlements.plist'
+    entitlements.write_bytes(plistlib.dumps(request))
+
+    nested = (path for path in app.rglob('*') if not path.is_symlink() and
+              path.suffix in ('.framework', '.dylib', '.appex'))
+    for path in [*sorted(nested, key=lambda child: (-len(child.parts), child.as_posix())), app]:
+        args = ['--entitlements', str(entitlements)] if path in (app, extension) else []
+        subprocess.run(['codesign', '--force', '--sign', '-', *args, str(path)], check=True)
+        if args:
+            result = subprocess.run(['codesign', '-d', '--entitlements', ':-', str(path)],
+                                    check=True, capture_output=True)
+            if plistlib.loads(result.stdout) != request:
+                raise ValueError('iOS share entitlement request was not embedded')
+    subprocess.run(['codesign', '--verify', '--deep', '--strict', str(app)], check=True)
 
 
 def package(root, platform, revision=None):
@@ -193,6 +226,7 @@ def package(root, platform, revision=None):
             payload = staging / 'Payload'
             payload.mkdir()
             shutil.copytree(app, payload / app.name, symlinks=True)
+            embed_ios_share_entitlements(payload / app.name, staging)
             name = f'DontForget_iOS_unsigned_v{release_version}.ipa'
             subprocess.run(['ditto', '-c', '-k', '--keepParent', str(payload),
                             str(staging / name)], check=True)

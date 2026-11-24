@@ -1,0 +1,81 @@
+{
+  "build": "1.8.24+99",
+  "source_revision": "9cdad1d26f781ce52be3779381c764807a03c116",
+  "github_ci": {
+    "run": 45316783789,
+    "conclusion": "success",
+    "verified_platform_archives": ["android", "ios", "linux", "macos", "windows"],
+    "verified_release_candidate_files": 18,
+    "linux_dependencies_completed": true,
+    "android_two_apks_and_aab_match_release_certificate": true,
+    "ordinary_ios_host_and_extension_versions_verified": true
+  },
+  "windows": {
+    "artifact": 14886603636,
+    "before": "local build 99",
+    "after": "GitHub build 99",
+    "visible_and_running_at_install": true,
+    "pre_install_backup_verified": true,
+    "installer_exit_code": 0,
+    "old_process_exit_graceful": true,
+    "installed_payload_files_verified": 27,
+    "ordinary_reopen_visible": true,
+    "all_business_fields_and_dpapi_equal_after_install_and_reopen": true,
+    "credential_count": 1,
+    "in_app_update_check": {
+      "local_version": "1.8.24+99",
+      "public_version": "1.8.23+94",
+      "result": "current version is newer than the public release"
+    },
+    "lan_same_host_two_temp_databases": {
+      "selected_connected_apple_ethernet_ipv4": true,
+      "bidirectional_task_exchange": true,
+      "second_sync_unchanged": true
+    }
+  },
+  "pixel": {
+    "last_verified_installed_build": "1.8.24+98",
+    "candidate_arm64_apk_sha256": "590c8440961c52a9b7566d891c049fc2a7e3dd5f017eaa726c1ef923b56a07ae",
+    "build99_installation": "pending device enumeration"
+  },
+  "iphone": {
+    "paired_usb_readback": true,
+    "altstore_restored_in_place": true,
+    "build81_user_confirmed_launch_after_refresh": true,
+    "build81_signed_identity_equal_after_refresh": true,
+    "build81_schema": 17,
+    "build81_rows_equal_after_refresh": {"reminders": 4, "media_records": 1, "settings": 1},
+    "build81_media_and_preferences_equal_after_refresh": true,
+    "build81_notification_journal_changed_only_attempt_metadata": true,
+    "pre_upgrade_build99_backup_verified": true,
+    "build99_unsigned_candidate_workflow": 45320351982,
+    "build99_unsigned_candidate_artifact": 14887272293,
+    "build99_unsigned_candidate_sha256": "df98a247575ce111a8ac0179f1202ab796c7f0af5ee38e64afaff704ccc2af8f",
+    "build99_host_and_extension_identity_and_version_verified": true,
+    "build99_signed_overlay": {
+      "before": "1.8.11+81",
+      "after": "1.8.24+99",
+      "user_confirmed_launch_and_about_version": true,
+      "usb_verified_installed_version_and_existing_signed_identity": true,
+      "sqlite_integrity_before_and_after": true,
+      "schema": 17,
+      "all_business_rows_equal": {"reminders": 4, "media_records": 1, "settings": 1},
+      "document_and_preference_names_and_hashes_equal": true,
+      "keychain_verified": false
+    },
+    "build99_user_confirmed_voice_editor": {
+      "shows_editor_and_two_actions": true,
+      "clearing_all_text_dismisses_editor": true,
+      "transition_feedback": "abrupt"
+    },
+    "build99_runtime_acceptance": "launch, voice editor layout and clear-to-dismiss confirmed; appearance of the transition requires follow-up"
+  },
+  "follow_up_regressions": {
+    "flutter_sdk": "3.44.9",
+    "lan_sync_and_voice_editor_tests_passed": 38,
+    "ios_tools_tests_passed": 22,
+    "installed_iphone_build99_current_snapshot_matches_post_overlay": true,
+    "build99_ipa_has_share_extension": false,
+    "next_candidate_ios_local_network_description_verified_in_source": true
+  }
+}

@@ -51,7 +51,7 @@ class SharedText {
   static bool isImagePath(String filePath) =>
       imageExtensions.contains(p.extension(filePath).toLowerCase());
 
-  /// The Android bridge stages each share as `shared_handoff/<id>/<name>`.
+  /// Native bridges stage each share as `shared_handoff/<id>/<name>`.
   /// Only that private layout may be imported or removed for a share.
   static bool isHandoffPath(String filePath, String id) {
     final parent = p.dirname(filePath);

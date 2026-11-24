@@ -7,6 +7,56 @@ import '../../l10n/app_localizations.dart';
 import '../../providers/home_controller.dart';
 import 'voice_capture_feedback.dart';
 
+class MobileVoiceEditorRoute extends DialogRoute<bool> {
+  MobileVoiceEditorRoute({
+    required super.context,
+    required super.builder,
+    required super.themes,
+    required bool reduceMotion,
+  }) : _reduceMotion = reduceMotion,
+       super(
+         barrierColor: const Color(0xF5000000),
+         animationStyle: reduceMotion
+             ? AnimationStyle.noAnimation
+             : const AnimationStyle(
+                 duration: Duration(milliseconds: 230),
+                 curve: Curves.easeOutCubic,
+                 reverseCurve: Curves.easeOutCubic,
+               ),
+       );
+
+  final bool _reduceMotion;
+
+  @override
+  Duration get reverseTransitionDuration =>
+      _reduceMotion ? Duration.zero : const Duration(milliseconds: 180);
+
+  @override
+  Widget buildTransitions(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) => super.buildTransitions(
+    context,
+    animation,
+    secondaryAnimation,
+    _reduceMotion
+        ? child
+        : AnimatedBuilder(
+            animation: animation,
+            child: child,
+            builder: (_, child) => Transform.translate(
+              offset: Offset(
+                0,
+                14 * (1 - Curves.easeOutCubic.transform(animation.value)),
+              ),
+              child: child,
+            ),
+          ),
+  );
+}
+
 /// The user can edit immediately while recognition finishes. Once edited,
 /// remote partial/final updates cannot replace their text.
 class LiveVoiceTextDialog extends ConsumerStatefulWidget {
@@ -291,6 +341,13 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
         shape: mobile ? const RoundedRectangleBorder() : null,
         surfaceTintColor: mobile ? Colors.transparent : null,
         elevation: mobile ? 0 : null,
+        insetAnimationDuration:
+            mobile && !MediaQuery.disableAnimationsOf(context)
+            ? const Duration(milliseconds: 180)
+            : mobile
+            ? Duration.zero
+            : const Duration(milliseconds: 100),
+        insetAnimationCurve: mobile ? Curves.easeOutCubic : Curves.decelerate,
         insetPadding: EdgeInsets.symmetric(
           horizontal: mobile && MediaQuery.sizeOf(context).width >= 360
               ? 24

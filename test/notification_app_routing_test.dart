@@ -13,7 +13,7 @@ import 'package:dont_forget/providers/recovery_coordinator.dart';
 import 'package:dont_forget/services/context_trigger_service.dart';
 import 'package:dont_forget/services/notification_service.dart';
 import 'package:dont_forget/services/android_protocol_service.dart';
-import 'package:dont_forget/services/android_share_service.dart';
+import 'package:dont_forget/services/platform_share_service.dart';
 import 'package:dont_forget/services/shared_text_inbox.dart';
 import 'package:dont_forget/providers/shared_text_provider.dart';
 import 'package:dont_forget/ui/screens/shared_text_inbox_screen.dart';
@@ -160,11 +160,11 @@ void main() {
       MethodChannel('tray_manager'),
       MethodChannel('window_manager'),
       AndroidProtocolService.channel,
-      AndroidShareService.channel,
+      PlatformShareService.channel,
     ]);
     for (final channel in List<MethodChannel>.of(channels)) {
       messenger.setMockMethodCallHandler(channel, (call) async {
-        if (channel == AndroidShareService.channel) {
+        if (channel == PlatformShareService.channel) {
           if (call.method == 'initialize') {
             sharedEpoch = call.arguments as String;
           }
@@ -317,6 +317,29 @@ void main() {
   );
 
   testWidgets(
+    'iOS imports a share on resume and acknowledges after the inbox commits',
+    (tester) async {
+      await mount(tester);
+      await ready(tester);
+      await waitShare(tester, () => sharedEpoch == _firstEpoch);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      nativeShares.add(share(1).toJson());
+      await tester.pump();
+      expect(shareAcks, isEmpty);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await waitShare(tester, () => shareAcks.length == 1);
+      expect(shareAcks.single, share(1).id);
+      expect(find.byType(SharedTextInboxScreen), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    },
+    variant: const TargetPlatformVariant({TargetPlatform.iOS}),
+  );
+
+  testWidgets(
     'shared editor autosaves and explicit local save cannot create duplicate memos on redelivery',
     (tester) async {
       nativeShares.add(share(1).toJson());
@@ -358,7 +381,7 @@ void main() {
       nativeShares.add(share(1).toJson());
       await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .handlePlatformMessage(
-            AndroidShareService.channel.name,
+            PlatformShareService.channel.name,
             const StandardMethodCodec().encodeMethodCall(
               const MethodCall('onPendingShares'),
             ),

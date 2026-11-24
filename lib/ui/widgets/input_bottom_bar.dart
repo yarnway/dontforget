@@ -62,6 +62,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   Locale? _captureLocale;
   bool _captureOverlaySyncScheduled = false;
   bool _captureOverlayWanted = false;
+  bool _retainCaptureBackdrop = false;
   HomeController? _heldRecorder;
   DateTime? _quickTime;
   String? _parsedCacheText;
@@ -90,6 +91,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
       )?.showSnackBar(SnackBar(content: Text(message)));
     }
   }
+
   bool _memoOnly = false, _submitting = false, _restoring = false;
   bool _draftTouched = false, _draftSaveFailed = false;
   bool _resolvingPending = false;
@@ -119,12 +121,19 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     entry?.dispose();
   }
 
+  void _releaseCaptureBackdrop() {
+    if (!_retainCaptureBackdrop) return;
+    _retainCaptureBackdrop = false;
+    _removeCaptureOverlay();
+  }
+
   void _scheduleCaptureOverlay() {
     if (_captureOverlaySyncScheduled) return;
     _captureOverlaySyncScheduled = true;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _captureOverlaySyncScheduled = false;
       if (!mounted) return;
+      if (_retainCaptureBackdrop && _current) return;
       if (!_captureOverlayWanted || !_isLongPressRecording || !_current) {
         _removeCaptureOverlay();
         return;
@@ -180,7 +189,8 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                             return VoiceCaptureFeedback(
                               action: _voiceAction,
                               fullScreen: true,
-                              preparing: !state.isRecording,
+                              preparing:
+                                  !state.isRecording && !_retainCaptureBackdrop,
                               selectionOpen: _voiceGesture.selectionOpen,
                               transcript: state.voicePreview,
                               liveTranscription: live,
@@ -667,7 +677,12 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         Theme.of(context).platform == TargetPlatform.android ||
         Theme.of(context).platform == TargetPlatform.iOS;
     HapticFeedback.mediumImpact();
-    _removeCaptureOverlay();
+    _retainCaptureBackdrop =
+        mobile &&
+        action == VoiceReleaseAction.text &&
+        _captureOverlay != null &&
+        !MediaQuery.disableAnimationsOf(context);
+    if (!_retainCaptureBackdrop) _removeCaptureOverlay();
     setState(() {
       _isLongPressRecording = false;
       _isTranscribing =
@@ -736,6 +751,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         }
       }
     } finally {
+      _releaseCaptureBackdrop();
       await voiceDraft?.release(sentText: sendText);
       if (mounted && identical(_pendingRecordingStart, operation)) {
         setState(() {
@@ -757,51 +773,71 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   }) async {
     final prefix = _textController.text;
     final initial = ref.read(homeControllerProvider).voicePreview;
+    final mobile =
+        Theme.of(context).platform == TargetPlatform.android ||
+        Theme.of(context).platform == TargetPlatform.iOS;
     setState(() => _voiceEditorOpen = true);
+    MobileVoiceEditorRoute? route;
+    Animation<double>? transition;
+    void releaseBackdrop(AnimationStatus status) {
+      if (status == AnimationStatus.completed ||
+          status == AnimationStatus.reverse) {
+        _releaseCaptureBackdrop();
+      }
+    }
+
     try {
-      final send = await showDialog<bool>(
-        context: context,
-        barrierColor:
-            [
-              TargetPlatform.android,
-              TargetPlatform.iOS,
-            ].contains(Theme.of(context).platform)
-            ? Colors.black.withValues(alpha: .96)
-            : null,
-        builder: (_) => LiveVoiceTextDialog(
-          result: result,
-          prefix: prefix,
-          initial: initial,
-          onSendOriginal: draft == null
-              ? null
-              : () async {
-                  final sent = await draft.sendOriginal();
-                  if (sent && mounted) {
-                    _voiceTextDraft = prefix.isNotEmpty;
-                    _textController.value = TextEditingValue(
-                      text: prefix,
-                      selection: TextSelection.collapsed(offset: prefix.length),
-                    );
-                  }
-                  return sent;
-                },
-          onChanged: (text) {
-            if (_current) {
-              if (text.isNotEmpty) _voiceTextDraft = true;
-              _textController.value = TextEditingValue(
-                text: text,
-                selection: TextSelection.collapsed(offset: text.length),
-              );
-            }
-          },
-        ),
+      Widget buildEditor(BuildContext context) => LiveVoiceTextDialog(
+        result: result,
+        prefix: prefix,
+        initial: initial,
+        onSendOriginal: draft == null
+            ? null
+            : () async {
+                final sent = await draft.sendOriginal();
+                if (sent && mounted) {
+                  _voiceTextDraft = prefix.isNotEmpty;
+                  _textController.value = TextEditingValue(
+                    text: prefix,
+                    selection: TextSelection.collapsed(offset: prefix.length),
+                  );
+                }
+                return sent;
+              },
+        onChanged: (text) {
+          if (_current) {
+            if (text.isNotEmpty) _voiceTextDraft = true;
+            _textController.value = TextEditingValue(
+              text: text,
+              selection: TextSelection.collapsed(offset: text.length),
+            );
+          }
+        },
       );
-      return send == true;
+      if (!mobile) {
+        return await showDialog<bool>(context: context, builder: buildEditor) ==
+            true;
+      }
+      final navigator = Navigator.of(context, rootNavigator: true);
+      route = MobileVoiceEditorRoute(
+        context: context,
+        builder: buildEditor,
+        themes: InheritedTheme.capture(from: context, to: navigator.context),
+        reduceMotion: MediaQuery.disableAnimationsOf(context),
+      );
+      final selection = navigator.push(route);
+      transition = route.animation;
+      transition?.addStatusListener(releaseBackdrop);
+      if (transition?.isCompleted ?? false) _releaseCaptureBackdrop();
+      return await selection == true;
     } finally {
+      transition?.removeStatusListener(releaseBackdrop);
+      _releaseCaptureBackdrop();
+      if (mounted && ModalRoute.of(context)?.isCurrent != false) {
+        FocusScope.of(context).unfocus();
+      }
+      if (route != null) await route.completed;
       if (mounted) {
-        if (ModalRoute.of(context)?.isCurrent != false) {
-          FocusScope.of(context).unfocus();
-        }
         setState(() {
           _voiceEditorOpen = false;
           _voiceEditorClosing = true;
@@ -1089,8 +1125,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         platform == TargetPlatform.iOS || platform == TargetPlatform.android;
     final isWindows = platform == TargetPlatform.windows;
     final voiceMode = isMobile && _voiceMode;
-    final displayedTime =
-        _memoOnly ? null : (_quickTime ?? _cachedParsedTime(_textController.text));
+    final displayedTime = _memoOnly
+        ? null
+        : (_quickTime ?? _cachedParsedTime(_textController.text));
     final idleVoiceTarget =
         (voiceMode || (_textController.text.isEmpty && !_focusNode.hasFocus)) &&
         !_isTranscribing;
@@ -1687,7 +1724,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                       child: Container(
                         margin: const EdgeInsets.only(left: 4),
                         decoration: BoxDecoration(
-                          color: colors.primaryContainer.withValues(alpha: 0.55),
+                          color: colors.primaryContainer.withValues(
+                            alpha: 0.55,
+                          ),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
@@ -2075,8 +2114,9 @@ class _RecordingPulseState extends State<_RecordingPulse>
         boxShadow: widget.active && _controller.isAnimating
             ? [
                 BoxShadow(
-                  color: Theme.of(context).colorScheme.error
-                      .withValues(alpha: 0.4 * _controller.value),
+                  color: Theme.of(context).colorScheme.error.withValues(
+                    alpha: 0.4 * _controller.value,
+                  ),
                   blurRadius: 8 * _controller.value,
                   spreadRadius: 2 * _controller.value,
                 ),

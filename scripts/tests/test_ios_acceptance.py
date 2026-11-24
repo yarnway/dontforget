@@ -98,6 +98,14 @@ class TestIOSAcceptance(unittest.TestCase):
         self.assertIn('dontforget-live', rev_schemes)
         self.assertNotIn('dontforget-live-test-run-1', rev_schemes)
 
+    def test_share_group_and_extension_are_isolated_in_all_build_configurations(self):
+        project = Path(__file__).resolve().parents[2] / 'ios/Runner.xcodeproj/project.pbxproj'
+        source = project.read_text(encoding='utf-8')
+        rewritten = ios_acc.rewrite_pbxproj(source, 'phone-smoke')
+        self.assertEqual(rewritten.count('DONTFORGET_SHARE_GROUP = group.com.yarnway.dontforget.acceptance.phone-smoke;'), 3)
+        self.assertEqual(rewritten.count('PRODUCT_BUNDLE_IDENTIFIER = com.yarnway.dontforget.acceptance.phone-smoke.ShareExtension;'), 3)
+        self.assertEqual(ios_acc.revert_pbxproj(rewritten), source)
+
     def test_prepare_and_revert_workflow_in_directory(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
