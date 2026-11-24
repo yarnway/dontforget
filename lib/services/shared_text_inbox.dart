@@ -33,19 +33,19 @@ class SharedText {
   static final _id = RegExp(
     r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
   );
-  static final _nonUrlCharacters = RegExp(r'[\s\x00-\x1f\x7f\\<>"`]');
+  static final _webLink = RegExp(
+    r'(?:^|[\s<])(https?://[^\s\x00-\x1f\x7f<>"`]+)',
+    caseSensitive: false,
+  );
 
-  /// Accept a URL on its own line, including shares with a separate title.
+  /// Find a single clear web target without changing the shared text.
   static Uri? webLinkFromText(String text) {
     Uri? link;
-    for (final line in text.split('\n')) {
-      final candidate = line.trim();
-      if (_nonUrlCharacters.hasMatch(candidate)) continue;
+    for (final match in _webLink.allMatches(text)) {
+      final candidate = match.group(1)!;
+      if (candidate.contains('\\')) continue;
       final uri = Uri.tryParse(candidate);
-      if (uri == null ||
-          !(uri.isScheme('https') || uri.isScheme('http')) ||
-          uri.host.isEmpty ||
-          uri.userInfo.isNotEmpty) {
+      if (uri == null || uri.host.isEmpty || uri.userInfo.isNotEmpty) {
         continue;
       }
       if (link != null && link != uri) return null;

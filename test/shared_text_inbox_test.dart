@@ -29,13 +29,14 @@ void main() {
       final url = Uri.parse('https://example.com/a?b=1#c');
       expect(SharedText.webLinkFromText('  $url  '), url);
       expect(SharedText.webLinkFromText('网页标题\r\n$url'), url);
+      expect(SharedText.webLinkFromText('网页标题 <$url>'), url);
       for (final invalid in [
         '普通文本',
         'file:///tmp/private',
         'javascript:alert(1)',
         'https:/example.com',
         'https://user@example.com',
-        'https://example.com raw text',
+        'https://example.com\\@unsafe.test',
         '$url\nhttps://example.org',
       ]) {
         expect(SharedText.webLinkFromText(invalid), isNull, reason: invalid);

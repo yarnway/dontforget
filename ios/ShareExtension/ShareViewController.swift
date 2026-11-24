@@ -121,21 +121,28 @@ final class ShareViewController: UIViewController {
 
   private func enqueueFile(_ provider: NSItemProvider, type: UTType, caption: String, store: ShareHandoff) async throws {
     let suggestion = provider.suggestedName
+    let sourceName = await originalFileName(provider)
     try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
       _ = provider.loadFileRepresentation(forTypeIdentifier: type.identifier) { value, error in
         do {
           if let error { throw error }
           guard let value else { throw ShareHandoffError.invalid }
-          let types = ["pdf", "png", "jpg", "jpeg", "gif", "webp", "bmp", "heic", "heif"]
-          let ext = type.preferredFilenameExtension ?? value.pathExtension.lowercased()
-          guard types.contains(ext.lowercased()) else { throw ShareHandoffError.invalid }
-          let base = suggestion.flatMap { ShareHandoff.validName($0) ? $0 : nil } ?? "Share"
-          let stem = types.contains((base as NSString).pathExtension.lowercased())
-            ? (base as NSString).deletingPathExtension : base
-          let name = stem + "." + ext.lowercased()
-          try store.enqueue(text: caption, file: value, name: ShareHandoff.validName(name) ? name : "Share." + ext)
+          let name = try ShareHandoff.attachmentName(suggested: suggestion, source: sourceName,
+                                                      representation: value,
+                                                      preferredExtension: type.preferredFilenameExtension)
+          try store.enqueue(text: caption, file: value, name: name)
           continuation.resume()
         } catch { continuation.resume(throwing: error) }
+      }
+    }
+  }
+
+  private func originalFileName(_ provider: NSItemProvider) async -> String? {
+    guard provider.hasItemConformingToTypeIdentifier(UTType.fileURL.identifier) else { return nil }
+    return await withCheckedContinuation { continuation in
+      _ = provider.loadItem(forTypeIdentifier: UTType.fileURL.identifier, options: nil) { value, _ in
+        let url = value as? URL
+        continuation.resume(returning: url?.isFileURL == true ? url?.lastPathComponent : nil)
       }
     }
   }

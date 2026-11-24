@@ -34,6 +34,13 @@
       "preference_file_hashes_equal": true
     },
     "safari_system_share_persisted_after_cold_reopen": "user verified",
-    "safari_draft_browser_open": "link displayed as text in build 100"
+    "safari_draft_browser_open": "link displayed as text in build 100",
+    "system_share_attachments": {
+      "new_image_drafts_usb_verified": 1,
+      "new_pdf_drafts_usb_verified": 1,
+      "image_thumbnail_user_verified": true,
+      "source_names_retained": false,
+      "pdf_content_preview_verified": false
+    }
   }
 }

@@ -64,7 +64,11 @@ void main() {
   });
   tearDown(() => h.dispose());
 
-  Future<void> show(WidgetTester tester, {bool openEditor = true}) async {
+  Future<void> show(
+    WidgetTester tester, {
+    bool openEditor = true,
+    TargetPlatform? platform,
+  }) async {
     addTearDown(() async {
       await tester.pumpWidget(const SizedBox.shrink());
       await drainWorkspaceDrafts(tester, h.container);
@@ -77,6 +81,7 @@ void main() {
             homeControllerProvider.overrideWith((ref) => home = _Home(ref)),
           ],
           child: MaterialApp(
+            theme: ThemeData(platform: platform),
             locale: const Locale('zh'),
             supportedLocales: const [Locale('zh'), Locale('en'), Locale('ja')],
             localizationsDelegates: const [
@@ -150,6 +155,55 @@ void main() {
     await tester.enterText(editor, '普通草稿');
     await tester.pump();
     expect(find.text('在浏览器中打开'), findsNothing);
+  });
+
+  testWidgets('shared PDF shows file details and invokes iOS preview', (
+    tester,
+  ) async {
+    const pdfId = '00000000-0000-4000-8000-000000000002';
+    const name = '项目计划.PDF';
+    await tester.runAsync(() async {
+      final dir = Directory('${h.directory.path}/shared_handoff/$pdfId');
+      await dir.create(recursive: true);
+      final file = File('${dir.path}/$name');
+      await file.writeAsString('%PDF-1.4');
+      await inbox.accept(
+        SharedText(
+          id: pdfId,
+          text: '',
+          createdAt: 1762300801000,
+          attachmentPath: file.path,
+          attachmentName: name,
+        ),
+      );
+    });
+    const channel = MethodChannel('com.yarnway.dontforget/share');
+    final messenger = tester.binding.defaultBinaryMessenger;
+    final calls = <MethodCall>[];
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      calls.add(call);
+      return true;
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    await show(tester, openEditor: false, platform: TargetPlatform.iOS);
+    await tester.tap(find.text(name));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('shared-attachment-card')));
+    final size = find.byKey(const ValueKey('attachment-preview-size'));
+    await pumpUntilRealIo(
+      tester,
+      () => size.evaluate().isNotEmpty,
+      reason: 'The attachment details must display the size',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(name), findsOneWidget);
+    expect(tester.widget<Text>(size).data, '8 B');
+    await tester.tap(find.text('预览附件'));
+    await tester.pumpAndSettle();
+    expect(calls.single.method, 'previewPDF');
+    expect(calls.single.arguments, {'id': pdfId, 'name': name});
+    expect(await tester.runAsync(h.rows), isEmpty);
   });
 
   testWidgets(
@@ -292,6 +346,11 @@ void main() {
             .data,
         'diagram.png',
       );
+      await tester.tap(find.byKey(const ValueKey('shared-attachment-image')));
+      await tester.pumpAndSettle();
+      expect(find.byType(InteractiveViewer), findsOneWidget);
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
       final save = find.byKey(const ValueKey('shared-save-memo'));
       // Even with empty text, an attachment share can be saved once confirmed.
       expect(tester.widget<FilledButton>(save).onPressed, isNotNull);

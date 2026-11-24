@@ -13,6 +13,9 @@ enum ShareHandoffError: Error {
 struct ShareHandoff {
   static let groupKey = "DontForgetShareGroup"
   static let maxAttachmentBytes = 32 * 1024 * 1024
+  private static let attachmentExtensions: Set<String> = [
+    "pdf", "png", "jpg", "jpeg", "gif", "webp", "bmp", "heic", "heif",
+  ]
   private static let maxItems = 16
   private let root: URL
   private let files = FileManager.default
@@ -205,7 +208,35 @@ struct ShareHandoff {
       value.utf16.allSatisfy { $0 >= 32 && $0 != 127 && $0 != 47 && $0 != 92 }
   }
 
-  private static func validID(_ id: String) -> Bool {
+  static func attachmentName(suggested: String?, source: String?, representation: URL,
+                             preferredExtension: String?, date: Date = Date()) throws -> String {
+    let ext = (preferredExtension ?? representation.pathExtension).lowercased()
+    guard attachmentExtensions.contains(ext) else { throw ShareHandoffError.invalid }
+    let allowedExtensions: Set<String> = switch ext {
+    case "jpg", "jpeg": ["jpg", "jpeg"]
+    case "heic", "heif": ["heic", "heif"]
+    default: [ext]
+    }
+    let representationName = attachmentExtensions.contains(representation.pathExtension.lowercased())
+      ? representation.lastPathComponent : nil
+    for candidate in [source, suggested, representationName].compactMap({ $0 }) {
+      guard validName(candidate), !candidate.hasPrefix(".") else { continue }
+      let suppliedExtension = (candidate as NSString).pathExtension.lowercased()
+      let stem = attachmentExtensions.contains(suppliedExtension)
+        ? (candidate as NSString).deletingPathExtension : candidate
+      let placeholder = ["share", "item", "attachment", "file", "image", "document"].contains(stem.lowercased())
+      guard !placeholder, UUID(uuidString: stem) == nil else { continue }
+      let proposed = allowedExtensions.contains(suppliedExtension) ? candidate : stem + "." + ext
+      if validName(proposed) { return proposed }
+    }
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.dateFormat = "yyyyMMdd-HHmmss"
+    let kind = ext == "pdf" ? "Document" : "Image"
+    return "\(kind)-\(formatter.string(from: date)).\(ext)"
+  }
+
+  static func validID(_ id: String) -> Bool {
     id.range(of: "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
              options: .regularExpression) != nil
   }

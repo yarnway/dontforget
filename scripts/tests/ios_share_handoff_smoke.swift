@@ -17,6 +17,16 @@ struct ShareHandoffSmoke {
     let contents = Data("%PDF-1.4 synthetic payload".utf8)
     try contents.write(to: original)
 
+    try require(try ShareHandoff.attachmentName(suggested: "Share", source: "报告 (签字).PDF",
+                                                representation: original, preferredExtension: "pdf") == "报告 (签字).PDF")
+    try require(try ShareHandoff.attachmentName(suggested: nil, source: nil,
+                                                representation: temporary.appendingPathComponent("IMG_1234.HEIC"),
+                                                preferredExtension: "heic") == "IMG_1234.HEIC")
+    try require(try ShareHandoff.attachmentName(suggested: "../unsafe.pdf", source: nil,
+                                                representation: temporary.appendingPathComponent("Share.pdf"),
+                                                preferredExtension: "pdf", date: Date(timeIntervalSince1970: 0))
+      .range(of: #"^Document-\d{8}-\d{6}\.pdf$"#, options: .regularExpression) != nil)
+
     try store.enqueue(text: "分享草稿")
     try store.initialize(epoch: "one")
     try store.enqueue(text: "", file: original, name: "原件.pdf")
