@@ -1,9 +1,15 @@
 # 手动续行检查点
 
+## 2026-11-24 · Windows／Pixel 实机验收与语音编辑布局
+
+- GitHub build 97 在 Android 下载限流后重跑成功。Windows 运行中覆盖、托盘「显示窗口」和 Toast 正文跳转通过。Pixel 同签名覆盖、任务和附件、设置、云服务配置与真实转写通过。[Windows 回执](benchmarks/windows-upgrade-97-ci-2026-11-24.json) · [Pixel 回执](benchmarks/pixel-upgrade-97-ci-2026-11-24.json)
+- build 98 移除语音编辑标题，保留识别未完成短提示和读屏名称。96 项定向回归通过，Windows 本地运行中覆盖通过，Pixel 隔离 QA 实机验证完成和未完成状态。后续仍需核对 build 98 的 GitHub 制品，并对 Windows 与 Pixel 执行正式候选覆盖。iPhone 实机验收待设备接入。[build 98 回执](benchmarks/voice-editor-98-2026-11-24.json) · [当前执行顺序](Next_Steps_2026-11-02.md#当前执行顺序2026-11-23)
+
 ## 2026-11-23 · Windows build 97 候选覆盖与数据保全
 
 - `1.8.24+97` 候选从仍在托盘运行的 build 96 本机覆盖。升级前最新备份已核对，安装器正常关闭旧进程并以 `0` 退出。27 个安装文件、全部业务字段及 DPAPI 凭据通过安装后和普通重开核对。[升级回执](benchmarks/windows-upgrade-97-local-2026-11-23.json)
 - 固定 Flutter 3.44.9，静态分析通过，Flutter 2730 项通过／20 项跳过，Python 186 项通过／6 项跳过。后续验证 GitHub 的 build 97 同源制品，保全升级 Windows 与 Pixel，补 Windows 托盘「显示窗口」和 iPhone 真机验收。[当前执行顺序](Next_Steps_2026-11-02.md#当前执行顺序2026-11-23)
+- 候选提交 `e75a219` 已推送。[主线 CI](https://github.com/yarnway/dontforget/actions/runs/45204082717) 正在运行。Pixel build 94 已导出 DFBK2，摘要、任务与附件及密钥排除均已检查，权限受限的本机恢复副本已存档。取得同签名制品后再确认最新数据并覆盖。
 
 ## 2026-11-23 · Pixel 云服务配置与真实转写
 

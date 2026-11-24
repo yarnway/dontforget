@@ -1,0 +1,41 @@
+{
+  "date": "2026-11-24",
+  "package": {
+    "origin": "github-actions-candidate",
+    "workflow_run": 45204082717,
+    "artifact_id": 14835606091,
+    "revision": "e75a21977f567898590a61f4b239d6c37acedc4d",
+    "version": "1.8.24+97",
+    "archive_sha256": "80c617dd6bffcf46c969709044355f68a3457952c435539961d0465d7ff1bb63",
+    "setup_sha256": "3282b837190fd74ef0ab337255e1571d2860b35b4da1fafd5f2c9f6d9e95e3d3",
+    "portable_sha256": "039c0201298cde1061e4bdab794231668219ac58b8c94e254027449fab83cd2e"
+  },
+  "windows": {
+    "version_before": "1.8.24+97",
+    "package_origin_before": "local-candidate",
+    "prior_payload_files_verified": 27,
+    "fresh_restricted_backup_verified": true,
+    "window_visible_and_old_process_running_at_install": true,
+    "installer_exit_code": 0,
+    "graceful_mutex_release_logged": true,
+    "force_close_used": false,
+    "version_after": "1.8.24+97",
+    "installed_files_identical_to_ci_portable": 27,
+    "sqlite_schema": 17,
+    "sqlite_integrity_check": "ok",
+    "record_counts": {"reminders": 9, "media": 0, "settings": 1, "dpapi_credentials": 1},
+    "database_and_dpapi_readback_equal_after_install": true,
+    "ordinary_reopen_created_visible_new_process": true,
+    "database_and_dpapi_readback_equal_after_reopen": true,
+    "tray_show_window": {
+      "clicked_from_actual_system_tray": true,
+      "same_process_and_window_restored": true
+    },
+    "toast_body": {
+      "synthetic_reminder_and_view_only_action": true,
+      "title_body_and_protocol_verified_in_windows_history": true,
+      "user_clicked_notification_body": true,
+      "existing_window_showed_matching_reminder_detail_and_body": true
+    }
+  }
+}

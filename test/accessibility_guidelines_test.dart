@@ -160,7 +160,10 @@ void main() {
         await tester.tap(find.byKey(const ValueKey('composer-mode-toggle')));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 50));
-        expect(find.byKey(const ValueKey('composer-voice-pad')), findsOneWidget);
+        expect(
+          find.byKey(const ValueKey('composer-voice-pad')),
+          findsOneWidget,
+        );
 
         // Single tap on voice pad under accessibleNavigation starts recording.
         await tester.tap(find.byKey(const ValueKey('composer-voice-pad')));
@@ -244,7 +247,10 @@ void main() {
         );
         await pumpUntilRealIo(
           tester,
-          () => find.byKey(const ValueKey('backup-password-toggle')).evaluate().isNotEmpty,
+          () => find
+              .byKey(const ValueKey('backup-password-toggle'))
+              .evaluate()
+              .isNotEmpty,
           reason: 'PortableBackupPanel should render password toggle',
         );
 
@@ -303,7 +309,11 @@ void main() {
         await pumpUntilRealIo(
           tester,
           () => find
-              .byKey(const ValueKey('shared-item-00000000-0000-4000-8000-000000000088'))
+              .byKey(
+                const ValueKey(
+                  'shared-item-00000000-0000-4000-8000-000000000088',
+                ),
+              )
               .evaluate()
               .isNotEmpty,
           reason: 'SharedTextInboxScreen should render seeded draft item',
@@ -316,7 +326,10 @@ void main() {
         );
         await pumpUntilRealIo(
           tester,
-          () => find.byKey(const ValueKey('shared-text-editor')).evaluate().isNotEmpty,
+          () => find
+              .byKey(const ValueKey('shared-text-editor'))
+              .evaluate()
+              .isNotEmpty,
           reason: 'Shared text editor should open',
         );
 
@@ -352,7 +365,10 @@ void main() {
         );
         await pumpUntilRealIo(
           tester,
-          () => find.byKey(const ValueKey('lan-sync-server')).evaluate().isNotEmpty,
+          () => find
+              .byKey(const ValueKey('lan-sync-server'))
+              .evaluate()
+              .isNotEmpty,
           reason: 'SettingsScreen sync area should finish loading',
         );
 
@@ -470,7 +486,10 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
-        expect(find.text('识别未完成，请核对文字。'), findsOneWidget);
+        expect(find.text('识别未完成，可继续编辑。'), findsOneWidget);
+        expect(find.text('核对文字'), findsNothing);
+        expect(find.text('编辑文字'), findsNothing);
+        expect(find.bySemanticsLabel(RegExp('编辑文字')), findsAtLeastNWidgets(1));
 
         final keepSize = tester.getSize(
           find.byKey(const ValueKey('voice-editor-keep')),
@@ -552,8 +571,12 @@ void main() {
         final cancelButton = tester.widget<OutlinedButton>(
           find.byKey(const ValueKey('voice-accessible-cancel')),
         );
-        final bg = cancelButton.style?.backgroundColor?.resolve(<WidgetState>{});
-        final fg = cancelButton.style?.foregroundColor?.resolve(<WidgetState>{});
+        final bg = cancelButton.style?.backgroundColor?.resolve(
+          <WidgetState>{},
+        );
+        final fg = cancelButton.style?.foregroundColor?.resolve(
+          <WidgetState>{},
+        );
         expect(bg, const Color(0xFF2B2B2B));
         expect(fg, Colors.white);
         await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));

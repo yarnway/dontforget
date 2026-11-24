@@ -1,0 +1,40 @@
+{
+  "date": "2026-11-24",
+  "source": {
+    "baseline_revision": "e75a21977f567898590a61f4b239d6c37acedc4d",
+    "product_and_test_patch_sha256": "83250a8d6583016b5c4ed3e89f01fffffc47567a9d3e3f31b8e100bf453fcf1d",
+    "flutter_sdk": "3.44.9",
+    "analyzer_issues": 0,
+    "directed_tests_passed": 96,
+    "visual_title_removed_editor_keeps_accessible_name": true
+  },
+  "windows_local_candidate": {
+    "version_before": "1.8.24+97",
+    "package_origin_before": "github-actions-candidate",
+    "version_after": "1.8.24+98",
+    "setup_sha256": "9f42c0eb9f0c71458d23664c0b6eb1015d1fa438426585b7d8814a213ac752ae",
+    "portable_sha256": "35fc064cc0642921ec373e12a956c7fab790443002ef052c5dd4cca76cb5eafc",
+    "fresh_restricted_backup_verified": true,
+    "old_window_visible_and_process_running_at_install": true,
+    "installer_exit_code": 0,
+    "graceful_mutex_release_logged": true,
+    "force_close_used": false,
+    "installed_payload_files_verified": 27,
+    "sqlite_schema_and_integrity_verified": true,
+    "database_and_dpapi_credentials_equal_after_install_and_reopen": true,
+    "ordinary_reopen_visible": true
+  },
+  "pixel_local_fixture": {
+    "device": "Pixel 8 Pro",
+    "version": "1.8.24+98",
+    "mode": "isolated-debug-fixture-with-actual-product-editor",
+    "simulated_transcription_success_and_incomplete_checked": true,
+    "review_title_absent": true,
+    "concise_status_visible_only_for_incomplete_transcription": true,
+    "edit_and_action_controls_available": true,
+    "native_edit_and_send_verified_in_fixture": true,
+    "isolated_test_application_removed": true,
+    "matching_cloud_signed_candidate_installed": false,
+    "production_build": 97
+  }
+}

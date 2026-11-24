@@ -245,6 +245,10 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
           widget.onChanged(text);
         },
       );
+      final accessibleEditor = Semantics(
+        label: l10n.get('voiceEditTitle'),
+        child: editor,
+      );
       return Focus(
         key: _editorHost,
         onKeyEvent: _key,
@@ -256,10 +260,10 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                     selectionHandleColor: VoiceCaptureColors.ink,
                     selectionColor: Color(0x55305638),
                   ),
-                  child: editor,
+                  child: accessibleEditor,
                 ),
               )
-            : editor,
+            : accessibleEditor,
       );
     }
 
@@ -389,46 +393,36 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                       if (!compact)
                         Padding(
                           padding: EdgeInsets.fromLTRB(
-                            mobile ? 0 : 16,
-                            14,
-                            mobile ? 0 : 16,
-                            10,
+                            mobile ? 0 : 12,
+                            4,
+                            mobile ? 0 : 12,
+                            4,
                           ),
                           child: Row(
                             children: [
-                              if (mobile)
-                                keep()
-                              else
-                                Icon(
-                                  failed
-                                      ? Icons.warning_amber_rounded
-                                      : Icons.edit_note_rounded,
-                                  color: mobile
-                                      ? Colors.white70
-                                      : failed
-                                      ? colors.error
-                                      : colors.primary,
-                                ),
-                              const SizedBox(width: 10),
+                              if (mobile) keep(),
                               Expanded(
-                                child: Semantics(
-                                  header: true,
-                                  child: Text(
-                                    l10n.get(
-                                      failed
-                                          ? 'voiceReviewTitle'
-                                          : 'voiceEditTitle',
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(
-                                          color: mobile ? Colors.white70 : null,
+                                child: failed && height >= 280
+                                    ? Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
                                         ),
-                                  ),
-                                ),
+                                        child: Semantics(
+                                          container: true,
+                                          liveRegion: true,
+                                          child: Text(
+                                            l10n.get('voicePartialReview'),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              color: mobile
+                                                  ? const Color(0xFFF2B8B5)
+                                                  : colors.error,
+                                            ),
+                                          ),
+                                        ),
+                                      )
+                                    : const SizedBox.shrink(),
                               ),
                               if (!_complete || _sendingOriginal) ...[
                                 const SizedBox(width: 12),
@@ -460,24 +454,6 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                               const SizedBox(width: 4),
                               if (!mobile) keep(),
                             ],
-                          ),
-                        ),
-                      if (!compact && failed && height >= 280)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                          child: Semantics(
-                            container: true,
-                            liveRegion: true,
-                            child: Text(
-                              l10n.get('voicePartialReview'),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: mobile
-                                    ? const Color(0xFFF2B8B5)
-                                    : colors.error,
-                              ),
-                            ),
                           ),
                         ),
                       // This keyed slot and its editor never change parents when the
