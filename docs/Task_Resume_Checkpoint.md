@@ -1,5 +1,10 @@
 # 手动续行检查点
 
+## 2026-11-24 · 移动端语音编辑框清空退出
+
+- Android／iOS 移除外层背景卡片，编辑框只保留文字和两个发送按钮。用户主动删空时关闭并丢弃文字，识别起初为空时保留发送原语音入口。99 项定向通过，Pixel 隔离包用原生键盘验证完成和未完成两种状态。[验收回执](benchmarks/mobile-voice-editor-clear-2026-11-24.json)
+- GitHub build 98 的 Windows 运行中覆盖和 Pixel 同签名覆盖均通过。Windows 又完成本地 build 99 运行中覆盖。后续核对 GitHub build 99 制品并复验实装，iPhone 待接入。[build 98 回执](benchmarks/build98-ci-device-acceptance-2026-11-24.json)
+
 ## 2026-11-24 · Windows／Pixel 实机验收与语音编辑布局
 
 - GitHub build 97 在 Android 下载限流后重跑成功。Windows 运行中覆盖、托盘「显示窗口」和 Toast 正文跳转通过。Pixel 同签名覆盖、任务和附件、设置、云服务配置与真实转写通过。[Windows 回执](benchmarks/windows-upgrade-97-ci-2026-11-24.json) · [Pixel 回执](benchmarks/pixel-upgrade-97-ci-2026-11-24.json)

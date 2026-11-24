@@ -99,16 +99,15 @@ jobs:
           java-version: '17'
       - name: Linux native dependencies
         if: matrix.platform == 'linux'
-        timeout-minutes: 12
+        timeout-minutes: 20
         run: |
-          # The hosted Azure mirror can stream slowly without hitting APT's idle timeout.
-          # Hosted runners may reach Azure through mirror+file sources as well.
+          # Hosted cloud mirrors can stream slowly without hitting APT's idle timeout.
+          # A mirror+file source can list these endpoints too.
           # Keep suites, signing keys, and unrelated mirrors unchanged.
           for sources in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources /etc/apt/apt-mirrors.txt /etc/apt/apt-mirrors-security.txt; do
             if [ -f "$sources" ]; then
-              sudo sed -i \
-                -e 's|http://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' \
-                -e 's|https://azure.archive.ubuntu.com/ubuntu|https://archive.ubuntu.com/ubuntu|g' \
+              sudo sed -i -E \
+                -e 's#https?://(azure|[a-z0-9-]+[.]ec2)[.]archive[.]ubuntu[.]com/ubuntu#https://archive.ubuntu.com/ubuntu#g' \
                 "$sources"
             fi
           done

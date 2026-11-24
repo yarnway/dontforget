@@ -1240,8 +1240,9 @@ void main() {
       expect(find.byKey(const ValueKey('voice-text-editor')), findsOneWidget);
       expect(
         find.byKey(const ValueKey('voice-editor-progress')),
-        findsOneWidget,
+        findsNothing,
       );
+      expect(find.byKey(const ValueKey('voice-editor-keep')), findsNothing);
       home.pendingText!.complete('明日の予定を確認');
       await tester.pumpAndSettle();
       expect(home.drafts, 1);
@@ -1260,8 +1261,9 @@ void main() {
         isTrue,
       );
       await tester.enterText(editor, '明日9時に予定を確認');
-      await tester.tap(find.byKey(const ValueKey('voice-editor-keep')));
+      await tester.enterText(editor, '');
       await tester.pumpAndSettle();
+      expect(editor, findsNothing);
       expect(container.read(remindersProvider), isEmpty);
       expect(tester.takeException(), isNull);
     },

@@ -57,6 +57,8 @@ Type: files; Name: "{app}\vccorlib140.dll"
 Type: files; Name: "{app}\vcruntime140_threads.dll"
 Type: filesandordirs; Name: "{app}\data\flutter_assets\packages\cupertino_icons"
 Type: filesandordirs; Name: "{app}\data\flutter_assets\packages\record_web"
+; Remove a test-only manifest emitted beside an incremental local build.
+Type: files; Name: "{app}\native_assets.json"
 
 [Registry]
 ; Register dontforget:// protocol for Toast notification activation and custom URL scheme

@@ -1,0 +1,62 @@
+{
+  "date": "2026-11-24",
+  "base_revision": "95df9249ef4d88ac5f14ba64d0d7d85cd8f03b9c",
+  "source": {
+    "platforms": ["android", "ios"],
+    "visual_controls": ["transcript_editor", "send_original", "send_text"],
+    "outer_background_card_removed": true,
+    "user_clear_dismisses_editor_and_discards_text": true,
+    "initial_empty_recognition_preserves_original_audio_action": true,
+    "late_recognition_cannot_restore_discarded_text": true,
+    "screen_reader_name_and_incomplete_status_hint_retained": true
+  },
+  "automation": {
+    "flutter_sdk": "3.44.9",
+    "analyzer_issues": 0,
+    "directed_tests_passed": 99,
+    "android_and_ios_clear_regressions": true,
+    "full_tests_before_outer_card_removal_with_windows_ci_parameters": {
+      "passed": 2733,
+      "skipped": 20
+    },
+    "initial_local_timeout_cases_passed_in_isolation": 2
+  },
+  "windows_local_cross_version_upgrade": {
+    "version_before": "1.8.24+98",
+    "previous_package_origin": "github-actions-candidate",
+    "version_after": "1.8.24+99",
+    "tested_source_patch_sha256": "37e1be11d03c2f03ae9077391f5743594c31ddf76f850e68ef4dce1a26fd106f",
+    "installer_sha256": "ad706acfe17a195625d4cde821d622fd44574a818044b0afe6328306344ff411",
+    "portable_sha256": "f866468f5d9b1ef20fdeb535e883c3c61070d317ffec63b409b7d6a197803c14",
+    "fresh_backup_verified": true,
+    "visible_running_process_closed_gracefully_at_upgrade": true,
+    "installer_exit_code": 0,
+    "installed_payload_files_verified": 27,
+    "business_fields_and_dpapi_credentials_equal_after_install_and_reopen": true
+  },
+  "windows_final_local_candidate": {
+    "version": "1.8.24+99",
+    "tested_product_patch_sha256": "cb8a4353214b1caefcbfb741530744a15ae7e49495ce7a954c59cc95b2bf1fbe",
+    "installer_sha256": "ae51f99e0876d4b49091f14656898bdcac45c14a539595561a3033c137d0ad55",
+    "portable_sha256": "7e5e8efb1a11607030f7bfdd58ce5e1868edc82e08e922a3a394592622503bf9",
+    "fresh_backup_and_visible_running_upgrade_verified": true,
+    "installer_exit_code": 0,
+    "installed_payload_files_verified": 27,
+    "test_manifest_excluded_from_final_package_and_removed_by_installer": true,
+    "business_data_and_dpapi_equal_after_install_and_reopen": true,
+    "python_packaging_and_other_scripts_tests_passed": 186,
+    "python_tests_skipped": 6
+  },
+  "devices": {
+    "pixel_8_pro": {
+      "fixture_build": 99,
+      "mode": "isolated-debug-fixture-with-actual-product-editor",
+      "three_visible_parts_verified": true,
+      "no_outer_fill_border_or_shadow_in_rendered_layout": true,
+      "native_clear_dismissed_in_complete_and_incomplete_scenarios": true,
+      "fixture_removed_without_changing_production_package": true
+    },
+    "iphone_usb_devices_detected": 0,
+    "iphone_runtime_acceptance_performed": false
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "date": "2026-11-24",
+  "revision": "95df9249ef4d88ac5f14ba64d0d7d85cd8f03b9c",
+  "workflow_run": 45309973028,
+  "version": "1.8.24+98",
+  "windows": {
+    "github_archive_id": 14884495591,
+    "setup_sha256": "7cb20ff89b8d29fb7f16d973ae29f8f162e1e426fc64f9fbb26f5da32cdd31d2",
+    "portable_sha256": "f5aab8c48ef07a5c88187392f71125ba65ef60091b16a0b5cc7b39adfd1b6374",
+    "starting_product_version": "1.8.24+98",
+    "starting_package_origin": "local-candidate",
+    "fresh_backup_and_prior_payload_verified": true,
+    "old_window_visible_and_process_running_at_install": true,
+    "installer_exit_code": 0,
+    "old_process_gracefully_closed_without_force": true,
+    "installed_files_matching_github_portable": 27,
+    "business_data_and_dpapi_equal_after_install_and_ordinary_reopen": true
+  },
+  "pixel": {
+    "github_archive_id": 14885055101,
+    "starting_product_version": "1.8.24+97",
+    "arm64_apk_sha256": "1c6a70535ae9b6e3014946ad4e5bb6db70dd0e8a68478bde862640bfbdf7bc1e",
+    "both_apks_and_aab_verified_with_fixed_signer": true,
+    "fresh_backup_and_same_signer_overlay_succeeded": true,
+    "installed_apk_matches_github_candidate": true,
+    "reminder_and_attachment_records_equal": true,
+    "attachment_digests_equal": true,
+    "settings_equal_excluding_backup_export_history": true,
+    "masked_cloud_settings_read_back_after_cold_reopen": true,
+    "scoped_runtime_errors": 0
+  },
+  "ios": {
+    "github_archive_id": 14883806379,
+    "unsigned_app_and_widget_versions_verified": true,
+    "iphone_device_acceptance_performed": false
+  },
+  "linux": {
+    "first_job_id": 138171247663,
+    "rerun_job_id": 138177018032,
+    "native_dependency_step_timed_out_after_minutes_on_both_attempts": 12,
+    "observed_slow_mirror": "us-east-2.ec2.archive.ubuntu.com",
+    "next_candidate_ci_uses_official_archive_mirror_for_hosted_cloud_sources": true,
+    "next_candidate_dependency_timeout_minutes": 20
+  }
+}

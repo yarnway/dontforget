@@ -466,7 +466,7 @@ void main() {
   );
 
   testWidgets(
-    'LiveVoiceTextDialog keeps error notice visible at 2.0x text scale and preserves 48dp controls',
+    'mobile voice editor exposes the error hint to screen readers and preserves 48dp actions',
     (tester) async {
       final semantics = tester.ensureSemantics();
       try {
@@ -486,16 +486,22 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
-        expect(find.text('识别未完成，可继续编辑。'), findsOneWidget);
+        expect(find.text('识别未完成，可继续编辑。'), findsNothing);
         expect(find.text('核对文字'), findsNothing);
         expect(find.text('编辑文字'), findsNothing);
-        expect(find.bySemanticsLabel(RegExp('编辑文字')), findsAtLeastNWidgets(1));
-
-        final keepSize = tester.getSize(
-          find.byKey(const ValueKey('voice-editor-keep')),
+        expect(find.byKey(const ValueKey('voice-editor-keep')), findsNothing);
+        final dialog = tester.widget<Dialog>(
+          find.byKey(const ValueKey('voice-text-sheet')),
         );
-        expect(keepSize.width, greaterThanOrEqualTo(48));
-        expect(keepSize.height, greaterThanOrEqualTo(48));
+        expect(dialog.backgroundColor, Colors.transparent);
+        expect(dialog.shape, const RoundedRectangleBorder());
+        final editor = find.bySemanticsLabel(RegExp('编辑文字')).first;
+        expect(tester.getSemantics(editor).hint, '识别未完成，可继续编辑。');
+        for (final key in ['voice-editor-original', 'voice-editor-send']) {
+          final size = tester.getSize(find.byKey(ValueKey(key)));
+          expect(size.width, greaterThanOrEqualTo(48));
+          expect(size.height, greaterThanOrEqualTo(48));
+        }
         await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
       } finally {
         semantics.dispose();

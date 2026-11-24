@@ -167,6 +167,12 @@ def prune_and_stage_crt(release_dir: Path, redist_dir: Path) -> dict:
         redist_map[n].name for n in redist_map if n not in needed_crt
     )
     removed_unused_assets: list[str] = []
+    # Flutter tests can leave an absolute-path manifest beside the executable.
+    # The release already provides data/flutter_assets/NativeAssetsManifest.json.
+    test_manifest = release_dir / 'native_assets.json'
+    if test_manifest.is_file():
+        test_manifest.unlink()
+        removed_unused_assets.append(test_manifest.name)
     record_web_dir = release_dir / 'data' / 'flutter_assets' / 'packages' / 'record_web'
     if record_web_dir.is_dir():
         shutil.rmtree(record_web_dir)

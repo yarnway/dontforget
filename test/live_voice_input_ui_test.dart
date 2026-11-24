@@ -31,6 +31,7 @@ class _Home extends HomeController {
   int starts = 0, prepares = 0, cancels = 0, saves = 0;
   final sent = <String>[];
   Completer<String?>? finalResult;
+  String partialText = '明天买牛奶';
   bool failed = false;
   void preview(String value) {
     state = state.copyWith(voicePreview: value);
@@ -46,7 +47,7 @@ class _Home extends HomeController {
   @override
   void prepareRecordingTranscription() {
     prepares++;
-    state = state.copyWith(voicePreview: '明天买牛奶');
+    state = state.copyWith(voicePreview: partialText);
   }
 
   @override
@@ -123,6 +124,7 @@ void main() {
     WidgetTester tester, {
     Size size = const Size(375, 812),
     bool dark = false,
+    TargetPlatform platform = TargetPlatform.android,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = size;
@@ -141,8 +143,8 @@ void main() {
             GlobalCupertinoLocalizations.delegate,
           ],
           theme: dark
-              ? ThemeData.dark().copyWith(platform: TargetPlatform.android)
-              : ThemeData(platform: TargetPlatform.android),
+              ? ThemeData.dark().copyWith(platform: platform)
+              : ThemeData(platform: platform),
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(context).copyWith(disableAnimations: true),
             child: RepaintBoundary(key: interactionPreviewKey, child: child!),
@@ -177,6 +179,12 @@ void main() {
     await drainWorkspaceDrafts(tester, container);
     await tester.pumpWidget(const SizedBox());
     await tester.pump();
+  }
+
+  Future<void> dismissEditor(WidgetTester tester) async {
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('voice-text-editor')), findsNothing);
   }
 
   testWidgets('explicit voice mode starts after 200ms, not on a short tap', (
@@ -237,13 +245,8 @@ void main() {
       await tester.enterText(editor, '改为十点买牛奶');
       await tester.pumpAndSettle();
       expect(home.sent, isEmpty);
-      if (find
-          .byKey(const ValueKey('voice-editor-keep'))
-          .evaluate()
-          .isNotEmpty) {
-        await tester.tap(find.byKey(const ValueKey('voice-editor-keep')));
-        await tester.pumpAndSettle();
-      }
+      expect(find.byKey(const ValueKey('voice-editor-keep')), findsNothing);
+      await dismissEditor(tester);
       await finish(tester);
     },
   );
@@ -296,8 +299,7 @@ void main() {
       home.finalResult!.complete('最后的识别');
       await tester.pumpAndSettle();
       expect(tester.widget<TextField>(editor).controller!.text, '自己修改的文字');
-      await tester.tap(find.byKey(const ValueKey('voice-editor-keep')));
-      await tester.pumpAndSettle();
+      await dismissEditor(tester);
       expect(
         tester.widget<TextField>(find.byType(TextField)).controller!.text,
         '自己修改的文字',
@@ -306,6 +308,69 @@ void main() {
       await finish(tester);
     },
   );
+
+  for (final platform in [TargetPlatform.android, TargetPlatform.iOS]) {
+    testWidgets(
+      'clearing the $platform editor dismisses and discards the draft',
+      (tester) async {
+        await show(tester, platform: platform);
+        home.finalResult = Completer<String?>();
+        final held = await hold(tester);
+        await held.gesture.moveTo(held.origin + const Offset(70, -70));
+        await tester.pumpAndSettle();
+        await held.gesture.up();
+        await tester.pumpAndSettle();
+
+        final editor = find.byKey(const ValueKey('voice-text-editor'));
+        expect(tester.widget<TextField>(editor).controller!.text, '明天买牛奶');
+        expect(find.byKey(const ValueKey('voice-editor-keep')), findsNothing);
+        await tester.enterText(editor, '');
+        await tester.pumpAndSettle();
+        expect(editor, findsNothing);
+
+        home.preview('较晚的中间结果');
+        home.finalResult!.complete('最终识别结果');
+        await tester.pumpAndSettle();
+        expect(
+          tester.widget<TextField>(find.byType(TextField)).controller!.text,
+          isEmpty,
+        );
+        expect(home.sent, isEmpty);
+        expect(home.saves, 0);
+        await finish(tester);
+      },
+    );
+  }
+
+  testWidgets('an empty recognition still lets the user send original audio', (
+    tester,
+  ) async {
+    await show(tester);
+    home.partialText = '';
+    home.finalResult = Completer<String?>();
+    final held = await hold(tester);
+    await held.gesture.moveTo(held.origin + const Offset(70, -70));
+    await tester.pumpAndSettle();
+    await held.gesture.up();
+    home.finalResult!.complete(null);
+    await tester.pumpAndSettle();
+
+    final editor = find.byKey(const ValueKey('voice-text-editor'));
+    expect(tester.widget<TextField>(editor).controller!.text, isEmpty);
+    expect(find.byKey(const ValueKey('voice-editor-keep')), findsNothing);
+    expect(
+      tester
+          .widget<FilledButton>(find.byKey(const ValueKey('voice-editor-send')))
+          .onPressed,
+      isNull,
+    );
+    await tester.tap(find.byKey(const ValueKey('voice-editor-original')));
+    await tester.pumpAndSettle();
+    expect(editor, findsNothing);
+    expect(home.saves, 1);
+    expect(home.sent, isEmpty);
+    await finish(tester);
+  });
 
   testWidgets(
     'active IME composition is not replaced by late recognition or submitted by Enter',
@@ -341,8 +406,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.widget<TextField>(editor).controller!.text, initial);
       expect(home.sent, isEmpty);
-      await tester.tap(find.byKey(const ValueKey('voice-editor-keep')));
-      await tester.pumpAndSettle();
+      await dismissEditor(tester);
       await finish(tester);
     },
   );
@@ -373,6 +437,7 @@ void main() {
                     GlobalWidgetsLocalizations.delegate,
                     GlobalCupertinoLocalizations.delegate,
                   ],
+                  theme: ThemeData(platform: TargetPlatform.android),
                   builder: (context, child) => MediaQuery(
                     data: MediaQuery.of(context).copyWith(
                       textScaler: TextScaler.linear(scale),
@@ -414,8 +479,7 @@ void main() {
                   .bottom,
               lessThanOrEqualTo(size.height - 250),
             );
-            await tester.tap(find.byKey(const ValueKey('voice-editor-keep')));
-            await tester.pumpAndSettle();
+            await dismissEditor(tester);
           }
         }
       }
@@ -481,7 +545,6 @@ void main() {
         expect(tester.takeException(), isNull);
         for (final key in [
           'voice-text-editor',
-          'voice-editor-keep',
           'voice-editor-original',
           'voice-editor-send',
         ]) {
@@ -493,8 +556,8 @@ void main() {
         await tester.enterText(field, '调整后的文字');
         await tester.pumpAndSettle();
         expect(tester.widget<TextField>(field).controller!.text, '调整后的文字');
-        await tester.tap(find.byKey(const ValueKey('voice-editor-keep')));
-        await tester.pumpAndSettle();
+        expect(find.byKey(const ValueKey('voice-editor-keep')), findsNothing);
+        await dismissEditor(tester);
       }
       await finish(tester);
     },
@@ -549,10 +612,8 @@ void main() {
         expect(home.sent, isEmpty);
         expect(tester.takeException(), isNull);
       } finally {
-        final keep = find.byKey(const ValueKey('voice-editor-keep'));
-        if (keep.evaluate().isNotEmpty) {
-          await tester.tap(keep);
-          await tester.pumpAndSettle();
+        if (field.evaluate().isNotEmpty) {
+          await dismissEditor(tester);
         }
         await finish(tester);
       }
@@ -604,8 +665,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.getSize(field).height, short);
       expect(tester.takeException(), isNull);
-      await tester.tap(find.byKey(const ValueKey('voice-editor-keep')));
-      await tester.pumpAndSettle();
+      await dismissEditor(tester);
       await finish(tester);
     },
   );
@@ -847,8 +907,7 @@ void main() {
           .text,
       isNotEmpty,
     );
-    await tester.tap(find.byKey(const ValueKey('voice-editor-keep')));
-    await tester.pumpAndSettle();
+    await dismissEditor(tester);
     await finish(tester);
   });
 }

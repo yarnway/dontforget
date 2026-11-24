@@ -71,6 +71,7 @@ class BundleSizeOptimizationsTest(unittest.TestCase):
             # Unused Android-only JNI shim, web-only record asset, and stale unused CRT DLL.
             (rel / 'dartjni.dll').write_bytes(_make_minimal_pe64(['VCRUNTIME140.dll']))
             (rel / 'concrt140.dll').write_bytes(_make_minimal_pe64(['MSVCP140.dll']))
+            (rel / 'native_assets.json').write_text('{}', encoding='utf-8')
             web_dir = rel / 'data' / 'flutter_assets' / 'packages' / 'record_web' / 'assets' / 'js'
             web_dir.mkdir(parents=True)
             (web_dir / 'record.worklet.js').write_text('// web only', encoding='utf-8')
@@ -90,6 +91,8 @@ class BundleSizeOptimizationsTest(unittest.TestCase):
             self.assertFalse((rel / 'dartjni.dll').exists())
             self.assertFalse((rel / 'concrt140.dll').exists())
             self.assertFalse((rel / 'vccorlib140.dll').exists())
+            self.assertFalse((rel / 'native_assets.json').exists())
+            self.assertTrue((rel / 'data' / 'flutter_assets' / 'NativeAssetsManifest.json').is_file())
             self.assertFalse((rel / 'data' / 'flutter_assets' / 'packages' / 'record_web').exists())
             for dll in ('msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll', 'sqlite3.dll'):
                 self.assertTrue((rel / dll).is_file(), f'Missing expected {dll}')

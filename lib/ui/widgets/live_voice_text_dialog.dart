@@ -47,7 +47,7 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
     _editor = TextEditingController(text: combine(widget.initial));
     _editor.addListener(_refreshEditorState);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) widget.onChanged(_editor.text);
+      if (mounted && !_closing) widget.onChanged(_editor.text);
     });
     unawaited(
       widget.result.then(
@@ -207,7 +207,11 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
           color: mobile ? VoiceCaptureColors.ink : colors.onPrimaryContainer,
         ),
         decoration: InputDecoration(
-          hintText: l10n.get('voiceEditorPlaceholder'),
+          hintText: l10n.get(
+            mobile && !_complete
+                ? 'voiceListeningText'
+                : 'voiceEditorPlaceholder',
+          ),
           hintStyle: mobile
               ? const TextStyle(color: VoiceCaptureColors.secondaryInk)
               : null,
@@ -241,12 +245,23 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
           ),
         ),
         onChanged: (text) {
-          setState(() => _edited = true);
+          if (_closing || _sendingOriginal) return;
+          _edited = true;
+          final route = ModalRoute.of(context);
+          final dismiss =
+              mobile &&
+              text.isEmpty &&
+              route != null &&
+              route.isCurrent &&
+              !route.isFirst;
+          if (dismiss) _closing = true;
           widget.onChanged(text);
+          if (dismiss && mounted) Navigator.pop(context, false);
         },
       );
       final accessibleEditor = Semantics(
         label: l10n.get('voiceEditTitle'),
+        hint: mobile && failed ? l10n.get('voicePartialReview') : null,
         child: editor,
       );
       return Focus(
@@ -273,6 +288,7 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
         key: const ValueKey('voice-text-sheet'),
         alignment: mobile ? Alignment.bottomCenter : Alignment.center,
         backgroundColor: mobile ? Colors.transparent : null,
+        shape: mobile ? const RoundedRectangleBorder() : null,
         surfaceTintColor: mobile ? Colors.transparent : null,
         elevation: mobile ? 0 : null,
         insetPadding: EdgeInsets.symmetric(
@@ -293,17 +309,12 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                     180.0,
                     MediaQuery.textScalerOf(context).scale(18) * 2.85 +
                         actionHeight +
-                        72,
+                        (mobile ? 24 : 72),
                   );
               Widget keep() => IconButton(
                 key: const ValueKey('voice-editor-keep'),
                 tooltip: l10n.get('voiceKeepDraft'),
-                icon: Icon(
-                  Icons.close,
-                  color: mobile
-                      ? (_sendingOriginal ? Colors.white38 : Colors.white)
-                      : null,
-                ),
+                icon: const Icon(Icons.close),
                 onPressed: _sendingOriginal
                     ? null
                     : () {
@@ -311,10 +322,15 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                         Navigator.pop(context, false);
                       },
               );
+              final originalLabel = l10n.get(
+                mobile && _sendingOriginal
+                    ? 'voiceSendingOriginal'
+                    : 'voiceSendOriginal',
+              );
               Widget original(bool iconOnly) => iconOnly
                   ? IconButton(
                       key: const ValueKey('voice-editor-original'),
-                      tooltip: l10n.get('voiceSendOriginal'),
+                      tooltip: originalLabel,
                       icon: Icon(
                         Icons.mic_rounded,
                         color: mobile
@@ -344,7 +360,7 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                             )
                           : null,
                       child: Text(
-                        l10n.get('voiceSendOriginal'),
+                        originalLabel,
                         style: actionText,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -390,17 +406,11 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      if (!compact)
+                      if (!mobile && !compact)
                         Padding(
-                          padding: EdgeInsets.fromLTRB(
-                            mobile ? 0 : 12,
-                            4,
-                            mobile ? 0 : 12,
-                            4,
-                          ),
+                          padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
                           child: Row(
                             children: [
-                              if (mobile) keep(),
                               Expanded(
                                 child: failed && height >= 280
                                     ? Padding(
@@ -415,9 +425,7 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
                                             style: TextStyle(
-                                              color: mobile
-                                                  ? const Color(0xFFF2B8B5)
-                                                  : colors.error,
+                                              color: colors.error,
                                             ),
                                           ),
                                         ),
@@ -440,7 +448,6 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                                         'voice-editor-progress',
                                       ),
                                       strokeWidth: 2,
-                                      color: mobile ? Colors.white70 : null,
                                       value:
                                           MediaQuery.disableAnimationsOf(
                                             context,
@@ -452,7 +459,7 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                                 ),
                               ],
                               const SizedBox(width: 4),
-                              if (!mobile) keep(),
+                              keep(),
                             ],
                           ),
                         ),
@@ -461,37 +468,32 @@ class _LiveVoiceTextDialogState extends ConsumerState<LiveVoiceTextDialog> {
                       Flexible(
                         key: const ValueKey('voice-sheet-field-slot'),
                         child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            SizedBox(
-                              width: compact
-                                  ? 48
-                                  : mobile
-                                  ? 0
-                                  : 16,
-                              child: compact ? Center(child: keep()) : null,
-                            ),
+                            if (!mobile)
+                              SizedBox(
+                                width: compact ? 48 : 16,
+                                child: compact ? Center(child: keep()) : null,
+                              ),
                             Expanded(child: field(compact)),
-                            SizedBox(
-                              width: compact ? 48 : 0,
-                              child: compact
-                                  ? Center(child: original(true))
-                                  : null,
-                            ),
-                            SizedBox(
-                              width: compact
-                                  ? 48
-                                  : mobile
-                                  ? 0
-                                  : 16,
-                              child: compact ? Center(child: send(true)) : null,
-                            ),
+                            if (compact) ...[
+                              SizedBox(
+                                width: 48,
+                                child: Center(child: original(true)),
+                              ),
+                              SizedBox(
+                                width: 48,
+                                child: Center(child: send(true)),
+                              ),
+                            ] else if (!mobile)
+                              const SizedBox(width: 16),
                           ],
                         ),
                       ),
                       if (!compact)
                         Padding(
-                          padding: const EdgeInsets.all(12),
+                          padding: mobile
+                              ? const EdgeInsets.only(top: 10)
+                              : const EdgeInsets.all(12),
                           child: SizedBox(
                             height: actionHeight,
                             child: Row(
