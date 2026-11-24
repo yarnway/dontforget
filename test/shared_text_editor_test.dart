@@ -7,7 +7,9 @@ import 'package:dont_forget/providers/shared_text_provider.dart';
 import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'package:dont_forget/services/shared_text_inbox.dart';
 import 'package:dont_forget/ui/screens/shared_text_inbox_screen.dart';
+import 'package:dont_forget/ui/widgets/inline_feedback.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -62,7 +64,7 @@ void main() {
   });
   tearDown(() => h.dispose());
 
-  Future<void> show(WidgetTester tester) async {
+  Future<void> show(WidgetTester tester, {bool openEditor = true}) async {
     addTearDown(() async {
       await tester.pumpWidget(const SizedBox.shrink());
       await drainWorkspaceDrafts(tester, h.container);
@@ -74,16 +76,17 @@ void main() {
           overrides: [
             homeControllerProvider.overrideWith((ref) => home = _Home(ref)),
           ],
-          child: const MaterialApp(
-            locale: Locale('zh'),
-            supportedLocales: [Locale('zh'), Locale('en'), Locale('ja')],
-            localizationsDelegates: [
+          child: MaterialApp(
+            locale: const Locale('zh'),
+            supportedLocales: const [Locale('zh'), Locale('en'), Locale('ja')],
+            localizationsDelegates: const [
               AppLocalizationsDelegate(),
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
-            home: SharedTextInboxScreen(),
+            builder: (_, child) => InlineFeedback(child: child!),
+            home: const SharedTextInboxScreen(),
           ),
         ),
       ),
@@ -94,6 +97,7 @@ void main() {
       reason: 'Persisted inbox must load',
     );
     await tester.pumpAndSettle();
+    if (!openEditor) return;
     await tester.tap(find.byKey(const ValueKey('shared-item-$id')));
     await tester.pumpAndSettle();
     uiContainer = ProviderScope.containerOf(
@@ -110,6 +114,43 @@ void main() {
     selection: TextSelection.collapsed(offset: 4),
     composing: TextRange(start: 2, end: 4),
   );
+
+  testWidgets('a persisted web link opens externally and remains editable', (
+    tester,
+  ) async {
+    const link = 'https://example.com/read?chapter=1#start';
+    const original = '网页标题\n$link';
+    await tester.runAsync(() => inbox.edit(id, '分享原文', original));
+    const channel = MethodChannel('plugins.flutter.io/url_launcher');
+    final messenger = tester.binding.defaultBinaryMessenger;
+    final calls = <MethodCall>[];
+    var launchSucceeds = true;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      calls.add(call);
+      return launchSucceeds;
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    await show(tester, openEditor: false);
+    await tester.tap(find.byTooltip('在浏览器中打开'));
+    await tester.pumpAndSettle();
+    expect(calls.single.method, 'launch');
+    expect(calls.single.arguments, containsPair('url', link));
+    expect(calls.single.arguments, containsPair('useWebView', false));
+
+    await tester.tap(find.text(original));
+    await tester.pumpAndSettle();
+    final editor = find.byKey(const ValueKey('shared-text-editor'));
+    expect(tester.widget<TextField>(editor).controller!.text, original);
+    launchSucceeds = false;
+    await tester.tap(find.text('在浏览器中打开'));
+    await tester.pumpAndSettle();
+    expect(calls, hasLength(2));
+    expect(find.text('无法打开网页链接。'), findsOneWidget);
+    await tester.enterText(editor, '普通草稿');
+    await tester.pump();
+    expect(find.text('在浏览器中打开'), findsNothing);
+  });
 
   testWidgets(
     'unconfirmed IME blocks memo save; range-only commit enables saving',

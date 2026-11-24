@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
+import 'package:url_launcher/url_launcher.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/shared_text_strings.dart';
 import '../../providers/providers.dart';
@@ -11,6 +12,7 @@ import '../../providers/shared_text_provider.dart';
 import '../../providers/workspace_drafts_provider.dart';
 import '../../services/shared_text_inbox.dart';
 import '../../services/recovery/runtime_gate.dart';
+import '../widgets/inline_feedback.dart';
 import '../widgets/task_attachments_panel.dart';
 
 void openSharedTextInbox(BuildContext context, WidgetRef ref) {
@@ -24,6 +26,26 @@ void openSharedTextInbox(BuildContext context, WidgetRef ref) {
       settings: const RouteSettings(name: '/shared-drafts'),
       builder: (_) => const SharedTextInboxScreen(),
     ),
+  );
+}
+
+Future<void> _openWebLink(BuildContext context, Uri link) async {
+  try {
+    if (await launchUrl(link, mode: LaunchMode.externalApplication)) return;
+  } catch (_) {
+    // The system may have no available browser.
+  }
+  if (!context.mounted) return;
+  InlineFeedback.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        sharedTextLabel(
+          AppLocalizations.of(context).locale.languageCode,
+          'openLinkFailed',
+        ),
+      ),
+    ),
+    tone: FeedbackTone.error,
   );
 }
 
@@ -146,7 +168,14 @@ class SharedTextInboxScreen extends ConsumerWidget {
                             overflow: TextOverflow.ellipsis,
                           )
                         : null,
-                    trailing: const Icon(Icons.chevron_right),
+                    trailing: switch (SharedText.webLinkFromText(item.text)) {
+                      final link? => IconButton(
+                        tooltip: t('openLink'),
+                        icon: const Icon(Icons.open_in_new),
+                        onPressed: () => _openWebLink(context, link),
+                      ),
+                      null => const Icon(Icons.chevron_right),
+                    },
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => _SharedTextEditor(item: item),
@@ -381,6 +410,7 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
     final alreadySaved = ref
         .watch(remindersProvider)
         .any((row) => row.id == widget.item.id);
+    final link = SharedText.webLinkFromText(_text.text);
     return PopScope(
       canPop:
           _allowPop ||
@@ -469,6 +499,17 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
               ),
               onChanged: _changed,
             ),
+            if (link != null)
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton.icon(
+                  onPressed: _busy || _closing || _composing
+                      ? null
+                      : () => _openWebLink(context, link),
+                  icon: const Icon(Icons.open_in_new),
+                  label: Text(t('openLink')),
+                ),
+              ),
             if (_failed) ...[
               Semantics(
                 container: true,

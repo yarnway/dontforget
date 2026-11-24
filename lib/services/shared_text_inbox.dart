@@ -33,6 +33,27 @@ class SharedText {
   static final _id = RegExp(
     r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
   );
+  static final _nonUrlCharacters = RegExp(r'[\s\x00-\x1f\x7f\\<>"`]');
+
+  /// Accept a URL on its own line, including shares with a separate title.
+  static Uri? webLinkFromText(String text) {
+    Uri? link;
+    for (final line in text.split('\n')) {
+      final candidate = line.trim();
+      if (_nonUrlCharacters.hasMatch(candidate)) continue;
+      final uri = Uri.tryParse(candidate);
+      if (uri == null ||
+          !(uri.isScheme('https') || uri.isScheme('http')) ||
+          uri.host.isEmpty ||
+          uri.userInfo.isNotEmpty) {
+        continue;
+      }
+      if (link != null && link != uri) return null;
+      link = uri;
+    }
+    return link;
+  }
+
   static bool validText(String text) =>
       text.length <= maxTextLength &&
       !RegExp(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]').hasMatch(text);

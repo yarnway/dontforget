@@ -1,0 +1,39 @@
+{
+  "build": "1.8.24+100",
+  "source_revision": "23eebc07c09fdaf0c2d9ca9fddf12e7d8ebd587a",
+  "github_ci": {"run": 45345991812, "conclusion": "success"},
+  "windows": {
+    "artifact": 14898434894,
+    "prior_build": "1.8.24+99",
+    "running_and_visible_before_install": true,
+    "latest_backup_verified": true,
+    "installer_exit": 0,
+    "old_process_exited_gracefully": true,
+    "installed_payload_files_match": 27,
+    "ordinary_reopen_visible": true,
+    "business_fields_and_dpapi_equal_after_install_and_reopen": true
+  },
+  "iphone": {
+    "ordinary_ipa_artifact": 14899067288,
+    "isolated_candidate_run": 45350480991,
+    "isolated_artifact": 14899823291,
+    "isolated_ipa_sha256": "c7036f703bc9de7ccf5a31ae4ebb15dbc8c3c78ad37e41fa738795a3489f43f9",
+    "versions_and_ids_verified_for_host_reminder_and_share": true,
+    "isolated_share_group_matches_host": true,
+    "local_network_purpose_description_present": true,
+    "pre_overlay_usb_snapshot_integrity": "ok",
+    "personal_signing_and_same_identity_overlay": "passed",
+    "installed_build_usb_verified": 100,
+    "post_overlay_usb_comparison": {
+      "schema": 17,
+      "integrity_before_and_after": "ok",
+      "reminder_rows_equal": 9,
+      "media_rows_equal": 4,
+      "settings_rows_equal": 1,
+      "document_file_hashes_equal": 11,
+      "preference_file_hashes_equal": true
+    },
+    "safari_system_share_persisted_after_cold_reopen": "user verified",
+    "safari_draft_browser_open": "link displayed as text in build 100"
+  }
+}

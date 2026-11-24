@@ -23,6 +23,25 @@ SharedText item(int n, {String text = '中文 English https://example.com/link'}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  test(
+    'recognizes an unambiguous browser link without changing draft text',
+    () {
+      final url = Uri.parse('https://example.com/a?b=1#c');
+      expect(SharedText.webLinkFromText('  $url  '), url);
+      expect(SharedText.webLinkFromText('网页标题\r\n$url'), url);
+      for (final invalid in [
+        '普通文本',
+        'file:///tmp/private',
+        'javascript:alert(1)',
+        'https:/example.com',
+        'https://user@example.com',
+        'https://example.com raw text',
+        '$url\nhttps://example.org',
+      ]) {
+        expect(SharedText.webLinkFromText(invalid), isNull, reason: invalid);
+      }
+    },
+  );
   group('durable shared drafts', () {
     late OfflineManagementHarness h;
     late SharedTextInbox inbox;

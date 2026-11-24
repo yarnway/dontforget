@@ -861,6 +861,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         InlineFeedback.of(context).showSnackBar(
           SnackBar(content: Text(message), action: snackAction),
           tone: tone,
+          dismissAfter:
+              kind == _NoticeActionKind.complete && tone == FeedbackTone.success
+              ? const Duration(seconds: 5)
+              : null,
         );
       }
     } catch (_) {
@@ -1345,7 +1349,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     try {
       await _releasePlayback();
       if (!_runtimeActive) return;
-      final player = AudioPlayer();
+      // This playback control has no position indicator to update.
+      final player = AudioPlayer()..positionUpdater = null;
       _audioPlayer = player;
       _playingRecordId = recordId;
       var completed = false;

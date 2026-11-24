@@ -77,6 +77,7 @@
       "playback_feedback_persisted_after_natural_completion": true
     },
     "build99_user_confirmed_background_notification_body_opens_matching_task": true,
+    "build99_voiceover_user_confirmed_normal": true,
     "build99_runtime_acceptance": "launch, voice editor layout, clear-to-dismiss, text sending and audio playback confirmed; animation follow-up in build 100"
   },
   "follow_up_regressions": {

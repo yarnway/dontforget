@@ -2,7 +2,8 @@
 
 ## 2026-11-24 · iPhone 语音过渡与系统分享 build 100
 
-- 用户验证 build 99 语音编辑只显示三个控件并在删空时退出。build 100 源码已做语音浮层到编辑器的过渡接续，新增 iOS 系统分享与局域网用途说明。Flutter 定向 85 项通过，Xcode 工程结构及 Swift 语法检查通过。待原生 IPA 构建和同身份覆盖后实测。[阶段台账](Next_Steps_2026-11-02.md#11-月-24-日--iphone-语音过渡与系统分享-build-100)
+- 用户验证 build 99 的语音编辑和两种发送、冷重开后播放、后台通知正文和旁白。build 100 的 Windows 运行中覆盖、数据保全和普通重开通过。iPhone 同身份重签覆盖、USB 对照全部字段、11 个文件哈希及偏好一致。Safari 分享草稿冷重开可读，用户报告 build 100 点不开网址。[验收回执](benchmarks/build100-device-acceptance-2026-11-24.json)
+- build 101 的完整 CI 停在播放留下的帧回调。经关闭未使用的位置更新，恢复与完成提示相关 145 项定向回归通过。build 102 源码包括播放结束收起提示、完成提示保留 5 秒和分享草稿浏览器入口。候选包及实机补验分别记录。[build 101 CI](https://github.com/yarnway/dontforget/actions/runs/45348713847) · [阶段台账](Next_Steps_2026-11-02.md#11-月-24-日--分享草稿打开网页)
 
 ## 2026-11-24 · iPhone USB 恢复及升级准备
 
