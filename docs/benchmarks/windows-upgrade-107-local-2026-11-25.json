@@ -1,0 +1,83 @@
+{
+  "timestamp_utc": "2026-11-25T15:54:36.147812+00:00",
+  "package_origin": "local-candidate",
+  "source_commit": "2e31332d338a2db36f4c7fd8a1290f54d3531373",
+  "candidate_distribution": "local fixed-SDK package",
+  "setup_sha256": "3d2ec02a2b06f9210b05f95174cf4b04980981d968ace229fdcdbb7a0b061eba",
+  "portable_sha256": "ed6bfb5f07bf1c2e68a42c433e20fd3170a0e649f11ba657a31186e7f3aa003e",
+  "previous_package_origin": "local-candidate-build106",
+  "version_before": "1.8.24+106",
+  "verified_installed_prior_payload_files": 27,
+  "running_at_install_pid": 16664,
+  "visible_at_install": false,
+  "backup_verified": true,
+  "force_close_allowed": false,
+  "installer_exit": 0,
+  "graceful_release_logged": true,
+  "old_pid_exited": true,
+  "version_after": "1.8.24+107",
+  "payload_files_identical": 27,
+  "expected_payload_files": 27,
+  "after_install": {
+    "all_business_fields_equal": true,
+    "dpapi_credential_readback_equal": true,
+    "credential_files_equal": true,
+    "credential_count": 1,
+    "counts": {
+      "Reminders": 20,
+      "MediaRecords": 4,
+      "Settings": 1
+    },
+    "schema": 17,
+    "integrity_check": "ok",
+    "document_attachment_count": 4,
+    "document_attachment_hashes_equal": true
+  },
+  "reopen_pid": 6460,
+  "reopen_window_visible": true,
+  "after_reopen": {
+    "all_business_fields_equal": true,
+    "dpapi_credential_readback_equal": true,
+    "credential_files_equal": true,
+    "credential_count": 1,
+    "counts": {
+      "Reminders": 20,
+      "MediaRecords": 4,
+      "Settings": 1
+    },
+    "schema": 17,
+    "integrity_check": "ok",
+    "document_attachment_count": 4,
+    "document_attachment_hashes_equal": true
+  },
+  "resize_acceptance": {
+    "native_maximize_and_restore": true,
+    "window_sizes_logical": [
+      [
+        1244,
+        710
+      ],
+      [
+        1536,
+        816
+      ],
+      [
+        1244,
+        710
+      ]
+    ],
+    "workspace_and_composer_edges_stay_aligned": true,
+    "search_and_result_edges_stay_aligned": true,
+    "search_query_and_focus_survive_restore": true,
+    "same_search_result_count_after_restore": 2,
+    "returned_to_home_after_test": true,
+    "automated_viewport_widths": [
+      390,
+      900,
+      1244,
+      1440,
+      1920,
+      2560
+    ]
+  }
+}
