@@ -127,6 +127,7 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
       InlineFeedback.of(context).showSnackBar(
         SnackBar(content: Text(l10n.get('changesSaved'))),
         tone: FeedbackTone.success,
+        dismissAfter: const Duration(seconds: 5),
       );
       setState(() => _isBusy = false);
       Navigator.of(context).pop();
@@ -191,6 +192,12 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
             },
           ),
         ),
+        tone: result.nativeSyncFailed
+            ? FeedbackTone.warning
+            : FeedbackTone.info,
+        dismissAfter: result.nativeSyncFailed
+            ? null
+            : const Duration(seconds: 5),
       );
       setState(() => _isBusy = false);
       Navigator.of(context).pop();

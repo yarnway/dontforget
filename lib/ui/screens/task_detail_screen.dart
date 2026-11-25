@@ -624,6 +624,7 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
       feedback.showSnackBar(
         SnackBar(content: Text(l10n.get('changesSaved'))),
         tone: FeedbackTone.success,
+        dismissAfter: const Duration(seconds: 5),
       );
       // A focused text input can still receive keyboard/IME updates while the
       // pointer is blocked during the write. Keep any newer draft on screen.
@@ -703,6 +704,12 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
               },
             ),
           ),
+          tone: result.nativeSyncFailed
+              ? FeedbackTone.warning
+              : FeedbackTone.info,
+          dismissAfter: result.nativeSyncFailed
+              ? null
+              : const Duration(seconds: 5),
         );
       }
       if (mounted) {

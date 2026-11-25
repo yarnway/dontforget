@@ -6,6 +6,7 @@ import '../../models/reminder.dart';
 import '../../providers/task_search_provider.dart';
 import '../../services/task_search_index.dart';
 import '../theme/app_theme.dart';
+import 'completed_tasks_toolbar.dart';
 import 'task_card.dart';
 
 /// Search and browsing share one lazy list, including an empty search query.
@@ -30,6 +31,9 @@ class _TaskSearchPanelState extends ConsumerState<TaskSearchPanel>
   final _scrollController = ScrollController();
   TaskSearchFilter _filter = TaskSearchFilter.all;
   TaskSearchSort _sort = TaskSearchSort.source;
+  bool _selectingCompleted = false;
+  final Set<String> _selectedCompletedIds = {};
+  bool _batchBusy = false;
   Timer? _refresh;
   TaskSearchIndex? _projectedIndex;
   String? _projectedQuery;
@@ -54,6 +58,8 @@ class _TaskSearchPanelState extends ConsumerState<TaskSearchPanel>
   void didUpdateWidget(TaskSearchPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.query != widget.query) {
+      _selectingCompleted = false;
+      _selectedCompletedIds.clear();
       _scrollToTop();
     }
   }
@@ -122,9 +128,90 @@ class _TaskSearchPanelState extends ConsumerState<TaskSearchPanel>
     setState(() {
       _filter = TaskSearchFilter.all;
       _sort = TaskSearchSort.source;
+      _selectingCompleted = false;
+      _selectedCompletedIds.clear();
     });
     _scrollToTop();
     widget.onClearQuery();
+  }
+
+  void _toggleCompletedSelection(String id) {
+    setState(() {
+      if (!_selectedCompletedIds.remove(id)) {
+        _selectedCompletedIds.add(id);
+      }
+    });
+  }
+
+  void _toggleSelectAllCompleted(List<Reminder> completed) {
+    final ids = completed.map((t) => t.id).toSet();
+    final allSelected =
+        ids.isNotEmpty && ids.every(_selectedCompletedIds.contains);
+    setState(() {
+      if (allSelected) {
+        _selectedCompletedIds.removeAll(ids);
+      } else {
+        _selectedCompletedIds
+          ..clear()
+          ..addAll(ids);
+      }
+    });
+  }
+
+  Future<void> _deleteSelectedCompleted(List<Reminder> completed) async {
+    if (_batchBusy) return;
+    final targets = completed
+        .where((t) => _selectedCompletedIds.contains(t.id))
+        .toList();
+    if (targets.isEmpty) return;
+    setState(() => _batchBusy = true);
+    try {
+      final ok = await trashTasksWithUndo(context, ref, targets);
+      if (ok && mounted) {
+        setState(() {
+          _selectedCompletedIds.clear();
+          _selectingCompleted = false;
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _batchBusy = false);
+    }
+  }
+
+  Future<void> _reopenSelectedCompleted(List<Reminder> completed) async {
+    if (_batchBusy) return;
+    final targets = completed
+        .where((t) => _selectedCompletedIds.contains(t.id))
+        .toList();
+    if (targets.isEmpty) return;
+    setState(() => _batchBusy = true);
+    try {
+      final ok = await reopenTasksBatch(context, ref, targets);
+      if (ok && mounted) {
+        setState(() {
+          _selectedCompletedIds.clear();
+          _selectingCompleted = false;
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _batchBusy = false);
+    }
+  }
+
+  Future<void> _clearAllCompleted(List<Reminder> completed) async {
+    if (_batchBusy) return;
+    setState(() => _batchBusy = true);
+    try {
+      final ok = await confirmAndClearCompletedTasks(context, ref, completed);
+      if (ok && mounted) {
+        setState(() {
+          _selectedCompletedIds.clear();
+          _selectingCompleted = false;
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _batchBusy = false);
+    }
   }
 
   @override
@@ -216,7 +303,11 @@ class _TaskSearchPanelState extends ConsumerState<TaskSearchPanel>
                                 selected: filter == _filter,
                                 onSelected: (_) {
                                   if (_filter == filter) return;
-                                  setState(() => _filter = filter);
+                                  setState(() {
+                                    _filter = filter;
+                                    _selectingCompleted = false;
+                                    _selectedCompletedIds.clear();
+                                  });
                                   _scrollToTop();
                                 },
                               );
@@ -294,6 +385,32 @@ class _TaskSearchPanelState extends ConsumerState<TaskSearchPanel>
                       ],
                     ),
                     Divider(color: colors.outlineVariant),
+                    if (_filter == TaskSearchFilter.completed &&
+                        results.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      CompletedTasksToolbar(
+                        scopeKey: 'search-completed',
+                        tasks: results,
+                        selectionMode: _selectingCompleted,
+                        selectedIds: _selectedCompletedIds,
+                        busy: _batchBusy,
+                        onEnterSelection: () => setState(() {
+                          _selectingCompleted = true;
+                          _selectedCompletedIds.clear();
+                        }),
+                        onExitSelection: () => setState(() {
+                          _selectingCompleted = false;
+                          _selectedCompletedIds.clear();
+                        }),
+                        onToggleSelectAll: () =>
+                            _toggleSelectAllCompleted(results),
+                        onDeleteSelected: () =>
+                            _deleteSelectedCompleted(results),
+                        onReopenSelected: () =>
+                            _reopenSelectedCompleted(results),
+                        onClearAll: () => _clearAllCompleted(results),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -366,10 +483,20 @@ class _TaskSearchPanelState extends ConsumerState<TaskSearchPanel>
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       final task = results[index];
+                      final inCompletedMode =
+                          _filter == TaskSearchFilter.completed &&
+                          _selectingCompleted;
                       return TaskCard(
                         key: ValueKey(task.id),
                         task: task,
                         referenceNow: now,
+                        selectionMode: inCompletedMode,
+                        selected:
+                            inCompletedMode &&
+                            _selectedCompletedIds.contains(task.id),
+                        onToggleSelected: inCompletedMode
+                            ? () => _toggleCompletedSelection(task.id)
+                            : null,
                         onPlayMedia: () {
                           if (task.recordId != null) {
                             widget.onPlayMedia(task.recordId!);

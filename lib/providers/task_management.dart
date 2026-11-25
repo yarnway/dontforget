@@ -905,4 +905,246 @@ extension TaskManagement on RemindersNotifier {
       generation: generation,
     );
   }
+
+  /// Atomically moves a batch of visible workspace tasks (such as selected or
+  /// all completed items) into Trash in a single transaction, returning the
+  /// exact trashed root snapshots so Undo can restore them cleanly.
+  Future<({List<Reminder> trashed, int nativeSyncFailures})>
+  trashWorkspaceTasks(
+    List<Reminder> targets,
+    DataGeneration generation, {
+    DateTime? now,
+  }) {
+    final uniqueIds = <String>{};
+    final requested = <Reminder>[
+      for (final item in targets)
+        if (uniqueIds.add(item.id)) item,
+    ];
+    if (requested.isEmpty) {
+      return Future.value((trashed: const <Reminder>[], nativeSyncFailures: 0));
+    }
+    final at = now ?? DateTime.now();
+    return _enqueue(
+      (ticket) => _dbHelper.runOperation(ticket, () async {
+        final result = await _dbHelper.writeTransaction(ticket, (db) async {
+          final all = (await db.query(
+            'Reminders',
+          )).map(Reminder.fromJson).toList();
+          final byId = <String, Reminder>{for (final r in all) r.id: r};
+          final childrenByPlan = <String, List<Reminder>>{};
+          for (final r in all) {
+            final pid = r.details.planId;
+            if (pid != null) {
+              (childrenByPlan[pid] ??= <Reminder>[]).add(r);
+            }
+          }
+          final trashedRoots = <Reminder>[];
+          final changes = <Reminder>[];
+          final stamp = at.toIso8601String();
+          for (final wanted in requested) {
+            final root = byId[wanted.id];
+            if (root == null ||
+                root.details.deletedAt != null ||
+                root.details.data['learning_archive'] == true) {
+              continue;
+            }
+            final group = <Reminder>[root, ...?childrenByPlan[root.id]];
+            for (final row in group) {
+              if (row.details.deletedAt != null) continue;
+              final next = row.copyWith(
+                detailsJson: row.details
+                    .patch({'deleted_at': stamp})
+                    .record('trash', at)
+                    .encode(),
+                noticeRevision: row.noticeRevision + 1,
+                noticeAcknowledgedAt: null,
+                upcomingDismissedAt: null,
+              );
+              await db.update(
+                'Reminders',
+                next.toJson(),
+                where: 'id = ?',
+                whereArgs: [next.id],
+              );
+              changes.add(next);
+              if (row.id == root.id) {
+                trashedRoots.add(next);
+              }
+            }
+          }
+          return (roots: trashedRoots, changes: changes);
+        });
+        _dbHelper.checkGeneration(ticket);
+        if (result.changes.isNotEmpty) {
+          _publishManaged(result.changes);
+        }
+        var failures = 0;
+        for (final row in result.changes) {
+          if (await _synchronizeReminder(row, ticket, cancelOverdue: true)) {
+            failures++;
+          }
+        }
+        return (trashed: result.roots, nativeSyncFailures: failures);
+      }),
+      generation: generation,
+    );
+  }
+
+  /// Restores a batch of trashed workspace tasks back out of Trash atomically.
+  Future<ReminderBatchResult> restoreTrashedWorkspaceTasks(
+    List<Reminder> trashedRoots,
+    DataGeneration generation, {
+    DateTime? now,
+  }) {
+    final uniqueIds = <String>{};
+    final requested = <Reminder>[
+      for (final item in trashedRoots)
+        if (uniqueIds.add(item.id)) item,
+    ];
+    if (requested.isEmpty) {
+      return Future.value(const ReminderBatchResult());
+    }
+    final at = now ?? DateTime.now();
+    return _enqueue(
+      (ticket) => _dbHelper.runOperation(ticket, () async {
+        final changes = await _dbHelper.writeTransaction(ticket, (db) async {
+          final all = (await db.query(
+            'Reminders',
+          )).map(Reminder.fromJson).toList();
+          final byId = <String, Reminder>{for (final r in all) r.id: r};
+          final childrenByPlan = <String, List<Reminder>>{};
+          for (final r in all) {
+            final pid = r.details.planId;
+            if (pid != null) {
+              (childrenByPlan[pid] ??= <Reminder>[]).add(r);
+            }
+          }
+          final updated = <Reminder>[];
+          for (final wanted in requested) {
+            final root = byId[wanted.id];
+            if (root == null || root.details.deletedAt == null) continue;
+            final group = <Reminder>[root, ...?childrenByPlan[root.id]];
+            for (final row in group) {
+              if (row.id != root.id &&
+                  row.details.deletedAt != root.details.deletedAt) {
+                continue;
+              }
+              if (row.details.deletedAt == null) continue;
+              final next = row.copyWith(
+                detailsJson: row.details
+                    .patch({'deleted_at': null})
+                    .record('restore', at)
+                    .encode(),
+                noticeRevision: row.noticeRevision + 1,
+                noticeAcknowledgedAt: null,
+                upcomingDismissedAt: null,
+              );
+              await db.update(
+                'Reminders',
+                next.toJson(),
+                where: 'id = ?',
+                whereArgs: [next.id],
+              );
+              updated.add(next);
+            }
+          }
+          return updated;
+        });
+        _dbHelper.checkGeneration(ticket);
+        if (changes.isNotEmpty) {
+          _publishManaged(changes);
+        }
+        var failures = 0;
+        for (final row in changes) {
+          if (await _synchronizeReminder(row, ticket, cancelOverdue: true)) {
+            failures++;
+          }
+        }
+        return ReminderBatchResult(
+          changed: changes.length,
+          nativeSyncFailures: failures,
+        );
+      }),
+      generation: generation,
+    );
+  }
+
+  /// Atomically marks a batch of completed workspace tasks back as undone.
+  Future<ReminderBatchResult> reopenCompletedTasks(
+    List<Reminder> targets,
+    DataGeneration generation, {
+    DateTime? now,
+  }) {
+    final uniqueIds = <String>{};
+    final requested = <Reminder>[
+      for (final item in targets)
+        if (uniqueIds.add(item.id)) item,
+    ];
+    if (requested.isEmpty) {
+      return Future.value(const ReminderBatchResult());
+    }
+    final at = now ?? DateTime.now();
+    return _enqueue(
+      (ticket) => _dbHelper.runOperation(ticket, () async {
+        final changes = await _dbHelper.writeTransaction(ticket, (db) async {
+          final all = (await db.query(
+            'Reminders',
+          )).map(Reminder.fromJson).toList();
+          final byId = <String, Reminder>{for (final r in all) r.id: r};
+          final updated = <Reminder>[];
+          for (final wanted in requested) {
+            final current = byId[wanted.id];
+            if (current == null ||
+                !current.isCompleted ||
+                !current.isVisible ||
+                current.details.data['learning_archive'] == true ||
+                OrdinarySeries.isOwner(current)) {
+              continue;
+            }
+            final medication = current.details.kind == 'medication';
+            final next = current.copyWith(
+              isCompleted: false,
+              noticeRevision: current.noticeRevision + 1,
+              detailsJson: current.details
+                  .record(
+                    'reopened',
+                    at,
+                    scheduled: current.eventTime ?? current.triggerTime,
+                  )
+                  .patch({
+                    'completed_at': null,
+                    if (medication) 'dose_outcome': null,
+                    if (medication)
+                      'data': {...current.details.data, 'dose_taken_at': null},
+                  })
+                  .encode(),
+            );
+            await db.update(
+              'Reminders',
+              next.toJson()..remove('id'),
+              where: 'id = ?',
+              whereArgs: [next.id],
+            );
+            updated.add(next);
+          }
+          return updated;
+        });
+        _dbHelper.checkGeneration(ticket);
+        if (changes.isNotEmpty) {
+          _publishManaged(changes);
+        }
+        var failures = 0;
+        for (final row in changes) {
+          if (await _synchronizeReminder(row, ticket)) {
+            failures++;
+          }
+        }
+        return ReminderBatchResult(
+          changed: changes.length,
+          nativeSyncFailures: failures,
+        );
+      }),
+      generation: generation,
+    );
+  }
 }

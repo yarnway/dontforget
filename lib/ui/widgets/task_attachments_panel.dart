@@ -98,6 +98,9 @@ class _TaskAttachmentsPanelState extends ConsumerState<TaskAttachmentsPanel> {
             : SnackBarAction(label: l10n.get('undo'), onPressed: undo),
       ),
       tone: tone,
+      dismissAfter: tone == FeedbackTone.warning || tone == FeedbackTone.error
+          ? null
+          : const Duration(seconds: 5),
     );
   }
 

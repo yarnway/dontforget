@@ -6,6 +6,7 @@ import '../../models/reminder.dart';
 import '../../providers/providers.dart';
 import '../../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
+import 'completed_tasks_toolbar.dart';
 import 'task_card.dart';
 import 'task_board_data.dart';
 
@@ -79,6 +80,9 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
         tone: result.nativeSyncFailed
             ? FeedbackTone.warning
             : FeedbackTone.success,
+        dismissAfter: result.nativeSyncFailed
+            ? null
+            : const Duration(seconds: 5),
       );
     } catch (_) {
       if (!mounted) return;
@@ -177,25 +181,51 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
         return Semantics(
           key: ValueKey('$row-${widget.level}'),
           expanded: expanded,
-          child: TextButton.icon(
-            onPressed: () => setState(() {
-              if (isCompleted) {
-                _completedExpanded = !_completedExpanded;
-              } else {
-                _isQ4FoldExpanded = !_isQ4FoldExpanded;
-              }
-            }),
-            icon: Icon(
-              expanded ? Icons.expand_less : Icons.expand_more,
-              size: 18,
-            ),
-            label: Text('$label ($count)'),
-            style: TextButton.styleFrom(
-              animationDuration: Duration.zero,
-              foregroundColor: Theme.of(context).colorScheme.primary,
-              alignment: Alignment.centerLeft,
-              minimumSize: const Size(0, 44),
-            ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextButton.icon(
+                  onPressed: () => setState(() {
+                    if (isCompleted) {
+                      _completedExpanded = !_completedExpanded;
+                    } else {
+                      _isQ4FoldExpanded = !_isQ4FoldExpanded;
+                    }
+                  }),
+                  icon: Icon(
+                    expanded ? Icons.expand_less : Icons.expand_more,
+                    size: 18,
+                  ),
+                  label: Text(
+                    '$label ($count)',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  style: TextButton.styleFrom(
+                    animationDuration: Duration.zero,
+                    foregroundColor: Theme.of(context).colorScheme.primary,
+                    alignment: Alignment.centerLeft,
+                    minimumSize: const Size(0, 44),
+                  ),
+                ),
+              ),
+              if (isCompleted && completed.isNotEmpty)
+                IconButton(
+                  key: ValueKey('quadrant-clear-completed-${widget.level}'),
+                  tooltip:
+                      '${l10n.get('clearCompletedTitle')} (${completed.length})',
+                  constraints: const BoxConstraints(
+                    minWidth: 44,
+                    minHeight: 44,
+                  ),
+                  icon: Icon(
+                    Icons.delete_sweep_outlined,
+                    size: 18,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  onPressed: () =>
+                      confirmAndClearCompletedTasks(context, ref, completed),
+                ),
+            ],
           ),
         );
       },

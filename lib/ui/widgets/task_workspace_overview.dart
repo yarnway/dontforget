@@ -6,6 +6,7 @@ import '../../models/reminder.dart';
 import '../../providers/global_capture_provider.dart';
 import '../../providers/workspace_drafts_provider.dart';
 import '../theme/app_theme.dart';
+import 'completed_tasks_toolbar.dart';
 import 'inline_feedback.dart';
 import 'task_board.dart';
 import 'task_card.dart';
@@ -38,6 +39,9 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
   Timer? _timer;
   String? _selected;
   bool _showCompleted = false;
+  bool _selectingCompleted = false;
+  final Set<String> _selectedCompletedIds = {};
+  bool _batchBusy = false;
   int _refreshRevision = 0;
   List<Reminder>? _cachedReminders;
   List<Reminder>? _cachedMissedProp;
@@ -116,12 +120,14 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
     var todayCount = 0;
     var futureCount = 0;
     for (final r in widget.reminders) {
-      if (r.isCompleted) {
+      if (r.isCompleted &&
+          r.isWorkspaceItem &&
+          r.details.data['learning_archive'] != true) {
         completedCount++;
-        if (view == 'all' && _showCompleted && r.isWorkspaceItem) {
+        if (view == 'completed' || (view == 'all' && _showCompleted)) {
           completedList.add(r);
         }
-      } else if (r.isWorkspaceItem) {
+      } else if (!r.isCompleted && r.isWorkspaceItem) {
         tasks.add(r);
         final todayGroup = _todayGroupFor(r, now, todayStart, tomorrow);
         if (todayGroup != null) {
@@ -137,11 +143,14 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
         }
       }
     }
-    final completed = view == 'all' && _showCompleted
+    if (completedList.length > 1) {
+      completedList.sort(compareCompletedTasksNewestFirst);
+    }
+    final completed = (view == 'completed' || (view == 'all' && _showCompleted))
         ? completedList
         : const <Reminder>[];
     // Board renders via TaskBoard directly; skip O(N log N) sorting and row build.
-    if (view != 'board') {
+    if (view != 'board' && view != 'completed') {
       tasks.sort((a, b) {
         final learning = (a.spacedRepetitionLevel > 0 ? 1 : 0).compareTo(
           b.spacedRepetitionLevel > 0 ? 1 : 0,
@@ -280,7 +289,11 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
   }
 
   void _select(String value) {
-    setState(() => _selected = value);
+    setState(() {
+      _selected = value;
+      _selectingCompleted = false;
+      _selectedCompletedIds.clear();
+    });
     widget.onViewChanged?.call(value);
     unawaited(
       ref
@@ -301,6 +314,93 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
     );
   }
 
+  void _toggleCompletedSelection(String id) {
+    setState(() {
+      if (!_selectedCompletedIds.remove(id)) {
+        _selectedCompletedIds.add(id);
+      }
+    });
+  }
+
+  void _toggleSelectAllCompleted(List<Reminder> completed) {
+    final ids = completed.map((t) => t.id).toSet();
+    final allSelected =
+        ids.isNotEmpty && ids.every(_selectedCompletedIds.contains);
+    setState(() {
+      if (allSelected) {
+        _selectedCompletedIds.removeAll(ids);
+      } else {
+        _selectedCompletedIds
+          ..clear()
+          ..addAll(ids);
+      }
+    });
+  }
+
+  Future<void> _deleteSelectedCompleted(List<Reminder> completed) async {
+    if (_batchBusy) return;
+    final targets = completed
+        .where((t) => _selectedCompletedIds.contains(t.id))
+        .toList();
+    if (targets.isEmpty) return;
+    setState(() => _batchBusy = true);
+    try {
+      final ok = await trashTasksWithUndo(context, ref, targets);
+      if (ok && mounted) {
+        setState(() {
+          _selectedCompletedIds.clear();
+          _selectingCompleted = false;
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _batchBusy = false);
+    }
+  }
+
+  Future<void> _reopenSelectedCompleted(List<Reminder> completed) async {
+    if (_batchBusy) return;
+    final targets = completed
+        .where((t) => _selectedCompletedIds.contains(t.id))
+        .toList();
+    if (targets.isEmpty) return;
+    setState(() => _batchBusy = true);
+    try {
+      final ok = await reopenTasksBatch(context, ref, targets);
+      if (ok && mounted) {
+        setState(() {
+          _selectedCompletedIds.clear();
+          _selectingCompleted = false;
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _batchBusy = false);
+    }
+  }
+
+  Future<void> _clearAllCompleted() async {
+    if (_batchBusy) return;
+    final eligible = widget.reminders
+        .where(
+          (r) =>
+              r.isCompleted &&
+              r.isWorkspaceItem &&
+              r.details.data['learning_archive'] != true,
+        )
+        .toList();
+    setState(() => _batchBusy = true);
+    try {
+      final ok = await confirmAndClearCompletedTasks(context, ref, eligible);
+      if (ok && mounted) {
+        setState(() {
+          _selectedCompletedIds.clear();
+          _selectingCompleted = false;
+        });
+      }
+    } finally {
+      if (mounted) setState(() => _batchBusy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
@@ -309,7 +409,14 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
     );
     final view =
         _selected ??
-        (const ['today', 'future', 'all', 'board', 'missed'].contains(stored)
+        (const [
+              'today',
+              'future',
+              'all',
+              'board',
+              'completed',
+              'missed',
+            ].contains(stored)
             ? stored as String
             : 'today');
     _currentView = view;
@@ -324,17 +431,21 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
       'today': _cachedTodayCount,
       'future': _cachedFutureCount,
       'all': _cachedActiveAllCount,
+      'completed': _cachedCompletedCount,
     };
     final choices = <String, String>{
       'today': 'viewToday',
       'future': 'viewFuture',
       'all': 'viewAll',
       'board': 'viewBoard',
+      if (_cachedCompletedCount > 0 || view == 'completed')
+        'completed': 'completed',
       if (missedCount > 0 || view == 'missed') 'missed': 'viewMissed',
     };
-    final showEmptyState =
-        (rows.isEmpty && view != 'all') ||
-        (view == 'all' && rows.isEmpty && _cachedCompletedCount == 0);
+    final showEmptyState = view == 'completed'
+        ? _cachedCompletedCount == 0
+        : (rows.isEmpty && view != 'all') ||
+              (view == 'all' && rows.isEmpty && _cachedCompletedCount == 0);
     final hasAnyTasks = _cachedActiveAllCount > 0 || _cachedCompletedCount > 0;
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -376,11 +487,16 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                                     ? Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Text(
-                                            loc.get(entry.value),
-                                            style: highlightMissed
-                                                ? TextStyle(color: colors.error)
-                                                : null,
+                                          Flexible(
+                                            child: Text(
+                                              loc.get(entry.value),
+                                              overflow: TextOverflow.ellipsis,
+                                              style: highlightMissed
+                                                  ? TextStyle(
+                                                      color: colors.error,
+                                                    )
+                                                  : null,
+                                            ),
                                           ),
                                           const SizedBox(width: 6),
                                           Container(
@@ -460,6 +576,8 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                                                   : view == 'missed'
                                                   ? Icons
                                                         .notifications_none_rounded
+                                                  : view == 'completed'
+                                                  ? Icons.task_alt_rounded
                                                   : view == 'all'
                                                   ? Icons.checklist_rounded
                                                   : Icons
@@ -475,6 +593,8 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                                                   ? 'todayEmpty'
                                                   : view == 'missed'
                                                   ? 'emptyMissed'
+                                                  : view == 'completed'
+                                                  ? 'completedEmpty'
                                                   : view == 'all'
                                                   ? 'allTasksEmpty'
                                                   : 'futureEmpty',
@@ -530,223 +650,280 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                                 : CustomScrollView(
                                 key: PageStorageKey<String>('workspace-$view'),
                                 slivers: [
-                                  SliverPadding(
-                                    padding: const EdgeInsets.all(12),
-                                    sliver: SliverList(
-                                      delegate: SliverChildBuilderDelegate((
-                                        context,
-                                        index,
-                                      ) {
-                                        final row = rows[index];
-                                        if (row
-                                            is ({String key, int count})) {
-                                          if (row.key == 'todayReview' &&
-                                              widget.onOpenLearning != null) {
+                                  if (view != 'completed' && rows.isNotEmpty)
+                                    SliverPadding(
+                                      padding: const EdgeInsets.all(12),
+                                      sliver: SliverList(
+                                        delegate: SliverChildBuilderDelegate((
+                                          context,
+                                          index,
+                                        ) {
+                                          final row = rows[index];
+                                          if (row
+                                              is ({String key, int count})) {
+                                            if (row.key == 'todayReview' &&
+                                                widget.onOpenLearning != null) {
+                                              final colors = Theme.of(
+                                                context,
+                                              ).colorScheme;
+                                              return Padding(
+                                                padding:
+                                                    const EdgeInsets.fromLTRB(
+                                                      4,
+                                                      12,
+                                                      4,
+                                                      6,
+                                                    ),
+                                                child: InkWell(
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                  onTap: widget.onOpenLearning,
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 6,
+                                                          vertical: 6,
+                                                        ),
+                                                    child: Row(
+                                                      children: [
+                                                        Icon(
+                                                          Icons
+                                                              .auto_stories_outlined,
+                                                          size: 16,
+                                                          color: colors.primary,
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 8,
+                                                        ),
+                                                        Expanded(
+                                                          child: Text(
+                                                            loc.get(
+                                                              'learningQueueTitle',
+                                                            ),
+                                                            style: Theme.of(context)
+                                                                .textTheme
+                                                                .titleSmall
+                                                                ?.copyWith(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w700,
+                                                                  color: colors
+                                                                      .primary,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                        Container(
+                                                          padding:
+                                                              const EdgeInsets.symmetric(
+                                                                horizontal: 8,
+                                                                vertical: 2,
+                                                              ),
+                                                          decoration: BoxDecoration(
+                                                            color: colors
+                                                                .primaryContainer,
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  999,
+                                                                ),
+                                                          ),
+                                                          child: Text(
+                                                            '${row.count}',
+                                                            style: Theme.of(context)
+                                                                .textTheme
+                                                                .labelSmall
+                                                                ?.copyWith(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w700,
+                                                                  color: colors
+                                                                      .onPrimaryContainer,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 4,
+                                                        ),
+                                                        Icon(
+                                                          Icons
+                                                              .chevron_right_rounded,
+                                                          size: 18,
+                                                          color: colors.primary,
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            }
                                             final colors = Theme.of(
                                               context,
                                             ).colorScheme;
-                                            return Padding(
-                                              padding: const EdgeInsets.fromLTRB(
-                                                4,
-                                                12,
-                                                4,
-                                                6,
-                                              ),
-                                              child: InkWell(
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                                onTap: widget.onOpenLearning,
-                                                child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 6,
-                                                        vertical: 6,
-                                                      ),
-                                                  child: Row(
-                                                    children: [
-                                                      Icon(
-                                                        Icons
-                                                            .auto_stories_outlined,
-                                                        size: 16,
-                                                        color: colors.primary,
-                                                      ),
-                                                      const SizedBox(width: 8),
-                                                      Expanded(
-                                                        child: Text(
-                                                          loc.get(
-                                                            'learningQueueTitle',
-                                                          ),
-                                                          style: Theme.of(context)
-                                                              .textTheme
-                                                              .titleSmall
-                                                              ?.copyWith(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w700,
-                                                                color: colors
-                                                                    .primary,
-                                                              ),
-                                                        ),
-                                                      ),
-                                                      Container(
-                                                        padding:
-                                                            const EdgeInsets.symmetric(
-                                                              horizontal: 8,
-                                                              vertical: 2,
-                                                            ),
-                                                        decoration: BoxDecoration(
-                                                          color: colors
-                                                              .primaryContainer,
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                999,
-                                                              ),
-                                                        ),
-                                                        child: Text(
-                                                          '${row.count}',
-                                                          style: Theme.of(context)
-                                                              .textTheme
-                                                              .labelSmall
-                                                              ?.copyWith(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w700,
-                                                                color: colors
-                                                                    .onPrimaryContainer,
-                                                              ),
-                                                        ),
-                                                      ),
-                                                      const SizedBox(width: 4),
-                                                      Icon(
-                                                        Icons
-                                                            .chevron_right_rounded,
-                                                        size: 18,
-                                                        color: colors.primary,
-                                                      ),
-                                                    ],
+                                            final (icon, accent) =
+                                                switch (row.key) {
+                                                  'todayUrgent' => (
+                                                    Icons
+                                                        .notifications_active_outlined,
+                                                    colors.error,
                                                   ),
-                                                ),
+                                                  'todayPinned' => (
+                                                    Icons.push_pin_outlined,
+                                                    colors.primary,
+                                                  ),
+                                                  'todayOverdue' => (
+                                                    Icons.schedule_rounded,
+                                                    colors.error,
+                                                  ),
+                                                  'captureInbox' => (
+                                                    Icons.inbox_outlined,
+                                                    colors.tertiary,
+                                                  ),
+                                                  'futureTomorrow' => (
+                                                    Icons.wb_sunny_outlined,
+                                                    colors.primary,
+                                                  ),
+                                                  'futureThisWeek' => (
+                                                    Icons.date_range_outlined,
+                                                    colors.primary,
+                                                  ),
+                                                  'futureLater' => (
+                                                    Icons.event_note_outlined,
+                                                    colors.onSurfaceVariant,
+                                                  ),
+                                                  _ => (
+                                                    Icons.today_outlined,
+                                                    colors.primary,
+                                                  ),
+                                                };
+                                            return Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 12,
+                                                bottom: 8,
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    icon,
+                                                    size: 16,
+                                                    color: accent,
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  Flexible(
+                                                    child: Text(
+                                                      loc.get(row.key),
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .titleSmall
+                                                          ?.copyWith(
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 7,
+                                                          vertical: 1,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: colors
+                                                          .surfaceContainer,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            10,
+                                                          ),
+                                                    ),
+                                                    child: Text(
+                                                      '${row.count}',
+                                                      style: Theme.of(context)
+                                                          .textTheme
+                                                          .labelSmall
+                                                          ?.copyWith(
+                                                            color: colors
+                                                                .onSurfaceVariant,
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             );
                                           }
-                                          final colors = Theme.of(
-                                            context,
-                                          ).colorScheme;
-                                          final (icon, accent) =
-                                              switch (row.key) {
-                                                'todayUrgent' => (
-                                                  Icons
-                                                      .notifications_active_outlined,
-                                                  colors.error,
-                                                ),
-                                                'todayPinned' => (
-                                                  Icons.push_pin_outlined,
-                                                  colors.primary,
-                                                ),
-                                                'todayOverdue' => (
-                                                  Icons.schedule_rounded,
-                                                  colors.error,
-                                                ),
-                                                'captureInbox' => (
-                                                  Icons.inbox_outlined,
-                                                  colors.tertiary,
-                                                ),
-                                                'futureTomorrow' => (
-                                                  Icons.wb_sunny_outlined,
-                                                  colors.primary,
-                                                ),
-                                                'futureThisWeek' => (
-                                                  Icons.date_range_outlined,
-                                                  colors.primary,
-                                                ),
-                                                'futureLater' => (
-                                                  Icons.event_note_outlined,
-                                                  colors.onSurfaceVariant,
-                                                ),
-                                                _ => (
-                                                  Icons.today_outlined,
-                                                  colors.primary,
-                                                ),
-                                              };
-                                          return Padding(
-                                            padding: const EdgeInsets.only(
-                                              top: 12,
-                                              bottom: 8,
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                Icon(
-                                                  icon,
-                                                  size: 16,
-                                                  color: accent,
-                                                ),
-                                                const SizedBox(width: 6),
-                                                Flexible(
-                                                  child: Text(
-                                                    loc.get(row.key),
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .titleSmall
-                                                        ?.copyWith(
-                                                          fontWeight:
-                                                              FontWeight.w700,
-                                                        ),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Container(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 7,
-                                                        vertical: 1,
-                                                      ),
-                                                  decoration: BoxDecoration(
-                                                    color: colors
-                                                        .surfaceContainer,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          10,
-                                                        ),
-                                                  ),
-                                                  child: Text(
-                                                    '${row.count}',
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .labelSmall
-                                                        ?.copyWith(
-                                                          color: colors
-                                                              .onSurfaceVariant,
-                                                          fontWeight:
-                                                              FontWeight.w700,
-                                                        ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
+                                          final task = row as Reminder;
+                                          return TaskCard(
+                                            key: ValueKey(task.id),
+                                            task: task,
+                                            referenceNow: now,
+                                            onPlayMedia: () {
+                                              if (task.recordId != null) {
+                                                widget.onPlayMedia(
+                                                  task.recordId!,
+                                                );
+                                              }
+                                            },
                                           );
-                                        }
-                                        final task = row as Reminder;
-                                        return TaskCard(
-                                          key: ValueKey(task.id),
-                                          task: task,
-                                          referenceNow: now,
-                                          onPlayMedia: () {
-                                            if (task.recordId != null) {
-                                              widget.onPlayMedia(
-                                                task.recordId!,
-                                              );
-                                            }
-                                          },
-                                        );
-                                      },
-                                      childCount: rows.length,
-                                      findChildIndexCallback: (key) =>
-                                          key is ValueKey<String>
-                                          ? _cachedRowIndexByTaskId[key.value]
-                                          : null,
+                                        },
+                                        childCount: rows.length,
+                                        findChildIndexCallback: (key) =>
+                                            key is ValueKey<String>
+                                            ? _cachedRowIndexByTaskId[key.value]
+                                            : null,
+                                        ),
+                                      ),
                                     ),
+                                  if (view == 'completed' &&
+                                      completed.isNotEmpty)
+                                    SliverToBoxAdapter(
+                                      child: Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                          12,
+                                          8,
+                                          12,
+                                          6,
+                                        ),
+                                        child: CompletedTasksToolbar(
+                                          scopeKey: 'workspace-completed',
+                                          tasks: completed,
+                                          selectionMode: _selectingCompleted,
+                                          selectedIds: _selectedCompletedIds,
+                                          busy: _batchBusy,
+                                          onEnterSelection: () => setState(() {
+                                            _selectingCompleted = true;
+                                            _selectedCompletedIds.clear();
+                                          }),
+                                          onExitSelection: () => setState(() {
+                                            _selectingCompleted = false;
+                                            _selectedCompletedIds.clear();
+                                          }),
+                                          onToggleSelectAll: () =>
+                                              _toggleSelectAllCompleted(
+                                                completed,
+                                              ),
+                                          onDeleteSelected: () =>
+                                              _deleteSelectedCompleted(
+                                                completed,
+                                              ),
+                                          onReopenSelected: () =>
+                                              _reopenSelectedCompleted(
+                                                completed,
+                                              ),
+                                          onClearAll: _clearAllCompleted,
+                                          leading: Text(
+                                            '${loc.get('completed')} · $_cachedCompletedCount',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .titleSmall
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w700,
+                                                  fontFeatures:
+                                                      AppTheme.tabularFigures,
+                                                ),
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                  ),
                                   if (view == 'all' && _cachedCompletedCount > 0)
                                     SliverToBoxAdapter(
                                       child: Padding(
@@ -754,35 +931,131 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                                           horizontal: 12,
                                           vertical: 4,
                                         ),
-                                        child: Align(
-                                          alignment: Alignment.centerLeft,
-                                          child: TextButton.icon(
-                                            key: const ValueKey(
-                                              'workspace-completed-toggle',
-                                            ),
-                                            onPressed: () => setState(
-                                              () => _showCompleted =
-                                                  !_showCompleted,
-                                            ),
-                                            icon: Icon(
-                                              _showCompleted
-                                                  ? Icons.expand_less
-                                                  : Icons.expand_more,
-                                            ),
-                                            label: Text(
-                                              '${loc.get('completed')} · $_cachedCompletedCount',
-                                              style: const TextStyle(
-                                                fontFeatures:
-                                                    AppTheme.tabularFigures,
+                                        child: _showCompleted
+                                            ? CompletedTasksToolbar(
+                                                scopeKey:
+                                                    'workspace-all-completed',
+                                                tasks: completed,
+                                                selectionMode:
+                                                    _selectingCompleted,
+                                                selectedIds:
+                                                    _selectedCompletedIds,
+                                                busy: _batchBusy,
+                                                onEnterSelection: () =>
+                                                    setState(() {
+                                                      _selectingCompleted =
+                                                          true;
+                                                      _selectedCompletedIds
+                                                          .clear();
+                                                    }),
+                                                onExitSelection: () =>
+                                                    setState(() {
+                                                      _selectingCompleted =
+                                                          false;
+                                                      _selectedCompletedIds
+                                                          .clear();
+                                                    }),
+                                                onToggleSelectAll: () =>
+                                                    _toggleSelectAllCompleted(
+                                                      completed,
+                                                    ),
+                                                onDeleteSelected: () =>
+                                                    _deleteSelectedCompleted(
+                                                      completed,
+                                                    ),
+                                                onReopenSelected: () =>
+                                                    _reopenSelectedCompleted(
+                                                      completed,
+                                                    ),
+                                                onClearAll: _clearAllCompleted,
+                                                leading: TextButton.icon(
+                                                  key: const ValueKey(
+                                                    'workspace-completed-toggle',
+                                                  ),
+                                                  onPressed: () => setState(() {
+                                                    _showCompleted =
+                                                        !_showCompleted;
+                                                    if (!_showCompleted) {
+                                                      _selectingCompleted =
+                                                          false;
+                                                      _selectedCompletedIds
+                                                          .clear();
+                                                    }
+                                                  }),
+                                                  icon: Icon(
+                                                    _showCompleted
+                                                        ? Icons.expand_less
+                                                        : Icons.expand_more,
+                                                  ),
+                                                  label: Text(
+                                                    '${loc.get('completed')} · $_cachedCompletedCount',
+                                                    style: const TextStyle(
+                                                      fontFeatures: AppTheme
+                                                          .tabularFigures,
+                                                    ),
+                                                  ),
+                                                ),
+                                              )
+                                            : Wrap(
+                                                spacing: 6,
+                                                runSpacing: 4,
+                                                alignment:
+                                                    WrapAlignment.spaceBetween,
+                                                crossAxisAlignment:
+                                                    WrapCrossAlignment.center,
+                                                children: [
+                                                  TextButton.icon(
+                                                    key: const ValueKey(
+                                                      'workspace-completed-toggle',
+                                                    ),
+                                                    onPressed: () => setState(
+                                                      () => _showCompleted =
+                                                          !_showCompleted,
+                                                    ),
+                                                    icon: const Icon(
+                                                      Icons.expand_more,
+                                                    ),
+                                                    label: Text(
+                                                      '${loc.get('completed')} · $_cachedCompletedCount',
+                                                      style: const TextStyle(
+                                                        fontFeatures: AppTheme
+                                                            .tabularFigures,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  TextButton.icon(
+                                                    key: const ValueKey(
+                                                      'workspace-all-collapsed-clear-completed',
+                                                    ),
+                                                    style: TextButton.styleFrom(
+                                                      minimumSize: const Size(
+                                                        48,
+                                                        44,
+                                                      ),
+                                                      foregroundColor:
+                                                          colors.error,
+                                                    ),
+                                                    onPressed: _batchBusy
+                                                        ? null
+                                                        : _clearAllCompleted,
+                                                    icon: const Icon(
+                                                      Icons
+                                                          .delete_sweep_outlined,
+                                                      size: 18,
+                                                    ),
+                                                    label: Text(
+                                                      loc.get(
+                                                        'clearCompletedShort',
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                            ),
-                                          ),
-                                        ),
                                       ),
                                     ),
-                                  if (view == 'all' &&
-                                      _cachedCompletedCount > 0 &&
-                                      _showCompleted)
+                                  if ((view == 'completed' ||
+                                          (view == 'all' && _showCompleted)) &&
+                                      completed.isNotEmpty)
                                     SliverPadding(
                                       padding: const EdgeInsets.fromLTRB(
                                         12,
@@ -798,6 +1071,14 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                                               key: ValueKey(task.id),
                                               task: task,
                                               referenceNow: now,
+                                              selectionMode:
+                                                  _selectingCompleted,
+                                              selected: _selectedCompletedIds
+                                                  .contains(task.id),
+                                              onToggleSelected: () =>
+                                                  _toggleCompletedSelection(
+                                                    task.id,
+                                                  ),
                                               onPlayMedia: () {
                                                 if (task.recordId != null) {
                                                   widget.onPlayMedia(

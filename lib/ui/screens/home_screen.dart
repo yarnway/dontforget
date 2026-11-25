@@ -36,6 +36,7 @@ import '../widgets/focus_mode_sheet.dart';
 import '../widgets/context_digest_sheet.dart';
 import '../widgets/missed_reminders_bar.dart';
 import '../widgets/task_workspace_overview.dart';
+import '../widgets/completed_tasks_toolbar.dart';
 import '../widgets/learning_queue_panel.dart';
 import '../widgets/planning_panel.dart';
 import '../../l10n/planning_strings.dart';
@@ -578,6 +579,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                   InlineFeedback.of(context).showSnackBar(
                     SnackBar(content: Text('$title: $body')),
                     tone: FeedbackTone.info,
+                    dismissAfter: const Duration(seconds: 5),
                   );
                 }
                 unawaited(
@@ -888,9 +890,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           SnackBar(content: Text(message), action: snackAction),
           tone: tone,
           dismissAfter:
-              kind == _NoticeActionKind.complete && tone == FeedbackTone.success
-              ? const Duration(seconds: 5)
-              : null,
+              tone == FeedbackTone.warning || tone == FeedbackTone.error
+              ? null
+              : const Duration(seconds: 5),
         );
       }
     } catch (_) {
@@ -943,6 +945,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       InlineFeedback.of(context).showSnackBar(
         SnackBar(content: Text('$title: $body')),
         tone: FeedbackTone.info,
+        dismissAfter: const Duration(seconds: 5),
       );
       unawaited(
         database
@@ -962,117 +965,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   void _confirmClearCompleted() {
     if (!mounted || !_runtimeActive || _confirmClearCompletedOpen) return;
-    final l10n = AppLocalizations.of(context);
-    final colors = Theme.of(context).colorScheme;
-    final completedCount = ref
-        .read(remindersProvider)
-        .where(
-          (r) => r.isCompleted && r.details.data['learning_archive'] != true,
-        )
-        .length;
-    if (completedCount == 0) {
-      InlineFeedback.of(context).hideCurrentSnackBar();
-      InlineFeedback.of(context).showSnackBar(
-        SnackBar(
-          duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          content: Text(l10n.get('noCompletedToClear')),
-        ),
-      );
-      return;
-    }
-
     _confirmClearCompletedOpen = true;
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(
-              Icons.cleaning_services_outlined,
-              color: colors.error,
-              size: 22,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                l10n.get('clearCompletedTitle'),
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          '${l10n.get('clearCompletedConfirm')} ($completedCount)',
-          style: const TextStyle(fontSize: 14),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(
-              l10n.get('cancel'),
-              style: const TextStyle(fontSize: 13),
-            ),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: Theme.of(ctx).colorScheme.error,
-              foregroundColor: Theme.of(ctx).colorScheme.onError,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
-              ),
-            ),
-            onPressed: () async {
-              if (!mounted || !_runtimeActive) return;
-              Navigator.of(ctx).pop();
-              try {
-                final database = ref.read(databaseHelperProvider);
-                final generation = database.captureGeneration();
-                final result = await database.runOperation(
-                  generation,
-                  () async {
-                    return ref
-                        .read(remindersProvider.notifier)
-                        .clearCompletedReminders();
-                  },
-                );
-                database.checkGeneration(generation);
-                if (mounted && _runtimeActive) {
-                  InlineFeedback.of(context).hideCurrentSnackBar();
-                  InlineFeedback.of(context).showSnackBar(
-                    SnackBar(
-                      duration: const Duration(seconds: 3),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      content: Text(
-                        result.nativeSyncFailures > 0
-                            ? l10n.get('reminderNativeDeleteFailed')
-                            : '${l10n.get('clearedCompletedSuccess')} (${result.changed})',
-                      ),
-                    ),
-                  );
-                }
-              } catch (_) {
-                if (mounted && _runtimeActive) {
-                  InlineFeedback.of(context).showSnackBar(
-                    SnackBar(content: Text(l10n.get('taskDeleteFailed'))),
-                  );
-                }
-              }
-            },
-            child: Text(
-              l10n.get('confirm'),
-              style: const TextStyle(fontSize: 13),
-            ),
-          ),
-        ],
-      ),
-    ).whenComplete(() {
-      _confirmClearCompletedOpen = false;
-    });
+    unawaited(
+      confirmAndClearCompletedTasks(
+        context,
+        ref,
+        ref.read(remindersProvider),
+      ).whenComplete(() {
+        _confirmClearCompletedOpen = false;
+      }),
+    );
   }
 
   Future<void> _clearAllNotices() async {
@@ -1089,6 +991,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       InlineFeedback.of(context).showSnackBar(
         SnackBar(content: Text(l10n.get('noticesCleared'))),
         tone: FeedbackTone.success,
+        dismissAfter: const Duration(seconds: 5),
       );
       return;
     }
@@ -1126,6 +1029,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         tone: nativeFailed || stale
             ? FeedbackTone.warning
             : FeedbackTone.success,
+        dismissAfter: nativeFailed || stale
+            ? null
+            : const Duration(seconds: 5),
       );
     } catch (_) {
       if (mounted && _runtimeActive) {
@@ -1154,6 +1060,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           content: Text(l10n.get('playbackStopped')),
         ),
+        dismissAfter: const Duration(seconds: 3),
       );
     }
   }
@@ -1390,7 +1297,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       final message =
           '${l10n.get('dynamicPromotedCount')}: ${result.changed}'
           '${result.nativeSyncFailures > 0 ? '\n${l10n.get('reminderNativeSyncFailed')}' : ''}';
-      InlineFeedback.of(context).showSnackBar(SnackBar(content: Text(message)));
+      InlineFeedback.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+        tone: result.nativeSyncFailures > 0
+            ? FeedbackTone.warning
+            : FeedbackTone.info,
+        dismissAfter: result.nativeSyncFailures > 0
+            ? null
+            : const Duration(seconds: 5),
+      );
     } catch (_) {
       if (!mounted || !_runtimeActive) return;
       InlineFeedback.of(context).showSnackBar(

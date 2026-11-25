@@ -1,0 +1,94 @@
+{
+  "date": "2026-11-25",
+  "platform": "windows-x64",
+  "from_version": "1.8.24+105",
+  "to_version": "1.8.24+106",
+  "flutter_sdk": "3.44.9",
+  "artifacts": {
+    "installer": {
+      "file": "dist/DontForget_Setup_v1.8.24.exe",
+      "bytes": 13308911,
+      "sha256": "09a5be1e2e649ff9a438b97cfabffedf957401316f538c4dd2cb99d9e79265d3"
+    },
+    "portable_zip": {
+      "file": "dist/DontForget_Windows_Portable_v1.8.24.zip",
+      "bytes": 15794337,
+      "sha256": "082e83a8d888880031d06edf1f81c08456a42d806069f0e7e053257702914bd1"
+    },
+    "sqlite3_dll_sha256": "2bf39f2aadafdc59a90b260f582a8fccebc5b89eb94175fdbaa9148c1e1f084d",
+    "prior_exe_sha256": "c53ef2ec9734596adc570af39fd6dad9b4ca4299834d63b57f5ed931b5406978",
+    "candidate_exe_sha256": "0cb6f64000e76e945deb19f4ab68f58817e3523e3faff164c7bb1f26fb230628",
+    "prior_appso_sha256": "7619ccafdd54be4bf0f5bac06ccabcf2df0b02d71ef268bf13840bfdf6ba4ff9",
+    "candidate_appso_sha256": "9aaa75669488729b42beada31406187a1b1dcaecc523e08d7a9e05a8896d9250"
+  },
+  "live_upgrade_rounds": [
+    {
+      "round": 1,
+      "scenario": "tray_hidden_running_cross_build_105_to_106",
+      "prior_pid": 10936,
+      "session_id": 1,
+      "force_killed": false,
+      "graceful_upgrade_signal": "Local\\DontForget.GracefulUpgradeExit",
+      "restart_manager_locked_files": 0,
+      "installer_exit_code": 0,
+      "elapsed_ms": 2725,
+      "prior_pid_exited_cleanly": true
+    },
+    {
+      "round": 2,
+      "scenario": "running_with_full_external_media_backup_106_to_106",
+      "prior_pid": 9148,
+      "session_id": 1,
+      "force_killed": false,
+      "installer_exit_code": 0,
+      "elapsed_ms": 2331,
+      "prior_pid_exited_cleanly": true,
+      "reopened_pid": 22104,
+      "reopened_main_window_handle": 56428542
+    },
+    {
+      "round": 3,
+      "scenario": "repeat_running_reopen_verification_106_to_106",
+      "prior_pid": 22104,
+      "session_id": 1,
+      "force_killed": false,
+      "installer_exit_code": 0,
+      "elapsed_ms": 1747,
+      "prior_pid_exited_cleanly": true,
+      "reopened_pid": 16664,
+      "reopened_main_window_handle": 78318554
+    }
+  ],
+  "payload_verification": {
+    "installed_payload_count": 27,
+    "expected_payload_count": 27,
+    "exact_match": true
+  },
+  "data_and_credential_verification": {
+    "backup_dir": "C:\\Users\\Wayne\\AppData\\Local\\DontForgetRecovery\\upgrade-backup-b106-20261125-213738",
+    "sqlite_schema": 17,
+    "integrity_check": "ok",
+    "counts": {
+      "reminders": 20,
+      "media": 4,
+      "media_files_present": 4,
+      "settings": 1,
+      "dpapi_credentials": 1
+    },
+    "tables_sha256_before": "7d60be31ec752874bc3b2cc41eef4c40a30da51355c3e290ecdaa13b2288bb7c",
+    "tables_sha256_after_reopen": "7d60be31ec752874bc3b2cc41eef4c40a30da51355c3e290ecdaa13b2288bb7c",
+    "reminders_sha256": "d90ab1acd7aa427eb1eb723cbafd0fde2e0e7cce5506ee49d06b7cf5b5f289d5",
+    "media_sha256": "dfa0b6b9a5ec0fb4eefecd10c4aed5c8a7ae8af9f60b8d2facab5a64ef8e4291",
+    "settings_sha256": "b0e64fabf7fd54daec2ac056624a7c6b83e05411e78463eae77d25b75ea4405a",
+    "external_media_sha256": {
+      "15240351-6fc8-41ba-86c4-9d2c78672cda": "d9e84536a4e136193817551bb13175ea9b76d05e6d159f23a69f5e08a2e93b13",
+      "1cad6136-a06a-4aaf-9b8a-4267357af0f0": "9897f65ee4ce82d80e5663eaefffb36e0b42aaa039138a4685dff32acbdac6e1",
+      "68e26025-5b22-4c31-a04c-3312e1b2a496": "00847b1e92dce7962532fb1b501ec0526089768df0fb50fc18216a6fdc6790bc",
+      "964f3a53-7acb-4f15-8298-2ec2664d0389": "d35d7d15754eb86bc1f48438a9e2b7bae7f6ff60469f880a7acadb8415c4cffd"
+    },
+    "dpapi_file_bytes": 742,
+    "dpapi_file_sha256_before": "a6aa809fda900a2baf9a8c077cb3c30dd9bdbee4ee98f33bfe69aed9c7a94108",
+    "dpapi_file_sha256_after_reopen": "a6aa809fda900a2baf9a8c077cb3c30dd9bdbee4ee98f33bfe69aed9c7a94108",
+    "exact_match": true
+  }
+}

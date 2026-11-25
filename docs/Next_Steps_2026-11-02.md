@@ -6,9 +6,9 @@
 
 | 顺序 | 阶段 | 待执行任务与条件 |
 | --- | --- | --- |
-| 1 | 47／49 · iPhone 与跨端验收 | iPhone build 105 已实测旧图片、PDF 直接预览和翻页、录音播放结束收起及带事项名的完成提示自动收起。Windows 与 iPhone 实机的合并、差异展示和重复同步已核对，现有回收站差异按两端原状态保留。iPhone 中文拼音候选态补验中。 |
-| 2 | 48 · 数据保护 | Windows 两种来源的 build 105 均已验证可见运行态覆盖及数据保全。Pixel build 105 已验证固定证书覆盖、冷重开及备份一致。iPhone build 105 同身份覆盖、USB 读回和业务及附件保全已通过。 |
-| 3 | 50 · GitHub 构建与下一版交付 | 公开发行仍为 `v1.8.23`（build 94）。build 105 已合入 `main`，候选完整 CI、八份制品及三端覆盖已验。主线 CI 运行中，后续核对制品、Windows 主线包运行中覆盖，再发布与读回。 |
+| 1 | 47／49 · iPhone 与跨端验收 | iPhone build 105 已实测旧图片、PDF 直接预览和翻页、录音播放结束收起及带事项名的完成提示自动收起。Windows 与 iPhone 实机的合并、差异展示和重复同步已核对，现有回收站差异按两端原状态保留。最新工作区 `1.8.24+106`（删除及操作弹窗 5 秒自动收起 + 已完成事项单删／多选批量删除优化）已在 Windows 本机完成运行中覆盖验收；待连接 Pixel 与 iPhone 补验 build 106 及 iPhone 中文拼音候选态。 |
+| 2 | 48 · 数据保护 | Windows 本地 build 106 已在最新数据库、4 份文档目录录音原件与 DPAPI 凭据受限备份后通过运行中无强杀覆盖及常规重开核对。Pixel 与 iPhone 当前实装基线为 build 105，待随 build 106 制品补做升级前后数据保全核对。 |
+| 3 | 50 · GitHub 构建与下一版交付 | 公开发行仍为 `v1.8.23`（build 94）。build 106 源码、静态分析、自动化回归及本机 Windows 安装包／运行中升级已完成；待提交推送触发 GitHub 五平台完整 CI、核对八份制品与签名、执行 Windows 主线包覆盖及双手机实装后再正式发布与读回。 |
 
 本机固定 Flutter 3.44.9 下，备份、恢复、窗口和更新服务专项 101 项通过，通知协议、路由和关于页专项 107 项通过。两组均无失败。阶段 46 的 USB 项按实际开发阻塞处理。下方为各阶段证据和历史执行记录，以上表格为当前排序。
 
@@ -182,6 +182,13 @@
 - **跨端只读与自动化**　实机快照对照确认 Windows 与 iPhone 的 20 条事项 ID、标题、摘要、提醒时间和媒体引用一致，4 份录音 SHA-256 一致，7 条事项的完成状态不同。用两个隔离 SQLite 库和产品同步服务复现 7 条状态差异及一条合成文本冲突。第一次同步合并完成状态并保留本端文字，第二次仍报告文本冲突，通过产品入口采用对端文字后第三次无冲突，两侧各有 20 条事项和 4 份字节一致的附件。同步与可用性回归另有 50 项通过。本次真实设备比较为只读。
 - **Windows 与 iPhone 实机同步**　用户在 Windows 完成配对和双向同步。快照核对 20 条事项核心字段已一致、4 份录音摘要一致，并在设置看到「查看差异（1）」。该条差异涉及回收站状态，保留两端既有状态。用户从同一 Windows 界面重复同步后仍显示一条差异，重新核对两端完整业务表和附件未改变。按回收站冲突保留实机验收，采用对端文字与收敛另用隔离库测试。[同步回执](benchmarks/windows-iphone-sync-105-2026-11-25.json)
 - **主线与发布准备**　基于五平台测试通过的 build 105 源码和三端验收，`main` 已快进到 `0a1a156`。更新 `v1.8.24` 发布说明并通过发布脚本的格式校验和 19 项定向测试。[主线 CI](https://github.com/yarnway/dontforget/actions/runs/45612685488)
+
+### 11 月 25 日 · build 106 删除及操作弹窗 5 秒自动收起与已完成事项单删／批量删除优化
+
+- **源码**　将版本推进至 `1.8.24+106`：① **删除及操作弹窗通知 5 秒自动收起**：统一为 `TaskCard` 单条删除（滑动／快捷删除按钮／菜单删除）、`TaskDetailScreen` 详情删除与保存、`TaskEditDialog` 编辑弹窗删除与保存、多选批量删除与清空已完成、`SavedTaskFiltersBar` 常用筛选删除与保存、`TaskAttachmentsPanel` 附件增删撤销、`QuadrantView` 象限移动、`PlanningPanel` 生命周期归档／回收站操作及 `HomeScreen` 提醒条／情境提示／扫描提示设置 `dismissAfter: const Duration(seconds: 5)`（播放手动停止为 3 秒），5 秒内可正常点击「撤销」，到期自动收起且读屏导航下同样生效；系统提醒同步／取消失败等需人工处理的告警保持常驻不误关；② **已完成事项易用性与批量删除优化**：修复 `TaskWorkspaceOverview` 将回收站及学习归档记录计入已完成数量的统计偏差，已完成列表按 `completedAt` 最新完成优先排序；新增一级 `已完成` 视图筛选标签（有已完成事项时自动展示数量角标）；已完成 `TaskCard` 展示 `完成于` 时间标签、精简已完成态无关菜单项，并在卡片右侧直接提供 `48×48` 一键删除按钮（桌面端未完成宽卡悬停栏同步补齐快捷删除按钮）；新增响应式 `CompletedTasksToolbar` 与 `TaskManagement` 原子批处理接口（`trashWorkspaceTasks`、`restoreTrashedWorkspaceTasks`、`reopenCompletedTasks`），在首页 `已完成` 视图、`全部` 视图已完成区（折叠态一键清空／展开态完整工具栏）、搜索面板 `已完成` 筛选、四象限看板已完成栏头及命令面板统一接入「批量选择（全选／取消全选、删除所选、标为未完成、Esc 退出）」与「清空已完成」，统一移入回收站并附带 5 秒自动关闭的「撤销」恢复。
+- **自动化测试**　固定 Flutter `3.44.9` 严格校验通过，`flutter analyze --no-pub` 零问题；永久性无障碍与发布静态门禁 `python -m unittest discover -s scripts/tests` **193 项运行（187 项通过／6 项跳过，0 失败）**；新增 `test/v1_8_24_build106_notifications_completed_test.dart`（覆盖已完成卡片一键删除 5 秒撤销与到期自动收起、弹窗／筛选删除 5 秒收起与系统提醒失败常驻对照、已完成排除回收站与学习归档、按完成时间倒序、多选批量删除／撤销／批量标为未完成／一键清空、搜索面板与四象限批量清理，以及 `320px/375px/1440px` × `2.0x` 大字号 × 中英日三语零溢出验证），连同 `quiet_feedback_test.dart`、`task_workspace_ux_test.dart`、`task_detail_screen_test.dart`、`planning_panel` 等 30 个关联测试套件共 **397 项用例全部通过（0 失败）**。
+- **Windows 安装包与本机运行中覆盖升级**　打包生成 `DontForget_Setup_v1.8.24.exe`（`13,308,911 B`，SHA-256 `09a5be1e...`）与 `DontForget_Windows_Portable_v1.8.24.zip`（`15,794,337 B`，SHA-256 `082e83a8...`）。升级前先对运行中的 `1.8.24+105`（`PID 10936`，`SessionId=1`）执行 SQLite 在线备份、系统文档目录 4 份原始录音（`100,403 B`、`62,778 B`、`124,135 B`、`141,407 B`）与 DPAPI 凭据受限目录快照，随后不强杀直接运行安装器完成三轮运行中优雅覆盖（`105→106` `2.725s`、`106→106` `2.331s` 与 `1.747s`，均通过 `Local\DontForget.GracefulUpgradeExit` 优雅释放、`RestartManager` 0 占用、退出码 `0`）。实装 `27/27` 载荷与便携包逐字节一致，经 `explorer.exe` 常规重开（`PID 16664`，`SessionId=1`，`MainWindowHandle=78318554`）后 SQLite schema `17` `integrity_check=ok`、20 条事项／4 条媒体／1 条设置（表摘要 `7d60be31...`）、4 份外部录音原件与 1 项 DPAPI 凭据（`742 B`，摘要 `a6aa809f...`）前后 100% 一致。[Windows 本机运行中升级回执](benchmarks/windows-upgrade-106-local-2026-11-25.json)
+- **剩余跨平台与真机待执行**　当前本机 ADB 未连接 Pixel（`0` 台），Windows 主机无 Xcode 构建环境（`MacOS_BUILD_HOST_REQUIRED`）；Linux／Android／iOS 的 `1.8.24+106` 发行包构建、GitHub Actions 五平台 CI 制品复核，以及 Pixel 同签名覆盖与 iPhone AltStore 同身份覆盖实机验收留待后续执行，不提前记为全部平台通过。
 
 ## 当前范围（2026-11-17调整）
 

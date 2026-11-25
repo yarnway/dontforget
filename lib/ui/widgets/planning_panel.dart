@@ -222,6 +222,12 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
                   )
                 : null,
           ),
+          tone: result.nativeSyncFailures > 0
+              ? FeedbackTone.warning
+              : FeedbackTone.success,
+          dismissAfter: result.nativeSyncFailures > 0
+              ? null
+              : const Duration(seconds: 5),
         );
       }
     } catch (_) {
@@ -308,6 +314,12 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
                 )
               : null,
         ),
+        tone: result.nativeSyncFailures > 0
+            ? FeedbackTone.warning
+            : FeedbackTone.success,
+        dismissAfter: result.nativeSyncFailures > 0
+            ? null
+            : const Duration(seconds: 5),
       );
     } catch (_) {
       if (mounted && context.mounted && _current) {

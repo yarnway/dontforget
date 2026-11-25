@@ -23,12 +23,18 @@ class TaskCard extends ConsumerStatefulWidget {
   final Reminder task;
   final VoidCallback onPlayMedia;
   final DateTime? referenceNow;
+  final bool selectionMode;
+  final bool selected;
+  final VoidCallback? onToggleSelected;
 
   const TaskCard({
     super.key,
     required this.task,
     required this.onPlayMedia,
     this.referenceNow,
+    this.selectionMode = false,
+    this.selected = false,
+    this.onToggleSelected,
   });
 
   @override
@@ -75,13 +81,20 @@ class _TaskCardState extends ConsumerState<TaskCard> {
     if (!mounted) return;
     final isNativeSyncFailure =
         message == AppLocalizations.of(context).get('reminderNativeSyncFailed');
+    final effectiveTone = isNativeSyncFailure ? FeedbackTone.warning : tone;
+    final effectiveDismiss =
+        isNativeSyncFailure ||
+            effectiveTone == FeedbackTone.warning ||
+            effectiveTone == FeedbackTone.error
+        ? null
+        : (dismissAfter ?? const Duration(seconds: 5));
     InlineFeedback.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
         action: isNativeSyncFailure ? notificationRepairAction(context) : null,
       ),
-      tone: isNativeSyncFailure ? FeedbackTone.warning : tone,
-      dismissAfter: isNativeSyncFailure ? null : dismissAfter,
+      tone: effectiveTone,
+      dismissAfter: effectiveDismiss,
     );
   }
 
@@ -330,6 +343,9 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         tone: result.nativeSyncFailed
             ? FeedbackTone.warning
             : FeedbackTone.info,
+        dismissAfter: result.nativeSyncFailed
+            ? null
+            : const Duration(seconds: 5),
       );
     } catch (_) {
       if (feedback.mounted) {
@@ -447,11 +463,12 @@ class _TaskCardState extends ConsumerState<TaskCard> {
           ? planningText(context, 'taken')
           : l10n.get(widget.task.isCompleted ? 'markUndone' : 'markDone'),
     ),
-    _menuItem(
-      'decompose',
-      Icons.psychology_outlined,
-      l10n.get('breakdownHabits'),
-    ),
+    if (!widget.task.isCompleted)
+      _menuItem(
+        'decompose',
+        Icons.psychology_outlined,
+        l10n.get('breakdownHabits'),
+      ),
     _menuItem(
       'toggle_review',
       Icons.school_outlined,
@@ -834,6 +851,13 @@ class _TaskCardState extends ConsumerState<TaskCard> {
           Icons.push_pin_outlined,
           colors.primary,
         ),
+      if (task.isCompleted && details.completedAt != null)
+        _badge(
+          '${l10n.get('completedAtShort')}: ${formatLocalDateTime(details.completedAt!)}',
+          Icons.task_alt_rounded,
+          colors.onSurfaceVariant,
+          tabular: true,
+        ),
       if (task.eventTime != null)
         _badge(
           '${l10n.get(sharedTime ? 'taskTimeAndReminder' : 'eventTimeShort')}: ${formatLocalDateTime(task.eventTime!)}',
@@ -902,13 +926,21 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         ),
     ];
 
-    final cardSurfaceColor = task.isCompleted
+    final baseSurfaceColor = task.isCompleted
         ? colors.surfaceContainerLowest
         : colors.surfaceContainerLow;
+    final cardSurfaceColor = widget.selectionMode && widget.selected
+        ? Color.alphaBlend(
+            colors.primary.withValues(alpha: isDark ? 0.14 : 0.07),
+            baseSurfaceColor,
+          )
+        : baseSurfaceColor;
 
     return Dismissible(
       key: ValueKey(task.id),
-      direction: _isBusy ? DismissDirection.none : DismissDirection.endToStart,
+      direction: _isBusy || widget.selectionMode
+          ? DismissDirection.none
+          : DismissDirection.endToStart,
       background: Container(
         margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
@@ -942,7 +974,9 @@ class _TaskCardState extends ConsumerState<TaskCard> {
               color: cardSurfaceColor,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: hovered
+                color: widget.selectionMode && widget.selected
+                    ? colors.primary
+                    : hovered
                     ? colors.primary.withValues(alpha: 0.55)
                     : isOverdue
                     ? colors.error.withValues(alpha: 0.45)
@@ -968,14 +1002,21 @@ class _TaskCardState extends ConsumerState<TaskCard> {
           ),
           child: InkWell(
             borderRadius: BorderRadius.circular(14),
-            onTap: _openDetails,
-            onSecondaryTapUp: (details) =>
-                _showContextMenu(details.globalPosition),
+            onTap: widget.selectionMode
+                ? () {
+                    HapticFeedback.selectionClick();
+                    widget.onToggleSelected?.call();
+                  }
+                : _openDetails,
+            onSecondaryTapUp: widget.selectionMode
+                ? null
+                : (details) => _showContextMenu(details.globalPosition),
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: LayoutBuilder(
                 builder: (context, cardConstraints) {
-                  final allowHoverActions = cardConstraints.maxWidth >= 440;
+                  final allowHoverActions =
+                      cardConstraints.maxWidth >= 440 && !widget.selectionMode;
                   final checklistDone = details.checklist
                       .where((e) => e.done)
                       .length;
@@ -989,6 +1030,28 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
+                              if (widget.selectionMode)
+                                SizedBox(
+                                  width: 48,
+                                  height: 48,
+                                  child: Checkbox(
+                                    key: ValueKey('select-${task.id}'),
+                                    semanticLabel:
+                                        '${l10n.get('selectTask')}: ${task.taskTitle}',
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.padded,
+                                    value: widget.selected,
+                                    onChanged: _isBusy
+                                        ? null
+                                        : (_) {
+                                            HapticFeedback.selectionClick();
+                                            widget.onToggleSelected?.call();
+                                          },
+                                  ),
+                                ),
                               Expanded(
                                 child: Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1028,52 +1091,70 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                                   ],
                                 ),
                               ),
-                              SizedBox(
-                                width: 48,
-                                height: 48,
-                                child: Checkbox(
-                                  key: ValueKey('complete-${task.id}'),
-                                  semanticLabel:
-                                      '${l10n.get(task.isCompleted ? 'markUndone' : 'markDone')}: ${task.taskTitle}',
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(4),
+                              if (!widget.selectionMode) ...[
+                                SizedBox(
+                                  width: 48,
+                                  height: 48,
+                                  child: Checkbox(
+                                    key: ValueKey('complete-${task.id}'),
+                                    semanticLabel:
+                                        '${l10n.get(task.isCompleted ? 'markUndone' : 'markDone')}: ${task.taskTitle}',
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    materialTapTargetSize:
+                                        MaterialTapTargetSize.padded,
+                                    value: task.isCompleted,
+                                    onChanged: _isBusy
+                                        ? null
+                                        : (value) {
+                                            HapticFeedback.selectionClick();
+                                            if (value != null) {
+                                              _setCompleted(value);
+                                            }
+                                          },
                                   ),
-                                  materialTapTargetSize:
-                                      MaterialTapTargetSize.padded,
-                                  value: task.isCompleted,
-                                  onChanged: _isBusy
-                                      ? null
-                                      : (value) {
-                                          HapticFeedback.selectionClick();
-                                          if (value != null) {
-                                            _setCompleted(value);
-                                          }
-                                        },
                                 ),
-                              ),
-                              PopupMenuButton<String>(
-                                key: ValueKey('actions-${task.id}'),
-                                tooltip: l10n.get('taskActions'),
-                                enabled: !_isBusy,
-                                constraints: const BoxConstraints(
-                                  minWidth: 200,
-                                  maxWidth: 320,
+                                if (task.isCompleted)
+                                  IconButton(
+                                    key: ValueKey('delete-${task.id}'),
+                                    tooltip:
+                                        '${l10n.get('deleteTask')}: ${task.taskTitle}',
+                                    constraints: const BoxConstraints(
+                                      minWidth: 48,
+                                      minHeight: 48,
+                                    ),
+                                    icon: Icon(
+                                      Icons.delete_outline_rounded,
+                                      size: 20,
+                                      color: colors.onSurfaceVariant,
+                                    ),
+                                    onPressed: _isBusy ? null : _deleteTask,
+                                  ),
+                                PopupMenuButton<String>(
+                                  key: ValueKey('actions-${task.id}'),
+                                  tooltip: l10n.get('taskActions'),
+                                  enabled: !_isBusy,
+                                  constraints: const BoxConstraints(
+                                    minWidth: 200,
+                                    maxWidth: 320,
+                                  ),
+                                  color: colors.surfaceContainer,
+                                  surfaceTintColor: Colors.transparent,
+                                  icon: Icon(
+                                    Icons.more_horiz_rounded,
+                                    size: 20,
+                                    color: colors.onSurfaceVariant,
+                                  ),
+                                  itemBuilder: (_) => _menuItems(l10n),
+                                  onSelected: _onAction,
                                 ),
-                                color: colors.surfaceContainer,
-                                surfaceTintColor: Colors.transparent,
-                                icon: Icon(
-                                  Icons.more_horiz_rounded,
-                                  size: 20,
-                                  color: colors.onSurfaceVariant,
-                                ),
-                                itemBuilder: (_) => _menuItems(l10n),
-                                onSelected: _onAction,
-                              ),
+                              ],
                             ],
                           ),
                           if (allowHoverActions)
                             PositionedDirectional(
-                              end: 96,
+                              end: task.isCompleted ? 144 : 96,
                               child: ValueListenableBuilder<bool>(
                                 valueListenable: _hovered,
                                 builder: (context, hovered, _) {
@@ -1167,6 +1248,23 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                                           ),
                                           onPressed: _openEditor,
                                         ),
+                                        if (!task.isCompleted)
+                                          IconButton(
+                                            key: ValueKey(
+                                              'hover-delete-${task.id}',
+                                            ),
+                                            tooltip: l10n.get('deleteTask'),
+                                            constraints: const BoxConstraints(
+                                              minWidth: 48,
+                                              minHeight: 48,
+                                            ),
+                                            icon: Icon(
+                                              Icons.delete_outline_rounded,
+                                              size: 18,
+                                              color: colors.error,
+                                            ),
+                                            onPressed: _deleteTask,
+                                          ),
                                       ],
                                     ),
                                   );

@@ -81,9 +81,11 @@ class _SavedTaskFiltersBarState extends ConsumerState<SavedTaskFiltersBar> {
       ),
     );
     if (saved == true && mounted && _current) {
-      InlineFeedback.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(t('saved'))));
+      InlineFeedback.of(context).showSnackBar(
+        SnackBar(content: Text(t('saved'))),
+        tone: FeedbackTone.success,
+        dismissAfter: const Duration(seconds: 5),
+      );
     }
   }
 
@@ -119,6 +121,8 @@ class _SavedTaskFiltersBarState extends ConsumerState<SavedTaskFiltersBar> {
             },
           ),
         ),
+        tone: FeedbackTone.info,
+        dismissAfter: const Duration(seconds: 5),
       );
     } catch (error) {
       if (mounted && _current) {
