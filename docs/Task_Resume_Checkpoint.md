@@ -2,7 +2,7 @@
 
 ## 2026-11-25 · 多端整合 build 104
 
-- 主线即时转写与 5 秒撤销已和 iOS 分享、附件预览及播放收起合并到 build 104 候选。Flutter 全量 2753 项、Python 187 项通过。Windows 本地版已经过运行中覆盖、数据对比、普通重开和完成提示自动收起。iPhone USB 读回同身份 build 100 及 3 份草稿附件，并通过 USB 网络读取 iPhone 共享服务状态。完整 CI、手机实装和配对交换分别补验。[阶段台账](Next_Steps_2026-11-02.md#11-月-25-日--多端整合-build-104) · [候选 CI](https://github.com/yarnway/dontforget/actions/runs/45539567593)
+- 主线即时转写与 5 秒撤销已和 iOS 分享、附件预览及播放收起合并到 build 104 候选。Flutter 全量 2753 项、Python 187 项通过。Windows 本地及 GitHub 版均已运行中覆盖、核对数据与普通重开，本地包实测完成提示自动收起。Windows 与 iPhone 的原有事项已双向到达，Windows 收到的 4 份录音与手机原件摘要一致。配对路径、重复同步和手机新包实装分别补验。[阶段台账](Next_Steps_2026-11-02.md#11-月-25-日--多端整合-build-104) · [候选 CI](https://github.com/yarnway/dontforget/actions/runs/45539567593)
 
 ## 2026-11-24 · iPhone 语音过渡与系统分享 build 100
 
