@@ -7,7 +7,7 @@
 | 顺序 | 阶段 | 待执行任务与条件 |
 | --- | --- | --- |
 | 1 | 47／49 · iPhone USB 接入与跨端验收 | Windows 与 Pixel 8 Pro 的 `1.8.24+100` 本地候选已全部完成实装、数据保全与上滑右转按住期间即时转写验收。当前本机 USB 未枚举到 iPhone；待用户通过 USB 接入 iPhone 后，读取当前实装版本、完成最新备份，用同一 AltStore 身份签名覆盖 `1.8.24+100`，再验上滑右转端侧流式即时转写、清空自动关闭、中文输入、通知、VoiceOver、系统分享和三端局域网。 |
-| 2 | 50 · GitHub 五平台 CI 构建与下一版交付 | 公开发行仍为 `v1.8.23`（build 94）。`1.8.24+100` 待提交触发 GitHub Actions 五平台构建（含验证 Ubuntu 官方镜像源与 20 分钟超时），取得 GitHub 制品后独立核对来源、摘要、Android 固定发行证书签名与 iOS 应用／扩展版本，再用 GitHub 制品复测 Windows 运行中覆盖与 Pixel 正式身份升级后进入公开 Release 发布。 |
+| 2 | 50 · GitHub 五平台 CI 构建与下一版交付 | 公开发行仍为 `v1.8.23`（build 94）。等待合入完成提示后的主线 CI，核对制品来源、摘要、Android 固定发行证书及 iOS 应用和扩展版本，再完成 Windows 运行中覆盖、Pixel 同签名升级和 iPhone 验收后进入公开发布。 |
 | 3 | 48 · 数据保护（GitHub 制品复核） | Windows 本地 build 100（三轮运行中优雅覆盖，`9/0/1` 与 DPAPI `1` 项一致）与 Pixel 8 Pro 本地固定签名 build 100（`1.8.24+98`→`1.8.24+100` 升级前后 `DFBK2` `5/2/1` 与 2 份音频原件摘要逐字节一致、冷重开双云服务遮罩凭据正常读回）均已完成保全验证；待 GitHub Actions 制品生成后按同一标准重复核对。物理断电、容量穷举及旧目录清理按需处理。 |
 
 本机固定 Flutter 3.44.9 下，备份、恢复、窗口和更新服务专项 101 项通过，通知协议、路由和关于页专项 107 项通过。两组均无失败。阶段 46 的 USB 项按实际开发阻塞处理。下方为各阶段证据和历史执行记录，以上表格为当前排序。
@@ -86,6 +86,13 @@
 - **Windows 安装包与本机运行中覆盖升级**　最终打包生成 `DontForget_Setup_v1.8.24.exe`（`13,293,239 B`，SHA-256 `98f81d94...`）与 `DontForget_Windows_Portable_v1.8.24.zip`（`15,774,706 B`，SHA-256 `400ad8df...`，`MaterialIcons-Regular.otf` `30,616 B`）。每次覆盖前均通过 SQLite 在线备份接口对运行中实装目录生成受限恢复快照并校验一致，累计完成三轮**无强杀运行中优雅覆盖安装**：① 托盘隐藏运行态旧实例（`PID 18260`）收到 `GracefulUpgradeExit` 信号优雅释放，`RestartManager` 0 占用，`2.57s` 退出码 `0`；② 新版运行态实例（`PID 32640`，`SessionId=1`）自覆盖升级，`1.78s` 退出码 `0`；③ 含端侧语音 Zone 修复的最终包对运行中实例（`PID 33192`，`SessionId=1`）优雅覆盖，`3.23s` 退出码 `0`。`27/27` 已装载荷文件与便携包逐字节一致，CLI `--help`/`--list` 正常，经 `explorer.exe` 在交互桌面会话（`SessionId=1`，`PID 35272`）常规重开后 SQLite schema `17` `integrity_check=ok`、9 条事项／0 条媒体／1 条设置（表摘要 `f4e2d026...`）与 1 项 DPAPI 凭据（`742 B`，摘要 `a6aa809f...`）与升级前逐字节一致。[Windows 本机运行中升级回执](benchmarks/windows-upgrade-100-local-2026-11-25.json)
 - **Android 固定签名三包与 Pixel 8 Pro 真机验收**　修复 `scripts/build_android.ps1` 单元素数组参数展开并补齐本地 SDK `cmdline-tools`（`apkanalyzer`）后，使用本机 DPAPI 固定发行证书（`3db49656...`）签名生成 `DontForget_Android_arm64_v1.8.24.apk`（`10,388,963 B`，SHA-256 `a3c20ad5...`，仅含 `libapp.so`/`libdartjni.so`/`libflutter.so`）、`DontForget_Android_v1.8.24.apk`（`29,201,950 B`，SHA-256 `f84cbc78...`）与 `DontForget_Android_v1.8.24.aab`（`62,827,508 B`，SHA-256 `c6c9877d...`）。Pixel 8 Pro（`43201FDJG000M7`，Android 17）先从已装 `1.8.24+98` 应用内导出升级前 `DFBK2` 普通备份（`dontforget-2026-11-25-101750056.dfbackup`，`schema=17`，`5/2/1`，表摘要 `26c69caf...`，2 份音频原件校验通过且不含云密钥），随后 `adb install -r` 同签名覆盖至 `1.8.24+100`：实装 `/data/app/.../base.apk` 摘要与制品一致，冷重开后导出 `DFBK2` 复核业务记录与附件逐字节一致（设置仅新增本次备份历史记录），关于页显示 `1.8.24 (100)` 且「检查更新」返回 `当前版本高于发布版`／`公开版本 1.8.23 (94)`，DeepSeek 安全存储状态、腾讯云遮罩凭据及新增「显示密钥」开关正常读回。实机通过连续触摸手势（`motionevent DOWN→MOVE→hold→UP`）播音验收：① 云端实时路径在手指按住上滑右转未松开期间（`4.69s` 截屏，早于 `7.84s` 抬手）气泡内已实时渲染完整识别文本（「明天上午10点参加项目评审会议。」「下午开会。」），全程不再出现旧版「松手后转写」，松手进入无外卡编辑框并实测删空文字自动退出（`auto_closed_on_clear: true`）；② 临时关闭云转写实测端侧流式路径，首次在真机捕获 Google 离线中文包缺失预拒绝触发的 `createVoiceTextDraft` 异步 `Unhandled Zone Error`，修复源码重编覆盖后复测端侧上滑右转（「正在识别…」）与左转取消均 **`0` Zone 异常、`0` `logcat` 错误**，随后恢复腾讯云开关与原始权限（`RECORD_AUDIO=true`、`POST_NOTIFICATIONS=false`），首页保持原有 `未来 1`／`全部 3` 活跃事项。[Pixel 实机升级与即时转写回执](benchmarks/pixel-upgrade-100-local-2026-11-25.json)
 - **剩余跨平台与真机待执行**　本机 USB 当前尚未枚举到 iPhone（`0` 台），Linux 与 iOS 发行包尚未在本轮本地生成；待用户通过 USB 连接 iPhone 完成 AltStore 同身份覆盖与 iOS 端侧流式即时转写验收，并待提交触发 GitHub Actions 五平台构建与制品复核（不提前记为全部平台通过）。
+
+### 11 月 25 日 · 即时转写复验与 5 秒完成提示
+
+- **源码**　基于主线 `7f86cb4` 复验上滑右转后、手指仍按住时可见转写预览，松手后进入编辑。事项卡片和首页提醒条的完成成功提示保留 5 秒，期间可撤销，超时只收起提示，事项保持完成。需要手动处理的失败和修复提示仍按既有交互显示。
+- **自动化**　Flutter 3.44.9 定向 164 项通过，包含 Android／iOS 按住时出现转写、松手进入编辑、提示弹出后撤销和到期后状态保留、读屏导航及提示替换。相关静态分析通过。
+- **安装包与实机**　Pixel 8 Pro 当前读回 `1.8.24 (100)`，此前本地同签名包的真实中文转写结果在松手前已出现。5 秒提示需用包含本次改动的包补验。Windows 继续执行运行中备份覆盖与普通重开，iPhone 继续补验同身份覆盖和真实端侧转写。[Pixel 实机回执](benchmarks/pixel-upgrade-100-local-2026-11-25.json)
+- **阶段 49**　iOS 系统分享、网页打开与原名／附件预览保留在 `codex/ios-share-attachments-build103`。该候选 iOS 构建通过，Android 打包失败，仍需与主线综合回归及真机补验。[独立候选 CI](https://github.com/yarnway/dontforget/actions/runs/45356375518)
 
 ## 当前范围（2026-11-17调整）
 

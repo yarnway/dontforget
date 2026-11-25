@@ -68,6 +68,32 @@ void main() {
   );
 
   testWidgets(
+    'a timed action expires in accessible navigation and cannot dismiss a replacement',
+    (tester) async {
+      final feedback = await showFeedbackHost(
+        tester,
+        accessibleNavigation: true,
+      );
+      final completion = SnackBar(
+        content: const Text('Completed'),
+        action: SnackBarAction(label: 'Undo', onPressed: () {}),
+      );
+      const timeout = Duration(seconds: 5);
+      feedback.showSnackBar(completion, dismissAfter: timeout);
+      await tester.pump(const Duration(seconds: 4));
+      expect(find.text('Undo'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.text('Completed'), findsNothing);
+
+      feedback.showSnackBar(completion, dismissAfter: timeout);
+      await tester.pump(const Duration(seconds: 2));
+      feedback.showSnackBar(const SnackBar(content: Text('Replacement')));
+      await tester.pump(const Duration(seconds: 4));
+      expect(find.text('Replacement'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+  testWidgets(
     'warnings and failures retain reading time and replacement cancels the old expiry',
     (tester) async {
       final feedback = await showFeedbackHost(tester);

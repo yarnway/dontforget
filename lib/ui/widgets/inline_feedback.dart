@@ -49,15 +49,22 @@ class InlineFeedbackState extends State<InlineFeedback> {
     _previousFocus = null;
   }
 
-  void showSnackBar(SnackBar message, {FeedbackTone tone = FeedbackTone.info}) {
+  void showSnackBar(
+    SnackBar message, {
+    FeedbackTone tone = FeedbackTone.info,
+    Duration? dismissAfter,
+  }) {
     _expiry?.cancel();
     setState(() {
       _message = message;
       _messageSeq++;
       _tone = tone;
     });
-    // Actionable results (for example Undo) remain until explicitly handled.
-    if (message.action == null &&
+    if (dismissAfter != null) {
+      _expiry = Timer(dismissAfter, () {
+        if (identical(_message, message)) hideCurrentSnackBar();
+      });
+    } else if (message.action == null &&
         !MediaQuery.of(context).accessibleNavigation) {
       final minimum = tone == FeedbackTone.success
           ? const Duration(seconds: 4)

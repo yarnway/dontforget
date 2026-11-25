@@ -205,6 +205,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                 ),
               ),
               tone: FeedbackTone.success,
+              dismissAfter: const Duration(seconds: 5),
             );
           }
         }

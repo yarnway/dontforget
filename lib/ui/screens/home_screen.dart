@@ -892,6 +892,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         InlineFeedback.of(context).showSnackBar(
           SnackBar(content: Text(message), action: snackAction),
           tone: tone,
+          dismissAfter:
+              kind == _NoticeActionKind.complete && tone == FeedbackTone.success
+              ? const Duration(seconds: 5)
+              : null,
         );
       }
     } catch (_) {

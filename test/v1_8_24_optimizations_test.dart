@@ -495,7 +495,6 @@ void main() {
                 GlobalWidgetsLocalizations.delegate,
                 GlobalCupertinoLocalizations.delegate,
               ],
-              theme: ThemeData(platform: TargetPlatform.android),
               builder: (context, child) => MediaQuery(
                 data: MediaQuery.of(context).copyWith(disableAnimations: true),
                 child: child!,
@@ -526,16 +525,24 @@ void main() {
         await tester.pump();
 
         expect(home.gestureTranscriptionStarts, 1);
+        expect(container.read(homeControllerProvider).isRecording, isTrue);
+        expect(find.byKey(const ValueKey('voice-text-editor')), findsNothing);
         expect(find.text('正在边按住边转写'), findsOneWidget);
         expect(find.text('松手后转写'), findsNothing);
 
         await gesture.up();
         await tester.pumpAndSettle();
+        expect(container.read(homeControllerProvider).isRecording, isFalse);
+        expect(find.byKey(const ValueKey('voice-text-editor')), findsOneWidget);
         await tester.binding.handlePopRoute();
         await tester.pumpAndSettle();
         await drainWorkspaceDrafts(tester, container);
         await tester.pumpWidget(const SizedBox());
       },
+      variant: const TargetPlatformVariant({
+        TargetPlatform.android,
+        TargetPlatform.iOS,
+      }),
     );
   });
 

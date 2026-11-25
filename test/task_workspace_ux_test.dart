@@ -1851,6 +1851,49 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
   testWidgets(
+    'task completion allows Undo for five seconds then dismisses the prompt',
+    (tester) async {
+      const id = 'timed-completion';
+      await tester.runAsync(
+        () => container
+            .read(remindersProvider.notifier)
+            .addReminder(
+              Reminder(id: id, taskTitle: 'Timed completion', quadrantLevel: 1),
+            ),
+      );
+      await show(tester, card(id));
+      final checkbox = find.byKey(const ValueKey('complete-$id'));
+      final confirmation = find.text('事项已标为完成');
+      final undo = find.text('撤销');
+      Future<void> complete() async {
+        await tester.tap(checkbox);
+        await pumpUntilRealIo(
+          tester,
+          () => confirmation.evaluate().isNotEmpty,
+          reason: 'show the persisted completion',
+        );
+      }
+
+      await complete();
+      await tester.pump(const Duration(seconds: 4));
+      expect(undo.hitTestable(), findsOneWidget);
+      await tester.tap(undo);
+      await pumpUntilRealIo(
+        tester,
+        () => !container.read(remindersProvider).single.isCompleted,
+        reason: 'Undo reopens the completed item',
+      );
+      await complete();
+      await tester.pump(const Duration(seconds: 4));
+      expect(undo, findsOneWidget);
+      await tester.pump(const Duration(seconds: 1, milliseconds: 100));
+      expect(confirmation, findsNothing);
+      expect(undo, findsNothing);
+      expect(container.read(remindersProvider).single.isCompleted, isTrue);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+  testWidgets(
     'successful swipe deletion exposes Undo after its card unmounts',
     (tester) async {
       final task = Reminder(
