@@ -37,7 +37,11 @@ final class NotificationActionRouteService {
     NotificationActionRequest,
   )
   apply;
-  final void Function(NotificationActionOutcome)? onResult;
+  final void Function(
+    NotificationActionOutcome,
+    Reminder,
+    NotificationActionRequest,
+  )? onResult;
   bool _ready = false;
   bool _disposed = false;
   Future<void>? _flushing;
@@ -94,8 +98,10 @@ final class NotificationActionRouteService {
         _handled.remove(_handled.first);
       }
       await queue.remove(request.identity);
-      if (!_disposed && outcome != NotificationActionOutcome.rejected) {
-        onResult?.call(outcome);
+      if (!_disposed &&
+          target != null &&
+          outcome != NotificationActionOutcome.rejected) {
+        onResult?.call(outcome, target, request);
       }
     }
   }

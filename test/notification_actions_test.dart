@@ -265,7 +265,11 @@ void main() {
               ? NotificationActionOutcome.repair
               : NotificationActionOutcome.applied;
         },
-        onResult: outcomes.add,
+        onResult: (outcome, reminder, request) {
+          expect(reminder.id, item.id);
+          expect(request.actionId, 'complete');
+          outcomes.add(outcome);
+        },
       );
       await router.setReady(true);
       expect((await stored(item.id)).isCompleted, isTrue);

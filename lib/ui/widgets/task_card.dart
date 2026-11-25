@@ -67,7 +67,11 @@ class _TaskCardState extends ConsumerState<TaskCard> {
 
   bool get _isBusy => _isUpdating || _isDeleting;
 
-  void _showMessage(String message, {FeedbackTone tone = FeedbackTone.info}) {
+  void _showMessage(
+    String message, {
+    FeedbackTone tone = FeedbackTone.info,
+    Duration? dismissAfter,
+  }) {
     if (!mounted) return;
     final isNativeSyncFailure =
         message == AppLocalizations.of(context).get('reminderNativeSyncFailed');
@@ -77,6 +81,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         action: isNativeSyncFailure ? notificationRepairAction(context) : null,
       ),
       tone: isNativeSyncFailure ? FeedbackTone.warning : tone,
+      dismissAfter: isNativeSyncFailure ? null : dismissAfter,
     );
   }
 
@@ -161,8 +166,12 @@ class _TaskCardState extends ConsumerState<TaskCard> {
         } else if (result.reminder?.isCompleted == false &&
             result.reminder?.triggerTime != null) {
           _showMessage(
-            '${l10n.get('periodicNext')}${formatLocalDateTime(result.reminder!.triggerTime!)}',
+            l10n.taskCompletionMessage(
+              result.reminder!.taskTitle,
+              nextReminder: formatLocalDateTime(result.reminder!.triggerTime!),
+            ),
             tone: FeedbackTone.success,
+            dismissAfter: const Duration(seconds: 5),
           );
         } else if (result.reminder?.isCompleted == true) {
           final completedTask = result.reminder!;
@@ -170,7 +179,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
           if (host.mounted && databaseForFeedback.isCurrent(gen)) {
             host.showSnackBar(
               SnackBar(
-                content: Text(l10n.get('taskCompleted')),
+                content: Text(l10n.taskCompletionMessage(completedTask.taskTitle)),
                 action: SnackBarAction(
                   label: l10n.get('undo'),
                   onPressed: () async {

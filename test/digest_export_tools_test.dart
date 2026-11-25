@@ -208,6 +208,7 @@ void main() {
       action();
       expect(tasks.calls, 1);
       expect(find.text('本次摘要没有待处理任务。'), findsOneWidget);
+      expect(find.text('「Task 0」已标记为完成'), findsOneWidget);
     },
   );
   testWidgets(

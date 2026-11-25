@@ -70,9 +70,13 @@ class _ContextDigestSheetState extends ConsumerState<ContextDigestSheet> {
 
   bool get _current => mounted && _gate.isCurrent(_birth);
   void _message(String value, {FeedbackTone tone = FeedbackTone.info}) =>
-      InlineFeedback.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(value)), tone: tone);
+      InlineFeedback.of(context).showSnackBar(
+        SnackBar(content: Text(value)),
+        tone: tone,
+        dismissAfter: tone == FeedbackTone.success
+            ? const Duration(seconds: 5)
+            : null,
+      );
   Future<void> _complete(Reminder task) async {
     if (_busy.contains(task.id) || _resolved.contains(task.id)) return;
     final loc = AppLocalizations.of(context);
@@ -94,15 +98,19 @@ class _ContextDigestSheetState extends ConsumerState<ContextDigestSheet> {
       final isWarning =
           result.nativeSyncFailed ||
           result.disposition == ReminderActionDisposition.stale;
+      final saved = result.reminder;
       _message(
         result.nativeSyncFailed
             ? loc.get('reminderNativeSyncFailed')
             : result.disposition == ReminderActionDisposition.stale
             ? loc.get('reminderOccurrenceChanged')
-            : result.reminder?.isCompleted == false &&
-                  result.reminder?.triggerTime != null
-            ? '${loc.get('periodicNext')}${formatLocalDateTime(result.reminder!.triggerTime!)}'
-            : '${loc.get('taskCompleted')}: ${task.taskTitle}',
+            : loc.taskCompletionMessage(
+                saved?.taskTitle ?? task.taskTitle,
+                nextReminder:
+                    saved != null && !saved.isCompleted && saved.triggerTime != null
+                    ? formatLocalDateTime(saved.triggerTime!)
+                    : null,
+              ),
         tone: isWarning ? FeedbackTone.warning : FeedbackTone.success,
       );
     } catch (_) {

@@ -114,17 +114,18 @@ extension TaskAttachments on RemindersNotifier {
     SharedText item, {
     required String text,
     required DataGeneration generation,
+    required String? resolvedAttachmentPath,
     TaskAttachmentFiles? files,
   }) => _enqueue(
     (ticket) => _dbHelper.runOperation(ticket, () async {
-      final sourcePath = item.attachmentPath;
-      if (sourcePath == null || !SharedText.isHandoffPath(sourcePath, item.id)) {
+      final storedPath = item.attachmentPath;
+      if (storedPath == null || !SharedText.isHandoffPath(storedPath, item.id)) {
         throw const FormatException('Missing shared attachment');
       }
       final trimmed = text.trim();
       final fallbackName = (item.attachmentName?.trim().isNotEmpty == true)
           ? item.attachmentName!.trim()
-          : p.basename(sourcePath);
+          : p.basename(storedPath);
       final titleSource = trimmed.isEmpty ? fallbackName : trimmed;
       final title = String.fromCharCodes(titleSource.runes.take(80));
       final summary = trimmed.isEmpty ? fallbackName : text;
@@ -139,6 +140,10 @@ extension TaskAttachments on RemindersNotifier {
           return existing;
         }
         throw const StaleReminderOccurrenceException();
+      }
+      final sourcePath = resolvedAttachmentPath;
+      if (sourcePath == null || !SharedText.isHandoffPath(sourcePath, item.id)) {
+        throw const FormatException('Missing shared attachment');
       }
       final storage = files ?? TaskAttachmentFiles();
       final media = await storage.import(sourcePath);

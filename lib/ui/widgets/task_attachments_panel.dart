@@ -456,11 +456,9 @@ class TaskAttachmentPreview extends StatefulWidget {
     super.key,
     required this.media,
     required this.resolvedPath,
-    this.onPreviewFile,
   });
   final MediaRecord media;
   final String? resolvedPath;
-  final VoidCallback? onPreviewFile;
   @override
   State<TaskAttachmentPreview> createState() => _TaskAttachmentPreviewState();
 }
@@ -750,10 +748,8 @@ class _TaskAttachmentPreviewState extends State<TaskAttachmentPreview> {
                                 child: SelectableText(
                                   media.type == 'text'
                                       ? media.contentOrPath
-                                      : widget.onPreviewFile != null
-                                      ? path.extension(media.contentOrPath)
-                                            .replaceFirst('.', '')
-                                            .toUpperCase()
+                                      : file == null
+                                      ? l10n.get('taskAttachmentUnavailable')
                                       : l10n.get('taskAttachmentFileHint'),
                                 ),
                               ),
@@ -767,12 +763,6 @@ class _TaskAttachmentPreviewState extends State<TaskAttachmentPreview> {
                           runSpacing: 8,
                           alignment: WrapAlignment.center,
                           children: [
-                            if (widget.onPreviewFile != null)
-                              FilledButton.icon(
-                                onPressed: widget.onPreviewFile,
-                                icon: const Icon(Icons.preview_outlined),
-                                label: Text(l10n.get('taskAttachmentPreview')),
-                              ),
                             if (textPreview != null &&
                                 textPreview.text.isNotEmpty)
                               OutlinedButton.icon(

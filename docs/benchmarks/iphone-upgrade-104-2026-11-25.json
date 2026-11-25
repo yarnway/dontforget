@@ -44,6 +44,12 @@
     }
   },
   "interaction_acceptance": {
-    "state": "awaiting interactive voice and share checks"
+    "user_confirmed_immediate_transcription_before_release": true,
+    "user_confirmed_smooth_editor_entrance_and_clear_to_dismiss": true,
+    "user_confirmed_safari_draft_opens_in_browser": true,
+    "user_confirmed_original_pdf_name": true,
+    "pdf_preview_required_secondary_button": true,
+    "older_image_preview_reported_unavailable": true,
+    "usb_verified_legacy_attachment_container_path_changed": true
   }
 }

@@ -51,6 +51,44 @@ Future<void> _openWebLink(BuildContext context, Uri link) async {
   );
 }
 
+Future<void> _openAttachmentPreview(
+  BuildContext context,
+  SharedText item,
+  Future<String?> attachmentPath, {
+  required bool Function() isActive,
+}) async {
+  final file = await attachmentPath;
+  if (!context.mounted || !isActive()) return;
+  if (file != null &&
+      Theme.of(context).platform == TargetPlatform.iOS &&
+      p.extension(file).toLowerCase() == '.pdf') {
+    try {
+      final opened = await PlatformShareService.channel.invokeMethod<bool>(
+        'previewPDF',
+        {'id': item.id, 'name': p.basename(file)},
+      );
+      if (opened == true) return;
+    } catch (_) {
+      // The attachment details still provide a save-copy option.
+    }
+  }
+  if (!context.mounted || !isActive()) return;
+  await Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => TaskAttachmentPreview(
+        media: MediaRecord(
+          id: item.id,
+          type: item.isImageAttachment ? 'image' : 'file',
+          contentOrPath:
+              item.attachmentName ?? p.basename(item.attachmentPath!),
+          createdAt: DateTime.fromMillisecondsSinceEpoch(item.createdAt),
+        ),
+        resolvedPath: file,
+      ),
+    ),
+  );
+}
+
 class SharedTextInboxScreen extends ConsumerWidget {
   const SharedTextInboxScreen({super.key});
   @override
@@ -61,6 +99,8 @@ class SharedTextInboxScreen extends ConsumerWidget {
       workspaceDraftsProvider.select((d) => d[SharedTextInbox.key]),
     );
     final drafts = ref.read(workspaceDraftsProvider.notifier);
+    final inbox = ref.watch(sharedTextInboxProvider);
+    final runtime = ref.read(runtimeRecoveryGateProvider);
     return Scaffold(
       appBar: AppBar(title: Text(t('title'))),
       body: FutureBuilder<void>(
@@ -98,9 +138,8 @@ class SharedTextInboxScreen extends ConsumerWidget {
                         width: 56,
                         height: 56,
                         decoration: BoxDecoration(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.primaryContainer.withValues(alpha: 0.65),
+                          color: Theme.of(context).colorScheme.primaryContainer
+                              .withValues(alpha: 0.65),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
@@ -128,30 +167,51 @@ class SharedTextInboxScreen extends ConsumerWidget {
                   margin: const EdgeInsets.only(bottom: 10),
                   child: ListTile(
                     leading: item.hasAttachment
-                        ? (item.isImageAttachment &&
-                                  SharedText.isHandoffPath(
-                                    item.attachmentPath!,
-                                    item.id,
+                        ? IconButton(
+                            tooltip: AppLocalizations.of(
+                              context,
+                            ).get('taskAttachmentPreview'),
+                            onPressed: () {
+                              if (runtime.paused) return;
+                              final token = runtime.capture();
+                              unawaited(
+                                _openAttachmentPreview(
+                                  context,
+                                  item,
+                                  inbox.resolveAttachmentPath(item),
+                                  isActive: () =>
+                                      runtime.isCurrent(token) &&
+                                      drafts.database.isCurrent(
+                                        drafts.generation,
+                                      ),
+                                ),
+                              );
+                            },
+                            icon: item.isImageAttachment
+                                ? FutureBuilder<String?>(
+                                    future: inbox.resolveAttachmentPath(item),
+                                    builder: (_, snapshot) {
+                                      final file = snapshot.data;
+                                      if (file == null) {
+                                        return const Icon(Icons.image_outlined);
+                                      }
+                                      return ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.file(
+                                          File(file),
+                                          width: 40,
+                                          height: 40,
+                                          cacheWidth: 128,
+                                          fit: BoxFit.cover,
+                                          excludeFromSemantics: true,
+                                          errorBuilder: (_, _, _) =>
+                                              const Icon(Icons.image_outlined),
+                                        ),
+                                      );
+                                    },
                                   )
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.file(
-                                    File(item.attachmentPath!),
-                                    width: 44,
-                                    height: 44,
-                                    cacheWidth: 128,
-                                    fit: BoxFit.cover,
-                                    excludeFromSemantics: true,
-                                    errorBuilder: (_, __, ___) => const Icon(
-                                      Icons.image_outlined,
-                                    ),
-                                  ),
-                                )
-                              : Icon(
-                                  item.isImageAttachment
-                                      ? Icons.image_outlined
-                                      : Icons.attach_file,
-                                ))
+                                : const Icon(Icons.attach_file),
+                          )
                         : null,
                     title: Text(
                       item.text.trim().isNotEmpty
@@ -204,6 +264,7 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
     with WidgetsBindingObserver {
   late final TextEditingController _text;
   late final SharedTextInbox _inbox;
+  late final Future<String?> _attachmentPath;
   late final RuntimeRecoveryGate _runtime;
   late final RuntimeRecoveryToken _birth;
   late String _committed;
@@ -232,6 +293,7 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
     _text.addListener(_refreshEditorState);
     _committed = widget.item.text;
     _inbox = ref.read(sharedTextInboxProvider);
+    _attachmentPath = _inbox.resolveAttachmentPath(widget.item);
     _runtime = ref.read(runtimeRecoveryGateProvider);
     _birth = _runtime.capture();
     WidgetsBinding.instance.addObserver(this);
@@ -343,12 +405,15 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
       if (!_current) return;
       if (!alreadySaved) {
         if (widget.item.hasAttachment) {
+          final resolvedPath = await _attachmentPath;
+          if (!_current) return;
           await ref
               .read(remindersProvider.notifier)
               .saveSharedAttachmentMemo(
                 widget.item,
                 text: _text.text,
                 generation: _inbox.drafts.generation,
+                resolvedAttachmentPath: resolvedPath,
                 files: ref.read(taskAttachmentFilesProvider),
               );
           if (!_current) throw StateError('Shared memo not committed');
@@ -407,54 +472,12 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
     }
   }
 
-  void _previewAttachment() {
-    if (!_current || _busy || _closing) return;
-    final item = widget.item;
-    final file = item.attachmentPath;
-    if (file == null || !SharedText.isHandoffPath(file, item.id)) return;
-    final name = item.attachmentName ?? p.basename(file);
-    final useQuickLook =
-        Theme.of(context).platform == TargetPlatform.iOS &&
-        p.extension(file).toLowerCase() == '.pdf';
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (previewContext) => TaskAttachmentPreview(
-          media: MediaRecord(
-            id: item.id,
-            type: item.isImageAttachment ? 'image' : 'file',
-            contentOrPath: name,
-            createdAt: DateTime.fromMillisecondsSinceEpoch(item.createdAt),
-          ),
-          resolvedPath: file,
-          onPreviewFile: useQuickLook
-              ? () => _previewPDF(previewContext, p.basename(file))
-              : null,
-        ),
-      ),
-    );
-  }
-
-  Future<void> _previewPDF(BuildContext previewContext, String name) async {
-    if (!_current) return;
-    try {
-      final opened = await PlatformShareService.channel.invokeMethod<bool>(
-        'previewPDF',
-        {'id': widget.item.id, 'name': name},
-      );
-      if (opened == true) return;
-    } catch (_) {
-      // Keep the file details and save-copy option available.
-    }
-    if (!previewContext.mounted || !_current) return;
-    InlineFeedback.of(previewContext).showSnackBar(
-      SnackBar(
-        content: Text(
-          AppLocalizations.of(previewContext).get('taskAttachmentUnavailable'),
-        ),
-      ),
-      tone: FeedbackTone.error,
-    );
-  }
+  Future<void> _previewAttachment() => _openAttachmentPreview(
+    context,
+    widget.item,
+    _attachmentPath,
+    isActive: () => _current && !_busy && !_closing,
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -497,24 +520,31 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       if (widget.item.isImageAttachment)
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxHeight: 220),
-                          child: Image.file(
-                            File(widget.item.attachmentPath!),
-                            key: const ValueKey('shared-attachment-image'),
-                            cacheHeight: 660,
-                            semanticLabel:
-                                widget.item.attachmentName ??
-                                p.basename(widget.item.attachmentPath!),
-                            fit: BoxFit.contain,
-                            errorBuilder: (_, _, _) => const Padding(
-                              padding: EdgeInsets.all(16),
-                              child: Icon(
-                                Icons.broken_image_outlined,
-                                size: 40,
+                        FutureBuilder<String?>(
+                          future: _attachmentPath,
+                          builder: (_, snapshot) {
+                            final file = snapshot.data;
+                            if (file == null) return const SizedBox.shrink();
+                            return ConstrainedBox(
+                              constraints: const BoxConstraints(maxHeight: 220),
+                              child: Image.file(
+                                File(file),
+                                key: const ValueKey('shared-attachment-image'),
+                                cacheHeight: 660,
+                                semanticLabel:
+                                    widget.item.attachmentName ??
+                                    p.basename(file),
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, _, _) => const Padding(
+                                  padding: EdgeInsets.all(16),
+                                  child: Icon(
+                                    Icons.broken_image_outlined,
+                                    size: 40,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
+                            );
+                          },
                         ),
                       ListTile(
                         leading: Icon(

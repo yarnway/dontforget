@@ -8,11 +8,13 @@ import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'package:dont_forget/services/shared_text_inbox.dart';
 import 'package:dont_forget/ui/screens/shared_text_inbox_screen.dart';
 import 'package:dont_forget/ui/widgets/inline_feedback.dart';
+import 'package:dont_forget/ui/widgets/task_attachments_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:record/record.dart';
 import 'support/offline_management_harness.dart';
 import 'support/real_io.dart';
@@ -157,54 +159,65 @@ void main() {
     expect(find.text('在浏览器中打开'), findsNothing);
   });
 
-  testWidgets('shared PDF shows file details and invokes iOS preview', (
-    tester,
-  ) async {
-    const pdfId = '00000000-0000-4000-8000-000000000002';
-    const name = '项目计划.PDF';
-    await tester.runAsync(() async {
-      final dir = Directory('${h.directory.path}/shared_handoff/$pdfId');
-      await dir.create(recursive: true);
-      final file = File('${dir.path}/$name');
-      await file.writeAsString('%PDF-1.4');
-      await inbox.accept(
-        SharedText(
-          id: pdfId,
-          text: '',
-          createdAt: 1762300801000,
-          attachmentPath: file.path,
-          attachmentName: name,
-        ),
-      );
-    });
-    const channel = MethodChannel('com.yarnway.dontforget/share');
-    final messenger = tester.binding.defaultBinaryMessenger;
-    final calls = <MethodCall>[];
-    messenger.setMockMethodCallHandler(channel, (call) async {
-      calls.add(call);
-      return true;
-    });
-    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+  testWidgets(
+    'shared PDF opens directly and keeps file details as a fallback',
+    (tester) async {
+      const pdfId = '00000000-0000-4000-8000-000000000002';
+      const name = '项目计划.PDF';
+      await tester.runAsync(() async {
+        final dir = Directory('${h.directory.path}/shared_handoff/$pdfId');
+        await dir.create(recursive: true);
+        final file = File('${dir.path}/$name');
+        await file.writeAsString('%PDF-1.4');
+        await inbox.accept(
+          SharedText(
+            id: pdfId,
+            text: '',
+            createdAt: 1762300801000,
+            attachmentPath: file.path,
+            attachmentName: name,
+          ),
+        );
+      });
+      const channel = MethodChannel('com.yarnway.dontforget/share');
+      final messenger = tester.binding.defaultBinaryMessenger;
+      final calls = <MethodCall>[];
+      var canPreview = true;
+      messenger.setMockMethodCallHandler(channel, (call) async {
+        calls.add(call);
+        return canPreview;
+      });
+      addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
 
-    await show(tester, openEditor: false, platform: TargetPlatform.iOS);
-    await tester.tap(find.text(name));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('shared-attachment-card')));
-    final size = find.byKey(const ValueKey('attachment-preview-size'));
-    await pumpUntilRealIo(
-      tester,
-      () => size.evaluate().isNotEmpty,
-      reason: 'The attachment details must display the size',
-    );
-    await tester.pumpAndSettle();
-    expect(find.text(name), findsOneWidget);
-    expect(tester.widget<Text>(size).data, '8 B');
-    await tester.tap(find.text('预览附件'));
-    await tester.pumpAndSettle();
-    expect(calls.single.method, 'previewPDF');
-    expect(calls.single.arguments, {'id': pdfId, 'name': name});
-    expect(await tester.runAsync(h.rows), isEmpty);
-  });
+      await show(tester, openEditor: false, platform: TargetPlatform.iOS);
+      await tester.tap(find.byTooltip('预览附件'));
+      await pumpUntilRealIo(
+        tester,
+        () => calls.isNotEmpty,
+        reason: 'One tap should request the system PDF viewer',
+      );
+      expect(calls.single.method, 'previewPDF');
+      expect(calls.single.arguments, {'id': pdfId, 'name': name});
+      expect(find.byType(TaskAttachmentPreview), findsNothing);
+
+      await tester.tap(find.text(name));
+      await tester.pumpAndSettle();
+      canPreview = false;
+      await tester.tap(find.byKey(const ValueKey('shared-attachment-card')));
+      final size = find.byKey(const ValueKey('attachment-preview-size'));
+      await pumpUntilRealIo(
+        tester,
+        () => size.evaluate().isNotEmpty,
+        reason: 'The attachment details must display the size',
+      );
+      await tester.pumpAndSettle();
+      expect(find.text(name), findsOneWidget);
+      expect(tester.widget<Text>(size).data, '8 B');
+      expect(calls, hasLength(2));
+      expect(calls.last.method, 'previewPDF');
+      expect(await tester.runAsync(h.rows), isEmpty);
+    },
+  );
 
   testWidgets(
     'unconfirmed IME blocks memo save; range-only commit enables saving',
@@ -271,25 +284,28 @@ void main() {
   );
 
   testWidgets(
-    'shared image attachment can be confirmed and saved as memo while preserving composer draft',
+    'a relocated shared image previews and saves from its current container',
     (tester) async {
       const attachmentShareId = '00000000-0000-4000-8000-000000000002';
+      final currentSupport = Directory(
+        '${h.directory.path}/current/Library/Application Support',
+      );
+      final previousSupport =
+          '${h.directory.path}/previous/Library/Application Support';
+      final relocatedInbox = SharedTextInbox(
+        h.container.read(workspaceDraftsProvider.notifier),
+        supportDirectory: () async => currentSupport,
+      );
       final handoffDir = await tester.runAsync(
         () => Directory(
-          '${h.directory.path}/shared_handoff/$attachmentShareId',
+          '${currentSupport.path}/shared_handoff/$attachmentShareId',
         ).create(recursive: true),
       );
+      final imageBytes = base64Decode(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aNo0AAAAASUVORK5CYII=',
+      );
       final sourceImage = await tester.runAsync(
-        () => File('${handoffDir!.path}/diagram.png').writeAsBytes([
-          137,
-          80,
-          78,
-          71,
-          13,
-          10,
-          26,
-          10,
-        ]),
+        () => File('${handoffDir!.path}/diagram.png').writeAsBytes(imageBytes),
       );
       await tester.runAsync(
         () => inbox.accept(
@@ -297,7 +313,8 @@ void main() {
             id: attachmentShareId,
             text: '',
             createdAt: 1762300801000,
-            attachmentPath: sourceImage!.path,
+            attachmentPath:
+                '$previousSupport/shared_handoff/$attachmentShareId/diagram.png',
             attachmentName: 'diagram.png',
           ),
         ),
@@ -309,16 +326,21 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: h.container,
-          child: const MaterialApp(
-            locale: Locale('zh'),
-            supportedLocales: [Locale('zh'), Locale('en'), Locale('ja')],
-            localizationsDelegates: [
-              AppLocalizationsDelegate(),
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
+          child: ProviderScope(
+            overrides: [
+              sharedTextInboxProvider.overrideWithValue(relocatedInbox),
             ],
-            home: SharedTextInboxScreen(),
+            child: const MaterialApp(
+              locale: Locale('zh'),
+              supportedLocales: [Locale('zh'), Locale('en'), Locale('ja')],
+              localizationsDelegates: [
+                AppLocalizationsDelegate(),
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              home: SharedTextInboxScreen(),
+            ),
           ),
         ),
       );
@@ -346,9 +368,24 @@ void main() {
             .data,
         'diagram.png',
       );
-      await tester.tap(find.byKey(const ValueKey('shared-attachment-image')));
+      final thumbnail = find.byKey(const ValueKey('shared-attachment-image'));
+      await pumpUntilRealIo(
+        tester,
+        () => thumbnail.evaluate().isNotEmpty,
+        reason: 'The stale draft path should resolve to the current container',
+      );
+      await tester.tap(thumbnail);
+      await pumpUntilRealIo(
+        tester,
+        () => find.byType(InteractiveViewer).evaluate().isNotEmpty,
+        reason: 'The relocated image should open directly',
+      );
       await tester.pumpAndSettle();
       expect(find.byType(InteractiveViewer), findsOneWidget);
+      final preview = tester.widget<TaskAttachmentPreview>(
+        find.byType(TaskAttachmentPreview),
+      );
+      expect(p.equals(preview.resolvedPath!, sourceImage!.path), isTrue);
       await tester.tap(find.byType(BackButton));
       await tester.pumpAndSettle();
       final save = find.byKey(const ValueKey('shared-save-memo'));
@@ -381,7 +418,7 @@ void main() {
         await tester.runAsync(
           () => File(mediaRows.single.contentOrPath).readAsBytes(),
         ),
-        [137, 80, 78, 71, 13, 10, 26, 10],
+        imageBytes,
       );
       expect(await tester.runAsync(() => handoffDir!.exists()), isFalse);
       final drafts = await tester.runAsync(h.drafts);

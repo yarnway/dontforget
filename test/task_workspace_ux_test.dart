@@ -1863,7 +1863,7 @@ void main() {
       );
       await show(tester, card(id));
       final checkbox = find.byKey(const ValueKey('complete-$id'));
-      final confirmation = find.text('事项已标为完成');
+      final confirmation = find.text('「Timed completion」已标记为完成');
       final undo = find.text('撤销');
       Future<void> complete() async {
         await tester.tap(checkbox);

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 import '../providers/workspace_drafts_provider.dart';
 
@@ -195,15 +196,55 @@ class SharedTextInboxData {
 /// Incoming content has its own durable entry; it never replaces the composer.
 /// A native event is acknowledged only after this transaction commits.
 class SharedTextInbox {
-  SharedTextInbox(this.drafts);
+  SharedTextInbox(this.drafts, {Future<Directory> Function()? supportDirectory})
+    : _supportDirectory =
+          supportDirectory ??
+          (Platform.isIOS ? getApplicationSupportDirectory : null);
   static const key = 'sharedTextInbox';
   static const maxItems = 32;
   final WorkspaceDrafts drafts;
+  final Future<Directory> Function()? _supportDirectory;
+  Future<Directory>? _resolvedSupport;
   Future<void> _tail = Future.value();
   Future<T> _serial<T>(Future<T> Function() operation) {
     final result = _tail.then((_) => operation());
     _tail = result.then<void>((_) {}, onError: (Object _) {});
     return result;
+  }
+
+  /// An iOS update can move the data container while leaving drafts intact.
+  Future<String?> resolveAttachmentPath(SharedText item) async {
+    final stored = item.attachmentPath;
+    if (stored == null || !SharedText.isHandoffPath(stored, item.id)) {
+      return null;
+    }
+    var handoff = p.dirname(p.dirname(stored));
+    var file = stored;
+    try {
+      final supportDirectory = _supportDirectory;
+      if (supportDirectory != null) {
+        final oldSupport = p.dirname(handoff);
+        if (p.basename(oldSupport) != 'Application Support' ||
+            p.basename(p.dirname(oldSupport)) != 'Library') {
+          return null;
+        }
+        final support = await (_resolvedSupport ??= supportDirectory());
+        handoff = p.join(support.path, 'shared_handoff');
+        file = p.join(handoff, item.id, p.basename(stored));
+      }
+      if (await FileSystemEntity.type(handoff, followLinks: false) !=
+              FileSystemEntityType.directory ||
+          await FileSystemEntity.type(p.dirname(file), followLinks: false) !=
+              FileSystemEntityType.directory ||
+          await FileSystemEntity.type(file, followLinks: false) !=
+              FileSystemEntityType.file) {
+        return null;
+      }
+      return file;
+    } catch (_) {
+      _resolvedSupport = null;
+      return null;
+    }
   }
 
   Future<bool> accept(SharedText incoming) => _serial(() async {
@@ -269,8 +310,8 @@ class SharedTextInbox {
         data.receipts,
       ).toJson(),
     );
-    final stagedPath = item.attachmentPath;
-    if (stagedPath != null && SharedText.isHandoffPath(stagedPath, id)) {
+    final stagedPath = await resolveAttachmentPath(item);
+    if (stagedPath != null && drafts.database.isCurrent(drafts.generation)) {
       final parent = p.dirname(stagedPath);
       try {
         final dir = Directory(parent);

@@ -4,6 +4,7 @@
 
 - 主线即时转写与 5 秒撤销已和 iOS 分享、附件预览及播放收起合并到 build 104 候选。Flutter 全量 2753 项、Python 187 项通过。Windows 本地及 GitHub 版均已运行中覆盖、核对数据与普通重开，本地包实测完成提示自动收起。Windows 与 iPhone 的原有事项已双向到达，Windows 收到的 4 份录音与手机原件摘要一致。配对路径、重复同步和手机新包实装分别补验。[阶段台账](Next_Steps_2026-11-02.md#11-月-25-日--多端整合-build-104) · [候选 CI](https://github.com/yarnway/dontforget/actions/runs/45539567593)
 - build 104 五平台 CI 和 8 份制品校验通过。iPhone 原验收身份已覆盖至 build 104，USB 核对 20 条事项、4 条媒体记录、1 条设置、11 个文档、3 份草稿附件及偏好一致。真机转写和分享交互待补验。Pixel 当前未枚举。[同身份验收包](https://github.com/yarnway/dontforget/actions/runs/45543142842) · [实机回执](benchmarks/iphone-upgrade-104-2026-11-25.json)
+- 用户随后确认 build 104 松手前已有转写、编辑过渡顺滑、网页跳转和 PDF 原名通过。旧图片显示无法预览，PDF 需要点第二次。build 105 已支持从当前容器读取旧附件、点开直接预览，以及显示事项名的完成提示。214 项定向回归通过。[阶段台账](Next_Steps_2026-11-02.md#11-月-25-日--附件直接预览与有事项名的完成提示)
 
 ## 2026-11-24 · iPhone 语音过渡与系统分享 build 100
 

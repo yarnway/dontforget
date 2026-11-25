@@ -851,10 +851,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             tone = FeedbackTone.info;
           case _NoticeActionKind.complete:
             if (saved != null && !saved.isCompleted && saved.triggerTime != null) {
-              message =
-                  '${l10n.get('periodicNext')}${formatLocalDateTime(saved.triggerTime!)}';
+              message = l10n.taskCompletionMessage(
+                saved.taskTitle,
+                nextReminder: formatLocalDateTime(saved.triggerTime!),
+              );
             } else {
-              message = l10n.get('taskCompleted');
+              message = l10n.taskCompletionMessage(
+                saved?.taskTitle ?? reminder.taskTitle,
+              );
               if (saved != null && saved.isCompleted) {
                 final completedRow = saved;
                 snackAction = SnackBarAction(

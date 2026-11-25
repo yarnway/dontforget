@@ -574,7 +574,8 @@ class AppLocalizations {
       'deleteTask': 'Delete Task',
       'deletedTask': 'Deleted task',
       'undo': 'Undo',
-      'periodicNext': 'Periodic task done. Next scheduled for: ',
+      'periodicNext':
+          '“{title}” is complete for this occurrence. Next reminder: {time}',
       'recurrencePeriodic': 'Recurring',
       // Home & Dialogs
       'clearCompleted': 'Clear Completed',
@@ -597,7 +598,8 @@ class AppLocalizations {
           'Tasks were deleted, but system reminders could not be removed. In Settings, select “Retry reminder scheduling”.',
       'reminderOccurrenceChanged':
           'This reminder has changed. Please use its current state.',
-      'taskCompleted': 'Task marked as completed',
+      'taskCompleted': '“{title}” marked complete',
+      'unnamedTask': 'Untitled task',
       'playingAudio': 'Playing voice note...',
       'playOrPreview': 'Play / preview attachment',
       'mediaUnavailable':
@@ -1439,7 +1441,7 @@ class AppLocalizations {
       'deleteTask': '删除事项',
       'deletedTask': '已删除事项',
       'undo': '撤销',
-      'periodicNext': '已完成本次周期任务，下一次已自动排期至: ',
+      'periodicNext': '「{title}」本次已完成，下次提醒：{time}',
       'recurrencePeriodic': '周期提醒',
       // Home & Dialogs
       'clearCompleted': '清理已完成事项',
@@ -1458,7 +1460,8 @@ class AppLocalizations {
       'reminderNativeSyncFailedCompact': '已保存，提醒未更新',
       'reminderNativeDeleteFailed': '任务已删除，但系统提醒未能移除。请在设置中点击“重新安排提醒”重试。',
       'reminderOccurrenceChanged': '此提醒已变化，请根据最新状态操作。',
-      'taskCompleted': '事项已标为完成',
+      'taskCompleted': '「{title}」已标记为完成',
+      'unnamedTask': '未命名事项',
       'playingAudio': '正在播放原声录音...',
       'playOrPreview': '播放 / 预览附件',
       'mediaUnavailable': '附件记录未能加载，请重启后再试。',
@@ -2284,7 +2287,7 @@ class AppLocalizations {
       'deleteTask': 'タスク削除',
       'deletedTask': '削除されたタスク',
       'undo': '元に戻す',
-      'periodicNext': '定期タスクを完了。次回: ',
+      'periodicNext': '「{title}」の今回分を完了しました。次回の通知：{time}',
       'recurrencePeriodic': '定期リマインダー',
       // Home & Dialogs
       'clearCompleted': '完了済みをクリア',
@@ -2305,7 +2308,8 @@ class AppLocalizations {
       'reminderNativeDeleteFailed':
           'タスクは削除しましたが、システム通知を削除できませんでした。設定の「リマインダーを再設定」から再試行してください。',
       'reminderOccurrenceChanged': 'このリマインダーは変更されました。最新の状態で操作してください。',
-      'taskCompleted': 'タスクを完了にしました',
+      'taskCompleted': '「{title}」を完了にしました',
+      'unnamedTask': '名前のないタスク',
       'playingAudio': '音声録音を再生中...',
       'playOrPreview': '添付ファイルを再生 / プレビュー',
       'mediaUnavailable': '添付記録を読み込めませんでした。再起動してお試しください。',
@@ -2669,6 +2673,17 @@ class AppLocalizations {
         notificationDiagnosticsStrings['en']?[key] ??
         _localizedValues['en']?[key] ??
         key;
+  }
+
+  String taskCompletionMessage(String title, {String? nextReminder}) {
+    final name = title.trim();
+    final template = nextReminder == null
+        ? get('taskCompleted')
+        : get('periodicNext').replaceFirst('{time}', nextReminder);
+    return template.replaceFirst(
+      '{title}',
+      name.isEmpty ? get('unnamedTask') : name,
+    );
   }
 
   String translate(String key) => get(key);

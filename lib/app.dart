@@ -245,7 +245,17 @@ class _MyAppState extends ConsumerState<MyApp>
       readQueue: _notifications.pendingNotificationActions,
       readSnapshot: _notificationSnapshot,
       apply: _applyNotificationAction,
-      onResult: _notificationActionFeedback,
+      onResult: (outcome, reminder, request) {
+        if (!mounted || !_nativeCommandsReady) return;
+        final saved = ref.read(remindersByIdProvider)[reminder.id];
+        _notificationActionFeedback(
+          outcome,
+          completedTitle:
+              request.actionId == 'complete' && saved?.isCompleted == true
+              ? saved!.taskTitle
+              : null,
+        );
+      },
     );
     _actionRuntimeGate.register(
       _notificationActions,
@@ -557,7 +567,10 @@ class _MyAppState extends ConsumerState<MyApp>
         : NotificationActionOutcome.applied;
   }
 
-  void _notificationActionFeedback(NotificationActionOutcome outcome) {
+  void _notificationActionFeedback(
+    NotificationActionOutcome outcome, {
+    String? completedTitle,
+  }) {
     if (!mounted ||
         WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
       return;
@@ -565,19 +578,24 @@ class _MyAppState extends ConsumerState<MyApp>
     final context = _navigatorKey.currentContext;
     if (context == null) return;
     final feedback = context.findAncestorStateOfType<InlineFeedbackState>();
+    final l10n = AppLocalizations.of(context);
     feedback?.showSnackBar(
       SnackBar(
         content: Text(
-          AppLocalizations.of(context).get(
-            outcome == NotificationActionOutcome.repair
-                ? 'notificationActionRepair'
-                : 'notificationActionApplied',
-          ),
+          outcome == NotificationActionOutcome.repair
+              ? l10n.get('notificationActionRepair')
+              : completedTitle == null
+              ? l10n.get('notificationActionApplied')
+              : l10n.taskCompletionMessage(completedTitle),
         ),
       ),
       tone: outcome == NotificationActionOutcome.repair
           ? FeedbackTone.warning
           : FeedbackTone.success,
+      dismissAfter:
+          completedTitle == null || outcome == NotificationActionOutcome.repair
+          ? null
+          : const Duration(seconds: 5),
     );
   }
 
@@ -955,10 +973,15 @@ class _MyAppState extends ConsumerState<MyApp>
               );
       }
       if (result.accepted) {
+        final saved = result.reminder;
         _notificationActionFeedback(
           result.nativeSyncFailed
               ? NotificationActionOutcome.repair
               : NotificationActionOutcome.applied,
+          completedTitle:
+              route.action == ProtocolAction.completeTask && saved?.isCompleted == true
+              ? saved!.taskTitle
+              : null,
         );
       }
     } catch (_) {
