@@ -7,8 +7,8 @@
 | 顺序 | 阶段 | 待执行任务与条件 |
 | --- | --- | --- |
 | 1 | 47／49 · iPhone 与跨端验收 | iPhone build 104 已验证松手前转写、编辑过渡、网页跳转与 PDF 原名。Windows build 105 已实测带事项名的完成提示自动收起。待 iPhone build 105 补验旧图片直接打开、PDF 直接打开并翻页、播放结束收起、完成提示及重复同步。 |
-| 2 | 48 · 数据保护 | Windows 本地 build 105 可见运行态覆盖、iPhone build 104 同身份覆盖和 Pixel build 104 固定证书覆盖已验。待 GitHub build 105 制品复核、Windows 运行态覆盖及两台手机各自的最新备份与升级。 |
-| 3 | 50 · GitHub 构建与下一版交付 | 公开发行仍为 `v1.8.23`（build 94）。build 104 完整 CI 与八份制品复核已完成。build 105 已更新旧通知文案的测试断言，本机全量 2753 项通过。GitHub 正在重跑检查和多平台打包。 |
+| 2 | 48 · 数据保护 | Windows 两种来源的 build 105 均已验证可见运行态覆盖及数据保全。Pixel build 105 已验证固定证书覆盖、冷重开及备份一致。待 iPhone 最新 USB 备份、个人重签同身份覆盖及升级后数据核对。 |
+| 3 | 50 · GitHub 构建与下一版交付 | 公开发行仍为 `v1.8.23`（build 94）。build 105 完整 CI 与八份制品复核已通过。待 iPhone 实机验收、合入 `main`、核对主线制品并发布。 |
 
 本机固定 Flutter 3.44.9 下，备份、恢复、窗口和更新服务专项 101 项通过，通知协议、路由和关于页专项 107 项通过。两组均无失败。阶段 46 的 USB 项按实际开发阻塞处理。下方为各阶段证据和历史执行记录，以上表格为当前排序。
 
@@ -168,6 +168,10 @@
 - **自动化**　Flutter 214 项定向回归通过，涉改代码静态分析无问题。覆盖升级后旧图片直接查看与导入、PDF 一键打开和回退、带事项名的完成提示和撤销、系统通知动作。
 - **全量测试补齐**　首轮 Linux CI 的通知用例仍断言旧文案 `Reminder updated`。更新用例以核对系统通知完成后的具体事项名，并等到提示实际出现再断言。固定 Flutter 3.44.9 下通知、协议和持久队列专项 45 项全部通过。本机全量 2753 项通过、20 项按既有规则跳过。变更仅涉及测试。[首轮 CI](https://github.com/yarnway/dontforget/actions/runs/45579343908) · [重跑 CI](https://github.com/yarnway/dontforget/actions/runs/45581836897)
 - **Windows 本地安装包与实机**　备份数据与四份原始录音，验证安装器、便携包及旧版载荷。从可见运行中的 GitHub build 104 正常退出并覆盖本地 build 105。安装及普通重开后，27 个载荷、20 条事项、4 条媒体、1 条设置、1 项 DPAPI 凭据和四份原件一致。在真实窗口核对「10分钟前测试任务」的完成提示和撤销。点击后的 5.16 秒采样仍显示，6.59 秒采样已收起，事项仍为完成；自动化覆盖提示出现后 5 秒的行为。[实机覆盖回执](benchmarks/windows-upgrade-105-local-2026-11-25.json)
+- **Windows GitHub 制品与实机**　验证同源安装器、便携包及归档摘要后，重新备份可见运行中的本地 build 105，并覆盖为 GitHub build 105。旧进程正常退出且未强关，普通重开后 27 个载荷、业务字段、DPAPI 凭据和四份录音原件一致。本地 build 105 的应用内更新检查返回「当前版本高于发布版」及公开 `1.8.23 (94)`。[实机覆盖回执](benchmarks/windows-upgrade-105-ci-2026-11-25.json)
+- **质量复核**　固定 SDK 全仓静态分析零问题。隔离测试进程继承的 Git 配置后，本机 Python 187 项通过、6 项跳过。GitHub Linux 和 Windows 质量检查均通过。[重跑 CI](https://github.com/yarnway/dontforget/actions/runs/45581836897)
+- **GitHub build 105 制品**　`72654ba` 的五平台构建均通过。复核 Windows `15007818395`、Android `15008458416`、Linux `15007878638`、iOS `15007518311`、macOS `15009700771` 共五个归档和八份制品的来源、版本和摘要。两个 APK 核对真实应用 ID 和版本，另外与 AAB 一起核对固定证书。普通未签名 IPA 核对主应用、提醒扩展、分享扩展版本号和共享组。沿用 iPhone 已安装身份的单独验收包正在构建。[完整 CI](https://github.com/yarnway/dontforget/actions/runs/45581836897) · [iPhone 验收构建](https://github.com/yarnway/dontforget/actions/runs/45587237247)
+- **Pixel build 105 实机**　最新完整备份后，同签名从 build 104 覆盖 GitHub ARM64 候选，读取已装 APK 摘要并冷重开。前后 7 条事项、4 条媒体、4 份原件一致，设置仅新增导出记录。DeepSeek 与腾讯转写配置前后可读，当前进程日志未发现运行时错误。[覆盖回执](benchmarks/pixel-upgrade-105-ci-2026-11-25.json)
 
 ## 当前范围（2026-11-17调整）
 
