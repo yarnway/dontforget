@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/reminder.dart';
+import 'workspace_frame.dart';
 
 /// Aggregated, non-modal entry for reminders that became due while the app was closed or offline.
 /// Shows up to 72 hours of unacknowledged overdue items without firing noisy toasts.
@@ -35,7 +36,9 @@ class MissedRemindersBar extends StatelessWidget {
       alignment: Alignment.topCenter,
       heightFactor: 1,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1040),
+        constraints: BoxConstraints(
+          maxWidth: WorkspaceFrame.widthLimitOf(context),
+        ),
         child: Container(
           width: double.infinity,
           margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),

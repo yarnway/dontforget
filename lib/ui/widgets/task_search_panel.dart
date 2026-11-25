@@ -8,6 +8,7 @@ import '../../services/task_search_index.dart';
 import '../theme/app_theme.dart';
 import 'completed_tasks_toolbar.dart';
 import 'task_card.dart';
+import 'workspace_frame.dart';
 
 /// Search and browsing share one lazy list, including an empty search query.
 class TaskSearchPanel extends ConsumerStatefulWidget {
@@ -245,7 +246,7 @@ class _TaskSearchPanelState extends ConsumerState<TaskSearchPanel>
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: AppTheme.workspaceMaxWidth),
+        constraints: BoxConstraints(maxWidth: WorkspaceFrame.widthLimitOf(context)),
         child: CustomScrollView(
           controller: _scrollController,
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,

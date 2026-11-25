@@ -28,7 +28,6 @@ import 'dashboard_screen.dart';
 import 'shared_text_inbox_screen.dart';
 import '../../l10n/shared_text_strings.dart';
 import '../widgets/task_search_panel.dart';
-import '../theme/app_theme.dart';
 import '../widgets/input_bottom_bar.dart';
 import '../widgets/command_palette_dialog.dart';
 import '../widgets/spaced_repetition_sheet.dart';
@@ -43,6 +42,7 @@ import '../../l10n/planning_strings.dart';
 import 'notification_repair_screen.dart';
 import '../../providers/workspace_drafts_provider.dart';
 import '../widgets/data_export_sheet.dart';
+import '../widgets/workspace_frame.dart';
 import '../widgets/workspace_tool_panel.dart';
 import '../widgets/agent_goal_panel.dart';
 import '../widgets/study_plan_panel.dart';
@@ -1644,8 +1644,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       borderSide: BorderSide.none,
     );
     return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: AppTheme.workspaceMaxWidth),
+      child: WorkspaceFrame(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: TextField(
@@ -1704,6 +1703,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   Widget build(BuildContext context) {
     final reminders = ref.watch(workspaceRemindersProvider);
     final l10n = AppLocalizations.of(context);
+    final viewportWidth =
+        MediaQuery.sizeOf(context).width -
+        MediaQuery.paddingOf(context).horizontal;
+    final toolbarInset =
+        (viewportWidth - WorkspaceFrame.widthFor(viewportWidth)) / 2;
     final spacedService = ref.watch(spacedRepetitionServiceProvider);
     final pendingSharedCount = ref.watch(
       workspaceDraftsProvider.select(SharedTextInbox.count),
@@ -1763,7 +1767,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           appBar: AppBar(
             centerTitle: false,
             automaticallyImplyLeading: !_isSearchOpen,
-            titleSpacing: _isSearchOpen ? 0 : null,
+            titleSpacing: _isSearchOpen
+                ? 0
+                : NavigationToolbar.kMiddleSpacing + toolbarInset,
+            actionsPadding: _isSearchOpen || toolbarInset == 0
+                ? null
+                : EdgeInsetsDirectional.only(end: toolbarInset),
             title: _isSearchOpen
                 ? _buildSearchBar(context, l10n)
                 : Row(
@@ -1957,11 +1966,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             child: SafeArea(
               bottom: false,
               child: Center(
-                child: ConstrainedBox(
+                child: WorkspaceFrame(
                   key: const ValueKey('home-content-frame'),
-                  constraints: const BoxConstraints(
-                    maxWidth: AppTheme.workspaceMaxWidth,
-                  ),
                   child: Column(
                     children: [
                       ValueListenableBuilder<DateTime>(

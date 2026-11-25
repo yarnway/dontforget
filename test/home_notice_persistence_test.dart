@@ -133,8 +133,10 @@ void main() {
     channels.clear();
   });
 
-  Future<void> showHome(WidgetTester tester) async {
-    await tester.binding.setSurfaceSize(const Size(1440, 1000));
+  Future<void> showHome(WidgetTester tester, {bool useViewSize = false}) async {
+    await tester.binding.setSurfaceSize(
+      useViewSize ? null : const Size(1440, 1000),
+    );
     addTearDown(() => drainWorkspaceDrafts(tester, container));
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -171,7 +173,10 @@ void main() {
   testWidgets('home notice, board and composer align across viewport widths', (
     tester,
   ) async {
-    addTearDown(() => tester.binding.setSurfaceSize(null));
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(900, 1000);
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     await tester.runAsync(() async {
       await reminders.addReminder(
         Reminder(
@@ -182,17 +187,33 @@ void main() {
         ),
       );
     });
-    await showHome(tester);
+    await showHome(tester, useViewSize: true);
     await tester.tap(find.byKey(const ValueKey('workspace-view-board')));
     await tester.pump(const Duration(milliseconds: 100));
-    for (final width in [1440.0, 1920.0, 900.0, 390.0]) {
-      await tester.binding.setSurfaceSize(Size(width, 1000));
+    for (final (width, expectedFrameWidth) in const [
+      (900.0, 900.0),
+      (1440.0, 1340.0),
+      (1920.0, 1700.0),
+      (2560.0, 1920.0),
+      (900.0, 900.0),
+      (390.0, 390.0),
+    ]) {
+      tester.view.physicalSize = Size(width, 1000);
       await tester.pump(const Duration(milliseconds: 100));
       final frame = tester.getRect(
         find.byKey(const ValueKey('home-content-frame')),
       );
-      expect(frame.width, closeTo(width > 1040 ? 1040 : width, .01));
+      expect(frame.width, closeTo(expectedFrameWidth, .01));
       expect(frame.center.dx, closeTo(width / 2, .01));
+      final l10n = AppLocalizations(const Locale('zh'));
+      expect(
+        tester.getRect(find.text(l10n.get('appTitle'))).left,
+        greaterThanOrEqualTo(frame.left),
+      );
+      expect(
+        tester.getRect(find.byTooltip(l10n.get('settings'))).right,
+        lessThanOrEqualTo(frame.right),
+      );
       Rect surface(String key) => tester.getRect(
         find
             .descendant(
@@ -223,9 +244,17 @@ void main() {
   testWidgets(
     'search field, notice, results and composer share the home edges',
     (tester) async {
-      addTearDown(() => tester.binding.setSurfaceSize(null));
-      await showHome(tester);
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = const Size(900, 1000);
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await showHome(tester, useViewSize: true);
       final l10n = AppLocalizations(const Locale('zh'));
+      final composerField = find.descendant(
+        of: find.byKey(const ValueKey('composer-frame')),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(composerField, 'Window resize draft');
       await tester.tap(find.byTooltip(l10n.get('searchHint')));
       await tester.pump();
       final field = find.byKey(const ValueKey('task-search-field'));
@@ -240,8 +269,8 @@ void main() {
             )
             .first,
       );
-      for (final width in [1440.0, 1244.0, 900.0, 390.0]) {
-        await tester.binding.setSurfaceSize(Size(width, 1000));
+      for (final width in [900.0, 1920.0, 2560.0, 1244.0, 900.0, 390.0]) {
+        tester.view.physicalSize = Size(width, 1000);
         await tester.pump();
         final composer = surface('composer-frame');
         for (final rect in [
@@ -260,6 +289,12 @@ void main() {
             reason: 'viewport $width',
           );
         }
+        expect(tester.widget<TextField>(field).controller!.text, 'Persisted');
+        expect(tester.widget<TextField>(field).focusNode!.hasFocus, isTrue);
+        expect(
+          tester.widget<TextField>(composerField).controller!.text,
+          'Window resize draft',
+        );
         expect(tester.takeException(), isNull);
       }
       await tester.tap(find.byTooltip(l10n.get('clearSearch')));

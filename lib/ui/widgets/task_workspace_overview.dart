@@ -10,6 +10,7 @@ import 'completed_tasks_toolbar.dart';
 import 'inline_feedback.dart';
 import 'task_board.dart';
 import 'task_card.dart';
+import 'workspace_frame.dart';
 
 /// Daily work and the existing priority board share the same persisted tasks.
 class TaskWorkspaceOverview extends ConsumerStatefulWidget {
@@ -447,6 +448,9 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
         : (rows.isEmpty && view != 'all') ||
               (view == 'all' && rows.isEmpty && _cachedCompletedCount == 0);
     final hasAnyTasks = _cachedActiveAllCount > 0 || _cachedCompletedCount > 0;
+    final frameConstraints = BoxConstraints(
+      maxWidth: WorkspaceFrame.widthLimitOf(context),
+    );
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxHeight < 96) return const SizedBox.shrink();
@@ -455,7 +459,7 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
             Align(
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1040),
+                constraints: frameConstraints,
                 child: SizedBox(
                   width: double.infinity,
                   child: Padding(
@@ -554,7 +558,7 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                   : Align(
                       alignment: Alignment.topCenter,
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1040),
+                        constraints: frameConstraints,
                         child: showEmptyState
                                 ? Center(
                                     child: SingleChildScrollView(

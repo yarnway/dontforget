@@ -25,6 +25,7 @@ import 'voice_capture_feedback.dart';
 import 'live_voice_text_dialog.dart';
 import '../../services/voice_text_draft.dart';
 import 'windows_composer_layout.dart';
+import 'workspace_frame.dart';
 
 // A separate type lets RawGestureDetector replace the recognizer when changing
 // input mode; a recognizer's deadline cannot be changed after construction.
@@ -1029,13 +1030,14 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
               height: 1.45,
               leadingDistribution: TextLeadingDistribution.even,
             );
+    final frameWidth = WorkspaceFrame.widthLimitOf(context);
     final windowsLayout = isWindows
         ? WindowsComposerLayout.measure(
             text: _textController.text,
             width: math.max(
               1,
               math.min(
-                    1040,
+                    frameWidth,
                     constraints.hasBoundedWidth
                         ? constraints.maxWidth
                         : MediaQuery.sizeOf(context).width,
@@ -1826,7 +1828,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
             heightFactor: 1,
             alignment: Alignment.bottomCenter,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1040),
+              constraints: BoxConstraints(maxWidth: frameWidth),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

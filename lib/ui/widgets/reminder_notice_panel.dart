@@ -4,6 +4,7 @@ import '../../l10n/app_localizations.dart';
 import '../../models/reminder.dart';
 import '../formatters/local_date_time.dart';
 import 'task_snooze_picker.dart';
+import 'workspace_frame.dart';
 
 String reminderOccurrenceKey(Reminder reminder) => reminder.occurrenceIdentity;
 
@@ -120,7 +121,9 @@ class ReminderNoticePanel extends StatelessWidget {
       alignment: Alignment.topCenter,
       heightFactor: 1,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1040),
+        constraints: BoxConstraints(
+          maxWidth: WorkspaceFrame.widthLimitOf(context),
+        ),
         child: Semantics(
           container: true,
           liveRegion: true,
