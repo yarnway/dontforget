@@ -1,0 +1,56 @@
+{
+  "timestamp_utc": "2026-11-25T03:17:46.913430+00:00",
+  "package_origin": "local-candidate",
+  "source_commit": "4395a3970b3b2e742df759ebfdd2897d76818947",
+  "candidate_distribution": "local fixed-SDK package",
+  "setup_sha256": "babd0bd2d38690e9754c2abc0004766a5e3818139f2b738c5e63ffdf4906b9cd",
+  "portable_sha256": "78634dba21585d9ceb34bb377c0f1d91f6f4203b1b461201fac8674c2d2cc395",
+  "previous_package_origin": "local-candidate-build100-2026-11-25",
+  "version_before": "1.8.24+100",
+  "verified_installed_prior_payload_files": 27,
+  "running_at_install_pid": 35272,
+  "visible_at_install": false,
+  "backup_verified": true,
+  "force_close_allowed": false,
+  "installer_exit": 0,
+  "graceful_release_logged": true,
+  "old_pid_exited": true,
+  "version_after": "1.8.24+104",
+  "payload_files_identical": 27,
+  "expected_payload_files": 27,
+  "after_install": {
+    "all_business_fields_equal": true,
+    "dpapi_credential_readback_equal": true,
+    "credential_files_equal": true,
+    "credential_count": 1,
+    "counts": {
+      "Reminders": 9,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "schema": 17,
+    "integrity_check": "ok"
+  },
+  "reopen_pid": 39568,
+  "reopen_window_visible": true,
+  "after_reopen": {
+    "all_business_fields_equal": true,
+    "dpapi_credential_readback_equal": true,
+    "credential_files_equal": true,
+    "credential_count": 1,
+    "counts": {
+      "Reminders": 9,
+      "MediaRecords": 0,
+      "Settings": 1
+    },
+    "schema": 17,
+    "integrity_check": "ok"
+  },
+  "completion_feedback_installed_ui": {
+    "seconds_after_click_with_undo": 3.926,
+    "seconds_after_click_without_prompt": 5.669,
+    "test_task_original_completion_restored": true,
+    "new_business_rows_created": 0
+  },
+  "verification_scope": "Windows local candidate; backup data matched after overlay and normal launch, before the test task toggle"
+}
