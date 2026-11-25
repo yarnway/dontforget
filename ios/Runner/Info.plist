@@ -30,6 +30,10 @@
 	<string>应用需要访问相册以选取图片或视频并提交给AI提炼待办</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>应用需要将附件保存至相册的权限</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>连接您选择的局域网设备，同步事项和附件。</string>
+	<key>DontForgetShareGroup</key>
+	<string>$(DONTFORGET_SHARE_GROUP)</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

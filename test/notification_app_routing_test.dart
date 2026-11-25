@@ -1,4 +1,5 @@
 import 'support/workspace_drafts.dart';
+import 'support/real_io.dart';
 import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'dart:async';
 import 'dart:io';
@@ -13,12 +14,13 @@ import 'package:dont_forget/providers/recovery_coordinator.dart';
 import 'package:dont_forget/services/context_trigger_service.dart';
 import 'package:dont_forget/services/notification_service.dart';
 import 'package:dont_forget/services/android_protocol_service.dart';
-import 'package:dont_forget/services/android_share_service.dart';
+import 'package:dont_forget/services/platform_share_service.dart';
 import 'package:dont_forget/services/shared_text_inbox.dart';
 import 'package:dont_forget/providers/shared_text_provider.dart';
 import 'package:dont_forget/ui/screens/shared_text_inbox_screen.dart';
 import 'package:dont_forget/ui/screens/recovery_outcome_screen.dart';
 import 'package:dont_forget/ui/screens/task_detail_screen.dart';
+import 'package:dont_forget/ui/widgets/inline_feedback.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -160,11 +162,11 @@ void main() {
       MethodChannel('tray_manager'),
       MethodChannel('window_manager'),
       AndroidProtocolService.channel,
-      AndroidShareService.channel,
+      PlatformShareService.channel,
     ]);
     for (final channel in List<MethodChannel>.of(channels)) {
       messenger.setMockMethodCallHandler(channel, (call) async {
-        if (channel == AndroidShareService.channel) {
+        if (channel == PlatformShareService.channel) {
           if (call.method == 'initialize') {
             sharedEpoch = call.arguments as String;
           }
@@ -317,6 +319,29 @@ void main() {
   );
 
   testWidgets(
+    'iOS imports a share on resume and acknowledges after the inbox commits',
+    (tester) async {
+      await mount(tester);
+      await ready(tester);
+      await waitShare(tester, () => sharedEpoch == _firstEpoch);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      nativeShares.add(share(1).toJson());
+      await tester.pump();
+      expect(shareAcks, isEmpty);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await waitShare(tester, () => shareAcks.length == 1);
+      expect(shareAcks.single, share(1).id);
+      expect(find.byType(SharedTextInboxScreen), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    },
+    variant: const TargetPlatformVariant({TargetPlatform.iOS}),
+  );
+
+  testWidgets(
     'shared editor autosaves and explicit local save cannot create duplicate memos on redelivery',
     (tester) async {
       nativeShares.add(share(1).toJson());
@@ -358,7 +383,7 @@ void main() {
       nativeShares.add(share(1).toJson());
       await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .handlePlatformMessage(
-            AndroidShareService.channel.name,
+            PlatformShareService.channel.name,
             const StandardMethodCodec().encodeMethodCall(
               const MethodCall('onPendingShares'),
             ),
@@ -568,6 +593,99 @@ void main() {
     expect(command.playMedia, isNotNull);
     await tester.pumpWidget(const SizedBox());
     expect(command.playMedia, isNull);
+  });
+
+  testWidgets('audio completion dismisses only its own playback feedback', (
+    tester,
+  ) async {
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final started = <String>[];
+    Future<void> emit(String player, String event, Object? value) async {
+      await messenger.handlePlatformMessage(
+        'xyz.luan/audioplayers/events/$player',
+        const StandardMethodCodec().encodeSuccessEnvelope({
+          'event': event,
+          'value': value,
+        }),
+        (_) {},
+      );
+    }
+
+    messenger.setMockMethodCallHandler(
+      const MethodChannel('xyz.luan/audioplayers'),
+      (call) async {
+        final player = (call.arguments as Map)['playerId'] as String;
+        if (call.method == 'create') {
+          final events = MethodChannel('xyz.luan/audioplayers/events/$player');
+          channels.add(events);
+          messenger.setMockMethodCallHandler(events, (_) async => null);
+        }
+        if (call.method == 'setSourceUrl') {
+          await emit(player, 'audio.onPrepared', true);
+        }
+        if (call.method == 'resume') started.add(player);
+        return null;
+      },
+    );
+    await tester.runAsync(() async {
+      await database.writeTransaction(
+        database.captureGeneration(),
+        (db) => db.insert('MediaRecords', {
+          'id': 'voice-playback',
+          'type': 'audio',
+          'content_or_path': '${directory.path}/test-audio.m4a',
+          'created_at': DateTime.utc(2026).toIso8601String(),
+        }),
+      );
+      await container.read(mediaRecordsProvider.notifier).refreshMediaRecords();
+    });
+    await mount(tester);
+    await ready(tester);
+    final command = container.read(workspaceToolsCommandProvider);
+    final playing = find.text('Playing voice note...');
+    command.playMedia!('voice-playback');
+    await pumpUntilRealIo(
+      tester,
+      () => playing.evaluate().isNotEmpty,
+      reason: 'show the first playback after the native player starts',
+    );
+    await emit(started.single, 'audio.onComplete', null);
+    await pumpUntilRealIo(
+      tester,
+      () => playing.evaluate().isEmpty,
+      reason: 'dismiss feedback at natural playback completion',
+    );
+
+    command.playMedia!('voice-playback');
+    await pumpUntilRealIo(
+      tester,
+      () => playing.evaluate().isNotEmpty,
+      reason: 'allow the same recording to be played after completion',
+    );
+    expect(started, hasLength(2));
+    final feedback = tester.state<InlineFeedbackState>(
+      find.byType(InlineFeedback),
+    );
+    feedback.showSnackBar(const SnackBar(content: Text('Unrelated feedback')));
+    await emit(started.last, 'audio.onComplete', null);
+    await tester.pump();
+    expect(find.text('Unrelated feedback'), findsOneWidget);
+
+    command.playMedia!('voice-playback');
+    await pumpUntilRealIo(
+      tester,
+      () => started.length == 3 && playing.evaluate().isNotEmpty,
+      reason: 'playback can start again after unrelated feedback',
+    );
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.tap(find.widgetWithText(TextButton, 'Stop'));
+    await pumpUntilRealIo(
+      tester,
+      () => playing.evaluate().isEmpty,
+      reason: 'manual stop also removes the playback action',
+    );
+    await tester.pumpWidget(const SizedBox());
   });
 
   testWidgets('workspace quiesce removes its media delegate', (tester) async {

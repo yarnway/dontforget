@@ -3,14 +3,18 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
+import 'package:url_launcher/url_launcher.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/shared_text_strings.dart';
+import '../../models/media_record.dart';
 import '../../providers/providers.dart';
 import '../../providers/home_controller.dart';
 import '../../providers/shared_text_provider.dart';
 import '../../providers/workspace_drafts_provider.dart';
+import '../../services/platform_share_service.dart';
 import '../../services/shared_text_inbox.dart';
 import '../../services/recovery/runtime_gate.dart';
+import '../widgets/inline_feedback.dart';
 import '../widgets/task_attachments_panel.dart';
 
 void openSharedTextInbox(BuildContext context, WidgetRef ref) {
@@ -24,6 +28,26 @@ void openSharedTextInbox(BuildContext context, WidgetRef ref) {
       settings: const RouteSettings(name: '/shared-drafts'),
       builder: (_) => const SharedTextInboxScreen(),
     ),
+  );
+}
+
+Future<void> _openWebLink(BuildContext context, Uri link) async {
+  try {
+    if (await launchUrl(link, mode: LaunchMode.externalApplication)) return;
+  } catch (_) {
+    // The system may have no available browser.
+  }
+  if (!context.mounted) return;
+  InlineFeedback.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        sharedTextLabel(
+          AppLocalizations.of(context).locale.languageCode,
+          'openLinkFailed',
+        ),
+      ),
+    ),
+    tone: FeedbackTone.error,
   );
 }
 
@@ -146,7 +170,14 @@ class SharedTextInboxScreen extends ConsumerWidget {
                             overflow: TextOverflow.ellipsis,
                           )
                         : null,
-                    trailing: const Icon(Icons.chevron_right),
+                    trailing: switch (SharedText.webLinkFromText(item.text)) {
+                      final link? => IconButton(
+                        tooltip: t('openLink'),
+                        icon: const Icon(Icons.open_in_new),
+                        onPressed: () => _openWebLink(context, link),
+                      ),
+                      null => const Icon(Icons.chevron_right),
+                    },
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
                         builder: (_) => _SharedTextEditor(item: item),
@@ -376,11 +407,61 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
     }
   }
 
+  void _previewAttachment() {
+    if (!_current || _busy || _closing) return;
+    final item = widget.item;
+    final file = item.attachmentPath;
+    if (file == null || !SharedText.isHandoffPath(file, item.id)) return;
+    final name = item.attachmentName ?? p.basename(file);
+    final useQuickLook =
+        Theme.of(context).platform == TargetPlatform.iOS &&
+        p.extension(file).toLowerCase() == '.pdf';
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (previewContext) => TaskAttachmentPreview(
+          media: MediaRecord(
+            id: item.id,
+            type: item.isImageAttachment ? 'image' : 'file',
+            contentOrPath: name,
+            createdAt: DateTime.fromMillisecondsSinceEpoch(item.createdAt),
+          ),
+          resolvedPath: file,
+          onPreviewFile: useQuickLook
+              ? () => _previewPDF(previewContext, p.basename(file))
+              : null,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _previewPDF(BuildContext previewContext, String name) async {
+    if (!_current) return;
+    try {
+      final opened = await PlatformShareService.channel.invokeMethod<bool>(
+        'previewPDF',
+        {'id': widget.item.id, 'name': name},
+      );
+      if (opened == true) return;
+    } catch (_) {
+      // Keep the file details and save-copy option available.
+    }
+    if (!previewContext.mounted || !_current) return;
+    InlineFeedback.of(previewContext).showSnackBar(
+      SnackBar(
+        content: Text(
+          AppLocalizations.of(previewContext).get('taskAttachmentUnavailable'),
+        ),
+      ),
+      tone: FeedbackTone.error,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final alreadySaved = ref
         .watch(remindersProvider)
         .any((row) => row.id == widget.item.id);
+    final link = SharedText.webLinkFromText(_text.text);
     return PopScope(
       canPop:
           _allowPop ||
@@ -409,48 +490,56 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
                 )) ...[
               Card.outlined(
                 key: const ValueKey('shared-attachment-card'),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (widget.item.isImageAttachment)
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 220),
-                        child: Image.file(
-                          File(widget.item.attachmentPath!),
-                          key: const ValueKey('shared-attachment-image'),
-                          cacheHeight: 660,
-                          semanticLabel:
-                              widget.item.attachmentName ??
-                              p.basename(widget.item.attachmentPath!),
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, _, _) => const Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Icon(Icons.broken_image_outlined, size: 40),
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: _busy || _closing ? null : _previewAttachment,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (widget.item.isImageAttachment)
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxHeight: 220),
+                          child: Image.file(
+                            File(widget.item.attachmentPath!),
+                            key: const ValueKey('shared-attachment-image'),
+                            cacheHeight: 660,
+                            semanticLabel:
+                                widget.item.attachmentName ??
+                                p.basename(widget.item.attachmentPath!),
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, _, _) => const Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Icon(
+                                Icons.broken_image_outlined,
+                                size: 40,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ListTile(
-                      leading: Icon(
-                        widget.item.isImageAttachment
-                            ? Icons.image_outlined
-                            : Icons.attach_file,
-                      ),
-                      title: Text(
-                        widget.item.attachmentName ??
-                            p.basename(widget.item.attachmentPath!),
-                        key: const ValueKey('shared-attachment-name'),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      subtitle: Text(
-                        t(
+                      ListTile(
+                        leading: Icon(
                           widget.item.isImageAttachment
-                              ? 'imageAttachment'
-                              : 'attachment',
+                              ? Icons.image_outlined
+                              : Icons.attach_file,
                         ),
+                        title: Text(
+                          widget.item.attachmentName ??
+                              p.basename(widget.item.attachmentPath!),
+                          key: const ValueKey('shared-attachment-name'),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(
+                          t(
+                            widget.item.isImageAttachment
+                                ? 'imageAttachment'
+                                : 'attachment',
+                          ),
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -469,6 +558,17 @@ class _SharedTextEditorState extends ConsumerState<_SharedTextEditor>
               ),
               onChanged: _changed,
             ),
+            if (link != null)
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: TextButton.icon(
+                  onPressed: _busy || _closing || _composing
+                      ? null
+                      : () => _openWebLink(context, link),
+                  icon: const Icon(Icons.open_in_new),
+                  label: Text(t('openLink')),
+                ),
+              ),
             if (_failed) ...[
               Semantics(
                 container: true,

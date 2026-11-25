@@ -35,7 +35,7 @@ class PackagingTest(unittest.TestCase):
 
     def test_ios_widget_versions_and_bundle_must_match_host(self):
         app = self.root / 'Runner.app'
-        host = {'CFBundleIdentifier': 'com.example.app',
+        host = {'CFBundleIdentifier': 'com.example.app', 'DontForgetShareGroup': 'group.com.example.app',
                 'CFBundleShortVersionString': '1.7.0', 'CFBundleVersion': '31'}
         info = {**host, 'CFBundleIdentifier': 'com.example.app.ReminderActivity',
                 'CFBundleExecutable': 'ReminderActivity',
@@ -43,6 +43,12 @@ class PackagingTest(unittest.TestCase):
         self.write('Runner.app/Info.plist', plistlib.dumps(host))
         target = 'Runner.app/PlugIns/ReminderActivity.appex/'
         self.write(target + 'ReminderActivity')
+        share_path = 'Runner.app/PlugIns/ShareExtension.appex/'
+        share = {**host, 'CFBundleIdentifier': 'com.example.app.ShareExtension',
+                 'CFBundleExecutable': 'ShareExtension',
+                 'NSExtension': {'NSExtensionPointIdentifier': 'com.apple.share-services'}}
+        self.write(share_path + 'Info.plist', plistlib.dumps(share))
+        self.write(share_path + 'ShareExtension')
         for mutation in ['valid', 'missing-version', 'old-version', 'wrong-bundle', 'wrong-type', 'unsafe-executable']:
             current = dict(info)
             if mutation == 'missing-version': current.pop('CFBundleVersion')
@@ -56,6 +62,11 @@ class PackagingTest(unittest.TestCase):
                     self.assertEqual(ios_extensions(app, '1.7.0', '31')[0]['build_number'], '31')
                 else:
                     with self.assertRaises(ValueError): ios_extensions(app, '1.7.0', '31')
+        self.write(target + 'Info.plist', plistlib.dumps(info))
+        self.assertEqual(len(ios_extensions(app, '1.7.0', '31')), 2)
+        self.write(share_path + 'Info.plist', plistlib.dumps({**share, 'DontForgetShareGroup': 'group.other'}))
+        with self.assertRaisesRegex(ValueError, 'share group'):
+            ios_extensions(app, '1.7.0', '31')
 
     def test_ios_missing_widget_or_host_version_fails_before_packaging(self):
         app = self.root / 'Runner.app'

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:dont_forget/providers/workspace_drafts_provider.dart';
-import 'package:dont_forget/services/android_share_service.dart';
+import 'package:dont_forget/services/platform_share_service.dart';
 import 'package:dont_forget/services/shared_text_inbox.dart';
 import 'package:dont_forget/services/streaming_backup_service.dart';
 import 'package:dont_forget/services/recovery/backup_inspector.dart';
@@ -23,6 +23,26 @@ SharedText item(int n, {String text = '中文 English https://example.com/link'}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  test(
+    'recognizes an unambiguous browser link without changing draft text',
+    () {
+      final url = Uri.parse('https://example.com/a?b=1#c');
+      expect(SharedText.webLinkFromText('  $url  '), url);
+      expect(SharedText.webLinkFromText('网页标题\r\n$url'), url);
+      expect(SharedText.webLinkFromText('网页标题 <$url>'), url);
+      for (final invalid in [
+        '普通文本',
+        'file:///tmp/private',
+        'javascript:alert(1)',
+        'https:/example.com',
+        'https://user@example.com',
+        'https://example.com\\@unsafe.test',
+        '$url\nhttps://example.org',
+      ]) {
+        expect(SharedText.webLinkFromText(invalid), isNull, reason: invalid);
+      }
+    },
+  );
   group('durable shared drafts', () {
     late OfflineManagementHarness h;
     late SharedTextInbox inbox;
@@ -270,16 +290,16 @@ void main() {
   group('Android handoff channel', () {
     final messenger =
         TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
-    late AndroidShareService service;
+    late PlatformShareService service;
     setUp(() {
-      service = AndroidShareService();
+      service = PlatformShareService();
     });
     tearDown(() {
       service.dispose();
-      messenger.setMockMethodCallHandler(AndroidShareService.channel, null);
+      messenger.setMockMethodCallHandler(PlatformShareService.channel, null);
     });
     Future<void> signal() => messenger.handlePlatformMessage(
-      AndroidShareService.channel.name,
+      PlatformShareService.channel.name,
       const StandardMethodCodec().encodeMethodCall(
         const MethodCall('onPendingShares'),
       ),
@@ -290,7 +310,7 @@ void main() {
       () async {
         final calls = <MethodCall>[];
         var signals = 0;
-        messenger.setMockMethodCallHandler(AndroidShareService.channel, (
+        messenger.setMockMethodCallHandler(PlatformShareService.channel, (
           call,
         ) async {
           calls.add(call);
@@ -319,7 +339,7 @@ void main() {
         final pending = Completer<Object?>();
         final requested = Completer<void>();
         var signals = 0;
-        messenger.setMockMethodCallHandler(AndroidShareService.channel, (
+        messenger.setMockMethodCallHandler(PlatformShareService.channel, (
           call,
         ) async {
           if (call.method == 'pending') {
@@ -352,7 +372,7 @@ void main() {
       () async {
         final reply = Completer<void>();
         messenger.setMockMethodCallHandler(
-          AndroidShareService.channel,
+          PlatformShareService.channel,
           (_) => reply.future,
         );
         final init = service.initialize(datasetEpoch: 'old', onPending: () {});
@@ -373,7 +393,7 @@ void main() {
     ]) {
       test('invalid native envelope is rejected', () async {
         messenger.setMockMethodCallHandler(
-          AndroidShareService.channel,
+          PlatformShareService.channel,
           (_) async => raw,
         );
         await expectLater(service.pending(), throwsFormatException);

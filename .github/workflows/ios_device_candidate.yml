@@ -72,7 +72,7 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
-      - name: Prepare a separate host and Live Activity identity
+      - name: Prepare separate host and extension identities
         run: |
           mkdir -p build
           python3 - <<'PY'
@@ -120,6 +120,15 @@ jobs:
                   raise SystemExit('Host and extension versions differ')
               if host['CFBundleVersion'] != manifest['build_number'] or host['CFBundleShortVersionString'] != manifest['version']:
                   raise SystemExit('Actual IPA does not match its version label')
+              share_group = host.get('DontForgetShareGroup')
+              if share_group:
+                  share = plistlib.loads(archive.read('Payload/Runner.app/PlugIns/ShareExtension.appex/Info.plist'))
+                  if (share.get('CFBundleIdentifier'), share.get('CFBundleShortVersionString'), share.get('CFBundleVersion')) != (identity + '.ShareExtension', manifest['version'], manifest['build_number']):
+                      raise SystemExit('Share extension does not match the candidate identity or version')
+                  if share_group != 'group.' + identity or share.get('DontForgetShareGroup') != share_group:
+                      raise SystemExit('Share extension group is outside the candidate identity')
+                  if share.get('NSExtension', {}).get('NSExtensionPointIdentifier') != 'com.apple.share-services':
+                      raise SystemExit('Unexpected share extension point')
               if any(n.endswith('embedded.mobileprovision') for n in archive.namelist()):
                   raise SystemExit('Unexpected provisioning profile in unsigned candidate')
           receipt = {
@@ -134,6 +143,8 @@ jobs:
               'apple_credentials_used': False,
               'prepared_files': json.loads(Path('build/ios-device-preparation.json').read_text()),
           }
+          if share_group:
+              receipt.update(share_extension_bundle=identity + '.ShareExtension', share_app_group=share_group)
           Path('dist/ios-device-receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
           with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
               output.write('build_number=' + host['CFBundleVersion'] + '\n')

@@ -26,7 +26,7 @@ import 'services/mac_menu_commands.dart';
 import 'services/recovery/runtime_gate.dart';
 import 'services/windows_protocol_service.dart';
 import 'services/android_protocol_service.dart';
-import 'services/android_share_service.dart';
+import 'services/platform_share_service.dart';
 import 'services/shared_text_inbox.dart';
 import 'providers/shared_text_provider.dart';
 import 'providers/global_capture_provider.dart';
@@ -75,7 +75,7 @@ class _MyAppState extends ConsumerState<MyApp>
   ProtocolRoute? _pendingProtocolRoute;
   bool _protocolFramePending = false;
   final _androidProtocol = AndroidProtocolService();
-  final _androidShares = AndroidShareService();
+  final _platformShares = PlatformShareService();
   bool _sharesAvailable = false,
       _shareFramePending = false,
       _shareAgain = false;
@@ -98,6 +98,11 @@ class _MyAppState extends ConsumerState<MyApp>
 
   bool get _supportsAndroidProtocol =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
+  bool get _supportsPlatformShares =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
 
   bool get _supportsProtocol =>
       !kIsWeb && (Platform.isWindows || _supportsAndroidProtocol);
@@ -318,8 +323,8 @@ class _MyAppState extends ConsumerState<MyApp>
       _shareDrain = null;
       _sharedInboxRoute = null;
       _sharedInboxWanted = false;
-      if (_supportsAndroidProtocol) {
-        unawaited(_androidShares.resetForRecovery().catchError((Object _) {}));
+      if (_supportsPlatformShares) {
+        unawaited(_platformShares.resetForRecovery().catchError((Object _) {}));
       }
     }
     if (enteringRecovery && _supportsLiveActivities) {
@@ -382,7 +387,7 @@ class _MyAppState extends ConsumerState<MyApp>
       _syncMacMenu();
       StartupTrace.mark('notifications_ready');
       _scheduleNotificationRoutes();
-      if (_supportsAndroidProtocol) unawaited(_initializeSharedTexts());
+      if (_supportsPlatformShares) unawaited(_initializeSharedTexts());
       if (_globalCapture != null) {
         unawaited(_globalCapture!.start(_activateGlobalCapture));
       }
@@ -407,7 +412,7 @@ class _MyAppState extends ConsumerState<MyApp>
     final epoch = ++_shareEpoch;
     final dataset = _notifications.datasetEpoch;
     if (dataset == null) return;
-    final available = await _androidShares.initialize(
+    final available = await _platformShares.initialize(
       datasetEpoch: dataset,
       onPending: _scheduleSharedTexts,
     );
@@ -448,7 +453,7 @@ class _MyAppState extends ConsumerState<MyApp>
     final epoch = _shareEpoch;
     bool current() => mounted && epoch == _shareEpoch && _nativeCommandsReady;
     try {
-      final pending = await _androidShares.pending();
+      final pending = await _platformShares.pending();
       if (!current() || pending.isEmpty) return;
       final inbox = ref.read(sharedTextInboxProvider);
       for (final item in pending) {
@@ -459,7 +464,7 @@ class _MyAppState extends ConsumerState<MyApp>
           _sharedFeedback('full');
           break;
         }
-        await _androidShares.acknowledge(item.id);
+        await _platformShares.acknowledge(item.id);
       }
       if (current() &&
           SharedTextInbox.count(ref.read(workspaceDraftsProvider)) > 0) {
@@ -1013,7 +1018,7 @@ class _MyAppState extends ConsumerState<MyApp>
   void dispose() {
     unawaited(_globalCapture?.pause().catchError((Object _) {}));
     _shareEpoch++;
-    _androidShares.dispose();
+    _platformShares.dispose();
     if (identical(_sharedCommand.open, _openSharedCommand)) {
       _sharedCommand.open = null;
     }

@@ -33,6 +33,27 @@ class SharedText {
   static final _id = RegExp(
     r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
   );
+  static final _webLink = RegExp(
+    r'(?:^|[\s<])(https?://[^\s\x00-\x1f\x7f<>"`]+)',
+    caseSensitive: false,
+  );
+
+  /// Find a single clear web target without changing the shared text.
+  static Uri? webLinkFromText(String text) {
+    Uri? link;
+    for (final match in _webLink.allMatches(text)) {
+      final candidate = match.group(1)!;
+      if (candidate.contains('\\')) continue;
+      final uri = Uri.tryParse(candidate);
+      if (uri == null || uri.host.isEmpty || uri.userInfo.isNotEmpty) {
+        continue;
+      }
+      if (link != null && link != uri) return null;
+      link = uri;
+    }
+    return link;
+  }
+
   static bool validText(String text) =>
       text.length <= maxTextLength &&
       !RegExp(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]').hasMatch(text);
@@ -51,7 +72,7 @@ class SharedText {
   static bool isImagePath(String filePath) =>
       imageExtensions.contains(p.extension(filePath).toLowerCase());
 
-  /// The Android bridge stages each share as `shared_handoff/<id>/<name>`.
+  /// Native bridges stage each share as `shared_handoff/<id>/<name>`.
   /// Only that private layout may be imported or removed for a share.
   static bool isHandoffPath(String filePath, String id) {
     final parent = p.dirname(filePath);

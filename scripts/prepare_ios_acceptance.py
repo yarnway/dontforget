@@ -41,19 +41,14 @@ def rewrite_pbxproj(content, run_id):
         f'PRODUCT_BUNDLE_IDENTIFIER = {acceptance_base};',
         content,
     )
-    # 2. ReminderActivity widget extension
-    content = re.sub(
-        r'PRODUCT_BUNDLE_IDENTIFIER\s*=\s*' + re.escape(f'{ORIGINAL_ID}.ReminderActivity') + r';',
-        f'PRODUCT_BUNDLE_IDENTIFIER = {acceptance_base}.ReminderActivity;',
-        content,
-    )
-    # 3. RunnerTests target
-    content = re.sub(
-        r'PRODUCT_BUNDLE_IDENTIFIER\s*=\s*' + re.escape(f'{ORIGINAL_ID}.RunnerTests') + r';',
-        f'PRODUCT_BUNDLE_IDENTIFIER = {acceptance_base}.RunnerTests;',
-        content,
-    )
-    return content
+    for target in ('ReminderActivity', 'ShareExtension', 'RunnerTests'):
+        content = re.sub(
+            r'PRODUCT_BUNDLE_IDENTIFIER\s*=\s*' + re.escape(f'{ORIGINAL_ID}.{target}') + r';',
+            f'PRODUCT_BUNDLE_IDENTIFIER = {acceptance_base}.{target};',
+            content,
+        )
+    return content.replace(f'DONTFORGET_SHARE_GROUP = group.{ORIGINAL_ID};',
+                           f'DONTFORGET_SHARE_GROUP = group.{acceptance_base};')
 
 
 def revert_pbxproj(content):
@@ -68,7 +63,9 @@ def revert_pbxproj(content):
         suffix = match.group(1) or ''
         return f'PRODUCT_BUNDLE_IDENTIFIER = {ORIGINAL_ID}{suffix};'
 
-    return re.sub(pattern, _replace, content)
+    content = re.sub(pattern, _replace, content)
+    return re.sub(r'DONTFORGET_SHARE_GROUP = group\.' + re.escape(ACCEPTANCE_PREFIX) + r'[a-z0-9-]+;',
+                  f'DONTFORGET_SHARE_GROUP = group.{ORIGINAL_ID};', content)
 
 
 def rewrite_info_plist(plist_bytes, run_id):
@@ -135,6 +132,8 @@ def prepare(root, run_id, dry_run=False):
         'run_id': run_id,
         'host_bundle_id': host_bundle_id,
         'widget_bundle_id': widget_bundle_id,
+        'share_bundle_id': f'{host_bundle_id}.ShareExtension',
+        'share_app_group': f'group.{host_bundle_id}',
         'dry_run': dry_run,
         'files': {
             'project.pbxproj': {

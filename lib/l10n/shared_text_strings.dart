@@ -15,6 +15,12 @@ String sharedTextLabel(String language, String key) {
     'emptyDraft': ['空草稿', 'Empty draft', '空の下書き'],
     'attachment': ['分享附件', 'Shared attachment', '共有添付ファイル'],
     'imageAttachment': ['分享图片', 'Shared image', '共有画像'],
+    'openLink': ['在浏览器中打开', 'Open in browser', 'ブラウザーで開く'],
+    'openLinkFailed': [
+      '无法打开网页链接。',
+      'Could not open the web link.',
+      'ウェブリンクを開けませんでした。',
+    ],
     'failed': [
       '草稿未保存，请重试。',
       'Draft not saved. Retry.',

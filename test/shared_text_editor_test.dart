@@ -7,7 +7,9 @@ import 'package:dont_forget/providers/shared_text_provider.dart';
 import 'package:dont_forget/providers/workspace_drafts_provider.dart';
 import 'package:dont_forget/services/shared_text_inbox.dart';
 import 'package:dont_forget/ui/screens/shared_text_inbox_screen.dart';
+import 'package:dont_forget/ui/widgets/inline_feedback.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -62,7 +64,11 @@ void main() {
   });
   tearDown(() => h.dispose());
 
-  Future<void> show(WidgetTester tester) async {
+  Future<void> show(
+    WidgetTester tester, {
+    bool openEditor = true,
+    TargetPlatform? platform,
+  }) async {
     addTearDown(() async {
       await tester.pumpWidget(const SizedBox.shrink());
       await drainWorkspaceDrafts(tester, h.container);
@@ -74,16 +80,18 @@ void main() {
           overrides: [
             homeControllerProvider.overrideWith((ref) => home = _Home(ref)),
           ],
-          child: const MaterialApp(
-            locale: Locale('zh'),
-            supportedLocales: [Locale('zh'), Locale('en'), Locale('ja')],
-            localizationsDelegates: [
+          child: MaterialApp(
+            theme: ThemeData(platform: platform),
+            locale: const Locale('zh'),
+            supportedLocales: const [Locale('zh'), Locale('en'), Locale('ja')],
+            localizationsDelegates: const [
               AppLocalizationsDelegate(),
               GlobalMaterialLocalizations.delegate,
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
-            home: SharedTextInboxScreen(),
+            builder: (_, child) => InlineFeedback(child: child!),
+            home: const SharedTextInboxScreen(),
           ),
         ),
       ),
@@ -94,6 +102,7 @@ void main() {
       reason: 'Persisted inbox must load',
     );
     await tester.pumpAndSettle();
+    if (!openEditor) return;
     await tester.tap(find.byKey(const ValueKey('shared-item-$id')));
     await tester.pumpAndSettle();
     uiContainer = ProviderScope.containerOf(
@@ -110,6 +119,92 @@ void main() {
     selection: TextSelection.collapsed(offset: 4),
     composing: TextRange(start: 2, end: 4),
   );
+
+  testWidgets('a persisted web link opens externally and remains editable', (
+    tester,
+  ) async {
+    const link = 'https://example.com/read?chapter=1#start';
+    const original = '网页标题\n$link';
+    await tester.runAsync(() => inbox.edit(id, '分享原文', original));
+    const channel = MethodChannel('plugins.flutter.io/url_launcher');
+    final messenger = tester.binding.defaultBinaryMessenger;
+    final calls = <MethodCall>[];
+    var launchSucceeds = true;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      calls.add(call);
+      return launchSucceeds;
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    await show(tester, openEditor: false);
+    await tester.tap(find.byTooltip('在浏览器中打开'));
+    await tester.pumpAndSettle();
+    expect(calls.single.method, 'launch');
+    expect(calls.single.arguments, containsPair('url', link));
+    expect(calls.single.arguments, containsPair('useWebView', false));
+
+    await tester.tap(find.text(original));
+    await tester.pumpAndSettle();
+    final editor = find.byKey(const ValueKey('shared-text-editor'));
+    expect(tester.widget<TextField>(editor).controller!.text, original);
+    launchSucceeds = false;
+    await tester.tap(find.text('在浏览器中打开'));
+    await tester.pumpAndSettle();
+    expect(calls, hasLength(2));
+    expect(find.text('无法打开网页链接。'), findsOneWidget);
+    await tester.enterText(editor, '普通草稿');
+    await tester.pump();
+    expect(find.text('在浏览器中打开'), findsNothing);
+  });
+
+  testWidgets('shared PDF shows file details and invokes iOS preview', (
+    tester,
+  ) async {
+    const pdfId = '00000000-0000-4000-8000-000000000002';
+    const name = '项目计划.PDF';
+    await tester.runAsync(() async {
+      final dir = Directory('${h.directory.path}/shared_handoff/$pdfId');
+      await dir.create(recursive: true);
+      final file = File('${dir.path}/$name');
+      await file.writeAsString('%PDF-1.4');
+      await inbox.accept(
+        SharedText(
+          id: pdfId,
+          text: '',
+          createdAt: 1762300801000,
+          attachmentPath: file.path,
+          attachmentName: name,
+        ),
+      );
+    });
+    const channel = MethodChannel('com.yarnway.dontforget/share');
+    final messenger = tester.binding.defaultBinaryMessenger;
+    final calls = <MethodCall>[];
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      calls.add(call);
+      return true;
+    });
+    addTearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+    await show(tester, openEditor: false, platform: TargetPlatform.iOS);
+    await tester.tap(find.text(name));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('shared-attachment-card')));
+    final size = find.byKey(const ValueKey('attachment-preview-size'));
+    await pumpUntilRealIo(
+      tester,
+      () => size.evaluate().isNotEmpty,
+      reason: 'The attachment details must display the size',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text(name), findsOneWidget);
+    expect(tester.widget<Text>(size).data, '8 B');
+    await tester.tap(find.text('预览附件'));
+    await tester.pumpAndSettle();
+    expect(calls.single.method, 'previewPDF');
+    expect(calls.single.arguments, {'id': pdfId, 'name': name});
+    expect(await tester.runAsync(h.rows), isEmpty);
+  });
 
   testWidgets(
     'unconfirmed IME blocks memo save; range-only commit enables saving',
@@ -251,6 +346,11 @@ void main() {
             .data,
         'diagram.png',
       );
+      await tester.tap(find.byKey(const ValueKey('shared-attachment-image')));
+      await tester.pumpAndSettle();
+      expect(find.byType(InteractiveViewer), findsOneWidget);
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
       final save = find.byKey(const ValueKey('shared-save-memo'));
       // Even with empty text, an attachment share can be saved once confirmed.
       expect(tester.widget<FilledButton>(save).onPressed, isNotNull);

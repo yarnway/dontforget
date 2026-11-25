@@ -78,25 +78,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   AudioPlayer? _audioPlayer;
   final _mediaStore = LocalMediaStore();
 
-  AudioPlayer _ensureAudioPlayer() {
-    final existing = _audioPlayer;
-    if (existing != null) return existing;
-    final player = AudioPlayer();
-    _playerCompleteSubscription = player.onPlayerComplete.listen((_) {
-      _playbackStarted = false;
-      _playingRecordId = null;
-    });
-    return _audioPlayer = player;
-  }
   late final RuntimeRecoveryGate _runtime;
   late final RuntimeRecoveryToken? _birth;
   late final NotificationService _notifications;
   late final ContextTriggerService _contextTriggers;
   WorkspaceDrafts? _workspaceDrafts;
   Future<void> _playbackOperations = Future<void>.value();
-  bool _playbackStarted = false;
   String? _playingRecordId;
   StreamSubscription<void>? _playerCompleteSubscription;
+  VoidCallback? _dismissPlaybackFeedback;
 
   bool get _runtimeActive => mounted && _runtime.isCurrent(_birth);
 
@@ -107,6 +97,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       onError: (Object _, StackTrace __) {},
     );
     return result;
+  }
+
+  Future<void> _releasePlayback() async {
+    final player = _audioPlayer;
+    final completion = _playerCompleteSubscription;
+    final dismissFeedback = _dismissPlaybackFeedback;
+    _audioPlayer = null;
+    _playerCompleteSubscription = null;
+    _dismissPlaybackFeedback = null;
+    _playingRecordId = null;
+    dismissFeedback?.call();
+    try {
+      await completion?.cancel();
+    } finally {
+      await player?.dispose();
+    }
   }
 
   Future<void> _quiesce() async {
@@ -128,15 +134,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         _catchUpDigestSubscription!.cancel(),
       if (_suppressedSubscription != null) _suppressedSubscription!.cancel(),
       if (_profileSubscription != null) _profileSubscription!.cancel(),
-      if (_playerCompleteSubscription != null)
-        _playerCompleteSubscription!.cancel(),
-      _serializePlayback(() async {
-        if (_playbackStarted) {
-          await _audioPlayer?.stop();
-          _playbackStarted = false;
-          _playingRecordId = null;
-        }
-      }),
+      _serializePlayback(_releasePlayback),
     ]);
     _promptedReminderIds.clear();
     _dueNoticeKeys.clear();
@@ -452,14 +450,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _catchUpDigestSubscription?.cancel();
     _suppressedSubscription?.cancel();
     _profileSubscription?.cancel();
-    _playerCompleteSubscription?.cancel();
-    _playingRecordId = null;
-    final player = _audioPlayer;
-    if (player != null) {
-      unawaited(
-        _serializePlayback(() => player.dispose()).catchError((Object _) {}),
-      );
-    }
+    unawaited(_serializePlayback(_releasePlayback).catchError((Object _) {}));
     super.dispose();
   }
 
@@ -1145,17 +1136,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
   }
 
-  Future<void> _stopAudioPlayback({bool showFeedback = true}) async {
+  Future<void> _stopPlaybackManually() async {
     try {
-      await _serializePlayback(() async {
-        if (_playbackStarted) {
-          await _audioPlayer?.stop();
-          _playbackStarted = false;
-          _playingRecordId = null;
-        }
-      });
+      await _releasePlayback();
     } catch (_) {}
-    if (showFeedback && mounted && _runtimeActive) {
+    if (mounted && _runtimeActive) {
       final l10n = AppLocalizations.of(context);
       InlineFeedback.of(context).hideCurrentSnackBar();
       InlineFeedback.of(context).showSnackBar(
@@ -1168,6 +1153,66 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       );
     }
   }
+
+  Future<void> _playAudio(
+    String recordId,
+    String path,
+    AppLocalizations l10n,
+  ) => _serializePlayback(() async {
+    if (!_runtimeActive) return;
+    if (_playingRecordId == recordId) {
+      await _stopPlaybackManually();
+      return;
+    }
+    try {
+      await _releasePlayback();
+      if (!_runtimeActive) return;
+      // This playback control has no position indicator to update.
+      final player = AudioPlayer()..positionUpdater = null;
+      _audioPlayer = player;
+      _playingRecordId = recordId;
+      var completed = false;
+      _playerCompleteSubscription = player.onPlayerComplete.listen((_) {
+        completed = true;
+        unawaited(
+          _serializePlayback(() async {
+            if (identical(_audioPlayer, player)) await _releasePlayback();
+          }).catchError((Object _) {}),
+        );
+      });
+      await player.play(DeviceFileSource(path));
+      if (!mounted || completed || !_runtimeActive) return;
+      final feedback = InlineFeedback.of(context);
+      final message = SnackBar(
+        duration: const Duration(seconds: 6),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        content: Text(l10n.get('playingAudio')),
+        action: SnackBarAction(
+          label: l10n.get('stopPlayback'),
+          onPressed: () => unawaited(
+            _serializePlayback(() async {
+              if (identical(_audioPlayer, player)) {
+                await _stopPlaybackManually();
+              }
+            }),
+          ),
+        ),
+      );
+      _dismissPlaybackFeedback = () => feedback.hideSnackBar(message);
+      feedback.showSnackBar(message);
+    } catch (_) {
+      try {
+        await _releasePlayback();
+      } catch (_) {}
+      if (mounted && _runtimeActive) {
+        InlineFeedback.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.get('audioPlaybackFailed'))),
+          tone: FeedbackTone.error,
+        );
+      }
+    }
+  });
 
   void _playMedia(String recordId) async {
     if (!mounted || !_runtimeActive || _openingMediaPreview) return;
@@ -1191,51 +1236,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final mediaPath = await _mediaStore.resolvePath(media.contentOrPath);
     if (!mounted || !_runtimeActive) return;
     if (media.type == 'audio') {
-      if (_playbackStarted && _playingRecordId == recordId) {
-        await _stopAudioPlayback();
-        return;
-      }
-      var playFailed = false;
-      await _serializePlayback(() async {
-        if (!mounted || !_runtimeActive) return;
-        _playbackStarted = true;
-        _playingRecordId = recordId;
-        try {
-          await _ensureAudioPlayer().play(DeviceFileSource(mediaPath));
-        } catch (_) {
-          if (_playingRecordId == recordId) {
-            _playbackStarted = false;
-            _playingRecordId = null;
-          }
-          playFailed = true;
-        }
-      });
-      if (playFailed) {
-        if (mounted && _runtimeActive) {
-          InlineFeedback.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.get('audioPlaybackFailed'))),
-            tone: FeedbackTone.error,
-          );
-        }
-        return;
-      }
-      if (mounted && _runtimeActive) {
-        InlineFeedback.of(context).hideCurrentSnackBar();
-        InlineFeedback.of(context).showSnackBar(
-          SnackBar(
-            duration: const Duration(seconds: 6),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            content: Text(l10n.get('playingAudio')),
-            action: SnackBarAction(
-              label: l10n.get('stopPlayback'),
-              onPressed: () => unawaited(_stopAudioPlayback()),
-            ),
-          ),
-        );
-      }
+      await _playAudio(recordId, mediaPath, l10n);
     } else if (media.type == 'image') {
       _openingMediaPreview = true;
       await showWorkspaceImagePreviewDialog(context, mediaPath).whenComplete(

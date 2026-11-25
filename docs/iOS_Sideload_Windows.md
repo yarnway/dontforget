@@ -12,6 +12,10 @@ GitHub Release中的`DontForget_iOS_unsigned_v<版本>.ipa`由固定源码在云
 
 本次iPhone15ProMax使用独立身份`com.yarnway.dontforget.acceptance.iphone15-20261115`，与普通发行包的`com.yarnway.dontforget`分开；安装普通发行包不会自动合并独立验收应用的数据。已有数据使用产品的备份预检与明确恢复流程迁移。
 
-## 当前发行与设备状态（2026-11-22）
+## 当前发行与设备状态（2026-11-24）
 
-v1.8.23／build94 已发布普通身份未签名 IPA（`DontForget_iOS_unsigned_v1.8.23.ipa`，`10,242,177 B` / `9.77 MiB`，较 `v1.8.20` 累计缩减 `-12.68%`，SHA‑256 `7f735c69...`，内含 `PlugIns/ReminderActivity.appex` 并已独立读回校验），但本机当前无 iPhone USB 连接且为 Windows 环境，尚未在 iPhone 实机安装或验收。手机最近独立读回仍为 `1.8.11／81`，原应用与数据保留。自动签名安装尚无可用路径，构建／发布不等于手机已升级；下次接入 iPhone 覆盖前重新取最新备份，再按既有 AltStore 身份重签覆盖并核对版本、数据、中文输入、通知、录音与 VoiceOver。[分层记录](Release_1.8.23_94_2026-11-22.md)。
+公开发行 `v1.8.23+94` 的普通身份未签名 IPA 已校验，含提醒扩展。iPhone 已经通过 USB 读回独立验收版 `1.8.11+81`。AltStore 覆盖恢复后，用户在 iPhone 信任原开发者身份，为验收应用续签并确认可以打开。续签前后的事项、附件和偏好设置已逐项核对。
+
+同验收身份的 `1.8.24+99` IPA 已完成签名覆盖。用户确认可以打开并查看关于页，USB 读回相同签名应用身份和实装版本，覆盖前后的业务字段、附件与偏好设置一致。用户实测语音编辑、两种发送与冷重开后播放。新版过渡、播放自动收起、中文输入、通知及 VoiceOver 待续验。[阶段台账](Next_Steps_2026-11-02.md#11-月-24-日--iphone-语音过渡与系统分享-build-100)
+
+从 build 100 起，候选包含提醒和分享两个扩展。AltStore 提示是否保留应用扩展时，选择保留，以便验收系统分享和灵动岛。分享扩展需要与主应用具备相同的 App Group 权限，个人重签后还要用真实内容核对。这些扩展也占用免费账户的 App ID 名额。[AltStore App ID 说明](https://faq.altstore.io/altstore-classic/app-ids)

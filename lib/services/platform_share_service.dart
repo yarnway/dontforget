@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 import 'shared_text_inbox.dart';
 
-class AndroidShareService {
+class PlatformShareService {
   static const channel = MethodChannel('com.yarnway.dontforget/share');
   int _epoch = 0;
   Future<bool> initialize({

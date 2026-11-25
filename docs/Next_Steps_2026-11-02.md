@@ -6,9 +6,9 @@
 
 | 顺序 | 阶段 | 待执行任务与条件 |
 | --- | --- | --- |
-| 1 | 47／49 · iPhone USB 接入与跨端验收 | Windows 与 Pixel 8 Pro 的 `1.8.24+100` 本地候选已全部完成实装、数据保全与上滑右转按住期间即时转写验收。当前本机 USB 未枚举到 iPhone；待用户通过 USB 接入 iPhone 后，读取当前实装版本、完成最新备份，用同一 AltStore 身份签名覆盖 `1.8.24+100`，再验上滑右转端侧流式即时转写、清空自动关闭、中文输入、通知、VoiceOver、系统分享和三端局域网。 |
-| 2 | 50 · GitHub 五平台 CI 构建与下一版交付 | 公开发行仍为 `v1.8.23`（build 94）。等待合入完成提示后的主线 CI，核对制品来源、摘要、Android 固定发行证书及 iOS 应用和扩展版本，再完成 Windows 运行中覆盖、Pixel 同签名升级和 iPhone 验收后进入公开发布。 |
-| 3 | 48 · 数据保护（GitHub 制品复核） | Windows 本地 build 100（三轮运行中优雅覆盖，`9/0/1` 与 DPAPI `1` 项一致）与 Pixel 8 Pro 本地固定签名 build 100（`1.8.24+98`→`1.8.24+100` 升级前后 `DFBK2` `5/2/1` 与 2 份音频原件摘要逐字节一致、冷重开双云服务遮罩凭据正常读回）均已完成保全验证；待 GitHub Actions 制品生成后按同一标准重复核对。物理断电、容量穷举及旧目录清理按需处理。 |
+| 1 | 47／49 · iPhone 与跨端验收 | iPhone 已重新接入 USB，确认同一验收身份 build 100，数据库和 3 份分享草稿附件已读回。build 104 已整合即时转写、语音编辑过渡、播放与完成提示、系统分享和附件预览。待同身份签名覆盖后验证这些功能，再验证跨端局域网同步。 |
+| 2 | 48 · 数据保护 | build 100 的 Windows 本地包和 Pixel 同签名包已做数据保全。build 104 须做本机 Windows 运行中覆盖及重开，Pixel 接入后做固定证书覆盖。iPhone 覆盖前刷新快照，再对照事项、媒体、偏好与分享附件。 |
+| 3 | 50 · GitHub 构建与下一版交付 | 公开发行仍为 `v1.8.23`（build 94）。完成候选全量 CI，核对制品来源、摘要、Android 固定发行证书及 iOS 应用和扩展版本，再完成设备验收及发布。 |
 
 本机固定 Flutter 3.44.9 下，备份、恢复、窗口和更新服务专项 101 项通过，通知协议、路由和关于页专项 107 项通过。两组均无失败。阶段 46 的 USB 项按实际开发阻塞处理。下方为各阶段证据和历史执行记录，以上表格为当前排序。
 
@@ -79,6 +79,58 @@
 - **Pixel**　从 build 97 重新导出备份，再覆盖固定发行证书签名的 build 98。安装 APK 与制品摘要一致，任务、附件、设置、冷重开和两项云配置通过核对。[实机回执](benchmarks/build98-ci-device-acceptance-2026-11-24.json)
 - **其它平台**　iOS 未签名 IPA 的应用与提醒扩展版本验证通过。Linux 两次构建均在 Ubuntu 依赖安装时触及 12 分钟上限。从 build 99 起将慢速托管镜像指向 Ubuntu 官方归档地址，依赖步骤上限提高至 20 分钟，效果归下一次 CI 验证。[构建运行](https://github.com/yarnway/dontforget/actions/runs/45309973028)
 
+### 11 月 24 日 · iPhone USB 恢复及升级前快照
+
+- **设备与数据**　通过 Windows 上的既有 USB 配对读回验收版 `1.8.11+81`，签名应用身份与此前验收一致。已保存 `Documents` 和偏好设置的权限受限快照。SQLite 一致性副本通过完整性与逐行核对，包含 4 条事项、1 条媒体记录和 1 条设置，另核对 2 个媒体文件的摘要。设备钥匙串留待续签与升级后的实机验证。
+- **启动状态**　旧验收版与 AltStore 起初均提示「不再可用」。AltServer 覆盖 AltStore 后，用户在手机上信任自己的开发者身份，为旧验收版续签并确认能打开。USB 读回仍为 `1.8.11+81` 且签名应用身份一致。SQLite 全部业务字段、媒体文件和偏好设置一致，通知日志仅更新发送尝试时间和次数。[AltStore 续签说明](https://faq.altstore.io/altstore-classic/altserver)
+- **候选制品**　build 99 主线 CI 通过后，已构建并独立校验既有验收身份 IPA 的应用、提醒扩展身份、实际版本和摘要。[iPhone 验收包构建](https://github.com/yarnway/dontforget/actions/runs/45320351982)
+- **签名覆盖与启动**　复核覆盖前最新 USB 快照后，使用原账号在 AltStore 签名覆盖。用户打开应用并确认关于页 `1.8.24 (99)`。独立 USB 读回同一签名应用身份和实装版本。SQLite 前后完整，全业务字段、Documents 里的附件和应用偏好设置逐项一致。待重开与功能验收。[验收回执](benchmarks/build99-device-acceptance-2026-11-24.json)
+
+### 11 月 24 日 · build 99 GitHub 制品与 Windows 运行中覆盖
+
+- **CI 与制品**　提交 `9cdad1d` 的两项分析测试及五平台构建全部成功。Linux 依赖安装通过。已核对五份归档摘要、四个发行平台的 18 个候选文件、两份 APK 和 AAB 的发行证书，以及普通 iOS IPA 的应用和提醒扩展版本。[主线运行](https://github.com/yarnway/dontforget/actions/runs/45316783789) · [验收回执](benchmarks/build99-device-acceptance-2026-11-24.json)
+- **Windows**　从可见运行的本地 build 99 备份后覆盖 GitHub build 99，安装器正常关闭旧进程并以 `0` 退出。27 个安装载荷与候选便携包一致。安装与普通重开后业务字段、1 项 DPAPI 凭据及 SQLite 完整性一致。
+- **Pixel**　build 99 ARM64 包来源、版本、摘要及固定发行证书已核对。当前 Windows 和 ADB 均未枚举 Pixel，已验证的实装基线仍为 build 98。
+
+### 11 月 24 日 · iPhone 续检与跨端源码核对
+
+- **实机只读续检**　iPhone 仍为同签名身份的 `1.8.24+99`。与覆盖后快照相比，SQLite 完整，4 条事项、1 条媒体记录、1 条设置、附件和偏好逐项一致。语音编辑交互待触屏确认。
+- **源码与自动化**　iPhone build 99 验收 IPA 的扩展清单只有提醒组件。现有分享收件箱来自 Android 原生桥接，iOS 需实现 Share Extension 和可靠的共享容器交接。iOS 源码已补局域网权限用途说明。核对普通和独立验收配置均保留该说明，iOS 工具相关 22 项通过。该说明随下一候选进入安装包和实机验证。
+- **Windows 安装版与隔离网络**　build 99 的「关于与更新」显示当前 `1.8.24 (99)`。点击「检查更新」返回公开 `1.8.23 (94)` 与「当前版本高于发布版」。固定 Flutter 3.44.9 的语音编辑和局域网定向回归 38 项通过。同一 Windows 主机上的两个临时数据库使用当前 Apple Ethernet IPv4 完成事项双向交换，第二次同步记录一致。手机作为同步对端待实测。[验收回执](benchmarks/build99-device-acceptance-2026-11-24.json)
+
+### 11 月 24 日 · iPhone 语音过渡与系统分享 build 100
+
+- **build 99 真机反馈**　用户以真实录音进入编辑页，确认仅显示编辑框和两个发送按钮，删空可自动关闭，过渡生硬。两个发送动作均通过，原录音可播放。USB 读回各 1 条文字与语音备忘和 1 个新增音频文件。既有数据唯一字段差异是一条旧事项与测试文字新增双向关联。[验收回执](benchmarks/build99-device-acceptance-2026-11-24.json)
+- **build 100 源码**　移动语音编辑上滑淡入，录音浮层保持到导航过渡覆盖完成后退出。关闭时等待退场再恢复录入栏，键盘避让采用缓动，遵循系统减少动态效果设置。iPhone Share Extension 接收文本、网页链接、图片与 PDF，通过 App Group 暂存，复用本地分享草稿收件箱。应用持久化草稿后确认投递，附件保留在应用私有目录。局域网用途说明随本候选纳入打包。
+- **自动化**　Flutter 3.44.9 定向回归 85 项通过，包含 iOS 动画交接、恢复前后台导入、持久化确认、Android 既有分享与移动输入。Xcode 构建、分享扩展校验及 Swift 原生冒烟测试通过。
+- **GitHub**　build 100 源码提交 `23eebc0` 已推送到 `codex/ios-share-build100`，同源完整 CI 与 iPhone 独立身份构建通过。主线仍为 build 99。[候选 CI](https://github.com/yarnway/dontforget/actions/runs/45345991812) · [iPhone 验收包](https://github.com/yarnway/dontforget/actions/runs/45350480991)
+- **安装包与 Windows 实装**　普通 iOS build 100 和同验收身份的 iPhone IPA 均已构建并校验，读回主应用、提醒和分享扩展的版本、身份及共享组。Windows GitHub build 100 已备份后从可见运行的 GitHub build 99 覆盖，安装器正常关闭旧进程。27 个文件、业务字段、DPAPI 凭据及普通重开核对通过。[验收回执](benchmarks/build100-device-acceptance-2026-11-24.json)
+- **iPhone 实装与网页分享**　个人重签同身份覆盖后打开 `1.8.24 (100)`。USB 核对升级前后 SQLite schema 17 完整，9 条事项、4 条媒体、1 条设置、11 个文档文件哈希及偏好均一致。用户确认 Safari 系统分享可存入草稿，冷重开后仍可读，网页在 build 100 中按纯文本展示。图片、PDF、语音过渡及局域网同步继续补验。[验收回执](benchmarks/build100-device-acceptance-2026-11-24.json)
+
+### 11 月 24 日 · iPhone 原声播放结束后收起提示
+
+- **build 99 真机**　用户冷重开后确认两条测试备忘仍在、录音可重播，反馈播放至结束后提示仍停留。
+- **build 101 源码**　收起当前播放提示并释放播放器，保留手动停止与再次播放。录音结束时保留由其它操作刚显示的提示。Flutter 定向回归 81 项通过，相关源码与测试静态分析通过。待真实音频完成事件实测。
+- **build 99 后台通知**　用户将合成事项设为约两分钟后提醒，回到 iPhone 主屏收到通知，点击正文确认打开对应事项。通知动作及语音修改的实机复验另行记录。[build 99 实机回执](benchmarks/build99-device-acceptance-2026-11-24.json)
+- **build 99 旁白**　用户确认已自行验证旁白正常，按用户要求结束该项人机操作。此结论来源于用户报告。
+- **GitHub**　build 101 源码提交 `0f6fb25` 已推送。Windows 与 Linux 的完整测试均在播放器相关用例发现遗留帧回调，未进入打包。下一候选关闭了播放器未使用的位置更新，相关恢复测试已通过。[候选 CI](https://github.com/yarnway/dontforget/actions/runs/45348713847)
+
+### 11 月 24 日 · 完成事项提示自动收起
+
+- **源码**　从事项卡片和提醒条标记完成后，提示和撤销入口显示 5 秒。期间可撤销，到期只收起提示。其它需处理的提示保留既有行为。
+- **自动化**　事项卡片真实写入、4 秒时撤销和 5 秒后提示消失均有回归。另覆盖读屏导航和提示被替换时的计时。加入播放器恢复场景后 Flutter 定向回归 145 项通过，待候选实装后补验。
+
+### 11 月 24 日 · 分享草稿打开网页
+
+- **源码**　复用已存的分享文本识别单独一行的 HTTP／HTTPS 地址，支持链接前有标题的草稿。草稿列表和编辑页都有浏览器入口，原文保留并可编辑。点击后交给系统处理，打开失败时给出提示。
+- **自动化与候选**　build 102 合入浏览器入口、播放释放修复和 5 秒完成提示。Flutter 定向 177 项通过，包含已有草稿、平台启动请求、打开失败反馈和恢复边界，相关静态分析通过。源码 `9d25022` 已推送，完整 CI 及安装包另验。[build 102 CI](https://github.com/yarnway/dontforget/actions/runs/45354077687)
+
+### 11 月 24 日 · iPhone 分享附件原名与预览
+
+- **build 100 真机**　用户从系统分享导入图片和 PDF，确认图片可显示缩略图。USB 从草稿库读回各一条新附件记录。两个文件原名均未保留，PDF 只确认已入库，未验证内容显示。[验收回执](benchmarks/build100-device-acceptance-2026-11-24.json)
+- **build 103 源码**　按原文件 URL 名称、提供方建议名称、文件副本名称顺序取有效名称。缺少有效名称时生成带时间和文件类型的名称。草稿附件支持点开查看，显示保存名称和文件大小，图片可缩放，iPhone PDF 可调用系统预览。草稿地址识别也支持文本说明后带一个明确地址。平台构建及真机内容验证待补。
+- **自动化**　Flutter 分享和附件回归 44 项通过，包括图片预览导航、PDF 元数据和平台调用、普通附件与已有草稿。相关静态分析通过。原名／回退规则加进 Swift 冒烟测试，随候选 CI 运行。
+
 ### 11 月 25 日 · build 100 上滑右转即时转写与五大维度综合优化
 
 - **源码**　将候选版本推进至 `1.8.24+100`：① **上滑右转按住期间即时转写**：重构 `LivePcmRecording`（新增线程安全并发 `writeWavSnapshot` 与 `waitForBytes`）、`LocalSpeechService.startLive`、Android `LocalSpeechBridge.kt`（管道流式 `SpeechRecognizer` 局部结果回调与 16kHz RIFF WAVE 直读及中日文零空格拼接）、iOS `LocalSpeechPlugin.swift`（`SFSpeechAudioBufferRecognitionRequest` 实时音频缓冲推送）、`HomeController.startGestureTranscription`（`_ProgressiveSnapshotTranscriber` 渐进式快照转写与端侧／云端统一即时调度）及 `InputBottomBar` 手势触发，上滑右转手指未松开即实时推送识别文字，不再显示「松手后转写」等待松手；② **功能可用性**：打通 `HomeScreen` 对 `ContextTriggerService` 场景模式（办公／居家／专注／通勤）切换及心跳的即时评估与带 `prompt` 提醒投递；补齐口语化时间解析（「三点二十」「八点零五」「一刻／三刻」「半小时后／一个半小时后」「中午1点..4点」）、单字城市查询、多图片真实 MIME 魔数识别与通知面板／图谱／详情关联任务的原声预览回调；③ **项目架构**：拆分 `home_voice_session.dart`、`settings_provider.dart`、`media_records_provider.dart`、`focus_context_providers.dart`、`composer_media_sheet.dart`、`pending_capture_dialog.dart`、`recording_pulse.dart`、`task_postpone_dialog.dart`、`workspace_media_presenter.dart`、`task_link_picker_dialog.dart`、`task_context_trigger_editor.dart` 与 `ime_composition_guard.dart`；为 `DatabaseHelper` 增加只读 `readTransaction` 供流式／便携备份与恢复快照使用；④ **易用性与美观性**：全仓搜索／AI 目标／密码／关联检索补齐中文／日文 IME 组合态防误触、`Ctrl/Cmd+Enter` 与 `Escape` 焦点归还、偏好保存失败原地重试保留草稿、窄屏／大字号多媒体面板自适应 2×2 网格、星期标签本地化、宽卡浮层微阴影及统一 `AppTheme` 圆角层级；⑤ **稳定性**：修复 `DPSchedulerService` 短空闲窗 `(-Infinity).round()` 崩溃、`MultiAgentService` 象限越界（钳制 `1..4`）、`MedicationPlanPanel` 空 `eventTime` 断言与 Windows 反斜杠路径名截断、`LanSyncService` 完成时间／服药结果／历史记录同步丢失、`OwnedMaterialActivity` 空活跃目录同步 `realpath` 阻塞、只读页面阻断桌面升级退出及 Win32 `SetQuitOnClose(true)` 窗口销毁退出消息循环。
@@ -93,6 +145,12 @@
 - **自动化**　Flutter 3.44.9 定向 164 项通过，包含 Android／iOS 按住时出现转写、松手进入编辑、提示弹出后撤销和到期后状态保留、读屏导航及提示替换。相关静态分析通过。
 - **安装包与实机**　Pixel 8 Pro 当前读回 `1.8.24 (100)`，此前本地同签名包的真实中文转写结果在松手前已出现。5 秒提示需用包含本次改动的包补验。Windows 继续执行运行中备份覆盖与普通重开，iPhone 继续补验同身份覆盖和真实端侧转写。[Pixel 实机回执](benchmarks/pixel-upgrade-100-local-2026-11-25.json)
 - **阶段 49**　iOS 系统分享、网页打开与原名／附件预览保留在 `codex/ios-share-attachments-build103`。该候选 iOS 构建通过，Android 打包失败，仍需与主线综合回归及真机补验。[独立候选 CI](https://github.com/yarnway/dontforget/actions/runs/45356375518)
+
+### 11 月 25 日 · 多端整合 build 104
+
+- **源码**　在 `c6e1168` 上合并 iPhone 分享与附件候选。保留主线即时转写与 5 秒撤销、情境模式订阅清理和桌面媒体预览，合入移动端语音过渡、播放结束收起、系统分享和 PDF 预览。前一 iOS 专项 build 103 的 iOS 原生构建通过，Android 作业在解析 Gradle 的 Kotlin 依赖时失败。[build 103 CI](https://github.com/yarnway/dontforget/actions/runs/45356375518)
+- **自动化**　Flutter 定向回归 194 项通过，覆盖手势、过渡、撤销、恢复、播放、分享和附件。相关静态分析及 iOS 验收工具单测通过。
+- **iPhone 升级准备**　从已配对的 USB 连接读回旧验收版 `1.8.24+100`，11 条事项、4 条媒体记录、1 条设置，SQLite 完整，3 条附件草稿的原件均已拷入受限快照。build 104 的包、签名覆盖和新增能力仍待实机核对。
 
 ## 当前范围（2026-11-17调整）
 
@@ -120,7 +178,7 @@
 | Android提醒 | 11月21日已在 Pixel 8 Pro **正式版 `com.yarnway.dontforget`（`v1.8.18 (89)`）**完整闭环实机验收：提前10分钟后台准时送达（`10:28:01`）→展开系统通知点击 **`15分钟后`**（`10:28:07`）→15分钟后后台准时二次送达（`10:43`）→点击通知正文直达 `事项详情`（`测试 89`）；测后已撤销临时通知权限至原始状态 | Android 正式包当前版本核心提醒闭环已收口；后续版本回归沿用同样实机门禁 |
 | 普通事项提前提醒 | 快速录入与自动整理默认提前10分钟，可选5／10／15分钟。11月18–20日 Pixel 隔离包已验三档后台送达与改期旧时点零通知；11月21日 **正式版 `com.yarnway.dontforget`（`v1.8.18 (89)`）**实机通过任务编辑器设定事项时间（`10:38`）并选「提前 10 分钟」→`10:28:01` 后台首投→`15分钟后` 延后→`10:43` 后台二次送达→点击正文打开 `事项详情`；同日在 Windows 11 本机实测发现 `DontForget` 系统通知开关当前为关闭（`DisabledForApplication`），已修复 `WindowsToast.script()` 对禁用态的真实报错检测并在安装器补齐 `AppUserModelId\DontForget` 元数据注册（已随 **`v1.8.20+91`** 至 **`v1.8.22+93`** 实装并通过注册表实机核验），11月22日另在 Windows 11 实机 PowerShell 5.1 验真 **`v1.8.22`** 四类 Unicode 弯单引号（`U+2018`–`U+201B`）转义：未改用户 `DontForget` AUMID（`Enabled=0`）准确返回退出码 `2` `DisabledForApplication`，临时 AUMID 实投通知中心 `History.Count=1`→`0` 并干净清理（[windows-v1.8.22-runtime-verify-2026-11-22.json](benchmarks/windows-v1.8.22-runtime-verify-2026-11-22.json)） | Android 正式包与 Windows WinRT Toast 禁用检测／弯单引号转义／AUMID 元数据注册已验证；待在活动桌面 `WinSta0\Default` 开启 `DontForget` 通知开关后补验点击通知唤醒详情及 iPhone 真机通知 |
 | Windows原生入口 | 85至94（`v1.8.14+85`→`v1.8.23+94`）均已完成本机覆盖升级验收。**`v1.8.23+94`** 一次性通过公开 CI 安装包（`13,269,364 B`／较 `v1.8.20` 累计 `-11.97%`，便携包 `-14.34%`）三轮运行中覆盖升级：① **跨版本 `SW_HIDE` 托盘隐藏态运行中升级（`1.8.22.93`→`1.8.23.94`，Inno 日志实录优雅释放互斥锁、RestartManager 0 占用、`2.36s` 退出码 `0`、全程零强杀，27/27 载荷与官方便携包逐字节一致、`MaterialIcons-Regular.otf` 为 `30,616 B`、无旧版冗余文件、`AppUserModelId\DontForget` 有效、CLI `--help`/`--add`/`--list` 全通、SQLite 回滚日志头 `[1, 1]` 与 `7/0/1` 及 DPAPI `1` 及普通重开 `PID 29948` 一致）**；② 可见运行态覆盖（`1.8.23.94`→`1.8.23.94`，`1.74s` 退出码 `0`，重开 `PID 19244`）；③ 自托盘隐藏态覆盖（`1.8.23.94`→`1.8.23.94`，`1.76s` 退出码 `0`，重开 `PID 18964`，测后 329.7 ms 优雅清理 `REMAINING_WIN_PROCS=0`）；前版 `v1.8.22+93` 另已实证 PowerShell 5.1 弯单引号 Toast 与冷启动 `pending_upgrade_exit_` 信号缓冲退出。此前已确认非活动隔离桌面 `WinSta0\exebox` 下 Windows DWM 不合成 Flutter ANGLE 客户端帧（`UIA_Nodes=2`） | `v1.8.23+94` Windows 官方 CI 三模式运行中优雅升级／载荷／AUMID／CLI／数据与凭据已全部收口；交互式活动桌面 `WinSta0\Default` GUI／托盘右键菜单／桌面中文输入法与点开 Toast 唤醒仍待活动桌面会话实测 |
-| iPhone客户端 | 手机最近独立读回为81。同源同验收身份85未签名 IPA 已构建并读回；**`v1.8.23+94`** 未签名 IPA（`10,242,177 B`／`9.77 MiB`／较 `v1.8.20` 累计 `-12.68%`，SHA‑256 `7f735c69...`）与 `PlugIns/ReminderActivity.appex` 已发布并独立读回；本机仍无 iPhone USB 连接且为 Windows（`MACOS_BUILD_HOST_REQUIRED`／无 Xcode／`devicectl`） | 接入后取最新备份，按既有 AltStore 身份签名覆盖 `v1.8.23 (94)`，核对版本、记录、中文输入、通知、录音与 VoiceOver |
+| iPhone客户端 | 同身份覆盖 `1.8.24+100` 后打开及 USB 数据核对通过。build 99 已验语音编辑、两种发送、冷重开后重播及后台通知正文，用户自行验证旁白正常。 | 补验语音过渡、中文输入、播放自然结束和 5 秒完成提示。 |
 | 界面与文案 | 首页和启动／托盘资源已改用统一品牌图标，手机分类列表去掉重复栏头；11月21日已在 Pixel 8 Pro 正式版完成大字号（`font_scale=1.3`，随后恢复 `1.0`）密度零溢出验收；`v1.8.20 (91)` 已在源码与永久性静态门禁 `test_ui_accessibility_lint.py` 清零全仓 `lib/ui/` 控件语义并经真实 TalkBack 复验；`v1.8.22 (93)` 完成明暗主题与 WCAG AA 象限配色升级并在 Pixel 8 Pro 实机复验中文选择器、搜索、命令面板、仪表盘与设置页；**`v1.8.23 (94)`** 进一步将浅色 Q2 象限色微调至 `#9E4706`（12% 淡底 `5.23:1` WCAG AA）、升级桌面宽卡右上角浮层零抖动悬停操作与单次完成「撤销」、「未来」分组、隐藏空 `已完成 · 0`、命令面板指令匹配、编辑页无框输入／清单回车／关联检索、AI 与同步双入口本地模型探测及内容管理未扫描引导，并在 Pixel 8 Pro 实机截图核验通过 | Android 正式包视觉、交互、三语选择器与读屏微调已收口；后续继续保持四平台正式包图标与静态无障碍门禁回归 |
 
 ## 阶段 48：数据保护与长期管理
@@ -141,7 +199,7 @@
 
 | 任务 | 当前状态 | 下一步 |
 | --- | --- | --- |
-| 分享采集 | 11月21日已在 Pixel 8 Pro **正式版 `com.yarnway.dontforget`（`v1.8.18 (89)`）**完整实机验收：① **真实 Android 系统分享面板（`分享`→点选 `别忘了`→`仅此一次`）**投递 PDF 文档（`df_f89_doc.pdf`，`329 B`）至正式版 `MainActivity`→分享草稿编辑页 `WeType` 组合态禁存／确认启用→保存为备忘；② `ACTION_SEND`（`image/png`，`69 B`）图片分享保存；③ 任务编辑器经 Android 原生 `documentsui` 选中 `df_f89_note.txt`（`131 B`）附加并在应用内预览页核对异步体积显示（`131 B`）、UTF‑8 中文正文及「复制文本／保存副本」按钮（0 异常）。11月22日另在正式版 **`v1.8.22 (93)`** 实机补验改造后的 `SharedTextBridge.kt` 后台执行器实时 `ACTION_SEND` 投递与彻底删除清理（零 ANR、零残留，见 [android-v1.8.22-feature-verify-2026-11-22.json](benchmarks/android-v1.8.22-feature-verify-2026-11-22.json)） | Android 正式包分享采集及 `v1.8.22` 后台执行器均已收口；iOS 分享扩展待接入 iPhone 补验 |
+| 分享采集 | Pixel 已实测系统分享 PDF、图片、原生文件选择及预览。iPhone build 100 已验网页草稿冷重开、图片缩略图和 PDF 收件。build 102 添加链接打开入口，build 103 加入原名和附件详情、预览。 | iPhone 验证浏览器入口和图像缩放，使用有已知原名的图片／PDF 验证名称，并实际阅读 PDF。 |
 | 局域网同步 | Windows 已实测默认端口冲突后换端口。11月21日已在 Pixel 8 Pro **正式版 `com.yarnway.dontforget`（`192.168.50.158`，`v1.8.18 (89)`）**与 Windows `v1.8.18+89` 隔离对端（`192.168.50.4:14697`，物理网卡优选，**零 USB 转发**）完成同一真实 Wi‑Fi 子网（`192.168.50.0/24`）4 次直连双向同步实机闭环：Windows 端实收正式版 PDF（`329 B`）与 PNG（`69 B`）原件 SHA‑256 逐字节一致，正式版实收 Windows 事项与附件 `win_formal89.txt`（`106 B`）并受内容管理保护；完成跨设备回收站移入差异采用（`移入本机回收站`）、恢复差异采用（`在本机恢复事项`）与第 4 次同步 0 差异收敛；此前亦已验证正式版服务端 `192.168.50.158:42888` 错误配对码 HTTP `401` 拒绝 | Android 正式版 ↔ Windows 真实 Wi‑Fi 同步已收口；待 Windows GUI 交互会话可用与接入 iPhone 后补全三端 GUI 实机互联 |
 | 学习与排程 | 计划管理、词条档案、批量改期、七天预测等已有实现和验收 | 维护已有功能；身份迁移、更多练习与预测扩展移入可选需求池 |
 

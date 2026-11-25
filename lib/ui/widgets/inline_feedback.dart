@@ -60,10 +60,9 @@ class InlineFeedbackState extends State<InlineFeedback> {
       _messageSeq++;
       _tone = tone;
     });
+    // An explicit timeout also covers transient prompts with an action.
     if (dismissAfter != null) {
-      _expiry = Timer(dismissAfter, () {
-        if (identical(_message, message)) hideCurrentSnackBar();
-      });
+      _expiry = Timer(dismissAfter, () => hideSnackBar(message));
     } else if (message.action == null &&
         !MediaQuery.of(context).accessibleNavigation) {
       final minimum = tone == FeedbackTone.success
@@ -78,6 +77,10 @@ class InlineFeedbackState extends State<InlineFeedback> {
     _expiry?.cancel();
     if (_actionFocus.hasFocus || _closeFocus.hasFocus) _restoreFocus();
     if (mounted && _message != null) setState(() => _message = null);
+  }
+
+  void hideSnackBar(SnackBar message) {
+    if (mounted && identical(_message, message)) hideCurrentSnackBar();
   }
 
   Widget _actionButton(SnackBarAction action, ColorScheme colors) => TextButton(

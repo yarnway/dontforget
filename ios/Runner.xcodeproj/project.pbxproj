@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F6293A5E8C41A78600000001 /* ShareHandoff.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6293A5E8C41A78600000005 /* ShareHandoff.swift */; };
+		F6293A5E8C41A78600000002 /* ShareHandoff.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6293A5E8C41A78600000005 /* ShareHandoff.swift */; };
+		F6293A5E8C41A78600000003 /* ShareBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6293A5E8C41A78600000006 /* ShareBridge.swift */; };
+		F6293A5E8C41A78600000004 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6293A5E8C41A78600000007 /* ShareViewController.swift */; };
+		F6293A5E8C41A7860000000A /* ShareExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = F6293A5E8C41A78600000008 /* ShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		0F7A51369C80EA30C840D717 /* ReminderActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A3CEC81025B903FADD54FBA /* ReminderActivityAttributes.swift */; };
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
@@ -28,6 +33,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		F6293A5E8C41A7860000000C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F6293A5E8C41A7860000000D;
+			remoteInfo = ShareExtension;
+		};
 		331C8085294A63A400263BE5 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
@@ -62,6 +74,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				F6F6DCDB70C07FD50D0663F0 /* ReminderActivity.appex in Embed App Extensions */,
+				F6293A5E8C41A7860000000A /* ShareExtension.appex in Embed App Extensions */,
 			);
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -69,6 +82,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		F6293A5E8C41A78600000005 /* ShareHandoff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareHandoff.swift; sourceTree = "<group>"; };
+		F6293A5E8C41A78600000006 /* ShareBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareBridge.swift; sourceTree = "<group>"; };
+		F6293A5E8C41A78600000007 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		F6293A5E8C41A78600000008 /* ShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; path = ShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		F6293A5E8C41A78600000009 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F6293A5E8C41A7860000000B /* ShareExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ShareExtension.entitlements; sourceTree = "<group>"; };
 		0A3CEC81025B903FADD54FBA /* ReminderActivityAttributes.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ReminderActivityAttributes.swift; sourceTree = "<group>"; };
 		0E8061FE7F7A0076AAAA0570 /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		116F160CCE171CA23DE74E93 /* ReminderActivity.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = ReminderActivity.xcconfig; sourceTree = "<group>"; };
@@ -133,10 +152,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		F6293A5E8C41A7860000000E /* ShareExtension */ = {
+			isa = PBXGroup;
+			children = (
+				F6293A5E8C41A78600000007 /* ShareViewController.swift */,
+				F6293A5E8C41A78600000009 /* Info.plist */,
+				F6293A5E8C41A7860000000B /* ShareExtension.entitlements */,
+			);
+			path = ShareExtension;
+			sourceTree = "<group>";
+		};
 		29B38FEC155E2CDB88911DE5 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
 				0A3CEC81025B903FADD54FBA /* ReminderActivityAttributes.swift */,
+				F6293A5E8C41A78600000005 /* ShareHandoff.swift */,
 			);
 			name = Shared;
 			path = Shared;
@@ -179,6 +209,7 @@
 				331C8082294A63A400263BE5 /* RunnerTests */,
 				29B38FEC155E2CDB88911DE5 /* Shared */,
 				E704B4F06B4DE8605B60B884 /* ReminderActivity */,
+				F6293A5E8C41A7860000000E /* ShareExtension */,
 				E1C91DA65780999BBF322CE0 /* Frameworks */,
 				D1F5843A89657BB363A65A01 /* Pods */,
 			);
@@ -190,6 +221,7 @@
 				97C146EE1CF9000F007C117D /* Runner.app */,
 				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
 				424DEE14F8B1C5C2576462CF /* ReminderActivity.appex */,
+				F6293A5E8C41A78600000008 /* ShareExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -206,6 +238,7 @@
 				74858FAE1ED2DC5600515810 /* AppDelegate.swift */,
 				7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */,
 				A12500000000000000000002 /* LocalSpeechPlugin.swift */,
+				F6293A5E8C41A78600000006 /* ShareBridge.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 				5CE04FE185D1000C4F2199E6 /* LiveReminderPlugin.swift */,
 			);
@@ -250,6 +283,21 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		F6293A5E8C41A7860000000D /* ShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F6293A5E8C41A7860000000F /* Build configuration list for PBXNativeTarget "ShareExtension" */;
+			buildPhases = (
+				F6293A5E8C41A78600000010 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ShareExtension;
+			productName = ShareExtension;
+			productReference = F6293A5E8C41A78600000008 /* ShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		331C8080294A63A400263BE5 /* RunnerTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 331C8087294A63A400263BE5 /* Build configuration list for PBXNativeTarget "RunnerTests" */;
@@ -287,6 +335,7 @@
 			);
 			dependencies = (
 				9A23F5CE637DE792BD6674EC /* PBXTargetDependency */,
+				F6293A5E8C41A78600000011 /* PBXTargetDependency */,
 			);
 			name = Runner;
 			packageProductDependencies = (
@@ -352,6 +401,7 @@
 				97C146ED1CF9000F007C117D /* Runner */,
 				331C8080294A63A400263BE5 /* RunnerTests */,
 				F54B97FACE6560E6F2E2A95C /* ReminderActivity */,
+				F6293A5E8C41A7860000000D /* ShareExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -480,6 +530,15 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		F6293A5E8C41A78600000010 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F6293A5E8C41A78600000002 /* ShareHandoff.swift in Sources */,
+				F6293A5E8C41A78600000004 /* ShareViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		0BFE32FC84AA2ABAE8B9040A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -505,6 +564,8 @@
 				1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */,
 				7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */,
 				A12500000000000000000001 /* LocalSpeechPlugin.swift in Sources */,
+				F6293A5E8C41A78600000001 /* ShareHandoff.swift in Sources */,
+				F6293A5E8C41A78600000003 /* ShareBridge.swift in Sources */,
 				B3589FE4F1DE14996D8F915E /* ReminderActivityAttributes.swift in Sources */,
 				8F8FDCF7F76C97C4FD382B85 /* LiveReminderPlugin.swift in Sources */,
 			);
@@ -513,6 +574,12 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		F6293A5E8C41A78600000011 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = ShareExtension;
+			target = F6293A5E8C41A7860000000D /* ShareExtension */;
+			targetProxy = F6293A5E8C41A7860000000C /* PBXContainerItemProxy */;
+		};
 		331C8086294A63A400263BE5 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 97C146ED1CF9000F007C117D /* Runner */;
@@ -546,6 +613,83 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		F6293A5E8C41A78600000014 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 116F160CCE171CA23DE74E93 /* ReminderActivity.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_ENTITLEMENTS = ShareExtension/ShareExtension.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ShareExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.yarnway.dontforget.ShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		F6293A5E8C41A78600000013 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 116F160CCE171CA23DE74E93 /* ReminderActivity.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_ENTITLEMENTS = ShareExtension/ShareExtension.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ShareExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.yarnway.dontforget.ShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Profile;
+		};
+		F6293A5E8C41A78600000012 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 116F160CCE171CA23DE74E93 /* ReminderActivity.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_ENTITLEMENTS = ShareExtension/ShareExtension.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ShareExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.yarnway.dontforget.ShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
 		221AE43CCAF5B5F3C11CCB71 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 116F160CCE171CA23DE74E93 /* ReminderActivity.xcconfig */;
@@ -573,6 +717,7 @@
 		249021D3217E4FDB00AE95B9 /* Profile */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				DONTFORGET_SHARE_GROUP = group.com.yarnway.dontforget;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -723,6 +868,7 @@
 		97C147031CF9000F007C117D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				DONTFORGET_SHARE_GROUP = group.com.yarnway.dontforget;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -781,6 +927,7 @@
 		97C147041CF9000F007C117D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				DONTFORGET_SHARE_GROUP = group.com.yarnway.dontforget;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -906,6 +1053,16 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		F6293A5E8C41A7860000000F /* Build configuration list for PBXNativeTarget "ShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F6293A5E8C41A78600000012 /* Debug */,
+				F6293A5E8C41A78600000013 /* Profile */,
+				F6293A5E8C41A78600000014 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		0412AE766C0BD1DDFDE9DF35 /* Build configuration list for PBXNativeTarget "ReminderActivity" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
