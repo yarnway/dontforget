@@ -1,0 +1,78 @@
+{
+  "tested_builds": {
+    "Windows": 105,
+    "iPhone": 105
+  },
+  "pre_sync_readback": {
+    "common_task_ids": 20,
+    "completion_state_differences": 7,
+    "matching_original_audio_digests": 4
+  },
+  "after_user_sync": {
+    "matching_task_ids": 20,
+    "matching_title_note_completion_reminder_and_media_reference": 20,
+    "matching_original_audio_digests": 4,
+    "reported_trash_conflicts": 1,
+    "windows_original_trash_state_preserved": true,
+    "iphone_original_trash_state_preserved": true,
+    "apple_usb_application_status_http": 200,
+    "sync_transport_route_independently_verified": false
+  },
+  "repeat_sync": {
+    "user_confirmed_one_difference_still_visible": true,
+    "windows_data_comparison": {
+      "all_business_fields_equal": true,
+      "dpapi_credential_readback_equal": true,
+      "credential_files_equal": true,
+      "credential_count": 1,
+      "counts": {
+        "Reminders": 20,
+        "MediaRecords": 4,
+        "Settings": 1
+      },
+      "schema": 17,
+      "integrity_check": "ok",
+      "document_attachment_count": 4,
+      "document_attachment_hashes_equal": true
+    },
+    "iphone_data_comparison": {
+      "integrity_check_passed_for_both": true,
+      "schema_before": 17,
+      "schema_after": 17,
+      "tables": {
+        "Reminders": {
+          "rows_before": 20,
+          "rows_after": 20,
+          "columns_and_all_rows_equal": true
+        },
+        "MediaRecords": {
+          "rows_before": 4,
+          "rows_after": 4,
+          "columns_and_all_rows_equal": true
+        },
+        "Settings": {
+          "rows_before": 1,
+          "rows_after": 1,
+          "columns_and_all_rows_equal": true
+        }
+      },
+      "compared_document_files_before": 11,
+      "compared_document_files_after": 11,
+      "document_file_names_and_hashes_equal": true,
+      "notification_journal_attempt_metadata_changed": false,
+      "preferences_names_and_hashes_equal": true,
+      "share_attachment_count_before": 4,
+      "share_attachment_count_after": 4,
+      "share_attachment_names_and_hashes_equal": true
+    }
+  },
+  "isolated_regression": {
+    "focused_tests_passed": 50,
+    "synthetic_two_database_repeated_sync_passed": true,
+    "fixture_completion_differences_merged": 7,
+    "same_text_conflict_preserved_on_repeat": true,
+    "explicit_peer_text_adoption": true,
+    "final_conflicts": 0,
+    "matching_fixture_attachment_bytes": 4
+  }
+}
