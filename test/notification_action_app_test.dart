@@ -319,9 +319,10 @@ void main() {
         tester,
         until: () => container.read(remindersProvider).single.isCompleted,
       );
-      await settle(tester);
+      final completion = find.text('“${task.taskTitle}” marked complete');
+      await settle(tester, until: () => completion.evaluate().isNotEmpty);
       await drained(tester);
-      expect(find.text('Reminder updated'), findsOneWidget);
+      expect(completion, findsOneWidget);
       expect(await readQueue(tester), isEmpty);
       await unmount(tester);
       expect(tester.takeException(), isNull);

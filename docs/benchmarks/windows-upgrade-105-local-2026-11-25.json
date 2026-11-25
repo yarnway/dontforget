@@ -1,0 +1,85 @@
+{
+  "timestamp_utc": "2026-11-25T08:50:12.132913+00:00",
+  "package_origin": "local-candidate",
+  "source_commit": "09f7e32c27dc037b190a65162296640da131d770",
+  "candidate_distribution": "local fixed-SDK package",
+  "setup_sha256": "c6520b8f9946112f6140debd36fd0dbeceb4d4e84c0b17cff069925b588bf687",
+  "portable_sha256": "474ef73007ad668978b7979a50a9c379106e47b5d0561bf58a6979360ec013de",
+  "previous_package_origin": "github-ci-candidate-build104",
+  "version_before": "1.8.24+104",
+  "verified_installed_prior_payload_files": 27,
+  "running_at_install_pid": 37736,
+  "visible_at_install": true,
+  "backup_verified": true,
+  "force_close_allowed": false,
+  "installer_exit": 0,
+  "graceful_release_logged": true,
+  "old_pid_exited": true,
+  "version_after": "1.8.24+105",
+  "payload_files_identical": 27,
+  "expected_payload_files": 27,
+  "after_install": {
+    "all_business_fields_equal": true,
+    "dpapi_credential_readback_equal": true,
+    "credential_files_equal": true,
+    "credential_count": 1,
+    "counts": {
+      "Reminders": 20,
+      "MediaRecords": 4,
+      "Settings": 1
+    },
+    "schema": 17,
+    "integrity_check": "ok",
+    "document_attachment_count": 4,
+    "document_attachment_hashes_equal": true
+  },
+  "reopen_pid": 27360,
+  "reopen_window_visible": true,
+  "after_reopen": {
+    "all_business_fields_equal": true,
+    "dpapi_credential_readback_equal": true,
+    "credential_files_equal": true,
+    "credential_count": 1,
+    "counts": {
+      "Reminders": 20,
+      "MediaRecords": 4,
+      "Settings": 1
+    },
+    "schema": 17,
+    "integrity_check": "ok",
+    "document_attachment_count": 4,
+    "document_attachment_hashes_equal": true
+  },
+  "completion_feedback": {
+    "details": "Synthetic task was returned to its original completed state.",
+    "exact_named_chinese_prompt_observed": true,
+    "elapsed_since_click_ms": [
+      {
+        "sample_ms": 507,
+        "named_prompt_visible": false,
+        "undo_visible": false,
+        "task_completed": false
+      },
+      {
+        "sample_ms": 3922,
+        "named_prompt_visible": true,
+        "undo_visible": true,
+        "task_completed": true
+      },
+      {
+        "sample_ms": 5156,
+        "named_prompt_visible": true,
+        "undo_visible": true,
+        "task_completed": true
+      },
+      {
+        "sample_ms": 6586,
+        "named_prompt_visible": false,
+        "undo_visible": false,
+        "task_completed": true
+      }
+    ],
+    "widget_timeout_from_message_display_ms": 5000,
+    "application_returned_to_home": true
+  }
+}
