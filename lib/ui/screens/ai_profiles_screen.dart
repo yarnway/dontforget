@@ -37,6 +37,7 @@ class _AiProfilesScreenState extends ConsumerState<AiProfilesScreen> {
   bool saving = false;
   String? error;
   final Map<String, int> keyRevisions = {};
+  final Set<String> _visibleSecretIds = {};
 
   @override
   void initState() {
@@ -139,11 +140,14 @@ class _AiProfilesScreenState extends ConsumerState<AiProfilesScreen> {
     } catch (_) {
       if (mounted) {
         setState(() {
-          saving = false;
           error = t('aiProfilesSaveFailed');
         });
       }
       return false;
+    } finally {
+      if (mounted) {
+        setState(() => saving = false);
+      }
     }
   }
 
@@ -342,25 +346,46 @@ class _AiProfilesScreenState extends ConsumerState<AiProfilesScreen> {
     String value,
     ValueChanged<String> onChanged, {
     bool secret = false,
-  }) => Padding(
-    padding: const EdgeInsets.only(top: 20),
-    child: TextFormField(
-      key: ValueKey(
-        secret ? '$id/$kind/${keyRevisions[id] ?? 0}' : '$id/$kind',
+  }) {
+    final secretVisible = secret && _visibleSecretIds.contains(id);
+    return Padding(
+      padding: const EdgeInsets.only(top: 20),
+      child: TextFormField(
+        key: ValueKey(
+          secret ? '$id/$kind/${keyRevisions[id] ?? 0}' : '$id/$kind',
+        ),
+        initialValue: value,
+        contextMenuBuilder: buildEditableTextMenu,
+        enabled: !saving,
+        obscureText: secret && !secretVisible,
+        autocorrect: false,
+        enableSuggestions: false,
+        enableIMEPersonalizedLearning: !secret,
+        decoration: InputDecoration(
+          labelText: label,
+          helperText: kind == 'url' ? t('aiProfilesUrlHint') : null,
+          suffixIcon: secret
+              ? IconButton(
+                  tooltip: t(secretVisible ? 'hideApiKey' : 'showApiKey'),
+                  icon: Icon(
+                    secretVisible
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                    size: 18,
+                  ),
+                  onPressed: saving
+                      ? null
+                      : () => setState(() {
+                          if (!_visibleSecretIds.remove(id)) {
+                            _visibleSecretIds.add(id);
+                          }
+                        }),
+                )
+              : null,
+          border: const OutlineInputBorder(),
+        ),
+        onChanged: onChanged,
       ),
-      initialValue: value,
-      contextMenuBuilder: buildEditableTextMenu,
-      enabled: !saving,
-      obscureText: secret,
-      autocorrect: false,
-      enableSuggestions: false,
-      enableIMEPersonalizedLearning: !secret,
-      decoration: InputDecoration(
-        labelText: label,
-        helperText: kind == 'url' ? t('aiProfilesUrlHint') : null,
-        border: const OutlineInputBorder(),
-      ),
-      onChanged: onChanged,
-    ),
-  );
+    );
+  }
 }

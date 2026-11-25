@@ -18,12 +18,32 @@ class UnsavedEditorScope extends StatefulWidget {
   final Widget Function(BuildContext, VoidCallback save, VoidCallback exit)
   builder;
 
+  static final Set<_UnsavedEditorScopeState> _activeScopes = {};
+
+  /// Whether any mounted editor currently holds unsaved changes, an in-flight
+  /// save, or an open discard-confirmation dialog.
+  static bool get hasBlockingEditor => _activeScopes.any(
+    (s) => s.mounted && (s.widget.dirty || s.widget.busy || s._saving || s._confirming),
+  );
+
   @override
   State<UnsavedEditorScope> createState() => _UnsavedEditorScopeState();
 }
 
 class _UnsavedEditorScopeState extends State<UnsavedEditorScope> {
   bool _allowPop = false, _saving = false, _confirming = false;
+
+  @override
+  void initState() {
+    super.initState();
+    UnsavedEditorScope._activeScopes.add(this);
+  }
+
+  @override
+  void dispose() {
+    UnsavedEditorScope._activeScopes.remove(this);
+    super.dispose();
+  }
 
   void _finish([Object? result]) {
     if (!mounted || _allowPop) return;

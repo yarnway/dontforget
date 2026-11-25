@@ -521,7 +521,11 @@ class _PreferencesScreenState extends ConsumerState<PreferencesScreen> {
                         ),
                         TextButton(
                           key: const ValueKey('preferences-error-retry'),
-                          onPressed: _saving ? null : _load,
+                          onPressed: _saving
+                              ? null
+                              : (_ready && _error == 'settingsSaveFailed'
+                                    ? save
+                                    : _load),
                           child: Text(loc.get('retry')),
                         ),
                       ],

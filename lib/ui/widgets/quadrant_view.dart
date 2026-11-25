@@ -61,6 +61,13 @@ class _QuadrantViewState extends ConsumerState<QuadrantView> {
             baseline: task,
           );
       if (!mounted) return;
+      if (!result.accepted) {
+        InlineFeedback.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.get('reminderOccurrenceChanged'))),
+          tone: FeedbackTone.warning,
+        );
+        return;
+      }
       InlineFeedback.of(context).showSnackBar(
         SnackBar(
           content: Text(

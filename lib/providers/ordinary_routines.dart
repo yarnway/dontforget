@@ -178,14 +178,15 @@ extension OrdinaryRoutines on RemindersNotifier {
               );
             }
           }
+          final existingIds = {for (final e in all) e.id};
           for (final child in fresh.values) {
-            if (all.any((e) => e.id == child.id)) {
+            if (existingIds.contains(child.id)) {
               throw StateError('Ordinary occurrence ID collision');
             }
             changes.add(child);
           }
           for (final row in changes) {
-            if (all.any((e) => e.id == row.id)) {
+            if (existingIds.contains(row.id)) {
               await db.update(
                 'Reminders',
                 row.toJson(),

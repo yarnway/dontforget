@@ -140,7 +140,7 @@ class StreamingBackupService {
     check();
     if (password != null) validatePassword(password);
     final at = now ?? DateTime.now();
-    final raw = await database.writeTransaction(generation, (db) async {
+    final raw = await database.readTransaction(generation, (db) async {
       final data = <String, dynamic>{
         'version': DatabaseHelper.schemaVersion,
         'timestamp': at.toIso8601String(),

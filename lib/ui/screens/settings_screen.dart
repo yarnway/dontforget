@@ -41,14 +41,24 @@ class ModelProvider {
   final String name;
   final String defaultBaseUrl;
   final String defaultModel;
+  final String? l10nNameKey;
 
-  const ModelProvider(this.name, this.defaultBaseUrl, this.defaultModel);
+  const ModelProvider(
+    this.name,
+    this.defaultBaseUrl,
+    this.defaultModel, {
+    this.l10nNameKey,
+  });
+
+  String localizedName(AppLocalizations l10n) =>
+      l10nNameKey == null ? name : l10n.get(l10nNameKey!);
 }
 
 const _ollamaPreset = ModelProvider(
   'Ollama (本地离线大模型)',
   'http://localhost:11434/v1',
   'llama3',
+  l10nNameKey: 'presetOllama',
 );
 
 const List<ModelProvider> _providers = [
@@ -56,11 +66,13 @@ const List<ModelProvider> _providers = [
     'DeepSeek (推荐默认)',
     'https://api.deepseek.com',
     'deepseek-flash',
+    l10nNameKey: 'presetDeepSeek',
   ),
   ModelProvider(
     'Gemini (Google 官方)',
     'https://generativelanguage.googleapis.com/v1beta/openai',
     'gemini-3.6-flash',
+    l10nNameKey: 'presetGemini',
   ),
   _ollamaPreset,
   ModelProvider('OpenAI (ChatGPT)', 'https://api.openai.com/v1', 'gpt-4o-mini'),
@@ -159,6 +171,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       final current = ref.read(settingsProvider);
       _apiKeyController.text = current.apiKey;
       _baseUrlController.text = current.baseUrl;
+      _lastNormalizedBaseUrl = current.baseUrl.trim();
       _modelNameController.text = current.modelName;
       setState(() {
         _selectedLang = current.language;
@@ -178,6 +191,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late TextEditingController _apiKeyController;
   late TextEditingController _baseUrlController;
   late TextEditingController _modelNameController;
+  String _lastNormalizedBaseUrl = '';
   String _selectedLang = 'zh';
   AppAppearance _selectedAppearance = AppAppearance.system;
   InputSendMode _selectedSendMode = InputSendMode.enter;
@@ -198,6 +212,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final settings = ref.read(settingsProvider);
     _apiKeyController = TextEditingController(text: settings.apiKey);
     _baseUrlController = TextEditingController(text: settings.baseUrl);
+    _lastNormalizedBaseUrl = settings.baseUrl.trim();
     _modelNameController = TextEditingController(text: settings.modelName);
     _selectedLang = settings.language;
     _selectedAppearance = settings.appearance;
@@ -236,6 +251,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       _apiKeyController.clear();
     }
     _baseUrlController.text = provider.defaultBaseUrl;
+    _lastNormalizedBaseUrl = provider.defaultBaseUrl;
     _modelNameController.text = provider.defaultModel;
     if (provider == _ollamaPreset) {
       _apiKeyController.text = 'ollama';
@@ -264,6 +280,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final current = ref.read(settingsProvider);
     _apiKeyController.text = current.apiKey;
     _baseUrlController.text = current.baseUrl;
+    _lastNormalizedBaseUrl = current.baseUrl.trim();
     _modelNameController.text = current.modelName;
     setState(() {
       _selectedProvider = _matchProvider(current);
@@ -1084,7 +1101,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                     (p) => DropdownMenuItem(
                                       value: p,
                                       child: Text(
-                                        p.name,
+                                        p.localizedName(l10n),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -1187,7 +1204,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                           'https://platform.moonshot.cn/console/api-keys',
                                         ),
                                         _buildConsoleLinkChip(
-                                          '阿里百炼 (Qwen)',
+                                          l10n.get('consoleQwen'),
                                           'https://bailian.console.aliyun.com/',
                                         ),
                                       ],
@@ -1200,9 +1217,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 key: const ValueKey('settings-base-url'),
                                 contextMenuBuilder: buildEditableTextMenu,
                                 controller: _baseUrlController,
-                                onChanged: (_) => _apiKeyController.clear(),
+                                onChanged: (value) {
+                                  final normalized = value.trim();
+                                  if (normalized != _lastNormalizedBaseUrl) {
+                                    _lastNormalizedBaseUrl = normalized;
+                                    _apiKeyController.clear();
+                                  }
+                                },
                                 decoration: InputDecoration(
                                   labelText: l10n.get('baseUrl'),
+                                  helperText: l10n.get('aiProfilesUrlHint'),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(6),
                                   ),

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 import 'package:record/record.dart';
 import 'speech_recognition_exception.dart';
 
@@ -20,6 +21,16 @@ class LivePcmRecording {
   Object? _failure;
   Future<String>? _finishing;
   final _readers = <Completer<void>>{};
+
+  int get writtenBytes => _written;
+  bool get isEnded => _ended;
+
+  static bool isStreamUnsupportedError(Object error) =>
+      error is UnsupportedError ||
+      error is MissingPluginException ||
+      (error is PlatformException &&
+          (error.code == 'unimplemented' ||
+              (error.message?.contains('Unsupported operation') ?? false)));
 
   static Future<LivePcmRecording> start(
     AudioRecorder recorder,
@@ -42,7 +53,8 @@ class LivePcmRecording {
       Stream<Uint8List> audio;
       try {
         audio = await recorder.startStream(config(1280));
-      } catch (_) {
+      } catch (error) {
+        if (isStreamUnsupportedError(error)) rethrow;
         // Some devices require a larger native buffer. Release a partially
         // initialized recorder before retrying with the hardware default.
         await recorder.cancel();
@@ -125,6 +137,64 @@ class LivePcmRecording {
         }
       }
     } finally {
+      try {
+        await input?.close();
+      } finally {
+        _readers.remove(closed);
+        closed.complete();
+      }
+    }
+  }
+
+  Future<void> waitForBytes(int targetBytes, CancelToken cancellation) async {
+    final onCancelled = cancellation.whenCancel.then((_) {});
+    while (!cancellation.isCancelled &&
+        _failure == null &&
+        !_ended &&
+        _written < targetBytes) {
+      final changed = _changed.future;
+      if (_written < targetBytes && !_ended && _failure == null) {
+        await Future.any([changed, onCancelled]);
+      }
+    }
+  }
+
+  /// Writes a self-contained 16kHz mono WAV snapshot of recorded PCM so far
+  /// without interrupting active capture, enabling non-streaming ASR backends
+  /// (Tencent Flash / Whisper) to transcribe while the user holds the gesture.
+  Future<int> writeWavSnapshot(
+    String snapshotPath, {
+    int minBytes = 16000,
+    CancelToken? cancellation,
+  }) async {
+    if (cancellation?.isCancelled == true || _failure != null) return 0;
+    final available = _written & ~1;
+    if (available < minBytes) return 0;
+    final closed = Completer<void>();
+    _readers.add(closed);
+    RandomAccessFile? input;
+    RandomAccessFile? out;
+    try {
+      input = await file.open();
+      await input.setPosition(44);
+      final target = File(snapshotPath);
+      out = await target.open(mode: FileMode.write);
+      await out.writeFrom(_header(available));
+      var copied = 0;
+      while (copied < available) {
+        if (cancellation?.isCancelled == true) return 0;
+        final chunk = await input.read(min(32768, available - copied));
+        if (chunk.isEmpty) break;
+        await out.writeFrom(chunk);
+        copied += chunk.length;
+      }
+      if (copied != available) return 0;
+      await out.flush();
+      return copied;
+    } finally {
+      try {
+        await out?.close();
+      } catch (_) {}
       try {
         await input?.close();
       } finally {

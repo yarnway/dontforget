@@ -2,12 +2,15 @@ import '../widgets/workspace_tool_panel.dart';
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
 import '../../providers/providers.dart';
 import '../../services/bidirectional_link_service.dart';
 import '../../l10n/app_localizations.dart';
+import '../theme/app_theme.dart';
 import '../widgets/editable_text_menu.dart';
+import '../widgets/ime_composition_guard.dart';
 import '../widgets/knowledge_graph_view.dart';
 import 'task_detail_screen.dart';
 
@@ -87,9 +90,10 @@ class _KnowledgeGraphScreenState extends ConsumerState<KnowledgeGraphScreen> {
   }
 
   void _setQuery(String query) {
+    if (isImeComposing(_search)) return;
     _debounce?.cancel();
     void apply() {
-      if (!mounted) return;
+      if (!mounted || isImeComposing(_search)) return;
       setState(() {
         _query = query.trim();
         _page = 0;
@@ -134,15 +138,27 @@ class _KnowledgeGraphScreenState extends ConsumerState<KnowledgeGraphScreen> {
       ..setEntry(1, 3, (viewport.height - canvasSize * scale) / 2);
   }
 
-  void _open(Reminder task) => Navigator.of(
-    context,
-  ).push(MaterialPageRoute(builder: (_) => TaskDetailScreen(task: task)));
+  void _open(Reminder task) {
+    final playMedia = ref.read(workspaceToolsCommandProvider).playMedia;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => TaskDetailScreen(
+          task: task,
+          onPlayMedia: task.recordId == null || playMedia == null
+              ? null
+              : () => playMedia(task.recordId!),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
-    final colors = Theme.of(context).colorScheme;
-    final tasks = ref.watch(remindersProvider);
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final brightness = theme.brightness;
+    final tasks = ref.watch(workspaceRemindersProvider);
     if (!identical(tasks, _source)) {
       _source = tasks;
       _byId = {for (final task in tasks) task.id: task};
@@ -183,15 +199,19 @@ class _KnowledgeGraphScreenState extends ConsumerState<KnowledgeGraphScreen> {
                         decoration: InputDecoration(
                           labelText: loc.get('searchGraphHint'),
                           prefixIcon: const Icon(Icons.search),
-                          suffixIcon: IconButton(
-                            tooltip: loc.get('clearSearch'),
-                            onPressed: () {
-                              _search.clear();
-                              _setQuery('');
-                            },
-                            icon: const Icon(Icons.clear),
+                          suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                            valueListenable: _search,
+                            builder: (context, value, _) => value.text.isEmpty
+                                ? const SizedBox.shrink()
+                                : IconButton(
+                                    tooltip: loc.get('clearSearch'),
+                                    onPressed: () {
+                                      _search.clear();
+                                      _setQuery('');
+                                    },
+                                    icon: const Icon(Icons.clear),
+                                  ),
                           ),
-                          border: const OutlineInputBorder(),
                         ),
                         onChanged: _setQuery,
                       ),
@@ -232,12 +252,19 @@ class _KnowledgeGraphScreenState extends ConsumerState<KnowledgeGraphScreen> {
                       const SizedBox(height: 4),
                       Text(
                         '${loc.get('graphMatches')}: ${_filtered.length} · ${_graph!.nodes.length} ${loc.get('graphNodes')} · ${_graph!.edges.length} ${loc.get('graphEdges')}',
-                        style: TextStyle(color: colors.onSurfaceVariant),
+                        style: TextStyle(
+                          color: colors.onSurfaceVariant,
+                          fontSize: 12,
+                          fontFeatures: AppTheme.tabularFigures,
+                        ),
                       ),
                       if (!_listMode && _filtered.length > pageSize)
                         Text(
                           loc.get('graphPageScope'),
-                          style: TextStyle(color: colors.onSurfaceVariant),
+                          style: TextStyle(
+                            color: colors.onSurfaceVariant,
+                            fontSize: 12,
+                          ),
                         ),
                     ],
                   ),
@@ -253,10 +280,19 @@ class _KnowledgeGraphScreenState extends ConsumerState<KnowledgeGraphScreen> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              Icons.hub_outlined,
-                              size: 40,
-                              color: colors.onSurfaceVariant,
+                            Container(
+                              width: 64,
+                              height: 64,
+                              decoration: BoxDecoration(
+                                color: colors.surfaceContainerHighest
+                                    .withValues(alpha: 0.55),
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              child: Icon(
+                                Icons.hub_outlined,
+                                size: 32,
+                                color: colors.primary,
+                              ),
                             ),
                             const SizedBox(height: 12),
                             Text(
@@ -275,28 +311,68 @@ class _KnowledgeGraphScreenState extends ConsumerState<KnowledgeGraphScreen> {
                       ),
                     )
                   : _listMode
-                  ? ListView.builder(
-                      itemCount: _filtered.length,
-                      itemBuilder: (context, index) {
-                        final task = _filtered[index];
-                        return ListTile(
-                          leading: Text('Q${task.quadrantLevel}'),
-                          title: Text(
-                            task.taskTitle,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          subtitle: task.taskSummary == null
-                              ? null
-                              : Text(
-                                  task.taskSummary!,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
+                  ? Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          maxWidth: AppTheme.workspaceMaxWidth,
+                        ),
+                        child: ListView.builder(
+                          itemCount: _filtered.length,
+                          itemBuilder: (context, index) {
+                            final task = _filtered[index];
+                            final qColor = AppTheme.quadrantColor(
+                              brightness,
+                              task.quadrantLevel,
+                            );
+                            return ListTile(
+                              leading: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
                                 ),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () => _open(task),
-                        );
-                      },
+                                decoration: BoxDecoration(
+                                  color: qColor.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      AppTheme.quadrantIcon(task.quadrantLevel),
+                                      size: 14,
+                                      color: qColor,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      'Q${task.quadrantLevel}',
+                                      style: TextStyle(
+                                        color: qColor,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        fontFeatures: AppTheme.tabularFigures,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              title: Text(
+                                task.taskTitle,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: task.taskSummary == null
+                                  ? null
+                                  : Text(
+                                      task.taskSummary!,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                              trailing: const Icon(Icons.chevron_right),
+                              onTap: () => _open(task),
+                            );
+                          },
+                        ),
+                      ),
                     )
                   : LayoutBuilder(
                       builder: (context, constraints) {
@@ -339,44 +415,63 @@ class _KnowledgeGraphScreenState extends ConsumerState<KnowledgeGraphScreen> {
                 constraints: BoxConstraints(
                   maxHeight: bodyConstraints.maxHeight * 0.25,
                 ),
-                child: SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: colors.surfaceContainerLow,
+                    border: Border(
+                      top: BorderSide(
+                        color: colors.outlineVariant.withValues(alpha: 0.7),
+                      ),
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                selected.taskTitle,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.titleSmall,
-                              ),
-                              if (selected.taskSummary != null)
+                  ),
+                  child: SingleChildScrollView(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
                                 Text(
-                                  selected.taskSummary!,
+                                  selected.taskTitle,
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              TextButton.icon(
-                                onPressed: () => _open(selected),
-                                icon: const Icon(Icons.open_in_new),
-                                label: Text(loc.get('openTaskDetail')),
-                              ),
-                            ],
+                                if (selected.taskSummary != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 2),
+                                    child: Text(
+                                      selected.taskSummary!,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: colors.onSurfaceVariant,
+                                        fontSize: 12.5,
+                                      ),
+                                    ),
+                                  ),
+                                TextButton.icon(
+                                  onPressed: () => _open(selected),
+                                  icon: const Icon(Icons.open_in_new, size: 16),
+                                  label: Text(loc.get('openTaskDetail')),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        IconButton(
-                          tooltip: loc.get('close'),
-                          onPressed: () => setState(() => _selected = null),
-                          icon: const Icon(Icons.close),
-                        ),
-                      ],
+                          IconButton(
+                            tooltip: loc.get('close'),
+                            onPressed: () => setState(() => _selected = null),
+                            icon: const Icon(Icons.close),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -395,7 +490,10 @@ class _KnowledgeGraphScreenState extends ConsumerState<KnowledgeGraphScreen> {
                           }),
                     icon: const Icon(Icons.chevron_left),
                   ),
-                  Text('${_page + 1} / $pageCount'),
+                  Text(
+                    '${_page + 1} / $pageCount',
+                    style: const TextStyle(fontFeatures: AppTheme.tabularFigures),
+                  ),
                   IconButton(
                     tooltip: loc.get('graphNextPage'),
                     onPressed: _page + 1 == pageCount
@@ -428,22 +526,30 @@ class _KnowledgeGraphScreenState extends ConsumerState<KnowledgeGraphScreen> {
         body: body,
       );
     }
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          loc.get('knowledgeGraphTitle'),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        actions: [
-          IconButton(
-            tooltip: loc.get('resetGraphView'),
-            onPressed: _fit,
-            icon: const Icon(Icons.center_focus_strong_outlined),
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.escape): () {
+          if (isImeComposing(_search)) return;
+          Navigator.maybePop(context);
+        },
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            loc.get('knowledgeGraphTitle'),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-        ],
+          actions: [
+            IconButton(
+              tooltip: loc.get('resetGraphView'),
+              onPressed: _fit,
+              icon: const Icon(Icons.center_focus_strong_outlined),
+            ),
+          ],
+        ),
+        body: body,
       ),
-      body: body,
     );
   }
 }

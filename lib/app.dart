@@ -38,6 +38,7 @@ import 'ui/screens/home_screen.dart';
 import 'ui/screens/recovery_outcome_screen.dart';
 import 'ui/screens/task_detail_screen.dart';
 import 'ui/screens/preferences_screen.dart';
+import 'ui/widgets/unsaved_editor_scope.dart';
 import 'l10n/app_localizations.dart';
 import 'l10n/framework_localizations.dart';
 
@@ -104,6 +105,17 @@ class _MyAppState extends ConsumerState<MyApp>
   bool get _isDesktop =>
       Platform.isWindows || Platform.isLinux || Platform.isMacOS;
 
+  bool _hasModalDialogOpen() {
+    final navigator = _navigatorKey.currentState;
+    if (navigator == null) return false;
+    var modalOpen = false;
+    navigator.popUntil((route) {
+      modalOpen = route is PopupRoute;
+      return true;
+    });
+    return modalOpen;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -122,7 +134,8 @@ class _MyAppState extends ConsumerState<MyApp>
             !_recovery.state.working &&
             !_actionRuntimeGate.paused &&
             !ref.read(homeControllerProvider).isProcessingInBackground &&
-            !(_navigatorKey.currentState?.canPop() ?? true) &&
+            !UnsavedEditorScope.hasBlockingEditor &&
+            !_hasModalDialogOpen() &&
             !ref.read(homeControllerProvider).isRecording &&
             !ref.read(homeControllerProvider).isPreparingRecording,
         prepare: () async {
@@ -557,6 +570,9 @@ class _MyAppState extends ConsumerState<MyApp>
           ),
         ),
       ),
+      tone: outcome == NotificationActionOutcome.repair
+          ? FeedbackTone.warning
+          : FeedbackTone.success,
     );
   }
 
@@ -1145,6 +1161,21 @@ class _MyAppState extends ConsumerState<MyApp>
   Future<void> _closeStorageAndExit() => _desktopExit ??= shutdownDesktopApp(
     saveState: () async {
       await _globalCapture?.pause();
+      if (!_actionRuntimeGate.paused) {
+        final drafts = ref.read(workspaceDraftsProvider.notifier);
+        try {
+          await drafts.ready;
+          await drainDesktopWrites(() => drafts.flushed, () => drafts.failed);
+        } catch (_) {}
+        await Future.wait<void>([
+          _actionRuntimeGate.pause().then((_) {}).catchError((Object _) {}),
+          ref
+              .read(lanSyncServiceProvider)
+              .pauseForRecovery()
+              .catchError((Object _) {}),
+          _notifications.pauseForMaintenance().catchError((Object _) {}),
+        ]);
+      }
       await DesktopWindowService.flush(DatabaseHelper.instance);
     },
     closeStorage: () => DatabaseHelper.instance.close(),

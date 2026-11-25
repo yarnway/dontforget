@@ -36,9 +36,10 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        speechBridge = LocalSpeechBridge(applicationContext)
         speechChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger,
-            "dontforget/local_speech").also { it.setMethodCallHandler(speechBridge) }
+            "dontforget/local_speech")
+        speechBridge = LocalSpeechBridge(applicationContext, speechChannel)
+        speechChannel?.setMethodCallHandler(speechBridge)
         protocolReady = false
         pendingProtocolUrl = protocolUrl(intent)
         protocolChannel = MethodChannel(
@@ -72,7 +73,9 @@ class MainActivity : FlutterActivity() {
                         }
                         "pending" -> result.success(bridge.pending())
                         "acknowledge" -> {
-                            bridge.acknowledge(call.arguments as String)
+                            val ackId = call.arguments as String
+                            bridge.acknowledge(ackId)
+                            if (currentShareId == ackId) currentShareId = null
                             result.success(null)
                         }
                         "reset" -> {

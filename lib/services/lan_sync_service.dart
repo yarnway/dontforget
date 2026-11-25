@@ -1212,6 +1212,20 @@ class LanSyncService {
           );
         }
         if (completes) {
+          final completedAt = reminder.details.completedAt ?? DateTime.now();
+          final completionPatch = <String, dynamic>{
+            'completed_at': completedAt.toIso8601String(),
+            if (current.details.kind == 'medication' &&
+                reminder.details.doseOutcome != null)
+              'dose_outcome': reminder.details.doseOutcome,
+            if (current.details.kind == 'medication' &&
+                reminder.details.data['dose_taken_at'] is String)
+              'dose_taken_at': reminder.details.data['dose_taken_at'],
+          };
+          var nextDetails = updated.details.patch(completionPatch);
+          if (!nextDetails.history.any((e) => e.action == 'completed')) {
+            nextDetails = nextDetails.record('completed', completedAt);
+          }
           updated = updated.copyWith(
             isCompleted: true,
             noticeRevision: current.noticeRevision + 1,
@@ -1219,6 +1233,8 @@ class LanSyncService {
             upcomingDismissedAt: null,
             snoozedAt: null,
             recurrenceAnchorTime: null,
+            recurrenceEventAnchorTime: null,
+            detailsJson: nextDetails.encode(),
           );
         }
         final updatedRow = updated.toJson();

@@ -1,0 +1,85 @@
+{
+  "date": "2026-11-25",
+  "source": {
+    "base_revision": "9cdad1d26f781ce52be3779381c764807a03c116",
+    "dependency_lock_sha256": "4a47ac79c5f94bb9f3b61ec2c2f70598ce677c7fbb702883ac02eff9ab21f3b1",
+    "flutter_sdk": "3.44.9"
+  },
+  "automation": {
+    "strict_sdk_check_passed": true,
+    "flutter_analyze_issues": 0,
+    "flutter_tests_passed": 2744,
+    "flutter_tests_skipped": 20,
+    "python_tests_passed": 186,
+    "python_tests_skipped": 6
+  },
+  "package": {
+    "origin": "local-candidate",
+    "version": "1.8.24+100",
+    "setup_sha256": "98f81d94497b5097371142966164ec18b8f281d61fd0869e8e3614410e22c526",
+    "setup_bytes": 13293239,
+    "portable_sha256": "400ad8dfb53434400e432a4e79c562b2f95492ec93e54216ccbe9a3a72290514",
+    "portable_bytes": 15774706,
+    "sqlite3_sha256": "2bf39f2aadafdc59a90b260f582a8fccebc5b89eb94175fdbaa9148c1e1f084d",
+    "material_icons_bytes": 30616
+  },
+  "windows": {
+    "version_before": "1.8.24+100",
+    "prior_payload_files_verified": 27,
+    "latest_data_backup_verified": true,
+    "backup_directory": "C:\\Users\\Wayne\\AppData\\Local\\DontForgetRecovery\\upgrade-backup-b100-20261125-104255",
+    "pass1_tray_hidden_running_upgrade": {
+      "old_pid": 18260,
+      "old_window_hidden_at_install": true,
+      "installer_exit_code": 0,
+      "elapsed_seconds": 2.57,
+      "graceful_exit_logged": true,
+      "restart_manager_locked_files": 0,
+      "forced_close_used": false
+    },
+    "pass2_running_new_binary_upgrade": {
+      "old_pid": 32640,
+      "session_id": 1,
+      "installer_exit_code": 0,
+      "elapsed_seconds": 1.78,
+      "graceful_exit_logged": true,
+      "restart_manager_locked_files": 0,
+      "forced_close_used": false
+    },
+    "pass3_final_zone_fix_running_upgrade": {
+      "old_pid": 33192,
+      "session_id": 1,
+      "installer_exit_code": 0,
+      "elapsed_seconds": 3.23,
+      "graceful_exit_logged": true,
+      "restart_manager_locked_files": 0,
+      "forced_close_used": false
+    },
+    "version_after": "1.8.24+100",
+    "installed_exe_sha256": "d3cea715b265c0ce62367ffb492d400faea37fa6ae7408d92dc6738657d0de92",
+    "installed_appso_sha256": "9f5d787bdedc01bde6c5ac66b3c81018bd4db1e116bb3525b91424f195ace3e5",
+    "installed_payload_files_verified": 27,
+    "cli_help_and_list_verified": true,
+    "sqlite_integrity_check": "ok",
+    "schema": 17,
+    "record_counts": {
+      "reminders": 9,
+      "media": 0,
+      "settings": 1,
+      "dpapi_credentials": 1
+    },
+    "tables_sha256": "f4e2d026878abb23d16a84c07e908425ed4b7bac81d22d12a6cf690afe50e0d4",
+    "dpapi_file_sha256": "a6aa809fda900a2baf9a8c077cb3c30dd9bdbee4ee98f33bfe69aed9c7a94108",
+    "all_business_fields_and_credentials_equal_after_install": true,
+    "usual_reopen_visible_in_new_process": true,
+    "reopened_pid": 35272,
+    "reopened_session_id": 1,
+    "all_business_fields_and_credentials_equal_after_reopen": true
+  },
+  "other_devices": {
+    "adb_tool_available": true,
+    "android_usb_devices_detected": 1,
+    "pixel_serial": "43201FDJG000M7",
+    "iphone_usb_devices_detected": 0
+  }
+}

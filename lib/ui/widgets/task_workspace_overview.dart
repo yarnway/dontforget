@@ -528,7 +528,7 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                                     ),
                                   )
                                 : CustomScrollView(
-                                key: ValueKey('workspace-$view'),
+                                key: PageStorageKey<String>('workspace-$view'),
                                 slivers: [
                                   SliverPadding(
                                     padding: const EdgeInsets.all(12),
@@ -542,23 +542,88 @@ class _TaskWorkspaceOverviewState extends ConsumerState<TaskWorkspaceOverview>
                                             is ({String key, int count})) {
                                           if (row.key == 'todayReview' &&
                                               widget.onOpenLearning != null) {
+                                            final colors = Theme.of(
+                                              context,
+                                            ).colorScheme;
                                             return Padding(
-                                              padding: const EdgeInsets.only(
-                                                top: 8,
-                                                bottom: 4,
+                                              padding: const EdgeInsets.fromLTRB(
+                                                4,
+                                                12,
+                                                4,
+                                                6,
                                               ),
-                                              child: Align(
-                                                alignment: AlignmentDirectional
-                                                    .centerStart,
-                                                child: TextButton.icon(
-                                                  onPressed:
-                                                      widget.onOpenLearning,
-                                                  icon: const Icon(
-                                                    Icons.auto_stories_outlined,
-                                                    size: 18,
-                                                  ),
-                                                  label: Text(
-                                                    '${loc.get('learningQueueTitle')} (${row.count})',
+                                              child: InkWell(
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                                onTap: widget.onOpenLearning,
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 6,
+                                                        vertical: 6,
+                                                      ),
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(
+                                                        Icons
+                                                            .auto_stories_outlined,
+                                                        size: 16,
+                                                        color: colors.primary,
+                                                      ),
+                                                      const SizedBox(width: 8),
+                                                      Expanded(
+                                                        child: Text(
+                                                          loc.get(
+                                                            'learningQueueTitle',
+                                                          ),
+                                                          style: Theme.of(context)
+                                                              .textTheme
+                                                              .titleSmall
+                                                              ?.copyWith(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w700,
+                                                                color: colors
+                                                                    .primary,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                      Container(
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 8,
+                                                              vertical: 2,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: colors
+                                                              .primaryContainer,
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                999,
+                                                              ),
+                                                        ),
+                                                        child: Text(
+                                                          '${row.count}',
+                                                          style: Theme.of(context)
+                                                              .textTheme
+                                                              .labelSmall
+                                                              ?.copyWith(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w700,
+                                                                color: colors
+                                                                    .onPrimaryContainer,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 4),
+                                                      Icon(
+                                                        Icons
+                                                            .chevron_right_rounded,
+                                                        size: 18,
+                                                        color: colors.primary,
+                                                      ),
+                                                    ],
                                                   ),
                                                 ),
                                               ),

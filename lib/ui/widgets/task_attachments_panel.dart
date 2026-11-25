@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -82,7 +83,11 @@ class _TaskAttachmentsPanelState extends ConsumerState<TaskAttachmentsPanel> {
     widget.onBusyChanged?.call(value);
   }
 
-  void _feedback(String key, {VoidCallback? undo}) {
+  void _feedback(
+    String key, {
+    VoidCallback? undo,
+    FeedbackTone tone = FeedbackTone.info,
+  }) {
     if (!mounted) return;
     final l10n = AppLocalizations.of(context);
     InlineFeedback.of(context).showSnackBar(
@@ -92,6 +97,7 @@ class _TaskAttachmentsPanelState extends ConsumerState<TaskAttachmentsPanel> {
             ? null
             : SnackBarAction(label: l10n.get('undo'), onPressed: undo),
       ),
+      tone: tone,
     );
   }
 
@@ -121,12 +127,15 @@ class _TaskAttachmentsPanelState extends ConsumerState<TaskAttachmentsPanel> {
             generation,
             files: ref.read(taskAttachmentFilesProvider),
           );
+      if (mounted) {
+        await ref.read(mediaRecordsProvider.notifier).refreshMediaRecords();
+      }
       gate.check(token);
-      _feedback('taskAttachmentAdded');
+      _feedback('taskAttachmentAdded', tone: FeedbackTone.success);
     } on AttachmentTooLarge {
-      _feedback('taskAttachmentTooLarge');
+      _feedback('taskAttachmentTooLarge', tone: FeedbackTone.warning);
     } catch (_) {
-      _feedback('taskAttachmentFailed');
+      _feedback('taskAttachmentFailed', tone: FeedbackTone.error);
     } finally {
       _setBusy(false);
     }
@@ -137,7 +146,7 @@ class _TaskAttachmentsPanelState extends ConsumerState<TaskAttachmentsPanel> {
     bool linked, {
     DataGeneration? generation,
   }) async {
-    if (_busy || !widget.enabled || widget.readOnly) return;
+    if (!mounted || _busy || !widget.enabled || widget.readOnly) return;
     final task = _current;
     if (task == null) return;
     _setBusy(true);
@@ -146,17 +155,29 @@ class _TaskAttachmentsPanelState extends ConsumerState<TaskAttachmentsPanel> {
       final ticket = generation ?? database.captureGeneration();
       final gate = ref.read(runtimeRecoveryGateProvider);
       final token = gate.capture();
+      final notifier = ref.read(remindersProvider.notifier);
       gate.check(token);
-      await ref
-          .read(remindersProvider.notifier)
-          .setTaskAttachmentLinked(task, id, linked, ticket);
+      await notifier.setTaskAttachmentLinked(task, id, linked, ticket);
       gate.check(token);
       _feedback(
         linked ? 'taskAttachmentAdded' : 'taskAttachmentRemoved',
-        undo: linked ? null : () => _link(id, true, generation: ticket),
+        tone: FeedbackTone.success,
+        undo: linked
+            ? null
+            : () {
+                if (mounted) {
+                  _link(id, true, generation: ticket);
+                } else if (gate.isCurrent(token) && database.isCurrent(ticket)) {
+                  unawaited(
+                    notifier
+                        .setTaskAttachmentLinked(task, id, true, ticket)
+                        .then<void>((_) {}, onError: (Object _) {}),
+                  );
+                }
+              },
       );
     } catch (_) {
-      _feedback('taskAttachmentFailed');
+      _feedback('taskAttachmentFailed', tone: FeedbackTone.error);
     } finally {
       _setBusy(false);
     }

@@ -39,6 +39,13 @@ class QuickReminderParser {
   static final _cjkNumber = RegExp(
     r'([零〇一二两三四五六七八九十]{1,3})(?=分钟|小时|点|分|時|時間)',
   );
+  static final _spokenClockMinute = RegExp(
+    r'([点時])([零〇一二两三四五六七八九十]{1,3})(?!\s*[分点時])',
+  );
+  static final _clockQuarter = RegExp(r'([点時])(一刻|三刻)');
+  static final _halfHourRelative = RegExp(
+    r'(?:(\d{1,2}|[一二两])\s*个?半(?:小时|小時|時間)|半\s*个?(?:小时|小時|時間))(后|後)',
+  );
   static final _cjkZeroDigit = RegExp(r'[零〇](?=\d)');
   static final _compoundRelativeDuration = RegExp(
     r'(\d{1,3})\s*(?:小时|小時|時間|hours?|hrs?)\s*(?:零|〇)?\s*(\d{1,3})\s*(?:分钟|minutes?|mins?|分)(?:后|後|\s+later)?',
@@ -156,8 +163,7 @@ class QuickReminderParser {
       '八': 8,
       '九': 9,
     };
-    return text.replaceAllMapped(_cjkNumber, (match) {
-      final value = match.group(1)!;
+    String parseNumeral(String value) {
       if (!value.contains('十')) {
         if (value.length == 2 &&
             (value.startsWith('零') || value.startsWith('〇'))) {
@@ -169,7 +175,33 @@ class QuickReminderParser {
       final parts = value.split('十');
       if (parts.length != 2) return value;
       return '${(parts.first.isEmpty ? 1 : digits[parts.first] ?? 0) * 10 + (parts.last.isEmpty ? 0 : digits[parts.last] ?? 0)}';
-    }).replaceAll(_cjkZeroDigit, '0');
+    }
+
+    var normalized = text.replaceAllMapped(_halfHourRelative, (match) {
+      final wholeRaw = match.group(1);
+      final suffix = match.group(2)!;
+      if (wholeRaw == null) return '30分钟$suffix';
+      final whole = int.tryParse(wholeRaw) ?? digits[wholeRaw] ?? 1;
+      return '${whole * 60 + 30}分钟$suffix';
+    });
+    normalized = normalized.replaceAllMapped(_clockQuarter, (match) {
+      final sep = match.group(1)!;
+      return '$sep${match.group(2) == '一刻' ? '15分' : '45分'}';
+    });
+    normalized = normalized.replaceAllMapped(
+      _cjkNumber,
+      (match) => parseNumeral(match.group(1)!),
+    );
+    normalized = normalized.replaceAllMapped(_spokenClockMinute, (match) {
+      final sep = match.group(1)!;
+      final parsed = parseNumeral(match.group(2)!);
+      final numVal = int.tryParse(parsed);
+      if (numVal != null && numVal >= 1 && numVal <= 59) {
+        return '$sep$parsed分';
+      }
+      return match.group(0)!;
+    });
+    return normalized.replaceAll(_cjkZeroDigit, '0');
   }
 
   static DateTime? _parse(
@@ -248,6 +280,7 @@ class QuickReminderParser {
     if (hour > 23 || minute > 59) return null;
     final evening =
         ['下午', '晚上', '午後', 'pm'].contains(period) ||
+        (period == '中午' && hour >= 1 && hour <= 4) ||
         marker == '今晚' ||
         marker == '明晚';
     if (evening && hour < 12) hour += 12;

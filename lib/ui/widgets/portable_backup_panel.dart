@@ -21,6 +21,8 @@ import '../formatters/byte_size.dart';
 import '../formatters/local_date_time.dart';
 import '../screens/backup_preview_screen.dart';
 import 'credential_status_panel.dart';
+import 'editable_text_menu.dart';
+import 'ime_composition_guard.dart';
 
 final streamingBackupServiceProvider = Provider<StreamingBackupService>(
   (_) => const StreamingBackupService(),
@@ -278,7 +280,7 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
           break;
         } on BackupPasswordException {
           if (!needsPassword || !_current) rethrow;
-          passwordError = t('wrongPassword');
+          passwordError = t('passwordError');
           if (_current) {
             setState(() => _progress = null);
           }
@@ -583,6 +585,8 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
               obscureText: _obscurePassword,
               autocorrect: false,
               enableSuggestions: false,
+              enableIMEPersonalizedLearning: false,
+              contextMenuBuilder: buildEditableTextMenu,
               textInputAction: TextInputAction.next,
               enabled: !_busy,
               maxLength: 1024,
@@ -611,6 +615,8 @@ class _PortableBackupPanelState extends ConsumerState<PortableBackupPanel> {
               obscureText: _obscureRepeat,
               autocorrect: false,
               enableSuggestions: false,
+              enableIMEPersonalizedLearning: false,
+              contextMenuBuilder: buildEditableTextMenu,
               textInputAction: TextInputAction.done,
               onSubmitted: _busy ? null : (_) => _export(),
               enabled: !_busy,
@@ -804,6 +810,11 @@ class _RestoreBackupPasswordDialogState
     super.dispose();
   }
 
+  void _submit() {
+    if (isImeComposing(_controller)) return;
+    Navigator.pop(context, _controller.text);
+  }
+
   @override
   Widget build(BuildContext context) {
     String t(String k) => protectionText(context, k);
@@ -816,6 +827,8 @@ class _RestoreBackupPasswordDialogState
         obscureText: _obscure,
         autocorrect: false,
         enableSuggestions: false,
+        enableIMEPersonalizedLearning: false,
+        contextMenuBuilder: buildEditableTextMenu,
         maxLength: 1024,
         decoration: InputDecoration(
           labelText: t('password'),
@@ -831,7 +844,7 @@ class _RestoreBackupPasswordDialogState
             ),
           ),
         ),
-        onSubmitted: (v) => Navigator.pop(context, v),
+        onSubmitted: (_) => _submit(),
       ),
       actions: [
         TextButton(
@@ -839,7 +852,7 @@ class _RestoreBackupPasswordDialogState
           child: Text(t('cancel')),
         ),
         FilledButton(
-          onPressed: () => Navigator.pop(context, _controller.text),
+          onPressed: _submit,
           child: Text(t('continue')),
         ),
       ],

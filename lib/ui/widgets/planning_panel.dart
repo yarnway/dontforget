@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../data/database_helper.dart';
 import '../../l10n/planning_strings.dart';
@@ -50,6 +51,7 @@ class PlanningPanel extends StatefulWidget {
 
 class _PlanningPanelState extends State<PlanningPanel> {
   late int _tab;
+  late final Set<int> _visited;
   @override
   void initState() {
     super.initState();
@@ -58,6 +60,7 @@ class _PlanningPanelState extends State<PlanningPanel> {
         : widget.initialDepartureId == null
         ? 0
         : 1;
+    _visited = {0, 1, _tab};
   }
 
   @override
@@ -91,7 +94,10 @@ class _PlanningPanelState extends State<PlanningPanel> {
                           ),
                   ),
                   selected: _tab == i,
-                  onSelected: (_) => setState(() => _tab = i),
+                  onSelected: (_) => setState(() {
+                    _tab = i;
+                    _visited.add(i);
+                  }),
                 ),
             ],
           ),
@@ -102,10 +108,16 @@ class _PlanningPanelState extends State<PlanningPanel> {
             children: [
               MedicationPlanPanel(initialPlanId: widget.initialMedicationId),
               DeparturePlanPanel(initialPlanId: widget.initialDepartureId),
-              TaskManagementPanel(initialPlanId: widget.initialOrdinaryId),
-              const PortableBackupPanel(),
-              const LearningManagementPanel(),
-              _tab == 5
+              _visited.contains(2)
+                  ? TaskManagementPanel(initialPlanId: widget.initialOrdinaryId)
+                  : const SizedBox.shrink(),
+              _visited.contains(3)
+                  ? const PortableBackupPanel()
+                  : const SizedBox.shrink(),
+              _visited.contains(4)
+                  ? const LearningManagementPanel()
+                  : const SizedBox.shrink(),
+              _visited.contains(5)
                   ? const ContentManagementPanel()
                   : const SizedBox.shrink(),
             ],
@@ -638,7 +650,12 @@ class _TaskManagementPanelState extends ConsumerState<TaskManagementPanel> {
                             if (row.details.tags.isNotEmpty ||
                                 row.details.project.isNotEmpty)
                               Text(
-                                '${row.details.project} · ${row.details.tags.join(' / ')}',
+                                [
+                                  if (row.details.project.isNotEmpty)
+                                    row.details.project,
+                                  if (row.details.tags.isNotEmpty)
+                                    row.details.tags.join(' / '),
+                                ].join(' · '),
                               ),
                             if (OrdinarySeries.isOwner(row))
                               Text(routineText(context, 'seriesOwner')),
@@ -1096,8 +1113,9 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
                 controller: _title,
                 maxLength: 160,
                 decoration: InputDecoration(labelText: t('title')),
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? t('incomplete') : null,
+                validator: (v) => v == null || v.trim().isEmpty
+                    ? AppLocalizations.of(context).get('taskTitleRequired')
+                    : null,
               ),
               TextFormField(
                 key: const ValueKey('task-management-tags'),
@@ -1285,7 +1303,11 @@ class _TaskManagementEditorState extends ConsumerState<TaskManagementEditor> {
                     children: [
                       for (var day = 1; day <= 7; day++)
                         FilterChip(
-                          label: Text('$day'),
+                          label: Text(
+                            DateFormat.E(
+                              Localizations.localeOf(context).toLanguageTag(),
+                            ).format(DateTime.utc(2024, 1, day)),
+                          ),
                           selected: _weekdays.contains(day),
                           onSelected: _saving
                               ? null

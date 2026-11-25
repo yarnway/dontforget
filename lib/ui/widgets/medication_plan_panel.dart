@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart' as p;
 import '../../data/database_helper.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/planning_strings.dart';
@@ -472,7 +473,7 @@ class _MedicationPlanPanelState extends ConsumerState<MedicationPlanPanel> {
             MedicationSource(
               id: 'record-${record.id}',
               kind: record.type,
-              label: '${record.type} · ${record.contentOrPath.split('/').last}',
+              label: '${record.type} · ${p.basename(record.contentOrPath)}',
               recordId: record.id,
             ),
           ];
@@ -857,12 +858,17 @@ class _MedicationPlanPanelState extends ConsumerState<MedicationPlanPanel> {
                   r.isVisible &&
                   r.details.kind == 'medication' &&
                   r.details.planId == (_baseline?.id ?? _draft['id']) &&
+                  (r.eventTime ?? r.triggerTime) != null &&
                   (r.eventTime ?? r.triggerTime)!.year == _day.year &&
                   (r.eventTime ?? r.triggerTime)!.month == _day.month &&
                   (r.eventTime ?? r.triggerTime)!.day == _day.day,
             )
             .toList()
-          ..sort((a, b) => a.eventTime!.compareTo(b.eventTime!));
+          ..sort(
+            (a, b) => (a.eventTime ?? a.triggerTime)!.compareTo(
+              (b.eventTime ?? b.triggerTime)!,
+            ),
+          );
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -930,7 +936,7 @@ class _MedicationPlanPanelState extends ConsumerState<MedicationPlanPanel> {
               DropdownMenuItem(
                 value: record.id,
                 child: Text(
-                  '${record.type} · ${record.type == 'text' ? record.contentOrPath : record.contentOrPath.split('/').last}',
+                  '${record.type} · ${record.type == 'text' ? record.contentOrPath : p.basename(record.contentOrPath)}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -956,7 +962,7 @@ class _MedicationPlanPanelState extends ConsumerState<MedicationPlanPanel> {
                         id: 'record-${record.id}',
                         kind: record.type,
                         label:
-                            '${record.type} · ${record.type == 'text' ? record.contentOrPath.substring(0, record.contentOrPath.length.clamp(0, 40)) : record.contentOrPath.split('/').last}',
+                            '${record.type} · ${record.type == 'text' ? record.contentOrPath.substring(0, record.contentOrPath.length.clamp(0, 40)) : p.basename(record.contentOrPath)}',
                         recordId: record.id,
                       ).toJson(),
                     ];
@@ -1088,7 +1094,7 @@ class _MedicationPlanPanelState extends ConsumerState<MedicationPlanPanel> {
               dense: true,
               title: Text(dose.taskTitle),
               subtitle: Text(
-                '${formatLocalDateTime(dose.eventTime!)}\n${dose.taskSummary}',
+                '${formatLocalDateTime((dose.eventTime ?? dose.triggerTime)!)}\n${dose.taskSummary}',
               ),
             ),
           CheckboxListTile(
@@ -1152,7 +1158,7 @@ class _MedicationPlanPanelState extends ConsumerState<MedicationPlanPanel> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    '${formatLocalDateTime(dose.eventTime!)} · ${dose.taskTitle}',
+                    '${formatLocalDateTime((dose.eventTime ?? dose.triggerTime)!)} · ${dose.taskTitle}',
                   ),
                   Text(dose.taskSummary ?? ''),
                   if (dose.isCompleted)

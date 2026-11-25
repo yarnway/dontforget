@@ -598,15 +598,32 @@ class _TaskReaderState extends ConsumerState<TaskDetailScreen> {
                                             : const Icon(Icons.chevron_right),
                                         onTap: visibleRow == null
                                             ? null
-                                            : () => Navigator.push(
-                                                context,
-                                                MaterialPageRoute<void>(
-                                                  builder: (_) =>
-                                                      TaskDetailScreen(
-                                                        task: visibleRow,
-                                                      ),
-                                                ),
-                                              ),
+                                            : () {
+                                                final playMedia = ref
+                                                    .read(
+                                                      workspaceToolsCommandProvider,
+                                                    )
+                                                    .playMedia;
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute<void>(
+                                                    builder: (_) =>
+                                                        TaskDetailScreen(
+                                                          task: visibleRow,
+                                                          onPlayMedia:
+                                                              visibleRow.recordId ==
+                                                                      null ||
+                                                                  playMedia ==
+                                                                      null
+                                                              ? null
+                                                              : () => playMedia(
+                                                                  visibleRow
+                                                                      .recordId!,
+                                                                ),
+                                                        ),
+                                                  ),
+                                                );
+                                              },
                                       );
                                     },
                                   ),

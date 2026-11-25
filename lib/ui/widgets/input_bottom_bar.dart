@@ -1,24 +1,26 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'dart:io' show Platform;
 import '../../services/recovery/runtime_gate.dart';
 import 'package:uuid/uuid.dart';
 import '../../providers/workspace_drafts_provider.dart';
 import '../../providers/global_capture_provider.dart';
 import '../../services/quick_reminder_parser.dart';
+import '../../services/llm_service.dart';
+import '../../services/local_speech_service.dart';
 import '../formatters/local_date_time.dart';
 import '../../providers/providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../providers/home_controller.dart';
 import '../../models/settings.dart';
-import '../../models/tencent_speech_credentials.dart';
 import '../../l10n/app_localizations.dart';
+import 'composer_media_sheet.dart';
 import 'editable_text_menu.dart';
 import 'inline_feedback.dart';
+import 'pending_capture_dialog.dart';
+import 'recording_pulse.dart';
 import 'voice_capture_feedback.dart';
 import 'live_voice_text_dialog.dart';
 import '../../services/voice_text_draft.dart';
@@ -93,6 +95,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   bool _memoOnly = false, _submitting = false, _restoring = false;
   bool _draftTouched = false, _draftSaveFailed = false;
   bool _resolvingPending = false;
+  bool _pickingQuickTime = false;
   bool _accessibleVoiceSession = false;
   int _draftRevision = 0;
   String _captureId = const Uuid().v4();
@@ -164,19 +167,33 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
                               homeControllerProvider.select(
                                 (s) => (
                                   isRecording: s.isRecording,
+                                  isLiveTranscribing: s.isLiveTranscribing,
                                   voicePreview: s.voicePreview,
                                 ),
                               ),
                             );
-                            final live = ref.watch(
-                              settingsProvider.select(
-                                (s) =>
-                                    s.speech.isConfigured &&
-                                    s.speech.endpoint ==
-                                        TencentSpeechCredentials
-                                            .realtimeEndpoint,
+                            final platform = _captureTheme?.platform;
+                            final mobileSpeechCapable =
+                                platform == TargetPlatform.android ||
+                                platform == TargetPlatform.iOS;
+                            final localSupported = ref.watch(
+                              localSpeechServiceProvider.select(
+                                (s) => s.supported,
                               ),
                             );
+                            final live =
+                                state.isLiveTranscribing ||
+                                localSupported ||
+                                mobileSpeechCapable ||
+                                ref.watch(
+                                  settingsProvider.select(
+                                    (s) =>
+                                        s.speech.isConfigured ||
+                                        LLMService.supportsAudioTranscription(
+                                          s,
+                                        ),
+                                  ),
+                                );
                             return VoiceCaptureFeedback(
                               action: _voiceAction,
                               fullScreen: true,
@@ -459,36 +476,9 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   Future<void> _showPending(String id, Map draft) async {
     if (!_current) return;
     final l10n = AppLocalizations.of(context);
-    final action = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.get('failedInputTitle')),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(l10n.get('failedInputHint')),
-              const SizedBox(height: 12),
-              SelectableText(draft['text'] as String),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, 'discard'),
-            child: Text(l10n.get('failedInputDiscard')),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext, 'copy'),
-            child: Text(l10n.get('failedInputCopy')),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, 'restore'),
-            child: Text(l10n.get('failedInputRestore')),
-          ),
-        ],
-      ),
+    final action = await showPendingCaptureDialog(
+      context,
+      draft['text'] as String,
     );
     if (!_current || action == null) return;
     if (action == 'copy') {
@@ -504,40 +494,45 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
   }
 
   Future<void> _pickQuickTime() async {
-    if (!_current) return;
-    final now = DateTime.now();
-    final initial = _quickTime?.isAfter(now) == true
-        ? _quickTime!
-        : now.add(const Duration(minutes: 15));
-    final date = await showDatePicker(
-      context: context,
-      initialDate: initial,
-      firstDate: DateTime(now.year, now.month, now.day),
-      lastDate: DateTime(now.year + 10),
-    );
-    if (!mounted || !_current || date == null) return;
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(initial),
-    );
-    if (!mounted || !_current || time == null) return;
-    final selected = DateTime(
-      date.year,
-      date.month,
-      date.day,
-      time.hour,
-      time.minute,
-    );
-    if (!selected.isAfter(DateTime.now())) {
-      InlineFeedback.maybeOf(context)?.showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context).get('chooseFutureTime')),
-        ),
-        tone: FeedbackTone.warning,
+    if (!_current || _pickingQuickTime) return;
+    _pickingQuickTime = true;
+    try {
+      final now = DateTime.now();
+      final initial = _quickTime?.isAfter(now) == true
+          ? _quickTime!
+          : now.add(const Duration(minutes: 15));
+      final date = await showDatePicker(
+        context: context,
+        initialDate: initial,
+        firstDate: DateTime(now.year, now.month, now.day),
+        lastDate: DateTime(now.year + 10),
       );
-      return;
+      if (!mounted || !_current || date == null) return;
+      final time = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(initial),
+      );
+      if (!mounted || !_current || time == null) return;
+      final selected = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
+      if (!selected.isAfter(DateTime.now())) {
+        InlineFeedback.maybeOf(context)?.showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).get('chooseFutureTime')),
+          ),
+          tone: FeedbackTone.warning,
+        );
+        return;
+      }
+      _selectTime(selected);
+    } finally {
+      _pickingQuickTime = false;
     }
-    _selectTime(selected);
   }
 
   void _selectTime(DateTime? time, {bool memo = false}) {
@@ -648,7 +643,15 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         }
       });
     } else if (_isLongPressRecording && !_isFinishingLongPress) {
-      controller.prepareRecordingTranscription();
+      if (_desktopVoiceDraft ||
+          _voiceAction == VoiceReleaseAction.text ||
+          _voiceAction == VoiceReleaseAction.send ||
+          (_voiceGesture.selectionOpen &&
+              _voiceAction != VoiceReleaseAction.cancel)) {
+        controller.startGestureTranscription();
+      } else {
+        controller.prepareRecordingTranscription();
+      }
       // The ready feedback must follow native start, never precede the mic.
       unawaited(HapticFeedback.heavyImpact());
     }
@@ -816,15 +819,20 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     final selected = _voiceGesture.update(
       details.globalPosition - _voiceOrigin,
     );
-    if (_voiceGesture.selectionOpen) {
-      ref.read(homeControllerProvider.notifier).prepareRecordingTranscription();
-    }
     final action =
         _desktopVoiceDraft &&
             (selected == VoiceReleaseAction.save ||
                 selected == VoiceReleaseAction.send)
         ? VoiceReleaseAction.text
         : selected;
+    if (_desktopVoiceDraft ||
+        action == VoiceReleaseAction.text ||
+        action == VoiceReleaseAction.send ||
+        (_voiceGesture.selectionOpen && action != VoiceReleaseAction.cancel)) {
+      ref.read(homeControllerProvider.notifier).startGestureTranscription();
+    } else if (_voiceGesture.selectionOpen) {
+      ref.read(homeControllerProvider.notifier).prepareRecordingTranscription();
+    }
     if (action == _voiceAction &&
         selectionWasOpen == _voiceGesture.selectionOpen) {
       return;
@@ -879,170 +887,11 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
     if (!_voiceMode) _focusTextAfterBuild();
   }
 
-  void _showMediaOptionsSheet(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-      ),
-      builder: (sheetCtx) {
-        final controller = ref.read(homeControllerProvider.notifier);
-
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 3.5,
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color: Theme.of(sheetCtx).colorScheme.outlineVariant,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                Semantics(
-                  header: true,
-                  child: Text(
-                    l10n.get('uploadMaterial'),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  l10n.get('uploadMaterialDesc'),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(sheetCtx).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    // Desktop builds have no camera capture path, so the entry
-                    // would always fail; mobile keeps it.
-                    if (Platform.isAndroid || Platform.isIOS)
-                      _buildMediaOption(
-                        sheetCtx: sheetCtx,
-                        icon: Icons.camera_alt_outlined,
-                        color: Theme.of(sheetCtx).colorScheme.primary,
-                        label: l10n.get('takePhoto'),
-                        onTap: () {
-                          Navigator.pop(sheetCtx);
-                          controller.processImageWithSource(ImageSource.camera);
-                        },
-                      ),
-                    _buildMediaOption(
-                      sheetCtx: sheetCtx,
-                      icon: Icons.photo_library_outlined,
-                      color: Theme.of(sheetCtx).colorScheme.secondary,
-                      label: l10n.get('galleryPhoto'),
-                      onTap: () {
-                        Navigator.pop(sheetCtx);
-                        controller.processImageWithSource(ImageSource.gallery);
-                      },
-                    ),
-                    _buildMediaOption(
-                      sheetCtx: sheetCtx,
-                      icon: Icons.snippet_folder_outlined,
-                      color: Theme.of(sheetCtx).colorScheme.tertiary,
-                      label: l10n.get('importFile'),
-                      onTap: () {
-                        Navigator.pop(sheetCtx);
-                        controller.processFile();
-                      },
-                    ),
-                    _buildMediaOption(
-                      sheetCtx: sheetCtx,
-                      icon: Icons.video_collection_outlined,
-                      color: Theme.of(sheetCtx).colorScheme.error,
-                      label: l10n.get('uploadVideo'),
-                      onTap: () {
-                        Navigator.pop(sheetCtx);
-                        controller.processVideo();
-                      },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildMediaOption({
-    required BuildContext sheetCtx,
-    required IconData icon,
-    required Color color,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    final colors = Theme.of(sheetCtx).colorScheme;
-    return Expanded(
-      child: Semantics(
-        button: true,
-        label: label,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 48),
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-            decoration: BoxDecoration(
-              color: colors.surfaceContainer,
-              border: Border.all(
-                color: colors.outlineVariant.withValues(alpha: 0.7),
-                width: 1,
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            child: ExcludeSemantics(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.14),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icon, color: color, size: 22),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    label,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: colors.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  void _showMediaOptionsSheet(BuildContext context) =>
+      showComposerMediaOptionsSheet(
+        context,
+        ref.read(homeControllerProvider.notifier),
+      );
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
@@ -1651,7 +1500,7 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
         },
       ),
     );
-    final desktopVoice = _RecordingPulse(
+    final desktopVoice = RecordingPulse(
       active: isRecording,
       child: IconButton(
         key: const ValueKey('composer-desktop-voice'),
@@ -2008,82 +1857,4 @@ class _InputBottomBarState extends ConsumerState<InputBottomBar> {
             ),
           );
   }
-}
-
-/// Keep the microphone still when idle, hidden, or reduced motion is requested.
-/// Passing the button as [child] also keeps animation ticks out of its subtree.
-class _RecordingPulse extends StatefulWidget {
-  const _RecordingPulse({required this.active, required this.child});
-  final bool active;
-  final Widget child;
-
-  @override
-  State<_RecordingPulse> createState() => _RecordingPulseState();
-}
-
-class _RecordingPulseState extends State<_RecordingPulse>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    );
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _syncAnimation();
-  }
-
-  @override
-  void didUpdateWidget(covariant _RecordingPulse oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _syncAnimation();
-  }
-
-  void _syncAnimation() {
-    final shouldAnimate =
-        widget.active &&
-        TickerMode.valuesOf(context).enabled &&
-        !MediaQuery.disableAnimationsOf(context);
-    if (shouldAnimate && !_controller.isAnimating) {
-      _controller.repeat(reverse: true);
-    } else if (!shouldAnimate && _controller.isAnimating) {
-      _controller.stop();
-      _controller.value = 0;
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) => AnimatedBuilder(
-    animation: _controller,
-    child: widget.child,
-    builder: (context, child) => DecoratedBox(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: widget.active && _controller.isAnimating
-            ? [
-                BoxShadow(
-                  color: Theme.of(context).colorScheme.error
-                      .withValues(alpha: 0.4 * _controller.value),
-                  blurRadius: 8 * _controller.value,
-                  spreadRadius: 2 * _controller.value,
-                ),
-              ]
-            : const [],
-      ),
-      child: child,
-    ),
-  );
 }

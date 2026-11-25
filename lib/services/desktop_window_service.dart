@@ -343,7 +343,6 @@ class DesktopWindowService {
       try {
         await manager.show();
         await manager.focus();
-        await manager.setPreventClose(true);
       } catch (_) {}
     });
   }

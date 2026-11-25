@@ -49,7 +49,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   Future<void> _generateReport() async {
     if (!_isCurrent || _isLoadingReport) return;
-    final tasks = ref.read(remindersProvider);
+    final tasks = ref.read(workspaceRemindersProvider);
     final settings = ref.read(settingsProvider);
     if (tasks.isEmpty) return;
     setState(() {
@@ -268,7 +268,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     );
                     final review = Consumer(
                       builder: (context, ref, _) {
-                        final tasks = ref.watch(remindersProvider);
+                        final tasks = ref.watch(workspaceRemindersProvider);
                         final settings = ref.watch(settingsProvider);
                         final stale =
                             _report != null &&

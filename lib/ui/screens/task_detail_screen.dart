@@ -11,6 +11,8 @@ import '../widgets/vocabulary_deck.dart';
 import '../widgets/editor_keyboard_actions.dart';
 import '../widgets/editable_text_menu.dart';
 import '../widgets/linked_task_tile.dart';
+import '../widgets/task_context_trigger_editor.dart';
+import '../widgets/task_link_picker_dialog.dart';
 import '../formatters/local_date_time.dart';
 import '../../data/database_helper.dart';
 import 'package:flutter/material.dart';
@@ -718,43 +720,52 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
     }
   }
 
-  Future<void> _pickDateTime({bool event = false}) async {
-    final initialDate =
-        (event ? _eventTime : _selectedTime)?.toLocal() ?? DateTime.now();
-    final now = DateTime.now();
-    final pickedDate = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: DateTime(
-        initialDate.year < now.year - 1 ? initialDate.year : now.year - 1,
-      ),
-      lastDate: DateTime(
-        initialDate.year > now.year + 5 ? initialDate.year + 1 : now.year + 6,
-      ),
-    );
+  bool _pickingDateTime = false;
+  bool _openingLinkDialog = false;
 
-    if (pickedDate != null && mounted) {
-      final pickedTime = await showTimePicker(
+  Future<void> _pickDateTime({bool event = false}) async {
+    if (_pickingDateTime || _isMutating) return;
+    _pickingDateTime = true;
+    try {
+      final initialDate =
+          (event ? _eventTime : _selectedTime)?.toLocal() ?? DateTime.now();
+      final now = DateTime.now();
+      final pickedDate = await showDatePicker(
         context: context,
-        initialTime: TimeOfDay.fromDateTime(initialDate),
+        initialDate: initialDate,
+        firstDate: DateTime(
+          initialDate.year < now.year - 1 ? initialDate.year : now.year - 1,
+        ),
+        lastDate: DateTime(
+          initialDate.year > now.year + 5 ? initialDate.year + 1 : now.year + 6,
+        ),
       );
 
-      if (pickedTime != null && mounted) {
-        setState(() {
-          final selected = DateTime(
-            pickedDate.year,
-            pickedDate.month,
-            pickedDate.day,
-            pickedTime.hour,
-            pickedTime.minute,
-          );
-          if (event) {
-            _setEventTime(selected);
-          } else {
-            _setAlarmTime(selected);
-          }
-        });
+      if (pickedDate != null && mounted) {
+        final pickedTime = await showTimePicker(
+          context: context,
+          initialTime: TimeOfDay.fromDateTime(initialDate),
+        );
+
+        if (pickedTime != null && mounted) {
+          setState(() {
+            final selected = DateTime(
+              pickedDate.year,
+              pickedDate.month,
+              pickedDate.day,
+              pickedTime.hour,
+              pickedTime.minute,
+            );
+            if (event) {
+              _setEventTime(selected);
+            } else {
+              _setAlarmTime(selected);
+            }
+          });
+        }
       }
+    } finally {
+      _pickingDateTime = false;
     }
   }
 
@@ -840,20 +851,6 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
     }
   }
 
-  Widget _buildTriggerTypeRadio(String type, String label) {
-    final isSelected = _contextTriggerType == type;
-    return Semantics(
-      inMutuallyExclusiveGroup: true,
-      selected: isSelected,
-      child: ChoiceChip(
-        selected: isSelected,
-        materialTapTargetSize: MaterialTapTargetSize.padded,
-        onSelected: (_) => setState(() => _contextTriggerType = type),
-        label: Text(label),
-      ),
-    );
-  }
-
   Future<void> _changeLink(String otherId, {required bool remove}) async {
     if (_isMutating) return;
     final l10n = AppLocalizations.of(context);
@@ -902,124 +899,49 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
       categoryColor: _getCategoryColor(target?.quadrantLevel ?? 4),
       onOpen: _isMutating || target == null
           ? null
-          : () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => TaskDetailScreen(task: target)),
-            ),
+          : () {
+              final playMedia = ref
+                  .read(workspaceToolsCommandProvider)
+                  .playMedia;
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => TaskDetailScreen(
+                    task: target,
+                    onPlayMedia: target.recordId == null || playMedia == null
+                        ? null
+                        : () => playMedia(target.recordId!),
+                  ),
+                ),
+              );
+            },
       onUnlink: _isMutating ? null : () => _changeLink(linkedId, remove: true),
     );
   }
 
-  void _showAddLinkDialog(AppLocalizations l10n) {
-    final allReminders = ref.read(remindersProvider);
-    final available = allReminders
-        .where(
-          (r) =>
-              r.isWorkspaceItem &&
-              r.id != widget.task.id &&
-              !_linkedTaskIds.contains(r.id),
-        )
-        .toList();
-    var query = '';
-
-    showDialog<void>(
-      context: context,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (ctx, setDialogState) {
-            final normalized = query.trim().toLowerCase();
-            final filtered = normalized.isEmpty
-                ? available
-                : available
-                      .where(
-                        (item) =>
-                            item.taskTitle.toLowerCase().contains(normalized) ||
-                            (item.taskSummary?.toLowerCase().contains(
-                                  normalized,
-                                ) ??
-                                false),
-                      )
-                      .toList();
-            return AlertDialog(
-              title: Text(l10n.get('addLinkedTask')),
-              content: SizedBox(
-                width: double.maxFinite,
-                height: 340,
-                child: available.isEmpty
-                    ? Center(child: Text(l10n.get('noAvailableTasksToLink')))
-                    : Column(
-                        children: [
-                          TextField(
-                            key: const ValueKey('link-task-search'),
-                            contextMenuBuilder: buildEditableTextMenu,
-                            decoration: InputDecoration(
-                              hintText: l10n.get('searchLinkHint'),
-                              prefixIcon: const Icon(
-                                Icons.search_rounded,
-                                size: 18,
-                              ),
-                              isDense: true,
-                            ),
-                            onChanged: (value) =>
-                                setDialogState(() => query = value),
-                          ),
-                          const SizedBox(height: 8),
-                          Expanded(
-                            child: filtered.isEmpty
-                                ? Center(
-                                    child: Text(l10n.get('noSearchResult')),
-                                  )
-                                : ListView.builder(
-                                    itemCount: filtered.length,
-                                    itemBuilder: (_, i) {
-                                      final item = filtered[i];
-                                      final qColor = _getCategoryColor(
-                                        item.quadrantLevel,
-                                      );
-                                      return ListTile(
-                                        leading: CircleAvatar(
-                                          radius: 12,
-                                          backgroundColor: qColor.withValues(
-                                            alpha: 0.2,
-                                          ),
-                                          child: Text(
-                                            'Q${item.quadrantLevel}',
-                                            style: TextStyle(
-                                              fontSize: 10,
-                                              color: qColor,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                        title: Text(
-                                          item.taskTitle,
-                                          style: const TextStyle(fontSize: 13),
-                                        ),
-                                        onTap: () async {
-                                          Navigator.pop(ctx);
-                                          await _changeLink(
-                                            item.id,
-                                            remove: false,
-                                          );
-                                        },
-                                      );
-                                    },
-                                  ),
-                          ),
-                        ],
-                      ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: Text(l10n.get('cancel')),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
+  Future<void> _showAddLinkDialog(AppLocalizations l10n) async {
+    if (_openingLinkDialog || _isMutating) return;
+    _openingLinkDialog = true;
+    try {
+      final allReminders = ref.read(remindersProvider);
+      final available = allReminders
+          .where(
+            (r) =>
+                r.isWorkspaceItem &&
+                r.id != widget.task.id &&
+                !_linkedTaskIds.contains(r.id),
+          )
+          .toList();
+      final selectedId = await showTaskLinkPickerDialog(
+        context,
+        available: available,
+      );
+      if (selectedId != null && mounted) {
+        await _changeLink(selectedId, remove: false);
+      }
+    } finally {
+      _openingLinkDialog = false;
+    }
   }
 
   @override
@@ -1036,8 +958,11 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
     Widget sectionCard(Widget child, {EdgeInsetsGeometry? padding}) => Material(
       color: colors.surfaceContainerLow,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: colors.outlineVariant, width: 1),
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: colors.outlineVariant.withValues(alpha: 0.65),
+          width: 1,
+        ),
       ),
       clipBehavior: Clip.antiAlias,
       child: Padding(
@@ -2197,156 +2122,15 @@ class _TaskEditScreenState extends ConsumerState<TaskEditScreen> {
 
                     // 7. Context Trigger Section (情境感知触发器)
                     sectionCard(
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Wrap(
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            spacing: 6,
-                            runSpacing: 6,
-                            children: [
-                              Icon(
-                                Icons.near_me_outlined,
-                                size: 16,
-                                color: Theme.of(context).colorScheme.primary,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                l10n.get('contextTriggerTitle'),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 6,
-                            children: [
-                              _buildTriggerTypeRadio(
-                                'none',
-                                l10n.get('triggerNone'),
-                              ),
-                              _buildTriggerTypeRadio(
-                                'wifi',
-                                l10n.get('triggerWifi'),
-                              ),
-                              _buildTriggerTypeRadio(
-                                'profile',
-                                l10n.get('triggerProfile'),
-                              ),
-                            ],
-                          ),
-                          if (_contextTriggerType == 'wifi') ...[
-                            const SizedBox(height: 8),
-                            TextField(
-                              controller: _wifiSsidController,
-                              contextMenuBuilder: buildEditableTextMenu,
-                              style: const TextStyle(fontSize: 13),
-                              decoration: InputDecoration(
-                                labelText: l10n.get('wifiSsidLabel'),
-                                hintText: l10n.get('wifiSsidHint'),
-                                isDense: true,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 8,
-                                ),
-                              ),
-                            ),
-                          ] else if (_contextTriggerType == 'profile') ...[
-                            const SizedBox(height: 8),
-                            DropdownButtonFormField<String>(
-                              isExpanded: true,
-                              initialValue: _contextProfileValue,
-                              decoration: InputDecoration(
-                                labelText: l10n.get('profileSelectLabel'),
-                                isDense: true,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 8,
-                                ),
-                              ),
-                              items: [
-                                DropdownMenuItem(
-                                  value: 'general',
-                                  child: Text(l10n.get('profileGeneral')),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'commute',
-                                  child: Text(l10n.get('profileCommute')),
-                                ),
-                                if (!{
-                                  'general',
-                                  'office',
-                                  'deepWork',
-                                  'home',
-                                  'commute',
-                                }.contains(_contextProfileValue))
-                                  DropdownMenuItem(
-                                    value: _contextProfileValue,
-                                    child: Text(_contextProfileValue),
-                                  ),
-                                DropdownMenuItem(
-                                  value: 'office',
-                                  child: Text(
-                                    l10n.get('profileOffice'),
-                                    style: const TextStyle(fontSize: 13),
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'deepWork',
-                                  child: Text(
-                                    l10n.get('profileDeepWork'),
-                                    style: const TextStyle(fontSize: 13),
-                                  ),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'home',
-                                  child: Text(
-                                    l10n.get('profileHome'),
-                                    style: const TextStyle(fontSize: 13),
-                                  ),
-                                ),
-                              ],
-                              onChanged: (val) {
-                                if (val != null) {
-                                  setState(() => _contextProfileValue = val);
-                                }
-                              },
-                            ),
-                          ],
-                          if (_contextTriggerType != 'none') ...[
-                            const SizedBox(height: 8),
-                            TextField(
-                              controller: _contextPromptController,
-                              contextMenuBuilder: buildEditableTextMenu,
-                              style: const TextStyle(fontSize: 13),
-                              decoration: InputDecoration(
-                                labelText: l10n.get('contextPromptLabel'),
-                                hintText: l10n.get('contextPromptHint'),
-                                isDense: true,
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(6),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 8,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
+                      TaskContextTriggerEditor(
+                        type: _contextTriggerType,
+                        profileValue: _contextProfileValue,
+                        wifiSsidController: _wifiSsidController,
+                        promptController: _contextPromptController,
+                        onTypeChanged: (value) =>
+                            setState(() => _contextTriggerType = value),
+                        onProfileChanged: (value) =>
+                            setState(() => _contextProfileValue = value),
                       ),
                     ),
 

@@ -136,7 +136,7 @@ class DatabaseRecovery {
       );
     }
     final generation = database.captureGeneration();
-    final snapshot = await database.writeTransaction(generation, _snapshot);
+    final snapshot = await database.readTransaction(generation, _snapshot);
     final directory = await database.acquireOwnership();
     database.checkGeneration(generation);
     final id = const Uuid().v4();

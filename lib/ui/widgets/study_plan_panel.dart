@@ -25,8 +25,9 @@ class StudyPlanDraft extends ChangeNotifier {
   DataGeneration? generation;
   CancelToken? request;
   bool busy = false, saving = false, saved = false;
-  int syncFailures = 0, completedDays = 0;
+  int syncFailures = 0, completedDays = 0, revision = 0;
   String? feedback;
+  VoidCallback? onDraftMutated;
   bool _disposed = false;
   Map<String, dynamic> toJson() => {
     'exam': exam.name,
@@ -81,11 +82,19 @@ class StudyPlanDraft extends ChangeNotifier {
     generation = current;
     busy = false;
     saving = false;
+    revision++;
     changed();
   }
 
+  void markTextEdited() {
+    if (!_disposed) onDraftMutated?.call();
+  }
+
   void changed() {
-    if (!_disposed) notifyListeners();
+    if (!_disposed) {
+      notifyListeners();
+      onDraftMutated?.call();
+    }
   }
 
   void reset() {
@@ -323,6 +332,7 @@ class _StudyPlanPanelState extends ConsumerState<StudyPlanPanel> {
       final colors = Theme.of(context).colorScheme;
       final locked = d.busy || d.saving;
       return CallbackShortcuts(
+        key: ValueKey('study-draft-rev-${d.revision}'),
         bindings: {
           const SingleActivator(LogicalKeyboardKey.keyS, meta: true): _save,
           const SingleActivator(LogicalKeyboardKey.keyS, control: true): _save,
@@ -449,7 +459,10 @@ class _StudyPlanPanelState extends ConsumerState<StudyPlanPanel> {
                   hintText: loc.get('studyNotesHint'),
                   border: const OutlineInputBorder(),
                 ),
-                onChanged: (v) => d.notes = v,
+                onChanged: (v) {
+                  d.notes = v;
+                  d.markTextEdited();
+                },
               ),
               const SizedBox(height: 12),
               FilledButton.icon(
@@ -461,7 +474,7 @@ class _StudyPlanPanelState extends ConsumerState<StudyPlanPanel> {
             ],
             if (d.plan != null && !d.saved) ...[
               Text(
-                '${loc.get('studyModel')}: ${d.plan!.modelLabel ?? ''}${d.plan!.usedFallback ? ' · ${loc.get('studyFallback')}' : ''}',
+                '${loc.get('studyModel')}: ${(d.plan!.modelLabel?.trim().isNotEmpty ?? false) ? d.plan!.modelLabel!.trim() : '-'}${d.plan!.usedFallback ? ' · ${loc.get('studyFallback')}' : ''}',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 12),
@@ -510,6 +523,7 @@ class _StudyPlanPanelState extends ConsumerState<StudyPlanPanel> {
                           ),
                           onChanged: (v) {
                             d.edited[i] = d.edited[i].copyWith(title: v);
+                            d.markTextEdited();
                           },
                         ),
                         if (_editingBatches.contains(i)) ...[
@@ -526,6 +540,7 @@ class _StudyPlanPanelState extends ConsumerState<StudyPlanPanel> {
                             ),
                             onChanged: (v) {
                               d.edited[i] = d.edited[i].copyWith(content: v);
+                              d.markTextEdited();
                             },
                           ),
                           Text(

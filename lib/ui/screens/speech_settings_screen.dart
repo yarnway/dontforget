@@ -8,6 +8,7 @@ import '../../models/tencent_speech_credentials.dart';
 import '../../providers/providers.dart';
 import '../../services/recovery/runtime_gate.dart';
 import '../../services/security/credential_repository.dart';
+import '../widgets/editable_text_menu.dart';
 import '../widgets/unsaved_editor_scope.dart';
 
 class SpeechSettingsScreen extends ConsumerStatefulWidget {
@@ -25,6 +26,7 @@ class _SpeechSettingsScreenState extends ConsumerState<SpeechSettingsScreen> {
   late final RuntimeRecoveryToken _birth;
   SpeechSettings _saved = const SpeechSettings();
   bool _ready = false, _saving = false, _enabled = false, _edited = false;
+  final Set<String> _visibleSecrets = {};
   String? _error;
   String t(String key) =>
       speechText(Localizations.localeOf(context).languageCode, key);
@@ -129,11 +131,14 @@ class _SpeechSettingsScreenState extends ConsumerState<SpeechSettingsScreen> {
     } catch (_) {
       if (mounted) {
         setState(() {
-          _saving = false;
           _error = 'saveFailed';
         });
       }
       return false;
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
     }
   }
 
@@ -205,15 +210,44 @@ class _SpeechSettingsScreenState extends ConsumerState<SpeechSettingsScreen> {
                           child: TextField(
                             key: ValueKey('speech-${field.$3}'),
                             controller: field.$1,
+                            contextMenuBuilder: buildEditableTextMenu,
                             enabled: _ready && !_saving,
-                            obscureText: field.$1 != _appId,
+                            obscureText:
+                                field.$1 != _appId &&
+                                !_visibleSecrets.contains(field.$3),
                             autocorrect: false,
                             enableSuggestions: false,
                             enableIMEPersonalizedLearning: false,
                             keyboardType: field.$1 == _appId
                                 ? TextInputType.number
                                 : TextInputType.visiblePassword,
-                            decoration: InputDecoration(labelText: field.$2),
+                            decoration: InputDecoration(
+                              labelText: field.$2,
+                              suffixIcon: field.$1 == _appId
+                                  ? null
+                                  : IconButton(
+                                      tooltip: AppLocalizations.of(context).get(
+                                        _visibleSecrets.contains(field.$3)
+                                            ? 'hideApiKey'
+                                            : 'showApiKey',
+                                      ),
+                                      icon: Icon(
+                                        _visibleSecrets.contains(field.$3)
+                                            ? Icons.visibility_off_outlined
+                                            : Icons.visibility_outlined,
+                                        size: 18,
+                                      ),
+                                      onPressed: !_ready || _saving
+                                          ? null
+                                          : () => setState(() {
+                                              if (!_visibleSecrets.remove(
+                                                field.$3,
+                                              )) {
+                                                _visibleSecrets.add(field.$3);
+                                              }
+                                            }),
+                                    ),
+                            ),
                             onChanged: (_) => setState(() {
                               _edited = true;
                               _error = null;

@@ -32,7 +32,7 @@ class PortableBackupService {
     DateTime? now,
   }) => database.runOperation(generation, () async {
     final at = now ?? DateTime.now();
-    final snapshot = await database.writeTransaction(
+    final snapshot = await database.readTransaction(
       generation,
       (db) async => <String, dynamic>{
         'version': DatabaseHelper.schemaVersion,

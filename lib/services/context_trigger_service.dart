@@ -200,6 +200,22 @@ class ContextTriggerService {
     return false;
   }
 
+  /// Fast pre-check for in-memory profile triggers ('office', 'home', etc.).
+  bool hasPendingProfileTrigger(Iterable<Reminder> reminders) {
+    for (final reminder in reminders) {
+      if (reminder.isCompleted ||
+          !reminder.isVisible ||
+          reminder.details.paused ||
+          _sessionTriggeredTaskIds.contains(reminder.id)) {
+        continue;
+      }
+      final raw = reminder.contextTrigger;
+      if (raw == null || raw.isEmpty || !raw.contains('profile')) continue;
+      if (ContextTriggerRule.tryParse(raw)?.type == 'profile') return true;
+    }
+    return false;
+  }
+
   /// 嗅探当前 Wi-Fi SSID (仅在 Windows 原生命令行执行 netsh，防卡顿超时与高频轮询)
   Future<String?> detectCurrentWifiSsid() {
     if (!Platform.isWindows ||
@@ -219,16 +235,25 @@ class ContextTriggerService {
   Future<String?> _runWifiProbe() async {
     final recoveryEpoch = _recoveryEpoch;
     _lastWifiProbeAt = DateTime.now();
+    Process? proc;
     try {
-      final result = await Process.run('netsh', [
+      proc = await Process.start('netsh', [
         'wlan',
         'show',
         'interfaces',
-      ], runInShell: false).timeout(const Duration(seconds: 2));
+      ], runInShell: false);
+      final stdoutFuture = proc.stdout.transform(systemEncoding.decoder).join();
+      final exitCode = await proc.exitCode.timeout(
+        const Duration(seconds: 2),
+        onTimeout: () {
+          proc?.kill();
+          throw TimeoutException('netsh probe timed out');
+        },
+      );
+      final stdout = await stdoutFuture.timeout(const Duration(seconds: 1));
 
       if (recoveryEpoch != _recoveryEpoch) return null;
-      if (result.exitCode == 0) {
-        final stdout = result.stdout.toString();
+      if (exitCode == 0) {
         final lines = stdout.split('\n');
         for (final line in lines) {
           final trimmed = line.trim();
@@ -244,7 +269,12 @@ class ContextTriggerService {
           }
         }
       }
+      // Clear stale SSID when Wi-Fi disconnects so triggers never fire offline.
+      if (recoveryEpoch == _recoveryEpoch) {
+        _detectedSsid = null;
+      }
     } catch (e) {
+      proc?.kill();
       debugPrint('Wi-Fi SSID detection note: $e');
     }
     return null;

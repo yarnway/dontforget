@@ -709,7 +709,11 @@ class _ArchiveTabView extends ConsumerWidget {
           child: ListTile(
             title: Text(row.taskTitle),
             subtitle: Text(
-              '${labelFor(row.details.kind)} · ${row.details.project} ${row.details.tags.join(' / ')}',
+              [
+                labelFor(row.details.kind),
+                if (row.details.project.isNotEmpty) row.details.project,
+                if (row.details.tags.isNotEmpty) row.details.tags.join(' / '),
+              ].join(' · '),
             ),
             isThreeLine: false,
             trailing: IconButton(

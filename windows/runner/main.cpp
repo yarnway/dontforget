@@ -159,7 +159,9 @@ void ActivateExistingWindow(const wchar_t *command_line) {
 // notification clicks and external links can activate the application.
 void RegisterProtocolHandler() {
   wchar_t exe_path[MAX_PATH];
-  if (::GetModuleFileNameW(nullptr, exe_path, MAX_PATH) == 0) {
+  const DWORD path_len = ::GetModuleFileNameW(nullptr, exe_path, MAX_PATH);
+  if (path_len == 0 || path_len >= MAX_PATH ||
+      ::GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
     return;
   }
 
@@ -243,9 +245,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
   if (!window.Create(L"DontForget", origin, size)) {
+    if (single_instance_mutex != nullptr) {
+      ::CloseHandle(single_instance_mutex);
+    }
+    ::CoUninitialize();
     return EXIT_FAILURE;
   }
-  window.SetQuitOnClose(false);
+  window.SetQuitOnClose(true);
 
   ::MSG msg;
   while (::GetMessage(&msg, nullptr, 0, 0)) {
@@ -253,6 +259,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
     ::DispatchMessage(&msg);
   }
 
+  if (single_instance_mutex != nullptr) {
+    ::CloseHandle(single_instance_mutex);
+  }
   ::CoUninitialize();
   return EXIT_SUCCESS;
 }

@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/task_details.dart';
 import 'editable_text_menu.dart';
+import 'ime_composition_guard.dart';
 
 /// Edits one task's metadata draft. Persistence and navigation belong to the
 /// host editor; this deliberately has no planning or database responsibilities.
@@ -55,6 +56,7 @@ class _TaskMetadataEditorState extends State<TaskMetadataEditor> {
       widget.onChanged(widget.details.patch(changes));
 
   void _addTag() {
+    if (isImeComposing(_newTag)) return;
     final tag = _newTag.text.trim();
     if (tag.isEmpty ||
         widget.details.tags.contains(tag) ||
@@ -68,6 +70,7 @@ class _TaskMetadataEditorState extends State<TaskMetadataEditor> {
   }
 
   void _addItem() {
+    if (isImeComposing(_newItem)) return;
     final label = _newItem.text.trim();
     if (label.isEmpty || widget.details.checklist.length >= 64) return;
     _patch({
@@ -147,6 +150,8 @@ class _TaskMetadataEditorState extends State<TaskMetadataEditor> {
           controller: _newTag,
           enabled: widget.enabled && widget.details.tags.length < 16,
           maxLength: 64,
+          textInputAction: TextInputAction.done,
+          contextMenuBuilder: buildEditableTextMenu,
           inputFormatters: [_storedLimit(64)],
           onSubmitted: (_) => _addTag(),
           decoration: InputDecoration(

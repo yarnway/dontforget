@@ -1,17 +1,16 @@
 import '../widgets/reminder_notice_panel.dart';
 import '../../data/database_helper.dart';
 import '../widgets/inline_feedback.dart';
+import '../widgets/editable_text_menu.dart';
+import '../widgets/ime_composition_guard.dart';
+import '../widgets/workspace_media_presenter.dart';
 import '../formatters/local_date_time.dart';
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:path/path.dart' as p;
-import 'package:url_launcher/url_launcher.dart';
 import '../../models/reminder.dart';
 import '../../providers/providers.dart';
 import '../../providers/global_capture_provider.dart';
@@ -128,6 +127,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       if (_catchUpDigestSubscription != null)
         _catchUpDigestSubscription!.cancel(),
       if (_suppressedSubscription != null) _suppressedSubscription!.cancel(),
+      if (_profileSubscription != null) _profileSubscription!.cancel(),
       if (_playerCompleteSubscription != null)
         _playerCompleteSubscription!.cancel(),
       _serializePlayback(() async {
@@ -154,6 +154,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   StreamSubscription<Reminder>? _dueSubscription;
   StreamSubscription<List<Reminder>>? _catchUpDigestSubscription;
   StreamSubscription<List<Reminder>>? _suppressedSubscription;
+  StreamSubscription<ContextProfile>? _profileSubscription;
   final Set<String> _promptedReminderIds = {};
   final Set<String> _dueNoticeKeys = {};
   int _dueNoticesVersion = 0;
@@ -272,6 +273,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _workspaceDrafts = ref.read(workspaceDraftsProvider.notifier);
     _agentGoal.addListener(_persistAgentGoalDraft);
     _studyDraft.addListener(_persistStudyDraft);
+    _studyDraft.onDraftMutated = _persistStudyDraft;
     unawaited(_restoreWorkspaceDrafts());
     _toolsCommand = ref.read(workspaceToolsCommandProvider);
     _toolsCommand!.open = _nativeToolsHandler;
@@ -301,6 +303,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // 监听拦截队列更新以便即时刷新情境徽标
     _suppressedSubscription = _contextTriggers.onSuppressedUpdated.listen((_) {
       if (mounted && _runtimeActive) setState(() {});
+    });
+
+    // 监听情境环境切换以即时触发匹配的情境感知提醒
+    _profileSubscription = _contextTriggers.onProfileChanged.listen((_) {
+      if (mounted && _runtimeActive) {
+        _evaluateProfileContextTriggers();
+      }
     });
 
     // 启动时仅在存在未触发的 Wi-Fi 情境触发器时执行嗅探，避免空闲时拉起系统网络进程
@@ -425,6 +434,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _runtime.unregister(this);
     _workspaceDrafts?.flushPending();
     WidgetsBinding.instance.removeObserver(this);
+    _studyDraft.onDraftMutated = null;
     _agentGoal.dispose();
     _studyDraft.dispose();
     _searchController.dispose();
@@ -441,6 +451,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     _dueSubscription?.cancel();
     _catchUpDigestSubscription?.cancel();
     _suppressedSubscription?.cancel();
+    _profileSubscription?.cancel();
     _playerCompleteSubscription?.cancel();
     _playingRecordId = null;
     final player = _audioPlayer;
@@ -544,7 +555,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       }
     }
 
-    // 情境感知触发器检测：仅当存在未暂停且本轮未触发的 Wi-Fi 触发器时才执行嗅探
+    // 情境感知触发器检测：先检查当前场景模式触发器，再按需嗅探未暂停且本轮未触发的 Wi-Fi 触发器
+    _evaluateProfileContextTriggers(reminders);
     if (_contextTriggers.hasPendingWifiTrigger(reminders)) {
       final wifiToastTemplate = AppLocalizations.of(
         context,
@@ -563,16 +575,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 latestReminders,
                 ssid: ssid,
               );
+              final title = wifiToastTemplate.replaceAll('{ssid}', ssid);
               for (final m in matched) {
+                final prompt = ContextTriggerRule.tryParse(
+                  m.contextTrigger,
+                )?.prompt?.trim();
+                final body = (prompt != null && prompt.isNotEmpty)
+                    ? '${m.taskTitle} — $prompt'
+                    : m.taskTitle;
+                if (mounted && _runtimeActive) {
+                  InlineFeedback.of(context).showSnackBar(
+                    SnackBar(content: Text('$title: $body')),
+                    tone: FeedbackTone.info,
+                  );
+                }
                 unawaited(
                   database
                       .runOperation(generation, () async {
                         await ref
                             .read(notificationServiceProvider)
-                            .showWindowsToast(
-                              wifiToastTemplate.replaceAll('{ssid}', ssid),
-                              m.taskTitle,
-                            );
+                            .showWindowsToast(title, body);
                       })
                       .catchError((Object _) {}),
                 );
@@ -885,8 +907,62 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
   }
 
-  void _confirmClearCompleted() {
+  static String _profileLocalizationKey(ContextProfile profile) =>
+      switch (profile) {
+        ContextProfile.general => 'profileGeneral',
+        ContextProfile.office => 'profileOffice',
+        ContextProfile.deepWork => 'profileDeepWork',
+        ContextProfile.home => 'profileHome',
+        ContextProfile.commute => 'profileCommute',
+      };
+
+  void _evaluateProfileContextTriggers([List<Reminder>? source]) {
     if (!mounted || !_runtimeActive) return;
+    final List<Reminder> reminders = source ?? ref.read(remindersProvider);
+    if (!_contextTriggers.hasPendingProfileTrigger(reminders)) return;
+    final database = ref.read(databaseHelperProvider);
+    final DataGeneration generation;
+    try {
+      generation = database.captureGeneration();
+    } on DatabaseAccessException {
+      return;
+    }
+    final matched = _contextTriggers.evaluateContextTriggers(reminders);
+    if (matched.isEmpty || !mounted || !_runtimeActive) return;
+    final l10n = AppLocalizations.of(context);
+    final profileLabel = l10n.get(
+      _profileLocalizationKey(_contextTriggers.currentProfile),
+    );
+    final title = '${l10n.get('contextTriggerTitle')} · $profileLabel';
+    for (final m in matched) {
+      final prompt = ContextTriggerRule.tryParse(
+        m.contextTrigger,
+      )?.prompt?.trim();
+      final body = (prompt != null && prompt.isNotEmpty)
+          ? '${m.taskTitle} — $prompt'
+          : m.taskTitle;
+      InlineFeedback.of(context).showSnackBar(
+        SnackBar(content: Text('$title: $body')),
+        tone: FeedbackTone.info,
+      );
+      unawaited(
+        database
+            .runOperation(generation, () async {
+              await ref
+                  .read(notificationServiceProvider)
+                  .showWindowsToast(title, body);
+            })
+            .catchError((Object _) {}),
+      );
+    }
+  }
+
+  bool _confirmClearCompletedOpen = false;
+  bool _openingMediaPreview = false;
+  bool _commandPaletteOpen = false;
+
+  void _confirmClearCompleted() {
+    if (!mounted || !_runtimeActive || _confirmClearCompletedOpen) return;
     final l10n = AppLocalizations.of(context);
     final colors = Theme.of(context).colorScheme;
     final completedCount = ref
@@ -908,7 +984,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       return;
     }
 
-    showDialog(
+    _confirmClearCompletedOpen = true;
+    showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: Row(
@@ -994,7 +1071,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           ),
         ],
       ),
-    );
+    ).whenComplete(() {
+      _confirmClearCompletedOpen = false;
+    });
   }
 
   Future<void> _clearAllNotices() async {
@@ -1062,267 +1141,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     }
   }
 
-  void _showImageDialog(String filePath) {
-    final l10n = AppLocalizations.of(context);
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        clipBehavior: Clip.antiAlias,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
-              children: [
-                InteractiveViewer(
-                  maxScale: 4.0,
-                  child: Image.file(
-                    File(filePath),
-                    cacheWidth: 2048,
-                    semanticLabel: p.basename(filePath),
-                    fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Text(l10n.get('cannotLoadImage')),
-                    ),
-                  ),
-                ),
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: IconButton(
-                    tooltip: l10n.get('close'),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.black54,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(48, 48),
-                    ),
-                    icon: const Icon(Icons.close, size: 20),
-                    onPressed: () => Navigator.pop(ctx),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  static const _filePreviewMaxBytes = 128 * 1024;
-
-  Future<({String text, bool truncated})?> _readBoundedTextPreview(
-    String filePath,
-  ) async {
-    try {
-      final file = File(filePath);
-      if (!await file.exists()) return null;
-      final raf = await file.open();
-      final Uint8List raw;
-      try {
-        raw = await raf.read(_filePreviewMaxBytes + 1);
-      } finally {
-        await raf.close();
-      }
-      if (raw.isEmpty) return null;
-      final truncated = raw.length > _filePreviewMaxBytes;
-      final slice = truncated ? raw.sublist(0, _filePreviewMaxBytes) : raw;
-      if (slice.contains(0)) return null;
-      final decoded = utf8.decode(slice, allowMalformed: truncated);
-      if (decoded.trim().isEmpty) return null;
-      return (text: decoded, truncated: truncated);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  void _showFileDialog(String filePath) {
-    final l10n = AppLocalizations.of(context);
-    final colors = Theme.of(context).colorScheme;
-    final fileName = p.basename(filePath);
-    final previewFuture = _readBoundedTextPreview(filePath);
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: colors.outlineVariant, width: 1),
-        ),
-        title: Row(
-          children: [
-            Icon(
-              Icons.description_outlined,
-              color: colors.primary,
-              size: 22,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                fileName,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: FutureBuilder<({String text, bool truncated})?>(
-            future: previewFuture,
-            builder: (context, snapshot) {
-              final preview = snapshot.data;
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${l10n.get('localPath')}: $filePath',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
-                  const Divider(height: 18),
-                  if (snapshot.connectionState != ConnectionState.done)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Row(
-                        children: [
-                          const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                          const SizedBox(width: 10),
-                          Text(l10n.get('loading')),
-                        ],
-                      ),
-                    )
-                  else if (preview != null) ...[
-                    Wrap(
-                      alignment: WrapAlignment.spaceBetween,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 8,
-                      runSpacing: 4,
-                      children: [
-                        Text(
-                          '${l10n.get('contentPreview')}:',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 12,
-                          ),
-                        ),
-                        TextButton.icon(
-                          key: const ValueKey('home-file-preview-copy'),
-                          onPressed: () async {
-                            await Clipboard.setData(
-                              ClipboardData(text: preview.text),
-                            );
-                            if (mounted && _runtimeActive) {
-                              InlineFeedback.of(this.context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    l10n.get('taskAttachmentTextCopied'),
-                                  ),
-                                ),
-                              );
-                            }
-                          },
-                          icon: const Icon(Icons.copy_rounded, size: 15),
-                          label: Text(l10n.get('taskAttachmentCopyText')),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      constraints: const BoxConstraints(maxHeight: 240),
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: colors.surfaceContainerHighest.withValues(
-                          alpha: 0.45,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: colors.outlineVariant),
-                      ),
-                      child: SingleChildScrollView(
-                        child: SelectableText(
-                          preview.text,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontFamily: 'monospace',
-                          ),
-                        ),
-                      ),
-                    ),
-                    if (preview.truncated) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        l10n.get('taskAttachmentTextTruncated'),
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: colors.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ] else
-                    Text(
-                      l10n.get('binaryFileNotice'),
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                ],
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              l10n.get('close'),
-              style: const TextStyle(fontSize: 13),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _openVideo(String filePath) async {
-    final l10n = AppLocalizations.of(context);
-    final fileName = p.basename(filePath);
-    var launched = false;
-    try {
-      final file = File(filePath);
-      if (await file.exists()) {
-        launched = await launchUrl(
-          Uri.file(filePath),
-          mode: LaunchMode.externalApplication,
-        );
-      }
-    } catch (_) {
-      launched = false;
-    }
-    if (!mounted || !_runtimeActive) return;
-    InlineFeedback.of(context).hideCurrentSnackBar();
-    InlineFeedback.of(context).showSnackBar(
-      SnackBar(
-        duration: const Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        content: Text(
-          launched
-              ? '${l10n.get('openedVideo')}: $fileName'
-              : l10n.get('videoOpenFailed'),
-        ),
-      ),
-      tone: launched ? FeedbackTone.info : FeedbackTone.error,
-    );
-  }
-
   Future<void> _stopAudioPlayback({bool showFeedback = true}) async {
     try {
       await _serializePlayback(() async {
@@ -1348,7 +1166,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   void _playMedia(String recordId) async {
-    if (!mounted || !_runtimeActive) return;
+    if (!mounted || !_runtimeActive || _openingMediaPreview) return;
     final l10n = AppLocalizations.of(context);
     try {
       await ref.read(mediaRecordsProvider.notifier).ready;
@@ -1415,11 +1233,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         );
       }
     } else if (media.type == 'image') {
-      _showImageDialog(mediaPath);
+      _openingMediaPreview = true;
+      await showWorkspaceImagePreviewDialog(context, mediaPath).whenComplete(
+        () => _openingMediaPreview = false,
+      );
     } else if (media.type == 'file') {
-      _showFileDialog(mediaPath);
+      _openingMediaPreview = true;
+      await showWorkspaceFilePreviewDialog(
+        context,
+        mediaPath,
+        isActive: () => mounted && _runtimeActive,
+      ).whenComplete(() => _openingMediaPreview = false);
     } else if (media.type == 'video') {
-      unawaited(_openVideo(mediaPath));
+      unawaited(
+        openWorkspaceVideoExternally(
+          context,
+          mediaPath,
+          isActive: () => mounted && _runtimeActive,
+        ),
+      );
     }
   }
 
@@ -1474,6 +1306,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void _closeWorkspaceTool() {
     if (!mounted || _toolBlocked) return;
     setState(() => _activeTool = null);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted &&
+          _runtimeActive &&
+          _activeTool == null &&
+          !_isSearchOpen &&
+          ModalRoute.of(context)?.isCurrent == true) {
+        _shortcutFocus.requestFocus();
+      }
+    });
   }
 
   void _setExportBusy(bool value) {
@@ -1509,7 +1350,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   }
 
   Future<void> _submitAgentGoal() async {
-    if (_agentBusy || !_runtimeActive || _agentGoal.text.trim().isEmpty) return;
+    if (_agentBusy ||
+        !_runtimeActive ||
+        isImeComposing(_agentGoal) ||
+        _agentGoal.text.trim().isEmpty) {
+      return;
+    }
     final submitted = _agentGoal.text;
     setState(() => _agentBusy = true);
     try {
@@ -1555,9 +1401,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   bool _openCommandPalette() {
     if (!_runtimeActive ||
         _toolBlocked ||
+        _commandPaletteOpen ||
         ModalRoute.of(context)?.isCurrent != true) {
       return false;
     }
+    _commandPaletteOpen = true;
     final l10n = AppLocalizations.of(context);
     final isImmersive = ref.read(immersiveModeProvider);
     final pendingSharedCount = SharedTextInbox.count(
@@ -1702,7 +1550,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         shortcut: '/plans',
         onExecute: () => _selectTool(_WorkspaceTool.planning),
       ),
-    ]);
+    ]).whenComplete(() {
+      _commandPaletteOpen = false;
+    });
     return true;
   }
 
@@ -1836,17 +1686,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       _searchController.clear();
       _searchQuery = '';
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted &&
+          _runtimeActive &&
+          !_isSearchOpen &&
+          _activeTool == null &&
+          ModalRoute.of(context)?.isCurrent == true) {
+        _shortcutFocus.requestFocus();
+      }
+    });
   }
 
   void _updateSearch(String query) {
-    if (!mounted || !_runtimeActive) return;
+    if (!mounted || !_runtimeActive || isImeComposing(_searchController)) {
+      return;
+    }
     _searchDebounce?.cancel();
     if (query.trim().isEmpty) {
       setState(() => _searchQuery = '');
       return;
     }
     _searchDebounce = Timer(const Duration(milliseconds: 150), () {
-      if (mounted && _runtimeActive) setState(() => _searchQuery = query);
+      if (mounted && _runtimeActive && !isImeComposing(_searchController)) {
+        setState(() => _searchQuery = query);
+      }
     });
   }
 
@@ -1866,6 +1729,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             controller: _searchController,
             focusNode: _searchFocus,
             autofocus: true,
+            contextMenuBuilder: buildEditableTextMenu,
             style: const TextStyle(fontSize: 14),
             textAlignVertical: TextAlignVertical.center,
             decoration: InputDecoration(
@@ -2201,8 +2065,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                                       onOpen: (r) => Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (_) =>
-                                              TaskDetailScreen(task: r),
+                                          builder: (_) => TaskDetailScreen(
+                                            task: r,
+                                            onPlayMedia: r.recordId == null
+                                                ? null
+                                                : () => _playMedia(r.recordId!),
+                                          ),
                                         ),
                                       ),
                                       onSnooze: (r) =>

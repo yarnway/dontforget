@@ -251,6 +251,23 @@ class DatabaseHelper {
   int _writeSequence = 0;
   int _lastBackedUpWriteSequence = -1;
 
+  /// Consistent read-only transaction snapshot across tables without dirtying
+  /// [_writeSequence] or invalidating [_bootstrapCache].
+  Future<T> readTransaction<T>(
+    DataGeneration generation,
+    Future<T> Function(Transaction) operation,
+  ) => runOperation(generation, () async {
+    final db = await _openDatabase();
+    return db.transaction((txn) async {
+      final scope = _ScopedExecutor(txn, writable: false);
+      try {
+        return await operation(scope);
+      } finally {
+        await scope.finish();
+      }
+    });
+  });
+
   Future<T> writeTransaction<T>(
     DataGeneration generation,
     Future<T> Function(Transaction) operation,

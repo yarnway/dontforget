@@ -185,10 +185,15 @@ class InlineFeedbackState extends State<InlineFeedback> {
                         child: child,
                       ),
                     ),
-                    child: Semantics(
-                      container: true,
-                      liveRegion: true,
-                      child: Material(
+                    child: CallbackShortcuts(
+                      bindings: {
+                        const SingleActivator(LogicalKeyboardKey.escape):
+                            hideCurrentSnackBar,
+                      },
+                      child: Semantics(
+                        container: true,
+                        liveRegion: true,
+                        child: Material(
                       key: const ValueKey('inline-feedback'),
                       color: colors.surfaceContainer,
                       elevation: 3,
@@ -302,8 +307,9 @@ class InlineFeedbackState extends State<InlineFeedback> {
                       ),
                     ),
                   ),
-                  ),
                 ),
+              ),
+            ),
             ],
           );
         },

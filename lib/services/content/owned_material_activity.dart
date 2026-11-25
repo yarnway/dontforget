@@ -28,6 +28,7 @@ class OwnedMaterialActivity {
   static void releaseDirectory(Directory directory) =>
       activeDirectories.remove(_identity(directory));
   static bool active(String directory) =>
+      activeDirectories.isNotEmpty &&
       activeDirectories.contains(_identity(Directory(directory)));
   static Future<void> mark(Directory directory, String role) async {
     if (!const {'original', 'restore'}.contains(role)) {

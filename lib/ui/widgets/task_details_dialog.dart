@@ -3,6 +3,8 @@ import '../screens/task_detail_screen.dart';
 import '../formatters/local_date_time.dart';
 import '../theme/app_theme.dart';
 import 'editable_text_menu.dart';
+import 'editor_keyboard_actions.dart';
+import 'ime_composition_guard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
@@ -61,10 +63,10 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
   }
 
   Future<void> _save() async {
-    if (_isBusy) return;
+    if (_isBusy || isImeComposing(_titleController)) return;
     final title = _titleController.text.trim();
     if (title.isEmpty) {
-      _showFailure('taskTitleLabel');
+      _showFailure('taskTitleRequired');
       return;
     }
     final l10n = AppLocalizations.of(context);
@@ -246,7 +248,7 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
       backgroundColor: colors.surfaceContainerHigh,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 460),
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(20.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -496,12 +498,18 @@ class _TaskEditDialogState extends ConsumerState<TaskEditDialog> {
     );
     return PopScope(
       canPop: !_isBusy,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          AbsorbPointer(absorbing: _isBusy, child: dialog),
-          if (_isBusy) const CircularProgressIndicator(),
-        ],
+      child: EditorKeyboardActions(
+        onSave: _save,
+        onExit: () {
+          if (!_isBusy) Navigator.of(context).maybePop();
+        },
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            AbsorbPointer(absorbing: _isBusy, child: dialog),
+            if (_isBusy) const CircularProgressIndicator(),
+          ],
+        ),
       ),
     );
   }

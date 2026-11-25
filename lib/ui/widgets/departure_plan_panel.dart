@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import '../../data/database_helper.dart';
 import '../../l10n/app_localizations.dart';
@@ -269,8 +270,8 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
     }
   }
 
-  void _load(Reminder row) {
-    if (_busy) return;
+  void _load(Reminder row, {bool force = false}) {
+    if (_busy && !force) return;
     setState(() {
       _baseline = row;
       _draft = Map<String, dynamic>.from(
@@ -319,6 +320,7 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
         _draft['items'] = latest.details.checklist
             .map((e) => e.toJson())
             .toList();
+        _exceptionsRevision++;
         _revision++;
       });
       _feedback(
@@ -607,83 +609,91 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
         dates
             .where((r) => !r.isCompleted && r.triggerTime!.isAfter(today))
             .firstOrNull;
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: [
-            for (final row in plans)
-              ActionChip(
-                label: Text(
-                  '${row.taskTitle}${row.details.paused ? ' · ${t('pause')}' : ''}',
+    final localeTag = Localizations.localeOf(context).toLanguageTag();
+    return KeyedSubtree(
+      key: ValueKey('departure-form:$_exceptionsRevision'),
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final row in plans)
+                ActionChip(
+                  label: Text(
+                    '${row.taskTitle}${row.details.paused ? ' · ${t('pause')}' : ''}',
+                  ),
+                  onPressed: _busy ? null : () => _load(row),
                 ),
-                onPressed: _busy ? null : () => _load(row),
-              ),
-          ],
-        ),
-        TextButton.icon(
-          icon: const Icon(Icons.add),
-          label: Text(t('newPlan')),
-          onPressed: _busy
-              ? null
-              : () => _change(() {
-                  _baseline = null;
-                  _draft = DeparturePlan().toJson();
-                  _exceptionsValid = true;
-                  _exceptionsRevision++;
-                  _invalid.clear();
-                }),
-        ),
-        _field('title', t('title')),
-        _field('place', t('place')),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(t('departureTime')),
-          subtitle: Text(_clock(plan.departureMinute)),
-          trailing: const Icon(Icons.schedule),
-          onTap: _busy
-              ? null
-              : () async {
-                  final time = await showTimePicker(
-                    context: context,
-                    initialTime: TimeOfDay(
-                      hour: plan.departureMinute ~/ 60,
-                      minute: plan.departureMinute % 60,
-                    ),
-                  );
-                  if (mounted && context.mounted && _current && time != null) {
-                    _change(
-                      () => _draft['minute'] = time.hour * 60 + time.minute,
+            ],
+          ),
+          TextButton.icon(
+            icon: const Icon(Icons.add),
+            label: Text(t('newPlan')),
+            onPressed: _busy
+                ? null
+                : () => _change(() {
+                    _baseline = null;
+                    _draft = DeparturePlan().toJson();
+                    _exceptionsValid = true;
+                    _exceptionsRevision++;
+                    _invalid.clear();
+                  }),
+          ),
+          _field('title', t('title')),
+          _field('place', t('place')),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(t('departureTime')),
+            subtitle: Text(_clock(plan.departureMinute)),
+            trailing: const Icon(Icons.schedule),
+            onTap: _busy
+                ? null
+                : () async {
+                    final time = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay(
+                        hour: plan.departureMinute ~/ 60,
+                        minute: plan.departureMinute % 60,
+                      ),
                     );
-                  }
-                },
-        ),
-        _field('lead', t('lead')),
-        Text(t('weekdays')),
-        Wrap(
-          spacing: 5,
-          runSpacing: 5,
-          children: [
-            for (var day = 1; day <= 7; day++)
-              FilterChip(
-                label: Text('$day'),
-                selected: plan.weekdays.contains(day),
-                onSelected: _busy
-                    ? null
-                    : (selected) => _change(() {
-                        final days = List<int>.from(_draft['weekdays']);
-                        if (selected) {
-                          days.add(day);
-                        } else if (days.length > 1) {
-                          days.remove(day);
-                        }
-                        _draft['weekdays'] = days..sort();
-                      }),
-              ),
-          ],
-        ),
+                    if (mounted &&
+                        context.mounted &&
+                        _current &&
+                        time != null) {
+                      _change(
+                        () => _draft['minute'] = time.hour * 60 + time.minute,
+                      );
+                    }
+                  },
+          ),
+          _field('lead', t('lead')),
+          Text(t('weekdays')),
+          Wrap(
+            spacing: 5,
+            runSpacing: 5,
+            children: [
+              for (var day = 1; day <= 7; day++)
+                FilterChip(
+                  label: Text(
+                    DateFormat.E(localeTag).format(DateTime.utc(2024, 1, day)),
+                  ),
+                  selected: plan.weekdays.contains(day),
+                  onSelected: _busy
+                      ? null
+                      : (selected) => _change(() {
+                          final days = List<int>.from(_draft['weekdays']);
+                          if (selected) {
+                            days.add(day);
+                          } else if (days.length > 1) {
+                            days.remove(day);
+                          }
+                          _draft['weekdays'] = days..sort();
+                        }),
+                ),
+            ],
+          ),
         Text(t('calendarHint')),
         CalendarExceptionsEditor(
           key: ValueKey(
@@ -987,7 +997,7 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
                               .read(remindersProvider)
                               .where((r) => r.id == currentOwner.id)
                               .firstOrNull;
-                          if (owner != null) _load(owner);
+                          if (owner != null) _load(owner, force: true);
                           _feedback(
                             result.nativeSyncFailed
                                 ? AppLocalizations.of(
@@ -1047,6 +1057,7 @@ class _DeparturePlanPanelState extends ConsumerState<DeparturePlanPanel> {
         ],
         if (_busy) const LinearProgressIndicator(),
       ],
+      ),
     );
   }
 }

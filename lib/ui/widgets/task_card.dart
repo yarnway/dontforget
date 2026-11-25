@@ -1,6 +1,7 @@
 import 'inline_feedback.dart';
 import 'capture_preview_dialog.dart';
 import 'task_category_picker_dialog.dart';
+import 'task_postpone_dialog.dart';
 import 'task_snooze_picker.dart';
 import '../formatters/local_date_time.dart';
 import 'dart:convert';
@@ -12,7 +13,6 @@ import '../../data/database_helper.dart';
 import '../../services/recovery/runtime_gate.dart';
 import '../../providers/providers.dart';
 import '../../providers/home_controller.dart';
-import '../../services/quick_reminder_parser.dart';
 import '../../l10n/app_localizations.dart';
 import '../../l10n/planning_strings.dart';
 import '../screens/task_detail_screen.dart';
@@ -494,6 +494,13 @@ class _TaskCardState extends ConsumerState<TaskCard> {
             baseline: widget.task,
           );
       if (!mounted) return;
+      if (!result.accepted) {
+        _showMessage(
+          l10n.get('reminderOccurrenceChanged'),
+          tone: FeedbackTone.warning,
+        );
+        return;
+      }
       _showMessage(
         result.nativeSyncFailed
             ? l10n.get('reminderNativeSyncFailed')
@@ -514,74 +521,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
       return;
     }
     final l10n = AppLocalizations.of(context);
-    final colors = Theme.of(context).colorScheme;
-    final previewNow = DateTime.now();
-    final previewTrigger = widget.task.triggerTime!;
-    final previewBase = previewTrigger.isAfter(previewNow)
-        ? previewTrigger
-        : previewNow;
-    final options = <(String key, String labelKey, IconData icon, DateTime? preview)>[
-      (
-        '15',
-        'snooze15',
-        Icons.timer_outlined,
-        previewBase.add(const Duration(minutes: 15)),
-      ),
-      (
-        '60',
-        'snooze60',
-        Icons.hourglass_bottom_rounded,
-        previewBase.add(const Duration(hours: 1)),
-      ),
-      (
-        'evening',
-        'quickEvening',
-        Icons.nightlight_outlined,
-        QuickReminderParser.tonight(previewNow),
-      ),
-      (
-        'morning',
-        'quickMorning',
-        Icons.wb_sunny_outlined,
-        QuickReminderParser.tomorrowMorning(previewNow),
-      ),
-      ('custom', 'quickChoose', Icons.edit_calendar_outlined, null),
-    ];
-    final choice = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => SimpleDialog(
-        key: const ValueKey('task-postpone-dialog'),
-        title: Text(l10n.get('quickPostpone')),
-        children: [
-          for (final opt in options)
-            SimpleDialogOption(
-              key: ValueKey('task-postpone-${opt.$1}'),
-              onPressed: () => Navigator.pop(dialogContext, opt.$1),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Row(
-                  children: [
-                    Icon(opt.$3, size: 18, color: colors.primary),
-                    const SizedBox(width: 12),
-                    Expanded(child: Text(l10n.get(opt.$2))),
-                    if (opt.$4 != null) ...[
-                      const SizedBox(width: 10),
-                      Text(
-                        formatLocalDateTime(opt.$4!),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: colors.onSurfaceVariant,
-                          fontFeatures: AppTheme.tabularFigures,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
+    final choice = await showTaskPostponeDialog(context, widget.task);
     if (!mounted || choice == null) return;
     final now = DateTime.now();
     final currentTrigger = widget.task.triggerTime!;
@@ -1025,7 +965,7 @@ class _TaskCardState extends ConsumerState<TaskCard> {
               padding: const EdgeInsets.all(12),
               child: LayoutBuilder(
                 builder: (context, cardConstraints) {
-                  final allowHoverActions = cardConstraints.maxWidth >= 360;
+                  final allowHoverActions = cardConstraints.maxWidth >= 440;
                   final checklistDone = details.checklist
                       .where((e) => e.done)
                       .length;
@@ -1142,6 +1082,19 @@ class _TaskCardState extends ConsumerState<TaskCard> {
                                           alpha: 0.55,
                                         ),
                                       ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(
+                                            alpha:
+                                                Theme.of(context).brightness ==
+                                                    Brightness.dark
+                                                ? 0.24
+                                                : 0.08,
+                                          ),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,

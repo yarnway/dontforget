@@ -6,7 +6,7 @@ String speechText(String language, String key) {
       'Tencent Cloud speech recognition',
       'Tencent Cloud 音声認識',
     ],
-    'scope': ['中文 · English', '中文 · English', '中文 · English'],
+    'scope': ['中文 · English', '中文 · English', '中国語 · 英語'],
     'privacy': [
       '启用实时识别后，开始录音即边录边发送到腾讯云，右滑可显示已有文字；之后改选保存原声或取消，已发送的音频无法撤回，可能产生服务费用。凭据保存在系统安全存储，不写入数据库或可移植备份。',
       'When real-time recognition is enabled, audio streams to Tencent Cloud as soon as recording starts, preparing text before you slide right. Saving voice or cancelling later cannot recall audio already sent; service charges may apply. Credentials use system secure storage and are excluded from database rows and portable backups.',

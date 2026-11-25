@@ -31,13 +31,17 @@ import '../l10n/speech_recognition_strings.dart';
 import '../services/quick_reminder_parser.dart';
 import '../services/scheduled_task_reminder.dart';
 import '../services/recovery/runtime_gate.dart';
+import 'package:dio/dio.dart' show CancelToken;
 import 'providers.dart';
+
+part 'home_voice_session.dart';
 
 class HomeState {
   static const _unchanged = Object();
   final bool isLoading;
   final bool isRecording;
   final bool isPreparingRecording;
+  final bool isLiveTranscribing;
   final int pendingTasksCount;
   final String? error;
   final String voicePreview;
@@ -46,6 +50,7 @@ class HomeState {
     this.isLoading = false,
     this.isRecording = false,
     this.isPreparingRecording = false,
+    this.isLiveTranscribing = false,
     this.pendingTasksCount = 0,
     this.error,
     this.voicePreview = '',
@@ -57,6 +62,7 @@ class HomeState {
     bool? isLoading,
     bool? isRecording,
     bool? isPreparingRecording,
+    bool? isLiveTranscribing,
     int? pendingTasksCount,
     Object? error = _unchanged,
     String? voicePreview,
@@ -65,6 +71,7 @@ class HomeState {
       isLoading: isLoading ?? this.isLoading,
       isRecording: isRecording ?? this.isRecording,
       isPreparingRecording: isPreparingRecording ?? this.isPreparingRecording,
+      isLiveTranscribing: isLiveTranscribing ?? this.isLiveTranscribing,
       pendingTasksCount: pendingTasksCount ?? this.pendingTasksCount,
       error: identical(error, _unchanged) ? this.error : error as String?,
       voicePreview: voicePreview ?? this.voicePreview,
@@ -103,6 +110,7 @@ class HomeController extends StateNotifier<HomeState> {
   LiveSpeechSession? _liveSpeech;
   LiveSpeechSession? _previewSpeech;
   LivePcmRecording? _livePreviewOwner;
+  bool _liveSpeechAllowsFileFallback = false;
 
   HomeController(
     this._ref, {
@@ -158,6 +166,7 @@ class HomeController extends StateNotifier<HomeState> {
     _previewSpeech = null;
     _liveSpeech = null;
     _livePreviewOwner = null;
+    _liveSpeechAllowsFileFallback = false;
     _recordingGeneration = null;
     _recordingOutputPath = null;
     final pcm = _pcmRecording;
@@ -274,7 +283,7 @@ class HomeController extends StateNotifier<HomeState> {
         } catch (error) {
           if (_isCurrent(generation)) {
             final message = explainModelError
-                ? '$failureMessage: ${_ref.read(llmServiceProvider).formatErrorMessage(error)}'
+                ? '$failureMessage: ${_ref.read(llmServiceProvider).formatLocalizedErrorMessage(error, _ref.read(settingsProvider).language)}'
                 : failureMessage;
             _reportError(generation, message);
           }
@@ -448,6 +457,7 @@ class HomeController extends StateNotifier<HomeState> {
         trimmed,
         settings: settings,
         existingTasks: existingTasks,
+        language: settings.language,
       );
       _check(generation);
       await _saveTasks(result.scheduledTasks, generation);
@@ -695,8 +705,10 @@ class HomeController extends StateNotifier<HomeState> {
     final generation = _beginInput();
     if (generation == null) return false;
     _livePreviewOwner = null;
+    _liveSpeechAllowsFileFallback = false;
     state = state.copyWith(
       isPreparingRecording: true,
+      isLiveTranscribing: false,
       error: null,
       voicePreview: '',
     );
@@ -723,12 +735,23 @@ class HomeController extends StateNotifier<HomeState> {
         if (_nativeRecording) return true;
         await tempDir.create(recursive: true);
         _check(generation);
-        final speech = _ref.read(settingsProvider).speech;
+        final settings = _ref.read(settingsProvider);
+        final speech = settings.speech;
+        final localSpeech = _ref.read(localSpeechServiceProvider);
         final realtime =
             speech.enabled &&
             speech.endpoint == TencentSpeechCredentials.realtimeEndpoint;
-        final ext = recordingExtensionForPlatform(null, realtime);
-        final path = '${tempDir.path}/audio_${const Uuid().v4()}.$ext';
+        final realtimeConfigured =
+            realtime &&
+            speech.isConfigured &&
+            TencentSpeechCredentials.decode(speech.apiKey) != null;
+        final canStreamForGesture =
+            realtimeConfigured ||
+            speech.isConfigured ||
+            localSpeech.supported ||
+            LLMService.supportsAudioTranscription(settings);
+        String path =
+            '${tempDir.path}/audio_${const Uuid().v4()}.${recordingExtensionForPlatform(null, realtime)}';
         var nativeStarted = false;
         try {
           _nativeRecording = true;
@@ -736,18 +759,26 @@ class HomeController extends StateNotifier<HomeState> {
           // speech track when enabled so the recorded file is ready to upload.
           final config = realtime
               ? tencentRecordingProfile()
-              : _ref.read(localSpeechServiceProvider).android &&
-                    _ref.read(settingsProvider).speech.enabled
+              : localSpeech.android && speech.enabled
               ? const RecordConfig(
                   sampleRate: 16000,
                   numChannels: 1,
                   bitRate: 64000,
                 )
               : const RecordConfig();
-          if (realtime &&
-              speech.isConfigured &&
-              TencentSpeechCredentials.decode(speech.apiKey) != null) {
-            _pcmRecording = await LivePcmRecording.start(recorder, path);
+          if (canStreamForGesture) {
+            final wavPath = '${tempDir.path}/audio_${const Uuid().v4()}.wav';
+            try {
+              _pcmRecording = await LivePcmRecording.start(recorder, wavPath);
+              path = wavPath;
+            } catch (error) {
+              if (realtimeConfigured ||
+                  !LivePcmRecording.isStreamUnsupportedError(error)) {
+                rethrow;
+              }
+              _pcmRecording = null;
+              await recorder.start(config, path: path);
+            }
           } else {
             await recorder.start(config, path: path);
           }
@@ -805,6 +836,7 @@ class HomeController extends StateNotifier<HomeState> {
     final settings = _ref.read(settingsProvider).speech;
     try {
       _livePreviewOwner = pcm;
+      _liveSpeechAllowsFileFallback = false;
       _liveSpeech = _ref
           .read(speechRecognitionServiceProvider)
           .startRealtime(
@@ -819,16 +851,101 @@ class HomeController extends StateNotifier<HomeState> {
             },
           );
       _previewSpeech = _liveSpeech;
+      state = state.copyWith(isLiveTranscribing: true);
     } on SpeechRecognitionException {
       /* Preserve local audio for explicit retry. */
     }
   }
 
+  /// Starts speech-to-text transcription immediately when the user swipes up
+  /// and turns right (or starts desktop voice dictation), without waiting for
+  /// finger release across on-device, Tencent, and Whisper backends.
+  void startGestureTranscription() {
+    prepareRecordingTranscription();
+    final generation = _recordingGeneration;
+    final pcm = _pcmRecording;
+    if (generation == null ||
+        pcm == null ||
+        _liveSpeech != null ||
+        !_isCurrent(generation)) {
+      return;
+    }
+    final settings = _ref.read(settingsProvider);
+    final localSpeech = _ref.read(localSpeechServiceProvider);
+    void publishPreview(String text) {
+      if (_isCurrent(generation) &&
+          identical(_livePreviewOwner, pcm) &&
+          state.voicePreview != text) {
+        state = state.copyWith(voicePreview: text);
+      }
+    }
+
+    if (!settings.speech.enabled && localSpeech.supported) {
+      try {
+        _livePreviewOwner = pcm;
+        _liveSpeechAllowsFileFallback = true;
+        final session = localSpeech.startLive(
+          pcm.pcm,
+          settings.language,
+          onText: publishPreview,
+        );
+        _liveSpeech = session;
+        _previewSpeech = session;
+        state = state.copyWith(isLiveTranscribing: true);
+        unawaited(
+          session.result.then<void>(
+            (_) {},
+            onError: (Object error, StackTrace _) {
+              // If the platform stream method is unavailable, clear _liveSpeech
+              // so release seamlessly falls back to file-based transcribe().
+              if (identical(_liveSpeech, session) &&
+                  (error is MissingPluginException ||
+                      error is UnsupportedError ||
+                      (error is PlatformException &&
+                          error.code == 'speech_unavailable'))) {
+                _liveSpeech = null;
+                if (identical(_previewSpeech, session)) _previewSpeech = null;
+              }
+            },
+          ),
+        );
+        return;
+      } catch (_) {
+        _liveSpeech = null;
+        _previewSpeech = null;
+      }
+    }
+
+    final canSnapshot =
+        (settings.speech.enabled && settings.speech.isConfigured) ||
+        (!settings.speech.enabled &&
+            LLMService.supportsAudioTranscription(settings));
+    if (canSnapshot) {
+      _livePreviewOwner = pcm;
+      _liveSpeechAllowsFileFallback = true;
+      final session = _ProgressiveSnapshotTranscriber.start(
+        pcm: pcm,
+        transcribeFile: (snapPath) => _transcribeCapture(snapPath, generation),
+        isActive: () => _isCurrent(generation),
+        onText: publishPreview,
+      );
+      _liveSpeech = session;
+      _previewSpeech = session;
+      state = state.copyWith(isLiveTranscribing: true);
+    }
+  }
+
   void cancelLiveTranscription() {
     _previewSpeech?.cancel();
+    if (identical(_liveSpeech, _previewSpeech)) {
+      _liveSpeech = null;
+      _liveSpeechAllowsFileFallback = false;
+    }
     _previewSpeech = null;
     _livePreviewOwner = null;
-    if (mounted) state = state.copyWith(voicePreview: '');
+    if (mounted) {
+      state = state.copyWith(voicePreview: '', isLiveTranscribing: false);
+    }
   }
 
   Future<
@@ -844,7 +961,9 @@ class HomeController extends StateNotifier<HomeState> {
     if (generation == null) return null;
     final expectedPath = _recordingOutputPath;
     final live = _liveSpeech;
+    final allowFallback = _liveSpeechAllowsFileFallback;
     _liveSpeech = null;
+    _liveSpeechAllowsFileFallback = false;
     if (!transcribe) {
       live?.cancel();
       _livePreviewOwner = null;
@@ -881,12 +1000,33 @@ class HomeController extends StateNotifier<HomeState> {
         return path;
       });
       if (_isCurrent(generation)) {
-        state = state.copyWith(isRecording: false);
+        state = state.copyWith(isRecording: false, isLiveTranscribing: false);
         if (path != null) {
+          Future<String>? resolvedLiveText;
+          if (transcribe && live != null) {
+            final candidate = allowFallback
+                ? live.result.catchError((Object error, StackTrace stack) {
+                    if (error is MissingPluginException ||
+                        error is UnsupportedError ||
+                        (error is PlatformException &&
+                            (error.code == 'speech_unavailable' ||
+                                error.code == 'speech_client'))) {
+                      return _transcribeCapture(path, generation);
+                    }
+                    Error.throwWithStackTrace(error, stack);
+                  })
+                : live.result;
+            // Guard against unhandled Zone errors while RecordingDurationReader
+            // inspects the WAV file before createVoiceTextDraft awaits liveText.
+            unawaited(
+              candidate.then<void>((_) {}, onError: (Object _, StackTrace __) {}),
+            );
+            resolvedLiveText = candidate;
+          }
           return (
             path: path,
             generation: generation,
-            liveText: transcribe ? live?.result : null,
+            liveText: resolvedLiveText,
             ownedTemporary:
                 expectedPath != null && p.equals(expectedPath, path),
           );
@@ -894,7 +1034,9 @@ class HomeController extends StateNotifier<HomeState> {
       }
     } catch (error) {
       live?.cancel();
-      if (_isCurrent(generation)) state = state.copyWith(isRecording: false);
+      if (_isCurrent(generation)) {
+        state = state.copyWith(isRecording: false, isLiveTranscribing: false);
+      }
       _reportError(generation, _t('stopRecordingFailed', {'error': '$error'}));
     }
     return null;
@@ -927,7 +1069,11 @@ class HomeController extends StateNotifier<HomeState> {
       return false;
     } finally {
       if (_isCurrent(generation)) {
-        state = state.copyWith(isRecording: false, voicePreview: '');
+        state = state.copyWith(
+          isRecording: false,
+          isLiveTranscribing: false,
+          voicePreview: '',
+        );
       }
     }
   }

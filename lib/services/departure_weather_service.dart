@@ -78,10 +78,15 @@ class WeatherForecast {
       end.toUtc().millisecondsSinceEpoch ~/ 3600000 * 3600000,
       isUtc: true,
     );
+    final baseUtc = hours.first.toUtc();
     var rain = false;
     for (var t = first; !t.isAfter(last); t = t.add(const Duration(hours: 1))) {
-      final i = hours.indexWhere((h) => h.isAtSameMomentAs(t));
-      if (i < 0 || probabilities[i] == null) return null;
+      final diffMinutes = t.difference(baseUtc).inMinutes;
+      if (diffMinutes < 0 || diffMinutes % 60 != 0) return null;
+      final i = diffMinutes ~/ 60;
+      if (i < 0 || i >= probabilities.length || probabilities[i] == null) {
+        return null;
+      }
       rain = rain || probabilities[i]! >= threshold;
     }
     return rain;
@@ -108,11 +113,15 @@ class DepartureWeatherService {
           );
   final Dio _client;
   void dispose() => _client.close(force: true);
+  static final _cjkChar = RegExp(r'[\u4e00-\u9fff\u3040-\u30ff]');
   Future<List<WeatherCity>> cities(
     String query, {
     CancelToken? cancelToken,
   }) async {
-    if (query.trim().length < 2 || query.length > 120) {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty ||
+        (trimmed.length < 2 && !_cjkChar.hasMatch(trimmed)) ||
+        query.length > 120) {
       throw const FormatException('City name required');
     }
     final response = await _client.get(

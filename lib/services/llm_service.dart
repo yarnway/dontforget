@@ -30,6 +30,27 @@ class LLMService {
     return '$trimmed/chat/completions';
   }
 
+  static bool supportsAudioTranscription(AppSettings settings) {
+    final primary = settings.primaryModelSettings;
+    if (primary.apiKey.trim().isEmpty) return false;
+    final endpoint = Uri.tryParse(primary.baseUrl.trim());
+    if (endpoint == null || endpoint.host.isEmpty) return false;
+    return !const {
+      'api.deepseek.com',
+      'generativelanguage.googleapis.com',
+      'api.moonshot.cn',
+      'api.anthropic.com',
+    }.contains(endpoint.host.toLowerCase());
+  }
+
+  static String detectBase64ImageMime(String base64Image) {
+    final trimmed = base64Image.trimLeft();
+    if (trimmed.startsWith('iVBORw0KGgo')) return 'image/png';
+    if (trimmed.startsWith('R0lGOD')) return 'image/gif';
+    if (trimmed.startsWith('UklGR')) return 'image/webp';
+    return 'image/jpeg';
+  }
+
   LLMService({Dio? client, this.probeClientFactory}) : _dio = client ?? Dio(BaseOptions(
     connectTimeout: const Duration(seconds: 10),
     sendTimeout: const Duration(seconds: 30),
@@ -38,7 +59,14 @@ class LLMService {
   ));
   final Dio _dio;
   final lastExtraction = ValueNotifier<AiExtractionStatus?>(null);
-  final PriorityModelRouter _router = PriorityModelRouter();
+  final PriorityModelRouter _router = PriorityModelRouter(
+    attemptTimeout: const Duration(seconds: 25),
+    totalTimeout: const Duration(seconds: 45),
+  );
+  final PriorityModelRouter _heavyRouter = PriorityModelRouter(
+    attemptTimeout: const Duration(seconds: 60),
+    totalTimeout: const Duration(seconds: 90),
+  );
   final Set<CancelToken> _activeRoutes = {};
   final Dio Function()? probeClientFactory;
   final Set<Dio> _probeClients = {};
@@ -80,7 +108,7 @@ class LLMService {
     final token = cancelToken ?? CancelToken();
     _activeRoutes.add(token);
     try {
-      final result = await _router.execute<Map<String, dynamic>>(
+      final result = await _heavyRouter.execute<Map<String, dynamic>>(
         profiles: settings.effectiveProfiles,
         allowFallback: settings.aiFallbackEnabled,
         cancelToken: token,
@@ -136,34 +164,53 @@ class LLMService {
   Future<List<Reminder>> extractTasksFromImage(
       String base64Image, AppSettings settings) async {
     _checkActive();
+    final mime = detectBase64ImageMime(base64Image);
     try {
-      return await _sendExtractionRequestWithRetry(settings, [
-        {
-          'role': 'user',
-          'content': [
-            {
-              'type': 'text',
-              'text': '请分析这张图片中的文字、计划、备忘或待办事项，提取出具体可执行的任务，并计算精确提醒时间。'
-            },
-            {
-              'type': 'image_url',
-              'image_url': {
-                'url': 'data:image/jpeg;base64,$base64Image'
+      return await _sendExtractionRequestWithRetry(
+        settings,
+        [
+          {
+            'role': 'user',
+            'content': [
+              {
+                'type': 'text',
+                'text': '请分析这张图片中的文字、计划、备忘或待办事项，提取出具体可执行的任务，并计算精确提醒时间。'
+              },
+              {
+                'type': 'image_url',
+                'image_url': {
+                  'url': 'data:$mime;base64,$base64Image'
+                }
               }
-            }
-          ]
-        }
-      ]);
+            ]
+          }
+        ],
+        heavy: true,
+      );
     } catch (e) {
       _checkActive();
       // Graceful fallback if model doesn't support multimodal vision (e.g. DeepSeek)
       final now = DateTime.now();
-      final nowStr = '${now.month}月${now.day}日 ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+      final hhmm = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+      final (title, summary) = switch (settings.language) {
+        'en' => (
+          'Image task (${now.month}/${now.day} $hhmm)',
+          'Image attachment saved. Tap the media icon on the card to view it.',
+        ),
+        'ja' => (
+          '画像タスク (${now.month}/${now.day} $hhmm)',
+          '画像を保存しました。カードのアイコンからいつでも確認できます。',
+        ),
+        _ => (
+          '图片待办 (${now.month}月${now.day}日 $hhmm)',
+          '已保存图片附件，点击卡片图标可随时查看大图',
+        ),
+      };
       return [
         Reminder(
           id: const Uuid().v4(),
-          taskTitle: '图片待办 ($nowStr)',
-          taskSummary: '已保存图片附件，点击卡片图标可随时查看大图',
+          taskTitle: title,
+          taskSummary: summary,
           quadrantLevel: 2,
           urgencyLevel: 'General',
           importanceLevel: 'Important',
@@ -197,10 +244,15 @@ $truncatedContent
       _checkActive();
     }
 
+    final prefix = switch (settings.language) {
+      'en' => 'File task',
+      'ja' => 'ファイルタスク',
+      _ => '文件任务',
+    };
     return [
       Reminder(
         id: const Uuid().v4(),
-        taskTitle: '文件任务: $fileName',
+        taskTitle: '$prefix: $fileName',
         taskSummary: truncateRunes(truncatedContent, 60, suffix: '...'),
         quadrantLevel: 2,
         urgencyLevel: 'General',
@@ -220,11 +272,25 @@ $truncatedContent
       _checkActive();
     }
 
+    final (title, summary) = switch (settings.language) {
+      'en' => (
+        'Video task: $fileName',
+        'Video attachment linked. Tap the video icon on the card to play.',
+      ),
+      'ja' => (
+        '動画タスク: $fileName',
+        '動画を関連付けました。カードの動画アイコンから再生できます。',
+      ),
+      _ => (
+        '视频事项: $fileName',
+        '已关联视频素材，点击卡片视频图标可快速调用播放器查看。',
+      ),
+    };
     return [
       Reminder(
         id: const Uuid().v4(),
-        taskTitle: '视频事项: $fileName',
-        taskSummary: '已关联视频素材，点击卡片视频图标可快速调用播放器查看。',
+        taskTitle: title,
+        taskSummary: summary,
         quadrantLevel: 2,
         urgencyLevel: 'General',
         importanceLevel: 'Important',
@@ -232,13 +298,19 @@ $truncatedContent
     ];
   }
 
-  Future<List<Reminder>> _sendExtractionRequestWithRetry(AppSettings settings, List<Map<String, dynamic>> userMessages, {int maxRetries = 2}) async {
+  Future<List<Reminder>> _sendExtractionRequestWithRetry(
+    AppSettings settings,
+    List<Map<String, dynamic>> userMessages, {
+    int maxRetries = 2,
+    bool heavy = false,
+  }) async {
     _checkActive();
     if (settings.aiProfiles.isNotEmpty) {
       final cancellation = CancelToken();
       _activeRoutes.add(cancellation);
       try {
-      final result = await _router.execute<List<Reminder>>(
+      final router = heavy ? _heavyRouter : _router;
+      final result = await router.execute<List<Reminder>>(
         profiles: settings.effectiveProfiles,
         allowFallback: settings.aiFallbackEnabled,
         cancelToken: cancellation,
@@ -658,23 +730,69 @@ Output strictly in valid JSON object matching this structure:
         const [429, 502, 503, 504].contains(error.response?.statusCode);
   }
 
-  String formatErrorMessage(dynamic error) {
-    if (error is AiRouteFailure) return '已启用的模型暂未完成任务提取，请检查模型配置或稍后重试。';
+  String formatErrorMessage(dynamic error) =>
+      _formatErrorByLanguage(error, 'zh');
+
+  String formatLocalizedErrorMessage(dynamic error, String language) {
+    final defaultMsg = formatErrorMessage(error);
+    if (language == 'zh') return defaultMsg;
+    // Preserve custom subclass overrides (e.g. test doubles) verbatim.
+    if (defaultMsg != _formatErrorByLanguage(error, 'zh')) return defaultMsg;
+    return _formatErrorByLanguage(error, language);
+  }
+
+  static String _formatErrorByLanguage(dynamic error, String language) {
+    String pick(String zh, String en, String ja) => switch (language) {
+      'en' => en,
+      'ja' => ja,
+      _ => zh,
+    };
+    if (error is AiRouteFailure) {
+      return pick(
+        '已启用的模型暂未完成任务提取，请检查模型配置或稍后重试。',
+        'Enabled AI models could not complete extraction. Check model settings or retry later.',
+        '有効なAIモデルで抽出を完了できませんでした。設定を確認するか後で再試行してください。',
+      );
+    }
     if (error is DioException) {
       if (error.type == DioExceptionType.connectionTimeout ||
           error.type == DioExceptionType.receiveTimeout ||
           error.type == DioExceptionType.sendTimeout) {
-        return 'AI 响应较慢，请稍后重试。';
+        return pick(
+          'AI 响应较慢，请稍后重试。',
+          'AI response timed out. Please retry shortly.',
+          'AIの応答がタイムアウトしました。しばらくして再試行してください。',
+        );
       }
       if (error.type == DioExceptionType.connectionError) {
-        return '暂时无法连接 AI 服务，请检查网络。';
+        return pick(
+          '暂时无法连接 AI 服务，请检查网络。',
+          'Could not connect to AI service. Check your network.',
+          'AIサービスに接続できません。ネットワークを確認してください。',
+        );
       }
       final code = error.response?.statusCode;
-      if (code == 401 || code == 403) return 'AI 服务尚未授权，请检查设置中的密钥。';
-      if (code == 402) return 'AI 服务余额不足，请检查服务商账户。';
-      if (code == 429) return 'AI 服务繁忙，请稍后重试。';
-      // Classify untrusted responses without showing raw text, request IDs,
-      // credentials or HTML. Some providers return strings/lists instead of maps.
+      if (code == 401 || code == 403) {
+        return pick(
+          'AI 服务尚未授权，请检查设置中的密钥。',
+          'AI authentication failed. Check the API key in Settings.',
+          'AI認証に失敗しました。設定のAPIキーを確認してください。',
+        );
+      }
+      if (code == 402) {
+        return pick(
+          'AI 服务余额不足，请检查服务商账户。',
+          'Insufficient AI account balance or quota. Check your provider billing.',
+          'AIサービスの残高またはクォータが不足しています。アカウントを確認してください。',
+        );
+      }
+      if (code == 429) {
+        return pick(
+          'AI 服务繁忙，请稍后重试。',
+          'AI service rate limit reached. Please retry shortly.',
+          'AIサービスが混雑しています。しばらくして再試行してください。',
+        );
+      }
       final data = error.response?.data;
       final detail = data is Map ? data['error'] : null;
       final message = detail is Map ? detail['message'] : null;
@@ -684,16 +802,44 @@ Output strictly in valid JSON object matching this structure:
               (message.toLowerCase().contains('support') ||
                message.toLowerCase().contains('not found')));
       if (code == 404 || modelError) {
-        return '当前模型不可用，请检查设置中的模型和服务地址。';
+        return pick(
+          '当前模型不可用，请检查设置中的模型和服务地址。',
+          'Selected model is unavailable. Check the model name and endpoint URL.',
+          '現在のモデルは利用できません。設定のモデル名とURLを確認してください。',
+        );
       }
-      if (code == 400 || code == 422) return 'AI 配置暂不可用，请检查模型设置。';
-      return 'AI 服务暂不可用，请稍后重试。';
+      if (code == 400 || code == 422) {
+        return pick(
+          'AI 配置暂不可用，请检查模型设置。',
+          'Invalid AI request configuration. Check model settings.',
+          'AI設定が無効です。モデル設定を確認してください。',
+        );
+      }
+      return pick(
+        'AI 服务暂不可用，请稍后重试。',
+        'AI service is temporarily unavailable. Please retry later.',
+        'AIサービスは一時的に利用できません。後で再試行してください。',
+      );
     }
     if (error is AudioTranscriptionUnsupportedException) {
-      return '当前服务不支持语音转文字，原声录音仍可使用。';
+      return pick(
+        '当前服务不支持语音转文字，原声录音仍可使用。',
+        'Current service does not support speech-to-text. Original audio was kept.',
+        '現在のサービスは音声の文字起こしに対応していません。元の録音は利用可能です。',
+      );
     }
-    if (error is FormatException) return '暂未识别出有效任务，可在详情中手动完善。';
-    return '暂未完成智能解析，可检查 AI 设置后重试。';
+    if (error is FormatException) {
+      return pick(
+        '暂未识别出有效任务，可在详情中手动完善。',
+        'Could not parse a structured task. You can refine it in task details.',
+        '有効なタスクを認識できませんでした。詳細画面から手動で編集できます。',
+      );
+    }
+    return pick(
+      '暂未完成智能解析，可检查 AI 设置后重试。',
+      'Smart parsing did not complete. Check AI settings and retry.',
+      'AI解析を完了できませんでした。AI設定を確認して再試行してください。',
+    );
   }
 
   Future<String> transcribeAudio(String filePath, AppSettings settings) async {
