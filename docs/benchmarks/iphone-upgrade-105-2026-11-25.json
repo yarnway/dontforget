@@ -1,0 +1,63 @@
+{
+  "iphone_candidate": {
+    "source": "72654ba742db013ed1de3a069600ea933e38c5ce",
+    "github_run": 45587237247,
+    "artifact": 15009651345,
+    "archive_digest": "sha256:e0458b13d0a6d0beade2eb1876895e40a4f4f1f36fe95883bde3e0fb46b0fff6",
+    "ipa_sha256": "7eb76cfce9523a5ec890950c1d59e70d47662eef16a6d03dafda69dfead758d5",
+    "version": "1.8.24+105",
+    "signing": "unsigned"
+  },
+  "overlay": {
+    "previous_build": 104,
+    "installed_build_read_over_usb": 105,
+    "same_signed_identity_verified": true,
+    "user_opened_about_version": "1.8.24 (105)",
+    "comparison": {
+      "integrity_check_passed_for_both": true,
+      "schema_before": 17,
+      "schema_after": 17,
+      "tables": {
+        "Reminders": {
+          "rows_before": 20,
+          "rows_after": 20,
+          "columns_and_all_rows_equal": true
+        },
+        "MediaRecords": {
+          "rows_before": 4,
+          "rows_after": 4,
+          "columns_and_all_rows_equal": true
+        },
+        "Settings": {
+          "rows_before": 1,
+          "rows_after": 1,
+          "columns_and_all_rows_equal": true
+        }
+      },
+      "compared_document_files_before": 10,
+      "compared_document_files_after": 10,
+      "document_file_names_and_hashes_equal": true,
+      "notification_journal_attempt_metadata_changed": true,
+      "preferences_names_and_hashes_equal": true,
+      "share_attachment_count_before": 4,
+      "share_attachment_count_after": 4,
+      "share_attachment_names_and_hashes_equal": true
+    }
+  },
+  "prior_cross_device_readback": {
+    "windows_task_count": 20,
+    "iphone_task_count": 20,
+    "matching_task_ids": 20,
+    "exact_common_task_title_summary_completion_and_media_reference": 13,
+    "common_audio_digests_match": 4,
+    "audio_pairs_validated": 4,
+    "read_only_comparison": true
+  },
+  "interaction_acceptance": {
+    "reported_by_device_operator": true,
+    "old_jpeg_opens_directly": true,
+    "multipage_pdf_opens_directly_and_pages": true,
+    "playback_feedback_dismisses_on_natural_end": true,
+    "completion_feedback_names_task_and_dismisses_after_about_five_seconds": true
+  }
+}
