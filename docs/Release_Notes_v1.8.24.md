@@ -26,6 +26,7 @@
 
 ## 验证记录
 
+- build 107 已在 Windows 实机核对普通窗口、最大化和还原，搜索查询和焦点保留。运行中覆盖后复核安装文件、事项、录音原件和系统凭据。本机全量 Flutter 测试 2758 项通过、20 项跳过，静态分析无问题。
 - build 105 候选在固定 Flutter 3.44.9 下完成本机全量回归，2753 项通过、20 项跳过，Python 工具校验 187 项通过、6 项跳过，静态分析零问题。GitHub 五平台候选制品已核对来源和摘要。[候选 CI](https://github.com/yarnway/dontforget/actions/runs/45581836897)
 - Windows build 105 候选通过运行中覆盖和普通重开，核对安装文件、事项、录音和 DPAPI 凭据。Pixel 8 Pro 通过同发行证书覆盖，核对备份、原件及安全存储中的云服务配置。
 - iPhone 个人重签验收版通过同身份覆盖，核对事项、录音、偏好和分享草稿原件。用户实测旧图片与多页 PDF 直开、PDF 翻页、录音播放结束收起，以及带事项名的完成提示自动收起。Windows、Android 和 iPhone 的验收范围及回执见 [后续阶段与任务](https://github.com/yarnway/dontforget/blob/main/docs/Next_Steps_2026-11-02.md)。
