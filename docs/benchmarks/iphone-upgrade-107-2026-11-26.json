@@ -1,0 +1,55 @@
+{
+  "iphone_candidate": {
+    "source": "d189a6c878534aa3c1f412f0783279959f6ebfde",
+    "github_run": 45742884906,
+    "artifact": 15081614393,
+    "archive_digest": "sha256:4e9d92e11784e6790d019cf02a7d4b65ec3cddc7a229cdb15e2c3f9e34d7cd7c",
+    "ipa_sha256": "41a06f8b8bcd800fa108f9e8eb98a2dde1aea37fa2fbef350291429979b36cb6",
+    "version": "1.8.24+107",
+    "signing": "unsigned"
+  },
+  "overlay": {
+    "previous_build": 105,
+    "installed_build_read_over_usb": 107,
+    "same_signed_identity_verified": true,
+    "reported_by_device_operator": true,
+    "comparison": {
+      "integrity_check_passed_for_both": true,
+      "schema_before": 17,
+      "schema_after": 17,
+      "tables": {
+        "Reminders": {
+          "rows_before": 20,
+          "rows_after": 20,
+          "columns_and_all_rows_equal": true
+        },
+        "MediaRecords": {
+          "rows_before": 4,
+          "rows_after": 4,
+          "columns_and_all_rows_equal": true
+        },
+        "Settings": {
+          "rows_before": 1,
+          "rows_after": 1,
+          "columns_and_all_rows_equal": true
+        }
+      },
+      "compared_document_files_before": 10,
+      "compared_document_files_after": 10,
+      "document_file_names_and_hashes_equal": true,
+      "notification_journal_attempt_metadata_changed": true,
+      "preferences_names_and_hashes_equal": true,
+      "share_attachment_count_before": 4,
+      "share_attachment_count_after": 4,
+      "share_attachment_names_and_hashes_equal": true
+    }
+  },
+  "interaction_acceptance": {
+    "reported_by_device_operator": true,
+    "altstore_resigned_same_account_with_both_extensions": true,
+    "about_version_1_8_24_107": true,
+    "named_completion_feedback_auto_dismisses_after_about_five_seconds": true,
+    "completed_tab_newest_first_single_delete_undo_and_batch_delete": true,
+    "swipe_up_right_live_transcription_while_holding": true
+  }
+}

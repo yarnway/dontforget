@@ -26,7 +26,7 @@
 
 ## 验证记录
 
-- build 107 已在 Windows 实机核对普通窗口、最大化和还原，搜索查询和焦点保留。运行中覆盖后复核安装文件、事项、录音原件和系统凭据。本机全量 Flutter 测试 2758 项通过、20 项跳过，静态分析无问题。
-- build 105 候选在固定 Flutter 3.44.9 下完成本机全量回归，2753 项通过、20 项跳过，Python 工具校验 187 项通过、6 项跳过，静态分析零问题。GitHub 五平台候选制品已核对来源和摘要。[候选 CI](https://github.com/yarnway/dontforget/actions/runs/45581836897)
-- Windows build 105 候选通过运行中覆盖和普通重开，核对安装文件、事项、录音和 DPAPI 凭据。Pixel 8 Pro 通过同发行证书覆盖，核对备份、原件及安全存储中的云服务配置。
-- iPhone 个人重签验收版通过同身份覆盖，核对事项、录音、偏好和分享草稿原件。用户实测旧图片与多页 PDF 直开、PDF 翻页、录音播放结束收起，以及带事项名的完成提示自动收起。Windows、Android 和 iPhone 的验收范围及回执见 [后续阶段与任务](https://github.com/yarnway/dontforget/blob/main/docs/Next_Steps_2026-11-02.md)。
+- build 107 在固定 Flutter `3.44.9` 下完成本机全量回归（`2758` 项通过、`20` 项跳过，静态分析零问题，Python 校验 `193` 项运行：`187` 通过、`6` 跳过）及 GitHub 五平台 CI（[候选 CI 45650861595](https://github.com/yarnway/dontforget/actions/runs/45650861595) 全部通过，核对 8 份制品来源、摘要、Android 固定发行证书与 iOS 主应用／提醒扩展／分享扩展版本及共享组）。
+- Windows build 107 已依次通过本地包（普通／最大化与还原尺寸对齐、焦点与查询保留）及 GitHub CI 包托盘运行态无强杀优雅覆盖与普通重开，复核 `27/27` 安装文件、`20/4/1` 全业务字段、4 份文档录音原件和 DPAPI 凭据一致。
+- Pixel 8 Pro 已完成 GitHub build 107 ARM64 APK 同签名覆盖与升级前后 `DFBK2`（`7/4/1`、4 份附件）及安全存储中的腾讯云／DeepSeek 凭据保全一致，并实机核对「关于与更新」（`1.8.24 (107)`／公开 `1.8.23 (94)`）、带事项名完成提示 5 秒自动收起、`已完成` 倒序与单删撤销及多选批量删除移入回收站。
+- iPhone 个人重签验收版（运行 [45742884906](https://github.com/yarnway/dontforget/actions/runs/45742884906)）已完成 `1.8.24 (105) → 1.8.24 (107)` 同身份 AltStore 重签覆盖，USB 逐项比对覆盖前后 SQLite `20/4/1`、10 份比对文档、4 份分享草稿附件及偏好逐字节一致；用户实测「关于与更新」`1.8.24 (107)`、带事项名 5 秒自动收起、`已完成` 视图单删撤销与批量删除、上滑右转按住期间即时转写，以及 build 105 继承的旧图片与多页 PDF 直开、PDF 翻页与录音播放结束收起均通过。Windows、Android 和 iPhone 的验收范围及回执见 [后续阶段与任务](https://github.com/yarnway/dontforget/blob/main/docs/Next_Steps_2026-11-02.md)。
