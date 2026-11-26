@@ -1,0 +1,56 @@
+{
+  "timestamp_utc": "2026-11-26T14:46:18.367899+00:00",
+  "package_origin": "github-release-v1.8.24",
+  "publish_run_id": 45841531776,
+  "ci_run_id": 45785650633,
+  "release_tag": "v1.8.24",
+  "source_commit": "0cedd94f42056c426d6078b3c553e41ac4046e47",
+  "candidate_distribution": "GitHub official v1.8.24 release",
+  "setup_sha256": "3835112aed88766e65f1c2a7262392985ff54dd3d5f3735c8da0e6c70f3263c4",
+  "portable_sha256": "60aebbf72396d25563b4be2885acf23602ad951168294595d92963dc2a4e2282",
+  "previous_package_origin": "github-ci-build107",
+  "version_before": "1.8.24+107",
+  "verified_installed_prior_payload_files": 27,
+  "running_at_install_pid": 28356,
+  "visible_at_install": false,
+  "backup_verified": true,
+  "force_close_allowed": false,
+  "installer_exit": 0,
+  "graceful_release_logged": true,
+  "old_pid_exited": true,
+  "version_after": "1.8.24+107",
+  "payload_files_identical": 27,
+  "expected_payload_files": 27,
+  "after_install": {
+    "all_business_fields_equal": true,
+    "dpapi_credential_readback_equal": true,
+    "credential_files_equal": true,
+    "credential_count": 1,
+    "counts": {
+      "Reminders": 20,
+      "MediaRecords": 4,
+      "Settings": 1
+    },
+    "schema": 17,
+    "integrity_check": "ok",
+    "document_attachment_count": 4,
+    "document_attachment_hashes_equal": true
+  },
+  "reopen_pid": 38796,
+  "reopen_window_visible": true,
+  "after_reopen": {
+    "all_business_fields_equal": true,
+    "dpapi_credential_readback_equal": true,
+    "credential_files_equal": true,
+    "credential_count": 1,
+    "counts": {
+      "Reminders": 20,
+      "MediaRecords": 4,
+      "Settings": 1
+    },
+    "schema": 17,
+    "integrity_check": "ok",
+    "document_attachment_count": 4,
+    "document_attachment_hashes_equal": true
+  }
+}

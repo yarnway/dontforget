@@ -1,5 +1,11 @@
 # 手动续行检查点
 
+## 2026-11-26 · v1.8.24+107 四平台正式发布与收口
+
+- 已将 build 107 验收分支快进合入 `main`（`0cedd94`），[主线五平台 CI 45785650633](https://github.com/yarnway/dontforget/actions/runs/45785650633) 全部通过后执行 [发布工作流 45841531776](https://github.com/yarnway/dontforget/actions/runs/45841531776)，正式发布 [v1.8.24](https://github.com/yarnway/dontforget/releases/tag/v1.8.24)（四平台 7 包、20 附件并设为 `latest`，旧版 `v1.8.23` 未改动）。发布后独立读回全部通过。[发布读回回执](benchmarks/github-release-v1.8.24-2026-11-26.json)
+- Windows 本机使用公开 `v1.8.24` 正式安装包对托盘运行态（`PID 28356`）完成受限备份与零强杀优雅覆盖（退出码 `0`、释放互斥锁），经 `explorer.exe` 普通重开（`PID 38796`，窗口可见）后 `27/27` 载荷、`20/4/1` 全业务字段、4 份文档录音原件与 1 项 DPAPI 凭据一致。[Windows 正式包回执](benchmarks/windows-upgrade-107-release-2026-11-26.json)
+- 阶段 47／48／49／50 本版全部收口；后续新需求可基于 `main`（`v1.8.24+107`）开启下一版本迭代。
+
 ## 2026-11-26 · build 107 GitHub 制品与 Windows 覆盖
 
 - GitHub `d189a6c` 五平台 CI（[45650861595](https://github.com/yarnway/dontforget/actions/runs/45650861595)）7/7 通过，已独立下载五个归档并核对 8 份制品来源、摘要、Android 固定发行证书（`3db49656...`，`versionCode=107`）及 iOS 主应用与两项扩展（`1.8.24/107`、共享组 `group.com.yarnway.dontforget`）。
