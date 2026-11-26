@@ -6,9 +6,9 @@
 
 | 顺序 | 阶段 | 待执行任务与条件 |
 | --- | --- | --- |
-| 1 | 47／49 · 窗口适配与移动端验收 | build 105 已通过 iPhone 预览、播放、具名提示和跨端重复同步。build 107 已通过本机 Windows 最大化与还原，需在 Pixel 和 iPhone 补验继承的批量操作及主要流程。 |
-| 2 | 48 · 数据保护 | Windows 本地 build 107 已通过受限备份后的托盘运行态覆盖和普通重开。Pixel 与 iPhone 各自的 build 105 覆盖和数据保全已验。待 GitHub build 107 制品和可用手机依次覆盖验收。 |
-| 3 | 50 · GitHub 构建与下一版交付 | 公开发行仍为 `v1.8.23`（build 94）。`main` 的 build 105 完整 CI 已通过。build 107 本机全量已通过，GitHub 候选构建已启动，待制品、签名和实机核对完成后推进主线与正式发布。 |
+| 1 | 47／49 · 窗口适配与移动端验收 | build 105 已通过 iPhone 预览、播放、具名提示和跨端重复同步。build 107 已通过本机 Windows 最大化与还原，需在 Pixel 和 iPhone 补验继承的批量操作、5 秒收起及主要流程（iPhone 107 验收包正在构建）。 |
+| 2 | 48 · 数据保护 | GitHub build 107 制品已复核，Windows 已从托盘运行态正常覆盖 GitHub 版并完成普通重开（`27/27` 载荷、`20/4/1`、4 份录音及 1 项 DPAPI 凭据一致）；Pixel 未接入；iPhone build 105 覆盖前 USB 只读快照已取（`20/4/1`、17 个文件），107 验收包正在构建（运行 `45742884906`），待重签覆盖后补验。 |
+| 3 | 50 · GitHub 构建与下一版交付 | 公开发行仍为 `v1.8.23`（build 94）。`main` 的 build 105 完整 CI 已通过。build 107 本机全量与 GitHub 五平台 CI 制品核对均已通过，待手机完成 107 覆盖与实机核对后推进主线与正式发布。 |
 
 本机固定 Flutter 3.44.9 下，备份、恢复、窗口和更新服务专项 101 项通过，通知协议、路由和关于页专项 107 项通过。两组均无失败。阶段 46 的 USB 项按实际开发阻塞处理。下方为各阶段证据和历史执行记录，以上表格为当前排序。
 
@@ -197,6 +197,8 @@
 - **本机打包与实机覆盖**　固定 Flutter 3.44.9 静态分析无问题。核对本地安装器、便携包和运行中的 build 106 载荷，备份后从托盘运行态正常覆盖。普通重开后 27 个安装文件、20 条事项、4 条媒体、1 条设置、DPAPI 凭据和 4 份录音原件一致。[Windows 覆盖回执](benchmarks/windows-upgrade-107-local-2026-11-25.json)
 - **窗口实测**　实际 Windows 在 `1244 × 710`、`1536 × 816`、`1244 × 710` 之间切换。搜索框、结果和底部录入区同步扩展与收窄，查询、焦点和结果数在还原后保留。测试结束返回首页。
 - **全量与 GitHub**　固定 Flutter 3.44.9 全量 2758 项通过、20 项跳过。Python 187 项通过、6 项跳过。GitHub Actions 降级时触发返回 HTTP 500，重试后确认 `d189a6c` 的构建已启动。[候选构建](https://github.com/yarnway/dontforget/actions/runs/45650861595) · [GitHub 故障记录](https://www.githubstatus.com/incidents/qn8mfv6q5hlx)
+- **GitHub 制品复核**　`d189a6c` 五平台构建 [45650861595](https://github.com/yarnway/dontforget/actions/runs/45650861595) 全部成功。独立下载并核对 Windows（`15040159493`）、Android（`15041494374`）、Linux（`15041593278`）、iOS（`15041918585`）与 macOS（`15042850162`）五个归档及 8 份制品的来源、体积与 SHA-256。两份 APK 核对包名 `com.yarnway.dontforget` 与 `versionCode` `107`，两份 APK 与 AAB 签名均为固定发行证书 `3db49656...`；未签名 IPA 主应用、`ReminderActivity.appex` 与 `ShareExtension.appex` 版本均为 `1.8.24`（`107`）且共享组 `group.com.yarnway.dontforget` 一致。
+- **Windows CI 覆盖**　核对 GitHub build 107 安装器、便携包及托盘运行态本地 build 107（`PID 6460`，`27/27` 载荷）后，完成受限备份并零强杀运行中覆盖（优雅释放互斥锁、退出码 `0`）。经 `explorer.exe` 普通重开（`PID 28356`，窗口可见）后，`27/27` 载荷、schema 17 完整性、20 条事项／4 条媒体／1 条设置全业务字段、4 份文档录音原件与 1 项 DPAPI 凭据一致。[Windows CI 覆盖回执](benchmarks/windows-upgrade-107-ci-2026-11-26.json)
 
 ## 当前范围（2026-11-17调整）
 

@@ -1,0 +1,57 @@
+{
+  "timestamp_utc": "2026-11-26T02:27:15.067513+00:00",
+  "package_origin": "github-ci",
+  "ci_run_id": 45650861595,
+  "ci_run_url": "https://github.com/yarnway/dontforget/actions/runs/45650861595",
+  "source_commit": "d189a6c878534aa3c1f412f0783279959f6ebfde",
+  "candidate_distribution": "GitHub fixed-SDK candidate",
+  "setup_sha256": "872899e274e02b0a15832870412f4467770494cc6bb0e55121cd85689de7f439",
+  "portable_sha256": "9fea378126454325570ce67d90b8208503d33facbba108ebbc4b9086bf493ec4",
+  "previous_package_origin": "local-candidate-build107",
+  "version_before": "1.8.24+107",
+  "verified_installed_prior_payload_files": 27,
+  "running_at_install_pid": 6460,
+  "visible_at_install": false,
+  "backup_verified": true,
+  "force_close_allowed": false,
+  "installer_exit": 0,
+  "graceful_release_logged": true,
+  "old_pid_exited": true,
+  "version_after": "1.8.24+107",
+  "payload_files_identical": 27,
+  "expected_payload_files": 27,
+  "after_install": {
+    "all_business_fields_equal": true,
+    "dpapi_credential_readback_equal": true,
+    "credential_files_equal": true,
+    "credential_count": 1,
+    "counts": {
+      "Reminders": 20,
+      "MediaRecords": 4,
+      "Settings": 1
+    },
+    "schema": 17,
+    "integrity_check": "ok",
+    "document_attachment_count": 4,
+    "document_attachment_hashes_equal": true
+  },
+  "reopen_pid": 28356,
+  "reopen_window_visible": true,
+  "after_reopen": {
+    "all_business_fields_equal": true,
+    "dpapi_credential_readback_equal": true,
+    "credential_files_equal": true,
+    "credential_count": 1,
+    "counts": {
+      "Reminders": 20,
+      "MediaRecords": 4,
+      "Settings": 1
+    },
+    "schema": 17,
+    "integrity_check": "ok",
+    "document_attachment_count": 4,
+    "document_attachment_hashes_equal": true
+  },
+  "github_artifact_id": 15040159493,
+  "github_artifact_digest": "sha256:f623f2f8c893a757b7de85c7dfc0cf618ce84eb1a4dec0ed6e64a03542b7c749"
+}

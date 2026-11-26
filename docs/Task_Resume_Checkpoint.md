@@ -1,5 +1,11 @@
 # 手动续行检查点
 
+## 2026-11-26 · build 107 GitHub 制品与 Windows 覆盖
+
+- GitHub `d189a6c` 五平台 CI（[45650861595](https://github.com/yarnway/dontforget/actions/runs/45650861595)）7/7 通过，已独立下载五个归档并核对 8 份制品来源、摘要、Android 固定发行证书（`3db49656...`，`versionCode=107`）及 iOS 主应用与两项扩展（`1.8.24/107`、共享组 `group.com.yarnway.dontforget`）。
+- Windows 从托盘运行态本地 build 107（`PID 6460`）完成受限备份与零强杀覆盖 GitHub build 107（退出码 `0`，日志记录优雅释放互斥锁），普通重开（`PID 28356`）后 `27/27` 载荷、20/4/1 全业务字段、4 份录音原件与 1 项 DPAPI 凭据一致。[Windows CI 回执](benchmarks/windows-upgrade-107-ci-2026-11-26.json)
+- Pixel 当前未接入；iPhone 已连接 USB 并捕获 `1.8.24 (105)` 覆盖前只读快照（20/4/1、17 个文件），同验收身份 build 107 打包工作流已派发（运行 `45742884906`），待构建完成后提供重签覆盖入口。
+
 ## 2026-11-25 · 多端整合 build 104
 
 - 主线即时转写与 5 秒撤销已和 iOS 分享、附件预览及播放收起合并到 build 104 候选。Flutter 全量 2753 项、Python 187 项通过。Windows 本地及 GitHub 版均已运行中覆盖、核对数据与普通重开，本地包实测完成提示自动收起。Windows 与 iPhone 的原有事项已双向到达，Windows 收到的 4 份录音与手机原件摘要一致。配对路径、重复同步和手机新包实装分别补验。[阶段台账](Next_Steps_2026-11-02.md#11-月-25-日--多端整合-build-104) · [候选 CI](https://github.com/yarnway/dontforget/actions/runs/45539567593)
