@@ -4,7 +4,8 @@
 
 - GitHub `d189a6c` 五平台 CI（[45650861595](https://github.com/yarnway/dontforget/actions/runs/45650861595)）7/7 通过，已独立下载五个归档并核对 8 份制品来源、摘要、Android 固定发行证书（`3db49656...`，`versionCode=107`）及 iOS 主应用与两项扩展（`1.8.24/107`、共享组 `group.com.yarnway.dontforget`）。
 - Windows 从托盘运行态本地 build 107（`PID 6460`）完成受限备份与零强杀覆盖 GitHub build 107（退出码 `0`，日志记录优雅释放互斥锁），普通重开（`PID 28356`）后 `27/27` 载荷、20/4/1 全业务字段、4 份录音原件与 1 项 DPAPI 凭据一致。[Windows CI 回执](benchmarks/windows-upgrade-107-ci-2026-11-26.json)
-- Pixel 当前未接入；iPhone 已连接 USB 并捕获 `1.8.24 (105)` 覆盖前只读快照（20/4/1、17 个文件），同验收身份 build 107 打包工作流已派发（运行 `45742884906`），待构建完成后提供重签覆盖入口。
+- Pixel 8 Pro 已从 `1.8.24 (105)` 完成升级前 `DFBK2`（`7/4/1`、4 份附件）与双云凭据核对，同签名覆盖 GitHub ARM64 `1.8.24 (107)` 后冷重开、二次 `DFBK2` 复核及凭据均逐项一致；实测「关于与更新」（`1.8.24 (107)`／公开 `1.8.23 (94)`）、带事项名 5 秒自动收起提示、`已完成` 倒序与单删撤销及 `批量选择` 批量删除后恢复原状（`未来 1`/`全部 3`，`logcat` 零异常）。[Pixel CI 回执](benchmarks/pixel-upgrade-107-ci-2026-11-26.json)
+- iPhone 同验收身份 build 107 打包已通过（[45742884906](https://github.com/yarnway/dontforget/actions/runs/45742884906)，IPA SHA-256 `41a06f8b...`）并已留存 `1.8.24 (105)` 覆盖前 USB 只读快照（20/4/1、17 个文件）；当前 iPhone 未连接 USB，待接入并解锁后刷新下载二维码并由用户完成 AltStore 重签覆盖与交互补验。
 
 ## 2026-11-25 · 多端整合 build 104
 
